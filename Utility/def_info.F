@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-      function def_info (ng,ncid,ncname,DimIDs)
+      FUNCTION def_info (ng,ncid,ncname,DimIDs)
 !
 !=======================================================================
 !  Copyright (c) 2002 ROMS/TOMS Group                                  !
@@ -37,6 +37,10 @@
 !                DimIDs(21) => Dimension 3D water U-points.            !
 !                DimIDs(23) => Dimension 3D water W-points.            !
 !                DimIDs(24) => Dimension sediment bed water points.    !
+!                DimIDs(25) => Number of EcoSim phytoplankton groups.  !
+!                DimIDs(26) => Number of EcoSim bateria groups.        !
+!                DimIDs(27) => Number of EcoSim DOM groups.            !
+!                DimIDs(28) => Number of EcoSim fecal groups.          !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -57,7 +61,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, ncid
-      integer, intent(in) :: DimIDs(24)
+      integer, intent(in) :: DimIDs(28)
       character (*), intent(in) :: ncname
 !
 !  Local variable declarations.
@@ -66,6 +70,12 @@
 
       integer :: brydim, i, j, srdim, stadim, status, swdim
       integer :: trcdim, usrdim, varid
+
+# if defined BIOLOGY && defined ECOSIM
+      integer :: bacdim, domdim, fecdim, phydim
+
+      integer :: biodim(2)
+# endif
 
       integer :: p2dgrd(2), tbrydim(2)
       integer :: t2dgrd(3), u2dgrd(3), v2dgrd(3)
@@ -76,7 +86,7 @@
 
       character (len=11) :: frcatt
       character (len=50) :: tiling
-      character (len=65) :: Vinfo(Natt)
+      character (len=80) :: Vinfo(Natt)
 !
 !-----------------------------------------------------------------------
 !  Set dimension variables.
@@ -97,6 +107,14 @@
       brydim=DimIDs(14)
       tbrydim(1)=DimIDs(11)
       tbrydim(2)=DimIDs(14)
+# if defined ECOSIM && defined SOLVE3D
+      phydim=DimIDs(25)
+      bacdim=DimIDs(26)
+      domdim=DimIDs(27)
+      fecdim=DimIDs(28)
+      biodim(1)=phydim
+      biodim(2)=fecdim
+# endif
 !
 !  Set dimension for generic user parameters.
 !
@@ -107,7 +125,7 @@
 !  Initialize local information variable arrays.
 !
       DO i=1,Natt
-        DO j=1,65
+        DO j=1,80
           Vinfo(i)(j:j)=' '
         END DO
       END DO
@@ -136,6 +154,8 @@
 !
       IF (ncid.eq.ncavgid(ng)) THEN
         type='ROMS/TOMS averages file'
+      ELSE IF (ncid.eq.ncdiaid(ng)) THEN
+        type='ROMS/TOMS diagnostics file'
       ELSE IF (ncid.eq.nchisid(ng)) THEN
         type='ROMS/TOMS hystory file'
       ELSE IF (ncid.eq.ncrstid(ng)) THEN
@@ -171,6 +191,15 @@
       ELSE
         status=nf_put_att_text(ncid,nf_global,'avg_file',               &
      &                         LEN_TRIM(avgname(ng)),avgname(ng))
+      END IF
+#endif
+#ifdef DIAGNOSTICS
+      IF (ndefdia(ng).gt.0) THEN
+        status=nf_put_att_text(ncid,nf_global,'dia_base',               &
+     &                         LEN_TRIM(diabase(ng))-3,diabase(ng))
+      ELSE
+        status=nf_put_att_text(ncid,nf_global,'dia_file',               &
+     &                         LEN_TRIM(dianame(ng)),dianame(ng))
       END IF
 #endif
 #ifdef STATIONS
@@ -307,6 +336,24 @@
         Vinfo( 1)='ndefavg'
         Vinfo( 2)=                                                      &
      &    'number of time-steps between the creation of average files'
+        status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
+      END IF
+#endif
+
+#ifdef DIAGNOSTICS
+      Vinfo( 1)='ntsdia'
+      Vinfo( 2)=                                                        &
+     &   'starting time-step for accumulation of diagnostic fields'
+      status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ndia'
+      Vinfo( 2)='number of time-steps between diagnostic records'
+      status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
+
+      IF (ndefdia(ng).gt.0) THEN
+        Vinfo( 1)='ndefdia'
+        Vinfo( 2)=                                                      &
+     &   'number of time-steps between the creation of diagnostic files'
         status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
       END IF
 #endif
@@ -638,9 +685,9 @@
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
 #if defined BIOLOGY && defined SOLVE3D
-# ifdef BIO_FASHAM
+# if defined BIO_FASHAM
 !
-!  Define Fasham type biological module parameters.
+!  Define Fasham biological model parameters.
 !
       Vinfo( 1)='BioIter'
       Vinfo( 2)='number of iterations to achieve convergence'
@@ -731,13 +778,6 @@
       Vinfo( 3)='day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-#  ifdef CARBON
-      Vinfo( 1)='ZooAE_C'
-      Vinfo( 2)='zooplankton carbon assimilation efficiency'
-      Vinfo( 3)='nondimensional'
-      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
-#  endif
-
       Vinfo( 1)='ZooAE_N'
       Vinfo( 2)='zooplankton mitrogen assimilation efficiency'
       Vinfo( 3)='nondimensional'
@@ -758,11 +798,6 @@
       Vinfo( 3)='day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-      Vinfo( 1)='ZooGGE_C'
-      Vinfo( 2)='zooplankton carbon gross growth efficiency'
-      Vinfo( 3)='nondimensional'
-      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
-
       Vinfo( 1)='ZooGR'
       Vinfo( 2)='zooplankton maximum growth rate'
       Vinfo( 3)='day-1'
@@ -778,8 +813,13 @@
       Vinfo( 3)='day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-      Vinfo( 1)='LDeRR'
-      Vinfo( 2)='rate of large detritus re-mineralization to NO3'
+      Vinfo( 1)='LDeRRN'
+      Vinfo( 2)='rate of large detritus nitrogen re-mineralization'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='LDeRRC'
+      Vinfo( 2)='rate of large detritus carbon re-mineralization'
       Vinfo( 3)='day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
@@ -788,18 +828,13 @@
       Vinfo( 3)='day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-      Vinfo( 1)='SDeAR'
-      Vinfo( 2)='rate of small detritus aggregation to large detritus'
+      Vinfo( 1)='SDeRRN'
+      Vinfo( 2)='remineralization rate for small detritus nitrogen'
       Vinfo( 3)='day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-      Vinfo( 1)='SDeBR'
-      Vinfo( 2)='rate of small detritus breakdown to NH4'
-      Vinfo( 3)='day-1'
-      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
-
-      Vinfo( 1)='SDeRR'
-      Vinfo( 2)='remineralization rate for small detritus'
+      Vinfo( 1)='SDeRRC'
+      Vinfo( 2)='remineralization rate for small detritus carbon'
       Vinfo( 3)='day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
@@ -808,29 +843,463 @@
       Vinfo( 3)='meter day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-#  ifdef CARBON
-      Vinfo( 1)='wLDeC'
-      Vinfo( 2)='vertical sinking velocity for large carbon detritus'
-      Vinfo( 3)='meter day-1'
-      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
-#  endif
-
-      Vinfo( 1)='wLDeN'
-      Vinfo( 2)='vertical sinking velocity for large nitrogen detritus'
+      Vinfo( 1)='wLDet'
+      Vinfo( 2)='vertical sinking velocity for large detritus'
       Vinfo( 3)='meter day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-#  ifdef CARBON
-      Vinfo( 1)='wSDeC'
-      Vinfo( 2)='vertical sinking velocity for small carbon detritus'
+      Vinfo( 1)='wSDet'
+      Vinfo( 2)='vertical sinking velocity for small detritus'
       Vinfo( 3)='meter day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
-#  endif
 
-      Vinfo( 1)='wSDeN'
-      Vinfo( 2)='vertical sinking velocity for small nitrogen detritus'
+# elif defined ECOSIM
+!
+!  Define EcoSim bio-optical model parameters.
+!
+      Vinfo( 1)='BioIter'
+      Vinfo( 2)='maximum number of iterations to achieve convergence'
+      status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RtUVR_flag'
+      Vinfo( 2)='switch to calculate CDOC UV photolysis.'
+      status=def_var(ncid,varid,nf_char,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='NFIX_flag'
+      Vinfo( 2)='switch to calculate temperature based N fixation'
+      status=def_var(ncid,varid,nf_char,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='Regen_flag'
+      Vinfo( 2)='switch to calculate fecal matter regeneration'
+      status=def_var(ncid,varid,nf_char,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsNO3'
+      Vinfo( 2)='half-saturation for phytoplankton NO3 uptake'
+      Vinfo( 3)='micromole_NO3 liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsNH4'
+      Vinfo( 2)='half-saturation for phytoplankton NH4 uptake'
+      Vinfo( 3)='micromole_NH4 liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsSiO'
+      Vinfo( 2)='half-saturation for phytoplankton SiO uptake'
+      Vinfo( 3)='micromole_SiO liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsPO4'
+      Vinfo( 2)='half-saturation for phytoplankton PO4 uptake'
+      Vinfo( 3)='micromole_PO4 liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsFe'
+      Vinfo( 2)='half-saturation for phytoplankton Fe uptake'
+      Vinfo( 3)='micromole_Fe liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='GtALG_max'
+      Vinfo( 2)='maximum phytoplankton 24 hour growth rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='PhyTbase'
+      Vinfo( 2)=                                                        &
+     &         'phytoplankton temperature base for exponential response'
+      Vinfo( 3)='Celsius'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='PhyTfac'
+      Vinfo( 2)='phytoplankton exponential temperature factor'
+      Vinfo( 3)='Celsius-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='BET_'
+      Vinfo( 2)='nitrate uptake inhibition for NH4'
+      Vinfo( 3)='micromole-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='maxC2nALG'
+      Vinfo( 2)='maximum phytoplankton C:N ratio'
+      Vinfo( 3)='micromole_C micromole_N-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='minC2nALG'
+      Vinfo( 2)='balanced phytoplankton C:N ratio'
+      Vinfo( 3)='micromole_C micromole_N-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2nALGminABS'
+      Vinfo( 2)='absolute minimum phytoplankton C:N ratio'
+      Vinfo( 3)='micromole_C micromole_N-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='maxC2SiALG'
+      Vinfo( 2)='maximum phytoplankton C:Si ratio'
+      Vinfo( 3)='micromole_C micromole_Si-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='minC2SiALG'
+      Vinfo( 2)='balanced phytoplankton C:Si ratio'
+      Vinfo( 3)='micromole_C micromole_Si-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2SiALGminABS'
+      Vinfo( 2)='absolute minimum phytoplankton C:Si ratio'
+      Vinfo( 3)='micromole_C micromole_Si-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='maxC2pALG'
+      Vinfo( 2)='maximum phytoplankton C:P ratio'
+      Vinfo( 3)='micromole_C micromole_P-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='minC2pALG'
+      Vinfo( 2)='balanced phytoplankton C:P ratio'
+      Vinfo( 3)='micromole_C micromole_P-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2pALGminABS'
+      Vinfo( 2)='absolute minimum phytoplankton C:P ratio'
+      Vinfo( 3)='micromole_C micromole_P-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='maxC2FeALG'
+      Vinfo( 2)='maximum phytoplankton C:Fe ratio'
+      Vinfo( 3)='micromole_C micromole_Fe-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='minC2FeALG'
+      Vinfo( 2)='balanced phytoplankton C:Fe ratio'
+      Vinfo( 3)='micromole_C micromole_Fe-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2FeALGminABS'
+      Vinfo( 2)='absolute minimum phytoplankton C:Fe ratio'
+      Vinfo( 3)='micromole_C micromole_Fe-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='qu_yld'
+      Vinfo( 2)='maximum quantum yield'
+      Vinfo( 3)='micromole_C micromole_quanta-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='E0_comp'
+      Vinfo( 2)='compensation light level'
+      Vinfo( 3)='micromole_quanta'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='E0_inhib'
+      Vinfo( 2)='light level for onset of photoinhibition'
+      Vinfo( 3)='micromole_quanta'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='inhib_fac'
+      Vinfo( 2)='exponential decay factor for light limited growth'
+      Vinfo( 3)='micromole_quanta-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2CHL_max'
+      Vinfo( 2)='maximum lighted limited C:Chl ratio'
+      Vinfo( 3)='microgram_C microgram_Chl-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxC2Cl'
+      Vinfo( 2)='rate of change in light limited C:CHL ratio'
+      Vinfo( 3)='microgram_C microgram_Chl-1 micromole_quanta-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_C2Cl'
+      Vinfo( 2)='minimum lighted limited C:Chl ratio'
+      Vinfo( 3)='microgram_C microgram_Chl-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxC2Cn'
+      Vinfo( 2)='rate of change in nutient limited C:Chl ratio'
+      Vinfo( 3)='microgram_C microgram_Chl-1 micromole_N micromole_C-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_C2Cn'
+      Vinfo( 2)='minimum nutrient limited C:CHL ratio'
+      Vinfo( 3)='microgram_C microgram_Chl-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxPacEff'
+      Vinfo( 2)='rate of change in package effect'
+      Vinfo( 3)='microgram_Chl microgram_C-1' 
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_PacEff'
+      Vinfo( 2)='maximum package effect'
+      Vinfo( 3)='microgram_Chl microgram_C-1' 
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxChlB'
+      Vinfo( 2)='rate of change in the Chl_b:CHL_a ratio'
+      Vinfo( 3)=                                                        &
+     & 'microgram_Chl_b microgram_Chl_a-1 microgram_Chl_a microgrma_C-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_ChlB'
+      Vinfo( 2)='maximum Chl_b:Chl_a ratio'
+      Vinfo( 3)='microgram_Chl_b microgram_Chl_a-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxChlC'
+      Vinfo( 2)='rate of change in the Chl_c:Chl_a ratio'
+      Vinfo( 3)=                                                        &
+     & 'microgram_Chl_c microgram_Chl_a-1 microgram_Chl_a microgrma_C-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_ChlC'
+      Vinfo( 2)='maximum Chl_c:Chl_a ratio'
+      Vinfo( 3)='microgram_Chl_c microgram_Chl_a-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxPSC'
+      Vinfo( 2)='rate of change in the PSC:Chl_a ratio'
+      Vinfo( 3)=                                                        &
+     &   'microgram_PSC microgram_Chl_a-1 microgram_Chl_a microgram_C-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_PSC'
+      Vinfo( 2)='maximum PSC:Chl_a ratio'
+      Vinfo( 3)='microgram_PSC microgram_Chl_a-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxPPC'
+      Vinfo( 2)='rate of change in the PPC:Chl_a ratio'
+      Vinfo( 3)=                                                        &
+     &   'microgram_PPC microgram_Chl_a-1 microgram_Chl_a microgram_C-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_PPC'
+      Vinfo( 2)='maximum PPC:Chl_a ratio'
+      Vinfo( 3)='microgram_Chl_c microgram_Chl_a-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxLPUb'
+      Vinfo( 2)='rate of change in the LPUb:Chl_a ratio'
+      Vinfo( 3)=                                                        &
+     &  'microgram_LPUb microgram_Chl_a-1 microgram_Chl_a microgram_C-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_LPUb'
+      Vinfo( 2)='Maximum LPUb:Chl_a ratio'
+      Vinfo( 3)='microgram_HPUb microgram_Chl_a-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='mxHPUb'
+      Vinfo( 2)='rate of change in the HPUb:Chl_a ratio'
+      Vinfo( 3)=                                                        &
+     &  'microgram_HPUb microgram_Chl_a-1 microgram_Chl_a microgram_C-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='b_HPUb'
+      Vinfo( 2)='maximum HPUb:Chl_a ratio'
+      Vinfo( 3)='microgram_HPUb microgram_Chl_a-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='FecDOC'
+      Vinfo( 2)='proportion of grazing stress apportioned to DOM'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='FecPEL'
+      Vinfo( 2)='proportion of grazing stress apportioned to fecal'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='FecCYC'
+      Vinfo( 2)='proportion of grazing stress that is recycled'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ExALG'
+      Vinfo( 2)='proportion of daily production lost to excretion'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='WS'
+      Vinfo( 2)='phytoplankton sinking speed'
       Vinfo( 3)='meter day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsGRZ'
+      Vinfo( 2)='phytoplankton grazing parameter'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='MinRefuge'
+      Vinfo( 2)='refuge phytoplankton population'
+      Vinfo( 3)='micromole_C liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RefugeDep'
+      Vinfo( 2)='maximum refuge phytoplankton depth'
+      Vinfo( 3)='meter'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='Norm_Vol'
+      Vinfo( 2)='normalized volume factor'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='norm_Surf'
+      Vinfo( 2)='normalized surface area factor'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsDOP'
+      Vinfo( 2)='half-saturation constant for DOP uptake'
+      Vinfo( 3)='micromole_DOP liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2pALKPHOS'
+      Vinfo( 2)='C:P ratio where DOP uptake begins'
+      Vinfo( 3)='micromole_C micromole_P-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsDON'
+      Vinfo( 2)='Half Saturation Constant for DON uptake'
+      Vinfo( 3)='micromole_DON liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2nNupDON'
+      Vinfo( 2)='C:N ratio where DON uptake begins'
+      Vinfo( 3)='micromole_C micromole_N-1'
+      status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsDOC_ba'
+      Vinfo( 2)='half-saturation constant for bacteria DOC uptake'
+      Vinfo( 3)='micromole_DOC liter-1'
+      status=def_var(ncid,varid,NF_TYPE,1,bacdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='GtBAC_max'
+      Vinfo( 2)='maximum 24 hour bacterial growth rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,bacdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='BacTbase'
+      Vinfo( 2)='bacteria temperature base for exponential response'
+      Vinfo( 3)='Celsius'
+      status=def_var(ncid,varid,NF_TYPE,1,bacdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='BacTfac'
+      Vinfo( 2)='bacteria exponential temperature factor'
+      Vinfo( 3)='Celsius'
+      status=def_var(ncid,varid,NF_TYPE,1,bacdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2nBAC'
+      Vinfo( 2)='carbon to nitrogen ratio of bacteria'
+      Vinfo( 3)='micromole_C micromole_N-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2pBAC'
+      Vinfo( 2)='carbon to phosphorus ratio of bacteria'
+      Vinfo( 3)='micromole_C micromole_P-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='C2FeBAC'
+      Vinfo( 2)='carbon to iron ratio of bacteria'
+      Vinfo( 3)='micromole_C micromole_Fe-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='BacDOC'
+      Vinfo( 2)=                                                        &
+     &        'proportion of bacteria grazing stress apportioned to DOM'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='BacPEL'
+      Vinfo( 2)=                                                        &
+     &      'proportion of bacteria grazing stress apportioned to fecal'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='BacCYC'
+      Vinfo( 2)='proportion of bacteria grazing stress recycled'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ExBAC_c'
+      Vinfo( 2)=                                                        &
+     &      'bacterial recalcitrant C excretion as proportion of uptake'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ExBacC2N'
+      Vinfo( 2)='bacterial recalcitrant excretion carbon:nitrogen ratio'
+      Vinfo( 3)='micromole_C micromole_N-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='Bac_Ceff'
+      Vinfo( 2)='bacterial gross growth carbon efficiency'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RtNIT'
+      Vinfo( 2)='maximum nitrification rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='cDOCfrac_c'
+      Vinfo( 2)=                                                        &
+     &  'colored fraction of DOC from phytoplankton and bacteria losses'
+      Vinfo( 3)='nondimensional'
+      status=def_var(ncid,varid,NF_TYPE,1,domdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RtUVR_DIC'
+      Vinfo( 2)='UV degradation of DOC into DIC at 410 nanometer'
+      Vinfo( 3)='micromole meter-1 liter-1 hour-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RtUVR_DOC'
+      Vinfo( 2)=                                                        &
+     &  'UV degradation of DOC to colorless labile DOC at 410 nanometer'
+      Vinfo( 3)='micromole meter-1 liter-1 hour-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='WF'
+      Vinfo( 2)='fecal sinking flux'
+      Vinfo( 3)='meter day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RegTbase'
+      Vinfo( 2)=                                                        &
+     &    'fecal regeneration temperature base for exponential response'
+      Vinfo( 3)='Celsius'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RegTfac'
+      Vinfo( 2)='fecal regeneration exponential temperature factor'
+      Vinfo( 3)='Celsius-1'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RegCR'
+      Vinfo( 2)='fecal carbon regeneration rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RegNR'
+      Vinfo( 2)='fecal nitrogen regeneration rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RegSR'
+      Vinfo( 2)='fecal silica regeneration rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RegPR'
+      Vinfo( 2)='fecal phosphorus regeneration rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='RegFR'
+      Vinfo( 2)='fecal iron regeneration rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,1,fecdim,Aval,Vinfo,ncname)
 
 # endif
 #endif

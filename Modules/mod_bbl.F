@@ -6,21 +6,18 @@
 !  Copyright (c) 2002 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  Abed         wind-induced, bed wave excursion amplitude (m).        !
-!  Hripple      Bed ripple height (m).                                 !
-!  Lripple      Bed ripple length (m).                                 !
-!  Sdens        Sediment grain density (kg/m3) at RHO-points.          !
-!  Ssize        Sediment grain diameter size (m) at RHO-points.        !
 !  Ubed         Wind-induced, bed wave orbital U-velocity (m/s).       !
 !  Ubot         Bottom U-momentum (m/s) above bed.                     !
 !  Vbed         Wind-induced, bed wave orbital V-velocity (m/s).       !
 !  Vbot         Bottom V-momentum (m/s) above bed.                     !
-!  Zbnot        Hydraulic bottom roughness (m).                        !
-!  Zbnotc       Apparent hydraulic bottom roughness (m).               !
 !  bustrw       Kinematic bottom stress (m2/s2) due to wind-induced    !
 !                 waves the XI-direction at horizontal U-points.       !
+!  bustrcwmax   Kinematic bottom stress (m2/s2) due to maximum wind    !
+!                 and currents in the XI-direction at U-points.        !
 !  bvstrw       Kinematic bottom stress (m2/s2) due to wind-induced    !
 !                 waves the ETA-direction at horizontal V-points.      !
+!  bvstrcwmax   Kinematic bottom stress (m2/s2) due to maximum wind    !
+!                 and currents in the ETA-direction at V-points.       !
 !                                                                      !
 !=======================================================================
 !
@@ -32,19 +29,14 @@
 
           integer,  pointer :: Iconv(:,:)
 
-          real(r8), pointer :: Abed(:,:)
-          real(r8), pointer :: Hripple(:,:)
-          real(r8), pointer :: Lripple(:,:)
-          real(r8), pointer :: Sdens(:,:)
-          real(r8), pointer :: Ssize(:,:)
           real(r8), pointer :: Ubed(:,:)
           real(r8), pointer :: Ubot(:,:)
           real(r8), pointer :: Vbed(:,:)
           real(r8), pointer :: Vbot(:,:)
-          real(r8), pointer :: Zbnot(:,:)
-          real(r8), pointer :: Zbnotc(:,:)
           real(r8), pointer :: bustrw(:,:)
           real(r8), pointer :: bvstrw(:,:)
+          real(r8), pointer :: bustrcwmax(:,:)
+          real(r8), pointer :: bvstrcwmax(:,:)
 
         END TYPE T_BBL
 
@@ -76,19 +68,14 @@
       IF (ng.eq.1) allocate ( BBL(Ngrids) )
 !
       allocate ( BBL(ng) % Iconv(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Abed(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Hripple(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Lripple(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Sdens(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Ssize(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % Ubed(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % Ubot(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % Vbed(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % Vbot(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Zbnot(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Zbnotc(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % bustrw(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % bvstrw(LBi:UBi,LBj:UBj) )
+      allocate ( BBL(ng) % bustrcwmax(LBi:UBi,LBj:UBj) )
+      allocate ( BBL(ng) % bvstrcwmax(LBi:UBi,LBj:UBj) )
 
       RETURN
       END SUBROUTINE allocate_bbl
@@ -115,45 +102,59 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 # include "tile.h"
-# ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
-# else
-#  include "set_bounds.h"
-# endif
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
+#else
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-      BBL(ng) % Iconv(IstrR:IendR,JstrR:JendR) = 0
+      BBL(ng) % Iconv(Imin:Imax,Jmin:Jmax) = 0
 
-      BBL(ng) % Abed(IstrR:IendR,JstrR:JendR) = IniVal
+      BBL(ng) % Ubed(Imin:Imax,Jmin:Jmax) = IniVal
+      BBL(ng) % Ubot(Imin:Imax,Jmin:Jmax) = IniVal
 
-      BBL(ng) % Hripple(IstrR:IendR,JstrR:JendR) = IniVal
-      BBL(ng) % Lripple(IstrR:IendR,JstrR:JendR) = IniVal
+      BBL(ng) % Vbed(Imin:Imax,Jmin:Jmax) = IniVal
+      BBL(ng) % Vbot(Imin:Imax,Jmin:Jmax) = IniVal
 
-      BBL(ng) % Sdens(IstrR:IendR,JstrR:JendR) = IniVal
-      BBL(ng) % Ssize(IstrR:IendR,JstrR:JendR) = IniVal
+      BBL(ng) % bustrw(Imin:Imax,Jmin:Jmax) = IniVal
+      BBL(ng) % bvstrw(Imin:Imax,Jmin:Jmax) = IniVal
 
-      BBL(ng) % Ubed(IstrR:IendR,JstrR:JendR) = IniVal
-      BBL(ng) % Ubot(IstrR:IendR,JstrR:JendR) = IniVal
-
-      BBL(ng) % Vbed(IstrR:IendR,JstrR:JendR) = IniVal
-      BBL(ng) % Vbot(IstrR:IendR,JstrR:JendR) = IniVal
-
-      BBL(ng) % Zbnot(IstrR:IendR,JstrR:JendR) = IniVal
-      BBL(ng) % Zbnotc(IstrR:IendR,JstrR:JendR) = IniVal
-
-      BBL(ng) % bustrw(IstrR:IendR,JstrR:JendR) = IniVal
-      BBL(ng) % bvstrw(IstrR:IendR,JstrR:JendR) = IniVal
+      BBL(ng) % bustrcwmax(Imin:Imax,Jmin:Jmax) = IniVal
+      BBL(ng) % bvstrcwmax(Imin:Imax,Jmin:Jmax) = IniVal
 
       RETURN
       END SUBROUTINE initialize_bbl

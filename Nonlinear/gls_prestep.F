@@ -18,7 +18,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC gls_prestep
+      PUBLIC  :: gls_prestep
 
       CONTAINS
 !
@@ -392,9 +392,11 @@
      &                 gls, tke)
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, tke(:,:,:,3))
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        tke(:,:,:,3))
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, gls(:,:,:,3))
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        gls(:,:,:,3))
 # endif
       RETURN
       END SUBROUTINE gls_prestep_tile

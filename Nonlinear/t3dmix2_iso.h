@@ -16,7 +16,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC t3dmix2_iso
+      PUBLIC  :: t3dmix2_iso
 
       CONTAINS
 !
@@ -25,6 +25,9 @@
 !***********************************************************************
 !
       USE mod_param
+# ifdef DIAGNOSTICS_TS
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -52,12 +55,15 @@
      &                       GRID(ng) % z_r,                            &
      &                       MIXING(ng) % diff2,                        &
      &                       OCEAN(ng) % rho,                           &
+# ifdef DIAGNOSTICS_TS
+                             DIAGS(ng) % DiaTwrk,                       &
+# endif
      &                       OCEAN(ng) % t)
 # ifdef PROFILE
       CALL wclock_off (ng, 26)
 # endif
       RETURN
-      end
+      END SUBROUTINE t3dmix2_iso
 !
 !***********************************************************************
       SUBROUTINE t3dmix2_iso_tile (ng, Istr, Iend, Jstr, Jend,          &
@@ -68,7 +74,11 @@
 # endif
      &                             Hz, om_v, on_u, pm, pn, z_r,         &
      &                             diff2,                               &
-     &                             rho, t)
+     &                             rho,                                 &
+# ifdef DIAGNOSTICS_TS
+                                   DiaTwrk,                             &
+# endif
+     &                             t)
 !***********************************************************************
 !
       USE mod_param
@@ -93,7 +103,9 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: diff2(LBi:,LBj:,:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
-
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
+#  endif
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
 # else
 #  ifdef MASKING
@@ -108,7 +120,10 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: diff2(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
-
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),
+     &                                   NDT)
+#  endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
 !
@@ -121,7 +136,7 @@
       real(r8), parameter :: slope_max = 1.0E-4_r8
       real(r8), parameter :: strat_min = 0.1_r8
 
-      real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: cff, cff1, cff2, cff3, cff4, fac
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
@@ -244,7 +259,7 @@
                   cff=cff1*(cff1*dTdr(i,j,k2)-dTdx(i  ,j,k1))+          &
      &                cff2*(cff2*dTdr(i,j,k2)-dTdx(i+1,j,k2))+          &
      &                cff3*(cff3*dTdr(i,j,k2)-dTdx(i  ,j,k2))+          &
-     &                cff4*(cff4*dTdr(i,j,k2)-dTdx(i+1,j,k))
+     &                cff4*(cff4*dTdr(i,j,k2)-dTdx(i+1,j,k1))
                   cff1=MAX(dRde(i,j  ,k1),0.0_r8)
                   cff2=MAX(dRde(i,j+1,k2),0.0_r8)
                   cff3=MIN(dRde(i,j  ,k2),0.0_r8)
@@ -253,21 +268,24 @@
      &                cff1*(cff1*dTdr(i,j,k2)-dTde(i,j  ,k1))+          &
      &                cff2*(cff2*dTdr(i,j,k2)-dTde(i,j+1,k2))+          &
      &                cff3*(cff3*dTdr(i,j,k2)-dTde(i,j  ,k2))+          &
-     &                cff4*(cff4*dTdr(i,j,k2)-dTde(i,j+1,k))
+     &                cff4*(cff4*dTdr(i,j,k2)-dTde(i,j+1,k1))
                   FS(i,j,k2)=0.5_r8*cff*diff2(i,j,itrc)*FS(i,j,k2)
                 END DO
               END DO
             END IF
 !
-! Time-step harmonic, isopycnic diffusion term.
+! Time-step harmonic, isopycnic diffusion term (m Tunits).
 !
             DO j=Jstr,Jend
               DO i=Istr,Iend
-                t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+                  &
-     &                             dt(ng)*pm(i,j)*pn(i,j)*              &
-     &                                    (FX(i+1,j)-FX(i,j)+           &
-     &                                     FE(i,j+1)-FE(i,j))+          &
-     &                             dt(ng)*(FS(i,j,k2)-FS(i,j,k1))
+                fac=dt(ng)*pm(i,j)*pn(i,j)*                             &
+     &                     (FX(i+1,j)-FX(i,j)+                          &
+     &                      FE(i,j+1)-FE(i,j))+                         &
+     &              dt(ng)*(FS(i,j,k2)-FS(i,j,k1))
+                t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+fac
+# ifdef DIAGNOSTICS_TS
+                DiaTwrk(i,j,k,itrc,iThdif)=fac
+# endif
               END DO
             END DO
           END IF

@@ -2,10 +2,9 @@
 
 #if !defined TS_FIXED && defined SOLVE3D &&  \
     (defined TS_DIF2  || defined TS_DIF4)
-
 /*
 **======================================================================
-** Copyright (c) 2003 ROMS/TOMS Group                                  !
+** Copyright (c) 2004 ROMS/TOMS Group                                  !
 **================================================= Hernan G. Arango ===
 **                                                                     !
 ** This routine computes horizontal mixing of tracers.                 !

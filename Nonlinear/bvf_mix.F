@@ -16,7 +16,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC bvf_mix
+      PUBLIC  :: bvf_mix
 
       CONTAINS
 !
@@ -71,7 +71,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, j, k
+      integer :: i, itrc, j, k
 
       real(r8) :: cff
 !
@@ -112,13 +112,12 @@
 ! Set periodic boundary conditions.
 !
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Akv)
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Akt(:,:,:,itemp))
-#  ifdef SALINITY
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Akt(:,:,:,isalt))
-#  endif
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), Akv)
+      DO itrc=1,NAT
+        CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          Akt(:,:,:,itemp))
+      END DO
 # endif
       RETURN
       END SUBROUTINE bvf_mix_tile

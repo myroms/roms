@@ -1,22 +1,20 @@
 /*
 ** Include file "cppdefs.h"
-**********************************************************************
-** Copyright (c) 2002 ROMS/TOMS Group, version 2.0                  **
-************************************************* Hernan G. Arango ***
-**                                                                  **
-**  Choose the appropriate C-preprocessing options by using the     **
-**  command #define to activate option or #undef to deactivate      **
-**  option.                                                         **
-**                                                                  **
-**********************************************************************
+*******************************************************************************
+** Copyright (c) 2002 ROMS/TOMS Group, version 2.1                           **
+********************************************************** Hernan G. Arango ***
+**                                                                           **
+**  Choose the appropriate C-preprocessing options by using the command      **
+**  #define to activate option or #undef to deactivate option.               **
+**                                                                           **
+*******************************************************************************
 */
 
 /*
-**--------------------------------------------------------------------
-**  Choose a pre-defined model application.  If building a new
-**  application, choose a unique CPP flag for it and select the
-**  appropriate configuration.
-**--------------------------------------------------------------------
+**-----------------------------------------------------------------------------
+**  Choose a pre-defined model application.  If building a new application,
+**  choose a unique CPP flag for it and select the appropriate configuration.
+**-----------------------------------------------------------------------------
 */
 
 #undef  ADRIATIC1       /* for Adriatic Sea Application, Grid #1 */
@@ -25,22 +23,22 @@
 #undef  BENCHMARK1      /* for Small Benchmark Test */
 #undef  BENCHMARK2      /* for Medium Benchmark Test */
 #undef  BENCHMARK3      /* for Big Benchmark Test */
+#undef  BIO_TOY         /* for One-dimension (vertical) Biology Toy */
 #undef  BL_TEST         /* for Boundary Layers Test */
 #undef  BISCAY          /* for Bay of Biscay Aplication */
 #undef  CALCOFI         /* for Southern California Bight */
 #undef  CANYON_A        /* for Canyon_A Example */
 #undef  CANYON_B        /* for Canyon_B Example */
 #undef  CBLAST          /* for CBLAST application */
+#undef  COUPLING_TEST   /* for two-way atmosphere-ocean coupling test */
 #undef  DAMEE_4         /* for North Atlantic DAMEE Application Grid 4 */
-#undef  DAMEE_5         /* for North Atlantic DAMEE Application Grid 5 */
-#undef  DAMEE_6         /* for North Atlantic DAMEE Application Grid 6 */
-#undef  DAMEE_7         /* for North Atlantic DAMEE Application Grid 7 */
-#undef  DAMEE_9         /* for North Atlantic DAMEE Application Grid 9 */
 #undef  DOUBLE_GYRE     /* for idealized double-gyre Example */
+#undef  ESTUARY_TEST    /* test estuary for sediment*/
 #undef  FLT_TEST        /* for Float Tracking Example */
 #undef  GRAV_ADJ        /* for Graviational Adjustment Example */
 #undef  KELVIN          /* for Kelvin wave test */
 #undef  LAB_CANYON      /* for Lab Canyon, Polar Coordinates Example */
+#undef  LAKE_SIGNELL    /* for Lake Signell Sediment Test Case */
 #undef  LMD_TEST        /* Test for LMD and KPP */
 #undef  NATL            /* for high resolution North Atlantic Application */
 #undef  NENA            /* North East North America Application */
@@ -51,16 +49,18 @@
 #undef  SEAMOUNT        /* for Seamount Example */
 #undef  SED_TEST1       /* for Suspended Sediment Test in a Channel */
 #undef  SOLITON         /* for Equatorial Rossby Wave Example */
+#undef  TEST_CHAN       /* for sloping rectangular channel */
 #define UPWELLING       /* for Upwelling Example */
 #undef  USWEST          /* for US West Coast Application */
 #undef  WEDDELL         /* for Idealized Weddell Sea Shelf Application */
+#undef  WINDBASIN       /* linear wind-driven constant Coriolis basin */
 
 # if defined MY_APPL
 
 /*
-**--------------------------------------------------------------------
+**-----------------------------------------------------------------------------
 **  Detailed description of all available CPP options.
-**--------------------------------------------------------------------
+**-----------------------------------------------------------------------------
 **
 **  Select model dynamics for MOMENTUM equations:
 **  (The default advection is third-order upstream bias)
@@ -90,9 +90,9 @@
 #undef  TS_SVADVECTION  /* define if splines vertical advection */
 #undef  TS_DIF2         /* turn ON or OFF Laplacian horizontal mixing */
 #undef  TS_DIF4         /* turn ON or OFF biharmonic horizontal mixing */
+#undef  TS_FIXED        /* define if diagnostic run, no evolution of tracers */
 #undef  SALINITY        /* define if using salinity */
 #undef  NONLIN_EOS      /* define if using nonlinear equation of state */
-#undef  DIAGNOSTIC      /* define if diagnostic simulation */
 #undef  QCORRECTION     /* define if net heat flux correction */
 #undef  SCORRECTION     /* define if freshwater flux correction */
 #undef  SOLAR_SOURCE    /* define solar radiation source term */
@@ -115,17 +115,26 @@
 
 /*
 **  Select surface model fluxes formutalion via atmospheric boundary
-**  layer (Fairall et al, 1996).
+**  layer (Fairall et al, 1996). There are three ways to provide longwave
+**  radiation in the atmospheric boundary layer: (i) Compute the net longwave
+**  radiation internally using the Berliand (1952) equation (LONGWAVE) as a
+**  function of air temperature, sea surface temperature, relative humidity,
+**  and cloud fraction; (ii) provide (read) longwave downwelling radiation only
+**  and then add outgoing longwave radiation (LONGWAVE_OUT) as a function of
+**  the model sea surface temperature; (iii) provide net longwave radiation
+**  (default).
 */
 
+#undef  AIR_OCEAN       /* turn ON two-way atmosphere-ocean models coupling */
 #undef  BULK_FLUXES     /* turn ON or OFF bulk fluxes computation */
 #undef  COOL_SKIN       /* turn ON or OFF cool skin correction */
 #undef  LONGWAVE        /* Compute net longwave radiation internally */
+#undef  LONGWAVE_OUT    /* Compute ougoing longwave radiation internally */
 
 /*
 **  Select options for shortwave radiation.  The shortwave radiation can be
 **  computed using the global albedo equation with a cloud correction.
-**  Alternatively, input shortwave radiation data computed from average
+**  Alternatively, input shortwave radiation data computed from averaged
 **  data (with snapshots greater or equal than 24 hours) can be modulated
 **  by the local diurnal cycle which is a function longitude, latitude and
 **  day-of-year.
@@ -138,20 +147,24 @@
 **  Select model configuration:
 */
 
-#undef  SERIAL          /* define if serial code configuration */
-#undef  SOLVE3D         /* define if solving 3D primitive equations */
-#undef  CURVGRID        /* define if using  curvilinear coordinate grid*/
-#undef  MASKING         /* define if there is land in the domain */
-#undef  BODYFORCE       /* define if applying stresses as bodyforces */
-#undef  PROFILE         /* define if time profiling */
-#undef  AVERAGES        /* define if writing out time-averaged data */
-#undef  AVERAGES_AKV    /* define if writing out time-averaged AKv */
-#undef  AVERAGES_AKT    /* define if writing out time-averaged AKt */
-#undef  AVERAGES_AKS    /* define if writing out time-averaged AKs */
-#undef  ICESHELF        /* define if including ice shelf cavities */
-#undef  SPHERICAL       /* define if analytical spherical grid */
-#undef  STATIONS        /* define if writing out station data */
-#undef  STATIONS_CGRID  /* define if extracting data at native C-grid */
+#undef  SOLVE3D             /* define if solving 3D primitive equations */
+#undef  CURVGRID            /* define if using  curvilinear coordinate grid*/
+#undef  MASKING             /* define if there is land in the domain */
+#undef  BODYFORCE           /* define if applying stresses as bodyforces */
+#undef  PROFILE             /* define if time profiling */
+#undef  AVERAGES            /* define if writing out time-averaged data */
+#undef  AVERAGES_AKV        /* define if writing out time-averaged AKv */
+#undef  AVERAGES_AKT        /* define if writing out time-averaged AKt */
+#undef  AVERAGES_AKS        /* define if writing out time-averaged AKs */
+#undef  AVERAGES_FLUXES     /* define if writing out time-averaged fluxes */
+#undef  AVERAGES_QUADRATIC  /* define if writing out quadratic terms */
+#undef  DIAGNOSTICS_BIO     /* define if writing out biological diagnostics */
+#undef  DIAGNOSTICS_UV      /* define if writing out momentum diagnostics */
+#undef  DIAGNOSTICS_TS      /* define if writing out tracer diagnostics */
+#undef  ICESHELF            /* define if including ice shelf cavities */
+#undef  SPHERICAL           /* define if analytical spherical grid */
+#undef  STATIONS            /* define if writing out station data */
+#undef  STATIONS_CGRID      /* define if extracting data at native C-grid */
 
 /*
 ** Lagrangian drifters options
@@ -176,7 +189,6 @@
 
 #undef  ANA_BIOLOGY     /* analytical biology initial conditions */
 #undef  ANA_BPFLUX      /* analytical bottom passive tracers fluxes */
-#undef  ANA_BSEDIM      /* analytical bottom sediment grain size & density */
 #undef  ANA_BSFLUX      /* analytical bottom salinity flux */
 #undef  ANA_BTFLUX      /* analytical bottom temperature flux */
 #undef  ANA_CLOUD       /* analytical cloud fraction */
@@ -192,7 +204,7 @@
 #undef  ANA_PAIR        /* analytical surface air pressure */
 #undef  ANA_PSOURCE     /* analytical point Sources/Sinks */
 #undef  ANA_RAIN        /* analytical rain fall rate */
-#undef  ANA_SEDIMENT    /* analytical sediment initial conditions */
+#undef  ANA_SEDIMENT    /* analytical sediment initial field */
 #undef  ANA_SMFLUX      /* analytical surface momentum stress */
 #undef  ANA_SPFLUX      /* analytical surface passive tracers fluxes */
 #undef  ANA_SPINNING    /* analytical time-varying rotation force */
@@ -285,11 +297,19 @@
 #undef  RI_VERAVG       /* Activate vertical smoothing */
 
 /*
-**  Select options for bottom boundary layer closure.
+**  Select options for Meinte Blass bottom boundary layer closure.
+**  Options MB_Z0BL and MB_Z0RIP should be activated concurrently.
 */
 
-#undef  CS_BBL         /* turn ON or OFF Chris Sherwood BBL closure */
-#undef  MB_BBL         /* turn ON or OFF Mainte Blaas BBL closure */
+#undef  MB_BBL          /* turn ON or OFF Meinte Blaas BBL closure */
+#undef  MB_Z0BIO        /* biogenic bedform roughness ripple height & length */
+#undef  MB_Z0BL         /* bedload roughness for ripple */
+#undef  MB_Z0RIP        /* bedform roughness ripple height and length */
+
+/*
+**  Select options for Styles and Glenn (2000) bottom boundary layer closure.
+*/
+
 #undef  SG_BBL         /* turn ON or OFF Styles and Glenn (2000) BBL closure */
 #undef  SG_ZNOT        /* activate internal computation of bottom roughness */
 #undef  SG_LOGINT      /* activate logarithmic interpolation of (Ur,Vr) */
@@ -304,7 +324,11 @@
 */
 
 #undef  SPONGE            /* activate areas of enhanced viscosity/diffusion */
-#undef  OBC_VOLCONS       /* enforce mass conservation on open boundaries */
+
+#undef  EAST_VOLCONS      /* Eastern edge, enforce mass conservation */
+#undef  WEST_VOLCONS      /* Western edge, enforce mass conservation */
+#undef  NORTH_VOLCONS     /* Northern edge, enforce mass conservation */
+#undef  SOUTH_VOLCONS     /* Southern edge, enforce mass conservation */
 
 #undef  EW_PERIODIC       /* East-West periodic boundaries */
 #undef  NS_PERIODIC       /* North-South periodic boundaries */
@@ -450,10 +474,19 @@
 #undef  RANDOM_ESPERT      /* random error subspace perturbations */
 
 /*
-**  Biological model options.
+**  Fasham-type biology model options.
 */
 
 #undef  BIO_FASHAM         /* Fasham type nitrogen-based model */
+#undef  CARBON             /* Add Carbon constituents */
+#undef  DENITRIFICATION    /* Add denitrification processes */
+#undef  BIO_SEDIMENT       /* Restore fallen material to the nutrient pool */
+
+/*
+**  Bio-optical EcoSim model options.
+*/
+
+#undef  ECOSIM             /* Bio-optical EcoSim model */
 
 /*
 **  Sediment transport model options.
@@ -472,9 +505,17 @@
 #undef  OUT_DOUBLE         /* define if double precision output fields */
 
 /*
-**--------------------------------------------------------------------
+**  Flag to process 3D data level by level (2D slabs) to reduce memory
+**  needs in distributed-memory configurations. This option is convinient
+**  for large problems on nodes with limited memory.
+*/
+
+#undef  INLINE_2DIO        /* define if processing 3D IO level by level */
+
+/*
+**-----------------------------------------------------------------------------
 **  Set pre-defined configuration flags for model test problems.
-**--------------------------------------------------------------------
+**-----------------------------------------------------------------------------
 */
 
 # elif defined ADRIATIC1 || defined ADRIATIC2
@@ -535,7 +576,7 @@
 #define NORTHERN_WALL
 #define SOUTHERN_WALL
 #ifndef SOUTHERN_WALL
-# define OBC_VOLCONS
+# define SOUTH_VOLCONS
 # define RADIATION_2D
 # define SOUTH_FSGRADIENT
 # define SOUTH_M2RADIATION
@@ -638,6 +679,67 @@
 #define ANA_BSFLUX
 #define ANA_BTFLUX
 
+# elif defined BIO_TOY
+
+/*
+** One-dimensional (vertical) Biology Test.
+*/
+
+#define UV_ADV
+#define UV_SADVECTION
+#define UV_COR
+#define DJ_GRADPS
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#define SOLAR_SOURCE
+#define NONLIN_EOS
+#define SALINITY
+#define SPLINES
+#define AVERAGES
+#define AVERAGES_AKV
+#define AVERAGES_AKT
+#define AVERAGES_AKS
+#define SOLVE3D
+#define EW_PERIODIC
+#define NS_PERIODIC
+#define LMD_MIXING
+#ifdef LMD_MIXING
+# define LMD_RIMIX
+# define LMD_CONVEC
+# define LMD_SKPP
+# define LMD_BKPP
+# define LMD_NONLOCAL
+#endif
+#undef BIO_FASHAM
+#ifdef BIO_FASHAM
+# define CARBON
+# define DENITRIFICATION
+# define BIO_SEDIMENT
+# define DIAGNOSTICS_BIO
+#endif
+#define ECOSIM
+#if defined ECOSIM || defined BIO_FASHAM
+# define ANA_BIOLOGY
+# define ANA_SPFLUX
+# define ANA_BPFLUX
+# define ANA_CLOUD
+#endif
+#define BULK_FLUXES
+#ifdef BULK_FLUXES
+# define LONGWAVE
+# define ANA_RAIN
+#else
+# define ANA_SMFLUX
+# define ANA_STFLUX
+#endif
+#if defined BULK_FLUXES || defined ECOSIM
+# define ANA_CLOUD
+# define PAPA_CLM
+#endif
+#define ANA_SSFLUX
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+
 # elif defined BL_TEST
 
 /*
@@ -670,7 +772,7 @@
 #define EAST_M3RADIATION
 #define EAST_KRADIATION
 #define EAST_TRADIATION
-#define OBC_VOLCONS
+#define EAST_VOLCONS
 #undef  MY25_MIXING
 #ifdef MY25_MIXING
 # define N2S2_HORAVG
@@ -701,7 +803,7 @@
 #define SG_BBL
 #ifdef SG_BBL
 # define SG_ZNOT
-# define ANA_BSEDIM
+# define ANA_SEDIMENT
 # define ANA_WWAVE
 #endif
 #define ANA_GRID
@@ -742,7 +844,9 @@
 #define AVERAGES_AKT
 #define AVERAGES_AKS
 #define EASTERN_WALL
-#define OBC_VOLCONS
+#define NORTH_VOLCONS
+#define SOUTH_VOLCONS
+#define WEST_VOLCONS
 #define SPONGE
 #define NORTH_FSGRADIENT
 #define NORTH_M2GRADIENT
@@ -790,9 +894,10 @@
 #define SPLINES
 #define QCORRECTION
 #define EASTERN_WALL
-#define OBC_VOLCONS
 #define SPONGE
-#define OBC_VOLCONS
+#define WEST_VOLCONS
+#define NORTH_VOLCONS
+#define SOUTH_VOLCONS
 #define M2CLIMATOLOGY
 #define M3CLIMATOLOGY
 #define TCLIMATOLOGY
@@ -919,7 +1024,7 @@
 #undef	SG_BBL
 #ifdef SG_BBL
 # define SG_ZNOT
-# define ANA_BSEDIM
+# define ANA_SEDIMENT
 # define ANA_WWAVE
 #endif
 #define  BULK_FLUXES
@@ -930,7 +1035,10 @@
 #endif
 #define RADIATION_2D
 #undef  SPONGE
-#undef  OBC_VOLCONS
+#undef  EAST_VOLCONS
+#undef  WEST_VOLCONS
+#undef  SOUTH_VOLCONS
+#undef  NORTH_VOLCONS
 #define	SSH_TIDES
 #ifdef SSH_TIDES
 # define ADD_FSOBC
@@ -980,8 +1088,36 @@
 #undef  ANA_SMFLUX
 #undef  ANA_SRFLUX
 
-# elif defined DAMEE_4 || defined DAMEE_5 || defined DAMEE_6 || \
-       defined DAMEE_7 || defined DAMEE_9
+# elif defined COUPLING_TEST
+
+/*
+**  Atmosphere-ocean (WRF/ROMS) two-way coupling test.
+*/
+
+#define UV_ADV
+#define UV_COR
+#undef  UV_VIS2
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#define DJ_GRADPS
+#undef  TS_DIF2
+#undef  MIX_GEO_TS
+#define SALINITY
+#define EW_PERIODIC
+#define NS_PERIODIC
+#define SOLVE3D
+#define SPLINES
+#define AVERAGES
+#define AIR_OCEAN
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_STFLUX
+#define ANA_SSFLUX
+#define ANA_BTFLUX
+#define ANA_BSFLUX
+#define ANA_VMIX
+
+# elif defined DAMEE_4
 
 /*
 **  Options for North Atlantic DAMEE Application.
@@ -991,19 +1127,15 @@
 #define UV_COR
 #define DJ_GRADPS
 #define TS_U3HADVECTION
-#define TS_C4HADVECTION
+#define TS_C4VADVECTION
 #define NONLIN_EOS
 #define SALINITY
 #define SOLVE3D
 #define MASKING
-#define READ_WATER
-#define WRITE_WATER
 #define SPLINES
 #define QCORRECTION
 #define SRELAXATION
 #define CURVGRID
-#define STATIONS
-#define FLOATS
 #define AVERAGES
 #define AVERAGES_AKV
 #define AVERAGES_AKT
@@ -1012,7 +1144,6 @@
 #define WESTERN_WALL
 #define SOUTHERN_WALL
 #define NORTHERN_WALL
-#undef  MY25_MIXING
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
@@ -1054,6 +1185,56 @@
 #define ANA_SMFLUX
 #define ANA_STFLUX
 #define ANA_BTFLUX
+
+# elif defined ESTUARY_TEST
+
+/*
+**  ESTUARY_TEST - test estuary with sed transport
+**
+*/
+
+#define UV_ADV
+#define TS_U3HADVECTION
+#define SALINITY
+#define SOLVE3D
+#define SPLINES
+#define SEDIMENT
+#define AVERAGES
+#define AVERAGES_AKV
+#define AVERAGES_AKT
+#define AVERAGES_AKS
+#define OUT_DOUBLE
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define EAST_FSGRADIENT
+#define EAST_M2CLAMPED
+#define EAST_M3GRADIENT
+#define EAST_TCLAMPED
+#define WEST_FSGRADIENT
+#define WEST_M2CLAMPED
+#define WEST_M3GRADIENT
+#define WEST_TRADIATION
+#define WEST_TNUDGING
+#define GLS_MIXING
+#undef  MY25_MIXING
+#if defined GLS_MIXING || defined MY25_MIXING
+# define KANTHA_CLAYSON
+# undef  CANUTO_A
+# define N2S2_HORAVG
+#endif
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_SEDIMENT
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_BTFLUX
+#define ANA_SSFLUX
+#define ANA_BSFLUX
+#define ANA_SPFLUX
+#define ANA_BPFLUX
+#define ANA_FSOBC
+#define ANA_M2OBC
+#define ANA_TOBC
 
 # elif defined FLT_TEST
 
@@ -1105,6 +1286,9 @@
 #define ANA_SMFLUX
 #define ANA_STFLUX
 #define ANA_BTFLUX
+#define OUT_DOUBLE
+#define DIAGNOSTICS_TS
+#define DIAGNOSTICS_UV
 
 # elif defined KELVIN
 
@@ -1167,6 +1351,57 @@
 #define ANA_SMFLUX
 #define ANA_STFLUX
 #define ANA_BTFLUX
+
+# elif defined LAKE_SIGNELL
+
+/*
+** LAKE_SIGNELL - test case for closed basin with wind
+**
+*/
+
+#define FLOATS
+#define UV_ADV
+#undef  UV_COR
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#undef  WJ_GRADP
+#define DJ_GRADPS
+#define SALINITY
+#define SOLVE3D
+#define SPLINES
+#define AVERAGES
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define EASTERN_WALL
+#define WESTERN_WALL
+#undef  SG_BBL
+#define MB_BBL
+#ifdef MB_BBL
+# define Z0_RIP
+# define Z0_BL
+# define Z0_BIO
+#endif
+#if defined MB_BBL || defined SG_BBL
+# define ANA_WWAVE
+# ifndef ANA_WWAVE
+#  define SWAN
+# endif
+#endif
+#define SEDIMENT
+#if defined SEDIMENT || defined SG_BBL || defined MB_BBL
+# define ANA_SEDIMENT
+#endif
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_SSFLUX
+#define ANA_BPFLUX
+#define ANA_BTFLUX
+#define ANA_BSFLUX
+#define ANA_SPFLUX
+#define ANA_SRFLUX
+#define ANA_VMIX
 
 # elif defined LMD_TEST
 
@@ -1287,6 +1522,10 @@
 #undef  GLS_MIXING
 #define BIO_FASHAM
 #ifdef BIO_FASHAM
+# define CARBON
+# define DENITRIFICATION
+# define BIO_SEDIMENT
+# define DIAGNOSTICS_BIO
 # define ANA_SPFLUX
 # define ANA_BPFLUX
 #endif
@@ -1294,7 +1533,9 @@
 #undef  M3CLIMATOLOGY
 #undef  TCLIMATOLOGY
 #undef  ZCLIMATOLOGY
-#undef  OBC_VOLCONS
+#undef  EAST_VOLCONS
+#undef  WEST_VOLCONS
+#undef  SOUTH_VOLCONS
 #define EAST_FSCHAPMAN
 #define EAST_M2FLATHER
 #define EAST_M3CLAMPED
@@ -1317,6 +1558,7 @@
 **  Options for New Jersey Bight Application.
 */
 
+#define INLINE_2DIO
 #define UV_ADV
 #define UV_SADVECTION
 #define UV_COR
@@ -1324,6 +1566,7 @@
 #define DJ_GRADPS
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
+#undef  TS_SVADVECTION
 #undef  TS_A4HADVECTION
 #undef  TS_A4VADVECTION
 #undef  TS_DIF2
@@ -1341,6 +1584,7 @@
 # define AVERAGES_AKV
 # define AVERAGES_AKT
 # define AVERAGES_AKS
+# define AVERAGES_FLUXES
 #endif
 #define STATIONS
 #undef  FLOATS
@@ -1355,12 +1599,17 @@
 #define EAST_TRADIATION
 #define SOUTH_M3RADIATION
 #define SOUTH_TRADIATION
-#define MY25_MIXING
+#undef  MY25_MIXING
 #ifdef MY25_MIXING
 # define N2S2_HORAVG
 # define KANTHA_CLAYSON
 #endif
-#undef LMD_MIXING
+#define GLS_MIXING
+#ifdef GLS_MIXING
+# define N2S2_HORAVG
+# undef  KANTHA_CLAYSON
+#endif
+#undef  LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
 # define LMD_CONVEC
@@ -1379,7 +1628,7 @@
 #undef SG_BBL
 #ifdef SG_BBL
 # define SG_ZNOT
-# define ANA_BSEDIM
+# define ANA_SEDIMENT
 # define ANA_WWAVE
 #endif
 #define SSH_TIDES
@@ -1401,12 +1650,21 @@
 # define SOUTH_FSGRADIENT
 #endif
 #if defined SSH_TIDES || defined UV_TIDES
-# undef  OBC_VOLCONS
+# undef  EAST_VOLCONS
+# undef  SOUTH_VOLCONS
 #else
-# define OBC_VOLCONS
+# define EAST_VOLCONS
+# define SOUTH_VOLCONS
 #endif
 #undef  BIO_FASHAM
 #ifdef BIO_FASHAM
+# define CARBON
+# define DENITRIFICATION
+# define BIO_SEDIMENT
+# define DIAGNOSTICS_BIO
+#endif
+#undef  ECOSIM
+#if defined BIO_FASHAM || defined ECOSIM
 # define ANA_BIOLOGY
 # define ANA_SPFLUX
 # define ANA_BPFLUX
@@ -1630,6 +1888,49 @@
 #define EW_PERIODIC
 #define ANA_SMFLUX
 
+
+# elif defined TEST_CHAN
+/*
+**  TEST_CHAN - test channel
+*/
+
+#define WRITE_GRID
+#define OUT_DOUBLE
+#define ANA_GRID
+#define UV_ADV
+#undef                SALINITY
+#define SOLVE3D
+#undef                AVERAGES
+#define AVERAGES_AKV
+#define AVERAGES_AKT
+#define AVERAGES_AKS
+#define SPLINES
+#define ANA_INITIAL
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_BTFLUX
+#define ANA_SSFLUX
+#define ANA_BSFLUX
+#define ANA_SPFLUX
+#define ANA_BPFLUX
+#define TS_U3HADVECTION
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define EAST_FSGRADIENT
+#define EAST_M2CLAMPED
+#define EAST_M3GRADIENT
+#define WEST_FSCLAMPED
+#define WEST_M2GRADIENT
+#define WEST_M3GRADIENT
+#define ANA_FSOBC
+#define ANA_M2OBC
+#define SEDIMENT
+#define ANA_SEDIMENT
+#define GLS_MIXING
+#define KANTHA_CLAYSON
+#define N2S2_HORAVG
+
+
 # elif defined UPWELLING
 
 /*
@@ -1638,22 +1939,26 @@
 
 #define UV_ADV
 #define UV_COR
-#undef  UV_VIS2
+#define UV_VIS2
 #undef  UV_VIS4
+#define MIX_S_UV
 #undef  MIX_GEO_UV
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
 #undef  WJ_GRADP
 #define DJ_GRADPS
-#undef  TS_DIF2
+#define TS_DIF2
 #undef  TS_DIF4
 #undef  MIX_GEO_TS
+#define MIX_S_TS
 #define SALINITY
 #define EW_PERIODIC
 #define SOLVE3D
 #define SPLINES
 #define AVERAGES
-#define OUT_DOUBLE
+#define DIAGNOSTICS_TS
+#define DIAGNOSTICS_UV
+#undef  OUT_DOUBLE
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_SMFLUX
@@ -1662,12 +1967,16 @@
 #define ANA_BTFLUX
 #define ANA_BSFLUX
 #define ANA_VMIX
-#undef  BIO_FASHAM
+#define BIO_FASHAM
 #ifdef BIO_FASHAM
+# define CARBON
+# define DENITRIFICATION
+# define BIO_SEDIMENT
 # define ANA_BIOLOGY
 # define ANA_SPFLUX
 # define ANA_BPFLUX
 # define ANA_SRFLUX
+# define DIAGNOSTICS_BIO
 #endif
 
 # elif defined USWEST
@@ -1688,7 +1997,9 @@
 #define SOLVE3D
 #define SPLINES
 #define SPONGE
-#define OBC_VOLCONS
+#define WEST_VOLCONS
+#define SOUTH_VOLCONS
+#define NORTH_VOLCONS
 #define M2CLIMATOL0GY
 #define M3CLIMATOLOGY
 #define TCLIMATOLOGY
@@ -1745,7 +2056,8 @@
 #define ICESHELF
 #define AVERAGES
 #define NS_PERIODIC
-#define OBC_VOLCONS
+#define EAST_VOLCONS
+#define WEST_VOLCONS
 #define RADIATION_2D
 #define EAST_FSCHAPMAN
 #define EAST_M2FLATHER
@@ -1768,6 +2080,23 @@
 #define ANA_BSFLUX
 #define ANA_BTFLUX
 
+# elif defined WINDBASIN
+
+/*
+**  Options for Wind-Driven Constant Coriolis Basin.
+*/
+
+#undef UV_ADV
+#define UV_COR
+#define SOLVE3D
+#define SPLINES
+#define AVERAGES
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_BTFLUX
+
 # else
 
       CPPDEFS - Choose an appropriate ROMS application.
@@ -1775,9 +2104,9 @@
 # endif
 
 /*
-**--------------------------------------------------------------------
+**-----------------------------------------------------------------------------
 **  Include other internal CPP definitions:
-**--------------------------------------------------------------------
+**-----------------------------------------------------------------------------
 */
 
 #include "globaldefs.h"

@@ -6,15 +6,15 @@
 !  Copyright (c) 2002 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This routine time-steps tracer equations. Notice that avective      !
-!  and diffusive terms are time-steped differently.                    !
+!  This routine time-steps tracer equations. Notice that advective     !
+!  and diffusive terms are time-stepped differently.                   !
 !                                                                      !
 !=======================================================================
 !
       implicit none
 
       PRIVATE
-      PUBLIC step3d_t
+      PUBLIC  :: step3d_t
 
       CONTAINS
 !
@@ -25,6 +25,9 @@
       USE mod_param
 # ifdef CLIMATOLOGY
       USE mod_clima
+# endif
+# ifdef DIAGNOSTICS
+      USE mod_diags
 # endif
 # ifdef BIOLOGY
       USE mod_forces
@@ -71,7 +74,16 @@
      &                    GRID(ng) % z_r,                               &
 # ifdef BIOLOGY
      &                    GRID(ng) % z_w,                               &
+#  ifdef ECOSIM
+     &                    FORCES(ng) % SpecIr,                          &
+     &                    FORCES(ng) % avcos,                           &
+#  else
      &                    FORCES(ng) % srflx,                           &
+#  endif
+#  if defined CARBON && defined BIO_FASHAM
+     &                    FORCES(ng) % sustr,                           &
+     &                    FORCES(ng) % svstr,                           &
+#  endif
 # endif
 # if defined TCLM_NUDGING && defined TCLIMATOLOGY
      &                    CLIMA(ng) % Tnudgcof,                         &
@@ -85,6 +97,13 @@
      &                    OCEAN(ng) % W,                                &
 # if defined FLOATS && defined FLOAT_VWALK
      &                    MIXING(ng) % dAktdz,                          &
+# endif
+# ifdef DIAGNOSTICS_BIO
+     &                    DIAGS(ng) % DiaBio2d,                         &
+     &                    DIAGS(ng) % DiaBio3d,                         &
+# endif
+# ifdef DIAGNOSTICS_TS
+     &                    DIAGS(ng) % DiaTwrk,                          &
 # endif
      &                    OCEAN(ng) % t)
 # ifdef PROFILE
@@ -105,7 +124,15 @@
 # endif
      &                          Hz, Huon, Hvom, pm, pn, z_r,            &
 # ifdef BIOLOGY
-     &                          z_w, srflx,                             &
+     &                          z_w,                                    &
+#  ifdef ECOSIM
+     &                          SpecIr, avcos,                          &
+#  else
+     &                          srflx,                                  &
+#  endif
+#  if defined CARBON && defined BIO_FASHAM
+     &                          sustr, svstr,                           &
+#  endif
 # endif
 # if defined TCLM_NUDGING && defined TCLIMATOLOGY
      &                          Tnudgcof, tclm,                         &
@@ -116,6 +143,12 @@
      &                          Akt, W,                                 &
 # if defined FLOATS && defined FLOAT_VWALK
      &                          dAktdz,                                 &
+# endif
+# ifdef DIAGNOSTICS_BIO
+     &                          DiaBio2d, DiaBio3d,                     &
+# endif
+# ifdef DIAGNOSTICS_TS
+     &                          DiaTwrk,                                &
 # endif
      &                          t)
 !***********************************************************************
@@ -163,7 +196,16 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
 #  ifdef BIOLOGY
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
+#   ifdef ECOSIM
+      real(r8), intent(in) :: SpecIr(LBi:,LBj:,:)
+      real(r8), intent(in) :: avcos(LBi:,LBj:,:)
+#   else
       real(r8), intent(in) :: srflx(LBi:,LBj:)
+#   endif
+#   if defined CARBON && defined BIO_FASHAM
+      real(r8), intent(in) :: sustr(LBi:,LBj:)
+      real(r8), intent(in) :: svstr(LBi:,LBj:)
+#   endif
 #  endif
 #  if defined TCLM_NUDGING && defined TCLIMATOLOGY
       real(r8), intent(in) :: Tnudgcof(LBi:,LBj:,:)
@@ -173,13 +215,24 @@
       real(r8), intent(in) :: EobsT(LBi:,LBj:,:,:)
       real(r8), intent(in) :: Tobs(LBi:,LBj:,:,:)
 #  endif
+#  ifdef SUN
+      real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)     ! explicit
+#  else
       real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
-!!    real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)     ! explicit
+#  endif
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
-
+#  ifdef DIAGNOSTICS_BIO
+      real(r8), intent(inout) :: DiaBio2d(LBi:,LBj:,:)
+      real(r8), intent(inout) :: DiaBio3d(LBi:,LBj:,:,:)
+#  endif
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
+#  endif
+#  ifdef SUN
+      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng)) ! explicit
+#  else
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
-!!    real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng)) ! explicit
-
+#  endif
 #  if defined FLOATS && defined FLOAT_VWALK
       real(r8), intent(out) :: dAktdz(LBi:,LBj:,:)
 #  endif
@@ -211,7 +264,16 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
 #  ifdef BIOLOGY
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
+#   ifdef ECOSIM
+      real(r8), intent(in) :: SpecIr(LBi:UBi,LBj:UBj,NBands)
+      real(r8), intent(in) :: avcos(LBi:UBi,LBj:UBj,NBands)
+#   else
       real(r8), intent(in) :: srflx(LBi:UBi,LBj:UBj)
+#   endif
+#   if defined CARBON && defined BIO_FASHAM
+      real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: svstr(LBi:UBi,LBj:UBj)
+#   endif
 #  endif
 #  if defined TCLM_NUDGING && defined TCLIMATOLOGY
       real(r8), intent(in) :: Tnudgcof(LBi:UBi,LBj:UBj,NT(ng))
@@ -224,6 +286,14 @@
       real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
 
+#  ifdef DIAGNOSTICS_BIO
+      real(r8), intent(inout) :: DiaBio2d(LBi:UBi,LBj:UBj,NDbio2d)
+      real(r8), intent(inout) :: DiaBio3d(LBi:UBi,LBj:UBj,N(ng),NDbio3d)
+#  endif
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),  &
+     &                                   NDT)
+#  endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 
 #  if defined FLOATS && defined FLOAT_VWALK
@@ -235,16 +305,20 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, is, itrc, j, k, ltrc
+      integer :: idiag
 
       real(r8), parameter :: eps = 1.0E-16_r8
 
-      real(r8) :: cff, cff1, cff2, cff3
+      real(r8) :: cff, cff1, cff2, cff3, fac
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: oHz
+# ifdef DIAGNOSTICS_TS
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: wrk
+# endif
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
@@ -446,10 +520,13 @@
 !
           DO j=Jstr,Jend
             DO i=Istr,Iend
-              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-                    &
-     &                           dt(ng)*(FX(i+1,j)-FX(i,j)+             &
-     &                                   FE(i,j+1)-FE(i,j))*            &
-     &                           pm(i,j)*pn(i,j)
+              fac=dt(ng)*(FX(i+1,j)-FX(i,j)+                            &
+     &                    FE(i,j+1)-FE(i,j))*                           &
+     &            pm(i,j)*pn(i,j)
+              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-fac
+#  ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,k,itrc,iThadv)=-fac
+#  endif
             END DO
           END DO
         END DO
@@ -460,6 +537,11 @@
 !-----------------------------------------------------------------------
 !
       DO j=Jstr,Jend
+        DO k=1,N(ng)
+          DO i=Istr,Iend
+            oHz(i,k)=1.0_r8/Hz(i,j,k)
+          END DO
+        END DO
         DO itrc=1,NT(ng)
           ltrc=MIN(NAT,itrc)
 # ifdef TS_SVADVECTION
@@ -583,10 +665,28 @@
           END DO
           DO k=1,N(ng)
             DO i=Istr,Iend
-              t(i,j,k,nnew,itrc)=(t(i,j,k,nnew,itrc)-                   &
-     &                            CF(i,0)*(FC(i,k)-FC(i,k-1)))
+              fac=CF(i,0)*(FC(i,k)-FC(i,k-1))
+              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-fac
 # ifdef SPLINES
-              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)/Hz(i,j,k)
+              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)*oHz(i,k)
+# endif
+# ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,k,itrc,iTvadv)=-fac
+!
+!  Convert units of tracer diagnostic terms to Tunits.
+!
+              DiaTwrk(i,j,k,itrc,iThadv)=DiaTwrk(i,j,k,itrc,iThadv)*    &
+     &                                   oHz(i,k)
+              DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)*    &
+     &                                   oHz(i,k)
+#  if defined TS_DIF2 || defined TS_DIF4
+              DiaTwrk(i,j,k,itrc,iThdif)=DiaTwrk(i,j,k,itrc,iThdif)*    &
+     &                                   oHz(i,k)
+#  endif
+              DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)*    &
+     &                                   oHz(i,k)
+              DiaTwrk(i,j,k,itrc,iTrate)=DiaTwrk(i,j,k,itrc,iTrate)*    &
+     &                                   oHz(i,k)
 # endif
             END DO
           END DO
@@ -599,12 +699,6 @@
 !  Use conservative, parabolic spline reconstruction of vertical
 !  diffusion derivatives.  Then, time step vertical diffusion term
 !  implicitly.
-!
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              oHz(i,k)=1.0_r8/Hz(i,j,k)
-            END DO
-          END DO
 !
           cff1=1.0_r8/6.0_r8
           DO k=1,N(ng)-1
@@ -644,8 +738,12 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               DC(i,k)=DC(i,k)*Akt(i,j,k,ltrc)
-              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+                    &
-     &                           dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+              fac=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+fac
+#  ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)+    &
+     &                                   fac
+#  endif
             END DO
           END DO
 # else
@@ -691,14 +789,29 @@
             END DO
           END DO
           DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+             wrk(i,N(ng))=t(i,j,N(ng),nnew,itrc)*oHz(i,N(ng))
+#  endif
              DC(i,N(ng))=(DC(i,N(ng))-FC(i,N(ng)-1)*DC(i,N(ng)-1))/     &
      &                   (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
              t(i,j,N(ng),nnew,itrc)=DC(i,N(ng))
+#  ifdef DIAGNOSTICS_TS
+             DiaTwrk(i,j,N(ng),itrc,iTvdif)=                            &
+     &                              DiaTwrk(i,j,N(ng),itrc,iTvdif)+     &
+     &                              t(i,j,N(ng),nnew,itrc)-wrk(i,N(ng))
+#  endif
           END DO
           DO k=N(ng)-1,1,-1
             DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_TS
+              wrk(i,k)=t(i,j,k,nnew,itrc)*oHz(i,k)
+#  endif
               DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
               t(i,j,k,nnew,itrc)=DC(i,k)
+#  ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,k,itrc,iTvdif)=DiaTwrk(i,j,k,itrc,iTvdif)+    &
+     &                                   t(i,j,k,nnew,itrc)-wrk(i,k)
+#  endif
             END DO
           END DO
 # endif
@@ -729,7 +842,19 @@
 #  ifdef MASKING
      &                   rmask,                                         &
 #  endif
-     &                   Hz, z_r, z_w, srflx, t)
+     &                   Hz, z_r, z_w,                                  &
+#  ifdef ECOSIM
+     &                   SpecIr, avcos,                                 &
+#  else
+     &                   srflx,                                         &
+#  endif
+#  if defined CARBON && defined BIO_FASHAM
+     &                   sustr, svstr,                                  &
+#  endif
+#  ifdef DIAGNOSTICS_BIO
+     &                   DiaBio2d, DiaBio3d,                            &
+#  endif
+     &                   t)
       DO itrc=1,NT(ng)
 # endif
 # if defined TCLM_NUDGING && defined TCLIMATOLOGY
@@ -776,12 +901,29 @@
           END DO
         END DO
 # endif
+# ifdef DIAGNOSTICS_TS
+!
+!-----------------------------------------------------------------------
+!  Compute time-rate-of-change diagnostic term.
+!-----------------------------------------------------------------------
+!
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                DiaTwrk(i,j,k,itrc,iTrate)=t(i,j,k,nnew,itrc)-          &
+     &                                     DiaTwrk(i,j,k,itrc,iTrate)
+!!              DiaTwrk(i,j,k,itrc,iTrate)=t(i,j,k,nnew,itrc)-          &
+!!   &                                     t(i,j,k,nstp,itrc)
+              END DO
+            END DO
+          END DO
+# endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !  Apply periodic boundary conditions.
 !
         CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj,                     &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          t(:,:,:,nnew,itrc))
 # endif
       END DO

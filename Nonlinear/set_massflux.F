@@ -29,7 +29,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC set_massflux
+      PUBLIC  :: set_massflux
 
       CONTAINS
 !
@@ -137,9 +137,9 @@
 ! Set periodic boundary conditions.
 !
       CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Huon)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), Huon)
       CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Hvom)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), Hvom)
 # endif
       RETURN
       END SUBROUTINE set_massflux_tile

@@ -14,13 +14,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC prsgrd
+      PUBLIC  :: prsgrd
 
       CONTAINS
 
 # if defined PJ_GRADPQ4
 #  include "prsgrd44.h"
-# elif defined PJ_GRADQ2
+# elif defined PJ_GRADPQ2
 #  include "prsgrd42.h"
 # elif defined PJ_GRADP
 #  include "prsgrd40.h"

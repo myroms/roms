@@ -1,7 +1,7 @@
 !  Floats Input Parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.0                          ===
+!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -52,7 +52,7 @@
 !
 !   G      Nested grid number
 !   C      Initial horizontal coordinate type (0: grid units, 1: spherical)
-!   T      Float trajectory type (0: neutral 3D Lagrangian, 1:isopycnals)
+!   T      Float trajectory type (0: neutral 3D Lagrangian, 1:isobaric)
 !   N      Number floats to be releazed at (Fx0,Fy0,Fz0)
 !   Ft0    Float release time (days) after model initialization
 !   Fx0    Initial float X-location (grid units or longitude)
@@ -119,8 +119,7 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !
 !              Ftype = 0,  neutral density 3D Lagrangian particles.
 !
-!              Ftype = 1,  trajectory along isopycnals (density floats).
-!                          (NOT implemented yet).
+!              Ftype = 1,  isobaric (constant depth) floats.
 !
 !  N         Number of floats [Fcount] to be released at the (Fx0,Fy0,Fz0)
 !              location.  It must be equal or greater than one. If Fcount

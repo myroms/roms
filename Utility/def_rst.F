@@ -35,13 +35,11 @@
       integer :: i, j, ifield, nrec, nvd3, nvd4
       integer :: recdim, status
 
-      integer :: DimIDs(24), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(28), t2dgrd(3), u2dgrd(3), v2dgrd(3)
 
       integer :: def_info, def_var, wrt_info
 
 #ifdef SOLVE3D
-      logical :: got_trc(NT(ng))
-
       integer :: itrc
 
       integer :: b3dgrd(4), t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
@@ -49,7 +47,7 @@
 
       real(r4) :: Aval(4)
 
-      character (len=65) :: Vinfo(Natt)
+      character (len=80) :: Vinfo(Natt)
       character (len=80) :: fname, ncname
 !
 !=======================================================================
@@ -133,6 +131,16 @@
         status=nf_def_dim(ncrstid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
      &                    DimIDs(24))
 #  endif
+# endif
+# ifdef ECOSIM
+        status=nf_def_dim(ncrstid(ng),'Nphy'    ,Nphy,                  &
+     &                    DimIDs(25))
+        status=nf_def_dim(ncrstid(ng),'Nbac'    ,Nbac,                  &
+     &                    DimIDs(26))
+        status=nf_def_dim(ncrstid(ng),'Ndom'    ,Ndom,                  &
+     &                    DimIDs(27))
+        status=nf_def_dim(ncrstid(ng),'Nfec'    ,Nfec,                  &
+     &                    DimIDs(28))
 # endif
 #endif
         status=nf_def_dim(ncrstid(ng),'boundary',4,                     &
@@ -247,7 +255,7 @@
 !  Initialize local information variable arrays.
 !
         DO i=1,Natt
-          DO j=1,65
+          DO j=1,80
             Vinfo(i)=' '
           END DO
         END DO
@@ -464,7 +472,7 @@
 # endif
 # ifdef SEDIMENT
 !
-!  Define bed layer sediment fraction for each size class.
+!  Define sediment fraction of each size class in each bed layer.
 !
         DO i=1,NST
           Vinfo( 1)=Vname(1,idfrac(i))
@@ -480,7 +488,23 @@
      &                   nvd4,b3dgrd,Aval,Vinfo,ncname)
         END DO
 !
-!  Define bed layer sediment properties.
+!  Define sediment mass of each size class in each bed layer.
+!
+        DO i=1,NST
+          Vinfo( 1)=Vname(1,idBmas(i))
+          Vinfo( 2)=Vname(2,idBmas(i))
+          Vinfo( 3)=Vname(3,idBmas(i))
+          Vinfo(14)=Vname(4,idBmas(i))
+          Vinfo(16)=Vname(1,idtime)
+          WRITE (Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          status=def_var(ncrstid(ng),rstVid(idBmas(i),ng),NF_FRST,      &
+     &                   nvd4,b3dgrd,Aval,Vinfo,ncname)
+        END DO
+!
+!  Define sediment properties in each bed layer.
 !
         DO i=1,MBEDP
           Vinfo( 1)=Vname(1,idSbed(i))
@@ -493,6 +517,26 @@
 # endif
           status=def_var(ncrstid(ng),rstVid(idSbed(i),ng),NF_FRST,      &
      &                   nvd4,b3dgrd,Aval,Vinfo,ncname)
+        END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
+!
+!  define exposed sediment layer properties. Notice that only the
+!  first four properties (mean grain diameter, mean grain density,
+!  mean settling velocity, and mean critical erosion stress) are
+!  written.
+!
+        DO i=1,4
+          Vinfo( 1)=Vname(1,idBott(i))
+          Vinfo( 2)=Vname(2,idBott(i))
+          Vinfo( 3)=Vname(3,idBott(i))
+          Vinfo(14)=Vname(4,idBott(i))
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          status=def_var(ncrstid(ng),rstVid(idBott(i),ng),NF_FRST,      &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END DO
 # endif
 #endif
@@ -542,11 +586,6 @@
         DO i=1,NV
           got_var(i)=.false.
         END DO
-#ifdef SOLVE3D
-        DO itrc=1,NT(ng)
-          got_trc(itrc)=.false.
-        END DO
-#endif
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  restart variables. Get variable IDs.
@@ -585,7 +624,7 @@
           END IF
           DO itrc=1,NT(ng)
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
-             got_trc(itrc)=.true.
+             got_var(idTvar(itrc))=.true.
              status=nf_inq_varid(ncrstid(ng),                           &
      &                           TRIM(Vname(1,idTvar(itrc))),           &
      &                           rstTid(itrc,ng))
@@ -633,6 +672,12 @@
      &                            TRIM(Vname(1,idfrac(itrc))),          &
      &                            rstVid(idfrac(itrc),ng))
             END IF
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBmas(itrc)))) THEN
+              got_var(idBmas(itrc))=.true.
+              status=nf_inq_varid(ncrstid(ng),                          &
+     &                            TRIM(Vname(1,idBmas(itrc))),          &
+     &                            rstVid(idBmas(itrc),ng))
+            END IF
           END DO
           DO itrc=1,MBEDP
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSbed(itrc)))) THEN
@@ -640,6 +685,16 @@
               status=nf_inq_varid(ncrstid(ng),                          &
      &                            TRIM(Vname(1,idSbed(itrc))),          &
      &                            rstVid(idSbed(itrc),ng))
+            END IF
+          END DO
+# endif
+# if defined SEDIIMENT || defined BBL_MODEL
+          DO itrc=1,4
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
+              got_var(idBott(itrc))=.true.
+              status=nf_inq_varid(ncrstid(ng),                          &
+     &                            TRIM(Vname(1,idBott(itrc))),          &
+     &                            rstVid(idBott(itrc),ng))
             END IF
           END DO
 # endif
@@ -681,7 +736,7 @@
           RETURN
         END IF
         DO itrc=1,NT(ng)
-          IF (.not.got_trc(itrc)) THEN
+          IF (.not.got_var(idTvar(itrc))) THEN
             WRITE (stdout,40) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
             exit_flag=3
             RETURN
@@ -699,10 +754,24 @@
             exit_flag=3
             RETURN
           END IF
+          IF (.not.got_var(idBmas(i))) THEN
+            WRITE (stdout,40) TRIM(Vname(1,idBmas(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
         END DO
         DO i=1,MBEDP
           IF (.not.got_var(idSbed(i))) THEN
             WRITE (stdout,40) TRIM(Vname(1,idSbed(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
+        DO i=1,4
+          IF (.not.got_var(idBott(i))) THEN
+            WRITE (stdout,40) TRIM(Vname(1,idBott(i))), TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
@@ -719,10 +788,10 @@
         END IF
       END IF
 !
-  10  format(/,' DEF_RST - unable to create restart NetCDF file: ',a)
-  20  format(1pe11.4,1x,'millimeter')
-  30  format(/,' DEF_RST - unable to open restart NetCDF file: ',a)
-  40  format(/,' DEF_RST - unable to find variable: ',a,2x,             &
-     &         ' in restart NetCDF file: ',a)
+  10  FORMAT (/,' DEF_RST - unable to create restart NetCDF file: ',a)
+  20  FORMAT (1pe11.4,1x,'millimeter')
+  30  FORMAT (/,' DEF_RST - unable to open restart NetCDF file: ',a)
+  40  FORMAT (/,' DEF_RST - unable to find variable: ',a,2x,            &
+     &          ' in restart NetCDF file: ',a)
       RETURN
       END SUBROUTINE def_rst

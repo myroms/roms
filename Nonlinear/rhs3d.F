@@ -14,7 +14,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC rhs3d
+      PUBLIC  :: rhs3d
 
       CONTAINS
 !
@@ -27,6 +27,9 @@
       USE mod_clima
 # endif
       USE mod_coupling
+# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+      USE mod_diags
+# endif
       USE mod_forces
       USE mod_grid
 # if defined ASSIMILATION || defined NUDGING
@@ -37,7 +40,7 @@
 !
       USE pre_step3d_mod, ONLY : pre_step3d
       USE prsgrd_mod, ONLY : prsgrd
-# ifndef DIAGNOSTIC
+# ifndef TS_FIXED
 #  ifdef TS_DIF2
 #   if defined MIX_S_TS
       USE t3dmix2_s_mod, ONLY : t3dmix2_s
@@ -88,7 +91,7 @@
 !-----------------------------------------------------------------------
 !
       CALL prsgrd (ng, tile)
-# ifndef DIAGNOSTIC
+# ifndef TS_FIXED
 #  ifdef TS_DIF2
 !
 !-----------------------------------------------------------------------
@@ -116,30 +119,6 @@
 #   elif defined MIX_ISO_TS
       CALL t3dmix4_iso (ng, tile)
 #   endif
-#  endif
-# endif
-# ifdef UV_VIS2
-!
-!-----------------------------------------------------------------------
-!  Compute horizontal, harmonic mixing of momentum.
-!-----------------------------------------------------------------------
-!
-#  if defined MIX_S_UV
-      CALL uv3dmix2_s (ng, tile)
-#  elif defined MIX_GEO_UV
-      CALL uv3dmix2_geo (ng, tile)
-#  endif
-# endif
-# ifdef UV_VIS4
-!
-!-----------------------------------------------------------------------
-!  Compute horizontal, biharmonic mixing of momentum.
-!-----------------------------------------------------------------------
-!
-#  if defined MIX_S_UV
-      CALL uv3dmix4_s (ng, tile)
-#  elif defined MIX_GEO_UV
-      CALL uv3dmix4_geo (ng, tile)
 #  endif
 # endif
 !
@@ -187,11 +166,41 @@
      &                 COUPLING(ng) % Zt_avg1,                          &
      &                 COUPLING(ng) % rufrc,                            &
      &                 COUPLING(ng) % rvfrc,                            &
+# ifdef DIAGNOSTICS_UV
+     &                 DIAGS(ng) % DiaRUfrc,                            &
+     &                 DIAGS(ng) % DiaRVfrc,                            &
+     &                 DIAGS(ng) % DiaRU,                               &
+     &                 DIAGS(ng) % DiaRV,                               &
+# endif
      &                 OCEAN(ng) % ru,                                  &
      &                 OCEAN(ng) % rv,                                  &
      &                 OCEAN(ng) % zeta)
 # ifdef PROFILE
       CALL wclock_off (ng, 21)
+# endif
+# ifdef UV_VIS2
+!
+!-----------------------------------------------------------------------
+!  Compute horizontal, harmonic mixing of momentum.
+!-----------------------------------------------------------------------
+!
+#  if defined MIX_S_UV
+      CALL uv3dmix2_s (ng, tile)
+#  elif defined MIX_GEO_UV
+      CALL uv3dmix2_geo (ng, tile)
+#  endif
+# endif
+# ifdef UV_VIS4
+!
+!-----------------------------------------------------------------------
+!  Compute horizontal, biharmonic mixing of momentum.
+!-----------------------------------------------------------------------
+!
+#  if defined MIX_S_UV
+      CALL uv3dmix4_s (ng, tile)
+#  elif defined MIX_GEO_UV
+      CALL uv3dmix4_geo (ng, tile)
+#  endif
 # endif
       RETURN
       END SUBROUTINE rhs3d
@@ -213,7 +222,12 @@
      &                       EobsUV, Uobs, Vobs,                        &
 # endif
      &                       u, v, W, Zt_avg1,                          &
-     &                       rufrc, rvfrc, ru, rv, zeta)
+     &                       rufrc, rvfrc,                              &
+# ifdef DIAGNOSTICS_UV
+     &                       DiaRUfrc, DiaRVfrc,                        &
+     &                       DiaRU, DiaRV,                              &
+# endif
+     &                       ru, rv, zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -266,6 +280,12 @@
 
       real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRUfrc(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaRVfrc(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
+#  endif
 
       real(r8), intent(out) :: rufrc(LBi:,LBj:)
       real(r8), intent(out) :: rvfrc(LBi:,LBj:)
@@ -306,13 +326,19 @@
 
       real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRUfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
+      real(r8), intent(inout) :: DiaRVfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
+      real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+      real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+#  endif
 
       real(r8), intent(out) :: rufrc(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: rvfrc(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,3)
 # endif
 !
-!  Local variable declarations. Because the tha adjoint the
+!  Local variable declarations. Because the adjoint model the
 !  equivalence via CPP is removed.  Better usage of private
 !  arrays will be done latter.
 !
@@ -322,6 +348,7 @@
       real(r8), parameter :: Gadv = -0.25_r8
 
       real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
@@ -352,6 +379,16 @@
 !  of the surface layer; then add in surface stress as a bodyfoce.
 !-----------------------------------------------------------------------
 !
+#  ifdef DIAGNOSTICS_UV
+      DO k=1,N(ng)
+        DO j=JstrV-1,Jend
+          DO i=IstrU-1,Iend
+            DiaRU(i,j,k,M3vvis)=0.0_r8
+            DiaRV(i,j,k,M3vvis)=0.0_r8
+          END DO
+        END DO
+      END DO
+#  endif
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
           wrk(i,j)=0.0_r8
@@ -381,14 +418,20 @@
       DO k=levsfrc(ng),N(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+                              &
-     &                     Uwrk(i,j)*(Hz(i,j,k)+Hz(i-1,j,k))
+            fac=Uwrk(i,j)*(Hz(i,j,k)+Hz(i-1,j,k))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+fac
+#  ifdef DIAGNOSTICS_UV
+            DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)+fac
+#  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+                              &
-     &                     Vwrk(i,j)*(Hz(i,j,k)+Hz(i,j-1,k))
+            fac=Vwrk(i,j)*(Hz(i,j,k)+Hz(i,j-1,k))
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+fac
+#  ifdef DIAGNOSTICS_UV
+            DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)+fac
+#  endif
           END DO
         END DO
       END DO
@@ -425,14 +468,20 @@
       DO k=1,levbfrc(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-                              &
-     &                     Uwrk(i,j)*(Hz(i,j,k)+Hz(i-1,j,k))
+            fac=Uwrk(i,j)*(Hz(i,j,k)+Hz(i-1,j,k))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-fac
+#  ifdef DIAGNOSTICS_UV
+            DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)-fac
+#  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-                              &
-     &                     Vwrk(i,j)*(Hz(i,j,k)+Hz(i,j-1,k))
+            fac=Vwrk(i,j)*(Hz(i,j,k)+Hz(i,j-1,k))
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac
+#  ifdef DIAGNOSTICS_UV
+            DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)-fac
+#  endif
           END DO
         END DO
       END DO
@@ -458,18 +507,47 @@
      &          )
             UFx(i,j)=cff*(v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
             VFe(i,j)=cff*(u(i,j,k,nrhs)+u(i+1,j,k,nrhs))
+#  ifdef DIAGNOSTICS_UV
+#   ifdef UV_COR
+            Uwrk(i,j)=0.5_r8*Hz(i,j,k)*fomn(i,j)*                       &
+     &                (v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
+            Vwrk(i,j)=0.5_r8*Hz(i,j,k)*fomn(i,j)*                       &
+     &                (u(i,j,k,nrhs)+u(i+1,j,k,nrhs))
+#   else
+            Uwrk(i,j)=0.0_r8
+            Vwrk(i,j)=0.0_r8
+#   endif
+#  endif
           END DO
         END DO
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+                              &
-     &                     0.5_r8*(UFx(i,j)+UFx(i-1,j))
+            fac1=0.5_r8*(UFx(i,j)+UFx(i-1,j))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+fac1
+#  ifdef DIAGNOSTICS_UV
+            fac2=0.5_r8*(Uwrk(i,j)+Uwrk(i-1,j))
+#   ifdef UV_COR
+            DiaRU(i,j,k,nrhs,M3fcor)=fac2
+#   endif
+#   if defined UV_ADV && defined CURVGRID
+            DiaRU(i,j,k,nrhs,M3hadv)=fac1-fac2
+#   endif
+#  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-                              &
-     &                     0.5_r8*(VFe(i,j)+VFe(i,j-1))
+            fac1=0.5_r8*(VFe(i,j)+VFe(i,j-1))
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac1
+#  ifdef DIAGNOSTICS_UV
+            fac2=0.5_r8*(Vwrk(i,j)+Vwrk(i,j-1))
+#   ifdef UV_COR
+            DiaRV(i,j,k,nrhs,M3fcor)=-fac2
+#   endif
+#   if defined UV_ADV && defined CURVGRID
+            DiaRV(i,j,k,nrhs,M3hadv)=-fac1+fac2
+#   endif
+#  endif
           END DO
         END DO
 # endif
@@ -794,14 +872,28 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-                              &
-     &                     (UFx(i,j)-UFx(i-1,j))-(UFe(i,j+1)-UFe(i,j))
+            fac=(UFx(i,j)-UFx(i-1,j))+(UFe(i,j+1)-UFe(i,j))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-fac
+#  ifdef DIAGNOSTICS_UV
+#   ifdef CURVGRID
+            DiaRU(i,j,k,nrhs,M3hadv)=DiaRU(i,j,k,nrhs,M3hadv)-fac
+#   else
+            DiaRU(i,j,k,nrhs,M3hadv)=-fac
+#   endif
+#  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-                              &
-     &                     (VFx(i+1,j)-VFx(i,j))-(VFe(i,j)-VFe(i,j-1))
+            fac=(VFx(i+1,j)-VFx(i,j))+(VFe(i,j)-VFe(i,j-1))
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac
+#  ifdef DIAGNOSTICS_UV
+#   ifdef CURVGRID
+            DiaRV(i,j,k,nrhs,M3hadv)=DiaRV(i,j,k,nrhs,M3hadv)-fac
+#   else
+            DiaRV(i,j,k,nrhs,M3hadv)=-fac
+#   endif
+#  endif
           END DO
         END DO
 # endif
@@ -926,8 +1018,11 @@
 #  endif
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-                              &
-     &                     (FC(i,k)-FC(i,k-1))
+            fac=(FC(i,k)-FC(i,k-1))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-fac
+#  ifdef DIAGNOSTICS_UV
+            DiaRU(i,j,k,nrhs,M3vadv)=-fac
+#  endif
           END DO
         END DO
         IF (j.ge.JstrV) THEN
@@ -1044,8 +1139,11 @@
 #  endif
           DO k=1,N(ng)
             DO i=Istr,Iend
-              rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-                            &
-     &                       (FC(i,k)-FC(i,k-1))
+              fac=(FC(i,k)-FC(i,k-1))
+              rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac
+#  ifdef DIAGNOSTICS_UV
+              DiaRV(i,j,k,nrhs,M3vadv)=-fac
+#  endif
             END DO
           END DO
         END IF
@@ -1055,43 +1153,111 @@
 !  Compute forcing term for the 2D momentum equations.
 !-----------------------------------------------------------------------
 !
-!  Vertically integrate baroclinic right-hand-side terms. If so not
+!  Vertically integrate baroclinic right-hand-side terms. If not
 !  body force stresses, add in the difference between surface and
 !  bottom stresses.
 !
         DO i=IstrU,Iend
           rufrc(i,j)=ru(i,j,1,nrhs)
+# ifdef DIAGNOSTICS_UV
+          DiaRUfrc(i,j,3,M2pgrd)=DiaRU(i,j,1,nrhs,M3pgrd)
+#  ifdef UV_COR
+          DiaRUfrc(i,j,3,M2fcor)=DiaRU(i,j,1,nrhs,M3fcor)
+#  endif
+#  ifdef UV_ADV
+          DiaRUfrc(i,j,3,M2hadv)=DiaRU(i,j,1,nrhs,M3hadv)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+          DiaRUfrc(i,j,3,M2hvis)=0.0_r8
+#  endif
+#  ifdef BODYFORCE
+          DiaRUfrc(i,j,3,M2strs)=DiaRU(i,j,1,nrhs,M3vvis)
+#  endif
+# endif
         END DO
         DO k=2,N(ng)
           DO i=IstrU,Iend
             rufrc(i,j)=rufrc(i,j)+ru(i,j,k,nrhs)
+# ifdef DIAGNOSTICS_UV
+            DiaRUfrc(i,j,3,M2pgrd)=DiaRUfrc(i,j,3,M2pgrd)+              &
+     &                             DiaRU(i,j,k,nrhs,M3pgrd)
+#  ifdef UV_COR
+            DiaRUfrc(i,j,3,M2fcor)=DiaRUfrc(i,j,3,M2fcor)+              &
+     &                             DiaRU(i,j,k,nrhs,M3fcor)
+#  endif
+#  ifdef UV_ADV
+            DiaRUfrc(i,j,3,M2hadv)=DiaRUfrc(i,j,3,M2hadv)+              &
+     &                             DiaRU(i,j,k,nrhs,M3hadv)
+#  endif
+#  ifdef BODYFORCE
+            DiaRUfrc(i,j,3,M2strs)=DiaRUfrc(i,j,3,M2strs)+              &
+     &                             DiaRU(i,j,k,nrhs,M3vvis)
+#  endif
+# endif
           END DO
         END DO
 # ifndef BODYFORCE
         DO i=IstrU,Iend
-          rufrc(i,j)=rufrc(i,j)+                                        &
-     &               (sustr(i,j)-bustr(i,j))*om_u(i,j)*on_u(i,j)
+          fac=(sustr(i,j)-bustr(i,j))*om_u(i,j)*on_u(i,j)
+          rufrc(i,j)=rufrc(i,j)+fac
+#  ifdef DIAGNOSTICS_UV
+          DiaRUfrc(i,j,3,M2strs)=fac
+#  endif
         END DO
 # endif
         IF (j.ge.JstrV) THEN
           DO i=Istr,Iend
             rvfrc(i,j)=rv(i,j,1,nrhs)
+# ifdef DIAGNOSTICS_UV
+            DiaRVfrc(i,j,3,M2pgrd)=DiaRV(i,j,1,nrhs,M3pgrd)
+#  ifdef UV_COR
+            DiaRVfrc(i,j,3,M2fcor)=DiaRV(i,j,1,nrhs,M3fcor)
+#  endif
+#  ifdef UV_ADV
+            DiaRVfrc(i,j,3,M2hadv)=DiaRV(i,j,1,nrhs,M3hadv)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+            DiaRVfrc(i,j,3,M2hvis)=0.0_r8
+#  endif
+#  ifdef BODYFORCE
+            DiaRVfrc(i,j,3,M2strs)=DiaRV(i,j,1,nrhs,M3vvis)
+#  endif
+# endif
           END DO
           DO k=2,N(ng)
             DO i=Istr,Iend
               rvfrc(i,j)=rvfrc(i,j)+rv(i,j,k,nrhs)
+# ifdef DIAGNOSTICS_UV
+              DiaRVfrc(i,j,3,M2pgrd)=DiaRVfrc(i,j,3,M2pgrd)+            &
+     &                               DiaRV(i,j,k,nrhs,M3pgrd)
+#  ifdef UV_COR
+              DiaRVfrc(i,j,3,M2fcor)=DiaRVfrc(i,j,3,M2fcor)+            &
+     &                               DiaRV(i,j,k,nrhs,M3fcor)
+#  endif
+#  ifdef UV_ADV
+              DiaRVfrc(i,j,3,M2hadv)=DiaRVfrc(i,j,3,M2hadv)+            &
+     &                               DiaRV(i,j,k,nrhs,M3hadv)
+#  endif
+#  ifdef BODYFORCE
+              DiaRVfrc(i,j,3,M2strs)=DiaRVfrc(i,j,3,M2strs)+            &
+     &                               DiaRV(i,j,k,nrhs,M3vvis)
+#  endif
+# endif
             END DO
           END DO
 # ifndef BODYFORCE
           DO i=Istr,Iend
-            rvfrc(i,j)=rvfrc(i,j)+                                      &
-     &                 (svstr(i,j)-bvstr(i,j))*om_v(i,j)*on_v(i,j)
+            fac=(svstr(i,j)-bvstr(i,j))*om_v(i,j)*on_v(i,j)
+            rvfrc(i,j)=rvfrc(i,j)+fac
+#  ifdef DIAGNOSTICS_UV
+            DiaRVfrc(i,j,3,M2strs)=fac
+#  endif
           END DO
 # endif
         END IF
       END DO
 !
-!  Prepare to time-stepping 2D equations:  set initial free-sruface
+!  Prepare to time-step 2D equations:  set initial free-surface
 !  to its fast-time averaged values (which corresponds to the time
 !  step "n").
 !

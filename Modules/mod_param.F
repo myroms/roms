@@ -39,7 +39,7 @@
 !  Tracer parameters:                                                  !
 !                                                                      !
 !  NAT        Number of active tracer type variables (usually,         !
-!               NTA=2 for potential temperature and salinity).         !
+!               NAT=2 for potential temperature and salinity).         !
 !  NBT        Number of biological tracer type variables.              !
 !  NFV        Number of float variables.                               !
 !  NST        Number of sediment tracer type variables (NCS+NNS).      !
@@ -50,12 +50,23 @@
 !  NCS        Number of cohesive (mud) sediment tracers.               !
 !  NNS        Number of non-cohesive (sand) sediment tracers.          !
 !                                                                      !
+!  NBands     Number of spectral irradiance bands in EcoSim.           !
 !  Nbac       Number of bacteria constituents in EcoSim.               !
 !  Ndom       Number of dissolved matter constituents in EcoSim.       !
 !  Nfec       Number of fecal matter constituents in EcoSim.           !
 !  Nphy       Number of phytoplankton constituents in EcoSim.          !
 !  Npig       Number of pigment constituents in EcoSim.                !
 !  PHY        EcoSim indices of phytoplankton species considered.      !
+!  PIG        EcoSim phytoplankton-pigment matrix.                     !
+!                                                                      !
+!  Diagnostic fields parameters:                                       !
+!                                                                      !
+!  NDbio2d    Number of diagnostic 2D biology fields.                  !
+!  NDbio3d    Number of diagnostic 3D biology fields.                  !
+!  NDT        Number of diagnostic tracer fields.                      !
+!  NDM2d      Number of diagnostic 2D momentum fields.                 !
+!  NDM3d      Number of diagnostic 3D momentum fields.                 !
+!  NDrhs      Number of diagnostic 3D right-hand-side fields.          !
 !                                                                      !
 !=======================================================================
 !
@@ -67,6 +78,11 @@
 
         integer, parameter :: Msev = 300
         integer, parameter :: Msrc = 25
+#ifdef ECOSIM
+        integer, parameter :: NBands = 60
+#endif
+        integer, parameter :: NDbio2d = 2
+        integer, parameter :: NDbio3d = 2
         integer, parameter :: MTC = 7
         integer, parameter :: NFT = 4
 
@@ -100,6 +116,12 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 2048 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 256  /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 30   /)
+#elif defined BIO_TOY
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 4   /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 4   /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
 #elif defined BISCAY
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
@@ -136,35 +158,17 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 160 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined COUPLING_TEST
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 42  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 42  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 15  /)
 #elif defined DAMEE_4
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
         integer, parameter, dimension(Ngrids) :: Lm = (/ 128 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
-#elif defined DAMEE_5
-        integer, parameter :: Ngrids = 1
-        integer, parameter :: NAT = 2
-        integer, parameter, dimension(Ngrids) :: Lm = (/ 128 /)
-        integer, parameter, dimension(Ngrids) :: Mm = (/ 56  /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
-#elif defined DAMEE_6
-        integer, parameter :: Ngrids = 1
-        integer, parameter :: NAT = 2
-        integer, parameter, dimension(Ngrids) :: Lm = (/ 192 /)
-        integer, parameter, dimension(Ngrids) :: Mm = (/ 96  /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
-#elif defined DAMEE_7
-        integer, parameter :: Ngrids = 1
-        integer, parameter :: NAT = 2
-        integer, parameter, dimension(Ngrids) :: Lm = (/ 256 /)
-        integer, parameter, dimension(Ngrids) :: Mm = (/ 256 /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
-#elif defined DAMEE_9
-        integer, parameter :: Ngrids = 1
-        integer, parameter :: NAT = 2
-        integer, parameter, dimension(Ngrids) :: Lm = (/ 286 /)
-        integer, parameter, dimension(Ngrids) :: Mm = (/ 286 /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
 #elif defined DOUBLE_GYRE
         integer, parameter :: Ngrids = 1
@@ -172,6 +176,12 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 54  /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 108 /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 4   /)
+#elif defined ESTUARY_TEST
+        integer, parameter :: Ngrids = 1
+        integer, parameter ::  NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 200 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 3   /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
 #elif defined FLT_TEST
         integer, parameter :: Ngrids = 1
         integer, parameter ::  NAT = 1
@@ -196,6 +206,12 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 110 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 250 /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 25  /)
+#elif defined LAKE_SIGNELL
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 100 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 20  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 8  /)
 #elif defined LMD_TEST
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
@@ -219,8 +235,8 @@
         integer, parameter :: NAT = 2
         integer, parameter, dimension(Ngrids) :: Lm = (/ 109 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 239 /)
-!!      integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 25  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+!!      integer, parameter, dimension(Ngrids) :: N  = (/ 25  /)
 #elif defined NPACIFIC
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
@@ -265,6 +281,12 @@
         integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
 !!      integer, parameter, dimension(Ngrids) :: Mm = (/ 3   /)
 !!      integer, parameter, dimension(Ngrids) :: N  = (/ 40  /)
+#elif defined TEST_CHAN
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 100 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 3  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
 #elif defined UPWELLING
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
@@ -283,6 +305,12 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 300 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 5   /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+#elif defined WINDBASIN
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 101  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 51  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 25  /)
 #else
         Illegal choice of  parameters Im, Jm, N, NAT
 #endif
@@ -295,6 +323,21 @@
         integer, parameter :: Nbed = 1
         integer, parameter :: NCS = 1
         integer, parameter :: NNS = 1
+        integer, parameter :: NST = NCS + NNS
+# elif defined TEST_CHAN
+        integer, parameter :: Nbed = 5
+        integer, parameter :: NCS = 2
+        integer, parameter :: NNS = 0
+        integer, parameter :: NST = NCS + NNS
+# elif defined ESTUARY_TEST
+        integer, parameter :: Nbed = 1
+        integer, parameter :: NCS = 1
+        integer, parameter :: NNS = 0
+        integer, parameter :: NST = NCS + NNS
+# elif defined LAKE_SIGNELL
+        integer, parameter :: Nbed = 5
+        integer, parameter :: NCS = 3
+        integer, parameter :: NNS = 0
         integer, parameter :: NST = NCS + NNS
 # else
         Illegal choice of parameters Nbed, NCS, NNS, NST
@@ -310,7 +353,7 @@
 !
 # if defined BIO_FASHAM
 #  ifdef CARBON
-        integer, parameter :: NBT = 9
+        integer, parameter :: NBT = 11
 #  else
         integer, parameter :: NBT = 7
 #  endif
@@ -320,7 +363,44 @@
         integer, parameter :: Nfec = 2
         integer, parameter :: Nphy = 4
         integer, parameter :: Npig = 7
-        integer :: PHY(Nphy)
+!
+!  Determine number of EcoSim biological tracer. Currently, there is a
+!  maximum of seven phytoplankton species and seven different pigments:
+!
+! [1] small diatom           [1] chlorophyll-a
+! [2] large diatom           [2] chlorophyll-b
+! [3] small dinoflagellate   [3] chlorophyll-c
+! [4] large dinoflagellate   [4] photosythetic carotenoids
+! [5] synechococcus          [5] photoprotective carotenoids
+! [6] small prochlorococcus  [6] low  urobilin phycoeurythin carotenoids
+! [7] large prochlorococcus  [7] high urobilin phycoeurythin carotenoids
+!
+!  The phytoplankton/pigment matrix is as follows:
+!
+!               P h y t o p l a n k t o n
+!              [1]   [2]   [3]   [4]   [5]   [6]   [7]
+!
+!       t [7]   0     0     0     0     1     0     0
+!       n [6]   0     0     0     0     0     0     0
+!       e [5]   1     1     1     1     1     1     1
+!       m [4]   1     1     1     1     0     0     0
+!       g [3]   1     1     1     1     0     0     0
+!       i [2]   0     0     0     0     0     1     1
+!       P [1]   1     1     1     1     1     1     1
+!
+        integer, parameter, dimension(7,7) :: PIG = reshape (           &
+     &                                      (/ 1, 1, 1, 1, 1, 1, 1,     &
+     &                                         0, 0, 0, 0, 0, 1, 1,     &
+     &                                         1, 1, 1, 1, 0, 0, 0,     &
+     &                                         1, 1, 1, 1, 0, 0, 0,     &
+     &                                         1, 1, 1, 1, 1, 1, 1,     &
+     &                                         0, 0, 0, 0, 0, 0, 0,     &
+     &                                         0, 0, 0, 0, 1, 0, 0 /),  &
+     &                                      (/ 7, 7 /) )
+!
+!  Set phytoplankton species to consider (see above classification):
+!
+        integer, parameter, dimension(Nphy) :: PHY = (/ 1, 2, 4, 5 /)
 # endif
 #else
         integer, parameter :: NBT = 0
@@ -329,14 +409,23 @@
 !  The following parameters are derived or only known during execution.
 !
         common /param/ Im, Jm, MT, NT, NFV, NSV, Nfloats, Nstation,     &
+#ifdef ECOSIM
+     &                 NBT,                                             &
+#endif
      &                 NtileI, NtileJ, NtileX, NtileE
 
         integer :: MT
-
+#ifdef ECOSIM
+        integer :: NBT
+#endif
         integer, dimension(Ngrids) :: Im, Jm, NT, NFV, NSV
         integer, dimension(Ngrids) :: Nfloats, Nstation
         integer, dimension(Ngrids) :: NtileI, NtileJ
         integer, dimension(Ngrids) :: NtileX, NtileE
+!
+!  Diagnostic fields parameters.
+!
+        integer :: NDT, NDM2d, NDM3d, NDrhs
 
       CONTAINS
 
@@ -351,9 +440,98 @@
 !                                                                      !
 !=======================================================================
 !
-!  Local variabel declarations
+!  Local variable declarations
 !
         integer :: I_padd, J_padd, ng
+#ifdef ECOSIM
+        integer :: i, j
+!
+!-----------------------------------------------------------------------
+!  Determine number of EcoSim total bio-optical constituents:
+!-----------------------------------------------------------------------
+!
+!       Nutrients: NO3, NO4, PO4, FeO, SiO, DIC  (6)
+!        Bacteria: C, Fe, N, P                   (Nbac*4)
+!             DOM: CDM, C, N, P                  (Ndom*4)
+!           Fecal: C, Fe, N, P, Si               (Nfec*5)
+!    Phytoplakton: C, Fe, N, P                   (Nfec*4 + Si)
+!        Pigments:  look table
+!
+        NBT=6+(Nbac*4)+(Ndom*4)+(Nfec*5)+(Nphy*4)
+!
+!  Add phytoplankton silica constituents.
+!
+        DO i=1,Nphy
+          IF (PHY(i).le.2) NBT=NBT+1
+        END DO
+!
+!  Add pigments.  Check phytoplankton-pigment table for values greater
+!  than zero.
+!
+        DO j=1,Npig
+          DO i=1,Nphy
+            IF (PIG(PHY(i),j).eq.1) NBT=NBT+1
+          END DO
+        END DO
+#endif
+
+#ifdef DIAGNOSTICS
+!
+!-----------------------------------------------------------------------
+!  Determine number of diagnostic variables.
+!-----------------------------------------------------------------------
+
+# ifdef DIAGNOSTICS_TS
+!
+!  Tracer diagnostics.
+!
+        NDT=4          ! Acceleration, advection, vertical diffusion
+#  if defined TS_DIF2 || defined TS_DIF4
+        NDT=NDT+1      ! Horizontal diffusion
+#  endif
+# else
+        NDT=0          ! No tracer diagnostics
+# endif
+# ifdef DIAGNOSTICS_UV
+!
+!  2D Momentum diagnostics.
+!
+        NDM2d=3        ! Acceleration, 2D P-Gradient, stresses
+#   ifdef UV_ADV
+        NDM2d=NDM2d+1  ! Horizontal advection
+#   endif
+#   ifdef UV_COR
+        NDM2d=NDM2d+1  ! Coriolis
+#   endif
+#   if defined UV_VIS2 || defined UV_VIS4
+        NDM2d=NDM2d+1  ! Horizontal viscosity
+#   endif
+#  ifdef SOLVE3D
+!
+!  3D Momentum diagnostics and right-hand-side terms.
+!
+        NDM3d=3        ! Acceleration, 3D P-Gradient, vertical viscosity
+        NDrhs=1        ! 3D P-Gradient
+#   ifdef UV_ADV
+        NDM3d=NDM3d+2  ! Horizontal and vertical advection
+        NDrhs=NDrhs+2  
+#   endif
+#   ifdef UV_COR
+        NDM3d=NDM3d+1  ! Coriolis
+        NDrhs=NDrhs+1
+#   endif
+#   if defined UV_VIS2 || defined UV_VIS4
+        NDM3d=NDM3d+1  ! Horizontal viscosity
+#   endif
+#   ifdef BODYFORCE
+        NDrhs=NDrhs+1  ! Vertical viscosity
+#   endif
+#  else
+        NDM3d=0        ! No 3D momentum diagnostics
+        NDrhs=0
+#  endif
+# endif
+#endif
 !
 !-----------------------------------------------------------------------
 !  Derived dimension parameters.

@@ -28,7 +28,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC pre_step3d
+      PUBLIC  :: pre_step3d
 
       CONTAINS
 !
@@ -37,6 +37,9 @@
 !***********************************************************************
 !
       USE mod_param
+# ifdef DIAGNOSTICS
+      USE mod_diags
+# endif
       USE mod_forces
       USE mod_grid
       USE mod_mixing
@@ -93,6 +96,15 @@
      &                      OCEAN(ng) % W,                              &
      &                      OCEAN(ng) % ru,                             &
      &                      OCEAN(ng) % rv,                             &
+# ifdef DIAGNOSTICS_TS
+     &                      DIAGS(ng) % DiaTwrk,                        &
+# endif
+# ifdef DIAGNOSTICS_UV
+     &                      DIAGS(ng) % DiaU3wrk,                       &
+     &                      DIAGS(ng) % DiaV3wrk,                       &
+     &                      DIAGS(ng) % DiaRU,                          &
+     &                      DIAGS(ng) % DiaRV,                          &
+# endif
      &                      OCEAN(ng) % t,                              &
      &                      OCEAN(ng) % u,                              &
      &                      OCEAN(ng) % v)
@@ -123,6 +135,13 @@
      &                            ghats,                                &
 # endif
      &                            W, ru, rv,                            &
+# ifdef DIAGNOSTICS_TS
+     &                            DiaTwrk,                              &
+# endif
+# ifdef DIAGNOSTICS_UV
+     &                            DiaU3wrk, DiaV3wrk,                   &
+     &                            DiaRU, DiaRV,                         &
+# endif
      &                            t, u, v)
 !***********************************************************************
 !
@@ -170,8 +189,11 @@
 #  ifdef SOLAR_SOURCE
       real(r8), intent(in) :: srflx(LBi:,LBj:)
 #  endif
+#  ifdef SUN
+      real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)     ! explicit
+#  else
       real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
-!!    real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)     ! explicit
+#  endif
       real(r8), intent(in) :: Akv(LBi:,LBj:,0:)
 #  ifdef LMD_NONLOCAL
       real(r8), intent(in) :: ghats(LBi:,LBj:,0:,:)
@@ -179,8 +201,20 @@
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
       real(r8), intent(in) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: rv(LBi:,LBj:,0:,:)
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
+#  endif
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaU3wrk(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
+#  endif
+#  ifdef SUN
+      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng)) ! explicit
+#  else
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
-!!    real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng)) ! explicit
+#  endif
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
 # else
@@ -221,6 +255,16 @@
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(in) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),
+     &                                   NDT)
+#  endif
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaU3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+      real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+      real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+#  endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
@@ -234,7 +278,7 @@
       real(r8), parameter :: Gamma = 1.0_r8/6.0_r8
       real(r8), parameter :: eps = 1.0E-16_r8
 
-      real(r8) :: cff, cff1, cff2, cff3
+      real(r8) :: cff, cff1, cff2, cff3, fac1, fac2
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
@@ -249,7 +293,7 @@
 
 # include "set_bounds.h"
 
-# ifndef DIAGNOSTIC
+# ifndef TS_FIXED
 !
 !=======================================================================
 !  Tracer equation(s).
@@ -428,39 +472,13 @@
           DO is=1,Nsrc
             i=Isrc(is)
             j=Jsrc(is)
-            IF (INT(Dsrc(is)).eq.0) THEN
-              IF (((Istr.le.i).and.(i.le.Iend+1)).and.                  &
-     &            ((Jstr.le.j).and.(j.le.Jend))) THEN
-                IF (Lsrc(is,itrc)) THEN
-                  FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
-                ELSE
-                  IF ((rmask(i  ,j).eq.0.0_r8).and.                     &
-     &                (rmask(i-1,j).eq.1.0_r8)) THEN
-                    FX(i,j)=Huon(i,j,k)*t(i-1,j,k,nstp,itrc)
-                  ELSE IF ((rmask(i  ,j).eq.1.0_r8).and.                &
-     &                     (rmask(i-1,j).eq.0.0_r8)) THEN
-                    FX(i,j)=Huon(i,j,k)*t(i  ,j,k,nstp,itrc)
-                  END IF
-#   endif
-                END IF
-              END IF
-            ELSE IF (INT(Dsrc(is)).eq.1) THEN
-              IF (((Istr.le.i).and.(i.le.Iend)).and.                    &
-     &            ((Jstr.le.j).and.(j.le.Jend+1))) THEN
-                IF (Lsrc(is,itrc)) THEN
-                  FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
-                ELSE
-                  IF ((rmask(i,j  ).eq.0.0_r8).and.                     &
-     &                (rmask(i,j-1).eq.1.0_r8)) THEN
-                    FE(i,j)=Hvom(i,j,k)*t(i,j-1,k,nstp,itrc)
-                  ELSE IF ((rmask(i,j  ).eq.1.0_r8).and.                &
-     &                     (rmask(i,j-1).eq.0.0_r8)) THEN
-                    FE(i,j)=Hvom(i,j,k)*t(i,j  ,k,nstp,itrc)
-                  END IF
-#   endif
-                END IF
+            IF (Lsrc(is,itrc).and.                                      &
+                ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
+     &          ((Jstr.le.j).and.(j.le.Jend+1))) THEN
+              IF (INT(Dsrc(is)).eq.0) THEN
+                FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
+              ELSE
+                FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
               END IF
             END IF
           END DO
@@ -696,15 +714,20 @@
 !
             DO k=1,N(ng)
               DO i=Istr,Iend
-                t(i,j,k,nnew,itrc)=Hz(i,j,k)*t(i,j,k,nstp,itrc)+        &
-     &                             FC(i,k)-FC(i,k-1)
+                fac1=Hz(i,j,k)*t(i,j,k,nstp,itrc)
+                fac2=FC(i,k)-FC(i,k-1)
+                t(i,j,k,nnew,itrc)=fac1+fac2
+#  ifdef DIAGNOSTICS_TS
+                DiaTwrk(i,j,k,itrc,iTrate)=fac1
+                DiaTwrk(i,j,k,itrc,iTvdif)=fac2
+#  endif
               END DO
             END DO
           END DO
         END IF
-# else /* DIAGNOSTIC */
+# else /* TS_FIXED */
       DO j=Jstr,Jend
-# endif /* !DIAGNOSTIC */
+# endif /* !TS_FIXED */
 !
 !=======================================================================
 !  3D momentum equation in the XI-direction.
@@ -747,18 +770,52 @@
           IF (iic(ng).eq.ntfirst) THEN
             DO k=1,N(ng)
               DO i=IstrU,Iend
-                u(i,j,k,nnew)=u(i,j,k,nstp)*                            &
-     &                        0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))+           &
-     &                        FC(i,k)-FC(i,k-1)
+                fac1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
+                fac2=FC(i,k)-FC(i,k-1)
+                u(i,j,k,nnew)=fac1+fac2
+# ifdef DIAGNOSTICS_UV
+                DiaU3wrk(i,j,k,M3rate)=fac1
+                DiaU3wrk(i,j,k,M3vvis)=fac2
+                DiaU3wrk(i,j,k,M3pgrd)=0.0_r8
+#  ifdef UV_ADV
+                DiaU3wrk(i,j,k,M3hadv)=0.0_r8
+                DiaU3wrk(i,j,k,M3vadv)=0.0_r8
+#  endif
+#  ifdef UV_COR
+                DiaU3wrk(i,j,k,M3fcor)=0.0_r8
+#  endif
+# endif
               END DO
             END DO
           ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
             DO k=1,N(ng)
               DO i=IstrU,Iend
-                u(i,j,k,nnew)=u(i,j,k,nstp)*                            &
-     &                        0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))-           &
+                fac1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
+                fac2=FC(i,k)-FC(i,k-1)
+                u(i,j,k,nnew)=fac1-                                     &
      &                        0.5_r8*DC(i,0)*ru(i,j,k,indx)+            &
-     &                        FC(i,k)-FC(i,k-1)
+     &                        fac2
+# ifdef DIAGNOSTICS_UV
+                DiaU3wrk(i,j,k,M3rate)=fac1
+                DiaU3wrk(i,j,k,M3vvis)=fac2
+                DiaU3wrk(i,j,k,M3pgrd)=-0.5_r8*DC(i,0)*                 &
+     &                                 DiaRU(i,j,k,indx,M3pgrd)
+#  ifdef UV_ADV
+                DiaU3wrk(i,j,k,M3hadv)=-0.5_r8*DC(i,0)*                 &
+     &                                 DiaRU(i,j,k,indx,M3hadv)
+                DiaU3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                 &
+     &                                 DiaRU(i,j,k,indx,M3vadv)
+#  endif
+#  ifdef UV_COR
+                DiaU3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                 &
+     &                                 DiaRU(i,j,k,indx,M3fcor)
+#  endif
+#  ifdef BODYFORCE
+                DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)-          &
+     &                                 0.5_r8*DC(i,0)*                  &
+     &                                 DiaRU(i,j,k,indx,M3vvis)
+#  endif
+# endif
               END DO
             END DO
           ELSE
@@ -766,11 +823,38 @@
             cff2=16.0_r8/12.0_r8
             DO k=1,N(ng)
               DO i=IstrU,Iend
-                u(i,j,k,nnew)=u(i,j,k,nstp)*                            &
-     &                        0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))+           &
+                fac1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
+                fac2=FC(i,k)-FC(i,k-1)
+                u(i,j,k,nnew)=fac1+                                     &
      &                        DC(i,0)*(cff1*ru(i,j,k,nrhs)-             &
      &                                 cff2*ru(i,j,k,indx))+            &
-     &                        FC(i,k)-FC(i,k-1)
+     &                        fac2
+# ifdef DIAGNOSTICS_UV
+                DiaU3wrk(i,j,k,M3rate)=fac1
+                DiaU3wrk(i,j,k,M3vvis)=fac2
+                DiaU3wrk(i,j,k,M3pgrd)=DC(i,0)*                         &
+     &                                 (cff1*DiaRU(i,j,k,nrhs,M3pgrd)-  &
+     &                                  cff2*DiaRU(i,j,k,indx,M3pgrd))
+#  ifdef UV_ADV
+                DiaU3wrk(i,j,k,M3hadv)=DC(i,0)*                         &
+     &                                 (cff1*DiaRU(i,j,k,nrhs,M3hadv)-  &
+     &                                  cff2*DiaRU(i,j,k,indx,M3hadv))
+                DiaU3wrk(i,j,k,M3vadv)=DC(i,0)*                         &
+     &                                 (cff1*DiaRU(i,j,k,nrhs,M3vadv)-  &
+     &                                  cff2*DiaRU(i,j,k,indx,M3vadv))
+#  endif
+#  ifdef UV_COR
+                DiaU3wrk(i,j,k,M3fcor)=DC(i,0)*                         &
+     &                                 (cff1*DiaRU(i,j,k,nrhs,M3fcor)-  &
+     &                                  cff2*DiaRU(i,j,k,indx,M3fcor))
+#  endif
+#  ifdef BODYFORCE
+                DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+          &
+     &                                 DC(i,0)*                         &
+     &                                 (cff1*DiaRU(i,j,k,nrhs,M3vvis)-  &
+     &                                  cff2*DiaRU(i,j,k,indx,M3vvis))
+#  endif
+# endif
               END DO
             END DO
           END IF
@@ -816,18 +900,52 @@
           IF (iic(ng).eq.ntfirst) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
-                v(i,j,k,nnew)=v(i,j,k,nstp)*                            &
-     &                        0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))+           &
-     &                        FC(i,k)-FC(i,k-1)
+                fac1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
+                fac2=FC(i,k)-FC(i,k-1)
+                v(i,j,k,nnew)=fac1+fac2
+# ifdef DIAGNOSTICS_UV
+                DiaV3wrk(i,j,k,M3rate)=fac1
+                DiaV3wrk(i,j,k,M3vvis)=fac2
+                DiaV3wrk(i,j,k,M3pgrd)=0.0_r8
+#  ifdef UV_ADV
+                DiaV3wrk(i,j,k,M3hadv)=0.0_r8
+                DiaV3wrk(i,j,k,M3vadv)=0.0_r8
+#  endif
+#  ifdef UV_COR
+                DiaV3wrk(i,j,k,M3fcor)=0.0_r8
+#  endif
+# endif
               END DO
             END DO
           ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
-                v(i,j,k,nnew)=v(i,j,k,nstp)*                            &
-     &                        0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))-           &
+                fac1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
+                fac2=FC(i,k)-FC(i,k-1)
+                v(i,j,k,nnew)=fac1-                                     &
      &                        0.5_r8*DC(i,0)*rv(i,j,k,indx)+            &
-     &                        FC(i,k)-FC(i,k-1)
+     &                        fac2
+# ifdef DIAGNOSTICS_UV
+                DiaV3wrk(i,j,k,M3rate)=fac1
+                DiaV3wrk(i,j,k,M3vvis)=fac2
+                DiaV3wrk(i,j,k,M3pgrd)=-0.5_r8*DC(i,0)*                 &
+     &                                  DiaRV(i,j,k,indx,M3pgrd)
+#  ifdef UV_ADV
+                DiaV3wrk(i,j,k,M3hadv)=-0.5_r8*DC(i,0)*                 &
+     &                                  DiaRV(i,j,k,indx,M3hadv)
+                DiaV3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                 &
+     &                                  DiaRV(i,j,k,indx,M3vadv)
+#  endif
+#  ifdef UV_COR
+                DiaV3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                 &
+     &                                  DiaRV(i,j,k,indx,M3fcor)
+#  endif
+#  ifdef BODYFORCE
+                DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)-          &
+     &                                 0.5_r8*DC(i,0)*                  &
+     &                                 DiaRV(i,j,k,indx,M3vvis)
+#  endif
+# endif
               END DO
             END DO
           ELSE
@@ -835,11 +953,38 @@
             cff2=16.0_r8/12.0_r8
             DO k=1,N(ng)
               DO i=Istr,Iend
-                v(i,j,k,nnew)=v(i,j,k,nstp)*                            &
-     &                        0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))+           &
+                fac1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
+                fac2=FC(i,k)-FC(i,k-1)
+                v(i,j,k,nnew)=fac1+                                     &
      &                        DC(i,0)*(cff1*rv(i,j,k,nrhs)-             &
      &                                 cff2*rv(i,j,k,indx))+            &
-     &                        FC(i,k)-FC(i,k-1)
+     &                        fac2
+# ifdef DIAGNOSTICS_UV
+                DiaV3wrk(i,j,k,M3rate)=fac1
+                DiaV3wrk(i,j,k,M3vvis)=fac2
+                DiaV3wrk(i,j,k,M3pgrd)=DC(i,0)*                         &
+     &                                 (cff1*DiaRV(i,j,k,nrhs,M3pgrd)-  &
+     &                                  cff2*DiaRV(i,j,k,indx,M3pgrd))
+#  ifdef UV_ADV
+                DiaV3wrk(i,j,k,M3hadv)=DC(i,0)*                         &
+     &                                 (cff1*DiaRV(i,j,k,nrhs,M3hadv)-  &
+     &                                  cff2*DiaRV(i,j,k,indx,M3hadv))
+                DiaV3wrk(i,j,k,M3vadv)=DC(i,0)*                         &
+     &                                 (cff1*DiaRV(i,j,k,nrhs,M3vadv)-  &
+     &                                  cff2*DiaRV(i,j,k,indx,M3vadv))
+#  endif
+#  ifdef UV_COR
+                DiaV3wrk(i,j,k,M3fcor)=DC(i,0)*                         &
+     &                                 (cff1*DiaRV(i,j,k,nrhs,M3fcor)-  &
+     &                                  cff2*DiaRV(i,j,k,indx,M3fcor))
+#  endif
+#  ifdef BODYFORCE
+                DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)+          &
+     &                                 DC(i,0)*                         &
+     &                                 (cff1*DiaRV(i,j,k,nrhs,M3vvis)-  &
+     &                                  cff2*DiaRV(i,j,k,indx,M3vvis))
+#  endif
+# endif
               END DO
             END DO
           END IF
@@ -850,7 +995,7 @@
 !  Apply lateral boundary conditions.
 !=======================================================================
 !
-# ifndef DIAGNOSTIC
+# ifndef TS_FIXED
       DO itrc=1,NT(ng)
         CALL t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,              &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
@@ -858,7 +1003,8 @@
      &                   t)
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
         CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, t(:,:,:,3,itrc))
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          t(:,:,:,3,itrc))
 #  endif
       END DO
 # endif

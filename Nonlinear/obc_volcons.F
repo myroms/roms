@@ -15,7 +15,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC obc_flux_tile, set_DUV_bc_tile
+      PUBLIC  :: obc_flux_tile, set_DUV_bc_tile
 
       CONTAINS
 !
@@ -218,6 +218,11 @@
 !
       USE mod_param
       USE mod_scalars
+# ifdef DISTRIBUTE
+!
+      USE exchange_2d_mod
+!
+# endif
 
       implicit none
 !
@@ -269,9 +274,16 @@
 !  the velocities.
 !-----------------------------------------------------------------------
 !
+# ifdef DISTRIBUTE
+#  define I_RANGE IstrU,MIN(Iend+1,Lm(ng))
+#  define J_RANGE JstrV,MIN(Jend+1,Mm(ng))
+# else
+#  define I_RANGE MAX(2,IstrU-1),MIN(Iend+1,Lm(ng))
+#  define J_RANGE MAX(2,JstrV-1),MIN(Jend+1,Mm(ng))
+# endif
 # ifdef WEST_VOLCONS
       IF (WESTERN_EDGE) THEN
-        DO j=Jstr-1,JendR
+        DO j=-2+J_RANGE+1
           Duon(Istr,j)=0.5_r8*(Drhs(Istr,j)+Drhs(Istr-1,j))*            &
      &                 (ubar(Istr,j,krhs)-ubar_xs)*                     &
      &                 on_u(Istr,j)
@@ -283,7 +295,7 @@
 # endif
 # ifdef EAST_VOLCONS
       IF (EASTERN_EDGE) THEN
-        DO j=Jstr-1,JendR
+        DO j=-2+J_RANGE+1
           Duon(Iend+1,j)=0.5_r8*(Drhs(Iend+1,j)+Drhs(Iend,j))*          &
      &                   (ubar(Iend+1,j,krhs)+ubar_xs)*                 &
      &                   on_u(Iend+1,j)
@@ -295,7 +307,7 @@
 # endif
 # ifdef SOUTH_VOLCONS
       IF (SOUTHERN_EDGE) THEN
-        DO i=Istr-1,IendR
+        DO i=-2+I_RANGE+1
           Dvom(i,Jstr)=0.5_r8*(Drhs(i,Jstr)+Drhs(i,Jstr-1))*            &
      &                 (vbar(i,Jstr,krhs)-ubar_xs)*                     &
      &                 om_v(i,Jstr)
@@ -307,7 +319,7 @@
 # endif
 # ifdef NORTH_VOLCONS
       IF (NORTHERN_EDGE) THEN
-        DO i=Istr-1,IendR
+        DO i=-2+I_RANGE+1
           Dvom(i,Jend+1)=0.5_r8*(Drhs(i,Jend+1)+Drhs(i,Jend))*          &
      &                   (vbar(i,Jend+1,krhs)+ubar_xs)*                 &
      &                   om_v(i,Jend+1)
@@ -317,6 +329,24 @@
         END DO
       END IF
 # endif
+# ifdef DISTRIBUTE
+!
+! Do a special exchange to avoid having three ghost points for high
+! order numerical stencil.
+!
+#  if defined WEST_VOLCONS || defined EAST_VOLCONS
+      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        Istr-3, Iend+3, Jstr-3, Jend+3,           &
+     &                        Duon)
+#  endif
+#  if defined SOUTH_VOLCONS || defined NORTH_VOLCONS
+      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        Istr-3, Iend+3, Jstr-3, Jend+3,           &
+     &                        Dvom)
+#  endif
+# endif
+# undef I_RANGE
+# undef J_RANGE
       RETURN
       END SUBROUTINE set_DUV_bc_tile
 !

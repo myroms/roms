@@ -13,6 +13,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_iounits
+      USE mod_strings
 !
       implicit none
 !
@@ -39,7 +40,7 @@
 !
       Cstr(region,ng)=my_wtime(wtime)
       IF ((region.eq.0).and.(proc(1,ng).eq.0)) THEN
-        DO iregion=1,35
+        DO iregion=1,Nregion
           Cend(iregion,ng)=0.0_r8
           Csum(iregion,ng)=0.0_r8
         END DO
@@ -96,7 +97,7 @@
       real(r8) :: my_wtime
 
 #ifdef DISTRIBUTE
-      character (len=3), dimension(0:35) :: op_handle
+      character (len=3), dimension(0:Nregion) :: op_handle
 #endif
 !
 !-----------------------------------------------------------------------
@@ -110,6 +111,9 @@
       IF ((region.eq.0).and.(proc(1,ng).eq.1)) THEN
         proc(1,ng)=0
 !$OMP CRITICAL (FINALIZE_WCLOCK)
+!
+!  Report total elapsed time (seconds) for each CPU.
+!
 #ifdef DISTRIBUTE
         CALL mp_barrier (ng)
         WRITE (stdout,10) ' Node   #',MyRank,' CPU:',Cend(region,ng)
@@ -119,29 +123,32 @@
         WRITE (stdout,10) ' Thread #',MyThread,' CPU:',Cend(region,ng)
 #endif
  10     FORMAT (a,i3,a,f12.3)
+!
+! Report elapsed time profile for each region of the code.
+!
         thread_count=thread_count+1
         Csum(region,ng)=Csum(region,ng)+Cend(region,ng)
 #ifdef PROFILE
-        DO iregion=1,35
+        DO iregion=1,Nregion
           Csum(iregion,ng)=Csum(iregion,ng)+Cend(iregion,ng)
         END DO
-        Csum(35,ng)=Csum(35,ng)-Csum(15,ng)-Csum(16,ng)
+        Csum(35,ng)=Csum(35,ng)-Csum(15,ng)
 #endif
         IF (thread_count.eq.numthreads) THEN
           thread_count=0
 #ifdef DISTRIBUTE
-          op_handle(0:35)='SUM'
-          CALL mp_reduce (ng, 36, Csum(0,ng), op_handle)
+          op_handle(0:Nregion)='SUM'
+          CALL mp_reduce (ng, Nregion+1, Csum(0,ng), op_handle)
 #endif
           IF (Master) WRITE (stdout,20) ' Total:', Csum(region,ng)
  20       FORMAT (a,8x,f14.3)
 #ifdef PROFILE
-          IF (Master) WRITE (stdout,30) ' Elapsed time profile: '
+          IF (Master) WRITE (stdout,30) ' Elapsed time profile:'
  30       FORMAT (/,a,/)
           sumcpu=0.0_r8
           sumper=0.0_r8
-          Csum(35,ng)=Csum(35,ng)-Csum(15,ng)-Csum(16,ng)
-          DO iregion=1,35
+          Csum(35,ng)=Csum(35,ng)-Csum(15,ng)
+          DO iregion=1,37
             IF (Csum(iregion,ng).gt.0.0_r8) THEN
               percent=100.0_r8*Csum(iregion,ng)/                        &
      &                         Csum( region,ng)
@@ -155,6 +162,26 @@
  40       FORMAT (2x,a,t53,f14.3,2x,'(',f7.4,' %)')
           IF (Master) WRITE (stdout,50) sumcpu, sumper
  50       FORMAT (t47,'Total:',f14.3,2x,f8.4)
+# ifdef DISTRIBUTE
+!
+! Report elapsed time for message passage communications.
+!
+          IF (Master) WRITE (stdout,30) ' Message Passage profile:'
+          sumcpu=0.0_r8
+          sumper=0.0_r8
+          DO iregion=38,Nregion
+            IF (Csum(iregion,ng).gt.0.0_r8) THEN
+              percent=100.0_r8*Csum(iregion,ng)/                        &
+     &                         Csum( region,ng)
+              IF (Master) WRITE (stdout,40) Pregion(iregion),           &
+     &                                      Csum(iregion,ng),           &
+     &                                      percent
+              sumcpu=sumcpu+Csum(iregion,ng)
+              sumper=sumper+percent
+            END IF
+          END DO
+          IF (Master) WRITE (stdout,50) sumcpu, sumper
+# endif
 #endif
         END IF
 !$OMP END CRITICAL (FINALIZE_WCLOCK)

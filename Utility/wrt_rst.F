@@ -32,7 +32,7 @@
 !  Local variable declarations.
 !
       integer :: LBi, UBi, LBj, UBj
-      integer :: gfactor, gtype, itrc, status
+      integer :: gfactor, gtype, i, itrc, status
 
       integer :: nf_fwrite
 
@@ -299,39 +299,82 @@
 # endif
 # ifdef SEDIMENT
 !
-!  Write out bed layer sediment fraction for each size class.
+!  Write out sediment fraction of each size class in each bed layer.
 !
-      DO itrc=1,NST
+      DO i=1,NST
         scale=1.0_r8
         gtype=gfactor*b3dvar
-        status=nf_fwrite(ng, ncrstid(ng), rstVid(idfrac(itrc),ng),      &
+        status=nf_fwrite(ng, ncrstid(ng), rstVid(idfrac(i),ng),         &
      &                   trstindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, Nbed, scale,            &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
 #  endif
-     &                   OCEAN(ng) % bed_frac(LBi,LBj,1,itrc))
+     &                   OCEAN(ng) % bed_frac(LBi,LBj,1,i))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idfrac(itrc))), trstindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), trstindx(ng)
           exit_flag=3
           RETURN
         END IF
       END DO
 !
-!  Write out bed layer sediment properties.
+!  Write out sediment mass of each size class in each bed layer.
 !
-      DO itrc=1,MBEDP
+      DO i=1,NST
         scale=1.0_r8
         gtype=gfactor*b3dvar
-        status=nf_fwrite(ng, ncrstid(ng), rstVid(idSbed(itrc),ng),      &
+        status=nf_fwrite(ng, ncrstid(ng), rstVid(idBmas(i),ng),         &
      &                   trstindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, Nbed, scale,            &
 #  ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
 #  endif
-     &                   OCEAN(ng) % bed(LBi,LBj,1,itrc))
+     &                   OCEAN(ng) % bed_mass(LBi,LBj,1,i))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idSbed(itrc))), trstindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), trstindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END DO
+!
+!  Write out sediment properties in each bed layer.
+!
+      DO i=1,MBEDP
+        scale=1.0_r8
+        gtype=gfactor*b3dvar
+        status=nf_fwrite(ng, ncrstid(ng), rstVid(idSbed(i),ng),         &
+     &                   trstindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nbed, scale,            &
+#  ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#  endif
+     &                   OCEAN(ng) % bed(LBi,LBj,1,i))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), trstindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
+!
+!  Write out exposed sediment layer properties. Notice that only the
+!  first four properties (mean grain diameter, mean grain density,
+!  mean settling velocity, and mean critical erosion stress) are
+!  written.
+!
+      DO i=1,4
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite(ng, ncrstid(ng), rstVid(idBott(i),ng),         &
+     &                   trstindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nbed, scale,            &
+#  ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#  endif
+     &                   OCEAN(ng) % bottom(LBi,LBj,i))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idBott(i))), trstindx(ng)
           exit_flag=3
           RETURN
         END IF
@@ -339,7 +382,7 @@
 # endif
 #endif
 !
-!  Synchronize restart NetCDF file to disk.
+!  Synchronize history NetCDF file to disk.
 !
       IF (OutThread) THEN
         status=nf_sync(ncrstid(ng))
@@ -355,7 +398,7 @@
      &        'into restart NetCDF file for time record: ',i4)
   20  FORMAT (/,' WRT_RST - unable to synchronize restart NetCDF to ',  &
      &        'disk.')
-  30  FORMAT (6x,'WRT_RST - wrote re-start fields into time record = ', &
-     &        i10.10)
+  30  FORMAT (6x,'WRT_RST   - wrote re-start fields into time ',        &
+     &        'record:',t63,i10.10)
       RETURN
-       END SUBROUTINE wrt_rst
+      END SUBROUTINE wrt_rst

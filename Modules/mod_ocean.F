@@ -26,6 +26,35 @@
 !  v          3D V-momentum component (m/s).                           !
 !  W          S-coordinate (omega*Hz/mn) vertical velocity (m3/s).     !
 !                                                                      !
+!  Sediment Variables.                                                 !
+!                                                                      !
+!  bed        Sediment properties in each bed layer:                   !
+!               bed(:,:,:,ithck) => layer thickness                    !
+!               bed(:,:,:,iaged) => layer age                          !
+!               bed(:,:,:,iporo) => layer porosity                     !
+!               bed(:,:,:,idiff) => layer bio-diffusivity              !
+!  bed_frac   Sediment fraction of each size class in each bed layer   !
+!               (nondimensional: 0-1.0).  Sum of bed_frac = 1.0        !
+!  bed_mass   Sediment mass of each size class in each bed layer       !
+!               (kg/m2).                                               !
+!  bottom     Exposed sediment layer properties:                       !
+!               bottom(:,:,isd50) => mean grain diameter               !
+!               bottom(:,:,idens) => mean grain density                !
+!               bottom(:,:,iwsed) => mean settling velocity            !
+!               bottom(:,:,itauc) => mean critical erosion stress      !
+!               bottom(:,:,irlen) => ripple length                     !
+!               bottom(:,:,irhgt) => ripple height                     !
+!               bottom(:,:,ibwav) => bed wave excursion amplitude      !
+!               bottom(:,:,izNik) => Nikuradse bottom roughness        !
+!               bottom(:,:,izbio) => biological bottom roughness       !
+!               bottom(:,:,izbfm) => bed form bottom roughness         !
+!               bottom(:,:,izbld) => bed load bottom roughness         !
+!               bottom(:,:,izapp) => apparent bottom roughness         !
+!               bottom(:,:,izwbl) => wave bottom roughness             !
+!               bottom(:,:,izdef) => default bottom roughness          !
+!               bottom(:,:,iactv) => active layer thickness            !
+!               bottom(:,:,ishgt) => saltation height                  !
+!                                                                      !
 !=======================================================================
 !
         USE mod_kinds
@@ -50,9 +79,12 @@
           real(r8), pointer :: v(:,:,:,:)
           real(r8), pointer :: W(:,:,:)
           real(r8), pointer :: wvel(:,:,:)
-# ifdef SEDIMENT
+# if defined SEDIMENT
           real(r8), pointer :: bed(:,:,:,:)
           real(r8), pointer :: bed_frac(:,:,:,:)
+          real(r8), pointer :: bed_mass(:,:,:,:)
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
           real(r8), pointer :: bottom(:,:,:)
 # endif
 #endif
@@ -75,7 +107,7 @@
 !=======================================================================
 !
       USE mod_param
-#ifdef SEDIMENT
+#if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
 !
@@ -110,9 +142,12 @@
       allocate ( OCEAN(ng) % W(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( OCEAN(ng) % wvel(LBi:UBi,LBj:UBj,0:N(ng)) )
 
-# ifdef SEDIMENT
+# if defined SEDIMENT
       allocate ( OCEAN(ng) % bed(LBi:UBi,LBj:UBj,Nbed,MBEDP) )
       allocate ( OCEAN(ng) % bed_frac(LBi:UBi,LBj:UBj,Nbed,NST) )
+      allocate ( OCEAN(ng) % bed_mass(LBi:UBi,LBj:UBj,Nbed,NST) )
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
       allocate ( OCEAN(ng) % bottom(LBi:UBi,LBj:UBj,MBOTP) )
 # endif
 #endif
@@ -135,7 +170,7 @@
 !=======================================================================
 !
       USE mod_param
-#ifdef SEDIMENT
+#if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
 !
@@ -145,55 +180,77 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 #include "tile.h"
-#ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
 #else
-# include "set_bounds.h"
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
 #endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-      OCEAN(ng) % rubar(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      OCEAN(ng) % rvbar(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      OCEAN(ng) % rzeta(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      OCEAN(ng) % rubar(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      OCEAN(ng) % rvbar(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      OCEAN(ng) % rzeta(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 
-      OCEAN(ng) % ubar(IstrR:IendR,JstrR:JendR,1:3) = IniVal
-      OCEAN(ng) % vbar(IstrR:IendR,JstrR:JendR,1:3) = IniVal
-      OCEAN(ng) % zeta(IstrR:IendR,JstrR:JendR,1:3) = IniVal
+      OCEAN(ng) % ubar(Imin:Imax,Jmin:Jmax,1:3) = IniVal
+      OCEAN(ng) % vbar(Imin:Imax,Jmin:Jmax,1:3) = IniVal
+      OCEAN(ng) % zeta(Imin:Imax,Jmin:Jmax,1:3) = IniVal
 
 #ifdef SOLVE3D
-      OCEAN(ng) % pden(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
-      OCEAN(ng) % rho(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      OCEAN(ng) % pden(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      OCEAN(ng) % rho(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
-      OCEAN(ng) % ru(IstrR:IendR,JstrR:JendR,0:N(ng),1:2) = IniVal
-      OCEAN(ng) % rv(IstrR:IendR,JstrR:JendR,0:N(ng),1:2) = IniVal
+      OCEAN(ng) % ru(Imin:Imax,Jmin:Jmax,0:N(ng),1:2) = IniVal
+      OCEAN(ng) % rv(Imin:Imax,Jmin:Jmax,0:N(ng),1:2) = IniVal
 
-      OCEAN(ng) % u(IstrR:IendR,JstrR:JendR,1:N(ng),1:2) = IniVal
-      OCEAN(ng) % v(IstrR:IendR,JstrR:JendR,1:N(ng),1:2) = IniVal
+      OCEAN(ng) % u(Imin:Imax,Jmin:Jmax,1:N(ng),1:2) = IniVal
+      OCEAN(ng) % v(Imin:Imax,Jmin:Jmax,1:N(ng),1:2) = IniVal
  
-      OCEAN(ng) % W(IstrR:IendR,JstrR:JendR,0:N(ng)) = IniVal
-      OCEAN(ng) % wvel(IstrR:IendR,JstrR:JendR,0:N(ng)) = IniVal
+      OCEAN(ng) % W(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
+      OCEAN(ng) % wvel(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
 
-      OCEAN(ng) % t(IstrR:IendR,JstrR:JendR,1:N(ng),1:2,1:NT(ng)) =     &
-     &             IniVal
+      OCEAN(ng) % t(Imin:Imax,Jmin:Jmax,1:N(ng),1:2,1:NT(ng)) = IniVal
 
-# ifdef SEDIMENT
-      OCEAN(ng) % bed(IstrR:IendR,JstrR:JendR,1:Nbed,1:MBEDP) = IniVal
+# if defined SEDIMENT || defined BBL_MODEL
+      OCEAN(ng) % bed(Imin:Imax,Jmin:Jmax,1:Nbed,1:MBEDP) = IniVal
+      OCEAN(ng) % bed_frac(Imin:Imax,Jmin:Jmax,1:Nbed,1:NST) = IniVal
+      OCEAN(ng) % bed_mass(Imin:Imax,Jmin:Jmax,1:Nbed,1:NST) = IniVal
+# endif
 
-      OCEAN(ng) % bed_frac(IstrR:IendR,JstrR:JendR,1:Nbed,1:NST) =      &
-     &                    IniVal
-
-      OCEAN(ng) % bottom(IstrR:IendR,JstrR:JendR,1:MBOTP) = IniVal
+# if defined SEDIMENT || defined BBL_MODEL
+      OCEAN(ng) % bottom(Imin:Imax,Jmin:Jmax,1:MBOTP) = IniVal
 # endif
 
 #endif

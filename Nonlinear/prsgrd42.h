@@ -19,13 +19,17 @@
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
-!    Shchepetkin A.F and J.C. McWilliams, 2001:  A method for          !
+!    Shchepetkin A.F and J.C. McWilliams, 2003:  A method for          !
 !      computing horizontal pressure gradient force in an ocean        !
-!      model with non-aligned vertical coordinate.  DRAFT              !
+!      model with non-aligned vertical coordinate, JGR, 108,           !
+!      1-34.                                                           !
 !                                                                      !
 !***********************************************************************
 !
       USE mod_param
+# ifdef DIAGNOSTICS
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
@@ -49,6 +53,10 @@
      &                  GRID(ng) % on_u,                                &
      &                  GRID(ng) % z_w,                                 &
      &                  OCEAN(ng) % rho,                                &
+# ifdef DIAGNOSTICS_UV
+     &                  DIAGS(ng) % DiaRU,                              &
+     &                  DIAGS(ng) % DiaRV,                              &
+# endif
      &                  OCEAN(ng) % ru,                                 &
      &                  OCEAN(ng) % rv)
 # ifdef PROFILE
@@ -65,7 +73,11 @@
      &                        umask, vmask,                             &
 # endif
      &                        Hz, om_v, on_u, z_w,                      &
-     &                        rho, ru, rv)
+     &                        rho,                                      &
+# ifdef DIAGNOSTICS_UV
+     &                        DiaRU, DiaRV,                             &
+# endif
+     &                        ru, rv)
 !***********************************************************************
 !
       USE mod_param
@@ -88,6 +100,10 @@
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
+#  endif
       real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
 # else
@@ -101,6 +117,10 @@
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+      real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+#  endif
       real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
 # endif
@@ -321,6 +341,9 @@
      &                      cff1*ru(i,j,k,nrhs))*                       &
      &                     (Hz(i-1,j,k)+Hz(i,j,k))*on_u(i,j)+           &
      &                     (FC(i,k)-FC(i,k-1))*on_u(i,j)
+# ifdef DIAGNOSTICS_UV
+            DiaRU(i,j,k,nrhs,M3pgrd)=ru(i,j,k,nrhs)
+# endif
           END DO
         END DO
       END DO
@@ -353,6 +376,9 @@
      &                      cff1*rv(i,j,k,nrhs))*                       &
      &                     (Hz(i,j-1,k)+Hz(i,j,k))*om_v(i,j)+           &
      &                     (FX(i,j,k)-FX(i,j,k-1))*om_v(i,j)
+# ifdef DIAGNOSTICS_UV
+            DiaRV(i,j,k,nrhs,M3pgrd)=rv(i,j,k,nrhs)
+# endif
           END DO
         END DO
       END DO

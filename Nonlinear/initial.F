@@ -31,6 +31,9 @@
       USE set_massflux_mod, ONLY : set_massflux
       USE stiffness_mod, ONLY : stiffness
 #endif
+#if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
+      USE wpoints_mod, ONLY : wpoints
+#endif
 !
       implicit none
 !
@@ -57,7 +60,7 @@
  10     FORMAT (/,' <<<< Ensemble/Perturbation Run: ',i5.5,' >>>>',/)
 #endif
         WRITE (stdout,20) ' INITIAL: Configurating and initializing ...'
- 20     format(/,a,/)
+ 20     FORMAT (/,a,/)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -130,6 +133,7 @@
         CALL get_grid (ng)
         if (exit_flag.ne.0) RETURN
 #endif
+
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -138,6 +142,7 @@
 !
         CALL set_scoord (ng)
 #endif
+
 #ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
@@ -156,14 +161,15 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
             CALL metrics (ng, TILE)
-#if defined MASKING && defined WRITE_WATER
+#if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
             CALL wpoints (ng, TILE)
 #endif
           END DO
         END DO
 !$OMP END PARALLEL DO
-!
+
 #if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
+!
 !-----------------------------------------------------------------------
 !  Set horizontal mixing coefficients. Rescale according to the local
 !  grid size. If applicable, increases horizontal mixing in sponge
@@ -179,6 +185,7 @@
         END DO
 !$OMP END PARALLEL DO
 #endif
+
 #ifdef NUDGING_COFF
 !
 !-----------------------------------------------------------------------
@@ -200,8 +207,9 @@
 !  Initialize model state variables and forcing.  This part is
 !  executed for each ensemble run.
 !=======================================================================
-!
+
 #if defined SOLVE3D && defined ANA_INITIAL
+!
 !-----------------------------------------------------------------------
 !  Compute initial time-evolving depths with zero free-surface.  The
 !  grid depths are sometimes needed during analytical initialization.
@@ -238,6 +246,7 @@
 #else
       CALL get_initial (ng)
 #endif
+
 #if defined BIOLOGY && defined ANA_BIOLOGY && defined SOLVE3D
 !
 !  Analytical initial conditions for biology.
@@ -253,7 +262,9 @@
 !$OMP END PARALLEL DO
       END IF
 #endif
-#if defined SEDIMENT && defined ANA_SEDIMENT && defined SOLVE3D
+
+#if (defined SEDIMENT || defined BBL_MODEL) && defined ANA_SEDIMENT && \
+     defined SOLVE3D
 !
 !  Analytical initial conditions for sediment.
 !
@@ -268,9 +279,10 @@
 !$OMP END PARALLEL DO
       END IF
 #endif
-      if (exit_flag.ne.0) RETURN
-!
+      IF (exit_flag.ne.0) RETURN
+
 #ifdef PERTURBATION
+!
 !-----------------------------------------------------------------------
 !  Perturb initial conditions with a ramdon linear combination of
 !  error subspaces.
@@ -280,7 +292,9 @@
       CALL res_pert (ng)
 # endif
 #endif
+
 #ifdef SOLVE3D
+!
 !-----------------------------------------------------------------------
 !  Compute initial time-evolving depths.
 !-----------------------------------------------------------------------
@@ -308,7 +322,10 @@
 !$OMP END PARALLEL DO
 !
 !-----------------------------------------------------------------------
-!  Compute initial S-coordinates vertical velocity.
+!  Compute initial S-coordinates vertical velocity. Compute initial
+!  density anomaly from potential temperature and salinity via equation
+!  of state for seawater.  Also compute other equation of state related
+!  quatities.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
@@ -316,6 +333,7 @@
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
           CALL omega (ng, TILE)
+          CALL rho_eos (ng, TILE)
         END DO
       END DO
 !$OMP END PARALLEL DO
@@ -328,56 +346,9 @@
 !-----------------------------------------------------------------------
 !
       CALL get_data (ng)
-      if (exit_flag.ne.0) RETURN
-!
-#ifdef BBL_MODEL
-!-----------------------------------------------------------------------
-!  Set initial bottom sediment size and density.  Use analytical
-!  functions or read in from forcing NetCDF file.
-!-----------------------------------------------------------------------
-!
-# ifdef ANA_BSEDIM
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1
-          CALL ana_bsedim (ng, TILE)
-        END DO
-      END DO
-!$OMP END PARALLEL DO
-# else
-      CALL get_2dfld (ng, idSsiz, ncfrcid(idSsiz,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update, LBi, UBi, LBj, UBj, 1, 1,                 &
-#  ifdef MASKING
-     &                GRID(ng) % rmask(LBi,LBj),                        &
-#  endif
-     &                BBL(ng) % Ssize(LBi,LBj))
-      CALL get_2dfld (ng, idSden, ncfrcid(idSden,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update, LBi, UBi, LBj, UBj, 1, 1,                 &
-#  ifdef MASKING
-     &                GRID(ng) % rmask(LBi,LBj),                        &
-#  endif
-     &                BBL(ng) % Sdens(LBi,LBj))
-      if (exit_flag.ne.0) RETURN
-# endif
-#endif
+      IF (exit_flag.ne.0) RETURN
+
 #ifdef SOLVE3D
-!-----------------------------------------------------------------------
-!  Compute initial density anomaly from potential temperature and
-!  salinity via equation of state for seawater.  Also compute other
-!  equation of state related quatities.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1
-          CALL rho_eos (ng, TILE)
-        END DO
-      END DO
-!$OMP END PARALLEL DO
 !
 !-----------------------------------------------------------------------
 !  Compute grid stiffness.
@@ -392,6 +363,7 @@
       END DO
 !$OMP END PARALLEL DO
 #endif
+
 #if defined FLOATS || defined STATIONS
 !
 !-----------------------------------------------------------------------
@@ -401,6 +373,7 @@
 !
       CALL grid_coords (ng)
 #endif
+
 #ifdef PROFILE
 !
 !-----------------------------------------------------------------------

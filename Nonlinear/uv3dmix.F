@@ -4,7 +4,7 @@
 
 /*
 **======================================================================
-** Copyright (c) 2003 ROMS/TOMS Group                                  !
+** Copyright (c) 2004 ROMS/TOMS Group                                  !
 **================================================= Hernan G. Arango ===
 **                                                                     !
 ** This routine computes horizontal viscosity of momentum.             !
@@ -29,3 +29,4 @@
 # endif
 
 #endif
+

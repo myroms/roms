@@ -32,7 +32,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-      CALL mpi_barrier (MPI_COMM_WORLD, MyError)
+      CALL mpi_barrier (OCN_COMM_WORLD, MyError)
 # endif
 
       RETURN
@@ -75,22 +75,37 @@
 !  Local variable declarations
 !
       integer :: MyError
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 39)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MP_FLOAT, MyMaster, MPI_COMM_WORLD,     &
+      CALL mpi_bcast (A, Asize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,     &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         WRITE (stdout,10) 'BCAST', MyRank, MyError
+ 10     FORMAT (/,' MP_BCASTF - error during ',a,' call, Node = ',i3.3, &
+     &            ' Error = ',i3)
         exit_flag=2
       END IF
 # endif
-
- 10   FORMAT (/,' MP_BCASTF - error during ',a,' call, Node = ',i3.3,   &
-     &          ' Error = ',i3)
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 39)
+# endif
 
       RETURN
       END SUBROUTINE mp_bcastf
@@ -132,22 +147,38 @@
 !  Local variable declarations
 !
       integer :: MyError
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 39)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MPI_INTEGER, MyMaster, MPI_COMM_WORLD,  &
+      CALL mpi_bcast (A, Asize, MPI_INTEGER, MyMaster, OCN_COMM_WORLD,  &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         WRITE (stdout,10) 'BCAST', MyRank, MyError
+ 10     FORMAT (/,' MP_BCASTI - error during ',a,' call, Node = ',i3.3, &
+     &            ' Error = ',i3)
         exit_flag=2
       END IF
 # endif
-
- 10   FORMAT (/,' MP_BCASTI - error during ',a,' call, Node = ',i3.3,   &
-     &          ' Error = ',i3)
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 39)
+# endif
 
       RETURN
       END SUBROUTINE mp_bcasti
@@ -189,22 +220,38 @@
 !  Local variable declarations
 !
       integer :: MyError
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 39)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MPI_LOGICAL, MyMaster, MPI_COMM_WORLD,  &
+      CALL mpi_bcast (A, Asize, MPI_LOGICAL, MyMaster, OCN_COMM_WORLD,  &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         WRITE (stdout,10) 'BCAST', MyRank, MyError
+ 10     FORMAT (/,' MP_BCASTL - error during ',a,' call, Node = ',i3.3, &
+     &            ' Error = ',i3)
         exit_flag=2
       END IF
 # endif
-
- 10   FORMAT (/,' MP_BCASTL - error during ',a,' call, Node = ',i3.3,   &
-     &          ' Error = ',i3)
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 39)
+# endif
 
       RETURN
       END SUBROUTINE mp_bcastl
@@ -246,22 +293,38 @@
 !  Local variable declarations
 !
       integer :: MyError
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 39)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MPI_BYTE, MyMaster,                     &
-     &                MPI_COMM_WORLD, MyError)
+      CALL mpi_bcast (A, Asize, MPI_BYTE, MyMaster, OCN_COMM_WORLD,     &
+     &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         WRITE (stdout,10) 'BCAST', MyRank, MyError
+ 10     FORMAT (/,' MP_BCASTS - error during ',a,' call, Node = ',i3.3, &
+     &            ' Error = ',i3)
         exit_flag=2
       END IF
 # endif
-
- 10   FORMAT (/,' MP_BCASTS - error during ',a,' call, Node = ',i3.3,   &
-     &          ' Error = ',i3)
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 39)
+# endif
 
       RETURN
       END SUBROUTINE mp_bcasts
@@ -319,6 +382,15 @@
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1)) :: Asend
       real(r8), dimension((UBi-LBi+1)*(UBk-LBk+1),                      &
      &                    0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 43)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Pack boundary data.  Zero-out boundary array except points updated
@@ -346,7 +418,7 @@
 !
 # ifdef MPI
       CALL mpi_allgather (Asend, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT, &
-     &                    MPI_COMM_WORLD, MyError)
+     &                    OCN_COMM_WORLD, MyError)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -364,6 +436,14 @@
           END DO
         END DO
       END DO
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 43)
+# endif
 
       RETURN
       END SUBROUTINE mp_boundary
@@ -411,13 +491,22 @@
       integer :: MyError, Nnodes, i, rank
 
       real(r8), dimension(Npts,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 44)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Collect data from all nodes.
 !-----------------------------------------------------------------------
 !
       CALL mpi_allgather (A, Npts, MP_FLOAT, Arecv, Npts, MP_FLOAT,     &
-     &                    MPI_COMM_WORLD, MyError)
+     &                    OCN_COMM_WORLD, MyError)
 !
 !  Pack data according to special values: sum or ignore.
 !
@@ -438,6 +527,14 @@
           END DO
         END DO
       END IF
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 44)
+# endif
 
       RETURN
       END SUBROUTINE mp_collect
@@ -534,6 +631,15 @@
       real(r8), dimension((Nghost+pp)*(UBi-LBi+1)*(UBk-LBk+1)) :: ArecvN
 
       character*80 :: Estring
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 38)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Send and recive tile boundary data.
@@ -667,19 +773,19 @@
 # if defined MPI
       IF (Wexchange) THEN
         CALL mpi_irecv (ArecvW, EWsize, MP_FLOAT, Wtile, Etag,          &
-     &                  MPI_COMM_WORLD, Wrequest, Werror)
+     &                  OCN_COMM_WORLD, Wrequest, Werror)
       END IF
       IF (Eexchange) THEN
         CALL mpi_irecv (ArecvE, EWsize, MP_FLOAT, Etile, Wtag,          &
-     &                  MPI_COMM_WORLD, Erequest, Eerror)
+     &                  OCN_COMM_WORLD, Erequest, Eerror)
       END IF
       IF (Wexchange) THEN
         CALL mpi_send  (AsendW, JKsizeW, MP_FLOAT, Wtile, Wtag,         &
-     &                  MPI_COMM_WORLD, Werror)
+     &                  OCN_COMM_WORLD, Werror)
       END IF
       IF (Eexchange) THEN
         CALL mpi_send  (AsendE, JKsizeE, MP_FLOAT, Etile, Etag,         &
-     &                  MPI_COMM_WORLD, Eerror)
+     &                  OCN_COMM_WORLD, Eerror)
       END IF
       IF (Eexchange) THEN
         CALL mpi_wait (Erequest, status(1,3), Eerror)
@@ -817,19 +923,19 @@
 # if defined MPI
       IF (Sexchange) THEN
         CALL mpi_irecv (ArecvS, NSsize, MP_FLOAT, Stile, Ntag,          &
-     &                  MPI_COMM_WORLD, Srequest, Serror)
+     &                  OCN_COMM_WORLD, Srequest, Serror)
       END IF
       IF (Nexchange) THEN
         CALL mpi_irecv (ArecvN, NSsize, MP_FLOAT, Ntile, Stag,          &
-     &                  MPI_COMM_WORLD, Nrequest, Nerror)
+     &                  OCN_COMM_WORLD, Nrequest, Nerror)
       END IF
       IF (Sexchange) THEN
         CALL mpi_send  (AsendS, IKsizeS, MP_FLOAT, Stile, Stag,         &
-     &                  MPI_COMM_WORLD, Serror)
+     &                  OCN_COMM_WORLD, Serror)
       END IF
       IF (Nexchange) THEN
         CALL mpi_send  (AsendN, IKsizeN, MP_FLOAT, Ntile, Ntag,         &
-     &                  MPI_COMM_WORLD, Nerror)
+     &                  OCN_COMM_WORLD, Nerror)
       END IF
       IF (Nexchange) THEN
         CALL mpi_wait (Nrequest, status(1,4), Nerror)
@@ -875,6 +981,15 @@
           END DO
         END DO
       END IF
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 38)
+# endif
+
       RETURN
       END SUBROUTINE mp_exchange
 
@@ -962,6 +1077,15 @@
       real(r8), dimension((UBi-LBi+1)*(UBj-LBj+1)*(UBk-LBk+1)) :: Asend
       real(r8), dimension((UBi-LBi+1)*(UBj-LBj+1)*(UBk-LBk+1),          &
      &                    NtileI(ng)*NtileJ(ng)-1) :: Arecv
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 41)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set horizontal starting and ending indices for parallel domain
@@ -1070,7 +1194,7 @@
       IF (MyRank.eq.MyMaster) THEN
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
           CALL mpi_irecv (Arecv(1,rank), MySize(rank), MP_FLOAT, rank,  &
-     &                    rank+5, MPI_COMM_WORLD, Rrequest(rank),       &
+     &                    rank+5, OCN_COMM_WORLD, Rrequest(rank),       &
      &                    MyError)
         END DO
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
@@ -1090,7 +1214,7 @@
         END DO
       ELSE
         CALL mpi_isend (Asend, MySize(MyRank), MP_FLOAT, MyMaster,      &
-     &                  MyRank+5, MPI_COMM_WORLD, Srequest, MyError)
+     &                  MyRank+5, OCN_COMM_WORLD, Srequest, MyError)
         CALL mpi_wait (Srequest, Sstatus, MyError)
       END IF
 
@@ -1110,6 +1234,15 @@
         Npts=ic
       END IF
 # endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 41)
+# endif
+
       RETURN
       END SUBROUTINE mp_gather
 
@@ -1164,6 +1297,15 @@
       real(r8), dimension(Asize,0:NtileI(ng)*NtileJ(ng)-1) :: Arecv
       real(r8), dimension(Asize) :: Areduce
       real(r8), dimension(Asize) :: Asend
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 40)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Collect and reduce requested scalar variables.
@@ -1187,12 +1329,12 @@
           handle=MPI_SUM
         END IF
         CALL mpi_allreduce (Asend(i), Areduce(i), 1, MP_FLOAT, handle,  &
-     &                      MPI_COMM_WORLD, Rerror)
+     &                      OCN_COMM_WORLD, Rerror)
       END DO
 # elif defined ALLGATHER
       CALL mpi_allgather (Asend, Asize, MP_FLOAT,                       &
      &                    Arecv, Asize, MP_FLOAT,                       &
-     &                    MPI_COMM_WORLD, Rerror)
+     &                    OCN_COMM_WORLD, Rerror)
       DO i=1,Asize
         Areduce(i)=Arecv(i,0)
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
@@ -1209,7 +1351,7 @@
       IF (MyRank.eq.MyMaster) THEN
         DO rank=1,NtileI(ng)*NtileJ(ng)-1
           CALL mpi_irecv (Arecv(1,rank), Asize, MP_FLOAT, rank,         &
-     &                    rank+500, MPI_COMM_WORLD, Rrequest(rank),     &
+     &                    rank+500, OCN_COMM_WORLD, Rrequest(rank),     &
      &                    Rerror)
         END DO
         DO i=1,Asize
@@ -1229,7 +1371,7 @@
         END DO
       ELSE
         CALL mpi_isend (Asend, Asize, MP_FLOAT, MyMaster, MyRank+500,   &
-     &                  MPI_COMM_WORLD, Srequest, Serror)
+     &                  OCN_COMM_WORLD, Srequest, Serror)
         CALL mpi_wait (Srequest, Sstatus, Serror)
       END IF
 !
@@ -1237,7 +1379,7 @@
 !  group.
 !
       CALL mpi_bcast (Areduce, Asize, MP_FLOAT, MyMaster,               &
-     &                MPI_COMM_WORLD, Serror)
+     &                OCN_COMM_WORLD, Serror)
 # endif
 !
 !  Unpack.
@@ -1245,6 +1387,15 @@
       DO i=1,Asize
         A(i)=Areduce(i)
       END DO
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 40)
+# endif
+
       RETURN
       END SUBROUTINE mp_reduce
 
@@ -1330,6 +1481,15 @@
       integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Itile, Jtile
 
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: Arecv
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, 42)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set horizontal starting and ending indices for parallel domain
@@ -1401,10 +1561,12 @@
 !
 !  Broadcast data to all processes in the group, itself included.
 !
-      CALL mpi_bcast (A, MySize, MP_FLOAT, MyMaster, MPI_COMM_WORLD,    &
+      CALL mpi_bcast (A, MySize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,    &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         WRITE (stdout,10) 'BCAST', MyRank, MyError
+ 10     FORMAT (/,' MP_SCATTER - error during ',a,' call, Node = ',     &
+     &          i3.3, ' Error = ',i3)
         exit_flag=2
         RETURN
       END IF
@@ -1554,9 +1716,15 @@
       END IF
 #  endif
 # endif
+# ifdef PROFILE
 !
- 10   FORMAT (/,' MP_SCATTER - error during ',a,' call, Node = ',i3.3,  &
-     &          ' Error = ',i3)
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, 42)
+# endif
+
       RETURN
       END SUBROUTINE mp_scatter
 
@@ -1612,7 +1780,7 @@
       END IF
       nc=nc+1
       IF (Master) THEN
-        write (10,'(a,i3.3,a,a)') 'file ', nc, ': ', TRIM(name)
+        WRITE (10,'(a,i3.3,a,a)') 'file ', nc, ': ', TRIM(name)
         CALL my_flush (10)
       END IF
 !

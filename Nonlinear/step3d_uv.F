@@ -15,7 +15,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC step3d_uv
+      PUBLIC  :: step3d_uv
 
       CONTAINS
 !
@@ -25,6 +25,9 @@
 !
       USE mod_param
       USE mod_coupling
+# ifdef DIAGNOSTICS_UV
+      USE mod_diags
+# endif
       USE mod_forces
       USE mod_grid
       USE mod_mixing
@@ -69,6 +72,16 @@
      &                     COUPLING(ng) % DV_avg2,                      &
      &                     OCEAN(ng) % ru,                              &
      &                     OCEAN(ng) % rv,                              &
+# ifdef DIAGNOSTICS_UV
+     &                     DIAGS(ng) % DiaU2wrk,                        &
+     &                     DIAGS(ng) % DiaV2wrk,                        &
+     &                     DIAGS(ng) % DiaU2int,                        &
+     &                     DIAGS(ng) % DiaV2int,                        &
+     &                     DIAGS(ng) % DiaU3wrk,                        &
+     &                     DIAGS(ng) % DiaV3wrk,                        &
+     &                     DIAGS(ng) % DiaRU,                           &
+     &                     DIAGS(ng) % DiaRV,                           &
+# endif
      &                     OCEAN(ng) % u,                               &
      &                     OCEAN(ng) % v,                               &
      &                     OCEAN(ng) % ubar,                            &
@@ -96,6 +109,12 @@
      &                           Akv,                                   &
      &                           DU_avg1, DV_avg1, DU_avg2, DV_avg2,    &
      &                           ru, rv,                                &
+# ifdef DIAGNOSTICS_UV
+     &                           DiaU2wrk, DiaV2wrk,                    &
+     &                           DiaU2int, DiaV2int,                    &
+     &                           DiaU3wrk, DiaV3wrk,                    &
+     &                           DiaRU,    DiaRV,                       &
+# endif
      &                           u, v, ubar, vbar, Huon, Hvom)
 !***********************************************************************
 !
@@ -141,6 +160,16 @@
       real(r8), intent(in) :: DV_avg2(LBi:,LBj:)
       real(r8), intent(in) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: rv(LBi:,LBj:,0:,:)
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaU2wrk(LBi:,LBj:,:)
+      real(r8), intent(inout) :: DiaV2wrk(LBi:,LBj:,:)
+      real(r8), intent(inout) :: DiaU2int(LBi:,LBj:,:)
+      real(r8), intent(inout) :: DiaV2int(LBi:,LBj:,:)
+      real(r8), intent(inout) :: DiaU3wrk(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
+#  endif
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
       real(r8), intent(out) :: ubar(LBi:,LBj:,:)
@@ -173,6 +202,16 @@
       real(r8), intent(in) :: DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(in) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaU2wrk(LBi:UBi,LBj:UBj,NDM2d)
+      real(r8), intent(inout) :: DiaV2wrk(LBi:UBi,LBj:UBj,NDM2d)
+      real(r8), intent(inout) :: DiaU2int(LBi:UBi,LBj:UBj,NDM2d)
+      real(r8), intent(inout) :: DiaV2int(LBi:UBi,LBj:UBj,NDM2d)
+      real(r8), intent(inout) :: DiaU3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+      real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+      real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+#  endif
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(out) :: ubar(LBi:UBi,LBj:UBj,3)
@@ -181,12 +220,12 @@
       real(r8), intent(out) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
 # endif
 !
-!  Imported variable declarations.
+!  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, is, j, k
+      integer :: i, idiag, is, j, k
 
-      real(r8) :: cff, cff1, cff2
+      real(r8) :: cff, cff1, cff2, fac
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: AK
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
@@ -195,6 +234,10 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: Hzk
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: oHz
+# ifdef DIAGNOSTICS_UV
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: wrk
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,1:NDM2d-1) :: Dwrk
+# endif
 
 # include "set_bounds.h"
 !
@@ -208,7 +251,7 @@
           DO k=1,N(ng)
             AK(i,k)=0.5_r8*(Akv(i-1,j,k)+Akv(i,j,k))
             Hzk(i,k)=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))
-# ifdef SPLINES
+# if defined SPLINES || defined DIAGNOSTICS_UV
             oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
           END DO
@@ -232,6 +275,37 @@
             u(i,j,k,nnew)=(u(i,j,k,nnew)+DC(i,0)*ru(i,j,k,nrhs))
 # ifdef SPLINES
             u(i,j,k,nnew)=u(i,j,k,nnew)*oHz(i,k)
+# endif
+# ifdef DIAGNOSTICS_UV
+!
+!  Time step u-momentum diagnostic terms.
+!
+            DiaU3wrk(i,j,k,M3pgrd)=(DiaU3wrk(i,j,k,M3pgrd)+             &
+     &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3pgrd))*  &
+     &                             oHz(i,k)
+#  ifdef UV_COR
+            DiaU3wrk(i,j,k,M3fcor)=(DiaU3wrk(i,j,k,M3fcor)+             &
+     &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3fcor))*  &
+     &                             oHz(i,k)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+            DiaU3wrk(i,j,k,M3hvis)=DiaU3wrk(i,j,k,M3hvis)*oHz(i,k)
+#  endif
+#  ifdef UV_ADV
+            DiaU3wrk(i,j,k,M3hadv)=(DiaU3wrk(i,j,k,M3hadv)+             &
+     &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3hadv))*  &
+     &                             oHz(i,k)
+            DiaU3wrk(i,j,k,M3vadv)=(DiaU3wrk(i,j,k,M3vadv)+             &
+     &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3vadv))*  &
+     &                             oHz(i,k)
+#  endif
+            DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)*oHz(i,k)
+#  ifdef BODYFORCE
+            DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+              &
+     &                             DC(i,0)*DiaRU(i,j,k,nrhs,M3vvis)*    &
+     &                             oHz(i,k)
+#  endif
+            DiaU3wrk(i,j,k,M3rate)=DiaU3wrk(i,j,k,M3rate)*oHz(i,k)
 # endif
           END DO
         END DO
@@ -277,8 +351,11 @@
         DO k=1,N(ng)
           DO i=IstrU,Iend
             DC(i,k)=DC(i,k)*AK(i,k)
-            u(i,j,k,nnew)=u(i,j,k,nnew)+                                &
-     &                    dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+            fac=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+            u(i,j,k,nnew)=u(i,j,k,nnew)+fac
+#  ifdef DIAGNOSTICS_UV
+            DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+fac
+#  endif
           END DO
         END DO
 # else
@@ -320,17 +397,31 @@
           END DO
         END DO
 !
-!  Compute new solution by back subtitution.
+!  Compute new solution by back substitution.
 !
         DO i=IstrU,Iend
+#  ifdef DIAGNOSTICS_UV
+          wrk(i,N(ng))=u(i,j,N(ng),nnew)*oHz(i,N(ng))
+#  endif
           DC(i,N(ng))=(DC(i,N(ng))-FC(i,N(ng)-1)*DC(i,N(ng)-1))/        &
      &                (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
           u(i,j,N(ng),nnew)=DC(i,N(ng))
+#  ifdef DIAGNOSTICS_UV
+          DiaU3wrk(i,j,N(ng),M3vvis)=DiaU3wrk(i,j,N(ng),M3vvis)+        &
+     &                               u(i,j,N(ng),nnew)-wrk(i,N(ng))
+#  endif
         END DO
         DO k=N(ng)-1,1,-1
           DO i=IstrU,Iend
+#  ifdef DIAGNOSTICS_UV
+            wrk(i,k)=u(i,j,k,nnew)*oHz(i,k)
+#  endif
             DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
             u(i,j,k,nnew)=DC(i,k)
+#  ifdef DIAGNOSTICS_UV
+            DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+              &
+     &                             u(i,j,k,nnew)-wrk(i,k)
+#  endif
           END DO
         END DO
 # endif
@@ -341,16 +432,70 @@
         DO i=IstrU,Iend
           CF(i,0)=Hzk(i,1)
           DC(i,0)=u(i,j,1,nnew)*Hzk(i,1)
+# ifdef DIAGNOSTICS_UV
+          Dwrk(i,M2pgrd)=DiaU3wrk(i,j,1,M3pgrd)*Hzk(i,1)
+          Dwrk(i,M2strs)=DiaU3wrk(i,j,1,M3vvis)*Hzk(i,1)
+#  ifdef UV_COR
+          Dwrk(i,M2fcor)=DiaU3wrk(i,j,1,M3fcor)*Hzk(i,1)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+          Dwrk(i,M2hvis)=DiaU3wrk(i,j,1,M3hvis)*Hzk(i,1)
+#  endif
+#  ifdef UV_ADV
+          Dwrk(i,M2hadv)=DiaU3wrk(i,j,1,M3hadv)*Hzk(i,1)
+#  endif
+# endif
         END DO
         DO k=2,N(ng)
           DO i=IstrU,Iend
             CF(i,0)=CF(i,0)+Hzk(i,k)
             DC(i,0)=DC(i,0)+u(i,j,k,nnew)*Hzk(i,k)
+# ifdef DIAGNOSTICS_UV
+            Dwrk(i,M2pgrd)=Dwrk(i,M2pgrd)+                              &
+     &                     DiaU3wrk(i,j,k,M3pgrd)*Hzk(i,k)
+            Dwrk(i,M2strs)=Dwrk(i,M2strs)+                              &
+     &                     DiaU3wrk(i,j,k,M3vvis)*Hzk(i,k)
+#  ifdef UV_COR
+            Dwrk(i,M2fcor)=Dwrk(i,M2fcor)+                              &
+     &                     DiaU3wrk(i,j,k,M3fcor)*Hzk(i,k)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+            Dwrk(i,M2hvis)=Dwrk(i,M2hvis)+                              &
+     &                     DiaU3wrk(i,j,k,M3hvis)*Hzk(i,k)
+#  endif
+#  ifdef UV_ADV
+            Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                              &
+     &                     DiaU3wrk(i,j,k,M3hadv)*Hzk(i,k)
+#  endif
+# endif
           END DO
         END DO
         DO i=IstrU,Iend
           DC(i,0)=(DC(i,0)*on_u(i,j)-DU_avg1(i,j))/                     &
      &            (CF(i,0)*on_u(i,j))
+# ifdef DIAGNOSTICS_UV
+          Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*on_u(i,j)-                     &
+     &                    DiaU2wrk(i,j,M2pgrd))/                        &
+     &                   (CF(i,0)*on_u(i,j))
+          Dwrk(i,M2strs)=(Dwrk(i,M2strs)*on_u(i,j)-                     &
+     &                    DiaU2wrk(i,j,M2strs))/                        &
+     &                   (CF(i,0)*on_u(i,j))
+#  ifdef UV_COR
+          Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*on_u(i,j)-                     &
+     &                    DiaU2wrk(i,j,M2fcor))/                        &
+     &                   (CF(i,0)*on_u(i,j))
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+          Dwrk(i,M2hvis)=(Dwrk(i,M2hvis)*on_u(i,j)-                     &
+     &                    DiaU2wrk(i,j,M2hvis))/                        &
+     &                   (CF(i,0)*on_u(i,j))
+#  endif
+#  ifdef UV_ADV
+          Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*on_u(i,j)-                     &
+     &                    DiaU2wrk(i,j,M2hadv))/                        &
+     &                   (CF(i,0)*on_u(i,j))
+#  endif
+# endif
         END DO
 !
 !  Couple and update new solution.
@@ -360,6 +505,24 @@
             u(i,j,k,nnew)=u(i,j,k,nnew)-DC(i,0)
 # ifdef MASKING
             u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
+# endif
+# ifdef DIAGNOSTICS_UV
+            DiaU3wrk(i,j,k,M3pgrd)=DiaU3wrk(i,j,k,M3pgrd)-              &
+     &                             Dwrk(i,M2pgrd)
+            DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)-              &
+     &                             Dwrk(i,M2strs)
+#  ifdef UV_COR
+            DiaU3wrk(i,j,k,M3fcor)=DiaU3wrk(i,j,k,M3fcor)-              &
+     &                             Dwrk(i,M2fcor)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+            DiaU3wrk(i,j,k,M3hvis)=DiaU3wrk(i,j,k,M3hvis)-              &
+     &                             Dwrk(i,M2hvis)
+#  endif
+#  ifdef UV_ADV
+            DiaU3wrk(i,j,k,M3hadv)=DiaU3wrk(i,j,k,M3hadv)-              &
+     &                             Dwrk(i,M2hadv)
+#  endif
 # endif
           END DO
         END DO
@@ -374,7 +537,7 @@
             DO k=1,N(ng)
               AK(i,k)=0.5_r8*(Akv(i,j-1,k)+Akv(i,j,k))
               Hzk(i,k)=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))
-# ifdef SPLINES
+# if defined SPLINES || defined DIAGNOSTICS_UV
               oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
             END DO
@@ -398,6 +561,37 @@
               v(i,j,k,nnew)=(v(i,j,k,nnew)+DC(i,0)*rv(i,j,k,nrhs))
 # ifdef SPLINES
               v(i,j,k,nnew)=v(i,j,k,nnew)*oHz(i,k)
+# endif
+# ifdef DIAGNOSTICS_UV
+!
+!  Time step v-momentum diagnostic terms.
+!
+              DiaV3wrk(i,j,k,M3pgrd)=(DiaV3wrk(i,j,k,M3pgrd)+           &
+     &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3pgrd))*&
+     &                               oHz(i,k)
+#  ifdef UV_COR
+              DiaV3wrk(i,j,k,M3fcor)=(DiaV3wrk(i,j,k,M3fcor)+           &
+     &                               DC(i,0)*DiaRV(i,j,k,nrhs,M3fcor))* &
+     &                                                        oHz(i,k)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+              DiaV3wrk(i,j,k,M3hvis)=DiaV3wrk(i,j,k,M3hvis)*oHz(i,k)
+#  endif
+#  ifdef UV_ADV
+              DiaV3wrk(i,j,k,M3hadv)=(DiaV3wrk(i,j,k,M3hadv)+           &
+     &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3hadv))*&
+     &                               oHz(i,k)
+              DiaV3wrk(i,j,k,M3vadv)=(DiaV3wrk(i,j,k,M3vadv)+           &
+     &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3vadv))*&
+     &                               oHz(i,k)
+#  endif
+              DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)*oHz(i,k)
+#  ifdef BODYFORCE
+              DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)+            &
+     &                               DC(i,0)*DiaRV(i,j,k,nrhs,M3vvis)*  &
+     &                               oHz(i,k)
+#  endif
+              DiaV3wrk(i,j,k,M3rate)=DiaV3wrk(i,j,k,M3rate)*oHz(i,k)
 # endif
             END DO
           END DO
@@ -443,8 +637,11 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               DC(i,k)=DC(i,k)*AK(i,k)
-              v(i,j,k,nnew)=v(i,j,k,nnew)+                              &
-     &                      dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+              fac=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+              v(i,j,k,nnew)=v(i,j,k,nnew)+fac
+#  ifdef DIAGNOSTICS_UV
+              DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)+fac
+#  endif
             END DO
           END DO
 # else
@@ -486,17 +683,31 @@
             END DO
           END DO
 !
-!  Compute new solution by back subtitution.
+!  Compute new solution by back substitution.
 !
           DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_UV
+            wrk(i,N(ng))=v(i,j,N(ng),nnew)*oHz(i,N(ng))
+#  endif
             DC(i,N(ng))=(DC(i,N(ng))-FC(i,N(ng)-1)*DC(i,N(ng)-1))/      &
      &                  (BC(i,N(ng))-FC(i,N(ng)-1)*CF(i,N(ng)-1))
             v(i,j,N(ng),nnew)=DC(i,N(ng))
+#  ifdef DIAGNOSTICS_UV
+            DiaV3wrk(i,j,N(ng),M3vvis)=DiaV3wrk(i,j,N(ng),M3vvis)+      &
+     &                                 v(i,j,N(ng),nnew)-wrk(i,N(ng))
+#  endif
           END DO
           DO k=N(ng)-1,1,-1
             DO i=Istr,Iend
+#  ifdef DIAGNOSTICS_UV
+              wrk(i,k)=v(i,j,k,nnew)*oHz(i,k)
+#  endif
               DC(i,k)=DC(i,k)-CF(i,k)*DC(i,k+1)
               v(i,j,k,nnew)=DC(i,k)
+#  ifdef DIAGNOSTICS_UV
+              DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)+            &
+     &                               v(i,j,k,nnew)-wrk(i,k)
+#  endif
             END DO
           END DO
 # endif
@@ -507,16 +718,70 @@
           DO i=Istr,Iend
             CF(i,0)=Hzk(i,1)
             DC(i,0)=v(i,j,1,nnew)*Hzk(i,1)
+# ifdef DIAGNOSTICS_UV
+            Dwrk(i,M2pgrd)=DiaV3wrk(i,j,1,M3pgrd)*Hzk(i,1)
+            Dwrk(i,M2strs)=DiaV3wrk(i,j,1,M3vvis)*Hzk(i,1)
+#  ifdef UV_COR
+            Dwrk(i,M2fcor)=DiaV3wrk(i,j,1,M3fcor)*Hzk(i,1)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+            Dwrk(i,M2hvis)=DiaV3wrk(i,j,1,M3hvis)*Hzk(i,1)
+#  endif
+#  ifdef UV_ADV
+            Dwrk(i,M2hadv)=DiaV3wrk(i,j,1,M3hadv)*Hzk(i,1)
+#  endif
+# endif
           END DO
           DO k=2,N(ng)
             DO i=Istr,Iend
               CF(i,0)=CF(i,0)+Hzk(i,k)
               DC(i,0)=DC(i,0)+v(i,j,k,nnew)*Hzk(i,k)
+# ifdef DIAGNOSTICS_UV
+              Dwrk(i,M2pgrd)=Dwrk(i,M2pgrd)+                            &
+     &                       DiaV3wrk(i,j,k,M3pgrd)*Hzk(i,k)
+              Dwrk(i,M2strs)=Dwrk(i,M2strs)+                            &
+     &                       DiaV3wrk(i,j,k,M3vvis)*Hzk(i,k)
+#  ifdef UV_COR
+              Dwrk(i,M2fcor)=Dwrk(i,M2fcor)+                            &
+     &                       DiaV3wrk(i,j,k,M3fcor)*Hzk(i,k)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+              Dwrk(i,M2hvis)=Dwrk(i,M2hvis)+                            &
+     &                       DiaV3wrk(i,j,k,M3hvis)*Hzk(i,k)
+#  endif
+#  ifdef UV_ADV
+              Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                            &
+     &                       DiaV3wrk(i,j,k,M3hadv)*Hzk(i,k)
+#  endif
+# endif
             END DO
           END DO
           DO i=Istr,Iend
             DC(i,0)=(DC(i,0)*om_v(i,j)-DV_avg1(i,j))/                   &
      &              (CF(i,0)*om_v(i,j))
+# ifdef DIAGNOSTICS_UV
+            Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*om_v(i,j)-                   &
+     &                      DiaV2wrk(i,j,M2pgrd))/                      &
+     &                     (CF(i,0)*om_v(i,j))
+            Dwrk(i,M2strs)=(Dwrk(i,M2strs)*om_v(i,j)-                   &
+     &                      DiaV2wrk(i,j,M2strs))/                      &
+     &                     (CF(i,0)*om_v(i,j))
+#  ifdef UV_COR
+            Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*om_v(i,j)-                   &
+     &                      DiaV2wrk(i,j,M2fcor))/                      &
+     &                     (CF(i,0)*om_v(i,j))
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+            Dwrk(i,M2hvis)=(Dwrk(i,M2hvis)*om_v(i,j)-                   &
+     &                      DiaV2wrk(i,j,M2hvis))/                      &
+     &                     (CF(i,0)*om_v(i,j))
+#  endif
+#  ifdef UV_ADV
+            Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*om_v(i,j)-                   &
+     &                      DiaV2wrk(i,j,M2hadv))/                      &
+     &                     (CF(i,0)*om_v(i,j))
+#  endif
+# endif
           END DO
 !
 !  Couple and update new solution.
@@ -526,6 +791,24 @@
               v(i,j,k,nnew)=v(i,j,k,nnew)-DC(i,0)
 # ifdef MASKING
               v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
+# endif
+# ifdef DIAGNOSTICS_UV
+              DiaV3wrk(i,j,k,M3pgrd)=DiaV3wrk(i,j,k,M3pgrd)-            &
+     &                               Dwrk(i,M2pgrd)
+              DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)-            &
+     &                               Dwrk(i,M2strs)
+#  ifdef UV_COR
+              DiaV3wrk(i,j,k,M3fcor)=DiaV3wrk(i,j,k,M3fcor)-            &
+     &                               Dwrk(i,M2fcor)
+#  endif
+#  if defined UV_VIS2 || defined UV_VIS4
+              DiaV3wrk(i,j,k,M3hvis)=DiaV3wrk(i,j,k,M3hvis)-            &
+     &                               Dwrk(i,M2hvis)
+#  endif
+#  ifdef UV_ADV
+              DiaV3wrk(i,j,k,M3hadv)=DiaV3wrk(i,j,k,M3hadv)-            &
+     &                               Dwrk(i,M2hadv)
+#  endif
 # endif
             END DO
           END DO
@@ -553,19 +836,16 @@
       DO is=1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)
-        IF (INT(Dsrc(is)).eq.0) THEN
-          IF (((Istr.le.i).and.(i.le.Iend+1)).and.                      &
-     &        ((Jstr.le.j).and.(j.le.Jend))) THEN
+        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
+     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+          IF (INT(Dsrc(is)).eq.0) THEN
             DO k=1,N(ng)
               u(i,j,k,nnew)=Qsrc(is,k)/                                 &
      &                      (on_u(i,j)*                                 &
      &                       0.5_r8*(z_w(i-1,j,k)-z_w(i-1,j,k-1)+       &
      &                               z_w(i  ,j,k)-z_w(i  ,j,k-1)))
             END DO
-          END IF
-        ELSE
-          IF (((Istr.le.i).and.(i.le.Iend)).and.                        &
-     &        ((Jstr.le.j).and.(j.le.Jend+1))) THEN
+          ELSE
             DO k=1,N(ng)
                 v(i,j,k,nnew)=Qsrc(is,k)/                               &
      &                        (om_v(i,j)*                               &
@@ -622,7 +902,27 @@
           CF(i,0)=DC(i,0)*(CF(i,0)-DU_avg1(i,j))
           ubar(i,j,1)=DC(i,0)*DU_avg1(i,j)
           ubar(i,j,2)=ubar(i,j,1)
+# ifdef DIAGNOSTICS_UV
+!
+!  Compute the 2D time-rate of change term.
+!
+          DiaU2wrk(i,j,M2rate)=ubar(i,j,1)-DiaU2int(i,j,M2rate)*DC(i,0)
+          DiaU2int(i,j,M2rate)=ubar(i,j,1)/DC(i,0)
+!!        DiaU2wrk(i,j,M2rate)=ubar(i,j,1)-DiaU2int(i,j,M2rate)
+!!        DiaU2int(i,j,M2rate)=ubar(i,j,1)
+# endif
         END DO
+# ifdef DIAGNOSTICS_UV
+!
+!  Convert the units of the fast-time integrated change in mass flux
+!  diagnostic values to change in velocity (m s-1).
+!
+        DO idiag=1,NDM2d-1
+          DO i=IU_RANGE
+            DiaU2wrk(i,j,idiag)=DC(i,0)*DiaU2wrk(i,j,idiag)
+          END DO
+        END DO
+# endif
 !
 !  Replace incorrect vertical mean with more accurate barotropic
 !  component, ubar=DU_avg1/(D*on_u).  Recall that, D=CF(:,0).
@@ -635,6 +935,13 @@
 !!# endif
             Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
             FC(i,0)=FC(i,0)+Huon(i,j,k)
+# ifdef DIAGNOSTICS_UV
+!
+!  Compute the 3D time-rate-of-change diagnostic value.
+!
+            DiaU3wrk(i,j,k,M3rate)=u(i,j,k,nnew)-DiaU3wrk(i,j,k,M3rate)
+!!          DiaU3wrk(i,j,k,M3rate)=u(i,j,k,nnew)-u(i,j,k,nstp)
+# endif
           END DO
         END DO
 !
@@ -675,7 +982,28 @@
             CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))
             vbar(i,j,1)=DC(i,0)*DV_avg1(i,j)
             vbar(i,j,2)=vbar(i,j,1)
+# ifdef DIAGNOSTICS_UV
+!
+! Compute the 2D time-rate of change term.
+!
+            DiaV2wrk(i,j,M2rate)=vbar(i,j,1)-                           &
+     &                           DiaV2int(i,j,M2rate)*DC(i,0)
+            DiaV2int(i,j,M2rate)=vbar(i,j,1)/DC(i,0)
+!!          DiaV2wrk(i,j,M2rate)=vbar(i,j,1)-DiaV2int(i,j,M2rate)
+!!          DiaV2int(i,j,M2rate)=vbar(i,j,1)
+# endif
           END DO
+# ifdef DIAGNOSTICS_UV
+!
+!  Convert the units of the fast-time integrated change in mass flux
+!  diagnostic values to change in velocity (m s-1).
+!
+          DO idiag=1,NDM2d-1
+            DO i=IV_RANGE
+              DiaV2wrk(i,j,idiag)=DC(i,0)*DiaV2wrk(i,j,idiag)
+            END DO
+          END DO
+# endif
 !
 !  Replace incorrect vertical mean with more accurate barotropic
 !  component, vbar=DV_avg1/(D*om_v).  Recall that, D=CF(:,0).
@@ -688,6 +1016,14 @@
 !!# endif
               Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
               FC(i,0)=FC(i,0)+Hvom(i,j,k)
+# ifdef DIAGNOSTICS_UV
+!
+!  Compute 3D time-rate-of-change diagnostic value.
+!
+              DiaV3wrk(i,j,k,M3rate)=v(i,j,k,nnew)-                     &
+     &                               DiaV3wrk(i,j,k,M3rate)
+!!            DiaV3wrk(i,j,k,M3rate)=v(i,j,k,nnew)-v(i,j,k,nstp)
+# endif
             END DO
           END DO
 !
@@ -714,13 +1050,15 @@
 !  velocity components, if so prescribed.
 !
       CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, u(:,:,:,nnew))
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        u(:,:,:,nnew))
       CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, v(:,:,:,nnew))
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        v(:,:,:,nnew))
       CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Huon)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), Huon)
       CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Hvom)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), Hvom)
 !
       DO k=1,2
         CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &

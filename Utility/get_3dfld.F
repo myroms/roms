@@ -398,19 +398,19 @@
         END IF
       END IF
 !
-  10  format(/,' GET_3DFLD   - unable to find requested variable: ',a,  &
-     &       /,15x,'in input NetCDF file: ',a)
-  20  format(/,' GET_3DFLD   - unable to open input NetCDF file: ',a)
-  30  format(/,' GET_3DFLD   - error while reading attribute: ',a)
-  40  format(/,' GET_3DFLD   - error while inquiring attributes for',   &
+  10  FORMAT (/,' GET_3DFLD   - unable to find requested variable: ',a, &
+     &        /,15x,'in input NetCDF file: ',a)
+  20  FORMAT (/,' GET_3DFLD   - unable to open input NetCDF file: ',a)
+  30  FORMAT (/,' GET_3DFLD   - error while reading attribute: ',a)
+  40  FORMAT (/,' GET_3DFLD   - error while inquiring attributes for',  &
      &        ' variable: ',a)
-  50  format(/,' GET_3DFLD   - cannot inquire about time variable from',&
-     &        ' input NetCDF file.')
-  60  format(/,' GET_3DFLD   - error while reading variable: ',a,2x,    &
+  50  FORMAT (/,' GET_3DFLD   - cannot inquire about time variable',    &
+     &          ' from input NetCDF file.')
+  60  FORMAT (/,' GET_3DFLD   - error while reading variable: ',a,2x,   &
      &       ' at TIME index = ',i4)
-  70  format(' GET_3DFLD   - ',a,/,17x,'(Min = ',1pe15.8,' Max = ',     &
+  70  FORMAT (' GET_3DFLD   - ',a,/,17x,'(Min = ',1pe15.8,' Max = ',    &
      &       1pe15.8,')')
-  80  format(' GET_3DFLD   - ',a,',',t64,'t = ',f12.4,/,17x,'(Min = ',  &
+  80  FORMAT (' GET_3DFLD   - ',a,',',t64,'t = ',f12.4,/,17x,'(Min = ', &
      &       1pe15.8,' Max = ',1pe15.8,')')
       RETURN
       END SUBROUTINE get_3dfld

@@ -23,7 +23,7 @@
 !  This subroutine computes biharmonic mixing of momentum, along       !
 !  constant  S-surfaces, from the  horizontal divergence  of the       !
 !  stress tensor. A transverse isotropy is assumed so the stress       !
-!  tensor is splitted into vertical and horizontal subtensors.         !
+!  tensor is split into vertical and horizontal subtensors.            !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
@@ -33,8 +33,8 @@
 !                                                                      !
 !      Sadourny, R. and K. Maynard, 1997: Formulations of              !
 !         lateral diffusion in geophysical fluid dynamics              !
-!         models, In "Numerical Methods of Atmospheric and             !
-!         Oceanic Modelling". Lin, Laprise, and Ritchie,               !
+!         models, In Numerical Methods of Atmospheric and              !
+!         Oceanic Modelling. Lin, Laprise, and Ritchie,                !
 !         Eds., NRC Research Press, 547-556.                           !
 !                                                                      !
 !      Griffies, S.M. and R.W. Hallberg, 2000: Biharmonic              !
@@ -47,7 +47,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC uv3dmix4_s
+      PUBLIC  :: uv3dmix4_s
 
       CONTAINS
 !
@@ -56,6 +56,10 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_coupling
+# ifdef DIAGNOSTICS_UV
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -87,6 +91,14 @@
      &                      GRID(ng) % pnom_r,                          &
      &                      MIXING(ng) % visc4_p,                       &
      &                      MIXING(ng) % visc4_r,                       &
+# ifdef DIAGNOSTICS_UV
+     &                      DIAGS(ng) % DiaRUfrc,                       &
+     &                      DIAGS(ng) % DiaRVfrc,                       &
+     &                      DIAGS(ng) % DiaU3wrk,                       &
+     &                      DIAGS(ng) % DiaV3wrk,                       &
+# endif
+     &                      COUPLING(ng) % rufrc,                       &
+     &                      COUPLING(ng) % rvfrc,                       &
      &                      OCEAN(ng) % u,                              &
      &                      OCEAN(ng) % v)
 # ifdef PROFILE
@@ -107,7 +119,11 @@
      &                            pm, pmon_p, pmon_r,                   &
      &                            pn, pnom_p, pnom_r,                   &
      &                            visc4_p, visc4_r,                     &
-     &                            u, v)
+# ifdef DIAGNOSTICS_UV
+     &                            DiaRUfrc, DiaRVfrc,                   &
+     &                            DiaU3wrk, DiaV3wrk,                   &
+# endif
+     &                            rufrc, rvfrc, u, v)
 !***********************************************************************
 !
       USE mod_param
@@ -137,6 +153,14 @@
       real(r8), intent(in) :: visc4_p(LBi:,LBj:)
       real(r8), intent(in) :: visc4_r(LBi:,LBj:)
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRUfrc(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaRVfrc(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaU3wrk(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: rufrc(LBi:,LBj:)
+      real(r8), intent(inout) :: rvfrc(LBi:,LBj:)
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
 # else
@@ -157,6 +181,14 @@
       real(r8), intent(in) :: visc4_p(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: visc4_r(LBi:UBi,LBj:UBj)
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRUfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
+      real(r8), intent(inout) :: DiaRVfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
+      real(r8), intent(inout) :: DiaU3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+#  endif
+      real(r8), intent(inout) :: rufrc(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: rvfrc(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 # endif
@@ -166,7 +198,7 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
-      real(r8) :: cff
+      real(r8) :: cff, cff1, cff2, fac
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapU
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapV
@@ -248,9 +280,9 @@
         IF (WESTERN_EDGE) THEN
           DO j=JU_RANGE
 #  ifdef WESTERN_WALL
-            LapU(IstrU-1,j)=0.0_r8
+            LapU(Istr,j)=0.0_r8
 #  else
-            LapU(IstrU-1,j)=LapU(IstrU,j)
+            LapU(Istr,j)=LapU(Istr+1,j)
 #  endif
           END DO
           DO j=JV_RANGE
@@ -289,9 +321,9 @@
           END DO
           DO i=IV_RANGE
 #  ifdef SOUTHERN_WALL
-            LapV(i,JstrV-1)=0.0_r8
+            LapV(i,Jstr)=0.0_r8
 #  else
-            LapV(i,JstrV-1)=LapV(i,JstrV)
+            LapV(i,Jstr)=LapV(i,Jstr+1)
 #  endif
           END DO
         END IF
@@ -314,22 +346,28 @@
 # endif
 # if !defined EW_PERIODIC && !defined NS_PERIODIC
         IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-          LapU(1,0)=0.5_r8*(LapU(2,0)+LapU(1,1))
-          LapV(0,1)=0.5_r8*(LapV(0,2)+LapV(1,1))
+          LapU(Istr  ,Jstr-1)=0.5_r8*(LapU(Istr+1,Jstr-1)+              &
+     &                                LapU(Istr  ,Jstr  ))
+          LapV(Istr-1,Jstr  )=0.5_r8*(LapV(Istr-1,Jstr+1)+              &
+     &                                LapV(Istr  ,Jstr  ))
         END IF
         IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-          LapU(Lm(ng)+1,0)=0.5_r8*(LapU(Lm(ng),0)+LapU(Lm(ng)+1,1))
-          LapV(Lm(ng)+1,1)=0.5_r8*(LapV(Lm(ng),1)+LapV(Lm(ng)+1,2))
+          LapU(Iend+1,Jstr-1)=0.5_r8*(LapU(Iend  ,Jstr-1)+              &
+     &                                LapU(Iend+1,Jstr  ))
+          LapV(Iend+1,Jstr  )=0.5_r8*(LapV(Iend  ,Jstr  )+              &
+     &                                LapV(Iend+1,Jstr+1))
         END IF
         IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-          LapU(1,Mm(ng)+1)=0.5_r8*(LapU(2,Mm(ng)+1)+LapU(1,Mm(ng)))
-          LapV(0,Mm(ng)+1)=0.5_r8*(LapV(1,Mm(ng)+1)+LapV(0,Mm(ng)))
+          LapU(Istr  ,Jend+1)=0.5_r8*(LapU(Istr+1,Jend+1)+              &
+     &                                LapU(Istr  ,Jend  ))
+          LapV(Istr-1,Jend+1)=0.5_r8*(LapV(Istr  ,Jend+1)+              &
+     &                                LapV(Istr-1,Jend  ))
         END IF
         IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-          LapU(Lm(ng)+1,Mm(ng)+1)=0.5_r8*(LapU(Lm(ng)  ,Mm(ng)+1)+      &
-     &                                    LapU(Lm(ng)+1,Mm(ng)  ))
-          LapV(Lm(ng)+1,Mm(ng)+1)=0.5_r8*(LapV(Lm(ng)  ,Mm(ng)+1)+      &
-     &                                    LapV(Lm(ng)+1,Mm(ng)  ))
+          LapU(Iend+1,Jend+1)=0.5_r8*(LapU(Iend  ,Jend+1)+              &
+     &                                LapU(Iend+1,Jend  ))
+          LapV(Iend+1,Jend+1)=0.5_r8*(LapV(Iend  ,Jend+1)+              &
+     &                                LapV(Iend+1,Jend  ))
         END IF
 # endif
 !
@@ -368,23 +406,35 @@
         END DO
 !
 ! Time-step biharmonic, S-surfaces viscosity term.  Notice that
-! momentum at this stage is HzU and HzV and has units m2/s.
+! momentum at this stage is HzU and HzV and has units m2/s.  Add
+! contribution for barotropic forcing terms.
 !
-        cff=dt(ng)*0.125_r8
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            u(i,j,k,nnew)=u(i,j,k,nnew)-                                &
-     &                    cff*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))*  &
-     &                    ((pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))+ &
-     &                     (pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j)))
+            cff1=0.5_r8*((pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))+   &
+     &                   (pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j)))
+            cff2=0.25_r8*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
+            fac=dt(ng)*cff1*cff2
+            rufrc(i,j)=rufrc(i,j)-cff1
+            u(i,j,k,nnew)=u(i,j,k,nnew)-fac
+# ifdef DIAGNOSTICS_UV
+            DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)-cff1
+            DiaU3wrk(i,j,k,M3hvis)=-fac
+# endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            v(i,j,k,nnew)=v(i,j,k,nnew)-                                &
-     &                    cff*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))*  &
-     &                    ((pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))- &
-     &                     (pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1)))
+            cff1=0.5_r8*((pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))-   &
+     &                   (pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1)))
+            cff2=0.25_r8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
+            fac=dt(ng)*cff1*cff2
+            rvfrc(i,j)=rvfrc(i,j)-cff1
+            v(i,j,k,nnew)=v(i,j,k,nnew)-fac
+# ifdef DIAGNOSTICS_UV
+            DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)-cff1
+            DiaV3wrk(i,j,k,M3hvis)=-fac
+# endif
           END DO
         END DO
       END DO K_LOOP

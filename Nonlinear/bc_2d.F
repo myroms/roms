@@ -63,12 +63,12 @@
 !
       IF (EASTERN_EDGE) THEN
         DO j=Jstr,Jend
-          A(Lm(ng)+1,j)=A(Lm(ng),j)
+          A(Iend+1,j)=A(Iend,j)
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
         DO j=Jstr,Jend
-          A(0,j)=A(1,j)
+          A(Istr-1,j)=A(Istr,j)
         END DO
       END IF
 #endif
@@ -80,12 +80,12 @@
 !
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,Iend
-          A(i,Mm(ng)+1)=A(i,Mm(ng))
+          A(i,Jend+1)=A(i,Jend)
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,Iend
-          A(i,0)=A(i,1)
+          A(i,Jstr-1)=A(i,Jstr)
         END DO
       END IF
 #endif
@@ -96,17 +96,16 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(0,0)=0.5_r8*(A(1,0)+A(0,1))
+        A(Istr-1,Jstr-1)=0.5_r8*(A(Istr  ,Jstr-1)+A(Istr-1,Jstr  ))
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Lm(ng)+1,0)=0.5_r8*(A(Lm(ng)+1,1)+A(Lm(ng),0))
+        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend+1,Jstr  )+A(Iend  ,Jstr-1))
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(0,Mm(ng)+1)=0.5_r8*(A(0,Mm(ng))+A(1,Mm(ng)+1))
+        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+A(Istr  ,Jend+1))
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Lm(ng)+1,Mm(ng)+1)=0.5_r8*(A(Lm(ng)+1,Mm(ng)  )+              &
-     &                               A(Lm(ng)  ,Mm(ng)+1))
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+A(Iend  ,Jend+1))
       END IF
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
@@ -164,12 +163,12 @@
 !
       IF (EASTERN_EDGE) THEN
         DO j=Jstr,Jend
-          A(Lm(ng)+1,j)=A(Lm(ng),j)
+          A(Iend+1,j)=A(Iend,j)
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
         DO j=Jstr,Jend
-          A(1,j)=A(2,j)
+          A(Istr,j)=A(Istr+1,j)
         END DO
       END IF
 #endif
@@ -181,12 +180,12 @@
 !
       IF (NORTHERN_EDGE) THEN
         DO i=IstrU,Iend
-          A(i,Mm(ng)+1)=A(i,Mm(ng))
+          A(i,Jend+1)=A(i,Jend)
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
         DO i=IstrU,Iend
-          A(i,0)=A(i,1)
+          A(i,Jstr-1)=A(i,Jstr)
         END DO
       END IF
 #endif
@@ -197,17 +196,16 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(1,0)=0.5_r8*(A(2,0)+A(1,1))
+        A(Istr  ,Jstr-1)=0.5_r8*(A(Istr+1,Jstr-1)+A(Istr  ,Jstr))
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Lm(ng)+1,0)=0.5_r8*(A(Lm(ng),0)+A(Lm(ng)+1,1))
+        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+A(Iend+1,Jstr))
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(1,Mm(ng)+1)=0.5_r8*(A(2,Mm(ng)+1)+A(1,Mm(ng)))
+        A(Istr  ,Jend+1)=0.5_r8*(A(Istr+1,Jend+1)+A(Istr  ,Jend))
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Lm(ng)+1,Mm(ng)+1)=0.5_r8*(A(Lm(ng)  ,Mm(ng)+1)+              &
-     &                               A(Lm(ng)+1,Mm(ng)  ))
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend  ,Jend+1)+A(Iend+1,Jend))
       END IF
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
@@ -265,12 +263,12 @@
 !
       IF (EASTERN_EDGE) THEN
         DO j=JstrV,Jend
-          A(Lm(ng)+1,j)=A(Lm(ng),j)
+          A(Iend+1,j)=A(Iend,j)
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
         DO j=JstrV,Jend
-          A(0,j)=A(1,j)
+          A(Istr-1,j)=A(Istr,j)
         END DO
       END IF
 #endif
@@ -282,12 +280,12 @@
 !
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,Iend
-          A(i,Mm(ng)+1)=A(i,Mm(ng))
+          A(i,Jend+1)=A(i,Jend)
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,Iend
-          A(i,1)=A(i,2)
+          A(i,Jstr)=A(i,Jstr+1)
         END DO
       END IF
 #endif
@@ -298,17 +296,16 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(0,1)=0.5_r8*(A(0,2)+A(1,1))
+        A(Istr-1,Jstr  )=0.5_r8*(A(Istr-1,Jstr+1)+A(Istr,Jstr  ))
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Lm(ng)+1,0)=0.5_r8*(A(Lm(ng)+1,1)+A(Lm(ng),0))
+        A(Iend+1,Jstr  )=0.5_r8*(A(Iend+1,Jstr+1)+A(Iend,Jstr  ))
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(0,Mm(ng)+1)=0.5_r8*(A(0,Mm(ng))+A(1,Mm(ng)+1))
+        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+A(Istr,Jend+1))
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Lm(ng)+1,Mm(ng)+1)=0.5_r8*(A(Lm(ng)+1,Mm(ng)  )+              &
-     &                               A(Lm(ng)  ,Mm(ng)+1))
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+A(Iend,Jend+1))
       END IF
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE

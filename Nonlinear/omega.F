@@ -17,8 +17,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC omega
-      PUBLIC scale_omega
+      PUBLIC  :: omega, scale_omega
 
       CONTAINS
 !
@@ -129,7 +128,7 @@
 !  Set lateral boundary conditions.
 !
       CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, W)
+     &                  LBi, UBi, LBj, UBj, 0, N(ng), W)
       RETURN
       END SUBROUTINE omega_tile
 !

@@ -311,11 +311,11 @@
 #endif
 #ifdef SOLVE3D
         BOUNDARY(ng) % u_west(ETA_DIM,1:N(ng)) = IniVal
-# ifndef ANA_M2OBC
+# ifndef ANA_M3OBC
         BOUNDARY(ng) % uG_west(ETA_DIM,1:N(ng),1:2) = IniVal
 # endif
         BOUNDARY(ng) % v_west(ETA_DIM,1:N(ng)) = IniVal
-# ifndef ANA_M2OBC
+# ifndef ANA_M3OBC
         BOUNDARY(ng) % vG_west(ETA_DIM,1:N(ng),1:2) = IniVal
 # endif
         BOUNDARY(ng) % t_west(ETA_DIM,1:N(ng),1:NT(ng)) = IniVal
@@ -341,11 +341,11 @@
 #endif
 #ifdef SOLVE3D
         BOUNDARY(ng) % u_east(ETA_DIM,1:N(ng)) = IniVal
-# ifndef ANA_M2OBC
+# ifndef ANA_M3OBC
         BOUNDARY(ng) % uG_east(ETA_DIM,1:N(ng),1:2) = IniVal
 # endif
         BOUNDARY(ng) % v_east(ETA_DIM,1:N(ng)) = IniVal
-# ifndef ANA_M2OBC
+# ifndef ANA_M3OBC
         BOUNDARY(ng) % vG_east(ETA_DIM,1:N(ng),1:2) = IniVal
 # endif
         BOUNDARY(ng) % t_east(ETA_DIM,1:N(ng),1:NT(ng)) = IniVal

@@ -6,12 +6,12 @@
 # ifdef EW_PERIODIC
 #  define I_RANGE Istr-1,Iend+1
 # else
-#  define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm)
+#  define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
 # endif
 # ifdef NS_PERIODIC
 #  define J_RANGE Jstr-1,Jend+1
 # else
-#  define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm)
+#  define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
 # endif
 !
 !========================================== Alexander F. Shchepetkin ===
@@ -26,7 +26,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC t3dmix4_iso
+      PUBLIC  :: t3dmix4_iso
 
       CONTAINS
 !
@@ -35,6 +35,9 @@
 !***********************************************************************
 !
       USE mod_param
+# ifdef DIAGNOSTICS_TS
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -62,6 +65,9 @@
      &                       GRID(ng) % z_r,                            &
      &                       MIXING(ng) % diff4,                        &
      &                       OCEAN(ng) % rho,                           &
+# ifdef DIAGNOSTICS_TS
+                             DIAGS(ng) % DiaTwrk,                       &
+# endif
      &                       OCEAN(ng) % t)
 # ifdef PROFILE
       CALL wclock_off (ng, 29)
@@ -78,7 +84,11 @@
 # endif
      &                             Hz, om_v, on_u, pm, pn, z_r,         &
      &                             diff4,                               &
-     &                             rho, t)
+     &                             rho,                                 &
+# ifdef DIAGNOSTICS_TS
+                                   DiaTwrk,                             &
+# endif
+     &                             t)
 !***********************************************************************
 !
       USE mod_param
@@ -103,7 +113,9 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: diff4(LBi:,LBj:,:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
-
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
+#  endif
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
 # else
 #  ifdef MASKING
@@ -118,7 +130,10 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: diff4(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
-
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),
+     &                                   NDT)
+#  endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
 !
@@ -131,7 +146,7 @@
       real(r8), parameter :: slope_max = 1.0E-4_r8
       real(r8), parameter :: strat_min = 0.1_r8
 
-      real(r8) :: cff, cff1, cff2, cff3, cff4
+      real(r8) :: cff, cff1, cff2, cff3, cff4, fac
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: LapT
 
@@ -166,7 +181,7 @@
         DO k=0,N(ng)
           k1=k2
           k2=3-k1
-          IF (k.lt.N) THEN
+          IF (k.lt.N(ng)) THEN
             DO j=J_RANGE
               DO i=I_RANGE+1
                 cff=0.5_r8*(pm(i,j)+pm(i-1,j))
@@ -190,7 +205,7 @@
               END DO
             END DO
           END IF
-          IF ((k.eq.0).or.(k.eq.N)) THEN
+          IF ((k.eq.0).or.(k.eq.N(ng))) THEN
             DO j=-1+J_RANGE+1
               DO i=-1+I_RANGE+1
                 dTdr(i,j,k2)=0.0_r8
@@ -246,7 +261,7 @@
               END DO
             END DO
 !
-            IF (k.lt.N) THEN
+            IF (k.lt.N(ng)) THEN
               DO j=J_RANGE
                 DO i=I_RANGE
                   cff1=MAX(dRdx(i  ,j,k1),0.0_r8)
@@ -451,15 +466,18 @@
               END DO
             END IF
 !
-! Time-step biharmonic, isopycnal diffusion term.
+! Time-step biharmonic, isopycnal diffusion term (m Tunits).
 !
             DO j=Jstr,Jend
               DO i=Istr,Iend
-                t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-                  &
-     &                             (dt(ng)*pm(i,j)*pn(i,j)*             &
-     &                                     (FX(i+1,j)-FX(i,j)+          &
-     &                                      FE(i,j+1)-FE(i,j))+         &
-     &                              dt(ng)*(FS(i,j,k2)-FS(i,j,k1)))
+                fac=dt(ng)*pm(i,j)*pn(i,j)*                             &
+     &                     (FX(i+1,j)-FX(i,j)+                          &
+     &                      FE(i,j+1)-FE(i,j))+                         &
+     &              dt(ng)*(FS(i,j,k2)-FS(i,j,k1)))
+                t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-fac
+# ifdef DIAGNOSTICS_TS
+                DiaTwrk(i,j,k,itrc,iThdif)=-fac
+# endif
               END DO
             END DO
           END IF

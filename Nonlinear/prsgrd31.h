@@ -22,6 +22,9 @@
 !***********************************************************************
 !
       USE mod_param
+# ifdef DIAGNOSTICS
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
@@ -42,6 +45,10 @@
      &                  GRID(ng) % z_r,                                 &
      &                  GRID(ng) % z_w,                                 &
      &                  OCEAN(ng) % rho,                                &
+# ifdef DIAGNOSTICS_UV
+     &                  DIAGS(ng) % DiaRU,                              &
+     &                  DIAGS(ng) % DiaRV,                              &
+# endif
      &                  OCEAN(ng) % ru,                                 &
      &                  OCEAN(ng) % rv)
 # ifdef PROFILE
@@ -55,7 +62,11 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        nrhs,                                     &
      &                        Hz, om_v, on_u, z_r, z_w,                 &
-     &                        rho, ru, rv)
+     &                        rho,                                      &
+# ifdef DIAGNOSTICS_UV
+     &                        DiaRU, DiaRV,                             &
+# endif
+     &                        ru, rv)
 !***********************************************************************
 !
       USE mod_param
@@ -75,6 +86,10 @@
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
+#  endif
       real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
 # else
@@ -85,6 +100,10 @@
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+      real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+#  endif
       real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
 # endif
@@ -123,6 +142,9 @@
 # endif
           ru(i,j,N(ng),nrhs)=-0.5_r8*(Hz(i,j,N(ng))+Hz(i-1,j,N(ng)))*   &
      &                       phix(i)*on_u(i,j)
+# ifdef DIAGNOSTICS_UV
+          DiaRU(i,j,N(ng),nrhs,M3pgrd)=ru(i,j,N(ng),nrhs)
+# endif
         END DO
 !
 !  Compute interior baroclinic pressure gradient.  Differentiate and
@@ -161,6 +183,9 @@
 # endif
             ru(i,j,k,nrhs)=-0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*             &
      &                     phix(i)*on_u(i,j)
+# ifdef DIAGNOSTICS_UV
+            DiaRU(i,j,k,nrhs,M3pgrd)=ru(i,j,k,nrhs)
+# endif
           END DO
         END DO
 !
@@ -184,6 +209,9 @@
 # endif
             rv(i,j,N(ng),nrhs)=-0.5_r8*(Hz(i,j,N(ng))+Hz(i,j-1,N(ng)))* &
      &                         phie(i)*om_v(i,j)
+# ifdef DIAGNOSTICS_UV
+            DiaRV(i,j,N(ng),nrhs,M3pgrd)=rv(i,j,N(ng),nrhs)
+# endif
           END DO
 !
 !  Compute interior baroclinic pressure gradient.  Differentiate and
@@ -222,6 +250,9 @@
 # endif
               rv(i,j,k,nrhs)=-0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*           &
      &                       phie(i)*om_v(i,j)
+# ifdef DIAGNOSTICS_UV
+              DiaRV(i,j,k,nrhs,M3pgrd)=rv(i,j,k,nrhs)
+# endif
             END DO
           END DO
         END IF

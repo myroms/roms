@@ -1,7 +1,7 @@
 !  Fasham Nitrogen-based Biological Model Parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.0                          ===
+!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -74,12 +74,12 @@
  
       NitriR == 0.05d0
 
-! Inverse half-saturation for phytoplankton NO3 uptake [1/(mmol_N m-3)],
+! Inverse half-saturation for phytoplankton NO3 uptake [1/(millimole_N m-3)],
 ! {2.0d0}.
 
        K_NO3 == 2.0d0
 
-! Inverse half-saturation for phytoplankton NH4 uptake [1/(mmol_N m-3)],
+! Inverse half-saturation for phytoplankton NH4 uptake [1/(millimole_N m-3)],
 ! {2.0d0}.
 
        K_NH4 == 2.0d0
@@ -96,11 +96,11 @@
 
       ChlMin == 0.001d0
 
-! Phytoplankton Carbon:Nitrogen ratio [mol_C/mol_N] , {6.625d0}.
+! Phytoplankton Carbon:Nitrogen ratio [mole_C/mole_N] , {6.625d0}.
 
        PhyCN == 6.625d0
 
-! Phytoplankton, NH4 inhibition parameter [1/(mmol_N)], {1.5d0}.
+! Phytoplankton, NH4 inhibition parameter [1/(millimole_N)], {1.5d0}.
 
        PhyIP == 1.5d0
 
@@ -109,17 +109,13 @@
 
        PhyIS == 0.025d0
 
-! Phytoplankton minimum threshold value [mmol_N/m3], {0.0d0}.
+! Phytoplankton minimum threshold value [millimole_N/m3], {0.0d0}.
 
       PhyMin == 0.001d0
 
 ! Phytoplankton mortality rate [1/day], {0.072d0}.
 
        PhyMR == 0.15d0
-
-! Zooplankton Carbon assimilation efficiency [nondimensional], {0.75d0}.
-
-     ZooAE_C == 0.75d0
 
 ! Zooplankton Nitrogen assimilation efficiency [nondimesnional], {0.75d0}.
 
@@ -129,7 +125,7 @@
 
        ZooBM == 0.1d0
 
-! Zooplankton Carbon:Nitrogen ratio [mol_C/mol_N], {5.0d0}.
+! Zooplankton Carbon:Nitrogen ratio [mole_C/mole_N], {5.0d0}.
 
        ZooCN == 5.d0
 
@@ -137,15 +133,11 @@
 
        ZooER == 0.1d0
 
-! Zooplankton carbon gross growth efficiency [nondimensional], {0.65d0}
-
-    ZooGGE_C == 0.65d0
-
 ! Zooplankton maximum growth rate [1/day], {0.75d0}.
 
        ZooGR == 0.6d0
 
-! Zooplankton minimum threshold value [mmol_N/m3], {0.0d0}.
+! Zooplankton minimum threshold value [millimole_N/m3], {0.0d0}.
 
       ZooMin == 0.001d0
 
@@ -153,51 +145,40 @@
 
        ZooMR == 0.025d0
 
-! Large detritus remineralization rate [1/day], {0.01d0}.
+! Large detritus remineralization rate N-fraction [1/day], {0.01d0}.
 
-       LDeRR == 0.01d0
+       LDeRRN == 0.01d0
+
+! Large detritus remineralization rate C-fraction [1/day].
+
+       LDeRRC == 0.005d0
 
 ! Coagulation rate: aggregation rate of SDeN + Phy ==> LDeN
 ! [1/day], {0.005d0}.
 
        CoagR == 0.005d0
 
-! Rate of small fraction detritus aggregation to large detritus [1/day],
-! {0.005d0}.
+! Small detritus remineralization rate N-fraction [1/day], {0.03d0}.
 
-       SDeAR == 0.005d0
+       SDeRRN == 0.03d0
 
-! Rate of small fraction detritus breakdown to NH4 [1/day], {0.03d0}.
+! Small detritus remineralization rate C-fraction[1/day].
 
-       SDeBR == 0.03d0
-
-! Small detritus remineralization rate [1/day], {0.03d0}.
-
-       SDeRR == 0.03d0
+       SDeRRC == 0.015d0
 
 ! Vertical sinking velocity for phytoplankton [m/day], {0.1d0}.
 
         wPhy == 0.1d0
 
-! Vertical sinking velocity for large carbon fraction detritus [m/day],
+! Vertical sinking velocity for large detritus [m/day],
 ! {1.0d0}.
                
-       wLDeC == 1.0d0
+       wLDet == 1.0d0
 
-! Vertical sinking velocity for large nitrogen fraction detritus [m/day],
-! {1.0d0}.
-               
-       wLDeN == 1.0d0
-
-! Vertical sinking velocity for small carbon fraction detritus [m/day],
+! Vertical sinking velocity for small detritus [m/day],
 ! {0.1d0}.
 
-       wSDeC == 0.1d0
-
-! Vertical sinking velocity for small nitrogen fraction detritus [m/day],
-! {0.1d0}.
-
-       wSDeN == 0.1d0
+       wSDet == 0.1d0
 
 ! Lateral, constant, harmonic/biharmonic horizontal diffusion of biological
 ! tracer: [1:NBT,Ngrids].
@@ -218,6 +199,14 @@
 ! into HISTORY output file: [1:NBT,Ngrids].
 
 Hout(idTvar) == 7*T
+
+! Logical switches (TRUE/FALSE) to activate writing of diagnostics terms
+! into diagnostic output file [Ngrids].
+
+Hout(iCOfx) == T                      ! air-sea CO2 flux
+Hout(iDNIT) == T                      ! denitrification flux
+Hout(iPPro) == T                      ! primary production
+Hout(iNO3u) == T                      ! NO3 uptake
 
 !
 !  GLOSSARY:
@@ -257,10 +246,10 @@ Hout(idTvar) == 7*T
 !  NitriR    Nitrification rate: oxidation of NH4 to NO3 [day-1].
 !
 !  K_NO3     Inverse half-saturation for phytoplankton NO3 uptake
-!              [1/(mmol_N m-3)].
+!              [1/(millimole_N m-3)].
 !
 !  K_NH4     Inverse half-saturation for phytoplankton NH4 uptake
-!              [1/(mmol_N m-3)].
+!              [1/(millimole_N m-3)].
 !
 !  K_Phy     Zooplankton half-saturation constant for ingestion [1/day].
 !
@@ -269,61 +258,50 @@ Hout(idTvar) == 7*T
 !  ChlMin    Chlorophyll mimimum threshold value [mg_Chl/m3].  Set to
 !              zero to avoid limiting.
 !
-!  PhyCN     Phytoplankton Carbon:Nitrogen ratio [mol_C/mol_N].
+!  PhyCN     Phytoplankton Carbon:Nitrogen ratio [mole_C/mole_N].
 !
-!  PhyIP     Phytoplankton, NH4 inhibition parameter [1/(mmol_N)].
+!  PhyIP     Phytoplankton, NH4 inhibition parameter [1/(millimole_N)].
 !
 !  PhyIS     Phytoplankton, initial slope of P-I curve
 !              [(mg_C)/(mg_Chl Watts m-2 day)].
 !
-!  PhyMin    Phytoplankton mimimum threshold value [mmol_N/m3].  Set to
-!              zero to avoid limiting.
+!  PhyMin    Phytoplankton mimimum threshold value [millimole_N/m3].
+!              Set to zero to avoid limiting.
 !
 !  PhyMR     Phytoplankton mortality rate [1/day].
 !
 !  ZooAE_N   Zooplankton Nitrogen assimilation efficiency [nondimensional].
 !
-!  ZooAE_C   Zooplankton Carbon assimilation efficiency [nondimensional].
-!
 !  ZooBM     Basal metabolism of zooplankton [1/day].
 !
-!  ZooCN     Zooplankton Carbon:Nitrogen ratio [mol_C/mol_N].
+!  ZooCN     Zooplankton Carbon:Nitrogen ratio [mole_C/mole_N].
 !
 !  ZooER     Zooplankton specific excretion rate [1/day].
 !
-!  ZooGGE_C  Zooplankton carbon gross growth efficiency [nondimensional].
-!
 !  ZooGR     Zooplankton maximum growth rate [1/day].
 !
-!  ZooMin    Zooplankton mimimum threshold value [mmol_N/m3].  Set to
-!              zero to avoid limiting.
+!  ZooMin    Zooplankton mimimum threshold value [millimole_N/m3].
+!              Set to zero to avoid limiting.
 !
 !  ZooMR     Zooplankton mortality rate [1/day].
 !
-!  LDeRR     Large detritus remineralization rate [day-1].
+!  LDeRRN    Large nitrogen detritus remineralization rate [day-1].
+!
+!  LDeRRC    Large carbon detritus remineralization rate [day-1].
 !
 !  CoagR     Coagulation rate: aggregation rate of SDeN + Phyt ==> LDeN
 !              [day-1].
 !
-!  SDeAR     Rate of small fraction detritus aggregation to large detritus
-!             [day-1].
+!  SDeRRN    Small nitrogen detritus remineralization rate [day-1].
 !
-!  SDeBR     Rate of small fraction detritus breakdown to NH4 [day-1].
-!
-!  SDeRR     Small detritus remineralization rate [day-1].
+!  SDeRRC    Small carbon detritus remineralization rate [day-1].
 !
 !  wPhy      Vertical sinking velocity for phytoplankton [m/day].
 !
-!  wLDeC     Vertical sinking velocity for large carbon fraction detritus
+!  wLDet     Vertical sinking velocity for large detritus
 !              [m/day].
 !
-!  wLDeN     Vertical sinking velocity for large nitrogen fraction detritus
-!              [m/day].
-!
-!  wSDeC     Vertical sinking velocity for small carbon fraction detritus
-!              [m/day].
-!
-!  wSDeN     Vertical sinking velocity for small nitrogen fraction detritus
+!  wLDet     Vertical sinking velocity for large detritus
 !              [m/day].
 !
 !  TNU2      Lateral, Laplacian, constant, mixing coefficient (m2/s) for
@@ -342,6 +320,16 @@ Hout(idTvar) == 7*T
 !  TNUDG     Nudging time scale (days), [1:NBT,1:Ngrids].  Inverse scale will
 !              be computed internally.
 !
-!  Hout      Logical switches to write out biological tracers into HISTORY
-!              NetCDF, [1:NBT,1:Ngrids] values are expected.
+!  Hout      Logical switches (T/F) to write out biological data into output
+!              NetCDF files:
 !
+!            History/Average file, [1:NBT,1:Ngrids] values are expeted:
+!
+!              Hout(idTvar)     biological traces
+!
+!            Diagnostics file, [Ngrids] values are expected:
+!
+!              Hout(iCOfx)      air-sea CO2 flux
+!              Hout(iDNIT)      denitrification flux
+!              Hout(iPPro)      primary production
+!              Hout(iNO3u)      NO3 uptake

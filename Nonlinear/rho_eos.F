@@ -36,7 +36,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC rho_eos
+      PUBLIC  :: rho_eos
 
       CONTAINS
 !
@@ -467,15 +467,15 @@
 !------------------------------------------------------------------------
 !
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rho)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), rho)
 #   if defined LMD_SKPP || defined LMD_BKPP
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pden)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), pden)
 #   endif
 #   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
 #    ifdef LMD_DDMIX
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, alfaobeta)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), alfaobeta)
 #    endif
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj, alpha)
@@ -484,7 +484,7 @@
 #   endif    
 #   if defined MIX_ISO_TS || defined GENT_McWILLIAMS
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, neutral)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), neutral)
 #   endif
 #   ifdef VAR_RHO_2D
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
@@ -494,7 +494,7 @@
 #   endif
 #   ifdef BV_FREQUENCY
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, bvf)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), bvf)
 #   endif
 #  endif
       RETURN
@@ -717,15 +717,15 @@
 !------------------------------------------------------------------------
 !
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rho)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), rho)
 #   if defined LMD_SKPP || defined LMD_BKPP
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pden)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), pden)
 #   endif
 #   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
 #    ifdef LMD_DDMIX
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, alfaobeta)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), alfaobeta)
 #    endif
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj, alpha)
@@ -734,7 +734,7 @@
 #   endif    
 #   if defined MIX_ISO_TS || defined GENT_McWILLIAMS
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, neutral)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), neutral)
 #   endif
 #   ifdef VAR_RHO_2D
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
@@ -744,7 +744,7 @@
 #   endif
 #   ifdef BV_FREQUENCY
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, bvf)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), bvf)
 #   endif
 #  endif
       RETURN

@@ -23,7 +23,7 @@
 !  This routine computes harmonic mixing of momentum, rotated along    !
 !  geopotentials,  from the  horizontal  divergence  of the  stress    !
 !  tensor.  A transverse  isotropy is assumed so the stress tensor     !
-!  is splitted into vertical and horizontal subtensors.                !
+!  is split into vertical and horizontal subtensors.                   !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
@@ -33,8 +33,8 @@
 !                                                                      !
 !      Sadourny, R. and K. Maynard, 1997: Formulations of              !
 !         lateral diffusion in geophysical fluid dynamics              !
-!         models, In "Numerical Methods of Atmospheric and             !
-!         Oceanic Modelling". Lin, Laprise, and Ritchie,               !
+!         models, In Numerical Methods of Atmospheric and              !
+!         Oceanic Modelling. Lin, Laprise, and Ritchie,                !
 !         Eds., NRC Research Press, 547-556.                           !
 !                                                                      !
 !      Griffies, S.M. and R.W. Hallberg, 2000: Biharmonic              !
@@ -47,7 +47,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC uv3dmix2_geo
+      PUBLIC  :: uv3dmix2_geo
 
       CONTAINS
 !
@@ -56,6 +56,10 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_coupling
+# ifdef DIAGNOSTICS_UV
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -91,6 +95,14 @@
      &                        GRID(ng) % z_r,                           &
      &                        MIXING(ng) % visc2_p,                     &
      &                        MIXING(ng) % visc2_r,                     &
+# ifdef DIAGNOSTICS_UV
+     &                        DIAGS(ng) % DiaRUfrc,                     &
+     &                        DIAGS(ng) % DiaRVfrc,                     &
+     &                        DIAGS(ng) % DiaU3wrk,                     &
+     &                        DIAGS(ng) % DiaV3wrk,                     &
+# endif
+     &                        COUPLING(ng) % rufrc,                     &
+     &                        COUPLING(ng) % rvfrc,                     &
      &                        OCEAN(ng) % u,                            &
      &                        OCEAN(ng) % v)
 # ifdef PROFILE
@@ -111,7 +123,11 @@
      &                              on_p, on_r, on_u, on_v,             &
      &                              pm, pn, z_r,                        &
      &                              visc2_p, visc2_r,                   &
-     &                              u, v)
+# ifdef DIAGNOSTICS_UV
+     &                              DiaRUfrc, DiaRVfrc,                 &
+     &                              DiaU3wrk, DiaV3wrk,                 &
+# endif
+     &                              rufrc, rvfrc, u, v)
 !***********************************************************************
 !
       USE mod_param
@@ -145,6 +161,14 @@
       real(r8), intent(in) :: visc2_p(LBi:,LBj:)
       real(r8), intent(in) :: visc2_r(LBi:,LBj:)
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRUfrc(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaRVfrc(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaU3wrk(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: rufrc(LBi:,LBj:)
+      real(r8), intent(inout) :: rvfrc(LBi:,LBj:)
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
 # else
@@ -169,6 +193,14 @@
       real(r8), intent(in) :: visc2_p(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: visc2_r(LBi:UBi,LBj:UBj)
 
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRUfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
+      real(r8), intent(inout) :: DiaRVfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
+      real(r8), intent(inout) :: DiaU3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+      real(r8), intent(inout) :: DiaV3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
+#  endif
+      real(r8), intent(inout) :: rufrc(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: rvfrc(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 # endif
@@ -179,7 +211,7 @@
       integer :: i, j, k, k1, k2
 
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7, cff8
-      real(r8) :: dmUdz, dnUdz, dmVdz, dnVdz
+      real(r8) :: dmUdz, dnUdz, dmVdz, dnVdz, fac
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
@@ -501,31 +533,37 @@
           END IF
 !
 ! Time-step harmonic, geopotential viscosity term.  Notice that
-! momentum at this stage is HzU and HzV and has m2/s units.
+! momentum at this stage is HzU and HzV and has m2/s units.  Add
+! contribution for barotropic forcing terms.
 !
-          cff=dt(ng)*0.125_r8
           DO j=Jstr,Jend
             DO i=IstrU,Iend
-              u(i,j,k,nnew)=u(i,j,k,nnew)+                              &
-     &                      cff*(pm(i-1,j)+pm(i,j))*                    &
-     &                          (pn(i-1,j)+pn(i,j))*                    &
-     &                          ((pn(i-1,j)+pn(i,j))*(UFx(i  ,j)-       &
-     &                                                UFx(i-1,j))+      &
-     &                           (pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-       &
-     &                                                UFe(i,j  )))+     &
-     &                      dt(ng)*(UFs(i,j,k2)-UFs(i,j,k1))
+              cff1=0.5_r8*((pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))+ &
+     &                     (pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j)))
+              cff2=0.25_r8*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
+              cff3=UFs(i,j,k2)-UFs(i,j,k1)
+              fac=dt(ng)*(cff1*cff2+cff3)
+              rufrc(i,j)=rufrc(i,j)+cff1+cff3
+              u(i,j,k,nnew)=u(i,j,k,nnew)+fac
+# ifdef DIAGNOSTICS_UV
+              DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)+cff1+cff3
+              DiaU3wrk(i,j,k,M3hvis)=fac
+# endif
             END DO
           END DO
           DO j=JstrV,Jend
             DO i=Istr,Iend
-              v(i,j,k,nnew)=v(i,j,k,nnew)+                              &
-     &                      cff*(pm(i,j)+pm(i,j-1))*                    &
-     &                          (pn(i,j)+pn(i,j-1))*                    &
-     &                          ((pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-       &
-     &                                                VFx(i  ,j))-      &
-     &                           (pm(i,j-1)+pm(i,j))*(VFe(i,j  )-       &
-     &                                                VFe(i,j-1)))+     &
-     &                      dt(ng)*(VFs(i,j,k2)-VFs(i,j,k1))
+              cff1=0.5_r8*((pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))- &
+     &                     (pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1)))
+              cff2=0.25_8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
+              cff3=VFs(i,j,k2)-VFs(i,j,k1)
+              fac=dt(ng)*(cff1*cff2+cff3)
+              rvfrc(i,j)=rvfrc(i,j)+cff1+cff3
+              v(i,j,k,nnew)=v(i,j,k,nnew)+fac
+# ifdef DIAGNOSTICS_UV
+              DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)+cff1+cff3
+              DiaV3wrk(i,j,k,M3hvis)=fac
+# endif
             END DO
           END DO
         END IF

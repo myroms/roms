@@ -129,7 +129,7 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, itrc
+      integer :: Iwrk, i, j, itrc
       real(r8) :: cff, cff1, cff2, fac
 
 #include "set_bounds.h"
@@ -363,21 +363,6 @@
           diff2(i,j,isalt)=cff2
         END DO
       END DO
-#  endif
-# elif defined DAMEE_6
-!
-!  North Atlantic sponge areas.
-!
-       fac=8.0_r8
-#  ifdef UV_VIS2
-       DO j=MAX(JstrR,Mm(ng)+1-20),JendR
-         cff=fac*visc2(ng)+                                             &
-     &       REAL(Mm(ng)+1-j,r8)*(visc2(ng)-fac*visc2(ng))/20.0_r8
-         DO i=IstrR,IendR
-           visc2_r(i,j)=cff
-           visc2_p(i,j)=cff
-         END DO
-       END DO
 #  endif
 # elif defined USWEST
 !

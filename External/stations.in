@@ -1,7 +1,7 @@
 !  Station Extraction Parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.0                          ===
+!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -57,15 +57,10 @@ Sout(idVbms) == F                          ! bottom V-stress
 Sout(idUbws) == F                          ! bottom U-wave stress
 Sout(idVbws) == F                          ! bottom V-wave stress
 
-Sout(idAbed) == F                          ! bed wave excursion amplitude
 Sout(idUbed) == F                          ! bed wave orbital U-velocity
 Sout(idVbed) == F                          ! bed wave orbital V-velocity
 Sout(idUbot) == F                          ! bottom U-momentum above bed
 Sout(idVbot) == F                          ! bottom V-momentum above bed
-Sout(idHrip) == F                          ! bed ripple height
-Sout(idLrip) == F                          ! bed ripple length
-Sout(idZnot) == F                          ! bottom roughness
-Sout(idZapp) == F                          ! apparent bottom roughness
 
 Sout(idTsur) == F                          ! surface net heat flux
 Sout(idLhea) == F                          ! latent heat flux
@@ -81,6 +76,29 @@ Sout(idHsbl) == T                          ! depth of surface boundary layer
 Sout(idHbbl) == F                          ! depth of bottom boundary layer
 Sout(idMtke) == F                          ! turbulent kinetic energy
 Sout(idMtls) == F                          ! turbulent length scale
+
+! Logical switches (TRUE/FALSE) to activate writing of exposed sediment
+! layer properties into STATIONS output file.  Currently, MBOTP properties
+! are expected for the bottom boundary layer and/or sediment models:
+!
+!   Sout(idBott(isd50)),  isd50 = 1        ! mean grain diameter
+!   Sout(idBott(idens)),  idens = 2        ! mean grain density
+!   Sout(idBott(iwsed)),  iwsed = 3        ! mean settling velocity
+!   Sout(idBott(itauc)),  itauc = 4        ! critical erosion stress
+!   Sout(idBott(irlen)),  irlen = 5        ! ripple length
+!   Sout(idBott(irhgt)),  irhgt = 6        ! ripple height
+!   Sout(idBott(ibwav)),  ibwav = 7        ! wave excursion amplitude
+!   Sout(idBott(izdef)),  izdef = 8        ! default bottom roughness
+!   Sout(idBott(izapp)),  izapp = 9        ! apparent bottom roughness
+!   Sout(idBott(izNik)),  izNik = 10       ! Nikuradse bottom roughness
+!   Sout(idBott(izbio)),  izbio = 11       ! biological bottom roughness
+!   Sout(idBott(izbfm)),  izbfm = 12       ! bed form bottom roughness
+!   Sout(idBott(izbld)),  izbld = 13       ! bed load bottom roughness
+!   Sout(idBott(izwbl)),  izwbl = 14       ! wave bottom roughness
+!   Sout(idBott(iactv)),  iactv = 15       ! active layer thickness
+!   Sout(idBott(ishgt)),  ishgt = 16       ! saltation height
+
+Sout(idBott) == T T T T T T T T T F F F F F F F
 
 ! Number of stations to process in each nested grid.  These values are
 ! essential because the station arrays are dynamically allocated using
@@ -151,15 +169,10 @@ POS =  GRID  FLAG      X-POS     Y-POS   COMMENT
 !  Sout(idUbws)  Write out wind-induced, bottom U-wave stress.
 !  Sout(idVbws)  Write out wind-induced, bottom V-wave stress.
 !
-!  Sout(idAbed)  Write out wind-induced, bed wave excursion amplitude.
 !  Sout(idUbed)  Write out wind-induced, bed wave orbital U-velocity.
 !  Sout(idVbed)  Write out wind-induced, bed wave orbital V-velocity.
 !  Sout(idUbot)  Write out bottom U-momentum above bed.
 !  Sout(idVbot)  Write out bottom V-momentum above bed.
-!  Sout(idHrip)  Write out bed ripple height.
-!  Sout(idHapp)  Write out bed ripple length.
-!  Sout(idZnot)  Write out hydraulic bottom roughness.
-!  Sout(idZapp)  Write out apparent hydraulic bottom roughness.
 !
 !  Sout(idTsur)  Write out surface net heat flux.
 !  Sout(idLhea)  Write out latent heat flux.
@@ -175,6 +188,8 @@ POS =  GRID  FLAG      X-POS     Y-POS   COMMENT
 !  Sout(idHbbl)  Write out depth of oceanic bottom boundary layer.
 !  Sout(idMtke)  Write out turbulent kinetic energy.
 !  Sout(idMtls)  Write out turbulent kinetic energy times length scale.
+!
+!  Sout(idBott)  Write out exposed sediment layer properties, 1:MBOTP.
 !
 !------------------------------------------------------------------------------
 ! Station positions KEYWORDS. 

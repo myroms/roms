@@ -39,7 +39,7 @@
 ** story.
 */
 
-#undef DEBUGGING
+#define DEBUGGING
 
 /*
 ** Turn ON/OFF time profiling.
@@ -142,7 +142,7 @@
 ** the pearl script "cpp_clean" to remove the full directive.
 */
 
-#if defined SERIAL || defined DISTRIBUTE
+#if !defined _OPENMP
 # define OMP !
 #endif
 
@@ -403,17 +403,22 @@
 ** Activate internal switches for volume conservation at open boundary.
 */
 
-#if defined WEST_M2OBC  || defined WEST_M2RADIATION
-# define WEST_VOLCONS
+#if !defined WEST_M2OBC && defined WEST_VOLCONS
+# undef WEST_VOLCONS
 #endif
-#if defined EAST_M2OBC  || defined EAST_M2RADIATION
-# define EAST_VOLCONS
+#if !defined EAST_M2OBC && defined EAST_VOLCONS
+# undef EAST_VOLCONS
 #endif
-#if defined SOUTH_M2OBC || defined SOUTH_M2RADIATION
-# define SOUTH_VOLCONS
+#if !defined NORTH_M2OBC && defined NORTH_VOLCONS
+# undef NORTH_VOLCONS
 #endif
-#if defined NORTH_M2OBC || defined NORTH_M2RADIATION
-# define NORTH_VOLCONS
+#if !defined SOUTH_M2OBC && defined SOUTH_VOLCONS
+# undef SOUTH_VOLCONS
+#endif
+
+#if defined WEST_VOLCONS  || defined EAST_VOLCONS  || \
+    defined NORTH_VOLCONS || defined SOUTH_VOLCONS
+# define OBC_VOLCONS
 #endif
 
 /*
@@ -441,7 +446,7 @@
 ** mixing coefficients.
 */
 
-#if !defined LMD_MIXING && !defined MY25_MIXING
+#if !defined LMD_MIXING && !defined MY25_MIXING && !defined GLS_MIXING
 # if defined AVERAGES
 #  if defined AVERAGES_AKV
 #    undef AVERAGES_AKV
@@ -470,7 +475,7 @@
 #  endif
 # endif
 # if !defined ANA_BTFLUX   || \
-    (!defined BULK_FLUXES  && !defined ANA_SMFLUX)   || \
+    (!defined AIR_OCEAN    && !defined BULK_FLUXES   && !defined ANA_SMFLUX)   || \
     (!defined BULK_FLUXES  && !defined ANA_STFLUX)   || \
     ( defined SALINITY     && !defined ANA_SSFLUX)   || \
     ( defined BULK_FLUXES  && !defined LONGWAVE)     || \
@@ -482,8 +487,7 @@
     ( defined BULK_FLUXES  && !defined ANA_SRFLUX)   || \
     ( defined LMD_SKPP     && !defined ANA_SRFLUX)   || \
     ( defined SOLAR_SOURCE && !defined ANA_SRFLUX)   || \
-    ( defined BBL          && !defined ANA_BSEDIM)   || \
-    ( defined BBL          && !defined ANA_WWAVE)    || \
+    ( defined BBL_MODEL    && !defined ANA_WWAVE)    || \
     ( defined BIOLOGY      && !defined ANA_SPFLUX)   || \
     ( defined BIOLOGY      && !defined ANA_BPFLUX)   || \
     ( defined SEDIMENT     && !defined ANA_SPFLUX)   || \
@@ -501,7 +505,7 @@
 ** module.
 */
 
-#ifdef BIO_FASHAM
+#if defined BIO_FASHAM || defined ECOSIM
 # define BIOLOGY
 #endif
 
@@ -526,10 +530,28 @@
 ** shortwave option if not needed.
 */
 
-#if (defined BULK_FLUXES && defined LONGWAVE) || \
+#if (defined BULK_FLUXES && defined LONGWAVE) || defined ECOSIM || \
     (defined ANA_SRFLUX  && defined ALBEDO)
 # define CLOUDS
 #endif
 #if !defined CLOUDS && defined ANA_CLOUD
 # undef ANA_CLOUD
+#endif
+
+/*
+** Check if it is meaningful to write out momentum/tracer diagnostics
+** and activate internal diagnostics option.
+*/
+
+#if !defined SOLVE3D || defined TS_FIXED
+# if defined DIAGNOSTICS_TS
+#   undef DIAGNOSTICS_TS
+# endif
+#endif
+#if !defined BIO_FASHAM && defined DIAGNOSTICS_BIO
+#  undef DIAGNOSTICS_BIO
+#endif
+#if defined DIAGNOSTICS_BIO || defined DIAGNOSTICS_TS || \
+    defined DIAGNOSTICS_UV
+# define DIAGNOSTICS
 #endif

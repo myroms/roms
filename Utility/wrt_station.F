@@ -28,7 +28,11 @@
 # endif
       USE mod_stepping
 !
+# ifdef SOLVE3D
       USE extract_mod, ONLY : extract2d, extract3d
+# else
+      USE extract_mod, ONLY : extract2d
+# endif
 !
       implicit none
 !
@@ -40,7 +44,7 @@
 !
       logical :: Cgrid
 
-      integer :: NposR, NposW, LBi, UBi, LBj, UBj
+      integer :: NposB, NposR, NposW, LBi, UBi, LBj, UBj
       integer :: i, ifield, k, np, status, tile
 
       integer, dimension(3) :: start, total
@@ -49,6 +53,10 @@
 
       real(r8), dimension(Nstation(ng)) :: Xpos, Ypos, Zpos, psta
 # ifdef SOLVE3D
+#  ifdef SEDIMENT
+      real(r8), dimension(Nstation(ng)*Nbed) :: XposB, YposB, ZposB
+      real(r8), dimension(Nstation(ng)*Nbed) :: bsta
+#  endif
       real(r8), dimension(Nstation(ng)*(N(ng))) :: XposR, YposR, ZposR
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: XposW, YposW, ZposW
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: rsta
@@ -63,7 +71,7 @@
 !  Write out station data at RHO-points.
 !-----------------------------------------------------------------------
 !
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
 !
 !  Set time record index.
 !
@@ -91,6 +99,7 @@
 !
 !  Set positions for generic extraction routine.
 !
+      NposB=Nstation(ng)*Nbed
       NposR=Nstation(ng)*N(ng)
       NposW=Nstation(ng)*(N(ng)+1)
       DO i=1,Nstation(ng)
@@ -110,6 +119,14 @@
           YposW(np)=SCALARS(ng)%SposY(i)
           ZposW(np)=REAL(k,r8)
         END DO
+#  ifdef SEDIMENT
+        DO k=1,Nbed
+          np=k+(i-1)*Nbed
+          XposB(np)=SCALARS(ng)%SposX(i)
+          YposB(np)=SCALARS(ng)%SposY(i)
+          ZposB(np)=REAL(k,r8)
+        END DO
+#  endif
 # endif
       END DO
 !
@@ -617,7 +634,8 @@
           END IF
         END IF
       END IF
-#ifdef BBL_MODEL
+#ifdef SOLVE3D
+# ifdef BBL_MODEL
 !
 !  Write out wind-induced, bottom U-wave stress.
 !
@@ -657,19 +675,38 @@
         END IF
       END IF
 !
-!  Write out wind-induced, bed wave excursion amplitude.
+!  Write out maximum wind and current, bottom U-wave stress.
 !
-      IF (Sout(idAbed,ng)) THEN
-        scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idAbed, r2dvar,                      &
+      IF (Sout(idUbcs,ng)) THEN
+        scale=rho0
+        CALL extract2d (ng, Cgrid, idUbcs, u2dvar,                      &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Abed,                            &
+     &                  scale, BBL(ng)%bustrcwmax,                      &
      &                  Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idAbed,ng),       &
+          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUbcs,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idAbed)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), tstaindx(ng)
+            exit_flag=3
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!  Write out maximum wind and current, bottom V-wave stress.
+!
+      IF (Sout(idVbcs,ng)) THEN
+        scale=rho0
+        CALL extract2d (ng, Cgrid, idVbcs, v2dvar,                      &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  scale, BBL(ng)%bvstrcwmax,                          &
+     &                  Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVbcs,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), tstaindx(ng)
             exit_flag=3
             RETURN
           END IF
@@ -751,82 +788,94 @@
           END IF
         END IF
       END IF
+# endif
+# ifdef SEDIMENT
 !
-!  Write out bed ripple height.
+!  Write out sediment fraction of each size class in each bed layer.
 !
-      IF (Sout(idHrip,ng)) THEN
-        scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idHrip, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Hripple,                         &
-     &                  Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idHrip,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idHrip)), tstaindx(ng)
-            exit_flag=3
-            RETURN
+      total(1)=Nbed                       ! Warning, total(1) redefined
+      DO i=1,NST      
+        IF (Sout(idfrac(i),ng)) THEN
+          scale=1.0_r8
+          CALL extract3d (ng, Cgrid, idfrac(i), b3dvar,                 &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
+     &                    scale, OCEAN(ng)%bed_frac(:,:,:,i),           &
+     &                    NposB, XposB, YposB, ZposB, bsta)
+          IF (Master) THEN
+            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idfrac(i),ng),  &
+     &                              start, total, bsta)
+            IF (status.ne.nf_noerr) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), tstaindx(ng)
+              exit_flag=3
+              RETURN
+            END IF
           END IF
         END IF
-      END IF
 !
-!  Write out bed ripple length.
+!  Write out sediment mass of each size class in each bed layer.
 !
-      IF (Sout(idLrip,ng)) THEN
-        scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idLrip, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Lripple,                         &
-     &                  Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idLrip,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idLrip)), tstaindx(ng)
-            exit_flag=3
-            RETURN
+        IF (Sout(idBmas(i),ng)) THEN
+          scale=1.0_r8
+          CALL extract3d (ng, Cgrid, idBmas(i), b3dvar,                 &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
+     &                    scale, OCEAN(ng)%bed_mass(:,:,:,i),           &
+     &                    NposB, XposB, YposB, ZposB, bsta)
+          IF (Master) THEN
+            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idBmas(i),ng),  &
+     &                              start, total, bsta)
+            IF (status.ne.nf_noerr) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), tstaindx(ng)
+              exit_flag=3
+              RETURN
+            END IF
           END IF
         END IF
-      END IF
+      END DO
 !
-!  Write out hydraulic bottom roughness.
+!  Write out sediment properties in each bed layer.
 !
-      IF (Sout(idZnot,ng)) THEN
-        scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idZnot, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Zbnot,                           &
-     &                  Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idZnot,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idZnot)), tstaindx(ng)
-            exit_flag=3
-            RETURN
+      DO i=1,MBEDP      
+        IF (Sout(idSbed(i),ng)) THEN
+          scale=1.0_r8
+          CALL extract3d (ng, Cgrid, idSbed(i), b3dvar,                 &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
+     &                    scale, OCEAN(ng)%bed(:,:,:,i),                &
+     &                    NposB, XposB, YposB, ZposB, bsta)
+          IF (Master) THEN
+            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idSbed(i),ng),  &
+     &                              start, total, bsta)
+            IF (status.ne.nf_noerr) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), tstaindx(ng)
+              exit_flag=3
+              RETURN
+            END IF
           END IF
         END IF
-      END IF
+      END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
 !
-!  Write out apparent hydraulic bottom roughness.
+!  Write out exposed sediment layer properties.
 !
-      IF (Sout(idZapp,ng)) THEN
-        scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idZapp, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Zbnotc,                          &
-     &                  Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idZapp,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idZapp)), tstaindx(ng)
-            exit_flag=3
-            RETURN
+      DO i=1,MBEDP      
+        IF (Sout(idBott(i),ng)) THEN
+          scale=1.0_r8
+          CALL extract2d (ng, Cgrid, idBott(i), r2dvar,                 &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    scale, OCEAN(ng)%bottom(:,;,i),               &
+     &                    Nstation(ng), Xpos, Ypos, psta)
+          IF (Master) THEN
+            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idBott(i),ng),  &
+     &                              start(2), total(2), psta)
+            IF (status.ne.nf_noerr) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), tstaindx(ng)
+              exit_flag=3
+              RETURN
+            END IF
           END IF
         END IF
-      END IF
+      END DO
+# endif
 #endif
 !
 !  Synchronize restart NetCDF file to disk.

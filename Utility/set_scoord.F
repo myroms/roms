@@ -34,24 +34,35 @@
 !-----------------------------------------------------------------------
 !
       hc(ng)=MIN(hmin(ng),Tcline(ng))
-      cff1=1.0_r8/SINH(theta_s(ng))
-      cff2=0.5_r8/TANH(0.5_r8*theta_s(ng))
+      IF (theta_s(ng).ne.0.0_r8) THEN
+        cff1=1.0_r8/SINH(theta_s(ng))
+        cff2=0.5_r8/TANH(0.5_r8*theta_s(ng))
+      END IF
       SCALARS(ng)%sc_w(0)=-1.0_r8
       SCALARS(ng)%Cs_w(0)=-1.0_r8
       cff=1.0_r8/REAL(N(ng),r8)
       DO k=1,N(ng)
         SCALARS(ng)%sc_w(k)=cff*REAL(k-N(ng),r8)
-        SCALARS(ng)%Cs_w(k)=(1.0_r8-theta_b(ng))*                       &
-     &                      cff1*SINH(theta_s(ng)*SCALARS(ng)%sc_w(k))+ &
-     &                      theta_b(ng)*                                &
-     &                      (cff2*TANH(theta_s(ng)*(SCALARS(ng)%sc_w(k)+&
-     &                       0.5_r8))-0.5_r8)
         SCALARS(ng)%sc_r(k)=cff*(REAL(k-N(ng),r8)-0.5_r8)
-        SCALARS(ng)%Cs_r(k)=(1.0_r8-theta_b(ng))*                       &
-     &                      cff1*SINH(theta_s(ng)*SCALARS(ng)%sc_r(k))+ &
-     &                      theta_b(ng)*                                &
-     &                      (cff2*TANH(theta_s(ng)*(SCALARS(ng)%sc_r(k)+&
-     &                       0.5_r8))-0.5_r8)
+        IF (theta_s(ng).ne.0.0_r8) THEN
+          SCALARS(ng)%Cs_w(k)=(1.0_r8-theta_b(ng))*                     &
+     &                        cff1*SINH(theta_s(ng)*                    &
+     &                                  SCALARS(ng)%sc_w(k))+           &
+     &                        theta_b(ng)*                              &
+     &                        (cff2*TANH(theta_s(ng)*                   &
+     &                                   (SCALARS(ng)%sc_w(k)+0.5_r8))- &
+     &                         0.5_r8)
+          SCALARS(ng)%Cs_r(k)=(1.0_r8-theta_b(ng))*                     &
+     &                        cff1*SINH(theta_s(ng)*                    &
+     &                                  SCALARS(ng)%sc_r(k))+           &
+     &                        theta_b(ng)*                              &
+     &                        (cff2*TANH(theta_s(ng)*                   &
+     &                                   (SCALARS(ng)%sc_r(k)+0.5_r8))- &
+     &                         0.5_r8)
+        ELSE
+          SCALARS(ng)%Cs_w(k)=SCALARS(ng)%sc_w(k)
+          SCALARS(ng)%Cs_r(k)=SCALARS(ng)%sc_r(k)
+        END IF
       END DO
 !
 !-----------------------------------------------------------------------

@@ -93,12 +93,12 @@
 !  Construct date, time and day of the week output string.
 !-----------------------------------------------------------------------
 !
-      write(fmt,10) lmonth(imonth), lday(iday)
- 10   format('(a',i1,',1x,i',i1,',1h,,1x,i4)')
-      write(today,fmt) month(imonth), iday, iyear
+      WRITE (fmt,10) lmonth(imonth), lday(iday)
+ 10   FORMAT ('(a',i1,',1x,i',i1,',1h,,1x,i4)')
+      WRITE (today,fmt) month(imonth), iday, iyear
       dstring=day(Dindex)
-      write(tstring,20) ihour, iminute, isecond, ampm(half)
- 20   format(i2,':',i2.2,':',i2.2,a3)
+      WRITE (tstring,20) ihour, iminute, isecond, ampm(half)
+ 20   FORMAT (i2,':',i2.2,':',i2.2,a3)
 !
 !  Concatenate date string.
 !
@@ -223,6 +223,7 @@
       code=MOD(no_day,7)
       RETURN
       END SUBROUTINE day_code
+
       SUBROUTINE caldate (r_date, time, year, yday, month, day, hour)
 !
 !=======================================================================
@@ -363,7 +364,8 @@
       END IF
       RETURN
       END SUBROUTINE caldate
-      function ref_att (r_time, r_date)
+
+      FUNCTION ref_att (r_time, r_date)
 !
 !=======================================================================
 !                                                                      !
@@ -458,8 +460,8 @@
 !  Build reference-time string.
 !-----------------------------------------------------------------------
 !
-      write(text,10) iyear, month, iday, ihour, minute, isec
- 10   format(i4,'-',i2.2,'-',i2.2,1x,i2.2,':',i2.2,':',i2.2)
+      WRITE (text,10) iyear, month, iday, ihour, minute, isec
+ 10   FORMAT (i4,'-',i2.2,'-',i2.2,1x,i2.2,':',i2.2,':',i2.2)
       ref_att=text
       RETURN
-      end function ref_att
+      END FUNCTION ref_att

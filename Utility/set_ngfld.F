@@ -105,13 +105,13 @@
 !
       ELSE
         Tend=Finfo(2,ifield,ng)
-        write(stdout,10) TRIM(Vname(5,ifield)), tdays(ng), Tend,        &
-     &                   Tintrp(it1,ifield,ng)*sec2day,                 &
-     &                   Tintrp(it2,ifield,ng)*sec2day
-  10    format(/,' SET_NGFLD  - current model time',                    &
-     &         ' exceeds ending value for variable: ',a,                &
-     &         /,14x,'TDAYS   = ',f15.4,2x,'TEND    = ',f15.4,          &
-     &         /,14x,'TINTRP1 = ',f15.4,2x,'TINTRP2 = ',f15.4)
+        WRITE (stdout,10) TRIM(Vname(5,ifield)), tdays(ng), Tend,       &
+     &                    Tintrp(it1,ifield,ng)*sec2day,                &
+     &                    Tintrp(it2,ifield,ng)*sec2day
+  10    FORMAT (/,' SET_NGFLD  - current model time',                   &
+     &          ' exceeds ending value for variable: ',a,               &
+     &          /,14x,'TDAYS   = ',f15.4,2x,'TEND    = ',f15.4,         &
+     &          /,14x,'TINTRP1 = ',f15.4,2x,'TINTRP2 = ',f15.4)
         exit_flag=2
         update=.false.
       END IF

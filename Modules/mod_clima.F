@@ -203,73 +203,94 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 # include "tile.h"
-# ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
-# else
-#  include "set_bounds.h"
-# endif
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
+#else
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
 # ifdef ZCLIMATOLOGY
-      CLIMA(ng) % ssh(IstrR:IendR,JstrR:JendR) = IniVal
+      CLIMA(ng) % ssh(Imin:Imax,Jmin:Jmax) = IniVal
 #  ifndef ANA_SSH
-      CLIMA(ng) % sshG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      CLIMA(ng) % sshG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 # ifdef ZCLM_NUDGING
-      CLIMA(ng) % Znudgcof(IstrR:IendR,JstrR:JendR) = IniVal
+      CLIMA(ng) % Znudgcof(Imin:Imax,Jmin:Jmax) = IniVal
 # endif
 
 # ifdef M2CLIMATOLOGY
-      CLIMA(ng) % ubarclm(IstrR:IendR,JstrR:JendR) = IniVal
-      CLIMA(ng) % vbarclm(IstrR:IendR,JstrR:JendR) = IniVal
+      CLIMA(ng) % ubarclm(Imin:Imax,Jmin:Jmax) = IniVal
+      CLIMA(ng) % vbarclm(Imin:Imax,Jmin:Jmax) = IniVal
 #  ifndef ANA_M2CLIMA
-      CLIMA(ng) % ubarclmG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      CLIMA(ng) % vbarclmG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      CLIMA(ng) % ubarclmG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      CLIMA(ng) % vbarclmG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 # ifdef M2CLM_NUDGING
-      CLIMA(ng) % M2nudgcof(IstrR:IendR,JstrR:JendR) = IniVal
+      CLIMA(ng) % M2nudgcof(Imin:Imax,Jmin:Jmax) = IniVal
 # endif
 
 # ifdef SOLVE3D
 
 #  ifdef M3CLIMATOLOGY
-      CLIMA(ng) % uclm(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
-      CLIMA(ng) % vclm(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      CLIMA(ng) % uclm(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      CLIMA(ng) % vclm(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 #   ifndef ANA_M3CLIMA
-      CLIMA(ng) % uclmG(IstrR:IendR,JstrR:JendR,1:N(ng),1:2) = IniVal
-      CLIMA(ng) % vclmG(IstrR:IendR,JstrR:JendR,1:N(ng),1:2) = IniVal
+      CLIMA(ng) % uclmG(Imin:Imax,Jmin:Jmax,1:N(ng),1:2) = IniVal
+      CLIMA(ng) % vclmG(Imin:Imax,Jmin:Jmax,1:N(ng),1:2) = IniVal
 #   endif
 #  endif
 #  ifdef M3CLM_NUDGING
-      CLIMA(ng) % M3nudgcof(IstrR:IendR,JstrR:JendR) = IniVal
+      CLIMA(ng) % M3nudgcof(Imin:Imax,Jmin:Jmax) = IniVal
 #  endif
 
 #  ifdef TCLIMATOLOGY
-      CLIMA(ng) % tclm(IstrR:IendR,JstrR:JendR,1:N(ng),1:NT(ng)) =      &
-     &                IniVal
+      CLIMA(ng) % tclm(Imin:Imax,Jmin:Jmax,1:N(ng),1:NT(ng)) = IniVal
 #   ifndef ANA_TCLIMA
-      CLIMA(ng) % tclmG(IstrR:IendR,JstrR:JendR,1:N(ng),1:2,1:NT(ng)) = &
-     &                 IniVal
+      CLIMA(ng) % tclmG(Imin:Imax,Jmin:Jmax,1:N(ng),1:2,1:NT(ng)) = IniVal
 #   endif
 #  endif
 #  ifdef TCLM_NUDGING
-      CLIMA(ng) % Tnudgcof(IstrR:IendR,JstrR:JendR,1:NT(ng)) = IniVal
+      CLIMA(ng) % Tnudgcof(Imin:Imax,Jmin:Jmax,1:NT(ng)) = IniVal
 #  endif
 
 # endif
+
       RETURN
       END SUBROUTINE initialize_clima
 #endif

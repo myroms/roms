@@ -18,11 +18,11 @@
       USE mod_netcdf
       USE mod_ocean
       USE mod_scalars
-#ifdef SEDIMENT
+#if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
 
-#if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
 !
       USE exchange_2d_mod
 # ifdef SOLVE3D
@@ -39,14 +39,9 @@
 !  Local variable declarations.
 !
       logical, dimension(NV) :: got_var
-#ifdef SOLVE3D
-      logical, dimension(NT(ng)) :: got_trc
-
-      integer :: itrc
-#endif
 
       integer :: LBi, UBi, LBj, UBj
-      integer :: gtype, i, ifield, ncinpid
+      integer :: gtype, i, ifield, itrc, ncinpid
       integer :: nvatts, nrec, status, tindx, varid, vartype
 
       integer :: nf_fread
@@ -64,22 +59,17 @@
 !  the dimensions and variables.  Check for consistency.
 !-----------------------------------------------------------------------
 !
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
       ncname=ininame(ng)
       ifield=0
       CALL opencdf (ng, 1, TRIM(ncname), fname, N(ng), ifield, nrec)
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
 !
 !  Initialize logical switches.
 !
         DO i=1,NV
           got_var(i)=.false.
         END DO
-#ifdef SOLVE3D
-        DO itrc=1,NT(ng)
-          got_trc(itrc)=.false.
-        END DO
-#endif
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  model initialization variables.
@@ -109,9 +99,31 @@
         END IF
         DO itrc=1,NT(ng)
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
-            got_trc(itrc)=.true.
+            got_var(idTvar(itrc))=.true.
           END IF
         END DO
+# if !defined ANA_SEDIMENT && defined SEDIMENT
+        DO itrc=1,NST
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
+            got_var(idfrac(itrc))=.true.
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBmas(itrc)))) THEN
+            got_var(idBmass(itrc))=.true.
+          END IF
+        END DO
+        DO itrc=1,MBEDP
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSbed(itrc)))) THEN
+            got_var(idSbed(itrc))=.true.
+          END IF
+        END DO
+# endif
+# if !defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
+        DO itrc=1,4
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
+            got_var(idBott(itrc))=.true.
+          END IF
+        END DO
+# endif
 #endif
       END DO
 !
@@ -149,17 +161,47 @@
         exit_flag=2
         RETURN
       END IF
-# ifdef ANA_BIOLOGY
+# if defined ANA_BIOLOGY || defined ANA_SEDIMENT
       DO itrc=1,NAT
 # else
       DO itrc=1,NT(ng)
 # endif
-        IF (.not.got_trc(itrc)) THEN
+        IF (.not.got_var(idTvar(itrc))) THEN
           WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
           exit_flag=2
           RETURN
         END IF
       END DO
+# if !defined ANA_SEDIMENT && defined SEDIMENT
+      DO itrc=1,NST
+        IF (.not.got_var(idfrac(itrc))) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idfrac(itrc))), TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+        IF (.not.got_var(idBmas(itrc))) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idBmas(itrc))), TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END DO
+      DO itrc=1,MBEDP
+        IF (.not.got_var(idSbed(itrc))) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idSbed(itrc))), TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END DO
+# endif
+# if !defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
+      DO itrc=1,4
+        IF (.not.got_var(idBott(itrc))) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idBott(itrc))), TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END DO
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -276,7 +318,7 @@
 #endif
      &                OCEAN(ng) % zeta(LBi,LBj,1))
       IF (InpThread.and.(status.ne.nf_noerr)) THEN
-        WRITE (stdout,40) TRIM(Vname(1,idFsur)), tindx, TRIM(ncname)
+        WRITE (stdout,30) TRIM(Vname(1,idFsur)), tindx, TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
@@ -293,7 +335,7 @@
 #endif
      &                OCEAN(ng) % ubar(LBi,LBj,1))
       IF (InpThread.and.(status.ne.nf_noerr)) THEN
-        WRITE (stdout,40) TRIM(Vname(1,idUbar)), tindx, TRIM(ncname)
+        WRITE (stdout,30) TRIM(Vname(1,idUbar)), tindx, TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
@@ -310,7 +352,7 @@
 #endif
      &                OCEAN(ng) % vbar(LBi,LBj,1))
       IF (InpThread.and.(status.ne.nf_noerr)) THEN
-        WRITE (stdout,40) TRIM(Vname(1,idVbar)), tindx, TRIM(ncname)
+        WRITE (stdout,30) TRIM(Vname(1,idVbar)), tindx, TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
@@ -323,12 +365,12 @@
       status=nf_fread(ng, ncinpid, varid, tindx, gtype,                 &
      &                LBi, UBi, LBj, UBj, 1, N(ng),                     &
      &                Fscl, Fmin, Fmax,                                 &
-#ifdef MASKING
+# ifdef MASKING
      &                GRID(ng) % umask(LBi,LBj),                        &
-#endif
+# endif
      &                OCEAN(ng) % u(LBi,LBj,1,1))
       IF (InpThread.and.(status.ne.nf_noerr)) THEN
-        WRITE (stdout,40) TRIM(Vname(1,idUvel)), tindx, TRIM(ncname)
+        WRITE (stdout,30) TRIM(Vname(1,idUvel)), tindx, TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
@@ -340,19 +382,19 @@
       status=nf_fread(ng, ncinpid, varid, tindx, gtype,                 &
      &                LBi, UBi, LBj, UBj, 1, N(ng),                     &
      &                Fscl, Fmin, Fmax,                                 &
-#ifdef MASKING
+# ifdef MASKING
      &                GRID(ng) % vmask(LBi,LBj),                        &
-#endif
+# endif
      &                OCEAN(ng) % v(LBi,LBj,1,1))
       IF (InpThread.and.(status.ne.nf_noerr)) THEN
-        WRITE (stdout,40) TRIM(Vname(1,idVvel)), tindx, TRIM(ncname)
+        WRITE (stdout,30) TRIM(Vname(1,idVvel)), tindx, TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 !
 !  Read in tracer type variables.
 !
-# ifdef ANA_BIOLOGY
+# if defined ANA_BIOLOGY || defined ANA_SEDIMENT
       DO itrc=1,NAT
 # else
       DO itrc=1,NT(ng)
@@ -362,57 +404,111 @@
         status=nf_fread(ng, ncinpid, varid, tindx, gtype,               &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  Fscl, Fmin, Fmax,                               &
-#ifdef MASKING
+# ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
-#endif
+# endif
      &                  OCEAN(ng) % t(LBi,LBj,1,1,itrc))
         IF (InpThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,40) TRIM(Vname(1,idTvar(itrc))), tindx,         &
+          WRITE (stdout,30) TRIM(Vname(1,idTvar(itrc))), tindx,         &
      &                      TRIM(ncname)
           exit_flag=2
           RETURN
         END IF
       END DO
-# ifdef SEDIMENT
+
+# if !defined ANA_SEDIMENT && defined SEDIMENT
+!
+!  Read in sediment fraction of each size class in each bed layer.
+!
       DO i=1,NST
         status=nf_inq_varid(ncinpid, TRIM(Vname(1,idfrac(i))), varid)
         gtype=vflag(varid)*b3dvar
         status=nf_fread(ng, ncinpid, varid, tindx, gtype,               &
      &                  LBi, UBi, LBj, UBj, 1, Nbed,                    &
      &                  Fscl, Fmin, Fmax,                               &
-#ifdef MASKING
+#  ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
-#endif
+#  endif
      &                  OCEAN(ng) % bed_frac(LBi,LBj,1,i))
         IF (InpThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,40) TRIM(Vname(1,idfrac(i))), tindx,            &
+          WRITE (stdout,30) TRIM(Vname(1,idfrac(i))), tindx,            &
+     &                      TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+!
+!  Read in sediment mass of each size class in each bed layer.
+!
+        status=nf_inq_varid(ncinpid, TRIM(Vname(1,idBmas(i))), varid)
+        gtype=vflag(varid)*b3dvar
+        status=nf_fread(ng, ncinpid, varid, tindx, gtype,               &
+     &                  LBi, UBi, LBj, UBj, 1, Nbed,                    &
+     &                  Fscl, Fmin, Fmax,                               &
+#  ifdef MASKING
+     &                  GRID(ng) % rmask(LBi,LBj),                      &
+#  endif
+     &                  OCEAN(ng) % bed_mass(LBi,LBj,1,i))
+        IF (InpThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,30) TRIM(Vname(1,idBmas(i))), tindx,            &
      &                      TRIM(ncname)
           exit_flag=2
           RETURN
         END IF
       END DO
+!
+!  Read in sediment properties in each bed layer.
+!
       DO i=1,MBEDP
         status=nf_inq_varid(ncinpid, TRIM(Vname(1,idSbed(i))), varid)
         gtype=vflag(varid)*b3dvar
         status=nf_fread(ng, ncinpid, varid, tindx, gtype,               &
      &                  LBi, UBi, LBj, UBj, 1, Nbed,                    &
      &                  Fscl, Fmin, Fmax,                               &
-#ifdef MASKING
+#  ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
-#endif
+#  endif
      &                  OCEAN(ng) % bed(LBi,LBj,1,i))
         IF (InpThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,40) TRIM(Vname(1,idSbed(i))), tindx,            &
+          WRITE (stdout,30) TRIM(Vname(1,idSbed(i))), tindx,            &
      &                      TRIM(ncname)
           exit_flag=2
           RETURN
         END IF
       END DO
 # endif
-#endif
-#if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+
+# if !defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
 !
+!  Read in sediment properties in exposed bed layer. Notice that only
+!  the first four properties (mean grain diamneter, mean grain density,
+!  mean settling velocity, and mean critical erosion stress) are read.
+!
+      DO i=1,4
+        status=nf_inq_varid(ncinpid, TRIM(Vname(1,idBott(i))), varid)
+        gtype=vflag(varid)*r2dvar
+        status=nf_fread(ng, ncinpid, varid, tindx, gtype,               &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  Fscl, Fmin, Fmax,                               &
+#  ifdef MASKING
+     &                  GRID(ng) % rmask(LBi,LBj),                      &
+#  endif
+     &                  OCEAN(ng) % bottom(LBi,LBj,i))
+        IF (InpThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,30) TRIM(Vname(1,idBott(i))), tindx,            &
+     &                      TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+      END DO
+# endif
+
+#endif
+
+#if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
+!
+!-----------------------------------------------------------------------
 !  Set periodic boundary conditions.
+!-----------------------------------------------------------------------
 !
       CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -425,30 +521,44 @@
      &                        OCEAN(ng) % vbar(:,:,1))
 # ifdef SOLVE3D
       CALL exchange_u3d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
-     &                        LBi, UBi, LBj, UBj,                       &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OCEAN(ng) % u(:,:,:,1))
       CALL exchange_v3d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
-     &                        LBi, UBi, LBj, UBj,                       &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OCEAN(ng) % v(:,:,:,1))
-#  ifdef ANA_BIOL0GY
+
+#  if defined ANA_BIOL0GY || defined ANA_SEDIMENT
       DO itrc=1,NAT
 #  else
       DO itrc=1,NT(ng)
 #  endif
         CALL exchange_r3d_tile (ng, 1, Lm(ng), 1, Mm(ng),               &
-     &                          LBi, UBi, LBj, UBj,                     &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          OCEAN(ng) % t(:,:,:,1,itrc))
       END DO
-#  ifdef SEDIMENT
+
+#  if !defined ANA_SEDIMENT && defined SEDIMENT
       DO i=1,NST
         CALL exchange_r3d_tile (ng, 1, Lm(ng), 1, Mm(ng),               &
-     &                          LBi, UBi, LBj, UBj,                     &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
      &                          OCEAN(ng) % bed_frac(:,:,:,i))
+!
+        CALL exchange_r3d_tile (ng, 1, Lm(ng), 1, Mm(ng),               &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          OCEAN(ng) % bed_mass(:,:,:,i))
       END DO
       DO i=1,MBEDP
         CALL exchange_r3d_tile (ng, 1, Lm(ng), 1, Mm(ng),               &
-     &                          LBi, UBi, LBj, UBj,                     &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
      &                          OCEAN(ng) % bed(:,:,:,i))
+      END DO
+#  endif
+
+#  if !defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
+      DO i=1,4
+        CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          OCEAN(ng) % bottom(:,:,i))
       END DO
 #  endif
 # endif
@@ -459,20 +569,20 @@
       status=nf_close(ncinpid)
       IF (Master) WRITE (stdout,80) tdays(ng)
 !
-  10  format(/,' GET_INITIAL - unable to find model variable: ',a,      &
-     &       /,15x,'in input NetCDF file: ',a)
-  20  format(/,' GET_INITIAL - unable to open input NetCDF file: ',a)
-  30  format(/,' GET_INITIAL - error while reading variable: ',a,2x,    &
-     &       'at time record = ',i3,/,15x,'in input NetCDF file: ',a)
-  40  format(/,' GET_INITIAL - requested restart time record = ',i3,/,  &
-     &       15x,'not found in input NetCDF: ',a,/,                     &
-     &       15x,'number of available records = ',i3)
-  50  format(/,' GET_INITIAL - error while reading attribute: ',a)
-  60  format(/,' GET_INITIAL - error while inquiring attributes for',   &
-     &       ' variable: ',a)
-  70  format(/,' GET_INITIAL - cannot inquire about time variable in',  &
-     &       ' input NetCDF file: ',a)
-  80  format(/,' GET_INITIAL - Processed initial conditions,',          &
-     &       t64,'t = ',f12.4)
+  10  FORMAT (/,' GET_INITIAL - unable to find model variable: ',a,     &
+     &        /,15x,'in input NetCDF file: ',a)
+  20  FORMAT (/,' GET_INITIAL - unable to open input NetCDF file: ',a)
+  30  FORMAT (/,' GET_INITIAL - error while reading variable: ',a,2x,   &
+     &        'at time record = ',i3,/,15x,'in input NetCDF file: ',a)
+  40  FORMAT (/,' GET_INITIAL - requested restart time record = ',i3,/, &
+     &        15x,'not found in input NetCDF: ',a,/,                    &
+     &        15x,'number of available records = ',i3)
+  50  FORMAT (/,' GET_INITIAL - error while reading attribute: ',a)
+  60  FORMAT (/,' GET_INITIAL - error while inquiring attributes for',  &
+     &          ' variable: ',a)
+  70  FORMAT (/,' GET_INITIAL - cannot inquire about time variable in', &
+     &          ' input NetCDF file: ',a)
+  80  FORMAT (/,' GET_INITIAL - Processed initial conditions,',         &
+     &        t64,'t = ',f12.4)
       RETURN
       END SUBROUTINE get_initial

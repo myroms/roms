@@ -136,13 +136,13 @@
       ELSE
         IF (SOUTH_WEST_TEST) THEN
           Tend=Finfo(2,ifield,ng)
-          write(stdout,10) TRIM(Vname(5,ifield)), tdays(ng), Tend,      &
-     &                     Tintrp(it1,ifield,ng)*sec2day,               &
-     &                     Tintrp(it2,ifield,ng)*sec2day
-  10      format(/,' SET_3DFLD  - current model time',                  &
-     &           ' exceeds ending value for variable: ',a,              &
-     &           /,14x,'TDAYS   = ',f15.4,2x,'TEND    = ',f15.4,        &
-     &           /,14x,'TINTRP1 = ',f15.4,2x,'TINTRP2 = ',f15.4)
+          WRITE (stdout,10) TRIM(Vname(5,ifield)), tdays(ng), Tend,     &
+     &                      Tintrp(it1,ifield,ng)*sec2day,              &
+     &                      Tintrp(it2,ifield,ng)*sec2day
+  10      FORMAT (/,' SET_3DFLD  - current model time',                 &
+     &            ' exceeds ending value for variable: ',a,             &
+     &            /,14x,'TDAYS   = ',f15.4,2x,'TEND    = ',f15.4,       &
+     &            /,14x,'TINTRP1 = ',f15.4,2x,'TINTRP2 = ',f15.4)
           exit_flag=2
           update=.false.
         END IF
@@ -154,13 +154,13 @@
       IF (update) THEN
         IF (gtype.eq.r3dvar) THEN
           CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj, Fout)
+     &                            LBi, UBi, LBj, UBj, 1, N(ng), Fout)
         ELSE IF (gtype.eq.u3dvar) THEN
           CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj, Fout)
+     &                            LBi, UBi, LBj, UBj, 1, N(ng), Fout)
         ELSE IF (gtype.eq.v3dvar) THEN
           CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj, Fout)
+     &                            LBi, UBi, LBj, UBj, 1, N(ng), Fout)
         END IF
       END IF
 # endif

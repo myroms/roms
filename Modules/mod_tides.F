@@ -117,19 +117,41 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 # include "tile.h"
-#ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
-# else
-#  include "set_bounds.h"
-# endif
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
+#else
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
@@ -140,15 +162,15 @@
       END IF
 
 # if defined SSH_TIDES
-      TIDES(ng) % SSH_Tamp(IstrR:IendR,JstrR:JendR,1:MTC) = IniVal
-      TIDES(ng) % SSH_Tphase(IstrR:IendR,JstrR:JendR,1:MTC) = IniVal
+      TIDES(ng) % SSH_Tamp(Imin:Imax,Jmin:Jmax,1:MTC) = IniVal
+      TIDES(ng) % SSH_Tphase(Imin:Imax,Jmin:Jmax,1:MTC) = IniVal
 # endif
 
 # if defined UV_TIDES
-      TIDES(ng) % UV_Tangle(IstrR:IendR,JstrR:JendR,1:MTC) = IniVal
-      TIDES(ng) % UV_Tmajor(IstrR:IendR,JstrR:JendR,1:MTC) = IniVal
-      TIDES(ng) % UV_Tminor(IstrR:IendR,JstrR:JendR,1:MTC) = IniVal
-      TIDES(ng) % UV_Tphase(IstrR:IendR,JstrR:JendR,1:MTC) = IniVal
+      TIDES(ng) % UV_Tangle(Imin:Imax,Jmin:Jmax,1:MTC) = IniVal
+      TIDES(ng) % UV_Tmajor(Imin:Imax,Jmin:Jmax,1:MTC) = IniVal
+      TIDES(ng) % UV_Tminor(Imin:Imax,Jmin:Jmax,1:MTC) = IniVal
+      TIDES(ng) % UV_Tphase(Imin:Imax,Jmin:Jmax,1:MTC) = IniVal
 # endif
 
       RETURN

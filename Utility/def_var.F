@@ -83,7 +83,7 @@
       IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
         def_var=nf_def_var(ncid,TRIM(Vinfo(1)),Vtype,nVdims,Vdims,Vid)
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,10) TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,10) TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -96,7 +96,7 @@
         def_var=nf_put_att_text(ncid,Vid,'long_name',                   &
      &                          latt,TRIM(Vinfo(2)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'long_name', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'long_name', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -110,7 +110,7 @@
         def_var=nf_put_att_text(ncid,Vid,'size_class',                  &
      &                          latt,TRIM(Vinfo(19)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'size_class', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'size_class', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -124,7 +124,7 @@
         def_var=nf_put_att_text(ncid,Vid,'units',                       &
      &                          latt,TRIM(Vinfo(3)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'units', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'units', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -138,7 +138,7 @@
         def_var=nf_put_att_text(ncid,Vid,'calendar',                    &
      &                          latt,TRIM(Vinfo(4)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'calendar', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'calendar', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -157,7 +157,7 @@
      &                            Vtype,1,Aval(2))
         END IF
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) TRIM(Vinfo(5)), TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) TRIM(Vinfo(5)), TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -177,7 +177,7 @@
      &                            Vtype,1,Aval(3))
         END IF
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) TRIM(Vinfo(6)), TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) TRIM(Vinfo(6)), TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -192,7 +192,7 @@
         def_var=nf_put_att_text(ncid,Vid,'option_T',                    &
      &                          latt,TRIM(Vinfo(7)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'option_T', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'option_T', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -206,7 +206,7 @@
         def_var=nf_put_att_text(ncid,Vid,'option_F',                    &
      &                          latt,TRIM(Vinfo(8)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'option_F', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'option_F', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -220,7 +220,7 @@
         def_var=nf_put_att_text(ncid,Vid,'option_0',                    &
      &                          latt,TRIM(Vinfo(9)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'option_0', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'option_0', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -234,7 +234,7 @@
         def_var=nf_put_att_text(ncid,Vid,'option_1',                    &
      &                          latt,TRIM(Vinfo(10)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'option_1', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'option_1', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -248,7 +248,7 @@
         def_var=nf_put_att_text(ncid,Vid,'negative',                    &
      &                          latt,TRIM(Vinfo(11)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'negative', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'negative', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -262,7 +262,7 @@
         def_var=nf_put_att_text(ncid,Vid,'positive',                    &
      &                          latt,TRIM(Vinfo(12)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'positive', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'positive', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -276,7 +276,7 @@
         def_var=nf_put_att_text(ncid,Vid,'cycle',                       &
      &                          latt,TRIM(Vinfo(13)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'cycle', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'cycle', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -290,7 +290,7 @@
         def_var=nf_put_att_text(ncid,Vid,'positions',                   &
      &                          latt,TRIM(Vinfo(15)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'positions', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'positions', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -304,7 +304,7 @@
         def_var=nf_put_att_text(ncid,Vid,'time',                        &
      &                          latt,TRIM(Vinfo(16)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'time', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'time', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -323,7 +323,8 @@
      &                            Vtype,1,Aval(4))
         END IF
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) TRIM(Vinfo(17)), TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) TRIM(Vinfo(17)), TRIM(Vinfo(1)),            &
+     &                      TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -343,7 +344,7 @@
      &                            Vtype,1,Aval(1))
         END IF
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) TRIM(Vinfo(18)), TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) TRIM(Vinfo(18)), TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -358,7 +359,7 @@
         def_var=nf_put_att_text(ncid,Vid,'water_points',                &
      &                          latt,TRIM(Vinfo(20)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'water_points', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'water_points', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -372,7 +373,7 @@
         def_var=nf_put_att_text(ncid,Vid,'field',                       &
      &                          latt,TRIM(Vinfo(14)))
         IF (def_var.ne.nf_noerr) THEN
-          write(stdout,20) 'field', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'field', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF

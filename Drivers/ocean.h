@@ -5,8 +5,11 @@
 !  Copyright (c) 2002 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  Regional Ocean Model System (ROMS), Version 2.0                     !
-!  Terrain-following Ocean Model System (TOMS), Version 2.0            !
+!  Regional Ocean Model System (ROMS), Version 2.1                     !
+!  Terrain-following Ocean Model System (TOMS), Version 2.1            !
+!                                                                      !
+!  Master program to execute ROMS/TOMS in ocean mode only without      !
+!  coupling (sequential or concurrent) to any atmospheric model.       !
 !                                                                      !
 !  This ocean model solves the free surface, hydrostatic, primitive    !
 !  equations  over  variable  topography  using  stretched terrain-    !
@@ -30,80 +33,71 @@
       USE mod_param
       USE mod_parallel
       USE mod_iounits
-      USE mod_ncparam
       USE mod_scalars
 !
+      USE ocean_control_mod, ONLY : initialize
+      USE ocean_control_mod, ONLY : run
+      USE ocean_control_mod, ONLY : finalize
+!
       implicit none
+!
+!  Local variable declarations.
+!
+      logical, save :: first
 
-      logical :: allocate_vars = .true.
+      integer :: MyError
 
-      integer :: my_iic, ng
+#ifdef DISTRIBUTE
+# ifdef MPI
 !
 !-----------------------------------------------------------------------
-!  Initialize model internal parameters.
+!  Initialize distributed-memory MPI configuration.
 !-----------------------------------------------------------------------
 !
-      CALL initialize_param
-      CALL initialize_parallel
-      CALL initialize_scalars
+      CALL mpi_init (MyError)
+      IF (MyError.ne.0) THEN
+        WRITE (stdout,10)
+  10    FORMAT (/,' ROMS/TOMS - Unable to initialize MPI.')
+        exit_flag=6
+        STOP
+      END IF
 !
-!-----------------------------------------------------------------------
-!  Read in model tunable parameters from standard input.
-!-----------------------------------------------------------------------
+!  Get rank of the local process in the group associated with the
+!  comunicator.
 !
-      CALL inp_par
-!
-!-----------------------------------------------------------------------
-!  Allocate and initialize model variables for each nested grid..
-!-----------------------------------------------------------------------
-!
-      CALL mod_arrays (allocate_vars)
-!
-!-----------------------------------------------------------------------
-!  Run model for all nested grids, if any.  The model also can be run
-!  once or over an ensemble loop.
-!-----------------------------------------------------------------------
-!
-      ENSEMBLE : DO Nrun=ERstr,ERend
-!
-!  Initialize model state variables.
-!
-        DO ng=1,Ngrids
-          CALL initial (ng)
-          IF (exit_flag.ne.0) THEN
-            write(stdout,10) Rerror(exit_flag), exit_flag
- 10         format(/,a,i3,/)
-            EXIT ENSEMBLE
-          END IF
-        END DO
-!
-!  Time step ocean model.
-!
-        NEST : DO ng=1,Ngrids
-          IF (Master) WRITE (stdout,20) ntstart, ntend
- 20       FORMAT (/,' ROMS/TOMS: started time-stepping:',               &
-     &              '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
-!
-          time(ng)=time(ng)-dt(ng)
-          STEP : DO my_iic=ntstart,ntend+1
-            iic(ng)=my_iic
-#ifdef SOLVE3D
-            CALL main3d (ng)
-#else
-            CALL main2d (ng)
+      CALL mpi_comm_rank (MPI_COMM_WORLD, MyRank, MyError)
+      IF (MyError.ne.0) THEN
+        WRITE (stdout,20)
+  20    FORMAT (/,' ROMS/TOMS - Unable to inquire rank of local',       &
+     &              ' processor.')
+        exit_flag=6
+        STOP
+      END IF
+# endif
 #endif
-            IF (exit_flag.ne.0) THEN
-              write(stdout,10) Rerror(exit_flag), exit_flag
-              exit NEST
-            END IF
-          END DO STEP
-        END DO NEST
-      END DO ENSEMBLE
 !
 !-----------------------------------------------------------------------
-!  Close IO files.
+!  Initialize internal and external parameters and state variables.
 !-----------------------------------------------------------------------
 !
-      CALL close_io
-      STOP
+      first=.TRUE.
+      CALL initialize (first)
+!
+!-----------------------------------------------------------------------
+!  Time-step ocean model once or over an ensemble loop, if any.
+!-----------------------------------------------------------------------
+!
+      DO Nrun=ERstr,ERend
+        CALL run
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Terminate model execution: flush and close all IO files.
+!-----------------------------------------------------------------------
+!
+      CALL finalize
+#if defined DISTRIBUTE && defined MPI
+      CALL mpi_finalize (MyError)
+#endif
+
       END PROGRAM ocean

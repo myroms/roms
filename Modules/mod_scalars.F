@@ -19,7 +19,7 @@
 !                    Sflag = 1  => locations in terms of (lon,lat) pairs.
 !    SposX         Longitude or frational I-coordinate station location.
 !    SposY         Latitude  or frational J-coordinate station location.
-!    Cs_   r       Set of S-curves used to stretch the vertical grid
+!    Cs_r          Set of S-curves used to stretch the vertical grid
 !                    that follows the bathymetry at vertical RHO-points.
 !    Cs_w          Set of S-curves used to stretch the vertical grid
 !                    that follows the bathymetry at vertical W-points.
@@ -52,52 +52,104 @@
 !  Tracer identification indices.
 !-----------------------------------------------------------------------
 !
-        integer :: itemp            ! Potential temperature
-        integer :: isalt            ! Salinity
+        integer :: itemp              ! Potential temperature
+        integer :: isalt              ! Salinity
 #ifdef SEDIMENT
-        integer :: idsed(NST)       ! Cohesive and non-chohesive
-        integer :: idmud(NCS+1)     ! Cohesive sediment
-        integer :: isand(NNS+1)     ! Non-cohesive sediment
+        integer :: idsed(NST)         ! Cohesive and non-cohesive
+        integer :: idmud(NCS+1)       ! Cohesive sediment
+        integer :: isand(NNS+1)       ! Non-cohesive sediment
 #endif
 #ifdef BIO_FASHAM
-        integer :: idbio(NBT)       ! Biological tracers            
-        integer :: iNO3_            ! Nitrate concentration
-        integer :: iPhyt            ! Phytoplankton concentration
-        integer :: iZoop            ! Zooplankton concentration
-        integer :: iNH4_            ! Ammonium concentration
-        integer :: iLDeN            ! Large detritus N-concentration
-        integer :: iLDeC            ! Large detritus C-concentration
-        integer :: iSDeN            ! Small detritus N-concentration
-        integer :: iSDeC            ! Small detritus C-concentration
-        integer :: iChlo            ! Chlorophyll/Phytoplankton ratio
+        integer, pointer :: idbio(:)  ! Biological tracers
+        integer :: iNO3_              ! Nitrate concentration
+        integer :: iNH4_              ! Ammonium concentration
+        integer :: iChlo              ! Chlorophyll concentration
+        integer :: iPhyt              ! Phytoplankton concentration
+        integer :: iZoop              ! Zooplankton concentration
+        integer :: iLDeN              ! Large detritus N-concentration
+        integer :: iSDeN              ! Small detritus N-concentration
+#  ifdef CARBON
+        integer :: iLDeC              ! Large detritus C-concentration
+        integer :: iSDeC              ! Small detritus C-concentration
+        integer :: iTIC_              ! Total inorganic carbon
+        integer :: iTAlk              ! Total alkalinity
+#  endif
 #endif
 #ifdef ECOSIM
-        integer :: idbio(NBT)       ! Biological tracers            
-        integer :: iBacC(Nbac)      ! Bateria, Carbon group
-        integer :: iBacN(Nbac)      ! Bateria, Nitrogen group
-        integer :: iBacP(Nbac)      ! Bateria, Phosphorous group
-        integer :: iBacF(Nbac)      ! Bateria, Iron group
-        integer :: iCDMC(Ndom)      ! Color degradational matter
-        integer :: iDOMC(Ndom)      ! DOM, Carbon group
-        integer :: iDOMN(Ndom)      ! DOM, Nitrogen group
-        integer :: iDOMP(Ndom)      ! DOM, Phosphorous group
-        integer :: iFecC(Nfec)      ! Fecal matter, Carbon group
-        integer :: iFecN(Nfec)      ! Fecal matter, Nitrogen group
-        integer :: iFecP(Nfec)      ! Fecal matter, Phosphorous group
-        integer :: iFecF(Nfec)      ! Fecal matter, Iron group
-        integer :: iFecS(Nfec)      ! Fecal matter, Silica group
-        integer :: iPhyC(Nphy)      ! Phytoplankton, Carbon group
-        integer :: iPhyN(Nphy)      ! Phytoplankton, Nitrogen group
-        integer :: iPhyP(Nphy)      ! Phytoplankton, Phosphorous group
-        integer :: iPhyF(Nphy)      ! Phytoplankton, Iron group
-        integer :: iPhyS(Nphy)      ! Phytoplankton, Silica group
-        integer :: iPigs(Nphy,Npig) ! Phytoplankton, pigment group
-        integer :: iNO3_            ! Nitrate concentration
-        integer :: iNH4_            ! Ammonium concentration
-        integer :: iPO4_            ! Phosphate concentration
-        integer :: iFeO_            ! Iron concentration
-        integer :: iSiO_            ! Silica concentration
-        integer :: iDIC_            ! Dissolved inorganic Carbon
+        integer, pointer :: idbio(:)  ! Biological tracers
+        integer :: iBacC(Nbac)        ! Bacteria, Carbon group
+        integer :: iBacN(Nbac)        ! Bacteria, Nitrogen group
+        integer :: iBacP(Nbac)        ! Bacteria, Phosphorous group
+        integer :: iBacF(Nbac)        ! Bacteria, Iron group
+        integer :: iCDMC(Ndom)        ! Color degradational matter
+        integer :: iDOMC(Ndom)        ! DOM, Carbon group
+        integer :: iDOMN(Ndom)        ! DOM, Nitrogen group
+        integer :: iDOMP(Ndom)        ! DOM, Phosphorous group
+        integer :: iFecC(Nfec)        ! Fecal matter, Carbon group
+        integer :: iFecN(Nfec)        ! Fecal matter, Nitrogen group
+        integer :: iFecP(Nfec)        ! Fecal matter, Phosphorous group
+        integer :: iFecF(Nfec)        ! Fecal matter, Iron group
+        integer :: iFecS(Nfec)        ! Fecal matter, Silica group
+        integer :: iPhyC(Nphy)        ! Phytoplankton, Carbon group
+        integer :: iPhyN(Nphy)        ! Phytoplankton, Nitrogen group
+        integer :: iPhyP(Nphy)        ! Phytoplankton, Phosphorous group
+        integer :: iPhyF(Nphy)        ! Phytoplankton, Iron group
+        integer :: iPhyS(Nphy)        ! Phytoplankton, Silica group
+        integer :: iPigs(Nphy,Npig)   ! Phytoplankton, pigment group
+        integer :: iNO3_              ! Nitrate concentration
+        integer :: iNH4_              ! Ammonium concentration
+        integer :: iPO4_              ! Phosphate concentration
+        integer :: iFeO_              ! Iron concentration
+        integer :: iSiO_              ! Silica concentration
+        integer :: iDIC_              ! Dissolved inorganic Carbon
+        integer :: FirstPig           ! Index of first tracer pigment
+!
+!  EcoSim group names used on standard output.
+!
+        character (len=16), dimension(Nbac) :: BacName
+        character (len=11), dimension(Ndom) :: DomName
+        character (len=13), dimension(Nfec) :: FecName
+        character (len=21), dimension(Nphy) :: PhyName
+
+        character (len=39), dimension(7) :: PigName =                   &
+     &            (/ 'chlorophyll-a                          ',         &
+     &               'chlorophyll-b                          ',         &
+     &               'chlorophyll-c                          ',         &
+     &               'photosythetic carotenoids              ',         &
+     &               'photoprotective carotenoids            ',         &
+     &               'low urobilin phycoeurythin carotenoids ',         &
+     &               'high urobilin phycoeurythin carotenoids' /)
+#endif
+#ifdef DIAGNOSTICS
+!
+!-----------------------------------------------------------------------
+!  Diagnostic fields identification indices.
+!-----------------------------------------------------------------------
+!
+# ifdef DIAGNOSTICS_TS
+        integer :: iTrate            ! Tracer, time rate of change
+        integer :: iThadv            ! Tracer, horizontal advection
+        integer :: iThdif            ! Tracer, horizontal diffusion
+        integer :: iTvadv            ! Tracer, vertical advection
+        integer :: iTvdif            ! Tracer, vertical diffusion
+# endif
+# ifdef DIAGNOSTICS_UV
+        integer :: M2pgrd            ! 2D momentum, pressure gradient
+        integer :: M2fcor            ! 2D momentum, Coriolis
+        integer :: M2rate            ! 2D momentum, time rate of change
+        integer :: M2hadv            ! 2D momentum, horizontal advection
+        integer :: M2hvis            ! 2D momentum, horizontal viscosity
+        integer :: M2strs            ! 2D momentum, stresses
+#  ifdef SOLVE3D
+        integer :: M3fcor            ! 3D momentum, Coriolis
+        integer :: M3rate            ! 3D momentum, time rate of change
+        integer :: M3hadv            ! 3D momentum, horizontal advection
+        integer :: M3hvis            ! 3D momentum, horizontal viscosity
+        integer :: M3pgrd            ! 3D momentum, pressure gradient
+        integer :: M3vadv            ! 3D momentum, vertical advection
+        integer :: M3vvis            ! 3D momentum, vertical viscosity
+#  endif
+# endif
 #endif
 #ifdef FLOATS
 !
@@ -138,7 +190,8 @@
 !    dtfast        Size barotropic timestep (s).
 !    tdays         Model time clock (days).
 !    time          Model time clock (s).
-!    avgtime       Model time clock for time-averaged output (s).
+!    avgtime       Model time clock for averages output (s).
+!    diatime       Model time clock for diagnostics output (s).
 !    r_date        Model initialization reference date (vector):
 !                    r_date(1) => reference date (YYYYMMDD.dd).
 !                    r_date(2) => year.
@@ -166,6 +219,7 @@
         real(r8), dimension(Ngrids) :: tdays             ! days
         real(r8), dimension(Ngrids) :: time              ! seconds
         real(r8), dimension(Ngrids) :: avgtime           ! seconds
+        real(r8), dimension(Ngrids) :: diatime           ! seconds
 
         real(r8), dimension(8) :: r_date
         real(r8) :: dstart = 0.0_r8                      ! days
@@ -202,6 +256,17 @@
 !  is the total of barotropic timesteps.
 !
         integer :: ntimes
+
+#ifdef AIR_OCEAN
+!
+!  Number of atmosphere model time-steps.
+!
+        integer :: nATM_steps
+!
+!  Number of time-steps between two-way coupling to atmosphere model.
+!
+        integer :: nOCN_steps
+#endif
 !
 !  Starting, current, and ending ensemble run parameters.
 !
@@ -318,6 +383,12 @@
 !  application. Used for scaling horizontal mixing by the grid size.
 !
         real(r8), dimension(Ngrids) :: grdmax = 0.0_r8
+!
+!  Courant Numbers.
+!
+        real(r8) :: Cu_min = 0.0_r8             ! Minimun barotropic
+        real(r8) :: Cu_max = 0.0_r8             ! Maximun barotropic
+        real(r8) :: Cu_Cor = 0.0_r8             ! Maximun Coriolis
 !
 !  Linear equation of state parameters.
 !
@@ -444,6 +515,7 @@
 !  Switches to activate creation and writing of output NetCDF files.
 !
         logical, dimension(Ngrids) :: LdefAVG    ! Average file
+        logical, dimension(Ngrids) :: LdefDIA    ! Diagnostics file
         logical, dimension(Ngrids) :: LdefFLT    ! Floats file
         logical, dimension(Ngrids) :: LdefHIS    ! History file
         logical, dimension(Ngrids) :: LdefRST    ! Restart file
@@ -459,15 +531,18 @@
 !  Number of timesteps between creation of new output files.
 !
         integer, dimension(Ngrids) :: ndefavg    ! Average file
+        integer, dimension(Ngrids) :: ndefdia    ! Diagnostics file
         integer, dimension(Ngrids) :: ndefhis    ! History file
 !
 !  Starting timestep for accumulation of output.
 !
         integer, dimension(Ngrids) :: ntsavg     ! Average file
+        integer, dimension(Ngrids) :: ntsdia     ! Diagnostics file
 !
 !  Number of timesteps between writing of output data.
 !
         integer, dimension(Ngrids) :: navg       ! Average file
+        integer, dimension(Ngrids) :: ndia       ! Diagnostics file
         integer, dimension(Ngrids) :: nflt       ! Floats file
         integer, dimension(Ngrids) :: nhis       ! History file
         integer, dimension(Ngrids) :: nrst       ! Restart file
@@ -476,6 +551,7 @@
 !  Number of time records written into output files.
 !
         integer, dimension(Ngrids) :: nrecavg    ! Average file
+        integer, dimension(Ngrids) :: nrecdia    ! Diagnostics file
         integer, dimension(Ngrids) :: nrecflt    ! Floats file
         integer, dimension(Ngrids) :: nrechis    ! History file
         integer, dimension(Ngrids) :: nrecrst    ! Restart file
@@ -771,8 +847,7 @@
 !!      real(r8) :: lmd_nu0m = 50.0E-4_r8     ! m2/s
 !!      real(r8) :: lmd_nu0s = 50.0E-4_r8     ! m2/s
         real(r8) :: lmd_nuf = 10.0E-4_r8      ! m2/s
-# if defined DAMEE_4 || defined DAMEE_5 || defined DAMME_6 || \
-     defined DAMEE_7 || defined DAMEE_9
+# ifdef DAMEE_4
         real(r8) :: lmd_nuwm = 1.0E-4_r8      ! m2/s
         real(r8) :: lmd_nuws = 1.0E-5_r8      ! m2/s
 # else
@@ -1052,8 +1127,8 @@
 !  Latest observation time (seconds, monotonic) of read data.
 !
         real(r8), dimension(Ngrids) :: tsSSHobs     ! Sea surface height
-        real(r8), dimension(Ngrids) :: tsTobs       ! Tracers
         real(r8), dimension(Ngrids) :: tsVobs       ! Currents
+        real(r8), allocatable :: tsTobs(:,:)        ! Tracers
 !
 !  Current Observations error variance minimum and maximum values.
 !
@@ -1136,6 +1211,17 @@
       integer :: i, ic, j, ng
 
       real(r8), parameter :: IniVal = 0.0_r8
+
+#ifdef ECOSIM
+      character (len=21), dimension(7) :: PhyGroups =                   &
+     &                                 (/ 'small diatom         ',      &
+     &                                    'large diatom         ',      &
+     &                                    'small dinoflagellate ',      &
+     &                                    'large dinoflagellate ',      &
+     &                                    'synechococcus        ',      &
+     &                                    'small prochlorococcus',      &
+     &                                    'large prochlorococcus' /)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Allocate and initialize variables in module structure.
@@ -1176,6 +1262,9 @@
 #ifdef SOLVE3D
       allocate ( Tobc_in(MT,Ngrids,4) )
       allocate ( Tobc_out(MT,Ngrids,4) )
+# ifdef BIOLOGY
+      allocate ( idbio(NBT) )
+# endif
 #endif
       allocate ( Tnudg(MT,Ngrids) )
       allocate ( Tnudass(MT,Ngrids) )
@@ -1185,6 +1274,7 @@
       allocate ( update_T(MT,Ngrids) )
       allocate ( timeTobs(MT,Ngrids) )
       allocate ( tTobs(MT,2,Ngrids) )
+      allocate ( tsTobs(MT,Ngrids) )
       allocate ( EobsTmin(MT,Ngrids) )
       allocate ( EobsTmax(MT,Ngrids) )
       allocate ( assi(NSV(ng)) )
@@ -1223,45 +1313,27 @@
       END DO
       iNO3_=ic+1
       iNH4_=ic+2
-      iPhyt=ic+3
-      iZoop=ic+4
-      iChlo=ic+5
+      iChlo=ic+3
+      iPhyt=ic+4
+      iZoop=ic+5
       iLDeN=ic+6
       iSDeN=ic+7
       ic=ic+7
 # ifdef CARBON
       iLDeC=ic+1
       iSDeC=ic+2
-      ic=ic+2
+      iTIC_=ic+3
+      iTAlk=ic+4
+      ic=ic+4
 # endif
 #elif defined ECOSIM
-!
-!  Set full EcoSIM phytoplankton/pigment matrix.
-!
-      DO i=1,7
-        DO j=1,7
-          PIG(i,j)=0
-        END DO
-        PIG(i,1)=1
-        PIG(i,5)=1
-      END DO
-      DO i=6,7
-        PIG(i,2)=1
-      END DO
-      DO j=3,4
-        DO i=1,3
-          PIG(i,j)=1
-        END DO
-        PIG(4,j)=1
-      END DO
-      PIG(5,7)=1
 !
 !  Set bio-optical tracer indices.
 !
       DO i=1,NBT
         idbio(i)=ic+i
-      END DO      
-      DIC_=ic+1
+      END DO
+      iDIC_=ic+1
       iFeO_=ic+2
       iNH4_=ic+3
       iNO3_=ic+4
@@ -1295,9 +1367,17 @@
         iPhyF(i)=ic+2
         iPhyN(i)=ic+3
         iPhyP(i)=ic+4
-        iPhyS(i)=ic+5
-        ic=ic+5
+        ic=ic+4
       END DO
+      DO i=1,Nphy
+        IF (PHY(i).le.2) THEN
+          ic=ic+1
+          iPhyS(i)=ic
+        ELSE
+          iPhyS(i)=0
+        END IF
+      END DO
+      FirstPig=ic+1
       DO j=1,Npig
         DO i=1,Nphy
           iPigs(i,j)=0
@@ -1307,6 +1387,82 @@
           END IF
         END DO
       END DO
+!
+!  Set EcoSim group variable names.
+!
+      DO i=1,Nphy
+        PhyName(i)=PhyGroups(PHY(i))
+      END DO
+      DO i=1,Nbac
+        WRITE (BacName(i),'(a,1x,i1)') 'Bacteria Group', i
+      END DO
+      DO i=1,Ndom
+        WRITE (DomName(i),'(a,1x,i1)') 'DOM Group', i
+      END DO
+      DO i=1,Nfec
+        WRITE (FecName(i),'(a,1x,i1)') 'Fecal Group', i
+      END DO
+#endif
+#ifdef DIAGNOSTICS
+!
+!---------------------------------------------------------------------
+!  Set diagnostic fields identification indices.
+!---------------------------------------------------------------------
+!
+# ifdef DIAGNOSTICS_TS
+      iThadv=1
+      iTvadv=2
+      ic=2
+#  if defined TS_DIF2 || defined TS_DIF4
+      iThdif=ic+1
+      ic=ic+1
+#  endif
+      iTvdif=ic+1
+      iTrate=ic+2
+# endif
+# ifdef DIAGNOSTICS_UV
+!
+!  Indices for 2D momentum diagnostic variables.
+!  Order is important!
+!
+      M2pgrd=1
+      ic=1
+#  if defined UV_COR
+      M2fcor=ic+1
+      ic=ic+1
+#  endif
+#  if defined UV_ADV
+      M2hadv=ic+1
+      ic=ic+1
+#  endif
+      M2strs=ic+1
+#  if defined UV_VIS2 || defined UV_VIS4
+      M2hvis=ic+2
+#  endif
+      M2rate=NDM2d
+#  ifdef SOLVE3D
+!
+!  Indices for 3D momentum diagnostic variables.
+!  Order is important!
+!
+      M3pgrd=1
+      ic=1
+#   if defined UV_COR
+      M3fcor=ic+1
+      ic=ic+1
+#   endif
+#   if defined UV_ADV
+      M3hadv=ic+1
+      M3vadv=ic+2
+      ic=ic+2
+#   endif
+      M3vvis=ic+1
+#   if defined UV_VIS2 || defined UV_VIS4
+      M3hvis=ic+2
+#   endif
+      M3rate=NDM3d
+#  endif
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1340,16 +1496,19 @@
       DO ng=1,Ngrids
 
         LdefAVG(ng)=.true.
+        LdefDIA(ng)=.true.
         LdefFLT(ng)=.true.
         LdefHIS(ng)=.true.
         LdefRST(ng)=.true.
         LdefSTA(ng)=.true.
+
         LwrtHIS(ng)=.false.
         ldefout(ng)=.false.
 
         synchro_flag(ng)=.false.
 
         nrecavg(ng)=0
+        nrecdia(ng)=0
         nrecflt(ng)=0
         nrechis(ng)=0
         nrecrst(ng)=0

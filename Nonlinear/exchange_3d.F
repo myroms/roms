@@ -6,16 +6,16 @@
 !  Copyright (c) 2002 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This package contains periodic boundary conditions routines for     !
-!  3D variables.                                                       !
+!  This package contains periodic boundary conditions and parallel     !
+!  exchage (distributed-memory only) routines for 3D variables.        !
 !                                                                      !
 !  Routines:                                                           !
 !                                                                      !
-!    exchange_p3d_tile    periodic conditions at PSI-points            !
-!    exchange_r3d_tile    periodic conditions at RHO-points            !
-!    exchange_u3d_tile    periodic conditions at U-points              !
-!    exchange_v3d_tile    periodic conditions at V-points              !
-!    exchange_w3d_tile    periodic conditions at W-points              !
+!    exchange_p3d_tile    periodic conditions/exchange at PSI-points   !
+!    exchange_r3d_tile    periodic conditions/exchange at RHO-points   !
+!    exchange_u3d_tile    periodic conditions/exchange at U-points     !
+!    exchange_v3d_tile    periodic conditions/exchange at V-points     !
+!    exchange_w3d_tile    periodic conditions/exchange at W-points     !
 !                                                                      !
 !=======================================================================
 !
@@ -25,7 +25,7 @@
 !
 !***********************************************************************
       SUBROUTINE exchange_p3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, A)
+     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
 !***********************************************************************
 !
       USE mod_param
@@ -33,12 +33,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -72,7 +72,7 @@
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
@@ -80,7 +80,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(-2,j,k)=A(Lm(ng)-2,j,k)
               A(-1,j,k)=A(Lm(ng)-1,j,k)
@@ -110,7 +110,7 @@
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
@@ -118,7 +118,7 @@
           END DO
         END IF
         IF (NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,-2,k)=A(i,Mm(ng)-2,k)
               A(i,-1,k)=A(i,Mm(ng)-1,k)
@@ -142,7 +142,7 @@
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
         IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
@@ -150,7 +150,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
             A( 0,Mm(ng)+1,k)=A(Lm(ng)  ,1,k)
@@ -160,7 +160,7 @@
           END DO
         END IF
         IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
             A(Lm(ng)+1, 0,k)=A(1,Mm(ng)  ,k)
@@ -170,7 +170,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
             A(-2, 0,k)=A(Lm(ng)-2,Mm(ng)  ,k)
@@ -193,7 +193,7 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
 # endif
       RETURN
@@ -202,7 +202,7 @@
 !
 !***********************************************************************
       SUBROUTINE exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, A)
+     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
 !***********************************************************************
 !
       USE mod_param
@@ -210,12 +210,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -249,7 +249,7 @@
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
@@ -257,7 +257,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(-2,j,k)=A(Lm(ng)-2,j,k)
               A(-1,j,k)=A(Lm(ng)-1,j,k)
@@ -287,7 +287,7 @@
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
@@ -295,7 +295,7 @@
           END DO
         END IF
         IF (NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,-2,k)=A(i,Mm(ng)-2,k)
               A(i,-1,k)=A(i,Mm(ng)-1,k)
@@ -318,7 +318,7 @@
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
         IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
@@ -326,7 +326,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
             A( 0,Mm(ng)+1,k)=A(Lm(ng)  ,1,k)
@@ -336,7 +336,7 @@
           END DO
         END IF
         IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
             A(Lm(ng)+1, 0,k)=A(1,Mm(ng)  ,k)
@@ -346,7 +346,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
             A(-2, 0,k)=A(Lm(ng)-2,Mm(ng)  ,k)
@@ -369,7 +369,7 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
 # endif
       RETURN
@@ -378,7 +378,7 @@
 !
 !***********************************************************************
       SUBROUTINE exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, A)
+     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
 !***********************************************************************
 !
       USE mod_param
@@ -386,12 +386,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -425,7 +425,7 @@
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
@@ -433,7 +433,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(-2,j,k)=A(Lm(ng)-2,j,k)
               A(-1,j,k)=A(Lm(ng)-1,j,k)
@@ -463,7 +463,7 @@
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
@@ -471,7 +471,7 @@
           END DO
         END IF
         IF (NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,-2,k)=A(i,Mm(ng)-2,k)
               A(i,-1,k)=A(i,Mm(ng)-1,k)
@@ -495,7 +495,7 @@
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
         IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
@@ -503,7 +503,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
             A( 0,Mm(ng)+1,k)=A(Lm(ng)  ,1,k)
@@ -513,7 +513,7 @@
           END DO
         END IF
         IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
             A(Lm(ng)+1, 0,k)=A(1,Mm(ng)  ,k)
@@ -523,7 +523,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
             A(-2, 0,k)=A(Lm(ng)-2,Mm(ng)  ,k)
@@ -546,7 +546,7 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
 # endif
       RETURN
@@ -555,7 +555,7 @@
 !
 !***********************************************************************
       SUBROUTINE exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, A)
+     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
 !***********************************************************************
 !
       USE mod_param
@@ -563,12 +563,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -602,7 +602,7 @@
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
@@ -610,7 +610,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(-2,j,k)=A(Lm(ng)-2,j,k)
               A(-1,j,k)=A(Lm(ng)-1,j,k)
@@ -640,7 +640,7 @@
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
@@ -648,7 +648,7 @@
           END DO
         END IF
         IF (NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,-2,k)=A(i,Mm(ng)-2,k)
               A(i,-1,k)=A(i,Mm(ng)-1,k)
@@ -672,7 +672,7 @@
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
         IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
@@ -680,7 +680,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
             A( 0,Mm(ng)+1,k)=A(Lm(ng)  ,1,k)
@@ -690,7 +690,7 @@
           END DO
         END IF
         IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
             A(Lm(ng)+1, 0,k)=A(1,Mm(ng)  ,k)
@@ -700,7 +700,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
             A(-2, 0,k)=A(Lm(ng)-2,Mm(ng)  ,k)
@@ -723,7 +723,7 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
 # endif
       RETURN
@@ -732,7 +732,7 @@
 !
 !***********************************************************************
       SUBROUTINE exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, A)
+     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
 !***********************************************************************
 !
       USE mod_param
@@ -740,12 +740,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,0:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,0:N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -779,7 +779,7 @@
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
@@ -787,7 +787,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             DO j=J_RANGE
               A(-2,j,k)=A(Lm(ng)-2,j,k)
               A(-1,j,k)=A(Lm(ng)-1,j,k)
@@ -817,7 +817,7 @@
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
@@ -825,7 +825,7 @@
           END DO
         END IF
         IF (NORTHERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             DO i=I_RANGE
               A(i,-2,k)=A(i,Mm(ng)-2,k)
               A(i,-1,k)=A(i,Mm(ng)-1,k)
@@ -848,7 +848,7 @@
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
         IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
@@ -856,7 +856,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
             A( 0,Mm(ng)+1,k)=A(Lm(ng)  ,1,k)
@@ -866,7 +866,7 @@
           END DO
         END IF
         IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
             A(Lm(ng)+1, 0,k)=A(1,Mm(ng)  ,k)
@@ -876,7 +876,7 @@
           END DO
         END IF
         IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
-          DO k=0,N(ng)
+          DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
             A(-2, 0,k)=A(Lm(ng)-2,Mm(ng)  ,k)
@@ -899,7 +899,7 @@
 !-----------------------------------------------------------------------
 !
       CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
+     &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
 # endif
       RETURN

@@ -14,7 +14,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC set_depth, set_depth_tile
+      PUBLIC  :: set_depth, set_depth_tile
 
       CONTAINS
 !
@@ -161,11 +161,11 @@
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, z_w)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), z_w)
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, z_r)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), z_r)
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Hz)
+     &                        LBi, UBi, LBj, UBj, 1, N(ng), Hz)
 # endif
       RETURN
       END SUBROUTINE set_depth_tile

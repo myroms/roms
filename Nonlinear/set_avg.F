@@ -41,6 +41,7 @@
 !
       USE mod_param
       USE mod_average
+      USE mod_forces
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -60,7 +61,7 @@
 
       real(r8) :: fac
 
-#include "set_bounds.h"
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 ! Initialize time-averaged arrays when appropriate.  Notice that
@@ -118,6 +119,47 @@
             END DO
           END DO
         END DO
+#  ifdef AVERAGES_QUADRATIC
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgUU(i,j,k)=OCEAN(ng)%u(i,j,k,Nout)*         &
+     &                                 OCEAN(ng)%u(i,j,k,Nout)
+              AVERAGE(ng)%avgVV(i,j,k)=OCEAN(ng)%v(i,j,k,Nout)*         &
+     &                                 OCEAN(ng)%v(i,j,k,Nout)
+            END DO
+          END DO
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgUV(i,j,k)=0.25_r8*                         &
+     &                                 (OCEAN(ng)%u(i  ,j  ,k,Nout)+    &
+     &                                  OCEAN(ng)%u(i+1,j  ,k,Nout))*   &
+     &                                 (OCEAN(ng)%v(i  ,j  ,k,Nout)+    &
+     &                                  OCEAN(ng)%v(i  ,j+1,k,Nout))
+            END DO
+          END DO
+        END DO
+        DO it=1,NAT
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgUT(i,j,k,it)=                            &
+     &                                 0.5_r8*OCEAN(ng)%u(i,j,k,Nout)*  &
+     &                                 (OCEAN(ng)%t(i-1,j,k,Nout,it)+   &
+     &                                  OCEAN(ng)%t(i  ,j,k,Nout,it))
+              END DO
+            END DO
+            DO j=Jstr,Jend
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgVT(i,j,k,it)=                            &
+     &                                 0.5_r8*OCEAN(ng)%v(i,j,k,Nout)*  &
+     &                                 (OCEAN(ng)%t(i,j-1,k,Nout,it)+   &
+     &                                  OCEAN(ng)%t(i,j  ,k,Nout,it))
+              END DO
+            END DO
+          END DO
+        END DO
+#  endif
 #  ifdef AVERAGES_AKV
         DO k=0,N(ng)
           DO j=JstrR,JendR
@@ -145,6 +187,29 @@
           END DO
         END DO
 #  endif
+#  ifdef AVERAGES_FLUXES
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            AVERAGE(ng)%avgstf(i,j)=FORCES(ng)%stflx(i,j,itemp)
+#   ifdef BULK_FLUXES
+            AVERAGE(ng)%avglhf(i,j)=FORCES(ng)%lhflx(i,j)
+            AVERAGE(ng)%avgshf(i,j)=FORCES(ng)%shflx(i,j)
+            AVERAGE(ng)%avglrf(i,j)=FORCES(ng)%lrflx(i,j)
+#   endif
+#   ifdef SHORTWAVE
+            AVERAGE(ng)%avgsrf(i,j)=FORCES(ng)%srflx(i,j)
+#   endif
+          END DO
+        END DO
+#  endif
+# endif
+# ifdef AVERAGES_FLUXES
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            AVERAGE(ng)%avgsus(i,j)=FORCES(ng)%sustr(i,j)
+            AVERAGE(ng)%avgsvs(i,j)=FORCES(ng)%svstr(i,j)
+          END DO
+        END DO
 # endif
 !
 !-----------------------------------------------------------------------
@@ -209,6 +274,47 @@
             END DO
           END DO
         END DO
+#  ifdef AVERAGES_QUADRATIC
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgUU(i,j,k)=OCEAN(ng)%u(i,j,k,Nout)*         &
+     &                                 OCEAN(ng)%u(i,j,k,Nout)
+              AVERAGE(ng)%avgVV(i,j,k)=OCEAN(ng)%v(i,j,k,Nout)*         &
+     &                                 OCEAN(ng)%v(i,j,k,Nout)
+            END DO
+          END DO
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgUV(i,j,k)=0.25_r8*                         &
+     &                                 (OCEAN(ng)%u(i  ,j  ,k,Nout)+    &
+     &                                  OCEAN(ng)%u(i+1,j  ,k,Nout))*   &
+     &                                 (OCEAN(ng)%v(i  ,j  ,k,Nout)+    &
+     &                                  OCEAN(ng)%v(i  ,j+1,k,Nout))
+            END DO
+          END DO
+        END DO
+        DO it=1,NAT
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgUT(i,j,k,it)=                            &
+     &                                 0.5_r8*OCEAN(ng)%u(i,j,k,Nout)*  &
+     &                                 (OCEAN(ng)%t(i-1,j,k,Nout,it)+   &
+     &                                  OCEAN(ng)%t(i  ,j,k,Nout,it))
+              END DO
+            END DO
+            DO j=Jstr,Jend
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgVT(i,j,k,it)=                            &
+     &                                 0.5_r8*OCEAN(ng)%v(i,j,k,Nout)*  &
+     &                                 (OCEAN(ng)%t(i,j-1,k,Nout,it)+   &
+     &                                  OCEAN(ng)%t(i,j  ,k,Nout,it))
+              END DO
+            END DO
+          END DO
+        END DO
+#  endif
 #  ifdef AVERAGES_AKV
         DO k=0,N(ng)
           DO j=JstrR,JendR
@@ -239,6 +345,36 @@
           END DO
         END DO
 #  endif
+#  ifdef AVERAGES_FLUXES
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            AVERAGE(ng)%avgstf(i,j)=AVERAGE(ng)%avgstf(i,j)+            &
+     &                              FORCES(ng)%stflx(i,j,itemp)
+#   ifdef BULK_FLUXES
+            AVERAGE(ng)%avglhf(i,j)=AVERAGE(ng)%avglhf(i,j)+            &
+     &                              FORCES(ng)%lhflx(i,j)
+            AVERAGE(ng)%avgshf(i,j)=AVERAGE(ng)%avgshf(i,j)+            &
+     &                              FORCES(ng)%shflx(i,j)
+            AVERAGE(ng)%avglrf(i,j)=AVERAGE(ng)%avglrf(i,j)+            &
+     &                              FORCES(ng)%lrflx(i,j)
+#   endif
+#   ifdef SHORTWAVE
+            AVERAGE(ng)%avgsrf(i,j)=AVERAGE(ng)%avgsrf(i,j)+            &
+     &                              FORCES(ng)%srflx(i,j)
+#   endif
+          END DO
+        END DO
+#  endif
+# endif
+# ifdef AVERAGES_FLUXES
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            AVERAGE(ng)%avgsus(i,j)=AVERAGE(ng)%avgsus(i,j)+            &
+     &                              FORCES(ng)%sustr(i,j)
+            AVERAGE(ng)%avgsvs(i,j)=AVERAGE(ng)%avgsvs(i,j)+            &
+     &                              FORCES(ng)%svstr(i,j)
+          END DO
+        END DO
 # endif
       END IF
 !
@@ -299,6 +435,37 @@
             END DO
           END DO
         END DO
+#  ifdef AVERAGES_QUADRATIC
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              AVERAGE(ng)%avgUU(i,j,k)=fac*AVERAGE(ng)%avgUU(i,j,k)
+              AVERAGE(ng)%avgVV(i,j,k)=fac*AVERAGE(ng)%avgVV(i,j,k)
+            END DO
+          END DO
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              AVERAGE(ng)%avgUV(i,j,k)=fac*AVERAGE(ng)%avgUV(i,j,k)
+            END DO
+          END DO
+        END DO
+        DO it=1,NAT
+          DO k=1,N(ng)
+            DO j=JstrR,JendR
+              DO i=Istr,Iend
+                AVERAGE(ng)%avgUT(i,j,k,it)=fac*                        &
+     &                                      AVERAGE(ng)%avgUT(i,j,k,it)
+              END DO
+            END DO
+            DO j=Jstr,Jend
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgVT(i,j,k,it)=fac*                        &
+     &                                      AVERAGE(ng)%avgVT(i,j,k,it)
+              END DO
+            END DO
+          END DO
+        END DO
+#  endif
 #  ifdef AVERAGES_AKV
         DO k=0,N(ng)
           DO j=JstrR,JendR
@@ -326,6 +493,29 @@
           END DO
         END DO
 #  endif
+#  ifdef AVERAGES_FLUXES
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            AVERAGE(ng)%avgstf(i,j)=fac*AVERAGE(ng)%avgstf(i,j)
+#   ifdef BULK_FLUXES
+            AVERAGE(ng)%avglhf(i,j)=fac*AVERAGE(ng)%avglhf(i,j)
+            AVERAGE(ng)%avgshf(i,j)=fac*AVERAGE(ng)%avgshf(i,j)
+            AVERAGE(ng)%avglrf(i,j)=fac*AVERAGE(ng)%avglrf(i,j)
+#   endif
+#   ifdef SHORTWAVE
+            AVERAGE(ng)%avgsrf(i,j)=fac*AVERAGE(ng)%avgsrf(i,j)
+#   endif
+          END DO
+        END DO
+#  endif
+# endif
+# ifdef AVERAGES_FLUXES
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            AVERAGE(ng)%avgsus(i,j)=fac*AVERAGE(ng)%avgsus(i,j)
+            AVERAGE(ng)%avgsvs(i,j)=fac*AVERAGE(ng)%avgsvs(i,j)
+          END DO
+        END DO
 # endif
       END IF
       RETURN

@@ -18,6 +18,9 @@
       USE mod_scalars
       USE mod_stepping
 !
+# ifdef AIR_OCEAN
+      USE atm_coupler_mod, ONLY : atmos_coupling
+# endif
 # ifdef ANA_VMIX
       USE analytical_mod, ONLY : ana_vmix
 # endif
@@ -29,9 +32,6 @@
 # endif
 # ifdef BVF_MIXING
       USE bvf_mix_mod, ONLY : bvf_mix
-# endif
-# if defined SSH_TIDES || defined UV_TIDES
-      USE clm_tides_mod, ONLY : clm_tides
 # endif
       USE diag_mod, ONLY : diag
 # ifdef GLS_MIXING
@@ -49,7 +49,7 @@
       USE oi_update_mod, ONLY : oi_update
 # endif
       USE omega_mod, ONLY : omega
-# ifndef DIAGNOSTIC
+# ifndef TS_FIXED
       USE rho_eos_mod, ONLY : rho_eos
 # endif
       USE rhs3d_mod, ONLY : rhs3d
@@ -57,6 +57,9 @@
       USE sediment_mod, ONLY : sediment
 # endif
       USE set_massflux_mod, ONLY : set_massflux
+# if defined SSH_TIDES || defined UV_TIDES
+      USE set_tides_mod, ONLY : set_tides
+# endif
       USE set_vbc_mod, ONLY : set_vbc
       USE step2d_mod, ONLY : step2d
       USE step3d_t_mod, ONLY : step3d_t
@@ -97,7 +100,7 @@
 !-----------------------------------------------------------------------
 !
       CALL get_data (ng)
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
 !
 !-----------------------------------------------------------------------
 !  Compute density related fields and horizontal mass fluxes
@@ -111,7 +114,7 @@
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
           CALL set_massflux (ng, TILE)
-# ifndef DIAGNOSTIC
+# ifndef TS_FIXED
           CALL rho_eos (ng, TILE)
 # endif
           CALL set_data (ng, TILE)
@@ -119,7 +122,26 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
+
+# ifdef AIR_OCEAN
+!
+!-----------------------------------------------------------------------
+!  Couple to atmospheric model every "nOCN_steps" timesteps: get air/sea
+!  fluxes.
+!-----------------------------------------------------------------------
+!
+      IF (MOD(iic(ng),nOCN_steps).eq.0) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL atmos_coupling (ng, TILE)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Set fields for vertical boundary conditions. Process tidal forcing,
@@ -138,7 +160,7 @@
 # endif
           CALL set_vbc (ng, TILE)
 # if defined SSH_TIDES || defined UV_TIDES
-          CALL clm_tides (ng, TILE)
+          CALL set_tides (ng, TILE)
 # endif
         END DO
       END DO
@@ -175,6 +197,9 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
+# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+          CALL set_diags (ng, TILE)
+# endif
           CALL rhs3d (ng, TILE)
 # ifdef MY25_MIXING
           CALL my25_prestep (ng, TILE)
@@ -196,10 +221,10 @@
 !-----------------------------------------------------------------------
 !
       CALL output (ng)
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
       IF (iic(ng).eq.(ntend+1)) THEN
-        IF (Master) write(stdout,10) ' Elapsed CPU time (seconds):'
- 10     format(/,a,/)
+        IF (Master) WRITE (stdout,10) ' Elapsed CPU time (seconds):'
+ 10     FORMAT (/,a,/)
 !$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           CALL wclock_off (ng, 0)
@@ -273,7 +298,7 @@
       END DO
 !
 !-----------------------------------------------------------------------
-!  Time-step 3D equations.
+!  Time-step 3D momentum equations.
 !-----------------------------------------------------------------------
 !
 !  Time-step 3D momentum equations and couple with vertically
@@ -305,7 +330,7 @@
 # ifdef SEDIMENT
           CALL sediment (ng, TILE)
 # endif
-# ifndef DIAGNOSTIC
+# ifndef TS_FIXED
           CALL step3d_t (ng, TILE)
 # endif
 # ifdef ASSIMILATION
@@ -314,6 +339,7 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
 # ifdef FLOATS
 !
 !-----------------------------------------------------------------------

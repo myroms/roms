@@ -36,7 +36,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC oi_update
+      PUBLIC  :: oi_update
 
       CONTAINS
 !
@@ -46,6 +46,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_obs
       USE mod_ocean
       USE mod_stepping
 !
@@ -108,7 +109,7 @@
       CALL wclock_off (ng, 2)
 # endif
       RETURN
-      end
+      END SUBROUTINE oi_update
 # ifdef ASSIMILATION_SSH
 !
 !***********************************************************************
@@ -123,6 +124,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_parallel
+      USE mod_iounits
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -156,10 +159,10 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
-      real(r8), parameter eps = 1.0E-4_r8
+      real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: arg, cff, cff1, cff2, delta
-      real(r8) :: decay, mu, ratio, weight
+      real(r8) :: decay, mu, ratio, Aweight
 !
 #  include "set_bounds.h"
 !
@@ -201,10 +204,10 @@
               EmodSSH(i,j)=EmodSSH(i,j)+decay
               cff1=cor(ng)*SQRT(EobsSSH(i,j)*EmodSSH(i,j))
               cff2=EobsSSH(i,j)+EmodSSH(i,j)-2.0_r8*cff1
-              weight=(EmodSSH(i,j)-cff1)/MAX(cff2,eps)
-              weight=MAX(0.0_r8,MIN(1.0_r8,weight))
-              zeta(i,j,1)=(weight*SSHobs(i,j)+                          &
-     &                     (1.0_r8-weight)*zeta(i,j,knew))
+              Aweight=(EmodSSH(i,j)-cff1)/MAX(cff2,eps)
+              Aweight=MAX(0.0_r8,MIN(1.0_r8,Aweight))
+              zeta(i,j,1)=(Aweight*SSHobs(i,j)+                         &
+     &                     (1.0_r8-Aweight)*zeta(i,j,knew))
 #  ifdef MASKING
               zeta(i,j,1)=zeta(i,j,1)*rmask(i,j)
 #  endif
@@ -217,8 +220,8 @@
             tSSHobs(2,ng)=tSSHobs(1,ng)
             synchro_flag(ng)=.true.
             update_SSH(ng)=.false.
-            IF (Master) write(stdout,10) 'SSH', tSSHobs(1,ng)
- 10         format(' OI_UPDATE   - Assimilating ',a,' data,',t64,       &
+            IF (Master) WRITE (stdout,10) 'SSH', tSSHobs(1,ng)
+ 10         FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,       &
      &             't = ',f12.4)
           END IF
         END IF
@@ -240,6 +243,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_parallel
+      USE mod_iounits
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -273,10 +278,10 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
-      real(r8), parameter eps = 1.0E-4_r8
+      real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: arg, cff, cff1, cff2, delta
-      real(r8) :: decay, mu, ratio, weight
+      real(r8) :: decay, mu, ratio, Aweight
 !
 # include "set_bounds.h"
 !
@@ -322,10 +327,10 @@
                   EmodT(i,j,k,itrc)=EmodT(i,j,k,itrc)+decay
                   cff1=cor(ng)*SQRT(EobsT(i,j,k,itrc)*EmodT(i,j,k,itrc))
                   cff2=EobsT(i,j,k,itrc)+EmodT(i,j,k,itrc)-2.0_r8*cff1
-                  weight=(EmodT(i,j,k,itrc)-cff1)/MAX(cff2,eps)
-                  weight=MAX(0.0_r8,MIN(1.0_r8,weight))
-                  t(i,j,k,1,itrc)=(weight*Tobs(i,j,k,itrc)+             &
-     &                             (1.0_r8-weight)*t(i,j,k,nnew,itrc))
+                  Aweight=(EmodT(i,j,k,itrc)-cff1)/MAX(cff2,eps)
+                  Aweight=MAX(0.0_r8,MIN(1.0_r8,Aweight))
+                  t(i,j,k,1,itrc)=(Aweight*Tobs(i,j,k,itrc)+            &
+     &                             (1.0_r8-Aweight)*t(i,j,k,nnew,itrc))
 #  ifdef MASKING
                   t(i,j,k,1,itrc)=t(i,j,k,1,itrc)*rmask(i,j)
 #  endif
@@ -340,16 +345,16 @@
               tTobs(2,itrc,ng)=tTobs(1,itrc,ng)
               synchro_flag(ng)=.true.
               update_T(itrc,ng)=.false.
-              ntfirst=iic+1
+              ntfirst=iic(ng)+1
               IF (update_SST(ng).and.(itrc.eq.itemp)) THEN
-                IF (Master) write(stdout,10) 'SST', tTobs(1,itrc,ng)
- 10             format(' OI_UPDATE   - Assimilating ',a,' data,',t64,   &
-     &                 't = ',f12.4)
+                IF (Master) WRITE (stdout,10) 'SST', tTobs(1,itrc,ng)
+ 10             FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,  &
+     &                  't = ',f12.4)
               ELSE
-                IF (Master) write(stdout,20) 'TRACER', itrc,            &
-     &                                       tTobs(1,itrc,ng)
- 20             format(' OI_UPDATE   - Assimilating ',a,1x,i2.2,        &
-     &                 ' data,',t64,'t = ',f12.4)
+                IF (Master) WRITE (stdout,20) 'TRACER', itrc,           &
+     &                                        tTobs(1,itrc,ng)
+ 20             FORMAT (' OI_UPDATE   - Assimilating ',a,1x,i2.2,       &
+     &                  ' data,',t64,'t = ',f12.4)
               END IF
             END IF
           END IF
@@ -376,6 +381,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_parallel
+      USE mod_iounits
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -427,10 +434,10 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
-      real(r8), parameter eps = 1.0E-4_r8
+      real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: Eobs, arg, cff, cff1, cff2, delta
-      real(r8) :: decay, mu, ratio, weight
+      real(r8) :: decay, mu, ratio, Aweight
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: Uwrk
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: Vwrk
@@ -531,20 +538,20 @@
                 Eobs=0.5_r8*(EobsUV(i-1,j,k)+EobsUV(i,j,k))
                 cff1=cor(ng)*SQRT(Eobs*EmodU(i,j,k))
                 cff2=Eobs+EmodU(i,j,k)-2.0_r8*cff1
-                weight=(EmodU(i,j,k)-cff1)/MAX(cff2,eps)
-                weight=MAX(0.0_r8,MIN(1.0_r8,weight))
+                Aweight=(EmodU(i,j,k)-cff1)/MAX(cff2,eps)
+                Aweight=MAX(0.0_r8,MIN(1.0_r8,Aweight))
 #  ifdef UV_BAROCLINIC
                 u(i,j,k,1)=(ubar(i,j,knew)+                             &
-     &                      weight*(Uobs(i,j,k)-Uwrk(i,j,1))+           &
-     &                      (1.0_r8-weight)*(u(i,j,k,nnew)-             &
-     &                                       ubar(i,j,knew)))
+     &                      Aweight*(Uobs(i,j,k)-Uwrk(i,j,1))+          &
+     &                      (1.0_r8-Aweight)*(u(i,j,k,nnew)-            &
+     &                                        ubar(i,j,knew)))
 #   ifdef MASKING
                 u(i,j,k,1)=u(i,j,k,1)*umask(i,j)
 #   endif
                 u(i,j,k,2)=u(i,j,k,1)
 #  else
-                u(i,j,k,1)=(weight*Uobs(i,j,k)+                         &
-     &                      (1.0_r8-weight)*u(i,j,k,nnew))
+                u(i,j,k,1)=(Aweight*Uobs(i,j,k)+                        &
+     &                      (1.0_r8-Aweight)*u(i,j,k,nnew))
 #   ifdef MASKING
                 u(i,j,k,1)=u(i,j,k,1)**umask(i,j)
 #   endif
@@ -562,20 +569,20 @@
                 Eobs=0.5_r8*(EobsUV(i,j-1,k)+EobsUV(i,j,k))
                 cff1=cor(ng)*SQRT(Eobs*EmodV(i,j,k))
                 cff2=Eobs+EmodV(i,j,k)-2.0_r8*cff1
-                weight=(EmodV(i,j,k)-cff1)/MAX(cff2,eps)
-                weight=MAX(0.0_r8,MIN(1.0_r8,weight))
+                Aweight=(EmodV(i,j,k)-cff1)/MAX(cff2,eps)
+                Aweight=MAX(0.0_r8,MIN(1.0_r8,Aweight))
 #  ifdef UV_BAROCLINIC
                 v(i,j,k,1)=(vbar(i,j,1)+                                &
-     &                      weight*(Vobs(i,j,k)-Vwrk(i,j,1))+           &
-     &                      (1.0_r8-weight)*(v(i,j,k,nnew)-             &
-     &                                       vbar(i,j,1)))
+     &                      Aweight*(Vobs(i,j,k)-Vwrk(i,j,1))+          &
+     &                      (1.0_r8-Aweight)*(v(i,j,k,nnew)-            &
+     &                                        vbar(i,j,1)))
 #   ifdef MASKING
                 v(i,j,k,1)=v(i,j,k,1)*vmask(i,j)
 #   endif
                 v(i,j,k,2)=v(i,j,k,1)
 #  else
-                v(i,j,k,1)=(weight*Vobs(i,j,k)+                         &
-     &                      (1.0_r8-weight)*v(i,j,k,nnew))
+                v(i,j,k,1)=(Aweight*Vobs(i,j,k)+                        &
+     &                      (1.0_r8-Aweight)*v(i,j,k,nnew))
 #   ifdef MASKING
                 v(i,j,k,1)=v(i,j,k,1)*vmask(i,j)
 #   endif
@@ -591,15 +598,15 @@
           IF (NORTH_EAST_TEST) THEN
             tVobs(2,ng)=tVobs(1,ng)
             synchro_flag(ng)=.true.
-            ntfirst=iic+1
+            ntfirst=iic(ng)+1
             IF (update_UVsur(ng)) THEN
               update_UVsur(ng)=.false.
-              IF (Master) write(stdout,10) 'UVsur', tVobs(1,ng)
- 10           format(' OI_UPDATE   - Assimilating ',a,' data,',t64,     &
-     &               't = ',f12.4)
+              IF (Master) WRITE (stdout,10) 'UVsur', tVobs(1,ng)
+ 10           FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,    &
+     &                't = ',f12.4)
             ELSE
               update_UV(ng)=.false.
-              IF (Master) write(stdout,10) 'UV', tVobs(1,ng)
+              IF (Master) WRITE (stdout,10) 'UV', tVobs(1,ng)
             END IF
           END IF
 #  ifndef UV_BAROCLINIC

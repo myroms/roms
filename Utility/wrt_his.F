@@ -595,7 +595,8 @@
           RETURN
         END IF
       END IF
-#ifdef BBL_MODEL
+#ifdef SOLVE3D
+# ifdef BBL_MODEL
 !
 !  Write out wind-induced, bottom U-wave stress.
 !
@@ -605,9 +606,9 @@
         status=nf_fwrite(ng, nchisid(ng), hisVid(idUbws,ng),            &
      &                   thisindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
+#  ifdef MASKING
      &                   GRID(ng) % umask(LBi,LBj),                     &
-# endif
+#  endif
      &                   BBL(ng) % bustrw(LBi,LBj))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUbws)), thisindx(ng)
@@ -624,9 +625,9 @@
         status=nf_fwrite(ng, nchisid(ng), hisVid(idVbws,ng),            &
      &                   thisindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
+#  ifdef MASKING
      &                   GRID(ng) % vmask(LBi,LBj),                     &
-# endif
+#  endif
      &                   BBL(ng) % bvstrw(LBi,LBj))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVbws)), thisindx(ng)
@@ -635,20 +636,39 @@
         END IF
       END IF
 !
-!  Write out wind-induced, bed wave excursion amplitude.
+!  Write out maximum wind and current, bottom U-wave stress.
 !
-      IF (Hout(idAbed,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*r2dvar
-        status=nf_fwrite(ng, nchisid(ng), hisVid(idAbed,ng),            &
+      IF (Hout(idUbcs,ng)) THEN
+        scale=rho0
+        gtype=gfactor*u2dvar
+        status=nf_fwrite(ng, nchisid(ng), hisVid(idUbcs,ng),            &
      &                   thisindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
-     &                   GRID(ng) % rmask(LBi,LBj),                     &
-# endif
-     &                   BBL(ng) % Abed(LBi,LBj))
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   BBL(ng) % bustrcwmax(LBi,LBj))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idAbed)), thisindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idUbcs)), thisindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
+!
+!  Write out maximum wind and current, bottom V-wave stress.
+!
+      IF (Hout(idVbcs,ng)) THEN
+        scale=rho0
+        gtype=gfactor*v2dvar
+        status=nf_fwrite(ng, nchisid(ng), hisVid(idVbcs,ng),            &
+     &                   thisindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   BBL(ng) % bvstrcwmax(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVbcs)), thisindx(ng)
           exit_flag=3
           RETURN
         END IF
@@ -662,9 +682,9 @@
         status=nf_fwrite(ng, nchisid(ng), hisVid(idUbed,ng),            &
      &                   thisindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
+#  ifdef MASKING
      &                   GRID(ng) % umask(LBi,LBj),                     &
-# endif
+#  endif
      &                   BBL(ng) % Ubed(LBi,LBj))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUbed)), thisindx(ng)
@@ -681,9 +701,9 @@
         status=nf_fwrite(ng, nchisid(ng), hisVid(idVbed,ng),            &
      &                   thisindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
+#  ifdef MASKING
      &                   GRID(ng) % vmask(LBi,LBj),                     &
-# endif
+#  endif
      &                   BBL(ng) % Vbed(LBi,LBj))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVbed)), thisindx(ng)
@@ -700,9 +720,9 @@
         status=nf_fwrite(ng, nchisid(ng), hisVid(idUbot,ng),            &
      &                   thisindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
+#  ifdef MASKING
      &                   GRID(ng) % umask(LBi,LBj),                     &
-# endif
+#  endif
      &                   BBL(ng) % Ubot(LBi,LBj))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUbot)), thisindx(ng)
@@ -719,9 +739,9 @@
         status=nf_fwrite(ng, nchisid(ng), hisVid(idVbot,ng),            &
      &                   thisindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
+#  ifdef MASKING
      &                   GRID(ng) % vmask(LBi,LBj),                     &
-# endif
+#  endif
      &                   BBL(ng) % Vbot(LBi,LBj))
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVbot)), thisindx(ng)
@@ -729,86 +749,10 @@
           RETURN
         END IF
       END IF
-!
-!  Write out bed ripple height.
-!
-      IF (Hout(idHrip,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*r2dvar
-        status=nf_fwrite(ng, nchisid(ng), hisVid(idHrip,ng),            &
-     &                   thisindx(ng), gtype,                           &
-     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
-     &                   GRID(ng) % rmask(LBi,LBj),                     &
 # endif
-     &                   BBL(ng) % Hripple(LBi,LBj))
-        IF (OutThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idHrip)), thisindx(ng)
-          exit_flag=3
-          RETURN
-        END IF
-      END IF
+# ifdef SEDIMENT
 !
-!  Write out bed ripple length.
-!
-      IF (Hout(idLrip,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*r2dvar
-        status=nf_fwrite(ng, nchisid(ng), hisVid(idLrip,ng),            &
-     &                   thisindx(ng), gtype,                           &
-     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
-     &                   GRID(ng) % rmask(LBi,LBj),                     &
-# endif
-     &                   BBL(ng) % Lripple(LBi,LBj))
-        IF (OutThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idLrip)), thisindx(ng)
-          exit_flag=3
-          RETURN
-        END IF
-      END IF
-!
-!  Write out hydraulic bottom roughness.
-!
-      IF (Hout(idZnot,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*r2dvar
-        status=nf_fwrite(ng, nchisid(ng), hisVid(idZnot,ng),            &
-     &                   thisindx(ng), gtype,                           &
-     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
-     &                   GRID(ng) % rmask(LBi,LBj),                     &
-# endif
-     &                   BBL(ng) % Zbnot(LBi,LBj))
-        IF (OutThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idZnot)), thisindx(ng)
-          exit_flag=3
-          RETURN
-        END IF
-      END IF
-!
-!  Write out apparent hydraulic bottom roughness.
-!
-      IF (Hout(idZapp,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*r2dvar
-        status=nf_fwrite(ng, nchisid(ng), hisVid(idZapp,ng),            &
-     &                   thisindx(ng), gtype,                           &
-     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
-# ifdef MASKING
-     &                   GRID(ng) % rmask(LBi,LBj),                     &
-# endif
-     &                   BBL(ng) % Zbnotc(LBi,LBj))
-        IF (OutThread.and.(status.ne.nf_noerr)) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idZapp)), thisindx(ng)
-          exit_flag=3
-          RETURN
-        END IF
-      END IF
-#endif
-#ifdef SEDIMENT
-!
-!  Write out bed layer sediment fraction for each size class.
+!  Write out sediment fraction of each size class in each bed layer.
 !
       DO i=1,NST
         IF (Hout(idfrac(i),ng)) THEN
@@ -817,10 +761,29 @@
           status=nf_fwrite(ng, nchisid(ng), hisVid(idfrac(i),ng),       &
      &                     thisindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, Nbed, scale,          &
-# ifdef MASKING
+#  ifdef MASKING
      &                     GRID(ng) % rmask(LBi,LBj),                   &
-# endif
+#  endif
      &                     OCEAN(ng) % bed_frac(LBi,LBj,1,i))
+          IF (OutThread.and.(status.ne.nf_noerr)) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), thisindx(ng)
+            exit_flag=3
+            RETURN
+          END IF
+        END IF
+!
+!  Write out sediment mass of each size class in each bed layer.
+!
+        IF (Hout(idBmas(i),ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*b3dvar
+          status=nf_fwrite(ng, nchisid(ng), hisVid(idBmas(i),ng),       &
+     &                     thisindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, Nbed, scale,          &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#  endif
+     &                     OCEAN(ng) % bed_mass(LBi,LBj,1,i))
           IF (OutThread.and.(status.ne.nf_noerr)) THEN
             WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), thisindx(ng)
             exit_flag=3
@@ -829,7 +792,7 @@
         END IF
       END DO
 !
-!  Write out bed layer sediment properties.
+!  Write out sediment properties in each bed layer.
 !
       DO i=1,MBEDP
         IF (Hout(idSbed(i),ng)) THEN
@@ -838,9 +801,9 @@
           status=nf_fwrite(ng, nchisid(ng), hisVid(idSbed(i),ng),       &
      &                     thisindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, Nbed, scale,          &
-# ifdef MASKING
+#  ifdef MASKING
      &                     GRID(ng) % rmask(LBi,LBj),                   &
-# endif
+#  endif
      &                     OCEAN(ng) % bed(LBi,LBj,1,i))
           IF (OutThread.and.(status.ne.nf_noerr)) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), thisindx(ng)
@@ -849,8 +812,10 @@
           END IF
         END IF
       END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
 !
-!  Write out bottom sediment properties.
+!  Write out exposed sediment layer properties.
 !
       DO i=1,MBOTP
         IF (Hout(idBott(i),ng)) THEN
@@ -859,9 +824,9 @@
           status=nf_fwrite(ng, nchisid(ng), hisVid(idBott(i),ng),       &
      &                     thisindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, 1, scale,             &
-# ifdef MASKING
+#  ifdef MASKING
      &                     GRID(ng) % rmask(LBi,LBj),                   &
-# endif
+#  endif
      &                     OCEAN(ng) % bottom(LBi,LBj,i))
           IF (OutThread.and.(status.ne.nf_noerr)) THEN
             WRITE (stdout,10) TRIM(Vname(1,idBott(i))), thisindx(ng)
@@ -870,6 +835,7 @@
           END IF
         END IF
       END DO
+# endif
 #endif
 !
 !  Synchronize history NetCDF file to disk to allow other processes
@@ -889,7 +855,7 @@
      &        'into history NetCDF file for time record: ',i4)
   20  FORMAT (/,' WRT_HIS - unable to synchronize history NetCDF to ',  &
      &        'disk.')
-  30  FORMAT (6x,'WRT_HIS - wrote history  fields into time record = ', &
-     &        i10.10)
+  30  FORMAT (6x,'WRT_HIS   - wrote history  fields into time ',        &
+     &        'record:',t63,i10.10)
       RETURN
       END SUBROUTINE wrt_his

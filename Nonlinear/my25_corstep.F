@@ -24,7 +24,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC my25_corstep
+      PUBLIC  :: my25_corstep
 
       CONTAINS
 !
@@ -756,14 +756,17 @@
      &                 gls, tke)
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, tke(:,:,:,nnew))
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        tke(:,:,:,nnew))
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, gls(:,:,:,nnew))
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        gls(:,:,:,nnew))
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Akv)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), Akv)
       DO itrc=1,NAT
         CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, Akt(:,:,:,itrc))
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          Akt(:,:,:,itrc))
       END DO
 # endif
       RETURN

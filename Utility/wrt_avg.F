@@ -14,6 +14,7 @@
       USE mod_param
       USE mod_parallel
       USE mod_average
+      USE mod_forces
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
@@ -103,6 +104,7 @@
      &                   GRID(ng) % umask(LBi,LBj),                     &
 # endif
      &                   AVERAGE(ng) % avgu2d(LBi,LBj))
+
         IF (OutThread.and.(status.ne.nf_noerr)) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUbar)), tavgindx(ng)
           exit_flag=3
@@ -172,7 +174,7 @@
 !
       IF (Hout(idOvel,ng)) THEN
         scale=1.0_r8
-        gtype=gfactor*r3dvar
+        gtype=gfactor*w3dvar
         status=nf_fwrite(ng, ncavgid(ng), avgVid(idOvel,ng),            &
      &                   tavgindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 0, N(ng), scale,           &
@@ -269,6 +271,95 @@
         END IF
       END IF
 #  endif
+#  ifdef AVERAGES_QUADRATIC
+!
+!  Write out quadratic term <uu>.
+!
+      scale=1.0_r8
+      gtype=gfactor*u3dvar
+      status=nf_fwrite(ng, ncavgid(ng), avgVid(idUUav,ng),              &
+     &                 tavgindx(ng), gtype,                             &
+     &                 LBi, UBi, LBj, UBj, 1, N(ng), scale,             &
+#   ifdef MASKING
+     &                 GRID(ng) % umask(LBi,LBj),                       &
+#   endif
+     &                 AVERAGE(ng) % avgUU(LBi,LBj,1))
+      IF (OutThread.and.(status.ne.nf_noerr)) THEN
+        WRITE (stdout,10) TRIM(Vname(1,idUUav)), tavgindx(ng)
+        exit_flag=3
+        RETURN
+      END IF
+!
+!  Write out quadratic term <uv>.
+!
+      scale=1.0_r8
+      gtype=gfactor*r3dvar
+      status=nf_fwrite(ng, ncavgid(ng), avgVid(idUVav,ng),              &
+     &                 tavgindx(ng), gtype,                             &
+     &                 LBi, UBi, LBj, UBj, 1, N(ng), scale,             &
+#   ifdef MASKING
+     &                 GRID(ng) % rmask(LBi,LBj),                       &
+#   endif
+     &                 AVERAGE(ng) % avgUV(LBi,LBj,1))
+      IF (OutThread.and.(status.ne.nf_noerr)) THEN
+        WRITE (stdout,10) TRIM(Vname(1,idUVav)), tavgindx(ng)
+        exit_flag=3
+        RETURN
+      END IF
+!
+!  Write out quadratic term <vv>.
+!
+      scale=1.0_r8
+      gtype=gfactor*v3dvar
+      status=nf_fwrite(ng, ncavgid(ng), avgVid(idVVav,ng),              &
+     &                 tavgindx(ng), gtype,                             &
+     &                 LBi, UBi, LBj, UBj, 1, N(ng), scale,             &
+#   ifdef MASKING
+     &                 GRID(ng) % vmask(LBi,LBj),                       &
+#   endif
+     &                 AVERAGE(ng) % avgVV(LBi,LBj,1))
+      IF (OutThread.and.(status.ne.nf_noerr)) THEN
+        WRITE (stdout,10) TRIM(Vname(1,idVVav)), tavgindx(ng)
+        exit_flag=3
+        RETURN
+      END IF
+!
+!  Write out quadratic term <ut> and <vt>.
+!
+      DO itrc=1,NAT
+        scale=1.0_r8
+        gtype=gfactor*u3dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idUTav(itrc),ng),      &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgUT(LBi,LBj,1,itrc))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUTav(itrc))),                &
+     &                      tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+!
+        scale=1.0_r8
+        gtype=gfactor*v3dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idVTav(itrc),ng),      &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgVT(LBi,LBj,1,itrc))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVTav(itrc))),                &
+     &                      tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END DO
+#  endif
 #  ifdef AVERAGES_AKV
 !
 !  Write out vertical viscosity coefficient.
@@ -326,6 +417,147 @@
         RETURN
       END IF
 #  endif
+#  ifdef AVERAGES_FLUXES
+!
+!  Write out surface net heat flux.
+!
+      IF (Hout(idTsur(itemp),ng)) THEN
+        scale=rho0*Cp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idTsur(itemp),ng),     &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#   ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#   endif
+     &                   AVERAGE(ng) % avgstf(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idTsur(itemp))), tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
+#   ifdef BULK_FLUXES
+!
+!  Write out latent heat flux.
+!
+      IF (Hout(idLhea,ng)) THEN
+        scale=rho0*Cp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idLhea,ng),            &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#    ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#    endif
+     &                   AVERAGE(ng) % avglhf(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idLhea)), tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
+!
+!  Write out sensible heat flux.
+!
+      IF (Hout(idShea,ng)) THEN
+        scale=rho0*Cp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idShea,ng),            &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#    ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#    endif
+     &                   AVERAGE(ng) % avgshf(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idShea)), tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
+!
+!  Write out longwave radiation flux.
+!
+      IF (Hout(idLrad,ng)) THEN
+        scale=rho0*Cp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idLrad,ng),            &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#    ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#    endif
+     &                   AVERAGE(ng) % avglrf(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idLrad)), tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
+#   endif
+#   ifdef SHORTWAVE
+!
+!  Write out shortwave radiation flux.
+!
+      IF (Hout(idSrad,ng)) THEN
+        scale=rho0*Cp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idSrad,ng),            &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#    ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#    endif
+     &                   AVERAGE(ng) % avgsrf(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idSrad)), tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
+#   endif
+#  endif
+# endif
+# ifdef AVERAGES_FLUXES
+!
+!  Write out surface u-momentun stress.
+!
+      IF (Hout(idUsms,ng)) THEN
+        scale=rho0
+        gtype=gfactor*u2dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idUsms,ng),            &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgsus(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUsms)), tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
+!
+!  Write out surface v-momentun stress.
+!
+      IF (Hout(idVsms,ng)) THEN
+        scale=rho0
+        gtype=gfactor*v2dvar
+        status=nf_fwrite(ng, ncavgid(ng), avgVid(idVsms,ng),            &
+     &                   tavgindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, 1, scale,               &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgsvs(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVsms)), tavgindx(ng)
+          exit_flag=3
+          RETURN
+        END IF
+      END IF
 # endif
 !
 !  Synchronize time-average NetCDF file to disk to allow other processes
@@ -345,8 +577,8 @@
      &        'into averages NetCDF file for time record: ',i4)
   20  FORMAT (/,' WRT_AVG - unable to synchronize averages NetCDF to ', &
      &        'disk.')
-  30  FORMAT (6x,'WRT_AVG - wrote averaged fields into time record = ', &
-     &        i10.10)
+  30  FORMAT (6x,'WRT_AVG   - wrote averaged fields into time ',        &
+     &        'record:',t63,i10.10)
 #else
       SUBROUTINE wrt_avg
 #endif

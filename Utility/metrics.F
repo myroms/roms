@@ -12,7 +12,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC metrics
+      PUBLIC  :: metrics
 
       CONTAINS
 !
@@ -30,10 +30,12 @@
       CALL metrics_tile (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   GRID(ng) % f,                                  &
+     &                   GRID(ng) % h,                                  &
      &                   GRID(ng) % pm,                                 &
      &                   GRID(ng) % pn,                                 &
 #ifdef MASKING
      &                   GRID(ng) % pmask,                              &
+     &                   GRID(ng) % rmask,                              &
 #endif
 #if defined VISC_GRID || defined DIFF_GRID
      &                   GRID(ng) % grdscl,                             &
@@ -62,9 +64,9 @@
 !***********************************************************************
       SUBROUTINE metrics_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         f, pm, pn,                               &
+     &                         f, h, pm, pn,                            &
 #ifdef MASKING
-     &                         pmask,                                   &
+     &                         pmask, rmask,                            &
 #endif
 #if defined VISC_GRID || defined DIFF_GRID
      &                         grdscl,                                  &
@@ -95,11 +97,13 @@
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: f(LBi:,LBj:)
+      real(r8), intent(in) :: h(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
 
 # ifdef MASKING
       real(r8), intent(inout) :: pmask(LBi:,LBj:)
+      real(r8), intent(inout) :: rmask(LBi:,LBj:)
 # endif
 # if defined VISC_GRID || defined DIFF_GRID
       real(r8), intent(inout) :: grdscl(LBi:,LBj:)
@@ -124,11 +128,13 @@
       real(r8), intent(out) :: pmon_v(LBi:,LBj:)
 #else
       real(r8), intent(in) :: f(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
 
 # ifdef MASKING
       real(r8), intent(inout) :: pmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: rmask(LBi:UBi,LBj:UBj)
 # endif
 # if defined VISC_GRID || defined DIFF_GRID
       real(r8), intent(inout) :: grdscl(LBi:UBi,LBj:UBj)
@@ -157,10 +163,14 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
+
       real(r8) :: cff
+      real(r8) :: my_Cu_Cor, my_Cu_max, my_Cu_min, my_grdmax
 
 #ifdef DISTRIBUTE
-      character (len=3), dimension(1) :: op_handle
+      integer :: size
+      real(r8), dimension(4) :: buffer
+      character (len=3), dimension(4) :: op_handle
 #endif
 
 #include "set_bounds.h"
@@ -322,15 +332,53 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           grdscl(i,j)=SQRT(om_r(i,j)*om_r(i,j)+on_r(i,j)*on_r(i,j))
-          cff=MAX(cff,grdscl(i,j))
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj, grdscl)
 # endif
+#endif
 !
-! Determine global maximum.
+!-----------------------------------------------------------------------
+!  Compute Courant number.  Perform global reduction operations.
+!-----------------------------------------------------------------------
+!
+!  The Courant number is defined as:
+!
+!     Cu = c * dt * SQRT (1/dx^2 + 1/dy^2)
+!
+!  where c=SQRT(g*h) is phase speed for barotropic mode, and dx, dy
+!  are grid spacing in each direction.
+!
+      my_Cu_min= 1.0E+20_r8
+      my_Cu_max=-1.0E+20_r8
+      my_Cu_Cor=-1.0E+20_r8
+      my_grdmax=-1.0E+20_r8
+
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+#ifdef MASKING
+          IF (rmask(i,j).gt.0.0_r8) THEN
+#endif
+            cff=dtfast(ng)*SQRT(g*h(i,j)*                               &
+     &          (pm(i,j)*pm(i,j)+pn(i,j)*pn(i,j)))
+            my_Cu_min=MIN(my_Cu_min,cff)
+            my_Cu_max=MAX(my_Cu_max,cff)
+
+            cff=dt(ng)*ABS(f(i,j))
+            my_Cu_Cor=MAX(my_Cu_Cor,cff)
+
+#if defined VISC_GRID || defined DIFF_GRID
+            my_grdmax=MAX(my_grdmax,grdscl(i,j))
+#endif
+#ifdef MASKING
+          END IF
+#endif
+        END DO
+      END DO
+!
+!  Perform global reductions.
 !
       IF (SOUTH_WEST_CORNER.and.                                        &
      &    NORTH_EAST_CORNER) THEN
@@ -338,25 +386,60 @@
       ELSE
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
-!$OMP CRITICAL (MAX_AREA)
+!$OMP CRITICAL (REDUCTIONS)
       IF (tile_count.eq.0) THEN
-        grdmax(ng)=cff
+        Cu_min=my_Cu_min
+        Cu_max=my_Cu_max
+        Cu_Cor=my_Cu_Cor
+#if defined VISC_GRID || defined DIFF_GRID
+        grdmax(ng)=my_grdmax
+#endif
       ELSE
-        grdmax(ng)=MAX(grdmax(ng),cff)
+        Cu_min=MIN(Cu_min,my_Cu_min)
+        Cu_max=MAX(Cu_max,my_Cu_max)
+        Cu_Cor=MAX(Cu_Cor,my_Cu_Cor)
+#if defined VISC_GRID || defined DIFF_GRID
+        grdmax(ng)=MAX(grdmax(ng),my_grdmax)
+#endif
       END IF
       tile_count=tile_count+1
       IF (tile_count.eq.NSUB) THEN
         tile_count=0
-# ifdef DISTRIBUTE
-        op_handle(1)='MAX'
-        CALL mp_reduce (ng, 1, grdmax(ng), op_handle)
+#ifdef DISTRIBUTE
+        buffer(1)=Cu_min
+        op_handle(1)='MIN'
+        buffer(2)=Cu_max
+        op_handle(2)='MAX'
+        buffer(3)=Cu_Cor
+        op_handle(3)='MAX'
+# if defined VISC_GRID || defined DIFF_GRID
+        buffer(4)=grdmax(ng)
+        op_handle(4)='MAX'
+        size=4
+# else
+        size=3
 # endif
-        IF (Master) write(stdout,10) grdmax(ng)/1000.0_r8
- 10     format(/,' Horizontal mixing scaled by grid size,',             &
-     &           ' GRDMAX = ',1pe15.8,' km',/)
-      END IF
-!$OMP END CRITICAL (MAX_AREA)
+        CALL mp_reduce (ng, size, buffer, op_handle)
+        Cu_min=buffer(1)
+        Cu_max=buffer(2)
+        Cu_Cor=buffer(3)
+# if defined VISC_GRID || defined DIFF_GRID
+        grdmax(ng)=buffer(4)
+# endif
 #endif
+        IF (Master) WRITE (stdout,10) Cu_min, Cu_max, Cu_Cor
+  10    FORMAT (/,' Minimum barotropic Courant Number = ', 1pe15.8,/,   &
+     &            ' Maximum barotropic Courant Number = ', 1pe15.8,/,   &
+     &            ' Maximum Coriolis   Courant Number = ', 1pe15.8)
+
+# if defined VISC_GRID || defined DIFF_GRID
+        IF (Master) WRITE (stdout,20) grdmax(ng)/1000.0_r8
+  20    FORMAT (/,' Horizontal mixing scaled by grid size,',            &
+     &            ' GRDMAX = ',1pe15.8,' km',/)
+# endif
+      END IF
+!$OMP END CRITICAL (REDUCTIONS)
+
       RETURN
       END SUBROUTINE metrics_tile
 

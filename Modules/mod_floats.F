@@ -10,6 +10,9 @@
 !               location arrays, if any.                               ! 
 !  Flon       Initial longitude locations, if any.                     !
 !  Flat       Initial latitude locations, if any.                      !
+!  Ftype      Float trajectory type:                                   !
+!               Ftype(:) = 0,  neutral density 3D Lagrangian           !
+!               Ftype(:) = 1,  isobaric (constant depth) float.        !
 !  Tinfo      Float trajectory initial information.                    !
 !  bounded    Float bounded status switch.                             !
 !  track      Multivariate float trajectory data at several time       !
@@ -26,6 +29,7 @@
           logical, pointer  :: bounded(:)
 
           integer, pointer :: Findex(:)
+          integer, pointer :: Ftype(:)
 
           real(r8), pointer :: Flon(:)
           real(r8), pointer :: Flat(:)
@@ -67,6 +71,9 @@
 
       allocate ( FLT(ng) % Findex(0:Nfloats(ng)) )
       FLT(ng) % Findex = 0
+
+      allocate ( FLT(ng) % Ftype(Nfloats(ng)) )
+      FLT(ng) % Ftype = 0
 
       allocate ( FLT(ng) % Flon(Nfloats(ng)) )
       FLT(ng) % Flon = IniVal

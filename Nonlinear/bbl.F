@@ -14,11 +14,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC bblm
+      PUBLIC  :: bblm
 
       CONTAINS
 
-# ifdef SG_BBL
+# if defined MB_BBL
+#  include "mb_bbl.h"
+# elif defined SG_BBL
 #  include "sg_bbl.h"
 # endif
 

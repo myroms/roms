@@ -13,25 +13,25 @@
       implicit none
 
       PRIVATE
-      PUBLIC v2dbc_tile
+      PUBLIC  :: v2dbc_tile
 
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE v2dbc (ng, tile)
+      SUBROUTINE v2dbc (ng, kout, tile)
 !***********************************************************************
 !
       USE mod_param
       USE mod_ocean
       USE mod_stepping
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, kout, tile
 
 #include "tile.h"
 !
       CALL v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                      &
      &                 LBi, UBi, LBj, UBj,                              &
-     &                 krhs(ng), kstp(ng), knew(ng),                    &
+     &                 krhs(ng), kstp(ng), kout,                        &
      &                 OCEAN(ng) % zeta,                                &
      &                 OCEAN(ng) % vbar)
       RETURN
@@ -104,24 +104,24 @@
 !  Western edge, implicit upstream radiation condition.
 !
         DO j=JstrV-1,Jend
-          grad(0,j)=vbar(0,j+1,know)-                                   &
-     &              vbar(0,j  ,know)
-          grad(1,j)=vbar(1,j+1,know)-                                   &
-     &              vbar(1,j  ,know)
+          grad(Istr-1,j)=vbar(Istr-1,j+1,know)-                         &
+     &                   vbar(Istr-1,j  ,know)
+          grad(Istr  ,j)=vbar(Istr  ,j+1,know)-                         &
+     &                   vbar(Istr  ,j  ,know)
         END DO
         DO j=JstrV,Jend
-          dVdt=vbar(1,j,know)-vbar(1,j,knew)
-          dVdx=vbar(1,j,knew)-vbar(2,j,knew)
+          dVdt=vbar(Istr,j,know)-vbar(Istr  ,j,knew)
+          dVdx=vbar(Istr,j,knew)-vbar(Istr+1,j,knew)
 #  ifdef WEST_M2NUDGING
           tau=M2obc_out(ng,iwest)
           IF ((dVdt*dVdx).lt.0.0_r8) tau=M2obc_in(ng,iwest)
           tau=tau*dt2d
 #  endif
           IF ((dVdt*dVdx).lt.0.0_r8) dVdt=0.0_r8
-          IF ((dVdt*(grad(1,j-1)+grad(1,j))).gt.0.0_r8) THEN
-            dVde=grad(1,j-1)
+          IF ((dVdt*(grad(Istr,j-1)+grad(Istr,j))).gt.0.0_r8) THEN
+            dVde=grad(Istr,j-1)
           ELSE
-            dVde=grad(1,j  )
+            dVde=grad(Istr,j  )
           END IF
           cff=MAX(dVdx*dVdx+dVde*dVde,eps)
           Cx=dVdt*dVdx
@@ -130,60 +130,64 @@
 #  else
           Ce=0.0_r8
 #  endif
-          vbar(0,j,knew)=(cff*vbar(0,j,know)+                           &
-     &                    Cx*vbar(1,j,knew)-                            &
-     &                    MAX(Ce,0.0_r8)*grad(0,j-1)-                   &
-     &                    MIN(Ce,0.0_r8)*grad(0,j  ))/                  &
-     &                   (cff+Cx)
+          vbar(Istr-1,j,knew)=(cff*vbar(Istr-1,j,know)+                 &
+     &                         Cx*vbar(Istr,j,knew)-                    &
+     &                         MAX(Ce,0.0_r8)*grad(Istr-1,j-1)-         &
+     &                         MIN(Ce,0.0_r8)*grad(Istr-1,j  ))/        &
+     &                        (cff+Cx)
 #  ifdef WEST_M2NUDGING
-          vbar(0,j,knew)=vbar(0,j,knew)+                                &
-     &                   tau*(BOUNDARY(ng)%vbar_west(j)-                &
-     &                        vbar(0,j,know))
+          vbar(Istr-1,j,knew)=vbar(Istr-1,j,knew)+                      &
+     &                        tau*(BOUNDARY(ng)%vbar_west(j)-           &
+     &                        vbar(Istr-1,j,know))
 #   endif
 #  ifdef MASKING
-          vbar(0,j,knew)=vbar(0,j,knew)*                                &
-     &                   GRID(ng)%vmask(0,j)
+          vbar(Istr-1,j,knew)=vbar(Istr-1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Istr-1,j)
 #  endif
         END DO
+
 # elif defined WEST_M2FLATHER
 !
 !  Western edge, Chapman boundary condition.
 !
         DO j=JstrV,Jend
-          Cx=dt2d*0.5_r8*(GRID(ng)%pm(1,j-1)+                           &
-     &                    GRID(ng)%pm(1,j  ))*                          &
-     &       SQRT(g*0.5_r8*(GRID(ng)%h(1,j-1)+                          &
-     &                      GRID(ng)%h(1,j  )))
-          vbar(0,j,knew)=(vbar(0,j,know)+                               &
-     &                    Cx*vbar(1,j,knew))/                           &
-     &                   (1.0_r8+Cx)
+          Cx=dt2d*0.5_r8*(GRID(ng)%pm(Istr,j-1)+                        &
+     &                    GRID(ng)%pm(Istr,j  ))*                       &
+     &       SQRT(g*0.5_r8*(GRID(ng)%h(Istr,j-1)+                       &
+     &                      GRID(ng)%h(Istr,j  )))
+          vbar(Istr-1,j,knew)=(vbar(Istr-1,j,know)+                     &
+     &                         Cx*vbar(Istr,j,knew))/                   &
+     &                        (1.0_r8+Cx)
 #  ifdef MASKING
-          vbar(0,j,knew)=vbar(0,j,knew)*                                &
-     &                   GRID(ng)%vmask(0,j)
+          vbar(Istr-1,j,knew)=vbar(Istr-1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Istr-1,j)
 #  endif
         END DO
+
 # elif defined WEST_M2CLAMPED
 !
 !  Western edge, clamped boundary condition.
 !
         DO j=JstrV,Jend
-          vbar(0,j,knew)=BOUNDARY(ng)%vbar_west(j)
+          vbar(Istr-1,j,knew)=BOUNDARY(ng)%vbar_west(j)
 #  ifdef MASKING
-          vbar(0,j,knew)=vbar(0,j,knew)*                                &
-     &                   GRID(ng)%vmask(0,j)
+          vbar(Istr-1,j,knew)=vbar(Istr-1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Istr-1,j)
 #  endif
         END DO
+
 # elif defined WEST_M2GRADIENT
 !
 !  Western edge, gradient boundary condition.
 !
         DO j=JstrV,Jend
-          vbar(0,j,knew)=vbar(1,j,knew)
+          vbar(Istr-1,j,knew)=vbar(Istr,j,knew)
 #  ifdef MASKING
-          vbar(0,j,knew)=vbar(0,j,knew)*                                &
-     &                   GRID(ng)%vmask(0,j)
+          vbar(Istr-1,j,knew)=vbar(Istr-1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Istr-1,j)
 #  endif
         END DO
+
 # else
 !
 !  Western edge, closed boundary condition: free slip (gamma2=1)  or
@@ -195,10 +199,10 @@
 #   define J_RANGE Jstr,JendR
 #  endif
         DO j=J_RANGE
-          vbar(0,j,knew)=gamma2*vbar(1,j,knew)
+          vbar(Istr-1,j,knew)=gamma2*vbar(Istr,j,knew)
 #  ifdef MASKING
-          vbar(0,j,knew)=vbar(0,j,knew)*                                &
-     &                   GRID(ng)%vmask(0,j)
+          vbar(Istr-1,j,knew)=vbar(Istr-1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Istr-1,j)
 #  endif
         END DO
 #  undef J_RANGE
@@ -216,24 +220,24 @@
 !  Eastern edge, implicit upstream radiation condition.
 !
         DO j=JstrV-1,Jend
-          grad(Lm(ng),j)=vbar(Lm(ng),j+1,know)-                         &
-     &                   vbar(Lm(ng),j  ,know)
-          grad(Lm(ng)+1,j)=vbar(Lm(ng)+1,j+1,know)-                     &
-     &                     vbar(Lm(ng)+1,j  ,know)
+          grad(Iend  ,j)=vbar(Iend  ,j+1,know)-                         &
+     &                   vbar(Iend  ,j  ,know)
+          grad(Iend+1,j)=vbar(Iend+1,j+1,know)-                         &
+     &                   vbar(Iend+1,j  ,know)
         END DO
         DO j=JstrV,Jend
-          dVdt=vbar(Lm(ng),j,know)-vbar(Lm(ng),j,knew)
-          dVdx=vbar(Lm(ng),j,knew)-vbar(Lm(ng)-1,j,knew)
+          dVdt=vbar(Iend,j,know)-vbar(Iend  ,j,knew)
+          dVdx=vbar(Iend,j,knew)-vbar(Iend-1,j,knew)
 #  ifdef EAST_M2NUDGING
           tau=M2obc_out(ng,ieast)
           IF ((dVdt*dVdx).lt.0.0_r8) tau=M2obc_in(ng,ieast)
           tau=tau*dt2d
 #  endif
           IF ((dVdt*dVdx).lt.0.0_r8) dVdt=0.0_r8
-          IF ((dVdt*(grad(Lm(ng),j-1)+grad(Lm(ng),j))).gt.0.0_r8) THEN
-            dVde=grad(Lm(ng),j-1)
+          IF ((dVdt*(grad(Iend,j-1)+grad(Iend,j))).gt.0.0_r8) THEN
+            dVde=grad(Iend,j-1)
           ELSE
-            dVde=grad(Lm(ng),j  )
+            dVde=grad(Iend,j  )
           END IF
           cff=MAX(dVdx*dVdx+dVde*dVde,eps)
           Cx=dVdt*dVdx
@@ -242,60 +246,64 @@
 #  else
           Ce=0.0_r8
 #  endif
-          vbar(Lm(ng)+1,j,knew)=(cff*vbar(Lm(ng)+1,j,know)+             &
-     &                           Cx*vbar(Lm(ng),j,knew)-                &
-     &                           MAX(Ce,0.0_r8)*grad(Lm(ng)+1,j-1)-     &
-     &                           MIN(Ce,0.0_r8)*grad(Lm(ng)+1,j  ))/    &
-     &                          (cff+Cx)
+          vbar(Iend+1,j,knew)=(cff*vbar(Iend+1,j,know)+                 &
+     &                         Cx*vbar(Iend,j,knew)-                    &
+     &                         MAX(Ce,0.0_r8)*grad(Iend+1,j-1)-         &
+     &                         MIN(Ce,0.0_r8)*grad(Iend+1,j  ))/        &
+     &                        (cff+Cx)
 #  ifdef EAST_M2NUDGING
-          vbar(Lm(ng)+1,j,knew)=vbar(Lm(ng)+1,j,knew)+                  &
-     &                          tau*(BOUNDARY(ng)%vbar_east(j)-         &
-     &                               vbar(Lm(ng)+1,j,know))
+          vbar(Iend+1,j,knew)=vbar(Iend+1,j,knew)+                      &
+     &                        tau*(BOUNDARY(ng)%vbar_east(j)-           &
+     &                             vbar(Iend+1,j,know))
 #  endif
 #  ifdef MASKING
-          vbar(Lm(ng)+1,j,knew)=vbar(Lm(ng)+1,j,knew)*                  &
-     &                          GRID(ng)%vmask(Lm(ng)+1,j)
+          vbar(Iend+1,j,knew)=vbar(Iend+1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Iend+1,j)
 #  endif
         END DO
+
 # elif defined EAST_M2FLATHER
 !
 !  Eastern edge, Chapman boundary condition.
 !
         DO j=JstrV,Jend
-          Cx=dt2d*0.5_r8*(GRID(ng)%pm(Lm(ng),j-1)+                      &
-     &                    GRID(ng)%pm(Lm(ng),j  ))*                     &
-     &       SQRT(g*0.5_r8*(GRID(ng)%h(Lm(ng),j-1)+                     &
-     &                      GRID(ng)%h(Lm(ng),j  )))
-          vbar(Lm(ng)+1,j,knew)=(vbar(Lm(ng)+1,j,know)+                 &
-     &                           Cx*vbar(Lm(ng),j,knew))/               &
-     &                          (1.0_r8+Cx)
+          Cx=dt2d*0.5_r8*(GRID(ng)%pm(Iend,j-1)+                        &
+     &                    GRID(ng)%pm(Iend,j  ))*                       &
+     &       SQRT(g*0.5_r8*(GRID(ng)%h(Iend,j-1)+                       &
+     &                      GRID(ng)%h(Iend,j  )))
+          vbar(Iend+1,j,knew)=(vbar(Iend+1,j,know)+                     &
+     &                         Cx*vbar(Iend,j,knew))/                   &
+     &                        (1.0_r8+Cx)
 #  ifdef MASKING
-          vbar(Lm(ng)+1,j,knew)=vbar(Lm(ng)+1,j,knew)*                  &
-     &                          GRID(ng)%vmask(Lm(ng)+1,j)
+          vbar(Iend+1,j,knew)=vbar(Iend+1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Iend+1,j)
 #  endif
         END DO
+
 # elif defined EAST_M2CLAMPED
 !
 !  Eastern edge, clamped boundary condition.
 !
         DO j=JstrV,Jend
-          vbar(Lm(ng)+1,j,knew)=BOUNDARY(ng)%vbar_east(j)
+          vbar(Iend+1,j,knew)=BOUNDARY(ng)%vbar_east(j)
 #  ifdef MASKING
-          vbar(Lm(ng)+1,j,knew)=vbar(Lm(ng)+1,j,knew)*                  &
-     &                          GRID(ng)%vmask(Lm(ng)+1,j)
+          vbar(Iend+1,j,knew)=vbar(Iend+1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Iend+1,j)
 #  endif
         END DO
+
 # elif defined EAST_M2GRADIENT
 !
 !  Eastern edge, gradient boundary condition.
 !
         DO j=JstrV,Jend
-          vbar(Lm(ng)+1,j,knew)=vbar(Lm(ng),j,knew)
+          vbar(Iend+1,j,knew)=vbar(Iend,j,knew)
 #  ifdef MASKING
-          vbar(Lm(ng)+1,j,knew)=vbar(Lm(ng)+1,j,knew)*                        &
-     &                       GRID(ng)%vmask(Lm(ng)+1,j)
+          vbar(Iend+1,j,knew)=vbar(Iend+1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Iend+1,j)
 #  endif
         END DO
+
 # else
 !
 !  Eastern edge, closed boundary condition: free slip (gamma2=1)  or
@@ -307,10 +315,10 @@
 #   define J_RANGE Jstr,JendR
 #  endif
         DO j=J_RANGE
-          vbar(Lm(ng)+1,j,knew)=gamma2*vbar(Lm(ng),j,knew)
+          vbar(Iend+1,j,knew)=gamma2*vbar(Iend,j,knew)
 #  ifdef MASKING
-          vbar(Lm(ng)+1,j,knew)=vbar(Lm(ng)+1,j,knew)*                  &
-     &                          GRID(ng)%vmask(Lm(ng)+1,j)
+          vbar(Iend+1,j,knew)=vbar(Iend+1,j,knew)*                      &
+     &                        GRID(ng)%vmask(Iend+1,j)
 #  endif
         END DO
 #  undef J_RANGE
@@ -330,24 +338,24 @@
 !  Southern edge, implicit upstream radiation condition.
 !
         DO i=Istr,Iend+1
-          grad(i,1)=vbar(i  ,1,know)-                                   &
-     &              vbar(i-1,1,know)
-          grad(i,2)=vbar(i  ,2,know)-                                   &
-     &              vbar(i-1,2,know)
+          grad(i,Jstr  )=vbar(i  ,Jstr  ,know)-                          &
+     &                   vbar(i-1,Jstr  ,know)
+          grad(i,Jstr+1)=vbar(i  ,Jstr+1,know)-                          &
+     &                   vbar(i-1,Jstr+1,know)
         END DO
         DO i=Istr,Iend
-          dVdt=vbar(i,2,know)-vbar(i,2,knew)
-          dVde=vbar(i,2,knew)-vbar(i,3,knew)
+          dVdt=vbar(i,Jstr+1,know)-vbar(i,Jstr+1,knew)
+          dVde=vbar(i,Jstr+1,knew)-vbar(i,Jstr+2,knew)
 #  ifdef SOUTH_M2NUDGING
           tau=M2obc_out(ng,isouth)
           IF ((dVdt*dVde).lt.0.0_r8) tau=M2obc_in(ng,isouth)
           tau=tau*dt2d
 #  endif
           IF ((dVdt*dVde).lt.0.0_r8) dVdt=0.0_r8
-          IF ((dVdt*(grad(i,2)+grad(i+1,2))).gt.0.0_r8) THEN
-            dVdx=grad(i  ,2)
+          IF ((dVdt*(grad(i,Jstr+1)+grad(i+1,Jstr+1))).gt.0.0_r8) THEN
+            dVdx=grad(i  ,Jstr+1)
           ELSE
-            dVdx=grad(i+1,2)
+            dVdx=grad(i+1,Jstr+1)
           END IF
           cff=MAX(dVdx*dVdx+dVde*dVde,eps)
 #  ifdef RADIATION_2D
@@ -356,64 +364,69 @@
           Cx=0.0_r8
 #  endif
           Ce=dVdt*dVde
-          vbar(i,1,knew)=(cff*vbar(i,1,know)+                           &
-     &                    Ce*vbar(i,2,knew)-                            &
-     &                    MAX(Cx,0.0_r8)*grad(i  ,1)-                   &
-     &                    MIN(Cx,0.0_r8)*grad(i+1,1))/                  &
-     &                   (cff+Ce)
+          vbar(i,Jstr,knew)=(cff*vbar(i,Jstr  ,know)+                   &
+     &                       Ce *vbar(i,Jstr+1,knew)-                   &
+     &                       MAX(Cx,0.0_r8)*grad(i  ,Jstr)-             &
+     &                       MIN(Cx,0.0_r8)*grad(i+1,Jstr))/            &
+     &                      (cff+Ce)
 #  ifdef SOUTH_M2NUDGING
-          vbar(i,1,knew)=vbar(i,1,knew)+                                &
-     &                   tau*(BOUNDARY(ng)%vbar_south(i)-               &
-     &                        vbar(i,1,know))
+          vbar(i,Jstr,knew)=vbar(i,Jstr,knew)+                          &
+     &                      tau*(BOUNDARY(ng)%vbar_south(i)-            &
+     &                      vbar(i,Jstr,know))
 #  endif
 #  ifdef MASKING
-          vbar(i,1,knew)=vbar(i,1,knew)*                                &
-     &                   GRID(ng)%vmask(i,1)
+          vbar(i,Jstr,knew)=vbar(i,Jstr,knew)*                          &
+     &                      GRID(ng)%vmask(i,Jstr)
 #  endif
         END DO
+
 # elif defined SOUTH_M2FLATHER
 !
 !  Southern edge, Flather boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,1,knew)=BOUNDARY(ng)%vbar_south(i)-                    &
-     &                   SQRT(g/(0.5_r8*(GRID(ng)%h(i,0)+               &
-     &                                   GRID(ng)%h(i,1))))*            &
-     &                   (0.5_r8*(zeta(i,0,know)+zeta(i,1,know))-       &
-     &                    BOUNDARY(ng)%zeta_south(i))
+          vbar(i,Jstr,knew)=BOUNDARY(ng)%vbar_south(i)-                 &
+     &                      SQRT(g/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+       &
+     &                                      GRID(ng)%h(i,Jstr  ))))*    &
+     &                      (0.5_r8*(zeta(i,Jstr-1,know)+               &
+     &                               zeta(i,Jstr  ,know))-              &
+     &                       BOUNDARY(ng)%zeta_south(i))
 #  ifdef MASKING
-          vbar(i,1,knew)=vbar(i,1,knew)*                                &
-     &                   GRID(ng)%vmask(i,1)
+          vbar(i,Jstr,knew)=vbar(i,Jstr,knew)*                          &
+     &                      GRID(ng)%vmask(i,Jstr)
 #  endif
         END DO
+
 # elif defined SOUTH_M2CLAMPED
 !
 !  Southern edge, clamped boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,1,knew)=BOUNDARY(ng)%vbar_south(i)
+          vbar(i,Jstr,knew)=BOUNDARY(ng)%vbar_south(i)
 #  ifdef MASKING
-          vbar(i,1,knew)=vbar(i,1,knew)*                                &
-     &                   GRID(ng)%vmask(i,1)
+          vbar(i,Jstr,knew)=vbar(i,Jstr,knew)*                          &
+     &                      GRID(ng)%vmask(i,Jstr)
 #  endif
         END DO
+
 # elif defined SOUTH_M2GRADIENT
 !
 !  Southern edge, gradient boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,1,knew)=vbar(i,2,knew)
+          vbar(i,Jstr,knew)=vbar(i,Jstr+1,knew)
 #  ifdef MASKING
-          vbar(i,1,knew)=vbar(i,1,knew)*                                &
-     &                   GRID(ng)%vmask(i,1)
+          vbar(i,Jstr,knew)=vbar(i,Jstr,knew)*                          &
+     &                      GRID(ng)%vmask(i,Jstr)
 #  endif
         END DO
+
 # else
 !
 !  Southern edge, closed boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,1,knew)=0.0_r8
+          vbar(i,Jstr,knew)=0.0_r8
         END DO
 # endif
       END IF
@@ -429,24 +442,24 @@
 !  Northern edge, implicit upstream radiation condition.
 !
         DO i=Istr,Iend+1
-          grad(i,Mm(ng))=vbar(i  ,Mm(ng),know)-                         &
-     &                   vbar(i-1,Mm(ng),know)
-          grad(i,Mm(ng)+1)=vbar(i  ,Mm(ng)+1,know)-                     &
-     &                     vbar(i-1,Mm(ng)+1,know)
+          grad(i,Jend  )=vbar(i  ,Jend  ,know)-                         &
+     &                   vbar(i-1,Jend  ,know)
+          grad(i,Jend+1)=vbar(i  ,Jend+1,know)-                         &
+     &                   vbar(i-1,Jend+1,know)
         END DO
         DO i=Istr,Iend
-          dVdt=vbar(i,Mm(ng),know)-vbar(i,Mm(ng),knew)
-          dVde=vbar(i,Mm(ng),knew)-vbar(i,Mm(ng)-1,knew)
+          dVdt=vbar(i,Jend,know)-vbar(i,Jend  ,knew)
+          dVde=vbar(i,Jend,knew)-vbar(i,Jend-1,knew)
 #  ifdef NORTH_M2NUDGING
           tau=M2obc_out(ng,inorth)
           IF ((dVdt*dVde).lt.0.0_r8) tau=M2obc_in(ng,inorth)
           tau=tau*dt2d
 #  endif
           IF ((dVdt*dVde).lt.0.0_r8) dVdt=0.0_r8
-          IF ((dVdt*(grad(i,Mm(ng))+grad(i,Mm(ng)+1))).gt.0.0_r8) THEN
-            dVdx=grad(i  ,Mm(ng))
+          IF ((dVdt*(grad(i,Jend)+grad(i,Jend+1))).gt.0.0_r8) THEN
+            dVdx=grad(i  ,Jend)
           ELSE
-            dVdx=grad(i+1,Mm(ng))
+            dVdx=grad(i+1,Jend)
           END IF
           cff=MAX(dVdx*dVdx+dVde*dVde,eps)
 #  ifdef RADIATION_2D
@@ -455,58 +468,60 @@
           Cx=0.0_r8
 #  endif
           Ce=dVdt*dVde
-          vbar(i,Mm(ng)+1,knew)=(cff*vbar(i,Mm(ng)+1,know)+             &
-     &                           Ce*vbar(i,Mm(ng),knew)-                &
-     &                           MAX(Cx,0.0_r8)*grad(i  ,Mm(ng)+1)-     &
-     &                           MIN(Cx,0.0_r8)*grad(i+1,Mm(ng)+1))/    &
-     &                          (cff+Ce)
+          vbar(i,Jend+1,knew)=(cff*vbar(i,Jend+1,know)+                 &
+     &                         Ce *vbar(i,Jend  ,knew)-                 &
+     &                         MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-         &
+     &                         MIN(Cx,0.0_r8)*grad(i+1,Jend+1))/        &
+     &                        (cff+Ce)
 #  ifdef NORTH_M2NUDGING
-          vbar(i,Mm(ng)+1,knew)=vbar(i,Mm(ng)+1,knew)+                  &
-     &                          tau*(BOUNDARY(ng)%vbar_north(i)-        &
-     &                               vbar(i,Mm(ng)+1,know))
+          vbar(i,Jend+1,knew)=vbar(i,Jend+1,knew)+                      &
+     &                         tau*(BOUNDARY(ng)%vbar_north(i)-         &
+     &                         vbar(i,Jend+1,know))
 #  endif
 #  ifdef MASKING
-          vbar(i,Mm(ng)+1,knew)=vbar(i,Mm(ng)+1,knew)*                  &
-     &                          GRID(ng)%vmask(i,Mm(ng)+1)
+          vbar(i,Jend+1,knew)=vbar(i,Jend+1,knew)*                      &
+     &                        GRID(ng)%vmask(i,Jend+1)
 #  endif
         END DO
+
 # elif defined NORTH_M2FLATHER
 !
 !  Northern edge, Flather boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,Mm(ng)+1,knew)=BOUNDARY(ng)%vbar_north(i)+             &
-     &                          SQRT(g/(0.5_r8*                         &
-     &                                  (GRID(ng)%h(i,Mm(ng))+          &
-     &                                   GRID(ng)%h(i,Mm(ng)+1))))*     &
-     &                          (0.5_r8*(zeta(i,Mm(ng),know)+           &
-     &                                   zeta(i,Mm(ng)+1 ,know))-       &
-     &                           BOUNDARY(ng)%zeta_north(i))
+          vbar(i,Jend+1,knew)=BOUNDARY(ng)%vbar_north(i)+               &
+     &                        SQRT(g/(0.5_r8*(GRID(ng)%h(i,Jend  )+     &
+     &                                        GRID(ng)%h(i,Jend+1))))*  &
+     &                        (0.5_r8*(zeta(i,Jend  ,know)+             &
+     &                                 zeta(i,Jend+1,know))-            &
+     &                         BOUNDARY(ng)%zeta_north(i))
 #  ifdef MASKING
-          vbar(i,Mm(ng)+1,knew)=vbar(i,Mm(ng)+1,knew)*                  &
-     &                          GRID(ng)%vmask(i,Mm(ng)+1)
+          vbar(i,Jend+1,knew)=vbar(i,Jend+1,knew)*                      &
+     &                        GRID(ng)%vmask(i,Jend+1)
 #  endif
         END DO
+
 # elif defined NORTH_M2CLAMPED
 !
 !  Northern edge, clamped boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,Mm(ng)+1,knew)=BOUNDARY(ng)%vbar_north(i)
+          vbar(i,Jend+1,knew)=BOUNDARY(ng)%vbar_north(i)
 #  ifdef MASKING
-          vbar(i,Mm(ng)+1,knew)=vbar(i,Mm(ng)+1,knew)*                  &
-     &                          GRID(ng)%vmask(i,Mm(ng)+1)
+          vbar(i,Jend+1,knew)=vbar(i,Jend+1,knew)*                      &
+     &                        GRID(ng)%vmask(i,Jend+1)
 #  endif
         END DO
+
 # elif defined NORTH_M2GRADIENT
 !
 !  Northern edge, gradient boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,Mm(ng)+1,knew)=vbar(i,Mm(ng),knew)
+          vbar(i,Jend+1,knew)=vbar(i,Jend,knew)
 #  ifdef MASKING
-          vbar(i,Mm(ng)+1,knew)=vbar(i,Mm(ng)+1,knew)*                  &
-     &                          GRID(ng)%vmask(i,Mm(ng)+1)
+          vbar(i,Jend+1,knew)=vbar(i,Jend+1,knew)*                      &
+     &                        GRID(ng)%vmask(i,Jend+1)
 #  endif
         END DO
 # else
@@ -514,11 +529,12 @@
 !  Northern edge, closed boundary condition.
 !
         DO i=Istr,Iend
-          vbar(i,Mm(ng)+1,knew)=0.0_r8
+          vbar(i,Jend+1,knew)=0.0_r8
         END DO
 # endif
       END IF
 #endif
+
 #if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -526,23 +542,23 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        vbar(0,1,knew)=0.5_r8*(vbar(0,2,knew)+                          &
-     &                         vbar(1,1,knew))
+        vbar(Istr-1,Jstr,knew)=0.5_r8*(vbar(Istr-1,Jstr+1,knew)+        &
+     &                                 vbar(Istr  ,Jstr  ,knew))
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        vbar(Lm(ng)+1,1,knew)=0.5_r8*(vbar(Lm(ng)  ,1,knew)+            &
-     &                                vbar(Lm(ng)+1,2,knew))
+        vbar(Iend+1,Jstr,knew)=0.5_r8*(vbar(Iend  ,Jstr  ,knew)+        &
+     &                                 vbar(Iend+1,Jstr+1,knew))
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        vbar(0,Mm(ng)+1,knew)=0.5_r8*(vbar(0,Mm(ng)  ,knew)+            &
-     &                                vbar(1,Mm(ng)+1,knew))
+        vbar(Istr-1,Jend+1,knew)=0.5_r8*(vbar(Istr-1,Jend  ,knew)+      &
+     &                                   vbar(Istr  ,Jend+1,knew))
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        vbar(Lm(ng)+1,Mm(ng)+1,knew)=0.5_r8*                            &
-     &                               (vbar(Lm(ng)+1,Mm(ng)  ,knew)+     &
-     &                                vbar(Lm(ng)  ,Mm(ng)+1,knew))
+        vbar(Iend+1,Jend+1,knew)=0.5_r8*(vbar(Iend  ,Jend+1,knew)+      &
+     &                                   vbar(Iend+1,Jend  ,knew))
       END IF
 #endif
       RETURN
+
       END SUBROUTINE v2dbc_tile
       END MODULE v2dbc_mod

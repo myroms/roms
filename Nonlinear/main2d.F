@@ -18,12 +18,15 @@
       USE mod_scalars
       USE mod_stepping
 !
-# if defined SSH_TIDES || defined UV_TIDES
-      USE clm_tides_mod, ONLY : clm_tides
+# ifdef AIR_OCEAN
+      USE atm_coupler_mod, ONLY : atmos_coupling
 # endif
       USE diag_mod, ONLY : diag
 # ifdef ASSIMILATION
       USE oi_update_mod, ONLY : oi_update
+# endif
+# if defined SSH_TIDES || defined UV_TIDES
+      USE set_tides_mod, ONLY : set_tides
 # endif
       USE step2d_mod, ONLY : step2d
 # ifdef FLOATS
@@ -58,7 +61,7 @@
 !-----------------------------------------------------------------------
 !
       CALL get_data (ng)
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
 !
 !-----------------------------------------------------------------------
 !  Process forcing, climatology and assimilation input data: time
@@ -74,11 +77,34 @@
 # ifdef AVERAGES
           CALL set_avg (ng, TILE)
 # endif
+# ifdef DIAGNOSTICS_UV
+          CALL set_diags (ng, TILE)
+# endif
           CALL diag (ng, TILE)
         END DO
       END DO
 !$OMP END PARALLEL DO
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
+
+# ifdef AIR_OCEAN
+!
+!-----------------------------------------------------------------------
+!  Couple to atmospheric model every "nOCN_steps" timesteps: get air/sea
+!  fluxes.
+!-----------------------------------------------------------------------
+!
+      IF (MOD(iic(ng),nOCN_steps).eq.0) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*(thread+1)-1,subs*thread,-1
+            CALL atmos_coupling (ng, TILE)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
 # if defined SSH_TIDES || defined UV_TIDES
 !
 !-----------------------------------------------------------------------
@@ -89,7 +115,7 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL clm_tides (ng, TILE)
+          CALL set_tides (ng, TILE)
         END DO
       END DO
 !$OMP END PARALLEL DO
@@ -102,10 +128,10 @@
 !-----------------------------------------------------------------------
 !
       CALL output (ng)
-      if (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.0) RETURN
       IF (iic(ng).eq.(ntend+1)) THEN
-        IF (Master) write(stdout,10) ' Elapsed CPU time (seconds):'
- 10     format(/,a,/)
+        IF (Master) WRITE (stdout,10) ' Elapsed CPU time (seconds):'
+ 10     FORMAT (/,a,/)
 !$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           CALL wclock_off (ng, 0)
@@ -172,6 +198,7 @@
         END DO
 !$OMP END PARALLEL DO
       END IF
+
 # ifdef ASSIMILATION
 !
 !-----------------------------------------------------------------------
@@ -187,6 +214,7 @@
       END DO
 !$OMP END PARALLEL DO
 # endif
+
 # ifdef FLOATS
 !
 !-----------------------------------------------------------------------

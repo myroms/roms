@@ -101,22 +101,22 @@
 !  If appropriate, process time-average NetCDF file.
 !-----------------------------------------------------------------------
 !
-!  Create output time-averagd NetCDF file or prepare existing file
-!  to append new data to it.  Also,  notice that it is possible to
+!  Create output time-averaged NetCDF file or prepare existing file
+!  to append new data to it. Also, notice that it is possible to
 !  create several files during a single model run.
 !
       IF (LdefAVG(ng)) THEN
         IF (ndefavg(ng).gt.0) THEN
-          IF (idefavg(ng).lt.0) idefavg(ng)=ntstart+navg(ng)-1
+          IF (idefavg(ng).lt.0) idefavg(ng)=ntstart-1
           IF ((iic(ng)-1).eq.idefavg(ng)) THEN
             idefavg(ng)=idefavg(ng)+ndefavg(ng)
-            ifile=(iic(ng)-navg(ng)-1)/ndefavg(ng)+1
+            ifile=(iic(ng)-1)/ndefavg(ng)+1
             IF (Master) THEN
               lstr=len_trim(avgbase(ng))
               WRITE (avgname(ng),10) avgbase(ng)(1:lstr-3),ifile
             END IF
             IF (ncavgid(ng).ne.-1) status=nf_close(ncavgid(ng))
-            IF ((iic(ng).eq.ntstart+navg(ng)).and.                            &
+            IF ((iic(ng).eq.ntstart+navg(ng)).and.                      &
      &           (MOD(iic(ng)-navg(ng)-1,ndefavg(ng)).ne.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -139,6 +139,53 @@
       IF ((iic(ng).gt.ntstart).and.                                     &
      &    (MOD(iic(ng)-1,navg(ng)).eq.0)) THEN
         CALL wrt_avg (ng)
+        if (exit_flag.ne.0) RETURN
+      END IF
+#endif
+#ifdef DIAGNOSTICS
+!
+!-----------------------------------------------------------------------
+!  If appropriate, process time-averaged diagnostics NetCDF file.
+!-----------------------------------------------------------------------
+!
+!  Create output time-averaged diagnostics NetCDF file or prepare
+!  existing file to append new data to it. Also, notice that it is
+!  possible to create several files during a single model run.
+!
+      IF (LdefDIA(ng)) THEN
+        IF (ndefdia(ng).gt.0) THEN
+          IF (idefdia(ng).lt.0) idefdia(ng)=ntstart-1
+          IF ((iic(ng)-1).eq.idefdia(ng)) THEN
+            idefdia(ng)=idefdia(ng)+ndefdia(ng)
+            ifile=(iic(ng)-1)/ndefdia(ng)+1
+            IF (Master) THEN
+              lstr=len_trim(diabase(ng))
+              WRITE (dianame(ng),10) diabase(ng)(1:lstr-3),ifile
+            END IF
+            IF (ncdiaid(ng).ne.-1) status=nf_close(ncdiaid(ng))
+            IF ((iic(ng).eq.ntstart+ndia(ng)).and.                      &
+     &           (MOD(iic(ng)-ndia(ng)-1,ndefdia(ng)).ne.0)) THEN
+              ldef=ldefout(ng)
+            ELSE
+              ldef=.true.
+            END IF
+            CALL def_diags (ng, ldef)
+            if (exit_flag.ne.0) RETURN
+          END IF
+        ELSE
+          IF (iic(ng).eq.ntstart) THEN
+            CALL def_diags (ng, ldefout(ng))
+            if (exit_flag.ne.0) RETURN
+            LdefDIA(ng)=.false.
+          END IF
+        END IF
+      END IF
+!
+!  Write out data into time-averaged diagnostics NetCDF file.
+!
+      IF ((iic(ng).gt.ntstart).and.                                     &
+     &    (MOD(iic(ng)-1,ndia(ng)).eq.0)) THEN
+        CALL wrt_diags (ng)
         if (exit_flag.ne.0) RETURN
       END IF
 #endif
@@ -223,7 +270,7 @@
       CALL wclock_off (ng, 8)
 #endif
 !
-  10  FORMAT (a,'_',i3.3,'.nc')
+  10  FORMAT (a,'_',i4.4,'.nc')
 
       RETURN
       END SUBROUTINE output

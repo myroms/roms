@@ -7,19 +7,50 @@
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This  routine computes the sediment sources and sinks and adds      !
-!  then the global sediment tracer fields. Currently, it computes      !
-!  the following terms:                                                !
+!  then the global sediment tracer fields. Currently, it includes      !
+!  the following:                                                      !
 !                                                                      !
 !  * Vertical settling of sediment in the water column.                !
 !  * Erosive and depositional flux interactions of sediment            !
 !    between water column and the bed.                                 !
+!  * Transport of multiple grain sizes.                                !
+!  * Bed layer stratigraphy.
+!  * Seawater/sediment vertical level distribution:                    !
+!                                                                      !
+!         W-level  RHO-level                                           !
+!                                                                      !
+!            N     _________                                           !
+!                 |         |                                          !
+!                 |    N    |                                          !
+!          N-1    |_________|  S                                       !
+!                 |         |  E                                       !
+!                 |   N-1   |  A                                       !
+!            2    |_________|  W                                       !
+!                 |         |  A                                       !
+!                 |    2    |  T                                       !
+!            1    |_________|  E                                       !
+!                 |         |  R                                       !
+!                 |    1    |                                          !
+!            0    |_________|_____ bathymetry                          !
+!                 |/////////|                                          !
+!                 |    1    |                                          !
+!            1    |_________|  S                                       !
+!                 |         |  E                                       !
+!                 |    2    |  D                                       !
+!            2    |_________|  I                                       !
+!                 |         |  M                                       !
+!                 |  Nbed-1 |  E                                       !
+!        Nbed-1   |_________|  N                                       !
+!                 |         |  T                                       !
+!                 |  Nbed   |                                          !
+!         Nbed    |_________|                                          !
 !                                                                      !
 !=======================================================================
 !
       implicit none
 
       PRIVATE
-      PUBLIC sediment
+      PUBLIC  :: sediment
 
       CONTAINS
 !
@@ -46,14 +77,16 @@
       CALL sediment_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    nnew(ng),                                     &
+     &                    GRID(ng) % pm,                                &
+     &                    GRID(ng) % pn,                                &
 # ifdef MASKING
      &                    GRID(ng) % rmask,                             &
 # endif
      &                    GRID(ng) % Hz,                                &
      &                    GRID(ng) % z_w,                               &
 # ifdef BBL_MODEL
-     &                    BBL(ng) % bustrw,                             &
-     &                    BBL(ng) % bvstrw,                             &
+     &                    BBL(ng) % bustrcwmax,                         &
+     &                    BBL(ng) % bvstrcwmax,                         &
 # else
      &                    FORCES(ng) % bustr,                           &
      &                    FORCES(ng) % bvstr,                           &
@@ -61,6 +94,7 @@
      &                    OCEAN(ng) % t,                                &
      &                    OCEAN(ng) % bed,                              &
      &                    OCEAN(ng) % bed_frac,                         &
+     &                    OCEAN(ng) % bed_mass,                         &
      &                    OCEAN(ng) % bottom)
 # ifdef PROFILE
       CALL wclock_off (ng, 16)
@@ -72,21 +106,24 @@
       SUBROUTINE sediment_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nnew,                                   &
+     &                          pm, pn,                                 &
 # ifdef MASKING
      &                          rmask,                                  &
 # endif
      &                          Hz, z_w,                                &
 # ifdef BBL_MODEL
-     &                          bustrw, bvstrw,                         &
+     &                          bustrcwmax, bvstrcwmax,                 &
 # else
      &                          bustr, bvstr,                           &
 # endif
-     &                          t, bed, bed_frac, bottom)
+     &                          t, bed, bed_frac, bed_mass, bottom)
 !***********************************************************************
 !
       USE mod_param
       USE mod_scalars
       USE mod_sediment
+!
+      USE bc_3d_mod, ONLY : bc_r3d_tile
 !
 !  Imported variable declarations.
 !
@@ -95,14 +132,16 @@
       integer, intent(in) :: nnew
 
 # ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: pm(LBi:,LBj:)
+      real(r8), intent(in) :: pn(LBi:,LBj:)
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
 #  ifdef BBL_MODEL
-      real(r8), intent(in) :: bustrw(LBi:,LBj:)
-      real(r8), intent(in) :: bvstrw(LBi:,LBj:)
+      real(r8), intent(in) :: bustrcwmax(LBi:,LBj:)
+      real(r8), intent(in) :: bvstrcwmax(LBi:,LBj:)
 #  else
       real(r8), intent(in) :: bustr(LBi:,LBj:)
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
@@ -110,17 +149,19 @@
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: bed(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: bed_frac(LBi:,LBj:,:,:)
-
-      real(r8), intent(out) :: bottom(LBi:,LBj:,:)
+      real(r8), intent(inout) :: bed_mass(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
 # else
+      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #  ifdef BBL_MODEL
-      real(r8), intent(in) :: bustrw(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: bvstrw(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: bustrcwmax(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: bvstrcwmax(LBi:UBi,LBj:UBj)
 #  else
       real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
@@ -128,8 +169,8 @@
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
       real(r8), intent(inout) :: bed_frac(LBi:UBi,LBj:UBj,Nbed,NST)
-
-      real(r8), intent(out) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
+      real(r8), intent(inout) :: bed_mass(LBi:UBi,LBj:UBj,Nbed,NST)
+      real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
 # endif
 !
 !  Local variable declarations.
@@ -138,7 +179,7 @@
       integer :: i, indx, ised, j, k, ks
 
       real(r8) :: cff, cff1, cff2, cff3, cffL, cffR, dltL, dltR
-      real(r8) :: cu, ero_flux, tau_water
+      real(r8) :: cu, ero_flux, tau_water, cff4
 
       integer, dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ksource
 
@@ -153,11 +194,137 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WR
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WL
 
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,NST) :: dep_mass
+
+      integer :: Ksed, ised2
+      real(r8) :: thck_avail, thck_to_add
+      real(r8), parameter :: eps = 1.0E-10_r8
+
 # include "set_bounds.h"
 !
-!=======================================================================
+!-----------------------------------------------------------------------
+!  Update bed layer stratigraphy.
+!-----------------------------------------------------------------------
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend 
+!
+!  Calculate bottom stress.
+!
+# ifdef BBL_MODEL
+          tau_water=0.5_r8*SQRT((bustrcwmax(i,j)+bustrcwmax(i+1,j))*    &
+     &                          (bustrcwmax(i,j)+bustrcwmax(i+1,j))+    &
+     &                          (bvstrcwmax(i,j)+bvstrcwmax(i,j+1))*    &
+     &                          (bvstrcwmax(i,j)+bvstrcwmax(i,j+1)))
+# else
+          tau_water=0.5_r8*SQRT((bustr(i,j)+bustr(i+1,j))*              &
+     &                          (bustr(i,j)+bustr(i+1,j))+              &
+     &                          (bvstr(i,j)+bvstr(i,j+1))*              &
+     &                          (bvstr(i,j)+bvstr(i,j+1)))
+# endif
+!
+!  Calculate active layer thickness, bottom(i,j,iactv).
+!
+          bottom(i,j,iactv)=MAX(0.0_r8,                                 &
+     &                          0.007_r8*                               &
+     &                          (tau_water-bottom(i,j,itauc))*rho0)+    &
+     &                          6.0_r8*bottom(i,j,isd50)
+!
+!  Ensure top bed layer thickness is greater or equal than the active
+!  layer thickness. If need to add sediment to top layer, then entrain
+!  from lower levels. Create new layers at bottom to maintain Nbed.
+!
+          IF (bottom(i,j,iactv).gt.bed(i,j,1,ithck)) THEN
+            IF (Nbed.eq.1) THEN
+              bottom(i,j,iactv)=bed(i,j,1,ithck)
+            ELSE
+              thck_to_add=bottom(i,j,iactv)-bed(i,j,1,ithck)
+              thck_avail=0.0_r8
+              Ksed=1                                         ! initialize
+              DO k=2,Nbed
+                IF (thck_avail.lt.thck_to_add) THEN
+                  thck_avail=thck_avail+bed(i,j,k,ithck)
+                  Ksed=k
+                ENDIF
+              END DO
+!
+!  Catch here if there was not enough bed material.
+!
+              IF (thck_avail.lt.thck_to_add) THEN
+                bottom(i,j,iactv)=bed(i,j,1,ithck)+thck_avail
+                thck_to_add=thck_avail
+              END IF
+!
+!  Upate bed mass of top layer and fractional layer.
+!
+              cff2=(thck_avail-thck_to_add)/                            &
+     &             MAX(bed(i,j,Ksed,ithck),eps)
+              DO ised=1,NST
+                cff1=0.0_r8 
+                DO k=1,Ksed
+                  cff1=cff1+bed_mass(i,j,k,ised)
+                END DO
+                bed_mass(i,j,1   ,ised)=cff1-                           &
+     &                                  bed_mass(i,j,Ksed,ised)*cff2
+                bed_mass(i,j,Ksed,ised)=bed_mass(i,j,Ksed,ised)*cff2
+              END DO
+!
+!  Update thickness of fractional layer Ksed.
+!
+              bed(i,j,Ksed,ithck)=thck_avail-thck_to_add
+!
+!  Upate bed fraction of top layer.
+!
+              cff3=0.0_r8
+              DO ised=1,NST
+                cff3=cff3+bed_mass(i,j,1,ised)
+              END DO
+              DO ised=1,NST
+                bed_frac(i,j,1,ised)=bed_mass(i,j,1,ised)/              &
+     &                               MAX(cff3,eps)
+              END DO
+!
+!  Update bed thickness of top layer.
+!
+              bed(i,j,1,ithck)=bottom(i,j,iactv)
+!
+!  Pull all layers closer to the surface.
+!
+              DO k=Ksed,Nbed
+                ks=Ksed-2
+                bed(i,j,k-ks,ithck)=bed(i,j,k,ithck)
+                bed(i,j,k-ks,iporo)=bed(i,j,k,iporo)
+                bed(i,j,k-ks,iaged)=bed(i,j,k,iaged)
+                DO ised=1,NST
+                  bed_frac(i,j,k-ks,ised)=bed_frac(i,j,k,ised)
+                  bed_mass(i,j,k-ks,ised)=bed_mass(i,j,k,ised)
+                ENDDO
+              END DO
+!
+!  Add new layers onto the bottom. Split what was in the bottom layer to
+!  fill these new empty cells. ("ks" is the number of new layers).
+!
+              ks=Ksed-2
+              cff=1.0_r8/REAL(ks+1,r8)
+              DO k=Nbed,Nbed-ks,-1
+                bed(i,j,k,ithck)=bed(i,j,Nbed-ks,ithck)*cff
+!!              bed(i,j,k,iporo)=bed(i,j,Nbed-ks,iporo)
+                bed(i,j,k,iaged)=bed(i,j,Nbed-ks,iaged)
+                DO ised=1,NST
+                  bed_frac(i,j,k,ised)=bed_frac(i,j,Nbed-ks,ised)
+                  bed_mass(i,j,k,ised)=MAX(eps,                         &
+     &                                     bed_mass(i,j,Nbed-ks,ised)*  &
+     &                                     cff)
+                ENDDO
+              END DO
+            END IF                             ! Nbed > 1
+          END IF                               ! increase top bed layer
+        END DO
+      END DO
+!
+!-----------------------------------------------------------------------
 !  Add sediment Source/Sink terms.
-!=======================================================================
+!-----------------------------------------------------------------------
 !
 !  Compute inverse thicknessed to avoid repeated divisions.
 !
@@ -252,7 +419,7 @@
             END DO
           END DO
           DO i=Istr,Iend
-            FC(i,N(ng))=0.0_r8              ! NO-flux boundary condition
+            FC(i,N(ng))=0.0_r8              ! no-flux boundary condition
 # if defined LINEAR_CONTINUATION
             qL(i,N(ng))=qR(i,N(ng)-1)
             qR(i,N(ng))=2.0_r8*qc(i,N(ng))-qL(i,N(ng))
@@ -365,26 +532,82 @@
 !  is conserved. Restrict "ero_flux" so that "bed" cannot go negative
 !  after both fluxes are applied.
 !
-          cff=dt(ng)*Erate(ised,ng)*(1.0_r8-poros(ised,ng))
-          cff1=1.0_r8/tau_ce(ised,ng)
-          cff2=Srho(ised,ng)*(1.0_r8-poros(ised,ng))
-          cff3=1.0_r8/cff2
+          cff=1.0_r8/tau_ce(ised,ng)
           DO i=Istr,Iend
+            dep_mass(i,ised)=0.0_r8
 # ifdef BBL_MODEL
-            tau_water=0.5_r8*SQRT((bustrw(i,j)+bustrw(i+1,j))**2+       &
-     &                            (bvstrw(i,j)+bvstrw(i,j+1))**2)
+          tau_water=0.5_r8*SQRT((bustrcwmax(i,j)+bustrcwmax(i+1,j))*    &
+     &                          (bustrcwmax(i,j)+bustrcwmax(i+1,j))+    &
+     &                          (bvstrcwmax(i,j)+bvstrcwmax(i,j+1))*    &
+     &                          (bvstrcwmax(i,j)+bvstrcwmax(i,j+1)))
 # else
-            tau_water=0.5_r8*SQRT((bustr(i,j)+bustr(i+1,j))**2+         &
-     &                            (bvstr(i,j)+bvstr(i,j+1))**2)
+            tau_water=0.5_r8*SQRT((bustr(i,j)+bustr(i+1,j))*            &
+     &                            (bustr(i,j)+bustr(i+1,j))+            &
+     &                            (bvstr(i,j)+bvstr(i,j+1))*            &
+     &                            (bvstr(i,j)+bvstr(i,j+1)))
 # endif
-            ero_flux=MIN(MAX(0.0_r8,cff*(cff1*tau_water-1.0_r8)),       &
-     &                   cff2*bed(i,j,1,ithck)+0.001_r8*FC(i,0))
-            bed(i,j,1,ithck)=bed(i,j,1,ithck)-                          &
-     &                       cff3*(ero_flux-0.001_r8*FC(i,0))
+!
+!  Compute erosion, ero_flux (kg/m2).
+!
+            cff1=(1.0_r8-bed(i,j,1,iporo))*bed_frac(i,j,1,ised)
+            cff2=dt(ng)*Erate(ised,ng)*cff1
+            cff3=Srho(ised,ng)*cff1
+            ero_flux=MIN(MAX(0.0_r8,cff2*(cff*tau_water-1.0_r8)),       &
+     &                   cff3*bottom(i,j,iactv)+FC(i,0))
+!
+!  Check if depositional.
+!
+            IF ((ero_flux-FC(i,0)).lt.0.0_r8) THEN
+!
+!  If first time step of deposit, then store deposit material in
+!  temporary array, dep_mass.
+!
+              IF ((time(ng).gt.(bed(i,j,1,iaged)+1.1_r8*dt(ng))).and.   &
+                  (bed(i,j,1,ithck).gt.0.005_r8))THEN
+                dep_mass(i,ised)=-(ero_flux-FC(i,0))+eps
+              ELSE
+!
+!  If it is not first time step of deposit, update bed thickness of
+!  top layer.
+!  
+                bed(i,j,1,ithck)=bed(i,j,1,ithck)-                      &
+     &                           (ero_flux-FC(i,0))/                    &
+     &                           (Srho(ised,ng)*                        &
+     &                            (1.0_r8-bed(i,j,1,iporo)))
 # ifdef MASKING
-            bed(i,j,1,ithck)=bed(i,j,1,ithck)*rmask(i,j)
-# endif
-            qc(i,1)=qc(i,1)+1000.0_r8*ero_flux*Hz_inv(i,1)
+                bed(i,j,1,ithck)=bed(i,j,1,ithck)*rmask(i,j)
+# endif 
+!
+!  Upate bed mass of top layer.
+!
+                bed_mass(i,j,1,ised)=bed_mass(i,j,1,ised)-              &
+     &                               (ero_flux-FC(i,0))
+                bed(i,j,1,iaged)=time(ng)
+              END IF
+!
+!  Else,  if erosional.
+!
+            ELSE
+!
+!  Update bed thickness of top layer.
+!  
+              bed(i,j,1,ithck)=bed(i,j,1,ithck)-                        &
+     &                         (ero_flux-FC(i,0))/                      &
+     &                         (Srho(ised,ng)*                          &
+     &                          (1.0_r8-bed(i,j,1,iporo)))
+# ifdef MASKING
+              bed(i,j,1,ithck)=bed(i,j,1,ithck)*rmask(i,j)
+# endif 
+!
+!  Upate bed mass of top layer.
+!
+              bed_mass(i,j,1,ised)=bed_mass(i,j,1,ised)-                &
+     &                             (ero_flux-FC(i,0))
+            END IF
+!
+!  Compute new sedidiment concentrations.
+!
+            qc(i,1)=qc(i,1)+ero_flux*Hz_inv(i,1)
           END DO
 !
 !-----------------------------------------------------------------------
@@ -400,7 +623,223 @@
             END DO
           END DO
         END DO SED_LOOP
+!
+!  Upate bed fraction of top layer.
+!
+        DO i=Istr,Iend
+          cff3=0.0_r8
+          DO ised=1,NST
+             cff3=cff3+bed_mass(i,j,1,ised)
+          END DO
+          DO ised=1,NST
+            bed_frac(i,j,1,ised)=bed_mass(i,j,1,ised)/MAX(cff3,eps)
+          END DO
+        END DO
+!
+!  If first time step of deposit, create new layer and combine bottom
+!  two bed layers.
+!
+          DO i=Istr,Iend
+            cff=0.0_r8
+!
+!  Determine if deposition ocurred here.
+!
+            DO ised=1,NST
+               cff=cff+dep_mass(i,ised)
+            END DO
+            IF (cff.gt.0.0_r8) THEN
+              IF (NBED.gt.1) THEN
+!
+!  Combine bottom layers.
+!
+                bed(i,j,Nbed,ithck)=bed(i,j,Nbed-1,ithck)+              &
+                                    bed(i,j,Nbed  ,ithck)
+                bed(i,j,Nbed,iporo)=0.5_r8*(bed(i,j,Nbed-1,iporo)+      &
+     &                                      bed(i,j,Nbed,iporo))
+                bed(i,j,Nbed,iaged)=0.5_r8*(bed(i,j,Nbed-1,iaged)+      &
+     &                                      bed(i,j,Nbed,iaged))
+                cff3=0.0_r8
+                DO ised=1,NST
+                  bed_mass(i,j,Nbed,ised)=bed_mass(i,j,Nbed-1,ised)+    &
+     &                                    bed_mass(i,j,Nbed  ,ised)
+                  cff3=cff3+bed_mass(i,j,Nbed,ised)
+                ENDDO
+                cff3=1.0_r8/MAX(cff3,eps)
+                DO ised=1,NST
+                  bed_frac(i,j,Nbed,ised)=bed_mass(i,j,Nbed,ised)*cff3
+                END DO
+!
+!  Push layers down.
+!
+                DO k=Nbed-1,2,-1
+                  bed(i,j,k,ithck)=bed(i,j,k-1,ithck)
+                  bed(i,j,k,iporo)=bed(i,j,k-1,iporo)
+                  bed(i,j,k,iaged)=bed(i,j,k-1,iaged)
+                  DO ised =1,NST
+                    bed_frac(i,j,k,ised)=bed_frac(i,j,k-1,ised)
+                    bed_mass(i,j,k,ised)=bed_mass(i,j,k-1,ised)
+                  END DO
+                END DO
+!
+!  Set new top layer parameters.
+!
+                bed(i,j,1,ithck)=0.0_r8
+                DO ised=1,NST
+                  bed_mass(i,j,1,ised)=0.0_r8
+                END DO
+              END IF !NBED=1
+              cff3=0.0_r8
+              DO ised=1,NST
+                bed_mass(i,j,1,ised)=bed_mass(i,j,1,ised)+              &
+     &                               dep_mass(i,ised)
+                cff3=cff3+bed_mass(i,j,1,ised)
+                bed(i,j,1,ithck)=bed(i,j,1,ithck)+                      &
+     &                           dep_mass(i,ised)/                      &
+     &                           (Srho(ised,ng)*                        &
+     &                            (1.0_r8-bed(i,j,1,iporo)))
+              END DO
+              bed(i,j,1,iaged)=time(ng)
+              DO ised=1,NST
+                bed_frac(i,j,1,ised)=bed_mass(i,j,1,ised)/              &
+     &                               MAX(cff3,eps)
+!
+!  Reset deposition mass.
+!
+                dep_mass(i,ised)=0.0_r8
+              END DO
+            END IF
+!
+!! Re-determine top layer to be at least active layer thickness.
+!
+!  Ensure top bed layer thickness is greater or equal than active layer
+!  thickness. If need to add sed to top layer, then entrain from lower
+!  levels. Create new layers at bottom to maintain Nbed.
+!
+          IF (bottom(i,j,iactv).gt.bed(i,j,1,ithck)) THEN
+            IF (Nbed.eq.1) THEN
+              bottom(i,j,iactv)=bed(i,j,1,ithck)
+            ELSE
+              thck_to_add=bottom(i,j,iactv)-bed(i,j,1,ithck)
+              thck_avail=0.0_r8
+              Ksed=1                                        ! initialize
+              DO k=2,Nbed
+                IF (thck_avail.lt.thck_to_add) THEN
+                  thck_avail=thck_avail+bed(i,j,k,ithck)
+                  Ksed=k
+                ENDIF
+              END DO
+!
+!  Catch here if there was not enough bed material.
+!
+              IF (thck_avail.lt.thck_to_add) THEN
+                bottom(i,j,iactv)=bed(i,j,1,ithck)+thck_avail
+                thck_to_add=thck_avail
+              END IF
+!
+!  Update bed mass of top layer and fractional layer.
+!
+              cff2=(thck_avail-thck_to_add)/                            &
+     &              MAX(bed(i,j,Ksed,ithck),eps)
+              DO ised=1,NST
+                cff1=0.0_r8
+                DO k=1,Ksed
+                  cff1=cff1+bed_mass(i,j,k,ised)
+                END DO
+                bed_mass(i,j,1   ,ised)=cff1-                           &
+     &                                  bed_mass(i,j,Ksed,ised)*cff2
+                bed_mass(i,j,Ksed,ised)=bed_mass(i,j,Ksed,ised)*cff2
+              END DO
+!
+!  Update thickness of fractional layer ksource_sed.
+!
+              bed(i,j,Ksed,ithck)=thck_avail-thck_to_add
+!
+!  Upate bed fraction of top layer.
+!
+              cff3=0.0_r8
+              DO ised=1,NST
+                cff3=cff3+bed_mass(i,j,1,ised)
+              END DO
+              DO ised=1,NST
+                bed_frac(i,j,1,ised)=bed_mass(i,j,1,ised)/              &
+     &                               MAX(cff3,eps)
+              END DO
+!
+!  Upate bed thickness of top layer.
+!
+              bed(i,j,1,ithck)=bottom(i,j,iactv)
+!
+!  Pull all layers closer to the surface.
+!
+              DO k=Ksed,Nbed
+                ks=Ksed-2
+                bed(i,j,k-ks,ithck)=bed(i,j,k,ithck)
+                bed(i,j,k-ks,iporo)=bed(i,j,k,iporo)
+                bed(i,j,k-ks,iaged)=bed(i,j,k,iaged)
+                DO ised=1,NST
+                  bed_frac(i,j,k-ks,ised)=bed_frac(i,j,k,ised)
+                  bed_mass(i,j,k-ks,ised)=bed_mass(i,j,k,ised)
+                ENDDO
+              END DO
+!
+!  Add new layers onto the bottom. Split what was in the bottom layer to
+!  fill these new empty cells. ("ks" is the number of new layers).
+!
+              ks=Ksed-2
+              cff=1.0_r8/REAL(ks+1,r8)
+              DO k=Nbed,Nbed-ks,-1
+                bed(i,j,k,ithck)=bed(i,j,Nbed-ks,ithck)*cff
+                bed(i,j,k,iaged)=bed(i,j,Nbed-ks,iaged)
+                DO ised=1,NST
+                  bed_frac(i,j,k,ised)=bed_frac(i,j,Nbed-ks,ised)
+                  bed_mass(i,j,k,ised)=MAX(eps,                         &
+     &                                     bed_mass(i,j,Nbed-ks,ised)*  &
+     &                                     cff)
+                ENDDO
+              END DO
+            END IF  ! Nbed > 1
+          END IF  ! increase top bed layer
+!
+!  Update mean surface properties.
+!
+          cff1=1.0_r8
+          cff2=1.0_r8
+          cff3=1.0_r8
+          cff4=1.0_r8
+          DO ised=1,NST
+            cff1=cff1*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
+            cff2=cff2*Sd50(ised,ng)**bed_frac(i,j,1,ised)
+            cff3=cff3*wsed(ised,ng)**bed_frac(i,j,1,ised)
+            cff4=cff4*Srho(ised,ng)**bed_frac(i,j,1,ised)
+          END DO
+          bottom(i,j,itauc)=cff1
+          bottom(i,j,isd50)=cff2
+          bottom(i,j,iwsed)=cff3
+          bottom(i,j,idens)=cff4
+!
+        END DO
       END DO J_LOOP
+!
+!-----------------------------------------------------------------------
+!  Apply periodic or gradient boundary conditions to property arrays.
+!-----------------------------------------------------------------------
+!
+      DO ised=1,NST
+        CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
+     &                    bed_frac(:,:,:,ised))
+        CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
+     &                    bed_mass(:,:,:,ised))
+      END DO
+      DO i=1,MBEDP
+        CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
+     &                    bed(:,:,:,i))
+      END DO
+      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  LBi, UBi, LBj, UBj, 1, MBOTP, bottom)
+
       RETURN
       END SUBROUTINE sediment_tile
 #endif

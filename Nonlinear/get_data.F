@@ -87,6 +87,10 @@
 !
 #if defined SSH_TIDES || defined UV_TIDES
 !
+!-----------------------------------------------------------------------
+!  Tide period, amplitude, phase, and currents.
+!-----------------------------------------------------------------------
+!
 !  Tidal Period.
 !
       IF (iic(ng).eq.0) THEN
@@ -146,7 +150,7 @@
 # ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
-     &                  TIDES(ng) % UV_Tphase(LBi,LBj,1))
+    &                  TIDES(ng) % UV_Tphase(LBi,LBj,1))
         CALL get_2dfld (ng, idTvma, ncfrcid(idTvma,ng),                 &
      &                  nFfiles(ng), frcname(1,ng),                     &
      &                  update(1), LBi, UBi, LBj, UBj, MTC, NTC(ng),    &
@@ -165,12 +169,15 @@
         tdays(ng)=time(ng)*sec2day
       END IF
 #endif
+
 #if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
                              defined TS_PSOURCE)
 !
+!-----------------------------------------------------------------------
 !  Point Sources/Sinks position, direction, special flag, and mass
 !  transport nondimensional shape profile.  Point sources are at U-
 !  and V-points.
+!-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.0) THEN
         CALL get_ngfld (ng, idRxpo, ncfrcid(idRxpo,ng),                 &
@@ -195,16 +202,24 @@
      &                  update(1), 1, Msrc, 1, 1, 1, Nsrc(ng), 1,       &
      &                  SOURCES(ng) % Fsrc(1))
         IF (update(1)) THEN
+          DO i=1,NT(ng)
+            SOURCES(ng)%Ltracer(i)=.false.
+            DO is=1,Nsrc(ng)
+              SOURCES(ng)%Lsrc(is,i)=.false.
+            END DO
+          END DO
           DO is=1,Nsrc(ng)
-            SOURCES(ng)%Lsrc(is,itemp)=.false.
-            SOURCES(ng)%Lsrc(is,isalt)=.false.
             IF (SOURCES(ng)%Fsrc(is).eq.1.0_r8) THEN
               SOURCES(ng)%Lsrc(is,itemp)=.true.
+              SOURCES(ng)%Ltracer(itemp)=.true.
             ELSE IF (SOURCES(ng)%Fsrc(is).eq.2.0_r8) THEN
               SOURCES(ng)%Lsrc(is,isalt)=.true.
+              SOURCES(ng)%Ltracer(isalt)=.true.
             ELSE IF (SOURCES(ng)%Fsrc(is).eq.3.0_r8) THEN
               SOURCES(ng)%Lsrc(is,itemp)=.true.
               SOURCES(ng)%Lsrc(is,isalt)=.true.
+              SOURCES(ng)%Ltracer(itemp)=.true.
+              SOURCES(ng)%Ltracer(isalt)=.true.
             END IF
           END DO
         END IF
@@ -229,17 +244,22 @@
 !
 !  Tracer Sources/Sinks.
 !
-      DO i=1,NAT
-        CALL get_ngfld (ng, idRtrc(i), ncfrcid(idRtrc(i),ng),           &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), 1, Msrc, N, 2, 1, Nsrc(ng), N,       &
-     &                  SOURCES(ng) % TsrcG(1,1,1,i))
+      DO i=1,NT(ng)
+        IF (SOURCES(ng)%Ltracer(i)) THEN
+          CALL get_ngfld (ng, idRtrc(i), ncfrcid(idRtrc(i),ng),         &
+     &                    nFfiles(ng), frcname(1,ng),                   &
+     &                    update(1), 1, Msrc, N, 2, 1, Nsrc(ng), N,     &
+     &                    SOURCES(ng) % TsrcG(1,1,1,i))
+        END IF
       END DO
 # endif
 #endif
-#if !defined ANA_WINDS && defined BULK_FLUXES
+
+#if !defined ANA_WINDS && (defined BULK_FLUXES || defined ECOSIM)
 !
+!-----------------------------------------------------------------------
 !  Surface wind components.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idUair, ncfrcid(idUair,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -256,30 +276,48 @@
 # endif
      &                FORCES(ng) % VwindG(LBi,LBj,1))
 #endif
-#if !defined ANA_SMFLUX && !defined BULK_FLUXES
+
+#ifndef AIR_OCEAN
+# if !defined ANA_SMFLUX && !defined BULK_FLUXES
 !
+!-----------------------------------------------------------------------
 !  Surface wind stress components.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idUsms, ncfrcid(idUsms,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-# ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % umask(LBi,LBj),                        &
-# endif
+#  endif
      &                FORCES(ng) % sustrG(LBi,LBj,1))
       CALL get_2dfld (ng, idVsms, ncfrcid(idVsms,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-# ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % vmask(LBi,LBj),                        &
-# endif
+#  endif
      &                FORCES(ng) % svstrG(LBi,LBj,1))
+# endif
 #endif
+
 #ifdef SOLVE3D
+
 # if !defined ANA_WWAVE && defined BBL_MODEL
 !
+!-----------------------------------------------------------------------
 !  Surface wind induced wave amplitude, direction and period.
+!-----------------------------------------------------------------------
 !
+# ifdef SWAN
+      CALL get_2dfld (ng, idWorb, ncfrcid(idWorb,ng),                   &
+     &                nFfiles(ng), frcname(1,ng),                       &
+     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+#  ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#  endif
+     &                FORCES(ng) % UB_swanG(LBi,LBj,1))
+# else
       CALL get_2dfld (ng, idWamp, ncfrcid(idWamp,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
@@ -287,6 +325,7 @@
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
      &                FORCES(ng) % AwaveG(LBi,LBj,1))
+# endif
       CALL get_2dfld (ng, idWdir, ncfrcid(idWdir,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
@@ -302,9 +341,12 @@
 #  endif
      &                FORCES(ng) % PwaveG(LBi,LBj,1))
 # endif
+
 # if !defined ANA_CLOUD && defined CLOUDS
 !
+!-----------------------------------------------------------------------
 !  Cloud fraction.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idCfra, ncfrcid(idCfra,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -314,9 +356,12 @@
 #  endif
      &                FORCES(ng) % cloudG(LBi,LBj,1))
 # endif
+
 # if !defined ANA_SRFLUX && defined SHORTWAVE
 !
+!-----------------------------------------------------------------------
 !  Surface solar shortwave radiation.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idSrad, ncfrcid(idSrad,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -326,82 +371,120 @@
 #  endif
      &                FORCES(ng) % srflxG(LBi,LBj,1))
 # endif
-# ifdef BULK_FLUXES
-#  ifndef LONGWAVE
+
+# if defined BULK_FLUXES && !defined LONGWAVE
 !
+!-----------------------------------------------------------------------
 !  Surface net longwave radiation.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idLrad, ncfrcid(idLrad,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#   ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#   endif
-     &                FORCES(ng) % lrflxG(LBi,LBj,1))
 #  endif
-#  ifndef ANA_PAIR
+     &                FORCES(ng) % lrflxG(LBi,LBj,1))
+# endif
+
+# if defined BULK_FLUXES && defined LONGWAVE_OUT
 !
+!-----------------------------------------------------------------------
+!  Surface downwelling longwave radiation.
+!-----------------------------------------------------------------------
+!
+      CALL get_2dfld (ng, idLdwn, ncfrcid(idLdwn,ng),                   &
+     &                nFfiles(ng), frcname(1,ng),                       &
+     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+#  ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#  endif
+     &                FORCES(ng) % lrflxG(LBi,LBj,1))
+# endif
+
+# if !defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM)
+!
+!-----------------------------------------------------------------------
 !  Surface air pressure.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idPair, ncfrcid(idPair,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#   ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#   endif
-     &                FORCES(ng) % PairG(LBi,LBj,1))
 #  endif
-#  ifndef ANA_TAIR
+     &                FORCES(ng) % PairG(LBi,LBj,1))
+# endif
+
+# if !defined ANA_TAIR && \
+    ( defined BULK_FLUXES || defined ECOSIM || \
+     (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO) )
 !
+!-----------------------------------------------------------------------
 !  Surface air temperature.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idTair, ncfrcid(idTair,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#   ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#   endif
-     &                FORCES(ng) % TairG(LBi,LBj,1))
 #  endif
-#  ifndef ANA_HUMIDITY
+     &                FORCES(ng) % TairG(LBi,LBj,1))
+# endif
+
+# if !defined ANA_HUMIDITY && (defined BULK_FLUXES || defined ECOSIM)
 !
+!-----------------------------------------------------------------------
 !  Surface air humidity.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idQair, ncfrcid(idQair,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#   ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#   endif
-     &                FORCES(ng) % HairG(LBi,LBj,1))
 #  endif
-#  ifndef ANA_RAIN
+     &                FORCES(ng) % HairG(LBi,LBj,1))
+# endif
+
+# if !defined ANA_RAIN && defined BULK_FLUXES
+!
+!-----------------------------------------------------------------------
+!  Rain fall rate.
+!-----------------------------------------------------------------------
+!
       CALL get_2dfld (ng, idrain, ncfrcid(idrain,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#   ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#   endif
-     &                FORCES(ng) % rainG(LBi,LBj,1))
 #  endif
-# else
-#  ifndef ANA_STFLUX
+     &                FORCES(ng) % rainG(LBi,LBj,1))
+# endif
+
+# if !defined ANA_STFLUX && !defined BULK_FLUXES
 !
+!-----------------------------------------------------------------------
 !  Surface net heat flux.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idTsur(itemp), ncfrcid(idTsur(itemp),ng),     &
      &                nFfiles(ng), frcname(1,ng),                       &
      &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#   ifdef MASKING
+#  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#   endif
-     &                FORCES(ng) % stflxG(LBi,LBj,1,itemp))
 #  endif
+     &                FORCES(ng) % stflxG(LBi,LBj,1,itemp))
 # endif
+
 # if !defined ANA_SST && defined QCORRECTION
 !
+!-----------------------------------------------------------------------
 !  Surface net heat flux correction fields: sea surface temperature
 !  (SST) and heat flux sensitivity to SST (dQdSST).
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idSSTc, ncfrcid(idSSTc,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -418,9 +501,12 @@
 #  endif
      &                FORCES(ng) % dqdtG(LBi,LBj,1))
 # endif
+
 # ifndef ANA_BTFLUX
 !
+!-----------------------------------------------------------------------
 !  Bottom net heat flux.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idTbot(itemp), ncfrcid(idTbot(itemp),ng),     &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -430,10 +516,13 @@
 #  endif
      &                FORCES(ng) % btflxG(LBi,LBj,1,itemp))
 # endif
+
 # ifdef SALINITY
 #  ifndef ANA_SSFLUX
 !
+!-----------------------------------------------------------------------
 !  Surface net freshwater flux: E-P.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idTsur(isalt), ncfrcid(idTsur(isalt),ng),     &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -443,9 +532,12 @@
 #   endif
      &                FORCES(ng) % stflxG(LBi,LBj,1,isalt))
 #  endif
+
 #  if !defined ANA_SSS && (defined SCORRECTION || defined SRELAXATION)
 !
+!-----------------------------------------------------------------------
 !  Surface net freshwater flux correction field: sea surface salinity.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idSSSc, ncfrcid(idSSSc,ng),                   &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -455,9 +547,12 @@
 #   endif
      &                FORCES(ng) % sssG(LBi,LBj,1))
 #  endif
+
 #  ifndef ANA_BSFLUX
 !
+!-----------------------------------------------------------------------
 !  Bottom net freshwater flux.
+!-----------------------------------------------------------------------
 !
       CALL get_2dfld (ng, idTbot(isalt), ncfrcid(idTbot(isalt),ng),     &
      &                nFfiles(ng), frcname(1,ng),                       &
@@ -468,10 +563,13 @@
      &                FORCES(ng) % btflxG(LBi,LBj,1,isalt))
 #  endif
 # endif
+
 # if defined SEDIMENT || defined BIOLOGY
 #  ifndef ANA_SPFLUX
 !
+!-----------------------------------------------------------------------
 !  Passive tracers surface fluxes.
+!-----------------------------------------------------------------------
 !
       DO i=NAT+1,NT(ng)
         CALL get_2dfld (ng, idTsur(i), ncfrcid(idTsur(i),ng),           &
@@ -483,9 +581,12 @@
      &                  FORCES(ng) % stflxG(LBi,LBj,1,i))
       END DO
 #  endif
+
 #  ifndef ANA_BPFLUX
 !
+!-----------------------------------------------------------------------
 !  Passive tracers bottom fluxes.
+!-----------------------------------------------------------------------
 !
       DO i=NAT+1,NT(ng)
         CALL get_2dfld (ng, idTbot(i), ncfrcid(idTbot(i),ng),           &
@@ -499,6 +600,7 @@
 #  endif
 # endif
 #endif
+
 #ifdef OBC_DATA
 !
 !=======================================================================

@@ -176,14 +176,14 @@
         END IF
       END IF
 !
-  10  format(/,' GET_CYCLE - error while reading attribute: ',a)
-  20  format(/,' GET_CYCLE - error while inquiring attributes for',     &
-     &        ' variable: ',a)
-  30  format(/,' GET_CYCLE - cannot inquire about time variable from',  &
-     &        ' input NetCDF file.')
-  40  format(/,' GET_CYCLE - error while reading variable: ',a)
-  60  format(/,' GET_CYCLE - starting time for variable: ',a,           &
-     &       /,13x,'is greater than current model time. ',              &
-     &       /,13x,'TSTR = ',f15.4,2x,'TDAYS = ',f15.4)
+  10  FORMAT (/,' GET_CYCLE - error while reading attribute: ',a)
+  20  FORMAT (/,' GET_CYCLE - error while inquiring attributes for',    &
+     &          ' variable: ',a)
+  30  FORMAT (/,' GET_CYCLE - cannot inquire about time variable from', &
+     &          ' input NetCDF file.')
+  40  FORMAT (/,' GET_CYCLE - error while reading variable: ',a)
+  60  FORMAT (/,' GET_CYCLE - starting time for variable: ',a,          &
+     &        /,13x,'is greater than current model time. ',             &
+     &        /,13x,'TSTR = ',f15.4,2x,'TDAYS = ',f15.4)
       RETURN
       END SUBROUTINE get_cycle

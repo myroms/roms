@@ -66,7 +66,7 @@
 !
       logical :: is2D
       integer :: i, j, k, ic, jc, kc, Npts, NWpts, status, wtype
-      integer :: Imin, Imax, Jmin, Jmax, Ioff, Joff, Koff
+      integer :: Imin, Imax, Jmin, Jmax, Kmin, Kmax, Ioff, Joff, Koff
       integer :: Ilen, Jlen, Klen, IJlen, MyType, Nghost
 
       integer, dimension(4) :: start, total
@@ -75,7 +75,11 @@
 
       real(r8) :: Aval
 
+#if defined INLINE_2DIO && defined DISTRIBUTE
+      real(r8), dimension(2+(Lm(ng)+2)*(Mm(ng)+2)) :: wrk
+#else
       real(r8), dimension(2+(Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: wrk
+#endif
 
 #ifdef DEBUG
       character (len=20) :: Aname
@@ -141,7 +145,9 @@
         wtype=r2dvar
       END IF
       NWpts=(Lm(ng)+2)*(Mm(ng)+2)
+# if !defined INLINE_2DIO && defined DISTRIBUTE
       IF (.not.is2D) Npts=Npts*Klen
+# endif
 #endif
 !
 !  Set NetCDF dimension counters for processing requested field.
@@ -160,7 +166,9 @@
           total(3)=Klen
           start(4)=tindex
           total(4)=1
+# if !defined INLINE_2DIO && defined DISTRIBUTE
           Npts=Npts*Klen
+# endif
         END IF
 #if defined READ_WATER && defined MASKING
       ELSE
@@ -175,31 +183,52 @@
 !  Read in requested field and scale it.
 !-----------------------------------------------------------------------
 !
-      nf_fread=nf_noerr
-      IF (InpThread) THEN
-        status=nf_get_vara_TYPE(ncid, ncvarid, start, total, wrk)
-        nf_fread=status
-        IF (status.ne.nf_noerr) RETURN
-        Amin=wrk(1)*Ascl
-        Amax=wrk(1)*Ascl
-        DO i=1,Npts
-          wrk(i)=Ascl*wrk(i)
-          Amin=MIN(Amin,wrk(i))
-          Amax=MAX(Amax,wrk(i))
-        END DO
-      END IF          
+#if defined INLINE_2DIO && defined DISTRIBUTE
+
+!  If appropriate, process 3D data level by level to reduce memory
+!  requirements.
+!
+      Kmin=1
+      Kmax=1
+      DO k=LBk,UBk
+        IF (.not.is2D) THEN
+          start(3)=k-Koff+1
+          total(3)=1
+        END IF
+#else
+        Kmin=LBk
+        Kmax=UBk
+#endif
+        nf_fread=nf_noerr
+        IF (InpThread) THEN
+          status=nf_get_vara_TYPE(ncid, ncvarid, start, total, wrk)
+          nf_fread=status
+          IF (status.ne.nf_noerr) RETURN
+          Amin=wrk(1)*Ascl
+          Amax=wrk(1)*Ascl
+          DO i=1,Npts
+            wrk(i)=Ascl*wrk(i)
+            Amin=MIN(Amin,wrk(i))
+            Amax=MAX(Amax,wrk(i))
+          END DO
+        END IF          
 !
 !-----------------------------------------------------------------------
 !  Unpack read field.
 !-----------------------------------------------------------------------
 !
 #ifdef DISTRIBUTE
-      CALL mp_scatter (ng, LBi, UBi, LBj, UBj, LBk, UBk,                &
-     &                 Nghost, gtype, Amin, Amax,                       &
+        CALL mp_scatter (ng, LBi, UBi, LBj, UBj, Kmin, Kmax,            &
+     &                   Nghost, gtype, Amin, Amax,                     &
 # if defined READ_WATER && defined MASKING
-     &                 NWpts, SCALARS(ng)%IJwater(1,wtype),             &
+     &                   NWpts, SCALARS(ng)%IJwater(1,wtype),           &
 # endif
-     &                 Npts, wrk, A)
+# ifdef INLINE_2DIO
+     &                   Npts, wrk, A(LBi,LBj,k))
+      END DO
+# else
+     &                   Npts, wrk, A)
+# endif
 #else
       IF (gtype.gt.0) THEN
         DO k=LBk,UBk

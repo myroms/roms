@@ -14,7 +14,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC set_vbc
+      PUBLIC  :: set_vbc
 
       CONTAINS
 !

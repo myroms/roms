@@ -8,6 +8,7 @@
 !  Hz         Thicknesses (m) of vertical RHO-points.                  !
 !  Huon       Total U-momentum flux term, Hz*u/pn.                     !
 !  Hvom       Total V-momentum flux term, Hz*v/pm.                     !
+!  IcePress   Pressure under the ice shelf at RHO-points.              !
 !  Tcline     Width (m) of surface or bottom boundary layer where      !
 !               higher vertical resolution is required during          !
 !               stretching.                                            !
@@ -112,6 +113,7 @@
           real(r8), pointer :: z_r(:,:,:)
           real(r8), pointer :: z_w(:,:,:)
 # ifdef ICESHELF
+          real(r8), pointer :: IcePress(:,:)
           real(r8), pointer :: zice(:,:)
 # endif
 #endif
@@ -198,6 +200,7 @@
       allocate ( GRID(ng) % z_w(LBi:UBi,LBj:UBj,0:N(ng)) )
 
 # ifdef ICESHELF
+      allocate ( GRID(ng) % IcePress(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % zice(LBi:UBi,LBj:UBj) )
 # endif
 
@@ -235,88 +238,182 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 #include "tile.h"
-#ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
 #else
-# include "set_bounds.h"
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
 #endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-      GRID(ng) % angler(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % angler(Imin:Imax,Jmin:Jmax) = IniVal
 #if defined CURVGRID && defined UV_ADV
-      GRID(ng) % dmde(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % dndx(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % dmde(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % dndx(Imin:Imax,Jmin:Jmax) = IniVal
 #endif
-      GRID(ng) % f(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % fomn(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % f(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % fomn(Imin:Imax,Jmin:Jmax) = IniVal
 
-      GRID(ng) % grdscl(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % grdscl(Imin:Imax,Jmin:Jmax) = IniVal
 
-      GRID(ng) % h(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % hinv(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % h(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % hinv(Imin:Imax,Jmin:Jmax) = IniVal
 
-      GRID(ng) % latr(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % lonr(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % latr(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % lonr(Imin:Imax,Jmin:Jmax) = IniVal
 
-      GRID(ng) % omn(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % om_p(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % om_r(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % om_u(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % om_v(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % on_p(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % on_r(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % on_u(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % on_v(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % omn(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % om_p(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % om_r(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % om_u(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % om_v(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % on_p(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % on_r(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % on_u(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % on_v(Imin:Imax,Jmin:Jmax) = IniVal
 
-      GRID(ng) % pm(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pn(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % pm(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pn(Imin:Imax,Jmin:Jmax) = IniVal
 
-      GRID(ng) % pmon_p(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pmon_r(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pmon_u(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pmon_v(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pnom_p(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pnom_r(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pnom_u(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % pnom_v(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % pmon_p(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pmon_r(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pmon_u(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pmon_v(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pnom_p(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pnom_r(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pnom_u(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % pnom_v(Imin:Imax,Jmin:Jmax) = IniVal
 
-      GRID(ng) % xp(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % xr(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % yp(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % yr(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % xp(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % xr(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % yp(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % yr(Imin:Imax,Jmin:Jmax) = IniVal
 
 #ifdef SOLVE3D
-      GRID(ng) % Hz(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      GRID(ng) % Hz(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
-      GRID(ng) % Huon(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
-      GRID(ng) % Hvom(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      GRID(ng) % Huon(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      GRID(ng) % Hvom(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
-      GRID(ng) % z_r(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
-      GRID(ng) % z_w(IstrR:IendR,JstrR:JendR,0:N(ng)) = IniVal
+      GRID(ng) % z_r(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      GRID(ng) % z_w(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
 
 # ifdef ICESHELF
-      GRID(ng) % zice(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % IcePress(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % zice(Imin:Imax,Jmin:Jmax) = IniVal
 # endif
 
 #endif
 
 #ifdef MASKING
-      GRID(ng) % pmask(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % rmask(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % umask(IstrR:IendR,JstrR:JendR) = IniVal
-      GRID(ng) % vmask(IstrR:IendR,JstrR:JendR) = IniVal
+      GRID(ng) % pmask(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % rmask(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % umask(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % vmask(Imin:Imax,Jmin:Jmax) = IniVal
 #endif
+
+
+#ifdef REMOVE
+      GRID(ng) % angler = IniVal
+#if defined CURVGRID && defined UV_ADV
+      GRID(ng) % dmde = IniVal
+      GRID(ng) % dndx = IniVal
+#endif
+      GRID(ng) % f = IniVal
+      GRID(ng) % fomn = IniVal
+
+      GRID(ng) % grdscl = IniVal
+
+      GRID(ng) % h = IniVal
+      GRID(ng) % hinv = IniVal
+
+      GRID(ng) % latr = IniVal
+      GRID(ng) % lonr = IniVal
+
+      GRID(ng) % omn = IniVal
+      GRID(ng) % om_p = IniVal
+      GRID(ng) % om_r = IniVal
+      GRID(ng) % om_u = IniVal
+      GRID(ng) % om_v = IniVal
+      GRID(ng) % on_p = IniVal
+      GRID(ng) % on_r = IniVal
+      GRID(ng) % on_u = IniVal
+      GRID(ng) % on_v = IniVal
+
+      GRID(ng) % pm = IniVal
+      GRID(ng) % pn = IniVal
+
+      GRID(ng) % pmon_p = IniVal
+      GRID(ng) % pmon_r = IniVal
+      GRID(ng) % pmon_u = IniVal
+      GRID(ng) % pmon_v = IniVal
+      GRID(ng) % pnom_p = IniVal
+      GRID(ng) % pnom_r = IniVal
+      GRID(ng) % pnom_u = IniVal
+      GRID(ng) % pnom_v = IniVal
+
+      GRID(ng) % xp = IniVal
+      GRID(ng) % xr = IniVal
+      GRID(ng) % yp = IniVal
+      GRID(ng) % yr = IniVal
+
+#ifdef SOLVE3D
+      GRID(ng) % Hz = IniVal
+
+      GRID(ng) % Huon = IniVal
+      GRID(ng) % Hvom = IniVal
+
+      GRID(ng) % z_r = IniVal
+      GRID(ng) % z_w = IniVal
+
+# ifdef ICESHELF
+      GRID(ng) % IcePress = IniVal
+      GRID(ng) % zice = IniVal
+# endif
+
+#endif
+
+#ifdef MASKING
+      GRID(ng) % pmask = IniVal
+      GRID(ng) % rmask = IniVal
+      GRID(ng) % umask = IniVal
+      GRID(ng) % vmask = IniVal
+#endif
+
+#endif
+
 
       RETURN
       END SUBROUTINE initialize_grid

@@ -34,18 +34,14 @@
 
       integer, parameter :: Natt = 20
 
-      integer :: i, j, ifield, nrec, nvd3, nvd4
+      integer :: i, j, ifield, itrc, nrec, nvd3, nvd4
       integer :: recdim, status
 
-      integer :: DimIDs(24), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(28), t2dgrd(3), u2dgrd(3), v2dgrd(3)
 
       integer :: def_info, def_var, wrt_info
 
 #ifdef SOLVE3D
-      logical :: got_trc(NT(ng))
-
-      integer :: itrc
-
 # ifdef SEDIMENT
       integer :: b3dgrd(4)
 # endif
@@ -54,7 +50,7 @@
 
       real(r8) :: Aval(4)
 
-      character (len=65) :: Vinfo(Natt)
+      character (len=80) :: Vinfo(Natt)
       character (len=80) :: fname, ncname
 !
 !-----------------------------------------------------------------------
@@ -143,6 +139,16 @@
         status=nf_def_dim(nchisid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
      &                    DimIDs(24))
 #  endif
+# endif
+# ifdef ECOSIM
+        status=nf_def_dim(nchisid(ng),'Nphy'    ,Nphy,                  &
+     &                    DimIDs(25))
+        status=nf_def_dim(nchisid(ng),'Nbac'    ,Nbac,                  &
+     &                    DimIDs(26))
+        status=nf_def_dim(nchisid(ng),'Ndom'    ,Ndom,                  &
+     &                    DimIDs(27))
+        status=nf_def_dim(nchisid(ng),'Nfec'    ,Nfec,                  &
+     &                    DimIDs(28))
 # endif
 #endif
         status=nf_def_dim(nchisid(ng),'boundary',4,                     &
@@ -259,7 +265,7 @@
 !  Initialize local information variable arrays.
 !
         DO i=1,Natt
-          DO j=1,65
+          DO j=1,80
             Vinfo(i)(j:j)=' '
           END DO
         END DO
@@ -423,7 +429,7 @@
             END DO
 # endif
 # if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
+            Vinfo(20)='mask_rho'
 # endif
             status=def_var(nchisid(ng),hisTid(itrc,ng),NF_FOUT,         &
      &                     nvd4,t3dgrd,Aval,Vinfo,ncname)
@@ -704,7 +710,8 @@
           status=def_var(nchisid(ng),hisVid(idVbms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
-#ifdef BBL_MODEL
+#ifdef SOLVE3D
+# ifdef BBL_MODEL
 !
 !  Define wind-induced, bottom U-wave stress.
 !
@@ -714,9 +721,9 @@
           Vinfo( 3)=Vname(3,idUbws)
           Vinfo(14)=Vname(4,idUbws)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
-# endif
+#  endif
           status=def_var(nchisid(ng),hisVid(idUbws,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -729,26 +736,41 @@
           Vinfo( 3)=Vname(3,idVbws)
           Vinfo(14)=Vname(4,idVbws)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
-# endif
+#  endif
           status=def_var(nchisid(ng),hisVid(idVbws,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
 !
-!  Define wind-induced, bed wave excursion amplitude.
+!  Define maximum wind and current, bottom U-wave stress.
 !
-        IF (Hout(idAbed,ng)) THEN
-          Vinfo( 1)=Vname(1,idAbed)
-          Vinfo( 2)=Vname(2,idAbed)
-          Vinfo( 3)=Vname(3,idAbed)
-          Vinfo(14)=Vname(4,idAbed)
+        IF (Hout(idUbcs,ng)) THEN
+          Vinfo( 1)=Vname(1,idUbcs)
+          Vinfo( 2)=Vname(2,idUbcs)
+          Vinfo( 3)=Vname(3,idUbcs)
+          Vinfo(14)=Vname(4,idUbcs)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-# endif
-          status=def_var(nchisid(ng),hisVid(idAbed,ng),NF_FOUT,         &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          status=def_var(nchisid(ng),hisVid(idUbcs,ng),NF_FOUT,         &
+     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define maximum wind and current, bottom V-wave stress.
+!
+        IF (Hout(idVbcs,ng)) THEN
+          Vinfo( 1)=Vname(1,idVbcs)
+          Vinfo( 2)=Vname(2,idVbcs)
+          Vinfo( 3)=Vname(3,idVbcs)
+          Vinfo(14)=Vname(4,idVbcs)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          status=def_var(nchisid(ng),hisVid(idVbcs,ng),NF_FOUT,         &
+     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
 !
 !  Define wind-induced, bed wave orbital U-velocity.
@@ -759,9 +781,9 @@
           Vinfo( 3)=Vname(3,idUbed)
           Vinfo(14)=Vname(4,idUbed)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
-# endif
+#  endif
           status=def_var(nchisid(ng),hisVid(idUbed,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -774,9 +796,9 @@
           Vinfo( 3)=Vname(3,idVbed)
           Vinfo(14)=Vname(4,idVbed)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
-# endif
+#  endif
           status=def_var(nchisid(ng),hisVid(idVbed,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -789,9 +811,9 @@
           Vinfo( 3)=Vname(3,idUbot)
           Vinfo(14)=Vname(4,idUbot)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
-# endif
+#  endif
           status=def_var(nchisid(ng),hisVid(idUbot,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -804,76 +826,16 @@
           Vinfo( 3)=Vname(3,idVbot)
           Vinfo(14)=Vname(4,idVbot)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
-# endif
+#  endif
           status=def_var(nchisid(ng),hisVid(idVbot,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
-!
-!  Define bed ripple height.
-!
-        IF (Hout(idHrip,ng)) THEN
-          Vinfo( 1)=Vname(1,idHrip)
-          Vinfo( 2)=Vname(2,idHrip)
-          Vinfo( 3)=Vname(3,idHrip)
-          Vinfo(14)=Vname(4,idHrip)
-          Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
 # endif
-          status=def_var(nchisid(ng),hisVid(idHrip,ng),NF_FOUT,         &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
+# ifdef SEDIMENT
 !
-!  Define bed ripple length.
-!
-        IF (Hout(idLrip,ng)) THEN
-          Vinfo( 1)=Vname(1,idLrip)
-          Vinfo( 2)=Vname(2,idLrip)
-          Vinfo( 3)=Vname(3,idLrip)
-          Vinfo(14)=Vname(4,idLrip)
-          Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-# endif
-          status=def_var(nchisid(ng),hisVid(idLrip,ng),NF_FOUT,         &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
-!
-!  Define hydraulic bottom roughness.
-!
-        IF (Hout(idZnot,ng)) THEN
-          Vinfo( 1)=Vname(1,idZnot)
-          Vinfo( 2)=Vname(2,idZnot)
-          Vinfo( 3)=Vname(3,idZnot)
-          Vinfo(14)=Vname(4,idZnot)
-          Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-# endif
-          status=def_var(nchisid(ng),hisVid(idZnot,ng),NF_FOUT,         &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
-!
-!  Define apparent hydraulic bottom roughness.
-!
-        IF (Hout(idZapp,ng)) THEN
-          Vinfo( 1)=Vname(1,idZapp)
-          Vinfo( 2)=Vname(2,idZapp)
-          Vinfo( 3)=Vname(3,idZapp)
-          Vinfo(14)=Vname(4,idZapp)
-          Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-# endif
-          status=def_var(nchisid(ng),hisVid(idZapp,ng),NF_FOUT,         &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
-#endif
-#ifdef SEDIMENT
-!
-!  Define bed layer sediment fraction for each size class.
+!  Define sediment fraction of each size class in each bed layer.
 !
         DO i=1,NST
           IF (Hout(idfrac(i),ng)) THEN
@@ -883,15 +845,31 @@
             Vinfo(14)=Vname(4,idfrac(i))
             Vinfo(16)=Vname(1,idtime)
             WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
-# endif
+#  endif
             status=def_var(nchisid(ng),hisVid(idfrac(i),ng),NF_FOUT,    &
+     &                     nvd4,b3dgrd,Aval,Vinfo,ncname)
+          END IF
+!
+!  Define sediment mass of each size class in each bed layer.
+!
+          IF (Hout(idBmas(i),ng)) THEN
+            Vinfo( 1)=Vname(1,idBmas(i))
+            Vinfo( 2)=Vname(2,idBmas(i))
+            Vinfo( 3)=Vname(3,idBmas(i))
+            Vinfo(14)=Vname(4,idBmas(i))
+            Vinfo(16)=Vname(1,idtime)
+            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+#  if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#  endif
+            status=def_var(nchisid(ng),hisVid(idBmas(i),ng),NF_FOUT,    &
      &                     nvd4,b3dgrd,Aval,Vinfo,ncname)
           END IF
         END DO
 !
-!  Define bed layer sediment properties.
+!  Define sediment properties in each bed layer.
 !
         DO i=1,MBEDP
           IF (Hout(idSbed(i),ng)) THEN
@@ -900,15 +878,17 @@
             Vinfo( 3)=Vname(3,idSbed(i))
             Vinfo(14)=Vname(4,idSbed(i))
             Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
-# endif
+#  endif
             status=def_var(nchisid(ng),hisVid(idSbed(i),ng),NF_FOUT,    &
      &                     nvd4,b3dgrd,Aval,Vinfo,ncname)
           END IF
         END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
 !
-!  Define bottom sediment properties.
+!  Define exposed sediment layer properties.
 !
         DO i=1,MBOTP
           IF (Hout(idBott(i),ng)) THEN
@@ -917,13 +897,14 @@
             Vinfo( 3)=Vname(3,idBott(i))
             Vinfo(14)=Vname(4,idBott(i))
             Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-# endif
+#  endif
             status=def_var(nchisid(ng),hisVid(idBott(i),ng),NF_FOUT,    &
      &                     nvd3,t2dgrd,Aval,Vinfo,ncname)
           END IF
         END DO
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -970,11 +951,6 @@
         DO i=1,NV
           got_var(i)=.false.
         END DO
-#ifdef SOLVE3D
-        DO itrc=1,NT(ng)
-          got_trc(itrc)=.false.
-        END DO
-#endif
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  history variables. Get variable IDs.
@@ -1023,7 +999,7 @@
           END IF
           DO itrc=1,NT(ng)
             IF (varnam(i).eq.Vname(1,idTvar(itrc))) THEN
-              got_trc(itrc)=.true.
+              got_var(idTvar(itrc))=.true.
               status=nf_inq_varid(nchisid(ng),                          &
      &                            TRIM(Vname(1,idTvar(itrc))),          &
      &                            hisTid(itrc,ng))
@@ -1105,32 +1081,6 @@
      &                          hisVid(idSrad,ng))
           END IF
 # endif
-# ifdef SEDIMENT
-          DO itrc=1,NST
-            IF (varnam(i).eq.Vname(1,idfrac(itrc))) THEN
-              got_var(idfrac(itrc))=.true.
-              status=nf_inq_varid(nchisid(ng),                          &
-     &                            TRIM(Vname(1,idfrac(itrc))),          &
-     &                            hisVid(idfrac(itrc),ng))
-            END IF
-          END DO
-          DO itrc=1,MBEDP
-            IF (varnam(i).eq.Vname(1,idSbed(itrc))) THEN
-              got_var(idSbed(itrc))=.true.
-              status=nf_inq_varid(nchisid(ng),                          &
-     &                            TRIM(Vname(1,idSbed(itrc))),          &
-     &                            hisVid(idSbed(itrc),ng))
-            END IF
-          END DO
-          DO itrc=1,MBOTP
-            IF (varnam(i).eq.Vname(1,idBott(itrc))) THEN
-              got_var(idBott(itrc))=.true.
-              status=nf_inq_varid(nchisid(ng),                          &
-     &                            TRIM(Vname(1,idBott(itrc))),          &
-     &                            hisVid(idBott(itrc),ng))
-            END IF
-          END DO
-# endif
 #endif
           IF (varnam(i).eq.Vname(1,idUsms)) THEN
             got_var(idUsms)=.true.
@@ -1152,7 +1102,8 @@
             status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idVbms)),      &
      &                          hisVid(idVbms,ng))
           END IF
-#ifdef BBL_MODEL
+#ifdef SOLVE3D
+# ifdef BBL_MODEL
           IF (varnam(i).eq.Vname(1,idUbws)) THEN
             got_var(idUbws)=.true.
             status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idUbws)),      &
@@ -1163,10 +1114,15 @@
             status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idVbws)),      &
      &                          hisVid(idVbws,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idAbed)) THEN
-            got_var(idAbed)=.true.
-            status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idAbed)),      &
-     &                          hisVid(idAbed,ng))
+          IF (varnam(i).eq.Vname(1,idUbcs)) THEN
+            got_var(idUbcs)=.true.
+            status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idUbcs)),      &
+     &                          hisVid(idUbcs,ng))
+          END IF
+          IF (varnam(i).eq.Vname(1,idVbcs)) THEN
+            got_var(idVbcs)=.true.
+            status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idVbcs)),      &
+     &                          hisVid(idVbcs,ng))
           END IF
           IF (varnam(i).eq.Vname(1,idUbed)) THEN
             got_var(idUbed)=.true.
@@ -1188,26 +1144,41 @@
             status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idVbot)),      &
      &                          hisVid(idVbot,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idHrip)) THEN
-            got_var(idHrip)=.true.
-            status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idHrip)),      &
-     &                          hisVid(idHrip,ng))
-          END IF
-          IF (varnam(i).eq.Vname(1,idLrip)) THEN
-            got_var(idLrip)=.true.
-            status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idLrip)),      &
-     &                          hisVid(idLrip,ng))
-          END IF
-          IF (varnam(i).eq.Vname(1,idZnot)) THEN
-            got_var(idZnot)=.true.
-            status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idZnot)),      &
-     &                          hisVid(idZnot,ng))
-          END IF
-          IF (varnam(i).eq.Vname(1,idZapp)) THEN
-            got_var(idZapp)=.true.
-            status=nf_inq_varid(nchisid(ng),TRIM(Vname(1,idZapp)),      &
-     &                          hisVid(idZapp,ng))
-          END IF
+# endif
+# ifdef SEDIMENT
+          DO itrc=1,NST
+            IF (varnam(i).eq.Vname(1,idfrac(itrc))) THEN
+              got_var(idfrac(itrc))=.true.
+              status=nf_inq_varid(nchisid(ng),                          &
+     &                            TRIM(Vname(1,idfrac(itrc))),          &
+     &                            hisVid(idfrac(itrc),ng))
+            END IF
+            IF (varnam(i).eq.Vname(1,idBmas(itrc))) THEN
+              got_var(idfrac(itrc))=.true.
+              status=nf_inq_varid(nchisid(ng),                          &
+     &                            TRIM(Vname(1,idBmas(itrc))),          &
+     &                            hisVid(idBmas(itrc),ng))
+            END IF
+          END DO
+          DO itrc=1,MBEDP
+            IF (varnam(i).eq.Vname(1,idSbed(itrc))) THEN
+              got_var(idSbed(itrc))=.true.
+              status=nf_inq_varid(nchisid(ng),                          &
+     &                            TRIM(Vname(1,idSbed(itrc))),          &
+     &                            hisVid(idSbed(itrc),ng))
+            END IF
+          END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
+          DO itrc=1,MBOTP
+            IF (varnam(i).eq.Vname(1,idBott(itrc))) THEN
+              got_var(idBott(itrc))=.true.
+              status=nf_inq_varid(nchisid(ng),                          &
+     &                            TRIM(Vname(1,idBott(itrc))),          &
+     &                            hisVid(idBott(itrc),ng))
+            END IF
+          END DO
+# endif
 #endif
         END DO
 !
@@ -1255,7 +1226,7 @@
           RETURN
         END IF
         DO itrc=1,NT(ng)
-          IF (.not.got_trc(itrc).and.Hout(idTvar(itrc),ng)) THEN
+          IF (.not.got_var(idTvar(itrc)).and.Hout(idTvar(itrc),ng)) THEN
             WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
             exit_flag=3
             RETURN
@@ -1338,29 +1309,6 @@
           RETURN
         END IF
 # endif
-# ifdef SEDIMENT
-        DO itrc=1,NST
-          IF (.not.got_var(idfrac(itrc)).and.Hout(idfrac(itrc),ng)) THEN
-            WRITE (stdout,60) TRIM(Vname(1,idfrac(itrc))), TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-        DO itrc=1,MBEDP
-          IF (.not.got_var(idSbed(itrc)).and.Hout(idSbed(itrc),ng)) THEN
-            WRITE (stdout,60) TRIM(Vname(1,idSbed(itrc))), TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-        DO itrc=1,MBOTP
-          IF (.not.got_var(idBott(itrc)).and.Hout(idBott(itrc),ng)) THEN
-            WRITE (stdout,60) TRIM(Vname(1,idBott(itrc))), TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-# endif
 #endif
         IF (.not.got_var(idUsms).and.Hout(idUsms,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idUsms)), TRIM(ncname)
@@ -1382,7 +1330,8 @@
           exit_flag=3
           RETURN
         END IF
-#ifdef BBL_MODEL
+#ifdef SOLVE3D
+# ifdef BBL_MODEL
         IF (.not.got_var(idUbws).and.Hout(idUbws,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idUbws)), TRIM(ncname)
           exit_flag=3
@@ -1393,8 +1342,13 @@
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idAbed).and.Hout(idAbed,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idAbed)), TRIM(ncname)
+        IF (.not.got_var(idUbcs).and.Hout(idUbcs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idUbcs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVbcs).and.Hout(idVbcs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idVbcs)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -1418,26 +1372,37 @@
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idHrip).and.Hout(idHrip,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idHrip)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idLrip).and.Hout(idLrip,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idLrip)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idZnot).and.Hout(idZnot,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idZnot)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idZapp).and.Hout(idZapp,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idZapp)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
+# endif
+# ifdef SEDIMENT
+        DO i=1,NST
+          IF (.not.got_var(idfrac(i)).and.Hout(idfrac(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idfrac(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+          IF(.not.got_var(idBmas(i)).and.Hout(idBmas(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idBmas(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+        DO i=1,MBEDP
+          IF (.not.got_var(idSbed(i)).and.Hout(idSbed(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idSbed(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+# endif
+# if defined SEDIMENT || defined BBL_MODEL
+        DO i=1,MBOTP
+          IF (.not.got_var(idBott(i)).and.Hout(idBott(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idBott(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+# endif
 #endif
 !
 !  Set unlimited time record dimension to the appropriate value.
@@ -1459,8 +1424,8 @@
         thisindx(ng)=MIN(thisindx(ng),tsize)
       END IF
 !
-  10  FORMAT (6x,'DEF_HIS - creating history file: ',a)
-  20  FORMAT (6x,'DEF_HIS - inquiring history file: ',a)
+  10  FORMAT (6x,'DEF_HIS   - creating history file: ',a)
+  20  FORMAT (6x,'DEF_HIS   - inquiring history file: ',a)
   30  FORMAT (/,' DEF_HIS - unable to create history NetCDF file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')
   50  FORMAT (/,' DEF_HIS - unable to open history NetCDF file: ',a)

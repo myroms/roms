@@ -21,7 +21,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC stiffness
+      PUBLIC  :: stiffness
 
       CONTAINS
 !

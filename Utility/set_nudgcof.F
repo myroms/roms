@@ -205,147 +205,6 @@
         END DO
       END DO
 #  endif
-# elif defined DAMEE_5
-      cff1=1.0_r8/(5.0_r8*86400.0_r8)
-      cff2=1.0_r8/(60.0_r8*86400.0_r8)
-      cff3=(7.0_r8*cff1-cff2)/6.0_r8
-      DO j=JstrR,MIN(8,JendR)
-        DO i=IstrR,IendR
-          wrk(i,j)=cff2+REAL(8-j,r8)*(cff1-cff2)/7.0_r8
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)-7),JendR
-        DO i=IstrR,IendR
-          wrk(i,j)=cff1+REAL(Mm(ng)-j,r8)*(cff2-cff1)/7.0_r8
-        END DO
-      END DO
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-      DO j=MAX(JstrR,33),MIN(39,JendR)
-        DO i=MAX(IstrR,102),MIN(108,IendR)
-          cff1=SQRT(REAL((i-109)*(i-109)+(j-36)*(j-36),r8))
-          wrk(i,j)=MAX(0.0_r8,(cff3+cff1*(cff2-cff3)/6.0_r8))
-        END DO
-      END DO
-#  ifdef TCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
-          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-# elif defined DAMEE_6
-      cff1=1.0_r8/(5.0_r8*86400.0_r8)
-      cff2=1.0_r8/(60.0_r8*86400.0_r8)
-      cff3=(9.0_r8*cff1-cff2)/8.0_r8
-      DO j=JstrR,MIN(6,JendR)
-        DO i=IstrR,IendR
-          wrk(i,j)=cff2+REAL(6-j,r8)*(cff1-cff2)/5.0_r8
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)-6),JendR
-        DO i=IstrR,IendR
-          wrk(i,j)=cff1+REAL(Mm(ng)-j,r8)*(cff2-cff1)/6.0_r8
-        END DO
-      END DO
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-      DO j=MAX(JstrR,57),MIN(65,JendR)
-        DO i=MAX(IstrR,176),MIN(184,IendR)
-          cff1=SQRT(REAL((i-185)*(i-185)+(j-61)*(j-61),r8))
-          wrk(i,j)=MAX(0.0_r8,(cff3+cff1*(cff2-cff3)/8.0_r8))
-        END DO
-      END DO
-#  ifdef TCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
-          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-# elif defined DAMEE_7
-      cff1=1.0_r8/(5.0_r8*86400.0_r8)
-      cff2=1.0_r8/(60.0_r8*86400.0_r8)
-      cff3=(9.0_r8*cff1-cff2)/8.0_r8
-      DO j=JstrR,MIN(8,JendR)
-        DO i=IstrR,IendR
-          wrk(i,j)=cff2+REAL(8-j,r8)*(cff1-cff2)/7.0_r8
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)-7),JendR
-        DO i=IstrR,IendR
-          wrk(i,j)=cff1+REAL(Mm(ng)-j,r8)*(cff2-cff1)/7.0_r8
-        END DO
-      END DO
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-      DO j=MAX(JstrR,177),MIN(185,JendR)
-        DO i=MAX(IstrR,217),MIN(225,IendR)
-          cff1=SQRT(REAL((i-226)*(i-226)+(j-181)*(j-181),r8))
-          wrk(i,j)=MAX(0.0_r8,(cff3+cff1*(cff2-cff3)/8.0_r8))
-        END DO
-      END DO
-#  ifdef TCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
-          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-# elif defined DAMEE_9
-      cff1=1.0_r8/(5.0_r8*86400.0_r8)
-      cff2=1.0_r8/(60.0_r8*86400.0_r8)
-      cff3=(11.0_r8*cff1-cff2)/10.0_r8
-      DO j=JstrR,MIN(8,JendR)
-        DO i=IstrR,IendR
-          wrk(i,j)=cff2+REAL(8-j,r8)*(cff1-cff2)/7.0_r8
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)-7),JendR
-        DO i=IstrR,IendR
-          wrk(i,j)=cff1+REAL(Mm(ng)-j,r8)*(cff2-cff1)/7.0_r8
-        END DO
-      END DO
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-      DO j=MAX(JstrR,154),MIN(164,JendR)
-        DO i=MAX(IstrR,229),MIN(237,IendR)
-          cff1=SQRT(REAL((i-238)*(i-238)+(j-159)*(j-159),r8))
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=                                &
-     &              MAX(0.0_r8,(cff3+cff1*(cff2-cff3)/10.0_r8))
-        END DO
-      END DO
-#  ifdef TCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
-          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
-        END DO
-      END DO
-#  endif
 # elif defined NATL
       cff1=1.0_r8/(5.0_r8*86400.0_r8)
       cff2=1.0_r8/(60.0_r8*86400.0_r8)
@@ -399,10 +258,10 @@
 #  endif
 # elif defined USWEST
       cff1=0.5_r8/(90.0_r8*86400.0_r8)
-      cff2=150.0_e8+3                    ! width (m) of nudging layer
+      cff2=150.0_r8+3                    ! width (m) of nudging layer
       Iwrk=INT(cff2*REAL(Lm(ng),r8)/                                    &
-     &         (xr(Lm(ng)+1,INT(0.5_r8*REAL(Mm(ng),r8)))-               &
-     &          xr(1       ,INT(0.5_r8*REAL(Mm(ng),r8)))))
+     &         (GRID(ng)%xr(Lm(ng)+1,INT(0.5_r8*REAL(Mm(ng),r8)))-      &
+     &          GRID(ng)%xr(1       ,INT(0.5_r8*REAL(Mm(ng),r8)))))
       DO j=JstrR,JendR
         DO i=IstrR,MIN(Iwrk,IendR)
           wrk(i,j)=cff1*(1.0_r8+COS(pi*REAL(i,r8)/REAL(Iwrk,r8)))

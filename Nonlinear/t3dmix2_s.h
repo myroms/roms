@@ -14,7 +14,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC t3dmix2_s
+      PUBLIC  :: t3dmix2_s
 
       CONTAINS
 !
@@ -23,6 +23,9 @@
 !***********************************************************************
 !
       USE mod_param
+# ifdef DIAGNOSTICS_TS
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -48,6 +51,9 @@
      &                     GRID(ng) % pm,                               &
      &                     GRID(ng) % pn,                               &
      &                     MIXING(ng) % diff2,                          &
+# ifdef DIAGNOSTICS_TS
+                           DIAGS(ng) % DiaTwrk,                         &
+# endif
      &                     OCEAN(ng) % t)
 # ifdef PROFILE
       CALL wclock_off (ng, 24)
@@ -64,6 +70,9 @@
 # endif
      &                           Hz, pmon_u, pnom_v, pm, pn,            &
      &                           diff2,                                 &
+# ifdef DIAGNOSTICS_TS
+                                 DiaTwrk,                               &
+# endif
      &                           t)
 !***********************************************************************
 !
@@ -87,7 +96,9 @@
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: diff2(LBi:,LBj:,:)
-
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
+#  endif
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
 # else
 #  ifdef MASKING
@@ -100,7 +111,10 @@
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: diff2(LBi:UBi,LBj:UBj,NT(ng))
-
+#  ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),
+     &                                   NDT)
+#  endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
 !
@@ -108,6 +122,8 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
+
+      real(r8) :: fac
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
@@ -144,14 +160,17 @@
             END DO
           END DO
 !
-! Time-step harmonic, S-surfaces diffusion term.
+! Time-step harmonic, S-surfaces diffusion term (m Tunits).
 !
           DO j=Jstr,Jend
             DO i=Istr,Iend
-              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+                    &
-     &                           dt(ng)*pm(i,j)*pn(i,j)*                &
-     &                                  (FX(i+1,j)-FX(i,j)+             &
-     &                                   FE(i,j+1)-FE(i,j))
+              fac=dt(ng)*pm(i,j)*pn(i,j)*                               &
+     &                   (FX(i+1,j)-FX(i,j)+                            &
+     &                    FE(i,j+1)-FE(i,j))
+              t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)+fac
+# ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,k,itrc,iThdif)=fac
+# endif
             END DO
           END DO
         END DO

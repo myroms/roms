@@ -14,7 +14,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC u3dbc_tile
+      PUBLIC  :: u3dbc_tile
 
       CONTAINS
 !
@@ -88,24 +88,24 @@
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend+1
-            grad(1,j)=u(1,j  ,k,nstp)-                                  &
-     &                u(1,j-1,k,nstp)
-            grad(2,j)=u(2,j  ,k,nstp)-                                  &
-     &                u(2,j-1,k,nstp)
+            grad(Istr  ,j)=u(Istr  ,j  ,k,nstp)-                        &
+     &                     u(Istr  ,j-1,k,nstp)
+            grad(Istr+1,j)=u(Istr+1,j  ,k,nstp)-                        &
+     &                     u(Istr+1,j-1,k,nstp)
           END DO
           DO j=Jstr,Jend
-            dUdt=u(2,j,k,nstp)-u(2,j,k,nnew)
-            dUdx=u(2,j,k,nnew)-u(3,j,k,nnew)
+            dUdt=u(Istr+1,j,k,nstp)-u(Istr+1,j,k,nnew)
+            dUdx=u(Istr+1,j,k,nnew)-u(Istr+2,j,k,nnew)
 #   ifdef WEST_M3NUDGING
             tau=M3obc_out(ng,iwest)
             IF ((dUdt*dUdx).lt.0.0_r8) tau=M3obc_in(ng,iwest)
             tau=tau*dt(ng)
 #   endif
             IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
-            IF ((dUdt*(grad(2,j)+grad(2,j+1))).gt.0.0_r8) THEN
-              dUde=grad(2,j)
+            IF ((dUdt*(grad(Istr+1,j)+grad(Istr+1,j+1))).gt.0.0_r8) THEN
+              dUde=grad(Istr+1,j  )
             ELSE
-              dUde=grad(2,j+1)
+              dUde=grad(Istr+1,j+1)
             END IF
             cff=MAX(dUdx*dUdx+dUde*dUde,eps)
             Cx=dUdt*dUdx
@@ -114,55 +114,58 @@
 #   else
             Ce=0.0_r8
 #   endif
-            u(1,j,k,nnew)=(cff*u(1,j,k,nstp)+                           &
-     &                     Cx*u(2,j,k,nnew)-                            &
-     &                     MAX(Ce,0.0_r8)*grad(1,j  )-                  &
-     &                     MIN(Ce,0.0_r8)*grad(1,j+1))/                 &
-     &                    (cff+Cx)
+            u(Istr,j,k,nnew)=(cff*u(Istr  ,j,k,nstp)+                   &
+     &                        Cx *u(Istr+1,j,k,nnew)-                   &
+     &                        MAX(Ce,0.0_r8)*grad(Istr,j  )-            &
+     &                        MIN(Ce,0.0_r8)*grad(Istr,j+1))/           &
+     &                       (cff+Cx)
 #   ifdef WEST_M3NUDGING
-            u(1,j,k,nnew)=u(1,j,k,nnew)+                                &
-     &                    tau*(BOUNDARY(ng)%u_west(j,k)-                &
-     &                         u(1,j,k,nstp))
+            u(Istr,j,k,nnew)=u(Istr,j,k,nnew)+                          &
+     &                       tau*(BOUNDARY(ng)%u_west(j,k)-             &
+     &                            u(Istr,j,k,nstp))
 #   endif
 #   ifdef MASKING
-            u(1,j,k,nnew)=u(1,j,k,nnew)*                                &
-     &                    GRID(ng)%umask(1,j)
+            u(Istr,j,k,nnew)=u(Istr,j,k,nnew)*                          &
+     &                       GRID(ng)%umask(Istr,j)
 #   endif
           END DO
         END DO
+
 #  elif defined WEST_M3CLAMPED
 !
 !  Western edge, clamped boundary condition.
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend
-            u(1,j,k,nnew)=BOUNDARY(ng)%u_west(j,k)
+            u(Istr,j,k,nnew)=BOUNDARY(ng)%u_west(j,k)
 #   ifdef MASKING
-            u(1,j,k,nnew)=u(1,j,k,nnew)*                                &
-     &                    GRID(ng)%umask(1,j)
+            u(Istr,j,k,nnew)=u(Istr,j,k,nnew)*                          &
+     &                       GRID(ng)%umask(Istr,j)
 #   endif
           END DO
         END DO
+
 #  elif defined WEST_M3GRADIENT
 !
 !  Western edge, gradient boundary condition.
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend
-            u(1,j,k,nnew)=u(2,j,k,nnew)
+            u(Istr,j,k,nnew)=u(Istr+1,j,k,nnew)
 #   ifdef MASKING
-            u(1,j,k,nnew)=u(1,j,k,nnew)*                                &
-     &                    GRID(ng)%umask(1,j)
+            u(Istr,j,k,nnew)=u(Istr,j,k,nnew)*                                &
+     &                    GRID(ng)%umask(Istr,j)
 #   endif
           END DO
         END DO
+
 #  else
 !
 !  Western edge, closed boundary condition.
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend
-            u(1,j,k,nnew)=0.0_r8
+            u(Istr,j,k,nnew)=0.0_r8
           END DO
         END DO
 #  endif
@@ -180,24 +183,24 @@
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend+1
-            grad(Lm(ng),j)=u(Lm(ng),j  ,k,nstp)-                        &
-     &                     u(Lm(ng),j-1,k,nstp)
-            grad(Lm(ng)+1,j)=u(Lm(ng)+1,j  ,k,nstp)-                    &
-     &                       u(Lm(ng)+1,j-1,k,nstp)
+            grad(Iend  ,j)=u(Iend  ,j  ,k,nstp)-                        &
+     &                     u(Iend  ,j-1,k,nstp)
+            grad(Iend+1,j)=u(Iend+1,j  ,k,nstp)-                        &
+     &                     u(Iend+1,j-1,k,nstp)
           END DO
           DO j=Jstr,Jend
-            dUdt=u(Lm(ng),j,k,nstp)-u(Lm(ng),j,k,nnew)
-            dUdx=u(Lm(ng),j,k,nnew)-u(Lm(ng)-1,j,k,nnew)
+            dUdt=u(Iend,j,k,nstp)-u(Iend  ,j,k,nnew)
+            dUdx=u(Iend,j,k,nnew)-u(Iend-1,j,k,nnew)
 #   ifdef EAST_M3NUDGING
             tau=M3obc_out(ng,ieast)
             IF ((dUdt*dUdx).lt.0.0_r8) tau=M3obc_in(ng,ieast)
             tau=tau*dt(ng)
 #   endif
             IF ((dUdt*dUdx).lt.0.0_r8) dUdt=0.0_r8
-            IF ((dUdt*(grad(Lm(ng),j)+grad(Lm(ng),j+1))).gt.0.0_r8) THEN
-              dUde=grad(Lm(ng),j  )
+            IF ((dUdt*(grad(Iend,j)+grad(Iend,j+1))).gt.0.0_r8) THEN
+              dUde=grad(Iend,j  )
             ELSE
-              dUde=grad(Lm(ng),j+1)
+              dUde=grad(Iend,j+1)
             END IF
             cff=MAX(dUdx*dUdx+dUde*dUde,eps)
             Cx=dUdt*dUdx
@@ -206,60 +209,64 @@
 #   else
             Ce=0.0_r8
 #   endif
-            u(Lm(ng)+1,j,k,nnew)=(cff*u(Lm(ng)+1,j,k,nstp)+             &
-     &                            Cx*u(Lm(ng),j,k,nnew)-                &
-     &                            MAX(Ce,0.0_r8)*grad(Lm(ng)+1,j  )-    &
-     &                            MIN(Ce,0.0_r8)*grad(Lm(ng)+1,j+1))/   &
-     &                           (cff+Cx)
+            u(Iend+1,j,k,nnew)=(cff*u(Iend+1,j,k,nstp)+                 &
+     &                          Cx *u(Iend  ,j,k,nnew)-                 &
+     &                          MAX(Ce,0.0_r8)*grad(Iend+1,j  )-        &
+     &                          MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/       &
+     &                         (cff+Cx)
 #   ifdef EAST_M3NUDGING
-            u(Lm(ng)+1,j,k,nnew)=u(Lm(ng)+1,j,k,nnew)+                  &
-     &                        tau*(BOUNDARY(ng)%u_east(j,k)-            &
-     &                             u(Lm(ng)+1,j,k,nstp))
+            u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)+                      &
+     &                         tau*(BOUNDARY(ng)%u_east(j,k)-           &
+     &                              u(Iend+1,j,k,nstp))
 #   endif
 #   ifdef MASKING
-            u(Lm(ng)+1,j,k,nnew)=u(Lm(ng)+1,j,k,nnew)*                  &
-     &                           GRID(ng)%umask(Lm(ng)+1,j)
+            u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)*                      &
+     &                         GRID(ng)%umask(Iend+1,j)
 #   endif
           END DO
         END DO
+
 #  elif defined EAST_M3CLAMPED
 !
 !  Eastern edge, clamped boundary condition.
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend
-            u(Lm(ng)+1,j,k,nnew)=BOUNDARY(ng)%u_east(j,k)
+            u(Iend+1,j,k,nnew)=BOUNDARY(ng)%u_east(j,k)
 #   ifdef MASKING
-            u(Lm(ng)+1,j,k,nnew)=u(Lm(ng)+1,j,k,nnew)*                  &
-     &                           GRID(ng)%umask(Lm(ng)+1,j)
+            u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)*                      &
+     &                         GRID(ng)%umask(Iend+1,j)
 #   endif
           END DO
         END DO
+
 #  elif defined EAST_M3GRADIENT
 !
 !  Eastern edge, gradient boundary condition.
 !
       DO k=1,N(ng)
         DO j=Jstr,Jend
-          u(Lm(ng)+1,j,k,nnew)=u(Lm(ng),j,k,nnew)
+          u(Iend+1,j,k,nnew)=u(Iend,j,k,nnew)
 #   ifdef MASKING
-          u(Lm(ng)+1,j,k,nnew)=u(Lm(ng)+1,j,k,nnew)*                    &
-     &                         GRID(ng)%umask(Lm(ng)+1,j)
+          u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)*                        &
+     &                       GRID(ng)%umask(Iend+1,j)
 #   endif
         END DO
       END DO
+
 #  else
 !
 !  Eastern edge, closed boundary condition.
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend
-            u(Lm(ng)+1,j,k,nnew)=0.0_r8
+            u(Iend+1,j,k,nnew)=0.0_r8
           END DO
         END DO
 #  endif
       END IF
 # endif
+
 # ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -274,24 +281,24 @@
 !
         DO k=1,N(ng)
           DO i=IstrU-1,Iend
-            grad(i,0)=u(i+1,0,k,nstp)-                                  &
-     &                u(i  ,0,k,nstp)
-            grad(i,1)=u(i+1,1,k,nstp)-                                  &
-     &                u(i  ,1,k,nstp)
+            grad(i,Jstr-1)=u(i+1,Jstr-1,k,nstp)-                        &
+     &                     u(i  ,Jstr-1,k,nstp)
+            grad(i,Jstr  )=u(i+1,Jstr  ,k,nstp)-                        &
+     &                     u(i  ,Jstr  ,k,nstp)
           END DO
           DO i=IstrU,Iend
-            dUdt=u(i,1,k,nstp)-u(i,1,k,nnew)
-            dUde=u(i,1,k,nnew)-u(i,2,k,nnew)
+            dUdt=u(i,Jstr,k,nstp)-u(i,Jstr  ,k,nnew)
+            dUde=u(i,Jstr,k,nnew)-u(i,Jstr+1,k,nnew)
 #   ifdef SOUTH_M3NUDGING
             tau=M3obc_out(ng,isouth)
             IF ((dUdt*dUde).lt.0.0_r8) tau=M3obc_in(ng,isouth)
             tau=tau*dt(ng)
 #   endif
             IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
-            IF ((dUdt*(grad(i-1,1)+grad(i,1))).gt.0.0_r8) THEN
-              dUdx=grad(i-1,1)
+            IF ((dUdt*(grad(i-1,Jstr)+grad(i,Jstr))).gt.0.0_r8) THEN
+              dUdx=grad(i-1,Jstr)
             ELSE
-              dUdx=grad(i  ,1)
+              dUdx=grad(i  ,Jstr)
             END IF
             cff=MAX(dUdx*dUdx+dUde*dUde,eps)
 #   ifdef RADIATION_2D
@@ -300,48 +307,51 @@
             Cx=0.0_r8
 #   endif
             Ce=dUdt*dUde
-            u(i,0,k,nnew)=(cff*u(i,0,k,nstp)+                           &
-     &                     Ce*u(i,1,k,nnew)-                            &
-     &                     MAX(Cx,0.0_r8)*grad(i-1,0)-                  &
-     &                     MIN(Cx,0.0_r8)*grad(i  ,0))/                 &
-     &                    (cff+Ce)
+            u(i,Jstr-1,k,nnew)=(cff*u(i,Jstr-1,k,nstp)+                 &
+     &                          Ce *u(i,Jstr  ,k,nnew)-                 &
+     &                          MAX(Cx,0.0_r8)*grad(i-1,Jstr-1)-        &
+     &                          MIN(Cx,0.0_r8)*grad(i  ,Jstr-1))/       &
+     &                         (cff+Ce)
 #   ifdef SOUTH_M3NUDGING
-            u(i,0,k,nnew)=u(i,0,k,nnew)+                                &
-     &                    tau*(BOUNDARY(ng)%u_south(i,k)-               &
-     &                         u(i,0,k,nstp))
+            u(i,Jstr-1,k,nnew)=u(i,Jstr-1,k,nnew)+                      &
+     &                         tau*(BOUNDARY(ng)%u_south(i,k)-          &
+     &                              u(i,Jstr-1,k,nstp))
 #   endif
 #   ifdef MASKING
-            u(i,0,k,nnew)=u(i,0,k,nnew)*                                &
-     &                    GRID(ng)%umask(i,0)
+            u(i,Jstr-1,k,nnew)=u(i,Jstr-1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jstr-1)
 #   endif
           END DO
         END DO
+
 #  elif defined SOUTH_M3CLAMPED
 !
 !  Southern edge, clamped boundary condition.
 !
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            u(i,0,k,nnew)=BOUNDARY(ng)%u_south(i,k)
+            u(i,Jstr-1,k,nnew)=BOUNDARY(ng)%u_south(i,k)
 #   ifdef MASKING
-            u(i,0,k,nnew)=u(i,0,k,nnew)*                                &
-     &                    GRID(ng)%umask(i,0)
+            u(i,Jstr-1,k,nnew)=u(i,Jstr-1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jstr-1)
 #   endif
           END DO
         END DO
+
 #  elif defined SOUTH_M3GRADIENT
 !
 !  Southern edge, gradient boundary condition.
 !
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            u(i,0,k,nnew)=u(i,1,k,nnew)
+            u(i,Jstr-1,k,nnew)=u(i,Jstr,k,nnew)
 #   ifdef MASKING
-            u(i,0,k,nnew)=u(i,0,k,nnew)*                                &
-     &                    GRID(ng)%umask(i,0)
+            u(i,Jstr-1,k,nnew)=u(i,Jstr-1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jstr-1)
 #   endif
           END DO
         END DO
+
 #  else
 !
 !  Southern edge, closed boundary condition: free slip (gamma2=1)  or
@@ -354,10 +364,10 @@
 #   endif
         DO k=1,N(ng)
           DO i=I_RANGE
-            u(i,0,k,nnew)=gamma2*u(i,1,k,nnew)
+            u(i,Jstr-1,k,nnew)=gamma2*u(i,Jstr,k,nnew)
 #   ifdef MASKING
-            u(i,0,k,nnew)=u(i,0,k,nnew)*                                &
-     &                    GRID(ng)%umask(i,0)
+            u(i,Jstr-1,k,nnew)=u(i,Jstr-1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jstr-1)
 #   endif
           END DO
         END DO
@@ -377,24 +387,24 @@
 !
         DO k=1,N(ng)
           DO i=IstrU-1,Iend
-            grad(i,Mm(ng))=u(i+1,Mm(ng),k,nstp)-                        &
-     &                     u(i  ,Mm(ng),k,nstp)
-            grad(i,Mm(ng)+1)=u(i+1,Mm(ng)+1,k,nstp)-                    &
-     &                       u(i  ,Mm(ng)+1,k,nstp)
+            grad(i,Jend  )=u(i+1,Jend  ,k,nstp)-                        &
+     &                     u(i  ,Jend  ,k,nstp)
+            grad(i,Jend+1)=u(i+1,Jend+1,k,nstp)-                        &
+     &                     u(i  ,Jend+1,k,nstp)
           END DO
           DO i=IstrU,Iend
-            dUdt=u(i,Mm(ng),k,nstp)-u(i,Mm(ng),k,nnew)
-            dUde=u(i,Mm(ng),k,nnew)-u(i,Mm(ng)-1,k,nnew)
+            dUdt=u(i,Jend,k,nstp)-u(i,Jend  ,k,nnew)
+            dUde=u(i,Jend,k,nnew)-u(i,Jend-1,k,nnew)
 #   ifdef NORTH_M3NUDGING
             tau=M3obc_out(ng,inorth)
             IF ((dUdt*dUde).lt.0.0_r8) tau=M3obc_in(ng,inorth)
             tau=tau*dt(ng)
 #   endif
             IF ((dUdt*dUde).lt.0.0_r8) dUdt=0.0_r8
-            IF ((dUdt*(grad(i-1,Mm(ng))+grad(i,Mm(ng)))).gt.0.0_r8) THEN
-              dUdx=grad(i-1,Mm(ng))
+            IF ((dUdt*(grad(i-1,Jend)+grad(i,Jend))).gt.0.0_r8) THEN
+              dUdx=grad(i-1,Jend)
             ELSE
-              dUdx=grad(i  ,Mm(ng))
+              dUdx=grad(i  ,Jend)
             END IF
             cff=MAX(dUdx*dUdx+dUde*dUde,eps)
 #   ifdef RADIATION_2D
@@ -403,48 +413,51 @@
             Cx=0.0_r8
 #   endif
             Ce=dUdt*dUde
-            u(i,Mm(ng)+1,k,nnew)=(cff*u(i,Mm(ng)+1,k,nstp)+             &
-     &                            Ce*u(i,Mm(ng),k,nnew)-                &
-     &                            MAX(Cx,0.0_r8)*grad(i-1,Mm(ng)+1)-    &
-     &                            MIN(Cx,0.0_r8)*grad(i  ,Mm(ng)+1))/   &
-     &                           (cff+Ce)
+            u(i,Jend+1,k,nnew)=(cff*u(i,Jend+1,k,nstp)+                 &
+     &                          Ce *u(i,Jend  ,k,nnew)-                 &
+     &                          MAX(Cx,0.0_r8)*grad(i-1,Jend+1)-        &
+     &                          MIN(Cx,0.0_r8)*grad(i  ,Jend+1))/       &
+     &                         (cff+Ce)
 #   ifdef NORTH_M3NUDGING
-            u(i,Mm(ng)+1,k,nnew)=u(i,Mm(ng)+1,k,nnew)+                  &
-     &                           tau*(BOUNDARY(ng)%u_north(i,k)-        &
-     &                                u(i,Mm(ng)+1,k,nstp))
+            u(i,Jend+1,k,nnew)=u(i,Jend+1,k,nnew)+                      &
+     &                         tau*(BOUNDARY(ng)%u_north(i,k)-          &
+     &                              u(i,Jend+1,k,nstp))
 #    endif
 #   ifdef MASKING
-            u(i,Mm(ng)+1,k,nnew)=u(i,Mm(ng)+1,k,nnew)*                  &
-     &                           GRID(ng)%umask(i,Mm(ng)+1)
+            u(i,Jend+1,k,nnew)=u(i,Jend+1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jend+1)
 #   endif
           END DO
         END DO
+
 #  elif defined NORTH_M3CLAMPED
 !
 !  Northern edge, clamped boundary condition.
 !
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            u(i,Mm(ng)+1,k,nnew)=BOUNDARY(ng)%u_north(i,k)
+            u(i,Jend+1,k,nnew)=BOUNDARY(ng)%u_north(i,k)
 #   ifdef MASKING
-            u(i,Mm(ng)+1,k,nnew)=u(i,Mm(ng)+1,k,nnew)*                  &
-     &                           GRID(ng)%umask(i,Mm(ng)+1)
+            u(i,Jend+1,k,nnew)=u(i,Jend+1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jend+1)
 #   endif
           END DO
         END DO
+
 #  elif defined NORTH_M3GRADIENT
 !
 !  Northern edge, gradient boundary condition.
 !
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            u(i,Mm(ng)+1,k,nnew)=u(i,Mm(ng),k,nnew)
+            u(i,Jend+1,k,nnew)=u(i,Jend,k,nnew)
 #   ifdef MASKING
-            u(i,Mm(ng)+1,k,nnew)=u(i,Mm(ng)+1,k,nnew)*                  &
-     &                           GRID(ng)%umask(i,Mm(ng)+1)
+            u(i,Jend+1,k,nnew)=u(i,Jend+1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jend+1)
 #   endif
           END DO
         END DO
+
 #  else
 !
 !  Northern edge, closed boundary condition: free slip (gamma2=1)  or
@@ -457,10 +470,10 @@
 #   endif
         DO k=1,N(ng)
           DO i=I_RANGE
-            u(i,Mm(ng)+1,k,nnew)=gamma2*u(i,Mm(ng),k,nnew)
+            u(i,Jend+1,k,nnew)=gamma2*u(i,Jend,k,nnew)
 #   ifdef MASKING
-            u(i,Mm(ng)+1,k,nnew)=u(i,Mm(ng)+1,k,nnew)*                  &
-     &                           GRID(ng)%umask(i,Mm(ng)+1)
+            u(i,Jend+1,k,nnew)=u(i,Jend+1,k,nnew)*                      &
+     &                         GRID(ng)%umask(i,Jend+1)
 #   endif
           END DO
         END DO
@@ -468,6 +481,7 @@
 #  endif
       END IF
 # endif
+
 # if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -476,30 +490,30 @@
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
         DO k=1,N(ng)
-          u(1,0,k,nnew)=0.5_r8*(u(2,0,k,nnew)+                          &
-     &                          u(1,1,k,nnew))
+          u(Istr,Jstr-1,k,nnew)=0.5_r8*(u(Istr+1,Jstr-1,k,nnew)+        &
+     &                                  u(Istr  ,Jstr  ,k,nnew))
         END DO
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
         DO k=1,N(ng)
-          u(Lm(ng)+1,0,k,nnew)=0.5_r8*(u(Lm(ng)  ,0,k,nnew)+            &
-     &                                 u(Lm(ng)+1,1,k,nnew))
+          u(Iend+1,Jstr-1,k,nnew)=0.5_r8*(u(Iend  ,Jstr-1,k,nnew)+      &
+     &                                    u(Iend+1,Jstr  ,k,nnew))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
         DO k=1,N(ng)
-          u(1,Mm(ng)+1,k,nnew)=0.5_r8*(u(2,Mm(ng)+1,k,nnew)+            &
-     &                                 u(1,Mm(ng),k,nnew))
+          u(Istr,Jend+1,k,nnew)=0.5_r8*(u(Istr+1,Jend+1,k,nnew)+        &
+     &                                  u(Istr  ,Jend  ,k,nnew))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
         DO k=1,N(ng)
-          u(Lm(ng)+1,Mm(ng)+1,k,nnew)=0.5_r8*                           &
-     &                                (u(Lm(ng)  ,Mm(ng)+1,k,nnew)+     &
-     &                                 u(Lm(ng)+1,Mm(ng)  ,k,nnew))
+          u(Iend+1,Jend+1,k,nnew)=0.5_r8*(u(Iend  ,Jend+1,k,nnew)+      &
+     &                                    u(Iend+1,Jend  ,k,nnew))
         END DO
       END IF
 # endif
+
       RETURN
       END SUBROUTINE u3dbc_tile
 #endif

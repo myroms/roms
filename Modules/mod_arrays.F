@@ -23,6 +23,9 @@
 #ifdef SOLVE3D
       USE mod_coupling, ONLY : allocate_coupling, initialize_coupling
 #endif
+#ifdef DIAGNOSTICS
+      USE mod_diags, ONLY : allocate_diags, initialize_diags
+#endif
       USE mod_forces, ONLY : allocate_forces, initialize_forces
       USE mod_grid, ONLY : allocate_grid, initialize_grid
       USE mod_mixing, ONLY : allocate_mixing, initialize_mixing
@@ -76,6 +79,9 @@
 #ifdef SOLVE3D
           CALL allocate_coupling (ng, LBi, UBi, LBj, UBj)
 #endif
+#ifdef DIAGNOSTICS
+          CALL allocate_diags (ng, LBi, UBi, LBj, UBj)
+#endif
           CALL allocate_forces (ng, LBi, UBi, LBj, UBj)
           CALL allocate_grid (ng, LBi, UBi, LBj, UBj)
           CALL allocate_mixing (ng, LBi, UBi, LBj, UBj)
@@ -99,7 +105,11 @@
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         DO ng=1,Ngrids
+#if defined _OPENMP || defined DISTRIBUTE
           subs=NtileX(ng)*NtileE(ng)/numthreads
+#else
+          subs=1
+#endif
           DO tile=subs*thread,subs*(thread+1)-1
 #ifdef AVERAGES
             CALL initialize_average (ng, TILE)
@@ -113,6 +123,9 @@
 #endif
 #ifdef SOLVE3D
             CALL initialize_coupling (ng, TILE)
+#endif
+#ifdef DIAGNOSTICS
+            CALL initialize_diags (ng, TILE)
 #endif
             CALL initialize_forces (ng, TILE)
             CALL initialize_grid (ng, TILE)

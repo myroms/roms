@@ -103,38 +103,60 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 # include "tile.h"
-# ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
-# else
-#  include "set_bounds.h"
-# endif
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
+#else
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-      COUPLING(ng) % DU_avg1(IstrR:IendR,JstrR:JendR) = IniVal
-      COUPLING(ng) % DU_avg2(IstrR:IendR,JstrR:JendR) = IniVal
+      COUPLING(ng) % DU_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % DU_avg2(Imin:Imax,Jmin:Jmax) = IniVal
 
-      COUPLING(ng) % DV_avg1(IstrR:IendR,JstrR:JendR) = IniVal
-      COUPLING(ng) % DV_avg2(IstrR:IendR,JstrR:JendR) = IniVal
+      COUPLING(ng) % DV_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % DV_avg2(Imin:Imax,Jmin:Jmax) = IniVal
 
-      COUPLING(ng) % Zt_avg1(IstrR:IendR,JstrR:JendR) = IniVal
+      COUPLING(ng) % Zt_avg1(Imin:Imax,Jmin:Jmax) = IniVal
 
-      COUPLING(ng) % rufrc(IstrR:IendR,JstrR:JendR) = IniVal
-      COUPLING(ng) % rvfrc(IstrR:IendR,JstrR:JendR) = IniVal
+      COUPLING(ng) % rufrc(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % rvfrc(Imin:Imax,Jmin:Jmax) = IniVal
 
 # ifdef VAR_RHO_2D
-      COUPLING(ng) % rhoA(IstrR:IendR,JstrR:JendR) = IniVal
-      COUPLING(ng) % rhoS(IstrR:IendR,JstrR:JendR) = IniVal
+      COUPLING(ng) % rhoA(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % rhoS(Imin:Imax,Jmin:Jmax) = IniVal
 # endif
 
       RETURN

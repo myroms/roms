@@ -413,16 +413,16 @@
         END IF
       END IF
 !
-  10  format(/,' GET_NGFLD   - too small dimension for variable ',a,    &
-     &       ': ',2i5)
-  20  format(/,' GET_NGFLD   - unable to find requested variable: ',a,  &
+  10  FORMAT (/,' GET_NGFLD   - too small dimension for variable ',a,   &
+     &        ': ',2i5)
+  20  FORMAT (/,' GET_NGFLD   - unable to find requested variable: ',a, &
      &       /,15x,'in input NetCDF file: ',a)
-  30  format(/,' GET_NGFLD   - unable to open input NetCDF file: ',a)
-  40  format(/,' GET_NGFLD   - error while reading variable: ',a,2x,    &
-     &       ' at TIME index = ',i4)
-  50  format(' GET_NGFLD   - ',a,/,17x,'(Min = ',1pe15.8,' Max = ',     &
-     &       1pe15.8,')')
-  60  format(' GET_NGFLD   - ',a,',',t64,'t = ',f12.4,/,17x,'(Min = ',  &
-     &       1pe15.8,' Max = ',1pe15.8,')')
+  30  FORMAT (/,' GET_NGFLD   - unable to open input NetCDF file: ',a)
+  40  FORMAT (/,' GET_NGFLD   - error while reading variable: ',a,2x,   &
+     &          ' at TIME index = ',i4)
+  50  FORMAT (' GET_NGFLD   - ',a,/,17x,'(Min = ',1pe15.8,' Max = ',    &
+     &        1pe15.8,')')
+  60  FORMAT (' GET_NGFLD   - ',a,',',t64,'t = ',f12.4,/,17x,'(Min = ', &
+     &        1pe15.8,' Max = ',1pe15.8,')')
       RETURN
       END SUBROUTINE get_ngfld

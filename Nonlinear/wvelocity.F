@@ -15,7 +15,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC wvelocity
+      PUBLIC  :: wvelocity
 
       CONTAINS
 !
@@ -225,14 +225,14 @@
       IF (WESTERN_EDGE) THEN
         DO k=0,N(ng)
           DO j=Jstr,Jend
-            wvel(0,j,k)=wvel(1,j,k)
+            wvel(Istr-1,j,k)=wvel(Istr,j,k)
           END DO
         END DO
       END IF
       IF (EASTERN_EDGE) THEN
         DO k=0,N(ng)
           DO j=Jstr,Jend
-            wvel(Lm(ng)+1,j,k)=wvel(Lm(ng),j,k)
+            wvel(Iend+1,j,k)=wvel(Iend,j,k)
           END DO
         END DO
       END IF
@@ -246,14 +246,14 @@
       IF (SOUTHERN_EDGE) THEN
         DO k=0,N(ng)
           DO i=I_RANGE
-            wvel(i,0,k)=wvel(i,1,k)
+            wvel(i,Jstr-1,k)=wvel(i,Jstr,k)
           END DO
         END DO
       END IF
       IF (NORTHERN_EDGE) THEN
         DO k=0,N(ng)
           DO i=I_RANGE
-            wvel(i,Mm(ng)+1,k)=wvel(i,Mm(ng),k)
+            wvel(i,Jend+1,k)=wvel(i,Jend,k)
           END DO
         END DO
       END IF
@@ -261,7 +261,7 @@
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, wvel)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), wvel)
 # endif
       RETURN
       END SUBROUTINE wvelocity_tile

@@ -175,6 +175,34 @@
         END IF
 #endif
 
+#ifdef DIAGNOSTICS
+        wrt_info=nf_inq_varid(ncid,'ntsdia',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,ntsdia)
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'ntsdia', TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'ndia',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,ndia)
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'ndia', TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+
+        IF (ndefdia(ng).gt.0) THEN
+          wrt_info=nf_inq_varid(ncid,'ndefdia',varid)
+          wrt_info=nf_put_var1_int(ncid,varid,1,ndefdia(ng))
+          IF (wrt_info.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'ndefdia', TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END IF
+#endif
+
 #ifdef STATIONS
         wrt_info=nf_inq_varid(ncid,'nsta',varid)
         wrt_info=nf_put_var1_int(ncid,varid,1,nsta)
@@ -657,10 +685,10 @@
         END IF
 #endif
 #ifdef SOLVE3D
-!
-!  Various parameters.
-!
 # ifdef BODYFORCE
+!
+!  Body force parameters.
+!
         wrt_info=nf_inq_varid(ncid,'levsfrc',varid)
         wrt_info=nf_put_var1_int(ncid,varid,1,levsfrc(ng))
         IF (wrt_info.ne.nf_noerr) THEN
@@ -692,7 +720,7 @@
 #if defined BIOLOGY && defined SOLVE3D
 # ifdef BIO_FASHAM
 !
-!  Write out Fasham type biological module parameters.
+!  Write out Fasham type biological model parameters.
 !
         wrt_info=nf_inq_varid(ncid,'BioIter',varid)
         wrt_info=nf_put_var1_int(ncid,varid,1,BioIter(ng))
@@ -838,16 +866,6 @@
           RETURN
         END IF
 
-#  ifdef CARBON
-        wrt_info=nf_inq_varid(ncid,'ZooAE_C',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooAE_C(ng))
-        IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'ZooAE_C', TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-
         wrt_info=nf_inq_varid(ncid,'ZooAE_N',varid)
         wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooAE_N(ng))
         IF (wrt_info.ne.nf_noerr) THEN
@@ -880,14 +898,6 @@
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'ZooGGE_C',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooGGE_C(ng))
-        IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'ZooGGE_C', TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-
         wrt_info=nf_inq_varid(ncid,'ZooGR',varid)
         wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooGR(ng))
         IF (wrt_info.ne.nf_noerr) THEN
@@ -912,10 +922,18 @@
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'LDeRR',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,LDeRR(ng))
+        wrt_info=nf_inq_varid(ncid,'LDeRRN',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,LDeRRN(ng))
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'LDeRR', TRIM(ncname)
+          WRITE (stdout,10) 'LDeRRN', TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'LDeRRC',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,LDeRRC(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'LDeRRC', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -928,26 +946,18 @@
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'SDeAR',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,SDeAR(ng))
+        wrt_info=nf_inq_varid(ncid,'SDeRRN',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,SDeRRN(ng))
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'SDeAR', TRIM(ncname)
+          WRITE (stdout,10) 'SDeRRN', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'SDeBR',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,SDeBR(ng))
+        wrt_info=nf_inq_varid(ncid,'SDeRRC',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,SDeRRC(ng))
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'SDeBR', TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-
-        wrt_info=nf_inq_varid(ncid,'SDeRR',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,SDeRR(ng))
-        IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'SDeRR', TRIM(ncname)
+          WRITE (stdout,10) 'SDeRRC', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -960,41 +970,728 @@
           RETURN
         END IF
 
-#  ifdef CARBON
-        wrt_info=nf_inq_varid(ncid,'wLDeC',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wLDeC(ng))
+        wrt_info=nf_inq_varid(ncid,'wLDet',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wLDet(ng))
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'wLDeC', TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-#  endif
-
-        wrt_info=nf_inq_varid(ncid,'wLDeN',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wLDeN(ng))
-        IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'wLDeN', TRIM(ncname)
+          WRITE (stdout,10) 'wLDet', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 
-#  ifdef CARBON
-        wrt_info=nf_inq_varid(ncid,'wSDeC',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wSDeC(ng))
+        wrt_info=nf_inq_varid(ncid,'wSDet',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wSDet(ng))
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'wSDeC', TRIM(ncname)
+          WRITE (stdout,10) 'wSDet', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-#  endif
 
-        wrt_info=nf_inq_varid(ncid,'wSDeN',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wSDeN(ng))
-        IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'wSDeN', TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
+# elif defined ECOSIM
+!
+!  Write out EcoSim bio-optical model parameters.
+!
+      wrt_info=nf_inq_varid(ncid,'BioIter',varid)
+      wrt_info=nf_put_var1_int(ncid,varid,1,BioIter(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'BioIter', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RtUVR_flag',varid)
+      WRITE (char1,'(l1)') RtUVR_flag(ng)
+      wrt_info=nf_put_var1_text(ncid,varid,1,char1)
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RtUVR_flag', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'NFIX_flag',varid)
+      WRITE (char1,'(l1)') NFIX_flag(ng)
+      wrt_info=nf_put_var1_text(ncid,varid,1,char1)
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'NFIX_flag', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'Regen_flag',varid)
+      WRITE (char1,'(l1)') Regen_flag(ng)
+      wrt_info=nf_put_var1_text(ncid,varid,1,char1)
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'Regen_flag', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsNO3',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsNO3(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsNO3', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsNH4',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsNH4(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsNH4', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsSiO',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsSiO(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsSiO', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsPO4',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsPO4(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsPO4', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsFe',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsFe(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsFe', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'GtALG_max',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,GtALG_max(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'GtALG_max', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'PhyTbase',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,PhyTbase(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'PhyTbase', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'PhyTfac',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,PhyTfac(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'PhyTfac', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'BET_',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,BET_(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'BET_', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'maxC2nALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,maxC2nALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'maxC2nALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'minC2nALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,minC2nALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'minC2nALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2nALGminABS',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,C2nALGminABS(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2nALGminABS', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'maxC2SiALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,maxC2SiALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'maxC2SiALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'minC2SiALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,minC2SiALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'minC2SiALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2SiALGminABS',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,C2SiALGminABS(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2SiALGminABS', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'maxC2pALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,maxC2pALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'maxC2pALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'minC2pALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,minC2pALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'minC2pALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2pALGminABS',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,C2pALGminABS(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2pALGminABS', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'maxC2FeALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,maxC2FeALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'maxC2FeALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'minC2FeALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,minC2FeALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'minC2FeALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2FeALGminABS',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,C2FeALGminABS(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2FeALGminABS', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'qu_yld',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,qu_yld(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'qu_yld', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'E0_comp',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,E0_comp(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'E0_comp', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'E0_inhib',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,E0_inhib(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'E0_inhib', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'inhib_fac',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,inhib_fac(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'inhib_fac', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2CHL_max',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,C2CHL_max(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2CHL_max', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxC2Cl',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxC2Cl(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxC2Cl', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_C2Cl',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_C2Cl(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_C2Cl', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxC2Cn',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxC2Cn(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxC2Cn', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_C2Cn',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_C2Cn(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_C2Cn', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxPacEff',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxPacEff(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxPacEff', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_PacEff',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_PacEff(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_PacEff', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxChlB',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxChlB(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxChlB', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_ChlB',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_ChlB(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_ChlB', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxChlC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxChlC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxChlC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_ChlC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_ChlC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_ChlC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxPSC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxPSC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxPSC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_PSC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_PSC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_PSC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxPPC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxPPC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxPPC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_PPC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_PPC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_PPC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxLPUb',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxLPUb(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxLPUb', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_LPUb',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_LPUb(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_LPUb', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'mxHPUb',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,mxHPUb(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'mxHPUb', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'b_HPUb',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,b_HPUb(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'b_HPUb', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'FecDOC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,FecDOC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'FecDOC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      start(1)=1
+      total(1)=Nphy
+      start(2)=1
+      total(2)=Nfec
+      wrt_info=nf_inq_varid(ncid,'FecPEL',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,start,total,FecPEL(1,1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'FecPEL', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'FecCYC',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,FecCYC(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'FecCYC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'ExALG',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,ExALG(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'ExALG', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'WS',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,WS(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'WS', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsGRZ',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsGRZ(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsGRZ', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'MinRefuge',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,MinRefuge(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'MinRefuge', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RefugeDep',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,RefugeDep(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RefugeDep', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'Norm_Vol',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,Norm_Vol(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'Norm_Vol', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'Norm_Surf',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,Norm_Surf(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'Norm_Surf', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsDOP',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsDOP(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsDOP', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2pALKPHOS',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,C2pALKPHOS(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2pALKPHOS', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsDON',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,HsDON(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsDON', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2nNupDON',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nphy,C2nNupDON(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2nNupDON', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsDOC_ba',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nbac,HsDOC_ba(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsDOC_ba', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'GtBAC_max',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nbac,GtBAC_max(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'GtBAC_max', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'BacTbase',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nbac,BacTbase(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'BacTbase', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'BacTfac',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nbac,BacTfac(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'BacTfac', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2nBAC',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,C2nBAC(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2nBAC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2pBAC',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,C2pBAC(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2pBAC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'C2FeBAC',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,C2FeBAC(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'C2FeBAC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'BacDOC',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,BacDOC(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'BacDOC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'BacPEL',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,BacPEL(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'BacPEL', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'BacCYC',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,BacCYC(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'BacCYC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'ExBAC_c',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,ExBAC_c(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'ExBAC_c', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'ExBacC2N',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,ExBacC2N(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'ExBacC2N', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'Bac_Ceff',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,Bac_Ceff(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'Bac_Ceff', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RtNIT',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,RtNIT(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RtNIT', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'cDOCfrac_c',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Ndom,cDOCfrac_c(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'cDOCfrac_c', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RtUVR_DIC',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,RtUVR_DIC(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RtUVR_DIC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RtUVR_DOC',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,RtUVR_DIC(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RtUVR_DOC', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'WF',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,WF(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'WF', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RegTbase',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,RegTbase(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RegTbase', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RegTfac',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,RegTfac(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RegTfac', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RegCR',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,RegCR(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RegCR', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RegNR',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,RegNR(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RegNR', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RegSR',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,RegSR(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RegSR', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RegPR',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,RegPR(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RegPR', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'RegFR',varid)
+      wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nfec,RegFR(1,ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'RegFR', TRIM(ncname)
+        exit_flag=3
+        RETURN
+      ENDIF
 
 # endif
 #endif
@@ -1006,7 +1703,7 @@
 !  Grid type switch.
 !
         wrt_info=nf_inq_varid(ncid,'spherical',varid)
-        write(char1,'(l1)') spherical
+        WRITE (char1,'(l1)') spherical
         wrt_info=nf_put_var1_text(ncid,varid,1,char1)
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'spherical', TRIM(ncname)
@@ -1429,7 +2126,7 @@
       END IF
 #endif
 !
-  10  format(/,' WRT_INFO - error while writing variable: ',a,/,        &
-     &       12x,'into NetCDF file: ',a)
+  10  FORMAT (/,' WRT_INFO - error while writing variable: ',a,/,       &
+     &        12x,'into NetCDF file: ',a)
       RETURN
       END FUNCTION wrt_info

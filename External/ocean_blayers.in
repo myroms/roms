@@ -2,7 +2,7 @@
 !  ROMS/TOMS Standard Input parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.0                          ===
+!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -36,12 +36,12 @@
 
 ! Application title.
 
-       TITLE = ROMS/TOMS 2.0 - Boundary Layers Test
+       TITLE = ROMS/TOMS 2.1 - Boundary Layers Test
 
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
 
-     VARNAME = External/varinfo.dat
+     VARNAME = varinfo.dat
 
 ! Domain decomposition parameters for serial, distributed-memory or
 ! shared-memory configurations used to determine tile horizontal range
@@ -50,7 +50,7 @@
       NtileI == 1                               ! I-direction partition
       NtileJ == 1                               ! J-direction partition
 
-! Time-Stepping parameters
+! Time-Stepping parameters.
 
       NTIMES =  1440
           DT == 300.0d0
@@ -75,6 +75,9 @@
       NTSAVG == 1
         NAVG == 144
      NDEFAVG == 0
+      NTSDIA == 1
+        NDIA == 144
+     NDEFDIA == 0
 
 ! Harmonic/biharmonic horizontal diffusion of tracer: [1:NAT,Ngrids].
 
@@ -151,7 +154,8 @@
       M3NUDG == 0.0d0                      ! days
 
 ! Factor between passive (outflow) and active (inflow) open boundary
-! conditions, [1:Ngrids].
+! conditions, [1:Ngrids]. If OBCFAC > 1, nudging on inflow is stronger
+! than on outflow (recommended).
 
       OBCFAC == 0.0d0                      ! nondimensional
 
@@ -186,16 +190,13 @@ Hout(idUbms) == T                          ! bottom U-stress
 Hout(idVbms) == T                          ! bottom V-stress
 Hout(idUbws) == T                          ! bottom U-wave stress
 Hout(idVbws) == T                          ! bottom V-wave stress
+Hout(idUbcs) == F                          ! bottom max wave-current U-stress
+Hout(idVbcs) == F                          ! bottom max wave-current V-stress
 
-Hout(idAbed) == T                          ! bed wave excursion amplitude
 Hout(idUbed) == T                          ! bed wave orbital U-velocity
 Hout(idVbed) == T                          ! bed wave orbital V-velocity
 Hout(idUbot) == T                          ! bottom U-momentum above bed
 Hout(idVbot) == T                          ! bottom V-momentum above bed
-Hout(idHrip) == T                          ! bed ripple height
-Hout(idLrip) == T                          ! bed ripple length
-Hout(idZnot) == T                          ! bottom roughness
-Hout(idZapp) == T                          ! apparent bottom roughness
 
 Hout(idTsur) == T                          ! surface net heat flux
 Hout(idLhea) == T                          ! latent heat flux
@@ -211,6 +212,29 @@ Hout(idHsbl) == T                          ! depth of surface boundary layer
 Hout(idHbbl) == T                          ! depth of bottom boundary layer
 Hout(idMtke) == T                          ! turbulent kinetic energy
 Hout(idMtls) == T                          ! turbulent length scale
+
+! Logical switches (TRUE/FALSE) to activate writing of exposed sediment
+! layer properties into HISTORY output file.  Currently, MBOTP properties
+! are expected for the bottom boundary layer and/or sediment models:
+!
+!   Hout(idBott(isd50)),  isd50 = 1        ! mean grain diameter
+!   Hout(idBott(idens)),  idens = 2        ! mean grain density
+!   Hout(idBott(iwsed)),  iwsed = 3        ! mean settling velocity
+!   Hout(idBott(itauc)),  itauc = 4        ! critical erosion stress
+!   Hout(idBott(irlen)),  irlen = 5        ! ripple length
+!   Hout(idBott(irhgt)),  irhgt = 6        ! ripple height
+!   Hout(idBott(ibwav)),  ibwav = 7        ! wave excursion amplitude
+!   Hout(idBott(izdef)),  izdef = 8        ! default bottom roughness
+!   Hout(idBott(izapp)),  izapp = 9        ! apparent bottom roughness
+!   Hout(idBott(izNik)),  izNik = 10       ! Nikuradse bottom roughness
+!   Hout(idBott(izbio)),  izbio = 11       ! biological bottom roughness
+!   Hout(idBott(izbfm)),  izbfm = 12       ! bed form bottom roughness
+!   Hout(idBott(izbld)),  izbld = 13       ! bed load bottom roughness
+!   Hout(idBott(izwbl)),  izwbl = 14       ! wave bottom roughness
+!   Hout(idBott(iactv)),  iactv = 15       ! active layer thickness
+!   Hout(idBott(ishgt)),  ishgt = 16       ! saltation height
+
+Hout(idBott) == T T T T T T T T T F F F F F F F
 
 ! Generic User parameters, [1:NUSER].
 
@@ -249,12 +273,12 @@ Hout(idMtls) == T                          ! turbulent length scale
 
 ! Input ASCII parameter filenames.
 
-     APARNAM =  External/assimilation.in
-     SPOSNAM =  External/stations.in
-     FPOSNAM =  External/floats.in
-     BPARNAM =  External/bioFasham.in
-     SPARNAM =  External/sediment.in
-     USRNAME =  External/MyFile.dat
+     APARNAM =  assimilation.in
+     SPOSNAM =  stations.in
+     FPOSNAM =  floats.in
+     BPARNAM =  bioFasham.in
+     SPARNAM =  sediment.in
+     USRNAME =  MyFile.dat
 
 !
 !  GLOSSARY:
@@ -355,15 +379,15 @@ Hout(idMtls) == T                          ! turbulent length scale
 !
 !  LDEFOUT   Logical switch (T/F) used to create new output files when
 !            initializing from a re-start file, abs(NRREC) > 0.  If TRUE
-!            and applicable, a new history, time-averaged, and station
-!            files are created during the initialization stage. If FALSE
-!            and applicable,  data is appended to an existing history,
-!            time-averaged and station files.  See also parameters
-!            NDEFHIS and NDEFAVG below.
+!            and applicable, a new history, average, diagnostic and
+!            station files are created during the initialization stage.
+!            If FALSE and applicable, data is appended to an existing
+!            history, average, diagnostic and station files.  See also
+!            parameters NDEFHIS, NDEFAVG and NDEFDIA below.
 !
 !  NHIS      Number of time-steps between writing fields into history file.
 !
-!  NDEFHIS   Number of time-steps between the creation of new history files.
+!  NDEFHIS   Number of time-steps between the creation of new history file.
 !            If NDEFHIS=0, the model will only process one history file.
 !            This feature is useful for long simulations when history files
 !            get too large; it creates a new file every NDEFHIS time-steps.
@@ -372,13 +396,26 @@ Hout(idMtls) == T                          ! turbulent length scale
 !            data.
 !
 !  NAVG      Number of time-steps between writing time-averaged data
-!            into averages file.  Averaged date is written at all levels.
+!            into averages file.  Averaged date is written for all fields.
 !
-!  NDEFAVG   Number of time-steps between the creation of new time-averaged
-!            files.  If NDEFAVG=0, the model will only process one time-
-!            averaged file.  This feature is useful for long simulations
-!            when time-averaged files get too large; it creates a new file
-!            every NDEFHIS time-steps.
+!  NDEFAVG   Number of time-steps between the creation of new average
+!            file.  If NDEFAVG=0, the model will only process one average
+!            file.  This feature is useful for long simulations when
+!            average files get too large; it creates a new file every
+!            NDEFAVG time-steps.
+!
+!  NTSDIA    Starting time-step for the accumulation of output time-averaged
+!            diagnostics data.
+!
+!  NDIA      Number of time-steps between writing time-averaged diagnostics
+!            data into diagnotics file.  Averaged date is written for all
+!            fields.
+!
+!  NDEFDIA   Number of time-steps between the creation of new time-averaged
+!            diagnostics file.  If NDEFDIA=0, the model will only process one
+!            diagnostics file.  This feature is useful for long simulations
+!            when diagnostics files get too large; it creates a new file
+!            every NDEFDIA time-steps.
 !
 !------------------------------------------------------------------------------
 ! Harmonic/Biharmonic horizontal diffusion for active tracers.
@@ -605,7 +642,8 @@ Hout(idMtls) == T                          ! turbulent length scale
 !  OBCFAC    Factor between passive (outflow) and active (inflow) open
 !              boundary conditions.  The nudging time scales for the
 !              active (inflow) conditions are obtained by multiplying
-!              the passive values by OBCFAC.
+!              the passive values by OBCFAC. If OBCFAC > 1, nudging on
+!              inflow is stronger than on outflow (recommended).
 !
 !------------------------------------------------------------------------------
 ! Linear equation of State parameters.
@@ -649,15 +687,12 @@ Hout(idMtls) == T                          ! turbulent length scale
 !  Hout(idUbws)  Write out wind-induced, bottom U-wave stress.
 !  Hout(idVbws)  Write out wind-induced, bottom V-wave stress.
 !
-!  Hout(idAbed)  Write out wind-induced, bed wave excursion amplitude.
 !  Hout(idUbed)  Write out wind-induced, bed wave orbital U-velocity.
 !  Hout(idVbed)  Write out wind-induced, bed wave orbital V-velocity.
 !  Hout(idUbot)  Write out bottom U-momentum above bed.
 !  Hout(idVbot)  Write out bottom V-momentum above bed.
-!  Hout(idHrip)  Write out bed ripple height.
-!  Hout(idHapp)  Write out bed ripple length.
-!  Hout(idZnot)  Write out hydraulic bottom roughness.
-!  Hout(idZapp)  Write out apparent hydraulic bottom roughness.
+!  Hout(idUbcs)  Write out bottom maximum wave and current U-stress.
+!  Hout(idVbcs)  Write out bottom maximum wave and current U-stress.
 !
 !  Hout(idTsur)  Write out surface net heat flux.
 !  Hout(idLhea)  Write out latent heat flux.
@@ -674,6 +709,8 @@ Hout(idMtls) == T                          ! turbulent length scale
 !  Hout(idMtke)  Write out turbulent kinetic energy.
 !  Hout(idMtls)  Write out turbulent kinetic energy times length scale.
 !
+!  Hout(idBott)  Write out exposed sediment layer properties, 1:MBOTP.
+!
 !------------------------------------------------------------------------------
 ! Generic User parameters.
 !------------------------------------------------------------------------------
@@ -688,6 +725,7 @@ Hout(idMtls) == T                          ! turbulent length scale
 !  RSTNAME   Output re-start file name.
 !  HISNAME   Output history file name.
 !  AVGNAME   Output averages file name.
+!  DIANAME   Output diagnostics file name.
 !  STANAME   Output stations file name.
 !  FLTNAME   Output floats file name.
 !

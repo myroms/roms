@@ -34,6 +34,9 @@
 ** Pwave        Surface wind induced wave period (s).                 **
 ** PwaveG       Latest two-time snapshots of input "Pwave" grided     **
 **                data used for interpolation.                        **
+** Ub_swan      Bottom orbital velocity read in from swan output      **
+** Ub_swanG     Latest two-time snapshots of input "Ub_swan" grided   **
+**                data used for interpolation.                        **
 **                                                                    **
 ** Solar shortwave radiation flux.                                    **
 **                                                                    **
@@ -121,6 +124,13 @@
 ** sssG         Latest two-time snapshots of input "sss" grided       **
 **                data used for interpolation.                        **
 **                                                                    **
+** Surface spectral downwelling irradiance.                           **
+**                                                                    **
+** SpecIr       Spectral irradiance (NBands) from 400-700 nm at       **
+**                5 nm bandwidth.                                     **
+** avcos        Cosine of average zenith angle of downwelling         **
+**                spectral photons.                                   **
+**                                                                    **
 ************************************************************************
 */
 
@@ -140,22 +150,33 @@
           real(r8), pointer :: bvstr(:,:)
 
 #ifdef BBL_MODEL
+# ifdef SWAN
+          real(r8), pointer :: UB_swan(:,:)
+# else
           real(r8), pointer :: Awave(:,:)
+# endif
           real(r8), pointer :: Dwave(:,:)
           real(r8), pointer :: Pwave(:,:)
 # ifndef ANA_WWAVE
+#  ifdef SWAN
+          real(r8), pointer :: UB_swanG(:,:,:)
+#  else
           real(r8), pointer :: AwaveG(:,:,:)
+#  endif
           real(r8), pointer :: DwaveG(:,:,:)
           real(r8), pointer :: PwaveG(:,:,:)
 # endif
 #endif
+
 #ifdef SOLVE3D
+
 # ifdef SHORTWAVE
           real(r8), pointer :: srflx(:,:)
 #  ifndef ANA_SRFLUX
           real(r8), pointer :: srflxG(:,:,:)
 #  endif
 # endif
+
 # ifdef CLOUDS
           real(r8), pointer :: cloud(:,:)
 #  ifndef ANA_CLOUD
@@ -170,7 +191,9 @@
 #  endif
           real(r8), pointer :: shflx(:,:)
 # endif
-# if defined BULK_FLUXES || (defined SHORTWAVE && defined ANA_SRFLUX)
+
+# if defined BULK_FLUXES || defined ECOSIM || \
+    (defined SHORTWAVE && defined ANA_SRFLUX)
           real(r8), pointer :: Hair(:,:)
 #  ifndef ANA_HUMIDITY
           real(r8), pointer :: HairG(:,:,:)
@@ -180,7 +203,8 @@
           real(r8), pointer :: TairG(:,:,:)
 #  endif
 # endif
-# ifdef BULK_FLUXES
+
+# if defined BULK_FLUXES || defined ECOSIM
           real(r8), pointer :: Pair(:,:)
 #  ifndef ANA_PAIR
           real(r8), pointer :: PairG(:,:,:)
@@ -191,11 +215,15 @@
           real(r8), pointer :: UwindG(:,:,:)
           real(r8), pointer :: VwindG(:,:,:)
 #  endif
+# endif
+
+# ifdef BULK_FLUXES
           real(r8), pointer :: rain(:,:)
 #  ifndef ANA_RAIN
           real(r8), pointer :: rainG(:,:,:)
 #  endif
 # endif
+
           real(r8), pointer :: stflx(:,:,:)
 # if !defined ANA_STFLUX || !defined ANA_SSFLUX
           real(r8), pointer :: stflxG(:,:,:,:)
@@ -204,6 +232,7 @@
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX
           real(r8), pointer :: btflxG(:,:,:,:)
 # endif
+
 # ifdef QCORRECTION
           real(r8), pointer :: dqdt(:,:)
           real(r8), pointer :: sst(:,:)
@@ -212,11 +241,17 @@
           real(r8), pointer :: sstG(:,:,:)
 #  endif
 # endif
+
 # if defined SALINITY && (defined SCORRECTION || defined SRELAXATION)
           real(r8), pointer :: sss(:,:)
 #  ifndef ANA_SSS
           real(r8), pointer :: sssG(:,:,:)
 #  endif
+# endif
+
+# ifdef ECOSIM
+          real(r8), pointer :: SpecIr(:,:,:)
+          real(r8), pointer :: avcos(:,:,:)
 # endif
 #endif
 
@@ -261,12 +296,20 @@
       allocate ( FORCES(ng) % bvstr(LBi:UBi,LBj:UBj) )
 
 #ifdef BBL_MODEL
+# ifdef SWAN
+      allocate ( FORCES(ng) % UB_swan(LBi:UBi,LBj:UBj) )
+# else
       allocate ( FORCES(ng) % Awave(LBi:UBi,LBj:UBj) )
+# endif
       allocate ( FORCES(ng) % Dwave(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % Pwave(LBi:UBi,LBj:UBj) )
 
 # ifndef ANA_WWAVE
+#  ifdef SWAN
+      allocate ( FORCES(ng) % UB_swanG(LBi:UBi,LBj:UBj,2) )
+#  else
       allocate ( FORCES(ng) % AwaveG(LBi:UBi,LBj:UBj,2) )
+#  endif
       allocate ( FORCES(ng) % DwaveG(LBi:UBi,LBj:UBj,2) )
       allocate ( FORCES(ng) % PwaveG(LBi:UBi,LBj:UBj,2) )
 # endif
@@ -301,7 +344,8 @@
       allocate ( FORCES(ng) % shflx(LBi:UBi,LBj:UBj) )
 # endif
 
-# if defined BULK_FLUXES || (defined SHORTWAVE && defined ANA_SRFLUX)
+# if defined BULK_FLUXES || defined ECOSIM || \
+    (defined SHORTWAVE && defined ANA_SRFLUX)
       allocate ( FORCES(ng) % Hair(LBi:UBi,LBj:UBj) )
 
 #  ifndef ANA_HUMIDITY
@@ -315,7 +359,7 @@
 #  endif
 # endif
 
-# ifdef BULK_FLUXES
+# if defined BULK_FLUXES || defined ECOSIM
       allocate ( FORCES(ng) % Pair(LBi:UBi,LBj:UBj) )
 
 #  ifndef ANA_PAIR
@@ -329,8 +373,11 @@
       allocate ( FORCES(ng) % UwindG(LBi:UBi,LBj:UBj,2) )
       allocate ( FORCES(ng) % VwindG(LBi:UBi,LBj:UBj,2) )
 #  endif
+# endif
 
+# ifdef BULK_FLUXES
       allocate ( FORCES(ng) % rain(LBi:UBi,LBj:UBj) )
+
 #  ifndef ANA_RAIN
       allocate ( FORCES(ng) % rainG(LBi:UBi,LBj:UBj,2) )
 #  endif
@@ -366,6 +413,11 @@
 #  endif
 # endif
 
+# ifdef ECOSIM
+      allocate ( FORCES(ng) % SpecIr(LBi:UBi,LBj:UBj,NBands) )
+      allocate ( FORCES(ng) % avcos(LBi:UBi,LBj:UBj,NBands) )
+# endif
+
 #endif
 
       RETURN
@@ -393,140 +445,181 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 #include "tile.h"
-#ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
 #else
-# include "set_bounds.h"
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
 #endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-      FORCES(ng) % sustr(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % svstr(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % sustr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % svstr(Imin:Imax,Jmin:Jmax) = IniVal
 
 #if !defined ANA_SMFLUX || !defined BULK_FLUXES
-      FORCES(ng) % sustrG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      FORCES(ng) % svstrG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % sustrG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      FORCES(ng) % svstrG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #endif
 
-      FORCES(ng) % bustr(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % bvstr(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % bustr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % bvstr(Imin:Imax,Jmin:Jmax) = IniVal
 
 #ifdef BBL_MODEL
-      FORCES(ng) % Awave(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % Dwave(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % Pwave(IstrR:IendR,JstrR:JendR) = IniVal
+# ifdef SWAN
+      FORCES(ng) % UB_swan(Imin:Imax,Jmin:Jmax) = IniVal
+# else
+      FORCES(ng) % Awave(Imin:Imax,Jmin:Jmax) = IniVal
+# endif
+      FORCES(ng) % Dwave(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % Pwave(Imin:Imax,Jmin:Jmax) = IniVal
 
 # ifndef ANA_WWAVE
-      FORCES(ng) % AwaveG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      FORCES(ng) % DwaveG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      FORCES(ng) % PwaveG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+#  ifdef SWAN
+      FORCES(ng) % Ub_swanG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+#  else
+      FORCES(ng) % AwaveG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+#  endif
+      FORCES(ng) % DwaveG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      FORCES(ng) % PwaveG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 # endif
 #endif
 
 #ifdef SOLVE3D
 
 # ifdef SHORTWAVE
-      FORCES(ng) % srflx(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % srflx(Imin:Imax,Jmin:Jmax) = IniVal
 
 #  ifndef ANA_SRFLUX
-      FORCES(ng) % srflxG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % srflxG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 
 # ifdef CLOUDS
-      FORCES(ng) % cloud(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % cloud(Imin:Imax,Jmin:Jmax) = IniVal
 
 #  ifndef ANA_CLOUD
-      FORCES(ng) % cloudG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % cloudG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 
 # ifdef BULK_FLUXES
-      FORCES(ng) % lhflx(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % lrflx(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % shflx(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % lhflx(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % lrflx(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % shflx(Imin:Imax,Jmin:Jmax) = IniVal
 # endif
 
-# if defined BULK_FLUXES || (defined SHORTWAVE && defined ANA_SRFLUX)
-      FORCES(ng) % Hair(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % Tair(IstrR:IendR,JstrR:JendR) = IniVal
+# if defined BULK_FLUXES || defined ECOSIM || \
+    (defined SHORTWAVE && defined ANA_SRFLUX)
+      FORCES(ng) % Hair(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % Tair(Imin:Imax,Jmin:Jmax) = IniVal
+# endif
+
+# if defined BULK_FLUXES || defined ECOSIM
+      FORCES(ng) % Pair(Imin:Imax,Jmin:Jmax) = IniVal
+
+      FORCES(ng) % Uwind(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % Vwind(Imin:Imax,Jmin:Jmax) = IniVal
 # endif
 
 # ifdef BULK_FLUXES
-      FORCES(ng) % Pair(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % rain(Imin:Imax,Jmin:Jmax) = IniVal
+# endif
 
-      FORCES(ng) % Uwind(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % Vwind(IstrR:IendR,JstrR:JendR) = IniVal
+# if !defined LONGWAVE && defined BULK_FLUXES
+      FORCES(ng) % lrflxG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+# endif
 
-      FORCES(ng) % rain(IstrR:IendR,JstrR:JendR) = IniVal
-
-#  ifndef LONGWAVE
-      FORCES(ng) % lrflxG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-#  endif
-
+# if defined BULK_FLUXES || defined ECOSIM
 #  ifndef ANA_HUMIDITY
-      FORCES(ng) % HairG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % HairG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 
 #  ifndef ANA_PAIR
-      FORCES(ng) % PairG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % PairG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 
 #  ifndef ANA_TAIR
-      FORCES(ng) % TairG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % TairG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 
 #  ifndef ANA_WINDS
-      FORCES(ng) % UwindG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      FORCES(ng) % VwindG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-#  endif
-
-#  ifndef ANA_RAIN
-      FORCES(ng) % rainG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % UwindG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      FORCES(ng) % VwindG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 
-      FORCES(ng) % stflx(IstrR:IendR,JstrR:JendR,1:NT(ng)) = IniVal
-      FORCES(ng) % btflx(IstrR:IendR,JstrR:JendR,1:NT(ng)) = IniVal
+# if !defined ANA_RAIN && defined BULK_FLUXES
+      FORCES(ng) % rainG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+# endif
+
+      FORCES(ng) % stflx(Imin:Imax,Jmin:Jmax,1:NT(ng)) = IniVal
+      FORCES(ng) % btflx(Imin:Imax,Jmin:Jmax,1:NT(ng)) = IniVal
 
 # if !defined ANA_STFLUX || !defined ANA_SSFLUX
-      FORCES(ng) % stflxG(IstrR:IendR,JstrR:JendR,1:2,1:NT(ng)) = IniVal
+      FORCES(ng) % stflxG(Imin:Imax,Jmin:Jmax,1:2,1:NT(ng)) = IniVal
 # endif
 
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX
-      FORCES(ng) % btflxG(IstrR:IendR,JstrR:JendR,1:2,1:NT(ng)) = IniVal
+      FORCES(ng) % btflxG(Imin:Imax,Jmin:Jmax,1:2,1:NT(ng)) = IniVal
 # endif
 
 # ifdef QCORRECTION
-      FORCES(ng) % dqdt(IstrR:IendR,JstrR:JendR) = IniVal
-      FORCES(ng) % sst(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % dqdt(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % sst(Imin:Imax,Jmin:Jmax) = IniVal
 
 #  ifndef ANA_SST
-      FORCES(ng) % dqdtG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      FORCES(ng) % sstG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % dqdtG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      FORCES(ng) % sstG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 
 # if defined SALINITY && (defined SCORRECTION || defined SRELAXATION)
-      FORCES(ng) % sss(IstrR:IendR,JstrR:JendR) = IniVal
+      FORCES(ng) % sss(Imin:Imax,Jmin:Jmax) = IniVal
 
 #  ifndef ANA_SSS
-      FORCES(ng) % sssG(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      FORCES(ng) % sssG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 
+# ifdef ECOSIM
+      FORCES(ng) % SpecIr(Imin:Imax,Jmin:Jmax,1:NBands) = IniVal
+      FORCES(ng) % avcos(Imin:Imax,Jmin:Jmax,1:NBands) = IniVal
+# endif
+
 #endif
+
       RETURN
       END SUBROUTINE initialize_forces
 

@@ -15,25 +15,25 @@
       implicit none
 
       PRIVATE
-      PUBLIC tkebc_tile
+      PUBLIC  :: tkebc_tile
 
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE tkebc (ng, tile, indx)
+      SUBROUTINE tkebc (ng, tile, nout)
 !***********************************************************************
 !
       USE mod_param
       USE mod_mixing
       USE mod_stepping
 !
-      integer, intent(in) :: ng, tile, indx
+      integer, intent(in) :: ng, tile, nout
 
 # include "tile.h"
 !
       CALL tkebc_tile (ng, Istr, Iend, Jstr, Jend,                      &
      &                 LBi, UBi, LBj, UBj, N(ng),                       &
-     &                 indx, nstp(ng),                                  &
+     &                 nout, nstp(ng),                                  &
      &                 MIXING(ng)% gls,                                 &
      &                 MIXING(ng)% tke)
       RETURN
@@ -42,7 +42,7 @@
 !***********************************************************************
       SUBROUTINE tkebc_tile (ng, Istr, Iend, Jstr, Jend,                &
      &                       LBi, UBi, LBj, UBj, UBk,                   &
-     &                       indx, nstp,                                &
+     &                       nout, nstp,                                &
      &                       gls, tke)
 !***********************************************************************
 !
@@ -54,7 +54,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk
-      integer, intent(in) :: indx, nstp
+      integer, intent(in) :: nout, nstp
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: gls(LBi:,LBj:,0:,:)
@@ -92,35 +92,35 @@
 !
         DO k=0,N(ng)
           DO j=Jstr,Jend+1
-            grad(0,j)=tke(0,j  ,k,nstp)-                                &
-     &                tke(0,j-1,k,nstp)
+            grad(Istr-1,j)=tke(Istr-1,j  ,k,nstp)-                      &
+     &                     tke(Istr-1,j-1,k,nstp)
 #   ifdef MASKING
-            grad(0,j)=grad(0,j)*GRID(ng)%vmask(0,j)
+            grad(Istr-1,j)=grad(Istr-1,j)*GRID(ng)%vmask(Istr-1,j)
 #   endif
-            grad(1,j)=tke(1,j  ,k,nstp)-                                &
-     &                tke(1,j-1,k,nstp)
+            grad(Istr  ,j)=tke(Istr  ,j  ,k,nstp)-                      &
+     &                     tke(Istr  ,j-1,k,nstp)
 #   ifdef MASKING
-            grad(1,j)=grad(1,j)*GRID(ng)%vmask(1,j)
+            grad(Istr  ,j)=grad(Istr  ,j)*GRID(ng)%vmask(Istr  ,j)
 #   endif
-            gradL(0,j)=gls(0,j  ,k,nstp)-                               &
-     &                 gls(0,j-1,k,nstp)
+            gradL(Istr-1,j)=gls(Istr-1,j  ,k,nstp)-                     &
+     &                      gls(Istr-1,j-1,k,nstp)
 #   ifdef MASKING
-            gradL(0,j)=gradL(0,j)*GRID(ng)%vmask(0,j)
+            gradL(Istr-1,j)=gradL(Istr-1,j)*GRID(ng)%vmask(Istr-1,j)
 #   endif
-            gradL(1,j)=gls(1,j  ,k,nstp)-                               &
-     &                 gls(1,j-1,k,nstp)
+            gradL(Istr  ,j)=gls(Istr  ,j  ,k,nstp)-                     &
+     &                      gls(Istr  ,j-1,k,nstp)
 #   ifdef MASKING
-            gradL(1,j)=gradL(1,j)*GRID(ng)%vmask(1,j)
+            gradL(Istr  ,j)=gradL(Istr  ,j)*GRID(ng)%vmask(Istr  ,j)
 #   endif
           END DO
           DO j=Jstr,Jend
-            dKdt=tke(1,j,k,nstp)-tke(1,j,k,indx)
-            dKdx=tke(1,j,k,indx)-tke(2,j,k,indx)
+            dKdt=tke(Istr,j,k,nstp)-tke(Istr  ,j,k,nout)
+            dKdx=tke(Istr,j,k,nout)-tke(Istr+1,j,k,nout)
             IF ((dKdt*dKdx).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(grad(1,j)+grad(1,j+1))).gt.0.0_r8) THEN
-              dKde=grad(1,j  )
+            IF ((dKdt*(grad(Istr,j)+grad(Istr,j+1))).gt.0.0_r8) THEN
+              dKde=grad(Istr,j  )
             ELSE
-              dKde=grad(1,j+1)
+              dKde=grad(Istr,j+1)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde,eps)
             Cx=dKdt*dKdx
@@ -129,24 +129,22 @@
 #   else
             Ce=0.0_r8
 #   endif
-            tke(0,j,k,indx)=(cff*tke(0,j,k,nstp)+                       &
-     &                       Cx*tke(1,j,k,indx)-                        &
-     &                       MAX(Ce,0.0_r8)*                            &
-     &                          grad(0,j  )-                            &
-     &                       MIN(Ce,0.0_r8)*                            &
-     &                          grad(0,j+1))/                           &
-     &                      (cff+Cx)
+            tke(Istr-1,j,k,nout)=(cff*tke(Istr-1,j,k,nstp)+             &
+     &                            Cx *tke(Istr  ,j,k,nout)-             &
+     &                            MAX(Ce,0.0_r8)*grad(Istr-1,j  )-      &
+     &                            MIN(Ce,0.0_r8)*grad(Istr-1,j+1))/     &
+     &                           (cff+Cx)
 #   ifdef MASKING
-            tke(0,j,k,indx)=tke(0,j,k,indx)*                            &
-     &                      GRID(ng)%rmask(0,j)
+            tke(Istr-1,j,k,nout)=tke(Istr-1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Istr-1,j)
 #   endif
-            dKdt=gls(1,j,k,nstp)-gls(1,j,k,indx)
-            dKdx=gls(1,j,k,indx)-gls(2,j,k,indx)
+            dKdt=gls(Istr,j,k,nstp)-gls(Istr  ,j,k,nout)
+            dKdx=gls(Istr,j,k,nout)-gls(Istr+1,j,k,nout)
             IF ((dKdt*dKdx).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(gradL(1,j)+gradL(1,j+1))).gt.0.0_r8) THEN
-              dKde=gradL(1,j  )
+            IF ((dKdt*(gradL(Istr,j)+gradL(Istr,j+1))).gt.0.0_r8) THEN
+              dKde=gradL(Istr,j  )
             ELSE
-              dKde=gradL(1,j+1)
+              dKde=gradL(Istr,j+1)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde,eps)
             Cx=dKdt*dKdx
@@ -155,52 +153,52 @@
 #   else
             Ce=0.0_r8
 #   endif
-            gls(0,j,k,indx)=(cff*gls(0,j,k,nstp)+                       &
-     &                       Cx*gls(1,j,k,indx)-                        &
-     &                       MAX(Ce,0.0_r8)*                            &
-     &                          gradL(0,j  )-                           &
-     &                       MIN(Ce,0.0_r8)*                            &
-     &                          gradL(0,j+1))/                          &
-     &                      (cff+Cx)
+            gls(Istr-1,j,k,nout)=(cff*gls(Istr-1,j,k,nstp)+             &
+     &                            Cx *gls(Istr  ,j,k,nout)-             &
+     &                            MAX(Ce,0.0_r8)*gradL(Istr-1,j  )-     &
+     &                            MIN(Ce,0.0_r8)*gradL(Istr-1,j+1))/    &
+     &                           (cff+Cx)
 #   ifdef MASKING
-            gls(0,j,k,indx)=gls(0,j,k,indx)*                            &
-     &                      GRID(ng)%rmask(0,j)
+            gls(Istr-1,j,k,nout)=gls(Istr-1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(0,j)
 #   endif
           END DO
         END DO
+
 #  elif defined WEST_KGRADIENT
 !
 !  Western edge, gradient boundary condition.
 !
         DO k=0,N(ng)
           DO j=Jstr,Jend
-            tke(0,j,k,indx)=tke(1,j,k,indx)
+            tke(Istr-1,j,k,nout)=tke(Istr,j,k,nout)
 #   ifdef MASKING
-            tke(0,j,k,indx)=tke(0,j,k,indx)*                            &
-     &                      GRID(ng)%rmask(0,j)
+            tke(Istr-1,j,k,nout)=tke(Istr-1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Istr-1,j)
 #   endif
-            gls(0,j,k,indx)=gls(1,j,k,indx)
+            gls(Istr-1,j,k,nout)=gls(Istr,j,k,nout)
 #   ifdef MASKING
-            gls(0,j,k,indx)=gls(0,j,k,indx)*                            &
-     &                      GRID(ng)%rmask(0,j)
+            gls(Istr-1,j,k,nout)=gls(Istr-1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Istr-1,j)
 #   endif
           END DO
         END DO
+
 #  else
 !
 !  Western edge, closed boundary condition.
 !
         DO k=0,N(ng)
           DO j=Jstr,Jend
-            tke(0,j,k,indx)=tke(1,j,k,indx)
+            tke(Istr-1,j,k,nout)=tke(Istr,j,k,nout)
 #   ifdef MASKING
-            tke(0,j,k,indx)=tke(0,j,k,indx)*                            &
-     &                      GRID(ng)%rmask(0,j)
+            tke(Istr-1,j,k,nout)=tke(Istr-1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Istr-1,j)
 #   endif
-            gls(0,j,k,indx)=gls(1,j,k,indx)
+            gls(Istr-1,j,k,nout)=gls(Istr,j,k,nout)
 #   ifdef MASKING
-            gls(0,j,k,indx)=gls(0,j,k,indx)*                            &
-     &                      GRID(ng)%rmask(0,j)
+            gls(Istr-1,j,k,nout)=gls(Istr-1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Istr-1,j)
 #   endif
           END DO
         END DO
@@ -219,39 +217,35 @@
 !
         DO k=0,N(ng)
           DO j=Jstr,Jend+1
-           grad(Lm(ng),j)=tke(Lm(ng),j  ,k,nstp)-                       &
-     &                    tke(Lm(ng),j-1,k,nstp)
+           grad(Iend  ,j)=tke(Iend  ,j  ,k,nstp)-                       &
+     &                    tke(Iend  ,j-1,k,nstp)
 #   ifdef MASKING
-           grad(Lm(ng),j)=grad(Lm(ng),j)*                               &
-     &                    GRID(ng)%vmask(Lm(ng),j)
+           grad(Iend  ,j)=grad(Iend  ,j)*GRID(ng)%vmask(Iend  ,j)
 #   endif
-           grad(Lm(ng)+1,j)=tke(Lm(ng)+1,j  ,k,nstp)-                   &
-     &                      tke(Lm(ng)+1,j-1,k,nstp)
+           grad(Iend+1,j)=tke(Iend+1,j  ,k,nstp)-                       &
+     &                    tke(Iend+1,j-1,k,nstp)
 #   ifdef MASKING
-           grad(Lm(ng)+1,j)=grad(Lm(ng)+1,j)*                           &
-     &                      GRID(ng)%vmask(Lm(ng)+1,j)
+           grad(Iend+1,j)=grad(Iend+1,j)*GRID(ng)%vmask(Iend+1,j)
 #   endif
-           gradL(Lm(ng),j)=gls(Lm(ng),j  ,k,nstp)-                      &
-     &                     gls(Lm(ng),j-1,k,nstp)
+           gradL(Iend  ,j)=gls(Iend  ,j  ,k,nstp)-                      &
+     &                     gls(Iend  ,j-1,k,nstp)
 #   ifdef MASKING
-           gradL(Lm(ng),j)=gradL(Lm(ng),j)*                             &
-     &                     GRID(ng)%vmask(Lm(ng),j)
+           gradL(Iend  ,j)=gradL(Iend  ,j)*GRID(ng)%vmask(Iend  ,j)
 #   endif
-           gradL(Lm(ng)+1,j)=gls(Lm(ng)+1,j  ,k,nstp)-                  &
-     &                       gls(Lm(ng)+1,j-1,k,nstp)
+           gradL(Iend+1,j)=gls(Iend+1,j  ,k,nstp)-                      &
+     &                     gls(Iend+1,j-1,k,nstp)
 #   ifdef MASKING
-           gradL(Lm(ng)+1,j)=gradL(Lm(ng)+1,j)*                         &
-     &                       GRID(ng)%vmask(Lm(ng)+1,j)
+           gradL(Iend+1,j)=gradL(Iend+1,j)*GRID(ng)%vmask(Iend+1,j)
 #   endif
           END DO
           DO j=Jstr,Jend
-            dKdt=tke(Lm(ng),j,k,nstp)-tke(Lm(ng),j,k,indx)
-            dKdx=tke(Lm(ng),j,k,indx)-tke(Lm(ng)-1,j,k,indx)
+            dKdt=tke(Iend,j,k,nstp)-tke(Iend,j,k,nout)
+            dKdx=tke(Iend,j,k,nout)-tke(Iend-1,j,k,nout)
             IF ((dKdt*dKdx).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(grad(Lm(ng),j)+grad(Lm(ng),j+1))).gt.0.0_r8) THEN
-              dKde=grad(Lm(ng),j  )
+            IF ((dKdt*(grad(Iend,j)+grad(Iend,j+1))).gt.0.0_r8) THEN
+              dKde=grad(Iend,j  )
             ELSE
-              dKde=grad(Lm(ng),j+1)
+              dKde=grad(Iend,j+1)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde,eps)
             Cx=dKdt*dKdx
@@ -260,25 +254,22 @@
 #   else
             Ce=0.0_r8
 #   endif
-            tke(Lm(ng)+1,j,k,indx)=(cff*tke(Lm(ng)+1,j,k,nstp)+         &
-     &                              Cx*tke(Lm(ng),j,k,indx)-            &
-     &                              MAX(Ce,0.0_r8)*                     &
-     &                                 grad(Lm(ng)+1,j  )-              &
-     &                              MIN(Ce,0.0_r8)*                     &
-     &                                 grad(Lm(ng)+1,j+1))/             &
-     &                             (cff+Cx)
+            tke(Iend+1,j,k,nout)=(cff*tke(Iend+1,j,k,nstp)+             &
+     &                            Cx *tke(Iend  ,j,k,nout)-             &
+     &                            MAX(Ce,0.0_r8)*grad(Iend+1,j  )-      &
+     &                            MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/     &
+     &                           (cff+Cx)
 #   ifdef MASKING
-            tke(Lm(ng)+1,j,k,indx)=tke(Lm(ng)+1,j,k,indx)*              &
-     &                             GRID(ng)%rmask(Lm(ng)+1,j)
+            tke(Iend+1,j,k,nout)=tke(Iend+1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
-            dKdt=gls(Lm(ng),j,k,nstp)-gls(Lm(ng),j,k,indx)
-            dKdx=gls(Lm(ng),j,k,indx)-gls(Lm(ng)-1,j,k,indx)
+            dKdt=gls(Iend,j,k,nstp)-gls(Iend  ,j,k,nout)
+            dKdx=gls(Iend,j,k,nout)-gls(Iend-1,j,k,nout)
             IF ((dKdt*dKdx).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(gradL(Lm(ng),j)+                                 &
-     &                 gradL(Lm(ng),j+1))).gt.0.0_r8) THEN
-              dKde=gradL(Lm(ng),j  )
+            IF ((dKdt*(gradL(Iend,j)+gradL(Iend,j+1))).gt.0.0_r8) THEN
+              dKde=gradL(Iend,j  )
             ELSE
-              dKde=gradL(Lm(ng),j+1)
+              dKde=gradL(Iend,j+1)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde,eps)
             Cx=dKdt*dKdx
@@ -287,58 +278,59 @@
 #   else
             Ce=0.0_r8
 #   endif
-            gls(Lm(ng)+1,j,k,indx)=(cff*gls(Lm(ng)+1,j,k,nstp)+         &
-     &                              Cx*gls(Lm(ng),j,k,indx)-            &
-     &                              MAX(Ce,0.0_r8)*                     &
-     &                                 gradL(Lm(ng)+1,j  )-             &
-     &                              MIN(Ce,0.0_r8)*                     &
-     &                                 gradL(Lm(ng)+1,j+1))/            &
-     &                             (cff+Cx)
+            gls(Iend+1,j,k,nout)=(cff*gls(Iend+1,j,k,nstp)+             &
+     &                            Cx *gls(Iend  ,j,k,nout)-             &
+     &                            MAX(Ce,0.0_r8)*gradL(Iend+1,j  )-     &
+     &                            MIN(Ce,0.0_r8)*gradL(Iend+1,j+1))/    &
+     &                           (cff+Cx)
 #   ifdef MASKING
-            gls(Lm(ng)+1,j,k,indx)=gls(Lm(ng)+1,j,k,indx)*              &
-     &                             GRID(ng)%rmask(Lm(ng)+1,j)
+            gls(Iend+1,j,k,nout)=gls(Iend+1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
           END DO
         END DO
+
 #  elif defined EAST_KGRADIENT
 !
 !  Eastern edge, gradient boundary condition.
 !
         DO k=0,N(ng)
           DO j=Jstr,Jend
-            tke(Lm(ng)+1,j,k,indx)=tke(Lm(ng),j,k,indx)
+            tke(Iend+1,j,k,nout)=tke(Iend,j,k,nout)
 #   ifdef MASKING
-            tke(Lm(ng)+1,j,k,indx)=tke(Lm(ng)+1,j,k,indx)*              &
-     &                             GRID(ng)%rmask(Lm(ng)+1,j)
+            tke(Iend+1,j,k,nout)=tke(Iend+1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
-            gls(Lm(ng)+1,j,k,indx)=gls(Lm(ng),j,k,indx)
+            gls(Iend+1,j,k,nout)=gls(Iend,j,k,nout)
 #   ifdef MASKING
-            gls(Lm(ng)+1,j,k,indx)=gls(Lm(ng)+1,j,k,indx)*              &
-     &                             GRID(ng)%rmask(Lm(ng)+1,j)
+            gls(Iend+1,j,k,nout)=gls(Iend+1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
           END DO
         END DO
+
 #  else
 !
 !  Eastern edge, closed boundary condition.
 !
         DO k=0,N(ng)
           DO j=Jstr,Jend
-            tke(Lm(ng)+1,j,k,indx)=tke(Lm(ng),j,k,indx)
+            tke(Iend+1,j,k,nout)=tke(Iend,j,k,nout)
 #   ifdef MASKING
-            tke(Lm(ng)+1,j,k,indx)=tke(Lm(ng)+1,j,k,indx)*              &
-     &                             GRID(ng)%rmask(Lm(ng)+1,j)
+            tke(Iend+1,j,k,nout)=tke(Iend+1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
-            gls(Lm(ng)+1,j,k,indx)=gls(Lm(ng),j,k,indx)
+            gls(Iend+1,j,k,nout)=gls(Iend,j,k,nout)
 #   ifdef MASKING
-            gls(Lm(ng)+1,j,k,indx)=gls(Lm(ng)+1,j,k,indx)*              &
-     &                             GRID(ng)%rmask(Lm(ng)+1,j)
+            gls(Iend+1,j,k,nout)=gls(Iend+1,j,k,nout)*                  &
+     &                           GRID(ng)%rmask(Iend+1,j)
 #   endif
           END DO
         END DO
 #  endif
       END IF
 # endif
+
 # ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -353,35 +345,35 @@
 !
         DO k=0,N(ng)
           DO i=Istr,Iend+1
-            grad(i,1)=tke(i  ,1,k,nstp)-                                &
-     &                tke(i-1,1,k,nstp)
+            grad(i,Jstr  )=tke(i  ,Jstr  ,k,nstp)-                      &
+     &                     tke(i-1,Jstr  ,k,nstp)
 #   ifdef MASKING
-            grad(i,1)=grad(i,1)*GRID(ng)%umask(i,1)
+            grad(i,Jstr  )=grad(i,Jstr  )*GRID(ng)%umask(i,Jstr  )
 #   endif
-            grad(i,0)=tke(i  ,0,k,nstp)-                                &
-     &                tke(i-1,0,k,nstp)
+            grad(i,Jstr-1)=tke(i  ,Jstr-1,k,nstp)-                      &
+     &                     tke(i-1,Jstr-1,k,nstp)
 #   ifdef MASKING
-            grad(i,0)=grad(i,0)*GRID(ng)%umask(i,0)
+            grad(i,Jstr-1)=grad(i,Jstr-1)*GRID(ng)%umask(i,Jstr-1)
 #   endif
-            gradL(i,1)=gls(i  ,1,k,nstp)-                               &
-     &                 gls(i-1,1,k,nstp)
+            gradL(i,Jstr  )=gls(i  ,Jstr  ,k,nstp)-                     &
+     &                      gls(i-1,Jstr  ,k,nstp)
 #   ifdef MASKING
-            gradL(i,1)=gradL(i,1)*GRID(ng)%umask(i,1)
+            gradL(i,Jstr  )=gradL(i,Jstr  )*GRID(ng)%umask(i,Jstr  )
 #   endif
-            gradL(i,0)=gls(i  ,0,k,nstp)-                               &
-     &                 gls(i-1,0,k,nstp)
+            gradL(i,Jstr-1)=gls(i  ,Jstr-1,k,nstp)-                     &
+     &                      gls(i-1,Jstr-1,k,nstp)
 #   ifdef MASKING
-            gradL(i,0)=gradL(i,0)*GRID(ng)%umask(i,0)
+            gradL(i,Jstr-1)=gradL(i,Jstr-1)*GRID(ng)%umask(i,Jstr-1)
 #   endif
           END DO
           DO i=Istr,Iend
-            dKdt=tke(i,1,k,nstp)-tke(i,1,k,indx)
-            dKde=tke(i,1,k,indx)-tke(i,2,k,indx)
+            dKdt=tke(i,Jstr,k,nstp)-tke(i,Jstr,k,nout)
+            dKde=tke(i,Jstr,k,nout)-tke(i,2,k,nout)
             IF ((dKdt*dKde).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(grad(i,1)+grad(i+1,1))).gt.0.0_r8) THEN
-              dKdx=grad(i  ,1)
+            IF ((dKdt*(grad(i,Jstr)+grad(i+1,Jstr))).gt.0.0_r8) THEN
+              dKdx=grad(i  ,Jstr)
             ELSE
-              dKdx=grad(i+1,1)
+              dKdx=grad(i+1,Jstr)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde, eps)
 #   ifdef RADIATION_2D
@@ -390,24 +382,22 @@
             Cx=0.0_r8
 #   endif
             Ce=dKdt*dKde
-            tke(i,0,k,indx)=(cff*tke(i,0,k,nstp)+                       &
-     &                       Ce*tke(i,1,k,indx)-                        &
-     &                       MAX(Cx,0.0_r8)*                            &
-     &                          grad(i  ,0)-                            &
-     &                       MIN(Cx,0.0_r8)*                            &
-     &                          grad(i+1,0))/                           &
-     &                      (cff+Ce)
+            tke(i,Jstr-1,k,nout)=(cff*tke(i,Jstr-1,k,nstp)+             &
+     &                            Ce *tke(i,Jstr  ,k,nout)-             &
+     &                            MAX(Cx,0.0_r8)*grad(i  ,Jstr-1)-      &
+     &                            MIN(Cx,0.0_r8)*grad(i+1,Jstr-1))/     &
+     &                           (cff+Ce)
 #   ifdef MASKING
-            tke(i,0,k,indx)=tke(i,0,k,indx)*                            &
-     &                      GRID(ng)%rmask(i,0)
+            tke(i,Jstr-1,k,nout)=tke(i,Jstr-1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
-            dKdt=gls(i,1,k,nstp)-gls(i,1,k,indx)
-            dKde=gls(i,1,k,indx)-gls(i,2,k,indx)
+            dKdt=gls(i,Jstr,k,nstp)-gls(i,Jstr  ,k,nout)
+            dKde=gls(i,Jstr,k,nout)-gls(i,Jstr+1,k,nout)
             IF ((dKdt*dKde).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(gradL(i,1)+gradL(i+1,1))).gt.0.0_r8) THEN
-              dKdx=gradL(i  ,1)
+            IF ((dKdt*(gradL(i,Jstr)+gradL(i+1,Jstr))).gt.0.0_r8) THEN
+              dKdx=gradL(i  ,Jstr)
             ELSE
-              dKdx=gradL(i+1,1)
+              dKdx=gradL(i+1,Jstr)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde,eps)
 #   ifdef RADIATION_2D
@@ -416,52 +406,52 @@
             Cx=0.0_r8
 #   endif
             Ce=dKdt*dKde
-            gls(i,0,k,indx)=(cff*gls(i,0,k,nstp)+                       &
-     &                       Ce*gls(i,1,k,indx)-                        &
-     &                       MAX(Cx,0.0_r8)*                            &
-     &                          gradL(i  ,0)-                           &
-     &                       MIN(Cx,0.0_r8)*                            &
-     &                          gradL(i+1,0))/                          &
-     &                      (cff+Ce)
+            gls(i,Jstr-1,k,nout)=(cff*gls(i,Jstr-1,k,nstp)+             &
+     &                            Ce *gls(i,Jstr  ,k,nout)-             &
+     &                            MAX(Cx,0.0_r8)*gradL(i  ,Jstr-1)-     &
+     &                            MIN(Cx,0.0_r8)*gradL(i+1,Jstr-1))/    &
+     &                           (cff+Ce)
 #   ifdef MASKING
-            gls(i,0,k,indx)=gls(i,0,k,indx)*                            &
-     &                      GRID(ng)%rmask(i,0)
+            gls(i,Jstr-1,k,nout)=gls(i,Jstr-1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
           END DO
         END DO
+
 #  elif defined SOUTH_KGRADIENT
 !
 !  Southern edge, gradient boundary condition.
 !
         DO k=0,N(ng)
           DO i=Istr,Iend
-            tke(i,0,k,indx)=tke(i,1,k,indx)
+            tke(i,Jstr-1,k,nout)=tke(i,Jstr,k,nout)
 #   ifdef MASKING
-            tke(i,0,k,indx)=tke(i,0,k,indx)*                            &
-     &                      GRID(ng)%rmask(i,0)
+            tke(i,Jstr-1,k,nout)=tke(i,Jstr-1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
-            gls(i,0,k,indx)=gls(i,1,k,indx)
+            gls(i,Jstr-1,k,nout)=gls(i,Jstr,k,nout)
 #   ifdef MASKING
-            gls(i,0,k,indx)=gls(i,0,k,indx)*                            &
-     &                      GRID(ng)%rmask(i,0)
+            gls(i,Jstr-1,k,nout)=gls(i,Jstr-1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
           END DO
         END DO
+
 #  else
 !
 !  Southern edge, closed boundary condition.
 !
         DO k=0,N(ng)
           DO i=Istr,Iend
-            tke(i,0,k,indx)=tke(i,1,k,indx)
+            tke(i,Jstr-1,k,nout)=tke(i,Jstr,k,nout)
 #   ifdef MASKING
-            tke(i,0,k,indx)=tke(i,0,k,indx)*                            &
-     &                      GRID(ng)%rmask(i,0)
+            tke(i,Jstr-1,k,nout)=tke(i,Jstr-1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
-            gls(i,0,k,indx)=gls(i,1,k,indx)
+            gls(i,Jstr-1,k,nout)=gls(i,Jstr,k,nout)
 #   ifdef MASKING
-            gls(i,0,k,indx)=gls(i,0,k,indx)*                            &
-     &                      GRID(ng)%rmask(i,0)
+            gls(i,Jstr-1,k,nout)=gls(i,Jstr-1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jstr-1)
 #   endif
           END DO
         END DO
@@ -480,39 +470,35 @@
 !
         DO k=0,N(ng)
           DO i=Istr,Iend+1
-            grad(i,Mm(ng))=tke(i  ,Mm(ng),k,nstp)-                      &
-     &                     tke(i-1,Mm(ng),k,nstp)
+            grad(i,Jend  )=tke(i  ,Jend  ,k,nstp)-                      &
+     &                     tke(i-1,Jend  ,k,nstp)
 #   ifdef MASKING
-            grad(i,Mm(ng))=grad(i,Mm(ng))*                              &
-     &                     GRID(ng)%umask(i,Mm(ng))
+            grad(i,Jend  )=grad(i,Jend  )*GRID(ng)%umask(i,Jend  )
 #   endif
-            grad(i,Mm(ng)+1)=tke(i  ,Mm(ng)+1,k,nstp)-                  &
-     &                       tke(i-1,Mm(ng)+1,k,nstp)
+            grad(i,Jend+1)=tke(i  ,Jend+1,k,nstp)-                      &
+     &                     tke(i-1,Jend+1,k,nstp)
 #   ifdef MASKING
-            grad(i,Mm(ng)+1)=grad(i,Mm(ng)+1)*                          &
-     &                       GRID(ng)%umask(i,Mm(ng)+1)
+            grad(i,Jend+1)=grad(i,Jend+1)*GRID(ng)%umask(i,Jend+1)
 #   endif
-            gradL(i,Mm(ng))=gls(i  ,Mm(ng),k,nstp)-                     &
-     &                      gls(i-1,Mm(ng),k,nstp)
+            gradL(i,Jend  )=gls(i  ,Jend  ,k,nstp)-                     &
+     &                      gls(i-1,Jend  ,k,nstp)
 #   ifdef MASKING
-            gradL(i,Mm(ng))=gradL(i,Mm(ng))*                            &
-     &                      GRID(ng)%umask(i,Mm(ng))
+            gradL(i,Jend  )=gradL(i,Jend  )*GRID(ng)%umask(i,Jend  )
 #   endif
-            gradL(i,Mm(ng)+1)=gls(i  ,Mm(ng)+1,k,nstp)-                 &
-     &                        gls(i-1,Mm(ng)+1,k,nstp)
+            gradL(i,Jend+1)=gls(i  ,Jend+1,k,nstp)-                     &
+     &                      gls(i-1,Jend+1,k,nstp)
 #   ifdef MASKING
-            gradL(i,Mm(ng)+1)=gradL(i,Mm(ng)+1)*                        &
-     &                        GRID(ng)%umask(i,Mm(ng)+1)
+            gradL(i,Jend+1)=gradL(i,Jend+1)*GRID(ng)%umask(i,Jend+1)
 #   endif
           END DO
           DO i=Istr,Iend
-            dKdt=tke(i,Mm(ng),k,nstp)-tke(i,Mm(ng),k,indx)
-            dKde=tke(i,Mm(ng),k,indx)-tke(i,Mm(ng)-1,k,indx)
+            dKdt=tke(i,Jend,k,nstp)-tke(i,Jend  ,k,nout)
+            dKde=tke(i,Jend,k,nout)-tke(i,Jend-1,k,nout)
             IF ((dKdt*dKde).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(grad(i,Mm(ng))+grad(i+1,Mm(ng)))).gt.0.0_r8) THEN
-              dKdx=grad(i  ,Mm(ng))
+            IF ((dKdt*(grad(i,Jend)+grad(i+1,Jend))).gt.0.0_r8) THEN
+              dKdx=grad(i  ,Jend)
             ELSE
-              dKdx=grad(i+1,Mm(ng))
+              dKdx=grad(i+1,Jend)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde,eps)
 #   ifdef RADIATION_2D
@@ -521,25 +507,22 @@
             Cx=0.0_r8
 #   endif
             Ce=dKdt*dKde
-            tke(i,Mm(ng)+1,k,indx)=(cff*tke(i,Mm(ng)+1,k,nstp)+         &
-     &                              Ce*tke(i,Mm(ng),k,indx)-            &
-     &                              MAX(Cx,0.0_r8)*                     &
-     &                                 grad(i  ,Mm(ng)+1)-              &
-     &                              MIN(Cx,0.0_r8)*                     &
-     &                                 grad(i+1,Mm(ng)+1))/             &
-     &                             (cff+Ce)
+            tke(i,Jend+1,k,nout)=(cff*tke(i,Jend+1,k,nstp)+             &
+     &                            Ce *tke(i,Jend  ,k,nout)-             &
+     &                            MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-      &
+     &                            MIN(Cx,0.0_r8)*grad(i+1,Jend+1))/     &
+     &                           (cff+Ce)
 #   ifdef MASKING
-            tke(i,Mm(ng)+1,k,indx)=tke(i,Mm(ng)+1,k,indx)*              &
-     &                             GRID(ng)%rmask(i,Mm(ng)+1)
+            tke(i,Jend+1,k,nout)=tke(i,Jend+1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jend+1)
 #   endif
-            dKdt=gls(i,Mm(ng),k,nstp)-gls(i,Mm(ng),k,indx)
-            dKde=gls(i,Mm(ng),k,indx)-gls(i,Mm(ng)-1,k,indx)
+            dKdt=gls(i,Jend,k,nstp)-gls(i,Jend  ,k,nout)
+            dKde=gls(i,Jend,k,nout)-gls(i,Jend-1,k,nout)
             IF ((dKdt*dKde).lt.0.0_r8) dKdt=0.0_r8
-            IF ((dKdt*(gradL(i  ,Mm(ng))+                               &
-     &                 gradL(i+1,Mm(ng)))).gt.0.0_r8) THEN
-              dKdx=gradL(i  ,Mm(ng))
+            IF ((dKdt*(gradL(i  ,Jend)+gradL(i+1,Jend))).gt.0.0_r8) THEN
+              dKdx=gradL(i  ,Jend)
             ELSE
-              dKdx=gradL(i+1,Mm(ng))
+              dKdx=gradL(i+1,Jend)
             END IF
             cff=MAX(dKdx*dKdx+dKde*dKde,eps)
 #   ifdef RADIATION_2D
@@ -548,58 +531,59 @@
             Cx=0.0_r8
 #   endif
             Ce=dKdt*dKde
-            gls(i,Mm(ng)+1,k,indx)=(cff*gls(i,Mm(ng)+1,k,nstp)+         &
-     &                              Ce*gls(i,Mm(ng),k,indx)-            &
-     &                              MAX(Cx,0.0_r8)*                     &
-     &                                 gradL(i  ,Mm(ng)+1)-             &
-     &                              MIN(Cx,0.0_r8)*                     &
-     &                                 gradL(i+1,Mm(ng)+1))/            &
-     &                             (cff+Ce)
+            gls(i,Jend+1,k,nout)=(cff*gls(i,Jend+1,k,nstp)+             &
+     &                            Ce *gls(i,Jend  ,k,nout)-             &
+     &                            MAX(Cx,0.0_r8)*gradL(i  ,Jend+1)-     &
+     &                            MIN(Cx,0.0_r8)*gradL(i+1,Jend+1))/    &
+     &                           (cff+Ce)
 #   ifdef MASKING
-            gls(i,Mm(ng)+1,k,indx)=gls(i,Mm(ng)+1,k,indx)*              &
-     &                             GRID(ng)%rmask(i,Mm(ng)+1)
+            gls(i,Jend+1,k,nout)=gls(i,Jend+1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jend+1)
 #   endif
           END DO
         END DO
+
 #  elif defined NORTH_KGRADIENT
 !
 !  Northern edge, gradient boundary condition.
 !
         DO k=0,N(ng)
           DO i=Istr,Iend
-            tke(i,Mm(ng)+1,k,indx)=tke(i,Mm(ng),k,indx)
+            tke(i,Jend+1,k,nout)=tke(i,Jend,k,nout)
 #   ifdef MASKING
-            tke(i,Mm(ng)+1,k,indx)=tke(i,Mm(ng)+1,k,indx)*              &
-     &                             GRID(ng)%rmask(i,Mm(ng)+1)
+            tke(i,Jend+1,k,nout)=tke(i,Jend+1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jend+1)
 #   endif
-            gls(i,Mm(ng)+1,k,indx)=gls(i,Mm(ng),k,indx)
+            gls(i,Jend+1,k,nout)=gls(i,Jend,k,nout)
 #   ifdef MASKING
-            gls(i,Mm(ng)+1,k,indx)=gls(i,Mm(ng)+1,k,indx)*              &
-     &                             GRID(ng)%rmask(i,Mm(ng)+1)
+            gls(i,Jend+1,k,nout)=gls(i,Jend+1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jend+1)
 #   endif
           END DO
         END DO
+
 #  else
 !
 !  Northern edge, closed boundary condition.
 !
         DO k=0,N(ng)
           DO i=Istr,Iend
-            tke(i,Mm(ng)+1,k,indx)=tke(i,Mm(ng),k,indx)
+            tke(i,Jend+1,k,nout)=tke(i,Jend,k,nout)
 #   ifdef MASKING
-            tke(i,Mm(ng)+1,k,indx)=tke(i,Mm(ng)+1,k,indx)*              &
-     &                             GRID(ng)%rmask(i,Mm(ng)+1)
+            tke(i,Jend+1,k,nout)=tke(i,Jend+1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jend+1)
 #   endif
-            gls(i,Mm(ng)+1,k,indx)=gls(i,Mm(ng),k,indx)
+            gls(i,Jend+1,k,nout)=gls(i,Jend,k,nout)
 #   ifdef MASKING
-            gls(i,Mm(ng)+1,k,indx)=gls(i,Mm(ng)+1,k,indx)*              &
-     &                             GRID(ng)%rmask(i,Mm(ng)+1)
+            gls(i,Jend+1,k,nout)=gls(i,Jend+1,k,nout)*                  &
+     &                           GRID(ng)%rmask(i,Jend+1)
 #   endif
           END DO
         END DO
 #  endif
       END IF
 # endif
+
 # if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -608,39 +592,38 @@
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
         DO k=0,N(ng)
-          tke(0,0,k,indx)=0.5_r8*(tke(1,0,k,indx)+                      &
-     &                            tke(0,1,k,indx))
-          gls(0,0,k,indx)=0.5_r8*(gls(1,0,k,indx)+                      &
-     &                            gls(0,1,k,indx))
+          tke(Istr-1,Jstr-1,k,nout)=0.5_r8*(tke(Istr  ,Jstr-1,k,nout)+  &
+     &                                      tke(Istr-1,Jstr  ,k,nout))
+          gls(Istr-1,Jstr-1,k,nout)=0.5_r8*(gls(Istr  ,Jstr-1,k,nout)+  &
+     &                                      gls(Istr-1,Jstr  ,k,nout))
         END DO
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
         DO k=0,N(ng)
-          tke(Lm(ng)+1,0,k,indx)=0.5_r8*(tke(Lm(ng)  ,0,k,indx)+        &
-     &                                   tke(Lm(ng)+1,1,k,indx))
-          gls(Lm(ng)+1,0,k,indx)=0.5_r8*(gls(Lm(ng)  ,0,k,indx)+        &
-     &                                   gls(Lm(ng)+1,1,k,indx))
+          tke(Iend+1,Jstr-1,k,nout)=0.5_r8*(tke(Iend  ,Jstr-1,k,nout)+  &
+     &                                      tke(Iend+1,Jstr  ,k,nout))
+          gls(Iend+1,Jstr-1,k,nout)=0.5_r8*(gls(Iend  ,Jstr-1,k,nout)+  &
+     &                                      gls(Iend+1,Jstr  ,k,nout))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
         DO k=0,N(ng)
-          tke(0,Mm(ng)+1,k,indx)=0.5_r8*(tke(1,Mm(ng)+1,k,indx)+        &
-     &                                   tke(0,Mm(ng)  ,k,indx))
-          gls(0,Mm(ng)+1,k,indx)=0.5_r8*(gls(1,Mm(ng)+1,k,indx)+        &
-     &                                   gls(0,Mm(ng)  ,k,indx))
+          tke(Istr-1,Jend+1,k,nout)=0.5_r8*(tke(Istr  ,Jend+1,k,nout)+  &
+     &                                      tke(Istr-1,Jend  ,k,nout))
+          gls(Istr-1,Jend+1,k,nout)=0.5_r8*(gls(Istr  ,Jend+1,k,nout)+  &
+     &                                      gls(Istr-1,Jend  ,k,nout))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
         DO k=0,N(ng)
-          tke(Lm(ng)+1,Mm(ng)+1,k,indx)=0.5_r8*                         &
-     &                                  (tke(Lm(ng)  ,Mm(ng)+1,k,indx)+ &
-     &                                   tke(Lm(ng)+1,Mm(ng)  ,k,indx))
-          gls(Lm(ng)+1,Mm(ng)+1,k,indx)=0.5_r8*                         &
-     &                                  (gls(Lm(ng)  ,Mm(ng)+1,k,indx)+ &
-     &                                   gls(Lm(ng)+1,Mm(ng)  ,k,indx))
+          tke(Iend+1,Jend+1,k,nout)=0.5_r8*(tke(Iend  ,Jend+1,k,nout)+  &
+     &                                      tke(Iend+1,Jend  ,k,nout))
+          gls(Iend+1,Jend+1,k,nout)=0.5_r8*(gls(Iend  ,Jend+1,k,nout)+  &
+     &                                      gls(Iend+1,Jend  ,k,nout))
         END DO
       END IF
 # endif
+
       RETURN
       END SUBROUTINE tkebc_tile
 #endif

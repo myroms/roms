@@ -2,7 +2,7 @@
 !  ROMS/TOMS Cohesive and Non-cohesive Sediment Model Parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.0                          ===
+!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -92,8 +92,9 @@
 ! Logical switch (TRUE/FALSE) to activate writing of cohesive sediment
 ! into HISTORY output file.
 
-Hout(idmud)  == T T                             ! suspended concentration
-Hout(iMfrac) == T T                             ! bed layer fraction
+Hout(idmud)  == T                               ! suspended concentration
+Hout(iMfrac) == T                               ! bed layer fraction
+Hout(iMmass) == T                               ! bed layer mass
 
 !------------------------------------------------------------------------------
 ! Non-cohesive Sediment Parameters, [1:NNS,1:Ngrids] values expected.
@@ -147,25 +148,16 @@ SAND_AKT_BAK == 5.0d-6                          ! m2/s
 
 Hout(idsand) == T                               ! suspended concentration
 Hout(iSfrac) == T                               ! bed layer fraction
+Hout(iSmass) == T                               ! bed layer mass
 
 !------------------------------------------------------------------------------
 ! Bed layer and bottom sediment parameters, [1:Ngrids] values expected.
 !------------------------------------------------------------------------------
 
  Hout(ithck) == T                               ! sediment layer thickness
- Hout(iaged) == F                               ! sediment layer age
- Hout(iporo) == F                               ! sediment layer porosity
+ Hout(iaged) == T                               ! sediment layer age
+ Hout(iporo) == T                               ! sediment layer porosity
  Hout(idiff) == F                               ! biodiffusivity
-
- Hout(irlen) == F                               ! bottom ripple length
- Hout(irhgt) == F                               ! bottom ripple height
- Hout(ishgt) == F                               ! bottom saltation height
- Hout(izNik) == F                               ! Nikaradse bottom roughness
- Hout(izbio) == F                               ! biological bottom roughness
- Hout(izbld) == F                               ! bed load bottom roughness
- Hout(izbfm) == F                               ! bed form bottom roughness
- Hout(izapp) == F                               ! apparent bottom roughness
-
 
 !
 !  GLOSSARY:
@@ -230,6 +222,10 @@ Hout(iSfrac) == T                               ! bed layer fraction
 !                  class fraction composition of each bed layer into HISTORY
 !                  NetCDF file, HOUT(idfrac(i)) with i=1,NCS.
 !
+!  Hout(iMmass)  Logical switches to activate writing of cohesive sediment
+!                  mass of each bed layer into HISTORY NetCDF file,
+!                  HOUT(idsed(i)) with i=1,NCS.
+!
 !------------------------------------------------------------------------------
 ! Suspended Non-cohesive Sediment KEYWORDS, [1:NNS,1:Ngrids] values expected.
 !------------------------------------------------------------------------------
@@ -275,6 +271,10 @@ Hout(iSfrac) == T                               ! bed layer fraction
 !                  class fraction composition of each bed layer into HISTORY
 !                  NetCDF file, HOUT(idfrac(i)) with i=NCS+1,NST.
 !
+!  Hout(iSmass)  Logical switches to activate writing of non-cohesive sediment
+!                  mass of each bed layer into HISTORY NetCDF file,
+!                  HOUT(idsed(i)) with i=NCS+1,NST.
+!
 !------------------------------------------------------------------------------
 ! Bed layer and bottom sediment KEYWORDS, [1:Ngrids] values expected.
 !------------------------------------------------------------------------------
@@ -286,20 +286,3 @@ Hout(iSfrac) == T                               ! bed layer fraction
 !  Hout(iporo)   Sediment layer porosity.
 !
 !  Hout(idiff)   Biodiffusivity at eh bottom of each layer.
-!
-!  Hout(irlen)   Bottom sediment ripple length.
-!
-!  Hout(irhgt)   Bottom sediment ripple height.
-!
-!  Hout(ishgt)   Bottom sediment saltation height.
-!
-!  Hout(izNik)   Nikaradse bottom roughness.
-!
-!  Hout(izbio)   Biological bottom roughness.
-!
-!  Hout(izbld)   Bedload bottom roughness.
-!
-!  Hout(izbfm)   Bedform bottom roughness.
-!
-!  Hout(izapp)   Apparent bottom roughness.
-!

@@ -25,7 +25,7 @@
       CALL wclock_off (ng, 4)
 #endif
       RETURN
-      end
+      END SUBROUTINE set_data
 !
 !***********************************************************************
       SUBROUTINE set_data_tile (ng, tile, Istr, Iend, Jstr, Jend,       &
@@ -87,6 +87,7 @@
 #include "set_bounds.h"
 
 #ifdef SOLVE3D
+
 # ifdef CLOUDS
 !
 !-----------------------------------------------------------------------
@@ -105,8 +106,9 @@
      &                     update)
 #  endif
 # endif
-# if defined BULK_FLUXES || (defined SHORTWAVE && defined ANA_SRFLUX && \
-                             defined ALBEDO)
+
+# if defined BULK_FLUXES || defined ECOSIM || \
+    (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
 !-----------------------------------------------------------------------
 !  Set surface air temperature (degC).
@@ -121,6 +123,10 @@
      &                     FORCES(ng)%Tair,                             &
      &                     update)
 #  endif
+# endif
+
+# if defined BULK_FLUXES || defined ECOSIM || \
+     (defined SHORTWAVE && defined ANA_SRFLUX && defined ALBEDO)
 !
 !-----------------------------------------------------------------------
 !  Set surface air relative or specific humidity.
@@ -136,6 +142,7 @@
      &                     update)
 #  endif
 # endif
+
 # ifdef SHORTWAVE
 !
 !-----------------------------------------------------------------------
@@ -159,23 +166,38 @@
       CALL ana_srflux (ng, tile)
 #  endif
 # endif
-# ifdef BULK_FLUXES
+
+# if !defined LONGWAVE && defined BULK_FLUXES
 !
 !-----------------------------------------------------------------------
-!  Set data for bulk parameterization of surface fluxes.
-!-----------------------------------------------------------------------
-#  ifndef LONGWAVE
-!
 !  Surface net longwave radiation (degC m/s).
+!-----------------------------------------------------------------------
 !
       CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idLrad,          &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%lrflxG,                           &
      &                     FORCES(ng)%lrflx,                            &
      &                     update)
-#  endif
+# endif
+
+# if defined LONGWAVE_OUT && defined BULK_FLUXES
 !
+!-----------------------------------------------------------------------
+!  Surface downwelling longwave radiation (degC m/s).
+!-----------------------------------------------------------------------
+!
+      CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idLdwn,          &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%lrflxG,                           &
+     &                     FORCES(ng)%lrflx,                            &
+     &                     update)
+# endif
+
+# if defined BULK_FLUXES || defined ECOSIM
+!
+!-----------------------------------------------------------------------
 !  Set surface air pressure (mb).
+!-----------------------------------------------------------------------
 !
 #  ifdef ANA_PAIR
       CALL ana_pair (ng, tile)
@@ -187,7 +209,9 @@
      &                     update)
 #  endif
 !
+!-----------------------------------------------------------------------
 !  Set surface winds (m/s).
+!-----------------------------------------------------------------------
 !
 #  ifdef ANA_WINDS
       CALL ana_winds (ng, tile)
@@ -224,8 +248,13 @@
       END IF
 #   endif
 #  endif
+# endif
+
+# ifdef BULK_FLUXES
 !
+!-----------------------------------------------------------------------
 !  Set rain fall rate (kg/m2/s).
+!-----------------------------------------------------------------------
 !
 #  ifdef ANA_RAIN
       CALL ana_rain (ng, tile)
@@ -236,7 +265,9 @@
      &                     FORCES(ng)%rain,                             &
      &                     update)
 #  endif
-# else
+# endif
+
+# ifndef BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface net heat flux (degC m/s).
@@ -252,6 +283,7 @@
      &                     update)
 #  endif
 # endif
+
 # ifdef QCORRECTION
 !
 !-----------------------------------------------------------------------
@@ -288,6 +320,7 @@
      &                     FORCES(ng)%btflx (:,:,itemp),                &
      &                     update)
 # endif
+
 # ifdef SALINITY
 !
 !-----------------------------------------------------------------------
@@ -303,6 +336,7 @@
      &                     FORCES(ng)%stflx (:,:,isalt),                &
      &                     update)
 #  endif
+
 #  if defined SCORRECTION || defined SRELAXATION
 !
 !-----------------------------------------------------------------------
@@ -334,6 +368,7 @@
      &                     update)
 #  endif
 # endif
+
 # if defined SEDIMENT || defined BIOLOGY
 !
 !-----------------------------------------------------------------------
@@ -351,26 +386,28 @@
      &                       update)
 #  endif
 #  ifdef ANA_BPFLUX
-      CALL ana_btflux (ng, tile, itrc)
+        CALL ana_btflux (ng, tile, itrc)
 #  else
-      CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idTbot(itrc),    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     FORCES(ng)%btflxG(:,:,:,itrc),               &
-     &                     FORCES(ng)%btflx (:,:,itrc),                 &
-     &                     update)
+        CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idTbot(itrc),  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       FORCES(ng)%btflxG(:,:,:,itrc),             &
+     &                       FORCES(ng)%btflx (:,:,itrc),               &
+     &                       update)
 #  endif
       END DO
 # endif
 #endif
-#ifndef BULK_FLUXES
+
+#ifndef AIR_OCEAN
+# ifndef BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface momentum flux (m2/s2).
 !-----------------------------------------------------------------------
 !
-# ifdef ANA_SMFLUX
+#  ifdef ANA_SMFLUX
       CALL ana_smflux (ng, tile)
-# else
+#  else
       CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idUsms,          &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%sustrG,                           &
@@ -381,7 +418,7 @@
      &                     FORCES(ng)%svstrG,                           &
      &                     FORCES(ng)%svstr,                            &
      &                     update)
-#  ifdef CURVGRID
+#   ifdef CURVGRID
 !
 !  If input point wind stress, rotate to curvilinear grid.  Notice
 !  that rotation is done at RHO-points. It does not matter.
@@ -402,9 +439,11 @@
           END DO
         END DO
       END IF
+#   endif
 #  endif
 # endif
 #endif
+
 #ifdef BBL_MODEL
 !
 !-----------------------------------------------------------------------
@@ -414,11 +453,19 @@
 # ifdef ANA_WWAVE
       CALL ana_wwave (ng, tile)
 # else
+#  ifdef SWAN
+      CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idWorb,          &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     FORCES(ng)%Ub_swanG,                           &
+     &                     FORCES(ng)%Ub_swan,                            &
+     &                     update)
+#  else
       CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idWamp,          &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%AwaveG,                           &
      &                     FORCES(ng)%Awave,                            &
      &                     update)
+#  endif
       CALL set_2dfld_tile (ng, Istr, Iend, Jstr, Jend, idWdir,          &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%DwaveG,                           &
@@ -444,6 +491,17 @@
 #  endif
 # endif
 #endif
+
+#if defined ECOSIM && defined SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Compute spectral irradiance and cosine of average zenith angle of
+!  downwelling spectral photons.
+!-----------------------------------------------------------------------
+!
+      CALL ana_specir (ng, tile)
+#endif     
+
 #ifdef ANA_SPINNING
 !
 !-----------------------------------------------------------------------
@@ -453,6 +511,7 @@
 !
       CALL ana_spinning (ng, tile)
 #endif
+
 #if defined UV_PSOURCE || defined TS_PSOURCE
 !
 !-----------------------------------------------------------------------
@@ -479,23 +538,26 @@
 #   endif
 #  endif
 #  if defined TS_PSOURCE && defined SOLVE3D
-        DO itrc=1,NAT
-          CALL set_ngfld (ng, idRtrc(itrc), 1, Msrc, N(ng),             &
-     &                    1, Nsrc(ng), N(ng),                           &
-     &                    SOURCES(ng) % TsrcG(1,1,1,itrc),              &
-     &                    SOURCES(ng) % Tsrc(1,1,itrc),                 &
-     &                    update)
-          IF (.not.update) THEN
-            DO i=1,Nsrc(ng)
-              SOURCES(ng) % Lsrc(i,itrc)=.false.
-            END DO
-            exit_flag=0
+        DO itrc=1,NT(ng)
+          IF (SOURCES(ng)%Ltracer(itrc)) THEN
+            CALL set_ngfld (ng, idRtrc(itrc), 1, Msrc, N(ng),           &
+     &                      1, Nsrc(ng), N(ng),                         &
+     &                      SOURCES(ng) % TsrcG(1,1,1,itrc),            &
+     &                      SOURCES(ng) % Tsrc(1,1,itrc),               &
+     &                      update)
+            IF (.not.update) THEN
+              DO i=1,Nsrc(ng)
+                SOURCES(ng) % Lsrc(i,itrc)=.false.
+              END DO
+              exit_flag=0
+            END IF
           END IF
         END DO
 #  endif
 # endif
       END IF
 #endif
+
 #ifdef OBC
 !
 !-----------------------------------------------------------------------
@@ -690,6 +752,7 @@
 #  endif
 # endif
 #endif
+
 #ifdef ZCLIMATOLOGY
 !
 !-----------------------------------------------------------------------
@@ -706,6 +769,7 @@
      &                     update)
 # endif
 #endif
+
 #ifdef M2CLIMATOLOGY
 !
 !-----------------------------------------------------------------------
@@ -727,6 +791,7 @@
      &                     update)
 # endif
 #endif
+
 #if defined SOLVE3D && defined TCLIMATOLOGY
 !
 !-----------------------------------------------------------------------
@@ -745,6 +810,7 @@
       END DO
 # endif
 #endif
+
 #if defined SOLVE3D && defined M3CLIMATOLOGY
 !
 !-----------------------------------------------------------------------
@@ -766,6 +832,7 @@
      &                     update)
 # endif
 #endif
+
 #if defined NUDGING_SSH
 !
 !-----------------------------------------------------------------------
@@ -789,6 +856,7 @@
         END IF
       END IF
 #endif
+
 #ifdef SOLVE3D
 # if defined NUDGING_SST || defined ASSIMILATION_SST
 !
@@ -850,6 +918,7 @@
         END IF
       END IF
 # endif
+
 # if defined NUDGING_T
 !
 !-----------------------------------------------------------------------
@@ -875,6 +944,7 @@
         END IF
       END DO
 # endif
+
 # if defined NUDGING_UVsur || defined ASSIMILATION_UVsur
 !
 !-----------------------------------------------------------------------
@@ -962,11 +1032,13 @@
           END DO
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
           CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj, OBS(ng)%EobsUV)
+     &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+     &                            OBS(ng)%EobsUV)
 # endif
         END IF
       END IF
 # endif
+
 # ifdef NUDGING_UV
 !
 !-----------------------------------------------------------------------

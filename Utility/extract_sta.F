@@ -82,7 +82,7 @@
       real(r8), parameter :: Aspv = 0.0_r8
 
       real(r8) :: Xgrd, Xoff, Ygrd, Yoff
-      real(r8) :: dz, p1, p2, q1, q2, r1, r2, wsum
+      real(r8) :: p1, p2, q1, q2, r1, r2, wsum
       real(r8) :: w111, w211, w121, w221, w112, w212, w122, w222
 
       real(r8), dimension(Npos) :: bounded
@@ -147,7 +147,7 @@
             w121=w121*GRID(ng)%rmask(i1,j2)
             w221=w221*GRID(ng)%rmask(i2,j2)
             wsum=w111+w211+w121+w221
-            if (wsum.gt.0.0_r8) then
+            IF (wsum.gt.0.0_r8) THEN
               wsum=1.0_r8/wsum
               w111=w111*wsum 
               w211=w211*wsum

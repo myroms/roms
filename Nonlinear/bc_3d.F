@@ -23,7 +23,7 @@
       CONTAINS
 !
       SUBROUTINE bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 !
 !=======================================================================
 !                                                                      !
@@ -42,12 +42,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -64,16 +64,16 @@
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO j=Jstr,Jend
-            A(Lm(ng)+1,j,k)=A(Lm(ng),j,k)
+            A(Iend+1,j,k)=A(Iend,j,k)
           END DO
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO j=Jstr,Jend
-            A(0,j,k)=A(1,j,k)
+            A(Istr-1,j,k)=A(Istr,j,k)
           END DO
         END DO
       END IF
@@ -85,16 +85,16 @@
 !-----------------------------------------------------------------------
 !
       IF (NORTHERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO i=Istr,Iend
-            A(i,Mm(ng)+1,k)=A(i,Mm(ng),k)
+            A(i,Jend+1,k)=A(i,Jend,k)
           END DO
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO i=Istr,Iend
-            A(i,0,k)=A(i,1,k)
+            A(i,Jstr-1,k)=A(i,Jstr,k)
           END DO
         END DO
       END IF
@@ -106,24 +106,27 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(0,0,k)=0.5_r8*(A(1,0,k)+A(0,1,k))
+        DO k=LBk,UBk
+          A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+                &
+     &                               A(Istr-1,Jstr  ,k))
         END DO
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(Lm(ng)+1,0,k)=0.5_r8*(A(Lm(ng)+1,1,k)+A(Lm(ng),0,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend+1,Jstr  ,k)+                &
+     &                               A(Iend  ,Jstr-1,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(0,Mm(ng)+1,k)=0.5_r8*(A(0,Mm(ng),k)+A(1,Mm(ng)+1,k))
+        DO k=LBk,UBk
+          A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+                &
+     &                               A(Istr  ,Jend+1,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(Lm(ng)+1,Mm(ng)+1,k)=0.5_r8*(A(Lm(ng)+1,Mm(ng)  ,k)+        &
-     &                                   A(Lm(ng)  ,Mm(ng)+1,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+                &
+     &                               A(Iend  ,Jend+1,k))
         END DO
       END IF
 # endif
@@ -134,13 +137,13 @@
 !-----------------------------------------------------------------------
 !
       CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 # endif
       RETURN
       END SUBROUTINE bc_r3d_tile
 
       SUBROUTINE bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 !
 !=======================================================================
 !                                                                      !
@@ -159,12 +162,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -181,16 +184,16 @@
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO j=Jstr,Jend
-            A(Lm(ng)+1,j,k)=A(Lm(ng),j,k)
+            A(Iend+1,j,k)=A(Iend,j,k)
           END DO
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO j=Jstr,Jend
-            A(1,j,k)=A(2,j,k)
+            A(Istr,j,k)=A(Istr+1,j,k)
           END DO
         END DO
       END IF
@@ -202,16 +205,16 @@
 !-----------------------------------------------------------------------
 !
       IF (NORTHERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO i=IstrU,Iend
-            A(i,Mm(ng)+1,k)=A(i,Mm(ng),k)
+            A(i,Jend+1,k)=A(i,Jend,k)
           END DO
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO i=IstrU,Iend
-            A(i,0,k)=A(i,1,k)
+            A(i,Jstr-1,k)=A(i,Jstr,k)
           END DO
         END DO
       END IF
@@ -223,24 +226,27 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(1,0,k)=0.5_r8*(A(2,0,k)+A(1,1,k))
+        DO k=LBk,UBk
+          A(Istr  ,Jstr-1,k)=0.5_r8*(A(Istr+1,Jstr-1,k)+                &
+     &                               A(Istr  ,Jstr  ,k))
         END DO
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(Lm(ng)+1,0,k)=0.5_r8*(A(Lm(ng),0,k)+A(Lm(ng)+1,1,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+                &
+     &                               A(Iend+1,Jstr  ,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(1,Mm(ng)+1,k)=0.5_r8*(A(2,Mm(ng)+1,k)+A(1,Mm(ng),k))
+        DO k=LBk,UBk
+          A(Istr  ,Jend+1,k)=0.5_r8*(A(Istr+1,Jend+1,k)+                &
+     &                               A(Istr  ,Jend  ,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(Lm(ng)+1,Mm(ng)+1,k)=0.5_r8*(A(Lm(ng)  ,Mm(ng)+1,k)+        &
-     &                                   A(Lm(ng)+1,Mm(ng)  ,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend  ,Jend+1,k)+                &
+     &                               A(Iend+1,Jend  ,k))
         END DO
       END IF
 # endif
@@ -251,13 +257,13 @@
 !-----------------------------------------------------------------------
 !
       CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 # endif
       RETURN
       END SUBROUTINE bc_u3d_tile
 
       SUBROUTINE bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 !
 !=======================================================================
 !                                                                      !
@@ -276,12 +282,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:,:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -298,16 +304,16 @@
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO j=JstrV,Jend
-            A(Lm(ng)+1,j,k)=A(Lm(ng),j,k)
+            A(Iend+1,j,k)=A(Iend,j,k)
           END DO
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO j=JstrV,Jend
-            A(0,j,k)=A(1,j,k)
+            A(Istr-1,j,k)=A(Istr,j,k)
           END DO
         END DO
       END IF
@@ -319,16 +325,16 @@
 !-----------------------------------------------------------------------
 !
       IF (NORTHERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO i=Istr,Iend
-            A(i,Mm(ng)+1,k)=A(i,Mm(ng),k)
+            A(i,Jend+1,k)=A(i,Jend,k)
           END DO
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
-        DO k=1,N(ng)
+        DO k=LBk,UBk
           DO i=Istr,Iend
-            A(i,1,k)=A(i,2,k)
+            A(i,Jstr,k)=A(i,Jstr+1,k)
           END DO
         END DO
       END IF
@@ -340,24 +346,27 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(0,1,k)=0.5_r8*(A(0,2,k)+A(1,1,k))
+        DO k=LBk,UBk
+          A(Istr-1,Jstr  ,k)=0.5_r8*(A(Istr-1,Jstr+1,k)+                &
+     &                               A(Istr  ,Jstr  ,k))
         END DO
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(Lm(ng)+1,0,k)=0.5_r8*(A(Lm(ng)+1,1,k)+A(Lm(ng),0,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jstr  ,k)=0.5_r8*(A(Iend+1,Jstr+1,k)+                &
+     &                               A(Iend  ,Jstr  ,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(0,Mm(ng)+1,k)=0.5_r8*(A(0,Mm(ng),k)+A(1,Mm(ng)+1,k))
+        DO k=LBk,UBk
+          A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+                &
+     &                               A(Istr  ,Jend+1,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          A(Lm(ng)+1,Mm(ng)+1,k)=0.5_r8*(A(Lm(ng)+1,Mm(ng)  ,k)+        &
-     &                                   A(Lm(ng)  ,Mm(ng)+1,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+                &
+     &                               A(Iend  ,Jend+1,k))
         END DO
       END IF
 # endif
@@ -368,13 +377,13 @@
 !-----------------------------------------------------------------------
 !
       CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 # endif
       RETURN
       END SUBROUTINE bc_v3d_tile
 
       SUBROUTINE bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 !
 !=======================================================================
 !                                                                      !
@@ -393,12 +402,12 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
-      real(r8), intent(inout) :: A(LBi:,LBj:,0:)
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
 # else
-      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,0:N(ng))
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -415,16 +424,16 @@
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
-        DO k=0,N(ng)
+        DO k=LBk,UBk
           DO j=Jstr,Jend
-            A(Lm(ng)+1,j,k)=A(Lm(ng),j,k)
+            A(Iend+1,j,k)=A(Iend,j,k)
           END DO
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
-        DO k=0,N(ng)
+        DO k=LBk,UBk
           DO j=Jstr,Jend
-            A(0,j,k)=A(1,j,k)
+            A(Istr-1,j,k)=A(Istr,j,k)
           END DO
         END DO
       END IF
@@ -436,16 +445,16 @@
 !-----------------------------------------------------------------------
 !
       IF (NORTHERN_EDGE) THEN
-        DO k=0,N(ng)
+        DO k=LBk,UBk
           DO i=Istr,Iend
-            A(i,Mm(ng)+1,k)=A(i,Mm(ng),k)
+            A(i,Jend+1,k)=A(i,Jend,k)
           END DO
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
-        DO k=0,N(ng)
+        DO k=LBk,UBk
           DO i=Istr,Iend
-            A(i,0,k)=A(i,1,k)
+            A(i,Jstr-1,k)=A(i,Jstr,k)
           END DO
         END DO
       END IF
@@ -457,24 +466,27 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=0,N(ng)
-          A(0,0,k)=0.5_r8*(A(1,0,k)+A(0,1,k))
+        DO k=LBk,UBk
+          A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+                &
+     &                               A(Istr-1,Jstr  ,k))
         END DO
       END IF
       IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=0,N(ng)
-          A(Lm(ng)+1,0,k)=0.5_r8*(A(Lm(ng)+1,1,k)+A(Lm(ng),0,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend+1,Jstr  ,k)+                &
+     &                               A(Iend  ,Jstr-1,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        DO k=0,N(ng)
-          A(0,Mm(ng)+1,k)=0.5_r8*(A(0,Mm(ng),k)+A(1,Mm(ng)+1,k))
+        DO k=LBk,UBk
+          A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+                &
+     &                               A(Istr  ,Jend+1,k))
         END DO
       END IF
       IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        DO k=0,N(ng)
-          A(Lm(ng)+1,Mm(ng)+1,k)=0.5_r8*(A(Lm(ng)+1,Mm(ng)  ,k)+        &
-     &                                   A(Lm(ng)  ,Mm(ng)+1,k))
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+                &
+     &                               A(Iend  ,Jend+1,k))
         END DO
       END IF
 # endif
@@ -485,7 +497,7 @@
 !-----------------------------------------------------------------------
 !
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, A)
 # endif
       RETURN
       END SUBROUTINE bc_w3d_tile

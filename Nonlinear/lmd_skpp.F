@@ -32,7 +32,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC lmd_skpp
+      PUBLIC  :: lmd_skpp
 
       CONTAINS
 !
@@ -793,10 +793,10 @@
 !  Apply boundary conditions.
 !
       CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Akv)
+     &                  LBi, UBi, LBj, UBj, 0, N(ng), Akv)
       DO itrc=1,NAT
         CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
-     &                    LBi, UBi, LBj, UBj, Akt(:,:,:,itrc))
+     &                    LBi, UBi, LBj, UBj, 0, N(ng), Akt(:,:,:,itrc))
       END DO
 # endif
       RETURN

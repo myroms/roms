@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE gls_corstep_mod
-#ifdef GLS_MIXING && defined SOLVE3D
+#if defined GLS_MIXING && defined SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
 !  Copyright (c) 2002 ROMS/TOMS Group                 John C. Warner   !
@@ -20,7 +20,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC gls_corstep
+      PUBLIC  :: gls_corstep
 
       CONTAINS
 !
@@ -165,7 +165,7 @@
 !
 !  Local variable declarations.
 !
-      Logical :: Lmy25, Lkw98
+      Logical :: Lmy25
 
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
@@ -206,16 +206,10 @@
 !-----------------------------------------------------------------------
 !
       Lmy25=.false.
-      Lkw98=.false.
       IF ((gls_p(ng).eq.0.0_r8).and.                                    &
      &    (gls_n(ng).eq.1.0_r8).and.                                    &
      &    (gls_m(ng).eq.1.0_r8)) THEN
         Lmy25=.true.
-      END IF
-      IF ((gls_p(ng).eq.-1.0_r8).and.                                   &
-     &    (gls_n(ng).eq. 0.5_r8).and.                                   &
-     &    (gls_m(ng).eq.-1.0_r8)) THEN
-        Lkw98=.true.
       END IF
 !
       sqrt2=SQRT(2.0_r8)
@@ -653,7 +647,7 @@
 !  Compute shear and bouyant production of turbulent energy (m3/s3)
 !  at W-points (ignore small negative values of buoyancy).
 !
-            IF ((buoy2(i,j,k).gt.-5.0E8-5_r8).and.                      &
+            IF ((buoy2(i,j,k).gt.-5.0E-5_r8).and.                       &
      &          (buoy2(i,j,k).lt.0.0_r8)) THEN
               strat2=0.0_r8
             ELSE
@@ -707,52 +701,31 @@
      &                  (1.0_r8/(z_w(i,j,N(ng))-z_w(i,j,k))+            &
      &                   1.0_r8/(z_w(i,j,k)-z_w(i,j,0))))**2
 !!
-!! linear wall function for , L =
-!!            wall_fac=1.0_r8+gls_E2/(vonKar*vonKar)*
-!!   &                 (gls(i,j,k,nstp)**( gls_exp1)*cmu_fac1*
-!!   &                  tke(i,j,k,nstp)**(-tke_exp1)*
-!!   &                  (1.0_r8/MIN((z_w(i,j,N(ng))-z_w(i,j,k)),
+!! Triangular wall function, L = min (ds, db).
+!!
+!!            wall_fac=1.0_r8+gls_E2/(vonKar*vonKar)*                   &
+!!   &                 (gls(i,j,k,nstp)**( gls_exp1)*cmu_fac1*          &
+!!   &                  tke(i,j,k,nstp)**(-tke_exp1)*                   &
+!!   &                  (1.0_r8/MIN((z_w(i,j,N(ng))-z_w(i,j,k)),        &
 !!   &                              (z_w(i,j,k)-z_w(i,j,0)))))**2
 !!
-!! Linear wall function for , L = dist to surface
+!! Linear wall function for , L = ds (=dist to surface).
 !!
-!!            wall_fac=1.0_r8+gls_E2/(vonKar*vonKar)*
-!!   &                 (gls(i,j,k,nstp)**( gls_exp1)*cmu_fac1*
-!!   &                  tke(i,j,k,nstp)**(-tke_exp1)*
+!!            wall_fac=1.0_r8+gls_E2/(vonKar*vonKar)*                   &
+!!   &                 (gls(i,j,k,nstp)**( gls_exp1)*cmu_fac1*          &
+!!   &                  tke(i,j,k,nstp)**(-tke_exp1)*                   &
 !!   &                 (1.0_r8/ (z_w(i,j,N(ng))-z_w(i,j,k))))**2
-            ELSE IF (Lkw98) THEN
-              wall_fac=1.0_r8         ! Will be added later.
-!!            gls_W=0.5*(du/dx-dv/dy)+fomn(i,j)
 !!
-!!            gls_S(1,1)= 1/2*(du/dx+du/dx)  --->
-!!            gls_S(1,1)=(u(i,j,k,nstp)-u(i+1,j  ,k  ,nstp))*om_r(i,j)
-!!            gls_S(2,2)= 1/2*(dv/dy+dv/dy)  --->
-!!            gls_S(2,2)=(v(i,j,k,nstp)-v(i  ,j+1,k  ,nstp))*on_r(i,j)
-!!            gls_S(3,3)= 1/2*(dw/dz+dw/dz)  --->
-!!            gls_S(3,3)=0.5_r8*((W(i,j,k  )-W(i,j,k-1))*Hz(i,j,k  )+
-!!   &                           (W(i,j,k+1)-W(i,j,k  ))*Hz(i,j,k+1))
-!!            gls_S(1,2)= 1/2*(du/dy+dv/dx)  --->
-!!            gls_S(1,2)= 0.5_r8*
-!!   &        (0.5_r8*((0.5_r8*(u(i,j,k,nstp)-u(i,j-1,k,nstp))*on_p(i,j)+
-!!   &        (u(i,j+1,k,nstp)-u(i,j,k,nstp))*on_p(i,j+1))+
-!!   &        (0.5_r8*(u(i+1,j,k,nstp)-u(i+1,j-1,k  ,nstp))*on_p(i+1,j)+
-!!   &        (u(i+1,j+1,k,nstp)-u(i+1,j,k  ,nstp))*on_p(i+1,j+1)))+
-!!   &        0.5_r8*((0.5_r8*(v(i,j,k,nstp)-v(i-1,j,k  ,nstp))*om_p(i,j)+
-!!   &        (v(i+1,j,k,nstp)-v(i,j,k  ,nstp))*om_p(i+1,j))+
-!!   &        (0.5_r8*(v(i,j+1,k,nstp)-v(i-1,j+1,k  ,nstp))*om_p(i,j+1)+
-!!   &        (v(i+1,j+1,k,nstp)-v(i,j+1,k  ,nstp))*om_p(i+1,j+1))))
-!!            gls_S(1,3)= 0.5_r8*(du/dz+dw/dx)  --->
-!!
-!!            Xw=ABS(gls_W(i,j)*gls_W(j,k)*gls_S(k,i)/
-!!   &              ((gls_cmu0(ng)**4*gls(i,j,k,nstp))**3))
-!!            Xk=dk/dx dw/dx / w**3
-!!            if (Xk.le.0.) then
-!!              fbstar=1
-!!            else
-!!              fbstar=(1+680Xk**2)/(1+400Xk**2)
-!!            endif
-!!            fb=(1+70*Xw)/(1+80*Xw)
-!!            wall_fac=gls_fb/gls_fbstar
+!! Parabolic wall function + free surface correction
+!
+!!            wall_fac=1.0_r8+gls_E2/(vonKar*vonKar)*                   &
+!!   &                (gls(i,j,k,nstp)**( gls_exp1)*cmu_fac1*           &
+!!   &                 tke(i,j,k,nstp)**(-tke_exp1)*                    &
+!!   &                 (1.0_r8/ (z_w(i,j,k)-z_w(i,j,0))))**2+           &
+!!   &                0.25_r8/(vonKar*vonKar)*                          &
+!!   &                (gls(i,j,k,nstp)**( gls_exp1)*cmu_fac1*           &
+!!   &                 tke(i,j,k,nstp)**(-tke_exp1)*                    &
+!!   &                 (1.0_r8/ (z_w(i,j,N)-z_w(i,j,k))))**2
             END IF
 !
             BCK(i,k)=cff*(1.0_r8+dt(ng)*                                &
@@ -959,17 +932,11 @@
      &               SQRT(0.5_r8*SQRT((bustr(i,j)+bustr(i+1,j))**2+     &
      &                                (bvstr(i,j)+bvstr(i,j+1))**2))
 !
-!!        if (Lmy25) then
-!!          Akk(i,j,N(ng))=Akk_bak(ng)
-!!          Akk(i,j,0)=Akk_bak(ng)
-!!          Akp(i,j,N(ng))=Akp_bak(ng)
-!!          Akp(i,j,0)=Akp_bak(ng)
-!!        else
             Akk(i,j,N(ng))=Akk_bak(ng)+Akv(i,j,N(ng))/gls_sigk(ng)
             Akk(i,j,0)=Akk_bak(ng)+Akv(i,j,0)/gls_sigk(ng)
             Akp(i,j,N(ng))=Akp_bak(ng)+Akv(i,j,N(ng))/gls_sigp(ng)
             Akp(i,j,0)=Akp_bak(ng)+Akv(i,j,0)/gls_sigp(ng)
-!!        endif
+!
           DO itrc=1,NAT
             Akt(i,j,N(ng),itrc)=Akt_bak(itrc,ng)
             Akt(i,j,0,itrc)=Akt_bak(itrc,ng)
@@ -987,14 +954,17 @@
      &                 gls, tke)
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, tke(:,:,:,nnew))
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        tke(:,:,:,nnew))
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, gls(:,:,:,nnew))
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        gls(:,:,:,nnew))
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Akv)
+     &                        LBi, UBi, LBj, UBj, 0, N(ng), Akv)
       DO itrc=1,NAT
         CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, Akt(:,:,:,itrc))
+     &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          Akt(:,:,:,itrc))
       END DO
 # endif
       RETURN

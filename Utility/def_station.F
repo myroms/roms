@@ -35,13 +35,11 @@
       integer :: i, j, nrec, recdim, stadim
       integer :: status
 
-      integer :: DimIDs(24), pgrd(2)
+      integer :: DimIDs(28), pgrd(2)
 
       integer :: def_info, def_var, wrt_info
 
 # ifdef SOLVE3D
-      logical :: got_trc(NT(ng))
-
       integer :: itrc
 
       integer :: bgrd(3), rgrd(3), wgrd(3)
@@ -49,7 +47,7 @@
 
       real(r8) :: Aval(4)
 
-      character (len=65) :: Vinfo(Natt)
+      character (len=80) :: Vinfo(Natt)
       character (len=80) :: fname, ncname
 !
 !-----------------------------------------------------------------------
@@ -74,14 +72,14 @@
       IF (ldef.and.Master) THEN
         status=nf_create(TRIM(ncname),nf_clobber,ncstaid(ng))
         IF (status.ne.nf_noerr) THEN
-          write(stdout,30) TRIM(ncname)
+          WRITE (stdout,30) TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
       END IF
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       CALL mp_bcasti (ng, ncstaid(ng), 1)
-#endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  Define the dimensions of staggered fields.
@@ -98,6 +96,16 @@
 #  ifdef SEDIMENT
         status=nf_def_dim(ncstaid(ng),'Nbed'    ,Nbed,                  &
      &                    DimIDs(16))
+#  endif
+#  ifdef ECOSIM
+        status=nf_def_dim(ncstaid(ng),'Nphy'    ,Nphy,                  &
+     &                    DimIDs(25))
+        status=nf_def_dim(ncstaid(ng),'Nbac'    ,Nbac,                  &
+     &                    DimIDs(26))
+        status=nf_def_dim(ncstaid(ng),'Ndom'    ,Ndom,                  &
+     &                    DimIDs(27))
+        status=nf_def_dim(ncstaid(ng),'Nfec'    ,Nfec,                  &
+     &                    DimIDs(28))
 #  endif
 # endif
         status=nf_def_dim(ncstaid(ng),'station' ,Nstation(ng),          &
@@ -141,7 +149,7 @@
 !  Initialize local information variable arrays.
 !
         DO i=1,Natt
-          DO j=1,65
+          DO j=1,80
             Vinfo(i)(j:j)=' '
           END DO
         END DO
@@ -276,13 +284,13 @@
             Vinfo( 3)=Vname(3,idTvar(itrc))
             Vinfo(14)=Vname(4,idTvar(itrc))
             Vinfo(16)=Vname(1,idtime)
-# ifdef SEDIMENT
+#  ifdef SEDIMENT
             DO i=1,NST
               IF (itrc.eq.idsed(i)) THEN
-                write(Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+                WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
               END IF
             END DO
-# endif
+#  endif
             status=def_var(ncstaid(ng),staTid(itrc,ng),NF_FOUT,         &
      &                     3,rgrd,Aval,Vinfo,ncname)
           END IF
@@ -514,7 +522,8 @@
           status=def_var(ncstaid(ng),staVid(idVbms,ng),NF_FOUT,         &
      &                   2,pgrd,Aval,Vinfo,ncname)
         END IF
-# ifdef BBL_MODEL
+# ifdef SOLVE3D
+#  ifdef BBL_MODEL
 !
 !  Define wind-induced, bottom U-wave stress.
 !
@@ -540,15 +549,27 @@
      &                   2,pgrd,Aval,Vinfo,ncname)
         END IF
 !
-!  Define wind-induced, bed wave excursion amplitude.
+!  Define maximum wind and current, bottom U-wave stress.
 !
-        IF (Sout(idAbed,ng)) THEN
-          Vinfo( 1)=Vname(1,idAbed)
-          Vinfo( 2)=Vname(2,idAbed)
-          Vinfo( 3)=Vname(3,idAbed)
-          Vinfo(14)=Vname(4,idAbed)
+        IF (Sout(idUbcs,ng)) THEN
+          Vinfo( 1)=Vname(1,idUbcs)
+          Vinfo( 2)=Vname(2,idUbcs)
+          Vinfo( 3)=Vname(3,idUbcs)
+          Vinfo(14)=Vname(4,idUbcs)
           Vinfo(16)=Vname(1,idtime)
-          status=def_var(ncstaid(ng),staVid(idAbed,ng),NF_FOUT,         &
+          status=def_var(ncstaid(ng),staVid(idUbcs,ng),NF_FOUT,         &
+     &                   2,pgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define maximum wind and current, bottom V-wave stress.
+!
+        IF (Sout(idVbcs,ng)) THEN
+          Vinfo( 1)=Vname(1,idVbcs)
+          Vinfo( 2)=Vname(2,idVbcs)
+          Vinfo( 3)=Vname(3,idVbcs)
+          Vinfo(14)=Vname(4,idVbcs)
+          Vinfo(16)=Vname(1,idtime)
+          status=def_var(ncstaid(ng),staVid(idVbcs,ng),NF_FOUT,         &
      &                   2,pgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -599,54 +620,67 @@
           status=def_var(ncstaid(ng),staVid(idVbot,ng),NF_FOUT,         &
      &                   2,pgrd,Aval,Vinfo,ncname)
         END IF
+#  endif
+#  ifdef SEDIMENT
 !
-!  Define bed ripple height.
+!  Define sediment fraction of each size class in each bed layer.
 !
-        IF (Sout(idHrip,ng)) THEN
-          Vinfo( 1)=Vname(1,idHrip)
-          Vinfo( 2)=Vname(2,idHrip)
-          Vinfo( 3)=Vname(3,idHrip)
-          Vinfo(14)=Vname(4,idHrip)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ncstaid(ng),staVid(idHrip,ng),NF_FOUT,         &
-     &                   2,pgrd,Aval,Vinfo,ncname)
-        END IF
+        DO i=1,NST
+          IF (Sout(idfrac(i),ng)) THEN
+            Vinfo( 1)=Vname(1,idfrac(i))
+            Vinfo( 2)=Vname(2,idfrac(i))
+            Vinfo( 3)=Vname(3,idfrac(i))
+            Vinfo(14)=Vname(4,idfrac(i))
+            Vinfo(16)=Vname(1,idtime)
+            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+            status=def_var(ncstaid(ng),staVid(idfrac(i),ng),NF_FOUT,    &
+     &                     3,bgrd,Aval,Vinfo,ncname)
+          END IF
 !
-!  Define bed ripple length.
+!  Define sediment mass of each size class in each bed layer.
 !
-        IF (Sout(idLrip,ng)) THEN
-          Vinfo( 1)=Vname(1,idLrip)
-          Vinfo( 2)=Vname(2,idLrip)
-          Vinfo( 3)=Vname(3,idLrip)
-          Vinfo(14)=Vname(4,idLrip)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ncstaid(ng),staVid(idLrip,ng),NF_FOUT,         &
-     &                   2,pgrd,Aval,Vinfo,ncname)
-        END IF
+          IF (Sout(idBmas(i),ng)) THEN
+            Vinfo( 1)=Vname(1,idBmas(i))
+            Vinfo( 2)=Vname(2,idBmas(i))
+            Vinfo( 3)=Vname(3,idBmas(i))
+            Vinfo(14)=Vname(4,idBmas(i))
+            Vinfo(16)=Vname(1,idtime)
+            WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+            status=def_var(ncstaid(ng),staVid(idBmas(i),ng),NF_FOUT,    &
+     &                     3,bgrd,Aval,Vinfo,ncname)
+          END IF
+        END DO
 !
-!  Define hydraulic bottom roughness.
+!  Define sediment properties in each bed layer.
 !
-        IF (Sout(idZnot,ng)) THEN
-          Vinfo( 1)=Vname(1,idZnot)
-          Vinfo( 2)=Vname(2,idZnot)
-          Vinfo( 3)=Vname(3,idZnot)
-          Vinfo(14)=Vname(4,idZnot)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ncstaid(ng),staVid(idZnot,ng),NF_FOUT,         &
-     &                   2,pgrd,Aval,Vinfo,ncname)
-        END IF
+        DO i=1,MBEDP
+          IF (Sout(idSbed(i),ng)) THEN
+            Vinfo( 1)=Vname(1,idSbed(i))
+            Vinfo( 2)=Vname(2,idSbed(i))
+            Vinfo( 3)=Vname(3,idSbed(i))
+            Vinfo(14)=Vname(4,idSbed(i))
+            Vinfo(16)=Vname(1,idtime)
+            status=def_var(ncstaid(ng),staVid(idSbed(i),ng),NF_FOUT,    &
+     &                     3,bgrd,Aval,Vinfo,ncname)
+          END IF
+        END DO
+#  endif
+#  if defined SEDIMENT || defined BBL_MODEL
 !
-!  Define apparent hydraulic bottom roughness.
+!  Define exposed sediment layer properties.
 !
-        IF (Sout(idZapp,ng)) THEN
-          Vinfo( 1)=Vname(1,idZapp)
-          Vinfo( 2)=Vname(2,idZapp)
-          Vinfo( 3)=Vname(3,idZapp)
-          Vinfo(14)=Vname(4,idZapp)
-          Vinfo(16)=Vname(1,idtime)
-          status=def_var(ncstaid(ng),staVid(idZapp,ng),NF_FOUT,         &
-     &                   2,pgrd,Aval,Vinfo,ncname)
-        END IF
+        DO i=1,MBOTP
+          IF (Sout(idBott(i),ng)) THEN
+            Vinfo( 1)=Vname(1,idBott(i))
+            Vinfo( 2)=Vname(2,idBott(i))
+            Vinfo( 3)=Vname(3,idBott(i))
+            Vinfo(14)=Vname(4,idBott(i))
+            Vinfo(16)=Vname(1,idtime)
+            status=def_var(ncstaid(ng),staVid(idBott(i),ng),NF_FOUT,    &
+     &                     2,pgrd,Aval,Vinfo,ncname)
+          END IF
+        END DO
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------
@@ -682,7 +716,7 @@
 !
         status=nf_open(TRIM(ncname),nf_write,ncstaid(ng))
         IF (status.ne.nf_noerr) THEN
-          write(stdout,50) TRIM(ncname)
+          WRITE (stdout,50) TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -692,11 +726,6 @@
         DO i=1,NV
           got_var(i)=.false.
         END DO
-# ifdef SOLVE3D
-        DO itrc=1,NT(ng)
-          got_trc(itrc)=.false.
-        END DO
-# endif
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  stations variables. Get variable IDs.
@@ -738,12 +767,17 @@
             status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idWvel)),      &
      &                          staVid(idWvel,ng))
           END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idOvel))) THEN
+            got_var(idOvel)=.true.
+            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idOvel)),      &
+     &                          staVid(idOvel,ng))
+          END IF
           DO itrc=1,NT(ng)
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
-             got_trc(itrc)=.true.
-             status=nf_inq_varid(ncstaid(ng),                           &
-     &                           TRIM(Vname(1,idTvar(itrc))),           &
-     &                           staTid(itrc,ng))
+              got_var(idTvar(itrc))=.true.
+              status=nf_inq_varid(ncstaid(ng),                          &
+     &                            TRIM(Vname(1,idTvar(itrc))),          &
+     &                            staTid(itrc,ng))
             END IF
           END DO
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idDano))) THEN
@@ -843,7 +877,8 @@
             status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idVbms)),      &
      &                          staVid(idVbms,ng))
           END IF
-# ifdef BBL_MODEL
+# ifdef SOLVE3D
+#  ifdef BBL_MODEL
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbws))) THEN
             got_var(idUbws)=.true.
             status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idUbws)),      &
@@ -854,10 +889,15 @@
             status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idVbws)),      &
      &                          staVid(idVbws,ng))
           END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idAbed))) THEN
-            got_var(idAbed)=.true.
-            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idAbed)),      &
-     &                          staVid(idAbed,ng))
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbcs))) THEN
+            got_var(idUbcs)=.true.
+            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idUbcs)),      &
+     &                          staVid(idUbcs,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbcs))) THEN
+            got_var(idVbcs)=.true.
+            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idVbcs)),      &
+     &                          staVid(idVbcs,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbed))) THEN
             got_var(idUbed)=.true.
@@ -879,228 +919,265 @@
             status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idVbot)),      &
      &                          staVid(idVbot,ng))
           END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idHrip))) THEN
-            got_var(idHrip)=.true.
-            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idHrip)),      &
-     &                          staVid(idHrip,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idLrip))) THEN
-            got_var(idLrip)=.true.
-            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idLrip)),      &
-     &                          staVid(idLrip,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idZnot))) THEN
-            got_var(idZnot)=.true.
-            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idZnot)),      &
-     &                          staVid(idZnot,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idZapp))) THEN
-            got_var(idZapp)=.true.
-            status=nf_inq_varid(ncstaid(ng),TRIM(Vname(1,idZapp)),      &
-     &                          staVid(idZapp,ng))
-          END IF
+#  endif
+#  ifdef SEDIMENT
+          DO itrc=1,NST
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
+              got_var(idfrac(itrc))=.true.
+              status=nf_inq_varid(ncstaid(ng),                          &
+     &                            TRIM(Vname(1,idfrac(itrc))),          &
+     &                            staVid(idfrac(itrc),ng))
+            END IF
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBmas(itrc)))) THEN
+              got_var(idBmas(itrc))=.true.
+              status=nf_inq_varid(ncstaid(ng),                          &
+     &                            TRIM(Vname(1,idBmas(itrc))),          &
+     &                            staVid(idBmas(itrc),ng))
+            END IF
+          END DO
+          DO itrc=1,MBEDP
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSbed(itrc)))) THEN
+              got_var(idSbed(itrc))=.true.
+              status=nf_inq_varid(ncstaid(ng),                          &
+     &                            TRIM(Vname(1,idSbed(itrc))),          &
+     &                            staVid(idSbed(itrc),ng))
+            END IF
+          END DO
+#  endif
+#  if defined SEDIMENT || defined BBL_MODEL
+          DO itrc=1,MBOTP
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
+              got_var(idBott(itrc))=.true.
+              status=nf_inq_varid(ncstaid(ng),                          &
+     &                            TRIM(Vname(1,idBott(itrc))),          &
+     &                            staVid(idBott(itrc),ng))
+            END IF
+          END DO
+#  endif
 # endif
         END DO
 !
 !  Check if station variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          write(stdout,60) TRIM(Vname(1,idtime)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idtime)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur).and.Sout(idFsur,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idFsur)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idFsur)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar).and.Sout(idUbar,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idUbar)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idUbar)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar).and.Sout(idVbar,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVbar)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVbar)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Sout(idUvel,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idUvel)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idUvel)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel).and.Sout(idVvel,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVvel)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVvel)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idWvel).and.Sout(idWvel,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idWvel)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idWvel)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idOvel).and.Sout(idOvel,ng)) THEN
+          WRITE(stdout,60) TRIM(Vname(1,idOvel)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         DO itrc=1,NT(ng)
-          IF (.not.got_trc(itrc).and.Sout(idTvar(itrc),ng)) THEN
-            write(stdout,60) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
+          IF (.not.got_var(idTvar(itrc)).and.Sout(idTvar(itrc),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
         END DO
         IF (.not.got_var(idDano).and.Sout(idDano,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idDano)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idDano)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef LMD_SKPP
         IF (.not.got_var(idHsbl).and.Sout(idHsbl,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idHsbl)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idHsbl)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  endif
 #  ifdef LMD_BKPP
         IF (.not.got_var(idHbbl).and.Sout(idHbbl,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idHbbl)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idHbbl)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  endif
         IF (.not.got_var(idVvis).and.Sout(idVvis,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVvis)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVvis)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idTdif).and.Sout(idTdif,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idTdif)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idTdif)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef SALINITY
         IF (.not.got_var(idSdif).and.Sout(idSdif,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idSdif)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idSdif)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  endif
 #  if defined GLS_MIXING || defined MY25_MIXING
         IF (.not.got_var(idMtke).and.Sout(idMtke,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idMtke)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idMtke)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idMtls).and.Sout(idMtls,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idMtls)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idMtls)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  endif
         IF (.not.got_var(idTsur(itemp)).and.Sout(idTsur(itemp),ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idTsur(itemp))), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idTsur(itemp))), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef BULK_FLUXES
         IF (.not.got_var(idLhea).and.Sout(idLhea,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idLhea)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idLhea)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idShea).and.Sout(idShea,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idShea)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idShea)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idLrad).and.Sout(idLrad,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idLrad)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idLrad)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  endif
 #  ifdef SHORTWAVE
         IF (.not.got_var(idSrad).and.Sout(idSrad,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idSrad)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idSrad)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  endif
 # endif
         IF (.not.got_var(idUsms).and.Sout(idUsms,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idUsms)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idUsms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVsms).and.Sout(idVsms,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVsms)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVsms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbms).and.Sout(idUbms,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idUbms)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idUbms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbms).and.Sout(idVbms,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVbms)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVbms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-# ifdef BBL_MODEL
+# ifdef SOLVE3D
+#  ifdef BBL_MODEL
         IF (.not.got_var(idUbws).and.Sout(idUbws,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idUbws)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idUbws)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbws).and.Sout(idVbws,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVbws)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVbws)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idAbed).and.Sout(idAbed,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idAbed)), TRIM(ncname)
+        IF (.not.got_var(idUbcs).and.Sout(idUbcs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idUbcs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVbcs).and.Sout(idVbcs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idVbcs)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbed).and.Sout(idUbed,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idUbed)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idUbed)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbed).and.Sout(idVbed,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVbed)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVbed)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbot).and.Sout(idUbot,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idUbot)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idUbot)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbot).and.Sout(idVbot,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idVbot)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idVbot)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idHrip).and.Sout(idHrip,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idHrip)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idLrip).and.Sout(idLrip,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idLrip)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idZnot).and.Sout(idZnot,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idZnot)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idZapp).and.Sout(idZapp,ng)) THEN
-          write(stdout,60) TRIM(Vname(1,idZapp)), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
+#  endif
+#  ifdef SEDIMENT
+        DO i=1,NST
+          IF (.not.got_var(idfrac(i)).and.Sout(idfrac(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idfrac(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+          IF (.not.got_var(idBmas(i)).and.Sout(idBmas(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idBmas(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+        DO i=1,MBEDP
+          IF (.not.got_var(idSbed(i)).and.Sout(idSbed(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idSbed(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+#  endif
+#  if defined SEDIMENT || defined BBL_MODEL
+        DO i=1,MBOTP
+          IF (.not.got_var(idBott(i)).and.Sout(idBott(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idBott(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+#  endif
 # endif
 !
 !  Set unlimited time record dimension to the appropriate value.
@@ -1109,7 +1186,7 @@
         tstaindx(ng)=(ntstart-1)/nsta(ng)
       END IF
 !
-  10  FORMAT (2x,'DEF_STATION - creating stations file: ',a)
+  10  FORMAT (2x,'DEF_STATION   - creating stations file: ',a)
   20  FORMAT (2x,'DEF_STATION - inquiring stations file: ',a)
   30  FORMAT (/,' DEF_STATION - unable to create stations NetCDF ',     &
      &         'file: ',a)

@@ -33,7 +33,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC bulk_flux
+      PUBLIC  :: bulk_flux
 
       CONTAINS
 !
@@ -72,7 +72,9 @@
      &                     FORCES(ng) % Tair,                           &
      &                     FORCES(ng) % Uwind,                          &
      &                     FORCES(ng) % Vwind,                          &
+# ifdef CLOUDS
      &                     FORCES(ng) % cloud,                          &
+# endif
      &                     FORCES(ng) % rain,                           &
      &                     FORCES(ng) % lhflx,                          &
      &                     FORCES(ng) % lrflx,                          &
@@ -96,7 +98,10 @@
 # endif
      &                           alpha, beta, rho, t,                   &
      &                           Hair, Pair, Tair, Uwind, Vwind,        &
-     &                           cloud, rain, lhflx, lrflx, shflx,      &
+# ifdef CLOUDS
+     &                           cloud,                                 &
+# endif
+     &                           rain, lhflx, lrflx, shflx,             &
      &                           srflx, stflx, sustr, svstr)
 !***********************************************************************
 !
@@ -129,7 +134,9 @@
       real(r8), intent(in) :: Tair(LBi:,LBj:)
       real(r8), intent(in) :: Uwind(LBi:,LBj:)
       real(r8), intent(in) :: Vwind(LBi:,LBj:)
+#  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: rain(LBi:,LBj:)
 
       real(r8), intent(inout) :: lhflx(LBi:,LBj:)
@@ -155,7 +162,9 @@
       real(r8), intent(in) :: Tair(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Uwind(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Vwind(LBi:UBi,LBj:UBj)
+#  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(in) :: rain(LBi:UBi,LBj:UBj)
 
       real(r8), intent(inout) :: lhflx(LBi:UBi,LBj:UBj)
@@ -175,17 +184,14 @@
 
       integer, parameter :: IterMax = 20
 
+      real(r8), parameter :: eps = 1.0E-20_r8
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
 
-      real(r8) :: Bf, Cd, Ce, Ch, Hl, Hlv, Hlw, Hscale, Hs, Hsr, IER
-      real(r8) :: PairM, Q, Qair, Qpsi, Qsea, Qstar, RH, Ri, Rq, Rr
-      real(r8) :: Rt, Scff, TairC, TairK, Taur, Tcff, Tpsi, TseaC
-      real(r8) :: TseaK, Tstar, TVstar, VisAir, Wgus, Wmag, Wpsi
-      real(r8) :: Wspeed, Wstar, ZQ, ZQoL, ZT, ZToL, ZW, ZWoL, ZoQ
-      real(r8) :: ZoT, ZoW
+      real(r8) :: Bf, Cd, Hl, Hlw, Hscale, Hs, Hsr, IER
+      real(r8) :: PairM,  RH, Ri, Scff, Taur, Tcff
+      real(r8) :: Wspeed, ZQoL, ZToL, ZoQ, ZoT
 
-      real(r8) :: cff, cff1, cff2, delQ, delQc, delT, delTc, delW
-      real(r8) :: diffh, diffw, oL, rainfall, rhoAir, rhoSea, upvel
+      real(r8) :: cff, cff1, cff2, diffh, diffw, oL, upvel
       real(r8) :: wet_bulb
 # ifdef LONGWAVE
       real(r8) :: e_sat, vap_p
@@ -193,6 +199,40 @@
 # ifdef COOL_SKIN
       real(r8) :: Clam, Cwet, Fc, Hcool, Hsb, Hlb, Qbouy, Qcool, lambd
 # endif
+
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQ
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQc
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delT
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delTc
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delW
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Hlv
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Q
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qair
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qpsi
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qsea
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qstar
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoAir
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoSea
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rq
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rr
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rt
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairC
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairK
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tpsi
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaC
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaK
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tstar
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TVstar
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: VisAir
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wgus
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wmag
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wpsi
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wstar
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoW
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZQ
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZT
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZW
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZWoL
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LHeat
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LRad
@@ -213,27 +253,25 @@
 !
 !  Input bulk parameterization fields.
 !
-          Wmag=SQRT(Uwind(i,j)*Uwind(i,j)+Vwind(i,j)*Vwind(i,j))
+          Wmag(i)=SQRT(Uwind(i,j)*Uwind(i,j)+Vwind(i,j)*Vwind(i,j))
           PairM=Pair(i,j)
-          TairC=Tair(i,j)
-          TairK=TairC+273.16_r8
-          TseaC=t(i,j,N(ng),nrhs,itemp)
-          TseaK=TseaC+273.16_r8
-          rhoSea=rho(i,j,N(ng))+1000.0_r8
+          TairC(i)=Tair(i,j)
+          TairK(i)=TairC(i)+273.16_r8
+          TseaC(i)=t(i,j,N(ng),nrhs,itemp)
+          TseaK(i)=TseaC(i)+273.16_r8
+          rhoSea(i)=rho(i,j,N(ng))+1000.0_r8
           RH=Hair(i,j)
           SRad(i,j)=srflx(i,j)*Hscale
-          rainfall=rain(i,j)
           Tcff=alpha(i,j)
           Scff=beta(i,j)
-          ZT=blk_ZT
-          ZQ=blk_ZQ
-          ZW=blk_ZW
+          ZT(i)=blk_ZT
+          ZQ(i)=blk_ZQ
+          ZW(i)=blk_ZW
 !
 !  Initialize.
 !
-          IER=0
-          delTc=0.0_r8
-          delQc=0.0_r8
+          delTc(i)=0.0_r8
+          delQc(i)=0.0_r8
           LHeat(i,j)=lhflx(i,j)*Hscale
           SHeat(i,j)=shflx(i,j)*Hscale
           Taur=0.0_r8
@@ -244,18 +282,29 @@
 !  Compute net longwave radiation (W/m2), LRad.
 !-----------------------------------------------------------------------
 !
-# ifdef LONGWAVE
+# if defined LONGWAVE
+
 !  Use Berliand (1952) formula.
 !
-          cff=(0.7859_r8+0.03477_r8*TairC)/(1.0_r8+0.00412_r8*TairC)
+          cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
+     &        (1.0_r8+0.00412_r8*TairC(i))
           e_sat=10.0_r8**cff
           vap_p=e_sat*RH
-          cff2=TairK*TairK*TairK
-          cff1=cff2*TairK
+          cff2=TairK(i)*TairK(i)*TairK(i)
+          cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
      &              (cff1*(0.39_r8-0.5_r8*SQRT(0.01_r8*vap_p))*         &
      &                    (1.0_r8-0.6823_r8*cloud(i,j)*cloud(i,j))+     &
-     &               cff2*4.0_r8*(TseaK-TairK))
+     &               cff2*4.0_r8*(TseaK(i)-TairK(i)))
+
+# elif defined LONGWAVE_OUT
+
+!  Treat input longwave data as downwelling radiation only and add
+!  outgoing IR from model sea surface temperature.
+!
+          LRad(i,j)=lrflx(i,j)*Hscale-                                  &
+     &              emmiss*StefBo*TseaK(i)*TseaK(i)*TseaK(i)*TseaK(i)
+ 
 # else
           LRad(i,j)=lrflx(i,j)*Hscale
 # endif
@@ -269,32 +318,32 @@
 !
 !  Compute air saturation vapor pressure (mb), using Teten formula.
 !
-          Qair=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                  &
-     &         EXP(17.502_r8*TairC/(240.97_r8+TairC))
+          Qair(i)=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*               &
+     &            EXP(17.502_r8*TairC(i)/(240.97_r8+TairC(i)))
 !
 !  Compute specific humdity, Q (kg/kg).  Check whether input relative
 !  humidity is in kg/kg or g/kg.
 !
           IF (RH.lt.2.0_r8) THEN
-            cff=Qair*RH
-            Q=0.62197_r8*(cff/(PairM-0.378_r8*cff))
+            cff=Qair(i)*RH
+            Q(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff))
           ELSE
-            Q=RH/1000.0_r8
+            Q(i)=RH/1000.0_r8
           END IF
-          Qair=0.62197_r8*(Qair/(PairM-0.378_r8*Qair))
+          Qair(i)=0.62197_r8*(Qair(i)/(PairM-0.378_r8*Qair(i)))
 !
 !  Compute water saturation vapor pressure (mb), using Teten formula.
 !
-          Qsea=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                  &
-     &         EXP(17.502_r8*TseaC/(240.97_r8+TseaC))
+          Qsea(i)=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*               &
+     &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !
 !  Qsea reduced for salinity (Kraus, 1972, pp 46).
 !
-          Qsea=Qsea*0.98_r8
+          Qsea(i)=Qsea(i)*0.98_r8
 !
 !  Convert Qsea from mb to specific humidity (kg/kg).
 !
-          Qsea=0.62197_r8*(Qsea/(PairM-0.378_r8*Qsea))
+          Qsea(i)=0.62197_r8*(Qsea(i)/(PairM-0.378_r8*Qsea(i)))
 !
 !-----------------------------------------------------------------------
 !  Compute Monin-Obukhov similarity parameters for wind (Wstar),
@@ -303,181 +352,185 @@
 !
 !  Moist air density (kg/m3).
 !
-          rhoAir=PairM*100.0_r8/(blk_Rgas*TairK*(1.0_r8+0.61_r8*Q))
+          rhoAir(i)=PairM*100.0_r8/(blk_Rgas*TairK(i)*                  &
+     &                              (1.0_r8+0.61_r8*Q(i)))
 !
 !  Kinematic viscosity of dry air (m2/s), Andreas (1989).
 !
-          VisAir=1.326E-5_r8*(1.0_r8+TairC*(6.542E-3_r8+TairC*          &
-     &                        (8.301E-6_r8-4.84E-9_r8*TairC)))
+          VisAir(i)=1.326E-5_r8*                                        &
+     &              (1.0_r8+TairC(i)*(6.542E-3_r8+TairC(i)*             &
+     &               (8.301E-6_r8-4.84E-9_r8*TairC(i))))
 !
 !  Compute latent heat of vaporization (J/kg) at sea surface, Hlv.
 !
-          Hlv=(2.501_r8-0.00237_r8*TseaC)*1.0E+6_r8
-# ifdef COOL_SKIN
-!
-!  Cool skin correction constants. Clam: part of Saunders constant
-!  lambda; Cwet: slope of saturation vapor.
-!
-          Clam=16.0_r8*g*blk_Cpw*(rhoSea*blk_visw)**3/                  &
-     &         (blk_tcw*blk_tcw*rhoAir*rhoAir)
-          Cwet=0.622_r8*Hlv*Qsea/(blk_Rgas*TseaK*TseaK)
-!
-!  Set initial guesses for cool-skin layer thickness (Hcool).
-!
-          Hcool=0.001_r8
-# endif
+          Hlv(i)=(2.501_r8-0.00237_r8*TseaC(i))*1.0E+6_r8
 !
 !  Assume that wind is measured relative to sea surface and include
 !  gustiness.
 !
-          Wgus=0.5_r8
-          delW=SQRT(Wmag*Wmag+Wgus*Wgus)
-          delQ=Q-Qsea
-          delT=TairC-TseaC
+          Wgus(i)=0.5_r8
+          delW(i)=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
+          delQ(i)=Q(i)-Qsea(i)
+          delT(i)=TairC(i)-TseaC(i)
 !
 !  Initial guesses for Monon-Obukhov similarity scales.
 !
-          ZWoL=0.0_r8
-          ZoW=0.0005_r8
-          Wstar=0.04_r8*delW
-          Tstar=0.04_r8*delT
-          Qstar=0.04_r8*delQ
-          TVstar=Tstar*(1.0_r8+0.61_r8*Q)+0.61_r8*TairK*Qstar
+          ZWoL(i)=0.0_r8
+          ZoW(i)=0.0005_r8
+          Wstar(i)=0.04_r8*delW(i)
+          Tstar(i)=0.04_r8*delT(i)
+          Qstar(i)=0.04_r8*delQ(i)
+          TVstar(i)=Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
+     &              0.61_r8*TairK(i)*Qstar(i)
 !
 !  Compute Richardson number.
 !
-          IF (delW.ne.0.0_r8) THEN
-            Ri=g*ZW*(delT+0.61_r8*TairK*delQ)/(TairK*delW*delW)
-!           if (Ri.gt.0.25_r8) IER=-1
-          ELSE
-            IER=-1
-          END IF
+          Ri=g*ZW(i)*(delT(i)+0.61_r8*TairK(i)*delQ(i))/                &
+     &       (TairK(i)*delW(i)*delW(i))
+          Rt(i)=0.0_r8
+          Rq(i)=0.0_r8
+        END DO
 !
-!  Iterate until convergence when IER is negative.  It usually
-!  converges within four iterations.
+!  Iterate until convergence. It usually converges within four
+!  iterations.
 !
-          DO Iter=1,IterMax
-            IF (IER.ge.0) THEN
+        DO Iter=1,IterMax
+          DO i=MIN(Istr-1,IstrR),IendR
 !
 !  Compute Monin-Obukhov stability parameter, Z/L.
 !
-              oL=g*vonKar*TVstar/                                       &
-     &           (TairK*(1.0_r8+0.61_r8*Q)*Wstar*Wstar)
-              ZWoL=ZW*oL
-              ZToL=ZT*oL
-              ZQoL=ZQ*oL
+            oL=g*vonKar*TVstar(i)/                                      &
+     &         (TairK(i)*(1.0_r8+0.61_r8*Q(i))*Wstar(i)*Wstar(i)+eps)
+            ZWoL(i)=ZW(i)*oL
+            ZToL=ZT(i)*oL
+            ZQoL=ZQ(i)*oL
 !
 !  Evaluate stability functions at Z/L.
 !
-              Wpsi=bulk_psi(1,ZWoL)
-              Tpsi=bulk_psi(2,ZToL)
-              Qpsi=bulk_psi(2,ZQoL)
+            Wpsi(i)=bulk_psi(1,ZWoL(i))
+            Tpsi(i)=bulk_psi(2,ZToL)
+            Qpsi(i)=bulk_psi(2,ZQoL)
 !
 !  Compute wind scaling parameters, Wstar.
 !
-              ZoW=0.011_r8*Wstar*Wstar/g+0.11_r8*VisAir/Wstar
-              Wstar=delW*vonKar/(LOG(ZW/ZoW)-Wpsi)
+            ZoW(i)=0.011_r8*Wstar(i)*Wstar(i)/g+                        &
+     &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
+            Wstar(i)=MAX(eps,delW(i)*vonKar/(LOG(ZW(i)/ZoW(i))-Wpsi(i)))
 !
 !  Computes roughness Reynolds number for wind (Rr), heat (Rt),
 !  and moisture (Rq). Use Liu et al. (1976) look-up table to
 !  compute "Rt" and "Rq" as function of "Rr".
 !
-              Rr=ZoW*Wstar/VisAir
-              IF ((Rr.ge.0.0_r8).and.(Rr.lt.1000.0_r8)) THEN
-                DO k=1,8
-                  IF ((Liu_Rr(k).le.Rr).and.(Rr.lt.Liu_Rr(k+1))) THEN
-                    Rt=Liu_a(k,1)*Rr**Liu_b(k,1)
-                    Rq=Liu_a(k,2)*Rr**Liu_b(k,2)
-                  END IF
-                END DO
+            Rr(i)=ZoW(i)*Wstar(i)/VisAir(i)
+            Rr(i)=MAX(MIN(1000.0_r8,Rr(i)),0.0_r8)
+          END DO
+          DO k=1,8
+            DO i=MIN(Istr-1,IstrR),IendR
+              IF ((Liu_Rr(k).le.Rr(i)).and.(Rr(i).le.Liu_Rr(k+1))) THEN
+                Rt(i)=Liu_a(k,1)*Rr(i)**Liu_b(k,1)
+                Rq(i)=Liu_a(k,2)*Rr(i)**Liu_b(k,2)
+              END IF
+            END DO
+          END DO
 !
 !  Compute heat and moisture scaling parameters, Tstar and Qstar.
 !
-                cff=VisAir/Wstar
-                ZoT=Rt*cff
-                ZoQ=Rq*cff
-                cff=vonKar*blk_fdg
-                Tstar=(delT+delTc)*cff/(LOG(ZT/ZoT)-Tpsi)
-                Qstar=(delQ+delQc)*cff/(LOG(ZQ/ZoQ)-Qpsi)
+          DO i=MIN(Istr-1,IstrR),IendR
+            cff=VisAir(i)/(Wstar(i)+eps)
+            ZoT=Rt(i)*cff
+            ZoQ=Rq(i)*cff
+            cff=vonKar*blk_fdg
+            Tstar(i)=(delT(i)+delTc(i))*                                &
+     &               cff/(LOG(ZT(i)/ZoT)-Tpsi(i))
+            Qstar(i)=(delQ(i)+delQc(i))*                                &
+     &               cff/(LOG(ZQ(i)/ZoQ)-Qpsi(i))
 !
 !  Compute gustiness in wind speed.
 !
-                TVstar=Tstar*(1.0_r8+0.61_r8*Q)+0.61_r8*TairK*Qstar
-                Bf=-g/TairK*Wstar*TVstar
-                IF (Bf.gt.0) THEN
-                  Wgus=blk_beta*(Bf*blk_Zabl)**r3
-                ELSE
-                  Wgus=0.0_r8
-                END IF
-                delW=SQRT(Wmag*Wmag+Wgus*Wgus)
+            TVstar(i)=Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                   &
+     &                0.61_r8*TairK(i)*Qstar(i)
+            Bf=-g/TairK(i)*Wstar(i)*TVstar(i)
+            IF (Bf.gt.0) THEN
+              Wgus(i)=blk_beta*(Bf*blk_Zabl)**r3
+            ELSE
+              Wgus(i)=0.0_r8
+            END IF
+            delW(i)=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
 # ifdef COOL_SKIN
 !
 !-----------------------------------------------------------------------
 !  Cool Skin correction.
 !-----------------------------------------------------------------------
 !
+!  Cool skin correction constants. Clam: part of Saunders constant
+!  lambda; Cwet: slope of saturation vapor.
+!
+            Clam=16.0_r8*g*blk_Cpw*(rhoSea(i)*blk_visw)**3/             &
+     &           (blk_tcw*blk_tcw*rhoAir(i)*rhoAir(i))
+            Cwet=0.622_r8*Hlv(i)*Qsea(i)/                               &
+     &           (blk_Rgas*TseaK(i)*TseaK(i))
+!
+!  Set initial guesses for cool-skin layer thickness (Hcool).
+!
+            Hcool=0.001_r8
+!
 !  Backgound sensible and latent heat.
 !
-                Hsb=-rhoAir*blk_Cpa*Wstar*Tstar
-                Hlb=-rhoAir*Hlv*Wstar*Qstar
+            Hsb=-rhoAir(i)*blk_Cpa*Wstar(i)*Tstar(i)
+            Hlb=-rhoAir(i)*Hlv(i)*Wstar(i)*Qstar(i)
 !
 !  Mean absoption in cool-skin layer.
 !
-                Fc=0.137_r8+11.0_r8*Hcool-                              &
-     &             (1.0_r8-EXP(-Hcool/8.0e-4))*6.6E-5_r8/Hcool
+            Fc=0.137_r8+11.0_r8*Hcool-                                  &
+     &         (1.0_r8-EXP(-Hcool/8.0e-4))*6.6E-5_r8/Hcool
 !
 !  Total cooling at the interface.
 !
-                Qcool=LRad(i,j)+Hsb+Hlb-SRad(i,j)*Fc
-                Qbouy=Tcff*Qcool+Scff*Hlb*blk_Cpw/Hlv
+            Qcool=LRad(i,j)+Hsb+Hlb-SRad(i,j)*Fc
+            Qbouy=Tcff*Qcool+Scff*Hlb*blk_Cpw/Hlv(i)
 !
 !  Compute temperature and moisture change.
 !
-                IF ((Qcool.gt.0.0_r8).and.(Qbouy.gt.0.0_r8)) THEN
-                  lambd=6.0_r8/                                         &
-     &                  (1.0_r8+(Clam*Qbouy/Wstar**4)**0.75_r8)**r3
-                  Hcool=lambd*blk_visw/(SQRT(rhoAir/rhoSea)*Wstar)
-                  delTc=Qcool*Hcool/blk_tcw
-                ELSE
-                  delTc=0.0_r8
-                END IF
-                delQc=Cwet*delTc
-# endif
-              ELSE
-                IER=-2
-              END IF
+            IF ((Qcool.gt.0.0_r8).and.(Qbouy.gt.0.0_r8)) THEN
+              lambd=6.0_r8/                                             &
+     &              (1.0_r8+(Clam*Qbouy/(Wstar(i)+eps)**4)**0.75_r8)**r3
+              Hcool=lambd*blk_visw/(SQRT(rhoAir(i)/rhoSea(i))*          &
+     &                              Wstar(i)+eps)
+              delTc(i)=Qcool*Hcool/blk_tcw
+            ELSE
+              delTc(i)=0.0_r8
             END IF
+            delQc(i)=Cwet*delTc(i)
+# endif
           END DO
+        END DO
 !
-!---------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !  Compute Atmosphere/Ocean fluxes.
-!---------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !
-          IF (IER.ge.0) THEN
+        DO i=MIN(Istr-1,IstrR),IendR
 !
-!  Compute transfer coefficients for momentun (Cd), heat (Ch),
-!  and moisture (Ce).
+!  Compute transfer coefficients for momentun (Cd).
 !
-            Wspeed=SQRT(Wmag*Wmag+Wgus*Wgus)
-            Cd=Wstar*Wstar/(Wspeed*Wspeed)
-            Ch=Wstar*Tstar/(Wspeed*(TairC-TseaC+delTc))
-            Ce=Wstar*Qstar/(Wspeed*(Q-Qsea+delQc))
+          Wspeed=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
+          Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps)
 !
 !  Compute turbulent sensible heat flux (W/m2), Hs.
 !
-            Hs=-blk_Cpa*rhoAir*Wstar*Tstar
+            Hs=-blk_Cpa*rhoAir(i)*Wstar(i)*Tstar(i)
 !
 !  Compute sensible heat flux (W/m2) due to rainfall (kg/m2/s), Hsr.
 !
-            diffw=2.11E-5_r8*(TairK/273.16_r8)**1.94_r8
-            diffh=0.02411_r8*                                           &
-     &            (1.0_r8+TairC*(3.309E-3_r8-1.44E-6_r8*TairC))/        &
-     &            (rhoAir*blk_Cpa)
-            cff=Qair*Hlv/(blk_Rgas*TairK*TairK)
-            wet_bulb=1.0_r8/(1.0_r8+0.622_r8*(cff*Hlv*diffw)/           &
+            diffw=2.11E-5_r8*(TairK(i)/273.16_r8)**1.94_r8
+            diffh=0.02411_r8*(1.0_r8+TairC(i)*                          &
+     &                        (3.309E-3_r8-1.44E-6_r8*TairC(i)))/       &
+     &            (rhoAir(i)*blk_Cpa)
+            cff=Qair(i)*Hlv(i)/(blk_Rgas*TairK(i)*TairK(i))
+            wet_bulb=1.0_r8/(1.0_r8+0.622_r8*(cff*Hlv(i)*diffw)/        &
      &                                       (blk_Cpa*diffh))
-            Hsr=rainfall*wet_bulb*blk_Cpw*                              &
-     &          ((TseaC-TairC)+(Qsea-Q)*Hlv/blk_Cpa)
+            Hsr=rain(i,j)*wet_bulb*blk_Cpw*                             &
+     &          ((TseaC(i)-TairC(i))+(Qsea(i)-Q(i))*Hlv(i)/blk_Cpa)
             SHeat(i,j)=(Hs+Hsr)
 # ifdef MASKING
             SHeat(i,j)=SHeat(i,j)*rmask(i,j)
@@ -485,13 +538,13 @@
 !
 !  Compute turbulent latent heat flux (W/m2), Hl.
 !
-            Hl=-Hlv*rhoAir*Wstar*Qstar
+            Hl=-Hlv(i)*rhoAir(i)*Wstar(i)*Qstar(i)
 !
 !  Compute Webb correction (Webb effect) to latent heat flux, Hlw.
 !
-            upvel=-1.61_r8*Wstar*Qstar-                                 &
-     &            (1.0_r8+1.61_r8*Q)*Wstar*Tstar/TairK
-            Hlw=rhoAir*Hlv*upvel*Q
+            upvel=-1.61_r8*Wstar(i)*Qstar(i)-                         &
+     &            (1.0_r8+1.61_r8*Q(i))*Wstar(i)*Tstar(i)/TairK(i)
+            Hlw=rhoAir(i)*Hlv(i)*upvel*Q(i)
             LHeat(i,j)=(Hl+Hlw)
 # ifdef MASKING
             LHeat(i,j)=LHeat(i,j)*rmask(i,j)
@@ -499,11 +552,11 @@
 !
 !  Compute momentum flux (N/m2) due to rainfall (kg/m2/s).
 !
-            Taur=0.85_r8*rainfall*Wmag
+            Taur=0.85_r8*rain(i,j)*Wmag(i)
 !
 !  Compute wind stress components (N/m2), Tau.
 !
-            cff=rhoAir*Cd*Wspeed
+            cff=rhoAir(i)*Cd*Wspeed
             Taux(i,j)=(cff*Uwind(i,j)+Taur*SIGN(1.0_r8,Uwind(i,j)))
 # ifdef MASKING
             Taux(i,j)=Taux(i,j)*rmask(i,j)
@@ -512,7 +565,6 @@
 # ifdef MASKING
             Tauy(i,j)=Tauy(i,j)*rmask(i,j)
 # endif
-          END IF
         END DO
       END DO
 !

@@ -151,11 +151,18 @@
       implicit none
 
       real(r8), intent(out) :: wtime(2)
-
       real(r8) :: my_wtime
+#ifdef CRAYX1
+      integer :: count, count_rate, count_max
+#endif
 
+#ifdef CRAYX1
+      CALL system_clock (count, count_rate, count_max)
+      my_wtime=REAL(count,r8)/REAL(count_rate,r8)
+#else
       CALL cpu_time (wtime(1))
       my_wtime=wtime(1)
+#endif
 
 #ifdef REMOVE
 # if defined SUN || defined SGI || defined DEC

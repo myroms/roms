@@ -26,7 +26,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC step_floats
+      PUBLIC  :: step_floats
 
       CONTAINS
 !
@@ -47,6 +47,7 @@
      &                       knew(ng), nnew(ng), nfm3(ng), nfm2(ng),    &
      &                       nfm1(ng), nf(ng), nfp1(ng),                &
      &                       FLT(ng) % bounded,                         &
+     &                       FLT(ng) % Ftype,                           &
      &                       FLT(ng) % Tinfo,                           &
      &                       FLT(ng) % track)
 # ifdef PROFILE
@@ -59,7 +60,7 @@
       SUBROUTINE step_floats_tile (ng, Lstr, Lend,                      &
      &                             knew, nnew,                          &
      &                             nfm3, nfm2, nfm1, nf, nfp1,          &
-     &                             bounded, Tinfo, track)
+     &                             bounded, Ftype, Tinfo, track)
 !***********************************************************************
 !
       USE mod_param
@@ -81,11 +82,15 @@
       integer, intent(in) :: knew, nnew, nfm3, nfm2, nfm1, nf, nfp1
 
 # ifdef ASSUMED_SHAPE
+      integer, intent(in) :: Ftype(:)
       real(r8), intent(in) :: Tinfo(0:,:)
+
       logical, intent(inout) :: bounded(:)
       real(r8), intent(inout) :: track(:,0:,:)
 # else
+      integer, intent(in) :: Ftype(Nfloats(ng))
       real(r8), intent(in) :: Tinfo(0:izrhs,Nfloats(ng))
+
       logical, intent(inout) :: bounded(Nfloats(ng))
       real(r8), intent(inout) :: track(NFV(ng),0:NFT,Nfloats(ng))
 # endif
@@ -102,11 +107,12 @@
 
       integer :: Itile, Jtile, Istr, Iend, Jstr, Jend
       integer :: LBi, UBi, LBj, UBj
-      integer :: Npts, i, j, itrc, l
+      integer :: Ir, Jr, Npts, i, i1, i2, j, j1, j2, itrc, l, k
 
       real(r8), parameter :: Fspv = 0.0_r8
 
-      real(r8) :: cff1, cff2, cff3, cff4, xrhs, yrhs, zrhs
+      real(r8) :: cff1, cff2, cff3, cff4, cff5, cff6, cff7, cff8
+      real(r8) :: p1, p2, q1, q2, xrhs, yrhs, zrhs, zfloat
 
 # ifdef FLOAT_VWALK
       integer :: ierr
@@ -141,7 +147,7 @@
 ! recombining step at the end of the routine.  If Fspv is zero, a SUM
 ! reduction is carried-out.  
 !
-      Npts = NFV(ng)*(NFT+1)*Nfloats(ng)
+      Npts=NFV(ng)*(NFT+1)*Nfloats(ng)
 
       CALL get_tile (ng, MyRank, Itile, Jtile, Istr, Iend, Jstr, Jend)
       Xstr=REAL(Istr,r8)-0.5_r8
@@ -255,10 +261,56 @@
      &                                cff2*track(iyrhs,nfm1,l)+         &
      &                                cff1*track(iyrhs,nfm2,l))
 # if defined SOLVE3D && !defined FLOAT_VWALK
-          track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                      &
-     &                        dt(ng)*(cff1*track(izrhs,nf  ,l)-         &
-     &                                cff2*track(izrhs,nfm1,l)+         &
-     &                                cff1*track(izrhs,nfm2,l))
+!
+!  If isobaric (constant depth) floats, keep floats at its initial depth
+!  location. Use bilinear interpolation to determine the isobaric in
+!  terms vertical grid units.
+!
+         IF (Ftype(l).eq.1) THEN
+           zfloat=Tinfo(izgrd,l)
+           Ir=INT(track(ixgrd,nfp1,l))
+           Jr=INT(track(iygrd,nfp1,l))
+!
+           i1=MIN(MAX(Ir  ,0),Lm(ng)+1)
+           i2=MIN(MAX(Ir+1,1),Lm(ng)+1)
+           j1=MIN(MAX(Jr  ,0),Mm(ng)+1)
+           j2=MIN(MAX(Jr+1,0),Mm(ng)+1)
+!
+            p2=REAL(i2-i1,r8)*(track(ixgrd,nfp1,l)-REAL(i1,r8))
+            q2=REAL(j2-j1,r8)*(track(iygrd,nfp1,l)-REAL(j1,r8))
+            p1=1.0_r8-p2
+            q1=1.0_r8-q2
+!
+            cff6=0.0_r8
+            DO k=N(ng),1,-1
+#  ifdef MASKING
+              cff7=p1*q1*GRID(ng)%z_w(i1,j1,k)*GRID(ng)%rmask(i1,j1)+   &
+     &             p2*q1*GRID(ng)%z_w(i2,j1,k)*GRID(ng)%rmask(i2,j1)+   &
+     &             p1*q2*GRID(ng)%z_w(i1,j2,k)*GRID(ng)%rmask(i1,j2)+   &
+     &             p2*q2*GRID(ng)%z_w(i2,j2,k)*GRID(ng)%rmask(i2,j2)
+              cff8=p1*q1*GRID(ng)%rmask(i1,j1)+                         &
+     &             p2*q1*GRID(ng)%rmask(i2,j1)+                         &
+     &             p1*q2*GRID(ng)%rmask(i1,j2)+                         &
+     &             p2*q2*GRID(ng)%rmask(i2,j2)
+              cff5=0.0_r8
+              IF (cff8.gt.0.0_r8) cff5=cff7/cff8
+#  else
+              cff5=p1*q1*GRID(ng)%z_w(i1,j1,k)+                         &
+     &             p2*q1*GRID(ng)%z_w(i2,j1,k)+                         &
+     &             p1*q2*GRID(ng)%z_w(i1,j2,k)+                         &
+     &             p2*q2*GRID(ng)%z_w(i2,j2,k)
+#  endif
+              IF ((zfloat-cff5)*(cff6-zfloat).ge.0.0_r8) THEN
+                track(izgrd,nfp1,l)=REAL(k,r8)+(zfloat-cff5)/(cff6-cff5)
+              END IF
+              cff6=cff5
+            END DO
+         ELSE
+           track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                     &
+     &                         dt(ng)*(cff1*track(izrhs,nf  ,l)-        &
+     &                                 cff2*track(izrhs,nfm1,l)+        &
+     &                                 cff1*track(izrhs,nfm2,l))
+         ENDIF
 # endif
         END IF
       END DO
@@ -351,11 +403,58 @@
      &                                cff4*track(iyrhs,nf  ,l)-         &
      &                                cff3*track(iyrhs,nfm1,l))
 # if defined SOLVE3D && !defined FLOAT_VWALK
-          track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-                 &
-     &                        cff2*track(izgrd,nfm2,l)+                 &
-     &                        dt(ng)*(cff3*track(izrhs,nfp1,l)+         &
-     &                                cff4*track(izrhs,nf  ,l)-         &
-     &                                cff3*track(izrhs,nfm1,l))
+!
+!  If isobaric (constant depth) floats, keep floats at its initial depth
+!  location. Use bilinear interpolation to determine the isobaric in
+!  terms vertical grid units.
+!
+          IF (Ftype(l).eq.1) THEN
+            zfloat=Tinfo(izgrd,l)
+!
+            Ir=INT(track(ixgrd,nfp1,l))
+            Jr=INT(track(iygrd,nfp1,l))
+!
+            i1=MIN(MAX(Ir  ,0),Lm(ng)+1)
+            i2=MIN(MAX(Ir+1,1),Lm(ng)+1)
+            j1=MIN(MAX(Jr  ,0),Mm(ng)+1)
+            j2=MIN(MAX(Jr+1,0),Mm(ng)+1)
+!
+            p2=REAL(i2-i1,r8)*(track(ixgrd,nfp1,l)-REAL(i1,r8))
+            q2=REAL(j2-j1,r8)*(track(iygrd,nfp1,l)-REAL(j1,r8))
+            p1=1.0_r8-p2
+            q1=1.0_r8-q2 
+!
+            cff6=0.0_r8
+            DO k=N(ng),1,-1
+#  ifdef MASKING
+              cff7=p1*q1*GRID(ng)%z_w(i1,j1,k)*GRID(ng)%rmask(i1,j1)+   &
+     &             p2*q1*GRID(ng)%z_w(i2,j1,k)*GRID(ng)%rmask(i2,j1)+   &
+     &             p1*q2*GRID(ng)%z_w(i1,j2,k)*GRID(ng)%rmask(i1,j2)+   &
+     &             p2*q2*GRID(ng)%z_w(i2,j2,k)*GRID(ng)%rmask(i2,j2)
+              cff8=p1*q1*GRID(ng)%rmask(i1,j1)+                         &
+     &             p2*q1*GRID(ng)%rmask(i2,j1)+                         &
+     &             p1*q2*GRID(ng)%rmask(i1,j2)+                         &
+     &             p2*q2*GRID(ng)%rmask(i2,j2)
+              cff5=0.0_r8
+              IF (cff8.gt.0.0_r8) cff5=cff7/cff8
+#  else
+              cff5=p1*q1*GRID(ng)%z_w(i1,j1,k)+                         &
+     &             p2*q1*GRID(ng)%z_w(i2,j1,k)+                         &
+     &             p1*q2*GRID(ng)%z_w(i1,j2,k)+                         &
+     &             p2*q2*GRID(ng)%z_w(i2,j2,k)
+#  endif
+              IF ((zfloat-cff5)*(cff6-zfloat).ge.0.0_r8) THEN
+                track(izgrd,nfp1,l)=REAL(k,r8)+(zfloat-cff5)/(cff6-cff5)
+              END IF
+              cff6=cff5
+            END DO
+          ELSE
+            track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
+     &                          cff2*track(izgrd,nfm2,l)+               &
+     &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
+     &                                  cff4*track(izrhs,nf  ,l)-       &
+     &                                  cff3*track(izrhs,nfm1,l))
+          END IF
 # endif
         END IF
       END DO

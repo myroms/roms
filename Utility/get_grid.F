@@ -18,7 +18,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+# if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       USE exchange_2d_mod
 !
 # endif
@@ -312,7 +312,7 @@
         exit_flag=2
         RETURN
       END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#  if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % rmask)
@@ -330,7 +330,7 @@
         exit_flag=2
         RETURN
       END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#  if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_u2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % umask)
@@ -348,7 +348,7 @@
         exit_flag=2
         RETURN
       END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#  if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_v2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % vmask)
@@ -366,7 +366,7 @@
         exit_flag=2
         RETURN
       END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#  if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_p2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % pmask)
@@ -387,7 +387,7 @@
         exit_flag=2
         RETURN
       END IF
-# if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+# if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % h)
@@ -408,7 +408,7 @@
         exit_flag=2
         RETURN
       END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#  if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % zice)
@@ -429,7 +429,7 @@
         exit_flag=2
         RETURN
       END IF
-# if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+# if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % f)
@@ -462,7 +462,7 @@
         exit_flag=2
         RETURN
       END IF
-# if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+# if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % pm)
@@ -498,7 +498,7 @@
         exit_flag=2
         RETURN
       END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#  if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
       CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % dmde)
@@ -612,7 +612,7 @@
           exit_flag=2
           RETURN
         END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC || !defined DISTRIBUTE
+#  if (defined EW_PERIODIC || defined NS_PERIODIC) && !defined DISTRIBUTE
         CALL exchange_r2d_tile (ng, 1, Lm(ng), 1, Mm(ng),               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          GRID(ng) % angler)
@@ -625,11 +625,11 @@
       status=nf_close(ncgrdid(ng))
       ncgrdid(ng)=-1
 !
-  10  format(/,' GET_GRID - unable to find grid variable: ',a,          &
-     &       /,12x,'in grid NetCDF file: ',a)
-  20  format(/,' GET_GRID - unable to open grid NetCDF file: ',a)
-  30  format(/,' GET_GRID - error while reading variable: ',a,          &
-     &       /,12x,'in grid NetCDF file: ',a)
+  10  FORMAT (/,' GET_GRID - unable to find grid variable: ',a,         &
+     &        /,12x,'in grid NetCDF file: ',a)
+  20  FORMAT (/,' GET_GRID - unable to open grid NetCDF file: ',a)
+  30  FORMAT (/,' GET_GRID - error while reading variable: ',a,         &
+     &        /,12x,'in grid NetCDF file: ',a)
 #else
       SUBROUTINE get_grid
 #endif

@@ -17,13 +17,17 @@
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
-!    Shchepetkin A.F and J.C. McWilliams, 2001:  A method for          !
+!    Shchepetkin A.F and J.C. McWilliams, 2003:  A method for          !
 !      computing horizontal pressure gradient force in an ocean        !
-!      model with non-aligned vertical coordinate.  DRAFT              !
+!      model with non-aligned vertical coordinate, JGR, 108,           !
+!      1-34.                                                           !
 !                                                                      !
 !***********************************************************************
 !
       USE mod_param
+# ifdef DIAGNOSTICS
+      USE mod_diags
+# endif
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
@@ -48,9 +52,14 @@
      &                  GRID(ng) % z_r,                                 &
      &                  GRID(ng) % z_w,                                 &
 # ifdef ICESHELF
+     &                  GRID(ng) % IcePress,                            &
      &                  GRID(ng) % zice,                                &
 # endif
      &                  OCEAN(ng) % rho,                                &
+# ifdef DIAGNOSTICS_UV
+     &                  DIAGS(ng) % DiaRU,                              &
+     &                  DIAGS(ng) % DiaRV,                              &
+# endif
      &                  OCEAN(ng) % ru,                                 &
      &                  OCEAN(ng) % rv)
 # ifdef PROFILE
@@ -67,10 +76,14 @@
      &                        umask, vmask,                             &
 # endif
      &                        Hz, om_v, on_u, z_r, z_w,                 &
+     &                        rho,                                      &
 # ifdef ICESHELF
-     &                        zice,                                     &
+     &                        IcePress, zice,                           &
 # endif
-     &                        rho, ru, rv)
+# ifdef DIAGNOSTICS_UV
+     &                        DiaRU, DiaRV,                             &
+# endif
+     &                        ru, rv)
 !***********************************************************************
 !
       USE mod_param
@@ -93,9 +106,14 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
 #  ifdef ICESHELF
+      real(r8), intent(in) :: IcePress(LBi:,LBj:)
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRU(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
+#  endif
       real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
 # else
@@ -109,9 +127,14 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #  ifdef ICESHELF
+      real(r8), intent(in) :: IcePress(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+#  ifdef DIAGNOSTICS_UV
+      real(r8), intent(inout) :: DiaRU(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+      real(r8), intent(inout) :: DiaRV(LBi:UBi,LBj:UBj,N(ng),2,NDrhs)
+#  endif
       real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
 # endif
@@ -173,8 +196,9 @@
         END DO
         DO i=IstrU-1,Iend
 # ifdef ICESHELF
-          P(i,j,N(ng))=GRho0*(z_w(i,j,N(ng))-zice(i,j))-                &
-     &                 GRho*rho(i,j,N(ng))*zice(i,j)+                   &
+          cff=z_w(i,j,N(ng))-zice(i,j)
+          P(i,j,N(ng))=GRho0*cff+                                       &
+     &                 GRho*(rho(i,j,N(ng))*cff+IcePress(i,j))+         &
      &                 GRho*(rho(i,j,N(ng))+                            &
      &                       0.5_r8*(rho(i,j,N(ng))-rho(i,j,N(ng)-1))*  &
      &                       (z_w(i,j,N(ng))-z_r(i,j,N(ng)))/           &
@@ -254,6 +278,9 @@
      &                                 (rho(i,j,k)-rho(i-1,j,k)-        &
      &                                  OneTwelfth*                     &
      &                                  (dRx(i,j)+dRx(i-1,j))))))
+# ifdef DIAGNOSTICS_UV
+            DiaRU(i,j,k,nrhs,M3pgrd)=ru(i,j,k,nrhs)
+# endif
           END DO
         END DO
       END DO
@@ -308,6 +335,9 @@
      &                                 (rho(i,j,k)-rho(i,j-1,k)-        &
      &                                  OneTwelfth*                     &
      &                                  (dRx(i,j)+dRx(i,j-1))))))
+# ifdef DIAGNOSTICS_UV
+            DiaRV(i,j,k,nrhs,M3pgrd)=rv(i,j,k,nrhs)
+# endif
           END DO
         END DO
       END DO

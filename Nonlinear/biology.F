@@ -14,12 +14,14 @@
       implicit none
 
       PRIVATE
-      PUBLIC biology_tile
+      PUBLIC  :: biology_tile
 
       CONTAINS
 
 # ifdef BIO_FASHAM
 #  include "fasham.h"
+# elif defined ECOSIM
+#  include "ecosim.h"
 # endif
 
 #endif

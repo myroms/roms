@@ -35,23 +35,24 @@
 
       logical :: got_var(-6:NV)
 
-      integer :: fltdim, i, ifield, j, l, nrec
+      integer :: fltdim, i, ifield, itrc, j, l, nrec
       integer :: recdim, status
 
-      integer :: DimIDs(24), fgrd(2), start(2), total(2)
+      integer :: DimIDs(28), fgrd(2), start(2), total(2)
 
       integer :: def_info, def_var, wrt_info
 
-# ifdef SOLVE3D
-      logical :: got_trc(NT(ng))
+# ifdef DISTRIBUTE
+      integer :: Npts
 
-      integer :: itrc
+      real(r8), parameter :: Fspv = 0.0_r8
+      real(r8), dimension(Nfloats(ng)*NFV(ng)) :: Fwrk
 # endif
 
       real(r8) :: Aval(4), Tinp(Nfloats(ng))
 
-      character (len=65) :: Vinfo(Natt),  dimnam
-      character (len=80) :: fname, ncname
+      character (len=80) :: Vinfo(Natt)
+      character (len=80) :: dimnam, fname, ncname
 !
 !=======================================================================
 !  Create a new floats data file.
@@ -68,7 +69,7 @@
         ncname=fltname(ng)
         status=nf_create(TRIM(ncname),nf_clobber,ncfltid(ng))
         IF (status.ne.nf_noerr) THEN
-          write(stdout,10) TRIM(ncname)
+          WRITE (stdout,10) TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -93,6 +94,16 @@
         status=nf_def_dim(ncfltid(ng),'Nbed'    ,Nbed,                  &
      &                    DimIDs(16))
 #  endif
+#  ifdef ECOSIM
+        status=nf_def_dim(ncfltid(ng),'Nphy'    ,Nphy,                  &
+     &                    DimIDs(25))
+        status=nf_def_dim(ncfltid(ng),'Nbac'    ,Nbac,                  &
+     &                    DimIDs(26))
+        status=nf_def_dim(ncfltid(ng),'Ndom'    ,Ndom,                  &
+     &                    DimIDs(27))
+        status=nf_def_dim(ncfltid(ng),'Nfec'    ,Nfec,                  &
+     &                    DimIDs(28))
+#  endif
 # endif
         status=nf_def_dim(ncfltid(ng),'drifter' ,Nfloats(ng),           &
      &                    DimIDs(15))
@@ -115,7 +126,7 @@
 !  Initialize local information variable arrays.
 !
         DO i=1,Natt
-          DO j=1,65
+          DO j=1,80
             Vinfo(i)(j:j)=' '
           END DO
         END DO
@@ -294,7 +305,7 @@
 #  ifdef SEDIMENT
           DO i=1,NST
             IF (itrc.eq.idsed(i)) THEN
-              write(Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
+              WRITE (Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
             END IF
           END DO
 #  endif
@@ -342,7 +353,7 @@
 !
         status=nf_open(TRIM(ncname),nf_write,ncfltid(ng))
         IF (status.ne.nf_noerr) THEN
-          write(stdout,30) TRIM(ncname)
+          WRITE (stdout,30) TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -352,23 +363,18 @@
         DO i=1,NV
           got_var(i)=.false.
         END DO
-# ifdef SOLVE3D
-        DO itrc=1,NT(ng)
-          got_trc(itrc)=.false.
-        END DO
-# endif
 !
 !  Inquire size of the "drifter" dimension.
 !
         status=nf_inq_dimid(ncfltid(ng),'drifter',fltdim)
         IF (status.ne.nf_noerr) THEN
-          write(stdout,40) 'drifter', TRIM(ncname)
+          WRITE (stdout,40) 'drifter', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         status=nf_inq_dim(ncfltid(ng),fltdim,dimnam,Nfloats(ng))
         IF (status.ne.nf_noerr) THEN
-          write(stdout,50) 'drifter', TRIM(ncname)
+          WRITE (stdout,50) 'drifter', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -427,7 +433,7 @@
           END IF
           DO itrc=1,NT(ng)
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
-             got_trc(itrc)=.true.
+             got_var(idTvar(itrc))=.true.
              status=nf_inq_varid(ncfltid(ng),                           &
      &                           TRIM(Vname(1,idTvar(itrc))),           &
      &                           fltTid(itrc,ng))
@@ -439,59 +445,59 @@
 !  Check if floats variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          write(stdout,60) TRIM(Vname(1,idtime)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idtime)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idXgrd)) THEN
-          write(stdout,60) 'Xgrid', TRIM(ncname)
+          WRITE (stdout,60) 'Xgrid', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idYgrd)) THEN
-          write(stdout,60) 'Ygrid', TRIM(ncname)
+          WRITE (stdout,60) 'Ygrid', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idZgrd)) THEN
-          write(stdout,60) 'Zgrid', TRIM(ncname)
+          WRITE (stdout,60) 'Zgrid', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # endif
         IF (.not.got_var(idglon)) THEN
           IF (spherical) THEN
-            write(stdout,60) 'lon', TRIM(ncname)
+            WRITE (stdout,60) 'lon', TRIM(ncname)
           ELSE
-            write(stdout,60) 'x', TRIM(ncname)
+            WRITE (stdout,60) 'x', TRIM(ncname)
           END IF
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idglat)) THEN
           IF (spherical) THEN
-            write(stdout,60) 'lat', TRIM(ncname)
+            WRITE (stdout,60) 'lat', TRIM(ncname)
           ELSE
-            write(stdout,60) 'y', TRIM(ncname)
+            WRITE (stdout,60) 'y', TRIM(ncname)
           END IF
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(iddpth)) THEN
-          write(stdout,60) 'depth', TRIM(ncname)
+          WRITE (stdout,60) 'depth', TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idDano)) THEN
-          write(stdout,60) TRIM(Vname(1,idDano)), TRIM(ncname)
+          WRITE (stdout,60) TRIM(Vname(1,idDano)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         DO itrc=1,NT(ng)
-          IF (.not.got_trc(itrc)) THEN
-            write(stdout,60) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
+          IF (.not.got_var(idTvar(itrc))) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
@@ -521,7 +527,7 @@
         status=nf_get_vara_TYPE(ncfltid(ng),fltVid(idXgrd,ng),          &
      &                          start,total,Tinp)
         IF (status.ne.nf_noerr) THEN
-          write(stdout,70) 'Xgrid', tfltindx(ng), TRIM(ncname)
+          WRITE (stdout,70) 'Xgrid', tfltindx(ng), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -540,7 +546,7 @@
         status=nf_get_vara_TYPE(ncfltid(ng),fltVid(idYgrd,ng),          &
      &                          start,total,Tinp)
         IF (status.ne.nf_noerr) THEN
-          write(stdout,70) 'Ygrid', tfltindx(ng), TRIM(ncname)
+          WRITE (stdout,70) 'Ygrid', tfltindx(ng), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -560,7 +566,7 @@
         status=nf_get_vara_TYPE(ncfltid(ng),fltVid(idZgrd,ng),          &
      &                          start,total,Tinp)
         IF (status.ne.nf_noerr) THEN
-          write(stdout,70) 'Zgrid', tfltindx(ng), TRIM(ncname)
+          WRITE (stdout,70) 'Zgrid', tfltindx(ng), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -577,20 +583,49 @@
         END DO
 # endif
       END IF
+
+# ifdef DISTRIBUTE
 !
-  10  format(/,' DEF_FLOATS - unable to create floats NetCDF ',         &
-     &       'file: ',a)
-  20  format(1pe11.4,1x,'millimeter')
-  30  format(/,' DEF_FLOATS - unable to open floats NetCDF file: ',a)
-  40  format(/,' DEF_FLOATS - error while inquiring dimension ID ',     &
-     &       ' for: ',a,2x,/,13x,'in floats NetCDF file: ',a)
-  50  format(/,' DEF_FLOATS - error while inquiring size of',           &
-     &       ' dimension: ',a,2x,/,13x,'in floats NetCDF file: ',a)
-  60  format(/,' DEF_FLOATS - unable to find variable: ',a,2x,          &
-     &         ' in floats NetCDF file: ',a)
-  70  format(/,' DEF_FLOATS - error while reading variable: ',a,2x,     &
-     &         ' at time record = ', i6.6,/,13x,                        &
-     &         ' in floats NetCDF file: ',a)
+!  Broadcast restart float information to all nodes.
+!
+      IF (.not.LdefFLT(ng)) THEN
+
+        Npts=NFV(ng)*(NFT+1)*Nfloats(ng)
+
+        CALL mp_collect (ng, Npts, Fspv, FLT(ng)%track)
+!
+!  Collect the bounded status switch.
+!
+        Fwrk=Fspv
+        DO l=1,Nfloats(ng)
+          IF (FLT(ng)%bounded(l)) THEN
+            Fwrk(l)=1.0_r8
+          END IF
+        END DO
+        CALL mp_collect (ng, Nfloats(ng), Fspv, Fwrk)
+        DO l=1,Nfloats(ng)
+          IF (Fwrk(l).ne.Fspv) THEN
+            FLT(ng)%bounded(l)=.true.
+          ELSE
+            FLT(ng)%bounded(l)=.false.
+          END IF
+        END DO
+      END IF
+# endif
+!
+  10  FORMAT (/,' DEF_FLOATS - unable to create floats NetCDF',         &
+     &          ' file: ',a)
+  20  FORMAT (1pe11.4,1x,'millimeter')
+  30  FORMAT (/,' DEF_FLOATS - unable to open floats NetCDF file: ',a)
+  40  FORMAT (/,' DEF_FLOATS - error while inquiring dimension ID ',    &
+     &          ' for: ',a,2x,/,13x,'in floats NetCDF file: ',a)
+  50  FORMAT (/,' DEF_FLOATS - error while inquiring size of',          &
+     &        ' dimension: ',a,2x,/,13x,'in floats NetCDF file: ',a)
+  60  FORMAT (/,' DEF_FLOATS - unable to find variable: ',a,2x,         &
+     &          ' in floats NetCDF file: ',a)
+  70  FORMAT (/,' DEF_FLOATS - error while reading variable: ',a,2x,    &
+     &          ' at time record = ', i6.6,/,13x,                       &
+     &          ' in floats NetCDF file: ',a)
       RETURN
       END SUBROUTINE def_floats
 #else

@@ -6,6 +6,7 @@
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  ESname      Input error subspace file name.                         !
+!  Iname       Physical parameters standard input script file name.    !
 !  Rerror      Running error messages.                                 !
 !  SSHname     Input SSH observations file name.                       !
 !  SSTname     Input SST observations file name.                       !
@@ -18,6 +19,8 @@
 !  bparnam     Input biology parameters file name.                     !
 !  bryname     Input boundary data file name.                          !
 !  clmname     Input climatology file name.                            !
+!  diabase     Output diagnostics base file name.                      !
+!  dianame     Output diagnostics file name.                           !
 !  fltname     Output floats file name.                                !
 !  fposnam     Input initial floats positions file name.               !
 !  frcids      NetCDF ID descriptors associated with frcname.          ! 
@@ -72,6 +75,8 @@
         character (len=80), dimension(Ngrids) :: avgname
         character (len=80), dimension(Ngrids) :: bryname
         character (len=80), dimension(Ngrids) :: clmname
+        character (len=80), dimension(Ngrids) :: diabase
+        character (len=80), dimension(Ngrids) :: dianame
         character (len=80), dimension(Ngrids) :: fltname
         character (len=80), dimension(Ngrids) :: fwdname
         character (len=80), dimension(Ngrids) :: grdname
@@ -81,6 +86,7 @@
         character (len=80), dimension(Ngrids) :: rstname
         character (len=80), dimension(Ngrids) :: staname
 
+        character (len=80) :: Iname
         character (len=80) :: aparnam
         character (len=80) :: bparnam
         character (len=80) :: fposnam

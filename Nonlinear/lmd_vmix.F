@@ -22,7 +22,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC lmd_vmix
+      PUBLIC  :: lmd_vmix
 
       CONTAINS
 !
@@ -50,20 +50,23 @@
 # ifdef PROFILE
       CALL wclock_on (ng, 18)
 # endif
-      CALL  lmd_vmix_tile (ng, Istr, Iend, Jstr, Jend,                  &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     nstp(ng),                                    &
-     &                     GRID(ng) % Hz,                               &
-     &                     OCEAN(ng) % rho,                             &
-     &                     OCEAN(ng) % u,                               &
-     &                     OCEAN(ng) % v,                               &
-# ifdef LMD_DDMIX
-     &                     OCEAN(ng) % t,                               &
-     &                     MIXING(ng) % alfaobeta,                      &
+      CALL lmd_vmix_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    nstp(ng),                                     &
+     &                    GRID(ng) % Hz,                                &
+# ifndef SPLINES
+     &                    GRID(ng) % z_r,                               &
 # endif
-     &                     MIXING(ng) % bvf,                            &
-     &                     MIXING(ng) % Akt,                            &
-     &                     MIXING(ng) % Akv)
+     &                    OCEAN(ng) % rho,                              &
+     &                    OCEAN(ng) % u,                                &
+     &                    OCEAN(ng) % v,                                &
+# ifdef LMD_DDMIX
+     &                    OCEAN(ng) % t,                                &
+     &                    MIXING(ng) % alfaobeta,                       &
+# endif
+     &                    MIXING(ng) % bvf,                             &
+     &                    MIXING(ng) % Akt,                             &
+     &                    MIXING(ng) % Akv)
 # ifdef LMD_SKPP
       CALL lmd_skpp (ng, tile)
 # endif
@@ -80,7 +83,11 @@
       SUBROUTINE lmd_vmix_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp,                                   &
-     &                          Hz, rho, u, v,                          &
+     &                          Hz,                                     &
+# ifndef SPLINES
+     &                          z_r,                                    &
+# endif
+     &                          rho, u, v,                              &
 # ifdef LMD_DDMIX
      &                          t, alfaobeta,                           &
 # endif
@@ -100,6 +107,9 @@
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+#  ifndef SPLINES
+      real(r8), intent(in) :: z_r(LBi:,LBj:,:)
+#  endif
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
@@ -113,6 +123,9 @@
       real(r8), intent(inout) :: Akv(LBi:,LBj:,0:)
 # else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+#  ifndef SPLINES
+      real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
+#  endif
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),3)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),3)
@@ -434,10 +447,10 @@
 !  Apply boundary conditions.
 !
       CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Akv)
+     &                  LBi, UBi, LBj, UBj, 0, N(ng), Akv)
       DO itrc=1,NAT
         CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
-     &                    LBi, UBi, LBj, UBj, Akt(:,:,:,trc))
+     &                    LBi, UBi, LBj, UBj, 0, N(ng), Akt(:,:,:,itrc))
       END DO
 # endif
       RETURN

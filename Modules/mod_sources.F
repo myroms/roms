@@ -15,12 +15,17 @@
 !               Fsrc(:) = 2,  Only salinity is on.                     !
 !               Fsrc(:) = 3,  Both temperature and salinity are on.    !
 !               Fsrc(:) = 4,  Both nitrate and salinity are on.        !
+!               Fsrc(:) = ... And other combinations.                  !
+!                             (We need a more robust logic here)       !
 !  Isrc       I-grid location of point Sources/Sinks,                  !
 !               1 =< Isrc =< Lm(ng).                                   !
 !  Jsrc       J-grid location of point Sources/Sinks,                  !
 !               1 =< Jsrc =< Mm(ng).                                   !
-!  Lsrc       Logical switch indicating which tracer field to apply    !
-!               the point Sources/Sinks.                               !
+!  Lsrc       Logical switch for each source point source/sink datum   !
+!               indicating which tracer(s) is (are) activated          !
+!               according to the "Fsrc" indentification flag.          !
+!  Ltracer    Logical switch indicating which tracer field need to be  !
+!               processed for Sources/Sinks terms.                     !
 !  Qbar       Vertically integrated mass transport (m3/s) of point     !
 !               Sources/Sinks at U- or V-points:                       !
 !               Qbar -> positive, if the mass transport is in the      !
@@ -45,6 +50,7 @@
         TYPE T_SOURCES
 
           logical, pointer :: Lsrc(:,:)
+          logical, pointer :: Ltracer(:)
 
           integer, pointer :: Isrc(:)
           integer, pointer :: Jsrc(:)
@@ -102,6 +108,9 @@
 
       allocate ( SOURCES(ng) % Lsrc(Msrc,NT(ng)) )
       SOURCES(ng) % Lsrc = .false.
+
+      allocate ( SOURCES(ng) % Ltracer(NT(ng)) )
+      SOURCES(ng) % Ltracer = .false.
 
       allocate ( SOURCES(ng) % Dsrc(Msrc) )
       SOURCES(ng) % Dsrc = IniVal

@@ -5,15 +5,15 @@
 !  Copyright (c) 2002 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This package contains periodic boundary conditions routines for     !
-!  2D primitive variables.                                             !
+!  This package contains periodic boundary conditions and parallel     !
+!  exchange (distributed-memory only) routines for 2D variables.       !
 !                                                                      !
 !  Routines:                                                           !
 !                                                                      !
-!    exchange_p2d_tile    periodic conditions at PSI-points            !
-!    exchange_r2d_tile    periodic conditions at RHO-points            !
-!    exchange_u2d_tile    periodic conditions at U-points              !
-!    exchange_v2d_tile    periodic conditions at V-points              !
+!    exchange_p2d_tile    periodic conditions/exchange at PSI-points   !
+!    exchange_r2d_tile    periodic conditions/exchange at RHO-points   !
+!    exchange_u2d_tile    periodic conditions/exchange at U-points     !
+!    exchange_v2d_tile    periodic conditions/exchange at V-points     !
 !                                                                      !
 !=======================================================================
 !

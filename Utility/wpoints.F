@@ -1,6 +1,5 @@
 #include "cppdefs.h"
-#if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
-      SUBROUTINE wpoints (ng, tile)
+      MODULE wpoints_mod
 !
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002 ROMS/TOMS Group                                  !
@@ -11,6 +10,20 @@
 !                                                                      !
 !=======================================================================
 !
+      implicit none
+
+      PRIVATE
+      PUBLIC  :: wpoints
+
+      CONTAINS
+
+#if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
+!
+!***********************************************************************
+      SUBROUTINE wpoints (ng, tile)
+!***********************************************************************
+!
+
       USE mod_param
       USE mod_grid
 
@@ -117,7 +130,7 @@
         NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
       END IF
 !$OMP CRITICAL (MAX_WATER)
-      IF (tile_count.eq.0) THEN
+      IF (block_count.eq.0) THEN
         Nxyp(ng)=0
         Nxyr(ng)=0
         Nxyu(ng)=0
@@ -127,9 +140,9 @@
       Nxyr(ng)=Nxyr(ng)+my_Nxyr
       Nxyu(ng)=Nxyu(ng)+my_Nxyu
       Nxyv(ng)=Nxyv(ng)+my_Nxyv
-      tile_count=tile_count+1
-      IF (tile_count.eq.NSUB) THEN
-        tile_count=0
+      block_count=block_count+1
+      IF (block_count.eq.NSUB) THEN
+        block_count=0
 # ifdef DISTRIBUTE
         buffer(1)=REAL(Nxyp(ng),r8)
         buffer(2)=REAL(Nxyr(ng),r8)
@@ -221,3 +234,4 @@
       RETURN
       END SUBROUTINE wpoints
 #endif
+      END MODULE wpoints_mod

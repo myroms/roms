@@ -282,30 +282,30 @@
         END IF
       END DO
 !
-  10  format(/,' OPENCDF - unable to open input NetCDF file: ',a)
-  20  format(/,' OPENCDF - error while reading attribute: ',a,2x,       &
-     &       ' in input NetCDF file: ',a)
-  30  format(/,' OPENCDF - cannot find attribute: ',a,2x,               &
-     &       ' in input NetCDF file: ',a)
-  40  format(/,' OPENCDF - too small dimension parameter, MV = ',       &
+  10  FORMAT (/,' OPENCDF - unable to open input NetCDF file: ',a)
+  20  FORMAT (/,' OPENCDF - error while reading attribute: ',a,2x,      &
+     &          ' in input NetCDF file: ',a)
+  30  FORMAT (/,' OPENCDF - cannot find attribute: ',a,2x,              &
+     &          ' in input NetCDF file: ',a)
+  40  FORMAT (/,' OPENCDF - too small dimension parameter, MV = ',      &
      &       2i5,/,11x,'change file  ncparam.h  and recompile.')
-  50  format(/,' OPENCDF - error while reading dimension ID: ',i3,2x,   &
-     &       ' in input NetCDF file: ',a)
-  60  format(/,' OPENCDF - inconsistent size of dimension: ',a,2x,      &
+  50  FORMAT (/,' OPENCDF - error while reading dimension ID: ',i3,2x,  &
+     &          ' in input NetCDF file: ',a)
+  60  FORMAT (/,' OPENCDF - inconsistent size of dimension: ',a,2x,     &
      &       2i5)
-  70  format(/,' OPENCDF - error while inquiring information for ',     &
-     &       ' variable ID: ',i3,2x,' in input NetCDF file: ',a)
-  80  format(/,' OPENCDF - error while inquiring length of',            &
-     &         ' attribute: ',a)
-  90  format(/,' OPENCDF - error while reading attribute: ',a)
- 100  format(/,' OPENCDF - error while inquiring attributes for',       &
-     &        ' variable: ',a)
- 110  format(/,' OPENCDF - unable to inquire size of time dimesion',    &
-     &       ' in variable: ',a)
- 120  format(/,' OPENCDF - unable to inquire about contents of',        &
-     &       ' input NetCDF file: ',a)
- 130  format(/,' OPENCDF - error inquiring dimension: ',a,2x,           &
-     &       ' in input NetCDF file: ',a)
+  70  FORMAT (/,' OPENCDF - error while inquiring inFORMAT ion for ',   &
+     &          ' variable ID: ',i3,2x,' in input NetCDF file: ',a)
+  80  FORMAT (/,' OPENCDF - error while inquiring length of',           &
+     &          ' attribute: ',a)
+  90  FORMAT (/,' OPENCDF - error while reading attribute: ',a)
+ 100  FORMAT (/,' OPENCDF - error while inquiring attributes for',      &
+     &          ' variable: ',a)
+ 110  FORMAT (/,' OPENCDF - unable to inquire size of time dimesion',   &
+     &          ' in variable: ',a)
+ 120  FORMAT (/,' OPENCDF - unable to inquire about contents of',       &
+     &          ' input NetCDF file: ',a)
+ 130  FORMAT (/,' OPENCDF - error inquiring dimension: ',a,2x,          &
+     &          ' in input NetCDF file: ',a)
       RETURN
       END SUBROUTINE opencdf
 

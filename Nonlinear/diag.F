@@ -12,7 +12,7 @@
       implicit none
 
       PRIVATE
-      PUBLIC diag
+      PUBLIC  :: diag
 
       CONTAINS
 !

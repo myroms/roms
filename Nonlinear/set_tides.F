@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-      MODULE clm_tides_mod
+      MODULE set_tides_mod
 #if defined SSH_TIDES || defined UV_TIDES
 !
 !==================================================== Robert Hetland ===
@@ -14,12 +14,12 @@
       implicit none
 
       PRIVATE
-      PUBLIC clm_tides
+      PUBLIC  :: set_tides
 
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE clm_tides (ng, tile)
+      SUBROUTINE set_tides (ng, tile)
 !***********************************************************************
 !
       USE mod_param
@@ -38,7 +38,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, 11)
 # endif
-      CALL clm_tides_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_tides_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     NTC(ng),                                     &
      &                     GRID(ng) % angler,                           &
@@ -81,10 +81,10 @@
       CALL wclock_off (ng, 11)
 # endif
       RETURN
-      END SUBROUTINE clm_tides
+      END SUBROUTINE set_tides
 !
 !***********************************************************************
-      SUBROUTINE clm_tides_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE set_tides_tile (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NTC,                                   &
      &                           angler,                                &
@@ -285,9 +285,9 @@
         DO j=JstrR,JendR
 #   ifdef ADD_FSOBC
           zeta_west(j)=zeta_west(j)+                                    &
-     &                 0.5_r8*(Etide(0,j)+Etide(1,j))
+     &                 0.5_r8*(Etide(Istr-1,j)+Etide(Istr,j))
 #   else
-          zeta_west(j)=0.5_r8*(Etide(0,j)+Etide(1,j))
+          zeta_west(j)=0.5_r8*(Etide(Istr-1,j)+Etide(Istr,j))
 #   endif
         END DO
         update=.true.
@@ -303,9 +303,9 @@
         DO j=JstrR,JendR
 #   ifdef ADD_FSOBC
           zeta_east(j)=zeta_east(j)+                                    &
-     &                 0.5_r8*(Etide(Lm(ng),j)+Etide(Lm(ng)+1,j))
+     &                 0.5_r8*(Etide(Iend,j)+Etide(Iend+1,j))
 #   else
-          zeta_east(j)=0.5_r8*(Etide(Lm(ng),j)+Etide(Lm(ng)+1,j))
+          zeta_east(j)=0.5_r8*(Etide(Iend,j)+Etide(Iend+1,j))
 #   endif
         END DO
         update=.true.
@@ -321,9 +321,9 @@
         DO i=IstrR,IendR
 #   ifdef ADD_FSOBC
           zeta_south(i)=zeta_south(i)+                                  &
-     &                  0.5_r8*(Etide(i,0)+Etide(i,1))
+     &                  0.5_r8*(Etide(i,Jstr-1)+Etide(i,Jstr))
 #   else
-          zeta_south(i)=0.5_r8*(Etide(i,0)+Etide(i,1))
+          zeta_south(i)=0.5_r8*(Etide(i,Jstr-1)+Etide(i,Jstr))
 #   endif
         END DO
         update=.true.
@@ -339,9 +339,9 @@
         DO i=IstrR,IendR
 #   ifdef ADD_FSOBC
           zeta_north(i)=zeta_north(i)+                                  &
-     &                  0.5_r8*(Etide(i,Mm(ng))+Etide(i,Mm(ng)+1))
+     &                  0.5_r8*(Etide(i,Jend)+Etide(i,Jend+1))
 #   else
-          zeta_north(i)=0.5_r8*(Etide(i,Mm(ng))+Etide(i,Mm(ng)+1))
+          zeta_north(i)=0.5_r8*(Etide(i,Jend)+Etide(i,Jend+1))
 #   endif
         END DO
         update=.true.
@@ -426,16 +426,16 @@
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_M2OBC
-          ubar_west(j)=ubar_west(j)+Utide(1,j)
+          ubar_west(j)=ubar_west(j)+Utide(Istr,j)
 #   else
-          ubar_west(j)=Utide(1,j)
+          ubar_west(j)=Utide(Istr,j)
 #   endif
         END DO
         DO j=Jstr,JendR
 #   ifdef ADD_M2OBC
-          vbar_west(j)=vbar_west(j)+Vtide(0,j)
+          vbar_west(j)=vbar_west(j)+Vtide(Istr-1,j)
 #   else
-          vbar_west(j)=Vtide(0,j)
+          vbar_west(j)=Vtide(Istr-1,j)
 #   endif
         END DO
         update=.true.
@@ -452,16 +452,16 @@
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_M2OBC
-          ubar_east(j)=ubar_east(j)+Utide(Lm(ng)+1,j)
+          ubar_east(j)=ubar_east(j)+Utide(Iend+1,j)
 #   else
-          ubar_east(j)=Utide(Lm(ng)+1,j)
+          ubar_east(j)=Utide(Iend+1,j)
 #   endif
         END DO
         DO j=Jstr,JendR
 #   ifdef ADD_M2OBC
-          vbar_east(j)=vbar_east(j)+Vtide(Lm(ng)+1,j)
+          vbar_east(j)=vbar_east(j)+Vtide(Iend+1,j)
 #   else
-          vbar_east(j)=Vtide(Lm(ng)+1,j)
+          vbar_east(j)=Vtide(Iend+1,j)
 #   endif
         END DO
         update=.true.
@@ -478,16 +478,16 @@
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,IendR
 #   ifdef ADD_M2OBC
-          ubar_south(i)=ubar_south(i)+Utide(i,0)
+          ubar_south(i)=ubar_south(i)+Utide(i,Jstr-1)
 #   else
-          ubar_south(i)=Utide(i,0)
+          ubar_south(i)=Utide(i,Jstr-1)
 #   endif
         END DO
         DO i=IstrR,IendR
 #   ifdef ADD_M2OBC
-          vbar_south(i)=vbar_south(i)+Vtide(i,1)
+          vbar_south(i)=vbar_south(i)+Vtide(i,Jstr)
 #   else
-          vbar_south(i)=Vtide(i,1)
+          vbar_south(i)=Vtide(i,Jstr)
 #   endif
         END DO
         update=.true.
@@ -504,16 +504,16 @@
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,IendR
 #   ifdef ADD_M2OBC
-          ubar_north(i)=ubar_north(i)+Utide(i,Mm(ng)+1)
+          ubar_north(i)=ubar_north(i)+Utide(i,Jend+1)
 #   else
-          ubar_north(i)=Utide(i,Mm(ng)+1)
+          ubar_north(i)=Utide(i,Jend+1)
 #   endif
         END DO
         DO i=IstrR,IendR
 #   ifdef ADD_M2OBC
-          vbar_north(i)=vbar_north(i)+Vtide(i,Mm(ng)+1)
+          vbar_north(i)=vbar_north(i)+Vtide(i,Jend+1)
 #   else
-          vbar_north(i)=Vtide(i,Mm(ng)+1)
+          vbar_north(i)=Vtide(i,Jend+1)
 #   endif
         END DO
         update=.true.
@@ -527,6 +527,6 @@
 #  endif
 # endif
       RETURN
-      END SUBROUTINE clm_tides_tile
+      END SUBROUTINE set_tides_tile
 #endif
-      END MODULE clm_tides_mod
+      END MODULE set_tides_mod

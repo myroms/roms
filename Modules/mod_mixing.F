@@ -242,20 +242,41 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: itrc
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 #include "tile.h"
-#ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
 #else
-# include "set_bounds.h"
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
 #endif
 !
 !-----------------------------------------------------------------------
@@ -263,98 +284,97 @@
 !-----------------------------------------------------------------------
 !
 #if defined UV_VIS2 || !defined SOLVE3D
-      MIXING(ng) % visc2_p(IstrR:IendR,JstrR:JendR) = visc2(ng)
-      MIXING(ng) % visc2_r(IstrR:IendR,JstrR:JendR) = visc2(ng)
+      MIXING(ng) % visc2_p(Imin:Imax,Jmin:Jmax) = visc2(ng)
+      MIXING(ng) % visc2_r(Imin:Imax,Jmin:Jmax) = visc2(ng)
 #endif
 
 #ifdef UV_VIS4
-      MIXING(ng) % visc4_p(IstrR:IendR,JstrR:JendR) = visc4(ng)
-      MIXING(ng) % visc4_r(IstrR:IendR,JstrR:JendR) = visc4(ng)
+      MIXING(ng) % visc4_p(Imin:Imax,Jmin:Jmax) = visc4(ng)
+      MIXING(ng) % visc4_r(Imin:Imax,Jmin:Jmax) = visc4(ng)
 #endif
 
 #ifdef SOLVE3D
 
 # ifdef TS_DIF2
       DO itrc=1,NT(ng)
-        MIXING(ng) % diff2(IstrR:IendR,JstrR:JendR,itrc) = tnu2(itrc,ng)
+        MIXING(ng) % diff2(Imin:Imax,Jmin:Jmax,itrc) = tnu2(itrc,ng)
       END DO
 # endif
 
 # ifdef TS_DIF4
       DO itrc=1,NT(ng)
-        MIXING(ng) % diff4(IstrR:IendR,JstrR:JendR,itrc) = tnu4(itrc,ng)
+        MIXING(ng) % diff4(Imin:Imax,Jmin:Jmax,itrc) = tnu4(itrc,ng)
       END DO
 # endif
 
-      MIXING(ng) % Akv(IstrR:IendR,JstrR:JendR,0) = IniVal
-      MIXING(ng) % Akv(IstrR:IendR,JstrR:JendR,1:N(ng)-1) = Akv_bak(ng)
-      MIXING(ng) % Akv(IstrR:IendR,JstrR:JendR,N(ng)) = IniVal
+      MIXING(ng) % Akv(Imin:Imax,Jmin:Jmax,0) = IniVal
+      MIXING(ng) % Akv(Imin:Imax,Jmin:Jmax,1:N(ng)-1) = Akv_bak(ng)
+      MIXING(ng) % Akv(Imin:Imax,Jmin:Jmax,N(ng)) = IniVal
 
-      MIXING(ng) % Akt(IstrR:IendR,JstrR:JendR,0,1:NAT) = IniVal
+      MIXING(ng) % Akt(Imin:Imax,Jmin:Jmax,0,1:NAT) = IniVal
       DO itrc=1,NAT
-        MIXING(ng) % Akt(IstrR:IendR,JstrR:JendR,1:N(ng)-1,itrc) =      &
+        MIXING(ng) % Akt(Imin:Imax,Jmin:Jmax,1:N(ng)-1,itrc) =          &
      &                  Akt_bak(itrc,ng)
       END DO
-      MIXING(ng) % Akt(IstrR:IendR,JstrR:JendR,N(ng),1:NAT) = IniVal
+      MIXING(ng) % Akt(Imin:Imax,Jmin:Jmax,N(ng),1:NAT) = IniVal
 
 # ifdef FLOAT_VWALK
-      MIXING(ng) % dAktdz(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      MIXING(ng) % dAktdz(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 # endif
 
 # if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
-      MIXING(ng) % alpha(IstrR:IendR,JstrR:JendR) = IniVal
-      MIXING(ng) % beta(IstrR:IendR,JstrR:JendR) = IniVal
+      MIXING(ng) % alpha(Imin:Imax,Jmin:Jmax) = IniVal
+      MIXING(ng) % beta(Imin:Imax,Jmin:Jmax) = IniVal
 # endif
 
 # ifdef BV_FREQUENCY
-      MIXING(ng) % bvf(IstrR:IendR,JstrR:JendR,0:N(ng)) = IniVal
+      MIXING(ng) % bvf(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
 # endif
 
 # if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      MIXING(ng) % neutral(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      MIXING(ng) % neutral(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 # endif
 
 # if defined GLS_MIXING || defined MY25_MIXING
-      MIXING(ng) % tke(IstrR:IendR,JstrR:JendR,0:N(ng),1:3) =           &
-     &                gls_Kmin(ng)
-      MIXING(ng) % gls(IstrR:IendR,JstrR:JendR,0:N(ng),1:3) =           &
-     &                gls_Pmin(ng)
+      MIXING(ng) % tke(Imin:Imax,Jmin:Jmax,0:N(ng),1:3) = gls_Kmin(ng)
+      MIXING(ng) % gls(Imin:Imax,Jmin:Jmax,0:N(ng),1:3) = gls_Pmin(ng)
 
-      MIXING(ng) % Lscale(IstrR:IendR,JstrR:JendR,0:N(ng)) = IniVal
+      MIXING(ng) % Lscale(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
 
-      MIXING(ng) % Akk(IstrR:IendR,JstrR:JendR,0) = IniVal
-      MIXING(ng) % Akk(IstrR:IendR,JstrR:JendR,1:N(ng)-1) = Akk_bak(ng)
-      MIXING(ng) % Akk(IstrR:IendR,JstrR:JendR,N(ng)) = IniVal
+      MIXING(ng) % Akk(Imin:Imax,Jmin:Jmax,0) = IniVal
+      MIXING(ng) % Akk(Imin:Imax,Jmin:Jmax,1:N(ng)-1) = Akk_bak(ng)
+      MIXING(ng) % Akk(Imin:Imax,Jmin:Jmax,N(ng)) = IniVal
 
 #  ifdef GLS_MIXING
-      MIXING(ng) % Akp(IstrR:IendR,JstrR:JendR,0) = IniVal
-      MIXING(ng) % Akp(IstrR:IendR,JstrR:JendR,1:N(ng)-1) = Akk_bak(ng)
-      MIXING(ng) % Akp(IstrR:IendR,JstrR:JendR,N(ng)) = IniVal
+      MIXING(ng) % Akp(Imin:Imax,Jmin:Jmax,0) = IniVal
+      MIXING(ng) % Akp(Imin:Imax,Jmin:Jmax,1:N(ng)-1) = Akk_bak(ng)
+      MIXING(ng) % Akp(Imin:Imax,Jmin:Jmax,N(ng)) = IniVal
 #  endif
 # endif
 
 # if defined LMD_MIXING && defined LMD_DDMIX
-      MIXING(ng) % alfaobeta(IstrR:IendR,JstrR:JendR,0:N(ng)) = IniVal
+      MIXING(ng) % alfaobeta(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
 # endif
 
 # if defined LMD_SKPP || defined SOLAR_SOURCE
-      MIXING(ng) % Jwtype(IstrR:IendR,JstrR:JendR) = lmd_Jwt(ng)
+      MIXING(ng) % Jwtype(Imin:Imax,Jmin:Jmax) = lmd_Jwt(ng)
 # endif
 
 # if defined LMD_SKPP || defined LMD_BKPP
-      MIXING(ng) % ksbl(IstrR:IendR,JstrR:JendR) = 0
-      MIXING(ng) % hsbl(IstrR:IendR,JstrR:JendR) = IniVal
+      MIXING(ng) % ksbl(Imin:Imax,Jmin:Jmax) = 0
+      MIXING(ng) % hsbl(Imin:Imax,Jmin:Jmax) = IniVal
 #  ifdef LMD_BKPP
-      MIXING(ng) % kbbl(IstrR:IendR,JstrR:JendR) = 0
-      MIXING(ng) % hbbl(IstrR:IendR,JstrR:JendR) = IniVal
+      MIXING(ng) % kbbl(Imin:Imax,Jmin:Jmax) = 0
+      MIXING(ng) % hbbl(Imin:Imax,Jmin:Jmax) = IniVal
 #  endif
 
 #  ifdef LMD_NONLOCAL
-      MIXING(ng) % ghats(IstrR:IendR,JstrR:JendR,0:N(ng),1:NAT) = IniVal
+      MIXING(ng) % ghats(Imin:Imax,Jmin:Jmax,0:N(ng),1:NAT) = IniVal
 #  endif
 # endif
 
 #endif
+
       RETURN
       END SUBROUTINE initialize_mixing
 

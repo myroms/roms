@@ -249,96 +249,116 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Imin, Imax, Jmin, Jmax
 
       real(r8), parameter :: IniVal = 0.0_r8
 !
 # include "tile.h"
-# ifdef DISTRIBUTE
-      IstrR=LBi
-      IendR=UBi
-      JstrR=LBj
-      JendR=UBj
-# else
-#  include "set_bounds.h"
-# endif
+!
+!  Set array initialization range.
+!
+#ifdef _OPENMP
+      IF (WESTERN_EDGE) THEN
+        Imin=LBi
+      ELSE
+        Imin=Istr
+      END IF
+      IF (EASTERN_EDGE) THEN
+        Imax=UBi
+      ELSE
+        Imax=Iend
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        Jmin=LBj
+      ELSE
+        Jmin=Jstr
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        Jmax=UBj
+      ELSE
+        Jmax=Jend
+      END IF
+#else
+      Imin=LBi
+      Imax=UBi
+      Jmin=LBj
+      Jmax=UBj
+#endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
 # if defined ASSIMILATION_SSH || defined NUDGING_SSH
-      OBS(ng) % EobsSSH(IstrR:IendR,JstrR:JendR) = IniVal
-      OBS(ng) % SSHobs(IstrR:IendR,JstrR:JendR) = IniVal
+      OBS(ng) % EobsSSH(Imin:Imax,Jmin:Jmax) = IniVal
+      OBS(ng) % SSHobs(Imin:Imax,Jmin:Jmax) = IniVal
 
 #  ifdef ASSIMILATION_SSH
-      OBS(ng) % EmodSSH(IstrR:IendR,JstrR:JendR) = IniVal
+      OBS(ng) % EmodSSH(Imin:Imax,Jmin:Jmax) = IniVal
 #  endif
 
 #  ifdef NUDGING_SSH
-      OBS(ng) % EdatSSH(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      OBS(ng) % SSHdat(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      OBS(ng) % EdatSSH(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      OBS(ng) % SSHdat(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 
 # if defined ASSIMILATION_SST || defined NUDGING_SST
-      OBS(ng) % EobsSST(IstrR:IendR,JstrR:JendR) = IniVal
-      OBS(ng) % SSTobs(IstrR:IendR,JstrR:JendR) = IniVal
+      OBS(ng) % EobsSST(Imin:Imax,Jmin:Jmax) = IniVal
+      OBS(ng) % SSTobs(Imin:Imax,Jmin:Jmax) = IniVal
 
 #  ifdef ASSIMILATION_SST
-      OBS(ng) % EmodSST(IstrR:IendR,JstrR:JendR) = IniVal
+      OBS(ng) % EmodSST(Imin:Imax,Jmin:Jmax) = IniVal
 #  endif
 
 #  ifdef NUDGING_SST
-      OBS(ng) % EdatSST(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      OBS(ng) % SSTdat(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      OBS(ng) % EdatSST(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      OBS(ng) % SSTdat(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 
 # if defined ASSIMILATION_T   || defined NUDGING_T   || \
      defined ASSIMILATION_SST || defined NUDGING_SST
-      OBS(ng) % EobsT(IstrR:IendR,JstrR:JendR,1:N(ng),1:NT(ng)) = IniVal
-      OBS(ng) % Tobs(IstrR:IendR,JstrR:JendR,1:N(ng),1:NT(ng)) = IniVal
+      OBS(ng) % EobsT(Imin:Imax,Jmin:Jmax,1:N(ng),1:NT(ng)) = IniVal
+      OBS(ng) % Tobs(Imin:Imax,Jmin:Jmax,1:N(ng),1:NT(ng)) = IniVal
 
 #  if defined ASSIMILATION_T || defined ASSIMILATION_SST
-      OBS(ng) % EmodT(IstrR:IendR,JstrR:JendR,1:N(ng),1:NT(ng)) = IniVal
+      OBS(ng) % EmodT(Imin:Imax,Jmin:Jmax,1:N(ng),1:NT(ng)) = IniVal
 #  endif
 
 #  ifdef NUDGING_T
-      OBS(ng) % EdatT(IstrR:IendR,JstrR:JendR,1:N(ng),1:2,1:NT(ng)) =   &
-     &               IniVal
-      OBS(ng) % Tdat(IstrR:IendR,JstrR:JendR,1:N(ng),1:2,1:NT(ng)) =    &
-     &              IniVal
+      OBS(ng) % EdatT(Imin:Imax,Jmin:Jmax,1:N(ng),1:2,1:NT(ng)) = IniVal
+      OBS(ng) % Tdat(Imin:Imax,Jmin:Jmax,1:N(ng),1:2,1:NT(ng)) = IniVal
 #  endif
 # endif
 
 # if defined ASSIMILATION_UVsur || defined NUDGING_UVsur  || \
      defined ASSIMILATION_UV    || defined NUDGING_UV
-      OBS(ng) % EobsUV(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
-      OBS(ng) % Uobs(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
-      OBS(ng) % Vobs(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      OBS(ng) % EobsUV(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      OBS(ng) % Uobs(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      OBS(ng) % Vobs(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
 #  if defined ASSIMILATION_UV || defined ASSIMILATION_UVsur
-      OBS(ng) % EmodU(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
-      OBS(ng) % EmodV(IstrR:IendR,JstrR:JendR,1:N(ng)) = IniVal
+      OBS(ng) % EmodU(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      OBS(ng) % EmodV(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 #  endif
 
 #  ifdef NUDGING_UV
-      OBS(ng) % Udat(IstrR:IendR,JstrR:JendR,1:N(ng),1:2) = IniVal
-      OBS(ng) % Vdat(IstrR:IendR,JstrR:JendR,1:N(ng),1:2) = IniVal
-      OBS(ng) % EdatUV(IstrR:IendR,JstrR:JendR,1:N(ng),1:2) = IniVal
+      OBS(ng) % Udat(Imin:Imax,Jmin:Jmax,1:N(ng),1:2) = IniVal
+      OBS(ng) % Vdat(Imin:Imax,Jmin:Jmax,1:N(ng),1:2) = IniVal
+      OBS(ng) % EdatUV(Imin:Imax,Jmin:Jmax,1:N(ng),1:2) = IniVal
 #  endif
 
 #  if defined ASSIMILATION_UVsur || defined NUDGING_UVsur
-      OBS(ng) % Usur(IstrR:IendR,JstrR:JendR) = IniVal
-      OBS(ng) % Vsur(IstrR:IendR,JstrR:JendR) = IniVal
-      OBS(ng) % EobsVsur(IstrR:IendR,JstrR:JendR) = IniVal
+      OBS(ng) % Usur(Imin:Imax,Jmin:Jmax) = IniVal
+      OBS(ng) % Vsur(Imin:Imax,Jmin:Jmax) = IniVal
+      OBS(ng) % EobsVsur(Imin:Imax,Jmin:Jmax) = IniVal
 #  endif
 
 #  ifdef NUDGING_UVsur
-      OBS(ng) % Usurdat(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      OBS(ng) % Vsurdat(IstrR:IendR,JstrR:JendR,1:2) = IniVal
-      OBS(ng) % EdatVsur(IstrR:IendR,JstrR:JendR,1:2) = IniVal
+      OBS(ng) % Usurdat(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      OBS(ng) % Vsurdat(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      OBS(ng) % EdatVsur(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #  endif
 # endif
 

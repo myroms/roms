@@ -18,25 +18,26 @@
         character (len=80)   :: title
         character (len=1024) :: Coptions
 
-#ifdef PROFILE
-        character (len=50), dimension(35) :: Pregion =                  &
+        integer, parameter :: Nregion = 44
+
+        character (len=50), dimension(Nregion) :: Pregion =             &
      &    (/'Initialization ...................................',       &
      &      'OI data assimilation .............................',       &
      &      'Reading of input data ............................',       &
      &      'Processing of input data .........................',       &
      &      'Processing of output time averaged data ..........',       &
      &      'Computation of vertical boundary conditions ......',       &
-     &      'Computation of diagnostics .......................',       &
+     &      'Computation of global information integrals ......',       &
      &      'Writing of output data ...........................',       &
      &      'Model 2D kernel ..................................',       &
      &      'Lagrangian floats trajectories ...................',       &
      &      'Tidal forcing ....................................',       &
-     &      'Vertical metrics .................................',       &
+     &      '2D/3D coupling, vertical metrics .................',       &
      &      'Omega vertical velocity ..........................',       &
      &      'Equation of state for seawater ...................',       &
-     &      'Biological MODULE, source/sink terms .............',       &
-     &      'Sediment tranport MODULE, source/sink terms ......',       &
-     &      'Atmospheric boundary layer coupler ...............',       &
+     &      'Biological module, source/sink terms .............',       &
+     &      'Sediment tranport module, source/sink terms ......',       &
+     &      'Atmosphere-Ocean bulk flux parameterization ......',       &
      &      'KPP vertical mixing parameterization .............',       &
      &      'GLS vertical mixing parameterization .............',       &
      &      'My2.5 vertical mixing parameterization ...........',       &
@@ -54,7 +55,15 @@
      &      'Biharmonic stress tensor, S-surfaces .............',       &
      &      'Biharmonic stress tensor, geopotentials ..........',       &
      &      'Corrector time-step for 3D momentum ..............',       &
-     &      'Corrector Time-step for tracers ..................'/)
-#endif
+     &      'Corrector time-step for tracers ..................',       &
+     &      'Two-way Atmosphere-Ocean models coupling .........',       &
+     &      'Bottom boundary layer module .....................',       &
+     &      'Message Passage: halo exchange ...................',       &
+     &      'Message Passage: data broadcast ..................',       &
+     &      'Message Passage: data reduction ..................',       &
+     &      'Message Passage: data gathering ..................',       &
+     &      'Message Passage: data scattering..................',       &
+     &      'Message Passage: boundary data gathering .........',       &
+     &      'Message Passage: point data gathering ............'/)
 
       END MODULE mod_strings

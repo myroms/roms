@@ -30,34 +30,41 @@
 
 # include "tile.h"
 !
+# ifdef PROFILE
+      CALL wclock_on (ng, 37)
+# endif
       CALL bblm_tile (ng, Istr, Iend, Jstr, Jend,                       &
      &                LBi, UBi, LBj, UBj,                               &
      &                nrhs(ng),                                         &
      &                GRID(ng) % h,                                     &
      &                GRID(ng) % z_r,                                   &
      &                GRID(ng) % z_w,                                   &
+     &                GRID(ng) % angler,                                &
+# ifdef SWAN
+     &                FORCES(ng) % Ub_swan,                             &
+# else
      &                FORCES(ng) % Awave,                               &
+# endif
      &                FORCES(ng) % Dwave,                               &
      &                FORCES(ng) % Pwave,                               &
      &                OCEAN(ng) % rho,                                  &
      &                OCEAN(ng) % u,                                    &
      &                OCEAN(ng) % v,                                    &
-     &                BBL(ng) % Sdens,                                  &
-     &                BBL(ng) % Ssize,                                  &
+     &                OCEAN(ng) % bottom,                               &
      &                BBL(ng) % Iconv,                                  &
-     &                BBL(ng) % Abed,                                   &
-     &                BBL(ng) % Hripple,                                &
-     &                BBL(ng) % Lripple,                                &
      &                BBL(ng) % Ubed,                                   &
      &                BBL(ng) % Vbed,                                   &
      &                BBL(ng) % Ubot,                                   &
      &                BBL(ng) % Vbot,                                   &
-     &                BBL(ng) % Zbnot,                                  &
-     &                BBL(ng) % Zbnotc,                                 &
      &                BBL(ng) % bustrw,                                 &
      &                BBL(ng) % bvstrw,                                 &
+     &                BBL(ng) % bustrcwmax,                             &
+     &                BBL(ng) % bvstrcwmax,                             &
      &                FORCES(ng) % bustr,                               &
      &                FORCES(ng) % bvstr)
+# ifdef PROFILE
+      CALL wclock_off (ng, 37)
+# endif
       RETURN
       END SUBROUTINE bblm
 !
@@ -65,18 +72,23 @@
       SUBROUTINE bblm_tile (ng, Istr, Iend, Jstr, Jend,                 &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nrhs,                                       &
-     &                      h, z_r, z_w,                                &
-     &                      Awave, Dwave, Pwave,                        &
-     &                      rho, u, v,                                  &
-     &                      Sdens, Ssize,                               &
-     &                      Iconv, Abed, Hripple, Lripple,              &
+     &                      h, z_r, z_w, angler                         &
+# ifdef SWAN
+     &                      UB_swan,                                    &
+# else
+     &                      Awave,                                      &
+# endif
+     &                      Dwave, Pwave,                               &
+     &                      rho, u, v, bottom,                          &
+     &                      Iconv,                                      &
      &                      Ubed, Vbed, Ubot, Vbot,                     &
-     &                      Zbnot, Zbnotc,                              &
-     &                      bustrw, bvstrw, bustr, bvstr)
+     &                      bustrw, bvstrw, bustrcwmax, bvstrcwmax,     &
+     &                      bustr, bvstr)
 !***********************************************************************
 !
       USE mod_param
       USE mod_scalars
+      USE mod_sediment
 !
       USE bc_2d_mod
 !
@@ -92,26 +104,28 @@
       real(r8), intent(in) :: h(LBi:,LBj:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
+      real(r8), intent(in) :: angler(LBi:,LBj:)
+#ifdef SWAN
+      real(r8), intent(in) :: UB_swan(LBi:,LBj:)
+#else
       real(r8), intent(in) :: Awave(LBi:,LBj:)
+#endif
       real(r8), intent(in) :: Dwave(LBi:,LBj:)
       real(r8), intent(in) :: Pwave(LBi:,LBj:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: Sdens(LBi:,LBj:)
-      real(r8), intent(in) :: Ssize(LBi:,LBj:)
 
-      real(r8), intent(out) :: Abed(LBi:,LBj:)
-      real(r8), intent(out) :: Hripple(LBi:,LBj:)
-      real(r8), intent(out) :: Lripple(LBi:,LBj:)
+      real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
+
       real(r8), intent(out) :: Ubed(LBi:,LBj:)
       real(r8), intent(out) :: Vbed(LBi:,LBj:)
       real(r8), intent(out) :: Ubot(LBi:,LBj:)
       real(r8), intent(out) :: Vbot(LBi:,LBj:)
-      real(r8), intent(out) :: Zbnot(LBi:,LBj:)
-      real(r8), intent(out) :: Zbnotc(LBi:,LBj:)
       real(r8), intent(out) :: bustrw(LBi:,LBj:)
       real(r8), intent(out) :: bvstrw(LBi:,LBj:)
+      real(r8), intent(out) :: bustrcwmax(LBi:,LBj:)
+      real(r8), intent(out) :: bvstrcwmax(LBi:,LBj:)
       real(r8), intent(out) :: bustr(LBi:,LBj:)
       real(r8), intent(out) :: bvstr(LBi:,LBj:)
 # else
@@ -120,26 +134,28 @@
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
+      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)   
+#ifdef SWAN
+      real(r8), intent(in) :: UB_swan(LBi:UBi,LBj:UBj)
+#else
       real(r8), intent(in) :: Awave(LBi:UBi,LBj:UBj)
+#endif
       real(r8), intent(in) :: Dwave(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Pwave(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: Sdens(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Ssize(LBi:UBi,LBj:UBj)
 
-      real(r8), intent(out) :: Abed(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Hripple(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Lripple(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
+
       real(r8), intent(out) :: Ubed(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Vbed(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Ubot(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Vbot(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Zbnot(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Zbnotc(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bustrw(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bvstrw(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: bustrcwmax(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: bvstrcwmax(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bvstr(LBi:UBi,LBj:UBj)
 # endif
@@ -152,7 +168,7 @@
       integer :: Iter, i, j, k
 
       real(r8) :: Fwave, Kb, Kbh, KboKb0, Kb0, Kdelta, Ucur, Ustr, Vcur
-      real(r8) :: anglec, anglew, cff1, cff2, og, fac, fac1, fac2
+      real(r8) :: anglec, anglew, cff, cff1, cff2, og, fac, fac1, fac2
       real(r8) :: sg_ab, sg_abokb, sg_a1, sg_b1, sg_chi, sg_c1, sg_dd
       real(r8) :: sg_epsilon, sg_eta, sg_fofa, sg_fofb, sg_fofc, sg_fwm
       real(r8) :: sg_kbs, sg_lambda, sg_mu, sg_phicw, sg_ro, sg_row
@@ -164,6 +180,7 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ab
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauc
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauw
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Taucwmax
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ub
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Umag
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ur
@@ -265,8 +282,14 @@
 !
 !  Compute bed wave orbital velocity and excursion amplitude.
 !
+# ifdef SWAN
+          Ub(i,j)=Ub_swan(i,j)
+          cff=Ub(i,j)/Fwave
+          Ab(i,j)=MAX(cff, 0.0001_r8)
+# else
           Ab(i,j)=Awave(i,j)/SINH(Kb*h(i,j))
           Ub(i,j)=Fwave*Ab(i,j)
+# endif
 !
 !  Compute bottom current magnitude at RHO-points.
 !
@@ -277,11 +300,11 @@
 !  Compute angle between currents and waves (radians)
 !
           IF (Ucur.eq.0.0_r8) THEN
-            phic(i,j)=0.5_r8*pi
+            phic(i,j)=0.5_r8*pi*SIGN(1.0_r8,Vcur)
           ELSE
             phic(i,j)=ATAN2(Vcur,Ucur)
           ENDIF
-          phicw(i,j)=Dwave(i,j)-phic(i,j)
+          phicw(i,j)=1.5_r8*pi-Dwave(i,j)-phic(i,j)-angler(i,j)
         END DO
       END DO
 !
@@ -305,8 +328,8 @@
 !
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
-          sg_dd=Ssize(i,j)
-          sg_ss=Sdens(i,j)/(rho(i,j,1)+1000.0_r8)
+          sg_dd=bottom(i,j,isd50)
+          sg_ss=bottom(i,j,idens)/(rho(i,j,1)+1000.0_r8)
           sg_ab=Ab(i,j)
           sg_ub=Ub(i,j)
           sg_phicw=phicw(i,j)
@@ -452,6 +475,9 @@
             sg_ustarc=MIN(sg_ustarcdef,sg_epsilon*sg_ustarcw)
             Tauc(i,j)=sg_ustarc*sg_ustarc
             Tauw(i,j)=sg_ustarwm*sg_ustarwm
+            Taucwmax(i,j)=SQRT((Tauc(i,j)+                              &
+     &                          Tauw(i,j)*COS(phicw(i,j)))**2+          &
+     &                         (Tauw(i,j)*SIN(phicw(i,j)))**2)
 !
 !  Compute apparent hydraulic roughness (m).
 !
@@ -490,11 +516,14 @@
         DO i=IstrU,Iend
           cff1=0.5_r8*(Tauc(i-1,j)+Tauc(i,j))
           cff2=0.5_r8*(Tauw(i-1,j)+Tauw(i,j))
+          cff3=0.5_r8*(Taucwmax(i-1,j)+Taucwmax(i,j))
 !!        anglec=COS(0.5_r8*(phic(i-1,j)+phic(i,j)))
           anglec=Ur(i,j)/(0.5*(Umag(i-1,j)+Umag(i,j)+1.0E-10_r8))
-          anglew=COS(0.5_r8*(Dwave(i-1,j)+Dwave(i,j)))
+          anglew=COS(0.5_r8*pi-0.5_r8*(Dwave(i-1,j)+Dwave(i,j))-        &
+     &               angler(i,j))
           bustr (i,j)=cff1*anglec
           bustrw(i,j)=cff2*anglew
+          bustrcwmax(i,j)=cff3*anglew
           Ubed(i,j)=Ub(i,j)*anglew
 !!        Ubot(i,j)=u100(i,j)*anglec
           Ubot(i,j)=Ur(i,j)
@@ -504,11 +533,14 @@
         DO i=Istr,Iend
           cff1=0.5_r8*(Tauc(i,j-1)+Tauc(i,j))
           cff2=0.5_r8*(Tauw(i,j-1)+Tauw(i,j))
+          cff3=0.5_r8*(Taucwmax(i,j-1)+Taucwmax(i,j))
 !!        anglec=SIN(0.5_r8*(phic(i,j-1)+phic(i,j)))
           anglec=Vr(i,j)/(0.5_r8*(Umag(i,j-1)+Umag(i,j)+1.0E-10_r8))
-          anglew=SIN(0.5_r8*(Dwave(i,j-1)+Dwave(i,j)))
+          anglew=SIN(0.5_r8*pi-0.5_r8*(Dwave(i,j-1)+Dwave(i,j))-        &
+     &               angler(i,j))
           bvstr (i,j)=cff1*anglec
           bvstrw(i,j)=cff2*anglew
+          bvstrcwmax(i,j)=cff3*anglew
           Vbed(i,j)=Ub(i,j)*anglew
 !!        Vbot(i,j)=u100(i,j)*anglec
           Vbot(i,j)=Vr(i,j)
@@ -541,26 +573,28 @@
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          Abed(i,j)=Ab(i,j)
-          Hripple(i,j)=rheight(i,j)
-          Lripple(i,j)=rlength(i,j)
-          Zbnot(i,j)=znot(i,j)
-          Zbnotc(i,j)=znotc(i,j)
+          bottom(i,j,izdef)=znot(i,j)
+          bottom(i,j,izapp)=znotc(i,j)
+          bottom(i,j,ibwav)=Ab(i,j)
+          bottom(i,j,irhgt)=rheight(i,j)
+          bottom(i,j,irlen)=rlength(i,j)
+!!        bottom(i,j,izapp)=znot(i,j)
+!!        bottom(i,j,izNik)=znotc(i,j)
         END DO
       END DO
 !
 !  Apply boundary conditions.
 !
       CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Abed)
+     &                  LBi, UBi, LBj, UBj, bottom(:,:,ibwav))
       CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Hripple)
+     &                  LBi, UBi, LBj, UBj, bottom(:,:,irhgt))
       CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Lripple)
+     &                  LBi, UBi, LBj, UBj, bottom(:,:,irlen))
       CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Zbnot)
+     &                  LBi, UBi, LBj, UBj, bottom(:,:,izdef))
       CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Zbnotc)
+     &                  LBi, UBi, LBj, UBj, bottom(:,:,izapp))
       RETURN
       END SUBROUTINE bblm_tile
 
@@ -993,17 +1027,17 @@
       argm=-cff*CMPLX(1.0_r8,1.0_r8)+thetam
       fofx=SQRT(pi/(2.0_r8*x))*CEXP(argm)
       ker=REAL(fofx)
-      kei=IMAG(fofx)
+      kei=AIMAG(fofx)
 !
       argp=cff*CMPLX(1.0_r8,1.0_r8)+thetap
       gofx=1.0_r8/SQRT(2.0_r8*pi*x)*CEXP(argp)
       ber=REAL(gofx)-kei/pi
-      bei=IMAG(gofx)+ker/pi
+      bei=AIMAG(gofx)+ker/pi
 !
       kerp=REAL(-fofx*phim)
-      keip=IMAG(-fofx*phim)
+      keip=AIMAG(-fofx*phim)
 !
       berp=REAL(gofx*phip)-keip/pi
-      beip=IMAG(gofx*phip)+kerp/pi
+      beip=AIMAG(gofx*phip)+kerp/pi
       RETURN
       END SUBROUTINE sg_kelvin8p
