@@ -1,0 +1,414 @@
+#include "cppdefs.h"
+      MODULE obc_volcons_mod
+#ifdef OBC_VOLCONS
+!
+!========================================== Alexander F. Shchepetkin ===
+!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!================================================== Hernan G. Arango ===
+!                                                                      !
+!  This routine computes integral mass flux "obc_flux" accross         !
+!  the open boundaries, which is needed to enforce global mass         !
+!  conservation constraint.                                            !
+!                                                                      !
+!=======================================================================
+!
+      implicit none
+
+      PRIVATE
+      PUBLIC obc_flux_tile, set_DUV_bc_tile
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE obc_flux (ng, tile)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_ocean
+      USE mod_stepping
+!
+      integer, intent(in) :: ng, tile
+
+# include "tile.h"
+!
+      CALL obc_flux_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    knew(ng),                                     &
+# ifdef MASKING
+     &                    GRID(ng) % umask,                             &
+     &                    GRID(ng) % vmask,                             &
+# endif
+     &                    GRID(ng) % h,                                 &
+     &                    GRID(ng) % om_v,                              &
+     &                    GRID(ng) % on_u,                              &
+     &                    OCEAN(ng) % ubar,                             &
+     &                    OCEAN(ng) % vbar,                             &
+     &                    OCEAN(ng) % zeta)
+      RETURN
+      END SUBROUTINE obc_flux
+!
+!***********************************************************************
+      SUBROUTINE obc_flux_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          knew,                                   &
+# ifdef MASKING
+     &                          umask, vmask,                           &
+# endif
+     &                          h, om_v, on_u,                          &
+     &                          ubar, vbar, zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: knew
+
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: h(LBi:,LBj:)
+      real(r8), intent(in) :: om_v(LBi:,LBj:)
+      real(r8), intent(in) :: on_u(LBi:,LBj:)
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
+      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: NSUB, i, j
+
+      real(r8) :: cff, my_area, my_flux
+
+# ifdef DISTRIBUTE
+      real(r8), dimension(2) :: buffer
+      character (len=3), dimension(2) :: op_handle
+# endif
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Compute open segments cross-section area and mass flux.
+!-----------------------------------------------------------------------
+!
+      my_area=0.0_r8
+      my_flux=0.0_r8
+!
+# ifdef WEST_VOLCONS
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          cff=0.5_r8*(zeta(Istr-1,j,knew)+h(Istr-1,j)+                  &
+     &                zeta(Istr  ,j,knew)+h(Istr  ,j))*on_u(Istr,j)
+#  ifdef MASKING
+          cff=cff*umask(Istr,j)
+#  endif
+          my_area=my_area+cff
+          my_flux=my_flux+cff*ubar(Istr,j,knew)
+        END DO
+      END IF
+# endif
+# ifdef EAST_VOLCONS
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          cff=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
+     &                zeta(Iend+1,j,knew)+h(Iend+1,j))*on_u(Iend+1,j)
+#  ifdef MASKING
+          cff=cff*umask(Iend+1,j)
+#  endif
+          my_area=my_area+cff
+          my_flux=my_flux-cff*ubar(Iend+1,j,knew)
+        END DO
+      END IF
+# endif
+# ifdef SOUTH_VOLCONS
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          cff=0.5_r8*(zeta(i,Jstr-1,knew)+h(i,Jstr-1)+                  &
+     &                zeta(i,Jstr  ,knew)+h(i,Jstr  ))*om_v(i,Jstr)
+#  ifdef MASKING
+          cff=cff*vmask(i,Jstr)
+#  endif
+          my_area=my_area+cff
+          my_flux=my_flux+cff*vbar(i,JstrV-1,knew)
+        END DO
+      END IF
+# endif
+# ifdef NORTH_VOLCONS
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          cff=0.5_r8*(zeta(i,Jend  ,knew)+h(i,Jend  )+                  &
+     &                zeta(i,Jend+1,knew)+h(i,Jend+1))*om_v(i,Jend+1)
+#  ifdef MASKING
+          cff=cff*vmask(i,Jend+1)
+#  endif
+          my_area=my_area+cff
+          my_flux=my_flux-cff*vbar(i,Jend+1,knew)
+        END DO
+      END IF
+# endif
+# if defined WEST_VOLCONS  || defined EAST_VOLCONS  || \
+     defined SOUTH_VOLCONS || defined NORTH_VOLCONS
+!
+!-----------------------------------------------------------------------
+!  Perform global summation and compute correction velocity.
+!-----------------------------------------------------------------------
+!
+      IF (SOUTH_WEST_CORNER.and.                                        &
+     &    NORTH_EAST_CORNER) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+!$OMP CRITICAL (OBC_VOLUME)
+      IF (tile_count.eq.0) THEN
+        bc_flux=0.0_r8
+        bc_area=0.0_r8
+      END IF
+      bc_area=bc_area+my_area
+      bc_flux=bc_flux+my_flux
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+#  ifdef DISTRIBUTE
+        buffer(1)=bc_area
+        buffer(2)=bc_flux
+        op_handle(1)='SUM'
+        op_handle(2)='SUM'
+        CALL mp_reduce (ng, 2, buffer, op_handle)
+        bc_area=buffer(1)
+        bc_flux=buffer(2)
+#  endif
+        ubar_xs=bc_flux/bc_area
+      END IF
+!$OMP END CRITICAL (OBC_VOLUME)
+# endif
+      RETURN
+      END SUBROUTINE obc_flux_tile
+!
+!***********************************************************************
+      SUBROUTINE set_DUV_bc_tile (ng, Istr, Iend, Jstr, Jend,           &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            krhs,                                 &
+# ifdef MASKING
+     &                            umask, vmask,                         &
+# endif
+     &                            om_v, on_u, ubar, vbar,               &
+     &                            Drhs, Duon, Dvom)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: krhs
+
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: om_v(LBi:,LBj:)
+      real(r8), intent(in) :: on_u(LBi:,LBj:)
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
+      real(r8), intent(in) :: Drhs(Istr-3:,Jstr-3:)
+
+      real(r8), intent(inout) :: Duon(Istr-3:,Jstr-3:)
+      real(r8), intent(inout) :: Dvom(Istr-3:,Jstr-3:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: Drhs(PRIVATE_2D_SCRATCH_ARRAY)
+
+      real(r8), intent(inout) :: Duon(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8), intent(inout) :: Dvom(PRIVATE_2D_SCRATCH_ARRAY)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Set vertically integrated mass fluxes "Duon" and "Dvom" along
+!  the open boundaries in such a way that the integral volume is
+!  conserved.  This is done by applying "ubar_xs" correction to
+!  the velocities.
+!-----------------------------------------------------------------------
+!
+# ifdef WEST_VOLCONS
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr-1,JendR
+          Duon(Istr,j)=0.5_r8*(Drhs(Istr,j)+Drhs(Istr-1,j))*            &
+     &                 (ubar(Istr,j,krhs)-ubar_xs)*                     &
+     &                 on_u(Istr,j)
+#  ifdef MASKING
+          Duon(Istr,j)=Duon(Istr,j)*umask(Istr,j)
+#  endif
+        END DO
+      END IF
+# endif
+# ifdef EAST_VOLCONS
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr-1,JendR
+          Duon(Iend+1,j)=0.5_r8*(Drhs(Iend+1,j)+Drhs(Iend,j))*          &
+     &                   (ubar(Iend+1,j,krhs)+ubar_xs)*                 &
+     &                   on_u(Iend+1,j)
+#  ifdef MASKING
+          Duon(Iend+1,j)=Duon(Iend+1,j)*umask(Iend+1,j)
+#  endif
+        END DO
+      END IF
+# endif
+# ifdef SOUTH_VOLCONS
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr-1,IendR
+          Dvom(i,Jstr)=0.5_r8*(Drhs(i,Jstr)+Drhs(i,Jstr-1))*            &
+     &                 (vbar(i,Jstr,krhs)-ubar_xs)*                     &
+     &                 om_v(i,Jstr)
+#  ifdef MASKING
+          Dvom(i,Jstr)=Dvom(i,Jstr)*vmask(i,Jstr)
+#  endif
+        END DO
+      END IF
+# endif
+# ifdef NORTH_VOLCONS
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr-1,IendR
+          Dvom(i,Jend+1)=0.5_r8*(Drhs(i,Jend+1)+Drhs(i,Jend))*          &
+     &                   (vbar(i,Jend+1,krhs)+ubar_xs)*                 &
+     &                   om_v(i,Jend+1)
+#  ifdef MASKING
+          Dvom(i,Jend+1)=Dvom(i,Jend+1)*vmask(i,Jend+1)
+#  endif
+        END DO
+      END IF
+# endif
+      RETURN
+      END SUBROUTINE set_DUV_bc_tile
+!
+!***********************************************************************
+      SUBROUTINE conserve_mass_tile (ng, Istr, Iend, Jstr, Jend,        &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               knew,                              &
+# ifdef MASKING
+     &                               umask, vmask,                      &
+# endif
+     &                               ubar, vbar)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: knew
+
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+
+      real(r8), intent(inout) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: vbar(LBi:,LBj:,:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+
+      real(r8), intent(inout) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: vbar(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+!
+!-----------------------------------------------------------------------
+!  Corrects velocities across the open boundaries to enforce global
+!  mass conservation constraint.
+!-----------------------------------------------------------------------
+!
+# ifdef WEST_VOLCONS
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          ubar(Istr,j,knew)=(ubar(Istr,j,knew)-ubar_xs)
+#  ifdef MASKING
+          ubar(Istr,j,knew)=ubar(Istr,j,knew)*umask(Istr,j)
+#  endif
+        END DO
+      END IF
+# endif
+# ifdef EAST_VOLCONS
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          ubar(Iend+1,j,knew)=(ubar(Iend+1,j,knew)+ubar_xs)
+#  ifdef MASKING
+          ubar(Iend+1,j,knew)=ubar(Iend+1,j,knew)*umask(Iend+1,j)
+#  endif
+        END DO
+      END IF
+# endif
+# ifdef SOUTH_VOLCONS
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          vbar(i,Jstr,knew)=(vbar(i,Jstr,knew)-ubar_xs)
+#  ifdef MASKING
+          vbar(i,Jstr,knew)=vbar(i,Jstr,knew)*vmask(i,Jstr)
+#  endif
+        END DO
+      END IF
+# endif
+# ifdef NORTH_VOLCONS
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          vbar(i,Jend+1,knew)=(vbar(i,Jend+1,knew)+ubar_xs)
+#  ifdef MASKING
+          vbar(i,Jend+1,knew)=vbar(i,Jend+1,knew)*vmask(i,Jend+1)
+#  endif
+        END DO
+      END IF
+# endif
+      RETURN
+      END SUBROUTINE conserve_mass_tile
+#endif
+      END MODULE obc_volcons_mod

@@ -1,0 +1,383 @@
+#include "cppdefs.h"
+      MODULE mod_param
+!
+!=======================================================================
+!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!================================================== Hernan G. Arango ===
+!                                                                      !
+!  Grid parameters:                                                    !
+!                                                                      !
+!  Im         Number of global grid points in the XI-direction         !
+!               for each nested grid.                                  !
+!  Jm         Number of global grid points in the ETA-direction        !
+!               for each nested grid.                                  !
+!  Lm         Number of interior grid points in the XI-direction       !
+!               for each nested grid.                                  !
+!  Mm         Number of internal grid points in the ETA-direction.     !
+!               for each nested grid.                                  !
+!  N          Number of vertical levels for each nested grid.          !
+!  Ngrids     Number of nested and/or connected grids to solve.        !
+!  NtileI     Number of XI-direction tiles or domain partitions for    !
+!               each nested grid. Values used to compute tile ranges.  !
+!  NtileJ     Number of ETA-direction tiles or domain partitions for   !
+!               each nested grid. Values used to compute tile ranges.  !
+!  NtileX     Number of XI-direction tiles or domain partitions for    !
+!               each nested grid. Values used in parallel loops.       !
+!  NtileE     Number of ETA-direction tiles or domain partitions for   !
+!               each nested grid. Values used in parallel loops.       !
+!                                                                      !
+!  Configuration parameters:                                           !
+!                                                                      !
+!  Nfloats    Number of floats tracjectories.                          !
+!  Nstation   Number of output stations.                               !
+!  Msev       Maximum number of state error eigenvectors.              !
+!  MTC        Maximum number of tidal components.                      !
+!  Msrc       Maximum number of point Sources/Sinks.                   !
+!  NFT        Number of float time levels (minus one).                 !
+!  NSV        Number of model state variables.                         !
+!                                                                      !
+!  Tracer parameters:                                                  !
+!                                                                      !
+!  NAT        Number of active tracer type variables (usually,         !
+!               NTA=2 for potential temperature and salinity).         !
+!  NBT        Number of biological tracer type variables.              !
+!  NFV        Number of float variables.                               !
+!  NST        Number of sediment tracer type variables (NCS+NNS).      !
+!  NT         Total number of tracer type variables.                   !
+!  MT         Maximum number of tracer type variables.                 !
+!                                                                      !
+!  Nbed       Number of sediment bed layers.                           !
+!  NCS        Number of cohesive (mud) sediment tracers.               !
+!  NNS        Number of non-cohesive (sand) sediment tracers.          !
+!                                                                      !
+!  Nbac       Number of bacteria constituents in EcoSim.               !
+!  Ndom       Number of dissolved matter constituents in EcoSim.       !
+!  Nfec       Number of fecal matter constituents in EcoSim.           !
+!  Nphy       Number of phytoplankton constituents in EcoSim.          !
+!  Npig       Number of pigment constituents in EcoSim.                !
+!  PHY        EcoSim indices of phytoplankton species considered.      !
+!                                                                      !
+!=======================================================================
+!
+        USE mod_kinds
+
+        implicit none
+
+        integer, private :: ig
+
+        integer, parameter :: Msev = 300
+        integer, parameter :: Msrc = 25
+        integer, parameter :: MTC = 7
+        integer, parameter :: NFT = 4
+
+#if defined ADRIATIC1
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 40  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 140 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 40  /)
+#elif defined BASIN
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 180 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 140 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 12  /)
+#elif defined BENCHMARK1
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 512 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 64  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+#elif defined BENCHMARK2
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 1024 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 128  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30   /)
+#elif defined BENCHMARK3
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 2048 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 256  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30   /)
+#elif defined BISCAY
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 96  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined BL_TEST
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 39  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 4   /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+#elif defined CALCOFI
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 78  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 118 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined CANYON_A
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 65  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 48  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
+#elif defined CANYON_B
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 66  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 48  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 12  /)
+#elif defined CBLAST
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 160 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined DAMEE_4
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined DAMEE_5
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 56  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined DAMEE_6
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 192 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 96  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined DAMEE_7
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 256 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 256 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined DAMEE_9
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 286 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 286 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined DOUBLE_GYRE
+        integer, parameter :: Ngrids = 1
+        integer, parameter ::  NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 54  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 108 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 4   /)
+#elif defined FLT_TEST
+        integer, parameter :: Ngrids = 1
+        integer, parameter ::  NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 14  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 12  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 4   /)
+#elif defined GRAV_ADJ
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 4   /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 40  /)
+#elif defined KELVIN
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 50  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 30  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
+#elif defined LAB_CANYON
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 110 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 250 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 25  /)
+#elif defined LMD_TEST
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 10  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 10  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 50  /)
+#elif defined NATL
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 1000 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 1024 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30   /)
+#elif defined NENA
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 384 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+#elif defined NJ_BIGHT
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 109 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 239 /)
+!!      integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 25  /)
+#elif defined NPACIFIC
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 174 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 94  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined OVERFLOW
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 4   /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined RIVERPLUME
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 39  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 67  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 13  /)
+#elif defined SEAMOUNT
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 49  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 48  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 13  /)
+#elif defined SHELFRONT
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 4   /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 40  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined SOLITON
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 1
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 96  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 32  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 3   /)
+#elif defined SED_TEST1
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 100 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 12  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
+!!      integer, parameter, dimension(Ngrids) :: Mm = (/ 3   /)
+!!      integer, parameter, dimension(Ngrids) :: N  = (/ 40  /)
+#elif defined UPWELLING
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 41  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 80  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 16  /)
+#elif defined USWEST
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 126 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 30  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
+#elif defined WEDDELL
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 300 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 5   /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+#else
+        Illegal choice of  parameters Im, Jm, N, NAT
+#endif
+
+#ifdef SEDIMENT
+!
+!  Sediment tracers parameters.
+!
+# if defined SED_TEST1
+        integer, parameter :: Nbed = 1
+        integer, parameter :: NCS = 1
+        integer, parameter :: NNS = 1
+        integer, parameter :: NST = NCS + NNS
+# else
+        Illegal choice of parameters Nbed, NCS, NNS, NST
+# endif
+#else
+        integer, parameter :: Nbed = 0
+        integer, parameter :: NST = 0
+#endif
+
+#ifdef BIOLOGY
+!
+!  Biological tracers parameters.
+!
+# if defined BIO_FASHAM
+#  ifdef CARBON
+        integer, parameter :: NBT = 9
+#  else
+        integer, parameter :: NBT = 7
+#  endif
+# elif defined ECOSIM
+        integer, parameter :: Nbac = 1
+        integer, parameter :: Ndom = 2
+        integer, parameter :: Nfec = 2
+        integer, parameter :: Nphy = 4
+        integer, parameter :: Npig = 7
+        integer :: PHY(Nphy)
+# endif
+#else
+        integer, parameter :: NBT = 0
+#endif
+!
+!  The following parameters are derived or only known during execution.
+!
+        common /param/ Im, Jm, MT, NT, NFV, NSV, Nfloats, Nstation,     &
+     &                 NtileI, NtileJ, NtileX, NtileE
+
+        integer :: MT
+
+        integer, dimension(Ngrids) :: Im, Jm, NT, NFV, NSV
+        integer, dimension(Ngrids) :: Nfloats, Nstation
+        integer, dimension(Ngrids) :: NtileI, NtileJ
+        integer, dimension(Ngrids) :: NtileX, NtileE
+
+      CONTAINS
+
+        SUBROUTINE initialize_param
+!
+!=======================================================================
+!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!================================================== Hernan G. Arango ===
+!                                                                      !
+!  This routine initializes several parameters in module "mod_param"   !
+!  for all nested grids.                                               !
+!                                                                      !
+!=======================================================================
+!
+!  Local variabel declarations
+!
+        integer :: I_padd, J_padd, ng
+!
+!-----------------------------------------------------------------------
+!  Derived dimension parameters.
+!-----------------------------------------------------------------------
+!
+        DO ng=1,Ngrids
+          I_padd=(Lm(ng)+2)/2-(Lm(ng)+1)/2
+          J_padd=(Mm(ng)+2)/2-(Mm(ng)+1)/2
+          Im(ng)=Lm(ng)+I_padd
+          Jm(ng)=Mm(ng)+J_padd
+          NT(ng)=NAT+NBT+NST
+#ifdef FLOAT_VWALK
+          NFV(ng)=NT(ng)+12
+#else
+          NFV(ng)=NT(ng)+10
+#endif
+          NSV(ng)=NT(ng)+5
+        END DO
+!
+!  Set maximum number of tracer between all nested grids.
+!
+        MT=MAX(2,MAXVAL(NT))
+
+        RETURN
+        END SUBROUTINE initialize_param
+
+      END MODULE mod_param

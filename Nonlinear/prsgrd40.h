@@ -1,0 +1,161 @@
+       SUBROUTINE prsgrd (ng, tile)
+!
+!****************************************** Alexander F. Shchepetkin ***
+!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!***********************************************************************
+!                                                                      !
+!  This subroutine evaluates the baroclinic, hydrostatic pressure      !
+!  gradient term using the finite-volume pressure Jacobian scheme      !
+!  of Lin (1997).                                                      !
+!                                                                      !
+!  The pressure gradient terms (m4/s2) are loaded into right-hand-     !
+!  side arrays "ru" and "rv".                                          !
+!                                                                      !
+!  Reference:                                                          !
+!                                                                      !
+!    Lin, Shian-Jiann, 1997:  A finite volume integration method       !
+!      for computing pressure gradient force in general vertical       !
+!      coordinates, Q. J. R. Meteorol. Soc., 123, 1749-1762.           !
+!                                                                      !
+!**********************************************************************=
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_ocean
+      USE mod_stepping
+!
+      integer, intent(in) :: ng, tile
+
+# include "tile.h"
+!
+# ifdef PROFILE
+      CALL wclock_on (ng, 23)
+# endif
+      CALL prsgrd_tile (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  nrhs(ng),                                       &
+     &                  GRID(ng) % Hz,                                  &
+     &                  GRID(ng) % om_v,                                &
+     &                  GRID(ng) % on_u,                                &
+     &                  GRID(ng) % z_w,                                 &
+     &                  OCEAN(ng) % rho,                                &
+     &                  OCEAN(ng) % ru,                                 &
+     &                  OCEAN(ng) % rv)
+# ifdef PROFILE
+      CALL wclock_off (ng, 23)
+# endif
+      RETURN
+      END SUBROUTINE prsgrd
+!
+!***********************************************************************
+      SUBROUTINE prsgrd_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        nrhs,                                     &
+     &                        Hz, om_v, on_u, z_w,                      &
+     &                        rho, ru, rv)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: nrhs
+
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+      real(r8), intent(in) :: om_v(LBi:,LBj:)
+      real(r8), intent(in) :: on_u(LBi:,LBj:)
+      real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
+      real(r8), intent(in) :: rho(LBi:,LBj:,:)
+
+      real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
+      real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
+# else
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
+      real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+
+      real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
+      real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j, k
+
+      real(r8) :: cff, cff1, dh
+
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: FX
+
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: P
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Finite Volume pressure gradient algorithm (Lin, 1997).
+!-----------------------------------------------------------------------
+!
+!  Compute pressure and its vertical integral.  Initialize pressure at
+!  the free-surface as zero.
+!
+      DO j=JstrV-1,Jend
+        DO i=IstrU-1,Iend
+          P(i,j,N(ng))=0.0_r8
+        END DO
+        DO k=N(ng),1,-1
+          DO i=IstrU-1,Iend
+            P(i,j,k-1)=P(i,j,k)+Hz(i,j,k)*rho(i,j,k)
+            FX(i,j,k)=0.5_r8*Hz(i,j,k)*(P(i,j,k)+P(i,j,k-1))
+          END DO
+        END DO
+!
+!  Calculate pressure gradient in the XI-direction (m4/s2).
+!
+        IF (j.ge.Jstr) THEN
+          DO i=IstrU,Iend
+            FC(i,N(ng))=0.0_r8
+          END DO
+          cff=0.5_r8*g
+          cff1=g/rho0
+          DO k=N(ng),1,-1
+            DO i=IstrU,Iend
+              dh=z_w(i,j,k-1)-z_w(i-1,j,k-1)
+              FC(i,k-1)=0.5_r8*dh*(P(i,j,k-1)+P(i-1,j,k-1))
+              ru(i,j,k,nrhs)=(cff *(Hz (i-1,j,k)+Hz (i,j,k))*           &
+     &                             (z_w(i-1,j,N(ng))-z_w(i,j,N(ng)))+   &
+     &                        cff1*(FX(i-1,j,k)-FX(i,j,k)+              &
+     &                              FC(i,k)-FC(i,k-1)))*on_u(i,j)
+            END DO
+          END DO
+        END IF
+!
+!  Calculate pressure gradient in the ETA-direction (m4/s2).
+!
+        IF (j.ge.JstrV) THEN
+          DO i=Istr,Iend
+            FC(i,N(ng))=0.0_r8
+          END DO
+          cff=0.5_r8*g
+          cff1=g/rho0
+          DO k=N(ng),1,-1
+            DO i=Istr,Iend
+              dh=z_w(i,j,k-1)-z_w(i,j-1,k-1)
+              FC(i,k-1)=0.5_r8*dh*(P(i,j,k-1)+P(i,j-1,k-1))
+              rv(i,j,k,nrhs)=(cff *(Hz(i,j-1,k)+Hz(i,j,k))*             &
+     &                             (z_w(i,j-1,N(ng))-z_w(i,j,N(ng)))+   &
+     &                        cff1*(FX(i,j-1,k)-FX(i,j,k)+              &
+     &                              FC(i,k)-FC(i,k-1)))*om_v(i,j)
+            END DO
+          END DO
+        END IF
+      END DO
+      RETURN
+      END SUBROUTINE prsgrd_tile

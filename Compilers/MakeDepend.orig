@@ -1,0 +1,693 @@
+master.o: ocean.h cppdefs.h globaldefs.h cppdefs.h globaldefs.h
+master.f90: ocean.h cppdefs.h globaldefs.h cppdefs.h globaldefs.h
+master.o: mod_iounits.o mod_ncparam.o mod_parallel.o mod_param.o mod_scalars.o
+master.o: master.f90
+
+mod_arrays.o: cppdefs.h globaldefs.h
+mod_arrays.f90: cppdefs.h globaldefs.h
+mod_arrays.o: mod_average.o mod_bbl.o mod_boundary.o mod_clima.o mod_coupling.o
+mod_arrays.o: mod_forces.o mod_grid.o mod_mixing.o mod_obs.o mod_ocean.o
+mod_arrays.o: mod_parallel.o mod_param.o mod_sources.o mod_tides.o
+mod_arrays.o: mod_arrays.f90
+
+mod_average.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_average.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_average.o: mod_kinds.o mod_param.o mod_average.f90
+
+mod_bbl.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_bbl.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_bbl.o: mod_kinds.o mod_param.o mod_bbl.f90
+
+mod_biology.o: cppdefs.h globaldefs.h
+mod_biology.f90: cppdefs.h globaldefs.h
+mod_biology.o: mod_param.o mod_biology.f90
+
+mod_boundary.o: tile.h cppdefs.h globaldefs.h
+mod_boundary.f90: tile.h cppdefs.h globaldefs.h
+mod_boundary.o: mod_kinds.o mod_param.o mod_boundary.f90
+
+mod_clima.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_clima.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_clima.o: mod_kinds.o mod_param.o mod_clima.f90
+
+mod_coupling.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_coupling.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_coupling.o: mod_kinds.o mod_param.o mod_coupling.f90
+
+mod_eoscoef.o: cppdefs.h globaldefs.h
+mod_eoscoef.f90: cppdefs.h globaldefs.h
+mod_eoscoef.o: mod_kinds.o mod_eoscoef.f90
+
+mod_floats.o: cppdefs.h globaldefs.h
+mod_floats.f90: cppdefs.h globaldefs.h
+mod_floats.o: mod_param.o mod_scalars.o mod_floats.f90
+
+mod_forces.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_forces.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_forces.o: mod_kinds.o mod_param.o mod_forces.f90
+
+mod_grid.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_grid.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_grid.o: mod_kinds.o mod_param.o mod_grid.f90
+
+mod_iounits.o: cppdefs.h globaldefs.h
+mod_iounits.f90: cppdefs.h globaldefs.h
+mod_iounits.o: mod_param.o mod_iounits.f90
+
+
+mod_mixing.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_mixing.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_mixing.o: mod_kinds.o mod_param.o mod_scalars.o mod_mixing.f90
+
+mod_ncparam.o: cppdefs.h globaldefs.h
+mod_ncparam.f90: cppdefs.h globaldefs.h
+mod_ncparam.o: mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+mod_ncparam.o: mod_sediment.o mod_ncparam.f90
+
+mod_netcdf.o: cppdefs.h globaldefs.h
+mod_netcdf.f90: cppdefs.h globaldefs.h
+mod_netcdf.o: mod_kinds.o mod_netcdf.f90
+
+mod_obs.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_obs.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_obs.o: mod_kinds.o mod_param.o mod_obs.f90
+
+mod_ocean.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_ocean.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_ocean.o: mod_kinds.o mod_param.o mod_sediment.o mod_ocean.f90
+
+mod_parallel.o: cppdefs.h globaldefs.h
+mod_parallel.f90: cppdefs.h globaldefs.h
+mod_parallel.o: mod_iounits.o mod_param.o mod_scalars.o mod_parallel.f90
+
+mod_param.o: cppdefs.h globaldefs.h
+mod_param.f90: cppdefs.h globaldefs.h
+mod_param.o: mod_kinds.o mod_param.f90
+
+mod_scalars.o: cppdefs.h globaldefs.h
+mod_scalars.f90: cppdefs.h globaldefs.h
+mod_scalars.o: mod_param.o mod_scalars.f90
+
+mod_sediment.o: cppdefs.h globaldefs.h
+mod_sediment.f90: cppdefs.h globaldefs.h
+mod_sediment.o: mod_param.o mod_sediment.f90
+
+mod_sources.o: cppdefs.h globaldefs.h
+mod_sources.f90: cppdefs.h globaldefs.h
+mod_sources.o: mod_kinds.o mod_param.o mod_sources.f90
+
+mod_stepping.o: cppdefs.h globaldefs.h
+mod_stepping.f90: cppdefs.h globaldefs.h
+mod_stepping.o: mod_param.o mod_stepping.f90
+
+mod_strings.o: cppdefs.h globaldefs.h
+mod_strings.f90: cppdefs.h globaldefs.h
+mod_strings.o: mod_kinds.o mod_strings.f90
+
+mod_tides.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_tides.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+mod_tides.o: mod_kinds.o mod_param.o mod_tides.f90
+
+analytical.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+analytical.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+analytical.o: exchange_2d.o exchange_3d.o mod_bbl.o mod_biology.o
+analytical.o: mod_boundary.o mod_clima.o mod_forces.o mod_grid.o mod_iounits.o
+analytical.o: mod_mixing.o mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o
+analytical.o: mod_sediment.o mod_sources.o mod_stepping.o analytical.f90
+
+bbl.o: sg_bbl.h set_bounds.h tile.h cppdefs.h globaldefs.h cppdefs.h
+bbl.o: globaldefs.h
+bbl.f90: sg_bbl.h set_bounds.h tile.h cppdefs.h globaldefs.h cppdefs.h
+bbl.f90: globaldefs.h
+bbl.o: bc_2d.o mod_bbl.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
+bbl.o: mod_scalars.o mod_stepping.o bbl.f90
+
+bc_2d.o: set_bounds.h cppdefs.h globaldefs.h
+bc_2d.f90: set_bounds.h cppdefs.h globaldefs.h
+bc_2d.o: exchange_2d.o mod_param.o bc_2d.f90
+
+bc_3d.o: set_bounds.h cppdefs.h globaldefs.h
+bc_3d.f90: set_bounds.h cppdefs.h globaldefs.h
+bc_3d.o: exchange_3d.o mod_param.o bc_3d.f90
+
+biology.o: fasham.h set_bounds.h tile.h cppdefs.h globaldefs.h cppdefs.h
+biology.o: globaldefs.h
+biology.f90: fasham.h set_bounds.h tile.h cppdefs.h globaldefs.h cppdefs.h
+biology.f90: globaldefs.h
+biology.o: mod_biology.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
+biology.o: mod_scalars.o mod_stepping.o biology.f90
+
+bulk_flux.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+bulk_flux.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+bulk_flux.o: exchange_2d.o mod_forces.o mod_grid.o mod_kinds.o mod_mixing.o
+bulk_flux.o: mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o bulk_flux.f90
+
+bvf_mix.o: tile.h cppdefs.h globaldefs.h
+bvf_mix.f90: tile.h cppdefs.h globaldefs.h
+bvf_mix.o: exchange_3d.o mod_mixing.o mod_param.o mod_scalars.o mod_sources.o
+bvf_mix.o: bvf_mix.f90
+
+diag.o: tile.h cppdefs.h globaldefs.h
+diag.f90: tile.h cppdefs.h globaldefs.h
+diag.o: analytical.o mod_grid.o mod_iounits.o mod_ocean.o mod_parallel.o
+diag.o: mod_param.o mod_scalars.o mod_stepping.o diag.f90
+
+exchange_2d.o: set_bounds.h cppdefs.h globaldefs.h
+exchange_2d.f90: set_bounds.h cppdefs.h globaldefs.h
+exchange_2d.o: mod_param.o exchange_2d.f90
+
+exchange_3d.o: set_bounds.h cppdefs.h globaldefs.h
+exchange_3d.f90: set_bounds.h cppdefs.h globaldefs.h
+exchange_3d.o: mod_param.o exchange_3d.f90
+
+get_data.o: cppdefs.h globaldefs.h
+get_data.f90: cppdefs.h globaldefs.h
+get_data.o: mod_boundary.o mod_clima.o mod_forces.o mod_grid.o mod_iounits.o
+get_data.o: mod_ncparam.o mod_obs.o mod_param.o mod_scalars.o mod_sources.o
+get_data.o: mod_stepping.o mod_tides.o get_data.f90
+
+gls_corstep.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+gls_corstep.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+gls_corstep.o: exchange_3d.o mod_forces.o mod_grid.o mod_mixing.o mod_ocean.o
+gls_corstep.o: mod_param.o mod_scalars.o mod_stepping.o tkebc_im.o
+gls_corstep.o: gls_corstep.f90
+
+gls_prestep.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+gls_prestep.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+gls_prestep.o: exchange_3d.o mod_grid.o mod_mixing.o mod_ocean.o mod_param.o
+gls_prestep.o: mod_scalars.o mod_stepping.o tkebc_im.o gls_prestep.f90
+
+initial.o: cppdefs.h globaldefs.h
+initial.f90: cppdefs.h globaldefs.h
+initial.o: analytical.o horz_mix.o metrics.o mod_bbl.o mod_grid.o mod_iounits.o
+initial.o: mod_ncparam.o mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o
+initial.o: mod_stepping.o omega.o rho_eos.o set_depth.o set_massflux.o
+initial.o: stiffness.o initial.f90
+
+interp_floats.o: cppdefs.h globaldefs.h
+interp_floats.f90: cppdefs.h globaldefs.h
+interp_floats.o: mod_ncparam.o mod_param.o mod_scalars.o interp_floats.f90
+
+lmd_bkpp.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+lmd_bkpp.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+lmd_bkpp.o: bc_2d.o bc_3d.o mod_forces.o mod_grid.o mod_mixing.o mod_ocean.o
+lmd_bkpp.o: mod_param.o mod_scalars.o mod_stepping.o lmd_bkpp.f90
+
+lmd_skpp.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+lmd_skpp.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+lmd_skpp.o: bc_2d.o bc_3d.o mod_forces.o mod_grid.o mod_mixing.o mod_ocean.o
+lmd_skpp.o: mod_param.o mod_scalars.o mod_stepping.o lmd_skpp.f90
+
+lmd_swfrac.o: cppdefs.h globaldefs.h
+lmd_swfrac.f90: cppdefs.h globaldefs.h
+lmd_swfrac.o: mod_mixing.o mod_param.o mod_scalars.o lmd_swfrac.f90
+
+lmd_vmix.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+lmd_vmix.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+lmd_vmix.o: bc_3d.o lmd_bkpp.o lmd_skpp.o mod_grid.o mod_mixing.o mod_ocean.o
+lmd_vmix.o: mod_param.o mod_scalars.o mod_stepping.o lmd_vmix.f90
+
+lmd_wscale.o: cppdefs.h globaldefs.h
+lmd_wscale.f90: cppdefs.h globaldefs.h
+lmd_wscale.o: mod_param.o mod_scalars.o lmd_wscale.f90
+
+main2d.o: cppdefs.h globaldefs.h
+main2d.f90: cppdefs.h globaldefs.h
+main2d.o: diag.o mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+main2d.o: mod_stepping.o oi_update.o set_tides.o step2d.o step_floats.o
+main2d.o: main2d.f90
+
+main3d.o: cppdefs.h globaldefs.h
+main3d.f90: cppdefs.h globaldefs.h
+main3d.o: analytical.o bbl.o bulk_flux.o bvf_mix.o diag.o gls_corstep.o
+main3d.o: gls_prestep.o lmd_vmix.o mod_iounits.o mod_parallel.o mod_param.o
+main3d.o: mod_scalars.o mod_stepping.o my25_corstep.o my25_prestep.o
+main3d.o: oi_update.o omega.o rho_eos.o rhs3d.o sediment.o set_massflux.o
+main3d.o: set_tides.o set_vbc.o step2d.o step3d_t.o step3d_uv.o step_floats.o
+main3d.o: wvelocity.o main3d.f90
+
+my25_corstep.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+my25_corstep.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+my25_corstep.o: exchange_3d.o mod_forces.o mod_grid.o mod_mixing.o mod_ocean.o
+my25_corstep.o: mod_param.o mod_scalars.o mod_stepping.o tkebc_im.o
+my25_corstep.o: my25_corstep.f90
+
+my25_prestep.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+my25_prestep.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+my25_prestep.o: exchange_3d.o mod_grid.o mod_mixing.o mod_ocean.o mod_param.o
+my25_prestep.o: mod_scalars.o mod_stepping.o tkebc_im.o my25_prestep.f90
+
+obc_volcons.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+obc_volcons.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+obc_volcons.o: mod_grid.o mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o
+obc_volcons.o: mod_stepping.o obc_volcons.f90
+
+omega.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+omega.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+omega.o: bc_3d.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o omega.f90
+
+output.o: cppdefs.h globaldefs.h
+output.f90: cppdefs.h globaldefs.h
+output.o: mod_floats.o mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o
+output.o: mod_param.o mod_scalars.o output.f90
+
+pre_step3d.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+pre_step3d.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+pre_step3d.o: exchange_3d.o mod_forces.o mod_grid.o mod_mixing.o mod_ocean.o
+pre_step3d.o: mod_param.o mod_scalars.o mod_sources.o mod_stepping.o t3dbc_im.o
+pre_step3d.o: pre_step3d.f90
+
+prsgrd.o: prsgrd32.h set_bounds.h tile.h prsgrd31.h set_bounds.h tile.h
+prsgrd.o: prsgrd42.h set_bounds.h tile.h cppdefs.h globaldefs.h prsgrd40.h
+prsgrd.o: set_bounds.h tile.h prsgrd44.h set_bounds.h tile.h cppdefs.h
+prsgrd.o: globaldefs.h cppdefs.h globaldefs.h
+prsgrd.f90: prsgrd32.h set_bounds.h tile.h prsgrd31.h set_bounds.h tile.h
+prsgrd.f90: prsgrd42.h set_bounds.h tile.h cppdefs.h globaldefs.h prsgrd40.h
+prsgrd.f90: set_bounds.h tile.h prsgrd44.h set_bounds.h tile.h cppdefs.h
+prsgrd.f90: globaldefs.h cppdefs.h globaldefs.h
+prsgrd.o: mod_grid.o mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
+prsgrd.o: prsgrd.f90
+
+rho_eos.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+rho_eos.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+rho_eos.o: exchange_2d.o exchange_3d.o mod_coupling.o mod_eoscoef.o mod_grid.o
+rho_eos.o: mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
+rho_eos.o: rho_eos.f90
+
+rhs3d.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+rhs3d.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+rhs3d.o: exchange_2d.o mod_clima.o mod_coupling.o mod_forces.o mod_grid.o
+rhs3d.o: mod_obs.o mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
+rhs3d.o: pre_step3d.o prsgrd.o t3dmix.o t3dmix.o t3dmix.o t3dmix.o t3dmix.o
+rhs3d.o: t3dmix.o uv3dmix.o uv3dmix.o uv3dmix.o uv3dmix.o rhs3d.f90
+
+sediment.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+sediment.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+sediment.o: mod_bbl.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
+sediment.o: mod_scalars.o mod_sediment.o mod_stepping.o sediment.f90
+
+set_avg.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_avg.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_avg.o: mod_average.o mod_grid.o mod_mixing.o mod_ocean.o mod_param.o
+set_avg.o: mod_scalars.o mod_stepping.o set_avg.f90
+
+set_data.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_data.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_data.o: analytical.o exchange_3d.o mod_boundary.o mod_clima.o mod_forces.o
+set_data.o: mod_grid.o mod_mixing.o mod_ncparam.o mod_obs.o mod_ocean.o
+set_data.o: mod_param.o mod_scalars.o mod_sources.o mod_stepping.o set_2dfld.o
+set_data.o: set_3dfld.o set_data.f90
+
+set_depth.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_depth.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_depth.o: exchange_2d.o exchange_3d.o mod_coupling.o mod_grid.o mod_ocean.o
+set_depth.o: mod_param.o mod_scalars.o set_depth.f90
+
+set_massflux.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_massflux.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_massflux.o: exchange_3d.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
+set_massflux.o: mod_stepping.o set_massflux.f90
+
+set_tides.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_tides.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_tides.o: exchange_2d.o mod_boundary.o mod_clima.o mod_grid.o mod_param.o
+set_tides.o: mod_scalars.o mod_stepping.o mod_tides.o set_tides.f90
+
+set_vbc.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_vbc.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_vbc.o: bc_2d.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
+set_vbc.o: mod_scalars.o mod_stepping.o set_vbc.f90
+
+step2d.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+step2d.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+step2d.o: exchange_2d.o mod_clima.o mod_coupling.o mod_forces.o mod_grid.o
+step2d.o: mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o mod_sources.o
+step2d.o: mod_stepping.o obc_volcons.o set_depth.o u2dbc_im.o v2dbc_im.o
+step2d.o: zetabc.o step2d.f90
+
+step3d_t.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+step3d_t.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+step3d_t.o: biology.o exchange_3d.o mod_clima.o mod_forces.o mod_grid.o
+step3d_t.o: mod_mixing.o mod_ncparam.o mod_obs.o mod_ocean.o mod_param.o
+step3d_t.o: mod_scalars.o mod_sources.o mod_stepping.o t3dbc_im.o step3d_t.f90
+
+step3d_uv.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+step3d_uv.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+step3d_uv.o: exchange_2d.o exchange_3d.o mod_coupling.o mod_forces.o mod_grid.o
+step3d_uv.o: mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o mod_sources.o
+step3d_uv.o: mod_stepping.o u3dbc_im.o v3dbc_im.o step3d_uv.f90
+
+step_floats.o: cppdefs.h globaldefs.h
+step_floats.f90: cppdefs.h globaldefs.h
+step_floats.o: mod_floats.o mod_grid.o mod_iounits.o mod_mixing.o mod_ncparam.o
+step_floats.o: mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o
+step_floats.o: mod_stepping.o utility.o step_floats.f90
+
+t3dbc_im.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
+t3dbc_im.o: mod_stepping.o t3dbc_im.f90
+
+t3dmix.o: t3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dmix.o: t3dmix2_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h t3dmix2_s.h
+t3dmix.o: set_bounds.h tile.h cppdefs.h globaldefs.h t3dmix4_iso.h set_bounds.h
+t3dmix.o: tile.h cppdefs.h globaldefs.h t3dmix4_s.h set_bounds.h tile.h
+t3dmix.o: cppdefs.h globaldefs.h t3dmix2_iso.h set_bounds.h tile.h cppdefs.h
+t3dmix.o: globaldefs.h cppdefs.h globaldefs.h
+t3dmix.f90: t3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dmix.f90: t3dmix2_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dmix.f90: t3dmix2_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dmix.f90: t3dmix4_iso.h set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dmix.f90: t3dmix4_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+t3dmix.f90: t3dmix2_iso.h set_bounds.h tile.h cppdefs.h globaldefs.h cppdefs.h
+t3dmix.f90: globaldefs.h
+t3dmix.o: mod_grid.o mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
+t3dmix.o: mod_stepping.o t3dmix.f90
+
+tkebc_im.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+tkebc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+tkebc_im.o: mod_grid.o mod_mixing.o mod_param.o mod_scalars.o mod_stepping.o
+tkebc_im.o: tkebc_im.f90
+
+u2dbc_im.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+u2dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+u2dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
+u2dbc_im.o: mod_stepping.o u2dbc_im.f90
+
+u3dbc_im.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+u3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+u3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
+u3dbc_im.o: mod_stepping.o u3dbc_im.f90
+
+uv3dmix.o: uv3dmix2_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.o: uv3dmix2_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.o: uv3dmix4_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.o: uv3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h cppdefs.h
+uv3dmix.o: globaldefs.h
+uv3dmix.f90: uv3dmix2_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.f90: uv3dmix2_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.f90: uv3dmix4_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.f90: uv3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.f90: cppdefs.h globaldefs.h
+uv3dmix.o: mod_grid.o mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
+uv3dmix.o: mod_stepping.o uv3dmix.f90
+
+v2dbc_im.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+v2dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+v2dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
+v2dbc_im.o: mod_stepping.o v2dbc_im.f90
+
+v3dbc_im.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+v3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+v3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
+v3dbc_im.o: mod_stepping.o v3dbc_im.f90
+
+wvelocity.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+wvelocity.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+wvelocity.o: exchange_2d.o exchange_3d.o mod_coupling.o mod_grid.o mod_ocean.o
+wvelocity.o: mod_param.o mod_scalars.o mod_stepping.o wvelocity.f90
+
+zetabc.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+zetabc.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+zetabc.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
+zetabc.o: mod_stepping.o zetabc.f90
+
+checkdefs.o: cppdefs.h globaldefs.h
+checkdefs.f90: cppdefs.h globaldefs.h
+checkdefs.o: mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+checkdefs.o: mod_strings.o checkdefs.f90
+
+close_io.o: cppdefs.h globaldefs.h
+close_io.f90: cppdefs.h globaldefs.h
+close_io.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o mod_param.o
+close_io.o: mod_scalars.o close_io.f90
+
+def_avg.o: cppdefs.h globaldefs.h
+def_avg.f90: cppdefs.h globaldefs.h
+def_avg.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o mod_param.o
+def_avg.o: mod_scalars.o mod_sediment.o def_avg.f90
+
+def_floats.o: cppdefs.h globaldefs.h
+def_floats.f90: cppdefs.h globaldefs.h
+def_floats.o: mod_floats.o mod_grid.o mod_iounits.o mod_ncparam.o mod_netcdf.o
+def_floats.o: mod_parallel.o mod_param.o mod_scalars.o mod_sediment.o
+def_floats.o: def_floats.f90
+
+def_his.o: cppdefs.h globaldefs.h
+def_his.f90: cppdefs.h globaldefs.h
+def_his.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o mod_param.o
+def_his.o: mod_scalars.o mod_sediment.o def_his.f90
+
+def_info.o: cppdefs.h globaldefs.h
+def_info.f90: cppdefs.h globaldefs.h
+def_info.o: mod_grid.o mod_iounits.o mod_ncparam.o mod_netcdf.o mod_param.o
+def_info.o: mod_scalars.o mod_strings.o def_info.f90
+
+def_rst.o: cppdefs.h globaldefs.h
+def_rst.f90: cppdefs.h globaldefs.h
+def_rst.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o mod_param.o
+def_rst.o: mod_scalars.o mod_sediment.o def_rst.f90
+
+def_station.o: cppdefs.h globaldefs.h
+def_station.f90: cppdefs.h globaldefs.h
+def_station.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o
+def_station.o: mod_param.o mod_scalars.o def_station.f90
+
+def_var.o: cppdefs.h globaldefs.h
+def_var.f90: cppdefs.h globaldefs.h
+def_var.o: mod_iounits.o mod_netcdf.o mod_param.o mod_scalars.o def_var.f90
+
+distribute.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+distribute.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+distribute.o: mod_iounits.o mod_ncparam.o mod_parallel.o mod_param.o
+distribute.o: mod_scalars.o distribute.f90
+
+extract_sta.o: cppdefs.h globaldefs.h
+extract_sta.f90: cppdefs.h globaldefs.h
+extract_sta.o: mod_grid.o mod_ncparam.o mod_parallel.o mod_param.o
+extract_sta.o: mod_scalars.o extract_sta.f90
+
+get_2dfld.o: cppdefs.h globaldefs.h
+get_2dfld.f90: cppdefs.h globaldefs.h
+get_2dfld.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o
+get_2dfld.o: mod_param.o mod_scalars.o get_2dfld.f90
+
+get_3dfld.o: cppdefs.h globaldefs.h
+get_3dfld.f90: cppdefs.h globaldefs.h
+get_3dfld.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o
+get_3dfld.o: mod_param.o mod_scalars.o get_3dfld.f90
+
+get_bounds.o: cppdefs.h globaldefs.h
+get_bounds.f90: cppdefs.h globaldefs.h
+get_bounds.o: mod_ncparam.o mod_parallel.o mod_param.o get_bounds.f90
+
+get_cycle.o: cppdefs.h globaldefs.h
+get_cycle.f90: cppdefs.h globaldefs.h
+get_cycle.o: mod_iounits.o mod_netcdf.o mod_param.o mod_scalars.o get_cycle.f90
+
+get_date.o: cppdefs.h globaldefs.h
+get_date.f90: cppdefs.h globaldefs.h
+get_date.o: mod_kinds.o get_date.f90
+
+get_grid.o: cppdefs.h globaldefs.h
+get_grid.f90: cppdefs.h globaldefs.h
+get_grid.o: exchange_2d.o mod_grid.o mod_iounits.o mod_ncparam.o mod_netcdf.o
+get_grid.o: mod_parallel.o mod_param.o mod_scalars.o get_grid.f90
+
+get_ngfld.o: cppdefs.h globaldefs.h
+get_ngfld.f90: cppdefs.h globaldefs.h
+get_ngfld.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_parallel.o
+get_ngfld.o: mod_param.o mod_scalars.o get_ngfld.f90
+
+get_state.o: cppdefs.h globaldefs.h
+get_state.f90: cppdefs.h globaldefs.h
+get_state.o: exchange_2d.o exchange_3d.o mod_grid.o mod_iounits.o mod_ncparam.o
+get_state.o: mod_netcdf.o mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o
+get_state.o: mod_sediment.o get_state.f90
+
+grid_coords.o: cppdefs.h globaldefs.h
+grid_coords.f90: cppdefs.h globaldefs.h
+grid_coords.o: mod_floats.o mod_grid.o mod_parallel.o mod_param.o mod_scalars.o
+grid_coords.o: utility.o grid_coords.f90
+
+horz_mix.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+horz_mix.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+horz_mix.o: exchange_2d.o mod_grid.o mod_mixing.o mod_param.o mod_scalars.o
+horz_mix.o: horz_mix.f90
+
+inp_par.o: cppdefs.h globaldefs.h
+inp_par.f90: cppdefs.h globaldefs.h
+inp_par.o: mod_biology.o mod_floats.o mod_iounits.o mod_kinds.o mod_ncparam.o
+inp_par.o: mod_parallel.o mod_param.o mod_scalars.o mod_sediment.o
+inp_par.o: mod_strings.o inp_par.f90
+
+metrics.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+metrics.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+metrics.o: exchange_2d.o mod_grid.o mod_iounits.o mod_parallel.o mod_param.o
+metrics.o: mod_scalars.o metrics.f90
+
+mp_routines.o: cppdefs.h globaldefs.h
+mp_routines.f90: cppdefs.h globaldefs.h
+mp_routines.o: mod_kinds.o mp_routines.f90
+
+nf_fread.o: cppdefs.h globaldefs.h
+nf_fread.f90: cppdefs.h globaldefs.h
+nf_fread.o: mod_ncparam.o mod_netcdf.o mod_parallel.o mod_param.o mod_scalars.o
+nf_fread.o: nf_fread.f90
+
+nf_fwrite.o: cppdefs.h globaldefs.h
+nf_fwrite.f90: cppdefs.h globaldefs.h
+nf_fwrite.o: mod_ncparam.o mod_netcdf.o mod_parallel.o mod_param.o
+nf_fwrite.o: mod_scalars.o nf_fwrite.f90
+
+oi_update.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+oi_update.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+oi_update.o: mod_grid.o mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
+oi_update.o: oi_update.f90
+
+opencdf.o: cppdefs.h globaldefs.h
+opencdf.f90: cppdefs.h globaldefs.h
+opencdf.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_param.o mod_scalars.o
+opencdf.o: opencdf.f90
+
+set_2dfld.o: set_bounds.h cppdefs.h globaldefs.h
+set_2dfld.f90: set_bounds.h cppdefs.h globaldefs.h
+set_2dfld.o: exchange_2d.o mod_iounits.o mod_ncparam.o mod_param.o
+set_2dfld.o: mod_scalars.o set_2dfld.f90
+
+set_3dfld.o: set_bounds.h cppdefs.h globaldefs.h
+set_3dfld.f90: set_bounds.h cppdefs.h globaldefs.h
+set_3dfld.o: exchange_3d.o mod_iounits.o mod_ncparam.o mod_param.o
+set_3dfld.o: mod_scalars.o set_3dfld.f90
+
+set_ngfld.o: cppdefs.h globaldefs.h
+set_ngfld.f90: cppdefs.h globaldefs.h
+set_ngfld.o: mod_iounits.o mod_ncparam.o mod_param.o mod_scalars.o
+set_ngfld.o: set_ngfld.f90
+
+set_nudgcof.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_nudgcof.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+set_nudgcof.o: mod_boundary.o mod_clima.o mod_grid.o mod_ncparam.o mod_param.o
+set_nudgcof.o: mod_scalars.o set_nudgcof.f90
+
+set_scoord.o: cppdefs.h globaldefs.h
+set_scoord.f90: cppdefs.h globaldefs.h
+set_scoord.o: mod_grid.o mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+set_scoord.o: set_scoord.f90
+
+set_weights.o: cppdefs.h globaldefs.h
+set_weights.f90: cppdefs.h globaldefs.h
+set_weights.o: mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+set_weights.o: set_weights.f90
+
+stiffness.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+stiffness.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+stiffness.o: mod_grid.o mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+stiffness.o: stiffness.f90
+
+timers.o: cppdefs.h globaldefs.h
+timers.f90: cppdefs.h globaldefs.h
+timers.o: mod_iounits.o mod_parallel.o mod_param.o mod_strings.o timers.f90
+
+utility.o: cppdefs.h globaldefs.h
+utility.f90: cppdefs.h globaldefs.h
+utility.o: mod_kinds.o mod_param.o mod_scalars.o utility.f90
+
+wpoints.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+wpoints.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+wpoints.o: mod_grid.o mod_ncparam.o mod_parallel.o mod_param.o mod_scalars.o
+wpoints.o: wpoints.f90
+
+wrt_avg.o: cppdefs.h globaldefs.h
+wrt_avg.f90: cppdefs.h globaldefs.h
+wrt_avg.o: mod_average.o mod_grid.o mod_iounits.o mod_ncparam.o mod_netcdf.o
+wrt_avg.o: mod_parallel.o mod_param.o mod_scalars.o wrt_avg.f90
+
+wrt_floats.o: cppdefs.h globaldefs.h
+wrt_floats.f90: cppdefs.h globaldefs.h
+wrt_floats.o: mod_floats.o mod_iounits.o mod_ncparam.o mod_netcdf.o
+wrt_floats.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
+wrt_floats.o: wrt_floats.f90
+
+wrt_his.o: cppdefs.h globaldefs.h
+wrt_his.f90: cppdefs.h globaldefs.h
+wrt_his.o: mod_bbl.o mod_forces.o mod_grid.o mod_iounits.o mod_mixing.o
+wrt_his.o: mod_ncparam.o mod_netcdf.o mod_ocean.o mod_parallel.o mod_param.o
+wrt_his.o: mod_scalars.o mod_sediment.o mod_stepping.o omega.o wrt_his.f90
+
+wrt_info.o: cppdefs.h globaldefs.h
+wrt_info.f90: cppdefs.h globaldefs.h
+wrt_info.o: extract_sta.o mod_biology.o mod_grid.o mod_iounits.o mod_ncparam.o
+wrt_info.o: mod_netcdf.o mod_parallel.o mod_param.o mod_scalars.o wrt_info.f90
+
+wrt_rst.o: cppdefs.h globaldefs.h
+wrt_rst.f90: cppdefs.h globaldefs.h
+wrt_rst.o: mod_grid.o mod_iounits.o mod_mixing.o mod_ncparam.o mod_netcdf.o
+wrt_rst.o: mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o mod_sediment.o
+wrt_rst.o: mod_stepping.o wrt_rst.f90
+
+wrt_station.o: cppdefs.h globaldefs.h
+wrt_station.f90: cppdefs.h globaldefs.h
+wrt_station.o: extract_sta.o mod_bbl.o mod_forces.o mod_grid.o mod_iounits.o
+wrt_station.o: mod_mixing.o mod_ncparam.o mod_netcdf.o mod_ocean.o
+wrt_station.o: mod_parallel.o mod_param.o mod_scalars.o mod_sediment.o
+wrt_station.o: mod_stepping.o wrt_station.f90
+
+analytical_mod.mod: analytical.o
+bbl_mod.mod: bbl.o
+bc_2d_mod.mod: bc_2d.o
+bc_3d_mod.mod: bc_3d.o
+biology_mod.mod: biology.o
+bulk_flux_mod.mod: bulk_flux.o
+bvf_mix_mod.mod: bvf_mix.o
+clm_tides_mod.mod: set_tides.o
+diag_mod.mod: diag.o
+exchange_2d_mod.mod: exchange_2d.o
+exchange_3d_mod.mod: exchange_3d.o
+extract_mod.mod: extract_sta.o
+gls_corstep_mod.mod: gls_corstep.o
+gls_prestep_mod.mod: gls_prestep.o
+horz_mix_mod.mod: horz_mix.o
+lmd_bkpp_mod.mod: lmd_bkpp.o
+lmd_skpp_mod.mod: lmd_skpp.o
+lmd_vmix_mod.mod: lmd_vmix.o
+metrics_mod.mod: metrics.o
+my25_corstep_mod.mod: my25_corstep.o
+my25_prestep_mod.mod: my25_prestep.o
+obc_volcons_mod.mod: obc_volcons.o
+oi_update_mod.mod: oi_update.o
+omega_mod.mod: omega.o
+pre_step3d_mod.mod: pre_step3d.o
+prsgrd_mod.mod: prsgrd.o
+rho_eos_mod.mod: rho_eos.o
+rhs3d_mod.mod: rhs3d.o
+sediment_mod.mod: sediment.o
+set_2dfld_mod.mod: set_2dfld.o
+set_3dfld_mod.mod: set_3dfld.o
+set_depth_mod.mod: set_depth.o
+set_massflux_mod.mod: set_massflux.o
+set_vbc_mod.mod: set_vbc.o
+step2d_mod.mod: step2d.o
+step3d_t_mod.mod: step3d_t.o
+step3d_uv_mod.mod: step3d_uv.o
+step_floats_mod.mod: step_floats.o
+stiffness_mod.mod: stiffness.o
+t3dbc_mod.mod: t3dbc_im.o
+t3dmix2_geo_mod.mod: t3dmix.o
+t3dmix2_iso_mod.mod: t3dmix.o
+t3dmix2_s_mod.mod: t3dmix.o
+t3dmix4_geo_mod.mod: t3dmix.o
+t3dmix4_iso_mod.mod: t3dmix.o
+t3dmix4_s_mod.mod: t3dmix.o
+tkebc_mod.mod: tkebc_im.o
+u2dbc_mod.mod: u2dbc_im.o
+u3dbc_mod.mod: u3dbc_im.o
+utility_mod.mod: utility.o
+uv3dmix2_geo_mod.mod: uv3dmix.o
+uv3dmix2_s_mod.mod: uv3dmix.o
+uv3dmix4_geo_mod.mod: uv3dmix.o
+uv3dmix4_s_mod.mod: uv3dmix.o
+v2dbc_mod.mod: v2dbc_im.o
+v3dbc_mod.mod: v3dbc_im.o
+wvelocity_mod.mod: wvelocity.o
+zetabc_mod.mod: zetabc.o

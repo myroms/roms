@@ -1,0 +1,2305 @@
+!
+!  ROMS/TOMS IO NetCDF variables.
+!
+!==============================================================================
+!  Copyright (c) 2002 ROMS/TOMS Group, version 2.0                          ===
+!========================================================= Hernan G. Arango ===
+!                                                                             !
+!  This file contains all ROMS/TOMS Input/Output variables information.  It   !
+!  is used to manage NetCDF files.  The following information is needed for   !
+!  any IO variable:                                                           !
+!                                                                             !
+!       Vinfo(1)      Field variable name.                                    !
+!       Vinfo(2)      Long-name attribute.                                    !
+!       Vinfo(3)      Units attribute.                                        !
+!       Vinfo(4)      Field type attribute.                                   !
+!       Vinfo(5)      Associated time variable name.                          !
+!       Vinfo(6)      Index variable name used in information arrays.         !
+!       Vinfo(7)      Staggered C-grid variable type:                         !
+!                       'nulvar' => non-grided variable.                      !
+!                       'p2dvar' => 2D PHI-variable.                          !
+!                       'r2dvar' => 2D RHO-variable.                          !
+!                       'u2dvar' => 2D U-variable.                            !
+!                       'v2dvar' => 2D V-variable.                            !
+!                       'p3dvar' => 3D PHI-variable.                          !
+!                       'r3dvar' => 3D RHO-variable.                          !
+!                       'u3dvar' => 3D U-variable.                            !
+!                       'v3dvar' => 3D V-variable.                            !
+!                       'w3dvar' => 3D W-variable.                            !
+!                       'b3dvar' => 3D BED-sediment.                          !
+!       scale         Scale to convert input data to model units.             !
+!                                                                             !
+!  Enclose Vinfo variables with single quotes so this file can be read with   !
+!  a free format statement.  The  Vinfo(6) variable must be unique and case   !
+!  sensitive.  It is checked in "mod_ncparm" to set the appropiate ID index   !
+!  for the information arrays.                                                !
+!                                                                             !
+!  Some of the SCALE values are reassigned internally in "inp_par.F" after    !
+!  the input script is processed.  A default value is provided here using:    !
+!                                                                             !
+!     rho0 = 1025.0 km/m3                                                     !
+!       Cd = 3985.0 Joules/kg/degC                                            !
+!                                                                             !
+!==============================================================================
+!
+! The value in Vinfo(5) here is used to name the unlimited dimension in all
+! output NetCDF files.  By default it is set to 'time'.  Alternatively, you
+! can use 'ocean_time' as dimension name so both variable and dimension
+! names are the same.  This facilitates processing in some NetCDF packages.
+! Notice that we use the prefix 'ocean' in the variable name to differentiate
+! between oceanic and atmospheric time clocks in fully coupled applications.
+!
+
+'ocean_time'
+  'time since initialization'
+  'second'
+  'time, scalar, series'
+  'time'
+  'idtime'
+  'nulvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Model state variables.
+!------------------------------------------------------------------------------
+!
+
+'zeta'
+  'free-surface'
+  'meter'
+  'free-surface, scalar, series'
+  'ocean_time'
+  'idFsur'
+  'r2dvar'
+  1.0d0
+
+'ubar'
+  'vertically integrated u-momentum component'
+  'meter second-1'
+  'ubar-velocity, scalar, series'
+  'ocean_time'
+  'idUbar'
+  'u2dvar'
+  1.0d0
+
+'vbar'
+  'vertically integrated v-momentum component'
+  'meter second-1'
+  'vbar-velocity, scalar, series'
+  'ocean_time'
+  'idVbar'
+  'v2dvar'
+  1.0d0
+
+'u'
+  'u-momentum component'
+ 'meter second-1'
+  'u-velocity, scalar, series'
+  'ocean_time'
+  'idUvel'
+  'u3dvar'
+  1.0d0
+
+'v'
+  'v-momentum component'
+  'meter second-1'
+  'v-velocity, scalar, series'
+  'ocean_time'
+  'idVvel'
+  'v3dvar'
+  1.0d0
+
+'w'
+  'vertical momentum component'
+  'meter second-1'
+  'w-velocity, scalar, series'
+  'ocean_time'
+  'idWvel'
+  'w3dvar'
+  1.0d0
+
+'omega'
+  'S-coordinate vertical momentum component'
+  'meter3 second-1'
+  'omega, scalar, series'
+  'ocean_time'
+  'idOvel'
+  'w3dvar'
+  1.0d0
+
+'rho'
+  'density anomaly'
+  'kilogram meter-3'
+  'density, scalar, series'
+  'ocean_time'
+  'idDano'
+  'r3dvar'
+  1.0d0
+
+'temp'
+  'potential temperature'
+  'Celsius'
+  'temperature, scalar, series'
+  'ocean_time'
+  'idTvar(itemp)'
+  'r3dvar'
+  1.0d0
+
+'salt'
+  'salinity'
+  'PSU'
+  'salinity, scalar, series'
+  'ocean_time'
+  'idTvar(isalt)'
+  'r3dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Momentum stress variables.
+!------------------------------------------------------------------------------
+!
+
+'sustr'
+  'surface u-momentum stress'
+  'Newton meter-2'
+  'surface u-momentum stress, scalar, series'
+  'sms_time'
+  'idUsms'
+  'u2dvar'
+  9.756097d-4                               ! (1/rho0) converted to m2/s2
+
+'svstr'
+  'surface v-momentum stress'
+  'Newton meter-2'
+  'surface v-momentum stress, scalar, series'
+  'sms_time'
+  'idVsms'
+  'v2dvar'
+  9.756097d-4                               ! (1/rho0) converted to m2/s2
+
+'bustr'
+  'bottom u-momentum stress'
+  'Newton meter-2'
+  'bottom u-momentum stress, scalar, series'
+  'bms_time'
+  'idUbms'
+  'u2dvar'
+  9.756097d-4                               ! (1/rho0) converted to m2/s2
+
+'bvstr'
+  'bottom v-momentum stress'
+  'Newton meter-2'
+  'bottom v-momentum stress, scalar, series'
+  'bms_time'
+  'idVbms'
+  'v2dvar'
+  9.756097d-4                               ! (1/rho0) converted to m2/s2
+
+'bustrw'
+  'wind-induced, bottom u-wave stress'
+  'Newton meter-2'
+  'bottom u-wave stress, scalar, series'
+  'ocean_time'
+  'idUbws'
+  'u2dvar'
+  9.756097d-4                               ! (1/rho0) converted to m2/s2
+
+'bvstrw'
+  'wind-induced, bottom v-wave stress'
+  'Newton meter-2'
+  'bottom v-wave stress, scalar, series'
+  'ocean_time'
+  'idVbws'
+  'v2dvar'
+  9.756097d-4                               ! (1/rho0) converted to m2/s2
+
+!
+!------------------------------------------------------------------------------
+!  Tracer flux variables.
+!------------------------------------------------------------------------------
+!
+
+'shflux'
+  'surface net heat flux'
+  'Watts meter-2'
+  'surface heat flux, scalar, series'
+  'shf_time'
+  'idTsur(itemp)'
+  'r2dvar'
+  2.448205d-7                               ! (1/rho0/Cp) converted to degC m/s
+
+'dQdSST'
+  'surface net heat flux sensitivity to SST'
+  'Watts meter-2 Celsius-1'
+  'dQdSST, scalar, series'
+  'sst_time'
+  'iddQdT'
+  'r2dvar'
+  2.448205d-7                               ! (1/rho0/Cp) converted to degC m/s
+
+'swflux'
+  'surface net freshwater flux (E-P)'
+  'centimeter day-1'
+  'surface freshwater flux, scalar, series'
+  'swf_time'
+  'idTsur(isalt)'
+  'r2dvar'
+  1.157407d-7                               ! (0.01/86400) converted to m/s
+
+'bhflux'
+  'bottom net heat flux'
+  'Watts meter-2'
+  'bottom heat flux, scalar, series'
+  'bhf_time'
+  'idTbot(itemp)'
+  'r2dvar'
+  2.448205d-7                               ! (1/rho0/Cp) converted to degC m/s
+
+'bwflux'
+  'bottom net freshwater flux'
+  'centimeter day-1'
+  'bottom water flux, scalar, series'
+  'bwf_time'
+  'idTbot(isalt)'
+  'r2dvar'
+  1.157407d-7                               ! (0.01/86400) converted to m/s
+
+!
+!------------------------------------------------------------------------------
+!  Mixing variables.
+!------------------------------------------------------------------------------
+!
+
+'tke'
+  'turbulent kinetic energy'
+  'meter2 second-2'
+  'tke, scalar, series'
+  'ocean_time'
+  'idMtke'
+  'w3dvar'
+  1.0d0
+
+'gls'
+  'turbulent generic length scale'
+  'meter3 second-2'
+  'gls, scalar, series'
+  'ocean_time'
+  'idMtls'
+  'w3dvar'
+  1.0d0
+
+'AKv'
+  'vertical viscosity coefficient'
+  'meter2 second-1'
+  'AKv, scalar, series'
+  'ocean_time'
+  'idVvis'
+  'w3dvar'
+  1.0d0
+
+'AKt'
+  'temperature vertical diffusion coefficient'
+  'meter2 second-1'
+  'AKt, scalar, series'
+  'ocean_time'
+  'idTdif'
+  'w3dvar'
+  1.0d0
+
+'AKs'
+  'salinity vertical diffusion coefficient'
+  'meter2 second-1'
+  'AKs, scalar, series'
+  'ocean_time'
+  'idSdif'
+  'w3dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Boundary variables.
+!------------------------------------------------------------------------------
+!
+
+'zeta_west'
+  'free-surface western boundary condition'
+  'meter'
+  'zeta_west, scalar, series'
+  'zeta_time'
+  'idZbry(iwest)'
+  'nulvar'
+  1.0d0
+
+'zeta_east'
+  'free-surface eastern boundary condition'
+  'meter'
+  'zeta_east, scalar, series'
+  'zeta_time'
+  'idZbry(ieast)'
+  'nulvar'
+  1.0d0
+
+'zeta_south'
+  'free-surface southern boundary condition'
+  'meter'
+  'zeta_south, scalar, series'
+  'zeta_time'
+  'idZbry(isouth)'
+  'nulvar'
+  1.0d0
+
+'zeta_north'
+  'free-surface northern boundary condition'
+  'meter'
+  'zeta_north, scalar, series'
+  'zeta_time'
+  'idZbry(inorth)'
+  'nulvar'
+  1.0d0
+
+'ubar_west'
+  '2D u-momentum western boundary condition'
+  'meter second-1'
+  'ubar_west, scalar, series'
+  'v2d_time'
+  'idU2bc(iwest)'
+  'nulvar'
+  1.0d0
+
+'ubar_east'
+  '2D u-momentum eastern boundary condition'
+  'meter second-1'
+  'ubar_east, scalar, series'
+  'v2d_time'
+  'idU2bc(ieast)'
+  'nulvar'
+  1.0d0
+
+'ubar_south'
+  '2D u-momentum southern boundary condition'
+  'meter second-1'
+  'ubar_south, scalar, series'
+  'v2d_time'
+  'idU2bc(isouth)'
+  'nulvar'
+  1.0d0
+
+'ubar_north'
+  '2D u-momentum northern boundary condition'
+  'meter second-1'
+  'ubar_north, scalar, series'
+  'v2d_time'
+  'idU2bc(inorth)'
+  'nulvar'
+  1.0d0
+
+'vbar_west'
+  '2D v-momentum western boundary condition'
+  'meter second-1'
+  'vbar_west, scalar, series'
+  'v2d_time'
+  'idV2bc(iwest)'
+  'nulvar'
+  1.0d0
+
+'vbar_east'
+  '2D v-momentum eastern boundary condition'
+  'meter second-1'
+  'vbar_east, scalar, series'
+  'v2d_time'
+  'idV2bc(ieast)'
+  'nulvar'
+  1.0d0
+
+'vbar_south'
+  '2D v-momentum southern boundary condition'
+  'meter second-1'
+  'vbar_south, scalar, series'
+  'v2d_time'
+  'idV2bc(isouth)'
+  'nulvar'
+  1.0d0
+
+'vbar_north'
+  '2D v-momentum northern boundary condition'
+  'meter second-1'
+  'vbar_north, scalar, series'
+  'v2d_time'
+  'idV2bc(inorth)'
+  'nulvar'
+  1.0d0
+
+'u_west'
+  '3D u-momentum western boundary condition'
+  'meter second-1'
+  'u_west, scalar, series'
+  'v3d_time'
+  'idU3bc(iwest)'
+  'nulvar'
+  1.0d0
+
+'u_east'
+  '3D u-momentum eastern boundary condition'
+  'meter second-1'
+  'u_east, scalar, series'
+  'v3d_time'
+  'idU3bc(ieast)'
+  'nulvar'
+  1.0d0
+
+'u_south'
+  '3D u-momentum southern boundary condition'
+  'meter second-1'
+  'u_south, scalar, series'
+  'v3d_time'
+  'idU3bc(isouth)'
+  'nulvar'
+  1.0d0
+
+'u_north'
+  '3D u-momentum northern boundary condition'
+  'meter second-1'
+  'u_north, scalar, series'
+  'v3d_time'
+  'idU3bc(inorth)'
+  'nulvar'
+  1.0d0
+
+'v_west'
+  '3D v-momentum western boundary condition'
+  'meter second-1'
+  'v_west, scalar, series'
+  'v3d_time'
+  'idV3bc(iwest)'
+  'nulvar'
+  1.0d0
+
+'v_east'
+  '3D v-momentum eastern boundary condition'
+  'meter second-1'
+  'v_east, scalar, series'
+  'v3d_time'
+  'idV3bc(ieast)'
+  'nulvar'
+  1.0d0
+
+'v_south'
+  '3D v-momentum southern boundary condition'
+  'meter second-1'
+  'v_south, scalar, series'
+  'v3d_time'
+  'idV3bc(isouth)'
+  'nulvar'
+  1.0d0
+
+'v_north'
+  '3D v-momentum northern boundary condition'
+  'meter second-1'
+  'v_north, scalar, series'
+  'v3d_time'
+  'idV3bc(inorth)'
+  'nulvar'
+  1.0d0
+
+'temp_west'
+  'temperature western boundary condition'
+  'Celsius'
+  'temp_west, scalar, series'
+  'temp_time'
+  'idTbry(iwest,itemp)'
+  'nulvar'
+  1.0d0
+
+'temp_east'
+  'temperature eastern boundary condition'
+  'Celsius'
+  'temp_east, scalar, series'
+  'temp_time'
+  'idTbry(ieast,itemp)'
+  'nulvar'
+  1.0d0
+
+'temp_south'
+  'temperature southern boundary condition'
+  'Celsius'
+  'temp_south, scalar, series'
+  'temp_time'
+  'idTbry(isouth,itemp)'
+  'nulvar'
+  1.0d0
+
+'temp_north'
+  'temperature northern boundary condition'
+  'Celsius'
+  'temp_north, scalar, series'
+  'temp_time'
+  'idTbry(inorth,itemp)'
+  'nulvar'
+  1.0d0
+
+'salt_west'
+  'salinity western boundary condition'
+  'PSU'
+  'salt_west, scalar, series'
+  'salt_time'
+  'idTbry(iwest,isalt)'
+  'nulvar'
+  1.0d0
+
+'salt_east'
+  'salinity eastern boundary condition'
+  'PSU'
+  'salt_east, scalar, series'
+  'salt_time'
+  'idTbry(ieast,isalt)'
+  'nulvar'
+  1.0d0
+
+'salt_south'
+  'salinity southern boundary condition'
+  'PSU'
+  'salt_south, scalar, series'
+  'salt_time'
+  'idTbry(isouth,isalt)'
+  'nulvar'
+  1.0d0
+
+'salt_north'
+  'salinity northern boundary condition'
+  'PSU'
+  'salt_north, scalar, series'
+  'salt_time'
+  'idTbry(inorth,isalt)'
+  'nulvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Atmospheric forcing variables.
+!------------------------------------------------------------------------------
+!
+
+'Pair'
+  'surface air pressure'
+  'millibar'
+  'Pair, scalar, series'
+  'pair_time'
+  'idPair'
+  'r2dvar'
+  1.0d0
+
+'Tair'
+  'surface air temperature'
+  'Celsius'
+  'Tair, scalar, series'
+  'tair_time'
+  'idTair'
+  'r2dvar'
+  1.0d0
+
+'Qair'
+  'surface air relative humidity'
+  'percentage'
+  'Qair, scalar, series'
+  'qair_time'
+  'idQair'
+  'r2dvar'
+  0.01d0                                    ! (1/100) converted to percentage
+
+'cloud'
+  'cloud fraction'
+  'nondimensional'
+  'cloud, scalar, series'
+  'cloud_time'
+  'idCfra'
+  'r2dvar'
+  1.0d0
+
+'swrad'
+  'solar shortwave radiation flux'
+  'Watts meter-2'
+  'shortwave radiation, scalar, series'
+  'srf_time'
+  'idSrad'
+  'r2dvar'
+  2.448205d-7                               ! (1/rho0/Cp) converted to degC m/s
+
+'lwrad'
+  'net longwave radiation flux'
+  'Watts meter-2'
+  'longwave radiation, scalar, series'
+  'lrf_time'
+  'idLrad'
+  'r2dvar'
+  2.448205d-7                               ! (1/rho0/Cp) converted to degC m/s
+
+'latent'
+  'net latent heat flux'
+  'Watts meter-2'
+  'latent heat flux, scalar, series'
+  'lhf_time'
+  'idLhea'
+  'r2dvar'
+  2.448205d-7                               ! (1/rho0/Cp) converted to degC m/s
+
+'sensible'
+  'net sensible heat flux'
+  'Watts meter-2'
+  'sensible heat flux, scalar, series'
+  'shf_time'
+  'idShea'
+  'r2dvar'
+  2.448205d-7                               ! (1/rho0/Cp) converted to degC m/s
+
+'rain'
+  'rain fall rate'
+  'kilogram meter-2 second-1'
+  'rain, scalar, series'
+  'rain_time'
+  'idrain'
+  'r2dvar'
+  1.0d0
+
+'evaporation'
+  'evaporation rate'
+  'kilogram meter-2 second-1'
+  'evaporation, scalar, series'
+  'evap_time'
+  'idevap'
+  'r2dvar'
+  1.0d0
+
+'Uwind'
+  'surface u-wind component'
+  'meter second-1'
+  'u-wind, scalar, series'
+  'wind_time'
+  'idUair'
+  'r2dvar'
+  1.0d0
+
+'Vwind'
+  'surface v-wind component'
+  'meter second-1'
+  'v-wind, scalar, series'
+  'wind_time'
+  'idVair'
+  'r2dvar'
+  1.0d0
+
+'Awave'
+  'wind-induced wave amplitude'
+  'meter'
+  'Awave, scalar, series'
+  'wave_time'
+  'idWamp'
+  'r2dvar'
+  1.0d0
+
+'Dwave'
+  'wind-induced wave direction'
+  'degrees'
+  'Dwave, scalar, series'
+  'wave_time'
+  'idWdir'
+  'r2dvar'
+  0.017453292519943295                      ! converted to radians
+
+'Pwave'
+  'wind-induced wave Period'
+  'second'
+  'Pwave, scalar, series'
+  'wave_time'
+  'idWper'
+  'r2dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Tidal forcing variables.
+!------------------------------------------------------------------------------
+!
+
+'tide_period'
+  'tidal period'
+  'hours'
+  'tide_period, scalar, series'
+  'tide_period'
+  'idTper'
+  'nulvar'
+  3600.0d0                                  ! converted to seconds
+
+'tide_Eamp'
+  'tidal elevation amplitude'
+  'meter'
+  'SSH_Tamp, scalar, series'
+  'tide_period'
+  'idTzam'
+  'r2dvar'
+  1.0d0
+
+'tide_Ephase'
+  'tidal elevation phase angle'
+  'degrees'
+  'SSH_Tphase, scalar, series'
+  'tide_period'
+  'idTzph'
+  'r2dvar'
+  0.017453292519943295                      ! (pi/180) converted to radians
+
+'tide_Cphase'
+  'tidal current phase angle'
+  'degrees'
+  'tide_Cphase, scalar, series'
+  'tide_period'
+  'idTvph'
+  'r2dvar'
+  0.017453292519943295                      ! (pi/180) converted to radians
+
+'tide_Cangle'
+  'tidal current inclination angle'
+  'degrees'
+  'tide_Cangle, scalar, series'
+  'tide_period'
+  'idTvan'
+  'r2dvar'
+  0.017453292519943295                      ! (pi/180) converted to radians
+
+'tide_Cmax'
+  'maximum tidal current, ellipse major axis'
+  'meter second-1'
+  'tide_Cmax, scalar, series'
+  'tide_period'
+  'idTvma'
+  'r2dvar'
+  1.0d0
+
+'tide_Cmin'
+  'minimum tidal current, ellipse minor axis'
+  'meter second-1'
+  'tide_Cmin, scalar, series'
+  'tide_period'
+  'idTvmi'
+  'r2dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  River forcing variables.
+!------------------------------------------------------------------------------
+!
+
+'river_Xposition'
+  'river runoff  XI-positions at RHO-points'
+  'nondimensional'
+  'river_Xposition, scalar'
+  'river'
+  'idRxpo'
+  'nulvar'
+  1.0d0
+
+'river_Eposition'
+  'river runoff ETA-positions at RHO-points'
+  'nondimensional'
+  'river_Eposition'
+  'river'
+  'idRepo'
+  'nulvar'
+  1.0d0
+
+'river_direction'
+  'river runoff direction'
+  'nondimensional'
+  'river_direction, scalar'
+  'river'
+  'idRdir'
+  'nulvar'
+  1.0d0
+
+'river_Vshape'
+  'river runoff mass transport vertical profile'
+  'nondimensional'
+  'river_Vshape, scalar'
+  'river'
+  'idRvsh'
+  'nulvar'
+  1.0d0
+
+'river_transport'
+  'river runoff mass transport'
+  'meter3 second-1'
+  'river_transport, scalar, series'
+  'river_time'
+  'idRtra'
+  'nulvar'
+  1.0d0
+
+'river_flag'
+  'river runoff flag'
+  'nondimensional'
+  'river_flag, scalar'
+  'river'
+  'idRflg'
+  'nulvar'
+  1.0d0
+
+'river_temp'
+  'river runoff potential temperature'
+  'Celsius'
+  'river_temp, scalar, series'
+  'river_time'
+  'idRtrc(itemp)'
+  'nulvar'
+  1.0d0
+
+'river_salt'
+  'river runoff salinity'
+  'PSU'
+  'river_salt, scalar, series'
+  'river_time'
+  'idRtrc(isalt)'
+  'nulvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Boundary layer variables.
+!------------------------------------------------------------------------------
+!
+
+'Hsbl'
+  'depth of oceanic surface boundary layer'
+  'meter'
+  'Hsbl, scalar, series'
+  'ocean_time'
+  'idHsbl'
+  'r2dvar'
+  1.0d0
+
+'Hbbl'
+  'depth of oceanic bottom boundary layer'
+  'meter'
+  'Hbbl, scalar, series'
+  'ocean_time'
+  'idHbbl'
+  'r2dvar'
+  1.0d0
+
+'Ubot'
+  'bottom u-momentum above bed'
+  'meter second-1'
+  'bottom u-velocity, scalar, series'
+  'ocean_time'
+  'idUbot'
+  'u2dvar'
+  1.0d0
+
+'Vbot'
+  'bottom v-momentum above bed'
+  'meter second-1'
+  'bottom v-velocity, scalar, series'
+  'ocean_time'
+  'idVbot'
+  'v2dvar'
+  1.0d0
+
+'Ubed'
+  'wind-induced, bed wave orbital u-velocity'
+  'meter second-1'
+  'bed wave u-velocity, scalar, series'
+  'ocean_time'
+  'idUbed'
+  'u2dvar'
+  1.0d0
+
+'Vbed'
+  'wind-induced, bed wave orbital v-velocity'
+  'meter second-1'
+  'bed wave v-velocity, scalar, series'
+  'ocean_time'
+  'idVbed'
+  'v2dvar'
+  1.0d0
+
+'Abed'
+  'wind-induced, bed wave excursion amplitude'
+  'meter'
+  'bed wave excursion, scalar, series'
+  'ocean_time'
+  'idAbed'
+  'r2dvar'
+  1.0d0
+
+'Zbnot'
+  'hydraulic bottom roughness'
+  'meter'
+  'bottom roughness, scalar, series'
+  'ocean_time'
+  'idZnot'
+  'r2dvar'
+  1.0d0
+
+'Zbnotc'
+  'apparent hydraulic bottom roughness'
+  'meter'
+  'bottom roughness, scalar, series'
+  'ocean_time'
+  'idZapp'
+  'r2dvar'
+  1.0d0
+
+'Hripple'
+  'bed ripple height'
+  'meter'
+  'ripple height, scalar, series'
+  'ocean_time'
+  'idHrip'
+  'r2dvar'
+  1.0d0
+
+'Lripple'
+  'bed ripple length'
+  'meter'
+  'ripple length, scalar, series'
+  'ocean_time'
+  'idLrip'
+  'r2dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Climatotogy variables.
+!------------------------------------------------------------------------------
+!
+
+'zeta'
+  'sea surface height climatology'
+  'meter'
+  'zeta, scalar, series'
+  'temp_time'
+  'idSSHc'
+  'r2dvar'
+  1.0d0
+
+'ubar'
+  'vertically integrated u-momentum climatology'
+  'meter second-1'
+  'ubar-velocity, scalar, series'
+  'v2d_time'
+  'idUbcl'
+  'u2dvar'
+  1.0d0
+
+'vbar'
+  'vertically integrated v-momentum climatology'
+  'meter second-1'
+  'vbar-velocity, scalar, series'
+  'v2d_time'
+  'idVbcl'
+  'v2dvar'
+  1.0d0
+
+'u'
+  'u-momentum component climatology'
+  'meter second-1'
+  'u-velocity, scalar, series'
+  'v3d_time'
+  'idUclm'
+  'u3dvar'
+  1.0d0
+
+'v'
+  'v-momentum component climatology'
+  'meter second-1'
+  'v-velocity, scalar, series'
+  'v3d_time'
+  'idVclm'
+  'v3dvar'
+  1.0d0
+
+'SSS'
+  'sea surface salinity climatology'
+  'PSU'
+  'SSS, scalar, series'
+  'sss_time'
+  'idSSSc'
+  'r2dvar'
+  1.0d0
+
+'SST'
+  'sea surface temperature climatology'
+  'Celsius'
+  'SST, scalar, series'
+  'sst_time'
+  'idSSTc'
+  'r2dvar'
+  1.0d0
+
+'temp'
+  'potential temperature climatology'
+  'Celsius'
+  'temp_time, scalar, series'
+  'temp_time'
+  'idTclm(itemp)'
+  'r3dvar'
+  1.0d0
+
+'salt'
+  'salinity climatology'
+  'PSU'
+  'salt_time, scalar, series'
+  'salt_time'
+  'idTclm(isalt)'
+  'r3dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Observation variables.
+!------------------------------------------------------------------------------
+!
+
+'SSH'
+  'sea surface height observations'
+  'meter'
+  'SSHobs, scalar, series'
+  'SSHobs_time'
+  'idSSHo'
+  'r2dvar'
+  1.0d0
+
+'SSH_err'
+  'sea surface height error variance'
+  'nondimensional'
+  'SSH_err, scalar, series'
+  'SSHobs_time'
+  'idSSHe'
+  'r2dvar'
+  1.0d0
+
+'u'
+  'u-momentum component observations'
+  'meter second-1'
+  'Uobs, scalar, series'
+  'Vobs_time'
+  'idUobs'
+  'u3dvar'
+  1.0d0
+
+'v'
+  'v-momentum component observations'
+  'meter second-1'
+  'Vobs, scalar, series'
+  'Vobs_time'
+  'idVobs'
+  'v3dvar'
+  1.0d0
+
+'Evel'
+  'horizontal velocity error variance'
+  'nondimensional'
+  'Evel, scalar, series'
+  'Vobs_time'
+  'idUVer'
+  'r3dvar'
+  1.0d0
+
+'Usur'
+  'surface u-momentum component observations'
+  'meter second-1'
+  'Usur, scalar, series'
+  'Vsur_time'
+  'idUsur'
+  'u2dvar'
+  1.0d0
+
+'Vsur'
+  'surface v-momentum component observations'
+  'meter second-1'
+  'Vsur, scalar, series'
+  'Vsur_time'
+  'idVsur'
+  'v2dvar'
+  1.0d0
+
+'Esur'
+  'surface velocity error variance'
+  'meter second-1'
+  'Esur, scalar, series'
+  'Vsur_time'
+  'idUVse'
+  'r2dvar'
+  1.0d0
+
+'SST'
+  'sea surface temperature observations'
+  'Celsius'
+  'SSTobs, scalar, series'
+  'SSTobs_time'
+  'idSSTo'
+  'r2dvar'
+  1.0d0
+
+'SST_err'
+  'sea surface temperature error variance'
+  'nondimensional'
+  'SST_err, scalar, series'
+  'SSTobs_time'
+  'idSSTe'
+  'r2dvar'
+  1.0d0
+
+'temp'
+  'potential temperature observations'
+  'Celsius'
+  'Tobs, scalar, series'
+  'Tobs_time'
+  'idTobs(itemp)'
+  'r3dvar'
+  1.0d0
+
+'temp_err'
+  'potential temperature error variance'
+  'nondimensional'
+  'temp_err, scalar, series'
+  'Tobs_time'
+  'idTerr(itemp)'
+  'r3dvar'
+  1.0d0
+
+'salt'
+  'salinity observations'
+  'PSU'
+  'Sobs, scalar, series'
+  'Sobs_time'
+  'idTobs(isalt)'
+  'r3dvar'
+  1.0d0
+
+'salt_err'
+  'salinity error variance'
+  'nondimensional'
+  'salt_err, scalar, series'
+  'Sobs_time'
+  'idTerr(isalt)'
+  'r3dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Error subspace variables.
+!------------------------------------------------------------------------------
+!
+
+'zeta_es'
+  'free-surface error subspace'
+  'nondimensional'
+  'zeta_es, scalar, series'
+  'time'
+  'idSvar(isFsur)'
+  'r2dvar'
+  1.0d0
+
+'ubar_es'
+  'barotropic u-momentum error subspace'
+  'nondimensional'
+  'ubar_es, scalar, series'
+  'time'
+  'idSvar(isUbar)'
+  'u2dvar'
+  1.0d0
+
+'vbar_es'
+  'barotropic v-momentum error subspace'
+  'nondimensional'
+  'vbar_es, scalar, series'
+  'time'
+  'idSvar(isVbar)'
+  'v2dvar'
+  1.0d0
+
+'u_es'
+  'u-momentum error subspace'
+  'nondimensional'
+  'u_es, scalar, series'
+  'time'
+  'idSvar(isUvel)'
+  'u3dvar'
+  1.0d0
+
+'v_es'
+  'v-momentum error subspace'
+  'nondimensional'
+  'v_es, scalar, series'
+  'time'
+  'idSvar(isVvel)'
+  'v3dvar'
+  1.0d0
+
+'temp_es'
+  'potential temperature error subspace'
+  'nondimensional'
+  'temp_es, scalar, series'
+  'time'
+  'idSvar(isTvar(itemp))'
+  'r3dvar'
+  1.0d0
+
+'salt_es'
+  'salinity error subspace'
+  'nondimensional'
+  'salt_es, scalar, series'
+  'time'
+  'idSvar(isTvar(isalt))'
+  'r3dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Sediment variables.
+!------------------------------------------------------------------------------
+!
+
+'Ssize'
+  'bottom sediment grain diameter size'
+  'meter'
+  'Ssize, scalar, series'
+  ' '
+  'idSsiz'
+  'r2dvar'
+  1.0d0
+
+'Sdens'
+  'bottom sediment grain density'
+  'kilogram meter-3'
+  'Sdens, scalar, series'
+  ' '
+  'idSden'
+  'r2dvar'
+  1.0d0
+
+'mud_'
+  'suspended cohesive sediment'
+  'milligram liter-1'
+  'mud_, scalar, series'
+  'ocean_time'
+  'idTvar(idmud(i))'
+  'r3dvar'
+  1.0d0
+
+'sand_'
+  'suspended noncohesive sediment'
+  'milligram liter-1'
+  'sand_, scalar, series'
+  'ocean_time'
+  'idTvar(isand(i))'
+  'r3dvar'
+  1.0d0
+
+'mudfrac_'
+  'cohesive sediment fraction'
+  'nondimensional'
+  'mudfrac_, scalar, series'
+  'ocean_time'
+  'idfrac'
+  'b3dvar'
+  1.0d0
+
+'sandfrac_'
+  'noncohesive sediment fraction'
+  'nondimensional'
+  'sandfrac_, scalar, series'
+  'ocean_time'
+  'idfrac'
+  'b3dvar'
+  1.0d0
+
+'bed_thick'
+  'sediment layer thickness'
+  'meter'
+  'bed_thick, scalar, series'
+  'ocean_time'
+  'idSbed(ithck)'
+  'b3dvar'
+  1.0d0
+
+'bed_age'
+  'sediment layer age'
+  'day'
+  'bed_thick, scalar, series'
+  'ocean_time'
+  'idSbed(iaged)'
+  'b3dvar'
+  1.0d0
+
+'bed_poros'
+  'sediment layer porosity'
+  'nondimensional'
+  'bed_poros, scalar, series'
+  'ocean_time'
+  'idSbed(iporo)'
+  'b3dvar'
+  1.0d0
+
+'bed_biodiff'
+  'biodiffusivity at bottom of each layer'
+  'meter2 second-1'
+  'bed_biodiff, scalar, series'
+  'ocean_time'
+  'idSbed(idiff)'
+  'b3dvar'
+  1.0d0
+
+'ripple_length'
+  'bottom ripple length'
+  'meter'
+  'ripple_length, scalar, series'
+  'ocean_time'
+  'idBott(irlen)'
+  'r2dvar'
+  1.0d0
+
+'ripple_height'
+  'bottom ripple height'
+  'meter'
+  'ripple_height, scalar, series'
+  'ocean_time'
+  'idBott(irhgt)'
+  'r2dvar'
+  1.0d0
+
+'saltation'
+  'bottom saltation height'
+  'meter'
+  'saltation, scalar, series'
+  'ocean_time'
+  'idBott(ishgt)'
+  'r2dvar'
+  1.0d0
+
+'Zo_Nik'
+  'Nikaradse bottom roughness'
+  'meter'
+  'Zo_Nik, scalar, series'
+  'ocean_time'
+  'idBott(izNik)'
+  'r2dvar'
+  1.0d0
+
+'Zo_bio'
+  'biological bottom roughness'
+  'meter'
+  'Zo_bio, scalar, series'
+  'ocean_time'
+  'idBott(izbio)'
+  'r2dvar'
+  1.0d0
+
+'Zo_bedload'
+  'bed load bottom roughness'
+  'meter'
+  'Zo_bedload, scalar, series'
+  'ocean_time'
+  'idBott(izbld)'
+  'r2dvar'
+  1.0d0
+
+'Zo_bedform'
+  'bed form bottom roughness'
+  'meter'
+  'Zo_bedform, scalar, series'
+  'ocean_time'
+  'idBott(izbfm)'
+  'r2dvar'
+  1.0d0
+
+'Zo_app'
+  'apparent bottom roughness'
+  'meter'
+  'Zo_app, scalar, series'
+  'ocean_time'
+  'idBott(izapp)'
+  'r2dvar'
+  1.0d0
+
+!
+!---------------------------------------------------------------------
+!  Define names of variables associated with Fasham biological module.
+!---------------------------------------------------------------------
+!
+
+'NO3'
+  'nitrate concentration'
+  'millimole nitrogen meter-3'
+  'NO3, scalar, series'
+  'ocean_time'
+  'idTvar(iNO3_)'
+  'r3dvar'
+  1.0d0
+
+'NH4'
+  'ammonium concentration'
+  'millimole nitrogen meter-3'
+  'NH4, scalar, series'
+  'ocean_time'
+  'idTvar(iNH4_)'
+  'r3dvar'
+  1.0d0
+
+'phytoplankton'
+  'phytoplankton concentration'
+  'millimole nitrogen meter-3'
+  'phytoplankton, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyt)'
+  'r3dvar'
+  1.0d0
+
+'zooplankton'
+  'zooplankton concentration'
+  'millimole nitrogen meter-3'
+  'zooplankton, scalar, series'
+  'ocean_time'
+  'idTvar(iZoop)'
+  'r3dvar'
+  1.0d0
+
+'chlorophyll'
+  'chlorophyll concentration'
+  'milligrams chlorophill meter-3'
+  'chlorophyll, scalar, series'
+  'ocean_time'
+  'idTvar(iChlo)'
+  'r3dvar'
+  1.0d0
+
+'LdetritusN'
+  'large fraction nitrogen detritus concentration'
+  'millimole nitrogen meter-3'
+  'Ldetritus, scalar, series'
+  'ocean_time'
+  'idTvar(iLDeN)'
+  'r3dvar'
+  1.0d0
+
+'SdetritusN'
+  'small fraction nitrogen detritus concentration'
+  'millimole nitrogen meter-3'
+  'Sdetritus, scalar, series'
+  'ocean_time'
+  'idTvar(iSDeN)'
+  'r3dvar'
+  1.0d0
+
+!
+!  Boundary variables.
+!
+
+'NO3_east'
+  'nitrate eastern boundary condition'
+  'millimole nitrogen meter-3'
+  'NO3_east, scalar, series'
+  'NO3_time'
+  'idTbry(ieast,iNO3_)'
+  'nulvar'
+  1.0d0
+
+'NO3_west'
+  'nitrate western boundary condition'
+  'millimole nitrogen meter-3'
+  'NO3_west, scalar, series'
+  'NO3_time'
+  'idTbry(iwest,iNO3_)'
+  'nulvar'
+  1.0d0
+
+'NO3_south'
+  'nitrate southern boundary condition'
+  'millimole nitrogen meter-3'
+  'NO3_south, scalar, series'
+  'NO3_time'
+  'idTbry(isouth,iNO3_)'
+  'nulvar'
+  1.0d0
+
+'NO3_north'
+  'nitrate northern boundary condition'
+  'millimole nitrogen meter-3'
+  'NO3_north, scalar, series'
+  'NO3_time'
+  'idTbry(inorth,iNO3_)'
+  'nulvar'
+  1.0d0
+
+'NH4_east'
+  'ammonium eastern boundary condition'
+  'millimole nitrogen meter-3'
+  'NH4_east, scalar, series'
+  'NH4_time'
+  'idTbry(ieast,iNH4_)'
+  'nulvar'
+  1.0d0
+
+'NH4_west'
+  'ammonium western boundary condition'
+  'millimole nitrogen meter-3'
+  'ONES_west, scalar, series'
+  'NH4_time'
+  'idTbry(iwest,iNH4_)'
+  'nulvar'
+  1.0d0
+
+'NH4_south'
+  'ammonium southern boundary condition'
+  'millimole nitrogen meter-3'
+  'NH4_south, scalar, series'
+  'NH4_time'
+  'idTbry(isouth,iNH4_)'
+  'nulvar'
+  1.0d0
+
+'NH4_north'
+  'ammonium northern boundary condition'
+  'millimole nitrogen meter-3'
+  'NH4_north, scalar, series'
+  'NH4_time'
+  'idTbry(inorth,iNH4_)'
+  'nulvar'
+  1.0d0
+
+'phyt_east'
+  'phytoplankton eastern boundary condition'
+  'millimole nitrogen meter-3'
+  'phyt_east, scalar, series'
+  'phyt_time'
+  'idTbry(ieast,iPhyt)'
+  'nulvar'
+  1.0d0
+
+'phyt_west'
+  'phytoplankton western boundary condition'
+  'millimole nitrogen meter-3'
+  'phyt_west, scalar, series'
+  'phyt_time'
+  'idTbry(iwest,iPhyt)'
+  'nulvar'
+  1.0d0
+
+'phyt_south'
+  'phytoplankton southern boundary condition'
+  'millimole nitrogen meter-3'
+  'phyt_south, scalar, series'
+  'phyt_time'
+  'idTbry(isouth,iPhyt)'
+  'nulvar'
+  1.0d0
+
+'phyt_north'
+  'phytoplankton northern boundary condition'
+  'millimole nitrogen meter-3'
+  'phyt_north, scalar, series'
+  'phyt_time'
+  'idTbry(inorth,iPhyt)'
+  'nulvar'
+  1.0d0
+
+'zoop_east'
+  'zooplankton eastern boundary condition'
+  'millimole nitrogen meter-3'
+  'zoop_east, scalar, series'
+  'zoop_time'
+  'idTbry(ieast,iZoop)'
+  'nulvar'
+  1.0d0
+
+'zoop_west'
+  'zooplankton western boundary condition'
+  'millimole nitrogen meter-3'
+  'zoop_west, scalar, series'
+  'zoop_time'
+  'idTbry(iwest,iZoop)'
+  'nulvar'
+  1.0d0
+
+'zoop_south'
+  'zooplankton southern boundary condition'
+  'millimole nitrogen meter-3'
+  'zoop_south, scalar, series'
+  'zoop_time'
+  'idTbry(isouth,iZoop)'
+  'nulvar'
+  1.0d0
+
+'zoop_north'
+  'zooplankton northern boundary condition'
+  'millimole nitrogen meter-3'
+  'zoop_north, scalar, series'
+  'zoop_time'
+  'idTbry(inorth,iZoop)'
+  'nulvar'
+  1.0d0
+
+'chlo_east'
+  'chlorophyll eastern boundary condition'
+  'milligram meter-3'
+  'chlo_east, scalar, series'
+  'chlo_time'
+  'idTbry(ieast,iChlo)'
+  'nulvar'
+  1.0d0
+
+'chlo_west'
+  'chlorophyll western boundary condition'
+  'milligram meter-3'
+  'chlo_west, scalar, series'
+  'chlo_time'
+  'idTbry(iwest,iChlo)'
+  'nulvar'
+  1.0d0
+
+'chlo_south'
+  'chlorophyll southern boundary condition'
+  'milligram meter-3'
+  'chlo_south, scalar, series'
+  'ones_time'
+  'idTbry(isouth,iChlo)'
+  'nulvar'
+  1.0d0
+
+'chlo_north'
+  'chlorophyll northern boundary condition'
+  'milligram meter-3'
+  'chlo_north, scalar, series'
+  'chlo_time'
+  'idTbry(inorth,iChlo)'
+  'nulvar'
+  1.0d0
+
+'LDeN_east'
+  'large fraction nitrogen detritus eastern boundary condition'
+  'millimole nitrogen meter-3'
+  'LDeN_east, scalar, series'
+  'LDeN_time'
+  'idTbry(ieast,iLDeN)'
+  'nulvar'
+  1.0d0
+
+'LDeN_west'
+  'large fraction nitrogen detritus western boundary condition'
+  'millimole nitrogen meter-3'
+  'LDeN_west, scalar, series'
+  'LDeN_time'
+  'idTbry(iwest,iLDeN)'
+  'nulvar'
+  1.0d0
+
+'LDeN_south'
+  'large fraction nitrogen detritus southern boundary condition'
+  'millimole nitrogen meter-3'
+  'LDeN_south, scalar, series'
+  'LDeN_time'
+  'idTbry(isouth,iLDeN)'
+  'nulvar'
+  1.0d0
+
+'LDeN_north'
+  'large fraction nitrogen detritus northern boundary condition'
+  'millimole nitrogen meter-3'
+  'LDeN_north, scalar, series'
+  'LDeN_time'
+  'idTbry(inorth,iLDeN)'
+  'nulvar'
+  1.0d0
+
+'SDeN_east'
+  'small fraction nitrogen detritus eastern boundary condition'
+  'millimole nitrogen meter-3'
+  'SDeN_east, scalar, series'
+  'SDeN_time'
+  'idTbry(ieast,iSDeN)'
+  'nulvar'
+  1.0d0
+
+'SDeN_west'
+  'small fraction nitrogen detritus western boundary condition'
+  'millimole nitrogen meter-3'
+  'SDeN_west, scalar, series'
+  'SDeN_time'
+  'idTbry(iwest,iSDeN)'
+  'nulvar'
+  1.0d0
+
+'SDeN_north'
+  'small fraction nitrogen detritus northern boundary condition'
+  'millimole nitrogen meter-3'
+  'SDeN_north, scalar, series'
+  'SDeN_time'
+  'idTbry(inorth,iSDeN)'
+  'nulvar'
+  1.0d0
+
+'SDeN_south'
+  'small fraction nitrogen detritus southern boundary condition'
+  'millimole nitrogen meter-3'
+  'SDeN_south, scalar, series'
+  'SDeN_time'
+  'idTbry(isouth,iSDeN)'
+  'nulvar'
+  1.0d0
+
+!
+!-----------------------------------------------------------------------
+!  Define names of variables associated with EcoSim bio-optical module.
+!-----------------------------------------------------------------------
+!
+
+'NO3'
+  'Nitrate concentration'
+  'millimole Nitrate concentration meter-3'
+  'Nitrate concentration, scalar, series'
+  'ocean_time'
+  'idTvar(iNO3_)'
+  'r3dvar'
+  1.0d0
+
+'NH4'
+  'Ammonium concentration'
+  'millimole Ammonium concentration meter-3'
+  'Ammonium concentration, scalar, series'
+  'ocean_time'
+  'idTvar(iNH4_)'
+  'r3dvar'
+  1.0d0
+
+'PO4'
+  'Phosphate concentration'
+  'millimole Phosphate concentration meter-3'
+  'Phosphate concentration, scalar, series'
+  'ocean_time'
+  'idTvar(iPO4_)'
+  'r3dvar'
+  1.0d0
+
+'FeO'
+  'Iron concentration'
+  'millimole Iron concentration meter-3'
+  'Iron concentration, scalar, series'
+  'ocean_time'
+  'idTvar(iFeO_)'
+  'r3dvar'
+  1.0d0
+
+'SiO'
+  'Silica concentration'
+  'millimole Silica concentration meter-3'
+  'Silica concentration, scalar, series'
+  'ocean_time'
+  'idTvar(iSiO_)'
+  'r3dvar'
+  1.0d0
+
+'DIC'
+  'DIC concentration'
+  'millimole DIC concentration meter-3'
+  'DIC concentration, scalar, series'
+  'ocean_time'
+  'idTvar(iDIC_)'
+  'r3dvar'
+  1.0d0
+
+'BacC1'
+  'Bacteria(1) Carbon Group'
+  'millimole Carbon meter-3'
+  'Bacteria(1) Carbon Group, scalar, series'
+  'ocean_time'
+  'idTvar(iBacC(1))'
+  'r3dvar'
+  1.0d0
+
+'BacF1'
+  'Bacteria(1) Iron Group'
+  'millimole Iron meter-3'
+  'Bacteria(1) Iron Group, scalar, series'
+  'ocean_time'
+  'idTvar(iBacF(1))'
+  'r3dvar'
+  1.0d0
+
+'BacN1'
+  'Bacteria(1) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'Bacteria(1) Nitrogen Group, scalar, series'
+  'ocean_time'
+  'idTvar(iBacN(1))'
+  'r3dvar'
+  1.0d0
+
+'BacP1'
+  'Bacteria(1) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'Bacteria(1) Phosphorus Group, scalar, series'
+  'ocean_time'
+  'idTvar(iBacP(1))'
+  'r3dvar'
+  1.0d0
+
+'CDMC1'
+  'Color Degradational Matter(1)'
+  'millimole CDMC meter-3'
+  'Color Degradational Matter(1), scalar, series'
+  'ocean_time'
+  'idTvar(iCDMC(1))'
+  'r3dvar'
+  1.0d0
+
+'CDMC2'
+  'Color Degradational Matter(2)'
+  'millimole CDMC meter-3'
+  'Color Degradational Matter(2), scalar, series'
+  'ocean_time'
+  'idTvar(iCDMC(2))'
+  'r3dvar'
+  1.0d0
+
+'DOMC1'
+  'Dissolved Organic Matter(1) Carbon Group'
+  'millimole Carbon meter-3'
+  'DOMC1, scalar, series'
+  'ocean_time'
+  'idTvar(iDOMC(1))'
+  'r3dvar'
+  1.0d0
+
+'DOMC2'
+  'Dissolved Organic Matter(2) Carbon Group'
+  'millimole Carbon meter-3'
+  'DOMC2, scalar, series'
+  'ocean_time'
+  'idTvar(iDOMC(2))'
+  'r3dvar'
+  1.0d0
+
+'DOMN1'
+  'Dissolved Organic Matter(1) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'DOMN1, scalar, series'
+  'ocean_time'
+  'idTvar(iDOMN(1))'
+  'r3dvar'
+  1.0d0
+
+'DOMN2'
+  'Dissolved Organic Matter(2) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'DOMN2, scalar, series'
+  'ocean_time'
+  'idTvar(iDOMN(2))'
+  'r3dvar'
+  1.0d0
+
+'DOMP1'
+  'Dissolved Organic Matter(1) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'DOMP1, scalar, series'
+  'ocean_time'
+  'idTvar(iDOMP(1))'
+  'r3dvar'
+  1.0d0
+
+'DOMP2'
+  'Dissolved Organic Matter(2) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'DOMP2, scalar, series'
+  'ocean_time'
+  'idTvar(iDOMP(2))'
+  'r3dvar'
+  1.0d0
+
+'FecC1'
+  'Fecal Matter(1) Carbon Group'
+  'millimole Carbon meter-3'
+  'FecC1, scalar, series'
+  'ocean_time'
+  'idTvar(iFecC(1))'
+  'r3dvar'
+  1.0d0
+
+'FecC2'
+  'Fecal Matter(2) Carbon Group'
+  'millimole Carbon meter-3'
+  'FecC2, scalar, series'
+  'ocean_time'
+  'idTvar(iFecC(2))'
+  'r3dvar'
+  1.0d0
+
+'FecF1'
+  'Fecal Matter(1) Iron Group'
+  'millimole Iron meter-3'
+  'FecF1, scalar, series'
+  'ocean_time'
+  'idTvar(iFecF(1))'
+  'r3dvar'
+  1.0d0
+
+'FecF2'
+  'Fecal Matter(2) Iron Group'
+  'millimole Iron meter-3'
+  'FecF2, scalar, series'
+  'ocean_time'
+  'idTvar(iFecF(2))'
+  'r3dvar'
+  1.0d0
+
+'FecN1'
+  'Fecal Matter(1) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'FecN1, scalar, series'
+  'ocean_time'
+  'idTvar(iFecN(1))'
+  'r3dvar'
+  1.0d0
+
+'FecN2'
+  'Fecal Matter(2) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'FecN2, scalar, series'
+  'ocean_time'
+  'idTvar(iFecN(2))'
+  'r3dvar'
+  1.0d0
+
+'FecP1'
+  'Fecal Matter(1) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'FecP1, scalar, series'
+  'ocean_time'
+  'idTvar(iFecP(1))'
+  'r3dvar'
+  1.0d0
+
+'FecP2'
+  'Fecal Matter(2) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'FecP2, scalar, series'
+  'ocean_time'
+  'idTvar(iFecP(2))'
+  'r3dvar'
+  1.0d0
+
+'FecS1'
+  'Fecal Matter(1) Silica Group'
+  'millimole Silica meter-3'
+  'FecS1, scalar, series'
+  'ocean_time'
+  'idTvar(iFecS(1))'
+  'r3dvar'
+  1.0d0
+
+'FecS2'
+  'Fecal Matter(2) Silica Group'
+  'millimole Silica meter-3'
+  'FecS2, scalar, series'
+  'ocean_time'
+  'idTvar(iFecS(2))'
+  'r3dvar'
+  1.0d0
+
+'PhyC1'
+  'Phytoplankton(1) Carbon Group'
+  'millimole Carbon meter-3'
+  'PhyC1, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyC(1))'
+  'r3dvar'
+  1.0d0
+
+'PhyC2'
+  'Phytoplankton(2) Carbon Group'
+  'millimole Carbon meter-3'
+  'PhyC2, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyC(2))'
+  'r3dvar'
+  1.0d0
+
+'PhyC3'
+  'Phytoplankton(3) Carbon Group'
+  'millimole Carbon meter-3'
+  'PhyC3, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyC(3))'
+  'r3dvar'
+  1.0d0
+
+'PhyC4'
+  'Phytoplankton(4) Carbon Group'
+  'millimole Carbon meter-3'
+  'PhyC4, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyC(4))'
+  'r3dvar'
+  1.0d0
+
+'PhyF1'
+  'Phytoplankton(1) Iron Group'
+  'millimole Iron meter-3'
+  'PhyF1, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyF(1))'
+  'r3dvar'
+  1.0d0
+
+'PhyF2'
+  'Phytoplankton(2) Iron Group'
+  'millimole Iron meter-3'
+  'PhyF2, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyF(2))'
+  'r3dvar'
+  1.0d0
+
+'PhyF3'
+  'Phytoplankton(3) Iron Group'
+  'millimole Iron meter-3'
+  'PhyF3, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyF(3))'
+  'r3dvar'
+  1.0d0
+
+'PhyF4'
+  'Phytoplankton(4) Iron Group'
+  'millimole Iron meter-3'
+  'PhyF4, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyF(4))'
+  'r3dvar'
+  1.0d0
+
+'PhyN1'
+  'Phytoplankton(1) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'PhyN1, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyN(1))'
+  'r3dvar'
+  1.0d0
+
+'PhyN2'
+  'Phytoplankton(2) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'PhyN2, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyN(2))'
+  'r3dvar'
+  1.0d0
+
+'PhyN3'
+  'Phytoplankton(3) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'PhyN3, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyN(3))'
+  'r3dvar'
+  1.0d0
+
+'PhyN4'
+  'Phytoplankton(4) Nitrogen Group'
+  'millimole Nitrogen meter-3'
+  'PhyN4, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyN(4))'
+  'r3dvar'
+  1.0d0
+
+'PhyP1'
+  'Phytoplankton(1) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'PhyP1, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyP(1))'
+  'r3dvar'
+  1.0d0
+
+'PhyP2'
+  'Phytoplankton(2) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'PhyP2, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyP(2))'
+  'r3dvar'
+  1.0d0
+
+'PhyP3'
+  'Phytoplankton(3) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'PhyP3, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyP(3))'
+  'r3dvar'
+  1.0d0
+
+'PhyP4'
+  'Phytoplankton(4) Phosphorus Group'
+  'millimole Phosphorus meter-3'
+  'PhyP4, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyP(4))'
+  'r3dvar'
+  1.0d0
+
+'PhyS1'
+  'Phytoplankton(1) Silica Group'
+  'millimole Silica meter-3'
+  'PhyS1, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyS(1))'
+  'r3dvar'
+  1.0d0
+
+'PhyS2'
+  'Phytoplankton(2) Silica Group'
+  'millimole Silica meter-3'
+  'PhyS2, scalar, series'
+  'ocean_time'
+  'idTvar(iPhyS(2))'
+  'r3dvar'
+  1.0d0
+
+'Pigs11'
+  'Phytoplankton(1) Pigment(1)'
+  'milligrams meter-3'
+  'Pigs11, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(1,1))'
+  'r3dvar'
+  1.0d0
+
+'Pigs21'
+  'Phytoplankton(2) Pigment(1)'
+  'milligrams meter-3'
+  'Pigs21, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(2,1))'
+  'r3dvar'
+  1.0d0
+
+'Pigs31'
+  'Phytoplankton(3) Pigment(1)'
+  'milligrams meter-3'
+  'Pigs31, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(3,1))'
+  'r3dvar'
+  1.0d0
+
+'Pigs41'
+  'Phytoplankton(4) Pigment(1)'
+  'milligrams meter-3'
+  'Pigs41, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(4,1))'
+  'r3dvar'
+  1.0d0
+
+'Pigs13'
+  'Phytoplankton(1) Pigment(3)'
+  'milligrams meter-3'
+  'Pigs13, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(1,3))'
+  'r3dvar'
+  1.0d0
+
+'Pigs23'
+  'Phytoplankton(2) Pigment(3)'
+  'milligrams meter-3'
+  'Pigs23, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(2,3))'
+  'r3dvar'
+  1.0d0
+
+'Pigs33'
+  'Phytoplankton(3) Pigment(3)'
+  'milligrams meter-3'
+  'Pigs33, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(3,3))'
+  'r3dvar'
+  1.0d0
+
+'Pigs14'
+  'Phytoplankton(1) Pigment(4)'
+  'milligrams meter-3'
+  'Pigs14, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(1,4))'
+  'r3dvar'
+  1.0d0
+
+'Pigs24'
+  'Phytoplankton(2) Pigment(4)'
+  'milligrams meter-3'
+  'Pigs24, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(2,4))'
+  'r3dvar'
+  1.0d0
+
+'Pigs34'
+  'Phytoplankton(3) Pigment(4)'
+  'milligrams meter-3'
+  'Pigs34, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(3,4))'
+  'r3dvar'
+  1.0d0
+
+'Pigs15'
+  'Phytoplankton(1) Pigment(5)'
+  'milligrams meter-3'
+  'Pigs15, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(1,5))'
+  'r3dvar'
+  1.0d0
+
+'Pigs25'
+  'Phytoplankton(2) Pigment(5)'
+  'milligrams meter-3'
+  'Pigs25, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(2,5))'
+  'r3dvar'
+  1.0d0
+
+'Pigs35'
+  'Phytoplankton(3) Pigment(5)'
+  'milligrams meter-3'
+  'Pigs35, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(3,5))'
+  'r3dvar'
+  1.0d0
+
+'Pigs45'
+  'Phytoplankton(4) Pigment(5)'
+  'milligrams meter-3'
+  'Pigs45, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(4,5))'
+  'r3dvar'
+  1.0d0
+
+'Pigs47'
+  'Phytoplankton(4) Pigment(7)'
+  'milligrams meter-3'
+  'Pigs47, scalar, series'
+  'ocean_time'
+  'idTvar(iPigs(4,7))'
+  'r3dvar'
+  1.0d0

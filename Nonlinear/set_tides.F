@@ -1,0 +1,532 @@
+#include "cppdefs.h"
+      MODULE clm_tides_mod
+#if defined SSH_TIDES || defined UV_TIDES
+!
+!==================================================== Robert Hetland ===
+!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!================================================== Hernan G. Arango ===
+!                                                                      !
+!  This routine adds tidal elevation (m) and tidal currents (m/s) to   !
+!  sea surface height and 2D momentum climatologies, respectively.     !
+!                                                                      !
+!=======================================================================
+!
+      implicit none
+
+      PRIVATE
+      PUBLIC clm_tides
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE clm_tides (ng, tile)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_boundary
+#ifdef CLIMATOLOGY
+      USE mod_clima
+#endif
+      USE mod_grid
+      USE mod_tides
+      USE mod_stepping
+!
+      integer, intent(in) :: ng, tile
+
+# include "tile.h"
+!
+# ifdef PROFILE
+      CALL wclock_on (ng, 11)
+# endif
+      CALL clm_tides_tile (ng, Istr, Iend, Jstr, Jend,                  &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     NTC(ng),                                     &
+     &                     GRID(ng) % angler,                           &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % vmask,                            &
+# endif
+     &                     TIDES(ng) % Tperiod,                         &
+# ifdef SSH_TIDES
+     &                     TIDES(ng) % SSH_Tamp,                        &
+     &                     TIDES(ng) % SSH_Tphase,                      &
+# endif
+# ifdef UV_TIDES
+     &                     TIDES(ng) % UV_Tangle,                       &
+     &                     TIDES(ng) % UV_Tphase,                       &
+     &                     TIDES(ng) % UV_Tmajor,                       &
+     &                     TIDES(ng) % UV_Tminor,                       &
+# endif
+# ifdef ZCLIMATOLOGY
+     &                     CLIMA(ng) % ssh,                             &
+# endif
+# ifdef M2CLIMATOLOGY
+     &                     CLIMA(ng) % ubarclm,                         &
+     &                     CLIMA(ng) % vbarclm,                         &
+# endif
+     &                     BOUNDARY(ng) % zeta_east,                    &
+     &                     BOUNDARY(ng) % zeta_west,                    &
+     &                     BOUNDARY(ng) % zeta_south,                   &
+     &                     BOUNDARY(ng) % zeta_north,                   &
+     &                     BOUNDARY(ng) % ubar_east,                    &
+     &                     BOUNDARY(ng) % vbar_east,                    &
+     &                     BOUNDARY(ng) % ubar_west,                    &
+     &                     BOUNDARY(ng) % vbar_west,                    &
+     &                     BOUNDARY(ng) % ubar_south,                   &
+     &                     BOUNDARY(ng) % vbar_south,                   &
+     &                     BOUNDARY(ng) % ubar_north,                   &
+     &                     BOUNDARY(ng) % vbar_north)
+# ifdef PROFILE
+      CALL wclock_off (ng, 11)
+# endif
+      RETURN
+      END SUBROUTINE clm_tides
+!
+!***********************************************************************
+      SUBROUTINE clm_tides_tile (ng, Istr, Iend, Jstr, Jend,            &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NTC,                                   &
+     &                           angler,                                &
+# ifdef MASKING
+     &                           rmask, umask, vmask,                   &
+# endif
+     &                           Tperiod,                               &
+# ifdef SSH_TIDES
+     &                           SSH_Tamp, SSH_Tphase,                  &
+# endif
+# ifdef UV_TIDES
+     &                           UV_Tangle, UV_Tphase,                  &
+     &                           UV_Tmajor, UV_Tminor,                  &
+# endif
+# ifdef ZCLIMATOLOGY
+     &                           ssh,                                   &
+# endif
+# ifdef M2CLIMATOLOGY
+     &                           ubarclm, vbarclm,                      &
+# endif
+     &                           zeta_east, zeta_west,                  &
+     &                           zeta_south, zeta_north,                &
+     &                           ubar_east, vbar_east,                  &
+     &                           ubar_west, vbar_west,                  &
+     &                           ubar_south, vbar_south,                &
+     &                           ubar_north, vbar_north)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+
+# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+!
+      USE exchange_2d_mod
+# endif
+!
+!  Imported variables declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: NTC
+
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: angler(LBi:,LBj:)
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: Tperiod(MTC)
+#  ifdef SSH_TIDES
+      real(r8), intent(in) :: SSH_Tamp(LBi:,LBj:,:)
+      real(r8), intent(in) :: SSH_Tphase(LBi:,LBj:,:)
+#  endif
+#  ifdef UV_TIDES
+      real(r8), intent(in) :: UV_Tangle(LBi:,LBj:,:)
+      real(r8), intent(in) :: UV_Tmajor(LBi:,LBj:,:)
+      real(r8), intent(in) :: UV_Tminor(LBi:,LBj:,:)
+      real(r8), intent(in) :: UV_Tphase(LBi:,LBj:,:)
+#  endif
+#  ifdef ZCLIMATOLOGY
+      real(r8), intent(inout) :: ssh(LBi:,LBj:)
+#  endif
+#  ifdef M2CLIMATOLOGY
+      real(r8), intent(inout) :: ubarclm(LBi:,LBj:)
+      real(r8), intent(inout) :: vbarclm(LBi:,LBj:)
+#  endif
+      real(r8), intent(inout) :: zeta_east(LOWER_BOUND_J:)
+      real(r8), intent(inout) :: zeta_west(LOWER_BOUND_J:)
+      real(r8), intent(inout) :: zeta_south(LOWER_BOUND_I:)
+      real(r8), intent(inout) :: zeta_north(LOWER_BOUND_I:)
+      real(r8), intent(inout) :: ubar_east(LOWER_BOUND_J:)
+      real(r8), intent(inout) :: vbar_east(LOWER_BOUND_J:)
+      real(r8), intent(inout) :: ubar_west(LOWER_BOUND_J:)
+      real(r8), intent(inout) :: vbar_west(LOWER_BOUND_J:)
+      real(r8), intent(inout) :: ubar_south(LOWER_BOUND_I:)
+      real(r8), intent(inout) :: vbar_south(LOWER_BOUND_I:)
+      real(r8), intent(inout) :: ubar_north(LOWER_BOUND_I:)
+      real(r8), intent(inout) :: vbar_north(LOWER_BOUND_I:)
+# else
+      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: Tperiod(MTC)
+#  ifdef SSH_TIDES
+      real(r8), intent(in) :: SSH_Tamp(LBi:UBi,LBj:UBj,MTC)
+      real(r8), intent(in) :: SSH_Tphase(LBi:UBi,LBj:UBj,MTC)
+#  endif
+#  ifdef UV_TIDES
+      real(r8), intent(in) :: UV_Tangle(LBi:UBi,LBj:UBj,MTC)
+      real(r8), intent(in) :: UV_Tmajor(LBi:UBi,LBj:UBj,MTC)
+      real(r8), intent(in) :: UV_Tminor(LBi:UBi,LBj:UBj,MTC)
+      real(r8), intent(in) :: UV_Tphase(LBi:UBi,LBj:UBj,MTC)
+#  endif
+#  ifdef ZCLIMATOLOGY
+      real(r8), intent(inout) :: ssh(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef M2CLIMATOLOGY
+      real(r8), intent(inout) :: ubarclm(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: vbarclm(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(inout) :: zeta_east(ETA_DIM)
+      real(r8), intent(inout) :: zeta_west(ETA_DIM)
+      real(r8), intent(inout) :: zeta_south(XI_DIM)
+      real(r8), intent(inout) :: zeta_north(XI_DIM)
+      real(r8), intent(inout) :: ubar_east(ETA_DIM)
+      real(r8), intent(inout) :: vbar_east(ETA_DIM)
+      real(r8), intent(inout) :: ubar_west(ETA_DIM)
+      real(r8), intent(inout) :: vbar_west(ETA_DIM)
+      real(r8), intent(inout) :: ubar_south(XI_DIM)
+      real(r8), intent(inout) :: vbar_south(XI_DIM)
+      real(r8), intent(inout) :: ubar_north(XI_DIM)
+      real(r8), intent(inout) :: vbar_north(XI_DIM)
+# endif
+!
+!  Local variables declarations.
+!
+      logical :: update
+
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+# ifdef DISTRIBUTE
+      integer :: ILB, IUB, JLB, JUB
+# endif
+      integer :: i, itide, j
+
+      real(r8) :: Cangle, Cphase, Sangle, Sphase
+      real(r8) :: angle, phase, omega, ramp
+
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Etide
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Utide
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Uwrk
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vtide
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vwrk
+
+# include "set_bounds.h"
+
+# ifdef DISTRIBUTE
+!
+!  Lower and upper bounds for nontiled boundary arrays.
+!
+      ILB=LOWER_BOUND_I
+      IUB=UPPER_BOUND_I
+      JLB=LOWER_BOUND_J
+      JUB=UPPER_BOUND_J
+# endif
+!
+!  Set time-ramping parameter.
+!
+!!    ramp=1.0_r8
+      ramp=TANH((tdays(ng)-dstart)/1.0_r8)
+
+# ifdef SSH_TIDES
+!
+!-----------------------------------------------------------------------
+!  Add tidal elevation (m) to sea surface height climatology.
+!-----------------------------------------------------------------------
+!
+      Etide(:,:)=0.0_r8
+      DO itide=1,NTC
+        IF (Tperiod(itide).gt.0.0_r8) THEN
+          omega=2.0_r8*pi*time(ng)/Tperiod(itide)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              Etide(i,j)=Etide(i,j)+                                    &
+     &                   ramp*SSH_Tamp(i,j,itide)*                      &
+     &                   COS(omega-SSH_Tphase(i,j,itide))
+#  ifdef MASKING
+              Etide(i,j)=Etide(i,j)*rmask(i,j)
+#  endif
+            END DO
+          END DO
+        END IF
+      END DO
+#  if defined ZCLIMATOLOGY && defined ADD_FSOBC
+!
+!  Add sub-tidal forcing and adjust climatology to include tides.
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          ssh(i,j)=ssh(i,j)+Etide(i,j)
+        END DO
+      END DO
+#   if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, ssh)
+
+#   endif
+#  endif
+!
+!  If appropriate, load tidal forcing into boundary arrays.
+!
+#  if defined WEST_FSOBC || defined WEST_M2OBC
+      update=.false.
+      IF (WESTERN_EDGE) THEN
+        DO j=JstrR,JendR
+#   ifdef ADD_FSOBC
+          zeta_west(j)=zeta_west(j)+                                    &
+     &                 0.5_r8*(Etide(0,j)+Etide(1,j))
+#   else
+          zeta_west(j)=0.5_r8*(Etide(0,j)+Etide(1,j))
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+     &                  zeta_west(JLB))
+#   endif
+#  endif
+#  if defined EAST_FSOBC || defined EAST_M2OBC
+      update=.false.
+      IF (EASTERN_EDGE) THEN
+        DO j=JstrR,JendR
+#   ifdef ADD_FSOBC
+          zeta_east(j)=zeta_east(j)+                                    &
+     &                 0.5_r8*(Etide(Lm(ng),j)+Etide(Lm(ng)+1,j))
+#   else
+          zeta_east(j)=0.5_r8*(Etide(Lm(ng),j)+Etide(Lm(ng)+1,j))
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+     &                  zeta_east(JLB))
+#   endif
+#  endif
+#  if defined SOUTH_FSOBC || defined SOUTH_M2OBC
+      update=.false.
+      IF (SOUTHERN_EDGE) THEN
+        DO i=IstrR,IendR
+#   ifdef ADD_FSOBC
+          zeta_south(i)=zeta_south(i)+                                  &
+     &                  0.5_r8*(Etide(i,0)+Etide(i,1))
+#   else
+          zeta_south(i)=0.5_r8*(Etide(i,0)+Etide(i,1))
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+     &                  zeta_south(ILB))
+#   endif
+#  endif
+#  if defined NORTH_FSOBC || defined NORTH_M2OBC
+      update=.false.
+      IF (NORTHERN_EDGE) THEN
+        DO i=IstrR,IendR
+#   ifdef ADD_FSOBC
+          zeta_north(i)=zeta_north(i)+                                  &
+     &                  0.5_r8*(Etide(i,Mm(ng))+Etide(i,Mm(ng)+1))
+#   else
+          zeta_north(i)=0.5_r8*(Etide(i,Mm(ng))+Etide(i,Mm(ng)+1))
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+     &                  zeta_north(ILB))
+#   endif
+#  endif
+# endif
+# ifdef UV_TIDES
+!
+!-----------------------------------------------------------------------
+!  Add tidal currents (m/s) to 2D momentum climatologies.
+!-----------------------------------------------------------------------
+!
+      Utide(:,:)=0.0_r8
+      Vtide(:,:)=0.0_r8
+      DO itide=1,NTC
+        IF (Tperiod(itide).gt.0.0_r8) THEN
+          omega=2.0_r8*pi*time(ng)/Tperiod(itide)
+          DO j=MIN(JstrR,Jstr-1),JendR
+            DO i=MIN(IstrR,Istr-1),IendR
+              angle=UV_Tangle(i,j,itide)-angler(i,j)
+              Cangle=COS(angle)
+              Sangle=SIN(angle)
+              phase=omega-UV_Tphase(i,j,itide)
+              Cphase=COS(phase)
+              Sphase=SIN(phase)
+              Uwrk(i,j)=UV_Tmajor(i,j,itide)*Cangle*Cphase-             &
+     &                  UV_Tminor(i,j,itide)*Sangle*Sphase
+              Vwrk(i,j)=UV_Tmajor(i,j,itide)*Sangle*Cphase+             &
+     &                  UV_Tminor(i,j,itide)*Cangle*Sphase
+            END DO
+          END DO
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              Utide(i,j)=Utide(i,j)+                                    &
+     &                   ramp*0.5_r8*(Uwrk(i-1,j)+Uwrk(i,j))
+# ifdef MASKING
+              Utide(i,j)=Utide(i,j)*umask(i,j)
+# endif
+            END DO
+          END DO
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              Vtide(i,j)=(Vtide(i,j)+                                   &
+     &                    ramp*0.5_r8*(Vwrk(i,j-1)+Vwrk(i,j)))
+# ifdef MASKING
+              Vtide(i,j)=Vtide(i,j)*vmask(i,j)
+# endif
+            END DO
+          END DO
+        END IF
+      END DO
+# if defined M2CLIMATOLOGY && defined ADD_M2OBC
+!
+!  Add sub-tidal forcing and adjust climatology to include tides.
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          ubarclm(i,j)=ubarclm(i,j)+Utide(i,j)
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          vbarclm(i,j)=vbarclm(i,j)+Vtide(i,j)
+        END DO
+      END DO
+#  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, ubarclm)
+      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, vbarclm)
+#  endif
+# endif
+!
+!  If appropriate, load tidal forcing into boundary arrays.
+!
+#  ifdef WEST_M2OBC
+      update=.false.
+      IF (WESTERN_EDGE) THEN
+        DO j=JstrR,JendR
+#   ifdef ADD_M2OBC
+          ubar_west(j)=ubar_west(j)+Utide(1,j)
+#   else
+          ubar_west(j)=Utide(1,j)
+#   endif
+        END DO
+        DO j=Jstr,JendR
+#   ifdef ADD_M2OBC
+          vbar_west(j)=vbar_west(j)+Vtide(0,j)
+#   else
+          vbar_west(j)=Vtide(0,j)
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+     &                  ubar_west(JLB))
+      CALL mp_boundary (ng, Jstr,  JendR, JLB, JUB, 1, 1, update,       &
+     &                  vbar_west(JLB))
+#   endif
+#  endif
+#  ifdef EAST_M2OBC
+      update=.false.
+      IF (EASTERN_EDGE) THEN
+        DO j=JstrR,JendR
+#   ifdef ADD_M2OBC
+          ubar_east(j)=ubar_east(j)+Utide(Lm(ng)+1,j)
+#   else
+          ubar_east(j)=Utide(Lm(ng)+1,j)
+#   endif
+        END DO
+        DO j=Jstr,JendR
+#   ifdef ADD_M2OBC
+          vbar_east(j)=vbar_east(j)+Vtide(Lm(ng)+1,j)
+#   else
+          vbar_east(j)=Vtide(Lm(ng)+1,j)
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+     &                  ubar_east(JLB))
+      CALL mp_boundary (ng, Jstr,  JendR, JLB, JUB, 1, 1, update,       &
+     &                  vbar_east(JLB))
+#   endif
+#  endif
+#  ifdef SOUTH_M2OBC
+      update=.false.
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,IendR
+#   ifdef ADD_M2OBC
+          ubar_south(i)=ubar_south(i)+Utide(i,0)
+#   else
+          ubar_south(i)=Utide(i,0)
+#   endif
+        END DO
+        DO i=IstrR,IendR
+#   ifdef ADD_M2OBC
+          vbar_south(i)=vbar_south(i)+Vtide(i,1)
+#   else
+          vbar_south(i)=Vtide(i,1)
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, Istr,  IendR, ILB, IUB, 1, 1, update,       &
+     &                  ubar_south(ILB))
+      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+     &                  vbar_south(ILB))
+#   endif
+#  endif
+#  ifdef NORTH_M2OBC
+      update=.false.
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,IendR
+#   ifdef ADD_M2OBC
+          ubar_north(i)=ubar_north(i)+Utide(i,Mm(ng)+1)
+#   else
+          ubar_north(i)=Utide(i,Mm(ng)+1)
+#   endif
+        END DO
+        DO i=IstrR,IendR
+#   ifdef ADD_M2OBC
+          vbar_north(i)=vbar_north(i)+Vtide(i,Mm(ng)+1)
+#   else
+          vbar_north(i)=Vtide(i,Mm(ng)+1)
+#   endif
+        END DO
+        update=.true.
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_boundary (ng, Istr,  IendR, ILB, IUB, 1, 1, update,       &
+     &                  ubar_north(ILB))
+      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+     &                  vbar_north(ILB))
+#   endif
+#  endif
+# endif
+      RETURN
+      END SUBROUTINE clm_tides_tile
+#endif
+      END MODULE clm_tides_mod
