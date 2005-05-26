@@ -2,7 +2,7 @@
 !  ROMS/TOMS Cohesive and Non-cohesive Sediment Model Parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
+!  Copyright (c) 2005 ROMS/TOMS Group, version 2.2                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -95,6 +95,8 @@
 Hout(idmud)  == T                               ! suspended concentration
 Hout(iMfrac) == T                               ! bed layer fraction
 Hout(iMmass) == T                               ! bed layer mass
+Hout(iMUbld) == T                               ! bed load at U-points
+Hout(iMVbed) == T                               ! bed load at V-points
 
 !------------------------------------------------------------------------------
 ! Non-cohesive Sediment Parameters, [1:NNS,1:Ngrids] values expected.
@@ -149,6 +151,8 @@ SAND_AKT_BAK == 5.0d-6                          ! m2/s
 Hout(idsand) == T                               ! suspended concentration
 Hout(iSfrac) == T                               ! bed layer fraction
 Hout(iSmass) == T                               ! bed layer mass
+Hout(iSUbld) == T                               ! bed load at U-points
+Hout(iSVbed) == T                               ! bed load at V-points
 
 !------------------------------------------------------------------------------
 ! Bed layer and bottom sediment parameters, [1:Ngrids] values expected.
@@ -226,6 +230,14 @@ Hout(iSmass) == T                               ! bed layer mass
 !                  mass of each bed layer into HISTORY NetCDF file,
 !                  HOUT(idsed(i)) with i=1,NCS.
 !
+!  Hout(iMUbld)  Logical switches to activate writing of cohesive sediment
+!                  bed load at U-points into HISTORY NetCDF file,
+!                  HOUT(idsed(i)) with i=1,NCS.
+!
+!  Hout(iMVbld)  Logical switches to activate writing of cohesive sediment
+!                  bed load at V-points into HISTORY NetCDF file,
+!                  HOUT(idsed(i)) with i=1,NCS.
+!
 !------------------------------------------------------------------------------
 ! Suspended Non-cohesive Sediment KEYWORDS, [1:NNS,1:Ngrids] values expected.
 !------------------------------------------------------------------------------
@@ -273,6 +285,14 @@ Hout(iSmass) == T                               ! bed layer mass
 !
 !  Hout(iSmass)  Logical switches to activate writing of non-cohesive sediment
 !                  mass of each bed layer into HISTORY NetCDF file,
+!                  HOUT(idsed(i)) with i=NCS+1,NST.
+!
+!  Hout(iSUbld)  Logical switches to activate writing of non-cohesive sediment
+!                  bed load at U-points into HISTORY NetCDF file,
+!                  HOUT(idsed(i)) with i=NCS+1,NST.
+!
+!  Hout(iSVbld)  Logical switches to activate writing of non-cohesive sediment
+!                  bed load at V-points into HISTORY NetCDF file,
 !                  HOUT(idsed(i)) with i=NCS+1,NST.
 !
 !------------------------------------------------------------------------------

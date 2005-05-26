@@ -3,7 +3,7 @@
 #if defined SEDIMENT || defined BBL_MODEL
 !
 !================================================== John C. Warner   ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Parameters for sediment model:                                      !
@@ -23,6 +23,7 @@
 !  BED properties indices:                                             !
 !                                                                      !
 !   MBEDP    Number of bed properties (array dimension).               !
+!   idBmas   Sedimen mass index.                                       !
 !   idSbed   IO indices for bed properties variables.                  !
 !   idfrac   sediment class fraction (non-dimensional).                !
 !   ithck    Sediment layer thickness (m).                             !
@@ -73,8 +74,8 @@
         integer, parameter :: ibwav = 7    ! wave excursion amplitude
         integer, parameter :: izdef = 8    ! default bottom roughness
         integer, parameter :: izapp = 9    ! apparent bottom roughness
-        integer, parameter :: izNik = 10    ! Nikuradse bottom roughness
-        integer, parameter :: izbio = 11    ! biological bottom roughness
+        integer, parameter :: izNik = 10   ! Nikuradse bottom roughness
+        integer, parameter :: izbio = 11   ! biological bottom roughness
         integer, parameter :: izbfm = 12   ! bed form bottom roughness
         integer, parameter :: izbld = 13   ! bed load bottom roughness
         integer, parameter :: izwbl = 14   ! wave bottom roughness
@@ -85,6 +86,8 @@
         integer  :: idBott(MBOTP)          ! bottom properties IDs
         integer  :: idfrac(NST)            ! class fraction indices
         integer  :: idSbed(MBEDP)          ! bed properties IDs
+        integer  :: idUbld(NST)            ! bed load u-points
+        integer  :: idVbld(NST)            ! bed load v-points
 
         real(r8) :: Csed(NST,Ngrids)       ! initial concentration
         real(r8) :: Erate(NST,Ngrids)      ! erosion rate

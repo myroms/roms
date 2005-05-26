@@ -2,7 +2,7 @@
       FUNCTION def_info (ng,ncid,ncname,DimIDs)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine defines information variables in requested NetCDF      !
@@ -66,7 +66,7 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 20
+      integer, parameter :: Natt = 23
 
       integer :: brydim, i, j, srdim, stadim, status, swdim
       integer :: trcdim, usrdim, varid
@@ -82,7 +82,7 @@
 
       integer :: def_info, def_var
 
-      real(r8) :: Aval(4)
+      real(r8) :: Aval(5)
 
       character (len=11) :: frcatt
       character (len=50) :: tiling
@@ -129,7 +129,7 @@
           Vinfo(i)(j:j)=' '
         END DO
       END DO
-      DO i=1,4
+      DO i=1,5
         Aval(i)=0.0_r8
       END DO
 !
@@ -140,9 +140,10 @@
 !  Define history global attribute.
 !
       IF (LEN_TRIM(date_str).gt.0) THEN
-        history='ROMS/TOMS, Version '//version//', '//trim(date_str)
+        WRITE (history,'(a,1x,a,", ",a)') 'ROMS/TOMS, Version',         &
+     &                                    TRIM( version), TRIM(date_str)
       ELSE
-        history='ROMS/TOMS, Version '//version
+        WRITE (history,'(a,1x,a)') 'ROMS/TOMS, Version', TRIM(version)
       END IF
 !
 !  Define tile decomposition global attribute.
@@ -152,20 +153,27 @@
 !
 !  Define file type global attribute.
 !
-      IF (ncid.eq.ncavgid(ng)) THEN
+      IF (ncid.eq.ncAVGid(ng)) THEN
         type='ROMS/TOMS averages file'
-      ELSE IF (ncid.eq.ncdiaid(ng)) THEN
+      ELSE IF (ncid.eq.ncDIAid(ng)) THEN
         type='ROMS/TOMS diagnostics file'
-      ELSE IF (ncid.eq.nchisid(ng)) THEN
-        type='ROMS/TOMS hystory file'
-      ELSE IF (ncid.eq.ncrstid(ng)) THEN
+      ELSE IF (ncid.eq.ncHISid(ng)) THEN
+        type='ROMS/TOMS history file'
+      ELSE IF (ncid.eq.ncRSTid(ng)) THEN
         type='ROMS/TOMS restart file'
-      ELSE IF (ncid.eq.ncstaid(ng)) THEN
+      ELSE IF (ncid.eq.ncSTAid(ng)) THEN
         type='ROMS/TOMS station file'
-      ELSE IF (ncid.eq.ncfltid(ng)) THEN
+      ELSE IF (ncid.eq.ncFLTid(ng)) THEN
         type='ROMS/TOMS floats file'
       END IF
       status=nf_put_att_text(ncid,nf_global,'type',LEN_TRIM(type),type)
+!
+!  Define file climate and forecast metadata convention global
+!  attribute.
+!
+      type='CF-1.0'
+      status=nf_put_att_text(ncid,nf_global,'Conventions',              &
+     &                       LEN_TRIM(type),type)
 !
 !  Define other global attributes to NetCDF file.
 !
@@ -174,64 +182,72 @@
       status=nf_put_att_text(ncid,nf_global,'var_info',                 &
      &                       LEN_TRIM(varname),varname)
       status=nf_put_att_text(ncid,nf_global,'rst_file',                 &
-     &                       LEN_TRIM(rstname(ng)),rstname(ng))
+     &                       LEN_TRIM(RSTname(ng)),RSTname(ng))
       IF (LdefHIS(ng)) THEN
-        IF (ndefhis(ng).gt.0) THEN
+        IF (ndefHIS(ng).gt.0) THEN
           status=nf_put_att_text(ncid,nf_global,'his_base',             &
-     &                           LEN_TRIM(hisbase(ng))-3,hisbase(ng))
+     &                           LEN_TRIM(HISbase(ng))-3,HISbase(ng))
         ELSE
           status=nf_put_att_text(ncid,nf_global,'his_file',             &
-     &                           LEN_TRIM(hisname(ng)),hisname(ng))
+     &                           LEN_TRIM(HISname(ng)),HISname(ng))
         END IF
       END IF
 #ifdef AVERAGES
-      IF (ndefavg(ng).gt.0) THEN
+      IF (ndefAVG(ng).gt.0) THEN
         status=nf_put_att_text(ncid,nf_global,'avg_base',               &
-     &                         LEN_TRIM(avgbase(ng))-3,avgbase(ng))
+     &                         LEN_TRIM(AVGbase(ng))-3,AVGbase(ng))
       ELSE
         status=nf_put_att_text(ncid,nf_global,'avg_file',               &
-     &                         LEN_TRIM(avgname(ng)),avgname(ng))
+     &                         LEN_TRIM(AVGname(ng)),AVGname(ng))
       END IF
 #endif
 #ifdef DIAGNOSTICS
-      IF (ndefdia(ng).gt.0) THEN
+      IF (ndefDIA(ng).gt.0) THEN
         status=nf_put_att_text(ncid,nf_global,'dia_base',               &
-     &                         LEN_TRIM(diabase(ng))-3,diabase(ng))
+     &                         LEN_TRIM(DIAbase(ng))-3,DIAbase(ng))
       ELSE
         status=nf_put_att_text(ncid,nf_global,'dia_file',               &
-     &                         LEN_TRIM(dianame(ng)),dianame(ng))
+     &                         LEN_TRIM(DIAname(ng)),DIAname(ng))
       END IF
 #endif
 #ifdef STATIONS
       status=nf_put_att_text(ncid,nf_global,'sta_file',                 &
-     &                       LEN_TRIM(staname(ng)),staname(ng))
+     &                       LEN_TRIM(STAname(ng)),STAname(ng))
 #endif
 #ifdef FLOATS
       status=nf_put_att_text(ncid,nf_global,'flt_file',                 &
-     &                       LEN_TRIM(fltname(ng)),fltname(ng))
+     &                       LEN_TRIM(FLTname(ng)),FLTname(ng))
 #endif
 #ifndef ANA_GRID
       status=nf_put_att_text(ncid,nf_global,'grd_file',                 &
-     &                       LEN_TRIM(grdname(ng)),grdname(ng))
+     &                       LEN_TRIM(GRDname(ng)),GRDname(ng))
 #endif
-#ifndef ANA_INITIAL
+#ifdef INI_FILE
       status=nf_put_att_text(ncid,nf_global,'ini_file',                 &
-     &                       LEN_TRIM(ininame(ng)),ininame(ng))
+     &                       LEN_TRIM(INIname(ng)),INIname(ng))
 #endif
 #ifdef FRC_FILE
       DO i=1,nFfiles(ng)
         WRITE (frcatt,20) i
   20    FORMAT ('frc_file_',i2.2)
         status=nf_put_att_text(ncid,nf_global,frcatt,                   &
-     &                       LEN_TRIM(frcname(i,ng)),frcname(i,ng))
+     &                       LEN_TRIM(FRCname(i,ng)),FRCname(i,ng))
       END DO
+#endif
+#ifdef OBC_DATA
+      status=nf_put_att_text(ncid,nf_global,'bry_file',                 &
+     &                       LEN_TRIM(BRYname(ng)),BRYname(ng))
 #endif
 #if (defined  ZCLIMATOLOGY && !defined ANA_SSH)     || \
     (defined M2CLIMATOLOGY && !defined ANA_M2CLIMA) || \
     (defined  TCLIMATOLOGY && !defined ANA_TCLIMA)  || \
     (defined M3CLIMATOLOGY && !defined ANA_M3CLIMA)
       status=nf_put_att_text(ncid,nf_global,'clm_file',                 &
-     &                       LEN_TRIM(clmname(ng)),clmname(ng))
+     &                       LEN_TRIM(CLMname(ng)),CLMname(ng))
+#endif
+#if !defined DEBUGGING && defined DISTRIBUTE
+      status=nf_put_att_text(ncid,nf_global,'script_file',              &
+     &                       LEN_TRIM(Iname),Iname)
 #endif
 #if defined ASSIMILATION || defined NUDGING
       status=nf_put_att_text(ncid,nf_global,'apar_file',                &
@@ -251,8 +267,21 @@
 #endif
 #ifndef DEBUGGING
 !
-! Avoid writing this information in order to use "diff" to compare
-! NetCDF files during the debugging phase.
+!  Attributes describing platform and compiler
+!
+      status=nf_put_att_text(ncid,nf_global,'os',                       &
+     &                       LEN_TRIM(my_os),my_os)
+      status=nf_put_att_text(ncid,nf_global,'cpu',                      &
+     &                       LEN_TRIM(my_cpu),my_cpu)
+      status=nf_put_att_text(ncid,nf_global,'compiler_system',          &
+     &                       LEN_TRIM(my_fort),my_fort)
+      status=nf_put_att_text(ncid,nf_global,'compiler_command',         &
+     &                       LEN_TRIM(my_fc),my_fc)
+      status=nf_put_att_text(ncid,nf_global,'compiler_flags',           &
+     &                       LEN_TRIM(my_fflags),my_fflags)
+!
+!  Avoid writing this information in order to use "diff" to compare
+!  NetCDF files during the debugging phase.
 !
       status=nf_put_att_text(ncid,nf_global,'history',                  &
      &                       LEN_TRIM(history),history)
@@ -290,50 +319,48 @@
       Vinfo( 2)='time stamp assigned to model initilization'
       IF (INT(time_ref).eq.-2) THEN
         Vinfo( 3)='days since 1968-05-23 00:00:00 GMT'
-        Vinfo( 4)='modified Julian day number'
-        Vinfo(18)='add_offset'
-        Aval(1)=jul_off
+        Vinfo( 4)='gregorian'
       ELSE IF (INT(time_ref).eq.-1) THEN
         Vinfo( 3)='days since 0000-01-01 00:00:00'
-        Vinfo( 4)='360 days in every year, 30 days in each month'
+        Vinfo( 4)='360_day'
       ELSE IF (INT(time_ref).eq.0) THEN
         Vinfo( 3)='days since 0000-01-01 00:00:00'
-        Vinfo( 4)='365.25 days in every year'
+        Vinfo( 4)='365.25_day'
       ELSE IF (time_ref.gt.0.0_r8) THEN
-        Vinfo( 3)='days since '//r_text
+        WRITE (Vinfo( 3),'(a,1x,a)') 'days since', TRIM(r_text)
       END IF
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-      Vinfo( 1)='nhis'
+      Vinfo( 1)='nHIS'
       Vinfo( 2)='number of time-steps between history records'
       status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
 
-      IF (ndefhis(ng).gt.0) THEN
-        Vinfo( 1)='ndefhis'
+      IF (ndefHIS(ng).gt.0) THEN
+        Vinfo( 1)='ndefHIS'
         Vinfo( 2)=                                                      &
      &    'number of time-steps between the creation of history files'
           status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
       END IF
 
-      Vinfo( 1)='nrst'
+      Vinfo( 1)='nRST'
       Vinfo( 2)='number of time-steps between restart records'
-      IF (lcycle(ng)) THEN
+      IF (LcycleRST(ng)) THEN
         Vinfo(13)='only latest two records are maintained'
       END IF
       status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
 
 #ifdef AVERAGES
-      Vinfo( 1)='ntsavg'
+      Vinfo( 1)='ntsAVG'
       Vinfo( 2)=                                                        &
      &   'starting time-step for accumulation of time-averaged fields'
       status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
 
-      Vinfo( 1)='navg'
+      Vinfo( 1)='nAVG'
       Vinfo( 2)='number of time-steps between time-averaged records'
       status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
 
-      IF (ndefavg(ng).gt.0) THEN
-        Vinfo( 1)='ndefavg'
+      IF (ndefAVG(ng).gt.0) THEN
+        Vinfo( 1)='ndefAVG'
         Vinfo( 2)=                                                      &
      &    'number of time-steps between the creation of average files'
         status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
@@ -341,17 +368,17 @@
 #endif
 
 #ifdef DIAGNOSTICS
-      Vinfo( 1)='ntsdia'
+      Vinfo( 1)='ntsDIA'
       Vinfo( 2)=                                                        &
      &   'starting time-step for accumulation of diagnostic fields'
       status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
 
-      Vinfo( 1)='ndia'
+      Vinfo( 1)='nDIA'
       Vinfo( 2)='number of time-steps between diagnostic records'
       status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
 
-      IF (ndefdia(ng).gt.0) THEN
-        Vinfo( 1)='ndefdia'
+      IF (ndefDIA(ng).gt.0) THEN
+        Vinfo( 1)='ndefDIA'
         Vinfo( 2)=                                                      &
      &   'number of time-steps between the creation of diagnostic files'
         status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
@@ -359,7 +386,7 @@
 #endif
 
 #ifdef STATIONS
-      Vinfo( 1)='nsta'
+      Vinfo( 1)='nSTA'
       Vinfo( 2)='number of time-steps between stations records'
       status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
 #endif
@@ -464,7 +491,6 @@
 
       Vinfo( 1)='rdrg2'
       Vinfo( 2)='quadratic drag coefficient'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
 #ifdef SOLVE3D
@@ -484,62 +510,50 @@
 !
       Vinfo( 1)='gls_p'
       Vinfo( 2)='stability exponent'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_m'
       Vinfo( 2)='turbulent kinetic energy exponent'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_n'
       Vinfo( 2)='turbulent length scale exponent'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_cmu0'
       Vinfo( 2)='stability coefficient'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_c1'
       Vinfo( 2)='shear production coefficient'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_c2'
       Vinfo( 2)='dissipation coefficient'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_c3m'
       Vinfo( 2)='buoyancy production coefficient (minus)'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_c3p'
       Vinfo( 2)='buoyancy production coefficient (plus)'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_sigk'
       Vinfo( 2)='constant Schmidt number for TKE'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_sigp'
       Vinfo( 2)='constant Schmidt number for PSI'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_Kmin'
-      Vinfo( 2)='stability exponent'
-      Vinfo( 3)='minimum value of specific turbulent kinetic energy'
+      Vinfo( 2)='minimum value of specific turbulent kinetic energy'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='gls_Pmin'
       Vinfo( 2)='minimum Value of dissipation'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 #endif
 !
@@ -681,7 +695,6 @@
 !
       Vinfo( 1)='gamma2'
       Vinfo( 2)='Slipperiness parameter'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
 #if defined BIOLOGY && defined SOLVE3D
@@ -705,22 +718,20 @@
 
       Vinfo( 1)='PARfrac'
       Vinfo( 2)='photosynthetically available radiation fraction'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='Vp0'
       Vinfo( 2)='Eppley temperature-limited growth parameter'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='I_thNH4'
       Vinfo( 2)='radiation threshold for nitrification'
-      Vinfo( 3)='Watts m-2'
+      Vinfo( 3)='watt meter-2'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='D_p5NH4'
       Vinfo( 2)='half-saturation radiation for nitrification'
-      Vinfo( 3)='Watts m-2'
+      Vinfo( 3)='watt meter-2'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='NitriR'
@@ -765,7 +776,7 @@
 
       Vinfo( 1)='PhyIS'
       Vinfo( 2)='phytoplankton, initial slope of P-I curve'
-      Vinfo( 3)='milligram_C milligram_Chl-1 Watts-1 meter2 day-1'
+      Vinfo( 3)='milligram_C milligram_Chl-1 watt-1 meter2 day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='PhyMin'
@@ -780,7 +791,6 @@
 
       Vinfo( 1)='ZooAE_N'
       Vinfo( 2)='zooplankton mitrogen assimilation efficiency'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='ZooBM'
@@ -851,6 +861,11 @@
       Vinfo( 1)='wSDet'
       Vinfo( 2)='vertical sinking velocity for small detritus'
       Vinfo( 3)='meter day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='pCO2air'
+      Vinfo( 2)='partial pressure of CO2 in the air'
+      Vinfo( 3)='parts per million by volume'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
 # elif defined ECOSIM
@@ -1102,22 +1117,18 @@
 
       Vinfo( 1)='FecDOC'
       Vinfo( 2)='proportion of grazing stress apportioned to DOM'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='FecPEL'
       Vinfo( 2)='proportion of grazing stress apportioned to fecal'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='FecCYC'
       Vinfo( 2)='proportion of grazing stress that is recycled'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='ExALG'
       Vinfo( 2)='proportion of daily production lost to excretion'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='WS'
@@ -1127,7 +1138,6 @@
 
       Vinfo( 1)='HsGRZ'
       Vinfo( 2)='phytoplankton grazing parameter'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='MinRefuge'
@@ -1142,12 +1152,10 @@
 
       Vinfo( 1)='Norm_Vol'
       Vinfo( 2)='normalized volume factor'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='norm_Surf'
       Vinfo( 2)='normalized surface area factor'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,phydim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='HsDOP'
@@ -1208,24 +1216,20 @@
       Vinfo( 1)='BacDOC'
       Vinfo( 2)=                                                        &
      &        'proportion of bacteria grazing stress apportioned to DOM'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='BacPEL'
       Vinfo( 2)=                                                        &
      &      'proportion of bacteria grazing stress apportioned to fecal'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='BacCYC'
       Vinfo( 2)='proportion of bacteria grazing stress recycled'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='ExBAC_c'
       Vinfo( 2)=                                                        &
      &      'bacterial recalcitrant C excretion as proportion of uptake'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='ExBacC2N'
@@ -1235,18 +1239,21 @@
 
       Vinfo( 1)='Bac_Ceff'
       Vinfo( 2)='bacterial gross growth carbon efficiency'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='RtNIT'
-      Vinfo( 2)='maximum nitrification rate'
+      Vinfo( 2)='maximum bacterial nitrification rate'
       Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HsNIT'
+      Vinfo( 2)='half-saturation constant for bacterial nitrification'
+      Vinfo( 3)='micromole_NH4 liter-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='cDOCfrac_c'
       Vinfo( 2)=                                                        &
      &  'colored fraction of DOC from phytoplankton and bacteria losses'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,1,domdim,Aval,Vinfo,ncname)
 
       Vinfo( 1)='RtUVR_DIC'
@@ -1333,12 +1340,10 @@
 !
       Vinfo( 1)='theta_s'
       Vinfo( 2)='S-coordinate surface control parameter'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='theta_b'
       Vinfo( 2)='S-coordinate bottom control parameter'
-      Vinfo( 3)='nondimensional'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='Tcline'
@@ -1353,24 +1358,28 @@
 !
 !  S-coordinate non-dimensional independent variable at RHO-points.
 !
-      Vinfo( 1)='sc_r'
+      Vinfo( 1)='s_rho'
       Vinfo( 2)='S-coordinate at RHO-points'
-      Vinfo( 3)='nondimensional'
       Vinfo( 5)='valid_min'
       Vinfo( 6)='valid_max'
-      Vinfo(14)='sc_r, scalar'
+      Vinfo(14)='s_rho, scalar'
+      Vinfo(21)='ocean_s_coordinate'
+      Vinfo(23)=                                                        &
+     &   's: s_rho eta: zeta depth: h a: theta_s b: theta_b depth_c: hc'
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
       status=def_var(ncid,varid,NF_TYPE,1,srdim,Aval,Vinfo,ncname)
 !
 !  S-coordinate non-dimensional independent variable at W-points.
 !
-      Vinfo( 1)='sc_w'
+      Vinfo( 1)='s_w'
       Vinfo( 2)='S-coordinate at W-points'
-      Vinfo( 3)='nondimensional'
       Vinfo( 5)='valid_min'
       Vinfo( 6)='valid_max'
-      Vinfo(14)='sc_w, scalar'
+      Vinfo(14)='s_w, scalar'
+      Vinfo(21)='ocean_s_coordinate'
+      Vinfo(23)=                                                        &
+     &   's: s_w eta: zeta depth: h a: theta_s b: theta_b depth_c: hc'
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
       status=def_var(ncid,varid,NF_TYPE,1,swdim,Aval,Vinfo,ncname)
@@ -1379,7 +1388,6 @@
 !
       Vinfo( 1)='Cs_r'
       Vinfo( 2)='S-coordinate stretching curves at RHO-points'
-      Vinfo( 3)='nondimensional'
       Vinfo( 5)='valid_min'
       Vinfo( 6)='valid_max'
       Vinfo(14)='Cs_r, scalar'
@@ -1391,7 +1399,6 @@
 !
       Vinfo( 1)='Cs_w'
       Vinfo( 2)='S-coordinate stretching curves at W-points'
-      Vinfo( 3)='nondimensional'
       Vinfo( 5)='valid_min'
       Vinfo( 6)='valid_max'
       Vinfo(14)='Cs_w, scalar'
@@ -1412,7 +1419,7 @@
 !
 !  Station positions.
 !
-      IF (ncid.eq.ncstaid(ng)) THEN
+      IF (ncid.eq.ncSTAid(ng)) THEN
         Vinfo( 1)='Ipos'
         Vinfo( 2)='stations I-direction positions'
         status=def_var(ncid,varid,NF_TYPE,1,stadim,Aval,Vinfo,          &
@@ -1428,12 +1435,14 @@
 !
 !  Bathymetry.
 !
-      IF (ncid.ne.ncfltid(ng)) THEN
+      IF (ncid.ne.ncFLTid(ng)) THEN
         Vinfo( 1)='h'
         Vinfo( 2)='bathymetry at RHO-points'
         Vinfo( 3)='meter'
         Vinfo(14)='bath, scalar'
-        IF (ncid.eq.ncstaid(ng)) THEN
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(r2dvar,r8)
+        IF (ncid.eq.ncSTAid(ng)) THEN
           status=def_var(ncid,varid,NF_TYPE,1,stadim,Aval,Vinfo,        &
      &                   ncname)
         ELSE
@@ -1443,22 +1452,26 @@
 !
 !  Coriolis Parameter.
 !
-        IF (ncid.ne.ncstaid(ng)) THEN
+        IF (ncid.ne.ncSTAid(ng)) THEN
           Vinfo( 1)='f'
           Vinfo( 2)='Coriolis parameter at RHO-points'
           Vinfo( 3)='second-1'
           Vinfo(14)='coriolis, scalar'
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
           status=def_var(ncid,varid,NF_TYPE,2,t2dgrd,Aval,Vinfo,        &
      &                   ncname)
         END IF
 !
 !  Curvilinear coordinate metrics.
 !
-        IF (ncid.ne.ncstaid(ng)) THEN
+        IF (ncid.ne.ncSTAid(ng)) THEN
           Vinfo( 1)='pm'
           Vinfo( 2)='curvilinear coordinate metric in XI'
           Vinfo( 3)='meter-1'
           Vinfo(14)='pm, scalar'
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
           status=def_var(ncid,varid,NF_TYPE,2,t2dgrd,Aval,Vinfo,        &
      &                   ncname)
 
@@ -1466,18 +1479,20 @@
           Vinfo( 2)='curvilinear coordinate metric in ETA'
           Vinfo( 3)='meter-1'
           Vinfo(14)='pn, scalar'
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
           status=def_var(ncid,varid,NF_TYPE,2,t2dgrd,Aval,Vinfo,        &
      &                   ncname)
         END IF
 !
-!  Longitude and latitude coordinates of RHO-points, if appropriate.
+!  Grid coordinates of RHO-points.
 !
         IF (spherical) THEN
           Vinfo( 1)='lon_rho'
           Vinfo( 2)='longitude of RHO-points'
           Vinfo( 3)='degree_east'
           Vinfo(14)='lon_rho, scalar'
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
             status=def_var(ncid,varid,NF_TYPE,1,stadim,Aval,Vinfo,      &
      &                     ncname)
           ELSE
@@ -1489,7 +1504,7 @@
           Vinfo( 2)='latitude of RHO-points'
           Vinfo( 3)='degree_north'
           Vinfo(14)='lat_rho, scalar'
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
             status=def_var(ncid,varid,NF_TYPE,1,stadim,Aval,Vinfo,      &
      &                     ncname)
           ELSE
@@ -1501,7 +1516,7 @@
           Vinfo( 2)='x-locations of RHO-points'
           Vinfo( 3)='meter'
           Vinfo(14)='x_rho, scalar'
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
             status=def_var(ncid,varid,NF_TYPE,1,stadim,Aval,Vinfo,      &
      &                     ncname)
           ELSE
@@ -1512,7 +1527,7 @@
           Vinfo( 2)='y-locations of RHO-points'
           Vinfo( 3)='meter'
           Vinfo(14)='y_rho, scalar'
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
             status=def_var(ncid,varid,NF_TYPE,1,stadim,Aval,Vinfo,      &
      &                     ncname)
           ELSE
@@ -1520,16 +1535,132 @@
      &                     ncname)
           END IF
         END IF
+!
+!  Grid coordinates of U-points.
+!
+        IF (spherical) THEN
+          Vinfo( 1)='lon_u'
+          Vinfo( 2)='longitude of U-points'
+          Vinfo( 3)='degree_east'
+          Vinfo(14)='lon_u, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,u2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+          Vinfo( 1)='lat_u'
+          Vinfo( 2)='latitude of U-points'
+          Vinfo( 3)='degree_north'
+          Vinfo(14)='lat_u, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,u2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+        ELSE
+          Vinfo( 1)='x_u'
+          Vinfo( 2)='x-locations of U-points'
+          Vinfo( 3)='meter'
+          Vinfo(14)='x_u, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,u2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+          Vinfo( 1)='y_u'
+          Vinfo( 2)='y-locations of U-points'
+          Vinfo( 3)='meter'
+          Vinfo(14)='y_u, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,u2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+        END IF
+!
+!  Grid coordinates of V-points.
+!
+        IF (spherical) THEN
+          Vinfo( 1)='lon_v'
+          Vinfo( 2)='longitude of V-points'
+          Vinfo( 3)='degree_east'
+          Vinfo(14)='lon_v, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,v2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+          Vinfo( 1)='lat_v'
+          Vinfo( 2)='latitude of V-points'
+          Vinfo( 3)='degree_north'
+          Vinfo(14)='lat_v, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,v2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+        ELSE
+          Vinfo( 1)='x_v'
+          Vinfo( 2)='x-locations of V-points'
+          Vinfo( 3)='meter'
+          Vinfo(14)='x_v, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,v2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+          Vinfo( 1)='y_v'
+          Vinfo( 2)='y-locations of V-points'
+          Vinfo( 3)='meter'
+          Vinfo(14)='y_v, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,v2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+        END IF
+!
+!  Grid coordinates of PSI-points.
+!
+        IF (spherical) THEN
+          Vinfo( 1)='lon_psi'
+          Vinfo( 2)='longitude of PSI-points'
+          Vinfo( 3)='degree_east'
+          Vinfo(14)='lon_psi, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,p2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+          Vinfo( 1)='lat_psi'
+          Vinfo( 2)='latitude of PSI-points'
+          Vinfo( 3)='degree_north'
+          Vinfo(14)='lat_psi, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,p2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+        ELSE
+          Vinfo( 1)='x_psi'
+          Vinfo( 2)='x-locations of PSI-points'
+          Vinfo( 3)='meter'
+          Vinfo(14)='x_psi, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,p2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+          Vinfo( 1)='y_psi'
+          Vinfo( 2)='y-locations of PSI-points'
+          Vinfo( 3)='meter'
+          Vinfo(14)='y_psi, scalar'
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            status=def_var(ncid,varid,NF_TYPE,2,p2dgrd,Aval,Vinfo,      &
+     &                     ncname)
+          END IF
+        END IF
 # ifdef CURVGRID
 !
-!  Angle between XI-axis and EAST at RHO-points, if appropriate.
+!  Angle between XI-axis and EAST at RHO-points.
 !
         IF (spherical) THEN
           Vinfo( 1)='angle'
           Vinfo( 2)='angle between XI-axis and EAST'
           Vinfo( 3)='radians'
           Vinfo(14)='angle, scalar'
-          IF (ncid.eq.ncstaid(ng)) THEN
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          IF (ncid.eq.ncSTAid(ng)) THEN
             status=def_var(ncid,varid,NF_TYPE,1,stadim,Aval,Vinfo,      &
      &                     ncname)
           ELSE
@@ -1542,11 +1673,13 @@
 !
 !  Masking fields at RHO-, U-, V-points, and PSI-points.
 !
-        IF (ncid.ne.ncstaid(ng)) THEN
+        IF (ncid.ne.ncSTAid(ng)) THEN
           Vinfo( 1)='mask_rho'
           Vinfo( 2)='mask on RHO-points'
           Vinfo( 9)='land'
           Vinfo(10)='water'
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
           status=def_var(ncid,varid,NF_TYPE,2,t2dgrd,Aval,Vinfo,        &
      &                   ncname)
 
@@ -1554,6 +1687,8 @@
           Vinfo( 2)='mask on U-points'
           Vinfo( 9)='land'
           Vinfo(10)='water'
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u2dvar,r8)
           status=def_var(ncid,varid,NF_TYPE,2,u2dgrd,Aval,Vinfo,        &
      &                   ncname)
 
@@ -1561,6 +1696,8 @@
           Vinfo( 2)='mask on V-points'
           Vinfo( 9)='land'
           Vinfo(10)='water'
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v2dvar,r8)
           status=def_var(ncid,varid,NF_TYPE,2,v2dgrd,Aval,Vinfo,        &
      &                   ncname)
 
@@ -1568,6 +1705,8 @@
           Vinfo( 2)='mask on psi-points'
           Vinfo( 9)='land'
           Vinfo(10)='water'
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(p2dvar,r8)
           status=def_var(ncid,varid,NF_TYPE,2,p2dgrd,Aval,Vinfo,        &
      &                   ncname)
         END IF

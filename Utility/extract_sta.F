@@ -1,8 +1,8 @@
 #include "cppdefs.h"
-      MODULE extract_mod
+      MODULE extract_sta_mod
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine extracts field at the requested (Xpos,Ypos,Zpos)       !
@@ -14,6 +14,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     Cgrid      Switch to interpolate at native C-grid (TRUE) or to   !
 !                  interpolate at RHO-points (FALSE).                  !
 !     ifield     Field ID.                                             !
@@ -45,9 +46,9 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE extract2d (ng, Cgrid, ifield, gtype,                   &
-     &                      LBi, UBi, LBj, UBj, Ascl, A,                &
-     &                      Npos, Xpos, Ypos, Apos)
+      SUBROUTINE extract_sta2d (ng, model, Cgrid, ifield, gtype,        &
+     &                          LBi, UBi, LBj, UBj, Ascl, A,            &
+     &                          Npos, Xpos, Ypos, Apos)
 !***********************************************************************
 !
       USE mod_param
@@ -60,7 +61,7 @@
 !
       logical, intent(in) :: Cgrid
 
-      integer, intent(in) :: Npos, ng, ifield, gtype
+      integer, intent(in) :: ng, model, ifield, gtype, Npos
       integer, intent(in) :: LBi, UBi, LBj, UBj
       real(r8), intent(in) :: Ascl
 
@@ -278,8 +279,8 @@
 !  Collect all extracted data.
 !-----------------------------------------------------------------------
 !
-      CALL mp_collect (ng, Npos, Aspv, Apos)
-      CALL mp_collect (ng, Npos, 0.0_r8, bounded)
+      CALL mp_collect (ng, model, Npos, Aspv, Apos)
+      CALL mp_collect (ng, model, Npos, 0.0_r8, bounded)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -292,14 +293,14 @@
         END IF
       END DO
       RETURN
-      END SUBROUTINE extract2d
+      END SUBROUTINE extract_sta2d
 
 #ifdef SOLVE3D
 !
 !***********************************************************************
-      SUBROUTINE extract3d (ng, Cgrid, ifield, gtype,                   &
-     &                      LBi, UBi, LBj, UBj, LBk, UBk, Ascl, A,      &
-     &                      Npos, Xpos, Ypos, Zpos, Apos)
+      SUBROUTINE extract_sta3d (ng, model, Cgrid, ifield, gtype,        &
+     &                          LBi, UBi, LBj, UBj, LBk, UBk, Ascl, A,  &
+     &                          Npos, Xpos, Ypos, Zpos, Apos)
 !***********************************************************************
 !
       USE mod_param
@@ -312,7 +313,7 @@
 !
       logical, intent(in) :: Cgrid
 
-      integer, intent(in) :: Npos, ng, ifield, gtype
+      integer, intent(in) :: ng, model, ifield, gtype, Npos
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       real(r8), intent(in) :: Ascl
 
@@ -813,8 +814,8 @@
 !  Collect all extracted data.
 !-----------------------------------------------------------------------
 !
-      CALL mp_collect (ng, Npos, Aspv, Apos)
-      CALL mp_collect (ng, Npos, 0.0_r8, bounded)
+      CALL mp_collect (ng, model, Npos, Aspv, Apos)
+      CALL mp_collect (ng, model, Npos, 0.0_r8, bounded)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -827,7 +828,7 @@
         END IF
       END DO
       RETURN
-      END SUBROUTINE extract3d
+      END SUBROUTINE extract_sta3d
 #endif
-      END MODULE extract_mod
+      END MODULE extract_sta_mod
 

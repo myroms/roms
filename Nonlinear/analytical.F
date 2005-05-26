@@ -6,7 +6,7 @@
       CONTAINS
 !!
 !!======================================================================
-!! Copyright (c) 2002 ROMS/TOMS Group                                  !
+!! Copyright (c) 2005 ROMS/TOMS Group                                  !
 !!================================================= Hernan G. Arango ===
 !!                                                                     !
 !! ANALYTICAL PACKAGE:                                                 !
@@ -20,6 +20,8 @@
 !!                       tracers.                                      !
 !! ana_btflux          Analytical kinematic bottom flux of tracer      !
 !!                       type variables.                               !
+!! ana_bmflux          Analytical bottom momentm flux - so can have
+!!                       spatially varying zo
 !! ana_cloud           Analytical cloud fraction.                      !
 !! ana_diag            Customized diagnostics.                         !
 !! ana_fsobc           Analytical free-surface boundary conditions.    !
@@ -33,6 +35,8 @@
 !! ana_m3obc           Analytical 3D momentum boundary conditions.     !
 !! ana_mask            Analytical Land/Sea masking.                    !
 !! ana_pair            Analytical surface air pressure.                !
+!! ana_passive         Analytical initial conditions for passive       !
+!!                       inert tracers.                                !
 !! ana_psource         Analytical mass/tracer point sources/sinks.     !
 !! ana_rain            Analytical rain fall rate.                      !
 !! ana_sediment        Analytical initial conditions for sediment      !
@@ -62,7 +66,7 @@
 !!======================================================================
 !!
 #if defined ANA_BIOLOGY && defined BIOLOGY
-      SUBROUTINE ana_biology (ng, tile)
+      SUBROUTINE ana_biology (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -74,18 +78,18 @@
       USE mod_param
       USE mod_ocean
 !    
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_biology_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL ana_biology_tile (ng, model, Istr, Iend, Jstr, Jend,         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng) % t)
       RETURN
       END SUBROUTINE ana_biology
 !
 !***********************************************************************
-      SUBROUTINE ana_biology_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE ana_biology_tile (ng, model, Istr, Iend, Jstr, Jend,   &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             t)
 !***********************************************************************
@@ -101,7 +105,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -330,12 +334,15 @@
       END DO
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      DO itrc=NAT+1,NAT+NBT
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+      DO is=1,NBT
+        itrc=idbio(is)
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          t(:,:,:,1,itrc))
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          t(:,:,:,2,itrc))
       END DO
 # endif
@@ -345,7 +352,7 @@
 
 #ifdef SOLVE3D
 # if defined ANA_BTFLUX || defined ANA_BSFLUX || defined ANA_BPFLUX
-      SUBROUTINE ana_btflux (ng, tile, itrc)
+      SUBROUTINE ana_btflux (ng, tile, model, itrc)
 !
 !=======================================================================
 !                                                                      !
@@ -357,19 +364,19 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile, itrc
+      integer, intent(in) :: ng, tile, model, itrc
 
 # include "tile.h"
 !
-      CALL ana_btflux_tile (ng, Istr, Iend, Jstr, Jend, itrc,           &
+      CALL ana_btflux_tile (ng, model, Istr, Iend, Jstr, Jend, itrc,    &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng) % btflx)
       RETURN
       END SUBROUTINE ana_btflux
 !
 !***********************************************************************
-      SUBROUTINE ana_btflux_tile (ng, Istr, Iend, Jstr, Jend, itrc,     &
-     &                            LBi, UBi, LBj, UBj,                   &
+      SUBROUTINE ana_btflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+     &                            itrc, LBi, UBi, LBj, UBj,             &
      &                            btflx)
 !***********************************************************************
 !
@@ -378,7 +385,7 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in) :: ng, Iend, Istr, Jend, Jstr, itrc
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -434,7 +441,7 @@
 #endif
 
 #if defined ANA_CLOUD && defined CLOUDS
-      SUBROUTINE ana_cloud (ng, tile)
+      SUBROUTINE ana_cloud (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -445,18 +452,18 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_cloud_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ana_cloud_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng) % cloud)
       RETURN
       END SUBROUTINE ana_cloud
 !
 !***********************************************************************
-      SUBROUTINE ana_cloud_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ana_cloud_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           cloud)
 !***********************************************************************
@@ -471,7 +478,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -516,8 +523,6 @@
      &                  (Cyday(i+1)-Cyday(i))
         END IF
       END DO
-# elif defined ADRIATIC1 || defined ADRIATIC2
-      Cval=0.4_r8
 # elif defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
       Cval=0.6_r8
 # elif defined NJ_BIGHT
@@ -532,15 +537,17 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, cloud)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        cloud)
 # endif
       RETURN
       END SUBROUTINE ana_cloud_tile
 #endif
 
 #ifdef ANA_DIAG
-      SUBROUTINE ana_diag (ng, tile)
+      SUBROUTINE ana_diag (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -553,11 +560,11 @@
       USE mod_param
       USE mod_ocean
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_diag_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_diag_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    OCEAN(ng) % ubar,                             &
      &                    OCEAN(ng) % vbar,                             &
@@ -567,7 +574,7 @@
       END SUBROUTINE ana_diag
 !
 !***********************************************************************
-      SUBROUTINE ana_diag_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_diag_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          ubar, vbar, u, v)
 !***********************************************************************
@@ -575,10 +582,13 @@
       USE mod_param
       USE mod_iounits
       USE mod_scalars
+# ifdef SEAMOUNT
+      USE mod_stepping
+# endif
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -602,13 +612,13 @@
 !
 !  Open USER file.
 !
-      IF (iic.eq.ntstart) THEN
-        OPEN (usrout,file=usrname,form='formatted',status='unknown',    &
+      IF (iic(ng).eq.ntstart) THEN
+        OPEN (usrout,file=USRname,form='formatted',status='unknown',    &
      &        err=40)
         GO TO 60
-  40    WRITE (stdout,50) usrname
+  40    WRITE (stdout,50) USRname
   50    FORMAT (' ANA_DIAG - unable to open output file: ',a)
-        exit_flag=1
+        exit_flag=2
   60    CONTINUE
       END IF
 !
@@ -621,23 +631,23 @@
       DO k=1,N(ng)
         DO j=0,Mm(ng)+1
           DO i=1,Lm(ng)+1
-            umax=MAX(umax,u(i,j,k,nnew))
+            umax=MAX(umax,u(i,j,k,nnew(ng)))
           END DO
         END DO
         DO j=1,Mm(ng)+1
           DO i=0,Lm(ng)+1
-            vmax=MAX(vmax,v(i,j,k,nnew))
+            vmax=MAX(vmax,v(i,j,k,nnew(ng)))
           END DO
         END DO
       END DO
       DO j=0,Mm(ng)+1
         DO i=1,Lm(ng)+1
-          ubarmax=MAX(ubarmax,ubar(i,j,knew))
+          ubarmax=MAX(ubarmax,ubar(i,j,knew(ng)))
         END DO
       END DO
       DO j=1,Mm(ng)+1
         DO i=0,Lm(ng)+1
-          vbarmax=MAX(vbarmax,vbar(i,j,knew))
+          vbarmax=MAX(vbarmax,vbar(i,j,knew(ng)))
         END DO
       END DO
 !
@@ -651,7 +661,7 @@
 #endif
 
 #ifdef ANA_FSOBC
-      SUBROUTINE ana_fsobc (ng, tile)
+      SUBROUTINE ana_fsobc (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -662,17 +672,17 @@
 !
       USE mod_param
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_fsobc_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ana_fsobc_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj)
       RETURN
       END SUBROUTINE ana_fsobc
 !
 !***********************************************************************
-      SUBROUTINE ana_fsobc_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ana_fsobc_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
@@ -683,7 +693,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
@@ -716,6 +726,13 @@
      &                                      cff-omega*time(ng))
         END DO
       END IF
+# elif defined ESTUARY_TEST
+      IF (WESTERN_EDGE) THEN
+        cff=1.0_r8*SIN(2.0_r8*pi*time(ng)/(12.0_r8*3600.0_r8))
+        DO j=JstrR,JendR
+          BOUNDARY(ng)%zeta_west(j)=cff
+        END DO
+      END IF
 # elif defined SED_TEST1
       IF (WESTERN_EDGE) THEN
         fac=100.0_r8
@@ -729,10 +746,11 @@
           BOUNDARY(ng)%zeta_east(j)=9.0E-06_r8*REAL(Iend+1,r8)*fac
         END DO
       END IF
-# elif defined TEST_CHAN
-      IF (WESTERN_EDGE) THEN
+# elif defined SED_TOY
+      IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
-          BOUNDARY(ng)%zeta_west(j)=-0.396_r8
+          omega=pi*time(ng)/(12.0_r8*1800.0_r8)     !  12 hr Tide period
+          BOUNDARY(ng)%zeta_east(j)=0.5_r8*SIN(omega)
         END DO
       END IF
 # elif defined WEDDELL
@@ -781,7 +799,7 @@
 #endif
 
 #ifdef ANA_GRID
-      SUBROUTINE ana_grid (ng, tile)
+      SUBROUTINE ana_grid (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -814,11 +832,11 @@
       USE mod_param
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_grid_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_grid_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % angler,                            &
 # if defined CURVGRID && defined UV_ADV
@@ -829,13 +847,23 @@
      &                    GRID(ng) % zice,                              &
 # endif
 # ifdef SPHERICAL
+     &                    GRID(ng) % lonp,                              &
      &                    GRID(ng) % lonr,                              &
+     &                    GRID(ng) % lonu,                              &
+     &                    GRID(ng) % lonv,                              &
+     &                    GRID(ng) % latp,                              &
      &                    GRID(ng) % latr,                              &
+     &                    GRID(ng) % latu,                              &
+     &                    GRID(ng) % latv,                              &
 # else
      &                    GRID(ng) % xp,                                &
      &                    GRID(ng) % xr,                                &
+     &                    GRID(ng) % xu,                                &
+     &                    GRID(ng) % xv,                                &
      &                    GRID(ng) % yp,                                &
      &                    GRID(ng) % yr,                                &
+     &                    GRID(ng) % yu,                                &
+     &                    GRID(ng) % yv,                                &
 # endif
      &                    GRID(ng) % pn,                                &
      &                    GRID(ng) % pm,                                &
@@ -845,7 +873,7 @@
       END SUBROUTINE ana_grid
 !
 !***********************************************************************
-      SUBROUTINE ana_grid_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_grid_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          angler,                                 &
 # if defined CURVGRID && defined UV_ADV
@@ -855,9 +883,11 @@
      &                          zice,                                   &
 # endif
 # ifdef SPHERICAL
-     &                          lonr, latr,                             &
+     &                          lonp, lonr, lonu, lonv,                 &
+     &                          latp, latr, latu, latv,                 &
 # else
-     &                          xp, xr, yp, yr,                         &
+     &                          xp, xr, xu, xv,                         &
+     &                          yp, yr, yu, yv,                         &
 # endif
      &                          pn, pm, f, h)
 !***********************************************************************
@@ -873,7 +903,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -886,13 +916,23 @@
       real(r8), intent(out) :: zice(LBi:,LBj:)
 #  endif
 #  ifdef SPHERICAL
+      real(r8), intent(out) :: lonp(LBi:,LBj:)
       real(r8), intent(out) :: lonr(LBi:,LBj:)
+      real(r8), intent(out) :: lonu(LBi:,LBj:)
+      real(r8), intent(out) :: lonv(LBi:,LBj:)
+      real(r8), intent(out) :: latp(LBi:,LBj:)
       real(r8), intent(out) :: latr(LBi:,LBj:)
+      real(r8), intent(out) :: latu(LBi:,LBj:)
+      real(r8), intent(out) :: latv(LBi:,LBj:)
 #  else
       real(r8), intent(out) :: xp(LBi:,LBj:)
       real(r8), intent(out) :: xr(LBi:,LBj:)
+      real(r8), intent(out) :: xu(LBi:,LBj:)
+      real(r8), intent(out) :: xv(LBi:,LBj:)
       real(r8), intent(out) :: yp(LBi:,LBj:)
       real(r8), intent(out) :: yr(LBi:,LBj:)
+      real(r8), intent(out) :: yu(LBi:,LBj:)
+      real(r8), intent(out) :: yv(LBi:,LBj:)
 #  endif
       real(r8), intent(out) :: pn(LBi:,LBj:)
       real(r8), intent(out) :: pm(LBi:,LBj:)
@@ -908,13 +948,23 @@
       real(r8), intent(out) :: zice(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SPHERICAL
+      real(r8), intent(out) :: lonp(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: lonr(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: lonu(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: lonv(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: latp(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: latr(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: latu(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: latv(LBi:UBi,LBj:UBj)
 #  else
       real(r8), intent(out) :: xp(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: xr(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: xu(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: xv(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: yp(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: yr(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: yu(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: yv(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(out) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: pm(LBi:UBi,LBj:UBj)
@@ -985,10 +1035,17 @@
       depth=1500.0_r8
       f0=5.0E-05_r8
       beta=0.0_r8
+# elif defined CRG_BAN_TEST
+      Xsize=1000.0_r8
+      Esize=1000.0_r8
+      depth=50.0_r8
+      f0=0.0_r8
+      beta=0.0_r8
 # elif defined DOUBLE_GYRE
       Xsize=1000.0E+03_r8
       Esize=2000.0E+03_r8
       depth=500.0_r8
+!!    depth=5000.0_r8
       f0=7.3E-05_r8
       beta=2.0E-11_r8
 # elif defined ESTUARY_TEST
@@ -1038,10 +1095,16 @@
       depth=4000.0_r8
       f0=0.0_r8
       beta=0.0_r8
-# elif defined RIVERPLUME
+# elif defined RIVERPLUME1
       Xsize=58.5E+03_r8
       Esize=201.0E+03_r8
       depth=150.0_r8
+      f0=1.0E-04_r8
+      beta=0.0_r8
+# elif defined RIVERPLUME2
+      Xsize=100.0E+03_r8
+      Esize=210.0E+03_r8
+      depth=190.0_r8
       f0=1.0E-04_r8
       beta=0.0_r8
 # elif defined SEAMOUNT
@@ -1071,10 +1134,11 @@
       depth=10.0_r8
       f0=0.0_r8
       beta=0.0_r8
-# elif defined TEST_CHAN
-      Xsize=10000.0_r8
-      Esize=1000.0_r8
-      depth=10.0_r8
+# elif defined SED_TOY
+!!    Xsize=10000.0_r8
+      Xsize=100.0_r8
+      Esize=100.0_r8
+      depth=20.0_r8
       f0=0.0_r8
       beta=0.0_r8
 # elif defined UPWELLING
@@ -1137,21 +1201,28 @@
       END IF
 
 # if defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
-
+!
 !  Spherical coordinates set-up.
 !
       dx=Xsize/REAL(Lm(ng),r8)
       dy=Esize/REAL(Mm(ng),r8)
-      spherical=.true.
+      spherical=.TRUE.
       DO j=Jmin,Jmax
-        cff=-70.0_r8+dy*(REAL(j,r8)-0.5_r8)
+        val1=-70.0_r8+dy*(REAL(j,r8)-0.5_r8)
+        val2=-70.0_r8+dy*REAL(j,r8)
         DO i=Imin,Imax
           lonr(i,j)=dx*(REAL(i,r8)-0.5_r8)
-          latr(i,j)=cff
+          latr(i,j)=val1
+          lonu(i,j)=dx*REAL(i,r8)
+          lonp(i,j)=lonu(i,j)
+          latu(i,j)=latr(i,j)
+          lonv(i,j)=lonr(i,j)
+          latv(i,j)=val2
+          latp(i,j)=latv(i,j)
         END DO
       END DO
 # elif defined LAB_CANYON
-
+!
 !  Polar coordinates set-up.
 !
       dx=Xsize/REAL(Lm(ng),r8)
@@ -1176,6 +1247,10 @@
      &                          REAL(Mm(ng),r8)))
           xr(i,j)=r*COS(theta)
           yr(i,j)=r*SIN(theta)
+          xu(i,j)=xp(i,j)
+          yu(i,j)=yr(i,j)
+          xv(i,j)=xr(i,j)
+          yv(i,j)=yp(i,j)         
         END DO
       END DO
 # else
@@ -1188,32 +1263,82 @@
 #  endif
           xp(i,j)=dx*REAL(i-1,r8)
           xr(i,j)=dx*(REAL(i-1,r8)+0.5_r8)
+          xu(i,j)=xp(i,j)
+          xv(i,j)=xr(i,j)
           yp(i,j)=dy*REAL(j-1,r8)
           yr(i,j)=dy*(REAL(j-1,r8)+0.5_r8)
+          yu(i,j)=yr(i,j)
+          yv(i,j)=yp(i,j)
         END DO
       END DO
 # endif
 # ifdef DISTRIBUTE
 #  ifdef SPHERICAL
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-     &                  GHOST_POINTS, .false., .false., lonr(LBi,LBj)) 
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  lonp(LBi,LBj)) 
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-     &                  GHOST_POINTS, .false., .false., latr(LBi,LBj))
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  lonr(LBi,LBj)) 
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  lonu(LBi,LBj)) 
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  lonv(LBi,LBj)) 
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  latp(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPOINTS, .FALSE., .FALSE.,                 &
+     &                  latr(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  latu(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  latv(LBi,LBj))
 #  else
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-     &                  GHOST_POINTS, .false., .false., xp(LBi,LBj))
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  xp(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-     &                  GHOST_POINTS, .false., .false., xr(LBi,LBj))
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  xr(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-     &                  GHOST_POINTS, .false., .false., yp(LBi,LBj))
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  xu(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, 1, 1,                       &
-     &                  GHOST_POINTS, .false., .false., yr(LBi,LBj))
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  xv(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  yp(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  yr(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  yu(LBi,LBj))
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
+     &                  NghostPoints, .FALSE., .FALSE.,                 &
+     &                  yv(LBi,LBj))
 #  endif   
 # endif
 !
@@ -1273,10 +1398,14 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pm)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pn)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pm)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pn)
 # endif
 # if (defined CURVGRID && defined UV_ADV)
 !
@@ -1293,10 +1422,14 @@
         END DO
       END DO
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, dndx)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, dmde)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        dndx)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        dmde)
 #  endif
 # endif
 !
@@ -1330,8 +1463,10 @@
       END DO
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, angler)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        angler)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1362,8 +1497,10 @@
       END DO
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, f)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        f)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1382,7 +1519,7 @@
           val1=(xr(i,j)+500.0_r8)/15000.0_r8
           h(i,j)=14.0_r8+                                               &
      &           25.0_r8*(1.0_r8-EXP(-pi*xr(i,j)*1.0E-05_r8))-          &
-     &           8.0_r8*exp(-val1*val1)
+     &           8.0_r8*EXP(-val1*val1)
         END DO
       END DO
 # elif defined CANYON_A || defined CANYON_B
@@ -1396,8 +1533,13 @@
 # elif defined ESTUARY_TEST
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-!!        h(i,j)=10.0_r8
           h(i,j)=5.0_r8+(Xsize-xr(i,j))/Xsize*5.0_r8
+        END DO
+      END DO 
+# elif defined CRG_BAN_TEST
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          h(i,j)=50.0_r8
         END DO
       END DO 
 # elif defined LAB_CANYON
@@ -1447,7 +1589,17 @@
      &           (1.0_r8+TANH((yr(i,j)-100000.0_r8)/20000.0_r8))
         END DO
       END DO
-# elif defined RIVERPLUME
+# elif defined RIVERPLUME1
+      DO j=JstrR,JendR
+        DO i=IstrR,MIN(5,IendR)
+          h(i,j)=15.0_r8
+        END DO
+        DO i=MAX(6,IstrR),IendR
+          h(i,j)=depth+REAL(Lm(ng)-i,r8)*(15.0_r8-depth)/               &
+     &                 REAL(Lm(ng)-6,r8)
+        END DO
+      END DO
+# elif defined RIVERPLUME2
       DO j=JstrR,JendR
         DO i=IstrR,MIN(5,IendR)
           h(i,j)=15.0_r8
@@ -1463,6 +1615,12 @@
           val1=(xr(i,j)-xr(Lm(ng)/2,Mm(ng)/2))/40000.0_r8
           val2=(yr(i,j)-yr(Lm(ng)/2,Mm(ng)/2))/40000.0_r8
           h(i,j)=depth-4500.0_r8*EXP(-(val1*val1+val2*val2))
+        END DO
+      END DO
+# elif defined SED_TOY
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          h(i,j)=20.0_r8
         END DO
       END DO
 # elif defined SHELFRONT
@@ -1483,13 +1641,6 @@
           END IF
         END DO
       END DO
-# elif defined TEST_CHAN
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-!!        h(i,j)=10.0_r8
-          h(i,j)=10.396_r8-0.396_r8*REAL(i-1,r8)/REAL(Lm(ng)-1,r8)
-        END DO
-      END DO 
 # elif defined UPWELLING
       DO j=JstrR,JendR
         IF (j.le.Mm(ng)/2) THEN
@@ -1533,15 +1684,15 @@
 # elif defined WINDBASIN
       DO i=IstrR,IendR
         val1=1;
-        IF ((i-IstrR).lt.(IFIX(0.03_r8*(IendR-IstrR)))) THEN
+        IF ((i-IstrR).lt.(INT(0.03_r8*REAL(IendR-IstrR,r8)))) THEN
           val1=1.0_r8-(REAL((i-IstrR+1)-                                &
-     &                      IFIX(0.03_r8*(IendR-IstrR)),r8)/            &
-     &                 REAL(0.03_r8*(IendR-IstrR),r8))**2
+     &                      INT(0.03_r8*REAL(IendR-IstrR,r8)),r8)/      &
+     &                 (0.03_r8*REAL(IendR-IstrR,r8)))**2
         END IF
-        IF ((IendR-i).lt.(IFIX(0.03_r8*(IendR-IstrR)))) THEN
+        IF ((IendR-i).lt.(INT(0.03_r8*REAL(IendR-IstrR,r8)))) THEN
           val1=1.0_r8-(REAL((IendR-i+1)-                                &
-     &                      IFIX(0.03_r8*(IendR-IstrR)),r8)/            &
-     &                 REAL(0.03_r8*(IendR-IstrR),r8))**2
+     &                      INT(0.03_r8*REAL(IendR-IstrR,r8)),r8)/      &
+     &                 (0.03_r8*REAL(IendR-IstrR,r8)))**2
         END IF
         DO j=JstrR,JendR
          val2=2.0_r8*REAL(j-(Mm(ng)+1)/2,r8)/REAL(Mm(ng)+1,r8)
@@ -1556,8 +1707,10 @@
       END DO
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, h)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        h)
 # endif
 !
 ! Determine minimum depth: first, determine minimum values of depth
@@ -1594,7 +1747,7 @@
         buffer(2)=hmax(ng)
         op_handle(1)='MIN'
         op_handle(2)='MAX'
-        CALL mp_reduce (ng, 2, buffer, op_handle)
+        CALL mp_reduce (ng, model, 2, buffer, op_handle)
         hmin(ng)=buffer(1)
         hmax(ng)=buffer(2)
 # endif
@@ -1627,8 +1780,10 @@
       END DO
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, zice)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        zice)
 #  endif
 # endif
       RETURN
@@ -1638,7 +1793,7 @@
 #if defined ANA_HUMIDITY && \
   ( defined BULK_FLUXES || defined ECOSIM || \
    (defined ANA_SRFLUX  && defined ALBEDO) )
-      SUBROUTINE ana_humid (ng, tile)
+      SUBROUTINE ana_humid (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -1657,18 +1812,18 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_humid_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ana_humid_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng) % Hair)
       RETURN
       END SUBROUTINE ana_humid
 !
 !***********************************************************************
-      SUBROUTINE ana_humid_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ana_humid_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Hair)
 !***********************************************************************
@@ -1682,7 +1837,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -1702,13 +1857,7 @@
 !  Set analytical surface air humidity.
 !-----------------------------------------------------------------------
 !
-# if defined ADRIATIC1 || defined ADRIATIC2
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          Hair(i,j)=0.7_r8
-        END DO
-      END DO
-# elif defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
+# if defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           Hair(i,j)=0.8_r8
@@ -1724,15 +1873,17 @@
       ANA_HUMIDITY: no values provided for HAIR.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Hair)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Hair)
 # endif
       RETURN
       END SUBROUTINE ana_humid_tile
 #endif
 
 #ifdef ANA_INITIAL
-      SUBROUTINE ana_initial (ng, tile)
+      SUBROUTINE ana_initial (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -1745,11 +1896,11 @@
       USE mod_grid
       USE mod_ocean
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_initial_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL ana_initial_tile (ng, model, Istr, Iend, Jstr, Jend,         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng) % ubar,                          &
      &                       OCEAN(ng) % vbar,                          &
@@ -1772,7 +1923,7 @@
       END SUBROUTINE ana_initial
 !
 !***********************************************************************
-      SUBROUTINE ana_initial_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE ana_initial_tile (ng, model, Istr, Iend, Jstr, Jend,   &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ubar, vbar, zeta,                    &
 # ifdef SOLVE3D
@@ -1799,7 +1950,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -1879,16 +2030,16 @@
           vbar(i,j,2)=vbar(i,j,1)
         END DO
       END DO
-# elif defined LAKE_SIGNELL
+# elif defined RIVERPLUME2
       DO j=JstrR,JendR
         DO i=Istr,IendR
-          ubar(i,j,1)=0.001_r8
+          ubar(i,j,1)=0.0_r8
           ubar(i,j,2)=ubar(i,j,1)
         END DO
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
-          vbar(i,j,1)=0.001_r8
+          vbar(i,j,1)=-0.05_r8
           vbar(i,j,2)=vbar(i,j,1)
         END DO
       END DO
@@ -1903,6 +2054,22 @@
       DO j=Jstr,JendR
         DO i=IstrR,IendR
           vbar(i,j,1)=0.0_r8
+          vbar(i,j,2)=vbar(i,j,1)
+        END DO
+      END DO
+# elif defined SED_TOY
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          ubar(i,j,1)=1.0_r8
+!!        ubar(i,j,1)=-1.0_r8
+!!        ubar(i,j,1)=0.0_r8
+          ubar(i,j,2)=ubar(i,j,1)
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          vbar(i,j,1)=0.0_r8
+!!        vbar(i,j,1)=1.0_r8
           vbar(i,j,2)=vbar(i,j,1)
         END DO
       END DO
@@ -1922,10 +2089,14 @@
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       DO i=1,2
-        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, ubar(:,:,i))
-        CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, vbar(:,:,i))
+        CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          ubar(:,:,i))
+        CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          vbar(:,:,i))
       END DO
 # endif
 !
@@ -1971,13 +2142,6 @@
           zeta(i,j,2)=zeta(i,j,1)
         END DO
       END DO
-# elif defined TEST_CHAN
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          zeta(i,j,1)=-0.396_r8+0.396_r8*REAL(i-1,r8)/REAL(Lm(ng)-1,r8)
-          zeta(i,j,2)=zeta(i,j,1)
-        END DO
-      END DO
 # else
       DO j=JstrR,JendR
         DO i=IstrR,IendR
@@ -1988,8 +2152,10 @@
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       DO i=1,2
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, zeta(:,:,i))
+        CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          zeta(:,:,i))
       END DO
 # endif
 # ifdef SOLVE3D
@@ -1998,17 +2164,18 @@
 !  Initial conditions for 3D momentum components (m/s).
 !-----------------------------------------------------------------------
 !
-#  if defined LAKE_SIGNELL
+#  if defined RIVERPLUME2
       DO k=1,N(ng)
        DO j=JstrR,JendR
          DO i=Istr,IendR
-            u(i,j,k,1)=0.001_r8
+            u(i,j,k,1)=0.0_r8
             u(i,j,k,2)=u(i,j,k,1)
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            v(i,j,k,1)=0.001_r8
+            v(i,j,k,1)=-0.05_r8*LOG((h(i,j)+z_r(i,j,k))/Zob(ng))/        &
+     &                 (LOG(h(i,j)/Zob(ng))-1.0_r8+Zob(ng)/h(i,j))
             v(i,j,k,2)=v(i,j,k,1)
           END DO
         END DO
@@ -2025,6 +2192,24 @@
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             v(i,j,k,1)=0.0_r8
+            v(i,j,k,2)=v(i,j,k,1)
+          END DO
+        END DO
+      END DO
+#  elif defined SED_TOY
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            u(i,j,k,1)=1.0_r8
+!!          u(i,j,k,1)=-1.0_r8
+!!          u(i,j,k,1)=0.0_r8
+            u(i,j,k,2)=u(i,j,k,1)
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            v(i,j,k,1)=0.0_r8
+!!          v(i,j,k,1)=1.0_r8
             v(i,j,k,2)=v(i,j,k,1)
           END DO
         END DO
@@ -2047,11 +2232,13 @@
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       DO i=1,2
-        CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_u3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          u(:,:,:,i))
-        CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_v3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          v(:,:,:,i))
       END DO
 #  endif
@@ -2094,8 +2281,8 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             val1=TANH(1.1_r8*z_r(i,j,k)+11.0_r8)
-            t(i,j,k,1,itemp)=17.25_r8+6.25_r8*val1
-            t(i,j,k,1,isalt)=31.0_r8-0.75_r8*val1
+            t(i,j,k,1,itemp)=T0(ng)+6.25_r8*val1
+            t(i,j,k,1,isalt)=S0(ng)-0.75_r8*val1
             t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
             t(i,j,k,2,isalt)=t(i,j,k,1,isalt)
           END DO
@@ -2118,6 +2305,17 @@
      &                       (1.0_r8-(2.0_r8/3.0_r8)*                   &
      &                               TANH(z_r(i,j,k)/800.0_r8))
             t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
+          END DO
+        END DO
+      END DO
+#  elif defined CBLAST
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            t(i,j,k,1,itemp)=4.0_r8+6.0_r8*EXP(z_r(i,j,k)/40.0_r8)
+            t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
+            t(i,j,k,1,isalt)=33.5_r8-1.5_r8*EXP(z_r(i,j,k)/100.0_r8)
+            t(i,j,k,2,isalt)=t(i,j,k,1,isalt)
           END DO
         END DO
       END DO
@@ -2179,11 +2377,15 @@
         DO j=JstrR,JendR
           DO i=IstrR,MIN((Lm(ng)+1)/2,IendR)
             t(i,j,k,1,itemp)=T0(ng)+5.0_r8
+            t(i,j,k,1,isalt)=0.0_r8
             t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
+            t(i,j,k,2,isalt)=t(i,j,k,1,isalt)
           END DO
           DO i=MAX((Lm(ng)+1)/2+1,IstrR),IendR
             t(i,j,k,1,itemp)=T0(ng)
+            t(i,j,k,1,isalt)=S0(ng)
             t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
+            t(i,j,k,2,isalt)=t(i,j,k,1,isalt)
           END DO
 !!        do i=IstrR,IendR
 !!         if (i.lt.Lm(ng)/2) then
@@ -2215,7 +2417,7 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             t(i,j,k,1,itemp)=10.0_r8
-            t(i,j,k,1,isalt)=0.0_r8
+            t(i,j,k,1,isalt)=30.0_r8
             t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
             t(i,j,k,2,isalt)=t(i,j,k,1,isalt)
           END DO
@@ -2276,11 +2478,22 @@
           END DO
         END DO
       END DO
-#  elif defined RIVERPLUME
+#  elif defined RIVERPLUME1
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             t(i,j,k,1,itemp)=T0(ng)+0.01_r8*REAL(k,r8)
+            t(i,j,k,1,isalt)=S0(ng)
+            t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
+            t(i,j,k,2,isalt)=t(i,j,k,1,isalt)
+          END DO
+        END DO
+      END DO
+#  elif defined RIVERPLUME2
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            t(i,j,k,1,itemp)=T0(ng)
             t(i,j,k,1,isalt)=S0(ng)
             t(i,j,k,2,itemp)=t(i,j,k,1,itemp)
             t(i,j,k,2,isalt)=t(i,j,k,1,isalt)
@@ -2324,13 +2537,12 @@
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            t(i,j,k,1,itemp)=14.0_r8+8.0_r8*EXP(z_r(i,j,k)/50.0_r8)-    &
-     &                       T0(ng)
-!!          t(i,j,k,1,itemp)=14.0_r8+(z_r(i,j,k)+75.0_r8)/150.0_r8+
+            t(i,j,k,1,itemp)=T0(ng)+8.0_r8*EXP(z_r(i,j,k)/50.0_r8)
+!!          t(i,j,k,1,itemp)=T0(ng)+(z_r(i,j,k)+75.0_r8)/150.0_r8+
 !!   &                       4.0_r8*(1.0_r8+TANH((z_r(i,j,k)+35.0_r8)/
 !!   &                                           6.5_r8))
-            t(i,j,k,1,isalt)=1.0E-04_r8*yr(i,j)-S0(ng)
-!!          t(i,j,k,1,isalt)=S0(ng)
+!!          t(i,j,k,1,isalt)=1.0E-04_r8*yr(i,j)-S0(ng)
+            t(i,j,k,1,isalt)=S0(ng)
 !!          if (j.lt.Mm(ng)/2) then
 !!            t(i,j,k,1,isalt)=0.0_r8
 !!          elseif (j.eq.Mm(ng)/2) then
@@ -2371,8 +2583,9 @@
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       DO itrc=1,NAT
         DO i=1,2
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,    &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
+     &                            NghostPoints,                         &
      &                            t(:,:,:,i,itrc))
         END DO
       END DO
@@ -2383,7 +2596,7 @@
 #endif
 
 #if defined ANA_M2CLIMA && defined M2CLIMATOLOGY
-      SUBROUTINE ana_m2clima (ng, tile)
+      SUBROUTINE ana_m2clima (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -2394,11 +2607,11 @@
       USE mod_param
       USE mod_clima
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_m2clima_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL ana_m2clima_tile (ng, model, Istr, Iend, Jstr, Jend,         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       CLIMA(ng) % ubarclm,                       &
      &                       CLIMA(ng) % vbarclm)
@@ -2406,7 +2619,7 @@
       END SUBROUTINE ana_m2clima
 !
 !***********************************************************************
-      SUBROUTINE ana_m2clima_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE ana_m2clima_tile (ng, model, Istr, Iend, Jstr, Jend,   &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ubarclm, vbarclm)
 !***********************************************************************
@@ -2420,7 +2633,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -2453,17 +2666,21 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, ubarclm)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, vbarclm)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        ubarclm)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        vbarclm)
 # endif
       RETURN
       END SUBROUTINE ana_m2clima_tile
 #endif
 
 #ifdef ANA_M2OBC
-      SUBROUTINE ana_m2obc (ng, tile)
+      SUBROUTINE ana_m2obc (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -2477,11 +2694,11 @@
       USE mod_ocean
       USE mod_stepping
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !    
-      CALL ana_m2obc_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ana_m2obc_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     knew(ng),                                    &
      &                     GRID(ng) % angler,                           &
@@ -2493,7 +2710,7 @@
       END SUBROUTINE ana_m2obc
 !
 !***********************************************************************
-      SUBROUTINE ana_m2obc_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ana_m2obc_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           knew,                                  &
      &                           angler, h, pm, pn, zeta)
@@ -2506,7 +2723,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
 
@@ -2541,28 +2758,11 @@
 !-----------------------------------------------------------------------
 !
 #if defined ESTUARY_TEST
-        cff1=0.40_r8
         cff2=0.08_r8
-        tid_flow=cff1*300.0_r8*10.0_r8
         riv_flow=cff2*300.0_r8*5.0_r8
-        IF (WESTERN_EDGE) THEN
-          my_area=0._r8
-          my_flux=0._r8
-          DO j=Jstr,Jend
-            cff=0.5_r8*(zeta(Istr-1,j,knew)+h(Istr-1,j)+                &
-     &                  zeta(Istr  ,j,knew)+h(Istr  ,j))/pn(Istr,j)
-            my_area=my_area+cff
-          END DO
-          my_flux=-tid_flow*SIN(2.0_r8*pi*time(ng)/                     &
-     &                          (12.0_r8*3600.0_r8))-riv_flow
-          DO j=Jstr,Jend
-            BOUNDARY(ng)%ubar_west(j)=my_flux/my_area
-            BOUNDARY(ng)%vbar_west(j)=0.0_r8
-          END DO
-        END IF
         IF (EASTERN_EDGE) THEN
-          my_area=0._r8
-          my_flux=0._r8
+          my_area=0.0_r8
+          my_flux=0.0_r8
           DO j=Jstr,Jend
             cff=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                &  
      &                  zeta(Iend+1,j,knew)+h(Iend+1,j))/pn(Iend,j)
@@ -2611,17 +2811,6 @@
           vbar_west(j)=0.0_r8
         END DO
       END IF
-      IF (EASTERN_EDGE) THEN
-        DO j=JstrR,JendR
-          val=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
-     &                zeta(Iend+1,j,knew)+h(Iend+1,j))
-          BOUNDARY(ng)%ubar_east(j)=-10.0_r8/val
-        END DO
-        DO j=Jstr,JendR
-          BOUNDARY(ng)%vbar_east(j)=0.0_r8
-        END DO
-      END IF
-# elif defined TEST_CHAN
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
           val=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
@@ -2716,7 +2905,7 @@
 #endif
 
 #if defined ANA_M3CLIMA && defined M3CLIMATOLOGY
-      SUBROUTINE ana_m3clima (ng, tile)
+      SUBROUTINE ana_m3clima (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -2727,11 +2916,11 @@
       USE mod_param
       USE mod_clima
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_m3clima_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL ana_m3clima_tile (ng, model, Istr, Iend, Jstr, Jend,         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       CLIMA(ng) % uclm,                          &
      &                       CLIMA(ng) % vclm)
@@ -2739,7 +2928,7 @@
       END SUBROUTINE ana_m3clima
 !
 !***********************************************************************
-      SUBROUTINE ana_m3clima_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE ana_m3clima_tile (ng, model, Istr, Iend, Jstr, Jend,   &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             uclm, vclm)
 !***********************************************************************
@@ -2753,7 +2942,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -2803,17 +2992,21 @@
       END DO
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), uclm)
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), vclm)
+      CALL exchange_u3d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        uclm)
+      CALL exchange_v3d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        vclm)
 # endif
       RETURN
       END SUBROUTINE ana_m3clima_tile
 #endif
 
 #ifdef ANA_M3OBC
-      SUBROUTINE ana_m3obc (ng, tile)
+      SUBROUTINE ana_m3obc (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -2825,25 +3018,26 @@
       USE mod_param
       USE mod_boundary
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_m3obc_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ana_m3obc_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj)
       RETURN
       END SUBROUTINE ana_m3obc
 !
 !***********************************************************************
-      SUBROUTINE ana_m3obc_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ana_m3obc_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
       USE mod_param
+      USE mod_boundary
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
@@ -2938,7 +3132,7 @@
 #endif
 
 #if defined ANA_GRID && defined MASKING
-      SUBROUTINE ana_mask (ng, tile)
+      SUBROUTINE ana_mask (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -2949,11 +3143,11 @@
       USE mod_param
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_mask_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_mask_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % pmask,                             &
      &                    GRID(ng) % rmask,                             &
@@ -2963,7 +3157,7 @@
       END SUBROUTINE ana_mask
 !
 !***********************************************************************
-      SUBROUTINE ana_mask_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_mask_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          pmask, rmask, umask, vmask)
 !***********************************************************************
@@ -2978,7 +3172,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -3020,7 +3214,7 @@
      &        (j.le.((Mm(ng)+1)/2+1))) mask(i,j)=0.0_r8
         END DO
       END DO
-# elif defined RIVERPLUME
+# elif defined RIVERPLUME1
       DO j=Jstr-2,Jend+2
         DO i=Istr-2,Iend+2
           mask(i,j)=1.0_r8
@@ -3031,6 +3225,20 @@
           mask(i,j)=0.0_r8
         END DO
         DO j=MAX(Jstr-2,Mm(ng)-16),Jend+2
+          mask(i,j)=0.0_r8
+        END DO
+      END DO
+# elif defined RIVERPLUME2
+      DO j=Jstr-2,Jend+2
+        DO i=Istr-2,Iend+2
+          mask(i,j)=1.0_r8
+        END DO
+      END DO
+      DO i=Istr-2,MIN(5,Iend+2)
+        DO j=Jstr-2,MIN(Mm(ng)-11,Jend+2)
+          mask(i,j)=0.0_r8
+        END DO
+        DO j=MAX(Jstr-2,Mm(ng)-9),Jend+2
           mask(i,j)=0.0_r8
         END DO
       END DO
@@ -3078,21 +3286,29 @@
         END DO
       END IF
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rmask)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pmask)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, umask)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, vmask)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        rmask)
+      CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pmask)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        umask)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        vmask)
 #  endif
       RETURN
       END SUBROUTINE ana_mask_tile
 #endif
 
 #if defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM)
-      SUBROUTINE ana_pair (ng, tile)
+      SUBROUTINE ana_pair (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -3104,18 +3320,18 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_pair_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_pair_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    FORCES(ng) % Pair)
       RETURN
       END SUBROUTINE ana_pair
 !
 !***********************************************************************
-      SUBROUTINE ana_pair_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_pair_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Pair)
 !***********************************************************************
@@ -3129,7 +3345,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -3166,15 +3382,108 @@
       ANA_PAIR: no values provided for PAIR.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Pair)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Pair)
 # endif
       RETURN
       END SUBROUTINE ana_pair_tile
 #endif
 
+#if defined ANA_PASSIVE && defined T_PASSIVE && defined SOLVE3D
+      SUBROUTINE ana_passive (ng, tile, model)
+!
+!=======================================================================
+!                                                                      !
+!  This routine sets initial conditions for passive inert tracers      !
+!  using analytical expressions.                                       !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_ocean
+!
+      integer, intent(in) :: ng, tile, model
+
+# include "tile.h"
+!
+      CALL ana_passive_tile (ng, model, Istr, Iend, Jstr, Jend,         &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       OCEAN(ng) % t)
+      RETURN
+      END SUBROUTINE ana_passive
+!
+!***********************************************************************
+      SUBROUTINE ana_passive_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             t)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+
+# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+!
+      USE exchange_3d_mod, ONLY : exchange_r3d_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(out) :: t(LBi:,LBj:,:,:,:)
+# else
+      real(r8), intent(out) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, ip, itrc, j, k
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Set analytical initial conditions for passive inert tracers.
+!-----------------------------------------------------------------------
+!
+# if defined MY_OPTION
+      DO ip=1,NPT
+        itrc=inert(ip)        
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              t(i,j,k,1,itrc)=???
+              t(i,j,k,2,itrc)=t(i,j,k,1,itrc)
+            END DO
+          END DO
+        END DO
+      END DO
+# else
+      ANA_PASSIVE: no values provided for t(:,:,:,1,inert(itrc))
+# endif
+# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+      DO ip=1,NPT
+        itrc=inert(ip)        
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
+     &                          t(:,:,:,1,itrc))
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
+     &                          t(:,:,:,2,itrc))
+      END DO
+# endif
+      RETURN
+      END SUBROUTINE ana_passive_tile
+#endif
+
 #if (defined TS_PSOURCE || defined UV_PSOURCE) && defined ANA_PSOURCE
-      SUBROUTINE ana_psource (ng)
+      SUBROUTINE ana_psource (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -3189,16 +3498,16 @@
       USE mod_sources
       USE mod_stepping
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, tile, model
 
       integer :: LBi, UBi, LBj, UBj
 !
-      LBi=lbound(GRID(ng)%h,DIM=1)
-      UBi=ubound(GRID(ng)%h,DIM=1)
-      LBj=lbound(GRID(ng)%h,DIM=2)
-      UBj=ubound(GRID(ng)%h,DIM=2)
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
 !
-      CALL ana_psource_grid (ng, LBi, UBi, LBj, UBj,                    &
+      CALL ana_psource_grid (ng, model, LBi, UBi, LBj, UBj,             &
      &                       nnew(ng), knew(ng), Nsrc(ng),              &
      &                       OCEAN(ng) % zeta,                          &
      &                       OCEAN(ng) % ubar,                          &
@@ -3210,6 +3519,7 @@
 # endif
      &                       GRID(ng) % h,                              &
      &                       GRID(ng) % on_u,                           &
+     &                       GRID(ng) % om_v,                           &
      &                       SOURCES(ng) % Isrc,                        &
      &                       SOURCES(ng) % Jsrc,                        &
      &                       SOURCES(ng) % Lsrc,                        &
@@ -3228,13 +3538,13 @@
       END SUBROUTINE ana_psource
 !
 !***********************************************************************
-      SUBROUTINE ana_psource_grid (ng, LBi, UBi, LBj, UBj,              &
+      SUBROUTINE ana_psource_grid (ng, model, LBi, UBi, LBj, UBj,       &
      &                             nnew, knew, Nsrc,                    &
      &                             zeta, ubar, vbar,                    &
 # ifdef SOLVE3D
      &                             u, v, z_w,                           &
 # endif
-     &                             h, on_u,                             &
+     &                             h, on_u, om_v,                       &
      &                             Isrc, Jsrc, Lsrc, Dsrc,              &
 # ifdef SOLVE3D
 #  ifdef UV_PSOURCE
@@ -3249,10 +3559,13 @@
 !
       USE mod_param
       USE mod_scalars
+# ifdef SEDIMENT
+      USE mod_sediment
+# endif
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, LBi, UBi, LBj, UBj
+      integer, intent(in) :: ng, model, LBi, UBi, LBj, UBj
       integer, intent(in) :: nnew, knew
 
       integer, intent(out) :: Nsrc
@@ -3273,6 +3586,7 @@
 #  endif
       real(r8), intent(in) :: h(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
+      real(r8), intent(in) :: om_v(LBi:,LBj:)
 
       real(r8), intent(out) :: Dsrc(:)
       real(r8), intent(out) :: Qbar(:)
@@ -3301,6 +3615,7 @@
 #  endif
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
 
       real(r8), intent(out) :: Dsrc(Msrc)
       real(r8), intent(out) :: Qbar(Msrc)
@@ -3317,7 +3632,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: is, i, j, k
+      integer :: is, i, j, k, ised
       real(r8) :: fac, my_area
 !
 !-----------------------------------------------------------------------
@@ -3333,14 +3648,47 @@
 !  located at U- or V-points so the grid locations should range from
 !  1 =< Isrc =< L  and  1 =< Jsrc =< M.
 !
-        Lsrc(:,:)=.false.
-# ifdef RIVERPLUME
+        Lsrc(:,:)=.FALSE.
+# if defined LAKE_SIGNELL
+        Nsrc=1
+        Dsrc(Nsrc)=1.0_r8
+        Isrc(Nsrc)=20
+        Jsrc(Nsrc)=1
+        Lsrc(Nsrc,itemp)=.TRUE.
+        Lsrc(Nsrc,isalt)=.TRUE.
+#  if defined SEDIMENT
+        DO ised =1,NST
+          Lsrc(Nsrc,ised+2)=.TRUE.
+        END DO
+#  endif
+# elif defined RIVERPLUME1
         Nsrc=1
         Dsrc(Nsrc)=0.0_r8
         Isrc(Nsrc)=1
         Jsrc(Nsrc)=50
-        Lsrc(Nsrc,itemp)=.true.
-        Lsrc(Nsrc,isalt)=.true.
+        Lsrc(Nsrc,itemp)=.TRUE.
+        Lsrc(Nsrc,isalt)=.TRUE.
+# elif defined RIVERPLUME2
+        Nsrc=1+Lm(ng)*2
+        DO is=1,(Nsrc-1)/2
+          Dsrc(is)=1.0_r8
+          Isrc(is)=is
+          Jsrc(is)=1
+          Lsrc(is,itemp)=.TRUE.
+          Lsrc(is,isalt)=.TRUE.
+        END DO
+        DO is=(Nsrc-1)/2+1,Nsrc-1
+          Dsrc(is)=1.0_r8
+          Isrc(is)=is-Lm(ng)
+          Jsrc(is)=Mm(ng)+1
+          Lsrc(is,itemp)=.TRUE.
+          Lsrc(is,isalt)=.TRUE.
+        END DO
+        Dsrc(Nsrc)=0.0_r8
+        Isrc(Nsrc)=1
+        Jsrc(Nsrc)=60
+        Lsrc(Nsrc,itemp)=.TRUE.
+        Lsrc(Nsrc,isalt)=.TRUE.
 # elif defined SED_TEST1
         Nsrc=Mm(ng)*2
         DO is=1,Nsrc/2
@@ -3353,16 +3701,27 @@
           Isrc(is)=Lm(ng)+1
           Jsrc(is)=is-Mm(ng)
         END DO
+# elif defined SED_TOY
+        Nsrc=1
+        DO is=1,Nsrc
+          Dsrc(is)=0.0_r8
+          Isrc(is)=10
+          Jsrc(is)=3
+        END DO
+        Lsrc(Nsrc,itemp)=.TRUE.
+        Lsrc(Nsrc,isalt)=.TRUE.
+        Lsrc(Nsrc,3)=.TRUE.
 # else
         ANA_PSOURCE: no values provided for Dsrc, Isrc, Jsrc, Lsrc.
 # endif
       END IF
-# ifdef SOLVE3D
+# ifdef UV_PSOURCE
+#  ifdef SOLVE3D
 !
 !  If appropriate, set-up nondimensional shape function to distribute
-!  mass point sources/sinks vertically.  It most add to unity!!.
+!  mass point sources/sinks vertically.  It must add to unity!!.
 !
-#  if defined SED_TEST1
+#   if defined SED_TEST1
         DO k=1,N(ng)
           DO is=1,Nsrc
             i=Isrc(is)
@@ -3374,21 +3733,33 @@
      &                    z_w(i  ,Mm(ng)/2,N(ng))-z_w(i  ,Mm(ng)/2,0))
           END DO
         END DO
-#  else
+#   elif defined RIVERPLUME2
+        DO k=1,N(ng)
+          DO is=1,Nsrc-1
+            i=Isrc(is)
+            j=Jsrc(is)
+            Qshape(is,k)=ABS(v(i,j,k,nnew)/vbar(i,j,knew))*             &
+     &                   (z_w(i,j-1,k)-z_w(i,j-1,k-1)+                  &
+     &                    z_w(i  ,j,k)-z_w(i  ,j,k-1))/                 &
+     &                   (z_w(i,j-1,N(ng))-z_w(i,j-1,0)+                &
+     &                    z_w(i  ,j,N(ng))-z_w(i  ,j,0))
+          END DO
+          Qshape(Nsrc,k)=1.0_r8/REAL(N(ng),r8)
+        END DO
+#   else
         DO k=1,N(ng)
           DO is=1,Nsrc
             Qshape(is,k)=1.0_r8/REAL(N(ng),r8)
           END DO
         END DO
+#   endif
 #  endif
-# endif
-# ifdef UV_PSOURCE
 !
 !  Set-up vertically integrated mass transport (m3/s) of point
 !  Sources/Sinks (positive in the positive U- or V-direction and
 !  viceversa).
 !
-#  if defined RIVERPLUME
+#  if defined RIVERPLUME1 || defined LAKE_SIGNELL
       IF ((tdays(ng)-dstart).lt.0.5_r8) THEN
         fac=1.0_r8+TANH((time(ng)-43200.0_r8)/43200.0_r8)
       ELSE
@@ -3397,15 +3768,31 @@
       DO is=1,Nsrc
         Qbar(is)=fac*1500.0_r8
       END DO
+#  elif defined RIVERPLUME2
+      DO is=1,(Nsrc-1)/2                     ! North end
+        i=Isrc(is)
+        j=Jsrc(is)
+        Qbar(is)=-0.05_r8*om_v(i,j)*(0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+ &
+     &                                       zeta(i  ,j,knew)+h(i  ,j)))
+      END DO
+      ! South End
+      DO is=(Nsrc-1)/2+1,Nsrc-1              ! South end
+        i=Isrc(is)
+        j=Jsrc(is)
+        Qbar(is)=-0.05_r8*om_v(i,j)*(0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+ &
+     &                                       zeta(i  ,j,knew)+h(i  ,j)))
+      END DO
+      Qbar(Nsrc)=1500.0_r8                   ! West wall
 #  elif defined SED_TEST1
-      my_area=0.0_r8         ! West end
+      my_area=0.0_r8                         ! West end
       DO is=1,Nsrc/2
         i=Isrc(is)
         j=Jsrc(is)
         my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
      &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
       END DO
-      fac=-1000.0_r8*10.0_r8*1.0_r8
+!!    fac=-1000.0_r8*10.0_r8*1.0_r8
+      fac=-500.0_r8*10.0_r8*1.0_r8
       DO is=1,Nsrc/2
         i=Isrc(is)
         j=Jsrc(is)
@@ -3413,14 +3800,15 @@
      &                        zeta(i  ,j,knew)+h(i  ,j)))*              &
      &           on_u(i,j)/my_area
       END DO
-      my_area=0.0_r8         ! East end
+      my_area=0.0_r8                         ! East end
       DO is=Nsrc/2+1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)
         my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
      &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
       END DO
-      fac=-1000.0_r8*10.0_r8*1.0_r8
+!!    fac=-1000.0_r8*10.0_r8*1.0_r8
+      fac=-500.0_r8*10.0_r8*1.0_r8
       DO is=Nsrc/2+1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)
@@ -3428,6 +3816,12 @@
      &                        zeta(i  ,j,knew)+h(i  ,j)))*              &
      &           on_u(i,j)/my_area
       END DO
+#  elif defined SED_TOY
+      is=Nsrc
+      i=Isrc(is)
+      j=Jsrc(is)
+      fac=0.0_r8
+      Qbar(is)=fac
 #  else
       ANA_PSOURCE: no values provided for Qbar.
 #  endif
@@ -3446,12 +3840,36 @@
 !
 !  Set-up tracer (tracer units) point Sources/Sinks.
 !
-#  ifdef RIVERPLUME
+#  if defined RIVERPLUME1 || defined LAKE_SIGNELL
       DO k=1,N(ng)
         DO is=1,Nsrc
           Tsrc(is,k,itemp)=T0(ng)
           Tsrc(is,k,isalt)=0.0_r8
+#   ifdef SEDIMENT
+          DO ised=1,NST
+            Tsrc(is,k,ised+2)=0.0_r8
+          END DO
+#   endif
         END DO
+      END DO
+#  elif defined RIVERPLUME2
+      DO k=1,N(ng)
+        DO is=1,Nsrc-1
+          Tsrc(is,k,itemp)=T0(ng)
+          Tsrc(is,k,isalt)=S0(ng)
+        END DO
+        Tsrc(Nsrc,k,itemp)=T0(ng)
+        Tsrc(Nsrc,k,isalt)=0.0_r8
+      END DO
+#  elif defined SED_TOY
+      DO k=1,N(ng)
+        DO is=1,Nsrc
+          Tsrc(is,k,itemp)=T0(ng)
+          Tsrc(is,k,isalt)=S0(ng)
+        END DO
+#   ifdef SEDIMENT
+        Tsrc(Nsrc,k,3)=1.0_r8
+#   endif
       END DO
 #  else
       ANA_PSOURCE: no values provided for Tsrc.
@@ -3462,7 +3880,7 @@
 #endif
 
 #if defined ANA_RAIN && defined BULK_FLUXES
-      SUBROUTINE ana_rain (ng, tile)
+      SUBROUTINE ana_rain (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -3474,18 +3892,18 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_rain_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_rain_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    FORCES(ng) % rain)
       RETURN
       END SUBROUTINE ana_rain
 !
 !***********************************************************************
-      SUBROUTINE ana_rain_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_rain_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          rain)
 !***********************************************************************
@@ -3499,7 +3917,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -3525,15 +3943,17 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rain)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        rain)
 # endif
       RETURN
       END SUBROUTINE ana_rain_tile
 #endif
 
 #if defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
-      SUBROUTINE ana_sediment (ng, tile)
+      SUBROUTINE ana_sediment (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -3548,15 +3968,17 @@
       USE mod_grid
       USE mod_ocean
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_sediment_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL ana_sediment_tile (ng, model, Istr, Iend, Jstr, Jend,        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % pm,                            &
      &                        GRID(ng) % pn,                            &
-# if defined BBL_MODEL && defined MB_BBL
+     &                        GRID(ng) % xr,                            &
+     &                        GRID(ng) % yr,                            &
+# if defined BBL_MODEL && (defined MB_BBL || defined SSW_BBL)
      &                        OCEAN(ng) % rho,                          &
 # endif
 # ifdef SEDIMENT
@@ -3570,10 +3992,11 @@
       END SUBROUTINE ana_sediment
 !
 !***********************************************************************
-      SUBROUTINE ana_sediment_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE ana_sediment_tile (ng, model, Istr, Iend, Jstr, Jend,  &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              pm, pn,                             &
-# if defined BBL_MODEL && defined MB_BBL
+     &                              xr, yr,                             &
+# if defined BBL_MODEL && (defined MB_BBL || defined SSW_BBL)
      &                              rho,                                &
 # endif
 # ifdef SEDIMENT
@@ -3594,33 +4017,37 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
-#  if defined BBL_MODEL && defined MB_BBL
+      real(r8), intent(in) :: xr(LBi:,LBj:)
+      real(r8), intent(in) :: yr(LBi:,LBj:)
+#  if defined BBL_MODEL && (defined MB_BBL || defined SSW_BBL)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
 #  endif
 #  ifdef SEDIMENT
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(out) :: bed(LBi:,LBj:,:,:)
       real(r8), intent(out) :: bed_frac(LBi:,LBj:,:,:)
-      real(r8), intent(out) :: bed_mass(LBi:,LBj:,:,:)
+      real(r8), intent(out) :: bed_mass(LBi:,LBj:,:,:,:)
 #  endif
       real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
 # else
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
-#  if defined BBL_MODEL && defined MB_BBL
+      real(r8), intent(in) :: xr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: yr(LBi:UBi,LBj:UBj)
+#  if defined BBL_MODEL && (defined MB_BBL || defined SSW_BBL)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
 #  endif
 #  ifdef SEDIMENT
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(out) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
       real(r8), intent(out) :: bed_frac(LBi:UBi,LBj:UBj,Nbed,NST)
-      real(r8), intent(out) :: bed_mass(LBi:UBi,LBj:UBj,Nbed,NST)
+      real(r8), intent(out) :: bed_mass(LBi:UBi,LBj:UBj,Nbed,2,NST)
 #  endif
       real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
 # endif
@@ -3629,7 +4056,7 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, ised, j, k
-      real(r8) :: cff1, cff2, cff3, cff4
+      real(r8) :: cff1, cff2, cff3, cff4, Kvisc, phinot
 
 # include "set_bounds.h"
 
@@ -3647,7 +4074,14 @@
           bottom(i,j,idens)=2650.0_r8
         END DO
       END DO
-#  elif defined LAKE_SIGNELL
+#  elif defined LAKE_SIGNELL || defined ADRIA02 
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          bottom(i,j,isd50)=0.000150_r8    ! 150 microns
+          bottom(i,j,idens)=2650.0_r8
+        END DO
+      END DO
+#  elif defined SED_TOY
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           bottom(i,j,isd50)=0.0005_r8
@@ -3657,7 +4091,7 @@
 #  else
       ANA_SEDIMENT: no values provided for bottom sediment properties.
 #  endif
-#  ifdef MB_BBL
+#  if defined MB_BBL || defined SSW_BBL
 #   undef YALIN
 !
 !-----------------------------------------------------------------------
@@ -3701,7 +4135,6 @@
         END DO
       END DO
 #   endif
-#  endif
 !
 !-----------------------------------------------------------------------
 !  If only Blass bottom boundary layer and not sediment model, set
@@ -3721,6 +4154,7 @@
 !!   &                      1.049_r8*D*D*D)-10.36_r8)/bottom(i,j,isd50)
         END DO
       END DO
+#  endif
 # endif
 
 # ifdef SEDIMENT
@@ -3733,8 +4167,31 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
+#  ifdef SED_TOY
+              IF ((i.ge.20).and.(i.le.30)) THEN       ! square wave
+                t(i,j,k,1,idsed(ised))=100.0_r8
+              ELSE
+                t(i,j,k,1,idsed(ised))=0.0_r8
+              END IF
+!!            IF (yr(i,j).le.7.0_r8) THEN             ! sinusoidal shape
+!!              phinot=0.0_r8
+!!            ELSE IF (yr(i,j).le.28.0_r8) THEN
+!!              phinot=-1.0_r8
+!!            ELSE IF (yr(i,j).le.39.0_r8) then
+!!              phinot=1.0_r8
+!!            ELSE
+!!              phinot=0.0_r8
+!!            END if
+!!            t(i,j,k,1,idsed(ised))=2.0_r8+phinot*                     &
+!!   &                               (1.0_r8+0.3_r8*                    &
+!!   &                                SIN(2.0_r8*pi*yr(i,j)/9.0_r8))*   &
+!!   &                               (1.0_r8+0.4_r8*                    &
+!!   &                                SIN(2.0_r8*pi*yr(i,j)/10.0_r8))
+              t(i,j,k,2,idsed(ised))=t(i,j,k,1,idsed(ised))
+#  else
               t(i,j,k,1,idsed(ised))=Csed(ised,ng)
               t(i,j,k,2,idsed(ised))=t(i,j,k,1,idsed(ised))
+#  endif
             END DO
           END DO
         END DO
@@ -3744,13 +4201,13 @@
 !  Initial sediment bed layer properties.
 !-----------------------------------------------------------------------
 !
-#  if defined LAKE_SIGNELL || defined ESTUARY_TEST
+#  if defined LAKE_SIGNELL || defined ESTUARY_TEST || defined ADRIA02
       DO k=1,Nbed
         DO j=JstrR,JendR
           DO i=IstrR,IendR
              bed(i,j,k,iaged)=time(ng)
-             bed(i,j,k,ithck)=1.0_r8
-             bed(i,j,k,iporo)=0.00_r8
+             bed(i,j,k,ithck)=0.10_r8
+             bed(i,j,k,iporo)=0.90_r8
              DO ised=1,NST
                bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
              ENDDO
@@ -3759,9 +4216,11 @@
 !  porosity.
 !
              DO ised=1,NST
-               bed_mass(i,j,k,ised)=bed(i,j,k,ithck)*                   &
-    &                   Srho(ised,ng)*(1.0_r8-bed(i,j,k,iporo))*        &
-    &                   bed_frac(i,j,k,ised)
+               bed_mass(i,j,k,1,ised)=bed(i,j,k,ithck)*                 &
+    &                                 Srho(ised,ng)*                    &
+    &                                 (1.0_r8-bed(i,j,k,iporo))*        &
+    &                                 bed_frac(i,j,k,ised)
+               bed_mass(i,j,k,2,ised)=bed_mass(i,j,k,1,ised)
              END DO
           END DO
         END DO
@@ -3770,7 +4229,7 @@
 !  Set exposed sediment layer properties.
 !
       DO j=JstrR,JendR
-        DO i=Istr,Iend
+        DO i=IstrR,IendR
           cff1=1.0_r8
           cff2=1.0_r8
           cff3=1.0_r8
@@ -3779,12 +4238,111 @@
             cff1=cff1*Sd50(ised,ng)**bed_frac(i,j,1,ised)
             cff2=cff2*Srho(ised,ng)**bed_frac(i,j,1,ised)
             cff3=cff3*wsed(ised,ng)**bed_frac(i,j,1,ised)
-            cff3=cff4*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
+            cff4=cff4*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
           END DO
           bottom(i,j,isd50)=cff1
           bottom(i,j,idens)=cff2
           bottom(i,j,iwsed)=cff3
           bottom(i,j,itauc)=cff4
+          bottom(i,j,irlen)=0.10_r8
+          bottom(i,j,irhgt)=0.01_r8
+          bottom(i,j,izdef)=Zob(ng)
+        END DO
+      END DO
+# elif defined SED_TOY
+      DO k=1,Nbed
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+             bed(i,j,k,iaged)=time(ng)
+!!           bed(i,j,k,ithck)=0.25_r8
+             bed(i,j,k,ithck)=0.00_r8
+             bed(i,j,k,iporo)=0.50_r8
+             DO ised=1,NST
+               bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+             ENDDO
+!
+!  Calculate mass so it is consistent with density, thickness, and
+!  porosity.
+!
+             DO ised=1,NST
+               bed_mass(i,j,k,1,ised)=bed(i,j,k,ithck)*                 &
+    &                                 Srho(ised,ng)*                    &
+    &                                 (1.0_r8-bed(i,j,k,iporo))*        &
+    &                                 bed_frac(i,j,k,ised)
+               bed_mass(i,j,k,2,ised)=bed_mass(i,j,k,1,ised)
+             END DO
+          END DO
+        END DO
+      END DO
+!
+!  Set exposed sediment layer properties.
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          cff1=1.0_r8
+          cff2=1.0_r8
+          cff3=1.0_r8
+          cff4=1.0_r8
+          DO ised=1,NST
+            cff1=cff1*Sd50(ised,ng)**bed_frac(i,j,1,ised)
+            cff2=cff2*Srho(ised,ng)**bed_frac(i,j,1,ised)
+            cff3=cff3*wsed(ised,ng)**bed_frac(i,j,1,ised)
+            cff4=cff4*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
+          END DO
+          bottom(i,j,isd50)=cff1
+          bottom(i,j,idens)=cff2
+          bottom(i,j,iwsed)=cff3
+          bottom(i,j,itauc)=cff4
+          bottom(i,j,irlen)=0.10_r8
+          bottom(i,j,irhgt)=0.01_r8
+          bottom(i,j,izdef)=Zob(ng)
+        END DO
+      END DO
+# elif defined SED_TEST1
+      DO k=1,Nbed
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+             bed(i,j,k,iaged)=time(ng)
+             bed(i,j,k,ithck)=0.25_r8
+             bed(i,j,k,iporo)=0.50_r8
+             DO ised=1,NST
+               bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
+             ENDDO
+!
+!  Calculate mass so it is consistent with density, thickness, and
+!  porosity.
+!
+             DO ised=1,NST
+               bed_mass(i,j,k,1,ised)=bed(i,j,k,ithck)*                 &
+    &                                 Srho(ised,ng)*                    &
+    &                                 (1.0_r8-bed(i,j,k,iporo))*        &
+    &                                 bed_frac(i,j,k,ised)
+               bed_mass(i,j,k,2,ised)=bed_mass(i,j,k,1,ised)
+             END DO
+          END DO
+        END DO
+      END DO
+!
+!  Set exposed sediment layer properties.
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          cff1=1.0_r8
+          cff2=1.0_r8
+          cff3=1.0_r8
+          cff4=1.0_r8
+          DO ised=1,NST
+            cff1=cff1*Sd50(ised,ng)**bed_frac(i,j,1,ised)
+            cff2=cff2*Srho(ised,ng)**bed_frac(i,j,1,ised)
+            cff3=cff3*wsed(ised,ng)**bed_frac(i,j,1,ised)
+            cff4=cff4*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
+          END DO
+          bottom(i,j,isd50)=cff1
+          bottom(i,j,idens)=cff2
+          bottom(i,j,iwsed)=cff3
+          bottom(i,j,itauc)=cff4
+          bottom(i,j,irlen)=0.10_r8
+          bottom(i,j,irhgt)=0.01_r8
           bottom(i,j,izdef)=Zob(ng)
         END DO
       END DO
@@ -3800,34 +4358,41 @@
 !
 #  ifdef SEDIMENT
       DO ised=1,NST
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          t(:,:,:,1,idsed(ised)))
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          t(:,:,:,2,idsed(ised)))
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          NghostPoints,                           &
      &                          bed_frac(:,:,:,ised))
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-     &                          bed_mass(:,:,:,ised))
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          NghostPoints,                           &
+     &                          bed_mass(:,:,:,1,ised))
       END DO
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, MBEDP,             &
-     &                        bed)
+      DO ised=1,MBEDP
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          NghostPoints,                           &
+     &                          bed(:,:,:,ised))
+      END DO
 #  endif
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
      &                        LBi, UBi, LBj, UBj, 1, MBOTP,             &
+     &                        NghostPoints,                             &
      &                        bottom)
 # endif
-
       RETURN
       END SUBROUTINE ana_sediment_tile
 #endif
 
 #ifdef ANA_SMFLUX
-      SUBROUTINE ana_smflux (ng, tile)
+      SUBROUTINE ana_smflux (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -3840,11 +4405,11 @@
       USE mod_forces
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_smflux_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ana_smflux_tile (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      GRID(ng) % angler,                          &
 # ifdef SPHERICAL
@@ -3860,7 +4425,7 @@
       END SUBROUTINE ana_smflux
 !
 !***********************************************************************
-      SUBROUTINE ana_smflux_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ana_smflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            angler,                               &
 # ifdef SPHERICAL
@@ -3881,7 +4446,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -3914,7 +4479,7 @@
       integer :: i, j
       real(r8) :: Ewind, Nwind, val1, val2, windamp, winddir
 # ifdef LAKE_SIGNELL
-      real(r8) :: mxst, mxtm, rmptm
+      real(r8) :: cff1, mxst, ramp_u, ramp_time, ramp_d
 # endif
 
 # include "set_bounds.h"
@@ -3948,14 +4513,15 @@
      &               (1.0_r8-TANH((yr(i,j)-0.5_r8*el(ng))/10000.0_r8))
         END DO
       END DO
+# elif defined CRG_BAN_TEST
+      DO j=JstrR,JendR
+         DO i=Istr,IendR
+           sustr(i,j)=0.0001_r8        ! m2/s2
+         END DO
+      END DO
 # elif defined DOUBLE_GYRE
-      IF ((tdays(ng)-dstart).le.2.0_r8) THEN
-!!      windamp=-0.05_r8*SIN(pi*tdays(ng)/4.0_r8)/rho0
-        windamp=user(1)*SIN(pi*tdays(ng)/4.0_r8)/rho0
-      ELSE
-!!      windamp=-0.05_r8/rho0
-        windamp=user(1)/rho0
-      END IF
+!!    windamp=user(1)/rho0
+      windamp=-0.05_r8/rho0
       val1=2.0_r8*pi/el(ng)
       DO j=JstrR,JendR
         DO i=Istr,IendR
@@ -3969,19 +4535,18 @@
         END DO
       END DO
 # elif defined LAKE_SIGNELL
-      mxst=0.2515_r8          ! N/m2
-      mxtm=48.0_r8            ! hours
-      rmptm=3.0_r8            ! hours
+!!    mxst=0.2515_r8          ! N/m2
+      mxst=0.2000_r8          ! N/m2
+      ramp_u=5.0_r8           ! start ramp UP at RAMP_UP hours
+      ramp_time=10.0_r8       ! ramp from 0 to 1 over RAMP_TIME hours
+      ramp_d=35.0_r8          ! start ramp DOWN at RAMP_DOWN hours
       DO j=JstrR,JendR
          DO i=Istr,IendR
-!!         sustr(i,j)=0.0_r8
-           sustr(i,j)=MIN(mxst/rho0*                                    &
-     &                    (TANH((time(ng)/60.0_r8-rmptm*150.0_r8)/      &
-     &                           150.0_r8)+1.0_r8)*0.5_r8,              &
-     &                    mxst/rho0*                                    &
-     &                    (TANH(((mxtm*3600.0_r8-time(ng))/             &
-     &                           60.0_r8-rmptm*150.0_r8)/150.0_r8)+     &
-     &                     1.0_r8)*0.5_r8)
+           cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/          &
+     &                            (ramp_time/5.0_r8))+1.0_r8)),         &
+     &              (1.0_r8-(0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_d)/  &
+     &                                    (ramp_time/5.0_r8))+1.0_r8))))
+           sustr(i,j)=mxst/rho0*cff1
          END DO
       END DO
 # elif defined LMD_TEST
@@ -4025,6 +4590,13 @@
           val1=0.5_r8*(angler(i-1,j)+angler(i,j))
           sustr(i,j)=Ewind*COS(val1)+Nwind*SIN(val1)
         END DO
+      END DO
+# elif defined SED_TOY
+      DO j=JstrR,JendR
+         DO i=Istr,IendR
+           sustr(i,j)=0.001_r8
+!!         sustr(i,j)=0.0_r8
+         END DO
       END DO
 # elif defined UPWELLING
       IF ((tdays(ng)-dstart).le.2.0_r8) THEN
@@ -4095,6 +4667,12 @@
           svstr(i,j)=-Ewind*SIN(val1)+Nwind*COS(val1)
         END DO
       END DO
+# elif defined SED_TOY
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          svstr(i,j)=0.0_r8
+        END DO
+      END DO
 # elif defined USWEST
       DO j=Jstr,JendR
         DO i=IstrR,IendR
@@ -4109,17 +4687,21 @@
       END DO
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, sustr)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, svstr)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        sustr)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        svstr)
 # endif
       RETURN
       END SUBROUTINE ana_smflux_tile
 #endif
 
 #ifdef ANA_SPINNING
-      SUBROUTINE ana_spinning (ng, tile)
+      SUBROUTINE ana_spinning (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -4132,11 +4714,11 @@
       USE mod_param
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_spinning_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL ana_spinning_tile (ng, model, Istr, Iend, Jstr, Jend,        &
      &                        LBi, UBi, LBj, UBj,                       &
 # ifdef SPHERICAL
      &                        GRID(ng) % lonr,                          &
@@ -4152,7 +4734,7 @@
       END SUBROUTINE ana_spinning
 !
 !***********************************************************************
-      SUBROUTINE ana_spinning_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE ana_spinning_tile (ng, model, Istr, Iend, Jstr, Jend,  &
      &                              LBi, UBi, LBj, UBj,                 &
 # ifdef SPHERICAL
      &                              lonr, latr                          &
@@ -4167,7 +4749,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -4241,7 +4823,7 @@
 #endif
 
 #if (defined ANA_SRFLUX && defined SOLVE3D) || defined DIURNAL_SRFLUX 
-      SUBROUTINE ana_srflux (ng, tile)
+      SUBROUTINE ana_srflux (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -4254,11 +4836,11 @@
       USE mod_forces
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_srflux_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ana_srflux_tile (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      GRID(ng) % lonr,                            &
      &                      GRID(ng) % latr,                            &
@@ -4272,7 +4854,7 @@
       END SUBROUTINE ana_srflux
 !
 !***********************************************************************
-      SUBROUTINE ana_srflux_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ana_srflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            lonr, latr,                           &
 # ifdef ALBEDO 
@@ -4291,7 +4873,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -4426,15 +5008,17 @@
       END DO
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, srflx)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        srflx)
 # endif
       RETURN
       END SUBROUTINE ana_srflux_tile
 #endif
 
 #if defined ECOSIM && defined SOLVE3D
-      SUBROUTINE ana_specir (ng, tile)
+      SUBROUTINE ana_specir (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -4456,11 +5040,11 @@
 !
       implicit none
 
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_specir_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ana_specir_tile (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      GRID(ng) % lonr,                            &
      &                      GRID(ng) % latr,                            &
@@ -4476,7 +5060,7 @@
       END SUBROUTINE ana_specir
 !
 !***********************************************************************
-      SUBROUTINE ana_specir_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ana_specir_tile (ng, model, Istr, Iend, Jstr, Jend,    &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            lonr, latr,                           &
      &                            cloud, Hair, Tair, Pair,              &
@@ -4487,7 +5071,8 @@
       USE mod_param
       USE mod_scalars
       USE mod_eclight
-
+      USE mod_iounits
+!  
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
       USE exchange_2d_mod, ONLY : exchange_r2d_tile
@@ -4497,7 +5082,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -4586,7 +5171,7 @@
         qlam(iband)=ec_wave_ab(iband)*cff
       END DO
 !
-!  Correct solar constant for Earth-Sun distance
+!  Correct solar constant for Earth-Sun distance.
 !
       cff=(1.0_r8+0.0167_r8*COS(2.0_r8*pi*(yday-3.0_r8)/365.0_r8))**2
       DO iband=1,NBands
@@ -4603,19 +5188,19 @@
 !
 !  Compute Climatological Ozone.
 !
-          to3=235.0_r8+(150.0_r8+40.0_r8*                               &
-     &        SIN(0.9865_r8*(yday-30.0_r8)*deg2rad)+                    &
-     &        20.0_r8*SIN(3.0_r8*LonRad))*                              &
-     &        SIN(1.28_r8*LatRad)*SIN(1.28_r8*LatRad)*                  &
+          to3=(235.0_r8+(150.0_r8+40.0_r8*                              &
+     &         SIN(0.9865_r8*(yday-30.0_r8)*deg2rad)+                   &
+     &         20.0_r8*SIN(3.0_r8*LonRad))*                             &
+     &         SIN(1.28_r8*LatRad)*SIN(1.28_r8*LatRad))*                &
      &        0.001_r8                                 ! sco3 conversion
 !
 !  Local daylight is a function of the declination (Dangle) and hour 
 !  angle adjusted for the local meridian (Hangle-lonr(i,j)*deg2rad). 
 !
-          zenith=SIN(LatRad)*SIN(Dangle)+                               &
+          cosunz=SIN(LatRad)*SIN(Dangle)+                               &
      &           COS(LatRad)*COS(Dangle)*COS(Hangle-lonr(i,j)*deg2rad)
+          zenith=ACOS(cosunz)
           theta=zenith*rad2deg
-          cosunz=COS(zenith)
 !
 !  Model for atmospheric transmittance of solar irradiance through
 !  a maritime atmosphere.  Computes direct and diffuse separately.
@@ -4763,7 +5348,7 @@
             DO iband=1,NBands
               rlam=ec_wave_ab(iband)*0.001_r8
 !
-!  Transmittance, Rayleigh, by Bird method.
+!  Transmittance, Rayleigh, by the method of Bird.
 !
               rtra=EXP(-rmp/(115.6406_r8*rlam**4-1.335_r8*rlam**2))
 !
@@ -4812,9 +5397,9 @@
                 Ed(iband)=Edir(iband)+Edif(iband)
               END IF
 !
-!  Convert to micromole quanta.
+!  Convert from W/cm/um to micromole quanta/m2/s.
 !
-              SpecIr(i,j,iband)=Ed(iband)*qlam(iband)
+              SpecIr(i,j,iband)=Ed(iband)*10.0_r8*qlam(iband)
 !
 !  Correction of zenith angle after crossing air/sea interface.
 !
@@ -4832,10 +5417,14 @@
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       DO iband=1,NBands
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, SpecIr(:,:,iband))
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, avcos(:,:,iband))
+        CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          SpecIr(:,:,iband))
+        CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          avcos(:,:,iband))
       END DO
 # endif
       RETURN
@@ -4843,7 +5432,7 @@
 #endif
 
 #if defined ANA_SSH && defined ZCLIMATOLOGY
-      SUBROUTINE ana_ssh (ng, tile)
+      SUBROUTINE ana_ssh (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -4854,18 +5443,18 @@
       USE mod_param
       USE mod_clima
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_ssh_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL ana_ssh_tile (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   CLIMA(ng) % ssh)
       RETURN
       END SUBROUTINE ana_ssh
 !
 !***********************************************************************
-      SUBROUTINE ana_ssh_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ana_ssh_tile (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         ssh)
 !***********************************************************************
@@ -4879,7 +5468,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -4905,8 +5494,10 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, ssh)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        ssh)
 # endif
       RETURN
       END SUBROUTINE ana_ssh_tile
@@ -4914,7 +5505,7 @@
 
 #if defined SALINITY    && defined ANA_SSS && \
    (defined SCORRECTION || defined SRELAXATION)
-      SUBROUTINE ana_sss (ng, tile)
+      SUBROUTINE ana_sss (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -4926,18 +5517,18 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_sss_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL ana_sss_tile (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   FORCES(ng) % sss)
       RETURN
       END SUBROUTINE ana_sss
 !
 !***********************************************************************
-      SUBROUTINE ana_sss_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ana_sss_tile (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         sss)
 !***********************************************************************
@@ -4951,7 +5542,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -4978,15 +5569,17 @@
       END DO
       ANA_SST: no values provided for SST.
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, sss)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        sss)
 # endif
       RETURN
       END SUBROUTINE ana_sss_tile
 #endif
 
 #if defined ANA_SST && defined QCORRECTION
-      SUBROUTINE ana_sst (ng, tile)
+      SUBROUTINE ana_sst (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -5004,11 +5597,11 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_sst_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL ana_sst_tile (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   FORCES(ng) % sst,                              &
      &                   FORCES(ng) % dqdt)
@@ -5016,7 +5609,7 @@
       END SUBROUTINE ana_sst
 !
 !***********************************************************************
-      SUBROUTINE ana_sst_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ana_sst_tile (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         sst, dqdt)
 !***********************************************************************
@@ -5030,7 +5623,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5061,17 +5654,21 @@
       END DO
       ANA_SST: no values provided for SST and DQDT.
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, sst)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, dqdt)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        sst)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        dqdt)
 # endif
       RETURN
       END SUBROUTINE ana_sst_tile
 #endif
 
 #if defined ANA_STFLUX || defined ANA_SSFLUX || defined ANA_SPFLUX
-      SUBROUTINE ana_stflux (ng, tile, itrc)
+      SUBROUTINE ana_stflux (ng, tile, model, itrc)
 !
 !=======================================================================
 !                                                                      !
@@ -5083,11 +5680,11 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile, itrc
+      integer, intent(in) :: ng, tile, model, itrc
 !
 # include "tile.h"
 !
-      CALL ana_stflux_tile (ng, Istr, Iend, Jstr, Jend, itrc,           &
+      CALL ana_stflux_tile (ng, model, Istr, Iend, Jstr, Jend, itrc,    &
      &                      LBi, UBi, LBj, UBj,                         &
 # ifdef SHORTWAVE
      &                      FORCES(ng) % srflx,                         &
@@ -5097,8 +5694,8 @@
       END SUBROUTINE ana_stflux
 !
 !***********************************************************************
-      SUBROUTINE ana_stflux_tile (ng, Istr, Iend, Jstr, Jend, itrc,     &
-     &                            LBi, UBi, LBj, UBj,                   &
+      SUBROUTINE ana_stflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+     &                            itrc, LBi, UBi, LBj, UBj,             &
 # ifdef SHORTWAVE
      &                            srflx,                                &
 # endif
@@ -5115,7 +5712,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5177,8 +5774,10 @@
         END DO
       END IF
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, stflx(:,:,itrc))
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        stflx(:,:,itrc))
 # endif
       RETURN
       END SUBROUTINE ana_stflux_tile
@@ -5187,7 +5786,7 @@
 #if defined ANA_TAIR && \
   ( defined BULK_FLUXES || defined ECOSIM || \
    (defined ANA_SRFLUX && defined ALBEDO) )
-      SUBROUTINE ana_tair (ng, tile)
+      SUBROUTINE ana_tair (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -5199,18 +5798,18 @@
       USE mod_param
       USE mod_forces
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_tair_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_tair_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    FORCES(ng) % Tair)
       RETURN
       END SUBROUTINE ana_tair
 !
 !***********************************************************************
-      SUBROUTINE ana_tair_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_tair_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Tair)
 !***********************************************************************
@@ -5224,7 +5823,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5244,13 +5843,7 @@
 !  Set analytical surface air temperature (degC).
 !-----------------------------------------------------------------------
 !
-# if defined ADRIATIC1 || defined ADRIATIC2
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          Tair(i,j)=12.0_r8
-        END DO
-      END DO
-# elif defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
+# if defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           Tair(i,j)=4.0_r8
@@ -5266,15 +5859,17 @@
       ANA_TAIR: no values provided for TAIR.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Tair)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Tair)
 # endif
       RETURN
       END SUBROUTINE ana_tair_tile
 #endif
 
 #if defined ANA_TCLIMA && defined TCLIMATOLOGY
-      SUBROUTINE ana_tclima (ng, tile)
+      SUBROUTINE ana_tclima (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -5285,18 +5880,18 @@
       USE mod_param
       USE mod_clima
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include  "tile.h"
 !
-      CALL ana_tclima_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ana_tclima_tile (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      CLIMA(ng) % tclm)
       RETURN
       END SUBROUTINE ana_tclima
 !
 !***********************************************************************
-      SUBROUTINE ana_tclima_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ana_tclima_tile (ng, model, Istr, Iend, Jstr, Jend,    &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            tclm)
 !***********************************************************************
@@ -5312,7 +5907,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5324,7 +5919,7 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, k
+      integer :: i, itrc, j, k
       real(r8) :: val1, val2, val3
 
 # include "set_bounds.h"
@@ -5358,8 +5953,9 @@
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       DO itrc=1,NAT
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          tclm(:,:,:,itrc))
       END DO
 # endif
@@ -5368,7 +5964,7 @@
 #endif
 
 #ifdef ANA_TOBC
-      SUBROUTINE ana_tobc (ng, tile)
+      SUBROUTINE ana_tobc (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -5381,18 +5977,18 @@
       USE mod_boundary
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_tobc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_tobc_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % z_r)
       RETURN
       END SUBROUTINE ana_tobc
 !
 !***********************************************************************
-      SUBROUTINE ana_tobc_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_tobc_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          z_r)
 !***********************************************************************
@@ -5403,7 +5999,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5448,6 +6044,55 @@
               BOUNDARY(ng)%t_west(j,k,idsed(ised))=0.0_r8
             END DO
 #  endif
+          END DO
+        END DO
+      END IF
+# elif defined CBLAST
+      IF (EASTERN_EDGE) THEN
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            BOUNDARY(ng)%t_east(j,k,itemp)=4.0_r8+                      &
+     &                                     6.0_r8*EXP(z_r(Iend+1,j,k)*  &
+     &                                                0.025_r8)
+            BOUNDARY(ng)%t_east(j,k,isalt)=33.5_r8-                     &
+     &                                     1.5_r8*EXP(z_r(Iend+1,j,k)*  &
+     &                                                0.01_r8)
+          END DO
+        END DO
+      END IF
+      IF (WESTERN_EDGE) THEN
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            BOUNDARY(ng)%t_west(j,k,itemp)=4.0_r8+                      &
+     &                                     6.0_r8*EXP(z_r(Istr-1,j,k)*  &
+     &                                                0.025_r8)
+            BOUNDARY(ng)%t_west(j,k,isalt)=33.5_r8-                     &
+     &                                     1.5_r8*EXP(z_r(Istr-1,j,k)*  &
+     &                                                0.01_r8)
+          END DO
+        END DO
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        DO k=1,N(ng)
+          DO i=IstrR,IendR
+            BOUNDARY(ng)%t_south(i,k,itemp)=4.0_r8+                     &
+     &                                      6.0_r8*EXP(z_r(i,Jstr-1,k)* &
+     &                                                 0.025_r8)
+            BOUNDARY(ng)%t_south(i,k,isalt)=33.5_r8-                    &
+     &                                      1.5_r8*EXP(z_r(i,Jstr-1,k)* &
+     &                                                 0.01_r8)
+          END DO
+        END DO
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        DO k=1,N(ng)
+          DO i=IstrR,IendR
+            BOUNDARY(ng)%t_north(i,k,itemp)=4.0_r8+                     &
+     &                                      6.0_r8*EXP(z_r(i,Jend+1,k)* &
+     &                                                 0.025_r8)
+            BOUNDARY(ng)%t_north(i,k,isalt)=33.5_r8-                    &
+     &                                      1.5_r8*EXP(z_r(i,Jend+1,k)* &
+     &                                                 0.01_r8)
           END DO
         END DO
       END IF
@@ -5588,7 +6233,7 @@
 #endif
 
 #ifdef ANA_VMIX
-      SUBROUTINE ana_vmix (ng, tile)
+      SUBROUTINE ana_vmix (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -5602,11 +6247,11 @@
       USE mod_mixing
       USE mod_ocean
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_vmix_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ana_vmix_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % h,                                 &
      &                    GRID(ng) % z_r,                               &
@@ -5618,7 +6263,7 @@
       END SUBROUTINE ana_vmix
 !
 !***********************************************************************
-      SUBROUTINE ana_vmix_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ana_vmix_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          h, z_r, z_w, zeta, Akv, Akt)
 !***********************************************************************
@@ -5633,7 +6278,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5728,8 +6373,10 @@
       ANA_VMIX: no values provided for AKV.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng), Akv)
+      CALL exchange_w3d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        Akv)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -5795,8 +6442,9 @@
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       DO itrc=1,NAT
-        CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_w3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          NghostPoints,                           &
      &                          Akt(:,:,:,itrc))
       END DO
 # endif
@@ -5805,7 +6453,7 @@
 #endif
 
 #if defined ANA_WINDS && (defined BULK_FLUXES || defined ECOSIM)
-      SUBROUTINE ana_winds (ng, tile)
+      SUBROUTINE ana_winds (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -5818,11 +6466,11 @@
       USE mod_forces
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_winds_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ana_winds_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
 # ifdef SPHERICAL
      &                     GRID(ng) % lonr,                             &
@@ -5837,7 +6485,7 @@
       END SUBROUTINE ana_winds
 !
 !***********************************************************************
-      SUBROUTINE ana_winds_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ana_winds_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
 # ifdef SPHERICAL
      &                           lonr, latr,                            &
@@ -5857,7 +6505,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5915,21 +6563,32 @@
           Vwind(i,j)=v_wind
         END DO
       END DO
+# elif defined CBLAST
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          Uwind(i,j)=0.0_r8
+          Vwind(i,j)=0.0_r8
+        END DO
+      END DO
 # else
       ANA_WINDS: no values provided for UWIND and VWIND.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Uwind)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Vwind)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Uwind)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Vwind)
 # endif
       RETURN
       END SUBROUTINE ana_winds_tile
 #endif
 
 #if defined ANA_WWAVE && defined BBL_MODEL
-      SUBROUTINE ana_wwave (ng, tile)
+      SUBROUTINE ana_wwave (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -5942,11 +6601,11 @@
       USE mod_forces
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL ana_wwave_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ana_wwave_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     GRID(ng) % angler,                           &
      &                     FORCES(ng) % Awave,                          &
@@ -5956,7 +6615,7 @@
       END SUBROUTINE ana_wwave
 !
 !***********************************************************************
-      SUBROUTINE ana_wwave_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ana_wwave_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           angler, Awave, Dwave, Pwave)
 !***********************************************************************
@@ -5971,7 +6630,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -5992,7 +6651,7 @@
       integer :: i, j
       real(r8) :: cff, wdir
 #if defined LAKE_SIGNELL
-      real(r8) :: mxtm, rmptm, mxst
+      real(r8) :: cff1, mxst, ramp_u, ramp_time, ramp_d
 #endif
 
 # include "set_bounds.h"
@@ -6012,27 +6671,19 @@
         END DO
       END DO
 # elif defined LAKE_SIGNELL
+      mxst=0.25_r8         ! Wave amplitude (1/2 wave height) (meters)
+      ramp_u=15.0_r8       ! start ramp UP at RAMP_UP (hours)
+      ramp_time=10.0_r8    ! ramp from 0 to 1 over RAMP_TIME (hours)
+      ramp_d=50.0_r8       ! start ramp DOWN at RAMP_DOWN (hours)
       DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          Dwave(i,j)=0.0_r8*deg2rad
-!
-          mxtm=48.0_r8                  ! hours
-          rmptm=3.0_r8                  ! hours
-          mxst=0.5_r8                   ! m
-          cff=MIN(mxst*(TANH((time(ng)/60.0_r8-rmptm*150.0_r8)/         &
-     &                       150.0_r8)+1.0_r8)*0.5_r8,                  &
-     &            mxst*(TANH(((mxtm*3600.0_r8-time(ng))/                &
-     &                        60.0_r8-rmptm*150.0_r8)/150.0_r8)+        &
-     &                  1.0_r8)*0.5_r8)
-          Awave(i,j)=MAX(cff,0.01_r8)
-!
-          mxst=5.0_r8                   ! sec
-          cff=MIN(mxst*(TANH((time(ng)/60.0_r8-rmptm*150.0_r8)/         &
-     &                       150.0_r8)+1.0_r8)*0.5_r8,                  &
-     &            mxst*(TANH(((mxtm*3600.0_r8-time(ng))/                &
-     &                        60.0_r8-rmptm*150.0_r8)/150.0_r8)+        &
-     &                  1.0_r8)/2.0_r8)
-          Pwave(i,j)=MAX(cff,2.0_r8)
+        DO i=Istr,IendR
+          Dwave(i,j)=270.0_r8*deg2rad
+          Pwave(i,j)=5.0_r8    ! wave period (seconds)
+           cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/          &
+     &                            (ramp_time/5.0_r8))+1.0_r8)),         &
+     &              (1.0_r8-(0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_d)/  &
+     &                                    (ramp_time/5.0_r8))+1.0_r8))))
+          Awave(i,j)=MAX((cff1*mxst),0.01_r8)
         END DO
       END DO
 # elif defined NJ_BIGHT
@@ -6051,16 +6702,31 @@
           Pwave(i,j)=10.0_r8
         END DO
       END DO
+# elif defined SED_TOY
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+!!        Awave(i,j)=0.0_r8
+          Awave(i,j)=0.5_r8
+          Dwave(i,j)=270.0_r8*deg2rad
+          Pwave(i,j)=8.0_r8
+        END DO
+      END DO
 # else
       ANA_WWAVE: no values provided for AWAVE, DWAVE, and PWAVE.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Awave)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Dwave)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, Pwave)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Awave)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Dwave)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        Pwave)
 # endif
       RETURN
       END SUBROUTINE ana_wwave_tile

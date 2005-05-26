@@ -2,9 +2,12 @@
       MODULE mod_grid
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
+!  IJwaterR   Water points IJ couter for RHO-points masked variables.  !
+!  IJwaterU   Water points IJ couter for   U-points masked variables.  !
+!  IJwaterV   Water points IJ couter for   V-points masked variables.  !
 !  Hz         Thicknesses (m) of vertical RHO-points.                  !
 !  Huon       Total U-momentum flux term, Hz*u/pn.                     !
 !  Hvom       Total V-momentum flux term, Hz*v/pm.                     !
@@ -14,6 +17,7 @@
 !               stretching.                                            !
 !  angler     Angle (radians) between XI-axis and true EAST at         !
 !               RHO-points.                                            !
+!  bed_thick0 Initial sum all bed layer thicknesses (m)                !
 !  dmde       ETA-derivative of inverse metric factor pm,              !
 !               d(1/pm)/d(ETA).                                        !
 !  dndx       XI-derivative  of inverse metric factor pn,              !
@@ -24,8 +28,14 @@
 !               to grid area.                                          !
 !  h          Bottom depth (m) at RHO-points.                          !
 !  hinv       Inverse of Bottom depth (1/m) at RHO-points.             !
+!  latp       Latitude (degrees_north) at PSI-points.                  !
 !  latr       Latitude (degrees_north) at RHO-points.                  !
+!  latu       Latitude (degrees_north) at U-points.                    !
+!  latv       Latitude (degrees_north) at V-points.                    !
+!  lonp       Longitude (degrees_east) at PSI-points.                  !
 !  lonr       Longitude (degrees_east) at RHO-points.                  !
+!  lonu       Longitude (degrees_east) at U-points.                    !
+!  lonv       Longitude (degrees_east) at V-points.                    !
 !  omm        RHO-grid area (meters2).                                 !
 !  om_p       PSI-grid spacing (meters) in the XI-direction.           !
 !  om_r       RHO-grid spacing (meters) in the XI-direction.           !
@@ -54,8 +64,12 @@
 !  vmask      Mask at V-points (0=Land, 1=Sea).                        !
 !  xp         XI-coordinates (m) at PSI-points.                        !
 !  xr         XI-coordinates (m) at RHO-points.                        !
+!  xu         XI-coordinates (m) at U-points.                          !
+!  xv         XI-coordinates (m) at V-points.                          !
 !  yp         ETA-coordinates (m) at PSI-points.                       !
 !  yr         ETA-coordinates (m) at RHO-points.                       !
+!  yu         ETA-coordinates (m) at U-points.                         !
+!  yv         ETA-coordinates (m) at V-points.                         !
 !  zice       Depth of ice shelf cavity (m, negative) at               !
 !               RHO-points.                                            !
 !  z_r        Actual depths (m) at horizontal RHO-points and           !
@@ -70,8 +84,19 @@
         implicit none
 
         TYPE T_GRID
+!
+!  Nonlinear model state.
+!
+# if defined MASKING && defined PROPAGATOR
+          integer, pointer :: IJwaterR(:,:)
+          integer, pointer :: IJwaterU(:,:)
+          integer, pointer :: IJwaterV(:,:)
+# endif
 
           real(r8), pointer :: angler(:,:)
+#ifdef SEDIMENT
+          real(r8), pointer :: bed_thick0(:,:)
+#endif
 #if defined CURVGRID && defined UV_ADV
           real(r8), pointer :: dmde(:,:)
           real(r8), pointer :: dndx(:,:)
@@ -81,8 +106,14 @@
           real(r8), pointer :: grdscl(:,:)
           real(r8), pointer :: h(:,:)
           real(r8), pointer :: hinv(:,:)
+          real(r8), pointer :: latp(:,:)
           real(r8), pointer :: latr(:,:)
+          real(r8), pointer :: latu(:,:)
+          real(r8), pointer :: latv(:,:)
+          real(r8), pointer :: lonp(:,:)
           real(r8), pointer :: lonr(:,:)
+          real(r8), pointer :: lonu(:,:)
+          real(r8), pointer :: lonv(:,:)
           real(r8), pointer :: omn(:,:)
           real(r8), pointer :: om_p(:,:)
           real(r8), pointer :: om_r(:,:)
@@ -104,8 +135,12 @@
           real(r8), pointer :: pnom_v(:,:)
           real(r8), pointer :: xp(:,:)
           real(r8), pointer :: xr(:,:)
+          real(r8), pointer :: xu(:,:)
+          real(r8), pointer :: xv(:,:)
           real(r8), pointer :: yp(:,:)
           real(r8), pointer :: yr(:,:)
+          real(r8), pointer :: yu(:,:)
+          real(r8), pointer :: yv(:,:)
 #ifdef SOLVE3D
           real(r8), pointer :: Hz(:,:,:)
           real(r8), pointer :: Huon(:,:,:)
@@ -124,6 +159,33 @@
           real(r8), pointer :: vmask(:,:)
 #endif
 
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+          real(r8), pointer :: tl_h(:,:)
+# ifdef SOLVE3D
+          real(r8), pointer :: tl_Hz(:,:,:)
+          real(r8), pointer :: tl_Huon(:,:,:)
+          real(r8), pointer :: tl_Hvom(:,:,:)
+          real(r8), pointer :: tl_z_r(:,:,:)
+          real(r8), pointer :: tl_z_w(:,:,:)
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+          real(r8), pointer :: ad_h(:,:)
+# ifdef SOLVE3D
+          real(r8), pointer :: ad_Hz(:,:,:)
+          real(r8), pointer :: ad_Huon(:,:,:)
+          real(r8), pointer :: ad_Hvom(:,:,:)
+          real(r8), pointer :: ad_z_r(:,:,:)
+          real(r8), pointer :: ad_z_w(:,:,:)
+# endif
+#endif
         END TYPE T_GRID
 
         TYPE (T_GRID), allocatable :: GRID(:)
@@ -133,7 +195,7 @@
       SUBROUTINE allocate_grid (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates all variables in the module for all nested   !
@@ -153,8 +215,18 @@
 !
       IF (ng.eq.1) allocate ( GRID(Ngrids) )
 !
-      allocate ( GRID(ng) % angler(LBi:UBi,LBj:UBj) )
+!  Nonlinear model state.
+!
+#if defined MASKING && defined PROPAGATOR
+      allocate ( GRID(ng) % IJwaterR(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % IJwaterU(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % IJwaterV(LBi:UBi,LBj:UBj) )
+#endif
 
+      allocate ( GRID(ng) % angler(LBi:UBi,LBj:UBj) )
+#ifdef SEDIMENT
+      allocate ( GRID(ng) % bed_thick0(LBi:UBi,LBj:UBj) )
+#endif
 #if defined CURVGRID && defined UV_ADV
       allocate ( GRID(ng) % dmde(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % dndx(LBi:UBi,LBj:UBj) )
@@ -165,8 +237,14 @@
       allocate ( GRID(ng) % grdscl(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % h(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % hinv(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % latp(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % latr(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % latu(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % latv(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % lonp(LBi:UBi,LBj:UBj))
       allocate ( GRID(ng) % lonr(LBi:UBi,LBj:UBj))
+      allocate ( GRID(ng) % lonu(LBi:UBi,LBj:UBj))
+      allocate ( GRID(ng) % lonv(LBi:UBi,LBj:UBj))
       allocate ( GRID(ng) % omn(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % om_p(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % om_r(LBi:UBi,LBj:UBj) )
@@ -188,8 +266,12 @@
       allocate ( GRID(ng) % pnom_v(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % xp(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % xr(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % xu(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % xv(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % yp(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % yr(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % yu(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % yv(LBi:UBi,LBj:UBj) )
 
 #ifdef SOLVE3D
 
@@ -213,13 +295,41 @@
       allocate ( GRID(ng) % vmask(LBi:UBi,LBj:UBj) )
 #endif
 
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+      allocate ( GRID(ng) % tl_h(LBi:UBi,LBj:UBj) )
+# ifdef SOLVE3D
+      allocate ( GRID(ng) % tl_Hz(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % tl_Huon(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % tl_Hvom(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % tl_z_r(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % tl_z_w(LBi:UBi,LBj:UBj,0:N(ng)) )
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+      allocate ( GRID(ng) % ad_h(LBi:UBi,LBj:UBj) )
+# ifdef SOLVE3D
+      allocate ( GRID(ng) % ad_Hz(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % ad_Huon(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % ad_Hvom(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % ad_z_r(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( GRID(ng) % ad_z_w(LBi:UBi,LBj:UBj,0:N(ng)) )
+# endif
+#endif
+
       RETURN
       END SUBROUTINE allocate_grid
 
       SUBROUTINE initialize_grid (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initialize all variables in the module using first     !
@@ -278,7 +388,18 @@
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
+!  Nonlinear model state.
+!
+#if defined MASKING && defined PROPAGATOR
+      GRID(ng) % IJwaterR(Imin:Imax,Jmin:Jmax) = 0
+      GRID(ng) % IJwaterU(Imin:Imax,Jmin:Jmax) = 0
+      GRID(ng) % IJwaterV(Imin:Imax,Jmin:Jmax) = 0
+#endif
+
       GRID(ng) % angler(Imin:Imax,Jmin:Jmax) = IniVal
+#ifdef SEDIMENT
+      GRID(ng) % bed_thick0(Imin:Imax,Jmin:Jmax) = IniVal
+#endif
 #if defined CURVGRID && defined UV_ADV
       GRID(ng) % dmde(Imin:Imax,Jmin:Jmax) = IniVal
       GRID(ng) % dndx(Imin:Imax,Jmin:Jmax) = IniVal
@@ -291,8 +412,14 @@
       GRID(ng) % h(Imin:Imax,Jmin:Jmax) = IniVal
       GRID(ng) % hinv(Imin:Imax,Jmin:Jmax) = IniVal
 
+      GRID(ng) % latp(Imin:Imax,Jmin:Jmax) = IniVal
       GRID(ng) % latr(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % latu(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % latv(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % lonp(Imin:Imax,Jmin:Jmax) = IniVal
       GRID(ng) % lonr(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % lonu(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % lonv(Imin:Imax,Jmin:Jmax) = IniVal
 
       GRID(ng) % omn(Imin:Imax,Jmin:Jmax) = IniVal
       GRID(ng) % om_p(Imin:Imax,Jmin:Jmax) = IniVal
@@ -318,8 +445,11 @@
 
       GRID(ng) % xp(Imin:Imax,Jmin:Jmax) = IniVal
       GRID(ng) % xr(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % xu(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % xv(Imin:Imax,Jmin:Jmax) = IniVal
       GRID(ng) % yp(Imin:Imax,Jmin:Jmax) = IniVal
-      GRID(ng) % yr(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % yu(Imin:Imax,Jmin:Jmax) = IniVal
+      GRID(ng) % yv(Imin:Imax,Jmin:Jmax) = IniVal
 
 #ifdef SOLVE3D
       GRID(ng) % Hz(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
@@ -344,76 +474,37 @@
       GRID(ng) % vmask(Imin:Imax,Jmin:Jmax) = IniVal
 #endif
 
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+      GRID(ng) % tl_h(Imin:Imax,Jmin:Jmax) = IniVal
+# ifdef SOLVE3D
+      GRID(ng) % tl_Hz(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
-#ifdef REMOVE
-      GRID(ng) % angler = IniVal
-#if defined CURVGRID && defined UV_ADV
-      GRID(ng) % dmde = IniVal
-      GRID(ng) % dndx = IniVal
-#endif
-      GRID(ng) % f = IniVal
-      GRID(ng) % fomn = IniVal
+      GRID(ng) % tl_Huon(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      GRID(ng) % tl_Hvom(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
-      GRID(ng) % grdscl = IniVal
-
-      GRID(ng) % h = IniVal
-      GRID(ng) % hinv = IniVal
-
-      GRID(ng) % latr = IniVal
-      GRID(ng) % lonr = IniVal
-
-      GRID(ng) % omn = IniVal
-      GRID(ng) % om_p = IniVal
-      GRID(ng) % om_r = IniVal
-      GRID(ng) % om_u = IniVal
-      GRID(ng) % om_v = IniVal
-      GRID(ng) % on_p = IniVal
-      GRID(ng) % on_r = IniVal
-      GRID(ng) % on_u = IniVal
-      GRID(ng) % on_v = IniVal
-
-      GRID(ng) % pm = IniVal
-      GRID(ng) % pn = IniVal
-
-      GRID(ng) % pmon_p = IniVal
-      GRID(ng) % pmon_r = IniVal
-      GRID(ng) % pmon_u = IniVal
-      GRID(ng) % pmon_v = IniVal
-      GRID(ng) % pnom_p = IniVal
-      GRID(ng) % pnom_r = IniVal
-      GRID(ng) % pnom_u = IniVal
-      GRID(ng) % pnom_v = IniVal
-
-      GRID(ng) % xp = IniVal
-      GRID(ng) % xr = IniVal
-      GRID(ng) % yp = IniVal
-      GRID(ng) % yr = IniVal
-
-#ifdef SOLVE3D
-      GRID(ng) % Hz = IniVal
-
-      GRID(ng) % Huon = IniVal
-      GRID(ng) % Hvom = IniVal
-
-      GRID(ng) % z_r = IniVal
-      GRID(ng) % z_w = IniVal
-
-# ifdef ICESHELF
-      GRID(ng) % IcePress = IniVal
-      GRID(ng) % zice = IniVal
+      GRID(ng) % tl_z_r(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      GRID(ng) % tl_z_w(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
 # endif
-
 #endif
 
-#ifdef MASKING
-      GRID(ng) % pmask = IniVal
-      GRID(ng) % rmask = IniVal
-      GRID(ng) % umask = IniVal
-      GRID(ng) % vmask = IniVal
-#endif
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+      GRID(ng) % ad_h(Imin:Imax,Jmin:Jmax) = IniVal
+# ifdef SOLVE3D
+      GRID(ng) % ad_Hz(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
-#endif
+      GRID(ng) % ad_Huon(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      GRID(ng) % ad_Hvom(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
 
+      GRID(ng) % ad_z_r(Imin:Imax,Jmin:Jmax,1:N(ng)) = IniVal
+      GRID(ng) % ad_z_w(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
+# endif
+#endif
 
       RETURN
       END SUBROUTINE initialize_grid

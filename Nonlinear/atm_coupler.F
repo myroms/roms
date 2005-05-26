@@ -4,7 +4,7 @@
 #ifdef AIR_OCEAN
 !
 !=================================================== Daniel Schaffer ===
-!  Copyright (c) 2004 WRF and ROMS/TOMS Groups                       ===
+!  Copyright (c) 2005 WRF and ROMS/TOMS Groups                       ===
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This module is for coupling ROMS to WRF using the Model Coupling    !
@@ -244,7 +244,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 36)
+      CALL wclock_on (ng, iNLM, 36)
 # endif
       CALL atmos_coupling_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
@@ -254,7 +254,7 @@
      &                          FORCES(ng) % sustr,                     &
      &                          FORCES(ng) % svstr)
 # ifdef PROFILE
-      CALL wclock_off (ng, 36)
+      CALL wclock_off (ng, iNLM, 36)
 # endif
       RETURN
       END SUBROUTINE atmos_coupling
@@ -449,10 +449,14 @@
 !
 !  Exchange boundary informaton.
 !
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, sustr)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, svstr)
+      CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        sustr)
+      CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        svstr)
 # endif
 !
 !-----------------------------------------------------------------------

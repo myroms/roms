@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE bbl_mod
-#ifdef BBL_MODEL
+#if defined NONLINEAR && defined BBL_MODEL
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes bottom momentun stress via a bottom boundary  !
@@ -18,7 +18,9 @@
 
       CONTAINS
 
-# if defined MB_BBL
+# if defined SSW_BBL
+#  include "ssw_bbl.h"
+# elif defined MB_BBL
 #  include "mb_bbl.h"
 # elif defined SG_BBL
 #  include "sg_bbl.h"

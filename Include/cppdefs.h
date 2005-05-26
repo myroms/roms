@@ -1,7 +1,7 @@
 /*
 ** Include file "cppdefs.h"
 *******************************************************************************
-** Copyright (c) 2002 ROMS/TOMS Group, version 2.1                           **
+** Copyright (c) 2005 ROMS/TOMS Group, version 2.2                           **
 ********************************************************** Hernan G. Arango ***
 **                                                                           **
 **  Choose the appropriate C-preprocessing options by using the command      **
@@ -17,16 +17,17 @@
 **-----------------------------------------------------------------------------
 */
 
-#undef  ADRIATIC1       /* for Adriatic Sea Application, Grid #1 */
-#undef  ADRIATIC2       /* for Adriatic Sea Application, Grid #2 */
+#undef  ADRIA02         /* for Adriatic Sea Application */
 #undef  BASIN           /* for Big Bad Basin Example */
+#undef  BASIN_BLOB      /* for Basin Blob Example */
+#undef  BASIN_BOWL      /* for Double Gyre Example with Bowl Bathymetry */
+#undef  BASIN_SHELF     /* for Double Gyre Example with Shelf Bathymetry */
 #undef  BENCHMARK1      /* for Small Benchmark Test */
 #undef  BENCHMARK2      /* for Medium Benchmark Test */
 #undef  BENCHMARK3      /* for Big Benchmark Test */
 #undef  BIO_TOY         /* for One-dimension (vertical) Biology Toy */
 #undef  BL_TEST         /* for Boundary Layers Test */
 #undef  BISCAY          /* for Bay of Biscay Aplication */
-#undef  CALCOFI         /* for Southern California Bight */
 #undef  CANYON_A        /* for Canyon_A Example */
 #undef  CANYON_B        /* for Canyon_B Example */
 #undef  CBLAST          /* for CBLAST application */
@@ -34,8 +35,11 @@
 #undef  DAMEE_4         /* for North Atlantic DAMEE Application Grid 4 */
 #undef  DOUBLE_GYRE     /* for idealized double-gyre Example */
 #undef  ESTUARY_TEST    /* test estuary for sediment*/
+#undef  EAC             /* for East Australia Current */
 #undef  FLT_TEST        /* for Float Tracking Example */
 #undef  GRAV_ADJ        /* for Graviational Adjustment Example */
+#undef  IAS             /* for Intra-Americas Sea Application */
+#undef  INNER_PRODUCT   /* Tangent/Adjoint State Matrix Inner Product Test */
 #undef  KELVIN          /* for Kelvin wave test */
 #undef  LAB_CANYON      /* for Lab Canyon, Polar Coordinates Example */
 #undef  LAKE_SIGNELL    /* for Lake Signell Sediment Test Case */
@@ -44,12 +48,16 @@
 #undef  NENA            /* North East North America Application */
 #undef  NJ_BIGHT        /* for New Jersey Bight Application */
 #undef  NPACIFIC        /* for North Pacific Application */
+#undef  OPT_PERT2D      /* Optimal Perturbation 2D Test */
+#undef  OPT_PERT3D      /* Optimal Perturbation 3D Test */
 #undef  OVERFLOW        /* for Graviational/Overflow Example */
-#undef  RIVERPLUME      /* for River plume Example */
+#undef  RIVERPLUME1     /* for River plume Example 1 */
+#undef  RIVERPLUME2     /* for River plume Example 2 (Hyatt and Signell) */
+#undef  SCB             /* for Southern California Bight */
 #undef  SEAMOUNT        /* for Seamount Example */
 #undef  SED_TEST1       /* for Suspended Sediment Test in a Channel */
+#undef  SED_TOY         /* for One-dimension (vertical) Sediment Toy */
 #undef  SOLITON         /* for Equatorial Rossby Wave Example */
-#undef  TEST_CHAN       /* for sloping rectangular channel */
 #define UPWELLING       /* for Upwelling Example */
 #undef  USWEST          /* for US West Coast Application */
 #undef  WEDDELL         /* for Idealized Weddell Sea Shelf Application */
@@ -67,12 +75,15 @@
 */
 
 #undef  UV_ADV          /* turn ON or OFF advection terms */
+#undef  UV_COR          /* turn ON or OFF Coriolis term */
 #undef  UV_C2ADVECTION  /* turn ON or OFF 2nd-order centered advection */
 #undef  UV_C4ADVECTION  /* turn ON or OFF 4th-order centered advection */
 #undef  UV_SADVECTION   /* turn ON or OFF splines vertical advection */
 #undef  UV_VIS2         /* turn ON or OFF Laplacian horizontal mixing */
 #undef  UV_VIS4         /* turn ON or OFF biharmonic horizontal mixing */
-#undef  UV_COR          /* turn ON or OFF Coriolis term */
+#undef  UV_LOGDRAG      /* turn ON or OFF logarithmic bottom friction */
+#undef  UV_LDRAG        /* turn ON or OFF linear bottom friction */
+#undef  UV_QDRAG        /* turn ON or OFF quadratic bottom friction */
 #undef  UV_PSOURCE      /* turn ON or OFF point Sources/Sinks */
 
 /*
@@ -83,6 +94,7 @@
 #undef  TS_A4HADVECTION /* define if 4th-order Akima horiz. advection */
 #undef  TS_C2HADVECTION /* define if 2nd-order centered horiz. advection */
 #undef  TS_C4HADVECTION /* define if 4th-order centered horiz. advection */
+#undef  TS_MPDATA       /* define if recursive MPDATA 3D advection */
 #undef  TS_U3HADVECTION /* define if 3rd-order upstream horiz. advection */
 #undef  TS_A4VADVECTION /* define if 4th-order Akima vertical advection */
 #undef  TS_C2VADVECTION /* define if 2nd-order centered vertical advection */
@@ -91,6 +103,7 @@
 #undef  TS_DIF2         /* turn ON or OFF Laplacian horizontal mixing */
 #undef  TS_DIF4         /* turn ON or OFF biharmonic horizontal mixing */
 #undef  TS_FIXED        /* define if diagnostic run, no evolution of tracers */
+#undef  T_PASSIVE       /* define if inert passive tracers (dyes, etc) */
 #undef  SALINITY        /* define if using salinity */
 #undef  NONLIN_EOS      /* define if using nonlinear equation of state */
 #undef  QCORRECTION     /* define if net heat flux correction */
@@ -130,6 +143,7 @@
 #undef  COOL_SKIN       /* turn ON or OFF cool skin correction */
 #undef  LONGWAVE        /* Compute net longwave radiation internally */
 #undef  LONGWAVE_OUT    /* Compute ougoing longwave radiation internally */
+#undef  EMINUSP         /* turn ON internal calculation of E-P */
 
 /*
 **  Select options for shortwave radiation.  The shortwave radiation can be
@@ -158,6 +172,7 @@
 #undef  AVERAGES_AKS        /* define if writing out time-averaged AKs */
 #undef  AVERAGES_FLUXES     /* define if writing out time-averaged fluxes */
 #undef  AVERAGES_QUADRATIC  /* define if writing out quadratic terms */
+#undef  AVERAGES_BEDLOAD    /* define if writing out time-averaged bed load */
 #undef  DIAGNOSTICS_BIO     /* define if writing out biological diagnostics */
 #undef  DIAGNOSTICS_UV      /* define if writing out momentum diagnostics */
 #undef  DIAGNOSTICS_TS      /* define if writing out tracer diagnostics */
@@ -201,10 +216,13 @@
 #undef  ANA_M2OBC       /* analytical 2D momentum boundary conditions */
 #undef  ANA_M3CLIMA     /* analytical 3D momentum climatology */
 #undef  ANA_M3OBC       /* analytical 3D momentum boundary conditions */
+#undef  ANA_MASK        /* analytical Land/Sea masking */
 #undef  ANA_PAIR        /* analytical surface air pressure */
+#undef  ANA_PASSIVE     /* analytical initial condtions for inert tracers */
+#undef  ANA_PERTURB     /* analytical perturbation of initial conditions */
 #undef  ANA_PSOURCE     /* analytical point Sources/Sinks */
 #undef  ANA_RAIN        /* analytical rain fall rate */
-#undef  ANA_SEDIMENT    /* analytical sediment initial field */
+#undef  ANA_SEDIMENT    /* analytical sediment initial fields */
 #undef  ANA_SMFLUX      /* analytical surface momentum stress */
 #undef  ANA_SPFLUX      /* analytical surface passive tracers fluxes */
 #undef  ANA_SPINNING    /* analytical time-varying rotation force */
@@ -253,12 +271,14 @@
 **  (The default advection is third-order upstream bias, G-Scheme)
 */
 
-#undef  N2S2_HORAVG     /* Activate horizontal smoothing of buoyancy/shear */
 #undef  CANUTO_A        /* Canuto A-stability function formulation */
 #undef  CANUTO_B        /* Canuto B-stability function formulation */
+#undef  CHARNOK         /* Charnok surface roughness from wind stress */
+#undef  CRAIG_BANNER    /* Craig and Banner wave breaking surface flux */
 #undef  KANTHA_CLAYSON  /* Kantha and Clayson stability function formulation */
 #undef  K_C2ADVECTION   /* turn ON or OFF 2nd-order centered advection */
 #undef  K_C4ADVECTION   /* turn ON or OFF 4th-order centered advection */
+#undef  N2S2_HORAVG     /* Activate horizontal smoothing of buoyancy/shear */
 
 /*
 **  Select options for the Mellor/Yamada level 2.5 closure:
@@ -302,8 +322,9 @@
 */
 
 #undef  MB_BBL          /* turn ON or OFF Meinte Blaas BBL closure */
+#undef  MB_CALC_ZNOT    /* activate internal computation of bottom roughness */
 #undef  MB_Z0BIO        /* biogenic bedform roughness ripple height & length */
-#undef  MB_Z0BL         /* bedload roughness for ripple */
+#undef  MB_Z0BL         /* bedload roughness for ripples */
 #undef  MB_Z0RIP        /* bedform roughness ripple height and length */
 
 /*
@@ -311,8 +332,16 @@
 */
 
 #undef  SG_BBL         /* turn ON or OFF Styles and Glenn (2000) BBL closure */
-#undef  SG_ZNOT        /* activate internal computation of bottom roughness */
+#undef  SG_CALC_ZNOT   /* activate internal computation of bottom roughness */
 #undef  SG_LOGINT      /* activate logarithmic interpolation of (Ur,Vr) */
+
+/*
+**  Select options for SSW  bottom boundary layer closure.
+*/
+
+#undef  SSW_BBL         /* turn ON or OFF Styles and Glenn (2000) BBL closure */
+#undef  SSW_CALC_ZNOT   /* activate internal computation of bottom roughness */
+#undef  SSW_LOGINT      /* activate logarithmic interpolation of (Ur,Vr) */
 
 /*
 **  Select lateral boundary options.  Usually, select ONE option at each
@@ -348,6 +377,7 @@
 #undef  EAST_M2FLATHER    /* Eastern edge, 2D momentum, Flather condition */
 #undef  EAST_M2GRADIENT   /* Eastern edge, 2D momentum, gradient condition */
 #undef  EAST_M2RADIATION  /* Eastern edge, 2D momentum, radiation condition */
+#undef  EAST_M2REDUCED    /* Eastern edge, 2D momentum, reduced-physics */
 #undef  EAST_M2NUDGING    /* Eastern edge, 2D momentum, passive/active term */
 #undef  EAST_M2CLAMPED    /* Eastern edge, 2D momentum, clamped condition */
 #undef  EAST_M3GRADIENT   /* Eastern edge, 3D momentum, gradient condition */
@@ -369,6 +399,7 @@
 #undef  WEST_M2FLATHER    /* Western edge, 2D momentum, Flather condition */
 #undef  WEST_M2GRADIENT   /* Western edge, 2D momentum, gradient condition */
 #undef  WEST_M2RADIATION  /* Western edge, 2D momentum, radiation condition */
+#undef  WEST_M2REDUCED    /* Western edge, 2D momentum, reduced-physics */
 #undef  WEST_M2NUDGING    /* Western edge, 2D momentum, passive/active term */
 #undef  WEST_M2CLAMPED    /* Western edge, 2D momentum, clamped condition */
 #undef  WEST_M3GRADIENT   /* Western edge, 3D momentum, gradient condition */
@@ -390,6 +421,7 @@
 #undef  NORTH_M2FLATHER   /* Northern edge, 2D momentum, Flather condition */
 #undef  NORTH_M2GRADIENT  /* Northern edge, 2D momentum, gradient condition */
 #undef  NORTH_M2RADIATION /* Northern edge, 2D momentum, radiation condition */
+#undef  NORTH_M2REDUCED   /* Northern edge, 2D momentum, reduced-physics */
 #undef  NORTH_M2NUDGING   /* Northern edge, 2D momentum, passive/active term */
 #undef  NORTH_M2CLAMPED   /* Northern edge, 2D momentum, clamped condition */
 #undef  NORTH_M3GRADIENT  /* Northern edge, 3D momentum, gradient condition */
@@ -411,6 +443,7 @@
 #undef  SOUTH_M2FLATHER   /* Southern edge, 2D momentum, Flather condition */
 #undef  SOUTH_M2GRADIENT  /* Southern edge, 2D momentum, gradient condition */
 #undef  SOUTH_M2RADIATION /* Southern edge, 2D momentum, radiation condition */
+#undef  SOUTH_M2REDUCED   /* Southern edge, 2D momentum, reduced-physics */
 #undef  SOUTH_M2NUDGING   /* Southern edge, 2D momentum, passive/active term */
 #undef  SOUTH_M2CLAMPED   /* Southern edge, 2D momentum, clamped condition */
 #undef  SOUTH_M3GRADIENT  /* Southern edge, 3D momentum, gradient condition */
@@ -429,11 +462,23 @@
 **  period.  The tidal forcing is computed for the full horizontal grid.
 **  If requested, the tidal forcing is added to the processed (read and
 **  time-interpolated) open boundary data. Also, if applicable, the tidal
-**  forcing is added to the climatological array.
+**  forcing is added to the open boundary array.
+**
+**  Both tidal elevation and tidal currents are required to force the
+**  model properly. However, if only tidal elevation is available, the
+**  tidal currents at the open boundary can be estimated by reduced
+**  physics. Only pressure gradient, Coriolis, and surface and bottom
+**  stresses terms are considered at the open boundary. See "u2dbc_im.F"
+**  or "v2dbc_im.F" for details.  Notice that there is an additional
+**  option (FSOBC_REDUCED) for the computation of the pressure gradient
+**  term in both Flather (*_M2FLATHER) or reduced physics (*_M2REDUCED)
+**  conditions. Use FSOBS_REDUCED to use elevation data from tides,
+**  nested models and/or climatology.
 */
 
 #undef  SSH_TIDES       /* turn on computation of tidal elevation */
 #undef  UV_TIDES        /* turn on computation of tidal currents */
+#undef  FSOBC_REDUCED   /* Use SSH data in reduced physics conditions */
 #undef  ADD_FSOBC       /* Add tidal elevation to processed OBC data */
 #undef  ADD_M2OBC       /* Add tidal currents  to processed OBC data */
 
@@ -471,16 +516,55 @@
 #undef  NUDGING_T          /* nudging of tracer observations */
 #undef  NUDGING_UVsur      /* nudging of surface current observations */
 #undef  NUDGING_UV         /* nudging of horizontal currents observations */
-#undef  RANDOM_ESPERT      /* random error subspace perturbations */
 
 /*
-**  Fasham-type biology model options.
+**  Options associated with tangent linear and adjoint models.  The TANGENT
+**  and ADJOINT switches are activate in the Makefile macro CPPFLAGS.
+*/
+
+#undef  AD_EIGENMODES      /* adjoint eingenmodes */
+#undef  BACKGROUND         /* include background cost function */
+#undef  CELERITY_WRITE     /* Write out radiation celerity in forward file */
+#undef  ENERGY1_NORM       /* cost function scaled with the energy norm, 1 */
+#undef  ENERGY2_NORM       /* cost function scaled with the energy norm, 2 */
+#undef  ENERGY3_NORM       /* cost function scaled with the energy norm, 3 */
+#undef  ENSEMBLE           /* ensemble forecasting */
+#undef  FORCING_SV         /* forcing singular vectors */
+#undef  FORWARD_WRITE      /* Write out forward solution for tangent/adjoint */
+#undef  FORWARD_READ       /* Read in forward solution for tangent/adjoint */
+#undef  N2NORM_PROFILE     /* Use N2(z) profile during energy normalization */
+#undef  OPT_PERTURBATION   /* optimal perturbations */
+#undef  PICARD_TEST        /* Representer tangent linear model test */
+#undef  PSEUDOSPECTRA      /* pseudospectra of tangent linear resolvant */
+#undef  GRADIENT_CHECK     /* Tangent linear and adjoint codes gradient test */
+#undef  SANITY_CHECK       /* Tangent linear and adjoint codes sanity check */
+#undef  S4DVAR             /* strong constraint 4DVar data assimilation */
+#undef  IS4DVAR            /* Incremental S4DVar data assimilation */
+#undef  SO_TRACE           /* stochastic optimals randomized trace */
+#undef  STOCHASTIC_OPT     /* stochastic optimals */
+#undef  TL_EIGENMODES      /* tangent linear eigenmodes */
+#undef  TLM_CHECK          /* tangent linear model linearization check */
+
+/*
+**  Determine if processing full grid range (interior and boundary points)
+**  or only interior points (undef) of the state vector in variational
+**  data assimilation and generalized stability theory analysis.
+*/
+
+#undef  FULL_GRID          /* consider both interior and boundary points */
+
+/*
+**  Fasham-type biology model options. 
 */
 
 #undef  BIO_FASHAM         /* Fasham type nitrogen-based model */
+#undef  BIO_SEDIMENT       /* Restore fallen material to the nutrient pool */
 #undef  CARBON             /* Add Carbon constituents */
 #undef  DENITRIFICATION    /* Add denitrification processes */
-#undef  BIO_SEDIMENT       /* Restore fallen material to the nutrient pool */
+#undef  OXYGEN             /* Add Oxygen dynamics */
+#undef  OCMIP_OXYGEN_SC    /* Schmidt number from Keeling et al. (1998) */
+#undef  RIVER_BIOLOGY      /* Process river biology point-sources */
+#undef  TALK_PROGNOSTIC    /* Turn on/off prognostic/diagnotic alkalinity */
 
 /*
 **  Bio-optical EcoSim model options.
@@ -493,6 +577,11 @@
 */
 
 #undef  SEDIMENT           /* Activate sediment transport model */
+#undef  BEDLOAD            /* Activate bed load transport */
+#undef  RIVER_SEDIMENT     /* Process river sediment point-sources */
+#undef  SED_DENS           /* Activate sediment to affect equation of state */
+#undef  SED_MORPH          /* allow bottom model elevation to evolve */
+#undef  SUSPLOAD           /* Activate suspended load transport */
 
 /*
 **  NetCDF IO options.
@@ -518,89 +607,113 @@
 **-----------------------------------------------------------------------------
 */
 
-# elif defined ADRIATIC1 || defined ADRIATIC2
-
+# elif defined ADRIA02
 /*
-**  Adriatic Sea Application, Grid 1.
+**  Options for ADRIA02 Uber Run
 */
 
 #define UV_ADV
-#define UV_SADVECTION
 #define UV_COR
-#define UV_VIS2
-#define MIX_S_UV
+#define UV_PSOURCE
 #define DJ_GRADPS
-#define TS_U3HADVECTION
-#define TS_SVADVECTION
-#undef  TS_C4VADVECTION
+#undef  TS_U3HADVECTION
+#undef  TS_SVADVECTION
+#define TS_MPDATA
 #define TS_DIF2
-#define MIX_GEO_TS 
-#undef  UV_PSOURCE
-#undef  TS_PSOURCE
-#define SOLAR_SOURCE
+#define MIX_GEO_TS
+#define TS_PSOURCE
 #define NONLIN_EOS
 #define SALINITY
-#define CURVGRID
-#define SOLVE3D
 #define MASKING
-#define SPLINES
-#define QCORRECTION
-#define SCORRECTION
+#define SOLVE3D
+#undef  SPLINES
+#define STATIONS
+#define CURVGRID
+#define FLOATS
 #define AVERAGES
-#ifdef AVERAGES
-# define AVERAGES_AKV
-# define AVERAGES_AKT
-# define AVERAGES_AKS
+#define AVERAGES_AKV
+#define AVERAGES_AKT
+#define AVERAGES_AKS
+
+#undef NOSEDBBL
+#ifdef NOSEDBBL
+# undef SEDIMENT
+# undef SUSPLOAD
+# define ANA_SEDIMENT
+# undef  ANA_WWAVE
+# define SWAN
+# undef RIVER_SEDIMENT
+#else
+# define SEDIMENT
+# define SUSPLOAD
+# undef  ANA_SEDIMENT
+# undef  ANA_WWAVE
+# define SWAN
+# define RIVER_SEDIMENT
 #endif
-#undef LMD_MIXING
-#ifdef LMD_MIXING
-# define LMD_RIMIX
-# define LMD_CONVEC
-# define LMD_SKPP
-# define LMD_NONLOCAL
+
+#undef  UV_LOGDRAG
+#undef  MB_BBL
+#undef  SG_BBL
+#define SSW_BBL
+
+#ifdef SG_BBL
+# define SG_CALC_ZNOT
+# undef  SG_LOGINT
 #endif
-#undef  MY25_MIXING
-#ifdef MY25_MIXING
-# define N2S2_HORAVG
-# define KANTHA_CLAYSON
-# undef K_C2ADVECTION
-# undef K_C4ADVECTION
+#ifdef MB_BBL
+# define MB_CALC_ZNOT
+# undef  MB_Z0BIO
+# undef  MB_Z0BL
+# undef  MB_Z0RIP
 #endif
+
+#undef MY25_MIXING
 #define GLS_MIXING
-#ifdef MY25_MIXING
+#if defined GLS_MIXING || defined MY25_MIXING
+# define KANTHA_CLAYSON
 # define N2S2_HORAVG
-# undef KANTHA_CLAYSON
+# define CRAIG_BANNER
+# define CHARNOK
 #endif
-#define EASTERN_WALL
+
+#undef ANA_SRFLUX
+#undef ALBEDO
+#define DIURNAL_SRFLUX
+#define ANA_SSFLUX
+#define ANA_BSFLUX
+#define ANA_BPFLUX
+#define ANA_BTFLUX
+#define ANA_SPFLUX
+
+#define BULK_FLUXES
+#ifdef BULK_FLUXES
+# define LONGWAVE
+# undef SOLAR_SOURCE
+# define ANA_RAIN
+# undef COOL_SKIN
+#endif
+
 #define WESTERN_WALL
 #define NORTHERN_WALL
 #define SOUTHERN_WALL
-#ifndef SOUTHERN_WALL
-# define SOUTH_VOLCONS
-# define RADIATION_2D
-# define SOUTH_FSGRADIENT
-# define SOUTH_M2RADIATION
-# define SOUTH_M3RADIATION
-# undef  SOUTH_M3NUDGING
-# define SOUTH_TRADIATION
-# define SOUTH_TNUDGING
-# define SPONGE
+#define RADIATION_2D
+#define EAST_M3RADIATION
+#define EAST_TRADIATION
+
+#define SSH_TIDES
+#ifdef SSH_TIDES
+# define EAST_FSCHAPMAN
+# define ANA_FSOBC
+#else
+# define EAST_FSGRADIENT
 #endif
-#undef  M3CLIMATOLOGY
-#undef  M3CLM_NUDGING
-#define TCLIMATOLOGY
-#define TCLM_NUDGING
-#define ANA_BTFLUX
-#define ANA_BSFLUX
-#undef  ANA_SMFLUX
-#undef  ANA_STFLUX
-#undef  ANA_SSFLUX
-#define ANA_SRFLUX
-#ifdef ANA_SRFLUX
-# define ALBEDO
-# define ANA_CLOUD
-# define ANA_HUMIDITY
-# define ANA_TAIR
+#define UV_TIDES
+#ifdef UV_TIDES
+# define EAST_M2FLATHER
+# define ANA_M2OBC
+#else
+# define EAST_M2RADIATION
 #endif
 
 # elif defined BASIN
@@ -611,6 +724,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS4
 #define MIX_S_UV
 #define DJ_GRADPS
@@ -629,6 +743,35 @@
 #define ANA_STFLUX
 #define ANA_BTFLUX
 
+# elif defined BASIN_BLOB
+
+/*
+**  Double-Gyre blob 4DVAR Test
+*/
+
+#undef  UV_C2ADVECTION
+#define UV_ADV
+#define UV_LDRAG
+#define UV_VIS2
+#undef  UV_VIS4
+#define UV_COR
+#define MIX_S_UV
+#undef  AVERAGES
+#define ANA_GRID
+#undef  ANA_INITIAL
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define ANA_SMFLUX
+#define S4DVAR
+#undef  IS4DVAR
+#undef  FULL_GRID
+#define ENERGY1_NORM
+#undef  ENERGY2_NORM
+#define FORWARD_WRITE
+#define FORWARD_READ
+
 # elif defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
 
 /*
@@ -637,9 +780,10 @@
 
 #define UV_ADV
 #define UV_COR
-#define DJ_GRADPS
+#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
+#define DJ_GRADPS
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
 #define TS_DIF2
@@ -688,6 +832,7 @@
 #define UV_ADV
 #define UV_SADVECTION
 #define UV_COR
+#define UV_QDRAG
 #define DJ_GRADPS
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
@@ -749,6 +894,7 @@
 #define UV_ADV
 #define UV_SADVECTION
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS
@@ -802,7 +948,7 @@
 #endif
 #define SG_BBL
 #ifdef SG_BBL
-# define SG_ZNOT
+# define SG_CALC_ZNOT
 # define ANA_SEDIMENT
 # define ANA_WWAVE
 #endif
@@ -822,6 +968,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define VISC_GRID
@@ -874,74 +1021,6 @@
 #define ANA_BSFLUX
 #define ANA_BTFLUX
 
-# elif defined CALCOFI
-
-/*
-**  Options for Southern California Bight Application.
-*/
-
-#define UV_ADV
-#define UV_COR
-#define UV_VIS2
-#define MIX_S_UV
-#define DJ_GRADPS
-#define SOLAR_SOURCE
-#define NONLIN_EOS
-#define SALINITY
-#define CURVGRID
-#define MASKING
-#define SOLVE3D
-#define SPLINES
-#define QCORRECTION
-#define EASTERN_WALL
-#define SPONGE
-#define WEST_VOLCONS
-#define NORTH_VOLCONS
-#define SOUTH_VOLCONS
-#define M2CLIMATOLOGY
-#define M3CLIMATOLOGY
-#define TCLIMATOLOGY
-#define M2CLM_NUDGING
-#define M3CLM_NUDGING
-#define TCLM_NUDGING
-#define EASTERN_WALL
-#define WESTERN_WALL
-#define SOUTHERN_WALL
-#define NORTHERN_WALL
-#define WEST_FSGRADIENT
-#define WEST_M2RADIATION
-#define WEST_M2NUDGING
-#define WEST_M3RADIATION
-#define WEST_M3NUDGING
-#define WEST_TRADIATION
-#define WEST_TNUDGING
-#define SOUTH_FSGRADIENT
-#define SOUTH_M2RADIATION
-#define SOUTH_M2NUDGING
-#define SOUTH_M3RADIATION
-#define SOUTH_M3NUDGING
-#define SOUTH_TRADIATION
-#define SOUTH_TNUDGING
-#define NORTH_FSGRADIENT
-#define NORTH_M2RADIATION
-#define NORTH_M2NUDGING
-#define NORTH_M3RADIATION
-#define NORTH_M3NUDGING
-#define NORTH_TRADIATION
-#define NORTH_TNUDGING
-#undef  MY25_MIXING
-#define LMD_MIXING
-#ifdef LMD_MIXING
-# define LMD_RIMIX
-# define LMD_CONVEC
-# define LMD_NONLOCAL
-# define LMD_SKPP
-#endif
-#undef  ANA_SRFLUX
-#undef  ALBEDO
-#define ANA_BSFLUX
-#define ANA_BTFLUX
-
 # elif defined CANYON_A
 
 /*
@@ -949,6 +1028,7 @@
 */
 
 #define UV_ADV
+#define UV_QDRAG
 #define UV_VIS2
 #define UV_COR
 #define EW_PERIODIC
@@ -966,6 +1046,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS
@@ -992,6 +1073,7 @@
 
 #define	UV_ADV
 #define	UV_COR
+#define UV_QDRAG
 #undef	UV_VIS2
 #undef	MIX_S_UV
 #define UV_SADVECTION
@@ -1023,7 +1105,7 @@
 #endif
 #undef	SG_BBL
 #ifdef SG_BBL
-# define SG_ZNOT
+# define SG_CALC_ZNOT
 # define ANA_SEDIMENT
 # define ANA_WWAVE
 #endif
@@ -1096,6 +1178,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #undef  UV_VIS2
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
@@ -1125,6 +1208,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define DJ_GRADPS
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
@@ -1156,35 +1240,456 @@
 #define ANA_BSFLUX
 #define ANA_BTFLUX
 
-# elif defined DOUBLE_GYRE
+# elif defined DOUBLE_GYRE_FWD2D || \
+       defined BASIN_BOWL_FWD2D  || defined BASIN_SHELF_FWD2D
 
 /*
-**  Options for idealized double-gyre example.
+**  Double-Gyre 2D Test
 */
 
+#undef  UV_C2ADVECTION
 #define UV_ADV
 #define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#define AVERAGES
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define ANA_GRID
+#undef  ANA_INITIAL
+#define ANA_SMFLUX
+#define FORWARD_RHS
+#define FORWARD_WRITE
+#define OUT_DOUBLE
+
+# elif defined DOUBLE_GYRE       || \
+       defined BASIN_BOWL_FWD3D  || defined BASIN_SHELF_FWD3D
+
+/*
+**  Double-Gyre 3D Test
+*/
+
+#define UV_C2ADVECTION
+#define UV_ADV
+#define UV_COR
+#define UV_LDRAG
 #define UV_VIS2
 #define MIX_S_UV
-#undef  DJ_GRADPS
+#undef  WJ_GRADP
+#define DJ_GRADPS
+#undef  TS_C2HADVECTION
+#undef  TS_C2VADVECTION
 #define TS_U3HADVECTION
-#define TS_C4HADVECTION
+#define TS_C4VADVECTION
 #define TS_DIF2
 #define MIX_S_TS
+#define NONLIN_EOS
+#define SOLVE3D
+#undef  AVERAGES
+#undef  SPLINES
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#undef  TCLIMATOLOGY
+#undef  TCLM_NUDGING
+#define ANA_GRID
+#undef  ANA_INITIAL
+#undef  ANA_TCLIMA
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_BTFLUX
+#undef  ANA_VMIX
+#undef  FORWARD_RHS
+#define FORWARD_WRITE
+#define OUT_DOUBLE
+
+# elif defined DOUBLE_GYRE_picard2D || \
+       defined BASIN_BOWL_picard2D  || defined BASIN_SHELF_picard2D
+
+/*
+**  Double-Gyre 2D Picard Iterations Test
+*/
+
+#undef  UV_C2ADVECTION
+#define UV_ADV
+#define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#undef  UV_VIS4
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define ANA_GRID
+#undef  ANA_INITIAL
+#define PICARD_TEST
+#define ANA_SMFLUX
+#undef  FORWARD_RHS
+#define FORWARD_READ
+#define FORWARD_WRITE
+#define OUT_DOUBLE
+
+# elif defined DOUBLE_GYRE_picard3D || \
+       defined BASIN_BOWL_picard3D  || defined BASIN_SHELF_picard3D
+
+/*
+**  Double-Gyre 3D Picard Iterations Test
+*/
+
+#define UV_C2ADVECTION
+#define UV_ADV
+#define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#undef  WJ_GRADP
+#define DJ_GRADPS
+#undef  TS_C2HADVECTION
+#undef  TS_C2VADVECTION
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#define TS_DIF2
+#define MIX_S_TS
+#define NONLIN_EOS
 #define SOLVE3D
 #undef  SPLINES
-#define EASTERN_WALL
 #define WESTERN_WALL
-#define SOUTHERN_WALL
+#define EASTERN_WALL
 #define NORTHERN_WALL
-#define TCLIMATOLOGY
-#define TCLM_NUDGING
+#define SOUTHERN_WALL
+#undef  TCLIMATOLOGY
+#undef  TCLM_NUDGING
+#define ANA_GRID
+#undef  ANA_INITIAL
+#undef  ANA_TCLIMA
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_BTFLUX
+#undef  ANA_VMIX
+#define PICARD_TEST
+#undef  FORWARD_RHS
+#define FORWARD_READ
+#define FORWARD_WRITE
+#undef  RST_SINGLE
+#define OUT_DOUBLE
+
+# elif defined DOUBLE_GYRE_OPT2D || \
+       defined BASIN_BOWL_OPT2D  || defined BASIN_SHELF_OPT2D
+
+/*
+**  2D optimal pertubations Double-Gyre Test
+*/
+
+#undef  OPT_PERTURBATION
+#ifndef OPT_PERTURBATION
+# undef  SANITY_CHECK
+#endif
+#define UV_ADV
+#define UV_VIS2
+#define UV_COR
+#define UV_LDRAG
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
 #define ANA_GRID
 #define ANA_INITIAL
+#define ANA_SMFLUX
+#undef  FORWARD_WRITE
+#define FORWARD_READ
+
+# elif defined DOUBLE_GYRE_OPT3D || \
+       defined BASIN_BOWL_OPT3D  || defined BASIN_SHELF_OPT3D
+
+/*
+**  3D optimal pertubations Double-Gyre Test
+*/
+
+#undef  OPT_PERTURBATION
+#ifndef OPT_PERTURBATION
+# undef SANITY_CHECK
+#endif
+#define UV_ADV
+#define UV_LDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#define UV_COR
+#define TS_U3HADVECTION
+#define TS_DIF2
+#define MIX_S_TS
+#define WJ_GRADP
+#define NONLIN_EOS
+#define SOLVE3D
+#define ANA_GRID
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define TCLIMATOLOGY
+#define TCLM_NUDGING
+#define ANA_TCLIMA
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_BTFLUX
+#undef  FORWARD_WRITE
+#define FORWARD_READ
+
+# elif defined DOUBLE_GYRE_4dvar2d || \
+       defined BASIN_BOWL_4dvar2d  || defined BASIN_SHELF_4dvar2d
+
+/*
+**  2D Double-Gyre 4DVAR Test
+*/
+
+#undef  UV_C2ADVECTION
+#define UV_ADV
+#define UV_LDRAG
+#define UV_VIS2
+#undef  UV_VIS4
+#define UV_COR
+#undef  AVERAGES
+#define ANA_GRID
+#undef  ANA_INITIAL
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define ANA_SMFLUX
+#define S4DVAR
+#undef  IS4DVAR
+#undef  GRADIENT_CHECK
+#undef  TLM_CHECK
+#undef  FULL_GRID
+#define ENERGY1_NORM
+#undef  ENERGY2_NORM
+#undef  ENERGY3_NORM
+#define FORWARD_WRITE
+#define FORWARD_READ
+#define OUT_DOUBLE
+
+# elif defined DOUBLE_GYRE_4dvar3d || \
+       defined BASIN_BOWL_4dvar3d  || defined BASIN_SHELF
+
+/*
+**  3D Double-Gyre 4DVAR Test
+*/
+
+#undef  UV_C2ADVECTION
+#undef  UV_C4ADVECTION
+#undef  UV_SADVECTION
+#define UV_ADV
+#define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#undef  MIX_GEO_UV
+#undef  WJ_GRADP
+#undef  DJ_GRADPS
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#undef  TS_A4HADVECTION
+#undef  TS_A4VADVECTION
+#define TS_DIF2
+#define MIX_S_TS
+#undef  MIX_GEO_TS
+#define NONLIN_EOS
+#define SOLVE3D
+#define SPLINES
+#undef  AVERAGES
+#define WESTERN_WALL
+#define EASTERN_WALL
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define TCLIMATOLOGY
+#define TCLM_NUDGING
+#undef  ANA_INITIAL
+#define ANA_GRID
 #define ANA_TCLIMA
 #define ANA_SMFLUX
 #define ANA_STFLUX
 #define ANA_BTFLUX
+#undef  ANA_VMIX
+#undef  AVOID_ADJOINT
+#define S4DVAR
+#undef  IS4DVAR
+#undef  GRADIENT_CHECK
+#undef  TLM_CHECK
+#undef  FULL_GRID
+#define ENERGY1_NORM
+#undef  ENERGY2_NORM
+#undef  ENERGY3_NORM
+#undef  N2NORM_PROFILE
+#define FORWARD_WRITE
+#define FORWARD_READ
+#define OUT_DOUBLE
+
+# elif defined EAC_FWD
+
+/*
+** East Australia Current Application.
+*/
+
+#define UV_ADV
+#undef  UV_SADVECTION
+#define DJ_GRADPS
+#define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#define SOLVE3D
+#define SALINITY
+#define NONLIN_EOS
+#define CURVGRID
+#define SPLINES
+#define MASKING
+#define AVERAGES
+#undef  EAST_VOLCONS
+#undef  WEST_VOLCONS
+#undef  NORTH_VOLCONS
+#undef  SOUTH_VOLCONS
+#define EAST_FSCHAPMAN
+#define EAST_M2FLATHER
+#define EAST_M3CLAMPED
+#define EAST_TCLAMPED
+#define WEST_FSCHAPMAN
+#define WEST_M2FLATHER
+#define WEST_M3CLAMPED
+#define WEST_TCLAMPED
+#define NORTH_FSCHAPMAN
+#define NORTH_M2FLATHER
+#define NORTH_M3CLAMPED
+#define NORTH_TCLAMPED
+#define SOUTH_FSCHAPMAN
+#define SOUTH_M2FLATHER
+#define SOUTH_M3CLAMPED
+#define SOUTH_TCLAMPED
+#undef  SRELAXATION
+#undef  QCORRECTION
+#define SOLAR_SOURCE
+#undef  ALBEDO
+#undef  DIURNAL_SRFLUX
+#undef  BULK_FLUXES
+#ifdef BULK_FLUXES
+# undef LONGWAVE
+# ifdef LONGWAVE
+#  define ANA_CLOUD
+# endif
+# undef  SRELAXATION
+# define ANA_RAIN
+# define ANA_SSFLUX
+#endif
+#undef  GLS_MIXING
+#define LMD_MIXING
+#ifdef LMD_MIXING
+# define LMD_RIMIX
+# define LMD_CONVEC
+# undef  LMD_DDMIX
+# define LMD_SKPP
+# undef  LMD_BKPP
+# define LMD_NONLOCAL
+#endif
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+#undef  ANA_SMFLUX
+#undef  ANA_STFLUX
+#undef  ANA_SSFLUX
+
+# elif defined EAC
+
+/*
+** East Australia Current Application, 4DVAR
+*/
+
+#define UV_ADV
+#undef  UV_SADVECTION
+#define DJ_GRADPS
+#define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#define SOLVE3D
+#define SALINITY
+#define NONLIN_EOS
+#define CURVGRID
+#undef  SPLINES
+#define MASKING
+#undef  AVERAGES
+#undef  CLOSE_OBC
+#ifdef CLOSE_OBC
+# define EASTERN_WALL
+# define WESTERN_WALL
+# define SOUTHERN_WALL
+# define NORTHERN_WALL
+#else
+# undef  EAST_VOLCONS
+# undef  WEST_VOLCONS
+# undef  NORTH_VOLCONS
+# undef  SOUTH_VOLCONS
+# define EAST_FSCHAPMAN
+# define EAST_M2FLATHER
+# undef  EAST_FSGRADIENT
+# undef  EAST_M2GRADIENT
+# define EAST_M3CLAMPED
+# define EAST_TCLAMPED
+# undef  EAST_M3GRADIENT
+# undef  EAST_TGRADIENT
+# define WEST_FSCHAPMAN
+# define WEST_M2FLATHER
+# undef  WEST_FSGRADIENT
+# undef  WEST_M2GRADIENT
+# define WEST_M3CLAMPED
+# define WEST_TCLAMPED
+# undef  WEST_M3GRADIENT
+# undef  WEST_TGRADIENT
+# define NORTH_FSCHAPMAN
+# define NORTH_M2FLATHER
+# undef  NORTH_FSGRADIENT
+# undef  NORTH_M2GRADIENT
+# define NORTH_M3CLAMPED
+# define NORTH_TCLAMPED
+# undef  NORTH_M3GRADIENT
+# undef  NORTH_TGRADIENT
+# define SOUTH_FSCHAPMAN
+# define SOUTH_M2FLATHER
+# undef  SOUTH_FSGRADIENT
+# undef  SOUTH_M2GRADIENT
+# define SOUTH_M3CLAMPED
+# define SOUTH_TCLAMPED
+# undef  SOUTH_M3GRADIENT
+# undef  SOUTH_TGRADIENT
+#endif
+#undef LMD_MIXING
+#ifdef LMD_MIXING
+# define LMD_RIMIX
+# define LMD_CONVEC
+# define LMD_SKPP
+# define LMD_NONLOCAL
+#endif
+#undef  SOLAR_SOURCE
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+#undef  AVOID_ADJOINT
+#define S4DVAR
+#undef  IS4DVAR
+#undef  GRADIENT_CHECK
+#undef  TLM_CHECK
+#define FULL_GRID
+#undef  ENERGY1_NORM
+#undef  ENERGY2_NORM
+#undef  ENERGY3_NORM
+#undef  N2NORM_PROFILE
+#define FORWARD_WRITE
+#define FORWARD_READ
+#define OUT_DOUBLE
 
 # elif defined ESTUARY_TEST
 
@@ -1194,11 +1699,16 @@
 */
 
 #define UV_ADV
-#define TS_U3HADVECTION
-#define SALINITY
+#define UV_QDRAG
+#undef  TS_U3HADVECTION
+#define TS_MPDATA
+#undef  SALINITY
 #define SOLVE3D
 #define SPLINES
 #define SEDIMENT
+#ifdef SEDIMENT
+# define SUSPLOAD
+#endif
 #define AVERAGES
 #define AVERAGES_AKV
 #define AVERAGES_AKT
@@ -1210,8 +1720,8 @@
 #define EAST_M2CLAMPED
 #define EAST_M3GRADIENT
 #define EAST_TCLAMPED
-#define WEST_FSGRADIENT
-#define WEST_M2CLAMPED
+#define WEST_FSCLAMPED
+#define WEST_M2REDUCED
 #define WEST_M3GRADIENT
 #define WEST_TRADIATION
 #define WEST_TNUDGING
@@ -1243,6 +1753,7 @@
 */
 
 #define UV_ADV
+#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define FLOATS
@@ -1253,7 +1764,7 @@
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_SMFLUX
-#undef  SOLVE3D
+#define SOLVE3D
 #ifdef SOLVE3D
 # define DJ_GRADPS
 # define TS_A4HADVECTION
@@ -1272,15 +1783,18 @@
 
 #define UV_ADV
 #define UV_VIS2
+#define UV_LDRAG
 #define MIX_S_UV
 #define DJ_GRADPS
-#define TS_U3HADVECTION
-#define TS_SVADVECTION
+#undef  TS_U3HADVECTION
+#undef  TS_SVADVECTION
+#define TS_MPDATA
 #define TS_DIF2
 #define MIX_S_TS
 #define SOLVE3D
 #define SPLINES
 #define AVERAGES
+#define NS_PERIODIC
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_SMFLUX
@@ -1290,6 +1804,123 @@
 #define DIAGNOSTICS_TS
 #define DIAGNOSTICS_UV
 
+# elif defined IAS
+
+/*
+** Intra-America Sea Application.
+*/
+
+#define UV_ADV
+#define DJ_GRADPS
+#define UV_COR
+#define UV_QDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#define TS_U3HADVECTION
+#define TS_SVADVECTION
+#define SOLVE3D
+#define SALINITY
+#define NONLIN_EOS
+#define CURVGRID
+#define SPLINES
+#define MASKING
+#define AVERAGES
+#define SRELAXATION
+#define QCORRECTION
+#define SOLAR_SOURCE
+#define DIURNAL_SRFLUX
+#define LMD_MIXING
+#ifdef LMD_MIXING
+# define LMD_RIMIX
+# define LMD_CONVEC
+# define LMD_SKPP
+# define LMD_NONLOCAL
+#endif
+#undef  GLS_MIXING
+#undef  BIO_FASHAM
+#ifdef BIO_FASHAM
+# define CARBON
+# define DENITRIFICATION
+# define BIO_SEDIMENT
+# define DIAGNOSTICS_BIO
+# define ANA_SPFLUX
+# define ANA_BPFLUX
+#endif
+#undef  M2CLIMATOLOGY
+#undef  M3CLIMATOLOGY
+#undef  TCLIMATOLOGY
+#undef  ZCLIMATOLOGY
+#undef  EAST_VOLCONS
+#undef  WEST_VOLCONS
+#undef  SOUTH_VOLCONS
+#define EAST_FSCHAPMAN
+#define EAST_M2FLATHER
+#define EAST_M3CLAMPED
+#define EAST_TCLAMPED
+#define WESTERN_WALL
+#define SOUTHERN_WALL
+#define NORTH_FSCHAPMAN
+#define NORTH_M2FLATHER
+#define NORTH_M3CLAMPED
+#define NORTH_TCLAMPED
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+
+# elif defined INNER_PRODUCT_2D
+
+/*
+**  Tangent/Adjoint State Matrices Inner Product 2D Test
+*/
+
+#undef  UV_C2ADVECTION
+#define UV_ADV
+#define UV_LDRAG
+#define UV_VIS2
+#undef  UV_VIS4
+#define UV_COR
+#define ANA_GRID
+#define ANA_INITIAL
+#define	EAST_M2GRADIENT
+#define	WEST_M2GRADIENT
+#define	SOUTH_M2GRADIENT
+#define	NORTH_M2GRADIENT
+#define	EAST_FSGRADIENT
+#define	WEST_FSGRADIENT
+#define	SOUTH_FSGRADIENT
+#define	NORTH_FSGRADIENT
+#define ANA_SMFLUX
+
+# elif defined INNER_PRODUCT
+
+/*
+**  Tangent/Adjoint State Matrices Inner Product 3D Test
+*/
+
+#define UV_ADV
+#define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#define UV_COR
+#define TS_U3HADVECTION
+#define TS_DIF2
+#define MIX_S_TS
+#define WJ_GRADP
+#define SOLVE3D
+#define	EAST_M2GRADIENT
+#define	WEST_M2GRADIENT
+#define	SOUTH_M2GRADIENT
+#define	NORTH_M2GRADIENT
+#define	EAST_FSGRADIENT
+#define	WEST_FSGRADIENT
+#define	SOUTH_FSGRADIENT
+#define	NORTH_FSGRADIENT
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_BTFLUX
+
 # elif defined KELVIN
 
 /*
@@ -1297,9 +1928,10 @@
 */
 
 #define UV_ADV
-#define DJ_GRADPS
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS2
+#define DJ_GRADPS
 #define TS_DIF2
 #define SOLVE3D
 #define NORTHERN_WALL
@@ -1359,36 +1991,63 @@
 **
 */
 
-#define FLOATS
 #define UV_ADV
 #undef  UV_COR
-#define TS_U3HADVECTION
-#define TS_C4VADVECTION
+#define DJ_GRADPS
+#undef  TS_U3HADVECTION
+#undef  TS_C4VADVECTION
+#define TS_MPDATA
 #undef  WJ_GRADP
 #define DJ_GRADPS
 #define SALINITY
 #define SOLVE3D
 #define SPLINES
 #define AVERAGES
+#if defined AVERAGES && defined BEDLOAD
+# define AVERAGES_BEDLOAD
+#endif
+#define FLOATS
 #define NORTHERN_WALL
 #define SOUTHERN_WALL
 #define EASTERN_WALL
 #define WESTERN_WALL
+#define UV_PSOURCE
+#define TS_PSOURCE
+#define ANA_PSOURCE
+
+#undef  UV_LOGDRAG
+#undef  MB_BBL
 #undef  SG_BBL
-#define MB_BBL
-#ifdef MB_BBL
-# define Z0_RIP
-# define Z0_BL
-# define Z0_BIO
+#define SSW_BBL
+
+#ifdef SG_BBL
+# define SG_CALC_ZNOT
+# undef  SG_LOGINT
 #endif
-#if defined MB_BBL || defined SG_BBL
+#ifdef MB_BBL
+# define MB_CALC_ZNOT
+# undef  MB_Z0BIO
+# undef  MB_Z0BL
+# undef  MB_Z0RIP
+#endif
+#ifdef SSW_BBL
+# define SSW_CALC_ZNOT
+# undef  SSW_LOGINT
+#endif
+
+#if defined MB_BBL || defined SG_BBL || defined SSW_BBL
 # define ANA_WWAVE
 # ifndef ANA_WWAVE
 #  define SWAN
 # endif
 #endif
+
 #define SEDIMENT
-#if defined SEDIMENT || defined SG_BBL || defined MB_BBL
+#ifdef SEDIMENT
+# define SUSPLOAD
+# define BEDLOAD
+#endif
+#if defined SEDIMENT || defined SG_BBL || defined MB_BBL || defined SSW_BBL
 # define ANA_SEDIMENT
 #endif
 #define ANA_GRID
@@ -1401,7 +2060,16 @@
 #define ANA_BSFLUX
 #define ANA_SPFLUX
 #define ANA_SRFLUX
-#define ANA_VMIX
+
+#undef ANA_VMIX
+#undef MY25_MIXING
+#define GLS_MIXING
+#if defined GLS_MIXING || defined MY25_MIXING
+# define KANTHA_CLAYSON
+# define  N2S2_HORAVG
+# undef CRAIG_BANNER
+# undef CHARNOK
+#endif
 
 # elif defined LMD_TEST
 
@@ -1411,6 +2079,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS
@@ -1452,8 +2121,9 @@
 */
 
 #define UV_ADV
-#define DJ_GRADPS
+#define UV_QDRAG
 #define UV_COR
+#define DJ_GRADPS
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
 #define SOLVE3D
@@ -1493,8 +2163,9 @@
 
 #define UV_ADV
 #define UV_SADVECTION
-#define DJ_GRADPS 
+#define DJ_GRADPS
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS2
 #define UV_PSOURCE
 #define MIX_S_UV
@@ -1512,7 +2183,7 @@
 #define QCORRECTION
 #define SOLAR_SOURCE
 #define DIURNAL_SRFLUX
-#define LMD_MIXING 
+#define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
 # define LMD_CONVEC
@@ -1561,6 +2232,7 @@
 #define INLINE_2DIO
 #define UV_ADV
 #define UV_SADVECTION
+#define UV_QDRAG
 #define UV_COR
 #undef  UV_PSOURCE
 #define DJ_GRADPS
@@ -1627,7 +2299,7 @@
 #endif
 #undef SG_BBL
 #ifdef SG_BBL
-# define SG_ZNOT
+# define SG_CALC_ZNOT
 # define ANA_SEDIMENT
 # define ANA_WWAVE
 #endif
@@ -1684,6 +2356,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define DJ_GRADPS
 #define TS_A4HADVECTION
 #define TS_A4VADVECTION
@@ -1714,6 +2387,64 @@
 #define ANA_BSFLUX
 #define ANA_BTFLUX
 
+# elif defined OPT_PERT2D
+
+/*
+**  Optimal Perturbation 2D Test
+*/
+
+#define UV_C4ADVECTION
+#define UV_ADV
+#define UV_VIS2
+#undef  UV_VIS4
+#define UV_COR
+#define EW_PERIODIC
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_SMFLUX
+
+# elif defined OPT_PERT3D
+
+/*
+**  Optimal Perturbation 3D Test
+*/
+
+#undef SPLINES
+#define UV_C2ADVECTION
+#define UV_ADV
+#define UV_VIS2
+#undef UV_VIS4
+#undef MIX_S_UV
+#define MIX_GEO_UV
+#define UV_COR
+#define TS_C2ADVECTION
+#define TS_DIF2
+#undef TS_DIF4
+#define MIX_S_TS
+#undef MIX_ISO_TS
+#undef MIX_GEO_TS
+#undef  DIAGNOSTIC
+#define SOLVE3D
+#define EW_PERIODIC
+#define NORTHERN_WALL
+#define SOUTHERN_WALL
+#define TCLIMATOLOGY
+#define TCLM_NUDGING
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_PERTURB
+#define ANA_TCLIMA
+#define ANA_SMFLUX
+#define ANA_STFLUX
+#define ANA_SSFLUX
+#define ANA_BTFLUX
+#define ANA_BSFLUX
+#undef FORWARD_RHS
+#undef  FORWARD_WRITE
+#define FORWARD_READ
+
 # elif defined OVERFLOW
 
 /*
@@ -1722,6 +2453,7 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS
@@ -1738,14 +2470,15 @@
 #define ANA_STFLUX
 #define ANA_BTFLUX
 
-# elif defined RIVERPLUME
+# elif defined RIVERPLUME1
 
 /*
-**  River Plume example.
+**  River Plume example 1.
 */
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define UV_PSOURCE
 #define DJ_GRADPS
 #define TS_A4HADVECTION
@@ -1784,6 +2517,143 @@
 #define ANA_BSFLUX
 #define ANA_BTFLUX
 
+# elif defined RIVERPLUME2
+
+/*
+**  River Plume example by Hyatt and Signell described at
+**  http://smig.usgs.gov/SMIG/features_0300/plumes_inline.html
+*/
+
+#define UV_ADV
+#define UV_COR
+#define UV_QDRAG
+#define UV_PSOURCE
+#define DJ_GRADPS
+#define TS_A4HADVECTION
+#define TS_A4VADVECTION
+#define TS_DIF2
+#define MIX_GEO_TS
+#define TS_PSOURCE
+#define NONLIN_EOS
+#define SALINITY
+#define MASKING
+#define SOLVE3D
+#define SPLINES
+#define AVERAGES
+#define AVERAGES_AKV
+#define AVERAGES_AKT
+#define AVERAGES_AKS
+#undef  NS_PERIODIC
+#define SOUTH_FSCHAPMAN
+#define SOUTH_M2GRADIENT
+#define SOUTH_M3GRADIENT
+#define SOUTH_TGRADIENT
+#define NORTH_FSCHAPMAN
+#define NORTH_M2GRADIENT
+#define NORTH_M3GRADIENT
+#define NORTH_TGRADIENT
+#define WESTERN_WALL
+#define EASTERN_WALL
+#undef  MY25_MIXING
+#define LMD_MIXING
+#ifdef LMD_MIXING
+# define LMD_RIMIX
+# define LMD_CONVEC
+# define LMD_SKPP
+# define LMD_BKPP
+# define LMD_NONLOCAL
+#endif
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_PSOURCE
+#define ANA_SMFLUX
+#define ANA_SRFLUX
+#define ANA_SSFLUX
+#define ANA_STFLUX
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+
+# elif defined SCB
+
+/*
+**  Options for Southern California Bight Application.
+*/
+
+#define UV_ADV
+#define UV_COR
+#define UV_LDRAG
+#define UV_VIS2
+#define MIX_S_UV
+#define DJ_GRADPS
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
+#define TS_DIF2
+#define MIX_S_TS
+#undef  MIX_GEO_TS
+#define SALINITY
+#define SOLAR_SOURCE
+#define NONLIN_EOS
+#define CURVGRID
+#define MASKING
+#define SOLVE3D
+#define SPLINES
+#undef  AVERAGES
+#undef  AVERAGES_QUADRATIC
+#undef  NPZD
+
+#undef  MY25_MIXING
+#undef  LMD_MIXING
+#ifdef LMD_MIXING
+# define LMD_RIMIX
+# define LMD_CONVEC
+# define LMD_NONLOCAL
+# define LMD_SKPP
+#endif
+
+#undef  CLOSED_OBC
+#ifdef CLOSED_OBC
+# define  SOUTHERN_WALL
+# define  NORTHERN_WALL
+# define  WESTERN_WALL
+# define  EASTERN_WALL
+#else
+# define SOUTH_FSCHAPMAN
+# define SOUTH_M2FLATHER
+# define SOUTH_M3CLAMPED
+# define SOUTH_TCLAMPED
+# define NORTH_FSCHAPMAN
+# define NORTH_M2FLATHER
+# define NORTH_M3CLAMPED
+# define NORTH_TCLAMPED
+# define WEST_FSCHAPMAN
+# define WEST_M2FLATHER
+# define WEST_M3CLAMPED
+# define WEST_TCLAMPED
+# define EASTERN_WALL
+#endif
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+
+#undef  FORWARD
+#ifndef FORWARD
+# define S4DVAR
+# undef  IS4DVAR
+# undef  GRADIENT_CHECK
+# undef  TLM_CHECK
+# undef  OPT_PERTURBATION
+# undef  AD_SENSITIVITY
+# undef  AD_SENS_TIMEAV
+# define FULL_GRID
+# define ENERGY1_NORM
+# undef  ENERGY2_NORM
+# undef  ENERGY3_NORM
+# undef  N2NORM_PROFILE
+# undef  INPUT_COVARIANCE
+# define FORWARD_WRITE
+# define FORWARD_READ
+#endif
+#define OUT_DOUBLE
+
 # elif defined SEAMOUNT
 
 /*
@@ -1792,6 +2662,8 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_QDRAG
+#define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS
 #define TS_A4HADVECTION
@@ -1816,6 +2688,7 @@
 
 #define UV_ADV
 #define UV_PSOURCE
+#define UV_LOGDRAG
 #define UV_VIS4
 #define MIX_S_UV
 #define TS_U3HADVECTION
@@ -1825,6 +2698,10 @@
 #define SALINITY
 #define SOLVE3D
 #define SEDIMENT
+#ifdef SEDIMENT
+# define SUSPLOAD
+# define BEDLOAD
+#endif
 #undef  SPLINES
 #define AVERAGES
 #ifdef AVERAGES
@@ -1872,6 +2749,77 @@
 #define ANA_FSOBC
 #undef  ANA_VMIX
 
+# elif defined SED_TOY
+
+/*
+** One-dimensional (vertical) Sediment Test.
+*/
+
+#define BODYFORCE
+#define UV_ADV
+#undef  UV_COR
+#undef  UV_LOGDRAG
+#define UV_QDRAG
+#define DJ_GRADPS
+#undef  TS_U3HADVECTION
+#define TS_MPDATA
+#undef  NONLIN_EOS
+#undef  SALINITY
+#undef  SPLINES
+#define OUT_DOUBLE
+#define SOLVE3D
+#define AVERAGES
+#undef  AVERAGES_AKV
+#undef  AVERAGES_AKT
+#undef  AVERAGES_AKS
+#define AVERAGES_BEDLOAD
+#undef  FLOATS
+#define EW_PERIODIC
+#define NS_PERIODIC
+#define ANA_BPFLUX
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_SEDIMENT
+#define ANA_SMFLUX
+#define ANA_SPFLUX
+#define ANA_SRFLUX
+#define ANA_SSFLUX
+#define ANA_STFLUX
+#define ANA_WWAVE
+#undef  SG_BBL
+#ifdef SG_BBL
+# undef  SG_CALC_ZNOT
+# undef  SG_LOGINT
+#endif
+#undef  MB_BBL
+#ifdef MB_BBL
+# undef  MB_CALC_ZNOT
+# undef  MB_Z0BIO
+# undef  MB_Z0BL
+# undef  MB_Z0RIP
+#endif
+#undef  SSW_BBL
+#ifdef SSW_BBL
+# define SSW_CALC_ZNOT
+# undef  SSW_LOGINT
+#endif
+#define GLS_MIXING
+#ifdef GLS_MIXING
+# define KANTHA_CLAYSON
+# define N2S2_HORAVG
+# undef  CRAIG_BANNER
+# undef  CHARNOK
+#endif
+#define SEDIMENT
+#ifdef SEDIMENT
+# define SUSPLOAD
+# undef  BEDLOAD
+# undef  SED_DENS
+# undef  SED_MORPH
+#endif
+
 # elif defined SOLITON
 
 /*
@@ -1882,54 +2830,12 @@
 #define UV_C4ADVECTION
 #define UV_VIS2
 #define UV_COR
+#define UV_QDRAG
 #define AVERAGES
 #define ANA_GRID
 #define ANA_INITIAL
 #define EW_PERIODIC
 #define ANA_SMFLUX
-
-
-# elif defined TEST_CHAN
-/*
-**  TEST_CHAN - test channel
-*/
-
-#define WRITE_GRID
-#define OUT_DOUBLE
-#define ANA_GRID
-#define UV_ADV
-#undef                SALINITY
-#define SOLVE3D
-#undef                AVERAGES
-#define AVERAGES_AKV
-#define AVERAGES_AKT
-#define AVERAGES_AKS
-#define SPLINES
-#define ANA_INITIAL
-#define ANA_SMFLUX
-#define ANA_STFLUX
-#define ANA_BTFLUX
-#define ANA_SSFLUX
-#define ANA_BSFLUX
-#define ANA_SPFLUX
-#define ANA_BPFLUX
-#define TS_U3HADVECTION
-#define NORTHERN_WALL
-#define SOUTHERN_WALL
-#define EAST_FSGRADIENT
-#define EAST_M2CLAMPED
-#define EAST_M3GRADIENT
-#define WEST_FSCLAMPED
-#define WEST_M2GRADIENT
-#define WEST_M3GRADIENT
-#define ANA_FSOBC
-#define ANA_M2OBC
-#define SEDIMENT
-#define ANA_SEDIMENT
-#define GLS_MIXING
-#define KANTHA_CLAYSON
-#define N2S2_HORAVG
-
 
 # elif defined UPWELLING
 
@@ -1939,12 +2845,14 @@
 
 #define UV_ADV
 #define UV_COR
+#define UV_LDRAG
 #define UV_VIS2
 #undef  UV_VIS4
 #define MIX_S_UV
 #undef  MIX_GEO_UV
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
+#undef  TS_MPDATA
 #undef  WJ_GRADP
 #define DJ_GRADPS
 #define TS_DIF2
@@ -1988,6 +2896,7 @@
 #define UV_ADV
 #define UV_VIS2
 #define UV_COR
+#define UV_QDRAG
 #define DJ_GRADPS
 #define NONLIN_EOS
 #define SALINITY
@@ -2042,6 +2951,7 @@
 #define UV_ADV
 #define DJ_GRADPS
 #define UV_COR
+#define UV_QDRAG
 #undef  UV_VIS4
 #undef  MIX_S_UV
 #define TS_A4HADVECTION
@@ -2088,6 +2998,7 @@
 
 #undef UV_ADV
 #define UV_COR
+#define UV_QDRAG
 #define SOLVE3D
 #define SPLINES
 #define AVERAGES

@@ -2,7 +2,7 @@
       SUBROUTINE get_date (date_str)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !   This routine gets todays date, day of the week and time called     !
@@ -102,17 +102,19 @@
 !
 !  Concatenate date string.
 !
-      len1=len_trim(dstring)
-      len2=len_trim(today)
-      len3=len_trim(tstring)
-      date_str=dstring(1:len1)
+      len1=LEN_TRIM(dstring)
+      len2=LEN_TRIM(today)
+      len3=LEN_TRIM(tstring)
+      date_str=TRIM(ADJUSTL(dstring(1:len1)))
       IF (len2.gt.0) THEN
-        len1=len_trim(date_str)
-        date_str=date_str(1:len1)//' - '//today(1:len2)
+        len1=LEN_TRIM(date_str)
+        WRITE (date_str,'(a," - ",a)') TRIM(date_str(1:len1)),          &
+     &                                 TRIM(today(1:len2))
       END IF
       IF (len3.gt.0) THEN
-        len1=len_trim(date_str)
-        date_str=date_str(1:len1)//' - '//tstring(1:len3)
+        len1=LEN_TRIM(date_str)
+        WRITE (date_str,'(a," - ",a)') TRIM(date_str(1:len1)),          &
+     &                                 TRIM(tstring(1:len3))
       END IF
       RETURN
       END SUBROUTINE get_date

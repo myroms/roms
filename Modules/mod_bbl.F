@@ -3,21 +3,27 @@
 #ifdef BBL_MODEL
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  Ubed         Wind-induced, bed wave orbital U-velocity (m/s).       !
-!  Ubot         Bottom U-momentum (m/s) above bed.                     !
-!  Vbed         Wind-induced, bed wave orbital V-velocity (m/s).       !
-!  Vbot         Bottom V-momentum (m/s) above bed.                     !
+!  Ubot         Wind-induced, bed wave orbital U-velocity (m/s) at     !
+!                 RHO-points.                                          !
+!  Ur           Bottom U-momentum above bed (m/s) at RHO-points.       !
+!  Vbot         Wind-induced, bed wave orbital V-velocity (m/s) at     !
+!                 RHO-points.                                          !
+!  Vr           Bottom V-momentum above bed (m/s) at RHO-points.       !
+!  bustrc       Kinematic bottom stress (m2/s2) due currents in the    !
+!                 XI-direction at RHO-points.                          !
 !  bustrw       Kinematic bottom stress (m2/s2) due to wind-induced    !
-!                 waves the XI-direction at horizontal U-points.       !
+!                 waves the XI-direction at horizontal RHO-points.     !
 !  bustrcwmax   Kinematic bottom stress (m2/s2) due to maximum wind    !
-!                 and currents in the XI-direction at U-points.        !
+!                 and currents in the XI-direction at RHO-points.      !
+!  bvstrc       Kinematic bottom stress (m2/s2) due currents in the    !
+!                 ETA-direction at RHO-points.                         !
 !  bvstrw       Kinematic bottom stress (m2/s2) due to wind-induced    !
-!                 waves the ETA-direction at horizontal V-points.      !
+!                 waves the ETA-direction at horizontal RHO-points.    !
 !  bvstrcwmax   Kinematic bottom stress (m2/s2) due to maximum wind    !
-!                 and currents in the ETA-direction at V-points.       !
+!                 and currents in the ETA-direction RHO-points.        !
 !                                                                      !
 !=======================================================================
 !
@@ -29,10 +35,12 @@
 
           integer,  pointer :: Iconv(:,:)
 
-          real(r8), pointer :: Ubed(:,:)
           real(r8), pointer :: Ubot(:,:)
-          real(r8), pointer :: Vbed(:,:)
+          real(r8), pointer :: Ur(:,:)
           real(r8), pointer :: Vbot(:,:)
+          real(r8), pointer :: Vr(:,:)
+          real(r8), pointer :: bustrc(:,:)
+          real(r8), pointer :: bvstrc(:,:)
           real(r8), pointer :: bustrw(:,:)
           real(r8), pointer :: bvstrw(:,:)
           real(r8), pointer :: bustrcwmax(:,:)
@@ -47,7 +55,7 @@
       SUBROUTINE allocate_bbl (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates all variables in the module for all nested   !
@@ -68,10 +76,12 @@
       IF (ng.eq.1) allocate ( BBL(Ngrids) )
 !
       allocate ( BBL(ng) % Iconv(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Ubed(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % Ubot(LBi:UBi,LBj:UBj) )
-      allocate ( BBL(ng) % Vbed(LBi:UBi,LBj:UBj) )
+      allocate ( BBL(ng) % Ur(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % Vbot(LBi:UBi,LBj:UBj) )
+      allocate ( BBL(ng) % Vr(LBi:UBi,LBj:UBj) )
+      allocate ( BBL(ng) % bustrc(LBi:UBi,LBj:UBj) )
+      allocate ( BBL(ng) % bvstrc(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % bustrw(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % bvstrw(LBi:UBi,LBj:UBj) )
       allocate ( BBL(ng) % bustrcwmax(LBi:UBi,LBj:UBj) )
@@ -83,7 +93,7 @@
       SUBROUTINE initialize_bbl (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initialize all variables in the module using first     !
@@ -144,11 +154,14 @@
 !
       BBL(ng) % Iconv(Imin:Imax,Jmin:Jmax) = 0
 
-      BBL(ng) % Ubed(Imin:Imax,Jmin:Jmax) = IniVal
       BBL(ng) % Ubot(Imin:Imax,Jmin:Jmax) = IniVal
+      BBL(ng) % Ur(Imin:Imax,Jmin:Jmax) = IniVal
 
-      BBL(ng) % Vbed(Imin:Imax,Jmin:Jmax) = IniVal
       BBL(ng) % Vbot(Imin:Imax,Jmin:Jmax) = IniVal
+      BBL(ng) % Vr(Imin:Imax,Jmin:Jmax) = IniVal
+
+      BBL(ng) % bustrc(Imin:Imax,Jmin:Jmax) = IniVal
+      BBL(ng) % bvstrc(Imin:Imax,Jmin:Jmax) = IniVal
 
       BBL(ng) % bustrw(Imin:Imax,Jmin:Jmax) = IniVal
       BBL(ng) % bvstrw(Imin:Imax,Jmin:Jmax) = IniVal

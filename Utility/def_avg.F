@@ -3,7 +3,7 @@
       SUBROUTINE def_avg (ng,ldef)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine creates averages NetCDF file, it defines its           !
@@ -31,7 +31,7 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 20
+      integer, parameter :: Natt = 23
 
       logical :: got_var(NV)
 
@@ -49,7 +49,7 @@
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 # endif
 
-      real(r8) :: Aval(4)
+      real(r8) :: Aval(5)
 
       character (len=80) :: Vinfo(Natt)
       character (len=80) :: fname, ncname
@@ -58,8 +58,8 @@
 !  Set and report file name.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.0) RETURN
-      ncname=avgname(ng)
+      IF (exit_flag.ne.NoError) RETURN
+      ncname=AVGname(ng)
 !
       IF (Master) THEN
         IF (ldef) THEN
@@ -74,15 +74,16 @@
 !=======================================================================
 !
       IF (ldef.and.OutThread) THEN
-        status=nf_create(TRIM(ncname),nf_clobber,ncavgid(ng))
+        status=nf_create(TRIM(ncname),nf_clobber,ncAVGid(ng))
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,30) TRIM(ncname)
           exit_flag=3
+          ioerror=status
           RETURN
         END IF
       END IF
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, ncavgid(ng), 1)
+      CALL mp_bcasti (ng, iNLM, ncAVGid(ng), 1)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -90,69 +91,69 @@
 !-----------------------------------------------------------------------
 !
       IF (ldef.and.OutThread) THEN
-        status=nf_def_dim(ncavgid(ng),'xi_rho'  ,Lm(ng)+2,              &
+        status=nf_def_dim(ncAVGid(ng),'xi_rho'  ,Lm(ng)+2,              &
      &                    DimIDs( 1))
-        status=nf_def_dim(ncavgid(ng),'xi_u'    ,Lm(ng)+1,              &
+        status=nf_def_dim(ncAVGid(ng),'xi_u'    ,Lm(ng)+1,              &
      &                    DimIDs( 2))
-        status=nf_def_dim(ncavgid(ng),'xi_v'    ,Lm(ng)+2,              &
+        status=nf_def_dim(ncAVGid(ng),'xi_v'    ,Lm(ng)+2,              &
      &                    DimIDs( 3))
-        status=nf_def_dim(ncavgid(ng),'xi_psi'  ,Lm(ng)+1,              &
+        status=nf_def_dim(ncAVGid(ng),'xi_psi'  ,Lm(ng)+1,              &
      &                    DimIDs( 4))
-        status=nf_def_dim(ncavgid(ng),'eta_rho' ,Mm(ng)+2,              &
+        status=nf_def_dim(ncAVGid(ng),'eta_rho' ,Mm(ng)+2,              &
      &                    DimIDs( 5))
-        status=nf_def_dim(ncavgid(ng),'eta_u'   ,Mm(ng)+2,              &
+        status=nf_def_dim(ncAVGid(ng),'eta_u'   ,Mm(ng)+2,              &
      &                    DimIDs( 6))
-        status=nf_def_dim(ncavgid(ng),'eta_v'   ,Mm(ng)+1,              &
+        status=nf_def_dim(ncAVGid(ng),'eta_v'   ,Mm(ng)+1,              &
      &                    DimIDs( 7))
-        status=nf_def_dim(ncavgid(ng),'eta_psi' ,Mm(ng)+1,              &
+        status=nf_def_dim(ncAVGid(ng),'eta_psi' ,Mm(ng)+1,              &
      &                    DimIDs( 8))
 # if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncavgid(ng),'xy_rho'  ,Nxyr(ng),              &
+        status=nf_def_dim(ncAVGid(ng),'xy_rho'  ,Nxyr(ng),              &
      &                    DimIDs(17))
-        status=nf_def_dim(ncavgid(ng),'xy_u'    ,Nxyu(ng),              &
+        status=nf_def_dim(ncAVGid(ng),'xy_u'    ,Nxyu(ng),              &
      &                    DimIDs(18))
-        status=nf_def_dim(ncavgid(ng),'xy_v'    ,Nxyv(ng),              &
+        status=nf_def_dim(ncAVGid(ng),'xy_v'    ,Nxyv(ng),              &
      &                    DimIDs(19))
 # endif
 # ifdef SOLVE3D
 #  if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncavgid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),        &
+        status=nf_def_dim(ncAVGid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),        &
      &                    DimIDs(20))
-        status=nf_def_dim(ncavgid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),        &
+        status=nf_def_dim(ncAVGid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),        &
      &                    DimIDs(21))
-        status=nf_def_dim(ncavgid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),        &
+        status=nf_def_dim(ncAVGid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),        &
      &                    DimIDs(22))
-        status=nf_def_dim(ncavgid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),    &
+        status=nf_def_dim(ncAVGid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),    &
      &                    DimIDs(23))
 #  endif
-        status=nf_def_dim(ncavgid(ng),'s_rho'   ,N(ng),                 &
+        status=nf_def_dim(ncAVGid(ng),'s_rho'   ,N(ng),                 &
      &                    DimIDs( 9))
-        status=nf_def_dim(ncavgid(ng),'s_w'     ,N(ng)+1,               &
+        status=nf_def_dim(ncAVGid(ng),'s_w'     ,N(ng)+1,               &
      &                    DimIDs(10))
-        status=nf_def_dim(ncavgid(ng),'tracer'  ,NT(ng),                &
+        status=nf_def_dim(ncAVGid(ng),'tracer'  ,NT(ng),                &
      &                    DimIDs(11))
 #  ifdef SEDIMENT
-        status=nf_def_dim(ncavgid(ng),'Nbed'    ,Nbed,                  &
+        status=nf_def_dim(ncAVGid(ng),'Nbed'    ,Nbed,                  &
      &                    DimIDs(16))
 #   if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncavgid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
+        status=nf_def_dim(ncAVGid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
      &                    DimIDs(24))
 #   endif
 #  endif
 #  ifdef ECOSIM
-        status=nf_def_dim(ncavgid(ng),'Nphy'    ,Nphy,                  &
+        status=nf_def_dim(ncAVGid(ng),'Nphy'    ,Nphy,                  &
      &                    DimIDs(25))
-        status=nf_def_dim(ncavgid(ng),'Nbac'    ,Nbac,                  &
+        status=nf_def_dim(ncAVGid(ng),'Nbac'    ,Nbac,                  &
      &                    DimIDs(26))
-        status=nf_def_dim(ncavgid(ng),'Ndom'    ,Ndom,                  &
+        status=nf_def_dim(ncAVGid(ng),'Ndom'    ,Ndom,                  &
      &                    DimIDs(27))
-        status=nf_def_dim(ncavgid(ng),'Nfec'    ,Nfec,                  &
+        status=nf_def_dim(ncAVGid(ng),'Nfec'    ,Nfec,                  &
      &                    DimIDs(28))
 #  endif
 # endif
-        status=nf_def_dim(ncavgid(ng),'boundary',4,                     &
+        status=nf_def_dim(ncAVGid(ng),'boundary',4,                     &
      &                    DimIDs(14))
-        status=nf_def_dim(ncavgid(ng),TRIM(ADJUSTL(Vname(5,idtime))),   &
+        status=nf_def_dim(ncAVGid(ng),TRIM(ADJUSTL(Vname(5,idtime))),   &
      &                    nf_unlimited,DimIDs(12))
         recdim=DimIDs(12)
 !
@@ -259,7 +260,7 @@
 !
 !  Initialize unlimited time record dimension.
 !
-        tavgindx(ng)=0
+        tAVGindx(ng)=0
 !
 !  Initialize local information variable arrays.
 !
@@ -268,7 +269,7 @@
             Vinfo(i)(j:j)=' '
           END DO
         END DO
-        DO i=1,4
+        DO i=1,5
           Aval(i)=0.0_r8
         END DO
 !
@@ -276,8 +277,8 @@
 !  Define time-recordless information variables.
 !-----------------------------------------------------------------------
 !
-        status=def_info(ng,ncavgid(ng),ncname,DimIDs)
-        IF (exit_flag.ne.0) RETURN
+        status=def_info(ng,ncAVGid(ng),ncname,DimIDs)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Define variables and their attributes.
@@ -286,37 +287,38 @@
 !  Define model time.
 !
         Vinfo( 1)=Vname(1,idtime)
-        Vinfo( 2)='averaged '//TRIM(Vname(2,idtime))
+        WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idtime))
         IF (INT(time_ref).eq.-2) THEN
           Vinfo( 3)='seconds since 1968-05-23 00:00:00 GMT'
-          Vinfo( 4)='modified Julian day number'
-          Vinfo(18)='add_offset'
-          Aval(1)=jul_off
+          Vinfo( 4)='gregorian'
         ELSE IF (INT(time_ref).eq.-1) THEN
           Vinfo( 3)='seconds since 0000-01-01 00:00:00'
-          Vinfo( 4)='360 days in every year, 30 days in each month'
+          Vinfo( 4)='360_day'
         ELSE IF (INT(time_ref).eq.0) THEN
           Vinfo( 3)='seconds since 0000-01-01 00:00:00'
-          Vinfo( 4)='365.25 days in every year'
+          Vinfo( 4)='365.25_day'
         ELSE IF (time_ref.gt.0.0_r8) THEN
-          Vinfo( 3)='seconds since '//r_text
+          WRITE (Vinfo( 3),'(a,1x,a)') 'seconds since', TRIM(r_text)
+          Vinfo( 4)='standard'
         END IF
         Vinfo(14)=Vname(4,idtime)
-        status=def_var(ncavgid(ng),avgVid(idtime,ng),NF_TYPE,           &
+        status=def_var(ncAVGid(ng),avgVid(idtime,ng),NF_TYPE,           &
      &                 1,recdim,Aval,Vinfo,ncname)
 !
 !  Define free-surface.
 !
         IF (Hout(idFsur,ng)) THEN
           Vinfo( 1)=Vname(1,idFsur)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idFsur))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idFsur))
           Vinfo( 3)=Vname(3,idFsur)
           Vinfo(14)=Vname(4,idFsur)
           Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 # endif
-          status=def_var(ncavgid(ng),avgVid(idFsur,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idFsur,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -324,14 +326,16 @@
 !
         IF (Hout(idUbar,ng)) THEN
           Vinfo( 1)=Vname(1,idUbar)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idUbar))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idUbar))
           Vinfo( 3)=Vname(3,idUbar)
           Vinfo(14)=Vname(4,idUbar)
           Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 # endif
-          status=def_var(ncavgid(ng),avgVid(idUbar,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUbar,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idUbar,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -339,14 +343,16 @@
 !
         IF (Hout(idVbar,ng)) THEN
           Vinfo( 1)=Vname(1,idVbar)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idVbar))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idVbar))
           Vinfo( 3)=Vname(3,idVbar)
           Vinfo(14)=Vname(4,idVbar)
           Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 # endif
-          status=def_var(ncavgid(ng),avgVid(idVbar,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idVbar,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
 # ifdef SOLVE3D
@@ -355,14 +361,16 @@
 !
         IF (Hout(idUvel,ng)) THEN
           Vinfo( 1)=Vname(1,idUvel)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idUvel))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idUvel))
           Vinfo( 3)=Vname(3,idUvel)
           Vinfo(14)=Vname(4,idUvel)
           Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #  endif
-          status=def_var(ncavgid(ng),avgVid(idUvel,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUvel,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idUvel,ng),NF_FOUT,         &
      &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -370,14 +378,16 @@
 !
         IF (Hout(idVvel,ng)) THEN
           Vinfo( 1)=Vname(1,idVvel)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idVvel))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idVvel))
           Vinfo( 3)=Vname(3,idVvel)
           Vinfo(14)=Vname(4,idVvel)
           Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #  endif
-          status=def_var(ncavgid(ng),avgVid(idVvel,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVvel,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idVvel,ng),NF_FOUT,         &
      &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -385,14 +395,16 @@
 !
         IF (Hout(idOvel,ng)) THEN
           Vinfo( 1)=Vname(1,idOvel)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idOvel))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idOvel))
           Vinfo( 3)=Vname(3,idOvel)
           Vinfo(14)=Vname(4,idOvel)
           Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #  endif
-          status=def_var(ncavgid(ng),avgVid(idOvel,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idOvel,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idOvel,ng),NF_FOUT,         &
      &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -401,7 +413,8 @@
         DO itrc=1,NT(ng)
           IF (Hout(idTvar(itrc),ng)) THEN
             Vinfo( 1)=Vname(1,idTvar(itrc))
-            Vinfo( 2)='averaged '//TRIM(Vname(2,idTvar(itrc)))
+            WRITE (Vinfo( 2),'(a,1x,a)') 'averaged',                    &
+     &                                   TRIM(Vname(2,idTvar(itrc)))
             Vinfo( 3)=Vname(3,idTvar(itrc))
             Vinfo(14)=Vname(4,idTvar(itrc))
             Vinfo(16)=Vname(1,idtime)
@@ -413,9 +426,11 @@
             END DO
 #  endif
 #  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
+            Vinfo(20)='mask_rho'
 #  endif
-            status=def_var(ncavgid(ng),avgTid(itrc,ng),NF_FOUT,         &
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r3dvar,r8)
+            status=def_var(ncAVGid(ng),avgTid(itrc,ng),NF_FOUT,         &
      &                     nvd4,t3dgrd,Aval,Vinfo,ncname)
           END IF
         END DO
@@ -424,14 +439,16 @@
 !
         IF (Hout(idDano,ng)) THEN
           Vinfo( 1)=Vname(1,idDano)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idDano))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idDano))
           Vinfo( 3)=Vname(3,idDano)
           Vinfo(14)=Vname(4,idDano)
           Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #  endif
-          status=def_var(ncavgid(ng),avgVid(idDano,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idDano,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idDano,ng),NF_FOUT,         &
      &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
         END IF
 #  ifdef LMD_SKPP
@@ -440,14 +457,16 @@
 !
         IF (Hout(idHsbl,ng)) THEN
           Vinfo( 1)=Vname(1,idHsbl)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idHsbl))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idHsbl))
           Vinfo( 3)=Vname(3,idHsbl)
           Vinfo(14)=Vname(4,idHsbl)
           Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #   endif
-          status=def_var(ncavgid(ng),avgVid(idHsbl,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idHsbl,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idHsbl,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
 #  endif
@@ -457,20 +476,71 @@
 !
         IF (Hout(idHbbl,ng)) THEN
           Vinfo( 1)=Vname(1,idHbbl)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idHbbl))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idHbbl))
           Vinfo( 3)=Vname(3,idHbbl)
           Vinfo(14)=Vname(4,idHbbl)
           Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #   endif
-          status=def_var(ncavgid(ng),avgVid(idHbbl,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idHbbl,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idHbbl,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
 #  endif
+# endif
+# ifdef AVERAGES_QUADRATIC
+!
+!  Define quadratic <zeta*zeta> term.
+!
+        Vinfo( 1)=Vname(1,idZZav)
+        Vinfo( 2)=TRIM(Vname(2,idZZav))
+        Vinfo( 3)=Vname(3,idZZav)
+        Vinfo(14)=Vname(4,idZZav)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_rho'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(r2dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idZZav,ng),NF_FOUT,           &
+     &                 nvd3,t2dgrd,Aval,Vinfo,ncname)
+!
+!  Define quadratic <ubar*ubar> term.
+!
+        Vinfo( 1)=Vname(1,idU2av)
+        Vinfo( 2)=TRIM(Vname(2,idU2av))
+        Vinfo( 3)=Vname(3,idU2av)
+        Vinfo(14)=Vname(4,idU2av)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(u2dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idU2av,ng),NF_FOUT,           &
+     &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
+!
+!  Define quadratic <vbar*vbar> term.
+!
+        Vinfo( 1)=Vname(1,idV2av)
+        Vinfo( 2)=TRIM(Vname(2,idV2av))
+        Vinfo( 3)=Vname(3,idV2av)
+        Vinfo(14)=Vname(4,idV2av)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(v2dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idV2av,ng),NF_FOUT,           &
+     &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+# endif
+# ifdef SOLVE3D
 #  ifdef AVERAGES_QUADRATIC
 !
-!  Define quadratic <uu> term.
+!  Define quadratic <u*u> term.
 !
         Vinfo( 1)=Vname(1,idUUav)
         Vinfo( 2)=TRIM(Vname(2,idUUav))
@@ -480,10 +550,12 @@
 #   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #   endif
-        status=def_var(ncavgid(ng),avgVid(idUUav,ng),NF_FOUT,           &
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(u3dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idUUav,ng),NF_FOUT,           &
      &                 nvd4,u3dgrd,Aval,Vinfo,ncname)
 !
-!  Define quadratic <uv> term.
+!  Define quadratic <u*v> term.
 !
         Vinfo( 1)=Vname(1,idUVav)
         Vinfo( 2)=TRIM(Vname(2,idUVav))
@@ -493,10 +565,12 @@
 #   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
 #   endif
-        status=def_var(ncavgid(ng),avgVid(idUVav,ng),NF_FOUT,           &
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(r3dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idUVav,ng),NF_FOUT,           &
      &                 nvd4,t3dgrd,Aval,Vinfo,ncname)
 !
-!  Define quadratic <vv> term.
+!  Define quadratic <v*v> term.
 !
         Vinfo( 1)=Vname(1,idVVav)
         Vinfo( 2)=TRIM(Vname(2,idVVav))
@@ -506,10 +580,29 @@
 #   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #   endif
-        status=def_var(ncavgid(ng),avgVid(idVVav,ng),NF_FOUT,           &
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(v3dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idVVav,ng),NF_FOUT,           &
      &                 nvd4,v3dgrd,Aval,Vinfo,ncname)
 !
-!  Define quadratic <ut> and <vt> terms.
+!  Define quadratic <t*t> terms.
+!
+        DO itrc=1,NAT
+          Vinfo( 1)=Vname(1,idTTav(itrc))
+          Vinfo( 2)=TRIM(Vname(2,idTTav(itrc)))
+          Vinfo( 3)=Vname(3,idTTav(itrc))
+          Vinfo(14)=Vname(4,idTTav(itrc))
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idTTav(itrc),ng),NF_FOUT,   &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END DO
+!
+!  Define quadratic <u*t> and <v*t> terms.
 !
         DO itrc=1,NAT
           Vinfo( 1)=Vname(1,idUTav(itrc))
@@ -517,10 +610,12 @@
           Vinfo( 3)=Vname(3,idUTav(itrc))
           Vinfo(14)=Vname(4,idUTav(itrc))
           Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
-#  endif
-          status=def_var(ncavgid(ng),avgVid(idUTav(itrc),ng),NF_FOUT,   &
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idUTav(itrc),ng),NF_FOUT,   &
      &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
 !
           Vinfo( 1)=Vname(1,idVTav(itrc))
@@ -528,10 +623,12 @@
           Vinfo( 3)=Vname(3,idVTav(itrc))
           Vinfo(14)=Vname(4,idVTav(itrc))
           Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
-#  endif
-          status=def_var(ncavgid(ng),avgVid(idVTav(itrc),ng),NF_FOUT,   &
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idVTav(itrc),ng),NF_FOUT,   &
      &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
         END DO
 #  endif
@@ -540,14 +637,16 @@
 !  Define vertical viscosity coefficient.
 !
         Vinfo( 1)=Vname(1,idVvis)
-        Vinfo( 2)='averaged '//TRIM(Vname(2,idVvis))
+        WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idVvis))
         Vinfo( 3)=Vname(3,idVvis)
         Vinfo(14)=Vname(4,idVvis)
         Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
 #   endif
-        status=def_var(ncavgid(ng),avgVid(idVvis,ng),NF_FOUT,           &
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idVvis,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idVvis,ng),NF_FOUT,           &
      &                 nvd4,w3dgrd,Aval,Vinfo,ncname)
 #  endif
 #  ifdef AVERAGES_AKT
@@ -555,14 +654,16 @@
 !  Define vertical diffusion coefficient for potential temperature.
 !
         Vinfo( 1)=Vname(1,idTdif)
-        Vinfo( 2)='averaged '//TRIM(Vname(2,idTdif))
+        WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idTdif))
         Vinfo( 3)=Vname(3,idTdif)
         Vinfo(14)=Vname(4,idTdif)
         Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
 #   endif
-        status=def_var(ncavgid(ng),avgVid(idTdif,ng),NF_FOUT,           &
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idTdif,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idTdif,ng),NF_FOUT,           &
      &                 nvd4,w3dgrd,Aval,Vinfo,ncname)
 #  endif
 #  ifdef AVERAGES_AKS
@@ -570,14 +671,16 @@
 !  Define vertical diffusion coefficient for salinity.
 !
         Vinfo( 1)=Vname(1,idSdif)
-        Vinfo( 2)='averaged '//TRIM(Vname(2,idSdif))
+        WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idSdif))
         Vinfo( 3)=Vname(3,idSdif)
         Vinfo(14)=Vname(4,idSdif)
         Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #   endif
-        status=def_var(ncavgid(ng),avgVid(idSdif,ng),NF_FOUT,           &
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idSdif,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idSdif,ng),NF_FOUT,           &
      &                 nvd4,w3dgrd,Aval,Vinfo,ncname)
 #  endif
 #  ifdef AVERAGES_FLUXES
@@ -586,7 +689,8 @@
 !
         IF (Hout(idTsur(itemp),ng)) THEN
           Vinfo( 1)=Vname(1,idTsur(itemp))
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idTsur(itemp)))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged',                      &
+     &                                 TRIM(Vname(2,idTsur(itemp)))
           Vinfo( 3)=Vname(3,idTsur(itemp))
           Vinfo(11)='upward flux, cooling'
           Vinfo(12)='downward flux, heating'
@@ -595,25 +699,50 @@
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #   endif
-          status=def_var(ncavgid(ng),avgVid(idTsur(itemp),ng),NF_FOUT,  &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idTsur(itemp),ng),NF_FOUT,  &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
+!
+!  Define surface net salt flux.
+!
+        IF (Hout(idTsur(isalt),ng)) THEN
+          Vinfo( 1)=Vname(1,idTsur(isalt))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged',                      &
+     &                                 TRIM(Vname(2,idTsur(isalt)))
+          Vinfo( 3)=Vname(3,idTsur(isalt))
+          Vinfo(11)='upward flux, freshening (net precipitation)'
+          Vinfo(12)='downward flux, salting (net evaporation)'
+          Vinfo(14)=Vname(4,idTsur(isalt))
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idTsur(isalt),ng),NF_FOUT,  &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+
 #   ifdef BULK_FLUXES
 !
 !  Define latent heat flux.
 !
         IF (Hout(idLhea,ng)) THEN
           Vinfo( 1)=Vname(1,idLhea)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idLhea))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idLhea))
           Vinfo( 3)=Vname(3,idLhea)
           Vinfo(11)='upward flux, cooling'
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idLhea)
           Vinfo(16)=Vname(1,idtime)
-#    if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#    endif
-          status=def_var(ncavgid(ng),avgVid(idLhea,ng),NF_FOUT,         &
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idLhea,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idLhea,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -621,16 +750,18 @@
 !
         IF (Hout(idShea,ng)) THEN
           Vinfo( 1)=Vname(1,idShea)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idShea))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idShea))
           Vinfo( 3)=Vname(3,idShea)
           Vinfo(11)='upward flux, cooling'
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idShea)
           Vinfo(16)=Vname(1,idtime)
-#    if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-#    endif
-          status=def_var(ncavgid(ng),avgVid(idShea,ng),NF_FOUT,         &
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idShea,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idShea,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -638,18 +769,77 @@
 !
         IF (Hout(idLrad,ng)) THEN
           Vinfo( 1)=Vname(1,idLrad)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idLrad))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idLrad))
           Vinfo( 3)=Vname(3,idLrad)
           Vinfo(11)='upward flux, cooling'
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idLrad)
           Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idLrad,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idLrad,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define atmospheric air temperature.
+!
+        IF (Hout(idTair,ng)) THEN
+          Vinfo( 1)=Vname(1,idTair)
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idTair))
+          Vinfo( 3)=Vname(3,idTair)
+          Vinfo(14)=Vname(4,idTair)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTair,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idTair,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+#   ifdef EMINUSP
+!
+!  Define evaporation rate.
+!
+        IF (Hout(idevap,ng)) THEN
+          Vinfo( 1)=Vname(1,idevap)
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idevap))
+          Vinfo( 3)=Vname(3,idevap)
+          Vinfo(11)='downward flux, freshening (condensation)'
+          Vinfo(12)='upward flux, salting (evaporation)'
+          Vinfo(14)=Vname(4,idevap)
+          Vinfo(16)=Vname(1,idtime)
 #    if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #    endif
-          status=def_var(ncavgid(ng),avgVid(idLrad,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idevap,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idevap,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
+!
+!  Define precipitation rate.
+!
+        IF (Hout(idrain,ng)) THEN
+          Vinfo( 1)=Vname(1,idrain)
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idrain))
+          Vinfo( 2)='averaged '//TRIM(Vname(2,idrain))
+          Vinfo( 3)=Vname(3,idrain)
+          Vinfo(12)='downward flux, freshening (precipitation)'
+          Vinfo(14)=Vname(4,idrain)
+          Vinfo(16)=Vname(1,idtime)
+#    if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#    endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idrain,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idrain,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+#    endif
 #   endif
 #   ifdef SHORTWAVE
 !
@@ -657,7 +847,7 @@
 !
         IF (Hout(idSrad,ng)) THEN
           Vinfo( 1)=Vname(1,idSrad)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idSrad))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idSrad))
           Vinfo( 3)=Vname(3,idSrad)
           Vinfo(11)='upward flux, cooling'
           Vinfo(12)='downward flux, heating'
@@ -666,7 +856,9 @@
 #    if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #    endif
-          status=def_var(ncavgid(ng),avgVid(idSrad,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idSrad,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idSrad,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
 #   endif
@@ -678,14 +870,16 @@
 !
         IF (Hout(idUsms,ng)) THEN
           Vinfo( 1)=Vname(1,idUsms)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idUsms))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idUsms))
           Vinfo( 3)=Vname(3,idUsms)
           Vinfo(14)=Vname(4,idUsms)
           Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #  endif
-          status=def_var(ncavgid(ng),avgVid(idUsms,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idUsms,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
 !
@@ -693,23 +887,63 @@
 !
         IF (Hout(idVsms,ng)) THEN
           Vinfo( 1)=Vname(1,idVsms)
-          Vinfo( 2)='averaged '//TRIM(Vname(2,idVsms))
+          WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idVsms))
           Vinfo( 3)=Vname(3,idVsms)
           Vinfo(14)=Vname(4,idVsms)
           Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #  endif
-          status=def_var(ncavgid(ng),avgVid(idVsms,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idVsms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
+# endif
+# if defined SEDIMENT && defined BEDLOAD
+        DO i=1,NST
+!
+!  Define Bedload U-direction.
+!
+          IF (Hout(idUbld(i),ng)) THEN
+            Vinfo( 1)=Vname(1,idUbld(i))
+            Vinfo( 2)=Vname(2,idUbld(i))
+            Vinfo( 3)=Vname(3,idUbld(i))
+            Vinfo(14)=Vname(4,idUbld(i))
+            Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_u'
+#  endif
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(Iinfo(1,idUbld(i),ng),r8)
+            status=def_var(ncAVGid(ng),avgVid(idUbld(i),ng),NF_FOUT,    &
+     &                     nvd3,u2dgrd,Aval,Vinfo,ncname)
+          END IF
+!
+!  Define Bedload V-direction.
+!
+          IF (Hout(idVbld(i),ng)) THEN
+            Vinfo( 1)=Vname(1,idVbld(i))
+            Vinfo( 2)=Vname(2,idVbld(i))
+            Vinfo( 3)=Vname(3,idVbld(i))
+            Vinfo(14)=Vname(4,idVbld(i))
+            Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_v'
+#  endif
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(Iinfo(1,idVbld(i),ng),r8)
+            status=def_var(ncAVGid(ng),avgVid(idVbld(i),ng),NF_FOUT,    &
+     &                     nvd3,v2dgrd,Aval,Vinfo,ncname)
+          END IF
+        END DO
 # endif
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf_enddef(ncavgid(ng))
+        status=nf_enddef(ncAVGid(ng))
       END IF
 !
 !-----------------------------------------------------------------------
@@ -717,8 +951,8 @@
 !-----------------------------------------------------------------------
 !
       IF (ldef) THEN
-        status=wrt_info(ng,ncavgid(ng),OutThread,ncname)
-        IF (exit_flag.ne.0) RETURN
+        status=wrt_info(ng, iNLM, ncAVGid(ng), OutThread, ncname)
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !=======================================================================
@@ -731,187 +965,246 @@
 !  Inquire about the contents of averages NetCDF file:  Inquire about
 !  the dimensions and variables.  Check for consistency.
 !
-        CALL opencdf (ng,1,ncname,fname,N(ng),0,nrec)
-        IF (exit_flag.ne.0) RETURN
+        CALL opencdf (ng, 1, ncname, fname, N(ng), 0, nrec)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Open averages file for read/write.
 !
-        status=nf_open(TRIM(ncname), nf_write, ncavgid(ng))
+        status=nf_open(TRIM(ncname), nf_write, ncAVGid(ng))
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,50) TRIM(ncname)
           exit_flag=3
+          ioerror=status
           RETURN
         END IF
 !
 !  Initialize logical switches.
 !
         DO i=1,NV
-          got_var(i)=.false.
+          got_var(i)=.FALSE.
         END DO
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  average variables. Get variable IDs.
 !
         DO i=1,nvars
-          IF (varnam(i).eq.Vname(1,idtime)) THEN
-            got_var(idtime)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idtime)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idtime))) THEN
+            got_var(idtime)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idtime)),      &
      &                          avgVid(idtime,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idFsur)) THEN
-            got_var(idFsur)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idFsur)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
+            got_var(idFsur)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idFsur)),      &
      &                          avgVid(idFsur,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idUbar)) THEN
-            got_var(idUbar)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idUbar)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbar))) THEN
+            got_var(idUbar)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUbar)),      &
      &                          avgVid(idUbar,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idVbar)) THEN
-            got_var(idVbar)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idVbar)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbar))) THEN
+            got_var(idVbar)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVbar)),      &
      &                          avgVid(idVbar,ng))
           END IF
 # ifdef SOLVE3D
-          IF (varnam(i).eq.Vname(1,idUvel)) THEN
-            got_var(idUvel)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idUvel)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
+            got_var(idUvel)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUvel)),      &
      &                          avgVid(idUvel,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idVvel)) THEN
-            got_var(idVvel)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idVvel)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvel))) THEN
+            got_var(idVvel)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVvel)),      &
      &                          avgVid(idVvel,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idOvel)) THEN
-            got_var(idOvel)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idOvel)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idOvel))) THEN
+            got_var(idOvel)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idOvel)),      &
      &                          avgVid(idOvel,ng))
           END IF
           DO itrc=1,NT(ng)
-            IF (varnam(i).eq.Vname(1,idTvar(itrc))) THEN
-             got_var(idTvar(itrc))=.true.
-             status=nf_inq_varid(ncavgid(ng),                           &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
+             got_var(idTvar(itrc))=.TRUE.
+             status=nf_inq_varid(ncAVGid(ng),                           &
      &                           TRIM(Vname(1,idTvar(itrc))),           &
      &                           avgTid(itrc,ng))
             END IF
           END DO
-          IF (varnam(i).eq.Vname(1,idDano)) THEN
-            got_var(idDano)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idDano)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idDano))) THEN
+            got_var(idDano)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idDano)),      &
      &                          avgVid(idDano,ng))
           END IF
 #  ifdef LMD_SKPP
-          IF (varnam(i).eq.Vname(1,idHsbl)) THEN
-            got_var(idHsbl)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idHsbl)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idHsbl))) THEN
+            got_var(idHsbl)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idHsbl)),      &
      &                          avgVid(idHsbl,ng))
           END IF
 #  endif
 #  ifdef LMD_BKPP
-          IF (varnam(i).eq.Vname(1,idHbbl)) THEN
-            got_var(idHbbl)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idHbbl)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idHbbl))) THEN
+            got_var(idHbbl)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idHbbl)),      &
      &                          avgVid(idHbbl,ng))
           END IF
 #  endif
+# endif
+# ifdef AVERAGES_QUADRATICA
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idZZav))) THEN
+            got_var(idZZav)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idZZav)),      &
+     &                          avgVid(idZZav,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2av))) THEN
+            got_var(idU2av)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idU2av)),      &
+     &                          avgVid(idU2av,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV2av))) THEN
+            got_var(idV2av)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idV2av)),      &
+     &                          avgVid(idV2av,ng))
+          END IF
+# endif
+# ifdef SOLVE3D
 #  ifdef AVERAGES_QUADRATIC
-          IF (varnam(i).eq.Vname(1,idUUav)) THEN
-            got_var(idUUav)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idUUav)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUUav))) THEN
+            got_var(idUUav)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUUav)),      &
      &                          avgVid(idUUav,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idUVav)) THEN
-            got_var(idUVav)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idUVav)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUVav))) THEN
+            got_var(idUVav)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUVav)),      &
      &                          avgVid(idUVav,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idVVav)) THEN
-            got_var(idVVav)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idVVav)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVVav))) THEN
+            got_var(idVVav)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVVav)),      &
      &                          avgVid(idVVav,ng))
           END IF
           DO itrc=1,NAT
-            IF (varnam(i).eq.Vname(1,idUTav(itrc))) THEN
-             got_var(idUTav(itrc))=.true.
-             status=nf_inq_varid(ncavgid(ng),                           &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUTav(itrc)))) THEN
+             got_var(idUTav(itrc))=.TRUE.
+             status=nf_inq_varid(ncAVGid(ng),                           &
      &                           TRIM(Vname(1,idUTav(itrc))),           &
      &                           avgVid(idUTav(itrc),ng))
             END IF
-            IF (varnam(i).eq.Vname(1,idVTav(itrc))) THEN
-             got_var(idVTav(itrc))=.true.
-             status=nf_inq_varid(ncavgid(ng),                           &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVTav(itrc)))) THEN
+             got_var(idVTav(itrc))=.TRUE.
+             status=nf_inq_varid(ncAVGid(ng),                           &
      &                           TRIM(Vname(1,idVTav(itrc))),           &
      &                           avgVid(idVTav(itrc),ng))
             END IF
           END DO
 #  endif
 #  ifdef AVERAGES_AKV
-          IF (varnam(i).eq.Vname(1,idVvis)) THEN
-            got_var(idVvis)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idVvis)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
+            got_var(idVvis)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVvis)),      &
      &                          avgVid(idVvis,ng))
           END IF
 #  endif
 #  ifdef AVERAGES_AKT
-          IF (varnam(i).eq.Vname(1,idTdif)) THEN
-            got_var(idTdif)=.true.
-           status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idTdif)),       &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTdif))) THEN
+            got_var(idTdif)=.TRUE.
+           status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idTdif)),       &
      &                         avgVid(idTdif,ng))
           END IF
 #  endif
 #  ifdef AVERAGES_AKS
-          IF (varnam(i).eq.Vname(1,idSdif)) THEN
-            got_var(idSdif)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idSdif)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSdif))) THEN
+            got_var(idSdif)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idSdif)),      &
      &                          avgVid(idSdif,ng))
           END IF
 #  endif
 #  ifdef AVERAGES_FLUXES
-          IF (varnam(i).eq.Vname(1,idTsur(itemp))) THEN
-            got_var(idTsur(itemp))=.true.
-            status=nf_inq_varid(ncavgid(ng),                            &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itemp)))) THEN
+            got_var(idTsur(itemp))=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),                            &
      &                          TRIM(Vname(1,idTsur(itemp))),           &
      &                          avgVid(idTsur(itemp),ng))
           END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(isalt)))) THEN
+            got_var(idTsur(isalt))=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),                            &
+     &                          TRIM(Vname(1,idTsur(isalt))),           &
+     &                          avgVid(idTsur(isalt),ng))
+          END IF
 #   ifdef BULK_FLUXES
-          IF (varnam(i).eq.Vname(1,idLhea)) THEN
-            got_var(idLhea)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idLhea)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idLhea))) THEN
+            got_var(idLhea)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idLhea)),      &
      &                          avgVid(idLhea,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idShea)) THEN
-            got_var(idShea)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idShea)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idShea))) THEN
+            got_var(idShea)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idShea)),      &
      &                          avgVid(idShea,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idLrad)) THEN
-            got_var(idLrad)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idLrad)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idLrad))) THEN
+            got_var(idLrad)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idLrad)),      &
      &                          avgVid(idLrad,ng))
           END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTair))) THEN
+            got_var(idTair)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idTair)),      &
+     &                          avgVid(idTair,ng))
+          END IF
+#    ifdef EMINUSP
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idevap))) THEN
+            got_var(idevap)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idevap)),      &
+     &                          avgVid(idevap,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idrain))) THEN
+            got_var(idrain)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idrain)),      &
+     &                          avgVid(idrain,ng))
+          END IF
+#    endif
 #   endif
 #   ifdef SHORTWAVE
-          IF (varnam(i).eq.Vname(1,idSrad)) THEN
-            got_var(idSrad)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idSrad)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSrad))) THEN
+            got_var(idSrad)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idSrad)),      &
      &                          avgVid(idSrad,ng))
           END IF
 #   endif
 #  endif
 # endif
 # ifdef AVERAGES_FLUXES
-          IF (varnam(i).eq.Vname(1,idUsms)) THEN
-            got_var(idUsms)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idUsms)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUsms))) THEN
+            got_var(idUsms)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUsms)),      &
      &                          avgVid(idUsms,ng))
           END IF
-          IF (varnam(i).eq.Vname(1,idVsms)) THEN
-            got_var(idVsms)=.true.
-            status=nf_inq_varid(ncavgid(ng),TRIM(Vname(1,idVsms)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVsms))) THEN
+            got_var(idVsms)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVsms)),      &
      &                          avgVid(idVsms,ng))
           END IF
+# endif
+# if defined SEDIMENT && defined BEDLOAD
+          DO itrc=1,NST
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbld(itrc)))) THEN
+              got_var(idUbld(itrc))=.true.
+              status=nf_inq_varid(ncAVGid(ng),                          &
+     &                            TRIM(Vname(1,idUbld(itrc))),          &
+     &                            avgVid(idUbld(itrc),ng))
+            END IF
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbld(itrc)))) THEN
+              got_var(idVbld(itrc))=.true.
+              status=nf_inq_varid(ncAVGid(ng),                          &
+     &                            TRIM(Vname(1,idVbld(itrc))),          &
+     &                            avgVid(idVbld(itrc),ng))
+            END IF
+          END DO
 # endif
         END DO
 !
@@ -979,6 +1272,25 @@
           RETURN
         END IF
 #  endif
+# endif
+# ifdef AVERAGES_QUADRATIC
+        IF (.not.got_var(idZZav)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idZZav)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU2av)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU2av)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2av)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV2av)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+# ifdef SOLVE3D
 #  ifdef AVERAGES_QUADRATIC
         IF (.not.got_var(idUUav)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idUUav)), TRIM(ncname)
@@ -1035,6 +1347,11 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idTsur(isalt)).and.Hout(idTsur(isalt),ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idTsur(isalt))), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 #   ifdef BULK_FLUXES
         IF (.not.got_var(idLhea).and.Hout(idLhea,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idLhea)), TRIM(ncname)
@@ -1051,6 +1368,23 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idTair).and.Hout(idTair,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idTair)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#    ifdef EMINUSP
+        IF (.not.got_var(idevap).and.Hout(idevap,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idevap)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idrain).and.Hout(idrain,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idrain)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#    endif
 #   endif
 #   ifdef SHORTWAVE
         IF (.not.got_var(idSrad).and.Hout(idSrad,ng)) THEN
@@ -1073,29 +1407,43 @@
           RETURN
         END IF
 # endif
+# if defined SEDIMENT && defined BEDLOAD
+        DO i=1,NST
+          IF (.not.got_var(idUbld(i)).and.Hout(idUbld(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idUbld(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+          IF (.not.got_var(idVbld(i)).and.Hout(idVbld(i),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idVbld(i))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+# endif
 !
 !  Set unlimited time record dimension to the appropriate value.
 !
-        IF (nrst(ng).eq.navg(ng)) THEN
-          IF (ndefavg(ng).gt.0) THEN
-            tavgindx(ng)=((ntstart-1)-                                  &
-     &                    ndefavg(ng)*((ntstart-1)/ndefavg(ng)))/       &
-     &                   navg(ng)
+        IF (nRST(ng).eq.nAVG(ng)) THEN
+          IF (ndefAVG(ng).gt.0) THEN
+            tAVGindx(ng)=((ntstart-1)-                                  &
+     &                    ndefAVG(ng)*((ntstart-1)/ndefAVG(ng)))/       &
+     &                   nAVG(ng)
           ELSE
-            tavgindx(ng)=(ntstart-1)/navg(ng)
+            tAVGindx(ng)=(ntstart-1)/nAVG(ng)
           END IF
         ELSE
-          tavgindx(ng)=tsize
+          tAVGindx(ng)=tsize
         END IF
       END IF
 !
 !  Set initial average time.
 !
-      IF (ntsavg(ng).eq.1) THEN
-        avgtime(ng)=time(ng)-0.5_r8*REAL(navg(ng),r8)*dt(ng)
+      IF (ntsAVG(ng).eq.1) THEN
+        AVGtime(ng)=time(ng)-0.5_r8*REAL(nAVG(ng),r8)*dt(ng)
       ELSE
-        avgtime(ng)=time(ng)+REAL(ntsavg(ng),r8)*dt(ng)-                &
-     &              0.5_r8*REAL(navg(ng),r8)*dt(ng)
+        AVGtime(ng)=time(ng)+REAL(ntsAVG(ng),r8)*dt(ng)-                &
+     &              0.5_r8*REAL(nAVG(ng),r8)*dt(ng)
       END IF
 !
   10  FORMAT (6x,'DEF_AVG   - creating averages file: ',a)
@@ -1104,7 +1452,7 @@
   40  FORMAT (1pe11.4,1x,'millimeter')
   50  FORMAT (/,' DEF_AVG - unable to open averages NetCDF file: ',a)
   60  FORMAT (/,' DEF_AVG - unable to find variable: ',a,2x,            &
-     &         ' in averages NetCDF file: ',a)
+     &        ' in averages NetCDF file: ',a)
       RETURN
       END SUBROUTINE def_avg
 #else

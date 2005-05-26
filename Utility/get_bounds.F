@@ -3,7 +3,7 @@
      &                       LBi, UBi, LBj, UBj)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine compute grid bounds in the I- and J-directions.        !
@@ -122,7 +122,7 @@
      &                     Istr, Iend, Jstr, Jend)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine computes the starting and ending horizontal indices    !

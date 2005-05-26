@@ -2,10 +2,10 @@
 #undef LMD_BOUND
 #define SASHA
       MODULE lmd_skpp_mod
-#if defined LMD_SKPP && defined SOLVE3D
+#if defined NONLINEAR && defined LMD_SKPP && defined SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine determines the depth of surface  oceanic boundary      !
@@ -538,8 +538,10 @@
 !
 !  Apply gradient or periodic boundary conditions.
 !
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, hsbl)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  hsbl)
 !
 !  Find new boundary layer index "ksbl".
 !
@@ -792,11 +794,15 @@
 !
 !  Apply boundary conditions.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng), Akv)
+      CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
+     &                  NghostPoints,                                   &
+     &                  Akv)
       DO itrc=1,NAT
-        CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng), Akt(:,:,:,itrc))
+        CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,             &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    Akt(:,:,:,itrc))
       END DO
 # endif
       RETURN

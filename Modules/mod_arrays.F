@@ -2,7 +2,7 @@
       SUBROUTINE mod_arrays (allocate_vars)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine routine allocates and initializa model state arrays    !
@@ -51,9 +51,11 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng, gtype, Nghost
+      integer :: ng, gtype
       integer :: LBi, UBi, LBj, UBj
       integer :: Itile, Jtile, tile, subs, thread
+
+      integer, parameter :: model = 0
 !
 !-----------------------------------------------------------------------
 !  Allocate model structures.
@@ -62,10 +64,9 @@
       IF (allocate_vars) then
         tile=-1
         gtype=0
-        Nghost=GHOST_POINTS
         DO ng=1,Ngrids
-          CALL get_bounds (ng, TILE, gtype, Nghost, Itile, Jtile,       &
-     &                     LBi, UBi, LBj, UBj)
+          CALL get_bounds (ng, TILE, gtype, NghostPoints,               &
+     &                     Itile, Jtile, LBi, UBi, LBj, UBj)
 #ifdef AVERAGES
           CALL allocate_average (ng, LBi, UBi, LBj, UBj)
 #endif
@@ -133,7 +134,7 @@
 #if defined ASSIMILATION || defined NUDGING
             CALL initialize_obs (ng, TILE)
 #endif
-            CALL initialize_ocean (ng, TILE)
+            CALL initialize_ocean (ng, TILE, model)
 #if defined SSH_TIDES || defined UV_TIDES
             CALL initialize_tides (ng, TILE)
 #endif
@@ -143,4 +144,4 @@
 !$OMP END PARALLEL DO
 
       RETURN
-      END
+      END SUBROUTINE mod_arrays

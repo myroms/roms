@@ -1,12 +1,12 @@
 #include "cppdefs.h"
       MODULE obc_volcons_mod
-#ifdef OBC_VOLCONS
+#if defined NONLINEAR && defined OBC_VOLCONS
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This routine computes integral mass flux "obc_flux" accross         !
+!  This routine computes integral mass flux  "obc_flux" across         !
 !  the open boundaries, which is needed to enforce global mass         !
 !  conservation constraint.                                            !
 !                                                                      !
@@ -20,21 +20,20 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE obc_flux (ng, tile)
+      SUBROUTINE obc_flux (ng, tile, kinp)
 !***********************************************************************
 !
       USE mod_param
       USE mod_grid
       USE mod_ocean
-      USE mod_stepping
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, kinp
 
 # include "tile.h"
 !
       CALL obc_flux_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    knew(ng),                                     &
+     &                    kinp,                                         &
 # ifdef MASKING
      &                    GRID(ng) % umask,                             &
      &                    GRID(ng) % vmask,                             &
@@ -51,7 +50,7 @@
 !***********************************************************************
       SUBROUTINE obc_flux_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          knew,                                   &
+     &                          kinp,                                   &
 # ifdef MASKING
      &                          umask, vmask,                           &
 # endif
@@ -67,7 +66,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: knew
+      integer, intent(in) :: kinp
 
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING
@@ -117,52 +116,52 @@
 # ifdef WEST_VOLCONS
       IF (WESTERN_EDGE) THEN
         DO j=Jstr,Jend
-          cff=0.5_r8*(zeta(Istr-1,j,knew)+h(Istr-1,j)+                  &
-     &                zeta(Istr  ,j,knew)+h(Istr  ,j))*on_u(Istr,j)
+          cff=0.5_r8*(zeta(Istr-1,j,kinp)+h(Istr-1,j)+                  &
+     &                zeta(Istr  ,j,kinp)+h(Istr  ,j))*on_u(Istr,j)
 #  ifdef MASKING
           cff=cff*umask(Istr,j)
 #  endif
           my_area=my_area+cff
-          my_flux=my_flux+cff*ubar(Istr,j,knew)
+          my_flux=my_flux+cff*ubar(Istr,j,kinp)
         END DO
       END IF
 # endif
 # ifdef EAST_VOLCONS
       IF (EASTERN_EDGE) THEN
         DO j=Jstr,Jend
-          cff=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
-     &                zeta(Iend+1,j,knew)+h(Iend+1,j))*on_u(Iend+1,j)
+          cff=0.5_r8*(zeta(Iend  ,j,kinp)+h(Iend  ,j)+                  &
+     &                zeta(Iend+1,j,kinp)+h(Iend+1,j))*on_u(Iend+1,j)
 #  ifdef MASKING
           cff=cff*umask(Iend+1,j)
 #  endif
           my_area=my_area+cff
-          my_flux=my_flux-cff*ubar(Iend+1,j,knew)
+          my_flux=my_flux-cff*ubar(Iend+1,j,kinp)
         END DO
       END IF
 # endif
 # ifdef SOUTH_VOLCONS
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,Iend
-          cff=0.5_r8*(zeta(i,Jstr-1,knew)+h(i,Jstr-1)+                  &
-     &                zeta(i,Jstr  ,knew)+h(i,Jstr  ))*om_v(i,Jstr)
+          cff=0.5_r8*(zeta(i,Jstr-1,kinp)+h(i,Jstr-1)+                  &
+     &                zeta(i,Jstr  ,kinp)+h(i,Jstr  ))*om_v(i,Jstr)
 #  ifdef MASKING
           cff=cff*vmask(i,Jstr)
 #  endif
           my_area=my_area+cff
-          my_flux=my_flux+cff*vbar(i,JstrV-1,knew)
+          my_flux=my_flux+cff*vbar(i,JstrV-1,kinp)
         END DO
       END IF
 # endif
 # ifdef NORTH_VOLCONS
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,Iend
-          cff=0.5_r8*(zeta(i,Jend  ,knew)+h(i,Jend  )+                  &
-     &                zeta(i,Jend+1,knew)+h(i,Jend+1))*om_v(i,Jend+1)
+          cff=0.5_r8*(zeta(i,Jend  ,kinp)+h(i,Jend  )+                  &
+     &                zeta(i,Jend+1,kinp)+h(i,Jend+1))*om_v(i,Jend+1)
 #  ifdef MASKING
           cff=cff*vmask(i,Jend+1)
 #  endif
           my_area=my_area+cff
-          my_flux=my_flux-cff*vbar(i,Jend+1,knew)
+          my_flux=my_flux-cff*vbar(i,Jend+1,kinp)
         END DO
       END IF
 # endif
@@ -194,7 +193,7 @@
         buffer(2)=bc_flux
         op_handle(1)='SUM'
         op_handle(2)='SUM'
-        CALL mp_reduce (ng, 2, buffer, op_handle)
+        CALL mp_reduce (ng, iNLM, 2, buffer, op_handle)
         bc_area=buffer(1)
         bc_flux=buffer(2)
 #  endif
@@ -208,7 +207,8 @@
 !***********************************************************************
       SUBROUTINE set_DUV_bc_tile (ng, Istr, Iend, Jstr, Jend,           &
      &                            LBi, UBi, LBj, UBj,                   &
-     &                            krhs,                                 &
+     &                            ILB, IUB, JLB, JUB,                   &
+     &                            kinp,                                 &
 # ifdef MASKING
      &                            umask, vmask,                         &
 # endif
@@ -221,16 +221,14 @@
 # ifdef DISTRIBUTE
 !
       USE exchange_2d_mod
-!
 # endif
-
-      implicit none
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: krhs
+      integer, intent(in) :: ILB, IUB, JLB, JUB
+      integer, intent(in) :: kinp
 
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING
@@ -241,10 +239,10 @@
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
-      real(r8), intent(in) :: Drhs(Istr-3:,Jstr-3:)
+      real(r8), intent(in) :: Drhs(ILB:,JLB:)
 
-      real(r8), intent(inout) :: Duon(Istr-3:,Jstr-3:)
-      real(r8), intent(inout) :: Dvom(Istr-3:,Jstr-3:)
+      real(r8), intent(inout) :: Duon(ILB:,JLB:)
+      real(r8), intent(inout) :: Dvom(ILB:,JLB:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
@@ -254,10 +252,10 @@
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: Drhs(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8), intent(in) :: Drhs(ILB:IUB,JLB:JUB)
 
-      real(r8), intent(inout) :: Duon(PRIVATE_2D_SCRATCH_ARRAY)
-      real(r8), intent(inout) :: Dvom(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8), intent(inout) :: Duon(ILB:IUB,JLB:JUB)
+      real(r8), intent(inout) :: Dvom(ILB:IUB,JLB:JUB)
 # endif
 !
 !  Local variable declarations.
@@ -281,11 +279,12 @@
 #  define I_RANGE MAX(2,IstrU-1),MIN(Iend+1,Lm(ng))
 #  define J_RANGE MAX(2,JstrV-1),MIN(Jend+1,Mm(ng))
 # endif
+
 # ifdef WEST_VOLCONS
       IF (WESTERN_EDGE) THEN
         DO j=-2+J_RANGE+1
           Duon(Istr,j)=0.5_r8*(Drhs(Istr,j)+Drhs(Istr-1,j))*            &
-     &                 (ubar(Istr,j,krhs)-ubar_xs)*                     &
+     &                 (ubar(Istr,j,kinp)-ubar_xs)*                     &
      &                 on_u(Istr,j)
 #  ifdef MASKING
           Duon(Istr,j)=Duon(Istr,j)*umask(Istr,j)
@@ -297,7 +296,7 @@
       IF (EASTERN_EDGE) THEN
         DO j=-2+J_RANGE+1
           Duon(Iend+1,j)=0.5_r8*(Drhs(Iend+1,j)+Drhs(Iend,j))*          &
-     &                   (ubar(Iend+1,j,krhs)+ubar_xs)*                 &
+     &                   (ubar(Iend+1,j,kinp)+ubar_xs)*                 &
      &                   on_u(Iend+1,j)
 #  ifdef MASKING
           Duon(Iend+1,j)=Duon(Iend+1,j)*umask(Iend+1,j)
@@ -309,7 +308,7 @@
       IF (SOUTHERN_EDGE) THEN
         DO i=-2+I_RANGE+1
           Dvom(i,Jstr)=0.5_r8*(Drhs(i,Jstr)+Drhs(i,Jstr-1))*            &
-     &                 (vbar(i,Jstr,krhs)-ubar_xs)*                     &
+     &                 (vbar(i,Jstr,kinp)-ubar_xs)*                     &
      &                 om_v(i,Jstr)
 #  ifdef MASKING
           Dvom(i,Jstr)=Dvom(i,Jstr)*vmask(i,Jstr)
@@ -321,7 +320,7 @@
       IF (NORTHERN_EDGE) THEN
         DO i=-2+I_RANGE+1
           Dvom(i,Jend+1)=0.5_r8*(Drhs(i,Jend+1)+Drhs(i,Jend))*          &
-     &                   (vbar(i,Jend+1,krhs)+ubar_xs)*                 &
+     &                   (vbar(i,Jend+1,kinp)+ubar_xs)*                 &
      &                   om_v(i,Jend+1)
 #  ifdef MASKING
           Dvom(i,Jend+1)=Dvom(i,Jend+1)*vmask(i,Jend+1)
@@ -335,25 +334,28 @@
 ! order numerical stencil.
 !
 #  if defined WEST_VOLCONS || defined EAST_VOLCONS
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        Istr-3, Iend+3, Jstr-3, Jend+3,           &
+      CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        ILB, IUB, JLB, JUB,                       &
+     &                        NghostPoints,                             &
      &                        Duon)
 #  endif
 #  if defined SOUTH_VOLCONS || defined NORTH_VOLCONS
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        Istr-3, Iend+3, Jstr-3, Jend+3,           &
+      CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        ILB, IUB, JLB, JUB,                       &
+     &                        NghostPoints,                             &
      &                        Dvom)
 #  endif
 # endif
 # undef I_RANGE
 # undef J_RANGE
+
       RETURN
       END SUBROUTINE set_DUV_bc_tile
 !
 !***********************************************************************
       SUBROUTINE conserve_mass_tile (ng, Istr, Iend, Jstr, Jend,        &
      &                               LBi, UBi, LBj, UBj,                &
-     &                               knew,                              &
+     &                               kinp,                              &
 # ifdef MASKING
      &                               umask, vmask,                      &
 # endif
@@ -362,14 +364,12 @@
 !
       USE mod_param
       USE mod_scalars
-
-      implicit none
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: knew
+      integer, intent(in) :: kinp
 
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING
@@ -401,9 +401,9 @@
 # ifdef WEST_VOLCONS
       IF (WESTERN_EDGE) THEN
         DO j=Jstr,Jend
-          ubar(Istr,j,knew)=(ubar(Istr,j,knew)-ubar_xs)
+          ubar(Istr,j,kinp)=(ubar(Istr,j,kinp)-ubar_xs)
 #  ifdef MASKING
-          ubar(Istr,j,knew)=ubar(Istr,j,knew)*umask(Istr,j)
+          ubar(Istr,j,kinp)=ubar(Istr,j,kinp)*umask(Istr,j)
 #  endif
         END DO
       END IF
@@ -411,9 +411,9 @@
 # ifdef EAST_VOLCONS
       IF (EASTERN_EDGE) THEN
         DO j=Jstr,Jend
-          ubar(Iend+1,j,knew)=(ubar(Iend+1,j,knew)+ubar_xs)
+          ubar(Iend+1,j,kinp)=(ubar(Iend+1,j,kinp)+ubar_xs)
 #  ifdef MASKING
-          ubar(Iend+1,j,knew)=ubar(Iend+1,j,knew)*umask(Iend+1,j)
+          ubar(Iend+1,j,kinp)=ubar(Iend+1,j,kinp)*umask(Iend+1,j)
 #  endif
         END DO
       END IF
@@ -421,9 +421,9 @@
 # ifdef SOUTH_VOLCONS
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,Iend
-          vbar(i,Jstr,knew)=(vbar(i,Jstr,knew)-ubar_xs)
+          vbar(i,Jstr,kinp)=(vbar(i,Jstr,kinp)-ubar_xs)
 #  ifdef MASKING
-          vbar(i,Jstr,knew)=vbar(i,Jstr,knew)*vmask(i,Jstr)
+          vbar(i,Jstr,kinp)=vbar(i,Jstr,kinp)*vmask(i,Jstr)
 #  endif
         END DO
       END IF
@@ -431,9 +431,9 @@
 # ifdef NORTH_VOLCONS
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,Iend
-          vbar(i,Jend+1,knew)=(vbar(i,Jend+1,knew)+ubar_xs)
+          vbar(i,Jend+1,kinp)=(vbar(i,Jend+1,kinp)+ubar_xs)
 #  ifdef MASKING
-          vbar(i,Jend+1,knew)=vbar(i,Jend+1,knew)*vmask(i,Jend+1)
+          vbar(i,Jend+1,kinp)=vbar(i,Jend+1,kinp)*vmask(i,Jend+1)
 #  endif
         END DO
       END IF

@@ -2,7 +2,7 @@
       MODULE diag_mod
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes various diagnostic fields.                    !
@@ -26,24 +26,21 @@
       USE mod_stepping
 
 #ifdef ANA_DIAG
+!
       USE analytical_mod, ONLY : ana_diag
 #endif
-
-      implicit none
-
       integer, intent(in) :: ng, tile
 
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, 7)
+      CALL wclock_on (ng, iNLM, 7)
 #endif
       CALL diag_tile (ng, Istr, Iend, Jstr, Jend,                       &
      &                LBi, UBi, LBj, UBj,                               &
      &                nstp(ng), krhs(ng),                               &
      &                GRID(ng) % h,                                     &
-     &                GRID(ng) % pm,                                    &
-     &                GRID(ng) % pn,                                    &
+     &                GRID(ng) % omn,                                   &
 #ifdef SOLVE3D
      &                GRID(ng) % Hz,                                    &
      &                GRID(ng) % z_r,                                   &
@@ -56,10 +53,10 @@
      &                OCEAN(ng) % vbar,                                 &
      &                OCEAN(ng) % zeta)
 #ifdef ANA_DIAG
-      CALL ana_diag (ng, tile)
+      CALL ana_diag (ng, tile, iNLM)
 #endif
 #ifdef PROFILE
-      CALL wclock_off (ng, 7)
+      CALL wclock_off (ng, iNLM, 7)
 #endif
       RETURN
       END SUBROUTINE diag
@@ -68,9 +65,10 @@
       SUBROUTINE diag_tile (ng, Istr, Iend, Jstr, Jend,                 &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nstp, krhs,                                 &
-     &                      h, pm, pn,                                  &
+     &                      h, omn,                                     &
 #ifdef SOLVE3D
-     &                      Hz, z_r, z_w, rho, u, v,                    &
+     &                      Hz, z_r, z_w,                               &
+     &                      rho, u, v,                                  &
 #endif
      &                      ubar, vbar, zeta)
 !***********************************************************************
@@ -90,8 +88,7 @@
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: h(LBi:,LBj:)
-      real(r8), intent(in) :: pm(LBi:,LBj:)
-      real(r8), intent(in) :: pn(LBi:,LBj:)
+      real(r8), intent(in) :: omn(LBi:,LBj:)
 # ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
@@ -105,8 +102,7 @@
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
 #else
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
 # ifdef SOLVE3D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
@@ -124,12 +120,12 @@
 !
       integer :: NSUB, i, j, k, trd
 
-# ifdef DISTRIBUTE
+#ifdef DISTRIBUTE
       real(r8), dimension(3) :: buffer
       character (len=3), dimension(3) :: op_handle
-# else
+#else
       integer :: my_threadnum      
-# endif
+#endif
 
       real(r8) :: cff, my_avgke, my_avgpe, my_volume
 
@@ -192,16 +188,15 @@
         END DO
         DO j=Jstr,Jend
           DO i=Istr,Iend
-            cff=1.0_r8/(pm(i,j)*pn(i,j))
 #ifdef SOLVE3D
             pe2d(i,Jend+1)=pe2d(i,Jend+1)+                              &
-     &                     cff*(z_w(i,j,N(ng))-z_w(i,j,0))
+     &                     omn(i,j)*(z_w(i,j,N(ng))-z_w(i,j,0))
 #else
             pe2d(i,Jend+1)=pe2d(i,Jend+1)+                              &
-     &                     cff*(zeta(i,j,krhs)+h(i,j))
+     &                     omn(i,j)*(zeta(i,j,krhs)+h(i,j))
 #endif
-            pe2d(i,Jstr-1)=pe2d(i,Jstr-1)+cff*pe2d(i,j)
-            ke2d(i,Jstr-1)=ke2d(i,Jstr-1)+cff*ke2d(i,j)
+            pe2d(i,Jstr-1)=pe2d(i,Jstr-1)+omn(i,j)*pe2d(i,j)
+            ke2d(i,Jstr-1)=ke2d(i,Jstr-1)+omn(i,j)*ke2d(i,j)
           END DO
         END DO
         my_volume=0.0_r8
@@ -225,7 +220,7 @@
         ELSE
           NSUB=NtileX(ng)*NtileE(ng)     ! tiled application
         END IF
-!$OMP CRITICAL (E_DIAGNOSTICS)
+!$OMP CRITICAL (NL_DIAGNOSTICS)
         IF (tile_count.eq.0) THEN
           volume=0.0_r8
           avgke=0.0_r8
@@ -244,7 +239,7 @@
           op_handle(1)='SUM'
           op_handle(2)='SUM'
           op_handle(3)='SUM'
-          CALL mp_reduce (ng, 3, buffer, op_handle)
+          CALL mp_reduce (ng, iNLM, 3, buffer, op_handle)
           volume=buffer(1)
           avgke=buffer(2)
           avgpe=buffer(3)
@@ -257,21 +252,21 @@
           avgkp=avgke+avgpe
           IF (first_time.eq.0) THEN
             first_time=1
-            IF (Master) write(stdout,10) 'STEP','time[DAYS]',           &
-     &                                   'KINETIC_ENRG', 'POTEN_ENRG',  &
-     &                                   'TOTAL_ENRG', 'NET_VOLUME',    &
-     &                                   'trd'
- 10         format(/,1x,a,4x,a,2x,a,3x,a,4x,a,4x,a,2x,a,/)
+            IF (Master) WRITE (stdout,10) 'STEP', 'time[DAYS]',         &
+     &                                    'KINETIC_ENRG', 'POTEN_ENRG', &
+     &                                    'TOTAL_ENRG', 'NET_VOLUME',   &
+     &                                    'trd'
+ 10         FORMAT (/,1x,a,4x,a,2x,a,3x,a,4x,a,4x,a,2x,a,/)
           END IF
-          IF (Master) write(stdout,20) iic(ng)-1,tdays,avgke,avgpe,     &
-     &                                 avgkp,volume,trd
- 20       format(i6,f13.6,4(1pe14.6),i3)
+          IF (Master) WRITE (stdout,20) iic(ng)-1, tdays, avgke, avgpe, &
+     &                                  avgkp, volume, trd
+ 20       FORMAT (i6,f13.6,4(1pe14.6),i3)
           IF (Master) CALL my_flush (stdout)
 !
 !  If blowing-up, set exit_flag to stop computations.
 !
-          write(kechar,'(1pe8.1)') avgke
-          write(pechar,'(1pe8.1)') avgpe
+          WRITE (kechar,'(1pe8.1)') avgke
+          WRITE (pechar,'(1pe8.1)') avgpe
           DO i=1,8
             IF ((kechar(i:i).eq.'N').or.(pechar(i:i).eq.'N').or.        &
      &          (kechar(i:i).eq.'n').or.(pechar(i:i).eq.'n').or.        &
@@ -280,7 +275,7 @@
             END IF
           END DO
         END IF
-!$OMP END CRITICAL (E_DIAGNOSTICS)
+!$OMP END CRITICAL (NL_DIAGNOSTICS)
       END IF
       RETURN
       END SUBROUTINE diag_tile

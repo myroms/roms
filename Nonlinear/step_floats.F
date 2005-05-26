@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE step_floats_mod
-#ifdef FLOATS
+#if defined NONLINEAR && defined FLOATS
 !
 !==================================================== John M. Klinck ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine time-steps  simulated  floats  trajectories using a    !
@@ -41,7 +41,7 @@
       integer, intent(in) :: ng, Lstr, Lend
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 10)
+      CALL wclock_on (ng, iNLM, 10)
 # endif
       CALL step_floats_tile (ng, Lstr, Lend,                            &
      &                       knew(ng), nnew(ng), nfm3(ng), nfm2(ng),    &
@@ -49,9 +49,10 @@
      &                       FLT(ng) % bounded,                         &
      &                       FLT(ng) % Ftype,                           &
      &                       FLT(ng) % Tinfo,                           &
+     &                       FLT(ng) % Fz0,                             &
      &                       FLT(ng) % track)
 # ifdef PROFILE
-      CALL wclock_off (ng, 10)
+      CALL wclock_off (ng, iNLM, 10)
 # endif
       RETURN
       END SUBROUTINE step_floats
@@ -60,7 +61,7 @@
       SUBROUTINE step_floats_tile (ng, Lstr, Lend,                      &
      &                             knew, nnew,                          &
      &                             nfm3, nfm2, nfm1, nf, nfp1,          &
-     &                             bounded, Ftype, Tinfo, track)
+     &                             bounded, Ftype, Tinfo, Fz0, track)
 !***********************************************************************
 !
       USE mod_param
@@ -84,12 +85,14 @@
 # ifdef ASSUMED_SHAPE
       integer, intent(in) :: Ftype(:)
       real(r8), intent(in) :: Tinfo(0:,:)
+      real(r8), intent(in) :: Fz0(:)
 
       logical, intent(inout) :: bounded(:)
       real(r8), intent(inout) :: track(:,0:,:)
 # else
       integer, intent(in) :: Ftype(Nfloats(ng))
       real(r8), intent(in) :: Tinfo(0:izrhs,Nfloats(ng))
+      real(r8), intent(in) :: Fz0(Nfloats(ng))
 
       logical, intent(inout) :: bounded(Nfloats(ng))
       real(r8), intent(inout) :: track(NFV(ng),0:NFT,Nfloats(ng))
@@ -97,11 +100,11 @@
 !
 !  Local variable declarations.
 !
-      logical, parameter :: Gmask = .false.
+      logical, parameter :: Gmask = .FALSE.
 # ifdef MASKING
-      logical, parameter :: Lmask = .true.
+      logical, parameter :: Lmask = .TRUE.
 # else
-      logical, parameter :: Lmask = .false.
+      logical, parameter :: Lmask = .FALSE.
 # endif
       logical, dimension(Lstr:Lend) :: MyThread
 
@@ -128,10 +131,10 @@
 !
 ! Set tile array bounds.
 !
-      LBi=lbound(GRID(ng)%h,DIM=1)
-      UBi=ubound(GRID(ng)%h,DIM=1)
-      LBj=lbound(GRID(ng)%h,DIM=2)
-      UBj=ubound(GRID(ng)%h,DIM=2)
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
 
 # ifdef DISTRIBUTE
 !
@@ -159,17 +162,17 @@
      &      (track(ixgrd,nf,l).lt.Xend).and.                            &
      &      (Ystr.le.track(iygrd,nf,l)).and.                            &
      &      (track(iygrd,nf,l).lt.Yend)) THEN
-          MyThread(l)=.true.
+          MyThread(l)=.TRUE.
         ELSE IF (Master.and.(.not.bounded(l))) THEN
-          MyThread(l)=.true.
+          MyThread(l)=.TRUE.
         ELSE
-          MyThread(l)=.false.
+          MyThread(l)=.FALSE.
           track(1:NFV(ng),0:NFT,l)=Fspv
         END IF
       END DO
 # else
       DO l=Lstr,Lend
-        MyThread(l)=.true.
+        MyThread(l)=.TRUE.
       END DO
 # endif
 !
@@ -207,7 +210,7 @@
      &                    MIXING(ng) % dAktdz(LBi,LBj,1),               &
      &                    MyThread, bounded, track(1,0,1))
 
-      CALL nrng (iseed, nudg(Lstr), Lend-Lstr+1, ierr)
+      CALL nrng (iseed, nudg(Lstr:Lend), Lend-Lstr+1, ierr)
       DO l=Lstr,Lend
         IF (MyThread(l).and.bounded(l)) THEN
           nudg(l)=SQRT(2.0_r8*MAX(track(ifakt,nf,l),0.0_r8)/dt(ng))*    &
@@ -267,7 +270,8 @@
 !  terms vertical grid units.
 !
          IF (Ftype(l).eq.1) THEN
-           zfloat=Tinfo(izgrd,l)
+!!         zfloat=Tinfo(izgrd,l)
+           zfloat=Fz0(l)
            Ir=INT(track(ixgrd,nfp1,l))
            Jr=INT(track(iygrd,nfp1,l))
 !
@@ -409,7 +413,8 @@
 !  terms vertical grid units.
 !
           IF (Ftype(l).eq.1) THEN
-            zfloat=Tinfo(izgrd,l)
+!!          zfloat=Tinfo(izgrd,l)
+            zfloat=Fz0(l)
 !
             Ir=INT(track(ixgrd,nfp1,l))
             Jr=INT(track(iygrd,nfp1,l))
@@ -484,17 +489,17 @@
       END DO
 #  ifdef DISTRIBUTE
       IF (NtileI(ng).gt.1) THEN
-        CALL mp_collect (ng, Npts, Fspv, track)
+        CALL mp_collect (ng, iNLM, Npts, Fspv, track)
         DO l=Lstr,Lend
           IF ((Xstr.le.track(ixgrd,nfp1,l)).and.                        &
      &        (track(ixgrd,nfp1,l).lt.Xend).and.                        &
      &        (Ystr.le.track(iygrd,nfp1,l)).and.                        &
      &        (track(iygrd,nfp1,l).lt.Yend)) THEN
-            MyThread(l)=.true.
+            MyThread(l)=.TRUE.
           ELSE IF (Master.and.(.not.bounded(l))) THEN
-            MyThread(l)=.true.
+            MyThread(l)=.TRUE.
           ELSE
-            MyThread(l)=.false.
+            MyThread(l)=.FALSE.
             track(1:NFV(ng),0:NFT,l)=Fspv
           END IF
         END DO
@@ -505,7 +510,7 @@
         IF (MyThread(l).and.bounded(l)) THEN
           IF ((track(ixgrd,nfp1,l).ge.REAL(Lm(ng)+1,r8)-0.5_r8).or.     &
      &        (track(ixgrd,nfp1,l).lt.0.5_r8)) THEN
-            bounded(l)=.false.
+            bounded(l)=.FALSE.
           END IF
         END IF
       END DO
@@ -531,17 +536,17 @@
       END DO
 #  ifdef DISTRIBUTE
       IF (NtileJ(ng).gt.1) THEN
-        CALL mp_collect (ng, Npts, Fspv, track)
+        CALL mp_collect (ng, iNLM, Npts, Fspv, track)
         DO l=Lstr,Lend
           IF ((Xstr.le.track(ixgrd,nfp1,l)).and.                        &
      &        (track(ixgrd,nfp1,l).lt.Xend).and.                        &
      &        (Ystr.le.track(iygrd,nfp1,l)).and.                        &
      &        (track(iygrd,nfp1,l).lt.Yend)) THEN
-            MyThread(l)=.true.
+            MyThread(l)=.TRUE.
           ELSE IF (Master.and.(.not.bounded(l))) THEN
-            MyThread(l)=.true.
+            MyThread(l)=.TRUE.
           ELSE
-            MyThread(l)=.false.
+            MyThread(l)=.FALSE.
             track(1:NFV(ng),0:NFT,l)=Fspv
           END IF
         END DO
@@ -552,7 +557,7 @@
         IF (MyThread(l).and.bounded(l)) THEN
           IF ((track(iygrd,nfp1,l).ge.REAL(Mm(ng)+1,r8)-0.5_r8).or.     &
      &        (track(iygrd,nfp1,l).lt.0.5_r8)) THEN
-            bounded(l)=.false.
+            bounded(l)=.FALSE.
           END IF
         END IF
       END DO
@@ -581,7 +586,7 @@
         IF (.not.bounded(l).and.                                        &
      &      (time(ng)-dt(ng).le.Tinfo(itstr,l).and.                     &
      &       time(ng)+dt(ng).gt.Tinfo(itstr,l))) THEN
-          bounded(l)=.true.
+          bounded(l)=.TRUE.
 # ifdef DISTRIBUTE
           IF ((Xstr.le.Tinfo(ixgrd,l)).and.                             &
      &        (Tinfo(ixgrd,l).lt.Xend).and.                             &
@@ -590,13 +595,13 @@
             track(ixgrd,0:NFT,l)=Tinfo(ixgrd,l)
             track(iygrd,0:NFT,l)=Tinfo(iygrd,l)
             track(izgrd,0:NFT,l)=Tinfo(izgrd,l)
-            MyThread(l)=.true.
+            MyThread(l)=.TRUE.
           ELSE
-            MyThread(l)=.false.
+            MyThread(l)=.FALSE.
             track(1:NFV(ng),0:NFT,l)=Fspv
           END IF
 # else
-          MyThread(l)=.true.
+          MyThread(l)=.TRUE.
           track(ixgrd,0:NFT,l)=Tinfo(ixgrd,l)
           track(iygrd,0:NFT,l)=Tinfo(iygrd,l)
           track(izgrd,0:NFT,l)=Tinfo(izgrd,l)
@@ -798,7 +803,7 @@
 !  Collect floats on all nodes.
 !-----------------------------------------------------------------------
 !
-      CALL mp_collect (ng, Npts, Fspv, track)
+      CALL mp_collect (ng, iNLM, Npts, Fspv, track)
 !
 !  Collect the bounded status switch.
 !
@@ -808,12 +813,12 @@
           Fwrk(l)=1.0_r8
         END IF
       END DO
-      CALL mp_collect (ng, Nfloats(ng), Fspv, Fwrk)
+      CALL mp_collect (ng, iNLM, Nfloats(ng), Fspv, Fwrk)
       DO l=1,Nfloats(ng)
         IF (Fwrk(l).ne.Fspv) THEN
-          bounded(l)=.true.
+          bounded(l)=.TRUE.
         ELSE
-          bounded(l)=.false.
+          bounded(l)=.FALSE.
         END IF
       END DO
 # endif

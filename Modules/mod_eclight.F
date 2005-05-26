@@ -3,7 +3,7 @@
 #if defined BIOLOGY && defined ECOSIM
 !
 !=======================================================================
-!  Copyright (c) 2003 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== W. Paul Bissett ====
 !                                                                      !
 !  The following data arrays  are the spectral atmospheric,  pigment,  !

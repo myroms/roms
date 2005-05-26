@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE biology_mod
-#ifdef BIOLOGY
+#if defined NONLINEAR && defined BIOLOGY
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes the source and sink terms for selected        !
@@ -14,11 +14,11 @@
       implicit none
 
       PRIVATE
-      PUBLIC  :: biology_tile
+      PUBLIC  :: biology
 
       CONTAINS
 
-# ifdef BIO_FASHAM
+# if defined BIO_FASHAM
 #  include "fasham.h"
 # elif defined ECOSIM
 #  include "ecosim.h"

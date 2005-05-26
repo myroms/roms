@@ -2,7 +2,7 @@
       MODULE mod_forces
 /*
 ************************************************************************
-** Copyright (c) 2002 ROMS/TOMS Group                                 **
+** Copyright (c) 2005 ROMS/TOMS Group                                 **
 *************************************************** Hernan G. Arango ***
 **                                                                    **
 ** Surface momentum stresses.                                         **
@@ -88,6 +88,7 @@
 **                                                                    **
 ** Rain fall rate.                                                    **
 **                                                                    **
+** evap         Evaporation rate (kg/m2/s).                           **
 ** rain         Rain fall rate (kg/m2/s).                             **
 ** rainG        Latest two-time snapshots of input "rain" grided      **
 **                data used for interpolation.                        **
@@ -139,10 +140,12 @@
         implicit none
 
         TYPE T_FORCES
-
+!
+!  Nonlinear model state.
+!
           real(r8), pointer :: sustr(:,:)
           real(r8), pointer :: svstr(:,:)
-#if !defined ANA_SMFLUX || !defined BULK_FLUXES
+#if !defined ANA_SMFLUX && !defined BULK_FLUXES
           real(r8), pointer :: sustrG(:,:,:)
           real(r8), pointer :: svstrG(:,:,:)
 #endif
@@ -150,11 +153,8 @@
           real(r8), pointer :: bvstr(:,:)
 
 #ifdef BBL_MODEL
-# ifdef SWAN
           real(r8), pointer :: UB_swan(:,:)
-# else
           real(r8), pointer :: Awave(:,:)
-# endif
           real(r8), pointer :: Dwave(:,:)
           real(r8), pointer :: Pwave(:,:)
 # ifndef ANA_WWAVE
@@ -222,6 +222,9 @@
 #  ifndef ANA_RAIN
           real(r8), pointer :: rainG(:,:,:)
 #  endif
+#  ifdef EMINUSP
+          real(r8), pointer :: evap(:,:)
+#  endif
 # endif
 
           real(r8), pointer :: stflx(:,:,:)
@@ -255,6 +258,34 @@
 # endif
 #endif
 
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+          real(r8), pointer :: tl_sustr(:,:)
+          real(r8), pointer :: tl_svstr(:,:)
+          real(r8), pointer :: tl_bustr(:,:)
+          real(r8), pointer :: tl_bvstr(:,:)
+# ifdef SOLVE3D
+          real(r8), pointer :: tl_stflx(:,:,:)
+          real(r8), pointer :: tl_btflx(:,:,:)
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+          real(r8), pointer :: ad_sustr(:,:)
+          real(r8), pointer :: ad_svstr(:,:)
+          real(r8), pointer :: ad_bustr(:,:)
+          real(r8), pointer :: ad_bvstr(:,:)
+# ifdef SOLVE3D
+          real(r8), pointer :: ad_stflx(:,:,:)
+          real(r8), pointer :: ad_btflx(:,:,:)
+# endif
+#endif
+
         END TYPE T_FORCES
 
         TYPE (T_FORCES), allocatable :: FORCES(:)
@@ -264,7 +295,7 @@
       SUBROUTINE allocate_forces (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates all variables in the module for all nested   !
@@ -284,10 +315,12 @@
 !
       IF (ng.eq.1) allocate ( FORCES(Ngrids) )
 !
+!  Nonlinear model state
+!
       allocate ( FORCES(ng) % sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % svstr(LBi:UBi,LBj:UBj) )
 
-#if !defined ANA_SMFLUX || !defined BULK_FLUXES
+#if !defined ANA_SMFLUX && !defined BULK_FLUXES
       allocate ( FORCES(ng) % sustrG(LBi:UBi,LBj:UBj,2) )
       allocate ( FORCES(ng) % svstrG(LBi:UBi,LBj:UBj,2) )
 #endif
@@ -381,6 +414,9 @@
 #  ifndef ANA_RAIN
       allocate ( FORCES(ng) % rainG(LBi:UBi,LBj:UBj,2) )
 #  endif
+#  ifdef EMINUSP
+      allocate ( FORCES(ng) % evap(LBi:UBi,LBj:UBj) )
+#  endif
 # endif
 
       allocate ( FORCES(ng) % stflx(LBi:UBi,LBj:UBj,NT(ng)) )
@@ -420,13 +456,41 @@
 
 #endif
 
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state
+!
+      allocate ( FORCES(ng) % tl_sustr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % tl_svstr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % tl_bustr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % tl_bvstr(LBi:UBi,LBj:UBj) )
+# ifdef SOLVE3D
+      allocate ( FORCES(ng) % tl_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      allocate ( FORCES(ng) % tl_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state
+!
+      allocate ( FORCES(ng) % ad_sustr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % ad_svstr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % ad_bustr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % ad_bvstr(LBi:UBi,LBj:UBj) )
+# ifdef SOLVE3D
+      allocate ( FORCES(ng) % ad_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      allocate ( FORCES(ng) % ad_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
+# endif
+#endif
+
       RETURN
       END SUBROUTINE allocate_forces
 
       SUBROUTINE initialize_forces (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initialize all variables in the module using first     !
@@ -485,10 +549,12 @@
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
+!  Nonlinear model state.
+!
       FORCES(ng) % sustr(Imin:Imax,Jmin:Jmax) = IniVal
       FORCES(ng) % svstr(Imin:Imax,Jmin:Jmax) = IniVal
 
-#if !defined ANA_SMFLUX || !defined BULK_FLUXES
+#if !defined ANA_SMFLUX && !defined BULK_FLUXES
       FORCES(ng) % sustrG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
       FORCES(ng) % svstrG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 #endif
@@ -555,6 +621,9 @@
 
 # ifdef BULK_FLUXES
       FORCES(ng) % rain(Imin:Imax,Jmin:Jmax) = IniVal
+#  ifdef EMINUSP
+      FORCES(ng) % evap(Imin:Imax,Jmin:Jmax) = IniVal
+#  endif
 # endif
 
 # if !defined LONGWAVE && defined BULK_FLUXES
@@ -618,6 +687,34 @@
       FORCES(ng) % avcos(Imin:Imax,Jmin:Jmax,1:NBands) = IniVal
 # endif
 
+#endif
+
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+      FORCES(ng) % tl_sustr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % tl_svstr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % tl_bustr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % tl_bvstr(Imin:Imax,Jmin:Jmax) = IniVal
+# ifdef SOLVE3D
+      FORCES(ng) % tl_stflx(Imin:Imax,Jmin:Jmax,1:NT(ng)) = IniVal
+      FORCES(ng) % tl_btflx(Imin:Imax,Jmin:Jmax,1:NT(ng)) = IniVal
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+      FORCES(ng) % ad_sustr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % ad_svstr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % ad_bustr(Imin:Imax,Jmin:Jmax) = IniVal
+      FORCES(ng) % ad_bvstr(Imin:Imax,Jmin:Jmax) = IniVal
+# ifdef SOLVE3D
+      FORCES(ng) % ad_stflx(Imin:Imax,Jmin:Jmax,1:NT(ng)) = IniVal
+      FORCES(ng) % ad_btflx(Imin:Imax,Jmin:Jmax,1:NT(ng)) = IniVal
+# endif
 #endif
 
       RETURN

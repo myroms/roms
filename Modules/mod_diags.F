@@ -3,7 +3,7 @@
 #ifdef DIAGNOSTICS
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Diagnostics fields for output.                                      !
@@ -84,7 +84,7 @@
       SUBROUTINE allocate_diags (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates all variables in the module for all nested   !
@@ -143,7 +143,7 @@
       SUBROUTINE initialize_diags (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initialize all variables in the module using first     !

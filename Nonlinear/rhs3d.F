@@ -1,13 +1,13 @@
 #include "cppdefs.h"
       MODULE rhs3d_mod
-#ifdef SOLVE3D
+#if defined NONLINEAR && defined SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This subroutine evaluates the right-hand-side term of the 3D        !
-!  momentum and tracers equations.                                     !
+!  This subroutine evaluates right-hand-side terms for 3D momentum     !
+!  and tracers equations.                                              !
 !                                                                      !
 !=======================================================================
 !
@@ -42,37 +42,17 @@
       USE prsgrd_mod, ONLY : prsgrd
 # ifndef TS_FIXED
 #  ifdef TS_DIF2
-#   if defined MIX_S_TS
-      USE t3dmix2_s_mod, ONLY : t3dmix2_s
-#   elif defined MIX_GEO_TS
-      USE t3dmix2_geo_mod, ONLY : t3dmix2_geo
-#   elif defined MIX_ISO_TS
-      USE t3dmix2_iso_mod, ONLY : t3dmix2_iso
-#   endif
+      USE t3dmix_mod, ONLY : t3dmix2
 #  endif
 #  ifdef TS_DIF4
-#   if defined MIX_S_TS
-      USE t3dmix4_s_mod, ONLY : t3dmix4_s
-#   elif defined MIX_GEO_TS
-      USE t3dmix4_geo_mod, ONLY : t3dmix4_geo
-#   elif defined MIX_ISO_TS
-      USE t3dmix4_iso_mod, ONLY : t3dmix4_iso
-#   endif
+      USE t3dmix_mod, ONLY : t3dmix4
 #  endif
 # endif
 # ifdef UV_VIS2
-#  if defined MIX_S_UV
-      USE uv3dmix2_s_mod, ONLY : uv3dmix2_s
-#  elif defined MIX_GEO_UV
-      USE uv3dmix2_geo_mod, ONLY: uv3dmix2_geo
-#  endif
+      USE uv3dmix_mod, ONLY : uv3dmix2
 # endif
 # ifdef UV_VIS4
-#  if defined MIX_S_UV
-      USE uv3dmix4_s_mod, ONLY : uv3dmix4_s
-#  elif defined MIX_GEO_UV
-      USE uv3dmix4_geo_mod, ONLY : uv3dmix4_geo
-#  endif
+      USE uv3dmix_mod, ONLY : uv3dmix4
 # endif
 !
       integer, intent(in) :: ng, tile
@@ -98,13 +78,7 @@
 !  Compute horizontal harmonic mixing of tracer type variables.
 !-----------------------------------------------------------------------
 !
-#   if defined MIX_S_TS
-      CALL t3dmix2_s (ng, tile)
-#   elif defined MIX_GEO_TS
-      CALL t3dmix2_geo (ng, tile)
-#   elif defined MIX_ISO_TS
-      CALL t3dmix2_iso (ng, tile)
-#   endif
+      CALL t3dmix2 (ng, tile)
 #  endif
 #  ifdef TS_DIF4
 !
@@ -112,22 +86,16 @@
 !  Compute horizontal biharmonic mixing of tracer type variables.
 !-----------------------------------------------------------------------
 !
-#   if defined MIX_S_TS
-      CALL t3dmix4_s (ng, tile)
-#   elif defined MIX_GEO_TS
-      CALL t3dmix4_geo (ng, tile)
-#   elif defined MIX_ISO_TS
-      CALL t3dmix4_iso (ng, tile)
-#   endif
+      CALL t3dmix4 (ng, tile)
 #  endif
 # endif
 !
 !-----------------------------------------------------------------------
-!  Compute the right-hand-side term of the 3D momentum equations.
+!  Compute right-hand-side terms for the 3D momentum equations.
 !-----------------------------------------------------------------------
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 21)
+      CALL wclock_on (ng, iNLM, 21)
 # endif
       CALL rhs3d_tile (ng, Istr, Iend, Jstr, Jend,                      &
      &                 LBi, UBi, LBj, UBj,                              &
@@ -176,7 +144,7 @@
      &                 OCEAN(ng) % rv,                                  &
      &                 OCEAN(ng) % zeta)
 # ifdef PROFILE
-      CALL wclock_off (ng, 21)
+      CALL wclock_off (ng, iNLM, 21)
 # endif
 # ifdef UV_VIS2
 !
@@ -184,11 +152,7 @@
 !  Compute horizontal, harmonic mixing of momentum.
 !-----------------------------------------------------------------------
 !
-#  if defined MIX_S_UV
-      CALL uv3dmix2_s (ng, tile)
-#  elif defined MIX_GEO_UV
-      CALL uv3dmix2_geo (ng, tile)
-#  endif
+      CALL uv3dmix2 (ng, tile)
 # endif
 # ifdef UV_VIS4
 !
@@ -196,11 +160,7 @@
 !  Compute horizontal, biharmonic mixing of momentum.
 !-----------------------------------------------------------------------
 !
-#  if defined MIX_S_UV
-      CALL uv3dmix4_s (ng, tile)
-#  elif defined MIX_GEO_UV
-      CALL uv3dmix4_geo (ng, tile)
-#  endif
+      CALL uv3dmix4 (ng, tile)
 # endif
       RETURN
       END SUBROUTINE rhs3d
@@ -213,21 +173,25 @@
 # if defined CURVGRID && defined UV_ADV
      &                       dmde, dndx,                                &
 # endif
-     &                       fomn, om_u, om_v, on_u, on_v, pm, pn,      &
-     &                       bustr, bvstr, sustr, svstr,                &
+     &                       fomn,                                      &
+     &                       om_u, om_v, on_u, on_v, pm, pn,            &
+     &                       bustr, bvstr,                              &
+     &                       sustr, svstr,                              &
 # ifdef M3CLM_NUDGING
      &                       M3nudgcof, uclm, vclm,                     &
 # endif
 # if defined NUDGING_UVsur || defined NUDGING_UV
      &                       EobsUV, Uobs, Vobs,                        &
 # endif
-     &                       u, v, W, Zt_avg1,                          &
+     &                       u, v, W,                                   &
+     &                       Zt_avg1,                                   &
      &                       rufrc, rvfrc,                              &
 # ifdef DIAGNOSTICS_UV
      &                       DiaRUfrc, DiaRVfrc,                        &
      &                       DiaRU, DiaRV,                              &
 # endif
-     &                       ru, rv, zeta)
+     &                       ru, rv,                                    &
+     &                       zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -403,34 +367,38 @@
       END DO
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          Uwrk(i,j)=sustr(i,j)*4.0_r8/((wrk(i-1,j)+wrk(i,j))*           &
-     &                                 (pm (i-1,j)+pm (i,j))*           &
-     &                                 (pn (i-1,j)+pn (i,j)))
+          cff=0.25_r8*(pm(i-1,j)+pm(i,j))*                              &
+     &                (pn(i-1,j)+pn(i,j))
+          cff1=1.0_r8/(cff*(wrk(i-1,j)+wrk(i,j)))
+          Uwrk(i,j)=sustr(i,j)*cff1
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          Vwrk(i,j)=svstr(i,j)*4.0_r8/((wrk(i,j-1)+wrk(i,j))*           &
-     &                                 (pm (i,j-1)+pm (i,j))*           &
-     &                                 (pn (i,j-1)+pn (i,j)))
+          cff=0.25*(pm(i,j-1)+pm(i,j))*                                 &
+     &             (pn(i,j-1)+pn(i,j))
+          cff1=1.0_r8/(cff*(wrk(i,j-1)+wrk(i,j)))
+          Vwrk(i,j)=svstr(i,j)*cff1
         END DO
       END DO
       DO k=levsfrc(ng),N(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            fac=Uwrk(i,j)*(Hz(i,j,k)+Hz(i-1,j,k))
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+fac
+            cff=Uwrk(i,j)*(Hz(i  ,j,k)+                                 &
+     &                     Hz(i-1,j,k))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+cff
 #  ifdef DIAGNOSTICS_UV
-            DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)+fac
+            DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)+cff
 #  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            fac=Vwrk(i,j)*(Hz(i,j,k)+Hz(i,j-1,k))
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+fac
+            cff=Vwrk(i,j)*(Hz(i,j  ,k)+                                 &
+     &                     Hz(i,j-1,k))
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+cff
 #  ifdef DIAGNOSTICS_UV
-            DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)+fac
+            DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)+cff
 #  endif
           END DO
         END DO
@@ -453,43 +421,48 @@
       END DO
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          Uwrk(i,j)=bustr(i,j)*4.0_r8/((wrk(i-1,j)+wrk(i,j))*           &
-     &                                 (pm (i-1,j)+pm (i,j))*           &
-     &                                 (pn (i-1,j)+pn (i,j)))
+          cff=0.25_r8*(pm (i-1,j)+pm (i,j))*                            &
+     &                (pn (i-1,j)+pn (i,j))
+          cff1=1.0_r8/(cff*(wrk(i-1,j)+wrk(i,j)))
+          Uwrk(i,j)=bustr(i,j)*cff1
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          Vwrk(i,j)=bvstr(i,j)*4.0_r8/((wrk(i,j-1)+wrk(i,j))*           &
-     &                                 (pm (i,j-1)+pm (i,j))*           &
-     &                                 (pn (i,j-1)+pn (i,j)))
+          cff=0.25_r8*(pm (i,j-1)+pm (i,j))*                            &
+     &                (pn (i,j-1)+pn (i,j))
+          cff1=1.0_r8/(cff*(wrk(i,j-1)+wrk(i,j)))
+          Vwrk(i,j)=bvstr(i,j)*cff1
         END DO
       END DO
       DO k=1,levbfrc(ng)
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            fac=Uwrk(i,j)*(Hz(i,j,k)+Hz(i-1,j,k))
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-fac
+            cff=Uwrk(i,j)*(Hz(i  ,j,k)+                                 &
+     &                     Hz(i-1,j,k))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-cff
 #  ifdef DIAGNOSTICS_UV
-            DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)-fac
+            DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)-cff
 #  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            fac=Vwrk(i,j)*(Hz(i,j,k)+Hz(i,j-1,k))
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac
+            cff=Vwrk(i,j)*(Hz(i,j  ,k)+                                 &
+     &                     Hz(i,j-1,k))
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-cff
 #  ifdef DIAGNOSTICS_UV
-            DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)-fac
+            DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)-cff
 #  endif
           END DO
         END DO
       END DO
 # endif
 !
-      DO k=1,N(ng)
-!
+      K_LOOP : DO k=1,N(ng)
+
 # if defined UV_COR || (defined CURVGRID && defined UV_ADV)
+!
 !-----------------------------------------------------------------------
 !  Add in Coriolis and curvilinear transformation terms, if any.
 !-----------------------------------------------------------------------
@@ -501,18 +474,24 @@
      &          fomn(i,j)                                               &
 #  endif
 #  if (defined CURVGRID && defined UV_ADV)
-     &         +0.5_r8*((v(i,j,k,nrhs)+v(i,j+1,k,nrhs))*dndx(i,j)-      &
-     &                  (u(i,j,k,nrhs)+u(i+1,j,k,nrhs))*dmde(i,j))      &
+     &         +0.5_r8*((v(i,j  ,k,nrhs)+                               &
+     &                   v(i,j+1,k,nrhs))*dndx(i,j)-                    &
+     &                  (u(i  ,j,k,nrhs)+                               &
+     &                   u(i+1,j,k,nrhs))*dmde(i,j))                    &
 #  endif
      &          )
-            UFx(i,j)=cff*(v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
-            VFe(i,j)=cff*(u(i,j,k,nrhs)+u(i+1,j,k,nrhs))
+            UFx(i,j)=cff*(v(i,j  ,k,nrhs)+                              &
+     &                    v(i,j+1,k,nrhs))
+            VFe(i,j)=cff*(u(i  ,j,k,nrhs)+                              &
+     &                    u(i+1,j,k,nrhs))
 #  ifdef DIAGNOSTICS_UV
 #   ifdef UV_COR
             Uwrk(i,j)=0.5_r8*Hz(i,j,k)*fomn(i,j)*                       &
-     &                (v(i,j,k,nrhs)+v(i,j+1,k,nrhs))
+     &                (v(i,j  ,k,nrhs)+                                 &
+     &                 v(i,j+1,k,nrhs))
             Vwrk(i,j)=0.5_r8*Hz(i,j,k)*fomn(i,j)*                       &
-     &                (u(i,j,k,nrhs)+u(i+1,j,k,nrhs))
+     &                (u(i  ,j,k,nrhs)+                                 &
+     &                 u(i+1,j,k,nrhs))
 #   else
             Uwrk(i,j)=0.0_r8
             Vwrk(i,j)=0.0_r8
@@ -522,30 +501,30 @@
         END DO
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            fac1=0.5_r8*(UFx(i,j)+UFx(i-1,j))
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+fac1
+            cff1=0.5_r8*(UFx(i,j)+UFx(i-1,j))
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+cff1
 #  ifdef DIAGNOSTICS_UV
-            fac2=0.5_r8*(Uwrk(i,j)+Uwrk(i-1,j))
+            cff2=0.5_r8*(Uwrk(i,j)+Uwrk(i-1,j))
 #   ifdef UV_COR
-            DiaRU(i,j,k,nrhs,M3fcor)=fac2
+            DiaRU(i,j,k,nrhs,M3fcor)=cff2
 #   endif
 #   if defined UV_ADV && defined CURVGRID
-            DiaRU(i,j,k,nrhs,M3hadv)=fac1-fac2
+            DiaRU(i,j,k,nrhs,M3hadv)=cff1-cff2
 #   endif
 #  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            fac1=0.5_r8*(VFe(i,j)+VFe(i,j-1))
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac1
+            cff1=0.5_r8*(VFe(i,j)+VFe(i,j-1))
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-cff1
 #  ifdef DIAGNOSTICS_UV
-            fac2=0.5_r8*(Vwrk(i,j)+Vwrk(i,j-1))
+            cff2=0.5_r8*(Vwrk(i,j)+Vwrk(i,j-1))
 #   ifdef UV_COR
-            DiaRV(i,j,k,nrhs,M3fcor)=-fac2
+            DiaRV(i,j,k,nrhs,M3fcor)=-cff2
 #   endif
 #   if defined UV_ADV && defined CURVGRID
-            DiaRV(i,j,k,nrhs,M3hadv)=-fac1+fac2
+            DiaRV(i,j,k,nrhs,M3hadv)=-cff1+cff2
 #   endif
 #  endif
           END DO
@@ -559,20 +538,20 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU,Iend
+            cff=0.25_r8*(M3nudgcof(i-1,j)+M3nudgcof(i,j))*              &
+     &          om_u(i,j)*on_u(i,j)
             ru(i,j,k,nrhs)=ru(i,j,k,nrhs)+                              &
-     &                     0.25_r8*(M3nudgcof(i-1,j)+M3nudgcof(i,j))*   &
-     &                     (Hz(i-1,j,k)+Hz(i,j,k))*                     &
-     &                     (uclm(i,j,k)-u(i,j,k,nrhs))*                 &
-     &                     om_u(i,j)*on_u(i,j)
+     &                     cff*(Hz(i-1,j,k)+Hz(i,j,k))*                 &
+     &                     (uclm(i,j,k)-u(i,j,k,nrhs))
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
+            cff=0.25_r8*(M3nudgcof(i,j-1)+M3nudgcof(i,j))*              &
+     &          om_v(i,j)*on_v(i,j)
             rv(i,j,k,nrhs)=rv(i,j,k,nrhs)+                              &
-     &                     0.25_r8*(M3nudgcof(i,j-1)+M3nudgcof(i,j))*   &
-     &                     (Hz(i,j-1,k)+Hz(i,j,k))*                     &
-     &                     (vclm(i,j,k)-v(i,j,k,nrhs))*                 &
-     &                     om_v(i,j)*on_v(i,j)
+     &                     cff*(Hz(i,j-1,k)+Hz(i,j,k))*                 &
+     &                     (vclm(i,j,k)-v(i,j,k,nrhs))
          END DO
        END DO
 # endif
@@ -611,6 +590,7 @@
         END IF
 # endif
 # ifdef UV_ADV
+!
 !-----------------------------------------------------------------------
 !  Add in horizontal advection of momentum.
 !-----------------------------------------------------------------------
@@ -624,26 +604,34 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
-            UFx(i,j)=0.25_r8*(u(i,j,k,nrhs)+u(i+1,j,k,nrhs))*           &
-     &                       (Huon(i,j,k)+Huon(i+1,j,k))
+            UFx(i,j)=0.25_r8*(u(i  ,j,k,nrhs)+                          &
+     &                        u(i+1,j,k,nrhs))*                         &
+     &                       (Huon(i  ,j,k)+                            &
+     &                        Huon(i+1,j,k))
           END DO
         END DO
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
-            UFe(i,j)=0.25_r8*(u(i,j-1,k,nrhs)+u(i,j,k,nrhs))*           &
-     &                       (Hvom(i-1,j,k)+Hvom(i,j,k))
+            UFe(i,j)=0.25_r8*(u(i,j-1,k,nrhs)+                          &
+     &                        u(i,j  ,k,nrhs))*                         &
+     &                       (Hvom(i-1,j,k)+                            &
+     &                        Hvom(i  ,j,k))
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
-            VFx(i,j)=0.25_r8*(v(i-1,j,k,nrhs)+v(i,j,k,nrhs))*           &
-     &                       (Huon(i,j-1,k)+Huon(i,j,k))
+            VFx(i,j)=0.25_r8*(v(i-1,j,k,nrhs)+                          &
+     &                        v(i  ,j,k,nrhs))*                         &
+     &                       (Huon(i,j-1,k)+                            &
+     &                        Huon(i,j  ,k))
           END DO
         END DO
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
-            VFe(i,j)=0.25_r8*(v(i,j,k,nrhs)+v(i,j+1,k,nrhs))*           &
-     &                       (Hvom(i,j,k)+Hvom(i,j+1,k))
+            VFe(i,j)=0.25_r8*(v(i,j  ,k,nrhs)+                          &
+     &                        v(i,j+1,k,nrhs))*                         &
+     &                       (Hvom(i,j  ,k)+                            &
+     &                        Hvom(i,j+1,k))
           END DO
         END DO
 #  else
@@ -676,21 +664,25 @@
 #   endif
 #   ifdef UV_C4ADVECTION
 !
-!  Fourth-order, centered differences advection.
+!  Fourth-order, centered differences u-momentum advection.
 !
         cff=1.0_r8/6.0_r8
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
-            UFx(i,j)=0.25_r8*(u(i,j,k,nrhs)+u(i+1,j,k,nrhs)-            &
-     &                        cff*(uxx (i,j)+uxx (i+1,j)))*             &
-     &                       (Huon(i,j,k)+Huon(i+1,j,k)-                &
-     &                        cff*(Huxx(i,j)+Huxx(i+1,j)))
+            UFx(i,j)=0.25_r8*(u(i  ,j,k,nrhs)+                          &
+     &                        u(i+1,j,k,nrhs)-                          &
+     &                        cff*(uxx (i  ,j)+                         &
+     &                             uxx (i+1,j)))*                       &
+     &                       (Huon(i  ,j,k)+                            &
+     &                        Huon(i+1,j,k)-                            &
+     &                        cff*(Huxx(i  ,j)+                         &
+     &                             Huxx(i+1,j)))
           END DO
         END DO
 #   else
 !
-!  Third-order, upstream bias advection with velocity dependent
-!  hyperdiffusion.
+!  Third-order, upstream bias u-momentum advection with velocity
+!  dependent hyperdiffusion.
 !
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
@@ -701,8 +693,10 @@
               cff=uxx(i+1,j)
             END IF
             UFx(i,j)=0.25_r8*(cff1+Gadv*cff)*                           &
-     &               (Huon(i,j,k)+Huon(i+1,j,k)+                        &
-     &                Gadv*0.5_r8*(Huxx(i,j)+Huxx(i+1,j)))
+     &               (Huon(i  ,j,k)+                                    &
+     &                Huon(i+1,j,k)+                                    &
+     &                Gadv*0.5_r8*(Huxx(i  ,j)+                         &
+     &                             Huxx(i+1,j)))
           END DO
         END DO
 #   endif
@@ -739,10 +733,14 @@
         cff=1.0_r8/6.0_r8
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
-            UFe(i,j)=0.25_r8*(u(i,j,k,nrhs)+u(i,j-1,k,nrhs)-            &
-     &                        cff*(uee (i,j)+uee (i,j-1)))*             &
-     &                       (Hvom(i,j,k)+Hvom(i-1,j,k)-                &
-     &                        cff*(Hvxx(i,j)+Hvxx(i-1,j)))
+            UFe(i,j)=0.25_r8*(u(i,j  ,k,nrhs)+                          &
+     &                        u(i,j-1,k,nrhs)-                          &
+     &                        cff*(uee (i,j  )+                         &
+     &                             uee (i,j-1)))*                       &
+     &                       (Hvom(i  ,j,k)+                            &
+     &                        Hvom(i-1,j,k)-                            &
+     &                        cff*(Hvxx(i  ,j)+                         &
+     &                             Hvxx(i-1,j)))
           END DO
         END DO
 #   else
@@ -756,7 +754,8 @@
               cff=uee(i,j)
             END IF
             UFe(i,j)=0.25_r8*(cff1+Gadv*cff)*                           &
-     &               (cff2+Gadv*0.5_r8*(Hvxx(i,j)+Hvxx(i-1,j)))
+     &               (cff2+Gadv*0.5_r8*(Hvxx(i  ,j)+                    &
+     &                                  Hvxx(i-1,j)))
           END DO
         END DO
 #   endif
@@ -790,16 +789,27 @@
           END DO
         END DO
 #   ifdef UV_C4ADVECTION
+!
+!  Fourth-order, centered differences v-momentum advection.
+!
         cff=1.0_r8/6.0_r8
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
-            VFx(i,j)=0.25_r8*(v(i,j,k,nrhs)+v(i-1,j,k,nrhs)-            &
-     &                        cff*(vxx (i,j)+vxx (i-1,j)))*             &
-     &                       (Huon(i,j,k)+Huon(i,j-1,k)-                &
-     &                        cff*(Huee(i,j)+Huee(i,j-1)))
+            VFx(i,j)=0.25_r8*(v(i  ,j,k,nrhs)+                          &
+     &                        v(i-1,j,k,nrhs)-                          &
+     &                        cff*(vxx (i  ,j)+                         &
+     &                             vxx (i-1,j)))*                       &
+     &                       (Huon(i,j  ,k)+                            &
+     &                        Huon(i,j-1,k)-                            &
+     &                        cff*(Huee(i,j  )+                         &
+     &                             Huee(i,j-1)))
           END DO
         END DO
 #   else
+!
+!  Third-order, upstream bias v-momentum advection with velocity
+!  dependent hyperdiffusion.
+!
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
             cff1=v(i,j,k,nrhs)+v(i-1,j,k,nrhs)
@@ -810,7 +820,8 @@
               cff=vxx(i,j)
             END IF
             VFx(i,j)=0.25_r8*(cff1+Gadv*cff)*                           &
-     &               (cff2+Gadv*0.5_r8*(Huee(i,j)+Huee(i,j-1)))
+     &               (cff2+Gadv*0.5_r8*(Huee(i,j  )+                    &
+     &                                  Huee(i,j-1)))
           END DO
         END DO
 #   endif
@@ -845,10 +856,14 @@
         cff=1.0_r8/6.0_r8
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
-            VFe(i,j)=0.25_r8*(v(i,j,k,nrhs)+v(i,j+1,k,nrhs)-            &
-     &                        cff*(vee (i,j)+vee (i,j+1)))*             &
-     &                       (Hvom(i,j,k)+Hvom(i,j+1,k)-                &
-     &                        cff*(Hvee(i,j)+Hvee(i,j+1)))
+            VFe(i,j)=0.25_r8*(v(i,j  ,k,nrhs)+                          &
+     &                        v(i,j+1,k,nrhs)-                          &
+     &                        cff*(vee (i,j  )+                         &
+     &                             vee (i,j+1)))*                       &
+     &                       (Hvom(i,j  ,k)+                            &
+     &                        Hvom(i,j+1,k)-                            &
+     &                        cff*(Hvee(i,j  )+                         &
+     &                             Hvee(i,j+1)))
           END DO
         END DO
 #   else
@@ -861,8 +876,10 @@
               cff=vee(i,j+1)
             END IF
             VFe(i,j)=0.25_r8*(cff1+Gadv*cff)*                           &
-     &               (Hvom(i,j,k)+Hvom(i,j+1,k)+                        &
-     &                Gadv*0.5_r8*(Hvee(i,j)+Hvee(i,j+1)))
+     &               (Hvom(i,j  ,k)+                                    &
+     &                Hvom(i,j+1,k)+                                    &
+     &                Gadv*0.5_r8*(Hvee(i,j  )+                         &
+     &                             Hvee(i,j+1)))
           END DO
         END DO
 #   endif
@@ -872,33 +889,36 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            fac=(UFx(i,j)-UFx(i-1,j))+(UFe(i,j+1)-UFe(i,j))
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-fac
+            cff=UFx(i,j)-UFx(i-1,j)+                                    &
+     &          UFe(i,j+1)-UFe(i,j)
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-cff
 #  ifdef DIAGNOSTICS_UV
 #   ifdef CURVGRID
-            DiaRU(i,j,k,nrhs,M3hadv)=DiaRU(i,j,k,nrhs,M3hadv)-fac
+            DiaRU(i,j,k,nrhs,M3hadv)=DiaRU(i,j,k,nrhs,M3hadv)-cff
 #   else
-            DiaRU(i,j,k,nrhs,M3hadv)=-fac
+            DiaRU(i,j,k,nrhs,M3hadv)=-cff
 #   endif
 #  endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            fac=(VFx(i+1,j)-VFx(i,j))+(VFe(i,j)-VFe(i,j-1))
-            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac
+            cff=VFx(i+1,j)-VFx(i,j)+                                    &
+     &          VFe(i,j)-VFe(i,j-1)
+            rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-cff
 #  ifdef DIAGNOSTICS_UV
 #   ifdef CURVGRID
-            DiaRV(i,j,k,nrhs,M3hadv)=DiaRV(i,j,k,nrhs,M3hadv)-fac
+            DiaRV(i,j,k,nrhs,M3hadv)=DiaRV(i,j,k,nrhs,M3hadv)-cff
 #   else
-            DiaRV(i,j,k,nrhs,M3hadv)=-fac
+            DiaRV(i,j,k,nrhs,M3hadv)=-cff
 #   endif
 #  endif
           END DO
         END DO
 # endif
-      END DO
-      DO j=Jstr,Jend
+      END DO K_LOOP
+!
+      J_LOOP : DO j=Jstr,Jend
 # ifdef UV_ADV
 !
 !-----------------------------------------------------------------------
@@ -914,8 +934,10 @@
         cff2=1.0_r8/16.0_r8
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            DC(i,k)=(cff1*(Hz(i  ,j,k)+Hz(i-1,j,k))-                    &
-     &               cff2*(Hz(i+1,j,k)+Hz(i-2,j,k)))
+            DC(i,k)=cff1*(Hz(i  ,j,k)+                                  &
+     &                    Hz(i-1,j,k))-                                 &
+     &              cff2*(Hz(i+1,j,k)+                                  &
+     &                    Hz(i-2,j,k))
           END DO
         END DO
         DO i=IstrU,Iend
@@ -945,10 +967,13 @@
         cff4=1.0_r8/6.0_r8
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
-            FC(i,k)=(cff1*(W(i  ,j,k)+W(i-1,j,k))-                      &
-     &               cff2*(W(i+1,j,k)+W(i-2,j,k)))*                     &
+            FC(i,k)=(cff1*(W(i  ,j,k)+                                  &
+     &                     W(i-1,j,k))-                                 &
+     &               cff2*(W(i+1,j,k)+                                  &
+     &                     W(i-2,j,k)))*                                &
      &              (u(i,j,k,nrhs)+                                     &
-     &               DC(i,k)*(cff3*CF(i,k)+cff4*CF(i,k-1)))
+     &               DC(i,k)*(cff3*CF(i,k  )+                           &
+     &                        cff4*CF(i,k-1)))
           END DO
         END DO
         DO i=IstrU,Iend
@@ -958,8 +983,10 @@
 #  elif defined UV_C2ADVECTION
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
-            FC(i,k)=0.25_r8*(u(i,j,k,nrhs)+u(i,j,k+1,nrhs))*            &
-     &              (W(i,j,k)+W(i-1,j,k))
+            FC(i,k)=0.25_r8*(u(i,j,k  ,nrhs)+                           &
+     &                       u(i,j,k+1,nrhs))*                          &
+     &              (W(i  ,j,k)+                                        &
+     &               W(i-1,j,k))
           END DO
         END DO
         DO i=IstrU,Iend
@@ -971,9 +998,12 @@
         cff2=1.0_r8/32.0_r8
         DO k=2,N(ng)-2
           DO i=IstrU,Iend
-            FC(i,k)=(cff1*(u(i,j,k  ,nrhs)+u(i,j,k+1,nrhs))-            &
-     &               cff2*(u(i,j,k-1,nrhs)+u(i,j,k+2,nrhs)))*           &
-     &              (W(i,j,k)+W(i-1,j,k))
+            FC(i,k)=(cff1*(u(i,j,k  ,nrhs)+                             &
+     &                     u(i,j,k+1,nrhs))-                            &
+     &               cff2*(u(i,j,k-1,nrhs)+                             &
+     &                     u(i,j,k+2,nrhs)))*                           &
+     &              (W(i  ,j,k)+                                        &
+     &               W(i-1,j,k))
           END DO
         END DO
         DO i=IstrU,Iend
@@ -982,10 +1012,14 @@
      &                         u(i,j,N(ng)  ,nrhs))-                    &
      &                   cff2*(u(i,j,N(ng)-2,nrhs)+                     &
      &                         u(i,j,N(ng)  ,nrhs)))*                   &
-     &                  (W(i,j,N(ng)-1)+W(i-1,j,N(ng)-1))
-          FC(i,1)=(cff1*(u(i,j,1,nrhs)+u(i,j,2,nrhs))-                  &
-     &             cff2*(u(i,j,1,nrhs)+u(i,j,3,nrhs)))*                 &
-     &            (W(i,j,1)+W(i-1,j,1))
+     &                  (W(i  ,j,N(ng)-1)+                              &
+     &                   W(i-1,j,N(ng)-1))
+          FC(i,1)=(cff1*(u(i,j,1,nrhs)+                                 &
+     &                   u(i,j,2,nrhs))-                                &
+     &             cff2*(u(i,j,1,nrhs)+                                 &
+     &                   u(i,j,3,nrhs)))*                               &
+     &            (W(i  ,j,1)+                                          &
+     &             W(i-1,j,1))
           FC(i,0)=0.0_r8
         END DO
 #  else
@@ -993,10 +1027,14 @@
         cff2=1.0_r8/16.0_r8
         DO k=2,N(ng)-2
           DO i=IstrU,Iend
-            FC(i,k)=(cff1*(u(i,j,k  ,nrhs)+u(i,j,k+1,nrhs))-            &
-     &               cff2*(u(i,j,k-1,nrhs)+u(i,j,k+2,nrhs)))*           &
-     &              (cff1*(W(i  ,j,k)+W(i-1,j,k))-                      &
-     &               cff2*(W(i+1,j,k)+W(i-2,j,k)))
+            FC(i,k)=(cff1*(u(i,j,k  ,nrhs)+                             &
+     &                     u(i,j,k+1,nrhs))-                            &
+     &               cff2*(u(i,j,k-1,nrhs)+                             &
+     &                     u(i,j,k+2,nrhs)))*                           &
+     &              (cff1*(W(i  ,j,k)+                                  &
+     &                     W(i-1,j,k))-                                 &
+     &               cff2*(W(i+1,j,k)+                                  &
+     &                     W(i-2,j,k)))
           END DO
         END DO
         DO i=IstrU,Iend
@@ -1009,19 +1047,23 @@
      &                         W(i-1,j,N(ng)-1))-                       &
      &                   cff2*(W(i+1,j,N(ng)-1)+                        &
      &                         W(i-2,j,N(ng)-1)))
-          FC(i,1)=(cff1*(u(i,j,1,nrhs)+u(i,j,2,nrhs))-                  &
-     &             cff2*(u(i,j,1,nrhs)+u(i,j,3,nrhs)))*                 &
-     &            (cff1*(W(i  ,j,1)+W(i-1,j,1))-                        &
-     &             cff2*(W(i+1,j,1)+W(i-2,j,1)))
+          FC(i,1)=(cff1*(u(i,j,1,nrhs)+                                 &
+     &                   u(i,j,2,nrhs))-                                &
+     &             cff2*(u(i,j,1,nrhs)+                                 &
+     &                   u(i,j,3,nrhs)))*                               &
+     &            (cff1*(W(i  ,j,1)+                                    &
+     &                   W(i-1,j,1))-                                   &
+     &             cff2*(W(i+1,j,1)+                                    &
+     &                   W(i-2,j,1)))
           FC(i,0)=0.0_r8
         END DO
 #  endif
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            fac=(FC(i,k)-FC(i,k-1))
-            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-fac
+            cff=FC(i,k)-FC(i,k-1)
+            ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-cff
 #  ifdef DIAGNOSTICS_UV
-            DiaRU(i,j,k,nrhs,M3vadv)=-fac
+            DiaRU(i,j,k,nrhs,M3vadv)=-cff
 #  endif
           END DO
         END DO
@@ -1035,8 +1077,10 @@
           cff2=1.0_r8/16.0_r8
           DO k=1,N(ng)
             DO i=Istr,Iend
-              DC(i,k)=(cff1*(Hz(i,j  ,k)+Hz(i,j-1,k))-                  &
-     &                 cff2*(Hz(i,j+1,k)+Hz(i,j-2,k)))
+              DC(i,k)=(cff1*(Hz(i,j  ,k)+                               &
+     &                       Hz(i,j-1,k))-                              &
+     &                 cff2*(Hz(i,j+1,k)+                               &
+     &                       Hz(i,j-2,k)))
             END DO
           END DO
           DO i=Istr,Iend
@@ -1066,10 +1110,13 @@
           cff4=1.0_r8/6.0_r8
           DO k=1,N(ng)-1
             DO i=Istr,Iend
-              FC(i,k)=(cff1*(W(i,j  ,k)+W(i,j-1,k))-                    &
-     &                 cff2*(W(i,j+1,k)+W(i,j-2,k)))*                   &
+              FC(i,k)=(cff1*(W(i,j  ,k)+                                &
+     &                       W(i,j-1,k))-                               &
+     &                 cff2*(W(i,j+1,k)+                                &
+     &                       W(i,j-2,k)))*                              &
      &                (v(i,j,k,nrhs)+                                   &
-     &                 DC(i,k)*(cff3*CF(i,k)+cff4*CF(i,k-1)))
+     &                 DC(i,k)*(cff3*CF(i,k  )+                         &
+     &                          cff4*CF(i,k-1)))
             END DO
           END DO
           DO i=Istr,Iend
@@ -1077,10 +1124,15 @@
             FC(i,0)=0.0_r8
           END DO
 #  elif defined UV_C2ADVECTION
+!
+!  Second-order, centered differences vertical advection.
+!
           DO k=1,N(ng)-1
             DO i=Istr,Iend
-              FC(i,k)=0.25_r8*(v(i,j,k,nrhs)+v(i,j,k+1,nrhs))*          &
-     &                (W(i,j,k)+W(i,j-1,k))
+              FC(i,k)=0.25_r8*(v(i,j,k  ,nrhs)+                         &
+     &                         v(i,j,k+1,nrhs))*                        &
+     &                (W(i,j  ,k)+                                      &
+     &                 W(i,j-1,k))
             END DO
           END DO
           DO i=Istr,Iend
@@ -1088,13 +1140,19 @@
             FC(i,N(ng))=0.0_r8
           END DO
 #  elif defined UV_C4ADVECTION
+!
+!  Forth-order, centered differences vertical advection.
+!
           cff1=9.0_r8/32.0_r8
           cff2=1.0_r8/32.0_r8
           DO k=2,N(ng)-2
             DO i=Istr,Iend
-              FC(i,k)=(cff1*(v(i,j,k  ,nrhs)+v(i,j,k+1,nrhs))-          &
-     &                 cff2*(v(i,j,k-1,nrhs)+v(i,j,k+2,nrhs)))*         &
-     &                (W(i,j,k)+W(i,j-1,k))
+              FC(i,k)=(cff1*(v(i,j,k  ,nrhs)+                           &
+     &                       v(i,j,k+1,nrhs))-                          &
+     &                 cff2*(v(i,j,k-1,nrhs)+                           &
+     &                       v(i,j,k+2,nrhs)))*                         &
+     &                (W(i,j  ,k)+                                      &
+     &                 W(i,j-1,k))
             END DO
           END DO
           DO i=Istr,Iend
@@ -1103,10 +1161,14 @@
      &                           v(i,j,N(ng)  ,nrhs))-                  &
      &                     cff2*(v(i,j,N(ng)-2,nrhs)+                   &
      &                           v(i,j,N(ng)  ,nrhs)))*                 &
-     &                    (W(i,j,N(ng)-1)+W(i,j-1,N(ng)-1))
-            FC(i,1)=(cff1*(v(i,j,1,nrhs)+v(i,j,2,nrhs))-                &
-     &               cff2*(v(i,j,1,nrhs)+v(i,j,3,nrhs)))*               &
-     &              (W(i,j,1)+W(i,j-1,1))
+     &                    (W(i,j  ,N(ng)-1)+                            &
+     &                     W(i,j-1,N(ng)-1))
+            FC(i,1)=(cff1*(v(i,j,1,nrhs)+                               &
+     &                     v(i,j,2,nrhs))-                              &
+     &               cff2*(v(i,j,1,nrhs)+                               &
+     &                     v(i,j,3,nrhs)))*                             &
+     &              (W(i,j  ,1)+                                        &
+     &               W(i,j-1,1))
             FC(i,0)=0.0_r8
           END DO
 #  else
@@ -1114,10 +1176,14 @@
           cff2=1.0_r8/16.0_r8
           DO k=2,N(ng)-2
             DO i=Istr,Iend
-              FC(i,k)=(cff1*(v(i,j,k,nrhs)+v(i,j,k+1,nrhs))-            &
-     &                 cff2*(v(i,j,k-1,nrhs)+v(i,j,k+2,nrhs)))*         &
-     &                (cff1*(W(i,j  ,k)+W(i,j-1,k))-                    &
-     &                 cff2*(W(i,j+1,k)+W(i,j-2,k)))
+              FC(i,k)=(cff1*(v(i,j,k  ,nrhs)+                           &
+     &                       v(i,j,k+1,nrhs))-                          &
+     &                 cff2*(v(i,j,k-1,nrhs)+                           &
+     &                       v(i,j,k+2,nrhs)))*                         &
+     &                (cff1*(W(i,j  ,k)+                                &
+     &                       W(i,j-1,k))-                               &
+     &                 cff2*(W(i,j+1,k)+                                &
+     &                       W(i,j-2,k)))
             END DO
           END DO
           DO i=Istr,Iend
@@ -1130,19 +1196,23 @@
      &                           W(i,j-1,N(ng)-1))-                     &
      &                     cff2*(W(i,j+1,N(ng)-1)+                      &
      &                           W(i,j-2,N(ng)-1)))
-            FC(i,1)=(cff1*(v(i,j,1,nrhs)+v(i,j,2,nrhs))-                &
-     &               cff2*(v(i,j,1,nrhs)+v(i,j,3,nrhs)))*               &
-     &              (cff1*(W(i,j  ,1)+W(i,j-1,1))-                      &
-     &               cff2*(W(i,j+1,1)+W(i,j-2,1)))
+            FC(i,1)=(cff1*(v(i,j,1,nrhs)+                               &
+     &                     v(i,j,2,nrhs))-                              &
+     &               cff2*(v(i,j,1,nrhs)+                               &
+     &                     v(i,j,3,nrhs)))*                             &
+     &              (cff1*(W(i,j  ,1)+                                  &
+     &                     W(i,j-1,1))-                                 &
+     &               cff2*(W(i,j+1,1)+                                  &
+     &                     W(i,j-2,1)))
             FC(i,0)=0.0_r8
           END DO
 #  endif
           DO k=1,N(ng)
             DO i=Istr,Iend
-              fac=(FC(i,k)-FC(i,k-1))
-              rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-fac
+              cff=FC(i,k)-FC(i,k-1)
+              rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-cff
 #  ifdef DIAGNOSTICS_UV
-              DiaRV(i,j,k,nrhs,M3vadv)=-fac
+              DiaRV(i,j,k,nrhs,M3vadv)=-cff
 #  endif
             END DO
           END DO
@@ -1198,10 +1268,10 @@
         END DO
 # ifndef BODYFORCE
         DO i=IstrU,Iend
-          fac=(sustr(i,j)-bustr(i,j))*om_u(i,j)*on_u(i,j)
-          rufrc(i,j)=rufrc(i,j)+fac
+          cff=(sustr(i,j)-bustr(i,j))*om_u(i,j)*on_u(i,j)
+          rufrc(i,j)=rufrc(i,j)+cff
 #  ifdef DIAGNOSTICS_UV
-          DiaRUfrc(i,j,3,M2strs)=fac
+          DiaRUfrc(i,j,3,M2strs)=cff
 #  endif
         END DO
 # endif
@@ -1247,15 +1317,15 @@
           END DO
 # ifndef BODYFORCE
           DO i=Istr,Iend
-            fac=(svstr(i,j)-bvstr(i,j))*om_v(i,j)*on_v(i,j)
-            rvfrc(i,j)=rvfrc(i,j)+fac
+            cff=(svstr(i,j)-bvstr(i,j))*om_v(i,j)*on_v(i,j)
+            rvfrc(i,j)=rvfrc(i,j)+cff
 #  ifdef DIAGNOSTICS_UV
-            DiaRVfrc(i,j,3,M2strs)=fac
+            DiaRVfrc(i,j,3,M2strs)=cff
 #  endif
           END DO
 # endif
         END IF
-      END DO
+      END DO J_LOOP
 !
 !  Prepare to time-step 2D equations:  set initial free-surface
 !  to its fast-time averaged values (which corresponds to the time
@@ -1268,8 +1338,10 @@
           END DO
         END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, zeta(:,:,k))
+        CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,       &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          zeta(:,:,k))
 # endif
       END DO
       RETURN

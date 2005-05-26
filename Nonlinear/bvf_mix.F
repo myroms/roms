@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE bvf_mix_mod
-#ifdef BVF_MIXING
+#if defined NONLINEAR && defined BVF_MIXING
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes tracer vertical mixing as a function of the   !
@@ -47,7 +47,6 @@
 !
       USE mod_param
       USE mod_scalars
-      USE mod_sources
 
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
@@ -111,11 +110,14 @@
 !
 ! Set periodic boundary conditions.
 !
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng), Akv)
+      CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        Akv)
       DO itrc=1,NAT
-        CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,       &
      &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
+     &                          NghostPoints,                           &
      &                          Akt(:,:,:,itemp))
       END DO
 # endif

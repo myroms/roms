@@ -1,7 +1,7 @@
 /*
 ** Include file "globaldef.h"
 ***************************************** Alexander F. Shchepetkin ***
-** Copyright (c) 2002 ROMS/TOMS Group                               **
+** Copyright (c) 2005 ROMS/TOMS Group, version 2.2                  **
 ************************************************* Hernan G. Arango ***
 **                                                                  **
 ** WARNING: This  file  contains  a set of  predetermined           **
@@ -21,6 +21,11 @@
 */
 
 #define ASSUMED_SHAPE
+#if defined G95 && defined I686
+# undef ASSUMED_SHAPE
+#elif defined UNICOS_SN
+# undef ASSUMED_SHAPE
+#endif
 
 /*
 ** Set internal distributed-memory switch.
@@ -39,7 +44,7 @@
 ** story.
 */
 
-#define DEBUGGING
+#undef  DEBUGGING
 
 /*
 ** Turn ON/OFF time profiling.
@@ -134,7 +139,14 @@
 ** Set number of ghost-points in the halo region.
 */
 
-#define GHOST_POINTS 2
+#if defined TS_MPDATA || defined UV_VIS4
+# define GHOST_POINTS 3
+# if defined DISTRIBUTE || defined EW_PERIODIC || defined NS_PERIODIC
+#   define THREE_GHOST
+# endif
+#else
+# define GHOST_POINTS 2
+#endif
 
 /*
 ** Remove OpenMP directives in serial and distributed memory 
@@ -164,10 +176,10 @@
 ** update domain boundaries and corners.
 */
 
-#define WESTERN_EDGE (Istr.eq.1)
-#define EASTERN_EDGE (Iend.eq.Lm(ng))
-#define SOUTHERN_EDGE (Jstr.eq.1)
-#define NORTHERN_EDGE (Jend.eq.Mm(ng))
+#define WESTERN_EDGE Istr.eq.1
+#define EASTERN_EDGE Iend.eq.Lm(ng)
+#define SOUTHERN_EDGE Jstr.eq.1
+#define NORTHERN_EDGE Jend.eq.Mm(ng)
 #define SOUTH_WEST_CORNER (Istr.eq.1).and.(Jstr.eq.1)
 #define NORTH_WEST_CORNER (Istr.eq.1).and.(Jend.eq.Mm(ng))
 #define SOUTH_EAST_CORNER (Iend.eq.Lm(ng)).and.(Jstr.eq.1)
@@ -209,6 +221,15 @@
 # define nf_put_var1_TYPE nf_put_var1_double
 # define nf_get_vara_TYPE nf_get_vara_double
 # define nf_put_vara_TYPE nf_put_vara_double
+# ifdef DISTRIBUTE
+#  define PDSAUPD pdsaupd
+#  define PDSEUPD pdseupd
+# else
+#  define DSAUPD dsaupd
+#  define DSEUPD dseupd
+# endif
+# define DAXPY daxpy
+# define DNRM2 dnrm2
 #else
 # define nf_get_att_TYPE nf_get_att_real
 # define nf_put_att_TYPE nf_put_att_real
@@ -216,6 +237,31 @@
 # define nf_put_var1_TYPE nf_put_var1_real
 # define nf_get_vara_TYPE nf_get_vara_real
 # define nf_put_vara_TYPE nf_put_vara_real
+# define DSAUPD ssaupd
+# define DSEUPD sseupd
+# define DAXPY saxpy
+# define DNRM2 snrm2
+#endif
+
+/*
+** Set NONLINEAR, TANGENT, TL_IOMS and ADJOINT switches.
+*/
+
+#define NONLINEAR
+#if defined GRADIENT_CHECK   || defined TLM_CHECK    || \
+    defined INNER_PRODUCT    || defined SANITY_CHECK || \
+    defined OPT_PERTURBATION || defined IS4DVAR      
+# define TANGENT
+#endif
+#if defined GRADIENT_CHECK   || defined TLM_CHECK    || \
+    defined INNER_PRODUCT    || defined SANITY_CHECK || \
+    defined IS4DVAR          || defined S4DVAR       || \
+    defined OPT_PERTURBATION 
+# define ADJOINT
+#endif
+#if defined PICARD_TEST
+# define TL_IOMS
+# undef  NONLINEAR
 #endif
 
 /*
@@ -223,11 +269,58 @@
 */
 
 #ifdef SOLVE3D
-# define KOUT kstp(ng)
+# if defined TANGENT || defined TL_IOMS
+#  define TKOUT kstp(ng)
+#  define KOUT kstp(ng)
+#  define NOUT nrhs(ng)
+# else
+#  define KOUT kstp(ng)
+#  define NOUT nrhs(ng)
+# endif
 #else
+# if defined TANGENT || defined TL_IOMS
+#  define TKOUT kstp(ng)
+# endif
 # define KOUT knew(ng)
 #endif
-#define NOUT nrhs(ng)
+
+/*
+** Set internal switch for the need of a propagator driver.
+*/
+
+#if defined OPT_PERTURBATION || defined TL_EIGENMODES  || \
+    defined AD_EIGENMODES    || defined PSEUDOSPECTRA  || \
+    defined FORCING_SV       || defined STOCHASTIC_OPT || \
+    defined SO_TRACE         || defined ENSEMBLE
+# define PROPAGATOR
+#endif
+    
+
+/*
+** Set internal switch for all the 4DVAR schemes.
+*/
+
+#if defined S4DVAR         || defined IS4DVAR    || \
+    defined GRADIENT_CHECK || defined TLM_CHECK
+# define FOUR_DVAR
+#endif
+#if defined IS4DVAR || defined GRADIENT_CHECK || defined TLM_CHECK
+# define TLM_OBS
+#endif
+#if !(defined ENERGY1_NORM || defined ENERGY2_NORM ||	\
+      defined ENERGY3_NORM)
+# undef N2NORM_PROFILE
+#endif
+
+/*
+** Set in internal switch to activate computation of nonlinear
+** equation of state expnasion polynomial T-derivatives.
+*/
+
+#if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES || \
+    defined TANGENT  || defined TL_IOMS  || defined ADJOINT
+# define EOS_TDERIVATIVE
+#endif
 
 /*
 ** If splines, deactivate horizontal and vertical smoothing of
@@ -266,7 +359,7 @@
 ** Activate internal switch for bottom boundary layer closure.
 */
 
-#if defined CS_BBL || defined MB_BBL || defined SG_BBL
+#if defined SSW_BBL || defined MB_BBL || defined SG_BBL
 # define BBL_MODEL
 #endif
 
@@ -292,37 +385,53 @@
 */
 
 #if (defined WEST_M2RADIATION  && defined WEST_M2NUDGING)  || \
-     defined WEST_M2FLATHER    || defined WEST_M2CLAMPED
+     defined WEST_M2FLATHER    || defined WEST_M2CLAMPED   || \
+     defined WEST_M2REDUCED
 # define WEST_M2OBC
 #endif
 #if (defined EAST_M2RADIATION  && defined EAST_M2NUDGING)  || \
-     defined EAST_M2FLATHER    || defined EAST_M2CLAMPED
+     defined EAST_M2FLATHER    || defined EAST_M2CLAMPED   || \
+     defined EAST_M2REDUCED
 # define EAST_M2OBC
 #endif
 #if (defined SOUTH_M2RADIATION && defined SOUTH_M2NUDGING) || \
-     defined SOUTH_M2FLATHER   || defined SOUTH_M2CLAMPED
+     defined SOUTH_M2FLATHER   || defined SOUTH_M2CLAMPED  || \
+     defined SOUTH_M2REDUCED
 # define SOUTH_M2OBC
 #endif
 #if (defined NORTH_M2RADIATION && defined NORTH_M2NUDGING) || \
-     defined NORTH_M2FLATHER   || defined NORTH_M2CLAMPED
+     defined NORTH_M2FLATHER   || defined NORTH_M2CLAMPED  || \
+     defined NORTH_M2REDUCED
 # define NORTH_M2OBC
 #endif
 
 #if (defined WEST_FSRADIATION  && defined WEST_FSNUDGING)  || \
-     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED
+     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED   || \
+     defined WEST_M2REDUCED
 # define WEST_FSOBC
 #endif
 #if (defined EAST_FSRADIATION  && defined EAST_FSNUDGING)  || \
-     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED
+     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED   || \
+     defined EAST_M2REDUCED
 # define EAST_FSOBC
 #endif
 #if (defined SOUTH_FSRADIATION && defined SOUTH_FSNUDGING) || \
-     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED
+     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED  || \
+     defined SOUTH_M2REDUCED
 # define SOUTH_FSOBC
 #endif
 #if (defined NORTH_FSRADIATION && defined NORTH_FSNUDGING) || \
-     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED
+     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED  || \
+     defined NORTH_M2REDUCED
 # define NORTH_FSOBC
+#endif
+
+#if defined FSOBC_REDUCED && \
+  !(defined WEST_M2REDUCED  || defined EAST_M2REDUCED  || \
+    defined NORTH_M2REDUCED || defined SOUTH_M2REDUCED || \
+    defined WEST_M2FLATHER  || defined EAST_M2FLATHER  || \
+    defined NORTH_M2FLATHER || defined SOUTH_M2FLATHER)
+# undef FSOBC_REDUCED
 #endif
 
 #if (defined WEST_M3RADIATION  && defined WEST_M3NUDGING)  || \
@@ -403,16 +512,20 @@
 ** Activate internal switches for volume conservation at open boundary.
 */
 
-#if !defined WEST_M2OBC && defined WEST_VOLCONS
+#if (!defined WEST_M2OBC   && !defined WEST_M2GRADIENT) && \
+      defined WEST_VOLCONS
 # undef WEST_VOLCONS
 #endif
-#if !defined EAST_M2OBC && defined EAST_VOLCONS
+#if (!defined EAST_M2OBC   && !defined EAST_M2GRADIENT) && \
+      defined EAST_VOLCONS
 # undef EAST_VOLCONS
 #endif
-#if !defined NORTH_M2OBC && defined NORTH_VOLCONS
+#if (!defined NORTH_M2OBC   && !defined NORTH_M2GRADIENT) && \
+      defined NORTH_VOLCONS
 # undef NORTH_VOLCONS
 #endif
-#if !defined SOUTH_M2OBC && defined SOUTH_VOLCONS
+#if (!defined SOUTH_M2OBC   && !defined SOUTH_M2GRADIENT) && \
+      defined SOUTH_VOLCONS
 # undef SOUTH_VOLCONS
 #endif
 
@@ -424,11 +537,6 @@
 /*
 ** Activate assimilation switches.
 */
-
-#if defined RANDOM_ESPERT
-# define PERTURBATION
-# define ESSE
-#endif
 
 #if defined ASSIMILATION_SSH || defined ASSIMILATION_SST   || \
     defined ASSIMILATION_T   || defined ASSIMILATION_UVsur || \
@@ -459,6 +567,16 @@
 #  endif
 # endif
 #endif
+
+/*
+** Activate internal biology option when using any type of biological
+** module.
+*/
+
+#if defined BIO_FASHAM || defined ECOSIM
+# define BIOLOGY
+#endif
+
 
 /*
 ** Define internal flag indicating processing of input forcing
@@ -501,12 +619,24 @@
 #endif
 
 /*
-** Activate internal biology option when using any type of biological
-** module.
+** Check analytical initial conditions options.
 */
 
-#if defined BIO_FASHAM || defined ECOSIM
-# define BIOLOGY
+#if defined ANA_BIOLOGY && !defined BIOLOGY
+# undef ANA_BIOLOGY
+#endif
+#if defined ANA_PASSIVE && !defined T_PASSIVE 
+# undef ANA_PASSIVE
+#endif
+#if defined ANA_SEDIMENT && !(defined SEDIMENT || defined BBL_MODEL) 
+# undef ANA_SEDIMENT
+#endif
+#if  !defined ANA_INITIAL || \
+    ( defined BIOLOGY     && !defined ANA_BIOLOGY)  || \
+    ( defined T_PASSIVE   && !defined ANA_PASSIVE)  || \
+    ( defined SEDIMENT    && !defined ANA_SEDIMENT) || \
+    ( defined BBL_MODEL   && !defined ANA_SEDIMENT)
+# define INI_FILE
 #endif
 
 /*

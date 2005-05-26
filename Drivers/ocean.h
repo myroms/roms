@@ -2,31 +2,40 @@
       PROGRAM ocean
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  Regional Ocean Model System (ROMS), Version 2.1                     !
-!  Terrain-following Ocean Model System (TOMS), Version 2.1            !
+!  Regional Ocean Model System (ROMS), Version 2.2                     !
+!  Terrain-following Ocean Model System (TOMS), Version 2.2            !
 !                                                                      !
-!  Master program to execute ROMS/TOMS in ocean mode only without      !
-!  coupling (sequential or concurrent) to any atmospheric model.       !
+!  Master program to execute  ROMS/TOMS  drivers in ocean mode only    !
+!  without coupling (sequential or concurrent) to  any  atmospheric    !
+!  model.                                                              !
 !                                                                      !
 !  This ocean model solves the free surface, hydrostatic, primitive    !
 !  equations  over  variable  topography  using  stretched terrain-    !
 !  following coordinates in the vertical and orthogonal curvilinear    !
 !  coordinates in the horizontal.                                      !
 !                                                                      !
-!  Developers:                                                         !
+!  Nonlinear Model Developers:                                         !
 !                                                                      !
 !  Dr. Hernan G. Arango                                                !
 !    Institute of Marine and Coastal Sciences                          !
 !    Rutgers University, New Brunswick, NJ, USA                        !
-!    (arango@imcs.rutgers.edu)                                         !
+!    (arango@marine.rutgers.edu)                                       !
 !                                                                      !
 !  Dr. Alexander F. Shchepetkin                                        !
 !    Institute of Geophysics and Planetary Physics                     !
 !    UCLA, Los Angeles, CA, USA                                        !
 !    (alex@atmos.ucla.edu)                                             !
+!                                                                      !
+!  Tangent linear and Adjoint Models Developers:                       !
+!                                                                      !
+!    Dr. Hernan G. Arango    (arango@marine.rutgers.edu)               !
+!    Dr. Bruce Cornuelle     (bcornuelle@ucsd.edu)                     !
+!    Dr. Emanuele Di Lorenzo (edl@eas.gatech.edu)                      !
+!    Dr. Arthur J. Miller    (ajmiller@ucsd.edu)                       !
+!    Dr. Andrew M. Moore     (andy@australis.colorado.edu)             !
 !                                                                      !
 !=======================================================================
 !
@@ -59,7 +68,6 @@
         WRITE (stdout,10)
   10    FORMAT (/,' ROMS/TOMS - Unable to initialize MPI.')
         exit_flag=6
-        STOP
       END IF
 !
 !  Get rank of the local process in the group associated with the
@@ -71,28 +79,30 @@
   20    FORMAT (/,' ROMS/TOMS - Unable to inquire rank of local',       &
      &              ' processor.')
         exit_flag=6
-        STOP
       END IF
 # endif
 #endif
 !
 !-----------------------------------------------------------------------
-!  Initialize internal and external parameters and state variables.
+!  Initialize ocean internal and external parameters and state
+!  variables.
 !-----------------------------------------------------------------------
 !
-      first=.TRUE.
-      CALL initialize (first)
+      IF (exit_flag.eq.NoError) THEN
+        first=.TRUE.
+        CALL initialize (first)
+      END IF
 !
 !-----------------------------------------------------------------------
-!  Time-step ocean model once or over an ensemble loop, if any.
+!  Time-step ocean model.
 !-----------------------------------------------------------------------
 !
-      DO Nrun=ERstr,ERend
+      IF (exit_flag.eq.NoError) THEN
         CALL run
-      END DO
+      END IF
 !
 !-----------------------------------------------------------------------
-!  Terminate model execution: flush and close all IO files.
+!  Terminate ocean model execution: flush and close all IO files.
 !-----------------------------------------------------------------------
 !
       CALL finalize

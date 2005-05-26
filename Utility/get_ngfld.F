@@ -1,19 +1,21 @@
 #include "cppdefs.h"
-      SUBROUTINE get_ngfld (ng, ifield, ncid, nfiles, fname, update,    &
-     &                      LBi, UBi, UBj, UBk, Istr, Iend, Jrec,       &
+      SUBROUTINE get_ngfld (ng, model, ifield, ncid, nfiles, fname,     &
+     &                      update, LBi, UBi, UBj, UBk,                 &
+     &                      Istr, Iend, Jrec,                           &
      &                      Fout)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in requested non-grided field from specified     !
 !  NetCDF file.  A non-grided field has different dimensions  than     !
-!  model spatial dimensions.                                           !
+!  model spatial dimensions. Forward time processing.                  !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             &
 !     ifield     Field ID.                                             !
 !     ncid       NetCDF file ID.                                       !
 !     nfiles     Number of input NetCDF files.                         !
@@ -50,7 +52,7 @@
 !
       logical, intent(out) :: update
 
-      integer, intent(in) :: ng, ifield, ncid, nfiles
+      integer, intent(in) :: ng, model, ifield, ncid, nfiles
       integer, intent(in) :: LBi, UBi, UBj, UBk, Istr, Jrec
       integer, intent(inout) :: Iend
 
@@ -63,12 +65,13 @@
       logical :: Lgrided, Liocycle, Lonerec, got_var, got_time
 
       integer :: Nrec, Tid, Tindex, Trec, Vid, Vtype
-      integer :: i, ic, j, lfvar, ltvar, npts, nvatts, status, vartype
+      integer :: i, ic, j, lend, lfvar, lstr, ltvar, npts, nvatts
+      integer :: status, vartype
 
       integer, dimension(3) :: start, total
 
-      real(r8) :: Aval, Clength, Fmax, Fmin, Tdelta, Tend, Tmono, Tscale
-      real(r8) :: Tstart, Tstr, Tval, scale
+      real(r8) :: Aval, Clength, Fmax, Fmin, Tdelta, Tend
+      real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr, Tval, scale
 
       real(r8), dimension((UBi-LBi+1)*UBj) :: A
 
@@ -79,7 +82,7 @@
 !  On first call, inquire about the contents of input NetCDF file.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.NoError) RETURN
 !
       IF (iic(ng).eq.0) THEN
 !
@@ -87,11 +90,11 @@
 !
         Vid=-1
         Tid=-1        
-        Liocycle=.false.
-        Lgrided=.false.
-        Lonerec=.false.
-        got_var=.false.
-        got_time=.false.
+        Liocycle=.FALSE.
+        Lgrided=.FALSE.
+        Lonerec=.FALSE.
+        got_var=.FALSE.
+        got_time=.FALSE.
         Vtype=Iinfo(1,ifield,ng)
         lfvar=LEN_TRIM(Vname(1,ifield))
         ltvar=LEN_TRIM(Tname(ifield))
@@ -100,7 +103,7 @@
 !
         IF (InpThread) THEN
           CALL opencdf (ng, nfiles, fname, ncfile, N(ng), ifield, Nrec)
-          IF (exit_flag.ne.0) RETURN
+          IF (exit_flag.ne.NoError) RETURN
           IF ((UBk.eq.1).and.(Nrec.gt.UBi)) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), UBi, Nrec
             exit_flag=4
@@ -110,7 +113,7 @@
         IF (Iend.eq.0) THEN
           Iend=Nrec
 #ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, Iend, 1)
+          CALL mp_bcasti (ng, model, Iend, 1)
 #endif
         END IF
 !
@@ -122,13 +125,13 @@
             IF (lfvar.gt.0) THEN
               IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
                 Vid=i
-                got_var=.true.
+                got_var=.TRUE.
               END IF
             END IF
             IF (ltvar.gt.0) THEN
               IF (TRIM(varnam(i)).eq.TRIM(Tname(ifield))) THEN
                 Tid=i
-                got_time=.true.
+                got_time=.TRUE.
               END IF
             END IF
           END DO
@@ -155,18 +158,20 @@
 !  field has been already opened and get/save its ID from/to the
 !  association table. 
 !
-          CALL openids (nFfiles(ng), frcname(1,ng), frcids(1,ng),       &
+          CALL openids (nFfiles(ng), FRCname(1,ng), FRCids(1,ng),       &
      &                  ncfile, ncid)
           IF (ncid.eq.-1) THEN
             status=nf_open(TRIM(ncfile), nf_nowrite, ncid)
             IF (status.ne.nf_noerr) THEN
               WRITE (stdout,20) TRIM(ncfile)
               exit_flag=2
+              ioerror=status
               RETURN
             END IF
-            CALL openids (nFfiles(ng), frcname(1,ng), frcids(1,ng),     &
+            CALL openids (nFfiles(ng), FRCname(1,ng), FRCids(1,ng),     &
      &                    ncfile, ncid)
           END IF
+          Cinfo(ifield,ng)=TRIM(ncfile)
 !
 !  If "scale_factor" attribute is present for a variable, the data are
 !  to be multiplied by this factor.  Check if only water points are
@@ -209,21 +214,24 @@
 !  Determine initial time record to read and cycling switch.
 !
           IF (UBk.eq.1) THEN
-            Tstart=1
+            Tstr=1
             Tend=1
             Trec=1
             Clength=0.0_r8
             Tscale=1.0_r8
           ELSE
             CALL get_cycle (ng, ncid, Tid, Nrec, tdays(ng), Liocycle,   &
-     &                      Clength, Trec, Tstart, Tstr, Tend, Tscale)
-            IF (exit_flag.ne.0) RETURN
+     &                      Clength, Trec, Tstr, Tend, Tmin, Tmax,      &
+     &                      Tscale)
+            IF (exit_flag.ne.NoError) RETURN
           END IF
           Linfo(2,ifield,ng)=Liocycle
-          Finfo(1,ifield,ng)=Tstart
-          Finfo(2,ifield,ng)=Tend
-          Finfo(3,ifield,ng)=Clength
-          Finfo(4,ifield,ng)=Tscale
+          Finfo(1,ifield,ng)=Tmin
+          Finfo(2,ifield,ng)=Tmax
+          Finfo(3,ifield,ng)=Tstr
+          Finfo(4,ifield,ng)=Tend
+          Finfo(5,ifield,ng)=Clength
+          Finfo(6,ifield,ng)=Tscale
 !
 !  The strategy here is to create a local, monotonically increasing
 !  time variable so the interpolation between snapshots is trivial
@@ -237,48 +245,50 @@
           END IF
           IF (Liocycle) THEN
             IF (Trec.eq.Nrec) THEN
-              IF (tdays(ng).lt.Tend) THEN
-                Tmono=Tstart-Clength
+              IF (tdays(ng).lt.Tmax) THEN
+                Tmono=Tstr-Clength
               ELSE
-                Tmono=tdays(ng)+(Tstart-Clength)
-                IF (Tstart.eq.Tend) THEN
-                  Tmono=Tmono+(Tstr-MOD(tdays(ng)+Tstr,Clength))
+                Tmono=tdays(ng)+(Tstr-Clength)
+                IF (Tstr.eq.Tmax) THEN
+                  Tmono=Tmono+(Tmin-MOD(tdays(ng)+Tmin,Clength))
                 ELSE
-                  Tmono=Tmono+(Tstart-MOD(tdays(ng)+Tstart,Clength))
+                  Tmono=Tmono+(Tstr-MOD(tdays(ng)+Tstr,Clength))
                 END IF
               END IF
-              Tmono=Tmono*day2sec
             ELSE
               IF (tdays(ng).gt.Clength) THEN
-                Tmono=time(ng)-MOD(tdays(ng)-Tstart,Clength)*day2sec
+                Tmono=tdays(ng)-MOD(tdays(ng)-Tstr,Clength)
               ELSE
-                Tmono=Tstart*day2sec
+                Tmono=Tstr
               END IF
             END IF
           ELSE
-            Tmono=time(ng)
+            Tmono=Tstr
           END IF
+          Tmono=Tmono*day2sec
           Trec=Trec-1
           Iinfo(5,ifield,ng)=Tindex
           Iinfo(6,ifield,ng)=Trec
-          Finfo(5,ifield,ng)=Tmono
+          Finfo(7,ifield,ng)=Tmono
 !
 !  Set switch for one time record dataset. In this case, the input
 !  data is always the same and time interpolation is not performed.
 !
-          IF (Nrec.eq.1) Lonerec=.true.
+          IF (Nrec.eq.1) Lonerec=.TRUE.
           Linfo(3,ifield,ng)=Lonerec
         END IF
 #ifdef DISTRIBUTE
 !
 !  Broadcast variable information to all nodes in the group.
 !
-        CALL mp_bcastl (ng, Linfo(1,ifield,ng), 3)
-        CALL mp_bcasti (ng, Iinfo(1,ifield,ng), 6)
-        CALL mp_bcastf (ng, Finfo(1,ifield,ng), 5)
+        CALL mp_bcastl (ng, model, Linfo(1,ifield,ng), 3)
+        CALL mp_bcasti (ng, model, Iinfo(1,ifield,ng), 6)
+        CALL mp_bcastf (ng, model, Finfo(1,ifield,ng), 7)
+        CALL mp_bcasts (ng, model, Cinfo(ifield,ng), 80)
+!
 #endif
         Tindex=Iinfo(5,ifield,ng)
-        Vtime(Tindex,ifield,ng)=Finfo(1,ifield,ng)
+        Vtime(Tindex,ifield,ng)=Finfo(3,ifield,ng)
       END IF         
 !
 !-----------------------------------------------------------------------
@@ -293,15 +303,16 @@
       Nrec    =Iinfo(4,ifield,ng)
       Tindex  =Iinfo(5,ifield,ng)
       Trec    =Iinfo(6,ifield,ng)
-      Clength =Finfo(3,ifield,ng)
-      Tscale  =Finfo(4,ifield,ng)
-      Tmono   =Finfo(5,ifield,ng)
+      Clength =Finfo(5,ifield,ng)
+      Tscale  =Finfo(6,ifield,ng)
+      Tmono   =Finfo(7,ifield,ng)
+      ncfile  =Cinfo(ifield,ng)
 !
 !-----------------------------------------------------------------------
 !  If appropriate, read in new data.
 !-----------------------------------------------------------------------
 !
-      update=.false.
+      update=.FALSE.
       IF ((Tmono.lt.time(ng)).or.(iic(ng).eq.0).or.                     &
      &    (iic(ng).eq.ntstart)) THEN
         IF (Liocycle) THEN
@@ -330,12 +341,13 @@
             IF (InpThread.and.(status.ne.nf_noerr)) THEN
               WRITE (stdout,40) TRIM(Tname(ifield)), Trec
               exit_flag=2
+              ioerror=status
               RETURN
             END IF
           END IF
           IF ((Tid.ge.0).and.(Tid.ne.Vid)) THEN
 #ifdef DISTRIBUTE
-            CALL mp_bcastf (ng, Tval, 1)
+            CALL mp_bcastf (ng, model, Tval, 1)
 #endif
             Vtime(Tindex,ifield,ng)=Tval*Tscale
           END IF
@@ -365,11 +377,12 @@
               IF (status.ne.nf_noerr) THEN
                 WRITE (stdout,40) TRIM(Vname(1,ifield)), Trec
                 exit_flag=2
+                ioerror=status
                 RETURN
               END IF
             END IF
 #ifdef DISTRIBUTE
-            CALL mp_bcastf (ng, A, npts)
+            CALL mp_bcastf (ng, model, A, npts)
 #endif
             Fmin=A(1)*Fscale(ifield,ng)
             Fmax=A(1)*Fscale(ifield,ng)
@@ -383,17 +396,20 @@
                 Fout(i,j,Tindex)=Aval
               END DO
             END DO
-            Finfo(6,ifield,ng)=Fmin
-            Finfo(7,ifield,ng)=Fmax
+            Finfo(8,ifield,ng)=Fmin
+            Finfo(9,ifield,ng)=Fmax
             IF (Master) THEN
               IF (UBk.eq.1) THEN
                 WRITE (stdout,50) TRIM(Vname(2,ifield)), Fmin, Fmax
               ELSE
+                lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
+                lend=LEN_TRIM(ncfile)
                 WRITE (stdout,60) TRIM(Vname(2,ifield)), Tval*Tscale,   &
+     &                            ncfile(lstr:lend), Trec, Tindex,      &
      &                            Fmin, Fmax
               END IF
             END IF
-            update=.true.
+            update=.TRUE.
           END IF
         END IF
 !
@@ -408,7 +424,7 @@
             Tdelta=Tdelta+Clength
           END IF
           Tmono=Tmono+Tdelta*day2sec
-          Finfo(5,ifield,ng)=Tmono
+          Finfo(7,ifield,ng)=Tmono
           Tintrp(Tindex,ifield,ng)=Tmono
         END IF
       END IF
@@ -420,9 +436,10 @@
   30  FORMAT (/,' GET_NGFLD   - unable to open input NetCDF file: ',a)
   40  FORMAT (/,' GET_NGFLD   - error while reading variable: ',a,2x,   &
      &          ' at TIME index = ',i4)
-  50  FORMAT (' GET_NGFLD   - ',a,/,17x,'(Min = ',1pe15.8,' Max = ',    &
+  50  FORMAT (3x,' GET_NGFLD   - ',a,/,19x,'(Min = ',1pe15.8,' Max = ', &
      &        1pe15.8,')')
-  60  FORMAT (' GET_NGFLD   - ',a,',',t64,'t = ',f12.4,/,17x,'(Min = ', &
-     &        1pe15.8,' Max = ',1pe15.8,')')
+  60  FORMAT (3x,' GET_NGFLD   - ',a,',',t64,'t = ',f12.4,/,19x,        &
+     &        '(File: ',a,', Rec=',i4.4,', Index=',i1,')',/,19x,        &
+     &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')
       RETURN
       END SUBROUTINE get_ngfld

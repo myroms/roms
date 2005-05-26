@@ -1,13 +1,13 @@
 #include "cppdefs.h"
       MODULE step3d_uv_mod
-#ifdef SOLVE3D
+#if defined NONLINEAR && defined SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This routine  performs the timestep for the horizontal momentum     !
-!  equations.  The vertical viscosity terms are time-stepped using     !
+!  This subroutine time-steps the nonlinear  horizontal  momentum      !
+!  equations. The vertical viscosity terms are time-stepped using      !
 !  an implicit algorithm.                                              !
 !                                                                      !
 !=======================================================================
@@ -42,7 +42,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 34)
+      CALL wclock_on (ng, iNLM, 34)
 # endif
       CALL step3d_uv_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -58,11 +58,11 @@
      &                     GRID(ng) % umask,                            &
      &                     GRID(ng) % vmask,                            &
 # endif
-     &                     GRID(ng) % Hz,                               &
      &                     GRID(ng) % om_v,                             &
      &                     GRID(ng) % on_u,                             &
      &                     GRID(ng) % pm,                               &
      &                     GRID(ng) % pn,                               &
+     &                     GRID(ng) % Hz,                               &
      &                     GRID(ng) % z_r,                              &
      &                     GRID(ng) % z_w,                              &
      &                     MIXING(ng) % Akv,                            &
@@ -89,7 +89,7 @@
      &                     GRID(ng) % Huon,                             &
      &                     GRID(ng) % Hvom)
 # ifdef PROFILE
-      CALL wclock_off (ng, 34)
+      CALL wclock_off (ng, iNLM, 34)
 # endif
       RETURN
       END SUBROUTINE step3d_uv
@@ -105,9 +105,11 @@
 # ifdef MASKING
      &                           umask, vmask,                          &
 # endif
-     &                           Hz, om_v, on_u, pm, pn, z_r, z_w,      &
+     &                           om_v, on_u, pm, pn,                    &
+     &                           Hz, z_r, z_w,                          &
      &                           Akv,                                   &
-     &                           DU_avg1, DV_avg1, DU_avg2, DV_avg2,    &
+     &                           DU_avg1, DV_avg1,                      &
+     &                           DU_avg2, DV_avg2,                      &
      &                           ru, rv,                                &
 # ifdef DIAGNOSTICS_UV
      &                           DiaU2wrk, DiaV2wrk,                    &
@@ -115,7 +117,9 @@
      &                           DiaU3wrk, DiaV3wrk,                    &
      &                           DiaRU,    DiaRV,                       &
 # endif
-     &                           u, v, ubar, vbar, Huon, Hvom)
+     &                           u, v,                                  &
+     &                           ubar, vbar,                            &
+     &                           Huon, Hvom)
 !***********************************************************************
 !
       USE mod_param
@@ -146,11 +150,11 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
-      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: Akv(LBi:,LBj:,0:)
@@ -188,11 +192,11 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: Akv(LBi:UBi,LBj:UBj,0:N(ng))
@@ -225,15 +229,16 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, idiag, is, j, k
 
-      real(r8) :: cff, cff1, cff2, fac
+      real(r8) :: cff, cff1, cff2
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: AK
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: Hzk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: oHz
+
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: oHz
 # ifdef DIAGNOSTICS_UV
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: wrk
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,1:NDM2d-1) :: Dwrk
@@ -247,15 +252,19 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          AK(i,0)=0.5_r8*(Akv(i-1,j,0)+Akv(i,j,0))
+          AK(i,0)=0.5_r8*(Akv(i-1,j,0)+                                 &
+     &                    Akv(i  ,j,0))
           DO k=1,N(ng)
-            AK(i,k)=0.5_r8*(Akv(i-1,j,k)+Akv(i,j,k))
-            Hzk(i,k)=0.5_r8*(Hz(i-1,j,k)+Hz(i,j,k))
+            AK(i,k)=0.5_r8*(Akv(i-1,j,k)+                               &
+     &                      Akv(i  ,j,k))
+            Hzk(i,k)=0.5_r8*(Hz(i-1,j,k)+                               &
+     &                       Hz(i  ,j,k))
 # if defined SPLINES || defined DIAGNOSTICS_UV
             oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
           END DO
-          AK(i,N(ng))=0.5_r8*(Akv(i-1,j,N(ng))+Akv(i,j,N(ng)))
+          AK(i,N(ng))=0.5_r8*(Akv(i-1,j,N(ng))+                         &
+     &                        Akv(i  ,j,N(ng)))
         END DO
 !
 !  Time step right-hand-side terms.
@@ -272,14 +281,12 @@
         END DO
         DO k=1,N(ng)
           DO i=IstrU,Iend
-            u(i,j,k,nnew)=(u(i,j,k,nnew)+DC(i,0)*ru(i,j,k,nrhs))
+            u(i,j,k,nnew)=u(i,j,k,nnew)+                                &
+     &                    DC(i,0)*ru(i,j,k,nrhs)
 # ifdef SPLINES
             u(i,j,k,nnew)=u(i,j,k,nnew)*oHz(i,k)
 # endif
 # ifdef DIAGNOSTICS_UV
-!
-!  Time step u-momentum diagnostic terms.
-!
             DiaU3wrk(i,j,k,M3pgrd)=(DiaU3wrk(i,j,k,M3pgrd)+             &
      &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3pgrd))*  &
      &                             oHz(i,k)
@@ -309,11 +316,12 @@
 # endif
           END DO
         END DO
+
 # ifdef SPLINES
 !
 !  Use conservative, parabolic spline reconstruction of vertical
 !  viscosity derivatives.  Then, time step vertical viscosity term
-!  implicitly.
+!  implicitly by solving a tridiagonal system.
 !
         cff1=1.0_r8/6.0_r8
         DO k=1,N(ng)-1
@@ -327,6 +335,8 @@
           DC(i,0)=0.0_r8
         END DO
 !
+!  LU decomposition and forward substitution.
+!
         cff1=1.0_r8/3.0_r8
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
@@ -338,6 +348,8 @@
      &                   FC(i,k)*DC(i,k-1))
           END DO
         END DO
+!
+!  Backward substitution.  
 !
         DO i=IstrU,Iend
           DC(i,N(ng))=0.0_r8
@@ -351,10 +363,10 @@
         DO k=1,N(ng)
           DO i=IstrU,Iend
             DC(i,k)=DC(i,k)*AK(i,k)
-            fac=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
-            u(i,j,k,nnew)=u(i,j,k,nnew)+fac
+            cff=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+            u(i,j,k,nnew)=u(i,j,k,nnew)+cff
 #  ifdef DIAGNOSTICS_UV
-            DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+fac
+            DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+cff
 #  endif
           END DO
         END DO
@@ -367,8 +379,9 @@
         cff=-lambda*dt(ng)/0.5_r8
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
-            FC(i,k)=cff*AK(i,k)/(z_r(i,j,k+1)+z_r(i-1,j,k+1)-           &
-     &                           z_r(i,j,k  )-z_r(i-1,j,k  ))
+            cff1=1.0_r8/(z_r(i,j,k+1)+z_r(i-1,j,k+1)-                   &
+     &                   z_r(i,j,k  )-z_r(i-1,j,k  ))
+            FC(i,k)=cff*cff1*AK(i,k)
           END DO
         END DO
         DO i=IstrU,Iend
@@ -426,8 +439,8 @@
         END DO
 # endif
 !
-!  Replace incorrect vertical mean with more accurate barotropic
-!  component, ubar=DU_avg1/(D*on_u).  Recall that, D=CF(:,0).
+!  Replace INTERIOR POINTS incorrect vertical mean with more accurate
+!  barotropic component, ubar=DU_avg1/(D*on_u). Recall that, D=CF(:,0).
 !
         DO i=IstrU,Iend
           CF(i,0)=Hzk(i,1)
@@ -471,29 +484,24 @@
           END DO
         END DO
         DO i=IstrU,Iend
-          DC(i,0)=(DC(i,0)*on_u(i,j)-DU_avg1(i,j))/                     &
-     &            (CF(i,0)*on_u(i,j))
+          cff1=1.0_r8/(CF(i,0)*on_u(i,j))
+          DC(i,0)=(DC(i,0)*on_u(i,j)-DU_avg1(i,j))*cff1      ! recursive
 # ifdef DIAGNOSTICS_UV
           Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*on_u(i,j)-                     &
-     &                    DiaU2wrk(i,j,M2pgrd))/                        &
-     &                   (CF(i,0)*on_u(i,j))
+     &                    DiaU2wrk(i,j,M2pgrd))*cff1
           Dwrk(i,M2strs)=(Dwrk(i,M2strs)*on_u(i,j)-                     &
-     &                    DiaU2wrk(i,j,M2strs))/                        &
-     &                   (CF(i,0)*on_u(i,j))
+     &                    DiaU2wrk(i,j,M2strs))*cff1
 #  ifdef UV_COR
           Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*on_u(i,j)-                     &
-     &                    DiaU2wrk(i,j,M2fcor))/                        &
-     &                   (CF(i,0)*on_u(i,j))
+     &                    DiaU2wrk(i,j,M2fcor))*cff1
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
           Dwrk(i,M2hvis)=(Dwrk(i,M2hvis)*on_u(i,j)-                     &
-     &                    DiaU2wrk(i,j,M2hvis))/                        &
-     &                   (CF(i,0)*on_u(i,j))
+     &                    DiaU2wrk(i,j,M2hvis))*cff1
 #  endif
 #  ifdef UV_ADV
           Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*on_u(i,j)-                     &
-     &                    DiaU2wrk(i,j,M2hadv))/                        &
-     &                   (CF(i,0)*on_u(i,j))
+     &                    DiaU2wrk(i,j,M2hadv))*cff1
 #  endif
 # endif
         END DO
@@ -533,15 +541,19 @@
 !
         IF (j.ge.JstrV) THEN
           DO i=Istr,Iend
-            AK(i,0)=0.5_r8*(Akv(i,j-1,0)+Akv(i,j,0))
+            AK(i,0)=0.5_r8*(Akv(i,j-1,0)+                               &
+     &                      Akv(i,j  ,0))
             DO k=1,N(ng)
-              AK(i,k)=0.5_r8*(Akv(i,j-1,k)+Akv(i,j,k))
-              Hzk(i,k)=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))
+              AK(i,k)=0.5_r8*(Akv(i,j-1,k)+                             &
+     &                        Akv(i,j  ,k))
+              Hzk(i,k)=0.5_r8*(Hz(i,j-1,k)+                             &
+     &                         Hz(i,j  ,k))
 # if defined SPLINES || defined DIAGNOSTICS_UV
               oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
             END DO
-            AK(i,N(ng))=0.5_r8*(Akv(i,j-1,N(ng))+Akv(i,j,N(ng)))
+            AK(i,N(ng))=0.5_r8*(Akv(i,j-1,N(ng))+                       &
+     &                          Akv(i,j  ,N(ng)))
           END DO
 !
 !  Time step right-hand-side terms.
@@ -558,14 +570,11 @@
           END DO
           DO k=1,N(ng)
             DO i=Istr,Iend
-              v(i,j,k,nnew)=(v(i,j,k,nnew)+DC(i,0)*rv(i,j,k,nrhs))
+              v(i,j,k,nnew)=v(i,j,k,nnew)+DC(i,0)*rv(i,j,k,nrhs)
 # ifdef SPLINES
               v(i,j,k,nnew)=v(i,j,k,nnew)*oHz(i,k)
 # endif
 # ifdef DIAGNOSTICS_UV
-!
-!  Time step v-momentum diagnostic terms.
-!
               DiaV3wrk(i,j,k,M3pgrd)=(DiaV3wrk(i,j,k,M3pgrd)+           &
      &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3pgrd))*&
      &                               oHz(i,k)
@@ -595,11 +604,12 @@
 # endif
             END DO
           END DO
+
 # ifdef SPLINES
 !
 !  Use conservative, parabolic spline reconstruction of vertical
 !  viscosity derivatives.  Then, time step vertical viscosity term
-!  implicitly.
+!  implicitly by solving a tridiagonal system.
 !
           cff1=1.0_r8/6.0_r8
           DO k=1,N(ng)-1
@@ -613,6 +623,8 @@
             DC(i,0)=0.0_r8
           END DO
 !
+!  LU decomposition and forward substitution.
+!
           cff1=1.0_r8/3.0_r8
           DO k=1,N(ng)-1
             DO i=Istr,Iend
@@ -624,6 +636,8 @@
      &                     FC(i,k)*DC(i,k-1))
             END DO
           END DO
+!
+!  Backward substitution.
 !
           DO i=Istr,Iend
             DC(i,N(ng))=0.0_r8
@@ -637,10 +651,10 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               DC(i,k)=DC(i,k)*AK(i,k)
-              fac=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
-              v(i,j,k,nnew)=v(i,j,k,nnew)+fac
+              cff=dt(ng)*oHz(i,k)*(DC(i,k)-DC(i,k-1))
+              v(i,j,k,nnew)=v(i,j,k,nnew)+cff
 #  ifdef DIAGNOSTICS_UV
-              DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)+fac
+              DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)+cff
 #  endif
             END DO
           END DO
@@ -653,8 +667,9 @@
           cff=-lambda*dt(ng)/0.5_r8
           DO k=1,N(ng)-1
             DO i=Istr,Iend
-              FC(i,k)=cff*AK(i,k)/(z_r(i,j,k+1)+z_r(i,j-1,k+1)-         &
-     &                             z_r(i,j,k  )-z_r(i,j-1,k  ))
+	      cff1=1.0_r8/(z_r(i,j,k+1)+z_r(i,j-1,k+1)-                 &
+     &                     z_r(i,j,k  )-z_r(i,j-1,k  ))
+              FC(i,k)=cff*cff1*AK(i,k)
             END DO
           END DO
           DO i=Istr,Iend
@@ -712,8 +727,8 @@
           END DO
 # endif
 !
-!  Replace incorrect vertical mean with more accurate barotropic
-!  component, vbar=DV_avg1/(D*om_v).  Recall that, D=CF(:,0).
+!  Replace INTERIOR POINTS incorrect vertical mean with more accurate
+!  barotropic component, vbar=DV_avg1/(D*om_v). Recall that, D=CF(:,0).
 !
           DO i=Istr,Iend
             CF(i,0)=Hzk(i,1)
@@ -757,29 +772,24 @@
             END DO
           END DO
           DO i=Istr,Iend
-            DC(i,0)=(DC(i,0)*om_v(i,j)-DV_avg1(i,j))/                   &
-     &              (CF(i,0)*om_v(i,j))
+            cff1=1.0_r8/(CF(i,0)*om_v(i,j))
+            DC(i,0)=(DC(i,0)*om_v(i,j)-DV_avg1(i,j))*cff1    ! recursive
 # ifdef DIAGNOSTICS_UV
             Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*om_v(i,j)-                   &
-     &                      DiaV2wrk(i,j,M2pgrd))/                      &
-     &                     (CF(i,0)*om_v(i,j))
+     &                      DiaV2wrk(i,j,M2pgrd))*cff1
             Dwrk(i,M2strs)=(Dwrk(i,M2strs)*om_v(i,j)-                   &
-     &                      DiaV2wrk(i,j,M2strs))/                      &
-     &                     (CF(i,0)*om_v(i,j))
+     &                      DiaV2wrk(i,j,M2strs))*cff1
 #  ifdef UV_COR
             Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*om_v(i,j)-                   &
-     &                      DiaV2wrk(i,j,M2fcor))/                      &
-     &                     (CF(i,0)*om_v(i,j))
+     &                      DiaV2wrk(i,j,M2fcor))*cff1
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
             Dwrk(i,M2hvis)=(Dwrk(i,M2hvis)*om_v(i,j)-                   &
-     &                      DiaV2wrk(i,j,M2hvis))/                      &
-     &                     (CF(i,0)*om_v(i,j))
+     &                      DiaV2wrk(i,j,M2hvis))*cff1
 #  endif
 #  ifdef UV_ADV
             Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*om_v(i,j)-                   &
-     &                      DiaV2wrk(i,j,M2hadv))/                      &
-     &                     (CF(i,0)*om_v(i,j))
+     &                      DiaV2wrk(i,j,M2hadv))*cff1
 #  endif
 # endif
           END DO
@@ -840,17 +850,17 @@
      &      ((JstrR.le.j).and.(j.le.JendR))) THEN
           IF (INT(Dsrc(is)).eq.0) THEN
             DO k=1,N(ng)
-              u(i,j,k,nnew)=Qsrc(is,k)/                                 &
-     &                      (on_u(i,j)*                                 &
-     &                       0.5_r8*(z_w(i-1,j,k)-z_w(i-1,j,k-1)+       &
-     &                               z_w(i  ,j,k)-z_w(i  ,j,k-1)))
+              cff1=1.0_r8/(on_u(i,j)*                                   &
+     &                     0.5_r8*(z_w(i-1,j,k)-z_w(i-1,j,k-1)+         &
+     &                             z_w(i  ,j,k)-z_w(i  ,j,k-1)))
+              u(i,j,k,nnew)=Qsrc(is,k)*cff1
             END DO
           ELSE
             DO k=1,N(ng)
-                v(i,j,k,nnew)=Qsrc(is,k)/                               &
-     &                        (om_v(i,j)*                               &
-     &                         0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+     &
-     &                                 z_w(i,j  ,k)-z_w(i,j  ,k-1)))
+              cff1=1.0_r8/(om_v(i,j)*                                   &
+     &                     0.5_r8*(z_w(i,j-1,k)-z_w(i,j-1,k-1)+         &
+     &                             z_w(i,j  ,k)-z_w(i,j  ,k-1)))
+              v(i,j,k,nnew)=Qsrc(is,k)*cff1
             END DO
           END IF
         END IF
@@ -892,24 +902,22 @@
 !
         DO k=1,N(ng)
           DO i=IU_RANGE
-            DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*on_u(i,j)
+            cff=0.5_r8*on_u(i,j)
+            DC(i,k)=cff*(Hz(i,j,k)+Hz(i-1,j,k))
             DC(i,0)=DC(i,0)+DC(i,k)
-            CF(i,0)=CF(i,0)+DC(i,k)*u(i,j,k,nnew)
+            CF(i,0)=CF(i,0)+                                            &
+     &              DC(i,k)*u(i,j,k,nnew)
           END DO
         END DO
         DO i=IU_RANGE
-          DC(i,0)=1.0_r8/DC(i,0)
-          CF(i,0)=DC(i,0)*(CF(i,0)-DU_avg1(i,j))
+          cff1=DC(i,0)                                  ! intermediate
+          DC(i,0)=1.0_r8/DC(i,0)                        ! recursive
+          CF(i,0)=DC(i,0)*(CF(i,0)-DU_avg1(i,j))        ! recursive
           ubar(i,j,1)=DC(i,0)*DU_avg1(i,j)
           ubar(i,j,2)=ubar(i,j,1)
 # ifdef DIAGNOSTICS_UV
-!
-!  Compute the 2D time-rate of change term.
-!
           DiaU2wrk(i,j,M2rate)=ubar(i,j,1)-DiaU2int(i,j,M2rate)*DC(i,0)
-          DiaU2int(i,j,M2rate)=ubar(i,j,1)/DC(i,0)
-!!        DiaU2wrk(i,j,M2rate)=ubar(i,j,1)-DiaU2int(i,j,M2rate)
-!!        DiaU2int(i,j,M2rate)=ubar(i,j,1)
+          DiaU2int(i,j,M2rate)=ubar(i,j,1)*cff1
 # endif
         END DO
 # ifdef DIAGNOSTICS_UV
@@ -924,31 +932,70 @@
         END DO
 # endif
 !
-!  Replace incorrect vertical mean with more accurate barotropic
-!  component, ubar=DU_avg1/(D*on_u).  Recall that, D=CF(:,0).
+!  Replace only BOUNDARY POINTS incorrect vertical mean with more
+!  accurate barotropic component, ubar=DU_avg1/(D*on_u). Recall that,
+!  D=CF(:,0).
 !
-        DO k=N(ng),1,-1
-          DO i=IU_RANGE
-            u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
-!!# ifdef MASKING
-!!          u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
-!!# endif
-            Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
-            FC(i,0)=FC(i,0)+Huon(i,j,k)
-# ifdef DIAGNOSTICS_UV
+!  NOTE:  Only the BOUNDARY POINTS need to be replaced. Avoid redundant
+!         update in the interior again for computational purposes which
+!         will not affect the nonlinear code.  However, the adjoint
+!         code is wrong because the interior solution is corrected
+!         twice.
 !
-!  Compute the 3D time-rate-of-change diagnostic value.
-!
-            DiaU3wrk(i,j,k,M3rate)=u(i,j,k,nnew)-DiaU3wrk(i,j,k,M3rate)
-!!          DiaU3wrk(i,j,k,M3rate)=u(i,j,k,nnew)-u(i,j,k,nstp)
-# endif
+# ifndef EW_PERIODIC
+        IF (Istr.eq.1)THEN
+          DO k=1,N(ng)
+            u(Istr,j,k,nnew)=u(Istr,j,k,nnew)-CF(Istr,0)
+#  ifdef MASKING
+            u(Istr,j,k,nnew)=u(Istr,j,k,nnew)*umask(Istr,j)
+#  endif
           END DO
-        END DO
+        END IF
+        IF (Iend.eq.Lm(ng)) THEN
+          DO k=1,N(ng)
+            u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)-CF(Iend+1,0)
+#  ifdef MASKING
+            u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)*umask(Iend+1,j)
+#  endif
+          END DO
+        END IF
+# endif
+# ifndef NS_PERIODIC
+        IF (j.eq.0) THEN
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+              u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
+#  ifdef MASKING
+              u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
+#  endif
+            END DO
+          END DO
+        END IF
+        IF (j.eq.Mm(ng)+1) THEN
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+              u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
+#  ifdef MASKING
+              u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
+#  endif
+            END DO
+          END DO
+        END IF
+# endif
 !
 !  Compute correct mass flux, Hz*u/n.
 !
+        DO k=N(ng),1,-1
+          DO i=IU_RANGE
+            Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
+            FC(i,0)=FC(i,0)+Huon(i,j,k)
+# ifdef DIAGNOSTICS_UV
+            DiaU3wrk(i,j,k,M3rate)=u(i,j,k,nnew)-DiaU3wrk(i,j,k,M3rate)
+# endif
+          END DO
+        END DO
         DO i=IU_RANGE
-          FC(i,0)=DC(i,0)*(FC(i,0)-DU_avg2(i,j))
+          FC(i,0)=DC(i,0)*(FC(i,0)-DU_avg2(i,j))        ! recursive
         END DO
         DO k=1,N(ng)
           DO i=IU_RANGE
@@ -972,23 +1019,22 @@
 !
           DO k=1,N(ng)
             DO i=IV_RANGE
-              DC(i,k)=0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*om_v(i,j)
+              cff=0.5_r8*om_v(i,j)
+              DC(i,k)=cff*(Hz(i,j,k)+Hz(i,j-1,k))
               DC(i,0)=DC(i,0)+DC(i,k)
               CF(i,0)=CF(i,0)+DC(i,k)*v(i,j,k,nnew)
             END DO
           END DO
           DO i=IV_RANGE
-            DC(i,0)=1.0_r8/DC(i,0)
-            CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))
+            cff1=DC(i,0)
+            DC(i,0)=1.0_r8/DC(i,0)                      ! recursive
+            CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))      ! recursive
             vbar(i,j,1)=DC(i,0)*DV_avg1(i,j)
             vbar(i,j,2)=vbar(i,j,1)
 # ifdef DIAGNOSTICS_UV
-!
-! Compute the 2D time-rate of change term.
-!
             DiaV2wrk(i,j,M2rate)=vbar(i,j,1)-                           &
      &                           DiaV2int(i,j,M2rate)*DC(i,0)
-            DiaV2int(i,j,M2rate)=vbar(i,j,1)/DC(i,0)
+            DiaV2int(i,j,M2rate)=vbar(i,j,1)*cff1
 !!          DiaV2wrk(i,j,M2rate)=vbar(i,j,1)-DiaV2int(i,j,M2rate)
 !!          DiaV2int(i,j,M2rate)=vbar(i,j,1)
 # endif
@@ -1005,32 +1051,71 @@
           END DO
 # endif
 !
-!  Replace incorrect vertical mean with more accurate barotropic
-!  component, vbar=DV_avg1/(D*om_v).  Recall that, D=CF(:,0).
+!  Replace only BOUNDARY POINTS incorrect vertical mean with more
+!  accurate barotropic component, vbar=DV_avg1/(D*om_v).  Recall that,
+!  D=CF(:,0).
 !
-          DO k=N(ng),1,-1
-            DO i=IV_RANGE
-              v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)
-!!# ifdef MASKING
-!!            v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
-!!# endif
-              Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
-              FC(i,0)=FC(i,0)+Hvom(i,j,k)
-# ifdef DIAGNOSTICS_UV
-!
-!  Compute 3D time-rate-of-change diagnostic value.
-!
-              DiaV3wrk(i,j,k,M3rate)=v(i,j,k,nnew)-                     &
-     &                               DiaV3wrk(i,j,k,M3rate)
-!!            DiaV3wrk(i,j,k,M3rate)=v(i,j,k,nnew)-v(i,j,k,nstp)
-# endif
+!  NOTE:  Only the BOUNDARY POINTS need to be replaced. Avoid redundant
+!         update in the interior again for computational purposes which
+!         will not affect the nonlinear code.  However, the adjoint
+!         code is wrong because the interior solution is corrected
+!         twice.
+!  
+# ifndef EW_PERIODIC
+          IF (Istr.eq.1) THEN
+            DO k=1,N(ng)
+              v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)-CF(Istr-1,0)
+#  ifdef MASKING
+              v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)*vmask(Istr-1,j)
+#  endif
             END DO
-          END DO
+          END IF
+          IF (Iend.eq.Lm(ng)) THEN
+            DO k=1,N(ng)
+              v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)-CF(Iend+1,0)
+#  ifdef MASKING
+              v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*vmask(Iend+1,j)
+#  endif
+            END DO
+          END IF
+# endif 
+# ifndef NS_PERIODIC
+          IF (j.eq.1) THEN
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)
+#  ifdef MASKING
+                v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
+#  endif
+              END DO
+            END DO
+          END IF
+          IF (j.eq.Mm(ng)+1) THEN
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)
+#  ifdef MASKING
+                v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
+#  endif
+              END DO
+            END DO
+          END IF
+# endif
 !
 !  Compute correct mass flux, Hz*v/m.
 !
+          DO k=N(ng),1,-1
+            DO i=IV_RANGE
+              Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
+              FC(i,0)=FC(i,0)+Hvom(i,j,k)
+# ifdef DIAGNOSTICS_UV
+              DiaV3wrk(i,j,k,M3rate)=v(i,j,k,nnew)-                     &
+     &                               DiaV3wrk(i,j,k,M3rate)
+# endif
+            END DO
+          END DO
           DO i=IV_RANGE
-            FC(i,0)=DC(i,0)*(FC(i,0)-DV_avg2(i,j))
+            FC(i,0)=DC(i,0)*(FC(i,0)-DV_avg2(i,j))      ! recursive
           END DO
           DO k=1,N(ng)
             DO i=IV_RANGE
@@ -1043,28 +1128,40 @@
 # undef JU_RANGE
 # undef IV_RANGE
 # undef JV_RANGE
-!
+
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
-!  Apply periodic boundaries conditions to mass fluxes and barotropic
-!  velocity components, if so prescribed.
+!-----------------------------------------------------------------------
+!  Exchange boundary data.
+!-----------------------------------------------------------------------
 !
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
      &                        u(:,:,:,nnew))
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
      &                        v(:,:,:,nnew))
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), Huon)
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), Hvom)
+
+      CALL exchange_u3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        Huon)
+      CALL exchange_v3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        Hvom)
 !
       DO k=1,2
-        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, ubar(:,:,k))
-        CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, vbar(:,:,k))
+        CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,       &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          ubar(:,:,k))
+        CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,       &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          vbar(:,:,k))
       END DO
 # endif
       RETURN

@@ -2,7 +2,7 @@
       MODULE horz_mix_mod
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine rescales horizontal mixing coefficients according      !
@@ -21,7 +21,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE horz_mix (ng, tile)
+      SUBROUTINE horz_mix (ng, tile, model)
 !***********************************************************************
 !
       USE mod_param
@@ -29,11 +29,11 @@
       USE mod_mixing
       USE mod_scalars
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 #include "tile.h"
 
-      CALL horz_mix_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL horz_mix_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
 #ifdef TS_DIF2
      &                    MIXING(ng) % diff2,                           &
@@ -56,7 +56,7 @@
       END SUBROUTINE horz_mix
 !
 !***********************************************************************
-      SUBROUTINE horz_mix_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE horz_mix_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
 #ifdef TS_DIF2
      &                          diff2,                                  &
@@ -85,7 +85,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 #ifdef ASSUMED_SHAPE
@@ -238,69 +238,6 @@
         END DO
       END DO
 #  endif
-# elif defined CALCOFI
-!
-!  Southern California Bight sponge areas.
-!
-      fac=4.0_r8
-#  if defined UV_VIS2
-      DO j=JstrR,MIN(6,JendR)
-        cff=visc2(ng)+REAL(6-j,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
-        DO i=IstrR,IendR
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
-        cff=fac*visc2(ng)+                                              &
-     &      REAL(Mm(ng)+1-j,r8)*(visc2(ng)-fac*visc2(ng))/6.0_r8
-        DO i=IstrR,IendR
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
-          cff=visc2(ng)+REAL(6-i,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-#  endif
-#  if defined TS_DIF2
-      DO j=JstrR,MIN(6,JendR)
-        cff1=tnu2(itemp,ng)+                                            &
-     &       REAL(6-j,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
-        cff2=tnu2(isalt,ng)+                                            &
-     &       REAL(6-j,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
-        DO i=IstrR,IendR
-          diff2(i,j,itemp)=cff1
-          diff2(i,j,isalt)=cff2
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
-        cff1=fac*tnu2(itemp,ng)+                                        &
-     &       REAL(Mm(ng)+1-j,r8)*(tnu2(itemp,ng)-                       &
-     &                            fac*tnu2(itemp,ng))/6.0_r8
-        cff2=fac*tnu2(isalt,ng)+                                        &
-     &       REAL(Mm(ng)+1-j,r8)*(tnu2(isalt,ng)-                       &
-     &                            fac*tnu2(isalt,ng))/6.0_r8
-        DO i=IstrR,IendR
-          diff2(i,j,itemp)=cff1
-          diff2(i,j,isalt)=cff2
-        END DO
-      END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
-          cff1=tnu2(itemp,ng)+                                          &
-     &         REAL(6-i,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
-          cff2=tnu2(isalt,ng)+                                          &
-     &         REAL(6-i,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
-          diff2(i,j,itemp)=cff1
-          diff2(i,j,isalt)=cff2
-        END DO
-      END DO
-#  endif
 # elif defined BISCAY
 !
 !  Bay of Biscay sponge areas.
@@ -359,6 +296,69 @@
      &         REAL(6-j,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
           cff2=tnu2(isalt,ng)+                                          &
      &         REAL(6-j,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
+          diff2(i,j,itemp)=cff1
+          diff2(i,j,isalt)=cff2
+        END DO
+      END DO
+#  endif
+# elif defined SCB
+!
+!  Southern California Bight sponge areas.
+!
+      fac=4.0_r8
+#  if defined UV_VIS2
+      DO j=JstrR,MIN(6,JendR)
+        cff=visc2(ng)+REAL(6-j,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
+        DO i=IstrR,IendR
+          visc2_r(i,j)=cff
+          visc2_p(i,j)=cff
+        END DO
+      END DO
+      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
+        cff=fac*visc2(ng)+                                              &
+     &      REAL(Mm(ng)+1-j,r8)*(visc2(ng)-fac*visc2(ng))/6.0_r8
+        DO i=IstrR,IendR
+          visc2_r(i,j)=cff
+          visc2_p(i,j)=cff
+        END DO
+      END DO
+      DO i=IstrR,MIN(6,IendR)
+        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+          cff=visc2(ng)+REAL(6-i,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
+          visc2_r(i,j)=cff
+          visc2_p(i,j)=cff
+        END DO
+      END DO
+#  endif
+#  if defined TS_DIF2
+      DO j=JstrR,MIN(6,JendR)
+        cff1=tnu2(itemp,ng)+                                            &
+     &       REAL(6-j,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
+        cff2=tnu2(isalt,ng)+                                            &
+     &       REAL(6-j,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
+        DO i=IstrR,IendR
+          diff2(i,j,itemp)=cff1
+          diff2(i,j,isalt)=cff2
+        END DO
+      END DO
+      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
+        cff1=fac*tnu2(itemp,ng)+                                        &
+     &       REAL(Mm(ng)+1-j,r8)*(tnu2(itemp,ng)-                       &
+     &                            fac*tnu2(itemp,ng))/6.0_r8
+        cff2=fac*tnu2(isalt,ng)+                                        &
+     &       REAL(Mm(ng)+1-j,r8)*(tnu2(isalt,ng)-                       &
+     &                            fac*tnu2(isalt,ng))/6.0_r8
+        DO i=IstrR,IendR
+          diff2(i,j,itemp)=cff1
+          diff2(i,j,isalt)=cff2
+        END DO
+      END DO
+      DO i=IstrR,MIN(6,IendR)
+        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+          cff1=tnu2(itemp,ng)+                                          &
+     &         REAL(6-i,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
+          cff2=tnu2(isalt,ng)+                                          &
+     &         REAL(6-i,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
           diff2(i,j,itemp)=cff1
           diff2(i,j,isalt)=cff2
         END DO
@@ -440,27 +440,39 @@
 !-----------------------------------------------------------------------
 !
 # ifdef UV_VIS2
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, visc2_r)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, visc2_p)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        visc2_r)
+      CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        visc2_p)
 # endif
 # ifdef UV_VIS4
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, visc4_r)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, visc4_p)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        visc4_r)
+      CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        visc4_p)
 # endif
 # ifdef TS_DIF2
       DO itrc=1,NT(ng)
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, diff2(:,:,itrc))
+        CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          diff2(:,:,itrc))
       END DO
 # endif
 # ifdef TS_DIF4
       DO itrc=1,NT(ng)
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, diff4(:,:,itrc))
+        CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          diff4(:,:,itrc))
       END DO
 # endif
 #endif

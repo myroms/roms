@@ -3,7 +3,7 @@
 #if defined SOLVE3D && (defined MY25_MIXING || defined GLS_MIXING)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine sets lateral boundary conditions for turbulent      !
@@ -590,7 +590,7 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
         DO k=0,N(ng)
           tke(Istr-1,Jstr-1,k,nout)=0.5_r8*(tke(Istr  ,Jstr-1,k,nout)+  &
      &                                      tke(Istr-1,Jstr  ,k,nout))
@@ -598,7 +598,7 @@
      &                                      gls(Istr-1,Jstr  ,k,nout))
         END DO
       END IF
-      IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
         DO k=0,N(ng)
           tke(Iend+1,Jstr-1,k,nout)=0.5_r8*(tke(Iend  ,Jstr-1,k,nout)+  &
      &                                      tke(Iend+1,Jstr  ,k,nout))
@@ -606,7 +606,7 @@
      &                                      gls(Iend+1,Jstr  ,k,nout))
         END DO
       END IF
-      IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
         DO k=0,N(ng)
           tke(Istr-1,Jend+1,k,nout)=0.5_r8*(tke(Istr  ,Jend+1,k,nout)+  &
      &                                      tke(Istr-1,Jend  ,k,nout))
@@ -614,7 +614,7 @@
      &                                      gls(Istr-1,Jend  ,k,nout))
         END DO
       END IF
-      IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
         DO k=0,N(ng)
           tke(Iend+1,Jend+1,k,nout)=0.5_r8*(tke(Iend  ,Jend+1,k,nout)+  &
      &                                      tke(Iend+1,Jend  ,k,nout))

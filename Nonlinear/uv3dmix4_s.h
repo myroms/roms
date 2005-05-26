@@ -1,6 +1,5 @@
 #include "cppdefs.h"
-      MODULE uv3dmix4_s_mod
-#if defined SOLVE3D && defined UV_VIS4 && defined MIX_S_UV
+
 # ifdef EW_PERIODIC
 #  define IV_RANGE Istr-1,Iend+1
 #  define IU_RANGE Istr-1,Iend+1
@@ -15,10 +14,12 @@
 #  define JU_RANGE MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
 #  define JV_RANGE MAX(2,JstrV-1),MIN(Jend+1,Mm(ng))
 # endif
+
+      SUBROUTINE uv3dmix4 (ng, tile)
 !
-!=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
-!================================================== Hernan G. Arango ===
+!***********************************************************************
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
+!************************************************** Hernan G. Arango ***
 !                                                                      !
 !  This subroutine computes biharmonic mixing of momentum, along       !
 !  constant  S-surfaces, from the  horizontal divergence  of the       !
@@ -42,24 +43,13 @@
 !         use in large-scale eddy-permitting ocean models,             !
 !         Monthly Weather Rev., 128, 8, 2935-2946.                     !
 !                                                                      !
-!=======================================================================
-!
-      implicit none
-
-      PRIVATE
-      PUBLIC  :: uv3dmix4_s
-
-      CONTAINS
-!
-!***********************************************************************
-      SUBROUTINE uv3dmix4_s (ng, tile)
 !***********************************************************************
 !
       USE mod_param
       USE mod_coupling
-# ifdef DIAGNOSTICS_UV
+#ifdef DIAGNOSTICS_UV
       USE mod_diags
-# endif
+#endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -67,63 +57,63 @@
 !
       integer, intent(in) :: ng, tile
 
-# include "tile.h"
+#include "tile.h"
 !
-# ifdef PROFILE
-      CALL wclock_on (ng, 32)
-# endif
-      CALL uv3dmix4_s_tile (ng, Istr, Iend, Jstr, Jend,                 &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      nrhs(ng), nnew(ng),                         &
-# ifdef MASKING
-     &                      GRID(ng) % pmask,                           &
-# endif
-     &                      GRID(ng) % Hz,                              &
-     &                      GRID(ng) % om_p,                            &
-     &                      GRID(ng) % om_r,                            &
-     &                      GRID(ng) % on_p,                            &
-     &                      GRID(ng) % on_r,                            &
-     &                      GRID(ng) % pm,                              &
-     &                      GRID(ng) % pmon_p,                          &
-     &                      GRID(ng) % pmon_r,                          &
-     &                      GRID(ng) % pn,                              &
-     &                      GRID(ng) % pnom_p,                          &
-     &                      GRID(ng) % pnom_r,                          &
-     &                      MIXING(ng) % visc4_p,                       &
-     &                      MIXING(ng) % visc4_r,                       &
-# ifdef DIAGNOSTICS_UV
-     &                      DIAGS(ng) % DiaRUfrc,                       &
-     &                      DIAGS(ng) % DiaRVfrc,                       &
-     &                      DIAGS(ng) % DiaU3wrk,                       &
-     &                      DIAGS(ng) % DiaV3wrk,                       &
-# endif
-     &                      COUPLING(ng) % rufrc,                       &
-     &                      COUPLING(ng) % rvfrc,                       &
-     &                      OCEAN(ng) % u,                              &
-     &                      OCEAN(ng) % v)
-# ifdef PROFILE
-      CALL wclock_off (ng, 32)
-# endif
+#ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 32)
+#endif
+      CALL uv3dmix4_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    nrhs(ng), nnew(ng),                           &
+#ifdef MASKING
+     &                    GRID(ng) % pmask,                             &
+#endif
+     &                    GRID(ng) % Hz,                                &
+     &                    GRID(ng) % om_p,                              &
+     &                    GRID(ng) % om_r,                              &
+     &                    GRID(ng) % on_p,                              &
+     &                    GRID(ng) % on_r,                              &
+     &                    GRID(ng) % pm,                                &
+     &                    GRID(ng) % pmon_p,                            &
+     &                    GRID(ng) % pmon_r,                            &
+     &                    GRID(ng) % pn,                                &
+     &                    GRID(ng) % pnom_p,                            &
+     &                    GRID(ng) % pnom_r,                            &
+     &                    MIXING(ng) % visc4_p,                         &
+     &                    MIXING(ng) % visc4_r,                         &
+#ifdef DIAGNOSTICS_UV
+     &                    DIAGS(ng) % DiaRUfrc,                         &
+     &                    DIAGS(ng) % DiaRVfrc,                         &
+     &                    DIAGS(ng) % DiaU3wrk,                         &
+     &                    DIAGS(ng) % DiaV3wrk,                         &
+#endif
+     &                    COUPLING(ng) % rufrc,                         &
+     &                    COUPLING(ng) % rvfrc,                         &
+     &                    OCEAN(ng) % u,                                &
+     &                    OCEAN(ng) % v)
+#ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 32)
+#endif
       RETURN
-      END SUBROUTINE uv3dmix4_s
+      END SUBROUTINE uv3dmix4
 !
 !***********************************************************************
-      SUBROUTINE uv3dmix4_s_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            nrhs, nnew,                           &
-# ifdef MASKING
-     &                            pmask,                                &
-# endif
-     &                            Hz,                                   &
-     &                            om_p, om_r, on_p, on_r,               &
-     &                            pm, pmon_p, pmon_r,                   &
-     &                            pn, pnom_p, pnom_r,                   &
-     &                            visc4_p, visc4_r,                     &
-# ifdef DIAGNOSTICS_UV
-     &                            DiaRUfrc, DiaRVfrc,                   &
-     &                            DiaU3wrk, DiaV3wrk,                   &
-# endif
-     &                            rufrc, rvfrc, u, v)
+      SUBROUTINE uv3dmix4_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          nrhs, nnew,                             &
+#ifdef MASKING
+     &                          pmask,                                  &
+#endif
+     &                          Hz,                                     &
+     &                          om_p, om_r, on_p, on_r,                 &
+     &                          pm, pmon_p, pmon_r,                     &
+     &                          pn, pnom_p, pnom_r,                     &
+     &                          visc4_p, visc4_r,                       &
+#ifdef DIAGNOSTICS_UV
+     &                          DiaRUfrc, DiaRVfrc,                     &
+     &                          DiaU3wrk, DiaV3wrk,                     &
+#endif
+     &                          rufrc, rvfrc, u, v)
 !***********************************************************************
 !
       USE mod_param
@@ -135,10 +125,10 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs, nnew
 
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
       real(r8), intent(in) :: pmask(LBi:,LBj:)
-#  endif
+# endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: om_p(LBi:,LBj:)
       real(r8), intent(in) :: om_r(LBi:,LBj:)
@@ -153,20 +143,20 @@
       real(r8), intent(in) :: visc4_p(LBi:,LBj:)
       real(r8), intent(in) :: visc4_r(LBi:,LBj:)
 
-#  ifdef DIAGNOSTICS_UV
+# ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRUfrc(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: DiaRVfrc(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: DiaU3wrk(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: DiaV3wrk(LBi:,LBj:,:,:)
-#  endif
+# endif
       real(r8), intent(inout) :: rufrc(LBi:,LBj:)
       real(r8), intent(inout) :: rvfrc(LBi:,LBj:)
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
-# else
-#  ifdef MASKING
+#else
+# ifdef MASKING
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)
-#  endif
+# endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: om_p(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_r(LBi:UBi,LBj:UBj)
@@ -181,24 +171,24 @@
       real(r8), intent(in) :: visc4_p(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: visc4_r(LBi:UBi,LBj:UBj)
 
-#  ifdef DIAGNOSTICS_UV
+# ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRUfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
       real(r8), intent(inout) :: DiaRVfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
       real(r8), intent(inout) :: DiaU3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
       real(r8), intent(inout) :: DiaV3wrk(LBi:UBi,LBj:UBj,N(ng),NDM3d)
-#  endif
+# endif
       real(r8), intent(inout) :: rufrc(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: rvfrc(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+#endif
 !
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
-      real(r8) :: cff, cff1, cff2, fac
+      real(r8) :: cff, cff1, cff2
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapU
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapV
@@ -207,13 +197,15 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFx
 
-# include "set_bounds.h"
+#include "set_bounds.h"
 !
-!---------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !  Compute horizontal biharmonic viscosity along constant S-surfaces.
 !  The biharmonic operator is computed by applying the harmonic
 !  operator twice.
-!---------------------------------------------------------------------
+!-----------------------------------------------------------------------
+!
+      K_LOOP : DO k=1,N(ng)
 !
 !  Compute flux-components of the horizontal divergence of the stress
 !  tensor (m4 s^-3/2) in XI- and ETA-directions.  It is assumed here
@@ -222,7 +214,6 @@
 !  thickness "Hz" appears only when computing the second harmonic
 !  operator.
 !
-      K_LOOP : DO k=1,N(ng)
         DO j=-1+JV_RANGE
           DO i=-1+IU_RANGE
             cff=visc4_r(i,j)*0.5_r8*                                    &
@@ -245,9 +236,9 @@
      &           pnom_p(i,j)*                                           &
      &           ((pm(i-1,j  )+pm(i,j  ))*u(i,j  ,k,nrhs)-              &
      &            (pm(i-1,j-1)+pm(i,j-1))*u(i,j-1,k,nrhs)))
-# ifdef MASKING
+#ifdef MASKING
             cff=cff*pmask(i,j)
-# endif
+#endif
             UFe(i,j)=om_p(i,j)*om_p(i,j)*cff
             VFx(i,j)=on_p(i,j)*on_p(i,j)*cff
           END DO
@@ -276,100 +267,100 @@
 !  harmonic operator. These are gradient or closed (free slip or
 !  no slip) boundary conditions.
 !
-# ifndef EW_PERIODIC
+#ifndef EW_PERIODIC
         IF (WESTERN_EDGE) THEN
           DO j=JU_RANGE
-#  ifdef WESTERN_WALL
+# ifdef WESTERN_WALL
             LapU(Istr,j)=0.0_r8
-#  else
+# else
             LapU(Istr,j)=LapU(Istr+1,j)
-#  endif
+# endif
           END DO
           DO j=JV_RANGE
-#  ifdef WESTERN_WALL
+# ifdef WESTERN_WALL
             LapV(Istr-1,j)=gamma2*LapV(Istr,j)
-#  else
+# else
             LapV(Istr-1,j)=0.0_r8
-#  endif
+# endif
           END DO
         END IF
         IF (EASTERN_EDGE) THEN
           DO j=JU_RANGE
-#  ifdef EASTERN_WALL
+# ifdef EASTERN_WALL
             LapU(Iend+1,j)=0.0_r8
-#  else
+# else
             LapU(Iend+1,j)=LapU(Iend,j)
-#  endif
+# endif
           END DO
           DO j=JV_RANGE
-#  ifdef EASTERN_WALL
+# ifdef EASTERN_WALL
             LapV(Iend+1,j)=gamma2*LapV(Iend,j)
-#  else
+# else
             LapV(Iend+1,j)=0.0_r8
-#  endif
+# endif
           END DO
         END IF
-# endif
-# ifndef NS_PERIODIC
+#endif
+#ifndef NS_PERIODIC
         IF (SOUTHERN_EDGE) THEN
           DO i=IU_RANGE
-#  ifdef SOUTHERN_WALL
+# ifdef SOUTHERN_WALL
             LapU(i,Jstr-1)=gamma2*LapU(i,Jstr)
-#  else
+# else
             LapU(i,Jstr-1)=0.0_r8
-#  endif
+# endif
           END DO
           DO i=IV_RANGE
-#  ifdef SOUTHERN_WALL
+# ifdef SOUTHERN_WALL
             LapV(i,Jstr)=0.0_r8
-#  else
+# else
             LapV(i,Jstr)=LapV(i,Jstr+1)
-#  endif
+# endif
           END DO
         END IF
         IF (NORTHERN_EDGE) THEN
           DO i=IU_RANGE
-#  ifdef NORTHERN_WALL
+# ifdef NORTHERN_WALL
             LapU(i,Jend+1)=gamma2*LapU(i,Jend)
-#  else
+# else
             LapU(i,Jend+1)=0.0_r8
-#  endif
+# endif
           END DO
           DO i=IV_RANGE
-#  ifdef NORTHERN_WALL
+# ifdef NORTHERN_WALL
             LapV(i,Jend+1)=0.0_r8
-#  else
+# else
             LapV(i,Jend+1)=LapV(i,Jend)
-#  endif
+# endif
           END DO
         END IF
-# endif
-# if !defined EW_PERIODIC && !defined NS_PERIODIC
-        IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
+#endif
+#if !defined EW_PERIODIC && !defined NS_PERIODIC
+        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
           LapU(Istr  ,Jstr-1)=0.5_r8*(LapU(Istr+1,Jstr-1)+              &
      &                                LapU(Istr  ,Jstr  ))
           LapV(Istr-1,Jstr  )=0.5_r8*(LapV(Istr-1,Jstr+1)+              &
      &                                LapV(Istr  ,Jstr  ))
         END IF
-        IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
+        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
           LapU(Iend+1,Jstr-1)=0.5_r8*(LapU(Iend  ,Jstr-1)+              &
      &                                LapU(Iend+1,Jstr  ))
           LapV(Iend+1,Jstr  )=0.5_r8*(LapV(Iend  ,Jstr  )+              &
      &                                LapV(Iend+1,Jstr+1))
         END IF
-        IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
+        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
           LapU(Istr  ,Jend+1)=0.5_r8*(LapU(Istr+1,Jend+1)+              &
      &                                LapU(Istr  ,Jend  ))
           LapV(Istr-1,Jend+1)=0.5_r8*(LapV(Istr  ,Jend+1)+              &
      &                                LapV(Istr-1,Jend  ))
         END IF
-        IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
+        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
           LapU(Iend+1,Jend+1)=0.5_r8*(LapU(Iend  ,Jend+1)+              &
      &                                LapU(Iend+1,Jend  ))
           LapV(Iend+1,Jend+1)=0.5_r8*(LapV(Iend  ,Jend+1)+              &
      &                                LapV(Iend+1,Jend  ))
         END IF
-# endif
+#endif
 !
 !  Compute flux-components of the horizontal divergence of the
 !  harmonic stress tensor (m4/s2) in XI- and ETA-directions.
@@ -397,9 +388,9 @@
      &           pnom_p(i,j)*                                           &
      &           ((pm(i-1,j  )+pm(i,j  ))*LapU(i,j  )-                  &
      &            (pm(i-1,j-1)+pm(i,j-1))*LapU(i,j-1)))
-# ifdef MASKING
+#ifdef MASKING
             cff=cff*pmask(i,j)
-# endif
+#endif
             UFe(i,j)=om_p(i,j)*om_p(i,j)*cff
             VFx(i,j)=on_p(i,j)*on_p(i,j)*cff
           END DO
@@ -411,38 +402,40 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU,Iend
-            cff1=0.5_r8*((pn(i-1,j)+pn(i,j))*(UFx(i,j  )-UFx(i-1,j))+   &
-     &                   (pm(i-1,j)+pm(i,j))*(UFe(i,j+1)-UFe(i  ,j)))
-            cff2=0.25_r8*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
-            fac=dt(ng)*cff1*cff2
+            cff=0.25_r8*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
+            cff1=0.5_r8*((pn(i-1,j)+pn(i,j))*                           &
+     &                   (UFx(i,j  )-UFx(i-1,j))+                       &
+     &                   (pm(i-1,j)+pm(i,j))*                           &
+     &                   (UFe(i,j+1)-UFe(i  ,j)))
+            cff2=dt(ng)*cff*cff1
             rufrc(i,j)=rufrc(i,j)-cff1
-            u(i,j,k,nnew)=u(i,j,k,nnew)-fac
-# ifdef DIAGNOSTICS_UV
+            u(i,j,k,nnew)=u(i,j,k,nnew)-cff2
+#ifdef DIAGNOSTICS_UV
             DiaRUfrc(i,j,3,M2hvis)=DiaRUfrc(i,j,3,M2hvis)-cff1
-            DiaU3wrk(i,j,k,M3hvis)=-fac
-# endif
+            DiaU3wrk(i,j,k,M3hvis)=-cff2
+#endif
           END DO
         END DO
         DO j=JstrV,Jend
           DO i=Istr,Iend
-            cff1=0.5_r8*((pn(i,j-1)+pn(i,j))*(VFx(i+1,j)-VFx(i,j  ))-   &
-     &                   (pm(i,j-1)+pm(i,j))*(VFe(i  ,j)-VFe(i,j-1)))
-            cff2=0.25_r8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
-            fac=dt(ng)*cff1*cff2
+            cff=0.25_r8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
+            cff1=0.5_r8*((pn(i,j-1)+pn(i,j))*                           &
+     &                   (VFx(i+1,j)-VFx(i,j  ))-                       &
+     &                   (pm(i,j-1)+pm(i,j))*                           &
+     &                   (VFe(i  ,j)-VFe(i,j-1)))
+            cff2=dt(ng)*cff*cff1
             rvfrc(i,j)=rvfrc(i,j)-cff1
-            v(i,j,k,nnew)=v(i,j,k,nnew)-fac
-# ifdef DIAGNOSTICS_UV
+            v(i,j,k,nnew)=v(i,j,k,nnew)-cff2
+#ifdef DIAGNOSTICS_UV
             DiaRVfrc(i,j,3,M2hvis)=DiaRVfrc(i,j,3,M2hvis)-cff1
-            DiaV3wrk(i,j,k,M3hvis)=-fac
-# endif
+            DiaV3wrk(i,j,k,M3hvis)=-cff2
+#endif
           END DO
         END DO
       END DO K_LOOP
-# undef IU_RANGE
-# undef IV_RANGE
-# undef JU_RANGE
-# undef JV_RANGE
+#undef IU_RANGE
+#undef IV_RANGE
+#undef JU_RANGE
+#undef JV_RANGE
       RETURN
-      END SUBROUTINE uv3dmix4_s_tile
-#endif
-      END MODULE uv3dmix4_s_mod
+      END SUBROUTINE uv3dmix4_tile

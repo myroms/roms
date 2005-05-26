@@ -2,7 +2,7 @@
       MODULE metrics_mod
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes various horizontal metric terms.              !
@@ -17,17 +17,17 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE metrics (ng, tile)
+      SUBROUTINE metrics (ng, tile, model)
 !***********************************************************************
 !
       USE mod_param
       USE mod_grid
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 #include "tile.h"
 !
-      CALL metrics_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL metrics_tile (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   GRID(ng) % f,                                  &
      &                   GRID(ng) % h,                                  &
@@ -39,6 +39,9 @@
 #endif
 #if defined VISC_GRID || defined DIFF_GRID
      &                   GRID(ng) % grdscl,                             &
+#endif
+#if !(defined SEDIMENT && defined SED_MORPH) && defined TL_IOMS
+     &                   GRID(ng) % tl_h,                               &
 #endif
      &                   GRID(ng) % om_p,                               &
      &                   GRID(ng) % om_r,                               &
@@ -62,7 +65,7 @@
       END SUBROUTINE metrics
 !
 !***********************************************************************
-      SUBROUTINE metrics_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE metrics_tile (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         f, h, pm, pn,                            &
 #ifdef MASKING
@@ -70,6 +73,9 @@
 #endif
 #if defined VISC_GRID || defined DIFF_GRID
      &                         grdscl,                                  &
+#endif
+#if !(defined SEDIMENT && defined SED_MORPH) && defined TL_IOMS
+     &                         tl_h,                                    &
 #endif
      &                         om_p, om_r, om_u, om_v,                  &
      &                         on_p, on_r, on_u, on_v,                  &
@@ -92,7 +98,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 #ifdef ASSUMED_SHAPE
@@ -108,6 +114,9 @@
 # if defined VISC_GRID || defined DIFF_GRID
       real(r8), intent(inout) :: grdscl(LBi:,LBj:)
 # endif
+#if !(defined SEDIMENT && defined SED_MORPH) && defined TL_IOMS
+      real(r8), intent(out) :: tl_h(LBi:,LBj:)
+#endif
       real(r8), intent(out) :: om_p(LBi:,LBj:)
       real(r8), intent(out) :: om_r(LBi:,LBj:)
       real(r8), intent(out) :: om_u(LBi:,LBj:)
@@ -139,6 +148,9 @@
 # if defined VISC_GRID || defined DIFF_GRID
       real(r8), intent(inout) :: grdscl(LBi:UBi,LBj:UBj)
 # endif
+#if !(defined SEDIMENT && defined SED_MORPH) && defined TL_IOMS
+      real(r8), intent(out) :: tl_h(LBi:UBi,LBj:UBj)
+#endif
       real(r8), intent(out) :: om_p(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: om_r(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: om_u(LBi:UBi,LBj:UBj)
@@ -200,17 +212,34 @@
           on_r(i,j)=1.0_r8/pn(i,j)
           omn(i,j)=1.0_r8/(pm(i,j)*pn(i,j))
           fomn(i,j)=f(i,j)*omn(i,j)
+#if !(defined SEDIMENT && defined SED_MORPH) && defined TL_IOMS
+          tl_h(i,j)=h(i,j)
+#endif
         END DO
       END DO
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, om_r)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, on_r)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, omn)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, fomn)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        om_r)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        on_r)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        omn)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        fomn)
+# if !(defined SEDIMENT && defined SED_MORPH) && defined TL_IOMS
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        tl_h)
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -224,10 +253,14 @@
         END DO
       END DO
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pnom_r)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pmon_r)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pnom_r)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pmon_r)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -243,14 +276,22 @@
         END DO
       END DO
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pmon_u)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pnom_u)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, om_u)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, on_u)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pmon_u)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pnom_u)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        om_u)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        on_u)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -266,14 +307,22 @@
         END DO
       END DO
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pmon_v)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pnom_v)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, om_v)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, on_v)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pmon_v)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pnom_v)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        om_v)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        on_v)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -291,14 +340,22 @@
         END DO
       END DO
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pnom_p)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, pmon_p)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, om_p)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, on_p)
+      CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pnom_p)
+      CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        pmon_p)
+      CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        om_p)
+      CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        on_p)
 #endif
 #ifdef MASKING
 !
@@ -315,8 +372,10 @@
           END DO
         END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-        CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj, pmask)
+        CALL exchange_p2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NghostPoints,                           &
+     &                          pmask)
 # endif
       END IF
 #endif
@@ -335,8 +394,10 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, grdscl)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        grdscl)
 # endif
 #endif
 !
@@ -419,7 +480,7 @@
 # else
         size=3
 # endif
-        CALL mp_reduce (ng, size, buffer, op_handle)
+        CALL mp_reduce (ng, model, size, buffer, op_handle)
         Cu_min=buffer(1)
         Cu_max=buffer(2)
         Cu_Cor=buffer(3)
@@ -427,16 +488,17 @@
         grdmax(ng)=buffer(4)
 # endif
 #endif
-        IF (Master) WRITE (stdout,10) Cu_min, Cu_max, Cu_Cor
-  10    FORMAT (/,' Minimum barotropic Courant Number = ', 1pe15.8,/,   &
-     &            ' Maximum barotropic Courant Number = ', 1pe15.8,/,   &
-     &            ' Maximum Coriolis   Courant Number = ', 1pe15.8)
-
+        IF (Master) THEN
+          WRITE (stdout,10) Cu_min, Cu_max, Cu_Cor
+  10      FORMAT (/,' Minimum barotropic Courant Number = ', 1pe15.8,/, &
+     &              ' Maximum barotropic Courant Number = ', 1pe15.8,/, &
+     &              ' Maximum Coriolis   Courant Number = ', 1pe15.8,/)
 # if defined VISC_GRID || defined DIFF_GRID
-        IF (Master) WRITE (stdout,20) grdmax(ng)/1000.0_r8
-  20    FORMAT (/,' Horizontal mixing scaled by grid size,',            &
+          WRITE (stdout,20) grdmax(ng)/1000.0_r8
+  20      FORMAT (' Horizontal mixing scaled by grid size,',            &
      &            ' GRDMAX = ',1pe15.8,' km',/)
 # endif
+        END IF
       END IF
 !$OMP END CRITICAL (REDUCTIONS)
 

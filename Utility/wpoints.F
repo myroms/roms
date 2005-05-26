@@ -1,8 +1,23 @@
 #include "cppdefs.h"
+#ifdef FULL_GRID
+# define IR_RANGE IstrR,IendR
+# define IU_RANGE Istr,IendR
+# define JR_RANGE JstrR,JendR
+# define JV_RANGE Jstr,JendR
+#else
+# define IR_RANGE Istr,Iend
+# define IU_RANGE IstrU,Iend
+# define JR_RANGE Jstr,Jend
+# define JV_RANGE JstrV,Jend
+#endif
+
       MODULE wpoints_mod
+
+#if defined MASKING && \
+   (defined READ_WATER || defined WRITE_WATER || defined PROPAGATOR)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine sets variables associate with reading and writing of   !
@@ -16,11 +31,9 @@
       PUBLIC  :: wpoints
 
       CONTAINS
-
-#if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
 !
 !***********************************************************************
-      SUBROUTINE wpoints (ng, tile)
+      SUBROUTINE wpoints (ng, tile, model)
 !***********************************************************************
 !
 
@@ -29,11 +42,11 @@
 
       implicit none
 
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL wpoints_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL wpoints_tile (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   GRID(ng) % pmask,                              &
      &                   GRID(ng) % rmask,                              &
@@ -43,7 +56,7 @@
       END SUBROUTINE wpoints
 !
 !***********************************************************************
-      SUBROUTINE wpoints_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE wpoints_tile (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         pmask, rmask, umask, vmask)
 !***********************************************************************
@@ -57,7 +70,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 # ifdef ASSUMED_SHAPE
@@ -75,22 +88,32 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: NSUB, Npts, i, j, my_Nxyp, my_Nxyr, my_Nxyu, my_Nxyv
+      integer :: NSUB, Npts, i, j
+      integer :: my_Nxyp, my_Nxyr, my_Nxyu, my_Nxyv
+# ifdef PROPAGATOR
+      integer :: my_NwaterR, my_NwaterU, my_NwaterV
+# endif
 
 # ifdef DISTRIBUTE
       integer :: ic, ij
+#  ifdef PROPAGAROR
+      real(r8), dimension(7) :: buffer
+      character (len=3), dimension(7) :: op_handle
+#  else
       real(r8), dimension(4) :: buffer
       character (len=3), dimension(4) :: op_handle
-#  ifdef READ_WATER
+#  endif
+#  if defined READ_WATER || defined PROPAGATOR
       real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)) :: mask
 #  endif
 # endif
-
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Determine number of water points. 
 !-----------------------------------------------------------------------
+!
+!  Determine interior and boundary points.
 !
       my_Nxyr=0
       my_Nxyp=0
@@ -120,8 +143,36 @@
           END IF
         END DO
       END DO
+
+# ifdef PROPAGATOR
 !
-! Determine global maximum.
+!  Determine number of water points for propagator state vector.
+!
+      my_NwaterR=0
+      my_NwaterU=0
+      my_NwaterV=0
+      DO j=JR_RANGE
+        DO i=IR_RANGE
+          IF (rmask(i,j).gt.0.0_r8) THEN
+            my_NwaterR=my_NwaterR+1
+          END IF
+        END DO
+        DO i=IU_RANGE
+          IF (umask(i,j).gt.0.0_r8) THEN
+            my_NwaterU=my_NwaterU+1
+          END IF
+        END DO
+      END DO
+      DO j=JV_RANGE
+        DO i=IR_RANGE
+          IF (vmask(i,j).gt.0.0_r8) THEN
+            my_NwaterV=my_NwaterV+1
+          END IF
+        END DO
+      END DO
+# endif
+!
+!  Determine global maximum.
 !
       IF (SOUTH_WEST_CORNER.and.                                        &
      &    NORTH_EAST_CORNER) THEN
@@ -135,11 +186,21 @@
         Nxyr(ng)=0
         Nxyu(ng)=0
         Nxyv(ng)=0
+# ifdef PROPAGATOR
+        NwaterR(ng)=0
+        NwaterU(ng)=0
+        NwaterV(ng)=0
+# endif
       END IF
       Nxyp(ng)=Nxyp(ng)+my_Nxyp
       Nxyr(ng)=Nxyr(ng)+my_Nxyr
       Nxyu(ng)=Nxyu(ng)+my_Nxyu
       Nxyv(ng)=Nxyv(ng)+my_Nxyv
+# ifdef PROPAGATOR
+      NwaterR(ng)=NwaterR(ng)+my_NwaterR
+      NwaterU(ng)=NwaterU(ng)+my_NwaterU
+      NwaterV(ng)=NwaterV(ng)+my_NwaterV
+# endif
       block_count=block_count+1
       IF (block_count.eq.NSUB) THEN
         block_count=0
@@ -148,31 +209,54 @@
         buffer(2)=REAL(Nxyr(ng),r8)
         buffer(3)=REAL(Nxyu(ng),r8)
         buffer(4)=REAL(Nxyv(ng),r8)
+#  ifdef PROPAGATOR
+        buffer(5)=REAL(NwaterR(ng),r8)
+        buffer(6)=REAL(NwaterU(ng),r8)
+        buffer(7)=REAL(NwaterV(ng),r8)
+#  endif
         op_handle(1)='SUM'
         op_handle(2)='SUM'
         op_handle(3)='SUM'
         op_handle(4)='SUM'
-        CALL mp_reduce (ng, 4, buffer, op_handle)
+#  ifdef PROPAGATOR
+        op_handle(5)='SUM'
+        op_handle(6)='SUM'
+        op_handle(7)='SUM'
+        CALL mp_reduce (ng, model, 7, buffer, op_handle)
+#  else
+        CALL mp_reduce (ng, model, 4, buffer, op_handle)
+#  endif
         Nxyp(ng)=INT(buffer(1))
         Nxyr(ng)=INT(buffer(2))
         Nxyu(ng)=INT(buffer(3))
         Nxyv(ng)=INT(buffer(4))
+#  ifdef PROPAGATOR
+        NwaterR(ng)=INT(buffer(5))
+        NwaterU(ng)=INT(buffer(6))
+        NwaterV(ng)=INT(buffer(7))
+#  endif
 # endif
       END IF
 !$OMP END CRITICAL (MAX_WATER)
 
-# if defined DISTRIBUTE && defined READ_WATER
+# if defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------
-!  If distributed-memory, set water indices for IO processing.
+!  If distributed-memory, set process water indices arrays.
 !-----------------------------------------------------------------------
 !
-!  RHO-points indices.
+!  Gather masking at RHO-points from all nodes.
 !
-      CALL mp_gather (ng, LBi, UBi, LBj, UBj, 1, 1, r2dvar, 1.0_r8,     &
+      CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
+     &                r2dvar, 1.0_r8,                                   &
      &                rmask(LBi,LBj), rmask(LBi,LBj), Npts, mask)
-      CALL mp_bcastf (ng, mask, Npts)
+      CALL mp_bcastf (ng, model, mask, Npts)
 
+
+#  if defined READ_WATER
+!
+!  Determine water RHO-points.
+!
       ic=0
       DO ij=1,Npts
         IF (mask(ij).gt.0.0_r8) THEN
@@ -181,12 +265,23 @@
         END IF
       END DO
       my_Nxyr=ic
+#  endif
+#  if defined PROPAGATOR
+!
+!  Determine water points for the propagator state vector at RHO-points.
+!
+      DO J=JR_RANGE
+        DO i=IR_RANGE
+        END DO
+      END DO
+#  endif
 !
 !  PSI-points indices.
 !
-      CALL mp_gather (ng, LBi, UBi, LBj, UBj, 1, 1, p2dvar, 1.0_r8,     &
+      CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
+     &                p2dvar, 1.0_r8,                                   &
      &                pmask(LBi,LBj), pmask(LBi,LBj), Npts, mask)
-      CALL mp_bcastf (ng, mask, Npts)
+      CALL mp_bcastf (ng, model, mask, Npts)
 
       ic=0
       DO ij=1,Npts
@@ -199,9 +294,10 @@
 !
 !  U-points indices.
 !
-      CALL mp_gather (ng, LBi, UBi, LBj, UBj, 1, 1, u2dvar, 1.0_r8,     &
+      CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
+     &                u2dvar, 1.0_r8,                                   &
      &                umask(LBi,LBj), umask(LBi,LBj), Npts, mask)
-      CALL mp_bcastf (ng, mask, Npts)
+      CALL mp_bcastf (ng, model, mask, Npts)
 
       ic=0
       DO ij=1,Npts
@@ -214,9 +310,10 @@
 !
 !  V-points indices.
 !
-      CALL mp_gather (ng, LBi, UBi, LBj, UBj, 1, 1, v2dvar, 1.0_r8,     &
+      CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
+     &                v2dvar, 1.0_r8,                                   &
      &                vmask(LBi,LBj), vmask(LBi,LBj), Npts, mask)
-      CALL mp_bcastf (ng, mask, Npts)
+      CALL mp_bcastf (ng, model, mask, Npts)
 
       ic=0
       DO ij=1,Npts
@@ -229,9 +326,5 @@
 # endif
       RETURN
       END SUBROUTINE wpoints_tile
-#else
-      SUBROUTINE wpoints
-      RETURN
-      END SUBROUTINE wpoints
 #endif
       END MODULE wpoints_mod

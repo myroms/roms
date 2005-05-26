@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-#ifdef FLOATS
+#if defined NONLINEAR && defined FLOATS
       SUBROUTINE interp_floats (ng, LBi, UBi, LBj, UBj, LBk, UBk,       &
      &                          Lstr, Lend, itime, ifield,              &
      &                          gtype, maskit, nudg,                    &
@@ -13,7 +13,7 @@
      &                          A, MyThread, bounded, track)
 !
 !==================================================== John M. Klinck ===
-!  Copyright (c) 2002 ROMS/TOMS Group                  Mark Hadfield   !
+!  Copyright (c) 2005 ROMS/TOMS Group                  Mark Hadfield   !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine interpolates requested field at the float trajectory   !
@@ -120,7 +120,7 @@
 # ifdef MASKING
       Lmask=maskit
 # else
-      Lmask=.false.
+      Lmask=.FALSE.
 # endif
 !
 !  If not interpolating slope, set multipliers to 1.
@@ -256,7 +256,7 @@
               Iu=INT(track(ixgrd,itime,l)+0.5_r8)
               Jv=INT(track(iygrd,itime,l)+0.5_r8)
 !
-              halo=.false.
+              halo=.FALSE.
 # ifdef MASKING
 !
 !  Is the float inside the halo (i.e. inside a masked grid cell or
@@ -306,31 +306,31 @@
                 Jrnp1=Jrn+1
 #  endif
                 IF (Amask(Irn,Jrn).lt.0.5_r8) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Ir.lt.Irn).and.                               &
      &                   (Amask(Irn-1,Jrn).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Ir.eq.Irn).and.                               &
      &                   (Amask(Irn+1,Jrn).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Jr.lt.Jrn).and.                               &
      &                   (Amask(Irn,Jrn-1).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Jr.eq.Jrn).and.                               &
      &                   (Amask(Irn,Jrn+1).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Ir.lt.Irn).and.(Jr.lt.Jrn).and.               &
      &                   (Amask(Irn-1,Jrn-1).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Ir.eq.Irn).and.(Jr.lt.Jrn).and.               &
      &                   (Amask(Irn+1,Jrn-1).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Ir.lt.Irn).and.(Jr.eq.Jrn).and.               &
      &                   (Amask(Irn-1,Jrn+1).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 ELSE IF ((Ir.eq.Irn).and.(Jr.eq.Jrn).and.               &
      &                   (Amask(Irn+1,Jrn+1).lt.0.5_r8)) THEN
-                  halo=.true.
+                  halo=.TRUE.
                 END IF
               END IF
 # endif

@@ -2,7 +2,7 @@
       MODULE mod_netcdf
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This MODULE contains all NetCDF variables definitions.              !
@@ -20,19 +20,19 @@
 #include "netcdf.inc"
 
 #ifdef OUT_DOUBLE
-        integer :: NF_FOUT = nf_double
+        integer, parameter :: NF_FOUT = nf_double
 #else
-        integer :: NF_FOUT = nf_real
+        integer, parameter :: NF_FOUT = nf_real
 #endif
 #ifdef RST_SINGLE
-        integer :: NF_FRST = nf_real
+        integer, parameter :: NF_FRST = nf_real
 #else
-        integer :: NF_FRST = nf_double
+        integer, parameter :: NF_FRST = nf_double
 #endif
 #ifdef DOUBLE_PRECISION
-        integer :: NF_TYPE = nf_double
+        integer, parameter :: NF_TYPE = nf_double
 #else
-        integer :: NF_TYPE = nf_real
+        integer, parameter :: NF_TYPE = nf_real
 #endif
 
       END MODULE mod_netcdf

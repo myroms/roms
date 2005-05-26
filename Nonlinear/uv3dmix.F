@@ -1,16 +1,30 @@
 #include "cppdefs.h"
 
-#if defined SOLVE3D && (defined UV_VIS2 || defined UV_VIS4)
+      MODULE uv3dmix_mod
 
-/*
-**======================================================================
-** Copyright (c) 2004 ROMS/TOMS Group                                  !
-**================================================= Hernan G. Arango ===
-**                                                                     !
-** This routine computes horizontal viscosity of momentum.             !
-**                                                                     !
-**======================================================================
-*/
+#if defined SOLVE3D && defined NONLINEAR && \
+   (defined UV_VIS2 || defined UV_VIS4)
+
+!
+!=======================================================================
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
+!================================================== Hernan G. Arango ===
+!                                                                      !
+!  This routine computes horizontal viscosity of momentum.             !
+!                                                                      !
+!=======================================================================
+!
+      implicit none
+
+      PRIVATE
+# ifdef UV_VIS2
+      PUBLIC uv3dmix2
+# endif
+# ifdef UV_VIS4
+      PUBLIC uv3dmix4
+# endif
+
+      CONTAINS
 
 # ifdef UV_VIS2
 #  if defined MIX_S_UV
@@ -30,3 +44,4 @@
 
 #endif
 
+      END MODULE uv3dmix_mod

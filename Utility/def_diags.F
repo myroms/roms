@@ -3,7 +3,7 @@
       SUBROUTINE def_diags (ng,ldef)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine creates diagnostics NetCDF file, it defines its        !
@@ -31,7 +31,7 @@
 !
 !  Local variable declarations.
 !
-      integer, parameter :: Natt = 20
+      integer, parameter :: Natt = 23
 
       logical :: got_var(NV)
 
@@ -49,7 +49,7 @@
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 # endif
 
-      real(r8) :: Aval(4)
+      real(r8) :: Aval(5)
 
       character (len=80) :: Vinfo(Natt)
       character (len=80) :: fname, ncname
@@ -58,8 +58,8 @@
 !  Set and report file name.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.0) RETURN
-      ncname=dianame(ng)
+      IF (exit_flag.ne.NoError) RETURN
+      ncname=DIAname(ng)
 !
       IF (Master) THEN
         IF (ldef) THEN
@@ -74,15 +74,16 @@
 !=======================================================================
 !
       IF (ldef.and.OutThread) THEN
-        status=nf_create(TRIM(ncname),nf_clobber,ncdiaid(ng))
+        status=nf_create(TRIM(ncname),nf_clobber,ncDIAid(ng))
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,30) TRIM(ncname)
           exit_flag=3
+          ioerror=status
           RETURN
         END IF
       END IF
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, ncdiaid(ng), 1)
+      CALL mp_bcasti (ng, iNLM, ncDIAid(ng), 1)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -90,69 +91,69 @@
 !-----------------------------------------------------------------------
 !
       IF (ldef.and.OutThread) THEN
-        status=nf_def_dim(ncdiaid(ng),'xi_rho'  ,Lm(ng)+2,              &
+        status=nf_def_dim(ncDIAid(ng),'xi_rho'  ,Lm(ng)+2,              &
      &                    DimIDs( 1))
-        status=nf_def_dim(ncdiaid(ng),'xi_u'    ,Lm(ng)+1,              &
+        status=nf_def_dim(ncDIAid(ng),'xi_u'    ,Lm(ng)+1,              &
      &                    DimIDs( 2))
-        status=nf_def_dim(ncdiaid(ng),'xi_v'    ,Lm(ng)+2,              &
+        status=nf_def_dim(ncDIAid(ng),'xi_v'    ,Lm(ng)+2,              &
      &                    DimIDs( 3))
-        status=nf_def_dim(ncdiaid(ng),'xi_psi'  ,Lm(ng)+1,              &
+        status=nf_def_dim(ncDIAid(ng),'xi_psi'  ,Lm(ng)+1,              &
      &                    DimIDs( 4))
-        status=nf_def_dim(ncdiaid(ng),'eta_rho' ,Mm(ng)+2,              &
+        status=nf_def_dim(ncDIAid(ng),'eta_rho' ,Mm(ng)+2,              &
      &                    DimIDs( 5))
-        status=nf_def_dim(ncdiaid(ng),'eta_u'   ,Mm(ng)+2,              &
+        status=nf_def_dim(ncDIAid(ng),'eta_u'   ,Mm(ng)+2,              &
      &                    DimIDs( 6))
-        status=nf_def_dim(ncdiaid(ng),'eta_v'   ,Mm(ng)+1,              &
+        status=nf_def_dim(ncDIAid(ng),'eta_v'   ,Mm(ng)+1,              &
      &                    DimIDs( 7))
-        status=nf_def_dim(ncdiaid(ng),'eta_psi' ,Mm(ng)+1,              &
+        status=nf_def_dim(ncDIAid(ng),'eta_psi' ,Mm(ng)+1,              &
      &                    DimIDs( 8))
 # if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncdiaid(ng),'xy_rho'  ,Nxyr(ng),              &
+        status=nf_def_dim(ncDIAid(ng),'xy_rho'  ,Nxyr(ng),              &
      &                    DimIDs(17))
-        status=nf_def_dim(ncdiaid(ng),'xy_u'    ,Nxyu(ng),              &
+        status=nf_def_dim(ncDIAid(ng),'xy_u'    ,Nxyu(ng),              &
      &                    DimIDs(18))
-        status=nf_def_dim(ncdiaid(ng),'xy_v'    ,Nxyv(ng),              &
+        status=nf_def_dim(ncDIAid(ng),'xy_v'    ,Nxyv(ng),              &
      &                    DimIDs(19))
 # endif
 # ifdef SOLVE3D
 #  if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncdiaid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),        &
+        status=nf_def_dim(ncDIAid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),        &
      &                    DimIDs(20))
-        status=nf_def_dim(ncdiaid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),        &
+        status=nf_def_dim(ncDIAid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),        &
      &                    DimIDs(21))
-        status=nf_def_dim(ncdiaid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),        &
+        status=nf_def_dim(ncDIAid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),        &
      &                    DimIDs(22))
-        status=nf_def_dim(ncdiaid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),    &
+        status=nf_def_dim(ncDIAid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),    &
      &                    DimIDs(23))
 #  endif
-        status=nf_def_dim(ncdiaid(ng),'s_rho'   ,N(ng),                 &
+        status=nf_def_dim(ncDIAid(ng),'s_rho'   ,N(ng),                 &
      &                    DimIDs( 9))
-        status=nf_def_dim(ncdiaid(ng),'s_w'     ,N(ng)+1,               &
+        status=nf_def_dim(ncDIAid(ng),'s_w'     ,N(ng)+1,               &
      &                    DimIDs(10))
-        status=nf_def_dim(ncdiaid(ng),'tracer'  ,NT(ng),                &
+        status=nf_def_dim(ncDIAid(ng),'tracer'  ,NT(ng),                &
      &                    DimIDs(11))
 #  ifdef SEDIMENT
-        status=nf_def_dim(ncdiaid(ng),'Nbed'    ,Nbed,                  &
+        status=nf_def_dim(ncDIAid(ng),'Nbed'    ,Nbed,                  &
      &                    DimIDs(16))
 #   if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncdiaid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
+        status=nf_def_dim(ncDIAid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
      &                    DimIDs(24))
 #   endif
 #  endif
 #  ifdef ECOSIM
-        status=nf_def_dim(ncdiaid(ng),'Nphy'    ,Nphy,                  &
+        status=nf_def_dim(ncDIAid(ng),'Nphy'    ,Nphy,                  &
      &                    DimIDs(25))
-        status=nf_def_dim(ncdiaid(ng),'Nbac'    ,Nbac,                  &
+        status=nf_def_dim(ncDIAid(ng),'Nbac'    ,Nbac,                  &
      &                    DimIDs(26))
-        status=nf_def_dim(ncdiaid(ng),'Ndom'    ,Ndom,                  &
+        status=nf_def_dim(ncDIAid(ng),'Ndom'    ,Ndom,                  &
      &                    DimIDs(27))
-        status=nf_def_dim(ncdiaid(ng),'Nfec'    ,Nfec,                  &
+        status=nf_def_dim(ncDIAid(ng),'Nfec'    ,Nfec,                  &
      &                    DimIDs(28))
 #  endif
 # endif
-        status=nf_def_dim(ncdiaid(ng),'boundary',4,                     &
+        status=nf_def_dim(ncDIAid(ng),'boundary',4,                     &
      &                    DimIDs(14))
-        status=nf_def_dim(ncdiaid(ng),TRIM(ADJUSTL(Vname(5,idtime))),   &
+        status=nf_def_dim(ncDIAid(ng),TRIM(ADJUSTL(Vname(5,idtime))),   &
      &                    nf_unlimited,DimIDs(12))
         recdim=DimIDs(12)
 !
@@ -259,7 +260,7 @@
 !
 !  Initialize unlimited time record dimension.
 !
-        tdiaindx(ng)=0
+        tDIAindx(ng)=0
 !
 !  Initialize local information variable arrays.
 !
@@ -268,7 +269,7 @@
             Vinfo(i)(j:j)=' '
           END DO
         END DO
-        DO i=1,4
+        DO i=1,5
           Aval(i)=0.0_r8
         END DO
 !
@@ -276,8 +277,8 @@
 !  Define time-recordless information variables.
 !-----------------------------------------------------------------------
 !
-        status=def_info(ng,ncdiaid(ng),ncname,DimIDs)
-        IF (exit_flag.ne.0) RETURN
+        status=def_info(ng,ncDIAid(ng),ncname,DimIDs)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Define variables and their attributes.
@@ -286,23 +287,22 @@
 !  Define model time.
 !
         Vinfo( 1)=Vname(1,idtime)
-        Vinfo( 2)='averaged '//TRIM(Vname(2,idtime))
+        WRITE (Vinfo( 2),'(a,1x,a)') 'averaged', TRIM(Vname(2,idtime))
         IF (INT(time_ref).eq.-2) THEN
           Vinfo( 3)='seconds since 1968-05-23 00:00:00 GMT'
-          Vinfo( 4)='modified Julian day number'
-          Vinfo(18)='add_offset'
-          Aval(1)=jul_off
+          Vinfo( 4)='gregorian'
         ELSE IF (INT(time_ref).eq.-1) THEN
           Vinfo( 3)='seconds since 0000-01-01 00:00:00'
-          Vinfo( 4)='360 days in every year, 30 days in each month'
+          Vinfo( 4)='360_day'
         ELSE IF (INT(time_ref).eq.0) THEN
           Vinfo( 3)='seconds since 0000-01-01 00:00:00'
-          Vinfo( 4)='365.25 days in every year'
+          Vinfo( 4)='365.25_day'
         ELSE IF (time_ref.gt.0.0_r8) THEN
-          Vinfo( 3)='seconds since '//r_text
+          WRITE (Vinfo( 3),'(a,1x,a)') 'seconds since', TRIM(r_text)
+          Vinfo( 4)='standard'
         END IF
         Vinfo(14)=Vname(4,idtime)
-        status=def_var(ncdiaid(ng),diaVid(idtime,ng),NF_TYPE,           &
+        status=def_var(ncDIAid(ng),diaVid(idtime,ng),NF_TYPE,           &
      &                 1,recdim,Aval,Vinfo,ncname)
 
 # ifdef DIAGNOSTICS_UV
@@ -319,7 +319,9 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #  endif
-          status=def_var(ncdiaid(ng),diaVid(ifield,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u2dvar,r8)
+          status=def_var(ncDIAid(ng),diaVid(ifield,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
           ifield=idDv2d(ivar)
           Vinfo( 1)=Vname(1,ifield)
@@ -330,7 +332,9 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #  endif
-          status=def_var(ncdiaid(ng),diaVid(ifield,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v2dvar,r8)
+          status=def_var(ncDIAid(ng),diaVid(ifield,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END DO
 #  ifdef SOLVE3D
@@ -347,7 +351,9 @@
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #   endif
-          status=def_var(ncdiaid(ng),diaVid(ifield,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncDIAid(ng),diaVid(ifield,ng),NF_FOUT,         &
      &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
           ifield=idDv3d(ivar)
           Vinfo( 1)=Vname(1,ifield)
@@ -358,7 +364,9 @@
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #   endif
-          status=def_var(ncdiaid(ng),diaVid(ifield,ng),NF_FOUT,         &
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v3dvar,r8)
+          status=def_var(ncDIAid(ng),diaVid(ifield,ng),NF_FOUT,         &
      &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
         END DO
 #  endif
@@ -379,7 +387,9 @@
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
-            status=def_var(ncdiaid(ng),diaVid(ifield,ng),NF_FOUT,       &
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r3dvar,r8)
+            status=def_var(ncDIAid(ng),diaVid(ifield,ng),NF_FOUT,       &
      &                     nvd4,t3dgrd,Aval,Vinfo,ncname)
           END DO
         END DO
@@ -393,14 +403,17 @@
           ifield=iDbio2(ivar)
           IF (Hout(ifield,ng)) THEN
             Vinfo( 1)=Vname(1,ifield)
-            Vinfo( 2)='averaged '//TRIM(Vname(2,ifield))
+            WRITE (Vinfo( 2),'(a,1x,a)') 'averaged',                    &
+     &                                   TRIM(Vname(2,ifield))
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
-            status=def_var(ncdiaid(ng),diaVid(ifield,ng),NF_FOUT,       &
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r3dvar,r8)
+            status=def_var(ncDIAid(ng),diaVid(ifield,ng),NF_FOUT,       &
      &                     nvd3,t2dgrd,Aval,Vinfo,ncname)
           END IF
         END DO
@@ -411,14 +424,17 @@
           ifield=iDbio3(ivar)
           IF (Hout(ifield,ng)) THEN
             Vinfo( 1)=Vname(1,ifield)
-            Vinfo( 2)='averaged '//TRIM(Vname(2,ifield))
+            WRITE (Vinfo( 2),'(a,1x,a)') 'averaged',                    &
+     &                                   TRIM(Vname(2,ifield))
             Vinfo( 3)=Vname(3,ifield)
             Vinfo(14)=Vname(4,ifield)
             Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #  endif
-            status=def_var(ncdiaid(ng),diaVid(ifield,ng),NF_FOUT,       &
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(r3dvar,r8)
+            status=def_var(ncDIAid(ng),diaVid(ifield,ng),NF_FOUT,       &
      &                     nvd4,t3dgrd,Aval,Vinfo,ncname)
           END IF
         END DO
@@ -428,7 +444,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf_enddef(ncdiaid(ng))
+        status=nf_enddef(ncDIAid(ng))
       END IF
 !
 !-----------------------------------------------------------------------
@@ -436,8 +452,8 @@
 !-----------------------------------------------------------------------
 !
       IF (ldef) THEN
-        status=wrt_info(ng,ncdiaid(ng),OutThread,ncname)
-        IF (exit_flag.ne.0) RETURN
+        status=wrt_info(ng, iNLM, ncDIAid(ng), OutThread, ncname)
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !=======================================================================
@@ -450,64 +466,65 @@
 !  Inquire about the contents of diagnostics NetCDF file: Inquire about
 !  the dimensions and variables.  Check for consistency.
 !
-        CALL opencdf (ng,1,ncname,fname,N(ng),0,nrec)
-        IF (exit_flag.ne.0) RETURN
+        CALL opencdf (ng, 1, ncname, fname, N(ng), 0, nrec)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Open diagnostics file for read/write.
 !
-        status=nf_open(TRIM(ncname), nf_write, ncdiaid(ng))
+        status=nf_open(TRIM(ncname), nf_write, ncDIAid(ng))
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,50) TRIM(ncname)
           exit_flag=3
+          ioerror=status
           RETURN
         END IF
 !
 !  Initialize logical switches.
 !
         DO i=1,NV
-          got_var(i)=.false.
+          got_var(i)=.FALSE.
         END DO
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  diagnostics variables. Get variable IDs.
 !
         DO i=1,nvars
-          IF (varnam(i).eq.Vname(1,idtime)) THEN
-            got_var(idtime)=.true.
-            status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,idtime)),      &
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idtime))) THEN
+            got_var(idtime)=.TRUE.
+            status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,idtime)),      &
      &                          diaVid(idtime,ng))
           END IF
 # ifdef DIAGNOSTICS_UV
           DO ivar=1,NDM2d
             ifield=idDu2d(ivar)
-            IF (varnam(i).eq.Vname(1,ifield)) THEN
-             got_var(ifield)=.true.
-             status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,ifield)),     &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
+             got_var(ifield)=.TRUE.
+             status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,ifield)),     &
      &                           diaVid(ifield,ng))
             END IF
           END DO
           DO ivar=1,NDM2d
             ifield=idDv2d(ivar)
-            IF (varnam(i).eq.Vname(1,ifield)) THEN
-             got_var(ifield)=.true.
-             status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,ifield)),     &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
+             got_var(ifield)=.TRUE.
+             status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,ifield)),     &
      &                           diaVid(ifield,ng))
             END IF
           END DO
 #  ifdef SOLVE3D
           DO ivar=1,NDM3d
             ifield=idDu3d(ivar)
-            IF (varnam(i).eq.Vname(1,ifield)) THEN
-             got_var(ifield)=.true.
-             status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,ifield)),     &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
+             got_var(ifield)=.TRUE.
+             status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,ifield)),     &
      &                           diaVid(ifield,ng))
             END IF
           END DO
           DO ivar=1,NDM3d
             ifield=idDv3d(ivar)
-            IF (varnam(i).eq.Vname(1,ifield)) THEN
-             got_var(ifield)=.true.
-             status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,ifield)),     &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
+             got_var(ifield)=.TRUE.
+             status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,ifield)),     &
      &                           diaVid(ifield,ng))
             END IF
           END DO
@@ -517,9 +534,9 @@
           DO itrc=1,NT(ng)
             DO ivar=1,NDT
               ifield=idDtrc(itrc,ivar)
-              IF (varnam(i).eq.Vname(1,ifield)) THEN
-               got_var(ifield)=.true.
-               status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,ifield)),   &
+              IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
+               got_var(ifield)=.TRUE.
+               status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,ifield)),   &
      &                             diaVid(ifield,ng))
               END IF
             END DO
@@ -528,17 +545,17 @@
 # ifdef BIO_FASHAM
           DO ivar=1,NDbio2d
             ifield=iDbio2(ivar)
-            IF (varnam(i).eq.Vname(1,ifield)) THEN
-             got_var(ifield)=.true.
-             status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,ifield)),     &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
+             got_var(ifield)=.TRUE.
+             status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,ifield)),     &
      &                           diaVid(ifield,ng))
             END IF
           END DO
           DO ivar=1,NDbio3d
             ifield=iDbio3(ivar)
-            IF (varnam(i).eq.Vname(1,ifield)) THEN
-             got_var(ifield)=.true.
-             status=nf_inq_varid(ncdiaid(ng),TRIM(Vname(1,ifield)),     &
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield))) THEN
+             got_var(ifield)=.TRUE.
+             status=nf_inq_varid(ncDIAid(ng),TRIM(Vname(1,ifield)),     &
      &                           diaVid(ifield,ng))
             END IF
           END DO
@@ -621,37 +638,37 @@
 !
 !  Set unlimited time record dimension to the appropriate value.
 !
-        IF (nrst(ng).eq.ndia(ng)) THEN
-          IF (ndefdia(ng).gt.0) THEN
-            tdiaindx(ng)=((ntstart-1)-                                  &
-     &                    ndefdia(ng)*((ntstart-1)/ndefdia(ng)))/       &
-     &                   ndia(ng)
+        IF (nRST(ng).eq.nDIA(ng)) THEN
+          IF (ndefDIA(ng).gt.0) THEN
+            tDIAindx(ng)=((ntstart-1)-                                  &
+     &                    ndefDIA(ng)*((ntstart-1)/ndefDIA(ng)))/       &
+     &                   nDIA(ng)
           ELSE
-            tdiaindx(ng)=(ntstart-1)/ndia(ng)
+            tDIAindx(ng)=(ntstart-1)/nDIA(ng)
           END IF
         ELSE
-          tdiaindx(ng)=tsize
+          tDIAindx(ng)=tsize
         END IF
       END IF
 !
 !  Set initial averaged time.
 !
-      IF (ntsdia(ng).eq.1) THEN
-        diatime(ng)=time(ng)-0.5_r8*REAL(ndia(ng),r8)*dt(ng)
+      IF (ntsDIA(ng).eq.1) THEN
+        DIAtime(ng)=time(ng)-0.5_r8*REAL(nDIA(ng),r8)*dt(ng)
       ELSE
-        diatime(ng)=time(ng)+REAL(ntsdia(ng),r8)*dt(ng)-                &
-     &              0.5_r8*REAL(ndia(ng),r8)*dt(ng)
+        DIAtime(ng)=time(ng)+REAL(ntsDIA(ng),r8)*dt(ng)-                &
+     &              0.5_r8*REAL(nDIA(ng),r8)*dt(ng)
       END IF
 !
   10  FORMAT (6x,'DEF_DIAGS - creating diagnostics file: ',a)
   20  FORMAT (6x,'DEF_DIAGS - inquiring diagnostics file: ',a)
   30  FORMAT (/,' DEF_DIAGS - unable to create diagnostics NetCDF',     &
-     &          ' file: ',a)
+     &        ' file: ',a)
   40  FORMAT (1pe11.4,1x,'millimeter')
   50  FORMAT (/,' DEF_DIAGS - unable to open diagnostics NetCDF',       &
-     &          ' file: ',a)
+     &        ' file: ',a)
   60  FORMAT (/,' DEF_DIAGS - unable to find variable: ',a,2x,          &
-     &         ' in diagnostics NetCDF file: ',a)
+     &        ' in diagnostics NetCDF file: ',a)
       RETURN
       END SUBROUTINE def_diags
 #else

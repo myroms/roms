@@ -3,7 +3,7 @@
       SUBROUTINE set_weights (ng)
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine sets the weigth functions for the time averaging of    !
@@ -27,7 +27,7 @@
       integer :: i, j, iter
 
 # ifdef POWER_LAW
-      real(r8) :: scale
+      real(r8) :: gamma, scale
 # elif defined COSINE2
       real(r8) :: arg
 # endif
@@ -71,15 +71,15 @@
 !  iteratively adjust "scale" to place the  centroid exactly at
 !  "ndtfast".
 !
+      gamma=Fgamma*MAX(0.0_r8, 1.0_r8-10.0_r8/REAL(ndtfast(ng),r8))
       DO iter=1,16
         nfast(ng)=0
         DO i=1,2*ndtfast(ng)
           cff=scale*REAL(i,r8)
-          weight(1,i,ng)=cff**Falpha-cff**(Falpha+Fbeta)-Fgamma*cff
-          IF ((i.gt.ndtfast(ng)).and.(weight(1,i,ng).lt.0.0_r8)) THEN
+          weight(1,i,ng)=cff**Falpha-cff**(Falpha+Fbeta)-gamma*cff
+          IF (weight(1,i,ng).gt.0.0_r8) nfast(ng)=i
+          IF ((nfast(ng).gt.0).and.(weight(1,i,ng).lt.0.0_r8)) THEN
             weight(1,i,ng)=0.0_r8
-          ELSE
-            nfast(ng)=i
           END IF
         END DO
         wsum=0.0_r16
@@ -101,7 +101,9 @@
       DO i=1,2*ndtfast(ng)
         arg=cff*float(i-ndtfast(ng))
         IF ((2.0_r8*ABS(arg)).lt.pi) THEN
-          weight(1,i,ng)=(COS(arg))**2
+!!        weight(1,i,ng)=1.0_r8                     ! flat
+!!        weight(1,i,ng)=(COS(arg))**2
+          weight(1,i,ng)=0.0882_r8+(COS(arg))**2    ! hamming window
           nfast(ng)=i
         END IF
       END DO
@@ -203,16 +205,16 @@
           cff1=cff1+weight(1,i,ng)*REAL(i,r8)
           cff2=cff2+weight(1,i,ng)*REAL(i*i,r8)
           wsum=wsum+weight(2,i,ng)
-          shift=shift+REAL(i,r8)*weight(2,i,ng)
+          shift=shift+weight(2,i,ng)*(REAL(i,r8)-0.5_r8)
           WRITE (stdout,20) i, weight(1,i,ng), weight(2,i,ng), cff, wsum
         END DO
         cff1=cff1/REAL(ndtfast(ng),r8)
         cff2=cff2/(REAL(ndtfast(ng),r8)*REAL(ndtfast(ng),r8))
-        shift=(shift-0.5_r16)/REAL(ndtfast(ng),r8)
+        shift=shift/REAL(ndtfast(ng),r8)
         WRITE (stdout,30) ndtfast(ng), nfast(ng),                       &
      &                    REAL(nfast(ng),r8)/REAL(ndtfast(ng),r8)
 # ifdef POWER_LAW
-        WRITE (stdout,40) cff1, cff2, shift, cff, wsum
+        WRITE (stdout,40) cff1, cff2, shift, cff, wsum, Fgamma, gamma
         IF (cff2.lt.1.0001_r8) WRITE (stdout,50)
 # endif
       END IF
@@ -224,8 +226,11 @@
   30  FORMAT (/,1x,'ndtfast, nfast = ',2i4,3x,'nfast/ndtfast = ',f7.5)
 # ifdef POWER_LAW
   40  FORMAT (/,1x,'Centers of gravity and integrals ',                 &
-     &        '(values must be 1, 1, approx 1/2, 1, 1):',/,/,3x,5F15.12)
-  50  FORMAT (/,' WARNING: unstable weights, reduce parameter gamma.',/)
+     &        '(values must be 1, 1, approx 1/2, 1, 1):',/,             &
+     &        /,3x,5F15.12,/,/,1x,'Power filter parameters, ',          &
+     &        'Fgamma, gamma = ', f8.5,2x,f8.5)
+  50  FORMAT (/,' WARNING: unstable weights, reduce parameter',         &
+     &          ' Fgamma in mod_scalars.F',/)
 # endif
 #else
       SUBROUTINE set_weights

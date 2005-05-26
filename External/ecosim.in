@@ -2,7 +2,7 @@
 !  EcoSim Biological Model Parameters.
 !
 !========================================================== W. Paul Bissett ===
-!  Copyright (c) 2003 ROMS/TOMS Group, version 2.1                          ===
+!  Copyright (c) 2005 ROMS/TOMS Group, version 2.2                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -45,7 +45,7 @@
 
 ! Logical switch (T/F) to calculate CDOC UV photolysis.
 
-    RtUVR_flag == F
+    RtUVR_flag == T
 
 ! Logical switch (T/F) to calculate temperature based nitrogen fixation.
 
@@ -408,7 +408,7 @@
 ! Carbon to Phosphorus ratio of Bacteria (micromole_C/micromole_P)
 ! [Ngrids] values are expected.
 
-        C2pBAC == 12.0d+00
+        C2pBAC == 60.0d+00
 
 ! Carbon to Iron ratio of Bacteria (micromole_C/micromole_Fe),
 ! [Ngrids] values are expected.
@@ -433,7 +433,7 @@
 ! Bacterial recalcitrant carbon excretion as a proportion of uptake
 ! (nondimensional), [Ngrids] values are expected.
 
-       ExBAC_c == 4.0d-01
+       ExBAC_c == 4.0d-02
 
 ! Bacterial recalcitrant excretion carbon to nitrogen ratio
 ! (micromole_C/micromole_N), [Ngrids] values are expected.
@@ -449,6 +449,11 @@
 ! [Ngrids] values are expected.
 
          RtNIT == 0.4d0
+
+! Half-saturation constant for bacterial nitrification (micromole_NH4/liter),
+! [Ngrids] values are expected.
+
+         HsNIT == 0.1d0
 
 !-----------------------------------------------------------------------------
 ! DOM group parameters.
@@ -863,6 +868,9 @@
 !
 !  RtNIT          Maximum nitrification rate,
 !                   (1/day).
+!
+!  HsNIT          Half-saturation constant for bacterial nitrification,  
+!                   (micromole_NH4/liter).
 !
 !------------------------------------------------------------------------------
 ! DOM Parameters. Unless specified, [Ngrids] values are expected. This

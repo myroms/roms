@@ -3,7 +3,7 @@
 #ifdef SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine sets lateral boundary conditions for the ITRC-th    !
@@ -32,15 +32,16 @@
 !
       CALL t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,                &
      &                 LBi, UBi, LBj, UBj, N(ng), NT(ng),               &
-     &                 nout, nstp(ng),                                  &
+     &                 nstp(ng), nout,                                  &
      &                 OCEAN(ng)% t)
       RETURN
       END SUBROUTINE t3dbc
+
 !
 !***********************************************************************
       SUBROUTINE t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,          &
      &                       LBi, UBi, LBj, UBj, UBk, UBt,              &
-     &                       nout, nstp,                                &
+     &                       nstp, nout,                                &
      &                       t)
 !***********************************************************************
 !
@@ -53,7 +54,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
-      integer, intent(in) :: nout, nstp
+      integer, intent(in) :: nstp, nout
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
@@ -91,12 +92,14 @@
             grad(Istr-1,j)=t(Istr-1,j  ,k,nstp,itrc)-                   &
      &                     t(Istr-1,j-1,k,nstp,itrc)
 #   ifdef MASKING
-            grad(Istr-1,j)=grad(Istr-1,j)*GRID(ng)%vmask(Istr-1,j)
+            grad(Istr-1,j)=grad(Istr-1,j)*                              &
+     &                     GRID(ng)%vmask(Istr-1,j)
 #   endif
             grad(Istr  ,j)=t(Istr  ,j  ,k,nstp,itrc)-                   &
      &                     t(Istr  ,j-1,k,nstp,itrc)
 #   ifdef MASKING
-            grad(Istr  ,j)=grad(Istr  ,j)*GRID(ng)%vmask(Istr  ,j)
+            grad(Istr  ,j)=grad(Istr  ,j)*                              &
+     &                     GRID(ng)%vmask(Istr  ,j)
 #   endif
           END DO
           DO j=Jstr,Jend
@@ -120,10 +123,17 @@
 #   else
             Ce=0.0_r8
 #   endif
+#   if defined CELERITY_WRITE && defined FORWARD_WRITE
+            BOUNDARY(ng)%t_west_Cx(j,k,itrc)=Cx
+            BOUNDARY(ng)%t_west_Ce(j,k,itrc)=Ce
+            BOUNDARY(ng)%t_west_C2(j,k,itrc)=cff
+#   endif
             t(Istr-1,j,k,nout,itrc)=(cff*t(Istr-1,j,k,nstp,itrc)+       &
-     &                               Cx *t(Istr  ,j,k,nout,itrc )-      &
-     &                               MAX(Ce,0.0_r8)*grad(Istr-1,j  )-   &
-     &                               MIN(Ce,0.0_r8)*grad(Istr-1,j+1))/  &
+     &                               Cx *t(Istr  ,j,k,nout,itrc)-       &
+     &                               MAX(Ce,0.0_r8)*                    &
+     &                                  grad(Istr-1,j  )-               &
+     &                               MIN(Ce,0.0_r8)*                    &
+     &                                  grad(Istr-1,j+1))/              &
      &                              (cff+Cx)
 #   ifdef WEST_TNUDGING
             t(Istr-1,j,k,nout,itrc)=t(Istr-1,j,k,nout,itrc)+            &
@@ -196,12 +206,14 @@
            grad(Iend  ,j)=t(Iend  ,j  ,k,nstp,itrc)-                    &
      &                    t(Iend  ,j-1,k,nstp,itrc)
 #   ifdef MASKING
-           grad(Iend  ,j)=grad(Iend  ,j)*GRID(ng)%vmask(Iend  ,j)
+           grad(Iend  ,j)=grad(Iend  ,j)*                               &
+     &                    GRID(ng)%vmask(Iend  ,j)
 #   endif
            grad(Iend+1,j)=t(Iend+1,j  ,k,nstp,itrc)-                    &
      &                    t(Iend+1,j-1,k,nstp,itrc)
 #   ifdef MASKING
-           grad(Iend+1,j)=grad(Iend+1,j)*GRID(ng)%vmask(Iend+1,j)
+           grad(Iend+1,j)=grad(Iend+1,j)*                               &
+     &                    GRID(ng)%vmask(Iend+1,j)
 #   endif
           END DO
           DO j=Jstr,Jend
@@ -225,10 +237,17 @@
 #   else
             Ce=0.0_r8
 #   endif
+#   if defined CELERITY_WRITE && defined FORWARD_WRITE
+            BOUNDARY(ng)%t_east_Cx(j,k,itrc)=Cx
+            BOUNDARY(ng)%t_east_Ce(j,k,itrc)=Ce
+            BOUNDARY(ng)%t_east_C2(j,k,itrc)=cff
+#   endif
             t(Iend+1,j,k,nout,itrc)=(cff*t(Iend+1,j,k,nstp,itrc)+       &
      &                               Cx *t(Iend  ,j,k,nout,itrc)-       &
-     &                               MAX(Ce,0.0_r8)*grad(Iend+1,j  )-   &
-     &                               MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/  &
+     &                               MAX(Ce,0.0_r8)*                    &
+     &                                  grad(Iend+1,j  )-               &
+     &                               MIN(Ce,0.0_r8)*                    &
+     &                                  grad(Iend+1,j+1))/              &
      &                              (cff+Cx)
 #   ifdef EAST_TNUDGING
             t(Iend+1,j,k,nout,itrc)=t(Iend+1,j,k,nout,itrc)+            &
@@ -304,12 +323,14 @@
             grad(i,Jstr  )=t(i  ,Jstr  ,k,nstp,itrc)-                   &
      &                     t(i-1,Jstr  ,k,nstp,itrc)
 #   ifdef MASKING
-            grad(i,Jstr  )=grad(i,Jstr  )*GRID(ng)%umask(i,Jstr  )
+            grad(i,Jstr  )=grad(i,Jstr  )*                              &
+     &                     GRID(ng)%umask(i,Jstr  )
 #   endif
             grad(i,Jstr-1)=t(i  ,Jstr-1,k,nstp,itrc)-                   &
      &                     t(i-1,Jstr-1,k,nstp,itrc)
 #   ifdef MASKING
-            grad(i,Jstr-1)=grad(i,Jstr-1)*GRID(ng)%umask(i,Jstr-1)
+            grad(i,Jstr-1)=grad(i,Jstr-1)*                              &
+     &                     GRID(ng)%umask(i,Jstr-1)
 #   endif
           END DO
           DO i=Istr,Iend
@@ -333,10 +354,17 @@
             Cx=0.0_r8
 #   endif
             Ce=dTdt*dTde
+#   if defined CELERITY_WRITE && defined FORWARD_WRITE
+            BOUNDARY(ng)%t_south_Cx(i,k,itrc)=Cx
+            BOUNDARY(ng)%t_south_Ce(i,k,itrc)=Ce
+            BOUNDARY(ng)%t_south_C2(i,k,itrc)=cff
+#   endif
             t(i,Jstr-1,k,nout,itrc)=(cff*t(i,Jstr-1,k,nstp,itrc)+       &
      &                               Ce *t(i,Jstr  ,k,nout,itrc )-      &
-     &                               MAX(Cx,0.0_r8)*grad(i  ,Jstr-1)-   &
-     &                               MIN(Cx,0.0_r8)*grad(i+1,Jstr-1))/  &
+     &                               MAX(Cx,0.0_r8)*                    &
+     &                                  grad(i  ,Jstr-1)-               &
+     &                               MIN(Cx,0.0_r8)*                    &
+     &                                  grad(i+1,Jstr-1))/              &
      &                              (cff+Ce)
 #   ifdef SOUTH_TNUDGING
             t(i,Jstr-1,k,nout,itrc)=t(i,Jstr-1,k,nout,itrc)+            &
@@ -409,12 +437,14 @@
             grad(i,Jend  )=t(i  ,Jend  ,k,nstp,itrc)-                   &
      &                     t(i-1,Jend  ,k,nstp,itrc)
 #   ifdef MASKING
-            grad(i,Jend  )=grad(i,Jend  )*GRID(ng)%umask(i,Jend  )
+            grad(i,Jend  )=grad(i,Jend  )*                              &
+     &                     GRID(ng)%umask(i,Jend  )
 #   endif
             grad(i,Jend+1)=t(i  ,Jend+1,k,nstp,itrc)-                   &
      &                     t(i-1,Jend+1,k,nstp,itrc)
 #   ifdef MASKING
-            grad(i,Jend+1)=grad(i,Jend+1)*GRID(ng)%umask(i,Jend+1)
+            grad(i,Jend+1)=grad(i,Jend+1)*                              &
+     &                     GRID(ng)%umask(i,Jend+1)
 #   endif
           END DO
           DO i=Istr,Iend
@@ -438,10 +468,17 @@
             Cx=0.0_r8
 #   endif
             Ce=dTdt*dTde
+#   if defined CELERITY_WRITE && defined FORWARD_WRITE
+            BOUNDARY(ng)%t_north_Cx(i,k,itrc)=Cx
+            BOUNDARY(ng)%t_north_Ce(i,k,itrc)=Ce
+            BOUNDARY(ng)%t_north_C2(i,k,itrc)=cff
+#   endif
             t(i,Jend+1,k,nout,itrc)=(cff*t(i,Jend+1,k,nstp,itrc)+       &
      &                               Ce *t(i,Jend  ,k,nout,itrc)-       &
-     &                               MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-   &
-     &                               MIN(Cx,0.0_r8)*grad(i+1,Jend+1))/  &
+     &                               MAX(Cx,0.0_r8)*                    &
+     &                                  grad(i  ,Jend+1)-               &
+     &                               MIN(Cx,0.0_r8)*                    &
+     &                                  grad(i+1,Jend+1))/              &
      &                              (cff+Ce)
 #   ifdef NORTH_TNUDGING
             t(i,Jend+1,k,nout,itrc)=t(i,Jend+1,k,nout,itrc)+            &
@@ -506,32 +543,32 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
         DO k=1,N(ng)
           t(Istr-1,Jstr-1,k,nout,itrc)=0.5_r8*                          &
      &                                 (t(Istr  ,Jstr-1,k,nout,itrc)+   &
      &                                  t(Istr-1,Jstr  ,k,nout,itrc))
         END DO
       END IF
-      IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
         DO k=1,N(ng)
           t(Iend+1,Jstr-1,k,nout,itrc)=0.5_r8*                          &
      &                                 (t(Iend  ,Jstr-1,k,nout,itrc)+   &
      &                                  t(Iend+1,Jstr  ,k,nout,itrc))
         END DO
       END IF
-      IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
         DO k=1,N(ng)
           t(Istr-1,Jend+1,k,nout,itrc)=0.5_r8*                          &
-     &                                 (t(Istr  ,Jend+1,k,nout,itrc)+   &
-     &                                  t(Istr-1,Jend  ,k,nout,itrc))
+     &                                 (t(Istr-1,Jend  ,k,nout,itrc)+   &
+     &                                  t(Istr  ,Jend+1,k,nout,itrc))
         END DO
       END IF
-      IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
         DO k=1,N(ng)
-           t(Iend+1,Jend+1,k,nout,itrc)=0.5_r8*                         &
-     &                                  (t(Iend  ,Jend+1,k,nout,itrc)+  &
-     &                                   t(Iend+1,Jend  ,k,nout,itrc))
+          t(Iend+1,Jend+1,k,nout,itrc)=0.5_r8*                          &
+     &                                 (t(Iend+1,Jend  ,k,nout,itrc)+   &
+     &                                  t(Iend  ,Jend+1,k,nout,itrc))
         END DO
       END IF
 # endif

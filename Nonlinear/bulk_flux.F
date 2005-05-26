@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE bulk_flux_mod
-#ifdef BULK_FLUXES
+#if defined NONLINEAR && defined BULK_FLUXES
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes the bulk parameterization of surface wind     !
@@ -27,6 +27,16 @@
 !                                                                      !
 !  Adapted from COARE code written originally by David Rutgers and     !
 !  Frank Bradley.                                                      !
+!                                                                      !
+!  EMINUSP option for equivalent salt fluxes added by Paul Goodman     !
+!  (10/2004).                                                          !
+!                                                                      !
+!  Modified by Kate Hedstrom for COARE version 3.0 (03/2005).          !
+!  Modified by Jim Edson to correct specific hunidities.               !
+!                                                                      !
+!  Reference:                                                          !
+!                                                                      !
+!     Fairall et al., 2003: J. Climate, 16, 571-591.                   !
 !                                                                      !
 !=======================================================================
 !
@@ -53,7 +63,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 17)
+      CALL wclock_on (ng, iNLM, 17)
 # endif
       CALL bulk_flux_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -75,16 +85,23 @@
 # ifdef CLOUDS
      &                     FORCES(ng) % cloud,                          &
 # endif
+# ifdef BBL_MODEL
+     &                     FORCES(ng) % Awave,                          &
+     &                     FORCES(ng) % Pwave,                          &
+# endif
      &                     FORCES(ng) % rain,                           &
      &                     FORCES(ng) % lhflx,                          &
      &                     FORCES(ng) % lrflx,                          &
      &                     FORCES(ng) % shflx,                          &
      &                     FORCES(ng) % srflx,                          &
      &                     FORCES(ng) % stflx,                          &
+# ifdef EMINUSP
+     &                     FORCES(ng) % evap,                           &
+# endif
      &                     FORCES(ng) % sustr,                          &
      &                     FORCES(ng) % svstr)
 # ifdef PROFILE
-      CALL wclock_off (ng, 17)
+      CALL wclock_off (ng, iNLM, 17)
 # endif
       RETURN
       END SUBROUTINE bulk_flux
@@ -101,8 +118,15 @@
 # ifdef CLOUDS
      &                           cloud,                                 &
 # endif
+# ifdef BBL_MODEL
+     &                           Awave, Pwave,                          &
+# endif
      &                           rain, lhflx, lrflx, shflx,             &
-     &                           srflx, stflx, sustr, svstr)
+     &                           srflx, stflx,                          &
+# ifdef EMINUSP
+     &                           evap,                                  &
+# endif
+     &                           sustr, svstr)
 !***********************************************************************
 !
       USE mod_param
@@ -137,6 +161,10 @@
 #  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:,LBj:)
 #  endif
+#  ifdef BBL_MODEL
+      real(r8), intent(in) :: Awave(LBi:,LBj:)
+      real(r8), intent(in) :: Pwave(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: rain(LBi:,LBj:)
 
       real(r8), intent(inout) :: lhflx(LBi:,LBj:)
@@ -145,6 +173,9 @@
       real(r8), intent(inout) :: srflx(LBi:,LBj:)
       real(r8), intent(inout) :: stflx(LBi:,LBj:,:)
 
+#  ifdef EMINUSP
+      real(r8), intent(out) :: evap(LBi:,LBj:)
+#  endif
       real(r8), intent(out) :: sustr(LBi:,LBj:)
       real(r8), intent(out) :: svstr(LBi:,LBj:)
 # else
@@ -165,6 +196,10 @@
 #  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:UBi,LBj:UBj)
 #  endif
+#  ifdef BBL_MODEL
+      real(r8), intent(in) :: Awave(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Pwave(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(in) :: rain(LBi:UBi,LBj:UBj)
 
       real(r8), intent(inout) :: lhflx(LBi:UBi,LBj:UBj)
@@ -173,6 +208,9 @@
       real(r8), intent(inout) :: srflx(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: stflx(LBi:UBi,LBj:UBj,NT(ng))
 
+#  ifdef EMINUSP
+      real(r8), intent(out) :: evap(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(out) :: sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: svstr(LBi:UBi,LBj:UBj)
 # endif
@@ -181,31 +219,41 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iter, i, j, k
-
-      integer, parameter :: IterMax = 20
+      integer :: IterMax
 
       real(r8), parameter :: eps = 1.0E-20_r8
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
 
       real(r8) :: Bf, Cd, Hl, Hlw, Hscale, Hs, Hsr, IER
-      real(r8) :: PairM,  RH, Ri, Scff, Taur, Tcff
-      real(r8) :: Wspeed, ZQoL, ZToL, ZoQ, ZoT
+      real(r8) :: PairM,  RH, Taur
+      real(r8) :: Wspeed, ZQoL, ZToL
 
       real(r8) :: cff, cff1, cff2, diffh, diffw, oL, upvel
-      real(r8) :: wet_bulb
+      real(r8) :: twopi_inv, wet_bulb
 # ifdef LONGWAVE
       real(r8) :: e_sat, vap_p
 # endif
 # ifdef COOL_SKIN
-      real(r8) :: Clam, Cwet, Fc, Hcool, Hsb, Hlb, Qbouy, Qcool, lambd
+      real(r8) :: Clam, Fc, Hcool, Hsb, Hlb, Qbouy, Qcool, lambd
 # endif
 
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: CC
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cd10
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ch10
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ct10
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: charn
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ct
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cwave
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cwet
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQ
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQc
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delT
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delTc
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delW
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Hlv
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L10
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Lwave
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Q
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qair
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qpsi
@@ -213,25 +261,30 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qstar
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoAir
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoSea
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rq
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ri
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ribcu
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rr
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rt
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Scff
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairK
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tcff
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tpsi
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaK
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TVstar
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: u10
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: VisAir
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wgus
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wmag
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wpsi
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wstar
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Zetu
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Zo10
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoT10
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoL
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoQ
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoT
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoW
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZQ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZW
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZWoL
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LHeat
@@ -248,6 +301,7 @@
 !=======================================================================
 !
       Hscale=rho0*Cp
+      twopi_inv=0.5_r8/pi
       DO j=MIN(Jstr-1,JstrR),JendR
         DO i=MIN(Istr-1,IstrR),IendR
 !
@@ -262,11 +316,8 @@
           rhoSea(i)=rho(i,j,N(ng))+1000.0_r8
           RH=Hair(i,j)
           SRad(i,j)=srflx(i,j)*Hscale
-          Tcff=alpha(i,j)
-          Scff=beta(i,j)
-          ZT(i)=blk_ZT
-          ZQ(i)=blk_ZQ
-          ZW(i)=blk_ZW
+          Tcff(i)=alpha(i,j)
+          Scff(i)=beta(i,j)
 !
 !  Initialize.
 !
@@ -281,10 +332,10 @@
 !-----------------------------------------------------------------------
 !  Compute net longwave radiation (W/m2), LRad.
 !-----------------------------------------------------------------------
-!
-# if defined LONGWAVE
 
-!  Use Berliand (1952) formula.
+# if defined LONGWAVE
+!
+!  Use Berliand (1952) formula to calculate net longwave radiation.
 !
           cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
      &        (1.0_r8+0.00412_r8*TairC(i))
@@ -298,7 +349,7 @@
      &               cff2*4.0_r8*(TseaK(i)-TairK(i)))
 
 # elif defined LONGWAVE_OUT
-
+!
 !  Treat input longwave data as downwelling radiation only and add
 !  outgoing IR from model sea surface temperature.
 !
@@ -314,36 +365,64 @@
 !
 !-----------------------------------------------------------------------
 !  Compute specific humidities (kg/kg).
+!
+!    note that Qair(i) is the saturation specific humidity at Tair
+!                 Q(i) is the actual specific humidity
+!              Qsea(i) is the saturation specific humidity at Tsea
+!
+!          Saturation vapor pressure in mb is first computed and then 
+!          converted to specific humidity in kg/kg
+!
+!          The saturation vapor pressure is computed from Teten formula
+!          using the approach of Buck (1981):
+!
+!          Esat(mb) = (1.0007_r8+3.46E-6_r8*PairM(mb))*6.1121_r8*
+!                  EXP(17.502_r8*TairC(C)/(240.97_r8+TairC(C)))
+!
+!          The ambient vapor is found from the definition of the
+!          Relative humidity:
+!
+!          RH = W/Ws*100 ~ E/Esat*100   E = RH/100*Esat if RH is in %
+!                                       E = RH*Esat     if RH fractional
+!
+!          The specific humidity is then found using the relationship:
+!
+!          Q = 0.622 E/(P + (0.622-1)e)
+!
+!          Q(kg/kg) = 0.62197_r8*(E(mb)/(PairM(mb)-0.378_r8*E(mb)))
+!          
 !-----------------------------------------------------------------------
 !
 !  Compute air saturation vapor pressure (mb), using Teten formula.
 !
-          Qair(i)=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*               &
-     &            EXP(17.502_r8*TairC(i)/(240.97_r8+TairC(i)))
+          cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
+     &        EXP(17.502_r8*TairC(i)/(240.97_r8+TairC(i)))
 !
-!  Compute specific humdity, Q (kg/kg).  Check whether input relative
-!  humidity is in kg/kg or g/kg.
+!  Compute specific humidity at Saturation, Qair (kg/kg).
 !
-          IF (RH.lt.2.0_r8) THEN
-            cff=Qair(i)*RH
-            Q(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff))
-          ELSE
-            Q(i)=RH/1000.0_r8
+          Qair(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff))
+!
+!  Compute specific humidity, Q (kg/kg).
+!
+          IF (RH.lt.2.0_r8) THEN                       !RH fraction
+            cff=cff*RH                                 !Vapor pres (mb)
+            Q(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff)) !Spec hum (kg/kg)
+          ELSE          !RH input was actually specific humidity in g/kg
+            Q(i)=RH/1000.0_r8                          !Spec Hum (kg/kg)
           END IF
-          Qair(i)=0.62197_r8*(Qair(i)/(PairM-0.378_r8*Qair(i)))
 !
 !  Compute water saturation vapor pressure (mb), using Teten formula.
 !
-          Qsea(i)=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*               &
+          cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
      &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !
-!  Qsea reduced for salinity (Kraus, 1972, pp 46).
+!  Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
 !
-          Qsea(i)=Qsea(i)*0.98_r8
+          cff=cff*0.98_r8
 !
-!  Convert Qsea from mb to specific humidity (kg/kg).
+!  Compute Qsea (kg/kg) from vapor pressure.
 !
-          Qsea(i)=0.62197_r8*(Qsea(i)/(PairM-0.378_r8*Qsea(i)))
+          Qsea(i)=0.62197_r8*(cff/(PairM-0.378_r8*cff))
 !
 !-----------------------------------------------------------------------
 !  Compute Monin-Obukhov similarity parameters for wind (Wstar),
@@ -370,25 +449,70 @@
 !
           Wgus(i)=0.5_r8
           delW(i)=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
-          delQ(i)=Q(i)-Qsea(i)
-          delT(i)=TairC(i)-TseaC(i)
+          delQ(i)=Qsea(i)-Q(i)
+          delT(i)=TseaC(i)-TairC(i)
 !
-!  Initial guesses for Monon-Obukhov similarity scales.
+!  Neutral coefficients.
 !
-          ZWoL(i)=0.0_r8
-          ZoW(i)=0.0005_r8
-          Wstar(i)=0.04_r8*delW(i)
-          Tstar(i)=0.04_r8*delT(i)
-          Qstar(i)=0.04_r8*delQ(i)
-          TVstar(i)=Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
-     &              0.61_r8*TairK(i)*Qstar(i)
+          ZoW(i)=0.0001_r8
+          u10(i)=delW(i)*LOG(10.0_r8/ZoW(i))/LOG(blk_ZW/ZoW(i))
+          Wstar(i)=0.035_r8*u10(i)
+          Zo10(i)=0.011_r8*Wstar(i)*Wstar(i)/g+                         &
+     &            0.11_r8*VisAir(i)/Wstar(i)
+          Cd10(i)=(vonKar/LOG(10.0_r8/Zo10(i)))**2
+          Ch10(i)=0.00115_r8
+          Ct10(i)=Ch10(i)/sqrt(Cd10(i))
+          ZoT10(i)=10.0_r8/EXP(vonKar/Ct10(i))
+          Cd=(vonKar/LOG(blk_ZW/Zo10(i)))**2
 !
 !  Compute Richardson number.
 !
-          Ri=g*ZW(i)*(delT(i)+0.61_r8*TairK(i)*delQ(i))/                &
-     &       (TairK(i)*delW(i)*delW(i))
-          Rt(i)=0.0_r8
-          Rq(i)=0.0_r8
+          Ct(i)=vonKar/LOG(blk_ZT/ZoT10(i))     ! T transfer coefficient
+          CC(i)=vonKar*Ct(i)/Cd
+          delTc(i)=0.0_r8
+# ifdef COOL_SKIN
+          delTc(i)=blk_dter
+# endif
+          Ribcu(i)=-blk_ZW/(blk_Zabl*0.004_r8*blk_beta**3)
+          Ri(i)=-g*blk_ZW*((delT(i)-delTc(i))+                          &
+     &                     0.61_r8*TairK(i)*delQ(i))/                   &
+     &          (TairK(i)*delW(i)*delW(i))
+          IF (Ri(i).lt.0.0_r8) THEN
+            Zetu(i)=CC(i)*Ri(i)/(1.0_r8+Ri(i)/Ribcu(i))       ! Unstable
+          ELSE
+            Zetu(i)=CC(i)*Ri(i)/(1.0_r8+3.0_r8*Ri(i)/CC(i))   ! Stable
+          END IF
+          L10(i)=blk_ZW/Zetu(i)
+          IF (Zetu(i).gt.50.0_r8) THEN
+            IterMax=1
+          ELSE
+            IterMax=3
+          END IF
+!
+!  First guesses for Monon-Obukhov similarity scales.
+!
+          Wstar(i)=delW(i)*vonKar/(LOG(blk_ZW/Zo10(i))-                 &
+     &                             bulk_psiu(blk_ZW/L10(i),pi))
+          Tstar(i)=-(delT(i)-delTc(i))*vonKar/                          &
+     &             (LOG(blk_ZT/ZoT10(i))-bulk_psit(blk_ZT/L10(i),pi))
+          Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
+     &             (LOG(blk_ZQ/ZoT10(i))-bulk_psit(blk_ZQ/L10(i),pi))
+!
+!  Modify Charnock for high wind speeds. The 0.125 factor below is for
+!  1.0/(18.0-10.0).
+!
+          IF (delW(i).gt.18.0_r8) THEN
+            charn(i)=0.018_r8
+          ELSE IF ((10.0_r8.lt.delW(i)).and.(delW(i).le.18.0_r8)) THEN
+            charn(i)=0.011_r8+                                          &
+     &               0.125_r8*(0.018_r8-0.011_r8)*(delW(i)-10._r8)
+          ELSE
+            charn(i)=0.011_r8
+          END IF
+# ifdef BBL_MODEL
+          Cwave(i)=g*Pwave(i,j)*twopi_inv
+          Lwave(i)=Cwave(i)*Pwave(i,j)
+# endif
         END DO
 !
 !  Iterate until convergence. It usually converges within four
@@ -396,64 +520,62 @@
 !
         DO Iter=1,IterMax
           DO i=MIN(Istr-1,IstrR),IendR
+# ifdef BBL_MODEL
+!
+!  Use wave info if we have it, two different options.
+!
+#  ifdef WIND_WAVES
+            ZoW(i)=(25._r8/pi)*Lwave(i)*(Wstar(i)/Cwave(i))**4.5+       &
+     &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
+#  else
+            ZoW(i)=1200._r8*Awave(i,j)*(Awave(i,j)/Lwave(i))**4.5+      &
+     &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
+#  endif
+# else
+            ZoW(i)=charn(i)*Wstar(i)*Wstar(i)/g+                        &
+     &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
+# endif
+            Rr(i)=ZoW(i)*Wstar(i)/VisAir(i)
 !
 !  Compute Monin-Obukhov stability parameter, Z/L.
 !
-            oL=g*vonKar*TVstar(i)/                                      &
-     &         (TairK(i)*(1.0_r8+0.61_r8*Q(i))*Wstar(i)*Wstar(i)+eps)
-            ZWoL(i)=ZW(i)*oL
-            ZToL=ZT(i)*oL
-            ZQoL=ZQ(i)*oL
+            ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6)
+            ZoT(i)=ZoQ(i)
+            ZoL(i)=vonKar*g*blk_ZW*                                     &
+     &             (Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
+     &                        0.61_r8*TairK(i)*Qstar(i))/               &
+     &             (TairK(i)*Wstar(i)*Wstar(i)*                         &
+     &             (1.0_r8+0.61_r8*Q(i))+eps)
+            L(i)=blk_ZW/(ZoL(i)+eps)
 !
 !  Evaluate stability functions at Z/L.
 !
-            Wpsi(i)=bulk_psi(1,ZWoL(i))
-            Tpsi(i)=bulk_psi(2,ZToL)
-            Qpsi(i)=bulk_psi(2,ZQoL)
+            Wpsi(i)=bulk_psiu(ZoL(i),pi)
+            Tpsi(i)=bulk_psit(blk_ZT/L(i),pi)
+            Qpsi(i)=bulk_psit(blk_ZQ/L(i),pi)
+# ifdef COOL_SKIN
+            Cwet(i)=0.622_r8*Hlv(i)*Qsea(i)/                            &
+     &              (blk_Rgas*TseaK(i)*TseaK(i))
+            delQc(i)=Cwet(i)*delTc(i)
+# endif
 !
 !  Compute wind scaling parameters, Wstar.
 !
-            ZoW(i)=0.011_r8*Wstar(i)*Wstar(i)/g+                        &
-     &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
-            Wstar(i)=MAX(eps,delW(i)*vonKar/(LOG(ZW(i)/ZoW(i))-Wpsi(i)))
-!
-!  Computes roughness Reynolds number for wind (Rr), heat (Rt),
-!  and moisture (Rq). Use Liu et al. (1976) look-up table to
-!  compute "Rt" and "Rq" as function of "Rr".
-!
-            Rr(i)=ZoW(i)*Wstar(i)/VisAir(i)
-            Rr(i)=MAX(MIN(1000.0_r8,Rr(i)),0.0_r8)
-          END DO
-          DO k=1,8
-            DO i=MIN(Istr-1,IstrR),IendR
-              IF ((Liu_Rr(k).le.Rr(i)).and.(Rr(i).le.Liu_Rr(k+1))) THEN
-                Rt(i)=Liu_a(k,1)*Rr(i)**Liu_b(k,1)
-                Rq(i)=Liu_a(k,2)*Rr(i)**Liu_b(k,2)
-              END IF
-            END DO
-          END DO
-!
-!  Compute heat and moisture scaling parameters, Tstar and Qstar.
-!
-          DO i=MIN(Istr-1,IstrR),IendR
-            cff=VisAir(i)/(Wstar(i)+eps)
-            ZoT=Rt(i)*cff
-            ZoQ=Rq(i)*cff
-            cff=vonKar*blk_fdg
-            Tstar(i)=(delT(i)+delTc(i))*                                &
-     &               cff/(LOG(ZT(i)/ZoT)-Tpsi(i))
-            Qstar(i)=(delQ(i)+delQc(i))*                                &
-     &               cff/(LOG(ZQ(i)/ZoQ)-Qpsi(i))
+            Wstar(i)=MAX(eps,delW(i)*vonKar/                            &
+     &               (LOG(blk_ZW/ZoW(i))-Wpsi(i)))
+            Tstar(i)=-(delT(i)-delTc(i))*vonKar/                        &
+     &               (LOG(blk_ZT/ZoT(i))-Tpsi(i))
+            Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                        &
+     &               (LOG(blk_ZQ/ZoQ(i))-Qpsi(i))
 !
 !  Compute gustiness in wind speed.
 !
-            TVstar(i)=Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                   &
-     &                0.61_r8*TairK(i)*Qstar(i)
-            Bf=-g/TairK(i)*Wstar(i)*TVstar(i)
-            IF (Bf.gt.0) THEN
+            Bf=-g/TairK(i)*                                             &
+     &         Wstar(i)*(Tstar(i)+0.61_r8*TairK(i)*Qstar(i))
+            IF (Bf.gt.0.0_r8) THEN
               Wgus(i)=blk_beta*(Bf*blk_Zabl)**r3
             ELSE
-              Wgus(i)=0.0_r8
+              Wgus(i)=0.2_r8
             END IF
             delW(i)=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
 # ifdef COOL_SKIN
@@ -467,8 +589,6 @@
 !
             Clam=16.0_r8*g*blk_Cpw*(rhoSea(i)*blk_visw)**3/             &
      &           (blk_tcw*blk_tcw*rhoAir(i)*rhoAir(i))
-            Cwet=0.622_r8*Hlv(i)*Qsea(i)/                               &
-     &           (blk_Rgas*TseaK(i)*TseaK(i))
 !
 !  Set initial guesses for cool-skin layer thickness (Hcool).
 !
@@ -481,13 +601,13 @@
 !
 !  Mean absoption in cool-skin layer.
 !
-            Fc=0.137_r8+11.0_r8*Hcool-                                  &
-     &         (1.0_r8-EXP(-Hcool/8.0e-4))*6.6E-5_r8/Hcool
+            Fc=0.065_r8+11.0_r8*Hcool-                                  &
+     &         (1.0_r8-EXP(-Hcool*1250.0_8))*6.6E-5_r8/Hcool
 !
 !  Total cooling at the interface.
 !
             Qcool=LRad(i,j)+Hsb+Hlb-SRad(i,j)*Fc
-            Qbouy=Tcff*Qcool+Scff*Hlb*blk_Cpw/Hlv(i)
+            Qbouy=Tcff(i)*Qcool+Scff(i)*Hlb*blk_Cpw/Hlv(i)
 !
 !  Compute temperature and moisture change.
 !
@@ -500,7 +620,7 @@
             ELSE
               delTc(i)=0.0_r8
             END IF
-            delQc(i)=Cwet*delTc(i)
+            delQc(i)=Cwet(i)*delTc(i)
 # endif
           END DO
         END DO
@@ -574,9 +694,29 @@
 !
 !  Compute kinematic, surface, net heat flux (degC m/s).  Notice that
 !  the signs of latent and sensible fluxes are reversed because fluxes
-!  from the bulk formulation are positive out of the ocean.
+!  calculated from the bulk formulations above are positive out of the
+!  ocean.
+!
+!  For EMINUSP option,  EVAP = LHeat (W/m2) / Hlv (J/kg) = kg/m2/s
+!                       PREC = rain = kg/m2/s            
+!       
+!  To convert these rates to m/s divide by freshwater density, rhow.
+!
+!  Note that when the air is undersaturated in water vapor (Q < Qsea)
+!  the model will evaporate and LHeat > 0:
+!
+!                   LHeat positive out of the ocean
+!                    evap positive out of the ocean
+!
+!  Note that if evaporating, the salt flux is positive
+!        and if     raining, the salt flux is negative
+!
+!  Note that fresh water flux is positive out of the ocean and the
+!  salt flux (stflx(isalt)) is positive into the ocean. It is converted
+!  to (psu m/s) for stflx(isalt) in "set_vbc.F".
 !
       Hscale=1.0_r8/(rho0*Cp)
+      cff=1.0_r8/rhow
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           lrflx(i,j)=LRad(i,j)*Hscale
@@ -584,8 +724,16 @@
           shflx(i,j)=-SHeat(i,j)*Hscale
           stflx(i,j,itemp)=(srflx(i,j)+lrflx(i,j)+                      &
      &                      lhflx(i,j)+shflx(i,j))
+# ifdef EMINUSP
+          evap(i,j)=LHeat(i,j)/Hlv(i)
+          stflx(i,j,isalt)=cff*(evap(i,j)-rain(i,j))
+# endif
 # ifdef MASKING
           stflx(i,j,itemp)=stflx(i,j,itemp)*rmask(i,j)
+#   ifdef EMINUSP
+          evap(i,j)=evap(i,j)*rmask(i,j)
+          stflx(i,j,isalt)=stflx(i,j,isalt)*rmask(i,j)
+#   endif
 # endif
         END DO
       END DO
@@ -615,35 +763,53 @@
 !  Apply periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, lrflx)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, lhflx)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, shflx)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, stflx(:,:,itemp))
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, sustr)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, svstr)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        lrflx)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        lhflx)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        shflx)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        stflx(:,:,itemp))
+#  ifdef EMINUSP
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        stflx(:,:,isalt))
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        evap)
+#  endif
+      CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        sustr)
+      CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        svstr)
 # endif
       RETURN
       END SUBROUTINE bulk_flux_tile
-      FUNCTION bulk_psi (iflag, ZoL)
+
+      FUNCTION bulk_psiu (ZoL, pi)
 !
 !=======================================================================
 !                                                                      !
-!  This function evaluates the stability function, PSI, for wind       !
-!  speed (iflag=1) or for air temperature and moisture (iflag=2)       !
-!  profiles as function of the stability parameter, ZoL (z/L).         !
-!                                                                      !
-!  Reference:                                                          !
-!                                                                      !
-!    Liu, W.T., K.B. Katsaros, and J.A. Businger, 1979:  Bulk          !
-!        parameterization of the air-sea exchange of heat and          !
-!        water vapor including the molecular constraints at            !
-!        the interface, J. Atmos. Sci, 36, 1722-1735.                  !
+!  This function evaluates the stability function for  wind speed      !
+!  by matching Kansas  and free convection forms.  The convective      !
+!  form follows Fairall et al. (1996) with profile constants from      !
+!  Grachev et al. (2000) BLM.  The  stable  form is from Beljaars      !
+!  and Holtslag (1991).                                                !
 !                                                                      !
 !=======================================================================
 !
@@ -651,60 +817,113 @@
 !
 !  Function result
 !
-      real(r8) :: bulk_psi
+      real(r8) :: bulk_psiu
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: iflag
-      real(r8), intent(in) :: ZoL
+      real(r8), intent(in) :: ZoL, pi
 !
 !  Local variable declarations.
 !
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
 
-      real(r8) :: Fw, chic, chik, cff, pi, psic, psik 
+      real(r8) :: Fw, cff, psic, psik, x, y
 !
 !-----------------------------------------------------------------------
 !  Compute stability function, PSI.
 !-----------------------------------------------------------------------
 !
-!  Initialize for the zero "ZoL" case.
-!
-      bulk_psi=0.0_r8
-!
 !  Unstable conditions.
 !
       IF (ZoL.lt.0.0_r8) THEN
-        pi=4.0_r8*ATAN(1.0_r8)
-        chik=(1.0_r8-16.0_r8*ZoL)**0.25_r8
-        IF (iflag.eq.1) THEN
-          psik=2.0_r8*LOG(0.5_r8*(1.0_r8+chik))+                        &
-     &                LOG(0.5_r8*(1.0_r8+chik*chik))-                   &
-     &         2.0_r8*ATAN(chik)+                                       &
-     &         0.5_r8*pi
-        ELSE IF (iflag.eq.2) THEN
-          psik=2.0_r8*LOG(0.5_r8*(1.0_r8+chik*chik))
-        END IF
+        x=(1.0_r8-15.0_r8*ZoL)**0.25_r8
+        psik=2.0_r8*LOG(0.5_r8*(1.0_r8+x))+                             &
+     &       LOG(0.5_r8*(1.0_r8+x*x))-                                  &
+     &       2.0_r8*ATAN(x)+0.5_r8*pi
 !
 !  For very unstable conditions, use free-convection (Fairall).
 !
         cff=SQRT(3.0_r8)
-        chic=(1.0_r8-12.87_r8*ZoL)**r3
-        psic=1.5_r8*LOG(r3*(1.0_r8+chic+chic*chic))-                    &
-     &       cff*ATAN((1.0_r8+2.0_r8*chic)/cff)+                        &
-     &       pi/cff
+        y=(1.0_r8-10.15_r8*ZoL)**r3
+        psic=1.5_r8*LOG(r3*(1.0_r8+y+y*y))-                             &
+     &       cff*ATAN((1.0_r8+2.0_r8*y)/cff)+pi/cff
 !
 !  Match Kansas and free-convection forms with weighting Fw.
 !
-        Fw=1.0_r8/(1.0_r8+ZoL*ZoL)
-        bulk_psi=Fw*psik+(1.0_r8-Fw)*psic
+        cff=ZoL*ZoL
+        Fw=cff/(1.0_r8+cff)
+        bulk_psiu=(1.0_r8-Fw)*psik+Fw*psic
 !
 !  Stable conditions.
 !
-      ELSE IF (ZoL.gt.0.0_r8) THEN
-        bulk_psi=-4.7_r8*ZoL
+      ELSE
+        cff=MIN(50.0_r8,0.35_r8*ZoL)
+        bulk_psiu=-((1.0_r8+ZoL)+0.6667_r8*(ZoL-14.28_r8)/              &
+     &            EXP(cff)+8.525)
       END IF
       RETURN
-      END FUNCTION bulk_psi
+      END FUNCTION bulk_psiu
+
+      FUNCTION bulk_psit (ZoL, pi)
+!
+!=======================================================================
+!                                                                      !
+!  This function evaluates the  stability function  for moisture and   !
+!  heat by matching Kansas and free convection forms. The convective   !
+!  form follows Fairall et al. (1996) with  profile  constants  from   !
+!  Grachev et al. (2000) BLM.  The stable form is from  Beljaars and   !
+!  and Holtslag (1991).                                                !
+!
+!=======================================================================
+!                                                                      !
+!
+      USE mod_kinds
+!
+!  Function result
+!
+      real(r8) :: bulk_psit
+!
+!  Imported variable declarations.
+!
+      real(r8), intent(in) :: ZoL, pi
+!
+!  Local variable declarations.
+!
+      real(r8), parameter :: r3 = 1.0_r8/3.0_r8
+
+      real(r8) :: Fw, cff, psic, psik, x, y
+!
+!-----------------------------------------------------------------------
+!  Compute stability function, PSI.
+!-----------------------------------------------------------------------
+!
+!  Unstable conditions.
+!
+      IF (ZoL.lt.0.0_r8) THEN
+        x=(1.0_r8-15.0_r8*ZoL)**0.5_r8
+        psik=2.0_r8*LOG(0.5_r8*(1.0_r8+x))
+!
+!  For very unstable conditions, use free-convection (Fairall).
+!
+        cff=SQRT(3.0_r8)
+        y=(1.0_r8-34.15_r8*ZoL)**r3
+        psic=1.5_r8*LOG(r3*(1.0_r8+y+y*y))-                             &
+     &       cff*ATAN((1.0_r8+2.0_r8*y)/cff)+pi/cff
+!
+!  Match Kansas and free-convection forms with weighting Fw.
+!
+        cff=ZoL*ZoL
+        Fw=cff/(1.0_r8+cff)
+        bulk_psit=(1.0_r8-Fw)*psik+Fw*psic
+!
+!  Stable conditions.
+!
+      ELSE
+        cff=MIN(50.0_r8,0.35_r8*ZoL)
+        bulk_psit=-((1.0_r8+2.0_r8*ZoL)**1.5_r8+                        &
+     &            0.6667_r8*(ZoL-14.28_r8)/EXP(cff)+8.525_r8)
+      END IF
+      RETURN
+      END FUNCTION bulk_psit
 #endif
       END MODULE bulk_flux_mod

@@ -1,9 +1,8 @@
 #include "cppdefs.h"
-# undef SG_LOGINT
       SUBROUTINE bblm (ng, tile)
 !
 !==================================================== Richard Styles ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine compute bottom stresses for the case when the wave     !
@@ -31,7 +30,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 37)
+      CALL wclock_on (ng, iNLM, 37)
 # endif
       CALL bblm_tile (ng, Istr, Iend, Jstr, Jend,                       &
      &                LBi, UBi, LBj, UBj,                               &
@@ -52,10 +51,12 @@
      &                OCEAN(ng) % v,                                    &
      &                OCEAN(ng) % bottom,                               &
      &                BBL(ng) % Iconv,                                  &
-     &                BBL(ng) % Ubed,                                   &
-     &                BBL(ng) % Vbed,                                   &
      &                BBL(ng) % Ubot,                                   &
      &                BBL(ng) % Vbot,                                   &
+     &                BBL(ng) % Ur,                                     &
+     &                BBL(ng) % Vr,                                     &
+     &                BBL(ng) % bustrc,                                 &
+     &                BBL(ng) % bvstrc,                                 &
      &                BBL(ng) % bustrw,                                 &
      &                BBL(ng) % bvstrw,                                 &
      &                BBL(ng) % bustrcwmax,                             &
@@ -63,7 +64,7 @@
      &                FORCES(ng) % bustr,                               &
      &                FORCES(ng) % bvstr)
 # ifdef PROFILE
-      CALL wclock_off (ng, 37)
+      CALL wclock_off (ng, iNLM, 37)
 # endif
       RETURN
       END SUBROUTINE bblm
@@ -72,7 +73,7 @@
       SUBROUTINE bblm_tile (ng, Istr, Iend, Jstr, Jend,                 &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nrhs,                                       &
-     &                      h, z_r, z_w, angler                         &
+     &                      h, z_r, z_w, angler,                        &
 # ifdef SWAN
      &                      UB_swan,                                    &
 # else
@@ -81,8 +82,10 @@
      &                      Dwave, Pwave,                               &
      &                      rho, u, v, bottom,                          &
      &                      Iconv,                                      &
-     &                      Ubed, Vbed, Ubot, Vbot,                     &
-     &                      bustrw, bvstrw, bustrcwmax, bvstrcwmax,     &
+     &                      Ubot, Vbot, Ur, Vr,                         &
+     &                      bustrc, bvstrc,                             &
+     &                      bustrw, bvstrw,                             &
+     &                      bustrcwmax, bvstrcwmax,                     &
      &                      bustr, bvstr)
 !***********************************************************************
 !
@@ -118,10 +121,12 @@
 
       real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
 
-      real(r8), intent(out) :: Ubed(LBi:,LBj:)
-      real(r8), intent(out) :: Vbed(LBi:,LBj:)
       real(r8), intent(out) :: Ubot(LBi:,LBj:)
       real(r8), intent(out) :: Vbot(LBi:,LBj:)
+      real(r8), intent(out) :: Ur(LBi:,LBj:)
+      real(r8), intent(out) :: Vr(LBi:,LBj:)
+      real(r8), intent(out) :: bustrc(LBi:,LBj:)
+      real(r8), intent(out) :: bvstrc(LBi:,LBj:)
       real(r8), intent(out) :: bustrw(LBi:,LBj:)
       real(r8), intent(out) :: bvstrw(LBi:,LBj:)
       real(r8), intent(out) :: bustrcwmax(LBi:,LBj:)
@@ -148,10 +153,12 @@
 
       real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
 
-      real(r8), intent(out) :: Ubed(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Vbed(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Ubot(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Vbot(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Ur(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Vr(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: bustrc(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: bvstrc(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bustrw(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bvstrw(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bustrcwmax(LBi:UBi,LBj:UBj)
@@ -167,8 +174,11 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iter, i, j, k
 
-      real(r8) :: Fwave, Kb, Kbh, KboKb0, Kb0, Kdelta, Ucur, Ustr, Vcur
-      real(r8) :: anglec, anglew, cff, cff1, cff2, og, fac, fac1, fac2
+      real(r8), parameter :: eps = 1.0E-10_r8
+
+      real(r8) :: Fwave, Kb, Kbh, KboKb0, Kb0, Kdelta, Ustr
+      real(r8) :: anglec, anglew
+      real(r8) :: cff, cff1, cff2, cff3, og, fac, fac1, fac2
       real(r8) :: sg_ab, sg_abokb, sg_a1, sg_b1, sg_chi, sg_c1, sg_dd
       real(r8) :: sg_epsilon, sg_eta, sg_fofa, sg_fofb, sg_fofc, sg_fwm
       real(r8) :: sg_kbs, sg_lambda, sg_mu, sg_phicw, sg_ro, sg_row
@@ -181,10 +191,12 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauc
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauw
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Taucwmax
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ur_sg
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vr_sg
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ub
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ucur
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Umag
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ur
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vr
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vcur
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Zr
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phic
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phicw
@@ -205,6 +217,7 @@
         DO i=IstrU-1,Iend
           Tauc(i,j)=0.0_r8
           Tauw(i,j)=0.0_r8
+          Taucwmax(i,j)=0.0_r8
           u100(i,j)=0.0_r8
           rheight(i,j)=0.0_r8
           rlength(i,j)=0.0_r8
@@ -220,8 +233,8 @@
       DO j=JstrV-1,Jend+1
         DO i=IstrU-1,Iend+1
           Zr(i,j)=z_r(i,j,1)-z_w(i,j,0)
-          Ur(i,j)=u(i,j,1,nrhs)
-          Vr(i,j)=v(i,j,1,nrhs)
+          Ur_sg(i,j)=u(i,j,1,nrhs)
+          Vr_sg(i,j)=v(i,j,1,nrhs)
 # ifdef SG_LOGINT
 !
 !  If current height is less than z1ur, interpolate logarithmically
@@ -235,8 +248,8 @@
                 fac=1.0_r8/LOG(z2/z1)
                 fac1=fac*LOG(z2/sg_z1min)
                 fac2=fac*LOG(sg_z1min/z1)
-                Ur(i,j)=fac1*u(i,j,k-1,nrhs)+fac2*u(i,j,k,nrhs)
-                Vr(i,j)=fac1*v(i,j,k-1,nrhs)+fac2*v(i,j,k,nrhs)
+                Ur_sg(i,j)=fac1*u(i,j,k-1,nrhs)+fac2*u(i,j,k,nrhs)
+                Vr_sg(i,j)=fac1*v(i,j,k-1,nrhs)+fac2*v(i,j,k,nrhs)
                 Zr(i,j)=sg_z1min
               END IF
             END DO
@@ -269,6 +282,7 @@
 !
 !  Compute bottom wave number via Newton-Raphson method.
 !
+          ITERATE=.TRUE.
           DO Iter=1,sg_n
             IF (ITERATE) THEN
               Kbh=Kb*h(i,j)
@@ -283,26 +297,25 @@
 !  Compute bed wave orbital velocity and excursion amplitude.
 !
 # ifdef SWAN
-          Ub(i,j)=Ub_swan(i,j)
-          cff=Ub(i,j)/Fwave
-          Ab(i,j)=MAX(cff, 0.0001_r8)
+          Ub(i,j)=ABS(Ub_swan(i,j))+eps
+          Ab(i,j)=Ub(i,j)/Fwave+eps
 # else
-          Ab(i,j)=Awave(i,j)/SINH(Kb*h(i,j))
-          Ub(i,j)=Fwave*Ab(i,j)
+          Ab(i,j)=Awave(i,j)/SINH(Kb*h(i,j))+eps
+          Ub(i,j)=Fwave*Ab(i,j)+eps
 # endif
 !
 !  Compute bottom current magnitude at RHO-points.
 !
-          Ucur=0.5_r8*(Ur(i,j)+Ur(i+1,j))
-          Vcur=0.5_r8*(Vr(i,j)+Vr(i,j+1))
-          Umag(i,j)=SQRT(Ucur*Ucur+Vcur*Vcur)
+          Ucur(i,j)=0.5_r8*(Ur_sg(i,j)+Ur_sg(i+1,j))
+          Vcur(i,j)=0.5_r8*(Vr_sg(i,j)+Vr_sg(i,j+1))
+          Umag(i,j)=SQRT(Ucur(i,j)*Ucur(i,j)+Vcur(i,j)*Vcur(i,j))+eps
 !
 !  Compute angle between currents and waves (radians)
 !
-          IF (Ucur.eq.0.0_r8) THEN
-            phic(i,j)=0.5_r8*pi*SIGN(1.0_r8,Vcur)
+          IF (Ucur(i,j).eq.0.0_r8) THEN
+            phic(i,j)=0.5_r8*pi*SIGN(1.0_r8,Vcur(i,j))
           ELSE
-            phic(i,j)=ATAN2(Vcur,Ucur)
+            phic(i,j)=ATAN2(Vcur(i,j),Ucur(i,j))
           ENDIF
           phicw(i,j)=1.5_r8*pi-Dwave(i,j)-phic(i,j)-angler(i,j)
         END DO
@@ -315,9 +328,12 @@
       DO j=JstrV-1,Jend
         DO i=IstrU-1,Iend
           IF (Umag(i,j).gt.0.0_r8) THEN
-            Ustr=MIN(sg_ustarcdef,Umag(i,j)*vonKar/                     &
-     &                            LOG(Zr(i,j)/sg_znotdef))
-            Tauc(i,j)=Ustr*Ustr
+!!          Ustr=MIN(sg_ustarcdef,Umag(i,j)*vonKar/                     &
+!!   &                            LOG(Zr(i,j)/sg_znotdef))
+!!          Tauc(i,j)=Ustr*Ustr
+            cff1=vonKar/LOG(Zr(i,j)/sg_znotdef)
+            cff2=MIN(Cdb_max,MAX(Cdb_min,cff1*cff1))
+            Tauc(i,j)=cff2*Umag(i,j)*Umag(i,j)
           END IF
         END DO
       END DO
@@ -339,7 +355,7 @@
 !  Compute hydraulic roughness "Znot" (m), ripple height "eta" (m),
 !  and ripple length "lambda" (m).
 !
-# ifdef SG_ZNOT
+# ifdef SG_CALC_ZNOT
           sg_star=sg_dd/(4.0_r8*sg_nu)*SQRT((sg_ss-1.0_r8)*sg_g*sg_dd)
 !
 !  Compute critical shield parameter based on grain diameter.
@@ -450,7 +466,7 @@
 !
 !  Solve PDE via bi-section method.
 !
-            ITERATE=.true.
+            ITERATE=.TRUE.
             DO Iter=1,sg_n
               IF (ITERATE) THEN
                 IF ((sg_fofb*sg_fofc).lt.0.0_r8) THEN
@@ -472,7 +488,9 @@
 !
             sg_ustarcw=sg_ub/sg_ubouc
             sg_ustarwm=sg_mu*sg_ustarcw
-            sg_ustarc=MIN(sg_ustarcdef,sg_epsilon*sg_ustarcw)
+!!          sg_ustarc=MIN(sg_ustarcdef,sg_epsilon*sg_ustarcw)
+!!          sg_ustarc=MIN(SQRT(Tauc(i,j)),sg_epsilon*sg_ustarcw)
+            sg_ustarc=MAX(SQRT(Tauc(i,j)),sg_epsilon*sg_ustarcw)
             Tauc(i,j)=sg_ustarc*sg_ustarc
             Tauw(i,j)=sg_ustarwm*sg_ustarwm
             Taucwmax(i,j)=SQRT((Tauc(i,j)+                              &
@@ -514,87 +532,113 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          cff1=0.5_r8*(Tauc(i-1,j)+Tauc(i,j))
-          cff2=0.5_r8*(Tauw(i-1,j)+Tauw(i,j))
-          cff3=0.5_r8*(Taucwmax(i-1,j)+Taucwmax(i,j))
-!!        anglec=COS(0.5_r8*(phic(i-1,j)+phic(i,j)))
-          anglec=Ur(i,j)/(0.5*(Umag(i-1,j)+Umag(i,j)+1.0E-10_r8))
-          anglew=COS(0.5_r8*pi-0.5_r8*(Dwave(i-1,j)+Dwave(i,j))-        &
-     &               angler(i,j))
-          bustr (i,j)=cff1*anglec
-          bustrw(i,j)=cff2*anglew
-          bustrcwmax(i,j)=cff3*anglew
-          Ubed(i,j)=Ub(i,j)*anglew
-!!        Ubot(i,j)=u100(i,j)*anglec
-          Ubot(i,j)=Ur(i,j)
+          anglec=Ur_sg(i,j)/(0.5*(Umag(i-1,j)+Umag(i,j)))
+          bustr(i,j)=0.5_r8*(Tauc(i-1,j)+Tauc(i,j))*anglec
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          cff1=0.5_r8*(Tauc(i,j-1)+Tauc(i,j))
-          cff2=0.5_r8*(Tauw(i,j-1)+Tauw(i,j))
-          cff3=0.5_r8*(Taucwmax(i,j-1)+Taucwmax(i,j))
-!!        anglec=SIN(0.5_r8*(phic(i,j-1)+phic(i,j)))
-          anglec=Vr(i,j)/(0.5_r8*(Umag(i,j-1)+Umag(i,j)+1.0E-10_r8))
-          anglew=SIN(0.5_r8*pi-0.5_r8*(Dwave(i,j-1)+Dwave(i,j))-        &
-     &               angler(i,j))
-          bvstr (i,j)=cff1*anglec
-          bvstrw(i,j)=cff2*anglew
-          bvstrcwmax(i,j)=cff3*anglew
-          Vbed(i,j)=Ub(i,j)*anglew
-!!        Vbot(i,j)=u100(i,j)*anglec
-          Vbot(i,j)=Vr(i,j)
+          anglec=Vr_sg(i,j)/(0.5_r8*(Umag(i,j-1)+Umag(i,j)))
+          bvstr(i,j)=0.5_r8*(Tauc(i,j-1)+Tauc(i,j))*anglec
+        END DO
+      END DO
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          anglec=Ur_sg(i,j)/Umag(i,j)
+          anglew=COS(1.5_r8*pi-Dwave(i,j)-angler(i,j))
+          bustrc(i,j)=Tauc(i,j)*anglec
+          bustrw(i,j)=Tauw(i,j)*anglew
+          bustrcwmax(i,j)=Taucwmax(i,j)*anglew
+          Ubot(i,j)=Ub(i,j)*anglew
+          Ur(i,j)=Ucur(i,j)
+!
+          anglec=Vr_sg(i,j)/Umag(i,j)
+          anglew=SIN(1.5_r8*pi-Dwave(i,j)-angler(i,j))
+          bvstrc(i,j)=Tauc(i,j)*anglec
+          bvstrw(i,j)=Tauw(i,j)*anglew
+          bvstrcwmax(i,j)=Taucwmax(i,j)*anglew
+          Vbot(i,j)=Ub(i,j)*anglew
+          Vr(i,j)=Vcur(i,j)
+!
+          bottom(i,j,ibwav)=Ab(i,j)
+          bottom(i,j,irhgt)=rheight(i,j)
+          bottom(i,j,irlen)=rlength(i,j)
+          bottom(i,j,izdef)=znot(i,j)
+          bottom(i,j,izapp)=znotc(i,j)
         END DO
       END DO
 !
 !  Apply periodic or gradient boundary conditions for output
 !  purposes only.
 !
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bustr)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bvstr)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bustrw)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bvstrw)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Ubed)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Vbed)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Ubot)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Vbot)
-!
-!-----------------------------------------------------------------------
-!  Load closure state variables for output purposes.
-!-----------------------------------------------------------------------
-!
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
-          bottom(i,j,izdef)=znot(i,j)
-          bottom(i,j,izapp)=znotc(i,j)
-          bottom(i,j,ibwav)=Ab(i,j)
-          bottom(i,j,irhgt)=rheight(i,j)
-          bottom(i,j,irlen)=rlength(i,j)
-!!        bottom(i,j,izapp)=znot(i,j)
-!!        bottom(i,j,izNik)=znotc(i,j)
-        END DO
-      END DO
-!
-!  Apply boundary conditions.
-!
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,ibwav))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,irhgt))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,irlen))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,izdef))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,izapp))
+      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bustr)
+      CALL bc_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstr)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bustrc)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstrc)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bustrw)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstrw)
+      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   & 
+     &                  bustrcwmax)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstrcwmax)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Ubot)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Vbot)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Ur)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Vr)      
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,ibwav))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,irhgt))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,irlen))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,izdef))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,izapp))
       RETURN
       END SUBROUTINE bblm_tile
 
@@ -665,7 +709,7 @@
 !  sure that there is an upper limit in "ubouc".  It usually requires
 !  only one pass.
 !
-      ITERATE=.true.
+      ITERATE=.TRUE.
       DO Iter=1,sg_n
         IF (ITERATE) THEN
           sg_ro=sg_row/sg_ubouc
@@ -713,7 +757,7 @@
           IF (sg_ubouc.gt.(1.0_r8/sg_phi)) THEN
             sg_ubouc=1.0_r8/sg_phi
           ELSE
-            ITERATE=.false.
+            ITERATE=.FALSE.
           END IF
         END IF
       END DO

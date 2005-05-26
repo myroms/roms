@@ -2,15 +2,15 @@
       PROGRAM air_ocean
 !
 !================================================= Christopher Moore ===
-!  Copyright (c) 2004 WRF and ROMS/TOMS Groups                         !
+!  Copyright (c) 2005 WRF and ROMS/TOMS Groups                         !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Wheather Research and Forcasting (WRF) model, Version 1.3           !
 !                                                                      !
 !     http://www.wrf-model.org                                         !
 !                                                                      ! 
-!  Regional Ocean Model System (ROMS), Version 2.1                     !
-!  Terrain-following Ocean Model System (TOMS), Version 2.1            !
+!  Regional Ocean Model System (ROMS), Version 2.2                     !
+!  Terrain-following Ocean Model System (TOMS), Version 2.2            !
 !                                                                      !
 !     http://marine.rutgers.edu/po/index.php?model=roms                !
 !     http://marine.rutgers.edu/po/index.php?model=toms                !
@@ -63,7 +63,7 @@
 !
       OCN_COMM_WORLD=MPI_COMM_WORLD
 !
-      CALL read_CouplePar
+      CALL read_CouplePar (iNLM)
 !
 !  Split the communicator into WRF and ROMS subgroups based on color
 !  and key.
@@ -74,7 +74,7 @@
         MyString="COMPONENT_ID=1,COMPONENT_NAME=wrf"
       ELSE
         MyColor=2
-        MyStream="COMPONENT_ID=2,COMPONENT_NAME=roms"
+        MyString="COMPONENT_ID=2,COMPONENT_NAME=roms"
       END IF
       CALL ext_mct_ioinit (MyString, MyError)
       CALL mpi_comm_split (MPI_COMM_WORLD, MyColor, MyKey, MyCOMM,      &
@@ -100,8 +100,12 @@
       ELSE
         first=.TRUE.
         Nrun=1
-        CALL roms_init (first, MyCOMM)
-        CALL roms_run
+        IF (exit_flag.eq.NoError) THEN
+          CALL roms_init (first, MyCOMM)
+        END IF
+        IF (exit_flag.eq.NoError) THEN
+          CALL roms_run
+        END IF
         CALL roms_finalize
       END IF
 !

@@ -1,9 +1,10 @@
 #include "cppdefs.h"
-      SUBROUTINE set_ngfld (ng, ifield, LBi, UBi, UBj, Istr, Iend,      &
-     &                      Jrec, Finp, Fout, update)
+      SUBROUTINE set_ngfld (ng, model, ifield,                          &
+     &                      LBi, UBi, UBj, Istr, Iend, Jrec,            &
+     &                      Finp, Fout, update)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine time-interpolates requested non-grided field from      !
@@ -11,7 +12,8 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number (integer).                         !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     ifield     Field ID.                                             !
 !     LBi        Finp/Fout 1st dimension lower-bound value.            !
 !     UBi        Finp/Fout 1st dimension upper-bound value.            !
@@ -41,7 +43,7 @@
 !
       logical, intent(out) :: update
 
-      integer, intent(in) :: ng, ifield
+      integer, intent(in) :: ng, model, ifield
       integer, intent(in) :: LBi, UBi, UBj, Istr, Iend, Jrec
 
       real(r8), intent(in) :: Finp(LBi:UBi,UBj,2)
@@ -64,14 +66,19 @@
 !
       Lonerec=Linfo(3,ifield,ng)
       Tindex=Iinfo(5,ifield,ng)
-      update=.true.
+      update=.TRUE.
 !
 !  Set linear-interpolation factors.
 !
       it1=3-Tindex
       it2=Tindex
-      fac1=Tintrp(it2,ifield,ng)-time(ng)
-      fac2=time(ng)-Tintrp(it1,ifield,ng)
+#ifdef CRAY
+      fac1=ANINT(Tintrp(it2,ifield,ng)-time(ng))
+      fac2=ANINT(time(ng)-Tintrp(it1,ifield,ng))
+#else
+      fac1=ANINT(Tintrp(it2,ifield,ng)-time(ng),r8)
+      fac2=ANINT(time(ng)-Tintrp(it1,ifield,ng),r8)
+#endif
 !
 !  Load time-invariant data. Time interpolation is not necessary.
 !
@@ -98,7 +105,7 @@
 !  read in at the next time step.
 !
         IF ((time(ng)+dt(ng)).gt.Tintrp(it2,ifield,ng)) THEN
-          synchro_flag(ng)=.true.
+          synchro_flag(ng)=.TRUE.
         END IF
 !
 !  Unable to interpolate field.  Activate error flag to quit.
@@ -113,7 +120,7 @@
      &          /,14x,'TDAYS   = ',f15.4,2x,'TEND    = ',f15.4,         &
      &          /,14x,'TINTRP1 = ',f15.4,2x,'TINTRP2 = ',f15.4)
         exit_flag=2
-        update=.false.
+        update=.FALSE.
       END IF
       RETURN
       END SUBROUTINE set_ngfld

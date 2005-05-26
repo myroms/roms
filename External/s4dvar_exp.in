@@ -1,0 +1,175 @@
+!  4DVAR assimilation input parameters.
+!
+!==============================================================================
+!  Copyright (c) 2005 ROMS/TOMS Group, version 2.2                          ===
+!========================================================= Hernan G. Arango ===
+!                                                                             !
+! Input parameters can be entered in ANY order, provided that the parameter   !
+! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
+! symbols. Any comment lines are allowed and must begin with an exclamation   !
+! mark (!) in column one.  Comments may  appear to the right of a parameter   !
+! specification to improve documentation.  All comments will ignored during   !
+! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
+! a parameter specification are allowed and must be preceded by a backslash   !
+! (\).  In some instances, more than one value is required for a parameter.   !
+! If fewer values are provided, the  last value  is assigned for the entire   !
+! parameter array.  The multiplication symbol (*),  without blank spaces in   !
+! between, is allowed for a parameter specification.  For example, in a two   !
+! grids nested application:                                                   !
+!                                                                             !
+!    AKT_BAK == 2*1.0d-6  2*5.0d-6              ! m2/s                        !
+!                                                                             !
+! indicates that the first two entries of array AKT_BAK,  in fortran column-  !
+! major order, will have the same value of "1.0d-6" for grid 1,  whereas the  !
+! next two entries will have the same value of "5.0d-6" for grid 2.           !
+!                                                                             !
+! In multiple levels of nesting and/or multiple connected domains  step-ups,  !
+! "Ngrids" entries are expected for some of these parameters.  In such case,  !
+! the order of the entries for a parameter is extremely important.  It  must  !
+! follow the same order (1:Ngrids) as in the state variable declaration. The  !
+! USER may follow the above guidelines for specifying his/her values.  These  !
+! parameters are marked by "==" plural symbol after the KEYWORD.              !
+!                                                                             !
+!==============================================================================
+!
+
+! Switch to recycle records in initial file, [1:Ngrids].
+
+   LcycleINI == T
+
+! Descent algorithm parameters.
+
+     NiterSD =  5
+         ICG =  1
+     CGstepI =  1.0d-4
+       CGtol =  0.1d+2
+
+! Cosfunction convergence factor.
+
+  CostFunFac =  0.05d0
+
+! Covariance spatial (horizontal; isotropic) decorrelation scale.
+
+      Ldecay == 50.0d+3                            ! meter
+
+! Time-step for diffusion equation space convolution.
+
+       DTdif == 1.25d+7                            ! second (for 50 steps)
+
+! Polynomial coefficients for Brunt-Vaisala frequency squared (N2) used for
+! normalization of tracer misfit cost function. The first value in each line
+! is the polynomial order whereas the second value is the polynomial expansion
+! coefficient. The values can be entered in any order, [0:npN2] values are
+! expected.  The coeficients are for an analytical exponential profile.
+
+        npN2 =  9                                  ! degree of polynomial
+
+    Pcoef_N2 =   ORDER        COEFFICIENT
+
+                   0          2.34970102478046e-06
+                   1          2.17979527349477e-09
+                   2          9.99524745008986e-13
+                   3          2.70928382681159e-16
+                   4          4.31272221780847e-20
+                   5          3.10612906190472e-24
+                   6         -9.11591981356765e-29
+                   7         -2.24316632371937e-32
+                   8          6.66875597862928e-37
+                   9          1.50485102343536e-40
+
+! Input observation file name, [1:Ngrids].
+
+     OBSname == ocean_obs.nc
+
+!
+!  GLOSSARY:
+!  =========
+!
+!------------------------------------------------------------------------------
+! Switches.
+!------------------------------------------------------------------------------
+!
+!  LcycleINI       Logical switch (T/F) used to recycle time records in output
+!                  initial file.  If TRUE,  only the latest two adjusted
+!                  initial conditions fields are maintained.  If FALSE, all
+!                  initial conditions fields are saved at the end of each
+!                  descent algorithm without recycling.
+!
+!------------------------------------------------------------------------------
+! Descent algorithm parameters.
+!------------------------------------------------------------------------------
+!
+!  NiterSD        Number of iterations between each steepest descent step.
+!                 The descent algorithm is reinitialized every NiterSD
+!                 iterations to avoid searching in directions which have
+!                 been searched previously.
+!
+!  ICG            Conjugate gradient algorithm:
+!
+!                   ICG = 0   Fletcher-Reeves scheme
+!                   ICG = 1   Polak-Riviere scheme
+!
+!  CGstepI        Conjugate gradient algorithm initial step size.
+!
+!  CGtol          Conjugate gradient othogonality tolerance: dot product
+!                 orthogonality between current and previous search.
+!
+!------------------------------------------------------------------------------
+! Misfit cost function convergence
+!------------------------------------------------------------------------------
+!
+!  CostFunFac     Cost function percentage change between succesive
+!                 iterations for convergence.  The inner iteration
+!                 loop is stoped when the following condition is
+!                 false:
+!
+!                 DO WHILE ((inner.le.Ninner).or.
+!    &                      (ABS(CostFunOld(0)-CostFun(0)).le.
+!    &                       CostFunFac*CostFunOld(0)) THEN
+!
+!------------------------------------------------------------------------------
+! Background error covariance parameters.
+!------------------------------------------------------------------------------
+!
+!  Ldecay         Isotropic spatial (horizontal) decorrelation scale (m).
+!
+!  DTdif          Time-step (s) for diffusion equation space convolution.
+!
+!                   For Gaussian (bell-shaped) covariances, an efficient
+!                   diffusion algorithm is used to estimate finite domain
+!                   error covariances via a space "convolution". The number
+!                   of time-steps for the generalized diffusion operator is
+!                   determined by the values of "Ldecay", "DTdif", and
+!                   "Kdif" as follows:
+!
+!                       Nsteps = NINT (Ldecay*Ldecay/(4.0*Kdif*DTdif))
+!
+!                   where "Kdif" is the spatial diffusion coefficient 
+!                   assumed constant and with a value of 1 m2/s.
+!
+!                   The number of convolution steps "Nsteps" is forced to be
+!                   an even number because its associated adjoint operator
+!                   needs to be convoluted for half of the steps only. This
+!                   is achieved by the statement:
+!
+!                       IF (MOD(Nsteps,2).ne.0) Nsteps=Nsteps+1
+!
+!------------------------------------------------------------------------------
+! Parameters for Brunt-Vaisala frequency squared.
+!------------------------------------------------------------------------------
+!
+!  npN2           Order of the polynomial representing the basis functions
+!                 used for N2(z).
+!
+!  Pcoef_N2       Polynomial coefficients for N2(z), (0:npN2) values are
+!                 expected.
+!
+!                 N2(z) = pcoef_N2(0) + pcoef_N2(1)*z + pcoef_N2(2)*z*z + ...
+!
+!------------------------------------------------------------------------------
+!  Input/Output observation NetCDF file (a string with a maximum of eighty
+!  characters).
+!------------------------------------------------------------------------------
+!
+!  OBSname        Input/Output observations data file name (NetCDF).
+!

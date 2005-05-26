@@ -2,7 +2,7 @@
       MODULE mod_mixing
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Horizontal and vertical mixing coefficients:                        !
@@ -50,7 +50,9 @@
         implicit none
 
         TYPE T_MIXING
-
+!
+!  Nonlinear model state.
+!
 #ifdef SOLVE3D
 # if defined LMD_SKPP || defined SOLAR_SOURCE
           integer,  pointer :: Jwtype(:,:)
@@ -116,6 +118,47 @@
 # endif
 #endif
 
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+# ifdef SOLVE3D
+          real(r8), pointer :: tl_Akv(:,:,:)
+          real(r8), pointer :: tl_Akt(:,:,:,:)
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+# ifdef SOLVE3D
+          real(r8), pointer :: ad_Akv(:,:,:)
+          real(r8), pointer :: ad_Akt(:,:,:,:)
+# endif
+#endif
+
+#if defined FORWARD_READ && \
+   (defined TANGENT || defined TL_IOMS || defined ADJOINT)
+# if defined LMD_MIXING || defined GLS_MIXING || defined MY25_MIXING
+!
+!  Latest two records of the nonlinear trajectory used to interpolate
+!  the background state in the tangent linear and adjoint models.
+!
+          real(r8), pointer :: AkvG(:,:,:,:)
+          real(r8), pointer :: AktG(:,:,:,:,:)
+# endif
+# if defined LMD_MIXING
+          real(r8), pointer :: hsblG(:,:,:)
+# endif
+# if defined LMD_BKPP
+          real(r8), pointer :: hbblG(:,:,:)
+# endif
+# if defined LMD_NONLOCAL
+          real(r8), pointer :: ghatsG(:,:,:,:)
+# endif
+#endif
+
         END TYPE T_MIXING
 
         TYPE (T_MIXING), allocatable :: MIXING(:)
@@ -125,7 +168,7 @@
       SUBROUTINE allocate_mixing (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates all variables in the module for all nested   !
@@ -145,6 +188,8 @@
 !
       IF (ng.eq.1) allocate ( MIXING(Ngrids) )
 ! 
+!  Nonlinear model state.
+!
 #if defined UV_VIS2 || !defined SOLVE3D
       allocate ( MIXING(ng) % visc2_p(LBi:UBi,LBj:UBj) )
       allocate ( MIXING(ng) % visc2_r(LBi:UBi,LBj:UBj) )
@@ -219,13 +264,54 @@
 # endif
 #endif
 
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+# ifdef SOLVE3D
+      allocate ( MIXING(ng) % tl_Akv(LBi:UBi,LBj:UBj,0:N(ng)) )
+      allocate ( MIXING(ng) % tl_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT) )
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+# ifdef SOLVE3D
+      allocate ( MIXING(ng) % ad_Akv(LBi:UBi,LBj:UBj,0:N(ng)) )
+      allocate ( MIXING(ng) % ad_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT) )
+# endif
+#endif
+
+#if defined FORWARD_READ && \
+   (defined TANGENT || defined TL_IOMS || defined ADJOINT)
+# if defined LMD_MIXING || defined GLS_MIXING || defined MY25_MIXING
+!
+!  Latest two records of the nonlinear trajectory used to interpolate
+!  the background state in the tangent linear and adjoint models.
+!
+      allocate ( MIXING(ng) % AkvG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+      allocate ( MIXING(ng) % AktG(LBi:UBi,LBj:UBj,0:N(ng),2,NAT) )
+# endif
+# if defined LMD_MIXING
+      allocate ( MIXING(ng) % hsblG(LBi:UBi,LBj:UBj,2) )
+# endif
+# if defined LMD_BKPP
+      allocate ( MIXING(ng) % hbblG(LBi:UBi,LBj:UBj,2) )
+# endif
+# if defined LMD_NONLOCAL
+      allocate ( MIXING(ng) % ghatsG(LBi:UBi,LBj:UBj,0:N(ng),2) )
+# endif
+#endif
+
       RETURN
       END SUBROUTINE allocate_mixing
 
       SUBROUTINE initialize_mixing (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates and initializes all variables in module      !
@@ -282,6 +368,8 @@
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
+!
+!  Nonlinear model state.
 !
 #if defined UV_VIS2 || !defined SOLVE3D
       MIXING(ng) % visc2_p(Imin:Imax,Jmin:Jmax) = visc2(ng)
@@ -373,6 +461,47 @@
 #  endif
 # endif
 
+#endif
+
+#if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+# ifdef SOLVE3D
+      MIXING(ng) % tl_Akv(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
+      MIXING(ng) % tl_Akt(Imin:Imax,Jmin:Jmax,0:N(ng),1:NAT) = IniVal
+# endif
+#endif
+
+#ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+# ifdef SOLVE3D
+      MIXING(ng) % ad_Akv(Imin:Imax,Jmin:Jmax,0:N(ng)) = IniVal
+      MIXING(ng) % ad_Akt(Imin:Imax,Jmin:Jmax,0:N(ng),1:NAT) = IniVal
+# endif
+#endif
+
+#if defined FORWARD_READ && \
+   (defined TANGENT || defined TL_IOMS || defined ADJOINT)
+# if defined LMD_MIXING || defined GLS_MIXING || defined MY25_MIXING
+!
+!  Latest two records of the nonlinear trajectory used to interpolate
+!  the background state in the tangent linear and adjoint models.
+!
+      MIXING(ng) % AkvG(Imin:Imax,Jmin:Jmax,0:N(ng),1:2) = IniVal
+      MIXING(ng) % AktG(Imin:Imax,Jmin:Jmax,0:N(ng),1:2,1:NAT) = IniVal
+# endif
+# if defined LMD_MIXING
+      MIXING(ng) % hsblG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+# endif
+# if defined LMD_BKPP
+      MIXING(ng) % hbblG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+# endif
+# if defined LMD_NONLOCAL
+      MIXING(ng) % ghatsG(Imin:Imax,Jmin:Jmax,0:N(ng),1:2) = IniVal
+# endif
 #endif
 
       RETURN

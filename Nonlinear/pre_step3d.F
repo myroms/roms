@@ -1,10 +1,10 @@
 #include "cppdefs.h"
       MODULE pre_step3d_mod
-#ifdef SOLVE3D
+#if defined NONLINEAR && defined SOLVE3D
 # define NEUMANN
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine initialize computations for new time step of the    !
@@ -54,7 +54,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 22)
+      CALL wclock_on (ng, iNLM, 22)
 # endif
       CALL pre_step3d_tile (ng, Istr, Iend, Jstr, Jend,                 &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -72,11 +72,11 @@
      &                      GRID(ng) % umask,                           &
      &                      GRID(ng) % vmask,                           &
 # endif
+     &                      GRID(ng) % pm,                              &
+     &                      GRID(ng) % pn,                              &
      &                      GRID(ng) % Hz,                              &
      &                      GRID(ng) % Huon,                            &
      &                      GRID(ng) % Hvom,                            &
-     &                      GRID(ng) % pm,                              &
-     &                      GRID(ng) % pn,                              &
      &                      GRID(ng) % z_r,                             &
      &                      GRID(ng) % z_w,                             &
      &                      FORCES(ng) % btflx,                         &
@@ -109,7 +109,7 @@
      &                      OCEAN(ng) % u,                              &
      &                      OCEAN(ng) % v)
 # ifdef PROFILE
-      CALL wclock_off (ng, 22)
+      CALL wclock_off (ng, iNLM, 22)
 # endif
       RETURN
       END SUBROUTINE pre_step3d
@@ -119,12 +119,15 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            nrhs, nstp, nnew,                     &
 # ifdef TS_PSOURCE
-     &                            Nsrc, Lsrc, Isrc, Jsrc, Dsrc, Tsrc,   &
+     &                            Nsrc, Lsrc, Isrc, Jsrc, Dsrc,         &
+     &                            Tsrc,                                 &
 # endif
 # ifdef MASKING
      &                            rmask, umask, vmask,                  &
 # endif
-     &                            Hz, Huon, Hvom, pm, pn, z_r, z_w,     &
+     &                            pm, pn,                               &
+     &                            Hz, Huon, Hvom,                       &
+     &                            z_r, z_w,                             &
      &                            btflx, bustr, bvstr,                  &
      &                            stflx, sustr, svstr,                  &
 # ifdef SOLAR_SOURCE
@@ -134,7 +137,8 @@
 # ifdef LMD_NONLOCAL
      &                            ghats,                                &
 # endif
-     &                            W, ru, rv,                            &
+     &                            W,                                    &
+     &                            ru, rv,                               &
 # ifdef DIAGNOSTICS_TS
      &                            DiaTwrk,                              &
 # endif
@@ -173,11 +177,11 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
+      real(r8), intent(in) :: pm(LBi:,LBj:)
+      real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: Huon(LBi:,LBj:,:)
       real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
-      real(r8), intent(in) :: pm(LBi:,LBj:)
-      real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: btflx(LBi:,LBj:,:)
@@ -190,7 +194,7 @@
       real(r8), intent(in) :: srflx(LBi:,LBj:)
 #  endif
 #  ifdef SUN
-      real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)     ! explicit
+      real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
 #  else
       real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
 #  endif
@@ -211,13 +215,15 @@
       real(r8), intent(inout) :: DiaRV(LBi:,LBj:,:,:,:)
 #  endif
 #  ifdef SUN
-      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng)) ! explicit
+      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 #  else
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
 #  endif
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
+
 # else
+
 #  ifdef TS_PSOURCE
       integer, intent(in) :: Nsrc
       logical, intent(in) :: Lsrc(Msrc,NT(ng))
@@ -231,11 +237,11 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
+      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: btflx(LBi:UBi,LBj:UBj,NT(ng))
@@ -256,7 +262,7 @@
       real(r8), intent(in) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(in) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
 #  ifdef DIAGNOSTICS_TS
-      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),
+      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),  &
      &                                   NDT)
 #  endif
 #  ifdef DIAGNOSTICS_UV
@@ -278,14 +284,15 @@
       real(r8), parameter :: Gamma = 1.0_r8/6.0_r8
       real(r8), parameter :: eps = 1.0E-16_r8
 
-      real(r8) :: cff, cff1, cff2, cff3, fac1, fac2
+      real(r8) :: cff, cff1, cff2, cff3, cff4
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
 
+# ifdef SOLAR_SOURCE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: swdk
-
+# endif
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: curv
@@ -298,7 +305,7 @@
 !=======================================================================
 !  Tracer equation(s).
 !=======================================================================
-!
+
 #  ifdef SOLAR_SOURCE
 !
 !  Compute fraction of the solar shortwave radiation, "swdk"
@@ -319,6 +326,7 @@
         END DO
       END DO
 #  endif
+#  ifndef TS_MPDATA
 !
 !-----------------------------------------------------------------------
 !  Compute intermediate tracer at n+1/2 time-step, t(i,j,k,3,itrc).
@@ -327,37 +335,53 @@
 !  Compute time rate of change of intermediate tracer due to
 !  horizontal advection.
 !
-      DO itrc=1,NT(ng)
-        DO k=1,N(ng)
-#  ifdef TS_C2HADVECTION
+      T_LOOP1 :DO itrc=1,NT(ng)
+        K_LOOP: DO k=1,N(ng)
+
+#   if defined TS_C2HADVECTION
+!
+!  Second-order, centered differences horizontal advective fluxes.
+!
           DO j=Jstr,Jend
             DO i=Istr,Iend+1
               FX(i,j)=Huon(i,j,k)*                                      &
-     &                0.5_r8*(t(i-1,j,k,nstp,itrc)+t(i,j,k,nstp,itrc))
+     &                0.5_r8*(t(i-1,j,k,nstp,itrc)+                     &
+     &                        t(i  ,j,k,nstp,itrc))
             END DO
           END DO
           DO j=Jstr,Jend+1
             DO i=Istr,Iend
               FE(i,j)=Hvom(i,j,k)*                                      &
-     &                0.5_r8*(t(i,j-1,k,nstp,itrc)+t(i,j,k,nstp,itrc))
+     &                0.5_r8*(t(i,j-1,k,nstp,itrc)+                     &
+     &                        t(i,j  ,k,nstp,itrc))
             END DO
           END DO
-#  else
-#   ifdef EW_PERIODIC
-#    define I_RANGE Istr-1,Iend+2
 #   else
-#    define I_RANGE MAX(Istr-1,1),MIN(Iend+2,Lm(ng)+1)
-#   endif
+!
+#    if defined TS_U3HADVECTION
+!  Third-order, uptream-biased horizontal advective fluxes.
+#    elif defined TS_A4HADVECTION
+!  Fourth-order, Akima horizontal advective fluxes.
+#    else
+!  Fourth-order, centered differences horizontal advective fluxes.
+#    endif
+!
+#    ifdef EW_PERIODIC
+#     define I_RANGE Istr-1,Iend+2
+#    else
+#     define I_RANGE MAX(Istr-1,1),MIN(Iend+2,Lm(ng)+1)
+#    endif
           DO j=Jstr,Jend
             DO i=I_RANGE
-              FX(i,j)=(t(i,j,k,nstp,itrc)-t(i-1,j,k,nstp,itrc))
-#   ifdef MASKING
+              FX(i,j)=t(i  ,j,k,nstp,itrc)-                             &
+     &                t(i-1,j,k,nstp,itrc)
+#    ifdef MASKING
               FX(i,j)=FX(i,j)*umask(i,j)
-#   endif
+#    endif
             END DO
           END DO
-#   undef I_RANGE
-#   ifndef EW_PERIODIC
+#    undef I_RANGE
+#    ifndef EW_PERIODIC
           IF (WESTERN_EDGE) THEN
             DO j=Jstr,Jend
               FX(Istr-1,j)=FX(Istr,j)
@@ -368,22 +392,22 @@
               FX(Iend+2,j)=FX(Iend+1,j)
             END DO
           END IF
-#   endif
+#    endif
 !
           DO j=Jstr,Jend
             DO i=Istr-1,Iend+1
-#   if defined TS_U3HADVECTION
+#    if defined TS_U3HADVECTION
               curv(i,j)=FX(i+1,j)-FX(i,j)
-#   elif defined TS_A4HADVECTION
+#    elif defined TS_A4HADVECTION
               cff=2.0_r8*FX(i+1,j)*FX(i,j)
               IF (cff.gt.eps) THEN
                 grad(i,j)=cff/(FX(i+1,j)+FX(i,j))
               ELSE
                 grad(i,j)=0.0_r8
               END IF
-#   else
+#    else
               grad(i,j)=0.5_r8*(FX(i+1,j)+FX(i,j))
-#   endif
+#    endif
             END DO
           END DO
 !
@@ -391,34 +415,38 @@
           cff2=1.0_r8/3.0_r8
           DO j=Jstr,Jend
             DO i=Istr,Iend+1
-#   ifdef TS_U3HADVECTION
+#    ifdef TS_U3HADVECTION
               FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,nstp,itrc)+t(i,j,k,nstp,itrc))-        &
+     &                (t(i-1,j,k,nstp,itrc)+                            &
+     &                 t(i  ,j,k,nstp,itrc))-                           &
      &                cff1*(curv(i-1,j)*MAX(Huon(i,j,k),0.0_r8)+        &
      &                      curv(i  ,j)*MIN(Huon(i,j,k),0.0_r8))
-#   else
+#    else
               FX(i,j)=Huon(i,j,k)*0.5_r8*                               &
-     &                (t(i-1,j,k,nstp,itrc)+t(i,j,k,nstp,itrc)-         &
-     &                 cff2*(grad(i,j)-grad(i-1,j)))
-#   endif
+     &                (t(i-1,j,k,nstp,itrc)+                            &
+     &                 t(i  ,j,k,nstp,itrc)-                            &
+     &                 cff2*(grad(i  ,j)-                               &
+     &                       grad(i-1,j)))
+#    endif
             END DO
           END DO
 !
-#   ifdef NS_PERIODIC
-#    define J_RANGE Jstr-1,Jend+2
-#   else
-#    define J_RANGE MAX(Jstr-1,1),MIN(Jend+2,Mm(ng)+1)
-#   endif
+#    ifdef NS_PERIODIC
+#     define J_RANGE Jstr-1,Jend+2
+#    else
+#     define J_RANGE MAX(Jstr-1,1),MIN(Jend+2,Mm(ng)+1)
+#    endif
           DO j=J_RANGE
             DO i=Istr,Iend
-              FE(i,j)=(t(i,j,k,nstp,itrc)-t(i,j-1,k,nstp,itrc))
-#   ifdef MASKING
+              FE(i,j)=t(i,j  ,k,nstp,itrc)-                             &
+     &                t(i,j-1,k,nstp,itrc)
+#    ifdef MASKING
               FE(i,j)=FE(i,j)*vmask(i,j)
-#   endif
+#    endif
             END DO
           END DO
-#   undef J_RANGE
-#   ifndef NS_PERIODIC
+#    undef J_RANGE
+#    ifndef NS_PERIODIC
           IF (SOUTHERN_EDGE) THEN
             DO i=Istr,Iend
               FE(i,Jstr-1)=FE(i,Jstr)
@@ -429,22 +457,22 @@
               FE(i,Jend+2)=FE(i,Jend+1)
             END DO
           END IF
-#   endif
+#    endif
 !
           DO j=Jstr-1,Jend+1
             DO i=Istr,Iend
-#   if defined TS_U3HADVECTION
+#    if defined TS_U3HADVECTION
               curv(i,j)=FE(i,j+1)-FE(i,j)
-#   elif defined TS_A4HADVECTION
+#    elif defined TS_A4HADVECTION
               cff=2.0_r8*FE(i,j+1)*FE(i,j)
               IF (cff.gt.eps) THEN
                 grad(i,j)=cff/(FE(i,j+1)+FE(i,j))
               ELSE
                 grad(i,j)=0.0_r8
               END IF
-#   else
+#    else
               grad(i,j)=0.5_r8*(FE(i,j+1)+FE(i,j))
-#   endif
+#    endif
             END DO
           END DO
 !
@@ -452,20 +480,24 @@
           cff2=1.0_r8/3.0_r8
           DO j=Jstr,Jend+1
             DO i=Istr,Iend
-#   ifdef TS_U3HADVECTION
+#    ifdef TS_U3HADVECTION
               FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,nstp,itrc)+t(i,j,k,nstp,itrc))-        &
+     &                (t(i,j-1,k,nstp,itrc)+                            &
+     &                 t(i,j  ,k,nstp,itrc))-                           &
      &                cff1*(curv(i,j-1)*MAX(Hvom(i,j,k),0.0_r8)+        &
      &                      curv(i,j  )*MIN(Hvom(i,j,k),0.0_r8))
-#   else
+#    else
               FE(i,j)=Hvom(i,j,k)*0.5_r8*                               &
-     &                (t(i,j-1,k,nstp,itrc)+t(i,j,k,nstp,itrc)-         &
-     &                 cff2*(grad(i,j)-grad(i,j-1)))
-#   endif
+     &                (t(i,j-1,k,nstp,itrc)+                            &
+     &                 t(i,j  ,k,nstp,itrc)-                            &
+     &                 cff2*(grad(i,j  )-                               &
+     &                       grad(i,j-1)))
+#    endif
             END DO
           END DO
-#  endif
-#  ifdef TS_PSOURCE
+#   endif
+
+#   ifdef TS_PSOURCE
 !
 !  Apply tracers point sources to the horizontal advection terms.
 !
@@ -482,7 +514,7 @@
               END IF
             END IF
           END DO
-#  endif
+#   endif
 !
 !  Time-step horizontal advection (m Tunits).
 !
@@ -500,17 +532,166 @@
               t(i,j,k,3,itrc)=Hz(i,j,k)*(cff1*t(i,j,k,nstp,itrc)+       &
      &                                   cff2*t(i,j,k,nnew,itrc))-      &
      &                        cff*pm(i,j)*pn(i,j)*                      &
-     &                        (FX(i+1,j)-FX(i,j)+FE(i,j+1)-FE(i,j))
+     &                        (FX(i+1,j)-FX(i,j)+                       &
+     &                         FE(i,j+1)-FE(i,j))
             END DO
           END DO
+        END DO K_LOOP
+      END DO T_LOOP1
+!
+!  Compute artificial continuity equation (same for all tracers) and
+!  load it into private array DC (1/m). Notice pipelined J-loop.
+!
+      J_LOOP1 : DO j=Jstr,Jend
+        IF (iic(ng).eq.ntfirst) THEN
+          cff=0.5_r8*dt(ng)
+        ELSE
+          cff=(1.0_r8-Gamma)*dt(ng)
+        END IF
+        DO k=1,N(ng)
+          DO i=Istr,Iend
+            DC(i,k)=1.0_r8/(Hz(i,j,k)-cff*pm(i,j)*pn(i,j)*              &
+     &                      (Huon(i+1,j,k)-Huon(i,j,k)+                 &
+     &                       Hvom(i,j+1,k)-Hvom(i,j,k)+                 &
+     &                      (W(i,j,k)-W(i,j,k-1))))
+          END DO
         END DO
-      END DO
 !
-!  Compute artificial continuity equation (same for all tracers).
-!  Notice that the J-loop is pipelined from here to the end.
+!-----------------------------------------------------------------------
+!  Compute time rate of change of intermediate tracer due to vertical
+!  advection.  Impose artificial continuity equation.
+!-----------------------------------------------------------------------
 !
-      DO j=Jstr,Jend
-        IF (j.le.Jend) THEN
+        T_LOOP2: DO itrc=1,NT(ng)
+
+#   ifdef TS_SVADVECTION
+!
+!  Build conservative parabolic splines for the vertical derivatives
+!  "FC" of the tracer.  Then, the interfacial "FC" values are
+!  converted to vertical advective flux.
+!
+          DO i=Istr,Iend
+#    ifdef NEUMANN
+            FC(i,0)=1.5_r8*t(i,j,1,nstp,itrc)
+            CF(i,1)=0.5_r8
+#    else
+            FC(i,0)=2.0_r8*t(i,j,1,nstp,itrc)
+            CF(i,1)=1.0_r8
+#    endif
+          END DO
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              cff=1.0_r8/(2.0_r8*Hz(i,j,k)+                             &
+     &                    Hz(i,j,k+1)*(2.0_r8-CF(i,k)))
+              CF(i,k+1)=cff*Hz(i,j,k)
+              FC(i,k)=cff*(3.0_r8*(Hz(i,j,k  )*t(i,j,k+1,nstp,itrc)+    &
+     &                             Hz(i,j,k+1)*t(i,j,k  ,nstp,itrc))-   &
+     &                     Hz(i,j,k+1)*FC(i,k-1))
+            END DO
+          END DO
+          DO i=Istr,Iend
+#    ifdef NEUMANN
+            FC(i,N(ng))=(3.0_r8*t(i,j,N(ng),nstp,itrc)-                 &
+     &                   FC(i,N(ng)-1))/(2.0_r8-CF(i,N(ng)))
+#    else
+            FC(i,N(ng))=(2.0_r8*t(i,j,N(ng),nstp,itrc)-                 &
+     &                   FC(i,N(ng)-1))/(1.0_r8-CF(i,N(ng)))
+#    endif
+          END DO
+          DO k=N(ng)-1,0,-1
+            DO i=Istr,Iend
+              FC(i,k)=FC(i,k)-CF(i,k+1)*FC(i,k+1)
+              FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
+            END DO
+          END DO
+          DO i=Istr,Iend
+            FC(i,N(ng))=0.0_r8
+            FC(i,0)=0.0_r8
+          END DO
+#   elif defined TS_A4VADVECTION
+!
+!  Fourth-order, Akima vertical advective flux.
+!
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              FC(i,k)=t(i,j,k+1,nstp,itrc)-                             &
+     &                t(i,j,k  ,nstp,itrc)
+            END DO
+          END DO
+          DO i=Istr,Iend
+            FC(i,0)=FC(i,1)
+            FC(i,N(ng))=FC(i,N(ng)-1)
+          END DO
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+              cff=2.0_r8*FC(i,k)*FC(i,k-1)
+              IF (cff.gt.eps) THEN
+                CF(i,k)=cff/(FC(i,k)+FC(i,k-1))
+              ELSE
+                CF(i,k)=0.0_r8
+              END IF
+            END DO
+          END DO
+          cff1=1.0_r8/3.0_r8
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              FC(i,k)=W(i,j,k)*                                         &
+     &                0.5_r8*(t(i,j,k  ,nstp,itrc)+                     &
+     &                        t(i,j,k+1,nstp,itrc)-                     &
+     &                        cff1*(CF(i,k+1)-CF(i,k)))
+            END DO
+          END DO
+          DO i=Istr,Iend
+            FC(i,0)=0.0_r8
+            FC(i,N(ng))=0.0_r8
+          END DO
+#   elif defined TS_C2VADVECTION
+!
+!  Second-order, central differences vertical advective flux.
+!
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              FC(i,k)=W(i,j,k)*                                         &
+     &                0.5_r8*(t(i,j,k  ,nstp,itrc)+                     &
+     &                        t(i,j,k+1,nstp,itrc))
+            END DO
+          END DO
+          DO i=Istr,Iend
+            FC(i,0)=0.0_r8
+            FC(i,N(ng))=0.0_r8
+          END DO
+#   else
+!
+!  Fourth-order, central differences vertical advective flux.
+!
+          cff1=0.5_r8
+          cff2=7.0_r8/12.0_r8
+          cff3=1.0_r8/12.0_r8
+          DO k=2,N(ng)-2
+            DO i=Istr,Iend
+              FC(i,k)=W(i,j,k)*                                         &
+     &                (cff2*(t(i,j,k  ,nstp,itrc)+                      &
+     &                       t(i,j,k+1,nstp,itrc))-                     &
+     &                 cff3*(t(i,j,k-1,nstp,itrc)+                      &
+     &                       t(i,j,k+2,nstp,itrc)))
+            END DO
+          END DO
+          DO i=Istr,Iend
+            FC(i,0)=0.0_r8
+            FC(i,1)=W(i,j,1)*                                           &
+     &              (cff1*t(i,j,1,nstp,itrc)+                           &
+     &               cff2*t(i,j,2,nstp,itrc)-                           &
+     &               cff3*t(i,j,3,nstp,itrc))
+            FC(i,N(ng)-1)=W(i,j,N(ng)-1)*                               &
+     &                    (cff1*t(i,j,N(ng)  ,nstp,itrc)+               &
+     &                     cff2*t(i,j,N(ng)-1,nstp,itrc)-               &
+     &                     cff3*t(i,j,N(ng)-2,nstp,itrc))
+            FC(i,N(ng))=0.0_r8
+          END DO
+#   endif
+!
+! Time-step vertical advection of tracers (Tunits).
+!
           IF (iic(ng).eq.ntfirst) THEN
             cff=0.5_r8*dt(ng)
           ELSE
@@ -518,150 +699,15 @@
           END IF
           DO k=1,N(ng)
             DO i=Istr,Iend
-              DC(i,k)=1.0_r8/(Hz(i,j,k)-cff*pm(i,j)*pn(i,j)*            &
-     &                        (Huon(i+1,j,k)-Huon(i,j,k)+               &
-     &                         Hvom(i,j+1,k)-Hvom(i,j,k)+               &
-     &                        (W(i,j,k)-W(i,j,k-1))))
+              cff1=cff*pm(i,j)*pn(i,j)
+              t(i,j,k,3,itrc)=DC(i,k)*                                  &
+     &                        (t(i,j,k,3,itrc)-                         &
+     &                         cff1*(FC(i,k)-FC(i,k-1)))
             END DO
           END DO
-!
-!-----------------------------------------------------------------------
-!  Compute time rate of change of intermediate tracer due to vertical
-!  advection.  Impose artificial continuity equation.
-!-----------------------------------------------------------------------
-!
-          DO itrc=1,NT(ng)
-#  ifdef TS_SVADVECTION
-!
-!  Build conservative parabolic splines for the vertical derivatives
-!  "FC" of the tracer.  Then, the interfacial "FC" values are
-!  converted to vertical advective fluxes.
-!
-            DO i=Istr,Iend
-#   ifdef NEUMANN
-              FC(i,0)=1.5_r8*t(i,j,1,nstp,itrc)
-              CF(i,1)=0.5_r8
-#   else
-              FC(i,0)=2.0_r8*t(i,j,1,nstp,itrc)
-              CF(i,1)=1.0_r8
-#   endif
-            END DO
-            DO k=1,N(ng)-1
-              DO i=Istr,Iend
-                cff=1.0_r8/(2.0_r8*Hz(i,j,k)+                           &
-     &                      Hz(i,j,k+1)*(2.0_r8-CF(i,k)))
-                CF(i,k+1)=cff*Hz(i,j,k)
-                FC(i,k)=cff*(3.0_r8*(Hz(i,j,k  )*t(i,j,k+1,nstp,itrc)+  &
-     &                               Hz(i,j,k+1)*t(i,j,k  ,nstp,itrc))- &
-     &                       Hz(i,j,k+1)*FC(i,k-1))
-              END DO
-            END DO
-            DO i=Istr,Iend
-#   ifdef NEUMANN
-              FC(i,N(ng))=(3.0_r8*t(i,j,N(ng),nstp,itrc)-               &
-     &                     FC(i,N(ng)-1))/(2.0_r8-CF(i,N(ng)))
-#   else
-              FC(i,N(ng))=(2.0_r8*t(i,j,N(ng),nstp,itrc)-               &
-     &                     FC(i,N(ng)-1))/(1.0_r8-CF(i,N(ng)))
-#   endif
-            END DO
-            DO k=N(ng)-1,0,-1
-              DO i=Istr,Iend
-                FC(i,k)=FC(i,k)-CF(i,k+1)*FC(i,k+1)
-                FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,N(ng))=0.0_r8
-              FC(i,0)=0.0_r8
-            END DO
-#  elif defined TS_A4VADVECTION
-            DO k=1,N(ng)-1
-              DO i=Istr,Iend
-                FC(i,k)=t(i,j,k+1,nstp,itrc)-t(i,j,k,nstp,itrc)
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,0)=FC(i,1)
-              FC(i,N(ng))=FC(i,N(ng)-1)
-            END DO
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                cff=2.0_r8*FC(i,k)*FC(i,k-1)
-                IF (cff.gt.eps) THEN
-                  CF(i,k)=cff/(FC(i,k)+FC(i,k-1))
-                ELSE
-                  CF(i,k)=0.0_r8
-                END IF
-              END DO
-            END DO
-            cff1=1.0_r8/3.0_r8
-            DO k=1,N(ng)-1
-              DO i=Istr,Iend
-                FC(i,k)=W(i,j,k)*                                       &
-     &                  0.5_r8*(t(i,j,k  ,nstp,itrc)+                   &
-     &                          t(i,j,k+1,nstp,itrc)-                   &
-     &                          cff1*(CF(i,k+1)-CF(i,k)))
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,0)=0.0_r8
-              FC(i,N(ng))=0.0_r8
-            END DO
-#  elif defined TS_C2VADVECTION
-            DO k=1,N(ng)-1
-              DO i=Istr,Iend
-                FC(i,k)=W(i,j,k)*                                       &
-     &                  0.5_r8*(t(i,j,k  ,nstp,itrc)+                   &
-     &                          t(i,j,k+1,nstp,itrc))
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,0)=0.0_r8
-              FC(i,N(ng))=0.0_r8
-            END DO
-#  else
-            cff1=0.5_r8
-            cff2=7.0_r8/12.0_r8
-            cff3=1.0_r8/12.0_r8
-            DO k=2,N(ng)-2
-              DO i=Istr,Iend
-                FC(i,k)=W(i,j,k)*(cff2*(t(i,j,k  ,nstp,itrc)+           &
-     &                                  t(i,j,k+1,nstp,itrc))-          &
-     &                            cff3*(t(i,j,k-1,nstp,itrc)+           &
-     &                                  t(i,j,k+2,nstp,itrc)))
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,0)=0.0_r8
-              FC(i,1)=W(i,j,1)*                                         &
-     &                (cff1*t(i,j,1,nstp,itrc)+                         &
-     &                 cff2*t(i,j,2,nstp,itrc)-                         &
-     &                 cff3*t(i,j,3,nstp,itrc))
-              FC(i,N(ng)-1)=W(i,j,N(ng)-1)*                             &
-     &                      (cff1*t(i,j,N(ng)  ,nstp,itrc)+             &
-     &                       cff2*t(i,j,N(ng)-1,nstp,itrc)-             &
-     &                       cff3*t(i,j,N(ng)-2,nstp,itrc))
-              FC(i,N(ng))=0.0_r8
-            END DO
-#  endif
-!
-! Time-step vertical advection of tracers (Tunits).
-!
-            IF (iic(ng).eq.ntfirst) THEN
-              cff=0.5_r8*dt(ng)
-            ELSE
-              cff=(1.0_r8-Gamma)*dt(ng)
-            END IF
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                t(i,j,k,3,itrc)=DC(i,k)*                                &
-     &                          (t(i,j,k,3,itrc)-                       &
-     &                           cff*pm(i,j)*pn(i,j)*                   &
-     &                           (FC(i,k)-FC(i,k-1)))
-              END DO
-            END DO
-          END DO
+        END DO T_LOOP2
+      END DO J_LOOP1
+#  endif /* !TS_MPDATA */
 !
 !-----------------------------------------------------------------------
 !  Start computation of tracers at n+1 time-step, t(i,j,k,nnew,itrc).
@@ -671,62 +717,65 @@
 !  current time step n, and at horizontal RHO-points and vertical
 !  W-points.
 !
-          cff3=dt(ng)*(1.0_r8-lambda)
-          DO itrc=1,NT(ng)
-            ltrc=MIN(NAT,itrc)
-            DO k=1,N(ng)-1
-              DO i=Istr,Iend
-                FC(i,k)=cff3*Akt(i,j,k,ltrc)*                           &
-     &                  (t(i,j,k+1,nstp,itrc)-t(i,j,k,nstp,itrc))/      &
-     &                  (z_r(i,j,k+1)-z_r(i,j,k))
+      DO j=Jstr,Jend
+        cff3=dt(ng)*(1.0_r8-lambda)
+        DO itrc=1,NT(ng)
+          ltrc=MIN(NAT,itrc)
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              cff=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
+              FC(i,k)=cff3*cff*Akt(i,j,k,ltrc)*                          &
+     &                (t(i,j,k+1,nstp,itrc)-                             &
+     &                 t(i,j,k  ,nstp,itrc))
 #  ifdef LMD_NONLOCAL
 !
 !  Add in the nonlocal transport flux for unstable (convective)
-!  forcing conditions into matrix DC when using the Large et al.
+!  forcing conditions into matrix FC when using the Large et al.
 !  KPP scheme.
 !
-                FC(i,k)=FC(i,k)-dt(ng)*Akt(i,j,k,ltrc)*ghats(i,j,k,ltrc)
+              FC(i,k)=FC(i,k)-dt(ng)*Akt(i,j,k,ltrc)*ghats(i,j,k,ltrc)
 #  endif
-              END DO
             END DO
+          END DO
 #  ifdef SOLAR_SOURCE
 !
 !  Add in incoming solar radiation at interior W-points using decay
 !  decay penetration function based on Jerlow water type.
 !
-            IF (itrc.eq.itemp) THEN
-              DO k=1,N(ng)-1
-                DO i=Istr,Iend
-                  FC(i,k)=FC(i,k)+dt(ng)*srflx(i,j)*swdk(i,j,k)
-                END DO
+          IF (itrc.eq.itemp) THEN
+            DO k=1,N(ng)-1
+              DO i=Istr,Iend
+                FC(i,k)=FC(i,k)+dt(ng)*srflx(i,j)*swdk(i,j,k)
               END DO
-            END IF
+            END DO
+          END IF
 #  endif
 !
 !  Apply bottom and surface tracer flux conditions.
 !
-            DO i=Istr,Iend
-              FC(i,0)=dt(ng)*btflx(i,j,itrc)
-              FC(i,N(ng))=dt(ng)*stflx(i,j,itrc)
-            END DO
+          DO i=Istr,Iend
+            FC(i,0)=dt(ng)*btflx(i,j,itrc)
+            FC(i,N(ng))=dt(ng)*stflx(i,j,itrc)
+          END DO
 !
 !  Compute new tracer field (m Tunits).
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                fac1=Hz(i,j,k)*t(i,j,k,nstp,itrc)
-                fac2=FC(i,k)-FC(i,k-1)
-                t(i,j,k,nnew,itrc)=fac1+fac2
-#  ifdef DIAGNOSTICS_TS
-                DiaTwrk(i,j,k,itrc,iTrate)=fac1
-                DiaTwrk(i,j,k,itrc,iTvdif)=fac2
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+              cff1=Hz(i,j,k)*t(i,j,k,nstp,itrc)
+              cff2=FC(i,k)-FC(i,k-1)
+              t(i,j,k,nnew,itrc)=cff1+cff2
+#  ifdef TS_MPDATA
+              t(i,j,k,3,itrc)=t(i,j,k,nnew,itrc)/Hz(i,j,k)
 #  endif
-              END DO
+#  ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,k,itrc,iTrate)=cff1
+              DiaTwrk(i,j,k,itrc,iTvdif)=cff2
+#  endif
             END DO
           END DO
-        END IF
-# else /* TS_FIXED */
-      DO j=Jstr,Jend
+        END DO
+      END DO
 # endif /* !TS_FIXED */
 !
 !=======================================================================
@@ -737,127 +786,126 @@
 !  current time-step n, and at horizontal U-points and vertical
 !  W-points.
 !
-        IF (j.le.Jend) THEN
-          cff3=dt(ng)*(1.0_r8-lambda)
-          DO k=1,N(ng)-1
-            DO i=IstrU,Iend
-              FC(i,k)=cff3*(u(i,j,k+1,nstp)-u(i,j,k,nstp))*             &
-     &                (Akv(i,j,k)+Akv(i-1,j,k))/                        &
-     &                (z_r(i,j,k+1)+z_r(i-1,j,k+1)-                     &
-     &                 z_r(i,j,k  )-z_r(i-1,j,k  ))
-            END DO
-          END DO
-!
-!  Apply surface and bottom stresses, if so is prescribed.
-!
+      J_LOOP2: DO j=Jstr,Jend
+        cff3=dt(ng)*(1.0_r8-lambda)
+        DO k=1,N(ng)-1
           DO i=IstrU,Iend
-# ifdef BODYFORCE
-            FC(i,0)=0.0_r8
-            FC(i,N(ng))=0.0_r8
-# else
-            FC(i,0)=dt(ng)*bustr(i,j)
-            FC(i,N(ng))=dt(ng)*sustr(i,j)
-# endif
+            cff=1.0_r8/(z_r(i,j,k+1)+z_r(i-1,j,k+1)-                    &
+     &                  z_r(i,j,k  )-z_r(i-1,j,k  ))
+            FC(i,k)=cff3*cff*(u(i,j,k+1,nstp)-u(i,j,k,nstp))*           &
+     &              (Akv(i,j,k)+Akv(i-1,j,k))
           END DO
+        END DO
+!
+!  Apply bottom and surface stresses, if so is prescribed.
+!
+        DO i=IstrU,Iend
+# ifdef BODYFORCE
+          FC(i,0)=0.0_r8
+          FC(i,N(ng))=0.0_r8
+# else
+          FC(i,0)=dt(ng)*bustr(i,j)
+          FC(i,N(ng))=dt(ng)*sustr(i,j)
+# endif
+        END DO
 !
 !  Compute new U-momentum (m m/s).
 !
-          cff=dt(ng)*0.25_r8
-          DO i=IstrU,Iend
-            DC(i,0)=cff*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
+        cff=dt(ng)*0.25_r8
+        DO i=IstrU,Iend
+          DC(i,0)=cff*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
+        END DO
+        indx=3-nrhs
+        IF (iic(ng).eq.ntfirst) THEN
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+              cff1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
+              cff2=FC(i,k)-FC(i,k-1)
+              u(i,j,k,nnew)=cff1+cff2
+# ifdef DIAGNOSTICS_UV
+              DiaU3wrk(i,j,k,M3rate)=cff1
+              DiaU3wrk(i,j,k,M3vvis)=cff2
+              DiaU3wrk(i,j,k,M3pgrd)=0.0_r8
+#  ifdef UV_ADV
+              DiaU3wrk(i,j,k,M3hadv)=0.0_r8
+              DiaU3wrk(i,j,k,M3vadv)=0.0_r8
+#  endif
+#  ifdef UV_COR
+              DiaU3wrk(i,j,k,M3fcor)=0.0_r8
+#  endif
+# endif
+            END DO
           END DO
-          indx=3-nrhs
-          IF (iic(ng).eq.ntfirst) THEN
-            DO k=1,N(ng)
-              DO i=IstrU,Iend
-                fac1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
-                fac2=FC(i,k)-FC(i,k-1)
-                u(i,j,k,nnew)=fac1+fac2
+        ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+              cff1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
+              cff2=FC(i,k)-FC(i,k-1)
+              u(i,j,k,nnew)=cff1-                                       &
+     &                      0.5_r8*DC(i,0)*ru(i,j,k,indx)+              &
+     &                      cff2
 # ifdef DIAGNOSTICS_UV
-                DiaU3wrk(i,j,k,M3rate)=fac1
-                DiaU3wrk(i,j,k,M3vvis)=fac2
-                DiaU3wrk(i,j,k,M3pgrd)=0.0_r8
+              DiaU3wrk(i,j,k,M3rate)=cff1
+              DiaU3wrk(i,j,k,M3vvis)=cff2
+              DiaU3wrk(i,j,k,M3pgrd)=-0.5_r8*DC(i,0)*                   &
+     &                               DiaRU(i,j,k,indx,M3pgrd)
 #  ifdef UV_ADV
-                DiaU3wrk(i,j,k,M3hadv)=0.0_r8
-                DiaU3wrk(i,j,k,M3vadv)=0.0_r8
+              DiaU3wrk(i,j,k,M3hadv)=-0.5_r8*DC(i,0)*                   &
+     &                               DiaRU(i,j,k,indx,M3hadv)
+              DiaU3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                   &
+     &                               DiaRU(i,j,k,indx,M3vadv)
 #  endif
 #  ifdef UV_COR
-                DiaU3wrk(i,j,k,M3fcor)=0.0_r8
-#  endif
-# endif
-              END DO
-            END DO
-          ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
-            DO k=1,N(ng)
-              DO i=IstrU,Iend
-                fac1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
-                fac2=FC(i,k)-FC(i,k-1)
-                u(i,j,k,nnew)=fac1-                                     &
-     &                        0.5_r8*DC(i,0)*ru(i,j,k,indx)+            &
-     &                        fac2
-# ifdef DIAGNOSTICS_UV
-                DiaU3wrk(i,j,k,M3rate)=fac1
-                DiaU3wrk(i,j,k,M3vvis)=fac2
-                DiaU3wrk(i,j,k,M3pgrd)=-0.5_r8*DC(i,0)*                 &
-     &                                 DiaRU(i,j,k,indx,M3pgrd)
-#  ifdef UV_ADV
-                DiaU3wrk(i,j,k,M3hadv)=-0.5_r8*DC(i,0)*                 &
-     &                                 DiaRU(i,j,k,indx,M3hadv)
-                DiaU3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                 &
-     &                                 DiaRU(i,j,k,indx,M3vadv)
-#  endif
-#  ifdef UV_COR
-                DiaU3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                 &
-     &                                 DiaRU(i,j,k,indx,M3fcor)
+              DiaU3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                   &
+     &                               DiaRU(i,j,k,indx,M3fcor)
 #  endif
 #  ifdef BODYFORCE
-                DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)-          &
-     &                                 0.5_r8*DC(i,0)*                  &
-     &                                 DiaRU(i,j,k,indx,M3vvis)
+              DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)-            &
+     &                               0.5_r8*DC(i,0)*                    &
+     &                               DiaRU(i,j,k,indx,M3vvis)
 #  endif
 # endif
-              END DO
             END DO
-          ELSE
-            cff1= 5.0_r8/12.0_r8
-            cff2=16.0_r8/12.0_r8
-            DO k=1,N(ng)
-              DO i=IstrU,Iend
-                fac1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
-                fac2=FC(i,k)-FC(i,k-1)
-                u(i,j,k,nnew)=fac1+                                     &
-     &                        DC(i,0)*(cff1*ru(i,j,k,nrhs)-             &
-     &                                 cff2*ru(i,j,k,indx))+            &
-     &                        fac2
+          END DO
+        ELSE
+          cff1= 5.0_r8/12.0_r8
+          cff2=16.0_r8/12.0_r8
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+              cff3=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
+              cff4=FC(i,k)-FC(i,k-1)
+              u(i,j,k,nnew)=cff3+                                       &
+     &                      DC(i,0)*(cff1*ru(i,j,k,nrhs)-               &
+     &                               cff2*ru(i,j,k,indx))+              &
+     &                      cff4
 # ifdef DIAGNOSTICS_UV
-                DiaU3wrk(i,j,k,M3rate)=fac1
-                DiaU3wrk(i,j,k,M3vvis)=fac2
-                DiaU3wrk(i,j,k,M3pgrd)=DC(i,0)*                         &
-     &                                 (cff1*DiaRU(i,j,k,nrhs,M3pgrd)-  &
-     &                                  cff2*DiaRU(i,j,k,indx,M3pgrd))
+              DiaU3wrk(i,j,k,M3rate)=cff3
+              DiaU3wrk(i,j,k,M3vvis)=cff4
+              DiaU3wrk(i,j,k,M3pgrd)=DC(i,0)*                           &
+     &                               (cff1*DiaRU(i,j,k,nrhs,M3pgrd)-    &
+     &                                cff2*DiaRU(i,j,k,indx,M3pgrd))
 #  ifdef UV_ADV
-                DiaU3wrk(i,j,k,M3hadv)=DC(i,0)*                         &
-     &                                 (cff1*DiaRU(i,j,k,nrhs,M3hadv)-  &
-     &                                  cff2*DiaRU(i,j,k,indx,M3hadv))
-                DiaU3wrk(i,j,k,M3vadv)=DC(i,0)*                         &
-     &                                 (cff1*DiaRU(i,j,k,nrhs,M3vadv)-  &
-     &                                  cff2*DiaRU(i,j,k,indx,M3vadv))
+              DiaU3wrk(i,j,k,M3hadv)=DC(i,0)*                           &
+     &                               (cff1*DiaRU(i,j,k,nrhs,M3hadv)-    &
+     &                                cff2*DiaRU(i,j,k,indx,M3hadv))
+              DiaU3wrk(i,j,k,M3vadv)=DC(i,0)*                           &
+     &                               (cff1*DiaRU(i,j,k,nrhs,M3vadv)-    &
+     &                                cff2*DiaRU(i,j,k,indx,M3vadv))
 #  endif
 #  ifdef UV_COR
-                DiaU3wrk(i,j,k,M3fcor)=DC(i,0)*                         &
-     &                                 (cff1*DiaRU(i,j,k,nrhs,M3fcor)-  &
-     &                                  cff2*DiaRU(i,j,k,indx,M3fcor))
+              DiaU3wrk(i,j,k,M3fcor)=DC(i,0)*                           &
+     &                               (cff1*DiaRU(i,j,k,nrhs,M3fcor)-    &
+     &                                cff2*DiaRU(i,j,k,indx,M3fcor))
 #  endif
 #  ifdef BODYFORCE
-                DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+          &
-     &                                 DC(i,0)*                         &
-     &                                 (cff1*DiaRU(i,j,k,nrhs,M3vvis)-  &
-     &                                  cff2*DiaRU(i,j,k,indx,M3vvis))
+              DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)+            &
+     &                               DC(i,0)*                           &
+     &                               (cff1*DiaRU(i,j,k,nrhs,M3vvis)-    &
+     &                                cff2*DiaRU(i,j,k,indx,M3vvis))
 #  endif
 # endif
-              END DO
             END DO
-          END IF
+          END DO
         END IF
 !
 !=======================================================================
@@ -872,14 +920,14 @@
           cff3=dt(ng)*(1.0_r8-lambda)
           DO k=1,N(ng)-1
             DO i=Istr,Iend
-              FC(i,k)=cff3*(v(i,j,k+1,nstp)-v(i,j,k,nstp))*             &
-     &                (Akv(i,j,k)+Akv(i,j-1,k))/                        &
-     &                (z_r(i,j,k+1)+z_r(i,j-1,k+1)-                     &
-     &                 z_r(i,j,k  )-z_r(i,j-1,k  ))
+              cff=1.0_r8/(z_r(i,j,k+1)+z_r(i,j-1,k+1)-                  &
+     &                    z_r(i,j,k  )-z_r(i,j-1,k  ))
+              FC(i,k)=cff3*cff*(v(i,j,k+1,nstp)-v(i,j,k,nstp))*         &
+     &                (Akv(i,j,k)+Akv(i,j-1,k))
             END DO
           END DO
 !
-!  Apply surface and bottom stresses, if so is prescribed.
+!  Apply bottom and surface stresses, if so is prescribed.
 !
           DO i=Istr,Iend
 # ifdef BODYFORCE
@@ -900,12 +948,12 @@
           IF (iic(ng).eq.ntfirst) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
-                fac1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
-                fac2=FC(i,k)-FC(i,k-1)
-                v(i,j,k,nnew)=fac1+fac2
+                cff1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
+                cff2=FC(i,k)-FC(i,k-1)
+                v(i,j,k,nnew)=cff1+cff2
 # ifdef DIAGNOSTICS_UV
-                DiaV3wrk(i,j,k,M3rate)=fac1
-                DiaV3wrk(i,j,k,M3vvis)=fac2
+                DiaV3wrk(i,j,k,M3rate)=cff1
+                DiaV3wrk(i,j,k,M3vvis)=cff2
                 DiaV3wrk(i,j,k,M3pgrd)=0.0_r8
 #  ifdef UV_ADV
                 DiaV3wrk(i,j,k,M3hadv)=0.0_r8
@@ -920,14 +968,14 @@
           ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
-                fac1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
-                fac2=FC(i,k)-FC(i,k-1)
-                v(i,j,k,nnew)=fac1-                                     &
+                cff1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
+                cff2=FC(i,k)-FC(i,k-1)
+                v(i,j,k,nnew)=cff1-                                     &
      &                        0.5_r8*DC(i,0)*rv(i,j,k,indx)+            &
-     &                        fac2
+     &                        cff2
 # ifdef DIAGNOSTICS_UV
-                DiaV3wrk(i,j,k,M3rate)=fac1
-                DiaV3wrk(i,j,k,M3vvis)=fac2
+                DiaV3wrk(i,j,k,M3rate)=cff1
+                DiaV3wrk(i,j,k,M3vvis)=cff2
                 DiaV3wrk(i,j,k,M3pgrd)=-0.5_r8*DC(i,0)*                 &
      &                                  DiaRV(i,j,k,indx,M3pgrd)
 #  ifdef UV_ADV
@@ -953,15 +1001,15 @@
             cff2=16.0_r8/12.0_r8
             DO k=1,N(ng)
               DO i=Istr,Iend
-                fac1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
-                fac2=FC(i,k)-FC(i,k-1)
-                v(i,j,k,nnew)=fac1+                                     &
+                cff3=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
+                cff4=FC(i,k)-FC(i,k-1)
+                v(i,j,k,nnew)=cff3+                                     &
      &                        DC(i,0)*(cff1*rv(i,j,k,nrhs)-             &
      &                                 cff2*rv(i,j,k,indx))+            &
-     &                        fac2
+     &                        cff4
 # ifdef DIAGNOSTICS_UV
-                DiaV3wrk(i,j,k,M3rate)=fac1
-                DiaV3wrk(i,j,k,M3vvis)=fac2
+                DiaV3wrk(i,j,k,M3rate)=cff3
+                DiaV3wrk(i,j,k,M3vvis)=cff4
                 DiaV3wrk(i,j,k,M3pgrd)=DC(i,0)*                         &
      &                                 (cff1*DiaRV(i,j,k,nrhs,M3pgrd)-  &
      &                                  cff2*DiaRV(i,j,k,indx,M3pgrd))
@@ -989,21 +1037,32 @@
             END DO
           END IF
         END IF
-      END DO
-!
-!=======================================================================
-!  Apply lateral boundary conditions.
-!=======================================================================
-!
+      END DO J_LOOP2
+
 # ifndef TS_FIXED
+!
+!=======================================================================
+!  Apply tracers lateral boundary conditions.
+!=======================================================================
+!
       DO itrc=1,NT(ng)
         CALL t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,              &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-     &                   3, nstp,                                       &
+     &                   nstp, 3,                                       &
      &                   t)
+#  ifdef TS_MPDATA
+        DO k=1,N(ng)
+          DO i=IstrR,IendR
+            DO j=JstrR,JendR
+              t(i,j,k,3,itrc)=t(i,j,k,3,itrc)*Hz(i,j,k)
+            END DO
+          END DO
+        END DO
+#  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,       &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          NghostPoints,                           &
      &                          t(:,:,:,3,itrc))
 #  endif
       END DO

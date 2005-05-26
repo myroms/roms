@@ -2,7 +2,7 @@
       SUBROUTINE bblm (ng,tile)
 !
 !====================================================== Meinte Blaas ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine computes bottom stresses for combined waves and     !
@@ -53,7 +53,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 37)
+      CALL wclock_on (ng, iNLM, 37)
 # endif
       CALL bblm_tile (ng, Istr, Iend, Jstr, Jend,                       &
      &                LBi, UBi, LBj, UBj,                               &
@@ -73,8 +73,12 @@
      &                OCEAN(ng) % u,                                    &
      &                OCEAN(ng) % v,                                    &
      &                OCEAN(ng) % bottom,                               &
-     &                BBL(ng) % Ubed,                                   &
-     &                BBL(ng) % Vbed,                                   &
+     &                BBL(ng) % Ubot,                                   &
+     &                BBL(ng) % Vbot,                                   &
+     &                BBL(ng) % Ur,                                     &
+     &                BBL(ng) % Vr,                                     &
+     &                BBL(ng) % bustrc,                                 &
+     &                BBL(ng) % bvstrc,                                 &
      &                BBL(ng) % bustrw,                                 &
      &                BBL(ng) % bvstrw,                                 &
      &                BBL(ng) % bustrcwmax,                             &
@@ -82,7 +86,7 @@
      &                FORCES(ng) % bustr,                               &
      &                FORCES(ng) % bvstr)
 # ifdef PROFILE
-      CALL wclock_off (ng, 37)
+      CALL wclock_off (ng, iNLM, 37)
 # endif
       RETURN
       END SUBROUTINE bblm
@@ -99,8 +103,11 @@
 # endif
      &                      Dwave, Pwave,                               &
      &                      rho, u, v, bottom,                          &
-     &                      Ubed, Vbed, bustrw, bvstrw,                 &
-     &                      bustrcwmax, bvstrcwmax, bustr, bvstr)
+     &                      Ubot, Vbot, Ur, Vr,                         &
+     &                      bustrc, bvstrc,                             &
+     &                      bustrw, bvstrw,                             &
+     &                      bustrcwmax, bvstrcwmax,                     &
+     &                      bustr, bvstr)
 !***********************************************************************
 !
       USE mod_param
@@ -133,8 +140,12 @@
 
       real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
 
-      real(r8), intent(out) :: Ubed(LBi:,LBj:)
-      real(r8), intent(out) :: Vbed(LBi:,LBj:)
+      real(r8), intent(out) :: Ubot(LBi:,LBj:)
+      real(r8), intent(out) :: Vbot(LBi:,LBj:)
+      real(r8), intent(out) :: Ur(LBi:,LBj:)
+      real(r8), intent(out) :: Vr(LBi:,LBj:)
+      real(r8), intent(out) :: bustrc(LBi:,LBj:)
+      real(r8), intent(out) :: bvstrc(LBi:,LBj:)
       real(r8), intent(out) :: bustrw(LBi:,LBj:)
       real(r8), intent(out) :: bvstrw(LBi:,LBj:)
       real(r8), intent(out) :: bustrcwmax(LBi:,LBj:)
@@ -159,8 +170,12 @@
 
       real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
 
-      real(r8), intent(out) :: Ubed(LBi:UBi,LBj:UBj)
-      real(r8), intent(out) :: Vbed(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Ubot(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Vbot(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Ur(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Vr(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: bustrc(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: bvstrc(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bustrw(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bvstrw(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: bustrcwmax(LBi:UBi,LBj:UBj)
@@ -195,7 +210,7 @@
       real(r8) :: RHmin = 0.001_r8       ! arbitrary minimum ripple height
       real(r8) :: RLmin = 0.01_r8        ! arbitrary minimum ripple length
 
-      real(r8) :: Ab, Fwave, Kbh, Kbh2, Kdh, Ucur, Vcur
+      real(r8) :: Ab, Fwave, Kbh, Kbh2, Kdh
       real(r8) :: angleC, angleW, phiC, phiCW
       real(r8) :: cff, cff1, cff2, d50, viscosity, wset
       real(r8) :: RHbio, RHbiofac, RHmax, RLbio
@@ -206,9 +221,11 @@
       real(r8) :: tau_c, tau_cb, tau_cs, tau_cw, tau_cwb, tau_cws
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ub
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ucur
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vcur
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Zr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ur
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vr
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ur_mb
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vr_mb
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Umag
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tauC
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tauW
@@ -227,7 +244,7 @@
           tauC(i,j)=0.0_r8
           tauCW(i,j)=0.0_r8
           tauCWmax(i,j)=0.0_r8
-	END DO
+        END DO
       END DO
 !
 !-----------------------------------------------------------------------
@@ -237,8 +254,8 @@
       DO j=JstrV-1,Jend+1
         DO i=IstrU-1,Iend+1
           Zr(i,j)=z_r(i,j,1)-z_w(i,j,0)
-          Ur(i,j)=u(i,j,1,nrhs)
-          Vr(i,j)=v(i,j,1,nrhs)
+          Ur_mb(i,j)=u(i,j,1,nrhs)
+          Vr_mb(i,j)=v(i,j,1,nrhs)
         END DO
       END DO
 !
@@ -272,27 +289,25 @@
 !
 # ifdef SWAN
           Ub(i,j)=Ub_swan(i,j)
-          cff=Ub(i,j)/Fwave
-          Ab=MAX(cff,0.0001_r8)
+          Ab=Ub(i,j)/Fwave+eps
 # else
-          Ab=Awave(i,j)/SINH(Kbh)
+          Ab=Awave(i,j)/SINH(Kbh)+eps
           Ub(i,j)=Fwave*Ab
 # endif
 !
 !  Compute bottom current magnitude at RHO-points.
 !
-          Ucur=0.5_r8*(Ur(i,j)+Ur(i+1,j))
-          Vcur=0.5_r8*(Vr(i,j)+Vr(i,j+1))
-          Umag(i,j)=SQRT(Ucur*Ucur+Vcur*Vcur)
+          Ucur(i,j)=0.5_r8*(Ur_mb(i,j)+Ur_mb(i+1,j))
+          Vcur(i,j)=0.5_r8*(Vr_mb(i,j)+Vr_mb(i,j+1))
+          Umag(i,j)=SQRT(Ucur(i,j)*Ucur(i,j)+Vcur(i,j)*Vcur(i,j))+eps
 !
 !  Compute angle between currents and waves (radians)
 !
-          IF (Ucur.ne.0.0_r8) THEN
-            phiC=ATAN2(Vcur,Ucur)
+          IF (Ucur(i,j).ne.0.0_r8) THEN
+            phiC=ATAN2(Vcur(i,j),Ucur(i,j))
           ELSE
-            phiC=0.5_r8*pi*SIGN(1.0_r8,Vcur)
+            phiC=0.5_r8*pi*SIGN(1.0_r8,Vcur(i,j))
           END IF
-!!        phiCW=Dwave(i,j)-phiC
           phiCW=1.5_r8*pi-Dwave(i,j)-phiC-angler(i,j)
 !
 !-----------------------------------------------------------------------
@@ -318,6 +333,9 @@
 !
           tau_bf=0.79_r8*(viscosity**(-0.6_r8))*                        &
      &           (((rhoSed-1.0_r8)*g)**0.3_r8)*(d50**0.9_r8)*tau_cb
+!
+!  Set Znot for currents as maximun of user value or grain roughness.
+!
            ZnotC=d50/12.0_r8
            Znot=MAX(Zob(ng),ZnotC) 
 !
@@ -346,25 +364,27 @@
 !
             tau_w=scf1*((ZnotC*Fwave)**scf2)*(Ub(i,j)**scf3)
 !      
-!  Wave-averaged, combined wave-current stress.
+!  Wave-averaged, combined wave-current stress.(Eqn. 69, Soulsby, 1997).
 !
             tau_cw=tau_cs*                                              &
      &             (1.0_r8+scf4*((tau_w/(tau_w+tau_cs))**scf5))
 !      
 !  Maximum of combined wave-current skin stress (m2/s2) component for
-!  sediment.
+!  sediment.(Eqn. 70, Soulsby, 1997).
 !
             tau_cws=SQRT((tau_cw+tau_w*COS(phiCW))**2+                  &
      &                   (tau_w*SIN(phiCW))**2)
+!!          tauw(i,j)=tau_cws
             tauCWmax(i,j)=tau_cws
-!
-!  Set combined stress for Znot.
-!
+            tauW(i,j)=tau_w
+!!
+!!  Set combined stress for Znot.
+!!
             tau_w=scf1*((Znot*Fwave)**scf2)*(Ub(i,j)**scf3)
             tau_cw=tauC(i,j)*                                           &
      &             (1.0_r8+scf4*((tau_w/(tau_w+tauC(i,j)))**scf5))
                            
-# ifdef Z0_BL
+# ifdef MB_Z0BL
 !
 !-----------------------------------------------------------------------
 !  Compute bedload roughness for ripple predictor and sediment purposes.
@@ -373,10 +393,12 @@
 !  used to predict ripples and onset of suspension (Li and Amos, 2001).
 !-----------------------------------------------------------------------
 !
+#  ifdef MB_CALC_ZNOT
             tau_ex=MAX((tau_cws-tau_cb),0.0_r8)
             cff=(1.0_r8/((rhoSed-1.0_r8)*g*d50))
             Znot_bl=17.4_r8*d50*(cff*tau_ex)**0.75_r8
             ZnotC=ZnotC+Znot_bl
+#  endif
 !     
 !-----------------------------------------------------------------------
 !  Compute stresses (m2/s2)for sediment purposes, using grain and
@@ -394,9 +416,10 @@
             tau_cwb=SQRT((tau_cw+tau_wb*COS(phiCW))**2+                  &
      &                   (tau_wb*SIN(phiCW))**2)
             tauCWmax(i,j)=tau_cwb
+            tauW(i,j)=tau_wb
 # endif
 
-# ifdef Z0_RIP        
+# ifdef MB_Z0RIP
 !
 !-----------------------------------------------------------------------
 !  Determine bedform roughness ripple height (m) and ripple length (m)
@@ -435,9 +458,9 @@
                 END IF
               END IF
             END IF
-# endif /* Z0_RIP */
+# endif
 
-# ifdef Z0_BIO
+# ifdef MB_Z0BIO
 !
 !-----------------------------------------------------------------------
 !  Determine (biogenic) bedform roughness ripple height (m) and ripple
@@ -456,14 +479,16 @@
               rhgt=MIN(RHbio,RHbiomax)
               rlen=RLbio
             END IF
-#  endif /* Z0_BIO */
+# endif
 
-# if defined Z0_RIP || defined Z0_BIO
+# if defined MB_Z0RIP || defined MB_Z0BIO
 !
 !  Ripple roughness using Grant and Madsen (1982) roughness length.
 !
+#  ifdef MB_CALC_ZNOT
             Znot_rip=0.92_r8*rhgt*rhgt/(MAX(rlen,RLmin))
             ZnotC=ZnotC+Znot_rip
+#  endif
 !
 !-----------------------------------------------------------------------
 ! Compute bottom stress (m2/s2) components based on total roughnes.
@@ -474,13 +499,17 @@
             tau_w=scf1*((ZnotC*Fwave)**scf2)*(Ub(i,j)**scf3)
             tau_cw=tau_c*                                               &
      &             (1.0_r8+scf4*((tau_w/(tau_w+tau_c))**scf5))
-# endif /* Z0_RIP || Z0_BIO */
+!!          tau_cwb=SQRT((tau_cw+tau_w*COS(phiCW))**2+                  &
+!!   &                   (tau_w*SIN(phiCW))**2)
+!!          tauCWmax(i,j)=tau_cwb
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute effective bottom shear velocity (m/s) relevant for flow and
 !  eddy-diffusivities/viscosity.
 !-----------------------------------------------------------------------
 !
+!!          tauC(i,j)=tau_cw
             tauCW(i,j)=tau_cw
             tauW(i,j)=tau_w
           ELSE IF (Ub(i,j).le.0.01_r8) THEN   
@@ -491,24 +520,32 @@
 !            
             tauCWmax(i,j)=tauC(i,j)
             tauW(i,j)=0.0_r8
+!!          tauW(i,j)=tau_cs
+!!          tauCW(i,j)=tau_cs
 
-# ifdef Z0_RIP    
-            IF (tau_cs.gt.tau_up) THEN
+# ifdef MB_Z0RIP    
+!!          IF (tauC(i,j).gt.tau_up) THEN
+            IF (tau_cs(i,j).gt.tau_up) THEN
               rhgt=0.0_r8
               rlen=0.0_r8
-            ELSE IF (tau_cs.lt.tau_cb) THEN
+!!          ELSE IF (tauC(i,j).lt.tau_cb) THEN
+            ELSE IF (tau_cs(i,j).lt.tau_cb) THEN
               rlen=bottom(i,j,irlen)
               rhgt=bottom(i,j,irhgt)
             ELSE
               rlen=1000.0_r8*d50                       ! Yalin (1964)
-              rhgt=100.0_r8*0.074_r8*                                   &
-     &             (0.01_r8*rlen)**1.19_r8             ! Allen (1970)
+              rhgt=0.0308_r8*(rlen**1.19_r8)
+!!            rhgt=100.0_r8*0.074_r8*                                   &
+!!   &             (0.01_r8*rlen)**1.19_r8             ! Allen (1970)
             END IF
+#  ifdef MB_CALC_ZNOT
             ZnotC=ZnotC+0.92_r8*rhgt*rhgt/(MAX(rlen,RLmin))
-	    cff1=vonKar/LOG(Zr(i,j)/ZnotC)
-            cff2=MIN(Cdb_max,MAX(Cdb_min,cff1*cff1))
-            tauCW(i,j)=cff2*Umag(i,j)*Umag(i,j)
+#  endif
 # endif 
+            cff1=vonKar/LOG(Zr(i,j)/ZnotC)
+            cff2=MIN(Cdb_max,MAX(Cdb_min,cff1*cff1))
+!!          tauc(i,j)=cff2*Umag(i,j)*Umag(i,j)
+            tauCW(i,j)=cff2*Umag(i,j)*Umag(i,j)
           END IF 
 !
 !-----------------------------------------------------------------------
@@ -518,7 +555,7 @@
           bottom(i,j,ibwav)=Ab
           bottom(i,j,irlen)=rlen
           bottom(i,j,irhgt)=rhgt
-          bottom(i,j,izdef)=Znot
+          bottom(i,j,izdef)=Znot                       ! Zob(ng)
           bottom(i,j,izapp)=ZnotC
         END DO
       END DO
@@ -530,55 +567,106 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          angleC=Ur(i,j)/(0.5_r8*(Umag(i-1,j)+Umag(i,j)+eps))
-          angleW=COS(0.5_r8*pi-0.5_r8*(Dwave(i-1,j)+Dwave(i,j))-        &
-     &               angler(i,j))
-          bustr (i,j)=0.5_r8*(tauCW(i-1,j)+tauCW(i,j))*angleC
-          bustrw(i,j)=0.5_r8*(tauW(i-1,j)+tauW(i,j))*angleW
-          bustrcwmax(i,j)=0.5_r8*(tauCWmax(i-1,j)+tauCWmax(i,j))*angleW
-          Ubed(i,j)=Ub(i,j)*angleW
+          angleC=Ur_mb(i,j)/(0.5*(Umag(i-1,j)+Umag(i,j)))
+          bustr(i,j)=0.5_r8*(tauCW(i-1,j)+tauCW(i,j))*angleC
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          angleC=Vr(i,j)/(0.5_r8*(Umag(i,j-1)+Umag(i,j)+eps))
-          angleW=SIN(0.5_r8*pi-0.5_r8*(Dwave(i,j-1)+Dwave(i,j))-        &
-     &               angler(i,j))
-          bvstr (i,j)=0.5_r8*(tauCW(i,j-1)+tauCW(i,j))*angleC
-          bvstrw(i,j)=0.5_r8*(tauW(i,j-1)+tauW(i,j))*angleW
-          bvstrcwmax(i,j)=0.5_r8*(tauCWmax(i,j-1)+tauCWmax(i,j))*angleW
-          Vbed(i,j)=Ub(i,j)*angleW
+          angleC=Vr_mb(i,j)/(0.5_r8*(Umag(i,j-1)+Umag(i,j)))
+          bvstr(i,j)=0.5_r8*(tauCW(i,j-1)+tauCW(i,j))*angleC
+        END DO
+      END DO
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          angleC=Ur_mb(i,j)/Umag(i,j)
+          angleW=COS(1.5_r8*pi-Dwave(i,j)-angler(i,j))
+          bustrc(i,j)=tauCW(i,j)*angleC
+          bustrw(i,j)=tauW(i,j)*angleW
+          bustrcwmax(i,j)=taucwmax(i,j)*angleW
+          Ubot(i,j)=Ub(i,j)*angleW
+          Ur(i,j)=Ucur(i,j)
+!
+          angleC=Vr_mb(i,j)/Umag(i,j)
+          angleW=SIN(1.5_r8*pi-Dwave(i,j)-angler(i,j))
+          bvstrc(i,j)=tauCW(i,j)*angleC
+          bvstrw(i,j)=tauW(i,j)*angleW
+          bvstrcwmax(i,j)=tauCWmax(i,j)*angleW
+          Vbot(i,j)=Ub(i,j)*angleW
+          Vr(i,j)=Vcur(i,j)
         END DO
       END DO
 ! 
 ! Apply periodic or gradient boundary conditions for output purposes.
 !
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bustr)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bvstr)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bustrw)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bvstrw)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bustrcwmax)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bvstrcwmax)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Ubed)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, Vbed)
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,ibwav))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,irhgt))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,irlen))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,izdef))
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, bottom(:,:,izapp))
+      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bustr)
+      CALL bc_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstr)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bustrc)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstrc)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bustrw)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstrw)
+      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bustrcwmax)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bvstrcwmax)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Ubot)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Vbot)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Ur)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  Vr)      
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,ibwav))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,irhgt))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,irlen))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,izdef))
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  bottom(:,:,izapp))
 
       RETURN
       END SUBROUTINE bblm_tile

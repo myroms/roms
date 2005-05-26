@@ -3,7 +3,7 @@
 #ifdef SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutines computes vertical velocity (m/s) at W-points       !
@@ -20,7 +20,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE wvelocity (ng, tile)
+      SUBROUTINE wvelocity (ng, tile, Ninp)
 !***********************************************************************
 !
       USE mod_param
@@ -29,13 +29,13 @@
       USE mod_ocean
       USE mod_stepping
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, Ninp
 
 # include "tile.h"
 
       CALL wvelocity_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     nstp(ng),                                    &
+     &                     Ninp,                                        &
      &                     GRID(ng) % pm,                               &
      &                     GRID(ng) % pn,                               &
      &                     GRID(ng) % z_r,                              &
@@ -52,7 +52,7 @@
 !***********************************************************************
       SUBROUTINE wvelocity_tile (ng, Istr, Iend, Jstr,Jend,             &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           nstp,                                  &
+     &                           Ninp,                                  &
      &                           pm, pn, z_r, z_w,                      &
      &                           DU_avg1, DV_avg1,                      &
      &                           u, v, W,                               &
@@ -61,18 +61,17 @@
 !
       USE mod_param
       USE mod_scalars
-
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
+      USE bc_3d_mod, ONLY : bc_w3d_tile
+# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       USE exchange_2d_mod
-      USE exchange_3d_mod, ONLY : exchange_w3d_tile
 # endif
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: nstp
+      integer, intent(in) :: Ninp
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: pm(LBi:,LBj:)
@@ -120,10 +119,14 @@
 !
 !  Exchange time-averaged fields.
 !
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, DU_avg1)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, DV_avg1)
+      CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        DU_avg1)
+      CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        DV_avg1)
 # endif
 !
 !  Compute contribution due to quasi-horizontal motions along
@@ -132,7 +135,7 @@
       DO k=1,N(ng)
         DO j=Jstr,Jend
           DO i=Istr,Iend+1
-            wrk(i,j)=u(i,j,k,nstp)*(z_r(i,j,k)-z_r(i-1,j,k))*           &
+            wrk(i,j)=u(i,j,k,Ninp)*(z_r(i,j,k)-z_r(i-1,j,k))*           &
      &                             (pm(i-1,j)+pm(i,j))
           END DO
           DO i=Istr,Iend
@@ -141,7 +144,7 @@
         END DO
         DO j=Jstr,Jend+1
           DO i=Istr,Iend
-            wrk(i,j)=v(i,j,k,nstp)*(z_r(i,j,k)-z_r(i,j-1,k))*           &
+            wrk(i,j)=v(i,j,k,Ninp)*(z_r(i,j,k)-z_r(i,j-1,k))*           &
      &                             (pn(i,j-1)+pn(i,j))
           END DO
         END DO
@@ -221,48 +224,10 @@
 !
 !  Set lateral boundary conditions.
 !
-# ifndef EW_PERIODIC
-      IF (WESTERN_EDGE) THEN
-        DO k=0,N(ng)
-          DO j=Jstr,Jend
-            wvel(Istr-1,j,k)=wvel(Istr,j,k)
-          END DO
-        END DO
-      END IF
-      IF (EASTERN_EDGE) THEN
-        DO k=0,N(ng)
-          DO j=Jstr,Jend
-            wvel(Iend+1,j,k)=wvel(Iend,j,k)
-          END DO
-        END DO
-      END IF
-# endif
-# ifndef NS_PERIODIC
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr,Iend
-#  else
-#   define I_RANGE IstrR,IendR
-#  endif
-      IF (SOUTHERN_EDGE) THEN
-        DO k=0,N(ng)
-          DO i=I_RANGE
-            wvel(i,Jstr-1,k)=wvel(i,Jstr,k)
-          END DO
-        END DO
-      END IF
-      IF (NORTHERN_EDGE) THEN
-        DO k=0,N(ng)
-          DO i=I_RANGE
-            wvel(i,Jend+1,k)=wvel(i,Jend,k)
-          END DO
-        END DO
-      END IF
-#  undef I_RANGE
-# endif
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng), wvel)
-# endif
+      CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
+     &                  NghostPoints,                                   &
+     &                  wvel)
       RETURN
       END SUBROUTINE wvelocity_tile
 #endif

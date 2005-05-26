@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE prsgrd_mod
-#ifdef SOLVE3D
+#if defined NONLINEAR && defined SOLVE3D
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes the baroclinic hydrostatic pressure gradient  !

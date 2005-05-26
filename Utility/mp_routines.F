@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This package contains multi-processing routines used during         !
@@ -162,21 +162,6 @@
 #else
       CALL cpu_time (wtime(1))
       my_wtime=wtime(1)
-#endif
-
-#ifdef REMOVE
-# if defined SUN || defined SGI || defined DEC
-      real(r4) :: etime, rtime(2)
-
-      my_wtime=DBLE(etime(rtime))     ! total time
-      wtime(1)=DBLE(rtime(1))         ! user time
-      wtime(2)=DBLE(rtime(2))         ! system time
-
-# elif defined _OPENMP
-      real(r8) :: omp_get_wtime
-
-      my_wtime=omp_get_wtime()        ! not available in OpenMP 1.0
-# endif
 #endif
 
       RETURN

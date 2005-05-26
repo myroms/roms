@@ -1,7 +1,7 @@
 !  Station Extraction Parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
+!  Copyright (c) 2005 ROMS/TOMS Group, version 2.2                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -62,11 +62,13 @@ Sout(idVbed) == F                          ! bed wave orbital V-velocity
 Sout(idUbot) == F                          ! bottom U-momentum above bed
 Sout(idVbot) == F                          ! bottom V-momentum above bed
 
-Sout(idTsur) == F                          ! surface net heat flux
+Sout(idTsur) == F F                        ! surface net heat and salt flux
 Sout(idLhea) == F                          ! latent heat flux
 Sout(idShea) == F                          ! sensible heat flux
 Sout(idLrad) == F                          ! longwave radiation flux
 Sout(idSrad) == F                          ! shortwave radiation flux
+Sout(idevap) == F                          ! evaporation rate
+Sout(idrain) == F                          ! precipitation rate
 
 Sout(idDano) == T                          ! density anomaly
 Sout(idVvis) == T                          ! vertical viscosity
@@ -97,14 +99,17 @@ Sout(idMtls) == F                          ! turbulent length scale
 !   Sout(idBott(izwbl)),  izwbl = 14       ! wave bottom roughness
 !   Sout(idBott(iactv)),  iactv = 15       ! active layer thickness
 !   Sout(idBott(ishgt)),  ishgt = 16       ! saltation height
+!
+!                                 1 1 1 1 1 1 1
+!               1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6
 
-Sout(idBott) == T T T T T T T T T F F F F F F F
+Sout(idBott) == F F F F F F F F F F F F F F F F
 
 ! Number of stations to process in each nested grid.  These values are
 ! essential because the station arrays are dynamically allocated using
 ! these values, [1:Ngrids].
 
-    NSTATION ==  7
+    NSTATION ==  25
 
 ! Station locations for all grids in any desired order.  The horizontal
 ! location for a particular station may be specified in terms of fractional
@@ -114,15 +119,33 @@ Sout(idBott) == T T T T T T T T T F F F F F F F
 ! be one in non-nested applications.  The COMMENT section is ignored during
 ! reading and may be used to help documentation.
 
-POS =  GRID  FLAG      X-POS     Y-POS   COMMENT
+POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 
-        1     0        6.0d0    88.0d0   ! (-74.2620 39.4615), COOL 1 - Node A
-        1     0        7.0d0    88.0d0   ! (-74.2458 39.4568), Node B
-        1     0       10.0d0    87.0d0   ! (-74.2283 39.4383)  COOL 2
-        1     0       15.0d0    86.0d0   ! (-74.1933 39.4150)  COOL 3
-        1     0       20.0d0    85.0d0   ! (-74.1580 39.3917)  COOL 4
-        1     0       25.0d0    84.0d0   ! (-74.1233 39.3680)  COOL 5
-        1     0       30.0d0    84.0d0   ! (-74.0843 39.3425)  COOL 6
+         1    1      12.5416     44.8691     ! real position: 12.50673 44.86875
+         1    1      14.26613    42.46277
+         1    1      12.41580    44.36130
+         1    1      13.7797     43.2927     ! real position: 13.75660 43.29690
+         1    1      13.87950    43.3331
+         1    1      12.46140    44.79600
+         1    1      12.49320    44.76940
+         1    1      12.85512    44.46100    !  8  CP2
+         1    1      13.12453    44.54018    !  9  CP3
+         1    1      14.02125    44.75067    ! 10  KB1
+         1    1      13.30660    43.83513    ! 11  SS2
+         1    1      13.42610    43.93067    ! 12  SS5
+         1    1      13.90525    44.25672    ! 13  SS8
+         1    1      14.29040    44.48123    ! 14  SS0 (aka SS10)
+         1    1      13.36667    43.88355    ! 15  SS4
+         1    1      13.50438    43.99562    ! 16  SS6
+         1    1      14.17478    44.41022    ! 17 SS9
+         1    1      12.63697    45.27892    ! 18 VR2
+         1    1      13.02810    45.18778    ! 19 VR4
+         1    1      13.28367    45.12493    ! 20 VR5
+         1    1      13.53603    45.05807    ! 21 VR6
+         1    1      12.51440    45.31663    ! 22 VR1
+         1    1      12.49370    44.76980    ! 23 Po 20-m
+         1    1      13.87970    43.33290    ! 24 Chienti 20-m
+         1    1      14.29800    42.48060    ! 25 Pescara 20-m
 
 !
 !  GLOSSARY:
@@ -174,11 +197,13 @@ POS =  GRID  FLAG      X-POS     Y-POS   COMMENT
 !  Sout(idUbot)  Write out bottom U-momentum above bed.
 !  Sout(idVbot)  Write out bottom V-momentum above bed.
 !
-!  Sout(idTsur)  Write out surface net heat flux.
+!  Sout(idTsur)  Write out surface net heat and salt flux.
 !  Sout(idLhea)  Write out latent heat flux.
 !  Sout(idShea)  Write out sensible heat flux.
 !  Sout(idLrad)  Write out long-wave radiation flux.
 !  Sout(idSrad)  Write out short-wave radiation flux.
+!  Sout(idevap)  Write out evaporation rate.
+!  Sout(idrain)  Write out precipitation rate.
 !
 !  Sout(idDano)  Write out density anomaly.
 !  Sout(idVvis)  Write out vertical viscosity coefficient.

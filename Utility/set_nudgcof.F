@@ -1,9 +1,9 @@
 #include "cppdefs.h"
 #ifdef NUDGING_COFF
-      SUBROUTINE set_nudgcof (ng, tile)
+      SUBROUTINE set_nudgcof (ng, tile, model)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine set nudging coefficients time-scales (1/s).            !
@@ -12,16 +12,16 @@
 !
       USE mod_param
 
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 
 # include "tile.h"
 !
-      CALL set_nudgcof_tile (ng, Istr, Iend, Jstr, Jend)
+      CALL set_nudgcof_tile (ng, model, Istr, Iend, Jstr, Jend)
       RETURN
       end
 !
 !***********************************************************************
-      SUBROUTINE set_nudgcof_tile (ng, Istr, Iend, Jstr, Jend)
+      SUBROUTINE set_nudgcof_tile (ng, model, Istr, Iend, Jstr, Jend)
 !***********************************************************************
 !
       USE mod_param
@@ -37,7 +37,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
 !
 !  Local variable declarations.
 !
@@ -85,53 +85,6 @@
         END DO
       END DO
 #  endif
-# elif defined CALCOFI
-      cff1=1.0_r8/(5.0_r8*86400.0_r8)
-      cff2=1.0_r8/(60.0_r8*86400.0_r8)
-      DO j=JstrR,MIN(6,JendR)
-        DO i=IstrR,IendR
-          wrk(i,j)=cff2+REAL(6-j,r8)*(cff1-cff2)/6.0_r8
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
-        DO i=IstrR,IendR
-          wrk(i,j)=cff1+REAL(Mm(ng)+1-j,r8)*(cff2-cff1)/6.0_r8
-        END DO
-      END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
-          wrk(i,j)=cff2+REAL(6-i,r8)*(cff1-cff2)/6.0_r8
-        END DO
-      END DO
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-#  ifdef M2CLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%M2nudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-#  ifdef M3CLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%M3nudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-#  ifdef TCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
-          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
-        END DO
-      END DO
-#  endif
 # elif defined BISCAY
       cff1=1.0_r8/( 5.0_r8*86400.0_r8)
       cff2=1.0_r8/(30.0_r8*86400.0_r8)
@@ -158,7 +111,7 @@
 #  endif
       DO j=MAX(JstrR,14),MIN(42,JendR)
         DO i=MAX(IstrR,86),MIN(IendR,Lm(ng)+1)
-          cff1=SQRT(REAL((i-Lm(ng)+2)*(i-Lm(ng)+2,r8)+(j-28)*(j-28),r8))
+          cff1=SQRT(REAL((i-Lm(ng)+2)*(i-Lm(ng)+2)+(j-28)*(j-28),r8))
           wrk(i,j)=MAX(0.0_r8,(cff3+cff1*(cff2-cff3)/28.0_r8))
         END DO
       END DO
@@ -245,6 +198,53 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
+        END DO
+      END DO
+#  endif
+#  ifdef TCLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
+          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
+        END DO
+      END DO
+#  endif
+# elif defined SCB
+      cff1=1.0_r8/(5.0_r8*86400.0_r8)
+      cff2=1.0_r8/(60.0_r8*86400.0_r8)
+      DO j=JstrR,MIN(6,JendR)
+        DO i=IstrR,IendR
+          wrk(i,j)=cff2+REAL(6-j,r8)*(cff1-cff2)/6.0_r8
+        END DO
+      END DO
+      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
+        DO i=IstrR,IendR
+          wrk(i,j)=cff1+REAL(Mm(ng)+1-j,r8)*(cff2-cff1)/6.0_r8
+        END DO
+      END DO
+      DO i=IstrR,MIN(6,IendR)
+        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+          wrk(i,j)=cff2+REAL(6-i,r8)*(cff1-cff2)/6.0_r8
+        END DO
+      END DO
+#  ifdef ZCLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
+        END DO
+      END DO
+#  endif
+#  ifdef M2CLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%M2nudgcof(i,j)=wrk(i,j)
+        END DO
+      END DO
+#  endif
+#  ifdef M3CLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%M3nudgcof(i,j)=wrk(i,j)
         END DO
       END DO
 #  endif
@@ -357,8 +357,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, FSobc_out(1,iwest), Ngrids)
-        CALL mp_bcastf (ng, FSobc_in (1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_out(1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_in (1,iwest), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -381,8 +381,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, FSobc_out(1,ieast), Ngrids)
-        CALL mp_bcastf (ng, FSobc_in (1,ieast), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_out(1,ieast), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_in (1,ieast), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -405,8 +405,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, FSobc_out(1,iwest), Ngrids)
-        CALL mp_bcastf (ng, FSobc_in (1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_out(1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_in (1,iwest), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -429,8 +429,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, FSobc_out(1,inorth), Ngrids)
-        CALL mp_bcastf (ng, FSobc_in (1,inorth), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_out(1,inorth), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_in (1,inorth), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -457,8 +457,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M2obc_out(1,iwest), Ngrids)
-        CALL mp_bcastf (ng, M2obc_in (1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_out(1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_in (1,iwest), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -483,8 +483,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M2obc_out(1,ieast), Ngrids)
-        CALL mp_bcastf (ng, M2obc_in (1,ieast), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_out(1,ieast), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_in (1,ieast), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -508,8 +508,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M2obc_out(1,isouth), Ngrids)
-        CALL mp_bcastf (ng, M2obc_in (1,isouth), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_out(1,isouth), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_in (1,isouth), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -534,8 +534,8 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M2obc_out(1,inorth), Ngrids)
-        CALL mp_bcastf (ng, M2obc_in (1,inorth), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_out(1,inorth), Ngrids)
+        CALL mp_bcastf (ng, model, M2obc_in (1,inorth), Ngrids)
       ENDIF
 #   endif
 #  else
@@ -564,8 +564,8 @@
       END DO
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, Tobc_out(1,1,iwest), MT*Ngrids)
-        CALL mp_bcastf (ng, Tobc_in (1,1,iwest), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_out(1,1,iwest), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_in (1,1,iwest), MT*Ngrids)
       ENDIF
 #    endif
 #   else
@@ -593,8 +593,8 @@
       END DO
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, Tobc_out(1,1,ieast), MT*Ngrids)
-        CALL mp_bcastf (ng, Tobc_in (1,1,ieast), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_out(1,1,ieast), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_in (1,1,ieast), MT*Ngrids)
       ENDIF
 #    endif
 #   else
@@ -621,8 +621,8 @@
       END DO
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, Tobc_out(1,1,isouth), MT*Ngrids)
-        CALL mp_bcastf (ng, Tobc_in (1,1,isouth), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_out(1,1,isouth), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_in (1,1,isouth), MT*Ngrids)
       ENDIF
 #    endif
 #   else
@@ -650,8 +650,8 @@
       END DO
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, Tobc_out(1,1,inorth), MT*Ngrids)
-        CALL mp_bcastf (ng, Tobc_in (1,1,inorth), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_out(1,1,inorth), MT*Ngrids)
+        CALL mp_bcastf (ng, model, Tobc_in (1,1,inorth), MT*Ngrids)
       ENDIF
 #    endif
 #   else
@@ -681,8 +681,8 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M3obc_out(1,iwest), Ngrids)
-        CALL mp_bcastf (ng, M3obc_in (1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_out(1,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_in (1,iwest), Ngrids)
       ENDIF
 #    endif
 #   else
@@ -707,8 +707,8 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M3obc_out(1,ieast), Ngrids)
-        CALL mp_bcastf (ng, M3obc_in (1,ieast), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_out(1,ieast), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_in (1,ieast), Ngrids)
       ENDIF
 #    endif
 #   else
@@ -733,8 +733,8 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M3obc_out(1,isouth), Ngrids)
-        CALL mp_bcastf (ng, M3obc_in (1,isouth), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_out(1,isouth), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_in (1,isouth), Ngrids)
       ENDIF
 #    endif
 #   else
@@ -759,8 +759,8 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, M3obc_out(1,inorth), Ngrids)
-        CALL mp_bcastf (ng, M3obc_in (1,inorth), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_out(1,inorth), Ngrids)
+        CALL mp_bcastf (ng, model, M3obc_in (1,inorth), Ngrids)
       ENDIF
 #    endif
 #   else

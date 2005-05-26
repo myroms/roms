@@ -29,22 +29,22 @@
       IF (Itile.eq.0) THEN
         LBi=LOWER_BOUND_I
       ELSE
-        LBi=Istr-GHOST_POINTS
+        LBi=Istr-NghostPoints
       END IF
       IF (Itile.eq.(NtileI(ng)-1)) THEN
         UBi=UPPER_BOUND_I
       ELSE
-        UBi=Iend+GHOST_POINTS
+        UBi=Iend+NghostPoints
       END IF
       IF (Jtile.eq.0) THEN
         LBj=LOWER_BOUND_J
       ELSE
-        LBj=Jstr-GHOST_POINTS
+        LBj=Jstr-NghostPoints
       END IF
       IF (Jtile.eq.(NtileJ(ng)-1)) THEN
         UBj=UPPER_BOUND_J
       ELSE
-        UBj=Jend+GHOST_POINTS
+        UBj=Jend+NghostPoints
       END IF
 #else
       LBi=LOWER_BOUND_I

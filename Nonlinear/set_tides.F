@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE set_tides_mod
-#if defined SSH_TIDES || defined UV_TIDES
+#if defined NONLINEAR && (defined SSH_TIDES || defined UV_TIDES)
 !
 !==================================================== Robert Hetland ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine adds tidal elevation (m) and tidal currents (m/s) to   !
@@ -24,9 +24,9 @@
 !
       USE mod_param
       USE mod_boundary
-#ifdef CLIMATOLOGY
+# ifdef CLIMATOLOGY
       USE mod_clima
-#endif
+# endif
       USE mod_grid
       USE mod_tides
       USE mod_stepping
@@ -36,7 +36,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 11)
+      CALL wclock_on (ng, iNLM, 11)
 # endif
       CALL set_tides_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -78,7 +78,7 @@
      &                     BOUNDARY(ng) % ubar_north,                   &
      &                     BOUNDARY(ng) % vbar_north)
 # ifdef PROFILE
-      CALL wclock_off (ng, 11)
+      CALL wclock_off (ng, iNLM, 11)
 # endif
       RETURN
       END SUBROUTINE set_tides
@@ -214,7 +214,8 @@
       integer :: i, itide, j
 
       real(r8) :: Cangle, Cphase, Sangle, Sphase
-      real(r8) :: angle, phase, omega, ramp
+      real(r8) :: angle, cff, phase, omega, ramp
+      real(r8) :: bry_cor, bry_pgr, bry_str, bry_val
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Etide
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Utide
@@ -246,9 +247,10 @@
 !-----------------------------------------------------------------------
 !
       Etide(:,:)=0.0_r8
+      cff=2.0_r8*pi*(time(ng)-tide_start*day2sec)
       DO itide=1,NTC
         IF (Tperiod(itide).gt.0.0_r8) THEN
-          omega=2.0_r8*pi*time(ng)/Tperiod(itide)
+          omega=cff/Tperiod(itide)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               Etide(i,j)=Etide(i,j)+                                    &
@@ -271,16 +273,25 @@
         END DO
       END DO
 #   if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, ssh)
-
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        ssh)
 #   endif
 #  endif
 !
-!  If appropriate, load tidal forcing into boundary arrays.
+!  If appropriate, load tidal forcing into boundary arrays.  The "zeta"
+!  boundary arrays are important for the Flather or reduced physics
+!  boundary conditions for 2D momentum. To avoid having two boundary
+!  points for these arrays, the values of "zeta_west" and "zeta_east"
+!  are averaged at u-points.  Similarly, the values of "zeta_south"
+!  and "zeta_north" is averaged at v-points. Noticed that these
+!  arrays are also used for the clamped conditions for free-surface.
+!  This averaging is less important for that type ob boundary
+!  conditions.
 !
 #  if defined WEST_FSOBC || defined WEST_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_FSOBC
@@ -290,15 +301,15 @@
           zeta_west(j)=0.5_r8*(Etide(Istr-1,j)+Etide(Istr,j))
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
      &                  zeta_west(JLB))
 #   endif
 #  endif
 #  if defined EAST_FSOBC || defined EAST_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_FSOBC
@@ -308,15 +319,15 @@
           zeta_east(j)=0.5_r8*(Etide(Iend,j)+Etide(Iend+1,j))
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
      &                  zeta_east(JLB))
 #   endif
 #  endif
 #  if defined SOUTH_FSOBC || defined SOUTH_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (SOUTHERN_EDGE) THEN
         DO i=IstrR,IendR
 #   ifdef ADD_FSOBC
@@ -326,15 +337,15 @@
           zeta_south(i)=0.5_r8*(Etide(i,Jstr-1)+Etide(i,Jstr))
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
      &                  zeta_south(ILB))
 #   endif
 #  endif
 #  if defined NORTH_FSOBC || defined NORTH_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (NORTHERN_EDGE) THEN
         DO i=IstrR,IendR
 #   ifdef ADD_FSOBC
@@ -344,15 +355,15 @@
           zeta_north(i)=0.5_r8*(Etide(i,Jend)+Etide(i,Jend+1))
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
      &                  zeta_north(ILB))
 #   endif
 #  endif
 # endif
-# ifdef UV_TIDES
+# if defined UV_TIDES
 !
 !-----------------------------------------------------------------------
 !  Add tidal currents (m/s) to 2D momentum climatologies.
@@ -360,9 +371,10 @@
 !
       Utide(:,:)=0.0_r8
       Vtide(:,:)=0.0_r8
+      cff=2.0_r8*pi*(time(ng)-tide_start*day2sec)
       DO itide=1,NTC
         IF (Tperiod(itide).gt.0.0_r8) THEN
-          omega=2.0_r8*pi*time(ng)/Tperiod(itide)
+          omega=cff/Tperiod(itide)
           DO j=MIN(JstrR,Jstr-1),JendR
             DO i=MIN(IstrR,Istr-1),IendR
               angle=UV_Tangle(i,j,itide)-angler(i,j)
@@ -381,23 +393,23 @@
             DO i=Istr,IendR
               Utide(i,j)=Utide(i,j)+                                    &
      &                   ramp*0.5_r8*(Uwrk(i-1,j)+Uwrk(i,j))
-# ifdef MASKING
+#  ifdef MASKING
               Utide(i,j)=Utide(i,j)*umask(i,j)
-# endif
+#  endif
             END DO
           END DO
           DO j=Jstr,JendR
             DO i=IstrR,IendR
               Vtide(i,j)=(Vtide(i,j)+                                   &
      &                    ramp*0.5_r8*(Vwrk(i,j-1)+Vwrk(i,j)))
-# ifdef MASKING
+#  ifdef MASKING
               Vtide(i,j)=Vtide(i,j)*vmask(i,j)
-# endif
+#  endif
             END DO
           END DO
         END IF
       END DO
-# if defined M2CLIMATOLOGY && defined ADD_M2OBC
+#  if defined M2CLIMATOLOGY && defined ADD_M2OBC
 !
 !  Add sub-tidal forcing and adjust climatology to include tides.
 !
@@ -411,18 +423,22 @@
           vbarclm(i,j)=vbarclm(i,j)+Vtide(i,j)
         END DO
       END DO
-#  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, ubarclm)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, vbarclm)
+#   if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+      CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        ubarclm)
+      CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        vbarclm)
+#   endif
 #  endif
-# endif
 !
 !  If appropriate, load tidal forcing into boundary arrays.
 !
 #  ifdef WEST_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_M2OBC
@@ -438,17 +454,17 @@
           vbar_west(j)=Vtide(Istr-1,j)
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
      &                  ubar_west(JLB))
-      CALL mp_boundary (ng, Jstr,  JendR, JLB, JUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, Jstr,  JendR, JLB, JUB, 1, 1, update, &
      &                  vbar_west(JLB))
 #   endif
 #  endif
 #  ifdef EAST_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
 #   ifdef ADD_M2OBC
@@ -464,17 +480,17 @@
           vbar_east(j)=Vtide(Iend+1,j)
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, JstrR, JendR, JLB, JUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
      &                  ubar_east(JLB))
-      CALL mp_boundary (ng, Jstr,  JendR, JLB, JUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, Jstr,  JendR, JLB, JUB, 1, 1, update, &
      &                  vbar_east(JLB))
 #   endif
 #  endif
 #  ifdef SOUTH_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,IendR
 #   ifdef ADD_M2OBC
@@ -490,17 +506,17 @@
           vbar_south(i)=Vtide(i,Jstr)
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, Istr,  IendR, ILB, IUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, Istr,  IendR, ILB, IUB, 1, 1, update, &
      &                  ubar_south(ILB))
-      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
      &                  vbar_south(ILB))
 #   endif
 #  endif
 #  ifdef NORTH_M2OBC
-      update=.false.
+      update=.FALSE.
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,IendR
 #   ifdef ADD_M2OBC
@@ -516,12 +532,12 @@
           vbar_north(i)=Vtide(i,Jend+1)
 #   endif
         END DO
-        update=.true.
+        update=.TRUE.
       END IF
 #   ifdef DISTRIBUTE
-      CALL mp_boundary (ng, Istr,  IendR, ILB, IUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, Istr,  IendR, ILB, IUB, 1, 1, update, &
      &                  ubar_north(ILB))
-      CALL mp_boundary (ng, IstrR, IendR, ILB, IUB, 1, 1, update,       &
+      CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
      &                  vbar_north(ILB))
 #   endif
 #  endif

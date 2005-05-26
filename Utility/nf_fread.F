@@ -1,6 +1,6 @@
 #include "cppdefs.h"
 #undef DEBUG
-      FUNCTION nf_fread (ng, ncid, ncvarid, tindex, gtype,              &
+      FUNCTION nf_fread (ng, model, ncid, ncvarid, tindex, gtype,       &
      &                   LBi, UBi, LBj, UBj, LBk, UBk, Ascl,            &
      &                   Amin, Amax,                                    &
 #ifdef MASKING
@@ -9,7 +9,7 @@
      &                   A)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This function reads in a generic floating point array from an       !
@@ -17,9 +17,10 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number (integer).                         !
-!     ncid       NetCDF file ID (integer).                             !
-!     ncvarid    NetCDF variable ID (integer).                         !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     ncid       NetCDF file ID.                                       !
+!     ncvarid    NetCDF variable ID.                                   !
 !     tindex     NetCDF time record index to read (integer).           !
 !     gtype      Grid type.                                            !
 !     LBi        I-dimension Lower bound.                              !
@@ -50,7 +51,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, ncid, ncvarid, tindex, gtype
+      integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
       real(r8), intent(in) :: Ascl
@@ -124,8 +125,8 @@
 !
 !  Determine if processing 2D or 3D fields.
 !
-      is2D=.false.
-      IF (MyType.le.4) is2D=.true.
+      is2D=.FALSE.
+      IF (MyType.le.4) is2D=.TRUE.
 #if defined READ_WATER && defined MASKING
 !
 !  If processing water points only, set number of points and type
@@ -145,7 +146,7 @@
         wtype=r2dvar
       END IF
       NWpts=(Lm(ng)+2)*(Mm(ng)+2)
-# if !defined INLINE_2DIO && defined DISTRIBUTE
+# if !(defined INLINE_2DIO && defined DISTRIBUTE)
       IF (.not.is2D) Npts=Npts*Klen
 # endif
 #endif
@@ -166,7 +167,7 @@
           total(3)=Klen
           start(4)=tindex
           total(4)=1
-# if !defined INLINE_2DIO && defined DISTRIBUTE
+# if !(defined INLINE_2DIO && defined DISTRIBUTE)
           Npts=Npts*Klen
 # endif
         END IF
@@ -218,7 +219,7 @@
 !-----------------------------------------------------------------------
 !
 #ifdef DISTRIBUTE
-        CALL mp_scatter (ng, LBi, UBi, LBj, UBj, Kmin, Kmax,            &
+        CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, Kmin, Kmax,     &
      &                   Nghost, gtype, Amin, Amax,                     &
 # if defined READ_WATER && defined MASKING
      &                   NWpts, SCALARS(ng)%IJwater(1,wtype),           &

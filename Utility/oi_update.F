@@ -17,7 +17,7 @@
 # endif
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine assimilates fields as a  pointwise  linear  optimal    !
@@ -55,7 +55,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 2)
+      CALL wclock_on (ng, iNLM, 2)
 # endif
 # ifdef ASSIMILATION_SSH
       CALL oi_ssh_tile (ng, Istr, Iend, Jstr, Jend,                     &
@@ -106,7 +106,7 @@
 # endif
 
 # ifdef PROFILE
-      CALL wclock_off (ng, 2)
+      CALL wclock_off (ng, iNLM, 2)
 # endif
       RETURN
       END SUBROUTINE oi_update
@@ -190,7 +190,7 @@
           IF (SOUTH_WEST_TEST)                                          &
      &      tSSHobs(2,ng)=tSSHobs(1,ng)
           IF (NORTH_EAST_TEST)                                          &
-     &      first_SSH(ng)=.false.
+     &      first_SSH(ng)=.FALSE.
         END IF
 !
 !  Determine assimilation weights and meld model and observations.
@@ -218,8 +218,8 @@
           END DO
           IF (NORTH_EAST_TEST) THEN
             tSSHobs(2,ng)=tSSHobs(1,ng)
-            synchro_flag(ng)=.true.
-            update_SSH(ng)=.false.
+            synchro_flag(ng)=.TRUE.
+            update_SSH(ng)=.FALSE.
             IF (Master) WRITE (stdout,10) 'SSH', tSSHobs(1,ng)
  10         FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,       &
      &             't = ',f12.4)
@@ -312,7 +312,7 @@
             IF (SOUTH_WEST_TEST)                                        &
      &        tTobs(2,itrc,ng)=tTobs(1,itrc,ng)
             IF (NORTH_EAST_TEST)                                        &
-     &        first_T(itrc,ng)=.false.
+     &        first_T(itrc,ng)=.FALSE.
           END IF
 !
 !  Determine assimilation weights and meld model and observations.
@@ -343,8 +343,8 @@
             END DO
             IF (NORTH_EAST_TEST) THEN
               tTobs(2,itrc,ng)=tTobs(1,itrc,ng)
-              synchro_flag(ng)=.true.
-              update_T(itrc,ng)=.false.
+              synchro_flag(ng)=.TRUE.
+              update_T(itrc,ng)=.FALSE.
               ntfirst=iic(ng)+1
               IF (update_SST(ng).and.(itrc.eq.itemp)) THEN
                 IF (Master) WRITE (stdout,10) 'SST', tTobs(1,itrc,ng)
@@ -483,7 +483,7 @@
           IF (SOUTH_WEST_TEST)                                          &
      &      tVobs(2,ng)=tVobs(1,ng)
           IF (NORTH_EAST_TEST)                                          &
-     &      first_UV(ng)=.false.
+     &      first_UV(ng)=.FALSE.
         END IF
 !
 !  Determine assimilation weights and meld model and observations.
@@ -597,15 +597,15 @@
           END DO
           IF (NORTH_EAST_TEST) THEN
             tVobs(2,ng)=tVobs(1,ng)
-            synchro_flag(ng)=.true.
+            synchro_flag(ng)=.TRUE.
             ntfirst=iic(ng)+1
             IF (update_UVsur(ng)) THEN
-              update_UVsur(ng)=.false.
+              update_UVsur(ng)=.FALSE.
               IF (Master) WRITE (stdout,10) 'UVsur', tVobs(1,ng)
  10           FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,    &
      &                't = ',f12.4)
             ELSE
-              update_UV(ng)=.false.
+              update_UV(ng)=.FALSE.
               IF (Master) WRITE (stdout,10) 'UV', tVobs(1,ng)
             END IF
           END IF

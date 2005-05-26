@@ -3,7 +3,7 @@
 #ifdef NONLIN_EOS
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Polynomial  expansion  coefficients for the computation of          !

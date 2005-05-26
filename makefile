@@ -1,6 +1,6 @@
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::: Kate Hedstrom :::
 #                                                                       :::
-#  ROMS/TOMS Version 2.1 Master Makefile                                :::
+#  ROMS/TOMS Version 2.2 Master Makefile                                :::
 #                                                                       :::
 #  This makefile is designed to work only with GNU Make version 3.79 or :::
 #  higher. It can be used in any architecture provided that there is a  :::

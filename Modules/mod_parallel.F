@@ -2,7 +2,7 @@
       MODULE mod_parallel
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This module contains all variables used for parallelization         !
@@ -62,16 +62,19 @@
 !    Cend          Ending time for program region.
 !    Csum          Accumulated time for progam region.
 !
+        integer  :: proc(0:1,4,Ngrids)
+
+        real(r8) :: Cstr(0:44,4,Ngrids)
+        real(r8) :: Cend(0:44,4,Ngrids)
+        real(r8) :: Csum(0:44,4,Ngrids)
+
+#ifdef _OPENMP
         common /process/ proc
-        integer  :: proc(0:1,Ngrids)
 !$OMP THREADPRIVATE (/process/)
 
         common /wallclock/ Cstr, Cend
-        real(r8) :: Cstr(0:44,Ngrids)
-        real(r8) :: Cend(0:44,Ngrids)
 !$OMP THREADPRIVATE (/wallclock/)
-
-        real(r8) :: Csum(0:44,Ngrids)
+#endif
 
 #ifdef DISTRIBUTE
 # ifdef MPI
@@ -90,8 +93,8 @@
 !
 # ifdef DOUBLE_PRECISION
 #  ifdef MPI
-!!      integer, parameter :: MP_FLOAT = MPI_DOUBLE_PRECISION
-        integer, parameter :: MP_FLOAT = MPI_REAL8
+        integer, parameter :: MP_FLOAT = MPI_DOUBLE_PRECISION
+!!      integer, parameter :: MP_FLOAT = MPI_REAL8
 #  endif
 # else
 #  ifdef MPI
@@ -105,7 +108,7 @@
         SUBROUTINE initialize_parallel
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initializes and spawn distribute-memory nodes.         !
@@ -119,6 +122,7 @@
 !  Local variable declarations.
 !
           integer :: MyError, ng, nsize
+
 #ifndef DISTRIBUTE
           integer :: my_numthreads
 !
@@ -131,9 +135,9 @@
 !$OMP PARALLEL SHARED(numthreads)
           numthreads=my_numthreads()
 !$OMP END PARALLEL
-          Master=.true.
-          InpThread=.true.
-          OutThread=.true.
+          Master=.TRUE.
+          InpThread=.TRUE.
+          OutThread=.TRUE.
 #endif
 #ifdef DISTRIBUTE
 # ifdef MPI
@@ -157,16 +161,26 @@
 !
 !  Identify master thread and output thread.
 !
-          Master=.false.
-          InpThread=.false.
-          OutThread=.false.
+          Master=.FALSE.
+          InpThread=.FALSE.
+          OutThread=.FALSE.
           IF (MyRank.eq.MyMaster) THEN
-            Master=.true.
-            InpThread=.true.
-            OutThread=.true.
+            Master=.TRUE.
+            InpThread=.TRUE.
+            OutThread=.TRUE.
           END IF
 # endif
 #endif
+!
+!-----------------------------------------------------------------------
+!  Initialize profiling variables.
+!-----------------------------------------------------------------------
+!
+          proc(0:1,1:4,1:Ngrids)=0
+          Cstr(0:44,1:4,1:Ngrids)=0.0_r8
+          Cend(0:44,1:4,1:Ngrids)=0.0_r8
+          Csum(0:44,1:4,1:Ngrids)=0.0_r8
+
           RETURN
         END SUBROUTINE initialize_parallel
       END MODULE mod_parallel

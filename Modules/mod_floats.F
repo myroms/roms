@@ -3,7 +3,7 @@
 #ifdef FLOATS
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Findex     Indices of spherical coordinates entries in initial      !
@@ -35,6 +35,7 @@
           real(r8), pointer :: Flat(:)
           real(r8), pointer :: Tinfo(:,:)
           real(r8), pointer :: track(:,:,:)
+          real(r8), pointer :: Fz0(:)
 
         END TYPE T_FLT
 
@@ -45,7 +46,7 @@
       SUBROUTINE allocate_floats (ng)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates and initialize all variables in the module   !
@@ -67,7 +68,7 @@
       IF (ng.eq.1) allocate ( FLT(Ngrids) )
 !
       allocate ( FLT(ng) % bounded(Nfloats(ng)) )
-      FLT(ng) % bounded = .false.
+      FLT(ng) % bounded = .FALSE.
 
       allocate ( FLT(ng) % Findex(0:Nfloats(ng)) )
       FLT(ng) % Findex = 0
@@ -86,6 +87,9 @@
 
       allocate ( FLT(ng) % track(NFV(ng),0:NFT,Nfloats(ng)) )
       FLT(ng) % track = IniVal
+
+      allocate ( FLT(ng) % Fz0(Nfloats(ng)) )
+      FLT(ng) % Fz0 = 0
 
       RETURN
       END SUBROUTINE allocate_floats

@@ -2,7 +2,7 @@
       MODULE zetabc_mod
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine sets lateral boundary conditions for free-surface.     !
@@ -17,14 +17,14 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE zetabc (ng, kout, tile)
+      SUBROUTINE zetabc (ng, tile, kout)
 !***********************************************************************
 !
       USE mod_param
       USE mod_ocean
       USE mod_stepping
 !
-      integer, intent(in) :: ng, kout, tile
+      integer, intent(in) :: ng, tile, kout
 
 # include "tile.h"
 !
@@ -38,7 +38,7 @@
 !***********************************************************************
       SUBROUTINE zetabc_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        krhs, kstp, knew,                         &
+     &                        krhs, kstp, kout,                         &
      &                        zeta)
 !***********************************************************************
 !
@@ -51,7 +51,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: krhs, kstp, knew
+      integer, intent(in) :: krhs, kstp, kout
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: zeta(LBi:,LBj:,:)
@@ -66,7 +66,8 @@
 
       real(r8), parameter :: eps =1.0E-20_r8
 
-      real(r8) :: Ce, Cx, cff, dt2d, dZde, dZdt, dZdx, tau
+      real(r8) :: Ce, Cx
+      real(r8) :: cff, cff1, cff2, dt2d, dZde, dZdt, dZdx, tau
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: grad
 
@@ -112,11 +113,14 @@
 #  endif
         END DO
         DO j=Jstr,Jend
-          dZdt=zeta(Istr,j,know)-zeta(Istr  ,j,knew)
-          dZdx=zeta(Istr,j,knew)-zeta(Istr+1,j,knew)
+          dZdt=zeta(Istr,j,know)-zeta(Istr  ,j,kout)
+          dZdx=zeta(Istr,j,kout)-zeta(Istr+1,j,kout)
 #  ifdef WEST_FSNUDGING
-          tau=FSobc_out(ng,iwest)
-          IF ((dZdt*dZdx).lt.0.0_r8) tau=FSobc_in(ng,iwest)
+          IF ((dZdt*dZdx).lt.0.0_r8) THEN
+            tau=FSobc_in(ng,iwest)
+          ELSE
+            tau=FSobc_out(ng,iwest)
+          END IF
           tau=tau*dt2d
 #  endif
           IF ((dZdt*dZdx).lt.0.0_r8) dZdt=0.0_r8
@@ -132,18 +136,23 @@
 #  else
           Ce=0.0_r8
 #  endif
-          zeta(Istr-1,j,knew)=(cff*zeta(Istr-1,j,know)+                 &
-     &                         Cx *zeta(Istr  ,j,knew)-                 &
+#  if defined CELERITY_WRITE && defined FORWARD_WRITE
+          BOUNDARY(ng)%zeta_west_Cx(j,k)=Cx
+          BOUNDARY(ng)%zeta_west_Ce(j,k)=Ce
+          BOUNDARY(ng)%zeta_west_C2(j,k)=cff
+#  endif
+          zeta(Istr-1,j,kout)=(cff*zeta(Istr-1,j,know)+                 &
+     &                         Cx *zeta(Istr  ,j,kout)-                 &
      &                         MAX(Ce,0.0_r8)*grad(Istr-1,j  )-         &
      &                         MIN(Ce,0.0_r8)*grad(Istr-1,j+1))/        &
      &                        (cff+Cx)
 #  ifdef WEST_FSNUDGING
-          zeta(Istr-1,j,knew)=zeta(Istr-1,j,knew)+                      &
+          zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)+                      &
      &                        tau*(BOUNDARY(ng)%zeta_west(j)-           &
      &                             zeta(Istr-1,j,know))
 #  endif
 #  ifdef MASKING
-          zeta(Istr-1,j,knew)=zeta(Istr-1,j,knew)*                      &
+          zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
      &                        GRID(ng)%rmask(Istr-1,j)
 #  endif
         END DO
@@ -153,12 +162,14 @@
 !  Western edge, Chapman boundary condition.
 !
         DO j=Jstr,Jend
-          Cx=dt2d*GRID(ng)%pm(Istr,j)*SQRT(g*GRID(ng)%h(Istr,j))
-          zeta(Istr-1,j,knew)=(zeta(Istr-1,j,know)+                     &
-     &                         Cx*zeta(Istr,j,knew))/                   &
-     &                        (1.0_r8+Cx)
+          cff=dt2d*GRID(ng)%pm(Istr,j)
+          cff1=SQRT(g*GRID(ng)%h(Istr,j))
+          Cx=cff*cff1
+          cff2=1.0_r8/(1.0_r8+Cx)
+          zeta(Istr-1,j,kout)=cff2*(zeta(Istr-1,j,know)+                &
+     &                              Cx*zeta(Istr,j,kout))
 #  ifdef MASKING
-          zeta(Istr-1,j,knew)=zeta(Istr-1,j,knew)*                      &
+          zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
      &                        GRID(ng)%rmask(Istr-1,j)
 #  endif
         END DO
@@ -168,9 +179,9 @@
 !  Western edge, clamped boundary condition.
 !
         DO j=Jstr,Jend
-          zeta(Istr-1,j,knew)=BOUNDARY(ng)%zeta_west(j)
+          zeta(Istr-1,j,kout)=BOUNDARY(ng)%zeta_west(j)
 #  ifdef MASKING
-          zeta(Istr-1,j,knew)=zeta(Istr-1,j,knew)*                      &
+          zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
      &                        GRID(ng)%rmask(Istr-1,j)
 #  endif
         END DO
@@ -180,10 +191,10 @@
 !  Western edge, gradient boundary condition.
 !
         DO j=Jstr,Jend
-          zeta(Istr-1,j,knew)=zeta(Istr,j,knew)
+          zeta(Istr-1,j,kout)=zeta(Istr,j,kout)
 #  ifdef MASKING
-          zeta(Istr-1,j,knew)=zeta(Istr-1,j,knew)*                      &
-     &                   GRID(ng)%rmask(Istr-1,j)
+          zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
+     &                        GRID(ng)%rmask(Istr-1,j)
 #  endif
         END DO
 
@@ -192,9 +203,9 @@
 !  Western edge, closed boundary condition.
 !
         DO j=Jstr,Jend
-          zeta(Istr-1,j,knew)=zeta(Istr,j,knew)
+          zeta(Istr-1,j,kout)=zeta(Istr,j,kout)
 #  ifdef MASKING
-          zeta(Istr-1,j,knew)=zeta(Istr-1,j,knew)*                      &
+          zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
      &                        GRID(ng)%rmask(Istr-1,j)
 #  endif
         END DO
@@ -224,11 +235,14 @@
 #  endif
         END DO
         DO j=Jstr,Jend
-          dZdt=zeta(Iend,j,know)-zeta(Iend  ,j,knew)
-          dZdx=zeta(Iend,j,knew)-zeta(Iend-1,j,knew)
+          dZdt=zeta(Iend,j,know)-zeta(Iend  ,j,kout)
+          dZdx=zeta(Iend,j,kout)-zeta(Iend-1,j,kout)
 #  ifdef EAST_FSNUDGING
-          tau=FSobc_out(ng,ieast)
-          IF ((dZdt*dZdx).lt.0.0_r8) tau=FSobc_in(ng,ieast)
+          IF ((dZdt*dZdx).lt.0.0_r8) THEN
+            tau=FSobc_in(ng,ieast)
+          ELSE
+            tau=FSobc_out(ng,ieast)
+          END IF
           tau=tau*dt2d
 #  endif
           IF ((dZdt*dZdx).lt.0.0_r8) dZdt=0.0_r8
@@ -244,18 +258,23 @@
 #  else
           Ce=0.0_r8
 #  endif
-          zeta(Iend+1,j,knew)=(cff*zeta(Iend+1,j,know)+                 &
-     &                         Cx *zeta(Iend  ,j,knew)-                 &
+#  if defined CELERITY_WRITE && defined FORWARD_WRITE
+          BOUNDARY(ng)%zeta_east_Cx(j,k)=Cx
+          BOUNDARY(ng)%zeta_east_Ce(j,k)=Ce
+          BOUNDARY(ng)%zeta_east_C2(j,k)=cff
+#  endif
+          zeta(Iend+1,j,kout)=(cff*zeta(Iend+1,j,know)+                 &
+     &                         Cx *zeta(Iend  ,j,kout)-                 &
      &                         MAX(Ce,0.0_r8)*grad(Iend+1,j  )-         &
      &                         MIN(Ce,0.0_r8)*grad(Iend+1,j+1))/        &
      &                        (cff+Cx)
 #  ifdef EAST_FSNUDGING
-          zeta(Iend+1,j,knew)=zeta(Iend+1,j,knew)+                      &
+          zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)+                      &
      &                        tau*(BOUNDARY(ng)%zeta_east(j)-           &
      &                             zeta(Iend+1,j,know))
 #  endif
 #  ifdef MASKING
-          zeta(Iend+1,j,knew)=zeta(Iend+1,j,knew)*                      &
+          zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
      &                        GRID(ng)%rmask(Iend+1,j)
 #  endif
         END DO
@@ -265,12 +284,14 @@
 !  Eastern edge, Chapman boundary condition.
 !
         DO j=Jstr,Jend
-          Cx=dt2d*GRID(ng)%pm(Iend,j)*SQRT(g*GRID(ng)%h(Iend,j))
-          zeta(Iend+1,j,knew)=(zeta(Iend+1,j,know)+                     &
-     &                         Cx*zeta(Iend,j,knew))/                   &
-     &                        (1.0_r8+Cx)
+          cff=dt2d*GRID(ng)%pm(Iend,j)
+          cff1=SQRT(g*GRID(ng)%h(Iend,j))
+          Cx=cff*cff1
+          cff2=1.0_r8/(1.0_r8+Cx)
+          zeta(Iend+1,j,kout)=cff2*(zeta(Iend+1,j,know)+                &
+     &                              Cx*zeta(Iend,j,kout))
 #  ifdef MASKING
-          zeta(Iend+1,j,knew)=zeta(Iend+1,j,knew)*                      &
+          zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
      &                        GRID(ng)%rmask(Iend+1,j)
 #  endif
         END DO
@@ -280,9 +301,9 @@
 !  Eastern edge, clamped boundary condition.
 !
         DO j=Jstr,Jend
-          zeta(Iend+1,j,knew)=BOUNDARY(ng)%zeta_east(j)
+          zeta(Iend+1,j,kout)=BOUNDARY(ng)%zeta_east(j)
 #  ifdef MASKING
-          zeta(Iend+1,j,knew)=zeta(Iend+1,j,knew)*                      &
+          zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
      &                        GRID(ng)%rmask(Iend+1,j)
 #  endif
         END DO
@@ -292,9 +313,9 @@
 !  Eastern edge, gradient boundary condition.
 !
         DO j=Jstr,Jend
-          zeta(Iend+1,j,knew)=zeta(Iend,j,knew)
+          zeta(Iend+1,j,kout)=zeta(Iend,j,kout)
 #  ifdef MASKING
-          zeta(Iend+1,j,knew)=zeta(Iend+1,j,knew)*                      &
+          zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
      &                        GRID(ng)%rmask(Iend+1,j)
 #  endif
         END DO
@@ -304,9 +325,9 @@
 !  Eastern edge, closed boundary condition.
 !
         DO j=Jstr,Jend
-          zeta(Iend+1,j,knew)=zeta(Iend,j,knew)
+          zeta(Iend+1,j,kout)=zeta(Iend,j,kout)
 #  ifdef MASKING
-          zeta(Iend+1,j,knew)=zeta(Iend+1,j,knew)*                      &
+          zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
      &                        GRID(ng)%rmask(Iend+1,j)
 #  endif
         END DO
@@ -339,11 +360,14 @@
 #  endif
         END DO
         DO i=Istr,Iend
-          dZdt=zeta(i,Jstr,know)-zeta(i,Jstr  ,knew)
-          dZde=zeta(i,Jstr,knew)-zeta(i,Jstr-1,knew)
+          dZdt=zeta(i,Jstr,know)-zeta(i,Jstr  ,kout)
+          dZde=zeta(i,Jstr,kout)-zeta(i,Jstr-1,kout)
 #  ifdef SOUTH_FSNUDGING
-          tau=FSobc_out(ng,isouth)
-          IF ((dZdt*dZde).lt.0.0_r8) tau=FSobc_in(ng,isouth)
+          IF ((dZdt*dZde).lt.0.0_r8) THEN
+            tau=FSobc_in(ng,isouth)
+          ELSE
+            tau=FSobc_out(ng,isouth)
+          END IF
           tau=tau*dt2d
 #  endif
           IF ((dZdt*dZde).lt.0.0_r8) dZdt=0.0_r8
@@ -359,18 +383,23 @@
           Cx=0.0_r8
 #  endif
           Ce=dZdt*dZde
-          zeta(i,Jstr-1,knew)=(cff*zeta(i,Jstr-1,know)+                 &
-     &                         Ce *zeta(i,Jstr  ,knew)-                 &
+#  if defined CELERITY_WRITE && defined FORWARD_WRITE
+          BOUNDARY(ng)%zeta_south_Cx(i,k)=Cx
+          BOUNDARY(ng)%zeta_south_Ce(i,k)=Ce
+          BOUNDARY(ng)%zeta_south_C2(i,k)=cff
+#  endif
+          zeta(i,Jstr-1,kout)=(cff*zeta(i,Jstr-1,know)+                 &
+     &                         Ce *zeta(i,Jstr  ,kout)-                 &
      &                         MAX(Cx,0.0_r8)*grad(i  ,Jstr)-           &
      &                         MIN(Cx,0.0_r8)*grad(i+1,Jstr))/          &
      &                        (cff+Ce)
 #  ifdef SOUTH_FSNUDGING
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr-1,knew)+                      &
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)+                      &
      &                        tau*(BOUNDARY(ng)%zeta_south(i)-          &
      &                             zeta(i,Jstr-1,know))
 #  endif
 #  ifdef MASKING
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr-1,knew)*                      &
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jstr-1)
 #  endif
         END DO
@@ -380,12 +409,14 @@
 !  Southern edge, Chapman boundary condition.
 !
         DO i=Istr,Iend
-          Ce=dt2d*GRID(ng)%pn(i,1)*SQRT(g*GRID(ng)%h(i,1))
-          zeta(i,Jstr-1,knew)=(zeta(i,Jstr-1,know)+                     &
-     &                         Ce*zeta(i,Jstr,knew))/                   &
-     &                        (1.0_r8+Ce)
+          cff=dt2d*GRID(ng)%pn(i,Jstr)
+          cff1=SQRT(g*GRID(ng)%h(i,Jstr))
+          Ce=cff*cff1
+          cff2=1.0_r8/(1.0_r8+Ce)
+          zeta(i,Jstr-1,kout)=cff2*(zeta(i,Jstr-1,know)+                &
+     &                              Ce*zeta(i,Jstr,kout))
 #  ifdef MASKING
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr-1,knew)*                      &
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jstr-1)
 #  endif
         END DO
@@ -395,9 +426,9 @@
 !  Southern edge, clamped boundary condition.
 !
         DO i=Istr,Iend
-          zeta(i,Jstr-1,knew)=BOUNDARY(ng)%zeta_south(i)
+          zeta(i,Jstr-1,kout)=BOUNDARY(ng)%zeta_south(i)
 #  ifdef MASKING
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr-1,knew)*                      &
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jstr-1)
 #  endif
         END DO
@@ -407,9 +438,9 @@
 !  Southern edge, gradient boundary condition.
 !
         DO i=Istr,Iend
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr,knew)
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr,kout)
 #  ifdef MASKING
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr-1,knew)*                      &
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jstr-1)
 #  endif
         END DO
@@ -419,9 +450,9 @@
 !  Southern edge, closed boundary condition.
 !
         DO i=Istr,Iend
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr,knew)
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr,kout)
 #  ifdef MASKING
-          zeta(i,Jstr-1,knew)=zeta(i,Jstr-1,knew)*                      &
+          zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jstr-1)
 #  endif
         END DO
@@ -451,11 +482,14 @@
 #  endif
         END DO
         DO i=Istr,Iend
-          dZdt=zeta(i,Jend,know)-zeta(i,Jend  ,knew)
-          dZde=zeta(i,Jend,knew)-zeta(i,Jend-1,knew)
+          dZdt=zeta(i,Jend,know)-zeta(i,Jend  ,kout)
+          dZde=zeta(i,Jend,kout)-zeta(i,Jend-1,kout)
 #  ifdef NORTH_FSNUDGING
-          tau=FSobc_out(ng,inorth)
-          IF ((dZdt*dZde).lt.0.0_r8) tau=FSobc_in(ng,inorth)
+          IF ((dZdt*dZde).lt.0.0_r8) THEN
+            tau=FSobc_in(ng,inorth)
+          ELSE
+            tau=FSobc_out(ng,inorth)
+          END IF
           tau=tau*dt2d
 #  endif
           IF ((dZdt*dZde).lt.0.0_r8) dZdt=0.0_r8
@@ -471,18 +505,23 @@
           Cx=0.0_r8
 #  endif
           Ce=dZdt*dZde
-          zeta(i,Jend+1,knew)=(cff*zeta(i,Jend+1,know)+                 &
-     &                         Ce *zeta(i,Jend  ,knew)-                 &
+#  if defined CELERITY_WRITE && defined FORWARD_WRITE
+          BOUNDARY(ng)%zeta_north_Cx(i,k)=Cx
+          BOUNDARY(ng)%zeta_north_Ce(i,k)=Ce
+          BOUNDARY(ng)%zeta_north_C2(i,k)=cff
+#  endif
+          zeta(i,Jend+1,kout)=(cff*zeta(i,Jend+1,know)+                 &
+     &                         Ce *zeta(i,Jend  ,kout)-                 &
      &                         MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-         &
      &                         MIN(Cx,0.0_r8)*grad(i+1,Jend+1))/        &
      &                        (cff+Ce)
 #  ifdef NORTH_FSNUDGING
-          zeta(i,Jend+1,knew)=zeta(i,Jend+1,knew)+                      &
+          zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)+                      &
      &                        tau*(BOUNDARY(ng)%zeta_north(i)-          &
      &                             zeta(i,Jend+1,know))
 #  endif
 #  ifdef MASKING
-          zeta(i,Jend+1,knew)=zeta(i,Jend+1,knew)*                      &
+          zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jend+1)
 #  endif
         END DO
@@ -492,12 +531,14 @@
 !  Northern edge, Chapman boundary condition.
 !
         DO i=Istr,Iend
-          Ce=dt2d*GRID(ng)%pn(i,Jend)*SQRT(g*GRID(ng)%h(i,Jend))
-          zeta(i,Jend+1,knew)=(zeta(i,Jend+1,know)+                     &
-     &                         Ce*zeta(i,Jend,knew))/                   &
-     &                        (1.0_r8+Ce)
+          cff=dt2d*GRID(ng)%pn(i,Jend)
+          cff1=SQRT(g*GRID(ng)%h(i,Jend))
+          Ce=cff*cff1
+          cff2=1.0_r8/(1.0_r8+Ce)
+          zeta(i,Jend+1,kout)=cff2*(zeta(i,Jend+1,know)+                &
+     &                              Ce*zeta(i,Jend,kout))
 #  ifdef MASKING
-          zeta(i,Jend+1,knew)=zeta(i,Jend+1,knew)*                      &
+          zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jend+1)
 #  endif
         END DO
@@ -507,9 +548,9 @@
 !  Northern edge, clamped boundary condition.
 !
         DO i=Istr,Iend
-          zeta(i,Jend+1,knew)=BOUNDARY(ng)%zeta_north(i)
+          zeta(i,Jend+1,kout)=BOUNDARY(ng)%zeta_north(i)
 #  ifdef MASKING
-          zeta(i,Jend+1,knew)=zeta(i,Jend+1,knew)*                      &
+          zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jend+1)
 #  endif
         END DO
@@ -519,9 +560,9 @@
 !  Northern edge, gradient boundary condition.
 !
         DO i=Istr,Iend
-          zeta(i,Jend+1,knew)=zeta(i,Jend,knew)
+          zeta(i,Jend+1,kout)=zeta(i,Jend,kout)
 #  ifdef MASKING
-          zeta(i,Jend+1,knew)=zeta(i,Jend+1,knew)*                      &
+          zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jend+1)
 #  endif
         END DO
@@ -531,9 +572,9 @@
 !  Northern edge, closed boundary condition.
 !
         DO i=Istr,Iend
-          zeta(i,Jend+1,knew)=zeta(i,Jend,knew)
+          zeta(i,Jend+1,kout)=zeta(i,Jend,kout)
 #  ifdef MASKING
-          zeta(i,Jend+1,knew)=zeta(i,Jend+1,knew)*                      &
+          zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &
      &                        GRID(ng)%rmask(i,Jend+1)
 #  endif
         END DO
@@ -547,21 +588,21 @@
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        zeta(Istr-1,Jstr-1,knew)=0.5_r8*(zeta(Istr  ,Jstr-1,knew)+      &
-     &                                   zeta(Istr-1,Jstr  ,knew))
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        zeta(Istr-1,Jstr-1,kout)=0.5_r8*(zeta(Istr  ,Jstr-1,kout)+      &
+     &                                   zeta(Istr-1,Jstr  ,kout))
       END IF
-      IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        zeta(Iend+1,Jstr-1,knew)=0.5_r8*(zeta(Iend+1,Jstr  ,knew)+      &
-     &                                   zeta(Iend  ,Jstr-1,knew))
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        zeta(Iend+1,Jstr-1,kout)=0.5_r8*(zeta(Iend  ,Jstr-1,kout)+      &
+     &                                   zeta(Iend+1,Jstr  ,kout))
       END IF
-      IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        zeta(Istr-1,Jend+1,knew)=0.5_r8*(zeta(Istr-1,Jend  ,knew)+      &
-     &                                   zeta(Istr,Jend+1,knew))
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        zeta(Istr-1,Jend+1,kout)=0.5_r8*(zeta(Istr-1,Jend  ,kout)+      &
+     &                                   zeta(Istr  ,Jend+1,kout))
       END IF
-      IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        zeta(Iend+1,Jend+1,knew)=0.5_r8*(zeta(Iend+1,Jend  ,knew)+      &
-     &                                   zeta(Iend  ,Jend+1,knew))
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        zeta(Iend+1,Jend+1,kout)=0.5_r8*(zeta(Iend+1,Jend  ,kout)+      &
+     &                                   zeta(Iend  ,Jend+1,kout))
       END IF
 #endif
       RETURN

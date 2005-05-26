@@ -1,9 +1,9 @@
 #include "cppdefs.h"
 #if defined FLOATS || defined STATIONS
-       SUBROUTINE grid_coords (ng)
+       SUBROUTINE grid_coords (ng, model)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine converts initial locations to fractional grid (I,J)    !
@@ -25,7 +25,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng
+      integer, intent(in) :: ng, model
 !
 !  Local variable declarations.
 !
@@ -66,10 +66,10 @@
       Jstr=0
       Jend=Mm(ng)+1
 # endif
-      LBi=lbound(GRID(ng)%h,DIM=1)
-      UBi=ubound(GRID(ng)%h,DIM=1)
-      LBj=lbound(GRID(ng)%h,DIM=2)
-      UBj=ubound(GRID(ng)%h,DIM=2)
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
 
 # ifdef FLOATS
 !
@@ -89,8 +89,8 @@
      &                   spv, mc, FLT(ng)%Flon, FLT(ng)%Flat,           &
      &                   Iflt, Jflt)
 #  ifdef DISTRIBUTE
-          CALL mp_collect (ng, mc, spv, Iflt)
-          CALL mp_collect (ng, mc, spv, Jflt)
+          CALL mp_collect (ng, model, mc, spv, Iflt)
+          CALL mp_collect (ng, model, mc, spv, Jflt)
 #  endif
           DO i=1,mc
             l=FLT(ng)%Findex(i)
@@ -111,14 +111,14 @@
         j=INT(FLT(ng)%Tinfo(iygrd,l))
         IF (((Istr.le.i).and.(i.le.Iend)).and.                          &
      &      ((Jstr.le.j).and.(j.le.Jend))) THEN
-          MyThread(l)=.true.
+          MyThread(l)=.TRUE.
         ELSE
-          MyThread(l)=.false.
+          MyThread(l)=.FALSE.
         END IF
       END DO
 #   else
       DO l=1,Nfloats(ng)
-        MyThread(l)=.true.
+        MyThread(l)=.TRUE.
       END DO
 #   endif
 #  endif
@@ -133,6 +133,7 @@
 #  ifdef SOLVE3D
         IF (MyThread(l)) THEN
           zfloat=FLT(ng)%Tinfo(izgrd,l)
+          FLT(ng)%Fz0(l)=zfloat                   ! Save original value
           Kflt(l)=zfloat
           IF (zfloat.le.0.0_r8) THEN
             i=INT(FLT(ng)%Tinfo(ixgrd,l))
@@ -156,7 +157,7 @@
       END DO
 #  ifdef SOLVE3D
 #   ifdef DISTRIBUTE
-      CALL mp_collect (ng, Nfloats(ng), spv, Kflt)
+      CALL mp_collect (ng, model, Nfloats(ng), spv, Kflt)
 #   endif
       DO l=1,Nfloats(ng)
         FLT(ng)%Tinfo(izgrd,l)=Kflt(l)
@@ -187,8 +188,8 @@
      &                   GRID(ng)%latr,                                 &
      &                   spv, mc, Slon, Slat, Ista, Jsta)
 #  ifdef DISTRIBUTE
-          CALL mp_collect (ng, mc, spv, Ista)
-          CALL mp_collect (ng, mc, spv, Jsta)
+          CALL mp_collect (ng, model, mc, spv, Ista)
+          CALL mp_collect (ng, model, mc, spv, Jsta)
 #  endif
           mc=0
           DO l=1,Nstation(ng)

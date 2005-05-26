@@ -3,7 +3,7 @@
 #ifdef SOLVE3D
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine time-interpolates requested 3D field from snapshots    !
@@ -16,8 +16,8 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE set_3dfld_tile (ng, Istr, Iend, Jstr, Jend, ifield,    &
-     &                           LBi, UBi, LBj, UBj,                    &
+      SUBROUTINE set_3dfld_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+     &                           ifield, LBi, UBi, LBj, UBj, LBk, UBk,  &
      &                           Finp, Fout, update)
 !***********************************************************************
 !
@@ -35,15 +35,15 @@
 !
       logical, intent(out) :: update
 
-      integer, intent(in) :: ng, Istr, Iend, Jstr, Jend, ifield
-      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: ng, model, Istr, Iend, Jstr, Jend, ifield
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Finp(LBi:,LBj:,:,:)
       real(r8), intent(out) :: Fout(LBi:,LBj:,:)
 # else
-      real(r8), intent(in) :: Finp(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(out) :: Fout(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Finp(LBi:UBi,LBj:UBj,LBk:UBk,2)
+      real(r8), intent(out) :: Fout(LBi:UBi,LBj:UBj,LBk:UBk)
 # endif
 !
 !  Local variable declarations.
@@ -67,20 +67,25 @@
       Lonerec=Linfo(3,ifield,ng)
       gtype  =Iinfo(1,ifield,ng)
       Tindex =Iinfo(5,ifield,ng)
-      update=.true.
+      update=.TRUE.
 !
 !  Set linear-interpolation factors.
 !
       it1=3-Tindex
       it2=Tindex
-      fac1=Tintrp(it2,ifield,ng)-time(ng)
-      fac2=time(ng)-Tintrp(it1,ifield,ng)
+# ifdef CRAY
+      fac1=ANINT(Tintrp(it2,ifield,ng)-time(ng))
+      fac2=ANINT(time(ng)-Tintrp(it1,ifield,ng))
+# else
+      fac1=ANINT(Tintrp(it2,ifield,ng)-time(ng),r8)
+      fac2=ANINT(time(ng)-Tintrp(it1,ifield,ng),r8)
+# endif
 !
 !  Load time-invariant data. Time interpolation is not necessary.
 !
       IF (Lonerec) THEN
         IF (Lgrided) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 Fout(i,j,k)=Finp(i,j,k,Tindex)
@@ -89,7 +94,7 @@
           END DO
         ELSE
           Fval=Fpoint(Tindex,ifield,ng)
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 Fout(i,j,k)=Fval
@@ -106,7 +111,7 @@
         fac1=fac*fac1
         fac2=fac*fac2
         IF (Lgrided) THEN
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 Fout(i,j,k)=fac1*Finp(i,j,k,it1)+fac2*Finp(i,j,k,it2)
@@ -115,7 +120,7 @@
           END DO
         ELSE
           Fval=fac1*Fpoint(it1,ifield,ng)+fac2*Fpoint(it2,ifield,ng)
-          DO k=1,N(ng)
+          DO k=LBk,UBk
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 Fout(i,j,k)=Fval
@@ -128,7 +133,7 @@
 !  read in at the next time step.
 !
         IF ((time(ng)+dt(ng)).gt.Tintrp(it2,ifield,ng)) THEN
-          IF (SOUTH_WEST_TEST) synchro_flag(ng)=.true.
+          IF (SOUTH_WEST_TEST) synchro_flag(ng)=.TRUE.
         END IF
 !
 !  Unable to set-up requested field.  Activate error flag to quit.
@@ -144,7 +149,7 @@
      &            /,14x,'TDAYS   = ',f15.4,2x,'TEND    = ',f15.4,       &
      &            /,14x,'TINTRP1 = ',f15.4,2x,'TINTRP2 = ',f15.4)
           exit_flag=2
-          update=.false.
+          update=.FALSE.
         END IF
       END IF
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
@@ -153,14 +158,25 @@
 !
       IF (update) THEN
         IF (gtype.eq.r3dvar) THEN
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj, 1, N(ng), Fout)
+          CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
+     &                            NghostPoints,                         &
+     &                            Fout)
         ELSE IF (gtype.eq.u3dvar) THEN
-          CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj, 1, N(ng), Fout)
+          CALL exchange_u3d_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
+     &                            NghostPoints,                         &
+     &                            Fout)
         ELSE IF (gtype.eq.v3dvar) THEN
-          CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                            LBi, UBi, LBj, UBj, 1, N(ng), Fout)
+          CALL exchange_v3d_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
+     &                            NghostPoints,                         &
+     &                            Fout)
+        ELSE IF (gtype.eq.w3dvar) THEN
+          CALL exchange_w3d_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
+     &                            NghostPoints,                         &
+     &                            Fout)
         END IF
       END IF
 # endif

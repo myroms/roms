@@ -1,10 +1,13 @@
 #include "cppdefs.h"
-#if (defined LMD_SKPP || defined SOLAR_SOURCE) && defined SOLVE3D
-      SUBROUTINE lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, Zscale,   &
-     &                            Z, swdk)
+
+#if defined NONLINEAR && (defined LMD_SKPP || defined SOLAR_SOURCE) && \
+    defined SOLVE3D
+
+      SUBROUTINE lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend,           &
+     &                            Zscale, Z, swdk)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine computes the  fraction  of  solar shortwave flux    !
@@ -48,6 +51,8 @@
 !  Local variable declarations.
 !
       integer :: Jindex, i, j
+
+      real(r8) :: cff1, cff2
 !
 !-----------------------------------------------------------------------
 !  Use Paulson and Simpson (1977) two wavelength bands solar
@@ -57,10 +62,10 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
           Jindex=MIXING(ng)%Jwtype(i,j)
-          swdk(i,j)=lmd_r1(Jindex)*                                     &
-     &              EXP(Z(i,j)*Zscale/lmd_mu1(Jindex))+                 &
-     &              (1.0_r8-lmd_r1(Jindex))*                            &
-     &              EXP(Z(i,j)*Zscale/lmd_mu2(Jindex))
+          cff1=Zscale/lmd_mu1(Jindex)
+          cff2=Zscale/lmd_mu2(Jindex)
+          swdk(i,j)=EXP(Z(i,j)*cff1)*lmd_r1(Jindex)+                     &
+     &              EXP(Z(i,j)*cff2)*(1.0_r8-lmd_r1(Jindex))
         END DO
       END DO
       END SUBROUTINE lmd_swfrac_tile

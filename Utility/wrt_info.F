@@ -1,8 +1,8 @@
 #include "cppdefs.h"
-      FUNCTION wrt_info (ng, ncid, wrtThread, ncname)
+      FUNCTION wrt_info (ng, model, ncid, wrtThread, ncname)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine writes out information variables into requested        !
@@ -10,9 +10,10 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng       Nested grid number (integer).                           !
-!     ncid     NetCDF file ID (integer).                               !
-!     ncname   NetCDF file name (character).                           !
+!     ng       Nested grid number.                                     !
+!     model    Calling model identifier.                               !
+!     ncid     NetCDF file ID.                                         !
+!     ncname   NetCDF file name.                                       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -31,21 +32,23 @@
       USE mod_netcdf
       USE mod_scalars
 !
-      USE extract_mod, ONLY : extract2d
+#ifdef STATIONS
+      USE extract_sta_mod, ONLY : extract_sta2d
 !
+#endif
       implicit none
 !
 !  Imported variable declarations.
 !
       logical, intent(in) :: wrtThread
 
-      integer, intent(in) :: ng, ncid
+      integer, intent(in) :: ng, model, ncid
 
       character (len=*), intent(in) :: ncname
 !
 !  Local variable declarations.
 !
-      logical :: Cgrid = .true.
+      logical :: Cgrid = .TRUE.
 
       integer :: LBi, UBi, LBj, UBj
       integer :: i, j, k, ibry, ilev, itrc, varid
@@ -68,10 +71,10 @@
 
       character (len=1) :: char1
 !
-      LBi=lbound(GRID(ng)%h,DIM=1)
-      UBi=ubound(GRID(ng)%h,DIM=1)
-      LBj=lbound(GRID(ng)%h,DIM=2)
-      UBj=ubound(GRID(ng)%h,DIM=2)
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Write out running parameters.
@@ -86,6 +89,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ntimes', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -94,6 +98,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ndtfast', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -102,6 +107,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'dt', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -110,6 +116,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'dtfast', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -118,97 +125,108 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'dstart', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'nhis',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,nhis)
+        wrt_info=nf_inq_varid(ncid,'nHIS',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,nHIS)
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'nhis', TRIM(ncname)
+          WRITE (stdout,10) 'nHIS', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
-        IF (ndefhis(ng).gt.0) THEN
-          wrt_info=nf_inq_varid(ncid,'ndefhis',varid)
-          wrt_info=nf_put_var1_int(ncid,varid,1,ndefhis(ng))
+        IF (ndefHIS(ng).gt.0) THEN
+          wrt_info=nf_inq_varid(ncid,'ndefHIS',varid)
+          wrt_info=nf_put_var1_int(ncid,varid,1,ndefHIS(ng))
           IF (wrt_info.ne.nf_noerr) THEN
-            WRITE (stdout,10) 'ndefhis', TRIM(ncname)
+            WRITE (stdout,10) 'ndefHIS', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'nrst',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,nrst)
+        wrt_info=nf_inq_varid(ncid,'nRST',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,nRST)
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'nrst', TRIM(ncname)
+          WRITE (stdout,10) 'nRST', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
 #ifdef AVERAGES
-        wrt_info=nf_inq_varid(ncid,'ntsavg',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,ntsavg)
+        wrt_info=nf_inq_varid(ncid,'ntsAVG',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,ntsAVG)
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'ntsavg', TRIM(ncname)
+          WRITE (stdout,10) 'ntsAVG', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'navg',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,navg)
+        wrt_info=nf_inq_varid(ncid,'nAVG',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,nAVG)
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'navg', TRIM(ncname)
+          WRITE (stdout,10) 'nAVG', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
-        IF (ndefavg(ng).gt.0) THEN
-          wrt_info=nf_inq_varid(ncid,'ndefavg',varid)
-          wrt_info=nf_put_var1_int(ncid,varid,1,ndefavg(ng))
+        IF (ndefAVG(ng).gt.0) THEN
+          wrt_info=nf_inq_varid(ncid,'ndefAVG',varid)
+          wrt_info=nf_put_var1_int(ncid,varid,1,ndefAVG(ng))
           IF (wrt_info.ne.nf_noerr) THEN
-            WRITE (stdout,10) 'ndefavg', TRIM(ncname)
+            WRITE (stdout,10) 'ndefAVG', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
 #endif
 
 #ifdef DIAGNOSTICS
-        wrt_info=nf_inq_varid(ncid,'ntsdia',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,ntsdia)
+        wrt_info=nf_inq_varid(ncid,'ntsDIA',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,ntsDIA)
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'ntsdia', TRIM(ncname)
+          WRITE (stdout,10) 'ntsDIA', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'ndia',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,ndia)
+        wrt_info=nf_inq_varid(ncid,'nDIA',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,nDIA)
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'ndia', TRIM(ncname)
+          WRITE (stdout,10) 'nDIA', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
-        IF (ndefdia(ng).gt.0) THEN
-          wrt_info=nf_inq_varid(ncid,'ndefdia',varid)
-          wrt_info=nf_put_var1_int(ncid,varid,1,ndefdia(ng))
+        IF (ndefDIA(ng).gt.0) THEN
+          wrt_info=nf_inq_varid(ncid,'ndefDIA',varid)
+          wrt_info=nf_put_var1_int(ncid,varid,1,ndefDIA(ng))
           IF (wrt_info.ne.nf_noerr) THEN
-            WRITE (stdout,10) 'ndefdia', TRIM(ncname)
+            WRITE (stdout,10) 'ndefDIA', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
 #endif
 
 #ifdef STATIONS
-        wrt_info=nf_inq_varid(ncid,'nsta',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,nsta)
+        wrt_info=nf_inq_varid(ncid,'nSTA',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,nSTA)
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'nsta', TRIM(ncname)
+          WRITE (stdout,10) 'nSTA', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -223,6 +241,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Falpha', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -231,6 +250,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Fbeta', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -239,6 +259,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Fgamma', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -251,6 +272,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'tnu2', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -264,6 +286,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'tnu4', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -274,6 +297,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'visc2', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -284,6 +308,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'visc4', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -295,6 +320,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'tkenu2', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 # endif
@@ -305,6 +331,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'tkenu4', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 # endif
@@ -318,6 +345,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Akt_bak', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -326,6 +354,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Akv_bak', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -335,6 +364,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Akk_bak', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -343,6 +373,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Akp_bak', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 # endif
@@ -355,6 +386,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'rdrg', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -363,6 +395,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'rdrg2', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -372,6 +405,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Zob', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -380,6 +414,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Zos', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -392,6 +427,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_p', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -400,6 +436,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_m', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -408,6 +445,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_n', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -416,6 +454,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_cmu0', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -424,6 +463,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_c1', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -432,6 +472,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_c2', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -440,6 +481,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_c3m', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -448,6 +490,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_c3p', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -456,6 +499,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_sigk', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -464,6 +508,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_sigp', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -472,6 +517,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_Kmin', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -480,6 +526,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gls_Pmin', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -491,6 +538,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Znudg', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -499,6 +547,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M2nudg', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -508,6 +557,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M3nudg', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -519,6 +569,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Tnudg', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -531,6 +582,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Znudass', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -539,6 +591,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M2nudass', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -548,6 +601,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M3nudass', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -559,6 +613,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Tnudass', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 # endif
@@ -572,6 +627,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'FSobc_in', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -580,6 +636,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'FSobc_out', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -588,6 +645,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M2obc_in', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -596,6 +654,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M2obc_out', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -615,12 +674,13 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Tobc_in', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
         DO ibry=1,4
           DO itrc=1,NT(ng)
-            Tobc(itrc,ibry)=Tobc_in(itrc,ng,ibry)
+            Tobc(itrc,ibry)=Tobc_out(itrc,ng,ibry)
           END DO
         END DO
         wrt_info=nf_inq_varid(ncid,'Tobc_out',varid)
@@ -628,6 +688,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Tobc_out', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -636,6 +697,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M3obc_in', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -644,6 +706,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'M3obc_out', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 # endif
@@ -656,6 +719,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'rho0', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -665,6 +729,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'R0', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -673,6 +738,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Tcoef', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -681,6 +747,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Scoef', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -694,6 +761,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'levsfrc', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -702,6 +770,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'levbfrc', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 # endif
@@ -714,6 +783,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gamma2', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -727,6 +797,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'BioIter', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -735,6 +806,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'AttSW', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -743,6 +815,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'AttChl', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -751,6 +824,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'PARfrac', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -759,6 +833,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Vp0', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -767,6 +842,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'I_thNH4', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -775,6 +851,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'D_p5NH4', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -783,6 +860,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'NitriR', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -791,6 +869,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'K_NO3', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -799,6 +878,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'K_NH4', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -807,6 +887,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'K_Phy', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -815,6 +896,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Chl2C_m', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -823,6 +905,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ChlMin', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -831,6 +914,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'PhyCN', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -839,6 +923,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'PhyIP', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -847,6 +932,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'PhyIS', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -855,6 +941,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'PhyMin', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -863,6 +950,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'PhyMR', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -871,6 +959,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ZooAE_N', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -879,6 +968,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ZooBM', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -887,6 +977,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ZooCN', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -895,6 +986,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ZooER', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -903,6 +995,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ZooGR', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -911,6 +1004,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ZooMin', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -919,6 +1013,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ZooMR', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -927,6 +1022,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'LDeRRN', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -935,6 +1031,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'LDeRRC', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -943,6 +1040,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'CoagR', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -951,6 +1049,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'SDeRRN', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -959,6 +1058,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'SDeRRC', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -967,6 +1067,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'wPhy', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -975,6 +1076,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'wLDet', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -983,6 +1085,16 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'wSDet', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'pCO2air',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,pCO2air(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'pCO2air', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -995,6 +1107,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'BioIter', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1004,6 +1117,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RtUVR_flag', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1013,6 +1127,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'NFIX_flag', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1022,6 +1137,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'Regen_flag', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1030,6 +1146,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsNO3', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1038,6 +1155,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsNH4', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1046,6 +1164,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsSiO', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1054,6 +1173,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsPO4', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1062,6 +1182,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsFe', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1070,6 +1191,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'GtALG_max', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1078,6 +1200,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'PhyTbase', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1086,6 +1209,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'PhyTfac', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1094,6 +1218,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'BET_', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1102,6 +1227,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'maxC2nALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1110,6 +1236,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'minC2nALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1118,6 +1245,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2nALGminABS', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1126,6 +1254,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'maxC2SiALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1134,6 +1263,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'minC2SiALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1142,6 +1272,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2SiALGminABS', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1150,6 +1281,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'maxC2pALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1158,6 +1290,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'minC2pALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1166,6 +1299,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2pALGminABS', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1174,6 +1308,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'maxC2FeALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1182,6 +1317,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'minC2FeALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1190,6 +1326,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2FeALGminABS', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1198,6 +1335,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'qu_yld', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1206,6 +1344,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'E0_comp', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1214,6 +1353,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'E0_inhib', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1222,6 +1362,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'inhib_fac', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1230,6 +1371,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2CHL_max', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1238,6 +1380,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxC2Cl', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1246,6 +1389,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_C2Cl', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1254,6 +1398,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxC2Cn', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1262,6 +1407,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_C2Cn', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1270,6 +1416,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxPacEff', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1278,6 +1425,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_PacEff', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1286,6 +1434,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxChlB', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1294,6 +1443,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_ChlB', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1302,6 +1452,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxChlC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1310,6 +1461,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_ChlC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1318,6 +1470,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxPSC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1326,6 +1479,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_PSC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1334,6 +1488,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxPPC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1342,6 +1497,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_PPC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1350,6 +1506,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxLPUb', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1358,6 +1515,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_LPUb', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1366,6 +1524,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'mxHPUb', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1374,6 +1533,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'b_HPUb', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1382,6 +1542,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'FecDOC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1394,6 +1555,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'FecPEL', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1402,6 +1564,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'FecCYC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1410,6 +1573,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'ExALG', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1418,6 +1582,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'WS', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1426,6 +1591,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsGRZ', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1434,6 +1600,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'MinRefuge', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1442,6 +1609,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RefugeDep', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1450,6 +1618,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'Norm_Vol', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1458,6 +1627,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'Norm_Surf', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1466,6 +1636,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsDOP', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1474,6 +1645,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2pALKPHOS', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1482,6 +1654,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsDON', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1490,6 +1663,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2nNupDON', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1498,6 +1672,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'HsDOC_ba', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1506,6 +1681,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'GtBAC_max', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1514,6 +1690,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'BacTbase', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1522,6 +1699,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'BacTfac', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1530,6 +1708,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2nBAC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1538,6 +1717,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2pBAC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1546,6 +1726,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'C2FeBAC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1554,6 +1735,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'BacDOC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1562,6 +1744,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'BacPEL', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1570,6 +1753,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'BacCYC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1578,6 +1762,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'ExBAC_c', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1586,6 +1771,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'ExBacC2N', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1594,6 +1780,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'Bac_Ceff', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1602,6 +1789,16 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RtNIT', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
+        RETURN
+      ENDIF
+
+      wrt_info=nf_inq_varid(ncid,'HsNIT',varid)
+      wrt_info=nf_put_var1_TYPE(ncid,varid,1,HsNIT(ng))
+      IF (wrt_info.ne.nf_noerr) THEN
+        WRITE (stdout,10) 'HsNIT', TRIM(ncname)
+        exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1610,6 +1807,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'cDOCfrac_c', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1618,6 +1816,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RtUVR_DIC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1626,6 +1825,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RtUVR_DOC', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1634,6 +1834,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'WF', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1642,6 +1843,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RegTbase', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1650,6 +1852,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RegTfac', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1658,6 +1861,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RegCR', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1666,6 +1870,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RegNR', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1674,6 +1879,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RegSR', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1682,6 +1888,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RegPR', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1690,6 +1897,7 @@
       IF (wrt_info.ne.nf_noerr) THEN
         WRITE (stdout,10) 'RegFR', TRIM(ncname)
         exit_flag=3
+        ioerror=wrt_info
         RETURN
       ENDIF
 
@@ -1708,6 +1916,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'spherical', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 !
@@ -1718,6 +1927,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'xl', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -1726,6 +1936,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'el', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #ifdef SOLVE3D
@@ -1737,6 +1948,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'theta_s', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -1745,6 +1957,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'theta_b', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -1753,6 +1966,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Tcline', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -1761,26 +1975,29 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'hc', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 !
 !  S-coordinate non-dimensional independent variables.
 !
-        wrt_info=nf_inq_varid(ncid,'sc_r',varid)
+        wrt_info=nf_inq_varid(ncid,'s_rho',varid)
         wrt_info=nf_put_vara_TYPE(ncid,varid,1,N(ng),                   &
      &                            SCALARS(ng)%sc_r(1))
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'sc_r', TRIM(ncname)
+          WRITE (stdout,10) 's_rho', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
-        wrt_info=nf_inq_varid(ncid,'sc_w',varid)
+        wrt_info=nf_inq_varid(ncid,'s_w',varid)
         wrt_info=nf_put_vara_TYPE(ncid,varid,1,N(ng)+1,                 &
      &                            SCALARS(ng)%sc_w(0))
         IF (wrt_info.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'sc_w', TRIM(ncname)
+          WRITE (stdout,10) 's_w', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 !
@@ -1792,6 +2009,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Cs_r', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 
@@ -1801,6 +2019,7 @@
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Cs_w', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 #endif
@@ -1813,6 +2032,7 @@
           IF (wrt_info.ne.nf_noerr) THEN
             WRITE (stdout,10) 'user', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
@@ -1820,13 +2040,14 @@
 !
 !  Stations positions.
 !
-        IF (ncid.eq.ncstaid(ng)) THEN
+        IF (ncid.eq.ncSTAid(ng)) THEN
           wrt_info=nf_inq_varid(ncid,'Ipos',varid)
           wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),          &
      &                              SCALARS(ng)%SposX(1))
           IF (wrt_info.ne.nf_noerr) THEN
             WRITE (stdout,10) 'Ipos', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
 
@@ -1836,6 +2057,7 @@
           IF (wrt_info.ne.nf_noerr) THEN
             WRITE (stdout,10) 'Jpos', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
@@ -1845,22 +2067,22 @@
 !
 !  Bathymetry.
 !
-      IF (ncid.ne.ncfltid(ng)) THEN
+      IF (ncid.ne.ncFLTid(ng)) THEN
         scale=1.0_r8
         wrt_info=nf_inq_varid(ncid,'h',varid)
-        IF (ncid.eq.ncstaid(ng)) THEN
+        IF (ncid.eq.ncSTAid(ng)) THEN
 # ifdef STATIONS
-          CALL extract2d (ng, Cgrid, varid, r2dvar,                     &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    scale, GRID(ng)%h,                            &
-     &                    Nstation(ng), SCALARS(ng)%SposX,              &
-     &                    SCALARS(ng)%SposY, wrk)
+          CALL extract_sta2d (ng, model, Cgrid, varid, r2dvar,          &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        scale, GRID(ng)%h,                        &
+     &                        Nstation(ng), SCALARS(ng)%SposX,          &
+     &                        SCALARS(ng)%SposY, wrk)
           IF (wrtThread) THEN
             wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),wrk)
           END IF
 # endif
         ELSE
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
 # ifdef MASKING
      &                       GRID(ng) % rmask(LBi,LBj),                 &
@@ -1870,15 +2092,16 @@
         IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
           WRITE (stdout,10) 'h', TRIM(ncname)
           exit_flag=3
+          ioerror=wrt_info
           RETURN
         END IF
 !
 !  Coriolis parameter.
 !
-        IF (ncid.ne.ncstaid(ng)) THEN
+        IF (ncid.ne.ncSTAid(ng)) THEN
           scale=1.0_r8
           wrt_info=nf_inq_varid(ncid,'f',varid)
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
 # ifdef MASKING
      &                       GRID(ng) % rmask(LBi,LBj),                 &
@@ -1887,16 +2110,17 @@
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'f', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
 !
 !  Curvilinear transformation metrics.
 !
-        IF (ncid.ne.ncstaid(ng)) THEN
+        IF (ncid.ne.ncSTAid(ng)) THEN
           scale=1.0_r8
           wrt_info=nf_inq_varid(ncid,'pm',varid)
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
 # ifdef MASKING
      &                       GRID(ng) % rmask(LBi,LBj),                 &
@@ -1905,11 +2129,12 @@
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'pm', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
 
           wrt_info=nf_inq_varid(ncid,'pn',varid)
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
 # ifdef MASKING
      &                       GRID(ng) % rmask(LBi,LBj),                 &
@@ -1918,28 +2143,29 @@
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'pn', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
 !
-!  Longitude and latitude of RHO-points, if appropriate.
+!  Grid coordinates of RHO-points.
 !
         IF (spherical) THEN
           scale=1.0_r8
           wrt_info=nf_inq_varid(ncid,'lon_rho',varid)
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
 # ifdef STATIONS
-            CALL extract2d (ng, Cgrid, varid, r2dvar,                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, GRID(ng)%lonr,                       &
-     &                      Nstation(ng), SCALARS(ng)%SposX,            &
-     &                      SCALARS(ng)%SposY, wrk)
+            CALL extract_sta2d (ng, model, Cgrid, varid, r2dvar,        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          scale, GRID(ng)%lonr,                   &
+     &                          Nstation(ng), SCALARS(ng)%SposX,        &
+     &                          SCALARS(ng)%SposY, wrk)
             IF (wrtThread) THEN
               wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),wrk)
             END IF
 # endif
           ELSE
-            wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,              &
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,       &
      &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
 # ifdef MASKING
      &                         GRID(ng) % rmask(LBi,LBj),               &
@@ -1949,23 +2175,24 @@
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'lon_rho', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
 
           wrt_info=nf_inq_varid(ncid,'lat_rho',varid)
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
 # ifdef STATIONS
-            CALL extract2d (ng, Cgrid, varid, r2dvar,                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, GRID(ng)%latr,                       &
-     &                      Nstation(ng), SCALARS(ng)%SposX,            &
-     &                      SCALARS(ng)%SposY, wrk)
+            CALL extract_sta2d (ng, model, Cgrid, varid, r2dvar,        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          scale, GRID(ng)%latr,                   &
+     &                          Nstation(ng), SCALARS(ng)%SposX,        &
+     &                          SCALARS(ng)%SposY, wrk)
             IF (wrtThread) THEN
               wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),wrk)
             END IF 
 # endif
           ELSE
-            wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,              &
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,       &
      &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
 # ifdef MASKING
      &                         GRID(ng) % rmask(LBi,LBj),               &
@@ -1975,24 +2202,25 @@
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'lat_rho', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         ELSE
           scale=1.0_r8
           wrt_info=nf_inq_varid(ncid,'x_rho',varid)
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
 # ifdef STATIONS
-            CALL extract2d (ng, Cgrid, varid, r2dvar,                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, GRID(ng)%xr,                         &
-     &                      Nstation(ng), SCALARS(ng)%SposX,            &
-     &                      SCALARS(ng)%SposY, wrk)
+            CALL extract_sta2d (ng, model, Cgrid, varid, r2dvar,        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          scale, GRID(ng)%xr,                     &
+     &                          Nstation(ng), SCALARS(ng)%SposX,        &
+     &                          SCALARS(ng)%SposY, wrk)
             IF (wrtThread) THEN
               wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),wrk)
             END IF
 # endif
           ELSE
-            wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,              &
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,       &
      &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
 # ifdef MASKING
      &                         GRID(ng) % rmask(LBi,LBj),               &
@@ -2002,23 +2230,24 @@
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'x_rho', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
 
           wrt_info=nf_inq_varid(ncid,'y_rho',varid)
-          IF (ncid.eq.ncstaid(ng)) THEN
+          IF (ncid.eq.ncSTAid(ng)) THEN
 # ifdef STATIONS
-            CALL extract2d (ng, Cgrid, varid, r2dvar,                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, GRID(ng)%yr,                         &
-     &                      Nstation(ng), SCALARS(ng)%SposX,            &
-     &                      SCALARS(ng)%SposY, wrk)
+            CALL extract_sta2d (ng, model, Cgrid, varid, r2dvar,        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          scale, GRID(ng)%yr,                     &
+     &                          Nstation(ng), SCALARS(ng)%SposX,        &
+     &                          SCALARS(ng)%SposY, wrk)
             IF (wrtThread) THEN
               wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),wrk)
             END IF
 # endif
           ELSE
-            wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,              &
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,       &
      &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
 # ifdef MASKING
      &                         GRID(ng) % rmask(LBi,LBj),               &
@@ -2031,35 +2260,253 @@
             RETURN
           END IF
         END IF
+!
+!  Grid coordinates of U-points.
+!
+        IF (spherical) THEN
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'lon_u',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, u2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % umask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % lonu(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'lon_u', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'lat_u',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, u2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % umask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % latu(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'lat_u', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+        ELSE
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'x_u',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, u2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % umask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % xu(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'x_u', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'y_u',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, u2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % umask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % yu(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'y_u', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+        END IF
+!
+!  Grid coordinates of V-points.
+!
+        IF (spherical) THEN
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'lon_v',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, v2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % vmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % lonv(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'lon_v', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'lat_v',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, v2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % vmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % latv(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'lat_v', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+        ELSE
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'x_v',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, v2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % vmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % xv(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'x_v', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'y_v',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, v2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % vmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % yv(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'y_v', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+        END IF
+!
+!  Grid coordinates of PSI-points.
+!
+        IF (spherical) THEN
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'lon_psi',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, p2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % pmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % lonp(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'lon_p', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'lat_psi',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, p2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % vmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % latp(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'lat_p', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+        ELSE
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'x_psi',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, p2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % pmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % xp(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'x_psi', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+
+          IF (ncid.ne.ncSTAid(ng)) THEN
+            scale=1.0_r8
+            wrt_info=nf_inq_varid(ncid,'y_psi',varid)
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, p2dvar,       &
+     &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
+# ifdef MASKING
+     &                         GRID(ng) % pmask(LBi,LBj),               &
+# endif
+     &                         GRID(ng) % yp(LBi,LBj))
+          END IF
+          IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
+            WRITE (stdout,10) 'y_psi', TRIM(ncname)
+            exit_flag=3
+            ioerror=wrt_info
+            RETURN
+          END IF
+        END IF
+
 # ifdef CURVGRID
 !
-!  Angle between XI-axis and EAST at RHO-points, if appropriate.
+!  Angle between XI-axis and EAST at RHO-points.
 !
         IF (spherical) THEN
           scale=1.0_r8
           wrt_info=nf_inq_varid(ncid,'angle',varid)
-          IF (ncid.eq.ncstaid(ng)) THEN
-# ifdef STATIONS
-            CALL extract2d (ng, Cgrid, varid, r2dvar,                   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      scale, GRID(ng)%angler,                     &
-     &                      Nstation(ng), SCALARS(ng)%SposX,            &
-     &                      SCALARS(ng)%SposY, wrk)
+          IF (ncid.eq.ncSTAid(ng)) THEN
+#  ifdef STATIONS
+            CALL extract_sta2d (ng, model, Cgrid, varid, r2dvar,        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          scale, GRID(ng)%angler,                 &
+     &                          Nstation(ng), SCALARS(ng)%SposX,        &
+     &                          SCALARS(ng)%SposY, wrk)
             IF (wrtThread) THEN
               wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),wrk)
             END IF
-# endif
+#  endif
           ELSE
-            wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,              &
+            wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,       &
      &                         LBi, UBi, LBj, UBj, 1, 1, scale,         &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % rmask(LBi,LBj),               &
-# endif
+#  endif
      &                         GRID(ng) % angler(LBi,LBj))
           END IF
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'angle', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF
@@ -2068,57 +2515,53 @@
 !
 !  Masking fields at RHO-, U-, V-points, and PSI-points.
 !
-        IF (ncid.ne.ncstaid(ng)) THEN
+        IF (ncid.ne.ncSTAid(ng)) THEN
           scale=1.0_r8
           wrt_info=nf_inq_varid(ncid,'mask_rho',varid)
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, r2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, r2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
-# ifdef MASKING
      &                       GRID(ng) % rmask(LBi,LBj),                 &
-# endif
      &                       GRID(ng) % rmask(LBi,LBj))
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'mask_rho', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
 
           wrt_info=nf_inq_varid(ncid,'mask_u',varid)
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, u2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, u2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
-# ifdef MASKING
      &                       GRID(ng) % umask(LBi,LBj),                 &
-# endif
      &                       GRID(ng) % umask(LBi,LBj))
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'mask_u', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
 
           wrt_info=nf_inq_varid(ncid,'mask_v',varid)
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, v2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, v2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
-# ifdef MASKING
      &                       GRID(ng) % vmask(LBi,LBj),                 &
-# endif
      &                       GRID(ng) % vmask(LBi,LBj))
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'mask_v', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
 
           wrt_info=nf_inq_varid(ncid,'mask_psi',varid)
-          wrt_info=nf_fwrite(ng, ncid, varid, 0, p2dvar,                &
+          wrt_info=nf_fwrite(ng, model, ncid, varid, 0, p2dvar,         &
      &                       LBi, UBi, LBj, UBj, 1, 1, scale,           &
-# ifdef MASKING
      &                       GRID(ng) % pmask(LBi,LBj),                 &
-# endif
      &                       GRID(ng) % pmask(LBi,LBj))
           IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
             WRITE (stdout,10) 'mask_psi', TRIM(ncname)
             exit_flag=3
+            ioerror=wrt_info
             RETURN
           END IF
         END IF

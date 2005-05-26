@@ -3,7 +3,7 @@
       SUBROUTINE set_diags (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine accumulates and computes output time-averaged       !
@@ -24,13 +24,13 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 5)
+      CALL wclock_on (ng, iNLM, 5)
 # endif
       CALL set_diags_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         KOUT, NOUT)
 # ifdef PROFILE
-      CALL wclock_off (ng, 5)
+      CALL wclock_off (ng, iNLM, 5)
 # endif
       RETURN
       END SUBROUTINE set_diags
@@ -75,8 +75,8 @@
 ! averaged fields are computed correctly.
 !-----------------------------------------------------------------------
 !
-      IF (((iic(ng).gt.ntsdia(ng)).and.                                 &
-     &     (MOD(iic(ng)-1,ndia(ng)).eq.1)).or.                          &
+      IF (((iic(ng).gt.ntsDIA(ng)).and.                                 &
+     &     (MOD(iic(ng)-1,nDIA(ng)).eq.1)).or.                          &
      &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart))) THEN
 # ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
@@ -119,7 +119,7 @@
 !  Accumulate time-averaged fields.
 !-----------------------------------------------------------------------
 !
-      ELSE IF (iic(ng).gt.ntsdia(ng)) THEN
+      ELSE IF (iic(ng).gt.ntsDIA(ng)) THEN
 # ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -168,8 +168,8 @@
 !  for output purposes.
 !-----------------------------------------------------------------------
 !
-      IF ((iic(ng).gt.ntsdia(ng)).and.                                  &
-     &    (MOD(iic(ng)-1,ndia(ng)).eq.0).and.                           &
+      IF ((iic(ng).gt.ntsDIA(ng)).and.                                  &
+     &    (MOD(iic(ng)-1,nDIA(ng)).eq.0).and.                           &
      &    ((iic(ng).ne.ntstart).or.(nrrec.eq.0))) THEN
 # ifdef DIAGNOSTICS_TS
 !
@@ -177,8 +177,9 @@
 !
         DO idiag=1,NDT
           DO it=1,NT(ng)
-            CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+            CALL bc_r3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
      &                        DIAGS(ng)%DiaTrc(:,:,:,it,idiag))
 #  ifdef MASKING
             DO k=1,N(ng)
@@ -199,20 +200,24 @@
 !  Apply periodic or gradient boundary conditions for output purposes.
 !
         DO idiag=1,NDM2d
-          CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,           &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints,                               &
      &                      DIAGS(ng)%DiaU2d(:,:,idiag))
-          CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,           &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints,                               &
      &                      DIAGS(ng)%DiaV2d(:,:,idiag))
         END DO
 #  ifdef SOLVE3D
         DO idiag=1,NDM3d
-          CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_u3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,           &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      NghostPoints,                               &
      &                      DIAGS(ng)%DiaU3d(:,:,:,idiag))
-          CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_v3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,           &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      NghostPoints,                               &
      &                      DIAGS(ng)%DiaV3d(:,:,:,idiag))
         END DO
 #  endif

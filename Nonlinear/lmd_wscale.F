@@ -1,9 +1,9 @@
 #include "cppdefs.h"
-#if defined LMD_SKPP || defined LMD_BKPP
+#if defined NONLINEAR && (defined LMD_SKPP || defined LMD_BKPP)
       SUBROUTINE lmd_wscale (Bfsfc, Ustar, sigma, wm, ws)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes the turbulent velocity scale for momentum     !

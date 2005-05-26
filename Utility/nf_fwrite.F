@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-      FUNCTION nf_fwrite (ng, ncid, ncvarid, tindex, gtype,             &
+      FUNCTION nf_fwrite (ng, model, ncid, ncvarid, tindex, gtype,      &
      &                    LBi, UBi, LBj, UBj, LBk, UBk, Ascl,           &
 #ifdef MASKING
      &                    Amask,                                        &
@@ -7,7 +7,7 @@
      &                    A)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This function writes out a generic floating point array into an     !
@@ -15,10 +15,11 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number (integer).                         !
-!     ncid       NetCDF file ID (integer).                             !
-!     ncvarid    NetCDF variable ID (integer).                         !
-!     tindex     NetCDF time record index to write (integer).          !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     ncid       NetCDF file ID.                                       !
+!     ncvarid    NetCDF variable ID.                                   !
+!     tindex     NetCDF time record index to write.                    !
 !     gtype      Grid type. If negative, only write water points.      !
 !     LBi        I-dimension Lower bound.                              !
 !     UBi        I-dimension Upper bound.                              !
@@ -46,7 +47,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, ncid, ncvarid, tindex, gtype
+      integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
       real(r8), intent(in) :: Ascl
@@ -113,8 +114,8 @@
 !
 !  Determine if processing 2D or 3D fields.
 !
-      is2D=.false.
-      IF (MyType.le.4) is2D=.true.
+      is2D=.FALSE.
+      IF (MyType.le.4) is2D=.TRUE.
 
 #ifdef DISTRIBUTE
 !
@@ -136,8 +137,8 @@
         Kmin=LBk
         Kmax=UBk
 # endif
-        CALL mp_gather (ng, LBi, UBi, LBj, UBj, Kmin, Kmax, gtype,      &
-     &                  Ascl,                                           &
+        CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, Kmin, Kmax,      &
+     &                  gtype, Ascl,                                    &
 # ifdef MASKING
      &                  Amask,                                          &
 # endif

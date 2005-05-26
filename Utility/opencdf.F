@@ -3,7 +3,7 @@
      &                    nrec)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine opens an existing NetCDF file and inquires about       !
@@ -41,7 +41,7 @@
 
       character (len=*), intent(in) :: fname(nfiles)
 
-      character (len=80), intent(out) :: ncname
+      character (len=*), intent(out) :: ncname
 !
 !  Local variable declarations.
 !
@@ -59,7 +59,7 @@
 !  scan files until the requested variable is found.
 !-----------------------------------------------------------------------
 !
-      SearchVar=.true.
+      SearchVar=.TRUE.
       DO ifile=1,nfiles
         IF (SearchVar) THEN
           ncname=fname(ifile)
@@ -67,6 +67,7 @@
           IF (status.ne.nf_noerr) THEN
             WRITE (stdout,10) TRIM(ncname)
             exit_flag=4
+            ioerror=status
             RETURN
           END IF
 !
@@ -80,6 +81,7 @@
             IF (status.ne.nf_noerr) THEN
               WRITE (stdout,20) 'type (global)', TRIM(ncname)
               exit_flag=4
+              ioerror=status
               RETURN
             END IF
           ELSE
@@ -113,6 +115,7 @@
               IF (status.ne.nf_noerr) THEN
                 WRITE (stdout,50) dimid, TRIM(ncname)
                 exit_flag=4
+                ioerror=status
                 RETURN
               END IF
               IF ((TRIM(dimnam).eq.'xi_rho').or.                        &
@@ -164,7 +167,7 @@
 !  specified in the "time" attribute, if any.  Check if only water
 !  points are available.
 !
-            timeatt=.false.
+            timeatt=.FALSE.
             DO i=1,nvars
               varid=i
               vflag(i)=1
@@ -173,6 +176,7 @@
               IF (status.ne.nf_noerr) THEN
                 WRITE (stdout,70) varid, TRIM(ncname)
                 exit_flag=4
+                ioerror=status
                 RETURN
               END IF
               IF (nvdims(i).gt.0) THEN
@@ -191,7 +195,7 @@
               END IF
               IF ((LEN_TRIM(Vname(1,ifield)).gt.0).and.                 &
      &            (TRIM(varnam(i)).eq.TRIM(Vname(1,ifield)))) THEN
-                SearchVar=.false.
+                SearchVar=.FALSE.
                 DO j=1,nvatts
                   status=nf_inq_attname(ncid,varid,j,attnam)
                   IF (status.eq.nf_noerr) THEN
@@ -201,6 +205,7 @@
                       IF (status.ne.nf_noerr) THEN
                         WRITE (stdout,80) TRIM(attnam)
                         exit_flag=4
+                        ioerror=status
                         RETURN
                       END IF
                       status=nf_get_att_text(ncid,varid,TRIM(attnam),   &
@@ -208,10 +213,11 @@
                       IF (status.ne.nf_noerr) THEN
                         WRITE (stdout,90) TRIM(attnam)
                         exit_flag=4
+                        ioerror=status
                         RETURN
                       END IF
                       Tname(ifield)=text(1:ltvar)
-                      timeatt=.true.
+                      timeatt=.TRUE.
                     END IF
                   ELSE
                     WRITE (stdout,100) TRIM(varnam(i))
@@ -231,6 +237,7 @@
                   IF (status.ne.nf_noerr) THEN
                     WRITE (stdout,70) varid, TRIM(ncname)
                     exit_flag=4
+                    ioerror=status
                     RETURN
                   END IF
                   IF (TRIM(varnam(i)).eq.TRIM(Tname(ifield))) THEN
@@ -239,6 +246,7 @@
                       IF (status.ne.nf_noerr) THEN
                         WRITE (stdout,110) TRIM(Tname(ifield))
                         exit_flag=4
+                        ioerror=status
                         RETURN
                       END IF
                       IF (INDEX(TRIM(dimnam),'time').ne.0) THEN
@@ -265,6 +273,7 @@
             IF (status.ne.nf_noerr) THEN
               WRITE (stdout,130) 'time', TRIM(ncname)
               exit_flag=4
+              ioerror=status
               RETURN
             END IF
           END IF
@@ -288,19 +297,19 @@
   30  FORMAT (/,' OPENCDF - cannot find attribute: ',a,2x,              &
      &          ' in input NetCDF file: ',a)
   40  FORMAT (/,' OPENCDF - too small dimension parameter, MV = ',      &
-     &       2i5,/,11x,'change file  ncparam.h  and recompile.')
+     &       2i5,/,11x,'change file  mod_ncparam.F  and recompile.')
   50  FORMAT (/,' OPENCDF - error while reading dimension ID: ',i3,2x,  &
      &          ' in input NetCDF file: ',a)
   60  FORMAT (/,' OPENCDF - inconsistent size of dimension: ',a,2x,     &
      &       2i5)
-  70  FORMAT (/,' OPENCDF - error while inquiring inFORMAT ion for ',   &
+  70  FORMAT (/,' OPENCDF - error while inquiring information for ',    &
      &          ' variable ID: ',i3,2x,' in input NetCDF file: ',a)
   80  FORMAT (/,' OPENCDF - error while inquiring length of',           &
      &          ' attribute: ',a)
   90  FORMAT (/,' OPENCDF - error while reading attribute: ',a)
  100  FORMAT (/,' OPENCDF - error while inquiring attributes for',      &
      &          ' variable: ',a)
- 110  FORMAT (/,' OPENCDF - unable to inquire size of time dimesion',   &
+ 110  FORMAT (/,' OPENCDF - unable to inquire size of time dimension',  &
      &          ' in variable: ',a)
  120  FORMAT (/,' OPENCDF - unable to inquire about contents of',       &
      &          ' input NetCDF file: ',a)
@@ -312,7 +321,7 @@
       SUBROUTINE openids (nfiles, fname, fid, ncname, ncid)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine determines association between pathnames and NetCDF    !

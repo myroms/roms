@@ -2,11 +2,14 @@
       MODULE mod_strings
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
+!  cdt         F90/F95 compiler used.                                  !
+!  fflags      F90/F95 compiler flags.                                 !
 !  title       Title of model run.                                     !
 !  Coptions    Activated C-preprocessing options.                      !
+!  Mstate      Model state processing messages.                        !
 !  Pregion     Model regions identifiers used for time profiling.      !
 !                                                                      !
 !=======================================================================
@@ -19,6 +22,12 @@
         character (len=1024) :: Coptions
 
         integer, parameter :: Nregion = 44
+
+        character (len=40), dimension(4) :: Mstate =                    &
+     &    (/'Read state initial conditions,          ',                 &
+     &      'Read previous state initial conditions, ',                 &
+     &      'Read previous adjoint state solution,   ',                 &
+     &      'Read latest adjoint state solution,     '/)
 
         character (len=50), dimension(Nregion) :: Pregion =             &
      &    (/'Initialization ...................................',       &
@@ -65,5 +74,11 @@
      &      'Message Passage: data scattering..................',       &
      &      'Message Passage: boundary data gathering .........',       &
      &      'Message Passage: point data gathering ............'/)
+
+        character (len=80) :: my_os = MY_OS
+        character (len=80) :: my_cpu = MY_CPU
+        character (len=80) :: my_fort = MY_FORT
+        character (len=80) :: my_fc = MY_FC
+        character (len=160) :: my_fflags = MY_FFLAGS
 
       END MODULE mod_strings

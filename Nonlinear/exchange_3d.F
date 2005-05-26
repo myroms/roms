@@ -1,9 +1,10 @@
 #include "cppdefs.h"
       MODULE exchange_3d_mod
-#ifdef SOLVE3D
+#if defined SOLVE3D && \
+    (defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE)
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This package contains periodic boundary conditions and parallel     !
@@ -24,16 +25,19 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE exchange_p3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
+      SUBROUTINE exchange_p3d_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Nghost,                             &
+     &                              A)
 !***********************************************************************
 !
       USE mod_param
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: Nghost
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
@@ -44,17 +48,21 @@
 !  Local variable declarations.
 !
 # ifdef DISTRIBUTE
-      logical :: EWperiodic, NSperiodic
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
-!
-# ifdef DISTRIBUTE
-      EWperiodic=.false.
-      NSperiodic=.false.
-# endif
 
 # ifdef EW_PERIODIC
 #  ifdef NS_PERIODIC
@@ -68,7 +76,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      EWperiodic=.true.
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
@@ -76,6 +83,9 @@
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
+#  ifdef THREE_GHOST
+              A(Lm(ng)+3,j,k)=A(3,j,k)
+#  endif
             END DO
           END DO
         END IF
@@ -106,7 +116,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      NSperiodic=.true.
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
@@ -114,6 +123,9 @@
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
+#  ifdef THREE_GHOST
+              A(i,Mm(ng)+3,k)=A(i,3,k)
+#  endif
             END DO
           END DO
         END IF
@@ -141,15 +153,24 @@
 #  ifdef DISTRIBUTE
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
-        IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+1,Mm(ng)+3,k)=A(1,3,k)
+#  endif
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
             A(Lm(ng)+2,Mm(ng)+2,k)=A(2,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+2,Mm(ng)+3,k)=A(2,3,k)
+            A(Lm(ng)+3,Mm(ng)+1,k)=A(3,1,k)
+            A(Lm(ng)+3,Mm(ng)+2,k)=A(3,2,k)
+            A(Lm(ng)+3,Mm(ng)+3,k)=A(3,3,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
@@ -157,9 +178,14 @@
             A(-2,Mm(ng)+2,k)=A(Lm(ng)-2,2,k)
             A(-1,Mm(ng)+2,k)=A(Lm(ng)-1,2,k)
             A( 0,Mm(ng)+2,k)=A(Lm(ng)  ,2,k)
+#  ifdef THREE_GHOST
+            A(-2,Mm(ng)+3,k)=A(Lm(ng)-2,3,k)
+            A(-1,Mm(ng)+3,k)=A(Lm(ng)-1,3,k)
+            A( 0,Mm(ng)+3,k)=A(Lm(ng)  ,3,k)
+#  endif
           END DO
         END IF
-        IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
@@ -167,9 +193,14 @@
             A(Lm(ng)+2,-2,k)=A(2,Mm(ng)-2,k)
             A(Lm(ng)+2,-1,k)=A(2,Mm(ng)-1,k)
             A(Lm(ng)+2, 0,k)=A(2,Mm(ng)  ,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+3,-2,k)=A(3,Mm(ng)-2,k)
+            A(Lm(ng)+3,-1,k)=A(3,Mm(ng)-1,k)
+            A(Lm(ng)+3, 0,k)=A(3,Mm(ng)  ,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
@@ -192,25 +223,29 @@
 !  Send/recieve tile boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
-     &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
+     &                  Nghost, EWperiodic, NSperiodic,                 &
+     &                  A)
 # endif
       RETURN
       END SUBROUTINE exchange_p3d_tile
 
 !
 !***********************************************************************
-      SUBROUTINE exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
+      SUBROUTINE exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Nghost,                             &
+     &                              A)
 !***********************************************************************
 !
       USE mod_param
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: Nghost
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
@@ -221,17 +256,21 @@
 !  Local variable declarations.
 !
 # ifdef DISTRIBUTE
-      logical :: EWperiodic, NSperiodic
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
-!
-# ifdef DISTRIBUTE
-      EWperiodic=.false.
-      NSperiodic=.false.
-# endif
 
 # ifdef EW_PERIODIC
 #  ifdef NS_PERIODIC
@@ -245,7 +284,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      EWperiodic=.true.
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
@@ -253,6 +291,9 @@
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
+#  ifdef THREE_GHOST
+              A(Lm(ng)+3,j,k)=A(3,j,k)
+#  endif
             END DO
           END DO
         END IF
@@ -283,7 +324,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      NSperiodic=.true.
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
@@ -291,6 +331,9 @@
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
+#  ifdef THREE_GHOST
+              A(i,Mm(ng)+3,k)=A(i,3,k)
+#  endif
             END DO
           END DO
         END IF
@@ -317,15 +360,24 @@
 #  ifdef DISTRIBUTE
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
-        IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+1,Mm(ng)+3,k)=A(1,3,k)
+#  endif
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
             A(Lm(ng)+2,Mm(ng)+2,k)=A(2,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+2,Mm(ng)+3,k)=A(2,3,k)
+            A(Lm(ng)+3,Mm(ng)+1,k)=A(3,1,k)
+            A(Lm(ng)+3,Mm(ng)+2,k)=A(3,2,k)
+            A(Lm(ng)+3,Mm(ng)+3,k)=A(3,3,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
@@ -333,9 +385,14 @@
             A(-2,Mm(ng)+2,k)=A(Lm(ng)-2,2,k)
             A(-1,Mm(ng)+2,k)=A(Lm(ng)-1,2,k)
             A( 0,Mm(ng)+2,k)=A(Lm(ng)  ,2,k)
+#  ifdef THREE_GHOST
+            A(-2,Mm(ng)+3,k)=A(Lm(ng)-2,3,k)
+            A(-1,Mm(ng)+3,k)=A(Lm(ng)-1,3,k)
+            A( 0,Mm(ng)+3,k)=A(Lm(ng)  ,3,k)
+#  endif
           END DO
         END IF
-        IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
@@ -343,9 +400,14 @@
             A(Lm(ng)+2,-2,k)=A(2,Mm(ng)-2,k)
             A(Lm(ng)+2,-1,k)=A(2,Mm(ng)-1,k)
             A(Lm(ng)+2, 0,k)=A(2,Mm(ng)  ,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+3,-2,k)=A(3,Mm(ng)-2,k)
+            A(Lm(ng)+3,-1,k)=A(3,Mm(ng)-1,k)
+            A(Lm(ng)+3, 0,k)=A(3,Mm(ng)  ,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
@@ -368,25 +430,29 @@
 !  Send/recieve tile boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
-     &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
+     &                  Nghost, EWperiodic, NSperiodic,                 &
+     &                  A)
 # endif
       RETURN
       END SUBROUTINE exchange_r3d_tile
 
 !
 !***********************************************************************
-      SUBROUTINE exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
+      SUBROUTINE exchange_u3d_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Nghost,                             &
+     &                              A)
 !***********************************************************************
 !
       USE mod_param
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: Nghost
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
@@ -397,17 +463,21 @@
 !  Local variable declarations.
 !
 # ifdef DISTRIBUTE
-      logical :: EWperiodic, NSperiodic
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
-!
-# ifdef DISTRIBUTE
-      EWperiodic=.false.
-      NSperiodic=.false.
-# endif
 
 # ifdef EW_PERIODIC
 #  ifdef NS_PERIODIC
@@ -421,7 +491,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      EWperiodic=.true.
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
@@ -429,6 +498,9 @@
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
+#  ifdef THREE_GHOST
+              A(Lm(ng)+3,j,k)=A(3,j,k)
+#  endif
             END DO
           END DO
         END IF
@@ -459,7 +531,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      NSperiodic=.true.
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
@@ -467,6 +538,9 @@
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
+#  ifdef THREE_GHOST
+              A(i,Mm(ng)+3,k)=A(i,3,k)
+#  endif
             END DO
           END DO
         END IF
@@ -494,15 +568,24 @@
 #  ifdef DISTRIBUTE
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
-        IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+1,Mm(ng)+3,k)=A(1,3,k)
+#  endif
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
             A(Lm(ng)+2,Mm(ng)+2,k)=A(2,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+2,Mm(ng)+3,k)=A(2,3,k)
+            A(Lm(ng)+3,Mm(ng)+1,k)=A(3,1,k)
+            A(Lm(ng)+3,Mm(ng)+2,k)=A(3,2,k)
+            A(Lm(ng)+3,Mm(ng)+3,k)=A(3,3,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
@@ -510,9 +593,14 @@
             A(-2,Mm(ng)+2,k)=A(Lm(ng)-2,2,k)
             A(-1,Mm(ng)+2,k)=A(Lm(ng)-1,2,k)
             A( 0,Mm(ng)+2,k)=A(Lm(ng)  ,2,k)
+#  ifdef THREE_GHOST
+            A(-2,Mm(ng)+3,k)=A(Lm(ng)-2,3,k)
+            A(-1,Mm(ng)+3,k)=A(Lm(ng)-1,3,k)
+            A( 0,Mm(ng)+3,k)=A(Lm(ng)  ,3,k)
+#  endif
           END DO
         END IF
-        IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
@@ -520,9 +608,14 @@
             A(Lm(ng)+2,-2,k)=A(2,Mm(ng)-2,k)
             A(Lm(ng)+2,-1,k)=A(2,Mm(ng)-1,k)
             A(Lm(ng)+2, 0,k)=A(2,Mm(ng)  ,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+3,-2,k)=A(3,Mm(ng)-2,k)
+            A(Lm(ng)+3,-1,k)=A(3,Mm(ng)-1,k)
+            A(Lm(ng)+3, 0,k)=A(3,Mm(ng)  ,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
@@ -545,25 +638,29 @@
 !  Send/recieve tile boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
-     &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
+     &                  Nghost, EWperiodic, NSperiodic,                 &
+     &                  A)
 # endif
       RETURN
       END SUBROUTINE exchange_u3d_tile
 
 !
 !***********************************************************************
-      SUBROUTINE exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
+      SUBROUTINE exchange_v3d_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Nghost,                             &
+     &                              A)
 !***********************************************************************
 !
       USE mod_param
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: Nghost
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
@@ -574,17 +671,21 @@
 !  Local variable declarations.
 !
 # ifdef DISTRIBUTE
-      logical :: EWperiodic, NSperiodic
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
-!
-# ifdef DISTRIBUTE
-      EWperiodic=.false.
-      NSperiodic=.false.
-# endif
 
 # ifdef EW_PERIODIC
 #  ifdef NS_PERIODIC
@@ -598,7 +699,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      EWperiodic=.true.
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
@@ -606,6 +706,9 @@
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
+#  ifdef THREE_GHOST
+              A(Lm(ng)+3,j,k)=A(3,j,k)
+#  endif
             END DO
           END DO
         END IF
@@ -636,7 +739,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      NSperiodic=.true.
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
@@ -644,6 +746,9 @@
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
+#  ifdef THREE_GHOST
+              A(i,Mm(ng)+3,k)=A(i,3,k)
+#  endif
             END DO
           END DO
         END IF
@@ -671,15 +776,24 @@
 #  ifdef DISTRIBUTE
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
-        IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+1,Mm(ng)+3,k)=A(1,3,k)
+#  endif
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
             A(Lm(ng)+2,Mm(ng)+2,k)=A(2,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+2,Mm(ng)+3,k)=A(2,3,k)
+            A(Lm(ng)+3,Mm(ng)+1,k)=A(3,1,k)
+            A(Lm(ng)+3,Mm(ng)+2,k)=A(3,2,k)
+            A(Lm(ng)+3,Mm(ng)+3,k)=A(3,3,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
@@ -687,9 +801,14 @@
             A(-2,Mm(ng)+2,k)=A(Lm(ng)-2,2,k)
             A(-1,Mm(ng)+2,k)=A(Lm(ng)-1,2,k)
             A( 0,Mm(ng)+2,k)=A(Lm(ng)  ,2,k)
+#  ifdef THREE_GHOST
+            A(-2,Mm(ng)+3,k)=A(Lm(ng)-2,3,k)
+            A(-1,Mm(ng)+3,k)=A(Lm(ng)-1,3,k)
+            A( 0,Mm(ng)+3,k)=A(Lm(ng)  ,3,k)
+#  endif
           END DO
         END IF
-        IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
@@ -697,9 +816,14 @@
             A(Lm(ng)+2,-2,k)=A(2,Mm(ng)-2,k)
             A(Lm(ng)+2,-1,k)=A(2,Mm(ng)-1,k)
             A(Lm(ng)+2, 0,k)=A(2,Mm(ng)  ,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+3,-2,k)=A(3,Mm(ng)-2,k)
+            A(Lm(ng)+3,-1,k)=A(3,Mm(ng)-1,k)
+            A(Lm(ng)+3, 0,k)=A(3,Mm(ng)  ,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
@@ -722,25 +846,29 @@
 !  Send/recieve tile boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
-     &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
+     &                  Nghost, EWperiodic, NSperiodic,                 &
+     &                  A)
 # endif
       RETURN
       END SUBROUTINE exchange_v3d_tile
 
 !
 !***********************************************************************
-      SUBROUTINE exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,         &
-     &                              LBi, UBi, LBj, UBj, LBk, UBk, A)
+      SUBROUTINE exchange_w3d_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+     &                              LBi, UBi, LBj, UBj, LBk, UBk,       &
+     &                              Nghost,                             &
+     &                              A)
 !***********************************************************************
 !
       USE mod_param
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: Nghost
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
@@ -751,17 +879,21 @@
 !  Local variable declarations.
 !
 # ifdef DISTRIBUTE
-      logical :: EWperiodic, NSperiodic
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
-!
-# ifdef DISTRIBUTE
-      EWperiodic=.false.
-      NSperiodic=.false.
-# endif
 
 # ifdef EW_PERIODIC
 #  ifdef NS_PERIODIC
@@ -775,7 +907,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      EWperiodic=.true.
       IF (NtileI(ng).eq.1) THEN
 #  endif
         IF (WESTERN_EDGE) THEN
@@ -783,6 +914,9 @@
             DO j=J_RANGE
               A(Lm(ng)+1,j,k)=A(1,j,k)
               A(Lm(ng)+2,j,k)=A(2,j,k)
+#  ifdef THREE_GHOST
+              A(Lm(ng)+3,j,k)=A(3,j,k)
+#  endif
             END DO
           END DO
         END IF
@@ -813,7 +947,6 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-      NSperiodic=.true.
       IF (NtileJ(ng).eq.1) THEN
 #  endif
         IF (SOUTHERN_EDGE) THEN
@@ -821,6 +954,9 @@
             DO i=I_RANGE
               A(i,Mm(ng)+1,k)=A(i,1,k)
               A(i,Mm(ng)+2,k)=A(i,2,k)
+#  ifdef THREE_GHOST
+              A(i,Mm(ng)+3,k)=A(i,3,k)
+#  endif
             END DO
           END DO
         END IF
@@ -847,15 +983,24 @@
 #  ifdef DISTRIBUTE
       IF ((NtileI(ng).eq.1).and.(NtileJ(ng).eq.1)) THEN
 #  endif
-        IF (WESTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,Mm(ng)+1,k)=A(1,1,k)
             A(Lm(ng)+1,Mm(ng)+2,k)=A(1,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+1,Mm(ng)+3,k)=A(1,3,k)
+#  endif
             A(Lm(ng)+2,Mm(ng)+1,k)=A(2,1,k)
             A(Lm(ng)+2,Mm(ng)+2,k)=A(2,2,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+2,Mm(ng)+3,k)=A(2,3,k)
+            A(Lm(ng)+3,Mm(ng)+1,k)=A(3,1,k)
+            A(Lm(ng)+3,Mm(ng)+2,k)=A(3,2,k)
+            A(Lm(ng)+3,Mm(ng)+3,k)=A(3,3,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.SOUTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(SOUTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,Mm(ng)+1,k)=A(Lm(ng)-2,1,k)
             A(-1,Mm(ng)+1,k)=A(Lm(ng)-1,1,k)
@@ -863,9 +1008,14 @@
             A(-2,Mm(ng)+2,k)=A(Lm(ng)-2,2,k)
             A(-1,Mm(ng)+2,k)=A(Lm(ng)-1,2,k)
             A( 0,Mm(ng)+2,k)=A(Lm(ng)  ,2,k)
+#  ifdef THREE_GHOST
+            A(-2,Mm(ng)+3,k)=A(Lm(ng)-2,3,k)
+            A(-1,Mm(ng)+3,k)=A(Lm(ng)-1,3,k)
+            A( 0,Mm(ng)+3,k)=A(Lm(ng)  ,3,k)
+#  endif
           END DO
         END IF
-        IF (WESTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((WESTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(Lm(ng)+1,-2,k)=A(1,Mm(ng)-2,k)
             A(Lm(ng)+1,-1,k)=A(1,Mm(ng)-1,k)
@@ -873,9 +1023,14 @@
             A(Lm(ng)+2,-2,k)=A(2,Mm(ng)-2,k)
             A(Lm(ng)+2,-1,k)=A(2,Mm(ng)-1,k)
             A(Lm(ng)+2, 0,k)=A(2,Mm(ng)  ,k)
+#  ifdef THREE_GHOST
+            A(Lm(ng)+3,-2,k)=A(3,Mm(ng)-2,k)
+            A(Lm(ng)+3,-1,k)=A(3,Mm(ng)-1,k)
+            A(Lm(ng)+3, 0,k)=A(3,Mm(ng)  ,k)
+#  endif
           END DO
         END IF
-        IF (EASTERN_EDGE.and.NORTHERN_EDGE) THEN
+        IF ((EASTERN_EDGE).and.(NORTHERN_EDGE)) THEN
           DO k=LBk,UBk
             A(-2,-2,k)=A(Lm(ng)-2,Mm(ng)-2,k)
             A(-2,-1,k)=A(Lm(ng)-2,Mm(ng)-1,k)
@@ -898,9 +1053,10 @@
 !  Send/recieve tile boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL mp_exchange (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
-     &                  GHOST_POINTS, EWperiodic, NSperiodic, A)
+     &                  Nghost, EWperiodic, NSperiodic,                 &
+     &                  A)
 # endif
       RETURN
       END SUBROUTINE exchange_w3d_tile

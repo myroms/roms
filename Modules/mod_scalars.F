@@ -2,7 +2,7 @@
       MODULE mod_scalars
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !
         USE mod_param
@@ -54,6 +54,9 @@
 !
         integer :: itemp              ! Potential temperature
         integer :: isalt              ! Salinity
+#ifdef T_PASSIVE
+        integer :: inert(NPT)         ! inert tracers
+#endif
 #ifdef SEDIMENT
         integer :: idsed(NST)         ! Cohesive and non-cohesive
         integer :: idmud(NCS+1)       ! Cohesive sediment
@@ -73,6 +76,9 @@
         integer :: iSDeC              ! Small detritus C-concentration
         integer :: iTIC_              ! Total inorganic carbon
         integer :: iTAlk              ! Total alkalinity
+#  endif
+#  ifdef OXYGEN
+        integer :: iOxyg              ! Dissolved oxygen concentration
 #  endif
 #endif
 #ifdef ECOSIM
@@ -190,8 +196,8 @@
 !    dtfast        Size barotropic timestep (s).
 !    tdays         Model time clock (days).
 !    time          Model time clock (s).
-!    avgtime       Model time clock for averages output (s).
-!    diatime       Model time clock for diagnostics output (s).
+!    AVGtime       Model time clock for averages output (s).
+!    DIAtime       Model time clock for diagnostics output (s).
 !    r_date        Model initialization reference date (vector):
 !                    r_date(1) => reference date (YYYYMMDD.dd).
 !                    r_date(2) => year.
@@ -203,6 +209,7 @@
 !                    r_date(8) => second.
 !    dstart        Time stamp assigned to model initialization (usually
 !                    a Calendar day, like modified Julian Day).
+!    tide_start    Reference time for tidal forcing (days).
 !    time_ref      Reference time for "units" attribute (YYYYMMDD.dd).
 !    r_text        Model initialization reference text (string).
 !
@@ -218,11 +225,13 @@
         real(r8), dimension(Ngrids) :: dtfast            ! seconds
         real(r8), dimension(Ngrids) :: tdays             ! days
         real(r8), dimension(Ngrids) :: time              ! seconds
-        real(r8), dimension(Ngrids) :: avgtime           ! seconds
-        real(r8), dimension(Ngrids) :: diatime           ! seconds
+        real(r8), dimension(Ngrids) :: AVGtime           ! seconds
+        real(r8), dimension(Ngrids) :: DIAtime           ! seconds
+        real(r8), dimension(Ngrids) :: ObsTime           ! seconds
 
         real(r8), dimension(8) :: r_date
         real(r8) :: dstart = 0.0_r8                      ! days
+        real(r8) :: tide_start = 0.0_r8                  ! days
         real(r8) :: time_ref = 0.0_r8                    ! YYYYMMDD.dd
 
         character (len=19) :: r_text
@@ -236,19 +245,32 @@
 !
 !  Possible settings of parameters to yield the second-order accuracy:
 !
-!     Falpha  Fbeta  Fgamma
-!     ---------------------
-!      2.0     1.0    0.169     The problem here is setting Fgamma.
-!      2.0     2.0    0.234     The value of Fgamma here is understood
-!      2.0     3.0    0.266     as the MAXIMUM value allowed. It is
-!      2.0     4.0    0.284     computed using a Newton iteration
-!      2.0     5.0    0.296     scheme.
-!      2.0     6.0    0.304
-!      2.0     8.0    0.314
+!     Falpha  Fbeta      Fgamma
+!     ------------------------------
+!      2.0     1.0    0.1181  0.169     The problem here is setting
+!      2.0     2.0    0.1576  0.234     Fgamma. Its value here is
+!      2.0     3.0    0.1772  0.266     understood as the MAXIMUM
+!      2.0     4.0    0.1892  0.284     allowed. It is computed using
+!      2.0     5.0    0.1976  0.296     a Newton iteration scheme.
+!      2.0     6.0    0.2039  0.304
+!      2.0     8.0    0.2129  0.314
+!
+!  NOTE: Theoretical values of Fgamma presented in the table above are
+!  derived assuming "exact" barotropic mode stepping. Consequently, it
+!  does not account for effects caused by Forward-Euler (FE) startup
+!  of the barotropic mode at every 3D time step.  As the result, the
+!  code may become unstable if the theoretical value of Fgamma is used
+!  when mode splitting ratio "ndtfast" is small, thus yielding non-
+!  negligible start up effects.  To compensate this, the accepted
+!  value of Fgamma is reduced relatively to theoretical one, depending
+!  on splitting ratio "ndtfast".  This measure is empirical. It is
+!  shown to work with setting of "ndtfast" as low as 15, which is
+!  more robust that the Hamming Window the squared cosine weights
+!  options in "set_weights".
 !
         real(r8) :: Falpha = 2.0_r8
-        real(r8) :: Fbeta  = 2.0_r8
-        real(r8) :: Fgamma = 0.2_r8
+        real(r8) :: Fbeta  = 4.0_r8
+        real(r8) :: Fgamma = 0.284_r8
 # endif
 !
 !  Total number timesteps in current run. In 3D configurations, "ntimes"
@@ -256,6 +278,11 @@
 !  is the total of barotropic timesteps.
 !
         integer :: ntimes
+!
+!  Number of time interval divisions for stochastic optimals.  It must
+!  a multiple of "ntimes".
+!
+        integer :: Nintervals = 1
 
 #ifdef AIR_OCEAN
 !
@@ -271,8 +298,11 @@
 !  Starting, current, and ending ensemble run parameters.
 !
         integer :: ERstr = 1                    ! Starting value
-        integer :: Nrun = 1                     ! Current counter
         integer :: ERend = 1                    ! Ending value
+        integer :: Ninner = 1                   ! number of inner loops
+        integer :: Nrun = 1                     ! Current counter
+        integer :: inner = 0                    ! inner loop counter
+        integer :: outer = 0                    ! outer loop counter
 !
 !  First, starting, and ending timestepping parameters
 !
@@ -285,7 +315,7 @@
 !-----------------------------------------------------------------------
 !
 !  These switches are designed to control computational options within
-!  nested and/or multiple connected grids.  They are .true. by default.
+!  nested and/or multiple connected grids.  They are .TRUE. by default.
 !  They can turned off for a particular grind in input scripts.
 !
         logical, dimension(Ngrids) :: Lassimilate
@@ -305,6 +335,7 @@
 !    emmiss        Infrared emmissivity.
 !    g             Acceleration due to gravity (m/s2).
 !    gorho0        gravity divided by mean density anomaly.
+!    rhow          fresh water density (kg/m3).
 !    vonKar        von Karman constant.
 !
         real(r8) :: Cp = 3985.0_r8              ! Joules/kg/degC
@@ -312,6 +343,7 @@
         real(r8) :: Eradius = 6371315.0_r8      ! m
         real(r8) :: StefBo = 5.67E-8_r8         ! Watts/m2/K4
         real(r8) :: emmiss = 0.97_r8            ! non_dimensional
+        real(r8) :: rhow = 1000.0_r8            ! kg/m3         
 #ifdef SOLITON
         real(r8) :: g = 1.0_r8                  ! non-dimensional
 #else
@@ -327,7 +359,11 @@
 !
 !  Switch for spherical grid (lon,lat) configurations.
 !
-        logical :: spherical = .false.
+        logical :: spherical = .FALSE.
+!
+!  Switch to compute the grid stiffness.
+!
+        logical :: Lstiffness = .TRUE.
 !
 !  Execution termination flag.
 !
@@ -340,6 +376,8 @@
 !    exit_flag = 6   Partition error
 !     
         integer :: exit_flag = 0
+        integer :: blowup = 0
+        integer, parameter :: NoError = 0
 !
 !  Shallowest and Deepest levels to apply bottom momemtum stresses as
 !  a bodyforce
@@ -377,7 +415,11 @@
         real(r8) :: avgke = 0.0_r8              ! Kinetic energy
         real(r8) :: avgpe = 0.0_r8              ! Potential energy
         real(r8) :: avgkp = 0.0_r8              ! Total energy
-        real(r8) :: volume = 0.0_r8             ! Total volume
+        real(r8) :: volume = 0.0_r8             ! diagnostics volume
+        real(r8) :: ad_volume = 0.0_r8          ! adjoint volume
+        real(r8) :: TotVolume = 0.0_r8          ! Total volume
+        real(r8) :: MaxVolume = 0.0_r8          ! Minimum cell volume
+        real(r8) :: MinVolume = 0.0_r8          ! Maximum cell volume
 !
 !  Maximum size of a grid node (m) over the whole curvilinear grid
 !  application. Used for scaling horizontal mixing by the grid size.
@@ -449,6 +491,10 @@
 !
         real(r8) :: rho0 = 1025.0_r8
 !
+!  Background Brunt-Vaisala frequency (1/s2)
+!
+        real(r8) :: bvf_bak = 0.00001_r8
+!
 !  Vector containing USER generic parameters.
 !
         integer :: Nuser
@@ -514,13 +560,24 @@
 !
 !  Switches to activate creation and writing of output NetCDF files.
 !
+        logical, dimension(Ngrids) :: LdefADJ    ! Adjoint file
         logical, dimension(Ngrids) :: LdefAVG    ! Average file
         logical, dimension(Ngrids) :: LdefDIA    ! Diagnostics file
         logical, dimension(Ngrids) :: LdefFLT    ! Floats file
         logical, dimension(Ngrids) :: LdefHIS    ! History file
+        logical, dimension(Ngrids) :: LdefINI    ! Initial file
+        logical, dimension(Ngrids) :: LdefITL    ! Initial TLM file
         logical, dimension(Ngrids) :: LdefRST    ! Restart file
         logical, dimension(Ngrids) :: LdefSTA    ! Stations file
-        logical, dimension(Ngrids) :: LwrtHIS    ! Writing history file
+        logical, dimension(Ngrids) :: LdefTLM    ! Tangent linear file
+
+        logical, dimension(Ngrids) :: LwrtADJ    ! Write adjoint file
+        logical, dimension(Ngrids) :: LwrtAVG    ! Write average file
+        logical, dimension(Ngrids) :: LwrtDIA    ! Write diagnostic file
+        logical, dimension(Ngrids) :: LwrtHIS    ! Write history file
+        logical, dimension(Ngrids) :: LwrtPER    ! Write during ensemble
+        logical, dimension(Ngrids) :: LwrtRST    ! Write restart file
+        logical, dimension(Ngrids) :: LwrtTLM    ! Write tangent file
 !
 !  Switch used to create new output NetCDF files. If TRUE, new output
 !  files are created. If FALSE, data is appended to an existing output
@@ -530,32 +587,40 @@
 !
 !  Number of timesteps between creation of new output files.
 !
-        integer, dimension(Ngrids) :: ndefavg    ! Average file
-        integer, dimension(Ngrids) :: ndefdia    ! Diagnostics file
-        integer, dimension(Ngrids) :: ndefhis    ! History file
+        integer, dimension(Ngrids) :: ndefADJ    ! Adjoint file
+        integer, dimension(Ngrids) :: ndefAVG    ! Average file
+        integer, dimension(Ngrids) :: ndefDIA    ! Diagnostics file
+        integer, dimension(Ngrids) :: ndefHIS    ! History file
+        integer, dimension(Ngrids) :: ndefTLM    ! Tangent linear file
 !
 !  Starting timestep for accumulation of output.
 !
-        integer, dimension(Ngrids) :: ntsavg     ! Average file
-        integer, dimension(Ngrids) :: ntsdia     ! Diagnostics file
+        integer, dimension(Ngrids) :: ntsAVG     ! Average file
+        integer, dimension(Ngrids) :: ntsDIA     ! Diagnostics file
 !
 !  Number of timesteps between writing of output data.
 !
-        integer, dimension(Ngrids) :: navg       ! Average file
-        integer, dimension(Ngrids) :: ndia       ! Diagnostics file
-        integer, dimension(Ngrids) :: nflt       ! Floats file
-        integer, dimension(Ngrids) :: nhis       ! History file
-        integer, dimension(Ngrids) :: nrst       ! Restart file
-        integer, dimension(Ngrids) :: nsta       ! Stations file
+        integer, dimension(Ngrids) :: nADJ       ! Adjoint file
+        integer, dimension(Ngrids) :: nAVG       ! Average file
+        integer, dimension(Ngrids) :: nDIA       ! Diagnostics file
+        integer, dimension(Ngrids) :: nFLT       ! Floats file
+        integer, dimension(Ngrids) :: nHIS       ! History file
+        integer, dimension(Ngrids) :: nRST       ! Restart file
+        integer, dimension(Ngrids) :: nSTA       ! Stations file
+        integer, dimension(Ngrids) :: nTLM       ! Tangent linear file
 !
 !  Number of time records written into output files.
 !
-        integer, dimension(Ngrids) :: nrecavg    ! Average file
-        integer, dimension(Ngrids) :: nrecdia    ! Diagnostics file
-        integer, dimension(Ngrids) :: nrecflt    ! Floats file
-        integer, dimension(Ngrids) :: nrechis    ! History file
-        integer, dimension(Ngrids) :: nrecrst    ! Restart file
-        integer, dimension(Ngrids) :: nrecsta    ! Station file
+        integer, dimension(Ngrids) :: NrecADJ    ! Adjoint file
+        integer, dimension(Ngrids) :: NrecAVG    ! Average file
+        integer, dimension(Ngrids) :: NrecDIA    ! Diagnostics file
+        integer, dimension(Ngrids) :: NrecFLT    ! Floats file
+        integer, dimension(Ngrids) :: NrecINI    ! NLM Initial file
+        integer, dimension(Ngrids) :: NrecITL    ! TLM Initial file
+        integer, dimension(Ngrids) :: NrecHIS    ! History file
+        integer, dimension(Ngrids) :: NrecRST    ! Restart file
+        integer, dimension(Ngrids) :: NrecSTA    ! Station file
+        integer, dimension(Ngrids) :: NrecTLM    ! Tangent linear file
 !
 !  Number of timesteps between print of single line information to
 !  standard output.
@@ -585,13 +650,16 @@
 !  Switch to inialize model with latest time record from initial
 !  (restart/history) NetCDF file.
 !
-        logical :: LastRec = .false.
+        logical :: LastRec = .FALSE.
 !
-!  Switch used to recycle time records in output restart file. If TRUE,
-!  only the latest two restart time records are maintained.  If FALSE,
-!  all restart fields are saved every NRST timesteps without recycling.
+!  Switches used to recycle time records in some output file. If TRUE,
+!  only the latest two time records are maintained.  If FALSE, all
+!  field records are saved.
 !
-        logical, dimension(Ngrids) :: lcycle  = .false.
+        logical, dimension(Ngrids) :: LcycleADJ  = .FALSE.
+        logical, dimension(Ngrids) :: LcycleINI  = .FALSE.
+        logical, dimension(Ngrids) :: LcycleRST  = .FALSE.
+        logical, dimension(Ngrids) :: LcycleTLM  = .FALSE.
 !
 !-----------------------------------------------------------------------
 !  Nudging variables for passive (outflow) and active (inflow) oepn
@@ -662,6 +730,16 @@
         real(r8) :: bc_area = 0.0_r8
         real(r8) :: bc_flux = 0.0_r8
         real(r8) :: ubar_xs = 0.0_r8
+#if defined TANGENT || defined TL_IOMS
+        real(r8) :: tl_bc_area = 0.0_r8
+        real(r8) :: tl_bc_flux = 0.0_r8
+        real(r8) :: tl_ubar_xs = 0.0_r8
+#endif
+#ifdef ADJOINT
+        real(r8) :: ad_bc_area = 0.0_r8
+        real(r8) :: ad_bc_flux = 0.0_r8
+        real(r8) :: ad_ubar_xs = 0.0_r8
+#endif
 
 #ifdef BULK_FLUXES
 !
@@ -672,20 +750,13 @@
 !    blk_Cpa       Specific heat capacity for dry air (J/kg/K).
 !    blk_Cpw       Specific heat capacity for seawater (J/kg/K).
 !    blk_Rgas      Gas constant for dry air (J/kg/K).
-!    blk_Rr        Liu et al (1979) look-up table ranges for wind
-!                    Reynolds number.
 !    blk_Zabl      Height (m) of atmospheric boundary layer.
 !    blk_ZQ        Height (m) of surface air humidity meassurement.
 !    blk_ZT        Height (m) of surface air temperature meassurement.
 !    blk_ZW        Height (m) of surface winds meassurement.
-!    blk_a         Liu et al (1979) look-up table coefficient "a" for
-!                    the computation of rougness Reynolds numbers.
-!    blk_a         Liu et al (1979) look-up table coefficient "b" for
-!                    the computation of rougness Reynolds numbers.
 !    blk_beta      Beta parameter evaluated from Fairall low windspeed
 !                    turbulence data.
-!    blk_fdg       Fairall LKB roughness Reynolds number to Von Karman
-!                    adjustment.
+!    blk_dter      Temperature change.
 !    blk_tcw       Thermal conductivity of water (W/m/K).
 !    blk_visw      Kinematic viscosity water (m2/s).
 !
@@ -697,38 +768,11 @@
         real(r8) :: blk_ZT = 10.0_r8          ! (m)
         real(r8) :: blk_ZW = 10.0_r8          ! (m)
         real(r8) :: blk_beta = 1.2_r8         ! non-dimensional
-        real(r8) :: blk_fdg = 1.0_r8          ! non-dimensional
+        real(r8) :: blk_dter = 0.3_r8         ! (K)
         real(r8) :: blk_tcw = 0.6_r8          ! (W/m/K)
         real(r8) :: blk_visw = 0.000001_r8    ! (m2/s)
-!
-!  Liu et al. (1976) look-up table coefficients to compute roughness
-!  Reynolds number for temperature (Rt) and moisture (Rq) as a
-!  function of wind Reynolds number (Rr):
-!
-!       Rt = Liu_a(:,1) * Rr   ** Liu_b(:,1)    temperarure
-!       Rq = Liu_a(:,2) * Rr   ** Liu_b(:,2)    moisture
-!
-        real(r8), dimension(8,2) :: Liu_a = reshape (                   &
-     &            (/ 0.177_r8,  1.376_r8,    1.026_r8,      1.625_r8,   &
-     &               4.661_r8, 34.904_r8, 1667.190_r8, 588000.0_r8,     &
-     &               0.292_r8,  1.808_r8,    1.393_r8,      1.956_r8,   &
-     &               4.994_r8, 30.709_r8, 1448.680_r8, 298000.0_r8 /),  &
-     &            (/ 8, 2 /) )
-
-        real(r8), dimension(8,2) :: Liu_b = reshape (                   &
-     &            (/  0.0_r8,    0.929_r8, -0.599_r8, -1.018_r8,        &
-     &               -1.475_r8, -2.067_r8, -2.907_r8, -3.935_r8,        &
-     &                0.0_r8,    0.826_r8, -0.528_r8, -0.870_r8,        &
-     &               -1.297_r8, -1.845_r8, -2.682_r8, -3.616_r8 /),     &
-     &            (/ 8, 2 /) )
-
-        real(r8), dimension(9) :: Liu_Rr =                              &
-     &            (/    0.0_r8,  0.11_r8,   0.825_r8,   3.0_r8,         &
-     &                 10.0_r8, 30.0_r8,  100.0_r8,   300.0_r8,         &
-     &               1000.0_r8 /)
-
 #endif
-# ifdef SG_BBL
+# if defined SG_BBL || defined SSW_BBL
 !
 !-----------------------------------------------------------------------
 !  Closure parameters associated with Styles and Glenn (1999) bottom
@@ -952,7 +996,7 @@
         real(r8), dimension(Ngrids) :: gls_Kmin
         real(r8), dimension(Ngrids) :: gls_Pmin
 #ifdef GLS_MIXING
-# ifdef CANUTO_A || CANUTO_B
+# if defined CANUTO_A || defined CANUTO_B
         real(r8) :: gls_s0
         real(r8) :: gls_s1
         real(r8) :: gls_s2
@@ -1068,6 +1112,16 @@
         real(r8) :: bvf_nu0 = 1.0E-7_r8        ! m2/s2
         real(r8) :: bvf_nu0c = 1.0_r8          ! m2/s
 #endif
+
+!
+!-----------------------------------------------------------------------
+!  Tangent linear and adjoint model parameters.
+!-----------------------------------------------------------------------
+!
+!  Tangent linear and adjoint model control switches.
+!
+        logical :: TLmodel = .FALSE.
+        logical :: ADmodel = .FALSE.
 
 #if defined ASSIMILATION || defined NUDGING
 !
@@ -1198,7 +1252,7 @@
       SUBROUTINE initialize_scalars
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initializes several variables in module "mod_scalars"  !
@@ -1261,7 +1315,9 @@
       allocate ( tnu4(MT,Ngrids) )
 #ifdef SOLVE3D
       allocate ( Tobc_in(MT,Ngrids,4) )
+      Tobc_in = IniVal
       allocate ( Tobc_out(MT,Ngrids,4) )
+      Tobc_out = IniVal
 # ifdef BIOLOGY
       allocate ( idbio(NBT) )
 # endif
@@ -1289,6 +1345,17 @@
       itemp=1
       isalt=2
       ic=NAT
+
+#ifdef T_PASSIVE
+!
+!  Indices for inert passive tracers to advect and diffuse.
+!
+      DO i=1,NPT
+        ic=ic+1
+        inert(i)=ic
+      END DO
+#endif
+
 #ifdef SEDIMENT
 !
 !  Cohesive and noncohesive suspended sediment tracers indices.
@@ -1326,6 +1393,10 @@
       iTAlk=ic+4
       ic=ic+4
 # endif
+# ifdef OXYGEN
+      iOxyg=ic+1
+      ic=ic+1
+# endif 
 #elif defined ECOSIM
 !
 !  Set bio-optical tracer indices.
@@ -1470,11 +1541,11 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-        Lassimilate(ng)=.true.
-        Lbiology(ng)=.true.
-        Lfloats(ng)=.true.
-        Lsediment(ng)=.true.
-        Lstations(ng)=.true.
+        Lassimilate(ng)=.TRUE.
+        Lbiology(ng)=.TRUE.
+        Lfloats(ng)=.TRUE.
+        Lsediment(ng)=.TRUE.
+        Lstations(ng)=.TRUE.
       END DO
 !
 !-----------------------------------------------------------------------
@@ -1495,28 +1566,42 @@
 !
       DO ng=1,Ngrids
 
-        LdefAVG(ng)=.true.
-        LdefDIA(ng)=.true.
-        LdefFLT(ng)=.true.
-        LdefHIS(ng)=.true.
-        LdefRST(ng)=.true.
-        LdefSTA(ng)=.true.
+        LdefADJ(ng)=.FALSE.
+        LdefAVG(ng)=.TRUE.
+        LdefDIA(ng)=.TRUE.
+        LdefFLT(ng)=.TRUE.
+        LdefHIS(ng)=.TRUE.
+        LdefINI(ng)=.FALSE.
+        LdefITL(ng)=.FALSE.
+        LdefRST(ng)=.TRUE.
+        LdefSTA(ng)=.TRUE.
+        LdefTLM(ng)=.FALSE.
 
-        LwrtHIS(ng)=.false.
-        ldefout(ng)=.false.
+        LwrtADJ(ng)=.FALSE.
+        LwrtAVG(ng)=.FALSE.
+        LwrtDIA(ng)=.FALSE.
+        LwrtHIS(ng)=.FALSE.
+        LwrtPER(ng)=.FALSE.
+        LwrtRST(ng)=.FALSE.
+        LwrtTLM(ng)=.FALSE.
+        ldefout(ng)=.FALSE.
 
-        synchro_flag(ng)=.false.
+        synchro_flag(ng)=.FALSE.
 
-        nrecavg(ng)=0
-        nrecdia(ng)=0
-        nrecflt(ng)=0
-        nrechis(ng)=0
-        nrecrst(ng)=0
-        nrecsta(ng)=0
+        NrecADJ(ng)=0
+        NrecAVG(ng)=0
+        NrecDIA(ng)=0
+        NrecFLT(ng)=0
+        NrecINI(ng)=0
+        NrecITL(ng)=0
+        NrecHIS(ng)=0
+        NrecRST(ng)=0
+        NrecSTA(ng)=0
+        NrecTLM(ng)=0
 
       END DO
 
-#ifdef SG_BBL
+# if defined SG_BBL || defined SSW_BBL
 !
 !  Nondimensional closure parameters associated with Styles and Glenn
 !  (1999) bottom currents and waves boundary layer.

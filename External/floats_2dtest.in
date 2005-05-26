@@ -1,7 +1,7 @@
 !  Floats Input Parameters.
 !
 !==============================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group, version 2.1                          ===
+!  Copyright (c) 2005 ROMS/TOMS Group, version 2.2                          ===
 !========================================================= Hernan G. Arango ===
 !                                                                             !
 ! Input parameters can be entered in ANY order, provided that the parameter   !
@@ -109,8 +109,9 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !
 !  C         Initial horizontal location coordinate type [Fcoor]:
 !
-!              Fcoor = 0,  grid units:  1 =< Fx0 =< Lm(ng)+1,
-!                                       1 =< Fy0 =< Mm(ng)+1
+!              Fcoor = 0,  rho grid units
+!                             0.5 =< Fx0 =< Lm(ng)+0.5,
+!                             0.5 =< Fy0 =< Mm(ng)+0.5
 !
 !              Fcoor = 1,  Fx0 is longitude (west values are negative).
 !                          Fy0 is latitude (south values are negative).

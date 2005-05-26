@@ -1,8 +1,8 @@
 #include "cppdefs.h"
-      SUBROUTINE inp_par
+      SUBROUTINE inp_par (model)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in input model parameters from standard input.   !
@@ -18,10 +18,15 @@
 !
       implicit none
 !
+!  Imported variable declarations.
+!
+      integer, intent(in) :: model
+!
 !  Local variable declarations.
 !
       logical :: Lwrite
 
+      integer :: Itile, Istr, Iend, Jtile, Jstr, Jend, tile
       integer :: inp, out, itrc, ng
 
       real(r8) :: cff
@@ -47,7 +52,7 @@
 #ifdef DISTRIBUTE
       IF (Master) CALL get_date (date_str)
       DO ng=1,Ngrids
-        CALL mp_bcasts (ng, date_str, 44)
+        CALL mp_bcasts (ng, model, date_str, LEN(date_str))
       END DO
 #else
       CALL get_date (date_str)
@@ -69,7 +74,7 @@
 !
       OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
      &      ERR=20)
-      GOTO 40
+      GO TO 40
  20   WRITE (stdout,30)
       STOP
  30   FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',    &
@@ -87,11 +92,11 @@
 !!    CALL my_getarg (1,Iname)
       IF (Master) CALL my_getarg (1,Iname)
       DO ng=1,Ngrids
-        CALL mp_bcasts (ng, Iname, 80)
+        CALL mp_bcasts (ng, model, Iname, LEN(Iname))
       END DO
       OPEN (inp, FILE=TRIM(Iname), FORM='formatted', STATUS='old',      &
      &      ERR=20)
-      GOTO 40
+      GO TO 40
  20   WRITE (stdout,30)
       STOP
  30   FORMAT (/,' INP_PAR - Unable to open ROMS/TOMS input script ',    &
@@ -107,7 +112,46 @@
 # endif
 #endif
 
-      CALL read_PhyPar (inp, out, Lwrite)
+      CALL read_PhyPar (model, inp, out, Lwrite)
+!
+!-----------------------------------------------------------------------
+!  Check tile partition starting and ending (I,J) indices for illegal
+!  domain decomposition parameters NtileI and NtileJ in standard input
+!  file.
+!-----------------------------------------------------------------------
+!
+      IF (Master) THEN
+        DO ng=1,Ngrids
+          DO tile=0,NtileI(ng)*NtileJ(ng)-1
+            CALL get_tile (ng, tile, Itile, Jtile,                      &
+     &                     Istr, Iend, Jstr, Jend)
+            IF ((Iend-Istr+1).lt.2) THEN
+              WRITE (stdout,50) ng, 'NtileI = ', NtileI(ng),            &
+     &                              'Lm = ', Lm(ng),                    &
+     &                              'Istr = ', Istr,                    &
+     &                              '  Iend = ', Iend,                  &
+     &                              'NtileI'
+              exit_flag=6
+              RETURN
+            END IF
+            IF ((Jend-Jstr+1).lt.2) THEN
+              WRITE (stdout,50) ng, 'NtileJ = ', NtileJ(ng),            &
+     &                              'Mm = ', Mm(ng),                    &
+     &                              'Jstr = ', Jstr,                    &
+     &                              '  Jend = ', Jend,                  &
+     &                              'NtileJ'
+              exit_flag=6
+              RETURN
+            END IF
+          END DO
+        END DO
+ 50     FORMAT (/,' INP_PAR - domain decomposition error in input ',    &
+     &                        'script file for grid: ',i2,/,            &
+     &          /,11x,'The domain partition parameter, ',a,i3,          &
+     &          /,11x,'is incompatible with grid size, ',a,i4,          &
+     &          /,11x,'because it yields too small tile, ',a,i3,a,i3,   &
+     &          /,11x,'Decrease partition parameter: ',a)
+      END IF
 
 #ifdef BIOLOGY
 !
@@ -117,7 +161,7 @@
 !
       OPEN (inp, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
 
-      CALL read_BioPar (inp, out, Lwrite)
+      CALL read_BioPar (model, inp, out, Lwrite)
 #endif
 #ifdef SEDIMENT
 !
@@ -127,9 +171,9 @@
 !
       OPEN (inp ,FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
 
-      CALL read_SedPar (inp, out, Lwrite)
+      CALL read_SedPar (model, inp, out, Lwrite)
 #endif
-#if defined ASSIMILATION || defined NUDGING
+#if defined ASSIMILATION || defined NUDGING || defined FOUR_DVAR
 !
 !-----------------------------------------------------------------------
 !  Read in input assimilation parameters.
@@ -137,7 +181,7 @@
 !
       OPEN (inp, FILE=TRIM(aparnam), FORM='formatted', STATUS='old')
 
-      CALL read_AssPar (inp, out, Lwrite)
+      CALL read_AssPar (model, inp, out, Lwrite)
 #endif
 #ifdef FLOATS
 !
@@ -147,7 +191,7 @@
 !
       OPEN (inp, FILE=TRIM(fposnam), FORM='formatted', STATUS='old')
 
-      CALL read_FloatsPar (inp, out, Lwrite)
+      CALL read_FloatsPar (model, inp, out, Lwrite)
 #endif
 #ifdef STATIONS
 !
@@ -157,15 +201,17 @@
 !
       OPEN (inp, FILE=TRIM(sposnam), FORM='formatted', STATUS='old')
 
-      CALL read_StaPar (inp, out, Lwrite)
+      CALL read_StaPar (model, inp, out, Lwrite)
 #endif
 !
 !-----------------------------------------------------------------------
 !  Check C-preprocessing options and definitions.
 !-----------------------------------------------------------------------
 !
-      IF (Master) CALL checkdefs
-      IF (Master) CALL my_flush (out)
+      IF (Master) THEN
+        CALL checkdefs
+        CALL my_flush (out)
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Compute various constants.
@@ -180,9 +226,6 @@
 !
         visc4(ng)=SQRT(ABS(visc4(ng)))
         tkenu4(ng)=SQRT(ABS(tkenu4(ng)))
-        DO itrc=1,NAT
-          tnu4(itrc,ng)=SQRT(ABS(tnu4(itrc,ng)))
-        END DO
 !
 !  Compute inverse nudging coefficients (1/s) used in various tasks.
 !
@@ -202,45 +245,40 @@
         ELSE
           M3nudg(ng)=0.0_r8
         END IF
-        DO itrc=1,NAT
-          IF (Tnudg(itrc,ng).gt.0.0_r8) THEN
-            Tnudg(itrc,ng)=1.0_r8/(Tnudg(itrc,ng)*86400.0_r8)
-          ELSE
-            Tnudg(itrc,ng)=0.0_r8
-          END IF
-        END DO
 #endif
 !
-!  Set scales for input forcing fields.  Notice that for consitency
-!  with Boussinesq approximation, these scales are overwritten here
-!  to use the provided value for "rho0".
+!  Convert momentum stresses and tracer flux scales to kinematic
+!  Values. Recall, that all the model fluxes are kinematic.
 !
         cff=1.0_r8/rho0
-        Fscale(idUsms,ng)=cff
-        Fscale(idVsms,ng)=cff
-        Fscale(idUbms,ng)=cff
-        Fscale(idVbms,ng)=cff
-        Fscale(idUbws,ng)=cff
-        Fscale(idVbws,ng)=cff
-        Fscale(idUbcs,ng)=cff
-        Fscale(idVbcs,ng)=cff
+        Fscale(idUsms,ng)=cff*Fscale(idUsms,ng)
+        Fscale(idVsms,ng)=cff*Fscale(idVsms,ng)
+        Fscale(idUbms,ng)=cff*Fscale(idUbms,ng)
+        Fscale(idVbms,ng)=cff*Fscale(idVbms,ng)
+        Fscale(idUbrs,ng)=cff*Fscale(idUbrs,ng)
+        Fscale(idVbrs,ng)=cff*Fscale(idVbrs,ng)
+        Fscale(idUbws,ng)=cff*Fscale(idUbws,ng)
+        Fscale(idVbws,ng)=cff*Fscale(idVbws,ng)
+        Fscale(idUbcs,ng)=cff*Fscale(idUbcs,ng)
+        Fscale(idVbcs,ng)=cff*Fscale(idVbcs,ng)
         cff=1.0_r8/(rho0*Cp)
-        Fscale(idTsur(itemp),ng)=cff
-        Fscale(idTbot(itemp),ng)=cff
-        Fscale(idSrad,ng)=cff
-        Fscale(idLrad,ng)=cff
-        Fscale(idLhea,ng)=cff
-        Fscale(idShea,ng)=cff
-        Fscale(iddQdT,ng)=cff
+        Fscale(idTsur(itemp),ng)=cff*Fscale(idTsur(itemp),ng)
+        Fscale(idTbot(itemp),ng)=cff*Fscale(idTbot(itemp),ng)
+        Fscale(idSrad,ng)=cff*Fscale(idSrad,ng)
+        Fscale(idLdwn,ng)=cff*Fscale(idLdwn,ng)
+        Fscale(idLrad,ng)=cff*Fscale(idLrad,ng)
+        Fscale(idLhea,ng)=cff*Fscale(idLhea,ng)
+        Fscale(idShea,ng)=cff*Fscale(idShea,ng)
+        Fscale(iddQdT,ng)=cff*Fscale(iddQdT,ng)
       END DO
       RETURN
       END SUBROUTINE inp_par
 
 #ifdef AIR_OCEAN
-      SUBROUTINE read_CouplePar
+      SUBROUTINE read_CouplePar (model)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in physical model input parameters.              !
@@ -254,6 +292,10 @@
 !
       implicit none
 !
+!  Imported variable declarations.
+!
+      integer, intent(in) :: model
+!
 !  Local variable declarations.
 !
       logical :: Lwrite
@@ -266,8 +308,9 @@
 
       character (len=1 ), parameter :: blank = ' '
       character (len=40) :: KeyWord
-      character (len=80) :: Cname, line
-      character (len=80), dimension(100) :: Cval
+      character (len=80) :: Cname
+      character (len=160) :: line
+      character (len=160), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Determine coupling standard input file name.  In distributed-memory,
@@ -283,12 +326,14 @@
 !
       IF (Master) CALL my_getarg (1,Cname)
       DO ng=1,Ngrids
-        CALL mp_bcasts (ng, Cname, 80)
+        CALL mp_bcasts (ng, model, Cname, 80)
       END DO
+      WRITE(stdout,*) 'MyRank = ', MyRank, Iname
       OPEN (inp, FILE=TRIM(Cname), FORM='formatted', STATUS='old',      &
      &      ERR=10)
-      GOTO 30
+      GO TO 30
  10   WRITE (stdout,20)
+      WRITE(stdout,*) 'MyRank = ', MyRank, Iname
       STOP
  20   FORMAT (/,' INP_PAR - Unable to open atmosphere-ocean input ',    &
      &              'script.',                                          &
@@ -312,12 +357,12 @@
 !  data into module. Take into account nested grid configurations.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=40,END=50) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
           IF (TRIM(KeyWord).eq.'VARNAME') THEN
-            DO i=1,LEN(usrname)
+            DO i=1,LEN(USRname)
               varname(i:i)=blank
             END DO
             varname=TRIM(ADJUSTL(Cval(Nval)))
@@ -353,10 +398,10 @@
       END SUBROUTINE read_CouplePar
 #endif
 
-      SUBROUTINE read_PhyPar (inp, out, Lwrite)
+      SUBROUTINE read_PhyPar (model, inp, out, Lwrite)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in physical model input parameters.              !
@@ -371,6 +416,9 @@
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 #endif
+#ifdef PROPAGATOR
+      USE mod_storage
+#endif
       USE mod_strings
 !
       implicit none
@@ -378,7 +426,7 @@
 !  Imported variable declarations
 !
       logical, intent(in) :: Lwrite
-      integer, intent(in) :: inp, out
+      integer, intent(in) :: model, inp, out
 !
 !  Local variable declarations.
 !
@@ -388,32 +436,35 @@
 
       integer :: decode_line, load_i, load_l, load_r
 
+#if defined SOLVE3D && defined T_PASSIVE
+      logical, dimension(NPT,Ngrids) :: Linert
+#endif
 #if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
       logical, dimension(MBOTP,Ngrids) :: Lbottom
 #endif
-      logical, dimension(NAT,Ngrids) :: Ltracer
+      logical, dimension(NAT+NPT,Ngrids) :: Ltracer
 
-      real(r8), dimension(NAT,Ngrids) :: Rtracer
+      real(r8), dimension(NAT+NPT,Ngrids) :: Rtracer
 
       real(r8), dimension(100) :: Rval
 
       character (len=1 ), parameter :: blank = ' '
       character (len=19) :: ref_att
       character (len=40) :: KeyWord
-      character (len=80) :: line, fname
-      character (len=80), dimension(100) :: Cval
+      character (len=160) :: fname, line
+      character (len=160), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in physical model parameters. Then, load input data into module.
 !  Take into account nested grid configurations.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
           IF (TRIM(KeyWord).eq.'VARNAME') THEN
-            DO i=1,LEN(usrname)
+            DO i=1,LEN(USRname)
               varname(i:i)=blank
             END DO
             varname=TRIM(ADJUSTL(Cval(Nval)))
@@ -442,49 +493,69 @@
             Npts=load_i(Nval, Rval, 1, ERstr)
           ELSE IF (TRIM(KeyWord).eq.'ERend') THEN
             Npts=load_i(Nval, Rval, 1, ERend)
+          ELSE IF (TRIM(KeyWord).eq.'Ninner') THEN
+            Npts=load_i(Nval, Rval, 1, Ninner)
+          ELSE IF (TRIM(KeyWord).eq.'Nintervals') THEN
+            Npts=load_i(Nval, Rval, 1, Nintervals)
+#ifdef PROPAGATOR
+          ELSE IF (TRIM(KeyWord).eq.'NEV') THEN
+            Npts=load_i(Nval, Rval, 1, NEV)
+#endif
           ELSE IF (TRIM(KeyWord).eq.'NRREC') THEN
             Npts=load_i(Nval, Rval, 1, nrrec)
-            LastRec=.false.
-            IF (nrrec.lt.0) LastRec=.true.
-          ELSE IF (TRIM(KeyWord).eq.'LCYCLE') THEN
-            Npts=load_l(Nval, Cval, Ngrids, lcycle)
+            LastRec=.FALSE.
+            IF (nrrec.lt.0) LastRec=.TRUE.
+          ELSE IF (TRIM(KeyWord).eq.'LcycleRST') THEN
+            Npts=load_l(Nval, Cval, Ngrids, LcycleRST)
           ELSE IF (TRIM(KeyWord).eq.'NRST') THEN
-            Npts=load_i(Nval, Rval, 1, nrst)
+            Npts=load_i(Nval, Rval, 1, nRST)
           ELSE IF (TRIM(KeyWord).eq.'NSTA') THEN
-            Npts=load_i(Nval, Rval, Ngrids, nsta)
+            Npts=load_i(Nval, Rval, Ngrids, nSTA)
           ELSE IF (TRIM(KeyWord).eq.'NFLT') THEN
-            Npts=load_i(Nval, Rval, Ngrids, nflt)
+            Npts=load_i(Nval, Rval, Ngrids, nFLT)
           ELSE IF (TRIM(KeyWord).eq.'NINFO') THEN
             Npts=load_i(Nval, Rval, Ngrids, ninfo)
           ELSE IF (TRIM(KeyWord).eq.'LDEFOUT') THEN
             Npts=load_l(Nval, Cval, Ngrids, ldefout)
           ELSE IF (TRIM(KeyWord).eq.'NHIS') THEN
-            Npts=load_i(Nval, Rval, Ngrids, nhis)
+            Npts=load_i(Nval, Rval, Ngrids, nHIS)
           ELSE IF (TRIM(KeyWord).eq.'NDEFHIS') THEN
-            Npts=load_i(Nval, Rval, Ngrids, ndefhis)
+            Npts=load_i(Nval, Rval, Ngrids, ndefHIS)
           ELSE IF (TRIM(KeyWord).eq.'NTSAVG') THEN
-            Npts=load_i(Nval, Rval, Ngrids, ntsavg)
+            Npts=load_i(Nval, Rval, Ngrids, ntsAVG)
           ELSE IF (TRIM(KeyWord).eq.'NAVG') THEN
-            Npts=load_i(Nval, Rval, Ngrids, navg)
+            Npts=load_i(Nval, Rval, Ngrids, nAVG)
           ELSE IF (TRIM(KeyWord).eq.'NDEFAVG') THEN
-            Npts=load_i(Nval, Rval, Ngrids, ndefavg)
+            Npts=load_i(Nval, Rval, Ngrids, ndefAVG)
           ELSE IF (TRIM(KeyWord).eq.'NTSDIA') THEN
-            Npts=load_i(Nval, Rval, Ngrids, ntsdia)
+            Npts=load_i(Nval, Rval, Ngrids, ntsDIA)
           ELSE IF (TRIM(KeyWord).eq.'NDIA') THEN
-            Npts=load_i(Nval, Rval, Ngrids, ndia)
+            Npts=load_i(Nval, Rval, Ngrids, nDIA)
           ELSE IF (TRIM(KeyWord).eq.'NDEFDIA') THEN
-            Npts=load_i(Nval, Rval, Ngrids, ndefdia)
+            Npts=load_i(Nval, Rval, Ngrids, ndefDIA)
+          ELSE IF (TRIM(KeyWord).eq.'LcycleTLM') THEN
+            Npts=load_l(Nval, Cval, Ngrids, LcycleTLM)
+          ELSE IF (TRIM(KeyWord).eq.'NTLM') THEN
+            Npts=load_i(Nval, Rval, Ngrids, nTLM)
+          ELSE IF (TRIM(KeyWord).eq.'NDEFTLM') THEN
+            Npts=load_i(Nval, Rval, Ngrids, ndefTLM)
+          ELSE IF (TRIM(KeyWord).eq.'LcycleADJ') THEN
+            Npts=load_l(Nval, Cval, Ngrids, LcycleADJ)
+          ELSE IF (TRIM(KeyWord).eq.'NADJ') THEN
+            Npts=load_i(Nval, Rval, Ngrids, nADJ)
+          ELSE IF (TRIM(KeyWord).eq.'NDEFTLM') THEN
+            Npts=load_i(Nval, Rval, Ngrids, ndefADJ)
           ELSE IF (TRIM(KeyWord).eq.'TNU2') THEN
-            Npts=load_r(Nval, Rval, NAT*Ngrids, Rtracer)
+            Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
             DO ng=1,Ngrids
-              DO itrc=1,NAT
+              DO itrc=1,NAT+NPT
                 tnu2(itrc,ng)=Rtracer(itrc,ng)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'TNU4') THEN
-            Npts=load_r(Nval, Rval, NAT*Ngrids, Rtracer)
+            Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
             DO ng=1,Ngrids
-              DO itrc=1,NAT
+              DO itrc=1,NAT+NPT
                 tnu4(itrc,ng)=Rtracer(itrc,ng)
               END DO
             END DO
@@ -493,9 +564,9 @@
           ELSE IF (TRIM(KeyWord).eq.'VISC4') THEN
             Npts=load_r(Nval, Rval, Ngrids, visc4)
           ELSE IF (TRIM(KeyWord).eq.'AKT_BAK') THEN
-            Npts=load_r(Nval, Rval, NAT*Ngrids, Rtracer)
+            Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
             DO ng=1,Ngrids
-              DO itrc=1,NAT
+              DO itrc=1,NAT+NPT
                 Akt_bak(itrc,ng)=Rtracer(itrc,ng)
               END DO
             END DO
@@ -555,15 +626,19 @@
             Npts=load_r(Nval, Rval, Ngrids, Tcline)
           ELSE IF (TRIM(KeyWord).eq.'RHO0') THEN
             Npts=load_r(Nval, Rval, 1, rho0)
+          ELSE IF (TRIM(KeyWord).eq.'BVF_BAK') THEN
+            Npts=load_r(Nval, Rval, 1, bvf_bak)
           ELSE IF (TRIM(KeyWord).eq.'DSTART') THEN
             Npts=load_r(Nval, Rval, 1, dstart)
+          ELSE IF (TRIM(KeyWord).eq.'TIDE_START') THEN
+            Npts=load_r(Nval, Rval, 1, tide_start)
           ELSE IF (TRIM(KeyWord).eq.'TIME_REF') THEN
             Npts=load_r(Nval, Rval, 1, time_ref)
             r_text=ref_att(time_ref,r_date)
           ELSE IF (TRIM(KeyWord).eq.'TNUDG') THEN
-            Npts=load_r(Nval, Rval, NAT*Ngrids, Rtracer)
+            Npts=load_r(Nval, Rval, (NAT+NPT)*Ngrids, Rtracer)
             DO ng=1,Ngrids
-              DO itrc=1,NAT
+              DO itrc=1,NAT+NPT
                 Tnudg(itrc,ng)=Rtracer(itrc,ng)
               END DO
             END DO
@@ -577,14 +652,23 @@
             Npts=load_r(Nval, Rval, Ngrids, obcfac)
           ELSE IF (TRIM(KeyWord).eq.'R0') THEN
             Npts=load_r(Nval, Rval, Ngrids, R0)
+            DO ng=1,Ngrids
+              IF (R0(ng).lt.100.0_r8) R0(ng)=R0(ng)+1000.0_r8
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'T0') THEN
             Npts=load_r(Nval, Rval, Ngrids, T0)
           ELSE IF (TRIM(KeyWord).eq.'S0') THEN
             Npts=load_r(Nval, Rval, Ngrids, S0)
           ELSE IF (TRIM(KeyWord).eq.'TCOEF') THEN
             Npts=load_r(Nval, Rval, Ngrids, Tcoef)
+            DO ng=1,Ngrids
+              Tcoef(ng)=ABS(Tcoef(ng))
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'SCOEF') THEN
             Npts=load_r(Nval, Rval, Ngrids, Scoef)
+            DO ng=1,Ngrids
+              Scoef(ng)=ABS(Scoef(ng))
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'GAMMA2') THEN
             Npts=load_r(Nval, Rval, 1, gamma2)
           ELSE IF (TRIM(KeyWord).eq.'Hout(idFsur)') THEN
@@ -665,6 +749,18 @@
               STOP
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idVbms,1))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idUbrs)') THEN
+            IF (idUbrs.eq.0) THEN
+              WRITE (out,280) 'idUbrs'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbrs,1))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idVbrs)') THEN
+            IF (idVbrs.eq.0) THEN
+              WRITE (out,280) 'idVbrs'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbrs,1))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbws)') THEN
             IF (idUbws.eq.0) THEN
               WRITE (out,280) 'idUbws'
@@ -689,18 +785,6 @@
               STOP
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idVbcs,1))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idUbed)') THEN
-            IF (idUbed.eq.0) THEN
-              WRITE (out,280) 'idUbed'
-              STOP
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbed,1))
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idVbed)') THEN
-            IF (idVbed.eq.0) THEN
-              WRITE (out,280) 'idVbed'
-              STOP
-            END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbed,1))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbot)') THEN
             IF (idUbot.eq.0) THEN
               WRITE (out,280) 'idUbot'
@@ -713,12 +797,30 @@
               STOP
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idVbot,1))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idUbur)') THEN
+            IF (idUbur.eq.0) THEN
+              WRITE (out,280) 'idUbur'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbur,1))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idVbvr)') THEN
+            IF (idVbvr.eq.0) THEN
+              WRITE (out,280) 'idVbvr'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbvr,1))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
             IF (idTsur(itemp).eq.0) THEN
               WRITE (out,280) 'idTsur'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idTsur(itemp),1))
+            Npts=load_l(Nval, Cval, NAT*Ngrids, Ltracer)
+            DO ng=1,Ngrids
+              DO itrc=1,NAT
+                i=idTsur(itrc)
+                Hout(i,ng)=Ltracer(itrc,ng)
+              END DO
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'Hout(idLhea)') THEN
             IF (idLhea.eq.0) THEN
               WRITE (out,280) 'idLhea'
@@ -743,6 +845,18 @@
               STOP
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idSrad,1))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idevap)') THEN
+            IF (idevap.eq.0) THEN
+              WRITE (out,280) 'idevap'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idevap,1))
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idrain)') THEN
+            IF (idrain.eq.0) THEN
+              WRITE (out,280) 'idrain'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idrain,1))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idDano)') THEN
             IF (idDano.eq.0) THEN
               WRITE (out,280) 'idDano'
@@ -791,6 +905,20 @@
               STOP
             END IF
             Npts=load_l(Nval, Cval, Ngrids, Hout(idMtls,1))
+#if defined SOLVE3D && defined T_PASSIVE
+          ELSE IF (TRIM(KeyWord).eq.'Hout(inert)') THEN
+            IF (MAXVAL(inert).eq.0) THEN
+              WRITE (out,280) 'inert'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, NPT*Ngrids, Linert)
+            DO ng=1,Ngrids
+              DO itrc=1,NPT
+                i=idTvar(inert(itrc))
+                Hout(i,ng)=Linert(itrc,ng)
+              END DO
+            END DO
+#endif
 #if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
           ELSE IF (TRIM(KeyWord).eq.'Hout(idBott)') THEN
             IF (MAXVAL(idBott).eq.0) THEN
@@ -813,54 +941,74 @@
             IF (Nval.eq.1) THEN
               title=TRIM(ADJUSTL(Cval(Nval)))
             ELSE
-              title=TRIM(ADJUSTL(title))//' '//TRIM(ADJUSTL(Cval(Nval)))
+              WRITE(title,'(a,1x,a)') TRIM(ADJUSTL(title)),             &
+     &                                TRIM(ADJUSTL(Cval(Nval)))
             END IF           
           ELSE IF (TRIM(KeyWord).eq.'RSTNAME') THEN
-            DO i=1,LEN(rstname(Nval))
-              rstname(Nval)(i:i)=blank
+            DO i=1,LEN(RSTname(Nval))
+              RSTname(Nval)(i:i)=blank
             END DO
-            rstname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            RSTname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'HISNAME') THEN
-            DO i=1,LEN(hisname(Nval))
-              hisname(Nval)(i:i)=blank
-              hisbase(Nval)(i:i)=blank
+            DO i=1,LEN(HISname(Nval))
+              HISname(Nval)(i:i)=blank
+              HISbase(Nval)(i:i)=blank
             END DO
-            hisname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            hisbase(Nval)=TRIM(ADJUSTL(hisname(Nval)))
+            HISname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            HISbase(Nval)=TRIM(ADJUSTL(HISname(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'TLMNAME') THEN
+            DO i=1,LEN(TLMname(Nval))
+              TLMname(Nval)(i:i)=blank
+              TLMbase(Nval)(i:i)=blank
+            END DO
+            TLMname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            TLMbase(Nval)=TRIM(ADJUSTL(TLMname(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'ADJNAME') THEN
+            DO i=1,LEN(ADJname(Nval))
+              ADJname(Nval)(i:i)=blank
+              ADJbase(Nval)(i:i)=blank
+            END DO
+            ADJname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            ADJbase(Nval)=TRIM(ADJUSTL(ADJname(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'AVGNAME') THEN
-            DO i=1,LEN(avgname(Nval))
-              avgname(Nval)(i:i)=blank
-              avgbase(Nval)(i:i)=blank
+            DO i=1,LEN(AVGname(Nval))
+              AVGname(Nval)(i:i)=blank
+              AVGbase(Nval)(i:i)=blank
             END DO
-            avgname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            avgbase(Nval)=TRIM(ADJUSTL(avgname(Nval)))
+            AVGname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            AVGbase(Nval)=TRIM(ADJUSTL(AVGname(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'DIANAME') THEN
-            DO i=1,LEN(dianame(Nval))
-              dianame(Nval)(i:i)=blank
-              diabase(Nval)(i:i)=blank
+            DO i=1,LEN(DIAname(Nval))
+              DIAname(Nval)(i:i)=blank
+              DIAbase(Nval)(i:i)=blank
             END DO
-            dianame(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            diabase(Nval)=TRIM(ADJUSTL(dianame(Nval)))
+            DIAname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            DIAbase(Nval)=TRIM(ADJUSTL(DIAname(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'STANAME') THEN
-            DO i=1,LEN(staname(Nval))
-              staname(Nval)(i:i)=blank
+            DO i=1,LEN(STAname(Nval))
+              STAname(Nval)(i:i)=blank
             END DO
-            staname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            STAname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'FLTNAME') THEN
-            DO i=1,LEN(fltname(Nval))
-              fltname(Nval)(i:i)=blank
+            DO i=1,LEN(FLTname(Nval))
+              FLTname(Nval)(i:i)=blank
             END DO
-            fltname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            FLTname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'GRDNAME') THEN
-            DO i=1,LEN(grdname(Nval))
-              grdname(Nval)(i:i)=blank
+            DO i=1,LEN(GRDname(Nval))
+              GRDname(Nval)(i:i)=blank
             END DO
-            grdname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            GRDname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'ININAME') THEN
-            DO i=1,LEN(ininame(Nval))
-              ininame(Nval)(i:i)=blank
+            DO i=1,LEN(INIname(Nval))
+              INIname(Nval)(i:i)=blank
             END DO
-            ininame(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            INIname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'ITLNAME') THEN
+            DO i=1,LEN(ITLname(Nval))
+              ITLname(Nval)(i:i)=blank
+            END DO
+            ITLname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'NFFILES') THEN
             Npts=load_i(Nval, Rval, Ngrids, nFfiles)
             DO ng=1,Ngrids
@@ -871,13 +1019,13 @@
               END IF
             END DO                
             Npts=MAXVAL(nFfiles)           
-            allocate ( frcids (Npts,Ngrids) )
-            allocate ( frcname(Npts,Ngrids) )
-            frcids(1:Npts,1:Ngrids)=-1
+            allocate ( FRCids (Npts,Ngrids) )
+            allocate ( FRCname(Npts,Ngrids) )
+            FRCids(1:Npts,1:Ngrids)=-1
             DO ng=1,Ngrids
               DO k=1,Npts
-                DO i=1,LEN(frcname(k,ng))
-                  frcname(k,ng)(i:i)=blank
+                DO i=1,LEN(FRCname(k,ng))
+                  FRCname(k,ng)(i:i)=blank
                 END DO
               END DO
             END DO
@@ -885,25 +1033,25 @@
             DO ng=1,Ngrids
               DO i=1,nFfiles(ng)
                 IF (Nval.eq.(i+(Ngrids-1)*nFfiles(ng))) THEN
-                  frcname(i,ng)=TRIM(ADJUSTL(Cval(Nval)))
+                  FRCname(i,ng)=TRIM(ADJUSTL(Cval(Nval)))
                 END IF
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'CLMNAME') THEN
-            DO i=1,LEN(clmname(Nval))
-              clmname(Nval)(i:i)=blank
+            DO i=1,LEN(CLMname(Nval))
+              CLMname(Nval)(i:i)=blank
             END DO
-            clmname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            CLMname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'BRYNAME') THEN
-            DO i=1,LEN(bryname(Nval))
-              bryname(Nval)(i:i)=blank
+            DO i=1,LEN(BRYname(Nval))
+              BRYname(Nval)(i:i)=blank
             END DO
-            bryname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            BRYname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'FWDNAME') THEN
-            DO i=1,LEN(fwdname(Nval))
-              fwdname(Nval)(i:i)=blank
+            DO i=1,LEN(FWDname(Nval))
+              FWDname(Nval)(i:i)=blank
             END DO
-            fwdname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            FWDname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'APARNAM') THEN
             DO i=1,LEN(aparnam)
               aparnam(i:i)=blank
@@ -930,10 +1078,10 @@
             END DO
             sparnam=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'USRNAME') THEN
-            DO i=1,LEN(usrname)
-              usrname(i:i)=blank
+            DO i=1,LEN(USRname)
+              USRname(i:i)=blank
             END DO
-            usrname=TRIM(ADJUSTL(Cval(Nval)))
+            USRname=TRIM(ADJUSTL(Cval(Nval)))
           END IF
         END IF
       END DO
@@ -946,20 +1094,20 @@
       DO ng=1,Ngrids
 #ifdef SOLVE3D
         DO i=1,NV
-          IF (Hout(i,ng)) LdefHIS(ng)=.true.
+          IF (Hout(i,ng)) LdefHIS(ng)=.TRUE.
         END DO
 #else
         IF (Hout(idFsur,ng).or.Hout(idUbar,ng).or.Hout(idVbar,ng)) THEN
-          LdefHIS(ng)=.true.
+          LdefHIS(ng)=.TRUE.
         END IF
 #endif
-        IF ((nrrec.eq.0).and.(navg(ng).gt.ntimes)) LdefAVG(ng)=.false.
-        IF ((nrrec.eq.0).and.(ndia(ng).gt.ntimes)) LdefDIA(ng)=.false.
-        IF ((nrrec.eq.0).and.(nflt(ng).gt.ntimes)) LdefFLT(ng)=.false.
-        IF ((nrrec.eq.0).and.(nhis(ng).gt.ntimes)) LdefHIS(ng)=.false.
-        IF ((nrrec.eq.0).and.(nhis(ng).gt.ntimes)) LdefHIS(ng)=.false.
-        IF ((nrrec.eq.0).and.(nrst(ng).gt.ntimes)) LdefRST(ng)=.false.
-        IF ((nrrec.eq.0).and.(nsta(ng).gt.ntimes)) LdefSTA(ng)=.false.
+        IF ((nrrec.eq.0).and.(nAVG(ng).gt.ntimes)) LdefAVG(ng)=.FALSE.
+        IF ((nrrec.eq.0).and.(nDIA(ng).gt.ntimes)) LdefDIA(ng)=.FALSE.
+        IF ((nrrec.eq.0).and.(nFLT(ng).gt.ntimes)) LdefFLT(ng)=.FALSE.
+        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes)) LdefHIS(ng)=.FALSE.
+        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes)) LdefHIS(ng)=.FALSE.
+        IF ((nrrec.eq.0).and.(nRST(ng).gt.ntimes)) LdefRST(ng)=.FALSE.
+        IF ((nrrec.eq.0).and.(nSTA(ng).gt.ntimes)) LdefSTA(ng)=.FALSE.
       END DO
 !
 !-----------------------------------------------------------------------
@@ -967,7 +1115,14 @@
 !-----------------------------------------------------------------------
 !
       IF (Lwrite) THEN
-        WRITE (out,60) TRIM(title)
+#ifdef DISTRIBUTE
+        WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
+     &                 TRIM(my_fort), TRIM(my_fc), TRIM(my_fflags),     &
+     &                 TRIM(iname)
+#else
+        WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
+     &                 TRIM(my_fort), TRIM(my_fc), TRIM(my_fflags)
+#endif
 
         DO ng=1,Ngrids
 !
@@ -1016,72 +1171,108 @@
      &          'Starting ensemble/perturbation run number.'
           WRITE (out,120) ERend, 'ERend',                               &
      &          'Ending ensemble/perturbation run number.'
+#ifdef IS4DVAR
+          WRITE (out,120) Ninner, 'Ninner',                             &
+     &          'Maximun number of 4DVAR inner loop iterations.'
+#endif
+#ifdef STOCHASTIC_OPT
+          WRITE (out,120) Nintervals, 'Nintervals',                     &
+     &          'Number of stochastic optimals timestep intervals.'
+#endif
+#ifdef PROPAGATOR
+          WRITE (out,120) NEV, 'NEV',                                   &
+     &          'Number of Lanczos/Arnoldi eigenvalues to compute.'
+#endif
           WRITE (out,120) nrrec, 'nrrec',                               &
      &          'Number of restart records to read from disk.'
-          WRITE (out,170) lcycle(ng), 'lcycle',                         &
+          WRITE (out,170) LcycleRST(ng), 'LcycleRST',                   &
      &          'Switch to recycle time-records in restart file.'
-          WRITE (out,130) nrst(ng), 'nrst',                             &
+          WRITE (out,130) nRST(ng), 'nRST',                             &
      &          'Number of timesteps between the writing of data',      &
      &          'into restart fields.'
           WRITE (out,130) ninfo(ng), 'ninfo',                           &
      &          'Number of timesteps between print of information',     &
      &          'to standard output.'
 #ifdef STATIONS
-          WRITE (out,130) nsta(ng), 'nsta',                             &
+          WRITE (out,130) nSTA(ng), 'nSTA',                             &
      &          'Number of timesteps between the writing of data',      &
      &          'the stations file.'
 #endif
 #ifdef FLOATS
-          WRITE (out,130) nflt(ng), 'nflt',                             &
+          WRITE (out,130) nFLT(ng), 'nFLT',                             &
      &          'Number of timesteps between the writing of data',      &
      &          'into floats file.'
 #endif
           WRITE (out,170) ldefout(ng), 'ldefout',                       &
      &          'Switch to create a new output NetCDF file(s).'
-          WRITE (out,130) nhis(ng), 'nhis',                             &
+          WRITE (out,130) nHIS(ng), 'nHIS',                             &
      &          'Number of timesteps between the writing fields',       &
      &          'into history file.'
-          IF (ndefhis(ng).gt.0) THEN
-            WRITE (out,130) ndefhis(ng), 'ndefhis',                     &
+          IF (ndefHIS(ng).gt.0) THEN
+            WRITE (out,130) ndefHIS(ng), 'ndefHIS',                     &
      &            'Number of timesteps between creation of new',        &
      &            'history files.'
           END IF
 #ifdef AVERAGES
-          WRITE (out,130) ntsavg(ng), 'ntsavg',                         &
+          WRITE (out,130) ntsAVG(ng), 'ntsAVG',                         &
      &          'Starting timestep for the accumulation of output',     &
      &          'time-averaged data.'
-          WRITE (out,130) navg(ng), 'navg',                             &
+          WRITE (out,130) nAVG(ng), 'nAVG',                             &
      &          'Number of timesteps between the writing of',           &
      &          'time-averaged data into averages file.'
-          IF (ndefavg(ng).gt.0) THEN
-            WRITE (out,130) ndefavg(ng), 'ndefavg',                     &
+          IF (ndefAVG(ng).gt.0) THEN
+            WRITE (out,130) ndefAVG(ng), 'ndefAVG',                     &
      &            'Number of timesteps between creation of new',        &
      &            'time-averaged file.'
           END IF
 #endif
 #ifdef DIAGNOSTICS
-          WRITE (out,130) ntsdia(ng), 'ntsdia',                         &
+          WRITE (out,130) ntsDIA(ng), 'ntsDIA',                         &
      &          'Starting timestep for the accumulation of output',     &
      &          'time-averaged diagnostics data.'
-          WRITE (out,130) ndia(ng), 'ndia',                             &
+          WRITE (out,130) nDIA(ng), 'nDIA',                             &
      &          'Number of timesteps between the writing of',           &
      &          'time-averaged data into diagnostics file.'
-          IF (ndefdia(ng).gt.0) THEN
-            WRITE (out,130) ndefdia(ng), 'ndefdia',                     &
+          IF (ndefDIA(ng).gt.0) THEN
+            WRITE (out,130) ndefDIA(ng), 'ndefDIA',                     &
      &            'Number of timesteps between creation of new',        &
      &            'diagnostic file.'
           END IF
 #endif
+#ifdef TANGENT
+          WRITE (out,170) LcycleTLM(ng), 'LcycleTLM',                   &
+     &          'Switch to recycle time-records in tangent file.'
+          WRITE (out,130) nTLM(ng), 'nTLM',                             &
+     &          'Number of timesteps between the writing of',           &
+     &          'data into tangent file.'
+          IF (ndefTLM(ng).gt.0) THEN
+            WRITE (out,130) ndefTLM(ng), 'ndefTLM',                     &
+     &            'Number of timesteps between creation of new',        &
+     &            'tangent file.'
+          END IF
+#endif
+#ifdef ADJOINT
+          WRITE (out,170) LcycleADJ(ng), 'LcycleADJ',                   &
+     &          'Switch to recycle time-records in adjoint file.'
+          WRITE (out,130) nADJ(ng), 'nADJ',                             &
+     &          'Number of timesteps between the writing of',           &
+     &          'data into adjoint file.'
+          IF (ndefADJ(ng).gt.0) THEN
+            WRITE (out,130) ndefADJ(ng), 'ndefADJ',                     &
+     &            'Number of timesteps between creation of new',        &
+     &            'adjoint file.'
+          END IF
+#endif
 #ifdef SOLVE3D
 # ifdef TS_DIF2
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             WRITE (out,190) tnu2(itrc,ng), 'tnu2', itrc,                &
      &            'Horizontal, harmonic mixing coefficient (m2/s)',     &
      &            'for tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
           END DO
 # endif
 # ifdef TS_DIF4
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             WRITE (out,190) tnu4(itrc,ng), 'tnu4', itrc,                &
      &            'Horizontal, biharmonic mixing coefficient (m4/s)',   &
      &            'for tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
@@ -1099,7 +1290,7 @@
      &          'for momentum.'
 #endif
 #ifdef SOLVE3D
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             WRITE (out,190) Akt_bak(itrc,ng), 'Akt_bak', itrc,          &
      &            'Background vertical mixing coefficient (m2/s)',      &
      &            'for tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
@@ -1152,18 +1343,12 @@
      &          'GLS constant Schmidt number for PSI.'
 # endif
 #endif
-          IF (rdrg(ng).ne.0.0_r8) THEN
-            WRITE (out,200) rdrg(ng), 'rdrg',                           &
-     &            'Linear bottom drag coefficient (m/s).'
-          END IF
-          IF (rdrg2(ng).ne.0.0_r8) THEN
-            WRITE (out,200) rdrg2(ng), 'rdrg2',                         &
-     &            'Quadratic bottom drag coefficient.'
-          END IF
-          IF (Zob(ng).ne.0.0_r8) THEN
-            WRITE (out,200) Zob(ng), 'Zob',                             &
-     &            'Bottom roughness (m).'
-          END IF
+          WRITE (out,200) rdrg(ng), 'rdrg',                             &
+     &          'Linear bottom drag coefficient (m/s).'
+          WRITE (out,200) rdrg2(ng), 'rdrg2',                           &
+     &          'Quadratic bottom drag coefficient.'
+          WRITE (out,200) Zob(ng), 'Zob',                               &
+     &          'Bottom roughness (m).'
 #ifdef BBL_MODEL
           IF (Zob(ng).le.0.0_r8) THEN
             WRITE (out,260) 'Zob.',                                     &
@@ -1215,12 +1400,20 @@
 #endif
           WRITE (out,140) rho0, 'rho0',                                 &
      &          'Mean density (kg/m3) for Boussinesq approximation.'
+#ifdef FOUR_DVAR
+          WRITE (out,200) bvf_bak, 'bvf_bak',                           &
+     &          'Background Brunt-Vaisala frequency squared (1/s2).'
+#endif
           WRITE (out,140) dstart, 'dstart',                             &
-     &          'Timestamp assigned to model initialization (days).'
+     &          'Time-stamp assigned to model initialization (days).'
+#ifdef SSH_TIDES || defined UV_TIDES
+          WRITE (out,140) tide_start, 'tide_start',                     &
+     &          'Reference time origin for tidal forcing (days).'
+#endif
           WRITE (out,150) time_ref, 'time_ref',                         &
      &          'Reference time for units attribute (yyyymmdd.dd)'
 #ifdef SOLVE3D
-          DO itrc=1,NAT
+          DO itrc=1,NAT+NPT
             WRITE (out,190) Tnudg(itrc,ng), 'Tnudg', itrc,              &
      &            'Nudging/relaxation time scale (days)',               &
      &            'for tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
@@ -1256,6 +1449,8 @@
           WRITE (out,160) R0(ng), 'R0',                                 &
      &          'Background density (kg/m3) used in linear Equation',   &
      &          'of State.'
+# endif
+# if !defined NONLIN_EOS || defined FOUR_DVAR
           WRITE (out,200) Tcoef(ng), 'Tcoef',                           &
      &          'Thermal expansion coefficient (1/Celsius).'
           WRITE (out,200) Scoef(ng), 'Scoef',                           &
@@ -1302,10 +1497,16 @@
           IF (Hout(idUbms,ng)) WRITE (out,170) Hout(idUbms,ng),         &
      &       'Hout(idUbms)',                                            &
      &       'Write out bottom U-momentum stress.'
-          IF (Hout(idUbms,ng)) WRITE (out,170) Hout(idVbms,ng),         &
+          IF (Hout(idVbms,ng)) WRITE (out,170) Hout(idVbms,ng),         &
      &       'Hout(idVbms)',                                            &
      &       'Write out bottom V-momentum stress.'
 #ifdef BBL_MODEL
+          IF (Hout(idUbrs,ng)) WRITE (out,170) Hout(idUbrs,ng),         &
+     &       'Hout(idUbrs)',                                            &
+     &       'Write out bottom U-current stress.'
+          IF (Hout(idVbrs,ng)) WRITE (out,170) Hout(idVbrs,ng),         &
+     &       'Hout(idVbrs)',                                            &
+     &       'Write out bottom V-current stress.'
           IF (Hout(idUbws,ng)) WRITE (out,170) Hout(idUbws,ng),         &
      &       'Hout(idUbws)',                                            &
      &       'Write out wind-induced, bottom U-wave stress.'
@@ -1318,18 +1519,38 @@
           IF (Hout(idVbcs,ng)) WRITE (out,170) Hout(idVbcs,ng),         &
      &       'Hout(idVbcs)',                                            &
      &       'Write out max wind + current, bottom V-wave stress.'
-          IF (Hout(idUbed,ng)) WRITE (out,170) Hout(idUbed,ng),         &
-     &       'Hout(idUbed)',                                            &
-     &       'Write out bed wave orbital U-velocity.'
-          IF (Hout(idVbed,ng)) WRITE (out,170) Hout(idVbed,ng),         &
-     &       'Hout(idVbed)',                                            &
-     &       'Write out bed wave orbital V-velocity.'
           IF (Hout(idUbot,ng)) WRITE (out,170) Hout(idUbot,ng),         &
      &       'Hout(idUbot)',                                            &
-     &       'Write out bottom U-momentum above bed.'
+     &       'Write out bed wave orbital U-velocity.'
           IF (Hout(idVbot,ng)) WRITE (out,170) Hout(idVbot,ng),         &
      &       'Hout(idVbot)',                                            &
+     &       'Write out bed wave orbital V-velocity.'
+          IF (Hout(idUbur,ng)) WRITE (out,170) Hout(idUbur,ng),         &
+     &       'Hout(idUbur)',                                            &
+     &       'Write out bottom U-momentum above bed.'
+          IF (Hout(idVbvr,ng)) WRITE (out,170) Hout(idVbvr,ng),         &
+     &       'Hout(idVbvr)',                                            &
      &       'Write out bottom V-momentum above bed.'
+#endif
+#if defined SOLVE3D && defined T_PASSIVE
+          DO itrc=1,NPT
+            IF (Hout(idTvar(inert(itrc)),ng)) WRITE (out,180)           &
+     &          Hout(idTvar(inert(itrc)),ng), 'Hout(inert)',            &
+     &          'Write out inert passive tracer ', itrc,                &
+     &          TRIM(Vname(1,idTvar(inert(itrc))))
+          END DO
+#endif
+#if defined SEDIMENT && defined BEDLOAD
+          DO itrc=1,NST
+            IF (Hout(idUbld(itrc),ng)) WRITE (out,180)                  &
+     &          Hout(idUbld(itrc),ng), 'Hout(idUbed)',                  &
+     &          'Write out bed load u direction ', itrc,                &
+     &          TRIM(Vname(1,idUbld(itrc)))
+            IF (Hout(idVbld(itrc),ng)) WRITE (out,180)                  &
+     &          Hout(idVbld(itrc),ng), 'Hout(idVbed)',                  &
+     &          'Write out bed load v direction ', itrc,                &
+     &          TRIM(Vname(1,idVbld(itrc)))
+          END DO
 #endif
 #if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
           DO itrc=1,MBOTP
@@ -1343,6 +1564,9 @@
           IF (Hout(idTsur(itemp),ng)) WRITE (out,170)                   &
      &        Hout(idTsur(itemp),ng), 'Hout(idTsur)',                   &
      &       'Write out surface net heat flux.'
+          IF (Hout(idTsur(isalt),ng)) WRITE (out,170)                   &
+     &        Hout(idTsur(isalt),ng), 'Hout(idTsur)',                   &
+     &       'Write out surface net salt flux.'
 # ifdef SHORTWAVE
           IF (Hout(idSrad,ng)) WRITE (out,170) Hout(idSrad,ng),         &
      &       'Hout(idSrad)',                                            &
@@ -1358,6 +1582,14 @@
           IF (Hout(idShea,ng)) WRITE (out,170) Hout(idShea,ng),         &
      &       'Hout(idShea)',                                            &
      &       'Write out sensible heat flux.'
+#  ifdef EMINUSP
+          IF (Hout(idevap,ng)) WRITE (out,170) Hout(idevap,ng),         &
+     &       'Hout(idevap)',                                            &
+     &       'Write out evaporation rate.'
+          IF (Hout(idrain,ng)) WRITE (out,170) Hout(idrain,ng),         &
+     &       'Hout(idrain)',                                            &
+     &       'Write out rain rate.'
+#  endif
 # endif
           IF (Hout(idDano,ng)) WRITE (out,170) Hout(idDano,ng),         &
      &       'Hout(idDano)',                                            &
@@ -1397,68 +1629,96 @@
 !
           WRITE (out,220)
           WRITE (out,230) '          Output Restart File:  ',           &
-     &                    TRIM(rstname(ng))
+     &                    TRIM(RSTname(ng))
           IF (LdefHIS(ng)) THEN
-            IF (ndefhis(ng).eq.0) THEN
+            IF (ndefHIS(ng).eq.0) THEN
               WRITE (out,230) '          Output History File:  ',       &
-     &                        TRIM(hisname(ng))
+     &                        TRIM(HISname(ng))
             ELSE
-              Lstr=LEN_TRIM(hisname(ng))
+              Lstr=LEN_TRIM(HISname(ng))
               WRITE (out,230) '     Prefix for History Files:  ',       &
-     &                        hisname(ng)(1:Lstr-3)
+     &                        HISname(ng)(1:Lstr-3)
             END IF
           END IF
-#ifdef AVERAGES
-          IF (ndefavg(ng).eq.0) THEN
-            WRITE (out,230) '         Output Averages File:  ',         &
-     &                      TRIM(avgname(ng))
+#ifdef TANGENT
+          IF (ndefTLM(ng).eq.0) THEN
+            WRITE (out,230) '          Output Tangent File:  ',         &
+     &                      TRIM(TLMname(ng))
           ELSE
-            Lstr=LEN_TRIM(avgname(ng))
+            Lstr=LEN_TRIM(TLMname(ng))
+            WRITE (out,230) '     Prefix for Tangent Files:  ',         &
+     &                      TLMname(ng)(1:Lstr-3)
+          END IF
+#endif
+#ifdef ADJOINT
+          IF (ndefADJ(ng).eq.0) THEN
+            WRITE (out,230) '          Output Adjoint File:  ',         &
+     &                      TRIM(ADJname(ng))
+          ELSE
+            Lstr=LEN_TRIM(ADJname(ng))
+            WRITE (out,230) '     Prefix for Adjoint Files:  ',         &
+     &                      ADJname(ng)(1:Lstr-3)
+          END IF
+#endif
+#ifdef AVERAGES
+          IF (ndefAVG(ng).eq.0) THEN
+            WRITE (out,230) '         Output Averages File:  ',         &
+     &                      TRIM(AVGname(ng))
+          ELSE
+            Lstr=LEN_TRIM(AVGname(ng))
             WRITE (out,230) '    Prefix for Averages Files:  ',         &
-     &                      avgname(ng)(1:Lstr-3)
+     &                      AVGname(ng)(1:Lstr-3)
           END IF
 #endif
 #ifdef DIAGNOSTICS
-          IF (ndefdia(ng).eq.0) THEN
+          IF (ndefDIA(ng).eq.0) THEN
             WRITE (out,230) '      Output Diagnostics File:  ',         &
-     &                      TRIM(dianame(ng))
+     &                      TRIM(DIAname(ng))
           ELSE
-            Lstr=LEN_TRIM(dianame(ng))
+            Lstr=LEN_TRIM(DIAname(ng))
             WRITE (out,230) ' Prefix for Diagnostics Files:  ',         &
-     &                      dianame(ng)(1:Lstr-3)
+     &                      DIAname(ng)(1:Lstr-3)
           END IF
 #endif
 #ifdef STATIONS
           WRITE (out,230) '         Output Stations File:  ',           &
-     &                    TRIM(staname(ng))
+     &                    TRIM(STAname(ng))
 #endif
 #ifdef FLOATS
           WRITE (out,230) '           Output Floats File:  ',           &
-     &                    TRIM(fltname(ng))
+     &                    TRIM(FLTname(ng))
 #endif
 #ifdef AIR_OCEAN
           WRITE (out,230) '     Physical parameters File:  ',           &
      &                    TRIM(Iname)
 #endif
 #ifndef ANA_GRID
-          fname=grdname(ng)
+          fname=GRDname(ng)
           OPEN (Tunit, FILE=TRIM(fname), FORM='unformatted',            &
      &          STATUS='old', ERR=30)
           WRITE (out,230) '              Input Grid File:  ',           &
      &                    TRIM(fname)
           CLOSE (Tunit)
 #endif
-#ifndef ANA_INITIAL
-          fname=ininame(ng)
+#ifdef INI_FILE
+          fname=INIname(ng)
           OPEN (Tunit, FILE=TRIM(fname), FORM='unformatted',            &
      &          STATUS='old', ERR=30)
-          WRITE (out,230) '           Input Initial File:  ',           &
+          WRITE (out,230) ' Input Nonlinear Initial File:  ',           &
      &                    TRIM(fname)
           CLOSE (Tunit)
+# ifdef TANGENT
+          fname=ITLname(ng)
+          OPEN (Tunit, FILE=TRIM(fname), FORM='unformatted',            &
+     &          STATUS='old', ERR=30)
+          WRITE (out,230) '   Input Tangent Initial File:  ',           &
+     &                    TRIM(fname)
+          CLOSE (Tunit)
+# endif
 #endif
 #ifdef FRC_FILE
           DO i=1,nFfiles(ng)
-            fname=frcname(i,ng)
+            fname=FRCname(i,ng)
             OPEN (Tunit, FILE=TRIM(fname), FORM='unformatted',          &
      &            STATUS='old', ERR=30)
             WRITE (out,290) '        Input Forcing File ', i, ':  ',    &
@@ -1470,7 +1730,7 @@
     (defined M2CLIMATOLOGY && !defined ANA_M2CLIMA) || \
     (defined  TCLIMATOLOGY && !defined ANA_TCLIMA)  || \
     (defined M3CLIMATOLOGY && !defined ANA_M3CLIMA)
-          fname=clmname(ng)
+          fname=CLMname(ng)
           OPEN (Tunit, FILE=TRIM(fname), FORM='unformatted',            &
      &          STATUS='old', ERR=30)
           WRITE (out,230) '       Input Climatology File:  ',           &
@@ -1478,7 +1738,7 @@
           CLOSE (Tunit)
 #endif
 #ifdef OBC_DATA
-          fname=bryname(ng)
+          fname=BRYname(ng)
           OPEN (Tunit, FILE=TRIM(fname), FORM='unformatted',            &
      &          STATUS='old', ERR=30)
           WRITE (out,230) '          Input Boundary File:  ',           &
@@ -1493,7 +1753,7 @@
      &                    TRIM(fname)
           CLOSE (Tunit)
 #endif
-#if defined ASSIMILATION || defined NUDGING
+#if defined ASSIMILATION || defined NUDGING || defined FOUR_DVAR
           fname=aparnam
           OPEN (Tunit, FILE=TRIM(fname), FORM='formatted',              &
      &          STATUS='old', ERR=30)
@@ -1520,11 +1780,15 @@
           fname=varname
           WRITE (out,230) ' IO Variable Information File:  ',           &
      &                    TRIM(fname)
-          GOTO 40
+          GO TO 40
   30      WRITE (out,270) TRIM(fname)
           STOP
   40      CONTINUE
         END DO
+        IF (Nuser.gt.0) THEN
+          WRITE (out,230) '       Input/Output USER File:  ',           &
+     &                    TRIM(USRname)
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Report generic USER parameters.
@@ -1536,13 +1800,49 @@
             WRITE (out,250) user(i), i, i
           END DO
         END IF
-        WRITE (out,230) '       Input/Output USER File:  ',             &
-     &                  TRIM(usrname)
-
       END IF
 
+#ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Rescale active tracer parameters
+!-----------------------------------------------------------------------
+!
+!  Take the square root of the biharmonic coefficients so it can
+!  be applied to each harmonic operator.
+!
+      DO ng=1,Ngrids
+        DO itrc=1,NAT+NPT
+          tnu4(itrc,ng)=SQRT(ABS(tnu4(itrc,ng)))
+!
+!  Compute inverse nudging coefficients (1/s) used in various tasks.
+!
+          IF (Tnudg(itrc,ng).gt.0.0_r8) THEN
+            Tnudg(itrc,ng)=1.0_r8/(Tnudg(itrc,ng)*86400.0_r8)
+          ELSE
+            Tnudg(itrc,ng)=0.0_r8
+          END IF
+        END DO
+      END DO
+#endif
+
   50  FORMAT (/,' READ_PhyPar - Error while processing line: ',/,a)
-  60  FORMAT (/,1x,a)
+#ifdef DISTRIBUTE
+  60  FORMAT (/,1x,a,/,                                                 &
+     &        /,1x,'Operating system : ',a,                             &
+     &        /,1x,'CPU/hardware     : ',a,                             &
+     &        /,1x,'Compiler system  : ',a,                             &
+     &        /,1x,'Compiler command : ',a,                             &
+     &        /,1x,'Compiler flags   : ',a,/,                           &
+     &        /,1x,'Input Script: ',a)
+#else
+  60  FORMAT (/,1x,a,/,                                                 &
+     &        /,1x,'Operating system : ',a,                             &
+     &        /,1x,'CPU/hardware     : ',a,                             &
+     &        /,1x,'Compiler system  : ',a,                             &
+     &        /,1x,'Compiler command : ',a,                             &
+     &        /,1x,'Compiler flags   : ',a)
+#endif
   70  FORMAT (/,' Resolution, Grid ',i2.2,': ',i4.4,'x',i4.4,'x',i3.3,  &
      &        ',',2x,'Parallel Nodes: ',i3,',',2x,'Tiling: ',i3.3,      &
      &        'x',i3.3)
@@ -1579,17 +1879,17 @@
      &        'User parameter ',i2.2,'.')
  260  FORMAT (/,' READ_PHYPAR - Invalid input parameter, ',a,/,15x,a)
  270  FORMAT (/,' READ_PHYPAR - could not find input file:  ',a)
- 280  FORMAT (/,' READ_PHYPAR - variable info not yet loaded, ', a)
+ 280  FORMAT (/,' READ_SEDPAR - variable info not yet loaded, ', a)
  290  FORMAT (2x,a,i2.2,a,a)
 
       RETURN
       END SUBROUTINE read_PhyPar
 
 #ifdef BIOLOGY
-      SUBROUTINE read_BioPar (inp, out, Lwrite)
+      SUBROUTINE read_BioPar (model, inp, out, Lwrite)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in biological model input parameters.            !
@@ -1607,7 +1907,7 @@
 !  Imported variable declarations
 !
       logical, intent(in) :: Lwrite
-      integer, intent(in) :: inp, out
+      integer, intent(in) :: model, inp, out
 !
 !  Local variable declarations.
 !
@@ -1623,8 +1923,8 @@
       real(r8), dimension(100) :: Rval
 
       character (len=40) :: KeyWord
-      character (len=80) :: line
-      character (len=80), dimension(100) :: Cval
+      character (len=160) :: line
+      character (len=160), dimension(100) :: Cval
 
 # ifdef BIO_FASHAM
 !
@@ -1632,7 +1932,7 @@
 !  Read in Fasham biological model parameters.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
@@ -1704,6 +2004,8 @@
             Npts=load_r(Nval, Rval, Ngrids, wLDet)
           ELSE IF (TRIM(KeyWord).eq.'wSDet') THEN
             Npts=load_r(Nval, Rval, Ngrids, wSDet)
+          ELSE IF (TRIM(KeyWord).eq.'pCO2air') THEN
+            Npts=load_r(Nval, Rval, Ngrids, pCO2air)
           ELSE IF (TRIM(KeyWord).eq.'TNU2') THEN
             Npts=load_r(Nval, Rval, NBT*Ngrids, Rbio)
             DO ng=1,Ngrids
@@ -1748,7 +2050,7 @@
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
-# ifdef DIAGNOSTICS
+# ifdef DIAGNOSTICS_BIO
           ELSE IF (TRIM(KeyWord).eq.'Hout(iCOfx)') THEN
             IF (iDbio2(iCOfx).eq.0) THEN
               WRITE (out,130) 'iDbio2(iCOfx)'
@@ -1769,6 +2071,30 @@
             DO ng=1,Ngrids
               Hout(i,ng)=Lbio(ng)
             END DO
+#  ifdef CARBON
+          ELSE IF (TRIM(KeyWord).eq.'Hout(ipCO2)') THEN
+            IF (iDbio2(ipCO2).eq.0) THEN
+              WRITE (out,130) 'iDbio2(ipCO2)'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Lbio)
+            i=iDbio2(ipCO2)
+            DO ng=1,Ngrids
+              Hout(i,ng)=Lbio(ng)
+            END DO
+#  endif
+#  ifdef OXYGEN
+          ELSE IF (TRIM(KeyWord).eq.'Hout(iO2fx)') THEN
+            IF (iDbio2(iO2fx).eq.0) THEN
+              WRITE (out,130) 'iDbio2(iO2fx)'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, Ngrids, Lbio)
+            i=iDbio2(iO2fx)
+            DO ng=1,Ngrids
+              Hout(i,ng)=Lbio(ng)
+            END DO
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(iPPro)') THEN
             IF (iDbio3(iPPro).eq.0) THEN
               WRITE (out,130) 'iDbio3(iPPro)'
@@ -1929,6 +2255,28 @@
           END IF
         END DO
       END IF
+!
+!-----------------------------------------------------------------------
+!  Rescale biological tracer parameters
+!-----------------------------------------------------------------------
+!
+!  Take the square root of the biharmonic coefficients so it can
+!  be applied to each harmonic operator.
+!
+      DO ng=1,Ngrids
+        DO itrc=1,NBT
+          i=idbio(itrc)
+          tnu4(i,ng)=SQRT(ABS(tnu4(i,ng)))
+!
+!  Compute inverse nudging coefficients (1/s) used in various tasks.
+!
+          IF (Tnudg(i,ng).gt.0.0_r8) THEN
+            Tnudg(i,ng)=1.0_r8/(Tnudg(i,ng)*86400.0_r8)
+          ELSE
+            Tnudg(i,ng)=0.0_r8
+          END IF
+        END DO
+      END DO
 
   30  FORMAT (/,' read_BioPar - Error while processing line: ',/,a)
   40  FORMAT (/,/,' Fasham Model Parameters, Grid: ',i2.2,              &
@@ -1951,7 +2299,7 @@
 !  Read in EcoSim bio-optical model parameters.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
@@ -2109,6 +2457,8 @@
             Npts=load_r(Nval, Rval, Ngrids, Bac_Ceff)
           ELSE IF (TRIM(KeyWord).eq.'RtNIT') THEN
             Npts=load_r(Nval, Rval, Ngrids, RtNIT)
+          ELSE IF (TRIM(KeyWord).eq.'HsNIT') THEN
+            Npts=load_r(Nval, Rval, Ngrids, HsNIT)
           ELSE IF (TRIM(KeyWord).eq.'cDOCfrac_c') THEN
             Npts=load_r(Nval, Rval, Ndom*Ngrids, cDOCfrac_c)
           ELSE IF (TRIM(KeyWord).eq.'RtUVR_DIC') THEN
@@ -2597,6 +2947,9 @@
      &            '(nondimensional).'
             WRITE (out,120) RtNIT(ng), 'RtNIT',                         &
      &            'Maximum nitrification rate (1/day).'
+            WRITE (out,110) HsNIT(ng), 'HsNIT',                         &
+     &            'Half saturation constant for bacteria nitrification',&
+     &            '(micromole_NH4/liter).'
             WRITE (out,70) 'cDOCfrac_c',                                &
      &            'Colored fraction of DOC from phytoplakton and',      &
      &            'bacterial losses (nondimensional):'
@@ -2689,6 +3042,28 @@
           END IF
         END DO
       END IF
+!
+!-----------------------------------------------------------------------
+!  Rescale biological tracer parameters
+!-----------------------------------------------------------------------
+!
+!  Take the square root of the biharmonic coefficients so it can
+!  be applied to each harmonic operator.
+!
+      DO ng=1,Ngrids
+        DO itrc=1,NBT
+          i=idbio(itrc)
+          tnu4(i,ng)=SQRT(ABS(tnu4(i,ng)))
+!
+!  Compute inverse nudging coefficients (1/s) used in various tasks.
+!
+          IF (Tnudg(i,ng).gt.0.0_r8) THEN
+            Tnudg(i,ng)=1.0_r8/(Tnudg(i,ng)*86400.0_r8)
+          ELSE
+            Tnudg(i,ng)=0.0_r8
+          END IF
+        END DO
+      END DO
 
   30  FORMAT (/,' read_BioPar - Error while processing line: ',/,a)
   40  FORMAT (/,/,' EcoSim Parameters, Grid: ',i2.2,                    &
@@ -2713,10 +3088,10 @@
 #endif
 
 #ifdef SEDIMENT
-      SUBROUTINE read_SedPar (inp, out, Lwrite)
+      SUBROUTINE read_SedPar (model, inp, out, Lwrite)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in cohesive and non-cohesive sediment model      !
@@ -2735,7 +3110,7 @@
 !  Imported variable declarations
 !
       logical, intent(in) :: Lwrite
-      integer, intent(in) :: inp, out
+      integer, intent(in) :: model, inp, out
 !
 !  Local variable declarations.
 !
@@ -2754,14 +3129,14 @@
       real(r8), dimension(100) :: Rval
 
       character (len=40) :: KeyWord
-      character (len=80) :: line
-      character (len=80), dimension(100) :: Cval
+      character (len=160) :: line
+      character (len=160), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in cohesive and non-cohesive model parameters.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
@@ -2879,6 +3254,40 @@
                 Hout(i,ng)=Lmud(itrc,ng)
               END DO
             END DO
+# ifdef BEDLOAD
+          ELSE IF (TRIM(KeyWord).eq.'Hout(iMUbld)') THEN
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                IF (idUbld(itrc).eq.0) THEN
+                  WRITE (out,100) 'idUbld'
+                 STOP
+                END IF
+              END DO
+            END DO
+            Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                i=idUbld(itrc)
+                Hout(i,ng)=Lmud(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(iMVbld)') THEN
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                IF (idVbld(itrc).eq.0) THEN
+                  WRITE (out,100) 'idVbld'
+                  STOP
+                END IF
+              END DO
+            END DO
+            Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
+            DO ng=1,Ngrids
+              DO itrc=1,NCS
+                i=idVbld(itrc)
+                Hout(i,ng)=Lmud(itrc,ng)
+              END DO
+            END DO
+# endif
           ELSE IF (TRIM(KeyWord).eq.'SAND_SD50') THEN 
             Npts=load_r(Nval, Rval, NNS*Ngrids, Rsand)
             DO ng=1,Ngrids
@@ -2999,6 +3408,40 @@
                 Hout(i,ng)=Lsand(itrc,ng)
               END DO
             END DO
+# ifdef BEDLOAD
+          ELSE IF (TRIM(KeyWord).eq.'Hout(iMUbld)') THEN
+            DO ng=1,Ngrids
+              DO itrc=NCS+1,NST
+                IF (idUbld(itrc).eq.0) THEN
+                  WRITE (out,100) 'idUbld'
+                 STOP
+                END IF
+              END DO
+            END DO
+            Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
+            DO ng=1,Ngrids
+              DO itrc=1,NNS
+                i=idUbld(NCS+itrc)
+                Hout(i,ng)=Lsand(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(iMVbld)') THEN
+            DO ng=1,Ngrids
+              DO itrc=1,NCS+1,NST
+                IF (idVbld(itrc).eq.0) THEN
+                  WRITE (out,100) 'idVbld'
+                  STOP
+                END IF
+              END DO
+            END DO
+            Npts=load_l(Nval, Cval, NNS*Ngrids, Lsand)
+            DO ng=1,Ngrids
+              DO itrc=1,NNS
+                i=idVbld(itrc)
+                Hout(i,ng)=Lsand(itrc,ng)
+              END DO
+            END DO
+# endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(ithck)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Lbed)
             i=idSbed(ithck)
@@ -3023,20 +3466,6 @@
             DO ng=1,Ngrids
               Hout(i,ng)=Lbed(ng)
             END DO
-#if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idBott)') THEN
-            IF (MAXVAL(idBott).eq.0) THEN
-              WRITE (out,30) 'idBott'
-              STOP
-            END IF
-            Npts=load_l(Nval, Cval, MBOTP*Ngrids, Lbottom)
-            DO ng=1,Ngrids
-              DO itrc=1,MBOTP
-                i=idBott(itrc)
-                Hout(i,ng)=Lbottom(itrc,ng)
-              END DO
-            END DO
-#endif
           END IF
         END IF
       END DO
@@ -3079,6 +3508,27 @@
      &            'Write out bed fraction, sediment ', itrc,            &
      &            TRIM(Vname(1,i))
             END DO
+            DO itrc=1,NST
+              i=idBmas(itrc)
+              IF (Hout(i,ng)) WRITE (out,90) Hout(i,ng),                &
+     &            'Hout(idfrac)',                                       &
+     &            'Write out mass, sediment ', itrc,                    &
+     &            TRIM(Vname(1,i))
+            END DO
+# ifdef BEDLOAD
+            DO itrc=1,NST
+              i=idUbld(itrc)
+              IF (Hout(i,ng)) WRITE (out,90) Hout(i,ng),                &
+     &            'Hout(idUbld)',                                       &
+     &            'Write out bed load at U-points, sediment ', itrc,    &
+     &            TRIM(Vname(1,i))
+              i=idVbld(itrc)
+              IF (Hout(i,ng)) WRITE (out,90) Hout(i,ng),                &
+     &            'Hout(idVbld)',                                       &
+     &            'Write out bed load at V-points, sediment ', itrc,    &
+     &            TRIM(Vname(1,i))
+            END DO
+# endif
             DO itrc=1,MBEDP
               i=idSbed(itrc)
               IF (Hout(i,ng)) WRITE (out,90) Hout(i,ng),                &
@@ -3121,16 +3571,17 @@
      &        'Akt_bak',6x,'Tnudg',/,9x,'(N/m2)',6x,'(N/m2)',6x,        &
      &        '(m2/s)',6x,'(m4/s)',7x,'(m2/s)',6x,'(day)',/)
   90  FORMAT (10x,l1,2x,a,t28,a,i2.2,':',1x,a)
+ 100  FORMAT (/,' READ_SEDPAR - variable info not yet loaded, ', a)
 
       RETURN
       END SUBROUTINE read_SedPar
 #endif
 
-#if defined ASSIMILATION || defined NUDGING
-      SUBROUTINE read_AssPar (inp, out, Lwrite)
+#if defined ASSIMILATION || defined NUDGING || defined FOUR_DVAR
+      SUBROUTINE read_AssPar (model, inp, out, Lwrite)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine reads in input model assimilation parameters.       !
@@ -3139,6 +3590,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef FOUR_DVAR
+      USE mod_fourdvar
+# endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
@@ -3148,7 +3602,7 @@
 !  Imported variable declarations
 !
       logical, intent(in) :: Lwrite
-      integer, intent(in) :: inp, out
+      integer, intent(in) :: model, inp, out
 !
 !  Local variable declarations.
 !
@@ -3159,24 +3613,26 @@
 
       integer :: decode_line, load_i, load_l, load_r
 
+# if defined ASSIMILATION || defined NUDGING
       logical, dimension(MT,Ngrids) :: Lassi
 
       real(r8), dimension(MT,Ngrids) :: Rassi
-
-      real(r8), dimension(2,Ngrids) :: pcoef
-
+#endif
       real(r8), dimension(100) :: Rval
 
+      character (len=1 ), parameter :: blank = ' '
       character (len=40) :: KeyWord
-      character (len=80) :: line, fname
-      character (len=80), dimension(100) :: Cval
+      character (len=160) :: fname, line
+      character (len=160), dimension(100) :: Cval
+
+# if defined ASSIMILATION || defined NUDGING
 !
 !-----------------------------------------------------------------------
 !  Read in assimilation parameters. Then, load input data into module.
 !  Take into account nested grid configurations.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
@@ -3233,13 +3689,13 @@
           ELSE IF (TRIM(KeyWord).eq.'Pcoef_SST') THEN
             DO ng=1,Ngrids
               DO i=0,npSST(ng)
-                read (inp,*) igrid, k, pcoef_SST(k,igrid)
+                READ (inp,*) igrid, k, pcoef_SST(k,igrid)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'Perr_SST') THEN
             DO ng=1,Ngrids
               DO i=0,npSST(ng)
-                read (inp,*) igrid, k, perr_SST(k,igrid)
+                READ (inp,*) igrid, k, perr_SST(k,igrid)
               END DO
             END DO
           ELSE IF (TRIM(KeyWord).eq.'extend_UV') THEN
@@ -3299,7 +3755,7 @@
         DO ng=1,Ngrids
           IF (Lassimilate(ng)) THEN
             WRITE (out,60) ng
-# ifdef ASSIMILATION
+#  ifdef ASSIMILATION
             WRITE (out,100) Emod0(ng), 'Emod0',                         &
      &            'Initial model error (percentage).'
             WRITE (out,100) Tgrowth(ng), 'Tgrowth',                     &
@@ -3308,7 +3764,7 @@
      &            'Correlation between model and observations.'
             WRITE (out,80) assi_SSH(ng), 'assi_SSH',                    &
      &            'Activate assimilation of SSH.'
-#  ifdef SOLVE3D
+#   ifdef SOLVE3D
             WRITE (out,80) assi_SST(ng), 'assi_SST',                    &
      &            'Activate assimilation of SST.'
             DO itrc=1,NAT
@@ -3320,10 +3776,10 @@
      &            'Activate assimilation of surface currents.'
             WRITE (out,80) assi_UV(ng), 'assi_UV',                      &
      &            'Activate assimilation of currents.'
+#   endif
 #  endif
-# endif
-# ifdef SOLVE3D
-#  if defined NUDGING_T || defined NUDGING_SST
+#  ifdef SOLVE3D
+#   if defined NUDGING_T || defined NUDGING_SST
             DO itrc=1,NAT
               IF (assi_T(itrc,ng)) THEN
                 WRITE (out,120) Tnudass(itrc,ng), 'Tnudass', itrc,      &
@@ -3331,20 +3787,20 @@
      &                'for tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
               END IF
             END DO
+#   endif
 #  endif
-# endif
-# ifdef NUDGING_SSH
+#  ifdef NUDGING_SSH
             WRITE (out,135) Znudass(ng), 'Znudass',                     &
      &            'Nudging assimilation time scale (days)',             &
      &            'for free-surface.'
-# endif
-# ifdef SOLVE3D
-#  if defined NUDGING_UV || defined NUDGING_UVsur
+#  endif
+#  ifdef SOLVE3D
+#   if defined NUDGING_UV || defined NUDGING_UVsur
             WRITE (out,135) M3nudass(ng), 'M3nudass',                   &
      &            'Nudging assimilation time scale (days)',             &
      &            'for 3D momentum.'
-#  endif
-#  if defined NUDGING_SST || defined ASSIMILATION_SST
+#   endif
+#   if defined NUDGING_SST || defined ASSIMILATION_SST
             IF (extend_SST(ng)) THEN
               WRITE (out,80) extend_SST(ng), 'extend_SST',              &
      &              'Extend SST vertically.'
@@ -3365,8 +3821,8 @@
                 WRITE (out,140) k, pcoef_SST(k,ng), perr_SST(k,ng)
               END DO
             END IF
-#  endif
-#  if defined NUDGING_UVsur || defined ASSIMILATION_UVsur
+#   endif
+#   if defined NUDGING_UVsur || defined ASSIMILATION_UVsur
             IF (extend_UV(ng)) THEN
               WRITE (out,80) extend_UV(ng), 'extend_UV',                &
      &              'Extend surface currents vertically.'
@@ -3389,8 +3845,8 @@
      &                             perr_V(k,ng)
               END DO
             END IF
+#   endif
 #  endif
-# endif
 !
 !-----------------------------------------------------------------------
 !  Report input files and check availability of input files.
@@ -3399,44 +3855,44 @@
             WRITE (out,170)
             WRITE (out,180) ' Assimilation parameters File:  ',         &
      &                      TRIM(aparnam)
-# if defined ASSIMILATION_SSH || defined NUDGING_SSH
+#  if defined ASSIMILATION_SSH || defined NUDGING_SSH
             fname=SSHname(ng)
             OPEN (Tunit, FILE=TRIM(fname), STATUS='old', ERR=30)
             WRITE (out,180) '      Sea Surface Height File:  ',         &
      &                      TRIM(fname)
             CLOSE (Tunit)
-# endif
-# ifdef SOLVE3D
-#  if defined ASSIMILATION_SST || defined NUDGING_SST
+#  endif
+#  ifdef SOLVE3D
+#   if defined ASSIMILATION_SST || defined NUDGING_SST
             fname=SSTname(ng)
             OPEN (Tunit, FILE=TRIM(fname), STATUS='old', ERR=30)
             WRITE (out,180) ' Sea Surface Temperature File:  ',         &
      &                      TRIM(fname)
             CLOSE (Tunit)
-#  endif
-#  if defined ASSIMILATION_T || defined NUDGING_T
+#   endif
+#   if defined ASSIMILATION_T || defined NUDGING_T
             fname=TOBSname(ng)
             OPEN (Tunit, FILE=TRIM(fname), STATUS='old', ERR=30)
             WRITE (out,180) '                 Tracers File:  ',         &
      &                      TRIM(fname)
             CLOSE (Tunit)
-#  endif
-#  if defined ASSIMILATION_UVsur || defined NUDGING_UVsur
+#   endif
+#   if defined ASSIMILATION_UVsur || defined NUDGING_UVsur
             fname=VSURname(ng)
             OPEN (Tunit, FILE=TRIM(fname), STATUS='old', ERR=30)
             WRITE (out,180) '        Surface Currents File:  ',         &
      &                      TRIM(fname)
             CLOSE (Tunit)
-#  endif
-#  if defined ASSIMILATION_UV || defined NUDGING_UV
+#   endif
+#   if defined ASSIMILATION_UV || defined NUDGING_UV
             fname=VOBSname(ng)
             OPEN (Tunit, FILE=TRIM(fname), STATUS='old', ERR=30)
             WRITE (out,180) '     Horizontal Currents File:  ',         &
      &                      TRIM(fname)
             CLOSE (Tunit)
+#   endif
 #  endif
-# endif
-            GOTO 40
+            GO TO 40
   30        WRITE (out,190) TRIM(fname)
             STOP
   40        CONTINUE
@@ -3499,15 +3955,129 @@
  180  FORMAT (2x,a,a)
  190  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)
 
+# elif defined FOUR_DVAR
+!
+!-----------------------------------------------------------------------
+!  Read in 4DVAR assimilation parameters. Then, load input data into
+!  module.
+!-----------------------------------------------------------------------
+!
+      DO WHILE (.TRUE.)
+        READ (inp,'(a)',ERR=10,END=20) line
+        status=decode_line(line, KeyWord, Nval, Cval, Rval)
+        IF (status.gt.0) THEN
+          IF (TRIM(KeyWord).eq.'LcycleINI') THEN 
+            Npts=load_l(Nval, Cval, Ngrids, LcycleINI)
+          ELSE IF (TRIM(KeyWord).eq.'NiterSD') THEN
+            Npts=load_i(Nval, Rval, 1, NiterSD)
+          ELSE IF (TRIM(KeyWord).eq.'ICG') THEN
+            Npts=load_i(Nval, Rval, 1, ICG)
+          ELSE IF (TRIM(KeyWord).eq.'CGstepI') THEN
+            Npts=load_r(Nval, Rval, 1, CGstepI)
+          ELSE IF (TRIM(KeyWord).eq.'CGtol') THEN
+            Npts=load_r(Nval, Rval, 1, CGtol)
+          ELSE IF (TRIM(KeyWord).eq.'CostFunFac') THEN
+            Npts=load_r(Nval, Rval, 1, CostFunFac)
+          ELSE IF (TRIM(KeyWord).eq.'Ldecay') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Ldecay)
+          ELSE IF (TRIM(KeyWord).eq.'DTdif') THEN
+            Npts=load_r(Nval, Rval, Ngrids, DTdif)
+          ELSE IF (TRIM(KeyWord).eq.'npN2') THEN
+            Npts=load_i(Nval, Rval, 1, npN2)
+          ELSE IF (TRIM(KeyWord).eq.'Pcoef_N2') THEN
+            allocate ( pcoef_N2(0:npN2) )
+            DO i=0,npN2
+              READ (inp,*) k, pcoef_N2(k)
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'OBSname') THEN
+            DO i=1,LEN(OBSname(Nval))
+              OBSname(Nval)(i:i)=blank
+            END DO
+            OBSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          END IF
+        END IF
+      END DO
+ 10   WRITE (out,50) line
+      STOP
+ 20   CLOSE (inp)
+!
+!-----------------------------------------------------------------------
+!  Report input parameters.
+!-----------------------------------------------------------------------
+!
+      IF (Lwrite) THEN
+        DO ng=1,Ngrids
+          WRITE (out,60) ng
+          WRITE (out,70) LcycleINI(ng), 'LcycleINI',                    &
+     &            'Switch to recycle time-record in initial file.'
+          WRITE (out,80) NiterSD, 'NiterSD',                            &
+     &            'Number of iterations between a steepest descent.'
+          WRITE (out,90) ICG, 'ICG',                                    &
+     &            'Conjugate gradient descent scheme: ',                &
+     &            '[0] Fletcher-reeves, [1] Polak-Ribiere'
+          WRITE (out,100) CGstepI, 'CGstepI',                           &
+     &            'Initial descent algorithm step size.'
+          WRITE (out,100) CGtol, 'CGtol',                               &
+     &            'Conjugate gradient orthogonality tolerance.'
+          WRITE (out,100) CostFunFac, 'CostFunFac',                     &
+     &            'Cost function change convergence factor.'
+          WRITE (out,110) Ldecay(ng), 'Ldecay',                         &
+     &            'Isotropic horizontal decorrelation scale (m).'
+          WRITE (out,100) DTdif(ng), 'DTdif',                           &
+     &            'Time-step (s) for diffusion space convolution.'
+#  if defined SOLVE3D && defined N2NORM_PROFILE
+          WRITE (out,80) npN2, 'npN2',                                  &
+     &            'Order of polynomial for N2(z) profile.'
+          IF (npN2.gt.0) THEN
+            WRITE (out,*)
+            DO k=0,npN2
+              WRITE (out,120) k, pcoef_N2(k)
+            END DO
+          END IF
+#  endif
+!
+!-----------------------------------------------------------------------
+!  Report input files and check availability of input files.
+!-----------------------------------------------------------------------
+!  
+          WRITE (out,130)
+          WRITE (out,140) ' Assimilation parameters File:  ',           &
+     &                    TRIM(aparnam)
+          fname=OBSname(ng)
+          OPEN (Tunit, FILE=TRIM(fname), STATUS='old', ERR=30)
+          WRITE (out,140) '            Observations File:  ',           &
+     &                    TRIM(fname)
+          CLOSE (Tunit)
+          GO TO 40
+  30      WRITE (out,150) TRIM(fname)
+          STOP
+  40      CONTINUE
+        END DO
+      END IF
+
+  50  FORMAT (/,' READ_AssPar - Error while processing line: ',/,a)
+  60  FORMAT (/,/,' Assimilation Parameters, Grid: ',i2.2,              &
+     &        /,  ' =================================',/)
+  70  FORMAT (10x,l1,2x,a,t28,a)
+  80  FORMAT (1x,i10,2x,a,t28,a)
+  90  FORMAT (1x,i10,2x,a,t28,a,/,t30,a)
+ 100  FORMAT (1p,e11.4,2x,a,t28,a)
+ 110  FORMAT (f11.3,2x,a,t28,a)
+ 120  FORMAT (1x,'N2(z) polynomial coefficient: ',i2.2,1x,1p,e15.8)
+ 130  FORMAT (/,' Input Assimilation Files:',/)
+ 140  FORMAT (2x,a,a)
+ 150  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)
+# endif
+
       RETURN
       END SUBROUTINE read_AssPar
 #endif
 
 #ifdef FLOATS
-      SUBROUTINE read_FloatsPar (inp, out, Lwrite)
+      SUBROUTINE read_FloatsPar (model, inp, out, Lwrite)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in input station parameters.                     !
@@ -3526,7 +4096,7 @@
 !  Imported variable declarations
 !
       logical, intent(in) :: Lwrite
-      integer, intent(in) :: inp, out
+      integer, intent(in) :: model, inp, out
 !
 !  Local variable declarations.
 !
@@ -3548,14 +4118,14 @@
 
       character (len=35) :: frmt
       character (len=40) :: KeyWord
-      character (len=80) :: line
-      character (len=80), dimension(100) :: Cval
+      character (len=160) :: line
+      character (len=160), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in initial float locations.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=20,END=30) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
@@ -3584,7 +4154,7 @@
             END DO
             ncount(1:Ngrids)=0
             nentry(1:Ngrids)=0
-            DO WHILE (.true.)
+            DO WHILE (.TRUE.)
               READ (inp,*,ERR=30,END=30) igrid,                         &
      &                                   Fcoor (nentry(igrid)+1,igrid), &
      &                                   Ftype (nentry(igrid)+1,igrid), &
@@ -3753,10 +4323,10 @@
 #endif
 
 #ifdef STATIONS
-      SUBROUTINE read_StaPar (inp, out, Lwrite)
+      SUBROUTINE read_StaPar (model, inp, out, Lwrite)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in input station parameters.                     !
@@ -3767,7 +4337,9 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
+# if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
+# endif
       USE mod_scalars
 !
       implicit none
@@ -3775,7 +4347,7 @@
 !  Imported variable declarations
 !
       logical, intent(in) :: Lwrite
-      integer, intent(in) :: inp, out
+      integer, intent(in) :: model, inp, out
 !
 !  Local variable declarations.
 !
@@ -3796,14 +4368,14 @@
       real(r8), dimension(100) :: Rval
 
       character (len=40) :: KeyWord
-      character (len=80) :: line
-      character (len=80), dimension(100) :: Cval
+      character (len=160) :: line
+      character (len=160), dimension(100) :: Cval
 !
 !-----------------------------------------------------------------------
 !  Read in stations parameters.
 !-----------------------------------------------------------------------
 !
-      DO WHILE (.true.)
+      DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=20,END=30) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
@@ -3838,6 +4410,10 @@
             Npts=load_l(Nval, Cval, Ngrids, Sout(idUbms,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbms)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idVbms,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idUbrs)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbrs,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idVbrs)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbrs,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbws)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idUbws,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbws)') THEN
@@ -3846,16 +4422,21 @@
             Npts=load_l(Nval, Cval, Ngrids, Sout(idUbcs,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbcs)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idVbcs,1))
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idUbed)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbed,1))
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idVbed)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbed,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUbot)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idUbot,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVbot)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idVbot,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idUbur)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbur,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idVbvr)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbvr,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idTsur)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idTsur(itemp),1))
+            Npts=load_l(Nval, Cval, NAT*Ngrids, Lsta)
+            DO ng=1,Ngrids
+              DO itrc=1,NAT
+                Sout(idTsur(itrc),ng)=Lsta(itrc,ng)
+              END DO
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'Sout(idLhea)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idLhea,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idShea)') THEN
@@ -3864,6 +4445,10 @@
             Npts=load_l(Nval, Cval, Ngrids, Sout(idLrad,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idSrad)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idSrad,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idevap)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idevap,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idrain)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idrain,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idDano)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idDano,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVvis)') THEN
@@ -3883,7 +4468,7 @@
 # if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
           ELSE IF (TRIM(KeyWord).eq.'Hout(idBott)') THEN
             IF (MAXVAL(idBott).eq.0) THEN
-              WRITE (out,280) 'idBott'
+              WRITE (out,110) 'idBott'
               STOP
             END IF
             Npts=load_l(Nval, Cval, MBOTP*Ngrids, Lbottom)
@@ -3903,7 +4488,7 @@
               allocate ( SCALARS(ng) % SposY(Nstation(ng)) )            
             END DO
             is(1:Ngrids)=0
-            DO WHILE (.true.)
+            DO WHILE (.TRUE.)
               READ (inp,*,ERR=10,END=10) igrid, flag, Xpos, Ypos
               ng=MAX(1,ABS(igrid))
               is(ng)=is(ng)+1
@@ -3968,13 +4553,19 @@
             IF (Sout(idVsms,ng)) WRITE (out,80) Sout(idVsms,ng),        &
      &          'Sout(idVsms)',                                         &
      &          'Write out surface V-momentum stress.'
-            IF (Sout(idVsms,ng)) WRITE (out,80) Sout(idVsms,ng),        &
-     &          'Sout(idVsms)',                                         &
+            IF (Sout(idUbms,ng)) WRITE (out,80) Sout(idUbms,ng),        &
+     &          'Sout(idUbms)',                                         &
      &          'Write out bottom U-momentum stress.'
-            IF (Sout(idVsms,ng)) WRITE (out,80) Sout(idVsms,ng),        &
-     &          'Sout(idVsms)',                                         &
+            IF (Sout(idVbms,ng)) WRITE (out,80) Sout(idVbms,ng),        &
+     &          'Sout(idVbms)',                                         &
      &          'Write out bottom V-momentum stress.'
-# ifdef BBL_MODL
+# ifdef BBL_MODEL
+            IF (Sout(idUbrs,ng)) WRITE (out,80) Sout(idUbrs,ng),        &
+     &          'Sout(idUbrs)',                                         &
+     &          'Write out bottom U-current stress.'
+            IF (Sout(idVbrs,ng)) WRITE (out,80) Sout(idVbrs,ng),        &
+     &          'Sout(idVbrs)',                                         &
+     &          'Write out bottom V-current stress.'
             IF (Sout(idUbws,ng)) WRITE (out,80) Sout(idUbws,ng),        &
      &          'Sout(idUbws)',                                         &
      &          'Write out wind-induced, bottom U-wave stress.'
@@ -3987,31 +4578,34 @@
             IF (Sout(idVbcs,ng)) WRITE (out,80) Sout(idVbcs,ng),        &
      &          'Sout(idVbcs)',                                         &
      &          'Write out max wind + current, bottom V-wave stress.'
-            IF (Sout(idUbed,ng)) WRITE (out,80) Sout(idUbed,ng),        &
-     &          'Sout(idUbed)',                                         &
-     &          'Write out bed wave orbital U-velocity.'
-            IF (Sout(idVbed,ng)) WRITE (out,80) Sout(idVbed,ng),        &
-     &          'Sout(idVbed)',                                         &
-     &          'Write out bed wave orbital V-velocity.'
             IF (Sout(idUbot,ng)) WRITE (out,80) Sout(idUbot,ng),        &
      &          'Sout(idUbot)',                                         &
-     &          'Write out bottom U-momentum above bed.'
+     &          'Write out bed wave orbital U-velocity.'
             IF (Sout(idVbot,ng)) WRITE (out,80) Sout(idVbot,ng),        &
      &          'Sout(idVbot)',                                         &
-     &          'Write out bottom V-momentum above bed.'
+     &          'Write out bed wave orbital V-velocity.'
+            IF (Sout(idUbur,ng)) WRITE (out,80) Sout(idUbur,ng),        &
+     &          'Sout(idUbur)',                                         &
+     &          'Write out bottom U-velocity above bed.'
+            IF (Sout(idVbvr,ng)) WRITE (out,80) Sout(idVbvr,ng),        &
+     &          'Sout(idVbvr)',                                         &
+     &          'Write out bottom V-velocity above bed.'
 # endif
-#if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
+# if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
             DO itrc=1,MBOTP
-              IF (Sout(idBott(itrc),ng)) WRITE (out,180)                &
+              IF (Sout(idBott(itrc),ng)) WRITE (out,80)                 &
      &            Sout(idBott(itrc),ng), 'Sout(idBott)',                &
      &            'Write out bottom property ', itrc,                   &
      &            TRIM(Vname(1,idBott(itrc)))
             END DO
-#endif
+# endif
 # ifdef SOLVE3D
             IF (Sout(idTsur(itemp),ng)) WRITE (out,80)                  &
      &          Sout(idTsur(itemp),ng), 'Sout(idTsur)',                 &
      &          'Write out surface net heat flux.'
+            IF (Sout(idTsur(isalt),ng)) WRITE (out,80)                  &
+     &          Sout(idTsur(isalt),ng), 'Sout(idTsur)',                 &
+     &          'Write out surface net salt flux.'
 #  ifdef SHORTWAVE
             IF (Sout(idSrad,ng)) WRITE (out,80) Sout(idSrad,ng),        &
      &          'Sout(idSrad)',                                         &
@@ -4027,6 +4621,14 @@
             IF (Sout(idShea,ng)) WRITE (out,80) Sout(idShea,ng),        &
      &          'Sout(idShea)',                                         &
      &          'Write out sensible heat flux.'
+#   ifdef EMINUSP
+            IF (Sout(idevap,ng)) WRITE (out,80) Sout(idevap,ng),        &
+     &         'Sout(idevap)',                                          &
+     &         'Write out evaporation rate.'
+            IF (Sout(idrain,ng)) WRITE (out,80) Sout(idrain,ng),        &
+     &         'Sout(idrain)',                                          &
+     &         'Write out rain rate.'
+#   endif
 #  endif
             IF (Sout(idDano,ng)) WRITE (out,80) Sout(idDano,ng),        &
      &          'Sout(idDano)',                                         &
@@ -4080,6 +4682,7 @@
   90  FORMAT (10x,l1,2x,a,t28,a,i2.2,':',1x,a)
  100  FORMAT (13x,'Flag and positions for station ',i4.4,':',           &
      &        i3,1x,2f10.4)
+ 110  FORMAT (/,' READ_StaPAR - variable info not yet loaded, ', a)
 
       RETURN
       END SUBROUTINE read_StaPar
@@ -4088,7 +4691,7 @@
       FUNCTION decode_line (line_text, KeyWord, Nval, Cval, Rval)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This function decodes lines of text from input script files.        !
@@ -4107,7 +4710,7 @@
 
       integer, intent(inout) :: Nval
 
-      character (len=80), dimension(100), intent(inout) :: Cval
+      character (len=160), dimension(100), intent(inout) :: Cval
 
       real(r8), dimension(100), intent(inout) :: Rval
 !
@@ -4123,7 +4726,7 @@
       integer :: decode_line
 
       character (len=1 ), parameter :: blank = ' '
-      character (len=80) :: Vstring, line, string
+      character (len=160) :: Vstring, line, string
 !
 !------------------------------------------------------------------------
 !  Decode input line.
@@ -4146,30 +4749,30 @@
 !  values.  Find equal sign [char(61)].
 !
       status=-1
-      nested=.false.
+      nested=.FALSE.
       IF ((Linp.gt.0).and.(line(1:1).ne.CHAR(33))) THEN
         status=1
         Kstr=1
-        Kend=INDEX(line,CHAR(61),BACK=.false.)-1
-        Lstr=INDEX(line,CHAR(61),BACK=.true.)+1
+        Kend=INDEX(line,CHAR(61),BACK=.FALSE.)-1
+        Lstr=INDEX(line,CHAR(61),BACK=.TRUE.)+1
 !
 ! Determine if KEYWORD is followed by double equal sign (==) indicating
 ! nested parameter.
 !
-        IF ((Lstr-Kend).eq.3) nested=.true.
+        IF ((Lstr-Kend).eq.3) nested=.TRUE.
 !
 ! Extract KEYWORD, trim leading and trailing blanks.
 !
-        Kextract=.false.
+        Kextract=.FALSE.
         IF (Kend.gt.0) THEN
           Lend=Linp
           KeyWord=line(Kstr:Kend)
           Nval=0
-          Kextract=.true.
+          Kextract=.TRUE.
         ELSE
           Lstr=1
           Lend=Linp
-          Kextract=.true.
+          Kextract=.TRUE.
         END IF
 !
 ! Extract parameter values string.  Remove comments [char(33)=!] or
@@ -4177,9 +4780,9 @@
 ! blanks.
 !
         IF (Kextract) THEN
-          Icmm=INDEX(line,CHAR(33),BACK=.false.)
+          Icmm=INDEX(line,CHAR(33),BACK=.FALSE.)
           IF (Icmm.gt.0) Lend=Icmm-1
-          Icmm=INDEX(line,CHAR(92),BACK=.false.)
+          Icmm=INDEX(line,CHAR(92),BACK=.FALSE.)
           IF (Icmm.gt.0) Lend=Icmm-1
           Vstring=ADJUSTL(line(Lstr:Lend))
           Lval=LEN_TRIM(Vstring)
@@ -4187,11 +4790,11 @@
 ! The TITLE KEYWORD is a special one since it can include strings,
 ! numbers, spaces, and continuation symbol.
 !
-          IsString=.false.
+          IsString=.FALSE.
           IF (TRIM(KeyWord).eq.'TITLE') THEN
             Nval=Nval+1
             Cval(Nval)=Vstring(1:Lval)
-            IsString=.true.
+            IsString=.TRUE.
           ELSE
 !
 ! Check if there is a multiplication symbol [char(42)=*] in the variable
@@ -4211,10 +4814,10 @@
             is=1
             ie=Lval
             Iblank=0
-            decode=.false.
+            decode=.FALSE.
             DO i=1,Lval
               IF (Vstring(i:i).eq.CHAR(32)) THEN
-                IF (Vstring(i+1:i+1).ne.CHAR(32)) decode=.true.
+                IF (Vstring(i+1:i+1).ne.CHAR(32)) decode=.TRUE.
                 Iblank=i
               ELSE
                 ie=i
@@ -4270,11 +4873,11 @@
                     string=Vstring(is:ie)
                     Cval(Nval)=TRIM(ADJUSTL(string))
                   END IF
-                  IsString=.true.
+                  IsString=.TRUE.
                 END IF
                 is=Iblank+1
                 ie=Lval
-                decode=.false.
+                decode=.FALSE.
               END IF
             END DO
           END IF
@@ -4288,7 +4891,7 @@
       FUNCTION load_i (Ninp, Vinp, Nout, Vout)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This function loads input values into a requested model integer     !
@@ -4353,7 +4956,7 @@
       FUNCTION load_l (Ninp, Vinp, Nout, Vout)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This function loads input values into a requested model logical     !
@@ -4379,7 +4982,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: Ninp, Nout
-      character (len=80), intent(in) :: Vinp(Ninp)
+      character (len=*), intent(in) :: Vinp(Ninp)
       logical, intent(out) :: Vout(Nout)
 !
 !  Local variable declarations.
@@ -4399,26 +5002,26 @@
         DO i=1,Ninp
           ic=ic+1
           IF ((Vinp(i)(1:1).eq.'T').or.(Vinp(i)(1:1).eq.'t')) THEN
-            Vout(i)=.true.
+            Vout(i)=.TRUE.
           ELSE
-            Vout(i)=.false.
+            Vout(i)=.FALSE.
           END IF
         END DO
         DO i=Ninp+1,Nout
           ic=ic+1
           IF ((Vinp(Ninp)(1:1).eq.'T').or.(Vinp(Ninp)(1:1).eq.'t')) THEN
-            Vout(i)=.true.
+            Vout(i)=.TRUE.
           ELSE
-            Vout(i)=.false.
+            Vout(i)=.FALSE.
           END IF
         END DO
       ELSE
         DO i=1,Nout
           ic=ic+1
           IF ((Vinp(i)(1:1).eq.'T').or.(Vinp(i)(1:1).eq.'t')) THEN
-            Vout(i)=.true.
+            Vout(i)=.TRUE.
           ELSE
-            Vout(i)=.false.
+            Vout(i)=.FALSE.
           END IF
         END DO
       END IF
@@ -4430,7 +5033,7 @@
       FUNCTION load_r (Ninp, Vinp, Nout, Vout)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This function loads input values into a requested model real        !

@@ -1,14 +1,14 @@
 #include "cppdefs.h"
-#ifdef SOLVE3D
+#if defined NONLINEAR && defined SOLVE3D
       SUBROUTINE main3d (ng)
 !
 !========================================== Alexander F. Shchepetkin ===
 !  Copyright (c) ROMS/TOMS Group                                       !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This routine is the main driver for ROMS/TOMS when configurated     !
-!  as a full 3D baroclinic ocean model.  It advances the primitive     !
-!  equations for a single time step.                                   !
+!  This subroutine is the main driver for nonlinear ROMS/TOMS when     !
+!  configurated as a full 3D baroclinic ocean model.  It  advances     !
+!  forward the primitive equations for a single time step.             !
 !                                                                      !
 !=======================================================================
 !
@@ -24,6 +24,9 @@
 # ifdef ANA_VMIX
       USE analytical_mod, ONLY : ana_vmix
 # endif
+# ifdef BIOLOGY
+      USE biology_mod, ONLY : biology
+# endif
 # ifdef BBL_MODEL
       USE bbl_mod, ONLY : bblm
 # endif
@@ -34,6 +37,9 @@
       USE bvf_mix_mod, ONLY : bvf_mix
 # endif
       USE diag_mod, ONLY : diag
+# ifdef TLM_CHECK
+      USE dotproduct_mod, ONLY : nl_dotproduct
+# endif
 # ifdef GLS_MIXING
       USE gls_corstep_mod, ONLY : gls_corstep
       USE gls_prestep_mod, ONLY : gls_prestep
@@ -83,7 +89,7 @@
 # endif
 !
 !=======================================================================
-!  Time-step 3D primitive equations.
+!  Time-step nonlinear 3D primitive equations.
 !=======================================================================
 !
 !  Set time indices and time clock.
@@ -95,18 +101,16 @@
       tdays(ng)=time(ng)*sec2day
 !
 !-----------------------------------------------------------------------
-!  Read in forcing, climatology and assimilation data from input
-!  NetCDF files, if any.
+!  Read in required data, if any, from input NetCDF files.
 !-----------------------------------------------------------------------
 !
       CALL get_data (ng)
-      IF (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Compute density related fields and horizontal mass fluxes
-!  (Hz*u/n and Hz*v/m). Process forcing, climatology and assimilation
-!  input data: time interpolate between snapshots.  If applicable,
-!  compute and report diagnostics.
+!  (Hz*u/n and Hz*v/m). Process input data, if any: time interpolate
+!  between snapshots. If applicable, compute and report diagnostics.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
@@ -119,16 +123,19 @@
 # endif
           CALL set_data (ng, TILE)
           CALL diag (ng, TILE)
+# ifdef TLM_CHECK
+          CALL nl_dotproduct (ng, TILE, Lnew(ng))
+# endif
         END DO
       END DO
 !$OMP END PARALLEL DO
-      IF (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.NoError) RETURN
 
 # ifdef AIR_OCEAN
 !
 !-----------------------------------------------------------------------
-!  Couple to atmospheric model every "nOCN_steps" timesteps: get air/sea
-!  fluxes.
+!  Couple to atmospheric model every "nOCN_steps" timesteps: get
+!  air/sea fluxes.
 !-----------------------------------------------------------------------
 !
       IF (MOD(iic(ng),nOCN_steps).eq.0) THEN
@@ -172,18 +179,20 @@
 !  horizontal mass divergence.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
+!$OMP&            SHARED(ng,nstp,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*(thread+1)-1,subs*thread,-1
 # if defined ANA_VMIX
-          CALL ana_vmix (ng, TILE)
+          CALL ana_vmix (ng, TILE, iNLM)
 # elif defined LMD_MIXING
           CALL lmd_vmix (ng, TILE)
 # elif defined BVF_MIXING
           CALL bvf_mix (ng, TILE)
 # endif
           CALL omega (ng, TILE)
+          CALL wvelocity (ng, TILE, nstp(ng))
         END DO
       END DO
 !$OMP END PARALLEL DO
@@ -209,29 +218,18 @@
 # ifdef AVERAGES
           CALL set_avg (ng, TILE)
 # endif
-          CALL wvelocity (ng, TILE)
         END DO
       END DO
 !$OMP END PARALLEL DO
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice
-!  that IO data is written in delayed and serial mode.  If last time
-!  step, stop all clocks.
+!  that IO data is written in delayed and serial mode.  Exit if last
+!  time step.
 !-----------------------------------------------------------------------
 !
       CALL output (ng)
-      IF (exit_flag.ne.0) RETURN
-      IF (iic(ng).eq.(ntend+1)) THEN
-        IF (Master) WRITE (stdout,10) ' Elapsed CPU time (seconds):'
- 10     FORMAT (/,a,/)
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          CALL wclock_off (ng, 0)
-        END DO
-!$OMP END PARALLEL DO
-        RETURN
-      END IF
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the
@@ -274,7 +272,7 @@
 !  Set time indices for corrector step.
 !
         IF (PREDICTOR_2D_STEP(ng)) THEN
-          PREDICTOR_2D_STEP(ng)=.false.
+          PREDICTOR_2D_STEP(ng)=.FALSE.
           knew(ng)=next_indx1
           kstp(ng)=3-knew(ng)
           krhs(ng)=3
@@ -314,10 +312,12 @@
 !$OMP END PARALLEL DO
 !
 !-----------------------------------------------------------------------
-!  Time-step tracer equations.
+!  Time-step vertical mixing turbulent equations and passive tracer
+!  source and sink terms, if applicable.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
+!$OMP&            SHARED(ng,nnew,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
@@ -327,18 +327,47 @@
 # elif defined GLS_MIXING
           CALL gls_corstep (ng, TILE)
 # endif
+# ifdef BIOLOGY
+          CALL biology (ng, TILE)
+# endif
 # ifdef SEDIMENT
           CALL sediment (ng, TILE)
-# endif
-# ifndef TS_FIXED
-          CALL step3d_t (ng, TILE)
-# endif
-# ifdef ASSIMILATION
-          CALL oi_update (ng, TILE)
 # endif
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# ifndef TS_FIXED
+!
+!-----------------------------------------------------------------------
+!  Time-step tracer equations.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*(thread+1)-1,subs*thread,-1
+          CALL step3d_t (ng, TILE)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
+
+# ifdef ASSIMILATION
+!
+!-----------------------------------------------------------------------
+!  Assimilate observations via Optimal Interpolation.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL oi_update (ng, TILE)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
 
 # ifdef FLOATS
 !
@@ -364,8 +393,10 @@
       nfm2(ng)=MOD(nfm2(ng)+1,NFT+1)
       nfm3(ng)=MOD(nfm3(ng)+1,NFT+1)
 # endif
-#else
-      SUBROUTINE main3d
-#endif
       RETURN
       END SUBROUTINE main3d
+#else
+      SUBROUTINE main3d
+      RETURN
+      END SUBROUTINE main3d
+#endif

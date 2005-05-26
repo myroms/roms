@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE lmd_vmix_mod
-#ifdef LMD_MIXING
+#if defined NONLINEAR && defined LMD_MIXING && defined SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine computes the vertical mixing coefficients for       !
@@ -48,7 +48,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 18)
+      CALL wclock_on (ng, iNLM, 18)
 # endif
       CALL lmd_vmix_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj,                           &
@@ -74,7 +74,7 @@
       CALL lmd_bkpp (ng, tile)
 # endif
 # ifdef PROFILE
-      CALL wclock_off (ng, 18)
+      CALL wclock_off (ng, iNLM, 18)
 # endif
       RETURN
       END SUBROUTINE lmd_vmix
@@ -446,11 +446,15 @@
 !
 !  Apply boundary conditions.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng), Akv)
+      CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
+     &                  NghostPoints,                                   &
+     &                  Akv)
       DO itrc=1,NAT
-        CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng), Akt(:,:,:,itrc))
+        CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,             &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    Akt(:,:,:,itrc))
       END DO
 # endif
       RETURN

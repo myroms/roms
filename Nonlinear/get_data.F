@@ -2,7 +2,7 @@
       SUBROUTINE get_data (ng)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine reads in forcing, climatology and assimilation data    !
@@ -27,6 +27,9 @@
 #if defined ASSIMILATION || defined NUDGING
       USE mod_obs
 #endif
+#ifdef TLM_CHECK
+      USE mod_ocean
+#endif
       USE mod_scalars
 #if defined UV_PSOURCE || defined TS_PSOURCE
       USE mod_sources
@@ -45,7 +48,7 @@
 !  Local variable declarations.
 !
       logical, dimension(3) :: update =                                 &
-     &         (/ .false., .false., .false. /)
+     &         (/ .FALSE., .FALSE., .FALSE. /)
 
 #ifdef OBC
       integer :: ILB, IUB, JLB, JUB
@@ -67,10 +70,10 @@
 !
 !  Lower and upper bounds for tiled arrays.
 !
-      LBi=lbound(GRID(ng)%h,DIM=1)
-      UBi=ubound(GRID(ng)%h,DIM=1)
-      LBj=lbound(GRID(ng)%h,DIM=2)
-      UBj=ubound(GRID(ng)%h,DIM=2)
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
 
 #ifdef PROFILE
 !
@@ -78,7 +81,7 @@
 !  Turn on input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 3)
+      CALL wclock_on (ng, iNLM, 3)
 #endif
 !
 !=======================================================================
@@ -95,9 +98,9 @@
 !
       IF (iic(ng).eq.0) THEN
         NTC(ng)=0
-        CALL get_ngfld (ng, idTper, ncfrcid(idTper,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), 1, MTC, 1, 1, 1, NTC(ng), 1,         &
+        CALL get_ngfld (ng, iNLM, idTper, ncFRCid(idTper,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  1, MTC, 1, 1, 1, NTC(ng), 1,                    &
      &                  TIDES(ng) % Tperiod(1))
       END IF
 #endif
@@ -111,16 +114,16 @@
         time_save=time(ng)
         time(ng)=8640000.0_r8
         tdays(ng)=time(ng)*sec2day
-        CALL get_2dfld (ng, idTzam, ncfrcid(idTzam,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, MTC, NTC(ng),    &
+        CALL get_2dfld (ng, iNLM, idTzam, ncFRCid(idTzam,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 # ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  TIDES(ng) % SSH_Tamp(LBi,LBj,1))
-        CALL get_2dfld (ng, idTzph, ncfrcid(idTzph,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, MTC, NTC(ng),    &
+        CALL get_2dfld (ng, iNLM, idTzph, ncFRCid(idTzph,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 # ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
@@ -137,30 +140,30 @@
         time_save=time(ng)
         time(ng)=8640000.0_r8
         tdays(ng)=time(ng)*sec2day
-        CALL get_2dfld (ng, idTvan, ncfrcid(idTvan,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, MTC, NTC(ng),    &
+        CALL get_2dfld (ng, iNLM, idTvan, ncFRCid(idTvan,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 # ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  TIDES(ng) % UV_Tangle(LBi,LBj,1))
-        CALL get_2dfld (ng, idTvph, ncfrcid(idTvph,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, MTC, NTC(ng),    &
+        CALL get_2dfld (ng, iNLM, idTvph, ncFRCid(idTvph,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 # ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
     &                  TIDES(ng) % UV_Tphase(LBi,LBj,1))
-        CALL get_2dfld (ng, idTvma, ncfrcid(idTvma,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, MTC, NTC(ng),    &
+        CALL get_2dfld (ng, iNLM, idTvma, ncFRCid(idTvma,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 # ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  TIDES(ng) % UV_Tmajor(LBi,LBj,1))
-        CALL get_2dfld (ng, idTvmi, ncfrcid(idTvmi,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, MTC, NTC(ng),    &
+        CALL get_2dfld (ng, iNLM, idTvmi, ncFRCid(idTvmi,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, MTC, NTC(ng),               &
 # ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
@@ -180,47 +183,65 @@
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.0) THEN
-        CALL get_ngfld (ng, idRxpo, ncfrcid(idRxpo,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), 1, Msrc, 1, 1, 1, Nsrc(ng), 1,       &
+        CALL get_ngfld (ng, iNLM, idRxpo, ncFRCid(idRxpo,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  1, Msrc, 1, 1, 1, Nsrc(ng), 1,                  &
      &                  SOURCES(ng) % Xsrc(1))
-        CALL get_ngfld (ng, idRepo, ncfrcid(idRepo,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), 1, Msrc, 1, 1, 1, Nsrc(ng), 1,       &
+        CALL get_ngfld (ng, iNLM, idRepo, ncFRCid(idRepo,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  1, Msrc, 1, 1, 1, Nsrc(ng), 1,                  &
      &                  SOURCES(ng) % Ysrc(1))
-        CALL get_ngfld (ng, idRdir, ncfrcid(idRdir,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), 1, Msrc, 1, 1, 1, Nsrc(ng), 1,       &
+        CALL get_ngfld (ng, iNLM, idRdir, ncFRCid(idRdir,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  1, Msrc, 1, 1, 1, Nsrc(ng), 1,                  &
      &                  SOURCES(ng) % Dsrc(1))
-        CALL get_ngfld (ng, idRvsh, ncfrcid(idRvsh,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), 1, Msrc, N, 1, 1, Nsrc(ng), N,       &
+        CALL get_ngfld (ng, iNLM, idRvsh, ncFRCid(idRvsh,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  1, Msrc, N(ng), 1, 1, Nsrc(ng), N(ng),          &
      &                  SOURCES(ng) % Qshape(1,1))
 # ifdef TS_PSOURCE
-        CALL get_ngfld (ng, idRflg, ncfrcid(idRflg,ng),                 &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), 1, Msrc, 1, 1, 1, Nsrc(ng), 1,       &
+        CALL get_ngfld (ng, iNLM, idRflg, ncFRCid(idRflg,ng),           &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  1, Msrc, 1, 1, 1, Nsrc(ng), 1,                  &
      &                  SOURCES(ng) % Fsrc(1))
         IF (update(1)) THEN
           DO i=1,NT(ng)
-            SOURCES(ng)%Ltracer(i)=.false.
+            SOURCES(ng)%Ltracer(i)=.FALSE.
             DO is=1,Nsrc(ng)
-              SOURCES(ng)%Lsrc(is,i)=.false.
+              SOURCES(ng)%Lsrc(is,i)=.FALSE.
             END DO
           END DO
           DO is=1,Nsrc(ng)
             IF (SOURCES(ng)%Fsrc(is).eq.1.0_r8) THEN
-              SOURCES(ng)%Lsrc(is,itemp)=.true.
-              SOURCES(ng)%Ltracer(itemp)=.true.
-            ELSE IF (SOURCES(ng)%Fsrc(is).eq.2.0_r8) THEN
-              SOURCES(ng)%Lsrc(is,isalt)=.true.
-              SOURCES(ng)%Ltracer(isalt)=.true.
-            ELSE IF (SOURCES(ng)%Fsrc(is).eq.3.0_r8) THEN
-              SOURCES(ng)%Lsrc(is,itemp)=.true.
-              SOURCES(ng)%Lsrc(is,isalt)=.true.
-              SOURCES(ng)%Ltracer(itemp)=.true.
-              SOURCES(ng)%Ltracer(isalt)=.true.
+              SOURCES(ng)%Lsrc(is,itemp)=.TRUE.
+              SOURCES(ng)%Ltracer(itemp)=.TRUE.
             END IF
+            IF (SOURCES(ng)%Fsrc(is).eq.2.0_r8) THEN
+              SOURCES(ng)%Lsrc(is,isalt)=.TRUE.
+              SOURCES(ng)%Ltracer(isalt)=.TRUE.
+            END IF
+            IF (SOURCES(ng)%Fsrc(is).ge.3.0_r8) THEN
+              SOURCES(ng)%Lsrc(is,itemp)=.TRUE.
+              SOURCES(ng)%Lsrc(is,isalt)=.TRUE.
+              SOURCES(ng)%Ltracer(itemp)=.TRUE.
+              SOURCES(ng)%Ltracer(isalt)=.TRUE.
+            END IF
+#  if defined RIVER_SEDIMENT && defined SEDIMENT
+            IF (SOURCES(ng)%Fsrc(is).ge.4.0_r8) THEN
+              DO i=1,NST
+                SOURCES(ng)%Lsrc(is,idsed(i))=.TRUE.
+                SOURCES(ng)%Ltracer(idsed(i))=.TRUE.
+              END DO
+            END IF
+#  endif
+#  if defined RIVER_BIOLOGY && defined BIOLOGY
+            IF (SOURCES(ng)%Fsrc(is).ge.5.0_r8) THEN
+              DO i=1,NBT
+                SOURCES(ng)%Lsrc(is,idbio(i))=.TRUE.
+                SOURCES(ng)%Ltracer(idbio(i))=.TRUE.
+              END DO
+            END IF
+#  endif
           END DO
         END IF
 # endif
@@ -235,9 +256,9 @@
 !
 !  Point Source/Sink vertically integrated mass transport.
 !
-      CALL get_ngfld (ng, idRtra, ncfrcid(idRtra,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), 1, Msrc, 1, 2, 1, Nsrc(ng), 1,         &
+      CALL get_ngfld (ng, iNLM, idRtra, ncFRCid(idRtra,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                1, Msrc, 1, 2, 1, Nsrc(ng), 1,                    &
      &                SOURCES(ng) % QbarG(1,1))
 # endif
 # if defined TS_PSOURCE && defined SOLVE3D
@@ -246,9 +267,9 @@
 !
       DO i=1,NT(ng)
         IF (SOURCES(ng)%Ltracer(i)) THEN
-          CALL get_ngfld (ng, idRtrc(i), ncfrcid(idRtrc(i),ng),         &
-     &                    nFfiles(ng), frcname(1,ng),                   &
-     &                    update(1), 1, Msrc, N, 2, 1, Nsrc(ng), N,     &
+          CALL get_ngfld (ng, iNLM, idRtrc(i), ncFRCid(idRtrc(i),ng),   &
+     &                    nFfiles(ng), FRCname(1,ng), update(1),        &
+     &                    1, Msrc, N(ng), 2, 1, Nsrc(ng), N(ng),        &
      &                    SOURCES(ng) % TsrcG(1,1,1,i))
         END IF
       END DO
@@ -261,16 +282,16 @@
 !  Surface wind components.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idUair, ncfrcid(idUair,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idUair, ncFRCid(idUair,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 # ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 # endif
      &                FORCES(ng) % UwindG(LBi,LBj,1))
-      CALL get_2dfld (ng , idVair, ncfrcid(idVair,ng),                  &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng , iNLM, idVair, ncFRCid(idVair,ng),            &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 # ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 # endif
@@ -284,16 +305,16 @@
 !  Surface wind stress components.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idUsms, ncfrcid(idUsms,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idUsms, ncFRCid(idUsms,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % umask(LBi,LBj),                        &
 #  endif
      &                FORCES(ng) % sustrG(LBi,LBj,1))
-      CALL get_2dfld (ng, idVsms, ncfrcid(idVsms,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idVsms, ncFRCid(idVsms,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % vmask(LBi,LBj),                        &
 #  endif
@@ -309,33 +330,33 @@
 !  Surface wind induced wave amplitude, direction and period.
 !-----------------------------------------------------------------------
 !
-# ifdef SWAN
-      CALL get_2dfld (ng, idWorb, ncfrcid(idWorb,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#  ifdef MASKING
+#  ifdef SWAN
+      CALL get_2dfld (ng, iNLM, idWorb, ncFRCid(idWorb,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#  endif
+#   endif
      &                FORCES(ng) % UB_swanG(LBi,LBj,1))
-# else
-      CALL get_2dfld (ng, idWamp, ncfrcid(idWamp,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
-#  ifdef MASKING
+#  else
+      CALL get_2dfld (ng, iNLM, idWamp, ncFRCid(idWamp,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
-#  endif
+#   endif
      &                FORCES(ng) % AwaveG(LBi,LBj,1))
-# endif
-      CALL get_2dfld (ng, idWdir, ncfrcid(idWdir,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+#  endif
+      CALL get_2dfld (ng, iNLM, idWdir, ncFRCid(idWdir,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
      &                FORCES(ng) % DwaveG(LBi,LBj,1))
-      CALL get_2dfld (ng, idWper, ncfrcid(idWper,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idWper, ncFRCid(idWper,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -348,9 +369,9 @@
 !  Cloud fraction.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idCfra, ncfrcid(idCfra,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idCfra, ncFRCid(idCfra,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -363,24 +384,24 @@
 !  Surface solar shortwave radiation.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idSrad, ncfrcid(idSrad,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idSrad, ncFRCid(idSrad,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
      &                FORCES(ng) % srflxG(LBi,LBj,1))
 # endif
 
-# if defined BULK_FLUXES && !defined LONGWAVE
+# if defined BULK_FLUXES && !defined LONGWAVE && !defined LONGWAVE_OUT
 !
 !-----------------------------------------------------------------------
 !  Surface net longwave radiation.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idLrad, ncfrcid(idLrad,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idLrad, ncFRCid(idLrad,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -393,9 +414,9 @@
 !  Surface downwelling longwave radiation.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idLdwn, ncfrcid(idLdwn,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idLdwn, ncFRCid(idLdwn,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -408,9 +429,9 @@
 !  Surface air pressure.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idPair, ncfrcid(idPair,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idPair, ncFRCid(idPair,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -425,9 +446,9 @@
 !  Surface air temperature.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idTair, ncfrcid(idTair,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idTair, ncFRCid(idTair,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -440,9 +461,9 @@
 !  Surface air humidity.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idQair, ncfrcid(idQair,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idQair, ncFRCid(idQair,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -455,9 +476,9 @@
 !  Rain fall rate.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idrain, ncfrcid(idrain,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idrain, ncFRCid(idrain,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -470,9 +491,10 @@
 !  Surface net heat flux.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idTsur(itemp), ncfrcid(idTsur(itemp),ng),     &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idTsur(itemp),                          &
+     &                ncFRCid(idTsur(itemp),ng),                        &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -486,16 +508,16 @@
 !  (SST) and heat flux sensitivity to SST (dQdSST).
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idSSTc, ncfrcid(idSSTc,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idSSTc, ncFRCid(idSSTc,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
      &                FORCES(ng) % sstG(LBi,LBj,1))
-      CALL get_2dfld (ng, iddQdT, ncfrcid(iddQdT,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, iddQdT, ncFRCid(iddQdT,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -508,9 +530,10 @@
 !  Bottom net heat flux.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idTbot(itemp), ncfrcid(idTbot(itemp),ng),     &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idTbot(itemp),                          &
+     &                ncFRCid(idTbot(itemp),ng),                        &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
@@ -518,15 +541,15 @@
 # endif
 
 # ifdef SALINITY
-#  ifndef ANA_SSFLUX
+#  if !(defined ANA_SSFLUX || defined EMINUSP || defined SRELAXATION)
 !
 !-----------------------------------------------------------------------
 !  Surface net freshwater flux: E-P.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idTsur(isalt), ncfrcid(idTsur(isalt),ng),     &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idsfwf, ncFRCid(idsfwf,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #   ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #   endif
@@ -539,9 +562,9 @@
 !  Surface net freshwater flux correction field: sea surface salinity.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idSSSc, ncfrcid(idSSSc,ng),                   &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idSSSc, ncFRCid(idSSSc,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #   ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #   endif
@@ -554,9 +577,10 @@
 !  Bottom net freshwater flux.
 !-----------------------------------------------------------------------
 !
-      CALL get_2dfld (ng, idTbot(isalt), ncfrcid(idTbot(isalt),ng),     &
-     &                nFfiles(ng), frcname(1,ng),                       &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idTbot(isalt),                          &
+     &                ncFRCid(idTbot(isalt),ng),                        &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #   ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #   endif
@@ -572,9 +596,9 @@
 !-----------------------------------------------------------------------
 !
       DO i=NAT+1,NT(ng)
-        CALL get_2dfld (ng, idTsur(i), ncfrcid(idTsur(i),ng),           &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idTsur(i), ncFRCid(idTsur(i),ng),     &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
@@ -589,9 +613,9 @@
 !-----------------------------------------------------------------------
 !
       DO i=NAT+1,NT(ng)
-        CALL get_2dfld (ng, idTbot(i), ncfrcid(idTbot(i),ng),           &
-     &                  nFfiles(ng), frcname(1,ng),                     &
-     &                  update(1), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idTbot(i), ncFRCid(idTbot(i),ng),     &
+     &                  nFfiles(ng), FRCname(1,ng), update(1),          &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
@@ -609,131 +633,152 @@
 !
 # ifndef ANA_FSOBC
 #  ifdef WEST_FSOBC
-      CALL get_ngfld (ng, idZbry(iwest), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idZbry(iwest), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % zetaG_west(JLB,1))
 #  endif
 #  ifdef EAST_FSOBC
-      CALL get_ngfld (ng, idZbry(ieast), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idZbry(ieast), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % zetaG_east(JLB,1))
 #  endif
 #  ifdef SOUTH_FSOBC
-      CALL get_ngfld (ng, idZbry(isouth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idZbry(isouth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % zetaG_south(ILB,1))
 #  endif
 #  ifdef NORTH_FSOBC
-      CALL get_ngfld (ng, idZbry(inorth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idZbry(inorth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % zetaG_north(ILB,1))
 #  endif
 # endif
 # ifndef ANA_M2OBC
 #  ifdef WEST_M2OBC
-      CALL get_ngfld (ng, idU2bc(iwest), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idU2bc(iwest), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % ubarG_west(JLB,1))
-      CALL get_ngfld (ng, idV2bc(iwest), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, 1, 2, 1, Mm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idV2bc(iwest), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, 1, 2, 1, Mm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % vbarG_west(JLB,1))
 #  endif
 #  ifdef EAST_M2OBC
-      CALL get_ngfld (ng, idU2bc(ieast), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idU2bc(ieast), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, 1, 2, 0, Mm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % ubarG_east(JLB,1))
-      CALL get_ngfld (ng, idV2bc(ieast), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, 1, 2, 1, Mm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idV2bc(ieast), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, 1, 2, 1, Mm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % vbarG_east(JLB,1))
 #  endif
 #  ifdef SOUTH_M2OBC
-      CALL get_ngfld (ng, idU2bc(isouth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, 1, 2, 1, Lm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idU2bc(isouth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, 1, 2, 1, Lm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % ubarG_south(ILB,1))
-      CALL get_ngfld (ng, idV2bc(isouth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idV2bc(isouth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % vbarG_south(ILB,1))
 #  endif
 #  ifdef NORTH_M2OBC
-      CALL get_ngfld (ng, idU2bc(inorth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, 1, 2, 1, Lm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idU2bc(inorth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, 1, 2, 1, Lm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % ubarG_north(ILB,1))
-      CALL get_ngfld (ng, idV2bc(inorth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,        &
+      CALL get_ngfld (ng, iNLM, idV2bc(inorth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, 1, 2, 0, Lm(ng)+1, 1,                   &
      &                BOUNDARY(ng) % vbarG_north(ILB,1))
 #  endif
 # endif
 # ifdef SOLVE3D
 #  ifndef ANA_M3OBC
 #   ifdef WEST_M3OBC
-      CALL get_ngfld (ng, idU3bc(iwest), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, N(ng), 2, 0, Mm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % uG_west(JLB,1,1))
-      CALL get_ngfld (ng, idV3bc(iwest), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, N(ng), 2, 1, Mm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % vG_west(JLB,1,1))
+      CALL get_ngfld (ng, iNLM, idU3bc(iwest), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % uG_west(JLB,1,1))
+      CALL get_ngfld (ng, iNLM, idV3bc(iwest), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, N(ng), 2, 1, Mm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % vG_west(JLB,1,1))
 #   endif
 #   ifdef EAST_M3OBC
-      CALL get_ngfld (ng, idU3bc(ieast), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, N(ng), 2, 0, Mm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % uG_east(JLB,1,1))
-      CALL get_ngfld (ng, idV3bc(ieast), ncbryid(ng), 1, bryname(ng),   &
-     &                update(1), JLB, JUB, N(ng), 2, 1, Mm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % vG_east(JLB,1,1))
+      CALL get_ngfld (ng, iNLM, idU3bc(ieast), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % uG_east(JLB,1,1))
+      CALL get_ngfld (ng, iNLM, idV3bc(ieast), ncBRYid(ng), 1,          &
+     &                BRYname(ng), update(1),                           &
+     &                JLB, JUB, N(ng), 2, 1, Mm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % vG_east(JLB,1,1))
 #   endif
 #   ifdef SOUTH_M3OBC
-      CALL get_ngfld (ng, idU3bc(isouth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, N(ng), 2, 1, Lm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % uG_south(ILB,1,1))
-      CALL get_ngfld (ng, idV3bc(isouth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, N(ng), 2, 0, Lm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % vG_south(ILB,1,1))
+      CALL get_ngfld (ng, iNLM, idU3bc(isouth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, N(ng), 2, 1, Lm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % uG_south(ILB,1,1))
+      CALL get_ngfld (ng, iNLM, idV3bc(isouth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % vG_south(ILB,1,1))
 #   endif
 #   ifdef NORTH_M3OBC
-      CALL get_ngfld (ng, idU3bc(inorth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, N(ng), 2, 1, Lm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % uG_north(ILB,1,1))
-      CALL get_ngfld (ng, idV3bc(inorth), ncbryid(ng), 1, bryname(ng),  &
-     &                update(1), ILB, IUB, N(ng), 2, 0, Lm(ng)+1,       &
-     &                N(ng), BOUNDARY(ng) % vG_north(ILB,1,1))
+      CALL get_ngfld (ng, iNLM, idU3bc(inorth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, N(ng), 2, 1, Lm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % uG_north(ILB,1,1))
+      CALL get_ngfld (ng, iNLM, idV3bc(inorth), ncBRYid(ng), 1,         &
+     &                BRYname(ng), update(1),                           &
+     &                ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),           &
+     &                BOUNDARY(ng) % vG_north(ILB,1,1))
 #   endif
 #  endif
 #  ifndef ANA_TOBC
 #   ifdef WEST_TOBC
       DO i=1,NT(ng)
-        CALL get_ngfld (ng, idTbry(iwest,i), ncbryid(ng),               &
-     &                  1, bryname(ng),                                 &
-     &                  update(1), JLB, JUB, N(ng), 2, 0, Mm(ng)+1,     &
-     &                  N(ng), BOUNDARY(ng) % tG_west(JLB,1,1,i))
+        CALL get_ngfld (ng, iNLM, idTbry(iwest,i), ncBRYid(ng), 1,      &
+     &                  BRYname(ng), update(1),                         &
+     &                  JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),         &
+     &                  BOUNDARY(ng) % tG_west(JLB,1,1,i))
       END DO
 #   endif
 #   ifdef EAST_TOBC
       DO i=1,NT(ng)
-        CALL get_ngfld (ng, idTbry(ieast,i), ncbryid(ng),               &
-     &                  1, bryname(ng),                                 &
-     &                  update(1), JLB, JUB, N(ng), 2, 0, Mm(ng)+1,     &
-     &                  N(ng), BOUNDARY(ng) % tG_east(JLB,1,1,i))
+        CALL get_ngfld (ng, iNLM, idTbry(ieast,i), ncBRYid(ng), 1,      &
+     &                  BRYname(ng), update(1),                         &
+     &                  JLB, JUB, N(ng), 2, 0, Mm(ng)+1, N(ng),         &
+     &                  BOUNDARY(ng) % tG_east(JLB,1,1,i))
       END DO
 #   endif
 #   ifdef SOUTH_TOBC
       DO i=1,NT(ng)
-        CALL get_ngfld (ng, idTbry(isouth,i), ncbryid(ng),              &
-     &                  1, bryname(ng),                                 &
-     &                  update(1), ILB, IUB, N(ng), 2, 0, Lm(ng)+1,     &
-     &                  N(ng), BOUNDARY(ng) % tG_south(ILB,1,1,i))
+        CALL get_ngfld (ng, iNLM, idTbry(isouth,i), ncBRYid(ng), 1,     &
+     &                  BRYname(ng), update(1),                         &
+     &                  ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),         &
+     &                  BOUNDARY(ng) % tG_south(ILB,1,1,i))
       END DO
 #   endif
 #   ifdef NORTH_TOBC
       DO i=1,NT(ng)
-        CALL get_ngfld (ng, idTbry(inorth,i), ncbryid(ng),              &
-     &                  1, bryname(ng),                                 &
-     &                  update(1), ILB, IUB, N(ng), 2, 0, Lm(ng)+1,     &
-     &                  N(ng), BOUNDARY(ng) % tG_north(ILB,1,1,i))
+        CALL get_ngfld (ng, iNLM, idTbry(inorth,i), ncBRYid(ng), 1,     &
+     &                  BRYname(ng), update(1),                         &
+     &                  ILB, IUB, N(ng), 2, 0, Lm(ng)+1, N(ng),         &
+     &                  BOUNDARY(ng) % tG_north(ILB,1,1,i))
       END DO
 #   endif
 #  endif
 # endif
 #endif
+
 #if defined ZCLIMATOLOGY || defined M2CLIMATOLOGY || \
     defined TCLIMATOLOGY || defined M3CLIMATOLOGY
 !
@@ -742,22 +787,25 @@
 !=======================================================================
 !
 # if !defined ANA_SSH && defined ZCLIMATOLOGY
-      CALL get_2dfld (ng, idSSHc, ncclmid(ng), 1, clmname(ng),          &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idSSHc, ncCLMid(ng), 1,                 &
+     &                CLMname(ng), update(1),                           &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #  endif
      &                CLIMA(ng) % sshG(LBi,LBj,1))
 # endif
 # if !defined ANA_M2CLIMA && defined M2CLIMATOLOGY
-      CALL get_2dfld (ng, idUbcl, ncclmid(ng), 1, clmname(ng),          &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idUbcl, ncCLMid(ng), 1,                 &
+     &                CLMname(ng), update(1),                           &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % umask(LBi,LBj),                        &
 #  endif
      &                CLIMA(ng) % ubarclmG(LBi,LBj,1))
-      CALL get_2dfld (ng, idVbcl, ncclmid(ng), 1, clmname(ng),          &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_2dfld (ng, iNLM, idVbcl, ncCLMid(ng), 1,                 &
+     &                CLMname(ng), update(1),                           &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #  ifdef MASKING
      &                GRID(ng) % vmask(LBi,LBj),                        &
 #  endif
@@ -766,8 +814,9 @@
 # ifdef SOLVE3D
 #  if !defined ANA_TCLIMA && defined TCLIMATOLOGY
       DO i=1,NAT
-        CALL get_3dfld (ng, idTclm(i), ncclmid(ng), 1, clmname(ng),     &
-     &                  update(1), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_3dfld (ng, iNLM, idTclm(i), ncCLMid(ng), 1,            &
+     &                  CLMname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
@@ -775,14 +824,16 @@
       END DO
 #  endif
 #  if !defined ANA_M3CLIMA && defined M3CLIMATOLOGY
-      CALL get_3dfld (ng, idUclm, ncclmid(ng), 1, clmname(ng),          &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_3dfld (ng, iNLM, idUclm, ncCLMid(ng), 1,                 &
+     &                CLMname(ng), update(1),                           &
+     &                LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,               &
 #   ifdef MASKING
      &                GRID(ng) % umask(LBi,LBj),                        &
 #   endif
      &                CLIMA(ng) % uclmG(LBi,LBj,1,1))
-      CALL get_3dfld (ng, idVclm, ncclmid(ng), 1, clmname(ng),          &
-     &                update(1), LBi, UBi, LBj, UBj, 2, 1,              &
+      CALL get_3dfld (ng, iNLM, idVclm, ncCLMid(ng), 1,                 &
+     &                CLMname(ng), update(1),                           &
+     &                LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,               &
 #   ifdef MASKING
      &                GRID(ng) % vmask(LBi,LBj),                        &
 #   endif
@@ -790,6 +841,7 @@
 #  endif
 # endif
 #endif
+
 #if defined ASSIMILATION || defined NUDGING
 !
 !=======================================================================
@@ -804,44 +856,49 @@
 !
       IF (assi_SSH(ng)) THEN
 #  ifdef NUDGING_SSH
-        CALL get_2dfld (ng, idSSHo, ncSSHid(ng), 1, SSHname(ng),        &
-     &                  update(1), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSHo, ncSSHid(ng), 1,               &
+     &                  SSHname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % SSHdat(LBi,LBj,1))
-        CALL get_2dfld (ng, idSSHe, ncSSHid(ng), 1, SSHname(ng),        &
-     &                  update(2), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSHe, ncSSHid(ng), 1,               &
+     &                  SSHname(ng), update(2),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EdatSSH(LBi,LBj,1))
-        IF (update(1).and.update(2)) update_SSH(ng)=.true.
+        IF (update(1).and.update(2)) update_SSH(ng)=.TRUE.
 #  else
-        CALL get_2dfld (ng, idSSHo, ncSSHid(ng), 1, SSHname(ng),        &
-     &                  update(1), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSHo, ncSSHid(ng), 1,               &
+     &                  SSHname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % SSHobs(LBi,LBj))
-        CALL get_2dfld (ng, idSSHe, ncSSHid(ng), 1, SSHname(ng),        &
-     &                  update(2), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSHe, ncSSHid(ng), 1,               &
+     &                  SSHname(ng), update(2),                         &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EobsSSH(LBi,LBj))
         IF (update(1).and.update(2)) THEN
-          update_SSH(ng)=.true.
+          update_SSH(ng)=.TRUE.
           tSSHobs(1,ng)=Vtime(1,idSSHo,ng)
           tsSSHobs(ng)=Vtime(1,idSSHo,ng)*day2sec
-          Finfo(5,idSSHo,ng)=tsSSHobs(ng)
-          Finfo(5,idSSHe,ng)=tsSSHobs(ng)
-          EobsSSHmin(ng)=Finfo(4,idSSHe,ng)
-          EobsSSHmax(ng)=Finfo(5,idSSHe,ng)
+          Finfo(7,idSSHo,ng)=tsSSHobs(ng)
+          Finfo(7,idSSHe,ng)=tsSSHobs(ng)
+          EobsSSHmin(ng)=Finfo(8,idSSHe,ng)
+          EobsSSHmax(ng)=Finfo(9,idSSHe,ng)
         END IF
 #  endif
       END IF
 # endif
+
 # if defined NUDGING_SST || defined ASSIMILATION_SST
 !
 !-----------------------------------------------------------------------
@@ -850,35 +907,40 @@
 !
       IF (assi_SST(ng)) THEN
 #  ifdef NUDGING_SST
-        CALL get_2dfld (ng, idSSTo, ncSSTid(ng), 1, SSTname(ng),        &
-     &                  update(1), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSTo, ncSSTid(ng), 1,               &
+     &                  SSTname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % SSTdat(LBi,LBj,1))
-        CALL get_2dfld (ng, idSSTe, ncSSTid(ng), 1, SSTname(ng),        &
-     &                  update(2), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSTe, ncSSTid(ng), 1,               &
+     &                  SSTname(ng), update(2),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EdatSST(LBi,LBj,1))
 #  else
-        CALL get_2dfld (ng, idSSTo, ncSSTid(ng), 1, SSTname(ng),        &
-     &                  update(1), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSTo, ncSSTid(ng), 1,               &
+     &                  SSTname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % SSTobs(LBi,LBj))
-        CALL get_2dfld (ng, idSSTe, ncSSTid(ng), 1, SSTname(ng),        &
-     &                  update(2), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_2dfld (ng, iNLM, idSSTe, ncSSTid(ng), 1,               &
+     &                  SSTname(ng), update(2),                         &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EobsSST(LBi,LBj))
 #  endif
-        IF (update(1).and.update(2)) update_SST(ng)=.true.
+        IF (update(1).and.update(2)) update_SST(ng)=.TRUE.
       END IF
 # endif
+
 # if defined NUDGING_T || defined ASSIMILATION_T
 !
 !-----------------------------------------------------------------------
@@ -888,45 +950,50 @@
       DO i=1,NAT
         IF (assi_T(i,ng)) THEN
 #  ifdef NUDGING_T
-          CALL get_3dfld (ng, idTobs(i), ncTOBSid(ng), 1, TOBSname(ng), &
-     &                    update(1), LBi, UBi, LBj, UBj, 2, 1,          &
+          CALL get_3dfld (ng, iNLM, idTobs(i), ncTOBSid(ng), 1,         &
+     &                    TOBSname(ng), update(1),                      &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,           &
 #   ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
 #   endif
      &                    OBS(ng) % Tdat(LBi,LBj,1,1,i))
-          CALL get_3dfld (ng, idTerr(i), ncTOBSid(ng), 1, TOBSname(ng), &
-     &                    update(2), LBi, UBi, LBj, UBj, 2, 1,          &
+          CALL get_3dfld (ng, iNLM, idTerr(i), ncTOBSid(ng), 1,         &
+     &                    TOBSname(ng), update(2),                      &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,           &
 #   ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
 #   endif
      &                    OBS(ng) % EdatT(LBi,LBj,1,1,i))
-          IF (update(1).and.update(2)) update_T(i,ng)=.true.
+          IF (update(1).and.update(2)) update_T(i,ng)=.TRUE.
 #  else
-          CALL get_3dfld (ng, idTobs(i), ncTOBSid(ng), 1, TOBSname(ng), &
-     &                    update(1), LBi, UBi, LBj, UBj, 1, 1,          &
+          CALL get_3dfld (ng, iNLM, idTobs(i), ncTOBSid(ng), 1,         &
+     &                    TOBSname(ng), update(1),                      &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, 1,           &
 #   ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
 #   endif
      &                    OBS(ng) % Tobs(LBi,LBj,1,i))
-          CALL get_3dfld (ng, idTerr(i), ncTOBSid(ng), 1, TOBSname(ng), &
-     &                    update(2), LBi, UBi, LBj, UBj, 1, 1,          &
+          CALL get_3dfld (ng, iNLM, idTerr(i), ncTOBSid(ng), 1,         &
+     &                    TOBSname(ng), update(2),                      &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, 1,           &
 #   ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
 #   endif
      &                    OBS(ng) % EobsT(LBi,LBj,1,i))
           IF (update(1).and.update(2)) THEN
-            update_T(i,ng)=.true.
+            update_T(i,ng)=.TRUE.
             tTobs(1,i,ng)=Vtime(1,idTobs(i),ng)
             tsTobs(i,ng)=Vtime(1,idTobs(i),ng)*day2sec
-            Finfo(5,idTobs(i),ng)=tsTobs(i,ng)
-            Finfo(5,idTerr(i),ng)=tsTobs(i,ng)
-            EobsTmin(i,ng)=Finfo(4,idTerr(i),ng)
-            EobsTmax(i,ng)=Finfo(5,idTerr(i),ng)
+            Finfo(7,idTobs(i),ng)=tsTobs(i,ng)
+            Finfo(7,idTerr(i),ng)=tsTobs(i,ng)
+            EobsTmin(i,ng)=Finfo(8,idTerr(i),ng)
+            EobsTmax(i,ng)=Finfo(9,idTerr(i),ng)
           END IF
 #  endif
         END IF
       END DO
 # endif
+
 # if defined NUDGING_UVsur || defined ASSIMILATION_UVsur
 !
 !-----------------------------------------------------------------------
@@ -935,47 +1002,54 @@
 !
       IF (assi_UVsur(ng)) THEN
 #  ifdef NUDGING_UVsur
-        CALL get_2dfld (ng, idUsur, ncVSURid(ng), 1, VSURname(ng),      &
-     &                  update(1), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idUsur, ncVSURid(ng), 1,              &
+     &                  VSURname(ng), update(1),                        &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % umask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Usurdat(LBi,LBj,1))
-        CALL get_2dfld (ng, idVsur, ncVSURid(ng), 1, VSURname(ng),      &
-     &                  update(2), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idVsur, ncVSURid(ng), 1,              &
+     &                  VSURname(ng), update(2),                        &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % vmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Vsurdat(LBi,LBj,1))
-        CALL get_2dfld (ng, idUVse, ncVSURid(ng), 1, VSURname(ng),      &
-     &                  update(3), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_2dfld (ng, iNLM, idUVse, ncVSURid(ng), 1,              &
+     &                  VSURname(ng), update(3),                        &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EdatVsur(LBi,LBj,1))
 #  else
-        CALL get_2dfld (ng, idUsur, ncVSURid(ng), 1, VSURname(ng),      &
-     &                  update(1), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_2dfld (ng, iNLM, idUsur, ncVSURid(ng), 1,              &
+     &                  VSURname(ng), update(1),                        &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % umask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Usur(LBi,LBj))
-        CALL get_2dfld (ng, idVsur, ncVSURid(ng), 1, VSURname(ng),      &
-     &                  update(2), LBi, UBi, LBj, UBj, 1 ,1,            &
+        CALL get_2dfld (ng, iNLM, idVsur, ncVSURid(ng), 1,              &
+     &                  VSURname(ng), update(2),                        &
+     &                  LBi, UBi, LBj, UBj, 1 ,1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % vmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Vsur(LBi,LBj))
-        CALL get_2dfld (ng, idUVse, ncVSURid(ng), 1, VSURname(ng),      &
-     &                  update(3), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_2dfld (ng, iNLM, idUVse, ncVSURid(ng), 1,              &
+     &                  VSURname(ng), update(3),                        &
+     &                  LBi, UBi, LBj, UBj, 1, 1,                       &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EobsVsur(LBi,LBj))
 #  endif
-        IF (update(1).and.update(2).and.update(3)) update_UVsur=.true.
+        IF (update(1).and.update(2).and.update(3)) update_UVsur=.TRUE.
       END IF
 # endif
+
 # if defined NUDGING_UV || defined ASSIMILATION_UV
 !
 !-----------------------------------------------------------------------
@@ -984,65 +1058,144 @@
 !
       IF (assi_UV(ng)) THEN
 #  ifdef NUDGING_UV
-        CALL get_3dfld (ng, idUobs, ncVOBSid(ng), 1, VOBSname(ng),      &
-     &                  update(1), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_3dfld (ng, iNLM, idUobs, ncVOBSid(ng), 1,              &
+     &                  VOBSname(ng), update(1),                        &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
 #   ifdef MASKING
      &                  GRID(ng) % umask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Udat(LBi,LBj,1,1))
-        CALL get_3dfld (ng, idVobs, ncVOBSid(ng), 1, VOBSname(ng),      &
-     &                  update(2), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_3dfld (ng, iNLM, idVobs, ncVOBSid(ng), 1,              &
+     &                  VOBSname(ng), update(2),                        &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
 #   ifdef MASKING
      &                  GRID(ng) % vmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Vdat(LBi,LBj,1,1))
-        CALL get_3dfld (ng, idUVer, ncVOBSid(ng), 1, VOBSname(ng),      &
-     &                  update(3), LBi, UBi, LBj, UBj, 2, 1,            &
+        CALL get_3dfld (ng, iNLM, idUVer, ncVOBSid(ng), 1,              &
+     &                  VOBSname(ng), update(3),                        &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EdatUV(LBi,LBj,1,1))
-        IF (update(1).and.update(2).and.update(3)) update_UV(ng)=.true.
+        IF (update(1).and.update(2).and.update(3)) update_UV(ng)=.TRUE.
 #  else
-        CALL get_3dfld (ng, idUobs, ncVOBSid(ng), 1, VOBSname(ng),      &
-     &                  update(1), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_3dfld (ng, iNLM, idUobs, ncVOBSid(ng), 1,              &
+     &                  VOBSname(ng), update(1),                        &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 1, 1,             &
 #   ifdef MASKING
      &                  GRID(ng) % umask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Uobs(LBi,LBj,1))
-        CALL get_3dfld (ng, idVobs, ncVOBSid(ng), 1, VOBSname(ng),      &
-     &                  update(2), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_3dfld (ng, iNLM, idVobs, ncVOBSid(ng), 1,              &
+     &                  VOBSname(ng), update(2),                        &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 1, 1,             &
 #   ifdef MASKING
      &                  GRID(ng) % vmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % Vobs(LBi,LBj,1))
-        CALL get_3dfld (ng, idUVer, ncVOBSid(ng), 1, VOBSname(ng),      &
-     &                  update(3), LBi, UBi, LBj, UBj, 1, 1,            &
+        CALL get_3dfld (ng, iNLM, idUVer, ncVOBSid(ng), 1,              &
+     &                  VOBSname(ng), update(3),                        &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 1, 1,             &
 #   ifdef MASKING
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #   endif
      &                  OBS(ng) % EobsUV(LBi,LBj,1))
         IF (update(1).and.update(2).and.update(3)) THEN
-          update_UV(ng)=.true.
+          update_UV(ng)=.TRUE.
           tVobs(1,ng)=Vtime(1,idVobs,ng)
           tsVobs(ng)=Vtime(1,idVobs,ng)*day2sec
-          Finfo(5,idUobs,ng)=tsVobs(ng)
-          Finfo(5,idVobs,ng)=tsVobs(ng)
-          Finfo(5,idUVer,ng)=tsVobs(ng)
-          EobsUVmin=Finfo(4,idUVer,ng)
-          EobsUVmax=Finfo(5,idUVer,ng)
+          Finfo(7,idUobs,ng)=tsVobs(ng)
+          Finfo(7,idVobs,ng)=tsVobs(ng)
+          Finfo(7,idUVer,ng)=tsVobs(ng)
+          EobsUVmin=Finfo(8,idUVer,ng)
+          EobsUVmax=Finfo(9,idUVer,ng)
         END IF
 #  endif
       END IF
 # endif
 #endif
+
+#ifdef TLM_CHECK
+!
+!-----------------------------------------------------------------------
+!  If tangent linear model check, read in nonlinear forward solution
+!  to compute dot product with perturbated nonlinear solution. Time
+!  interpolation between snapshot is not required (see subroutine
+!  "nl_dotproduct").
+!-----------------------------------------------------------------------
+!
+      IF (outer.ge.1) THEN
+!
+!  Read in free-surface.
+!
+        CALL get_2dfld (ng, iNLM, idFsur, ncFWDid(ng), 1,               &
+     &                  FWDname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+# ifdef MASKING
+     &                  GRID(ng) % rmask(LBi,LBj),                      &
+# endif
+     &                  OCEAN(ng) % zetaG(LBi,LBj,1))
+!
+!  Read 2D momentum.
+!
+        CALL get_2dfld (ng, iNLM, idUbar, ncFWDid(ng), 1,               &
+     &                  FWDname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+# ifdef MASKING
+     &                  GRID(ng) % umask(LBi,LBj),                      &
+# endif
+     &                  OCEAN(ng) % ubarG(LBi,LBj,1))
+        CALL get_2dfld (ng, iNLM, idVbar, ncFWDid(ng), 1,               &
+     &                  FWDname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+# ifdef MASKING
+     &                  GRID(ng) % vmask(LBi,LBj),                      &
+# endif
+     &                  OCEAN(ng) % vbarG(LBi,LBj,1))
+# ifdef SOLVE3D
+!
+!  Read in 3D momentum.
+!
+        CALL get_3dfld (ng, iNLM, idUvel, ncFWDid(ng), 1,               &
+     &                  FWDname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
+#  ifdef MASKING
+     &                  GRID(ng) % umask(LBi,LBj),                      &
+#  endif
+     &                  OCEAN(ng) % uG(LBi,LBj,1,1))
+        CALL get_3dfld (ng, iNLM, idVvel, ncFWDid(ng), 1,               &
+     &                  FWDname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
+#  ifdef MASKING
+     &                  GRID(ng) % vmask(LBi,LBj),                      &
+#  endif
+     &                  OCEAN(ng) % vG(LBi,LBj,1,1))
+!
+!  Read in 3D tracers.
+!
+        DO i=1,NT(ng)
+          CALL get_3dfld (ng, iNLM, idTvar(i), ncFWDid(ng), 1,          &
+     &                    FWDname(ng), update(1),                       &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,           &
+#  ifdef MASKING
+     &                    GRID(ng) % vmask(LBi,LBj),                    &
+#  endif
+     &                    OCEAN(ng) % tG(LBi,LBj,1,1,i))
+
+        END DO
+# endif
+      END IF
+#endif
+
 #ifdef PROFILE
 !
 !-----------------------------------------------------------------------
 !  Turn off input data time wall clock.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 3)
+      CALL wclock_off (ng, iNLM, 3)
 #endif
       RETURN
       END SUBROUTINE get_data

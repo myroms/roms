@@ -1,9 +1,9 @@
 #include "cppdefs.h"
-#ifdef AVERAGES
+#if defined NONLINEAR && defined AVERAGES
       SUBROUTINE set_avg (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This subroutine accumulates and computes output time-averaged       !
@@ -24,19 +24,25 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 5)
+      CALL wclock_on (ng, iNLM, 5)
 # endif
       CALL set_avg_tile (ng, Istr, Iend, Jstr, Jend,                    &
-     &                   KOUT, NOUT)
+# ifdef SOLVE3D
+     &                   NOUT,                                          &
+# endif
+     &                   KOUT)
 # ifdef PROFILE
-      CALL wclock_off (ng, 5)
+      CALL wclock_off (ng, iNLM, 5)
 # endif
       RETURN
       END SUBROUTINE set_avg
 !
 !***********************************************************************
       SUBROUTINE set_avg_tile (ng, Istr, Iend, Jstr, Jend,              &
-     &                         Kout, Nout)
+# ifdef SOLVE3D
+     &                         Nout,                                    &
+# endif
+     &                         Kout)
 !***********************************************************************
 !
       USE mod_param
@@ -52,7 +58,10 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: Kout, Nout
+# ifdef SOLVE3D
+      integer, intent(in) :: Nout
+# endif
+      integer, intent(in) :: Kout
 !
 !  Local variable declarations.
 !
@@ -69,14 +78,22 @@
 ! averaged fields are computed correctly.
 !-----------------------------------------------------------------------
 !
-      IF (((iic(ng).gt.ntsavg(ng)).and.                                 &
-     &     (MOD(iic(ng)-1,navg(ng)).eq.1)).or.                          &
+      IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
+     &     (MOD(iic(ng)-1,nAVG(ng)).eq.1)).or.                          &
      &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart))) THEN
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             AVERAGE(ng)%avgzeta(i,j)=OCEAN(ng)%zeta(i,j,Kout)
             AVERAGE(ng)%avgu2d (i,j)=OCEAN(ng)%ubar(i,j,Kout)
             AVERAGE(ng)%avgv2d (i,j)=OCEAN(ng)%vbar(i,j,Kout)
+# ifdef AVERAGES_QUADRATIC
+            AVERAGE(ng)%avgZZ(i,j)=OCEAN(ng)%zeta(i,j,Kout)*            &
+     &                             OCEAN(ng)%zeta(i,j,Kout)
+            AVERAGE(ng)%avgU2(i,j)=OCEAN(ng)%ubar(i,j,Kout)*            &
+     &                             OCEAN(ng)%ubar(i,j,Kout)
+            AVERAGE(ng)%avgV2(i,j)=OCEAN(ng)%vbar(i,j,Kout)*            &
+     &                             OCEAN(ng)%vbar(i,j,Kout)
+# endif
           END DO
         END DO
 # ifdef SOLVE3D
@@ -142,6 +159,11 @@
         DO it=1,NAT
           DO k=1,N(ng)
             DO j=JstrR,JendR
+              DO j=IstrR,IendR
+                AVERAGE(ng)%avgTT(i,j,k,it)=                            &
+     &                                 (OCEAN(ng)%t(i,j,k,Nout,it)*     &
+     &                                  OCEAN(ng)%t(i,j,k,Nout,it))
+              END DO
               DO i=Istr,Iend
                 AVERAGE(ng)%avgUT(i,j,k,it)=                            &
      &                                 0.5_r8*OCEAN(ng)%u(i,j,k,Nout)*  &
@@ -191,10 +213,15 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             AVERAGE(ng)%avgstf(i,j)=FORCES(ng)%stflx(i,j,itemp)
+            AVERAGE(ng)%avgswf(i,j)=FORCES(ng)%stflx(i,j,isalt)
 #   ifdef BULK_FLUXES
             AVERAGE(ng)%avglhf(i,j)=FORCES(ng)%lhflx(i,j)
             AVERAGE(ng)%avgshf(i,j)=FORCES(ng)%shflx(i,j)
             AVERAGE(ng)%avglrf(i,j)=FORCES(ng)%lrflx(i,j)
+#    ifdef EMINUSP
+            AVERAGE(ng)%avgevap(i,j)=FORCES(ng)%evap(i,j)
+            AVERAGE(ng)%avgrain(i,j)=FORCES(ng)%rain(i,j)
+#    endif
 #   endif
 #   ifdef SHORTWAVE
             AVERAGE(ng)%avgsrf(i,j)=FORCES(ng)%srflx(i,j)
@@ -216,7 +243,7 @@
 !  Accumulate time-averaged fields.
 !-----------------------------------------------------------------------
 !
-      ELSE IF (iic(ng).gt.ntsavg(ng)) THEN
+      ELSE IF (iic(ng).gt.ntsAVG(ng)) THEN
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             AVERAGE(ng)%avgzeta(i,j)=AVERAGE(ng)%avgzeta(i,j)+          &
@@ -225,6 +252,17 @@
      &                               OCEAN(ng)%ubar(i,j,Kout)
             AVERAGE(ng)%avgv2d (i,j)=AVERAGE(ng)%avgv2d (i,j)+          &
      &                               OCEAN(ng)%vbar(i,j,Kout)
+# ifdef AVERAGES_QUADRATIC
+            AVERAGE(ng)%avgZZ(i,j)=AVERAGE(ng)%avgZZ(i,j)+              &
+     &                             OCEAN(ng)%zeta(i,j,Kout)*            &
+     &                             OCEAN(ng)%zeta(i,j,Kout)
+            AVERAGE(ng)%avgU2(i,j)=AVERAGE(ng)%avgU2(i,j)+              &
+     &                             OCEAN(ng)%ubar(i,j,Kout)*            &
+     &                             OCEAN(ng)%ubar(i,j,Kout)
+            AVERAGE(ng)%avgV2(i,j)=AVERAGE(ng)%avgU2(i,j)+              &
+     &                             OCEAN(ng)%vbar(i,j,Kout)*            &
+     &                             OCEAN(ng)%vbar(i,j,Kout)
+# endif
           END DO
         END DO
 # ifdef SOLVE3D
@@ -278,15 +316,18 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              AVERAGE(ng)%avgUU(i,j,k)=OCEAN(ng)%u(i,j,k,Nout)*         &
+              AVERAGE(ng)%avgUU(i,j,k)=AVERAGE(ng)%avgUU(i,j,k)+        &
+     &                                 OCEAN(ng)%u(i,j,k,Nout)*         &
      &                                 OCEAN(ng)%u(i,j,k,Nout)
-              AVERAGE(ng)%avgVV(i,j,k)=OCEAN(ng)%v(i,j,k,Nout)*         &
+              AVERAGE(ng)%avgVV(i,j,k)=AVERAGE(ng)%avgVV(i,j,k)+        &
+     &                                 OCEAN(ng)%v(i,j,k,Nout)*         &
      &                                 OCEAN(ng)%v(i,j,k,Nout)
             END DO
           END DO
           DO j=Jstr,Jend
             DO i=Istr,Iend
-              AVERAGE(ng)%avgUV(i,j,k)=0.25_r8*                         &
+              AVERAGE(ng)%avgUV(i,j,k)=AVERAGE(ng)%avgUV(i,j,k)+        &
+     &                                 0.25_r8*                         &
      &                                 (OCEAN(ng)%u(i  ,j  ,k,Nout)+    &
      &                                  OCEAN(ng)%u(i+1,j  ,k,Nout))*   &
      &                                 (OCEAN(ng)%v(i  ,j  ,k,Nout)+    &
@@ -297,8 +338,15 @@
         DO it=1,NAT
           DO k=1,N(ng)
             DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgTT(i,j,k,it)=                            &
+     &                                 AVERAGE(ng)%avgTT(i,j,k,it)+     &
+     &                                 (OCEAN(ng)%t(i,j,k,Nout,it)*     &
+     &                                  OCEAN(ng)%t(i,j,k,Nout,it))
+              END DO
               DO i=Istr,Iend
                 AVERAGE(ng)%avgUT(i,j,k,it)=                            &
+     &                                 AVERAGE(ng)%avgUT(i,j,k,it)+     &
      &                                 0.5_r8*OCEAN(ng)%u(i,j,k,Nout)*  &
      &                                 (OCEAN(ng)%t(i-1,j,k,Nout,it)+   &
      &                                  OCEAN(ng)%t(i  ,j,k,Nout,it))
@@ -307,6 +355,7 @@
             DO j=Jstr,Jend
               DO i=IstrR,IendR
                 AVERAGE(ng)%avgVT(i,j,k,it)=                            &
+     &                                 AVERAGE(ng)%avgVT(i,j,k,it)+     &
      &                                 0.5_r8*OCEAN(ng)%v(i,j,k,Nout)*  &
      &                                 (OCEAN(ng)%t(i,j-1,k,Nout,it)+   &
      &                                  OCEAN(ng)%t(i,j  ,k,Nout,it))
@@ -350,6 +399,8 @@
           DO i=IstrR,IendR
             AVERAGE(ng)%avgstf(i,j)=AVERAGE(ng)%avgstf(i,j)+            &
      &                              FORCES(ng)%stflx(i,j,itemp)
+            AVERAGE(ng)%avgswf(i,j)=AVERAGE(ng)%avgswf(i,j)+            &
+     &                              FORCES(ng)%stflx(i,j,isalt)
 #   ifdef BULK_FLUXES
             AVERAGE(ng)%avglhf(i,j)=AVERAGE(ng)%avglhf(i,j)+            &
      &                              FORCES(ng)%lhflx(i,j)
@@ -357,6 +408,12 @@
      &                              FORCES(ng)%shflx(i,j)
             AVERAGE(ng)%avglrf(i,j)=AVERAGE(ng)%avglrf(i,j)+            &
      &                              FORCES(ng)%lrflx(i,j)
+#    ifdef EMINUSP
+            AVERAGE(ng)%avgevap(i,j)=AVERAGE(ng)%avgevap(i,j)+          &
+     &                               FORCES(ng)%evap(i,j)
+            AVERAGE(ng)%avgrain(i,j)=AVERAGE(ng)%avgrain(i,j)+          &
+     &                               FORCES(ng)%rain(i,j)
+#    endif
 #   endif
 #   ifdef SHORTWAVE
             AVERAGE(ng)%avgsrf(i,j)=AVERAGE(ng)%avgsrf(i,j)+            &
@@ -382,18 +439,23 @@
 !  Convert accumulated sums into time-averages, if appropriate.
 !-----------------------------------------------------------------------
 !
-      IF ((iic(ng).gt.ntsavg(ng)).and.                                  &
-     &    (MOD(iic(ng)-1,navg(ng)).eq.0).and.                           &
+      IF ((iic(ng).gt.ntsAVG(ng)).and.                                  &
+     &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
      &    ((iic(ng).ne.ntstart).or.(nrrec.eq.0))) THEN
-        fac=1.0_r8/REAL(navg(ng),r8)
+        fac=1.0_r8/REAL(nAVG(ng),r8)
         IF (SOUTH_WEST_TEST) THEN
-          avgtime(ng)=avgtime(ng)+REAL(navg(ng),r8)*dt(ng)
+          AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
         END IF
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             AVERAGE(ng)%avgzeta(i,j)=fac*AVERAGE(ng)%avgzeta(i,j)
             AVERAGE(ng)%avgu2d (i,j)=fac*AVERAGE(ng)%avgu2d (i,j)
             AVERAGE(ng)%avgv2d (i,j)=fac*AVERAGE(ng)%avgv2d (i,j)
+# ifdef AVERAGES_QUADRATIC
+            AVERAGE(ng)%avgZZ(i,j)=fac*AVERAGE(ng)%avgZZ(i,j)
+            AVERAGE(ng)%avgU2(i,j)=fac*AVERAGE(ng)%avgU2(i,j)
+            AVERAGE(ng)%avgV2(i,j)=fac*AVERAGE(ng)%avgV2(i,j)
+# endif
           END DO
         END DO
 # ifdef SOLVE3D
@@ -452,6 +514,10 @@
         DO it=1,NAT
           DO k=1,N(ng)
             DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                AVERAGE(ng)%avgTT(i,j,k,it)=fac*                        &
+     &                                      AVERAGE(ng)%avgTT(i,j,k,it)
+              END DO
               DO i=Istr,Iend
                 AVERAGE(ng)%avgUT(i,j,k,it)=fac*                        &
      &                                      AVERAGE(ng)%avgUT(i,j,k,it)
@@ -497,10 +563,15 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             AVERAGE(ng)%avgstf(i,j)=fac*AVERAGE(ng)%avgstf(i,j)
+            AVERAGE(ng)%avgswf(i,j)=fac*AVERAGE(ng)%avgswf(i,j)
 #   ifdef BULK_FLUXES
             AVERAGE(ng)%avglhf(i,j)=fac*AVERAGE(ng)%avglhf(i,j)
             AVERAGE(ng)%avgshf(i,j)=fac*AVERAGE(ng)%avgshf(i,j)
             AVERAGE(ng)%avglrf(i,j)=fac*AVERAGE(ng)%avglrf(i,j)
+#    ifdef EMINUSP
+            AVERAGE(ng)%avgevap(i,j)=fac*AVERAGE(ng)%avgevap(i,j)
+            AVERAGE(ng)%avgrain(i,j)=fac*AVERAGE(ng)%avgrain(i,j)
+#    endif
 #   endif
 #   ifdef SHORTWAVE
             AVERAGE(ng)%avgsrf(i,j)=fac*AVERAGE(ng)%avgsrf(i,j)

@@ -1,8 +1,8 @@
 #include "cppdefs.h"
       SUBROUTINE biology (ng, tile)
 !
-!=================================================== W. Paul Bissett ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!*************************************************** W. Paul Bissett ***
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !  Copyright (c) 1997 W. Paul Bissett, FERI                            !
 !                                                                      !
 !  The EcoSim code has been developed for research purposes only. It   !
@@ -12,7 +12,7 @@
 !  of these formulations is forbidden without express written          !
 !  permission from FERI. All rights reserved.                          !
 !                                                                      !
-!================================================== Hernan G. Arango ===
+!************************************************** Hernan G. Arango ***
 !                                                                      !
 !  This routine computes the EcoSim sources and sinks and adds them    !
 !  to the global biological fields.                                    !
@@ -33,7 +33,7 @@
 !  This version uses a descending index for depth that is different    !
 !  than the original coding.                                           !
 !                                                                      !
-!=======================================================================
+!***********************************************************************
 !
       USE mod_param
       USE mod_forces
@@ -43,26 +43,26 @@
 
       integer, intent(in) :: ng, tile
 
-# include "tile.h"
+#include "tile.h"
 !
-# ifdef PROFILE
-      CALL wclock_on (ng, 15)
-# endif
+#ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 15)
+#endif
       CALL biology_tile (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
      &                   nnew(ng),                                      &
-# ifdef MASKING
+#ifdef MASKING
      &                   GRID(ng) % rmask,                              &
-# endif
+#endif
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % z_r,                                &
      &                   GRID(ng) % z_w,                                &
      &                   FORCES(ng) % SpecIr,                           &
      &                   FORCES(ng) % avcos,                            &
      &                   OCEAN(ng) % t)
-# ifdef PROFILE
-      CALL wclock_off (ng, 15)
-# endif
+#ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 15)
+#endif
       RETURN
       END SUBROUTINE biology
 !
@@ -70,9 +70,9 @@
       SUBROUTINE biology_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
      &                         nnew,                                    &
-# ifdef MASKING
+#ifdef MASKING
      &                         rmask,                                   &
-# endif
+#endif
      &                         Hz, z_r, z_w,                            &
      &                         SpecIr, avcos,                           &
      &                         t)
@@ -81,6 +81,7 @@
       USE mod_param
       USE mod_biology
       USE mod_scalars
+      USE mod_iounits
 !
 !  Imported variable declarations.
 !
@@ -88,27 +89,27 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
       integer, intent(in) :: nnew
 
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
-#  endif
+# endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: SpecIr(LBi:,LBj:,:)
       real(r8), intent(in) :: avcos(LBi:,LBj:,:)
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
-# else
-#  ifdef MASKING
+#else
+# ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-#  endif
+# endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:UBk)
       real(r8), intent(in) :: SpecIr(LBi:UBi,LBj:UBj,NBands)
       real(r8), intent(in) :: avcos(LBi:UBi,LBj:UBj,NBands)
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,UBk,3,UBt)
-# endif
+#endif
 !
 !  Local variable declarations.
 !
@@ -124,7 +125,7 @@
       real(r8) :: photo_decay, slope_AC, tChl, theta_m, total_photo
       real(r8) :: tot_ab, tot_b, tot_bb
 
-      real(r8) :: Het_BAC, HsNIT
+      real(r8) :: Het_BAC
       real(r8) :: N_quota, RelDOC1, RelDON1, RelDOP1, RelFe
 
       real(r8), dimension(4) :: Bac_G
@@ -147,6 +148,7 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: E0_nz
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Ed_nz
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DOC_frac
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NitrBAC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NH4toNO3
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NtoNBAC
@@ -212,6 +214,16 @@
       J_LOOP : DO j=Jstr,Jend
 !
 !-----------------------------------------------------------------------
+!  Compute inverse thickness to avoid repeated divisions.
+!-----------------------------------------------------------------------
+!
+        DO k=1,N(ng)
+          DO i=Istr,Iend
+            Hz_inv(i,k)=1.0_r8/Hz(i,j,k)
+          END DO
+        END DO
+!
+!-----------------------------------------------------------------------
 !  Extract biological variables from tracer arrays, place them into
 !  scratch arrays, and restrict their values to be positive definite.
 !-----------------------------------------------------------------------
@@ -220,8 +232,7 @@
           itrc=idbio(ibio)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              Bio(i,k,itrc)=MAX(MinVal,                                 &
-     &                          t(i,j,k,nnew,itrc))
+              Bio(i,k,itrc)=MAX(MinVal,t(i,j,k,nnew,itrc)*Hz_inv(i,k))
               Bio_old(i,k,itrc)=Bio(i,k,itrc)
 !!
 !! HGA - The new tendency terms were not initialized.  This gives
@@ -240,8 +251,8 @@
 !
         DO k=1,N(ng)
           DO i=Istr,Iend
-            Bio(i,k,itemp)=t(i,j,k,nnew,itemp)
-            Bio(i,k,isalt)=t(i,j,k,nnew,isalt)
+            Bio(i,k,itemp)=t(i,j,k,nnew,itemp)*Hz_inv(i,k)
+            Bio(i,k,isalt)=t(i,j,k,nnew,isalt)*Hz_inv(i,k)
           END DO
         END DO
 !
@@ -629,25 +640,16 @@
                 IF ((Bio(i,k,iDOMC(ilab)).gt.0.0_r8).and.               &
      &              (Bio(i,k,iDOMN(ilab)).gt.0.0_r8).and.               &
      &              (Bio(i,k,iDOMP(ilab)).gt.0.0_r8)) THEN
-                  DOC_lab=Bio(i,k,iDOMC(ilab))
-!!
-!! HGA - This fraction is always one. It is dividing by the same value.
-!!       Is there a bug here? It is dangerous to use scalars in this
-!!       way. It looks like the division of two different variables and
-!!       values but it is not.
-!!
-                  DOC_frac(i,k)=Bio(i,k,iDOMC(ilab))/DOC_lab
                   NupDOC_ba(i,k,ibac)=GtBAC(i,k,ibac)*                  &
      &                                Bio(i,k,iBacC(ibac))*             &
      &                                I_Bac_Ceff(ng)*                   &
-     &                                (DOC_lab/(HsDOC_ba(ibac,ng)+      &
-     &                                          DOC_lab))
+     &                                (Bio(i,k,iDOMC(ilab))/            &
+     &                                (HsDOC_ba(ibac,ng)+               &
+     &                                 Bio(i,k,iDOMC(ilab))))
                   NupDON_ba(i,k,ibac)=NupDOC_ba(i,k,ibac)*              &
-     &                                DOC_frac(i,k)*                    &
      &                                Bio(i,k,iDOMN(ilab))/             &
      &                                Bio(i,k,iDOMC(ilab))
                   NupDOP_ba(i,k,ibac)=NupDOC_ba(i,k,ibac)*              &
-     &                                DOC_frac(i,k)*                    &
      &                                Bio(i,k,iDOMP(ilab))/             &
      &                                Bio(i,k,iDOMC(ilab))
                 ELSE
@@ -821,19 +823,14 @@
 !
           DO k=1,N(ng)
             DO i=Istr,Iend
+              NitrBAC(i,k)=0.0_r8
               NH4toNO3(i,k)=0.0_r8
               NtoNBAC(i,k)=0.0_r8
               NtoPBAC(i,k)=0.0_r8
               NtoFeBAC(i,k)=0.0_r8
-!!
-!! HGA - Need a value for HsNIT.  This variable is used before any
-!!       value is assigned to it. If NH4=0, the model blows-up. I
-!!       gave a temporary value to get the model running.
-!!
-              HsNIT=0.1
               IF (k.lt.Keuphotic(i)) THEN
                 NH4toNO3(i,k)=RtNIT(ng)*                                &
-     &                        Bio(i,k,iNH4_)/(HsNIT+Bio(i,k,iNH4_))
+     &                        Bio(i,k,iNH4_)/(HsNIT(ng)+Bio(i,k,iNH4_))
 !
 !  Nitrification fixes DIC into POC.
 !  Conversion factor of 7.0 from Kaplan 1983 "Nitrogen in the Sea"
@@ -860,7 +857,7 @@
             DO i=Istr,Iend
               FV2=totNO3_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iNO3_)) THEN
-                FV1=Bio(i,k,iNO3_)/FV2
+                FV1=(Bio(i,k,iNO3_)-VSMALL)/FV2
                 DO iphy=1,Nphy
                   NupNO3(i,k,iphy)=NupNO3(i,k,iphy)*FV1
                 END DO
@@ -868,7 +865,7 @@
 !
               FV2=totNH4_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iNH4_)) THEN
-                FV1=Bio(i,k,iNH4_)/FV2
+                FV1=(Bio(i,k,iNH4_)-VSMALL)/FV2
                 DO iphy=1,Nphy
                   NupNH4(i,k,iphy)=NupNH4(i,k,iphy)*FV1
                 END DO
@@ -881,7 +878,7 @@
 !
               FV2=totSiO_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iSiO_)) THEN
-                FV1=Bio(i,k,iSiO_)/FV2
+                FV1=(Bio(i,k,iSiO_)-VSMALL)/FV2
                 DO iphy=1,Nphy
                   NupSiO(i,k,iphy)=NupSiO(i,k,iphy)*FV1
                 END DO
@@ -889,7 +886,7 @@
 !
               FV2=totPO4_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iPO4_)) THEN
-                FV1=Bio(i,k,iPO4_)/FV2
+                FV1=(Bio(i,k,iPO4_)-VSMALL)/FV2
                 DO iphy=1,Nphy
                   NupPO4(i,k,iphy)=NupPO4(i,k,iphy)*FV1
                 END DO
@@ -901,7 +898,7 @@
 !
               FV2=totFe_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iFeO_)) THEN
-                FV1=Bio(i,k,iFeO_)/FV2
+                FV1=(Bio(i,k,iFeO_)-VSMALL)/FV2
                 DO iphy=1,Nphy
                   NupFe(i,k,iphy)=NupFe(i,k,iphy)*FV1
                 END DO
@@ -916,7 +913,7 @@
 !
               FV2=totDOC_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iDOMC(ilab))) THEN
-                FV1=Bio(i,k,iDOMC(ilab))/FV2
+                FV1=(Bio(i,k,iDOMC(ilab))-VSMALL)/FV2
                 totDOC_d(i,k)=totDOC_d(i,k)*FV1
                 DO ibac=1,Nbac
                   NupDOC_ba(i,k,ibac)=NupDOC_ba(i,k,ibac)*FV1
@@ -929,12 +926,11 @@
                 END DO
               END IF
 !
-!  Bacteria are only group to take up DOC.  Remove BAC DOP uptake
-!  from total uptake; adjust uptake and add back.
+!  Remove BAC DON uptake from total uptake; adjust uptake and add back.
 !
               FV2=totDON_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iDOMN(ilab))) THEN
-                FV1=Bio(i,k,iDOMN(ilab))/FV2
+                FV1=(Bio(i,k,iDOMN(ilab))-VSMALL)/FV2
                 totDON_d(i,k)=totDON_d(i,k)*FV1
                 totDOC_d(i,k)=totDOC_d(i,k)*FV1
                 DO iphy=1,Nphy
@@ -949,12 +945,11 @@
                 END DO
               END IF
 !
-!  Remove BAC DON uptake from total uptake; adjust uptake and add back.
-!  Bacteria are only group to take up DOC.
+!  Remove BAC DOP uptake from total uptake; adjust uptake and add back.
 !
               FV2=totDOP_d(i,k)*dtbio
               IF (FV2.gt.Bio(i,k,iDOMP(ilab))) THEN
-                FV1=Bio(i,k,iDOMP(ilab))/FV2
+                FV1=(Bio(i,k,iDOMP(ilab))-VSMALL)/FV2
                 totDOP_d(i,k)=totDOP_d(i,k)*FV1
                 totDOC_d(i,k)=totDOC_d(i,k)*FV1
                 DO iphy=1,Nphy
@@ -1300,7 +1295,8 @@
 !
 !  To get accurate DOP from C2pDOC, must add back excreted DOC.
 !
-                  FV4=FV1*R_ExBAC_c(ng)*DOC_frac(i,k)*                  &
+                  FV4=FV1*R_ExBAC_c(ng)*                                &
+!!   &                DOC_frac(i,k)*                                    &
      &                Bio(i,k,iDOMP(ilab))/                             &
      &                Bio(i,k,iDOMC(ilab))
                   FV5=FV2-(NupDOP_ba(i,k,ibac)+                         &
@@ -1345,7 +1341,8 @@
 !
 !  To get accurate DON from C2nDOC, must add back excreted DOC.
 !
-                  FV4=FV1*R_ExBAC_c(ng)*DOC_frac(i,k)*                  &
+                  FV4=FV1*R_ExBAC_c(ng)*                                &
+!!   &                DOC_frac(i,k)*                                    &
      &                (Bio(i,k,iDOMN(ilab))/                            &
      &                 Bio(i,k,iDOMC(ilab)))*Frac_ExBAC_n(ng)
                   FV5=FV2-(NupDON_ba(i,k,ibac)+                         &
@@ -1389,7 +1386,8 @@
 !
 !  To get accurate DON from C2nDOC, must add back excreted DOC.
 !
-                  FV4=FV1*R_ExBAC_c(ng)*DOC_frac(i,k)*                  &
+                  FV4=FV1*R_ExBAC_c(ng)*                                &
+!!   &                DOC_frac(i,k)*                                    &
      &                Bio(i,k,iDOMN(ilab))/                             &
      &                Bio(i,k,iDOMC(ilab))*Frac_ExBAC_n(ng)
                   FV5=FV2-(NupDON_ba(i,k,ibac)+                         &
@@ -1407,7 +1405,8 @@
 !
 !  To get accurate DOP from C2pDOC, must add back excreted DOC.
 !
-                  FV4=FV1*R_ExBAC_c(ng)*DOC_frac(i,k)*                  &
+                  FV4=FV1*R_ExBAC_c(ng)*                                &
+!!   &               DOC_frac(i,k)*                                     &
      &                Bio(i,k,iDOMP(ilab))/                             &
      &                Bio(i,k,iDOMC(ilab))
                   FV5=FV2-(NupDOP_ba(i,k,ibac)+                         &
@@ -1437,12 +1436,13 @@
 !       wash out in the budgeting.
 !
                 Bio_new(i,k,iDOMC(ilab))=Bio_new(i,k,iDOMC(ilab))-      &
-     &                                   (totDOC_d(i,k)-RelDOC1)*       &
-     &                                   DOC_frac(i,k)
-                Bio_new(i,k,iCDMC(ilab))=Bio_new(i,k,iCDMC(ilab))-      &
-     &                                   (totDOC_d(i,k)-RelDOC1)*       &
-     &                                   (1.0_r8-DOC_frac(i,k))
-!
+     &                                   (totDOC_d(i,k)-RelDOC1)
+!!   &                                   (totDOC_d(i,k)-RelDOC1)*       &
+!!   &                                   DOC_frac(i,k)
+!!              Bio_new(i,k,iCDMC(ilab))=Bio_new(i,k,iCDMC(ilab))-      &
+!!   &                                   (totDOC_d(i,k)-RelDOC1)*       &
+!!   &                                   (1.0_r8-DOC_frac(i,k))
+!!
 !  This is inclusive of RelDOX1, excretion of DON1 removed above.
 !
                 Bio_new(i,k,iDOMN(ilab))=Bio_new(i,k,iDOMN(ilab))-      &
@@ -1582,6 +1582,24 @@
             END DO
           END DO
 !
+!  Pigment Grazing.  No fecal or dissolved terms for pigments.
+!
+          DO ipig=1,Npig
+            DO iphy=1,Nphy
+              IF (iPigs(iphy,ipig).gt.0) THEN
+                itrc=iPigs(iphy,ipig)
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    IF (Bio(i,k,iPhyC(iphy)).gt.refuge(i,k,iphy)) THEN
+                      FV1=graz_act(i,k,iphy)*Bio(i,k,itrc)
+                      Bio_new(i,k,itrc)=Bio_new(i,k,itrc) - FV1
+                    END IF
+                  END DO
+                END DO
+              END IF
+            END DO
+          END DO
+!
 !-----------------------------------------------------------------------
 !  Bacterial losses.
 !-----------------------------------------------------------------------
@@ -1594,55 +1612,89 @@
 !
 !  Grazing calculation. (All fecal material to slow sinking pool.)
 !
-                FV1=BacCYC(ng)*Bio_new(i,k,iBacC(ibac))
-                FV2=BacPEL(ng)*Bio_new(i,k,iBacC(ibac))
-                FV3=BacDOC(ng)*Bio_new(i,k,iBacC(ibac))
-                FV4=FV1+FV2+FV3
+!! WPB - There appears to be some rounding errors that cause bacteria
+!!       populations to drop just below initialization values.  Once
+!!       they do, they never recover and the new lower values propagate
+!!       through the model.  Only evident in Bac_P1 at the moment.
+!!
+!!                FV1=BacCYC(ng)*Bio_new(i,k,iBacC(ibac))
+!!                FV2=BacPEL(ng)*Bio_new(i,k,iBacC(ibac))
+!!                FV3=BacDOC(ng)*Bio_new(i,k,iBacC(ibac))
+!!                FV4=FV1+FV2+FV3
 !
 !  Carbon calculations.
 !
                 Bio_new(i,k,iBacC(ibac))=Bio_new(i,k,iBacC(ibac))-      &
-     &                                   FV4
+!!   &                                   FV4
+     &                                   Bio_new(i,k,iBacC(ibac))
                 Bio_new(i,k,iFecC(isfc))=Bio_new(i,k,iFecC(isfc))+      &
-     &                                   FV2
+!!   &                                   FV2
+     &                                   Bio_new(i,k,iBacC(ibac))*      &
+     &                                   BacPEL(ng)
                 Bio_new(i,k,iDOMC(ilab))=Bio_new(i,k,iDOMC(ilab))+      &
      &                                   (1.0_r8-cDOCfrac_c(ilab,ng))*  &
-     &                                   FV3
+!!   &                                   FV3
+     &                                   Bio_new(i,k,iBacC(ibac))*      &
+     &                                   BacDOC(ng)
                 Bio_new(i,k,iCDMC(ilab))=Bio_new(i,k,iCDMC(ilab))+      &
-     &                                   cDOCfrac_c(ilab,ng)*FV3
+     &                                   cDOCfrac_c(ilab,ng)*           &
+!!   &                                   FV3
+     &                                   Bio_new(i,k,iBacC(ibac))*      &
+     &                                   BacDOC(ng)
                 Bio_new(i,k,iDIC_)=Bio_new(i,k,iDIC_)+                  &
-     &                             FV1
+!!   &                             FV1
+     &                             Bio_new(i,k,iBacC(ibac))*            &
+     &                             BacCYC(ng)
 !
 !  Nitrogen calculations.
 !
                 Bio_new(i,k,iBacN(ibac))=Bio_new(i,k,iBacN(ibac))-      &
-     &                                   N2cBAC(ng)*FV4
+!!   &                                   N2cBAC(ng)*FV4
+     &                                   Bio_new(i,k,iBacN(ibac))
                 Bio_new(i,k,iFecN(isfc))=Bio_new(i,k,iFecN(isfc))+      &
-     &                                   N2cBAC(ng)*FV2
+!!   &                                   N2cBAC(ng)*FV2
+     &                                   Bio_new(i,k,iBacN(ibac))*      &
+     &                                   BacPEL(ng)
                 Bio_new(i,k,iDOMN(ilab))=Bio_new(i,k,iDOMN(ilab))+      &
-     &                                   N2cBAC(ng)*FV3
+!!   &                                   N2cBAC(ng)*FV3
+     &                                   Bio_new(i,k,iBacN(ibac))*      &
+     &                                   BacDOC(ng)
                 Bio_new(i,k,iNH4_)=Bio_new(i,k,iNH4_)+                  &
-     &                             N2cBAC(ng)*FV1
+!!   &                             N2cBAC(ng)*FV1
+     &                             Bio_new(i,k,iBacN(ibac))*            &
+     &                             BacCYC(ng)
 !
 !  Phosphorous calculations.
 !
                 Bio_new(i,k,iBacP(ibac))=Bio_new(i,k,iBacP(ibac))-      &
-     &                                   P2cBAC(ng)*FV4
+!!   &                                   P2cBAC(ng)*FV4
+     &                                   Bio_new(i,k,iBacP(ibac))
                 Bio_new(i,k,iFecP(isfc))=Bio_new(i,k,iFecP(isfc))+      &
-     &                                   P2cBAC(ng)*FV2
+!!   &                                   P2cBAC(ng)*FV2
+     &                                   Bio_new(i,k,iBacP(ibac))*      &
+     &                                   BacPEL(ng)
                 Bio_new(i,k,iDOMP(ilab))=Bio_new(i,k,iDOMP(ilab))+      &
-     &                                   P2cBAC(ng)*FV3
+!!   &                                   P2cBAC(ng)*FV3
+     &                                   Bio_new(i,k,iBacP(ibac))*      &
+     &                                   BacDOC(ng)
                 Bio_new(i,k,iPO4_)=Bio_new(i,k,iPO4_)+                  &
-     &                             P2cBAC(ng)*FV1
+!!   &                             P2cBAC(ng)*FV1
+     &                             Bio_new(i,k,iBacP(ibac))*            &
+     &                             BacCYC(ng)
 !
 !  Iron calculations.
 !
                 Bio_new(i,k,iBacF(ibac))=Bio_new(i,k,iBacF(ibac))-      &
-     &                                   Fe2cBAC(ng)*FV4
+!!   &                                   Fe2cBAC(ng)*FV4
+     &                                   Bio_new(i,k,iBacF(ibac))
                 Bio_new(i,k,iFecF(isfc))=Bio_new(i,k,iFecF(isfc))+      &
-     &                                   Fe2cBAC(ng)*FV2
+!!   &                                   Fe2cBAC(ng)*FV2
+     &                                   Bio_new(i,k,iBacF(ibac))*      &
+     &                                   BacPEL(ng)
                 Bio_new(i,k,iFeO_)=Bio_new(i,k,iFeO_)+                  &
-     &                             Fe2cBAC(ng)*(FV1+FV3)
+!!   &                             Fe2cBAC(ng)*(FV1+FV3)
+     &                             Bio_new(i,k,iBacF(ibac))*            &
+     &                             (BacDOC(ng)+BacCYC(ng))
               END DO
             END DO
           END DO
@@ -1708,88 +1760,70 @@
 !  If Ed_nz(i,N(ng)) > zero, then there is sunlight. Standardizing rate
 !  to 1500 umol quanta m-2 s-1.
 !
-              FV1=RtUVR_DIC(ng)*Ed_nz(i,N(ng))/1500.0_r8
-              FV2=RtUVR_DOC(ng)*Ed_nz(i,N(ng))/1500.0_r8
+              IF (Ed_nz(i,N(ng)).ge.0.01) THEN
+!
+                FV1=RtUVR_DIC(ng)*Ed_nz(i,N(ng))/1500.0_r8
+                FV2=RtUVR_DOC(ng)*Ed_nz(i,N(ng))/1500.0_r8
 
 !
 !  FV4 equals the CDMC1 absorption at 410 nm. 0.012 converts to g m-3.
 !  FV5 equals the CDMC2 absorption at 410 nm.
-!  Weighted average attenuation of UVB at 300 nm = 0.2 m-1.
+!  Weighted average attenuation of UVB of water at 300 nm = 0.2 m-1.
 !
-              FV4=Bio(i,N(ng),iCDMC(ilab))*0.012_r8*aDOC410(ilab)
-              FV5=Bio(i,N(ng),iCDMC(irct))*0.012_r8*aDOC410(irct)
-              photo_decay=0.5_r8*Hz(i,j,N(ng))*                         &
-     &                    (0.2_r8+(FV4+FV5)*aDOC300(ilab))
-              FV3=EXP(-photo_decay)
-              photo_decay=2.0_r8*photo_decay
+                FV4=Bio(i,N(ng),iCDMC(ilab))*0.012_r8*aDOC410(ilab)
+                FV5=Bio(i,N(ng),iCDMC(irct))*0.012_r8*aDOC410(irct)
+                photo_decay=0.5_r8*Hz(i,j,N(ng))*                       &
+     &                      (0.2_r8+(FV4+FV5)*aDOC300(ilab))
+                FV3=EXP(-photo_decay)
+                photo_decay=2.0_r8*photo_decay
 !
 !  Do not photolyze below the euphotic zone.
 !
-              DO k=N(ng),Keuphotic(i),-1
-                IF (FV3.gt.0.01_r8) THEN
-                  FV6=FV5+FV4
-                  IF (FV6.gt.0.0_r8) THEN
-                    FV7=FV4/FV6
-                    photo_DIC=FV3*FV1*FV6
-                    photo_DOC=FV3*FV2*FV6
-                    total_photo=photo_DIC+photo_DOC
+                DO k=N(ng),Keuphotic(i),-1
+                  IF (FV3.gt.0.01_r8) THEN
+                    FV6=FV5+FV4
+                    IF (FV6.gt.0.0_r8) THEN
+                      FV7=FV4/FV6
+                      photo_DIC=FV3*FV1*FV6
+                      photo_DOC=FV3*FV2*FV6
+                      total_photo=photo_DIC+photo_DOC
 !
 !  NOTE: not testing for excess photolysis (CDOC going negative).
 !
-                    FV4=(1.0_r8-FV7)*total_photo
-                    Bio_new(i,k,iCDMC(irct))=Bio_new(i,k,iCDMC(irct))-  &
-     &                                       FV4
-                    Bio_new(i,k,iDOMC(ilab))=Bio_new(i,k,iDOMC(ilab))+  &
-     &                                       photo_DOC
-                    Bio_new(i,k,iCDMC(ilab))=Bio_new(i,k,iCDMC(ilab))-  &
-     &                                       FV7*total_photo
-                    Bio_new(i,k,iDIC_)=Bio_new(i,k,iDIC_)+              &
-     &                                 photo_DIC
-                  END IF
+                      FV4=(1.0_r8-FV7)*total_photo
+                      Bio_new(i,k,iCDMC(irct))=Bio_new(i,k,iCDMC(irct))-&
+     &                                         FV4
+                      Bio_new(i,k,iDOMC(ilab))=Bio_new(i,k,iDOMC(ilab))+&
+     &                                         photo_DOC
+                      Bio_new(i,k,iCDMC(ilab))=Bio_new(i,k,iCDMC(ilab))-&
+     &                                         FV7*total_photo
+                      Bio_new(i,k,iDIC_)=Bio_new(i,k,iDIC_)+            &
+     &                                         photo_DIC
+                    END IF
 !
 !  FV4 equals the CDMC1 absorption at 410 nm. 0.012 converts to g m-3.
 !  FV5 equals the CDMC2 absorption at 410 nm.
-!  Weighted average attenuation of UVB at 300 nm = 0.2 m-1.
+!  Weighted average attenuation of UVB of water at 300 nm = 0.2 m-1.
 !
-                  FV4=Bio(i,k,iCDMC(ilab))*0.012_r8*aDOC410(ilab)
-                  FV5=Bio(i,k,iCDMC(irct))*0.012_r8*aDOC410(irct)
-                  FV1=photo_decay+                                      &
-     &                0.5_r8*Hz(i,j,k)*(0.2_r8+(FV4+FV5)*aDOC300(ilab))
+                    FV4=Bio(i,k,iCDMC(ilab))*0.012_r8*aDOC410(ilab)
+                    FV5=Bio(i,k,iCDMC(irct))*0.012_r8*aDOC410(irct)
+                    FV7=photo_decay+                                    &
+     &                 0.5_r8*Hz(i,j,k)*(0.2_r8+(FV4+FV5)*aDOC300(ilab))
 !
 !  If k is greater than the bottom of the euphotic zone (and by
 !  by extension the bottom boundary) or the decay constant is
 !  greater than 4.61 (or < 1% photolysis zone) then exit do loop.
 !
-                  FV3=EXP(-FV1)
+                    FV3=EXP(-FV7)
 !
 !  Store value for passage through entire Hz(i,j,k).
 !
-                  photo_decay=photo_decay+2.0_r8*FV1
-                END IF
-              END DO
+                    photo_decay=photo_decay+2.0_r8*FV7
+                  END IF
+                END DO
+              END IF
             END DO
           END IF
-!
-!  Update pigment ratios due to light and nutrients.
-!  NOTE: 12 factor to convert to ugrams (mg m-3)
-!
-!!
-!! HGA - The array C2CHL is computed here but is not used anywhere.
-!!       There is no neccessity to create a (i,k) slab array.
-!!
-          DO iphy=1,Nphy
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                IF ((Bio(i,k,iPhyC(iphy)).gt.0.0_r8).and.               &
-     &              (iPigs(iphy,ichl).gt.0)) THEN
-                  C2CHL(k,iphy)=Bio(i,k,iPigs(iphy,ichl))/              &
-     &                          (Bio(i,k,iPhyC(iphy))*12.0_r8)
-                ELSE
-                  C2CHL(k,iphy)=0.0_r8
-                END IF
-              END DO
-            END DO
-          END DO
 !
 !-----------------------------------------------------------------------
 !  Create optimal pigment ratios.
@@ -1909,13 +1943,7 @@
 !
 !  Calculate pigment ratio changes.
 !  NOTE: 12 factor to convert to ugrams (mg m-3)
-!!
-!!  NOTE: dtbio is included in PigsP1 calculation and is not required
-!!        in the update of the tendency array section below.
-!!
-!!  HGA - No a good idea! For optimization and vectorization purposes
-!!        it is better to divide back by dtbio.
-!!
+!
               DO ipig=1,Npig
                 DO iphy=1,Nphy
                   IF (iPigs(iphy,ipig).gt.0) THEN
@@ -1925,13 +1953,12 @@
      &                    (Bio(i,k,itrc).gt.0.0_r8)) THEN
                         FV1=Bio(i,k,iPhyC(iphy))*12.0_r8
                         FV2=GtALG_r(i,k,iphy)*dtbio
+                        FV3=FV1/                                        &
+     &                      (FV2/Pigs_w(k,iphy,ipig)+                   &
+     &                       FV1*(1.0_r8-FV2)/                          &
+     &                       Bio(i,k,itrc))
                         Bio_new(i,k,itrc)=Bio_new(i,k,itrc)+            &
-     &                                    FV1/                          &
-     &                                    (FV2/Pigs_w(k,iphy,ipig)+     &
-     &                                     FV1*(1.0_r8-FV2)/            &
-     &                                     Bio(i,k,itrc))
-                      ELSE
-                        Bio_new(i,k,itrc)=0.0_r8
+     &                                    (FV3-Bio(i,k,itrc))/dtbio
                       END IF
                     END DO
                   END IF
@@ -1948,33 +1975,7 @@
             itrc=idbio(ibio)
             DO k=1,N(ng)
               DO i=Istr,Iend
-                IF (itrc.lt.FirstPig) THEN
                   Bio(i,k,itrc)=Bio(i,k,itrc)+dtbio*Bio_new(i,k,itrc)
-                ELSE
-!!
-!! HGA - I think that we need to add the pigment tendency terms to the
-!!       previous guess value of the iterative solution.  However, if
-!!       I do this, the model blows-up after half a day when the light
-!!       computations starts. I don't understand why the following
-!!       statement makes the model to blow-up:
-!!
-!!                Bio(i,k,itrc)=Bio(i,k,itrc)+Bio_new(i,k,itrc)
-!!
-!!       Perhaps, the pigment prognostic equations need to be
-!!       reformulated to do so.  The updating of the tendency terms
-!!       should be generic.  This will make the algorithm more
-!!       general and allow us for iterations!!!  It also facilitates
-!!       vectorization by removing the IF condtional.
-!!
-                  Bio(i,k,itrc)=Bio_new(i,k,itrc)
-                END IF
-!!
-!! HGA - There is a misunderstanding here of what the nonlinear 
-!!       iteration of the algorithm means. Why are the new tendency
-!!       arrays zero-out here?  If you do so, there is not
-!!       correction for the algorithm at smaller iteration time-steps.
-!!
-!!              Bio_new(i,k,itrc)=0.0_r8
               END DO
             END DO
           END DO
@@ -1991,11 +1992,14 @@
             DO i=Istr,Iend
                t(i,j,k,nnew,itrc)=MAX(MinVal,                           &
      &                                t(i,j,k,nnew,itrc)+               &
-     &                                Bio(i,k,itrc)-Bio_old(i,k,itrc))
+     &                                Hz(i,j,k)*                        &
+     &                                (Bio(i,k,itrc)-Bio_old(i,k,itrc)))
+#ifdef TS_MPDATA
+               t(i,j,k,3,itrc)=t(i,j,k,nnew,itrc)
+#endif
             END DO
           END DO
         END DO
-
       END DO J_LOOP
 
       RETURN

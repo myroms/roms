@@ -1,8 +1,8 @@
 #include "cppdefs.h"
-      FUNCTION def_var (ncid,Vid,Vtype,nVdims,Vdims,Aval,Vinfo,ncname)
+      FUNCTION def_var (ncid,Vid,Vtype,nVdim,Vdim,Aval,Vinfo,ncname)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine defines the requested NetCDF variable.                 !
@@ -11,12 +11,14 @@
 !                                                                      !
 !     ncid     NetCDF file ID (integer).                               !
 !     Vtype    NetCDF variable type (integer).                         !
-!     nVdims   Number of variable dimensions (integer; 0=scalar).      !
-!     Vdims    Dimensions IDs for this variable (integer vector).      !
+!     mVdim    Number of variable dimensions (integer; 0=scalar).      !
+!     Vdim     Dimensions IDs for this variable (integer vector).      !
 !     Aval     Attribute values (real vector):                         !
 !                Aval(1)   =>  Add offset value.                       !
 !                Aval(2)   =>  Valid minimum value.                    !
 !                Aval(3)   =>  Valid maximum value.                    !
+!                Aval(4)   =>  Missing value.                          !
+!                Aval(5)   =>  C-grid variable type.                   !
 !     Vinfo    Variable information (character array):                 !
 !                Vinfo( 1) =>  Variable name.                          !
 !                Vinfo( 2) =>  Variable "longname" attribute.          !
@@ -28,8 +30,8 @@
 !                Vinfo( 8) =>  Variable "option_F" attribute.          !
 !                Vinfo( 9) =>  Variable "option_0" attribute.          !
 !                Vinfo(10) =>  Variable "option_1" attribute.          !
-!                Vinfo(11) =>  Variable "negative" attribute.          !
-!                Vinfo(12) =>  Variable "positive" attribute.          !
+!                Vinfo(11) =>  Variable "negative_value" attribute.    !
+!                Vinfo(12) =>  Variable "positive_value" attribute.    !
 !                Vinfo(13) =>  Variable "cycle" attribute.             !
 !                Vinfo(14) =>  Variable "field" attribute.             !
 !                Vinfo(15) =>  Variable "positions" attribute.         !
@@ -38,6 +40,9 @@
 !                Vinfo(18) =>  Variable "add_offset" attribute.        !
 !                Vinfo(19) =>  Variable "size_class" attribute.        !
 !                Vinfo(20) =>  Variable "water_points" attribute.      !
+!                Vinfo(21) =>  Variable "standard_name" attribute.     !
+!                Vinfo(22) =>  Variable "coordinates" attribute.       !
+!                Vinfo(23) =>  Variable "formula_terms" attribute.     !
 !     ncname   NetCDF file name.                                       !
 !                                                                      !
 !  On Output:                                                          !
@@ -52,6 +57,7 @@
 !
       USE mod_param
       USE mod_iounits
+      USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
 
@@ -59,20 +65,22 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent (in) :: ncid, Vtype, nVdims
-      integer, dimension(*), intent(in) :: Vdims
+      integer, intent (in) :: ncid, Vtype, nVdim
+      integer, dimension(*), intent(in) :: Vdim
       integer, intent (out) :: Vid
 
       real(r8), dimension(*), intent(inout) :: Aval
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(inout) :: Vinfo(20)
+      character (len=*), intent(inout) :: Vinfo(23)
 !
 !  Local variable declarations.
 !
       integer :: latt
 
       integer :: def_var
+
+      character (len=40) text
 !
 !-----------------------------------------------------------------------
 !  Define requested variable and its attributes.
@@ -81,10 +89,11 @@
 !  Define variable.
 !
       IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
-        def_var=nf_def_var(ncid,TRIM(Vinfo(1)),Vtype,nVdims,Vdims,Vid)
+        def_var=nf_def_var(ncid,TRIM(Vinfo(1)),Vtype,nVdim,Vdim,Vid)
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,10) TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
       END IF
@@ -98,6 +107,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'long_name', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(2)=' '
@@ -112,6 +122,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'size_class', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(19)=' '
@@ -121,12 +132,15 @@
 !
       latt=LEN_TRIM(Vinfo(3))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'units',                       &
-     &                          latt,TRIM(Vinfo(3)))
-        IF (def_var.ne.nf_noerr) THEN
-          WRITE (stdout,20) 'units', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          RETURN
+        IF (TRIM(Vinfo(3)).ne.'nondimensional') THEN
+          def_var=nf_put_att_text(ncid,Vid,'units',                     &
+     &                            latt,TRIM(Vinfo(3)))
+          IF (def_var.ne.nf_noerr) THEN
+            WRITE (stdout,20) 'units', TRIM(Vinfo(1)), TRIM(ncname)
+            exit_flag=3
+            ioerror=def_var
+            RETURN
+          END IF
         END IF
         Vinfo(3)=' '
       END IF
@@ -140,6 +154,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'calendar', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(4)=' '
@@ -159,6 +174,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) TRIM(Vinfo(5)), TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Aval(2)=0.0_r8
@@ -179,6 +195,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) TRIM(Vinfo(6)), TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Aval(3)=0.0_r8
@@ -194,6 +211,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'option_T', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(7)=' '
@@ -208,6 +226,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'option_F', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(8)=' '
@@ -222,6 +241,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'option_0', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(9)=' '
@@ -236,6 +256,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'option_1', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(10)=' '
@@ -245,11 +266,13 @@
 !
       latt=LEN_TRIM(Vinfo(11))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'negative',                    &
+        def_var=nf_put_att_text(ncid,Vid,'negative_value',              &
      &                          latt,TRIM(Vinfo(11)))
         IF (def_var.ne.nf_noerr) THEN
-          WRITE (stdout,20) 'negative', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'negative_value', TRIM(Vinfo(1)),           &
+     &                      TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(11)=' '
@@ -259,11 +282,13 @@
 !
       latt=LEN_TRIM(Vinfo(12))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'positive',                    &
+        def_var=nf_put_att_text(ncid,Vid,'positive_value',              &
      &                          latt,TRIM(Vinfo(12)))
         IF (def_var.ne.nf_noerr) THEN
-          WRITE (stdout,20) 'positive', TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) 'positive_value', TRIM(Vinfo(1)),           &
+     &                      TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(12)=' '
@@ -278,6 +303,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'cycle', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(13)=' '
@@ -292,6 +318,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'positions', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(15)=' '
@@ -306,6 +333,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'time', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(16)=' '
@@ -326,6 +354,7 @@
           WRITE (stdout,20) TRIM(Vinfo(17)), TRIM(Vinfo(1)),            &
      &                      TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Aval(4)=0.0_r8
@@ -344,8 +373,10 @@
      &                            Vtype,1,Aval(1))
         END IF
         IF (def_var.ne.nf_noerr) THEN
-          WRITE (stdout,20) TRIM(Vinfo(18)), TRIM(Vinfo(1)), TRIM(ncname)
+          WRITE (stdout,20) TRIM(Vinfo(18)), TRIM(Vinfo(1)),            &
+     &                      TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Aval(1)=0.0_r8
@@ -361,9 +392,92 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'water_points', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(20)=' '
+      END IF
+!
+!  If applicable, define "standard_name" attribute.
+!
+      latt=LEN_TRIM(Vinfo(21))
+      IF (latt.gt.0) THEN
+        def_var=nf_put_att_text(ncid,Vid,'standard_name',               &
+     &                          latt,TRIM(Vinfo(21)))
+        IF (def_var.ne.nf_noerr) THEN
+          WRITE (stdout,20) 'standard_name', TRIM(Vinfo(1)),            &
+     &                      TRIM(ncname)
+          exit_flag=3
+          ioerror=def_var
+          RETURN
+        END IF
+        Vinfo(21)=' '
+      END IF
+!
+!  If applicable, define "coordinates" attribute.
+!
+      latt=LEN_TRIM(Vinfo(22))
+      IF (latt.gt.0) THEN
+        IF (spherical) THEN
+          IF ((INT(Aval(5)).eq.r2dvar).or.                              &
+     &        (INT(Aval(5)).eq.b3dvar).or.                              &
+     &        (INT(Aval(5)).eq.r3dvar).or.                              &
+     &        (INT(Aval(5)).eq.w3dvar)) THEN
+            text='lat_rho lon_rho'
+          ELSE IF ((INT(Aval(5)).eq.u2dvar).or.                         &
+     &             (INT(Aval(5)).eq.u3dvar)) THEN
+            text='lat_u lon_u'
+          ELSE IF ((INT(Aval(5)).eq.v2dvar).or.                         &
+     &             (INT(Aval(5)).eq.v3dvar)) THEN
+            text='lat_v lon_v'
+          ELSE IF ((INT(Aval(5)).eq.p2dvar).or.                         &
+     &             (INT(Aval(5)).eq.p3dvar)) THEN
+            text='lat_psi lon_psi'
+          END IF
+        ELSE
+          IF ((INT(Aval(5)).eq.r2dvar).or.                              &
+     &        (INT(Aval(5)).eq.b3dvar).or.                              &
+     &        (INT(Aval(5)).eq.r3dvar).or.                              &
+     &        (INT(Aval(5)).eq.w3dvar)) THEN
+            text='x_rho y_rho'
+          ELSE IF ((INT(Aval(5)).eq.u2dvar).or.                         &
+     &             (INT(Aval(5)).eq.u3dvar)) THEN
+            text='x_u y_u'
+          ELSE IF ((INT(Aval(5)).eq.v2dvar).or.                         &
+     &             (INT(Aval(5)).eq.v3dvar)) THEN
+            text='x_v y_v'
+          ELSE IF ((INT(Aval(5)).eq.p2dvar).or.                         &
+     &             (INT(Aval(5)).eq.p3dvar)) THEN
+            text='x_psi y_psi'
+          END IF
+        END IF
+        latt=LEN_TRIM(text)
+        def_var=nf_put_att_text(ncid,Vid,TRIM(Vinfo(22)),               &
+     &                          latt,TRIM(text))
+        IF (def_var.ne.nf_noerr) THEN
+          WRITE (stdout,20) 'coordinates', TRIM(Vinfo(1)), TRIM(ncname)
+          exit_flag=3
+          ioerror=def_var
+          RETURN
+        END IF
+        Vinfo(22)=' '
+        Aval(5)=0.0_r8
+      END IF
+!
+!  If applicable, define "formula_terms" attribute.
+!
+      latt=LEN_TRIM(Vinfo(23))
+      IF (latt.gt.0) THEN
+        def_var=nf_put_att_text(ncid,Vid,'formula_terms',               &
+     &                          latt,TRIM(Vinfo(23)))
+        IF (def_var.ne.nf_noerr) THEN
+          WRITE (stdout,20) 'formula_terms', TRIM(Vinfo(1)),            &
+     &                      TRIM(ncname)
+          exit_flag=3
+          ioerror=def_var
+          RETURN
+        END IF
+        Vinfo(23)=' '
       END IF
 !
 !  If applicable, define "field" attribute (always last).
@@ -375,6 +489,7 @@
         IF (def_var.ne.nf_noerr) THEN
           WRITE (stdout,20) 'field', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
+          ioerror=def_var
           RETURN
         END IF
         Vinfo(14)=' '

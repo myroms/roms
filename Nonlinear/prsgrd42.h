@@ -3,7 +3,7 @@
       SUBROUTINE prsgrd (ng, tile)
 !
 !****************************************** Alexander F. Shchepetkin ***
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !***********************************************************************
 !                                                                      !
 !  This subroutine evaluates the baroclinic,  hydrostatic pressure     !
@@ -39,7 +39,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 23)
+      CALL wclock_on (ng, iNLM, 23)
 # endif
       CALL prsgrd_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
@@ -60,7 +60,7 @@
      &                  OCEAN(ng) % ru,                                 &
      &                  OCEAN(ng) % rv)
 # ifdef PROFILE
-      CALL wclock_off (ng, 23)
+      CALL wclock_off (ng, iNLM, 23)
 # endif
       RETURN
       END SUBROUTINE prsgrd

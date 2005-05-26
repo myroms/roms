@@ -3,7 +3,7 @@
       SUBROUTINE wrt_station (ng)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine writes out data into stations NetCDF file.             !
@@ -12,9 +12,9 @@
 !
       USE mod_param
       USE mod_parallel
-#ifdef BBL_MODEL
+# ifdef BBL_MODEL
       USE mod_bbl
-#endif
+# endif
       USE mod_forces
       USE mod_grid
       USE mod_iounits
@@ -23,15 +23,15 @@
       USE mod_netcdf
       USE mod_ocean
       USE mod_scalars
-# ifdef SEDIMENT
+# if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 # endif
       USE mod_stepping
 !
 # ifdef SOLVE3D
-      USE extract_mod, ONLY : extract2d, extract3d
+      USE extract_sta_mod, ONLY : extract_sta2d, extract_sta3d
 # else
-      USE extract_mod, ONLY : extract2d
+      USE extract_sta_mod, ONLY : extract_sta2d
 # endif
 !
       implicit none
@@ -62,21 +62,21 @@
       real(r8), dimension(Nstation(ng)*(N(ng)+1)) :: rsta
 # endif
 
-      LBi=lbound(GRID(ng)%h,DIM=1)
-      UBi=ubound(GRID(ng)%h,DIM=1)
-      LBj=lbound(GRID(ng)%h,DIM=2)
-      UBj=ubound(GRID(ng)%h,DIM=2)
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Write out station data at RHO-points.
 !-----------------------------------------------------------------------
 !
-      IF (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Set time record index.
 !
-      tstaindx(ng)=tstaindx(ng)+1
-      nrecsta(ng)=nrecsta(ng)+1
+      tSTAindx(ng)=tSTAindx(ng)+1
+      NrecSTA(ng)=NrecSTA(ng)+1
 !
 !  Specify parameters for writing profiles to NetCDF files. These
 !  are overridden for some variables below
@@ -85,16 +85,16 @@
       total(1)=N(ng)
       start(2)=1
       total(2)=Nstation(ng)
-      start(3)=tstaindx(ng)
+      start(3)=tSTAindx(ng)
       total(3)=1
 !
 !  Set switch to extract station data at native C-grid position (TRUE)
 !  or at RHO-points (FALSE).
 !
 # ifdef STATIONS_CGRID
-      Cgrid=.true.
+      Cgrid=.TRUE.
 # else
-      Cgrid=.false.
+      Cgrid=.FALSE.
 # endif
 !
 !  Set positions for generic extraction routine.
@@ -133,11 +133,12 @@
 !  Write out model time (s).
 !
       IF (Master) THEN
-        status=nf_put_var1_TYPE(ncstaid(ng), staVid(idtime,ng),         &
-     &                          tstaindx(ng), time(ng))
+        status=nf_put_var1_TYPE(ncSTAid(ng), staVid(idtime,ng),         &
+     &                          tSTAindx(ng), time(ng))
         IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tstaindx(ng)
+          WRITE (stdout,10) TRIM(Vname(1,idtime)), tSTAindx(ng)
           exit_flag=3
+          ioerror=status
           RETURN
         END IF
       END IF
@@ -146,16 +147,17 @@
 !
       IF (Sout(idFsur,ng)) THEN
         scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idFsur, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, OCEAN(ng)%zeta(:,:,KOUT),                &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idFsur, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, OCEAN(ng)%zeta(:,:,KOUT),            &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idFsur,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idFsur,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idFsur)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idFsur)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -165,16 +167,17 @@
 !
       IF (Sout(idUbar,ng)) THEN
         scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idUbar, u2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, OCEAN(ng)%ubar(:,:,KOUT),                &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUbar, u2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, OCEAN(ng)%ubar(:,:,KOUT),            &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUbar,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbar,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbar)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUbar)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -184,16 +187,17 @@
 !
       IF (Sout(idVbar,ng)) THEN
         scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idVbar, v2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, OCEAN(ng)%vbar(:,:,KOUT),                &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVbar, v2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, OCEAN(ng)%vbar(:,:,KOUT),            &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVbar,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbar,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbar)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVbar)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -204,16 +208,17 @@
 !
       IF (Sout(idUvel,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idUvel, u3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                  scale, OCEAN(ng)%u(:,:,:,NOUT),                 &
-     &                  NposR, XposR, YposR, ZposR, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idUvel, u3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%u(:,:,:,NOUT),             &
+     &                      NposR, XposR, YposR, ZposR, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUvel,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUvel,ng),       &
      &                            start, total, rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUvel)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUvel)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -223,16 +228,17 @@
 !
       IF (Sout(idVvel,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idVvel, v3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                  scale, OCEAN(ng)%v(:,:,:,NOUT),                 &
-     &                  NposR, XposR, YposR, ZposR, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idVvel, v3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%v(:,:,:,NOUT),             &
+     &                      NposR, XposR, YposR, ZposR, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVvel,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVvel,ng),       &
      &                            start, total, rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVvel)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVvel)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -242,16 +248,17 @@
 !
       IF (Sout(idWvel,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idWvel, w3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  scale, OCEAN(ng)%wvel,                          &
-     &                  NposW, XposW, YposW, ZposW, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idWvel, w3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      scale, OCEAN(ng)%wvel,                      &
+     &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idWvel,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idWvel,ng),       &
      &                            start, total+(/1,0,0/), rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWvel)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idWvel)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -261,16 +268,17 @@
 !
       IF (Sout(idOvel,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idOvel, w3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  scale, OCEAN(ng)%W,                             &
-     &                  NposW, XposW, YposW, ZposW, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idOvel, w3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      scale, OCEAN(ng)%W,                         &
+     &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idOvel,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idOvel,ng),       &
      &                            start, total+(/1,0,0/), rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idOvel)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idOvel)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -282,16 +290,17 @@
         ifield=idTvar(i)
         IF (Sout(ifield,ng)) THEN
           scale=1.0_r8
-          CALL extract3d (ng, Cgrid, ifield, r3dvar,                    &
-     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
-     &                    scale, OCEAN(ng)%t(:,:,:,NOUT,i),             &
-     &                    NposR, XposR, YposR, ZposR, rsta)
+          CALL extract_sta3d (ng, iNLM, Cgrid, ifield, r3dvar,          &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        scale, OCEAN(ng)%t(:,:,:,NOUT,i),         &
+     &                        NposR, XposR, YposR, ZposR, rsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncstaid(ng), staTid(i,ng),          &
+            status=nf_put_vara_TYPE(ncSTAid(ng), staTid(i,ng),          &
      &                              start, total, rsta)
             IF (status.ne.nf_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTvar(i))), tstaindx(ng)
+              WRITE (stdout,10) TRIM(Vname(1,idTvar(i))), tSTAindx(ng)
               exit_flag=3
+              ioerror=status
               RETURN
             END IF
           END IF
@@ -302,16 +311,17 @@
 !
       IF (Sout(idDano,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idDano, r3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
-     &                  scale, OCEAN(ng)%rho,                           &
-     &                  NposR, XposR, YposR, ZposR, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idDano, r3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
+     &                      scale, OCEAN(ng)%rho,                       &
+     &                      NposR, XposR, YposR, ZposR, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idDano,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idDano,ng),       &
      &                            start, total, rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idDano)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idDano)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -322,16 +332,17 @@
 !
       IF (Sout(idHsbl,ng)) THEN
         scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idHsbl, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, MIXING(ng)%hsbl,                         &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idHsbl, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, MIXING(ng)%hsbl,                     &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idHsbl,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idHsbl,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idHsbl)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idHsbl)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -343,16 +354,17 @@
 !
       IF (Sout(idHbbl,ng)) THEN
         scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idHbbl, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, MIXING(ng)%hbbl,                         &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idHbbl, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, MIXING(ng)%hbbl,                     &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idHbbl,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idHbbl,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idHbbl)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idHbbl)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -363,16 +375,17 @@
 !
       IF (Sout(idVvis,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idVvis, w3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  scale, MIXING(ng)%Akv,                          &
-     &                  NposW, XposW, YposW, ZposW, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idVvis, w3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      scale, MIXING(ng)%Akv,                      &
+     &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVvis,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVvis,ng),       &
      &                            start, total+(/1,0,0/), rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVvis)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVvis)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -382,16 +395,17 @@
 !
       IF (Sout(idTdif,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idTdif, w3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  scale, MIXING(ng)%Akt(:,:,:,itemp),             &
-     &                  NposW, XposW, YposW, ZposW, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idTdif, w3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      scale, MIXING(ng)%Akt(:,:,:,itemp),         &
+     &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idTdif,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idTdif,ng),       &
      &                            start, total+(/1,0,0/), rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTdif)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idTdif)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -402,16 +416,17 @@
 !
       IF (Sout(idSdif,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idSdif, w3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  scale, MIXING(ng)%Akt(:,:,:,isalt),             &
-     &                  NposW, XposW, YposW, ZposW, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idSdif, w3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      scale, MIXING(ng)%Akt(:,:,:,isalt),         &
+     &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idSdif,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idSdif,ng),       &
      &                            start, total+(/1,0,0/), rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSdif)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idSdif)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -423,16 +438,17 @@
 !
       IF (Sout(idMtke,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idMtke, w3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  scale, MIXING(ng)%tke(:,:,:,NOUT),              &
-     &                  NposW, XposW, YposW, ZposW, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMtke, w3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      scale, MIXING(ng)%tke(:,:,:,NOUT),          &
+     &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idMtke,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idMtke,ng),       &
      &                            start, total+(/1,0,0/), rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idMtke)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idMtke)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -442,16 +458,17 @@
 !
       IF (Sout(idMtls,ng)) THEN
         scale=1.0_r8
-        CALL extract3d (ng, Cgrid, idMtls, w3dvar,                      &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  scale, MIXING(ng)%gls(:,:,:,NOUT),              &
-     &                  NposW, XposW, YposW, ZposW, rsta)
+        CALL extract_sta3d (ng, iNLM, Cgrid, idMtls, w3dvar,            &
+     &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
+     &                      scale, MIXING(ng)%gls(:,:,:,NOUT),          &
+     &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idMtls,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idMtls,ng),       &
      &                            start, total+(/1,0,0/), rsta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idMtls)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idMtls)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -463,16 +480,38 @@
       IF (Sout(idTsur(itemp),ng)) THEN
         ifield=idTsur(itemp)
         scale=rho0*Cp
-        CALL extract2d (ng, Cgrid, ifield, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%stflx(:,:,itemp),             &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, ifield, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%stflx(:,:,itemp),         &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(ifield,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(ifield,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,ifield)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,ifield)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!  Write out surface salt flux.
+!
+      IF (Sout(idTsur(isalt),ng)) THEN
+        ifield=idTsur(isalt)
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, ifield, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%stflx(:,:,isalt),         &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(ifield,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,ifield)), tSTAindx(ng)
+            exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -483,16 +522,17 @@
 !
       IF (Sout(idLhea,ng)) THEN
         scale=rho0*Cp
-        CALL extract2d (ng, Cgrid, idLhea, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%lhflx,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idLhea, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%lhflx,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idLhea,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idLhea,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idLhea)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idLhea)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -502,16 +542,17 @@
 !
       IF (Sout(idShea,ng)) THEN
         scale=rho0*Cp
-        CALL extract2d (ng, Cgrid, idShea, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%shflx,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idShea, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%shflx,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idShea,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idShea,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idShea)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idShea)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -521,20 +562,63 @@
 !
       IF (Sout(idLrad,ng)) THEN
         scale=rho0*Cp
-        CALL extract2d (ng, Cgrid, idLrad, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%lrflx,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idLrad, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%lrflx,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idLrad,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idLrad,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idLrad)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idLrad)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
       END IF
+#   ifdef EMINUSP
+!
+!  Write out evaportaion rate (kg/m2/s).
+!
+      IF (Sout(idevap,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idevap, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%evap,                     &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idevap,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idevap)), tSTAindx(ng)
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!  Write out precipitation rate (kg/m2/s).
+!
+      IF (Sout(idrain,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, Cgrid, idrain, r2dvar,                  &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%rain,                     &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idrain,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idrain)), tSTAindx(ng)
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+#   endif
 #  endif
 #  ifdef SHORTWAVE
 !
@@ -542,16 +626,17 @@
 !
       IF (Sout(idSrad,ng)) THEN
         scale=rho0*Cp
-        CALL extract2d (ng, Cgrid, idSrad, r2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%srflx,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idSrad, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%srflx,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idSrad,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idSrad,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSrad)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idSrad)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -563,16 +648,17 @@
 !
       IF (Sout(idUsms,ng)) THEN
         scale=rho0
-        CALL extract2d (ng, Cgrid, idUsms, u2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%sustr,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUsms, u2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%sustr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUsms,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUsms,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUsms)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUsms)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -582,16 +668,17 @@
 !
       IF (Sout(idVsms,ng)) THEN
         scale=rho0
-        CALL extract2d (ng, Cgrid, idVsms, v2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%svstr,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVsms, v2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%svstr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVsms,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVsms,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVsms)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVsms)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -601,16 +688,17 @@
 !
       IF (Sout(idUbms,ng)) THEN
         scale=-rho0
-        CALL extract2d (ng, Cgrid, idUbms, u2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%bustr,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUbms, u2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%bustr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUbms,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbms,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbms)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUbms)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -620,16 +708,17 @@
 !
       IF (Sout(idVbms,ng)) THEN
         scale=-rho0
-        CALL extract2d (ng, Cgrid, idVbms, v2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, FORCES(ng)%bvstr,                        &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVbms, v2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, FORCES(ng)%bvstr,                    &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVbms,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbms,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbms)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVbms)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -637,20 +726,61 @@
 #ifdef SOLVE3D
 # ifdef BBL_MODEL
 !
-!  Write out wind-induced, bottom U-wave stress.
+!  Write out current-induced, bottom U-stress.
+!
+      IF (Sout(idUbrs,ng)) THEN
+        scale=-rho0
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUbrs, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%bustrc,                      &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbrs,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), tSTAindx(ng)
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!  Write out current-induced, bottom V-stress.
+!
+      IF (Sout(idVbrs,ng)) THEN
+        scale=-rho0
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVbrs, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%bvstrc,                      &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbrs,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), tSTAindx(ng)
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!  Write out wind-induced, bottom U-stress.
 !
       IF (Sout(idUbws,ng)) THEN
         scale=rho0
-        CALL extract2d (ng, Cgrid, idUbws, u2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%bustrw,                          &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUbws, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%bustrw,                      &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUbws,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbws,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbws)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUbws)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -660,54 +790,57 @@
 !
       IF (Sout(idVbws,ng)) THEN
         scale=rho0
-        CALL extract2d (ng, Cgrid, idVbws, v2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%bvstrw,                          &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVbws, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%bvstrw,                      &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVbws,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbws,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbws)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVbws)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
       END IF
 !
-!  Write out maximum wind and current, bottom U-wave stress.
+!  Write out maximum wind and current, bottom U-stress.
 !
       IF (Sout(idUbcs,ng)) THEN
         scale=rho0
-        CALL extract2d (ng, Cgrid, idUbcs, u2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%bustrcwmax,                      &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUbcs, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%bustrcwmax,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUbcs,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbcs,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
       END IF
 !
-!  Write out maximum wind and current, bottom V-wave stress.
+!  Write out maximum wind and current, bottom V-stress.
 !
       IF (Sout(idVbcs,ng)) THEN
         scale=rho0
-        CALL extract2d (ng, Cgrid, idVbcs, v2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%bvstrcwmax,                          &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVbcs, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%bvstrcwmax,                  &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVbcs,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbcs,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -715,18 +848,19 @@
 !
 !  Write out wind-induced, bed wave orbital U-velocity.
 !
-      IF (Sout(idUbed,ng)) THEN
+      IF (Sout(idUbot,ng)) THEN
         scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idUbed, u2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Ubed,                            &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUbot, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%Ubot,                        &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUbed,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbot,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbed)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idUbot)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -734,56 +868,59 @@
 !
 !  Write out wind-induced, bed wave orbital V-velocity.
 !
-      IF (Sout(idVbed,ng)) THEN
-        scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idVbed, v2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Vbed,                            &
-     &                  Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVbed,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbed)), tstaindx(ng)
-            exit_flag=3
-            RETURN
-          END IF
-        END IF
-      END IF
-!
-!  Write out bottom U-momentum above bed.
-!
-      IF (Sout(idUbot,ng)) THEN
-        scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idUbot, u2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Ubot,                            &
-     &                  Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idUbot,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbot)), tstaindx(ng)
-            exit_flag=3
-            RETURN
-          END IF
-        END IF
-      END IF
-!
-!  Write out bottom V-momentum above bed.
-!
       IF (Sout(idVbot,ng)) THEN
         scale=1.0_r8
-        CALL extract2d (ng, Cgrid, idVbot, v2dvar,                      &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  scale, BBL(ng)%Vbot,                            &
-     &                  Nstation(ng), Xpos, Ypos, psta)
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVbot, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%Vbot,                        &
+     &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncstaid(ng), staVid(idVbot,ng),       &
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbot,ng),       &
      &                            start(2), total(2), psta)
           IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbot)), tstaindx(ng)
+            WRITE (stdout,10) TRIM(Vname(1,idVbot)), tSTAindx(ng)
             exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!  Write out bottom U-velocity above bed.
+!
+      IF (Sout(idUbur,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idUbur, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%Ur,                          &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbur,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUbur)), tSTAindx(ng)
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!  Write out bottom V-velocity above bed.
+!
+      IF (Sout(idVbvr,ng)) THEN
+        scale=1.0_r8
+        CALL extract_sta2d (ng, iNLM, Cgrid, idVbvr, r2dvar,            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      scale, BBL(ng)%Vr,                          &
+     &                      Nstation(ng), Xpos, Ypos, psta)
+        IF (Master) THEN
+          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbvr,ng),       &
+     &                            start(2), total(2), psta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVbvr)), tSTAindx(ng)
+            exit_flag=3
+            ioerror=status
             RETURN
           END IF
         END IF
@@ -797,16 +934,17 @@
       DO i=1,NST      
         IF (Sout(idfrac(i),ng)) THEN
           scale=1.0_r8
-          CALL extract3d (ng, Cgrid, idfrac(i), b3dvar,                 &
-     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
-     &                    scale, OCEAN(ng)%bed_frac(:,:,:,i),           &
-     &                    NposB, XposB, YposB, ZposB, bsta)
+          CALL extract_sta3d (ng, iNLM, Cgrid, idfrac(i), b3dvar,       &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
+     &                        scale, OCEAN(ng)%bed_frac(:,:,:,i),       &
+     &                        NposB, XposB, YposB, ZposB, bsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idfrac(i),ng),  &
+            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idfrac(i),ng),  &
      &                              start, total, bsta)
             IF (status.ne.nf_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), tstaindx(ng)
+              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), tSTAindx(ng)
               exit_flag=3
+              ioerror=status
               RETURN
             END IF
           END IF
@@ -816,16 +954,17 @@
 !
         IF (Sout(idBmas(i),ng)) THEN
           scale=1.0_r8
-          CALL extract3d (ng, Cgrid, idBmas(i), b3dvar,                 &
-     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
-     &                    scale, OCEAN(ng)%bed_mass(:,:,:,i),           &
-     &                    NposB, XposB, YposB, ZposB, bsta)
+          CALL extract_sta3d (ng, iNLM, Cgrid, idBmas(i), b3dvar,       &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
+     &                        scale, OCEAN(ng)%bed_mass(:,:,:,NOUT,i),  &
+     &                        NposB, XposB, YposB, ZposB, bsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idBmas(i),ng),  &
+            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idBmas(i),ng),  &
      &                              start, total, bsta)
             IF (status.ne.nf_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), tstaindx(ng)
+              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), tSTAindx(ng)
               exit_flag=3
+              ioerror=status
               RETURN
             END IF
           END IF
@@ -837,16 +976,17 @@
       DO i=1,MBEDP      
         IF (Sout(idSbed(i),ng)) THEN
           scale=1.0_r8
-          CALL extract3d (ng, Cgrid, idSbed(i), b3dvar,                 &
-     &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
-     &                    scale, OCEAN(ng)%bed(:,:,:,i),                &
-     &                    NposB, XposB, YposB, ZposB, bsta)
+          CALL extract_sta3d (ng, iNLM, Cgrid, idSbed(i), b3dvar,       &
+     &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
+     &                        scale, OCEAN(ng)%bed(:,:,:,i),            &
+     &                        NposB, XposB, YposB, ZposB, bsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idSbed(i),ng),  &
+            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idSbed(i),ng),  &
      &                              start, total, bsta)
             IF (status.ne.nf_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), tstaindx(ng)
+              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), tSTAindx(ng)
               exit_flag=3
+              ioerror=status
               RETURN
             END IF
           END IF
@@ -860,16 +1000,17 @@
       DO i=1,MBEDP      
         IF (Sout(idBott(i),ng)) THEN
           scale=1.0_r8
-          CALL extract2d (ng, Cgrid, idBott(i), r2dvar,                 &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    scale, OCEAN(ng)%bottom(:,;,i),               &
-     &                    Nstation(ng), Xpos, Ypos, psta)
+          CALL extract_sta2d (ng, iNLM, Cgrid, idBott(i), r2dvar,       &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        scale, OCEAN(ng)%bottom(:,:,i),           &
+     &                        Nstation(ng), Xpos, Ypos, psta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncstaid(ng), staVid(idBott(i),ng),  &
+            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idBott(i),ng),  &
      &                              start(2), total(2), psta)
             IF (status.ne.nf_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), tstaindx(ng)
+              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), tSTAindx(ng)
               exit_flag=3
+              ioerror=status
               RETURN
             END IF
           END IF
@@ -881,10 +1022,11 @@
 !  Synchronize restart NetCDF file to disk.
 !
       IF (Master) THEN
-        status=nf_sync(ncstaid(ng))
+        status=nf_sync(ncSTAid(ng))
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
+          ioerror=status
           RETURN
         END IF
       END IF

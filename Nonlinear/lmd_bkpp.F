@@ -1,10 +1,10 @@
 #include "cppdefs.h"
 #define SASHA
       MODULE lmd_bkpp_mod
-#ifdef LMD_BKPP
+#if defined NONLINEAR && defined LMD_BKPP
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine determines the depth of  bottom  oceanic boundary      !
@@ -514,8 +514,10 @@
 !
 !  Apply gradient or periodic boundary conditions.
 !
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, hbbl)
+      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NghostPoints,                                   &
+     &                  hbbl)
 !
 !  Find new boundary layer index "kbbl".
 !
@@ -710,11 +712,15 @@
 !
 !  Apply boundary conditions.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng), Akv)
+      CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
+     &                  NghostPoints,                                   &
+     &                  Akv)
       DO itrc=1,NAT
-        CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng), Akt(:,:,:,itrc))
+        CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,             &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints,                                 &
+     &                    Akt(:,:,:,itrc))
       END DO
       RETURN
       END SUBROUTINE lmd_bkpp_tile

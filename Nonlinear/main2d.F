@@ -1,14 +1,15 @@
 #include "cppdefs.h"
-#ifndef SOLVE3D
+#if defined NONLINEAR && !defined SOLVE3D
       SUBROUTINE main2d (ng)
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
-!  This routine is the main driver for  ROMS/TOMS when configurated    !
-!  as shallow water (barotropic) ocean model only.  It advances the    !
-!  vertically integrated primitive equations for a single time step.   !
+!  This subroutine is the main driver for nonlinear ROMS/TOMS when     !
+!  configurated as shallow water (barotropic) ocean model only. It     !
+!  advances forward the  vertically integrated primitive equations     !
+!  for a single time step.                                             !
 !                                                                      !
 !=======================================================================
 !
@@ -22,12 +23,16 @@
       USE atm_coupler_mod, ONLY : atmos_coupling
 # endif
       USE diag_mod, ONLY : diag
+# ifdef TLM_CHECK
+      USE dotproduct_mod, ONLY : nl_dotproduct
+# endif
 # ifdef ASSIMILATION
       USE oi_update_mod, ONLY : oi_update
 # endif
 # if defined SSH_TIDES || defined UV_TIDES
       USE set_tides_mod, ONLY : set_tides
 # endif
+      USE set_vbc_mod, ONLY: set_vbc
       USE step2d_mod, ONLY : step2d
 # ifdef FLOATS
       USE step_floats_mod, ONLY : step_floats
@@ -56,20 +61,19 @@
       tdays(ng)=time(ng)*sec2day
 !
 !-----------------------------------------------------------------------
-!  Read forcing, climatology and assimilation data from input NetCDF
-!  files, if any.
+!  Read in required data, if any, from input NetCDF files.
 !-----------------------------------------------------------------------
 !
       CALL get_data (ng)
-      IF (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
-!  Process forcing, climatology and assimilation input data: time
-!  interpolate between snapshots. If appropriate, compute and report
-!  diagnostics.
+!  Process input data, if any: time interpolate between snapshots.
+!  If appropriate, compute and report diagnostics.
 !-----------------------------------------------------------------------
 !
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
+!$OMP&            SHARED(ng,Lnew,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
@@ -81,16 +85,19 @@
           CALL set_diags (ng, TILE)
 # endif
           CALL diag (ng, TILE)
+# ifdef TLM_CHECK
+          CALL nl_dotproduct (ng, TILE, Lnew(ng))
+# endif
         END DO
       END DO
 !$OMP END PARALLEL DO
-      IF (exit_flag.ne.0) RETURN
+      IF (exit_flag.ne.NoError) RETURN
 
 # ifdef AIR_OCEAN
 !
 !-----------------------------------------------------------------------
-!  Couple to atmospheric model every "nOCN_steps" timesteps: get air/sea
-!  fluxes.
+!  Couple to atmospheric model every "nOCN_steps" timesteps: get
+!  air/sea fluxes.
 !-----------------------------------------------------------------------
 !
       IF (MOD(iic(ng),nOCN_steps).eq.0) THEN
@@ -105,40 +112,31 @@
       END IF
 # endif
 
-# if defined SSH_TIDES || defined UV_TIDES
 !
 !-----------------------------------------------------------------------
-!  Process tidal forcing.
+!  Set vertical boundary conditions. Process tidal forcing.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL set_vbc (ng, TILE)
+# if defined SSH_TIDES || defined UV_TIDES
           CALL set_tides (ng, TILE)
+# endif
         END DO
       END DO
 !$OMP END PARALLEL DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice
-!  that IO data is written in delayed and serial mode.  If last time
-!  step, stop all clocks.
+!  that IO data is written in delayed and serial mode.  Exit if last
+!  time step.
 !-----------------------------------------------------------------------
 !
       CALL output (ng)
-      IF (exit_flag.ne.0) RETURN
-      IF (iic(ng).eq.(ntend+1)) THEN
-        IF (Master) WRITE (stdout,10) ' Elapsed CPU time (seconds):'
- 10     FORMAT (/,a,/)
-!$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          CALL wclock_off (ng, 0)
-        END DO
-!$OMP END PARALLEL DO
-        RETURN
-      END IF
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the

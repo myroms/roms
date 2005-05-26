@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE my25_prestep_mod
-#if defined MY25_MIXING && defined SOLVE3D
+#if defined NONLINEAR && defined MY25_MIXING && defined SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine perfoms the predictor step for turbulent kinetic       !
@@ -37,7 +37,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 20)
+      CALL wclock_on (ng, iNLM, 20)
 # endif
       CALL my25_prestep_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -55,7 +55,7 @@
      &                        MIXING(ng) % gls,                         &
      &                        MIXING(ng) % tke)
 # ifdef PROFILE
-      CALL wclock_off (ng, 20)
+      CALL wclock_off (ng, iNLM, 20)
 # endif
       RETURN
       END SUBROUTINE my25_prestep
@@ -392,11 +392,13 @@
      &                 3, nstp,                                         &
      &                 gls, tke)
 # if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
      &                        tke(:,:,:,3))
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
      &                        gls(:,:,:,3))
 # endif
       RETURN

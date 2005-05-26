@@ -4,7 +4,7 @@
 # ifdef BIO_FASHAM
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Parameters for Fasham et al. (1990) type model:                     !
@@ -57,6 +57,7 @@
 !   ZooGR    Zooplankton maximum growth rate [1/day].                  !
 !   ZooMin   Zooplankton minimum threshold value [mmol_N/m3].          !
 !   ZooMR    Zooplankton mortality to Detritus [1/day].                !
+!   pCO2air  CO2 partial pressure in the air [ppmv].                   !
 !                                                                      !
 !=======================================================================
 !
@@ -100,12 +101,13 @@
         real(r8), dimension(Ngrids) :: ZooGR         ! 1/day
         real(r8), dimension(Ngrids) :: ZooMin        ! mmol_N/m3
         real(r8), dimension(Ngrids) :: ZooMR         ! 1/day
+        real(r8), dimension(Ngrids) :: pCO2air       ! ppmv
 
 # endif
 # ifdef ECOSIM
 !
 !=================================================== W. Paul Bissett ===
-!  Copyright (c) 2003 ROMS/TOMS Group                                ===
+!  Copyright (c) 2005 ROMS/TOMS Group                                ===
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  EcoSim Model Phytoplaknton Parameters:                              !
@@ -247,7 +249,9 @@
 !                   ratio (micromole_C/micromole_N).                   !
 !  Bac_Ceff       Bacterial gross growth carbon efficiency             !
 !                   (nondimensional).                                  !
-!  RtNIT          Maximum nitrification rate (1/day).                  !
+!  RtNIT          Maximum bacterial nitrification rate (1/day).        !
+!  HsNIT          Half saturation constant for bacterial nitrification !
+!                   (micromole NH4/liter)                              !
 !                                                                      !
 ! Dissolved Organic Matter Parameters:                                 !
 !                                                                      !
@@ -371,6 +375,7 @@
       real(r8), dimension(Ngrids) :: ExBacC2N
       real(r8), dimension(Ngrids) :: Bac_Ceff
       real(r8), dimension(Ngrids) :: RtNIT
+      real(r8), dimension(Ngrids) :: HsNIT  
 !
 !  DOM parameters.
 !
@@ -443,7 +448,7 @@
       SUBROUTINE initialize_biology
 !
 !=======================================================================
-!  Copyright (c) 2003 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== W. Paul Bissett ====
 !                                                                      !
 !  This routine initializes several parameters in module "mod_biology" !
@@ -511,11 +516,6 @@
           HsNH4_ba(ibac,ng)=HsDOC_ba(ibac,ng)/C2nBAC(ng)
           HsPO4_ba(ibac,ng)=HsDOC_ba(ibac,ng)/C2pBAC(ng)
           HsFe_ba (ibac,ng)=HsDOC_ba(ibac,ng)/C2FeBAC(ng)
-!!
-!!  HGA - If I use the statement below, the model blows-up
-!!        in 7 time-steps.
-!!
-!!        HsFe_ba (ibac,ng)=HsFe_ba (ibac,ng)/50.0_r8    ! Reduce Fe demand
         END DO
       END DO
 !
@@ -525,6 +525,7 @@
         N2cBAC(ng)=1.0_r8/C2nBAC(ng)
         P2cBAC(ng)=1.0_r8/C2pBAC(ng)
         Fe2cBAC(ng)=1.0_r8/C2FeBAC(ng)
+        I_Bac_Ceff(ng)=1.0_r8/Bac_Ceff(ng) 
       END DO
 !
 !  Reciprocal of non baterial recalcitran carbon excretion.

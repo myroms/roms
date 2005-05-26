@@ -3,7 +3,7 @@
 #ifdef SOLVE3D
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  DU_avg1   Time averaged U-flux for 2D equations (m3/s).             !
@@ -23,7 +23,9 @@
         implicit none
 
         TYPE T_COUPLING
-
+!
+!  Nonlinear model state.
+!
           real(r8), pointer :: DU_avg1(:,:)
           real(r8), pointer :: DU_avg2(:,:)
           real(r8), pointer :: DV_avg1(:,:)
@@ -36,6 +38,54 @@
           real(r8), pointer :: rhoS(:,:)
 # endif
 
+# if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+          real(r8), pointer :: tl_DU_avg1(:,:)
+          real(r8), pointer :: tl_DU_avg2(:,:)
+          real(r8), pointer :: tl_DV_avg1(:,:)
+          real(r8), pointer :: tl_DV_avg2(:,:)
+          real(r8), pointer :: tl_Zt_avg1(:,:)
+          real(r8), pointer :: tl_rufrc(:,:)
+          real(r8), pointer :: tl_rvfrc(:,:)
+#  ifdef VAR_RHO_2D
+          real(r8), pointer :: tl_rhoA(:,:)
+          real(r8), pointer :: tl_rhoS(:,:)
+#  endif
+# endif
+
+# ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+          real(r8), pointer :: ad_DU_avg1(:,:)
+          real(r8), pointer :: ad_DU_avg2(:,:)
+          real(r8), pointer :: ad_DV_avg1(:,:)
+          real(r8), pointer :: ad_DV_avg2(:,:)
+          real(r8), pointer :: ad_Zt_avg1(:,:)
+          real(r8), pointer :: ad_rufrc(:,:)
+          real(r8), pointer :: ad_rvfrc(:,:)
+#  ifdef VAR_RHO_2D
+          real(r8), pointer :: ad_rhoA(:,:)
+          real(r8), pointer :: ad_rhoS(:,:)
+#  endif
+# endif
+
+# if defined FORWARD_READ && \
+    (defined TANGENT || defined TL_IOMS || defined ADJOINT)
+!
+!  Latest two records of the nonlinear trajectory used to interpolate
+!  the background state in the tangent linear and adjoint models.
+!
+          real(r8), pointer :: DU_avg1G(:,:,:)
+          real(r8), pointer :: DU_avg2G(:,:,:)
+          real(r8), pointer :: DV_avg1G(:,:,:)
+          real(r8), pointer :: DV_avg2G(:,:,:)
+          real(r8), pointer :: rufrcG(:,:,:)
+          real(r8), pointer :: rvfrcG(:,:,:)
+# endif
+
         END TYPE T_COUPLING
 
         TYPE (T_COUPLING), allocatable :: COUPLING(:)
@@ -45,7 +95,7 @@
       SUBROUTINE allocate_coupling (ng, LBi, UBi, LBj, UBj)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates all variables in the module for all nested   !
@@ -65,6 +115,8 @@
 !
       IF (ng.eq.1) allocate ( COUPLING(Ngrids) )
 !
+!  Nonlinear model state.
+!
       allocate ( COUPLING(ng) % DU_avg1(LBi:UBi,LBj:UBj) )
       allocate ( COUPLING(ng) % DU_avg2(LBi:UBi,LBj:UBj) )
       allocate ( COUPLING(ng) % DV_avg1(LBi:UBi,LBj:UBj) )
@@ -78,13 +130,63 @@
       allocate ( COUPLING(ng) % rhoS(LBi:UBi,LBj:UBj) )
 # endif
 
+# if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+      allocate ( COUPLING(ng) % tl_DU_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % tl_DU_avg2(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % tl_DV_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % tl_DV_avg2(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % tl_Zt_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % tl_rufrc(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % tl_rvfrc(LBi:UBi,LBj:UBj) )
+
+#  ifdef VAR_RHO_2D
+      allocate ( COUPLING(ng) % tl_rhoA(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % tl_rhoS(LBi:UBi,LBj:UBj) )
+#  endif
+# endif
+
+# ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+      allocate ( COUPLING(ng) % ad_DU_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % ad_DU_avg2(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % ad_DV_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % ad_DV_avg2(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % ad_Zt_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % ad_rufrc(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % ad_rvfrc(LBi:UBi,LBj:UBj) )
+
+#  ifdef VAR_RHO_2D
+      allocate ( COUPLING(ng) % ad_rhoA(LBi:UBi,LBj:UBj) )
+      allocate ( COUPLING(ng) % ad_rhoS(LBi:UBi,LBj:UBj) )
+#  endif
+# endif
+
+# if defined FORWARD_READ && \
+    (defined TANGENT || defined TL_IOMS || defined ADJOINT)
+!
+!  Latest two records of the nonlinear trajectory used to interpolate
+!  the background state in the tangent linear and adjoint models.
+!
+      allocate ( COUPLING(ng) % DU_avg1G(LBi:UBi,LBj:UBj,2) )
+      allocate ( COUPLING(ng) % DU_avg2G(LBi:UBi,LBj:UBj,2) )
+      allocate ( COUPLING(ng) % DV_avg1G(LBi:UBi,LBj:UBj,2) )
+      allocate ( COUPLING(ng) % DV_avg2G(LBi:UBi,LBj:UBj,2) )
+      allocate ( COUPLING(ng) % rufrcG(LBi:UBi,LBj:UBj,2) )
+      allocate ( COUPLING(ng) % rvfrcG(LBi:UBi,LBj:UBj,2) )
+# endif
+
       RETURN
       END SUBROUTINE allocate_coupling
 
       SUBROUTINE initialize_coupling (ng, tile)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initialize all variables in the module using first     !
@@ -143,6 +245,8 @@
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
+!  Nonlinear model state.
+!
       COUPLING(ng) % DU_avg1(Imin:Imax,Jmin:Jmax) = IniVal
       COUPLING(ng) % DU_avg2(Imin:Imax,Jmin:Jmax) = IniVal
 
@@ -157,6 +261,64 @@
 # ifdef VAR_RHO_2D
       COUPLING(ng) % rhoA(Imin:Imax,Jmin:Jmax) = IniVal
       COUPLING(ng) % rhoS(Imin:Imax,Jmin:Jmax) = IniVal
+# endif
+
+# if defined TANGENT || defined TL_IOMS
+!
+!  Tangent linear model state.
+!
+      COUPLING(ng) % tl_DU_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % tl_DU_avg2(Imin:Imax,Jmin:Jmax) = IniVal
+
+      COUPLING(ng) % tl_DV_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % tl_DV_avg2(Imin:Imax,Jmin:Jmax) = IniVal
+
+      COUPLING(ng) % tl_Zt_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+
+      COUPLING(ng) % tl_rufrc(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % tl_rvfrc(Imin:Imax,Jmin:Jmax) = IniVal
+
+#  ifdef VAR_RHO_2D
+      COUPLING(ng) % tl_rhoA(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % tl_rhoS(Imin:Imax,Jmin:Jmax) = IniVal
+#  endif
+# endif
+
+# ifdef ADJOINT
+!
+!  Adjoint model state.
+!
+      COUPLING(ng) % ad_DU_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % ad_DU_avg2(Imin:Imax,Jmin:Jmax) = IniVal
+
+      COUPLING(ng) % ad_DV_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % ad_DV_avg2(Imin:Imax,Jmin:Jmax) = IniVal
+
+      COUPLING(ng) % ad_Zt_avg1(Imin:Imax,Jmin:Jmax) = IniVal
+
+      COUPLING(ng) % ad_rufrc(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % ad_rvfrc(Imin:Imax,Jmin:Jmax) = IniVal
+
+#  ifdef VAR_RHO_2D
+      COUPLING(ng) % ad_rhoA(Imin:Imax,Jmin:Jmax) = IniVal
+      COUPLING(ng) % ad_rhoS(Imin:Imax,Jmin:Jmax) = IniVal
+#  endif
+# endif
+
+# if defined FORWARD_READ && \
+    (defined TANGENT || defined TL_IOMS || defined ADJOINT)
+!
+!  Latest two records of the nonlinear trajectory used to interpolate
+!  the background state in the tangent linear and adjoint models.
+!
+      COUPLING(ng) % DU_avg1G(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      COUPLING(ng) % DU_avg2G(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+
+      COUPLING(ng) % DV_avg1G(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      COUPLING(ng) % DV_avg2G(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+
+      COUPLING(ng) % rufrcG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
+      COUPLING(ng) % rvfrcG(Imin:Imax,Jmin:Jmax,1:2) = IniVal
 # endif
 
       RETURN

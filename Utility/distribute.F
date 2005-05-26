@@ -6,10 +6,10 @@
       SUBROUTINE mp_barrier (ng)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
-!  This routine bloks the caller until all group members have called   !
+!  This routine blocks the caller until all group members have called  !
 !  it.                                                                 !
 !                                                                      !
 !=======================================================================
@@ -38,10 +38,10 @@
       RETURN
       END SUBROUTINE mp_barrier
 
-      SUBROUTINE mp_bcastf (ng, A, Asize)
+      SUBROUTINE mp_bcastf (ng, model, A, Asize)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine broadcasts a floating-point variable to all processors !
@@ -50,6 +50,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     A          Variable to broadcast.                                !
 !     Asize      Number of entries to broadcast.                       !
 !                                                                      !
@@ -68,7 +69,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Asize
+      integer, intent(in) :: ng, model, Asize
 
       real(r8), intent(inout) :: A(Asize)
 !
@@ -81,7 +82,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 39)
+      CALL wclock_on (ng, model, 39)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -104,16 +105,16 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 39)
+      CALL wclock_off (ng, model, 39)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastf
 
-      SUBROUTINE mp_bcasti (ng, A, Asize)
+      SUBROUTINE mp_bcasti (ng, model, A, Asize)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine broadcasts an integer variable to all processors in    !
@@ -122,6 +123,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     A          Variable to broadcast.                                !
 !     Asize      Number of entries to broadcast.                       !
 !                                                                      !
@@ -140,7 +142,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Asize
+      integer, intent(in) :: ng, model, Asize
 
       integer, intent(inout) :: A(Asize)
 !
@@ -154,7 +156,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 39)
+      CALL wclock_on (ng, model, 39)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -177,16 +179,16 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 39)
+      CALL wclock_off (ng, model, 39)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcasti
 
-      SUBROUTINE mp_bcastl (ng, A, Asize)
+      SUBROUTINE mp_bcastl (ng, model, A, Asize)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine broadcasts a logical variable to all processors in     !
@@ -195,6 +197,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     A          Variable to broadcast.                                !
 !     Asize      Number of entries to broadcast.                       !
 !                                                                      !
@@ -213,7 +216,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Asize
+      integer, intent(in) :: ng, model, Asize
 
       logical, intent(inout) :: A(Asize)
 !
@@ -227,7 +230,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 39)
+      CALL wclock_on (ng, model, 39)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -250,16 +253,16 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 39)
+      CALL wclock_off (ng, model, 39)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcastl
 
-      SUBROUTINE mp_bcasts (ng, A, Asize)
+      SUBROUTINE mp_bcasts (ng, model, A, Asize)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine broadcasts a string variable to all processors in the  !
@@ -268,6 +271,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     A          Variable to broadcast.                                !
 !     Asize      Number of entries to broadcast.                       !
 !                                                                      !
@@ -286,7 +290,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Asize
+      integer, intent(in) :: ng, model, Asize
 
       character (len=*), intent(inout) :: A
 !
@@ -300,7 +304,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 39)
+      CALL wclock_on (ng, model, 39)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -323,17 +327,18 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 39)
+      CALL wclock_off (ng, model, 39)
 # endif
 
       RETURN
       END SUBROUTINE mp_bcasts
 
-      SUBROUTINE mp_boundary (ng, Imin, Imax, LBi, UBi, LBk, UBk,       &
+      SUBROUTINE mp_boundary (ng, model, Imin, Imax,                    &
+     &                        LBi, UBi, LBk, UBk,                       &
      &                        update, A)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine exchanges boundary arrays between tiles.               !
@@ -341,6 +346,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     Imin       Starting tile index.                                  !
 !     Imax       Ending   tile index.                                  !
 !     Jstr       Starting tile index in the J-direction.               !
@@ -371,7 +377,8 @@
 !
       logical, intent(in) :: update
 
-      integer, intent(in) :: ng, Imin, Imax, LBi, UBi, LBk, UBk
+      integer, intent(in) :: ng, model, Imin, Imax
+      integer, intent(in) :: LBi, UBi, LBk, UBk
 
       real(r8), intent(inout) :: A(LBi:UBi,LBk:UBk)
 !
@@ -389,7 +396,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 43)
+      CALL wclock_on (ng, model, 43)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -442,16 +449,16 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 43)
+      CALL wclock_off (ng, model, 43)
 # endif
 
       RETURN
       END SUBROUTINE mp_boundary
 
-      SUBROUTINE mp_collect (ng, Npts, Aspv, A)
+      SUBROUTINE mp_collect (ng, model, Npts, Aspv, A)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine collects requested buffer from all members in the      !
@@ -462,6 +469,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     Npts       Number of extracted data points.                      !
 !     Aspv       Special value indicating no data.  This implies that  !
 !                  desired data is tile unbouded.                      !
@@ -480,7 +488,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Npts
+      integer, intent(in) :: ng, model, Npts
 
       real(r8), intent(in) :: Aspv
 
@@ -498,7 +506,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 44)
+      CALL wclock_on (ng, model, 44)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -533,29 +541,30 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 44)
+      CALL wclock_off (ng, model, 44)
 # endif
 
       RETURN
       END SUBROUTINE mp_collect
 
-      SUBROUTINE mp_exchange (ng, Istr, Iend, Jstr, Jend,               &
+      SUBROUTINE mp_exchange (ng, model, Istr, Iend, Jstr, Jend,        &
      &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
      &                        Nghost, EWperiodic, NSperiodic, A)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================ Enrique Curchitser ===
 !                                                                      !
 !  This routine updates the tile overlap halo of a  2D or 3D real      !
 !  array. It exchanges the specified number of "ghost-points". In      !
 !  order to minimize the number send and recive calls,  the ghost-     !
 !  points are included in the buffers. Therefore, the order of the     !
-!  pack/send/recive/unpack is crucial.                                 !
+!  pack/send/receive/unpack is crucial.                                !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     Istr       Starting tile index in the I-direction.               !
 !     Iend       Ending   tile index in the I-direction.               !
 !     Jstr       Starting tile index in the J-direction.               !
@@ -589,7 +598,7 @@
 !
       logical, intent(in) :: EWperiodic, NSperiodic
 
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, Nghost
 
       real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
@@ -638,7 +647,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 38)
+      CALL wclock_on (ng, model, 38)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -677,10 +686,10 @@
       Stag=2
       Etag=3
       Ntag=4
-      Wexchange=.false.
-      Sexchange=.false.
-      Eexchange=.false.
-      Nexchange=.false.
+      Wexchange=.FALSE.
+      Sexchange=.FALSE.
+      Eexchange=.FALSE.
+      Nexchange=.FALSE.
 !
 !-----------------------------------------------------------------------
 !  Process Western and Eastern tile boundary data.
@@ -697,11 +706,19 @@
 !
 !  Determine the rank of Western and Eastern tiles.  Then, determine
 !  the number of ghost-points to send and receive in the West- and
-!  East-directions.  The number of ghost-points changes when periodic
-!  boundary condition are activated.  The periodicity is as follows:
+!  East-directions.  This logic only works for two and three ghost
+!  points. The number of ghost-points changes when periodic boundary
+!  condition are activated.  The periodicity is as follows:
+!
+!  If two ghost-points:
 !
 !                      Lm-2  Lm-1  Lm   Lm+1  Lm+2       
 !                      -2    -1     0    1     2
+!
+!  If three ghost-points:
+!
+!                      Lm-2  Lm-1  Lm   Lm+1  Lm+2   Lm+3
+!                      -2    -1     0    1     2      3
 !
       IF (EWperiodic) THEN
         IF ((table(MyRankI-1,MyRankJ).eq.Null_Value).and.               &
@@ -710,14 +727,22 @@
           Etile=table(MyRankI+1,MyRankJ)
           GsendW=Nghost
           GsendE=Nghost
+# if defined THREE_GHOST
+          GrecvW=Nghost
+# else
           GrecvW=Nghost+1
+# endif
           GrecvE=Nghost
         ELSE IF ((table(MyRankI+1,MyRankJ).eq.Null_Value).and.          &
      &           (NtileI(ng).gt.1)) THEN
           Wtile=table(MyRankI-1,MyRankJ)
           Etile=table(0,MyRankJ)
           GsendW=Nghost
+# if defined THREE_GHOST
+          GsendE=Nghost
+# else
           GsendE=Nghost+1
+# endif
           GrecvW=Nghost
           GrecvE=Nghost
         ELSE        
@@ -736,8 +761,8 @@
         GrecvW=Nghost
         GrecvE=Nghost
       END IF
-      IF (Wtile.ne.Null_Value) Wexchange=.true.
-      IF (Etile.ne.Null_Value) Eexchange=.true.
+      IF (Wtile.ne.Null_Value) Wexchange=.TRUE.
+      IF (Etile.ne.Null_Value) Eexchange=.TRUE.
 !
 !  Pack tile boundary data including ghost-points.
 !
@@ -847,11 +872,19 @@
 !
 !  Determine the rank of Southern and Northern tiles.  Then, determine
 !  the number of ghost-points to send and receive in the South- and
-!  North-directions.  The number of ghost-points changes when periodic
-!  boundary condition are activated.  The periodicity is as follows:
+!  North-directions.  This logic only works for two and three ghost
+!  points. The number of ghost-points changes when periodic boundary
+!  condition are activated.  The periodicity is as follows:
 !
-!                      Mm-2  Mm-1  Mm   Mm+1  Mm+2       
+!  If two ghost-points:
+!
+!                      Mm-2  Mm-1  Mm   Mm+1  Mm+2
 !                      -2    -1     0    1     2
+!
+!  If three ghost-points:
+!
+!                      Mm-2  Mm-1  Mm   Mm+1  Mm+2  Mm+3
+!                      -2    -1     0    1     2     3
 !
       IF (NSperiodic) THEN
         IF ((table(MyRankI,MyRankJ-1).eq.Null_Value).and.               &
@@ -860,14 +893,22 @@
           Ntile=table(MyRankI,MyRankJ+1)
           GsendS=Nghost
           GsendN=Nghost
+# if defined THREE_GHOST
+          GrecvS=Nghost
+# else
           GrecvS=Nghost+1
+# endif
           GrecvN=Nghost
         ELSE IF ((table(MyRankI,MyRankJ+1).eq.Null_Value).and.          &
      &           (NtileJ(ng).gt.1)) then
           Stile=table(MyRankI,MyRankJ-1)
           Ntile=table(MyRankI,0)
           GsendS=Nghost
+# if defined THREE_GHOST
+          GsendN=Nghost
+# else
           GsendN=Nghost+1
+# endif
           GrecvS=Nghost
           GrecvN=Nghost
         ELSE
@@ -886,8 +927,8 @@
         GrecvS=Nghost
         GrecvN=Nghost
       END IF
-      IF (Stile.ne.Null_Value) Sexchange=.true.
-      IF (Ntile.ne.Null_Value) Nexchange=.true.
+      IF (Stile.ne.Null_Value) Sexchange=.TRUE.
+      IF (Ntile.ne.Null_Value) Nexchange=.TRUE.
 !
 !  Pack tile boundary data including ghost-points.
 !
@@ -987,21 +1028,21 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 38)
+      CALL wclock_off (ng, model, 38)
 # endif
 
       RETURN
       END SUBROUTINE mp_exchange
 
-      SUBROUTINE mp_gather (ng, LBi, UBi, LBj, UBj, LBk, UBk, gtype,    &
-     &                      Ascl,                                       &
+      SUBROUTINE mp_gather (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,    &
+     &                      gtype, Ascl,                                &
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
      &                      A, Npts, Aout)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine collects requested real tile array (2D or 3D) from     !
@@ -1012,6 +1053,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     LBi        I-dimension Lower bound.                              !
 !     UBi        I-dimension Upper bound.                              !
 !     LBj        J-dimension Lower bound.                              !
@@ -1045,7 +1087,8 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, LBi, UBi, LBj, UBj, LBk, UBk, gtype
+      integer, intent(in) :: ng, model, gtype
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(out) :: Npts
 
       real(r8), intent(in) :: Ascl
@@ -1084,7 +1127,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 41)
+      CALL wclock_on (ng, model, 41)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1240,16 +1283,16 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 41)
+      CALL wclock_off (ng, model, 41)
 # endif
 
       RETURN
       END SUBROUTINE mp_gather
 
-      SUBROUTINE mp_reduce (ng, Asize, A, op_handle)
+      SUBROUTINE mp_reduce (ng, model, Asize, A, op_handle)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine collects and reduces requested variables from all      !
@@ -1259,6 +1302,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     Asize      Number of scalar variables to reduce.                 !
 !     A          Vector of scalar variables to reduce.                 !
 !     op_handle  Reduction operation handle (string).  The following   !
@@ -1278,7 +1322,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Asize
+      integer, intent(in) :: ng, model, Asize
 
       character (len=*), intent(in) :: op_handle(Asize)
 
@@ -1304,7 +1348,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 40)
+      CALL wclock_on (ng, model, 40)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1393,13 +1437,13 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 40)
+      CALL wclock_off (ng, model, 40)
 # endif
 
       RETURN
       END SUBROUTINE mp_reduce
 
-      SUBROUTINE mp_scatter (ng, LBi, UBi, LBj, UBj, LBk, UBk,          &
+      SUBROUTINE mp_scatter (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,   &
      &                       Nghost, gtype, Amin, Amax,                 &
 # if defined READ_WATER && defined MASKING
      &                       NWpts, IJ_water,                           &
@@ -1407,7 +1451,7 @@
      &                       Npts, A, Aout)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine broadcasts input global data, packed as 1D real array, !
@@ -1418,6 +1462,7 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
 !     LBi        I-dimension Lower bound.                              !
 !     UBi        I-dimension Upper bound.                              !
 !     LBj        J-dimension Lower bound.                              !
@@ -1458,7 +1503,8 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost, gtype, Npts
 
 # if defined READ_WATER && defined MASKING
@@ -1488,7 +1534,7 @@
 !  Turn on time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_on (ng, 42)
+      CALL wclock_on (ng, model, 42)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -1631,6 +1677,9 @@
             ic=Ioff+(j-Joff)*Ilen+kc
             Aout(Lm(ng)+1,j,k)=Arecv(1+ic)
             Aout(Lm(ng)+2,j,k)=Arecv(2+ic)
+#   ifdef THREE_GHOST
+            Aout(Lm(ng)+3,j,k)=Arecv(3+ic)
+#   endif
           END DO
         END DO
       END IF
@@ -1653,6 +1702,9 @@
           DO i=Imin(MyRank),Imax(MyRank)
             Aout(i,Mm(ng)+1,k)=Arecv(i+Ioff+(1-Joff)*Ilen+kc)
             Aout(i,Mm(ng)+2,k)=Arecv(i+Ioff+(2-Joff)*Ilen+kc)
+#   ifdef THREE_GHOST
+            Aout(i,Mm(ng)+3,k)=Arecv(i+Ioff+(3-Joff)*Ilen+kc)
+#   endif
           END DO
         END DO
       END IF
@@ -1672,10 +1724,17 @@
      &    (Jtile(MyRank).eq.(NtileJ(ng)-1))) THEN
         DO k=LBk,UBk
           kc=(k-Koff)*IJlen
+#   ifdef THREE_GHOST
+          DO j=1,3
+#   else
           DO j=1,2
+#   endif
             jc=Ioff+(j-Joff)*Ilen+kc
             Aout(Lm(ng)+1,Mm(ng)+j,k)=Arecv(1+jc)
             Aout(Lm(ng)+2,Mm(ng)+j,k)=Arecv(2+jc)
+#   ifdef THREE_GHOST
+            Aout(Lm(ng)+3,Mm(ng)+j,k)=Arecv(3+jc)
+#   endif
           END DO
         END DO
       END IF
@@ -1683,7 +1742,11 @@
      &    (Jtile(MyRank).eq.(NtileJ(ng)-1))) THEN
         DO k=LBk,UBk
           kc=(k-Koff)*IJlen
+#   ifdef THREE_GHOST
+          DO j=1,3
+#   else
           DO j=1,2
+#   endif
             jc=Ioff+(j-Joff)*Ilen+kc
             Aout(-2,Mm(ng)+j,k)=Arecv(Lm(ng)-2+jc)
             Aout(-1,Mm(ng)+j,k)=Arecv(Lm(ng)-1+jc)
@@ -1699,6 +1762,9 @@
             jc=Ioff+(Mm(ng)+j-Joff)*Ilen+kc
             Aout(Lm(ng)+1,j,k)=Arecv(1+jc)
             Aout(Lm(ng)+2,j,k)=Arecv(2+jc)
+#   ifdef THREE_GHOST
+            Aout(Lm(ng)+3,j,k)=Arecv(3+jc)
+#   endif
           END DO
         END DO
       END IF
@@ -1722,7 +1788,7 @@
 !  Turn off time clocks.
 !-----------------------------------------------------------------------
 !
-      CALL wclock_off (ng, 42)
+      CALL wclock_off (ng, model, 42)
 # endif
 
       RETURN
@@ -1732,7 +1798,7 @@
      &                    ILB, IUB, JLB, JUB, KLB, KUB, A, name)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This routine is used to debug distributed-memory communications.    !
@@ -1761,7 +1827,7 @@
       common /counter/ nc
       integer :: nc
 
-      logical, save :: first = .true.
+      logical, save :: first = .TRUE.
 
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Imin, Imax, Ioff, Jmin, Jmax, Joff
@@ -1776,7 +1842,7 @@
 !
       IF (first) THEN
         nc=0
-        first=.false.
+        first=.FALSE.
       END IF
       nc=nc+1
       IF (Master) THEN

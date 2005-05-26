@@ -3,7 +3,7 @@
 #if defined UV_PSOURCE || defined TS_PSOURCE
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Dsrc       Direction of point Sources/Sinks:                        !
@@ -78,7 +78,7 @@
       SUBROUTINE allocate_sources (ng)
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine allocates and initializes all variables in the module  !
@@ -107,10 +107,10 @@
       SOURCES(ng) % Jsrc = 0
 
       allocate ( SOURCES(ng) % Lsrc(Msrc,NT(ng)) )
-      SOURCES(ng) % Lsrc = .false.
+      SOURCES(ng) % Lsrc = .FALSE.
 
       allocate ( SOURCES(ng) % Ltracer(NT(ng)) )
-      SOURCES(ng) % Ltracer = .false.
+      SOURCES(ng) % Ltracer = .FALSE.
 
       allocate ( SOURCES(ng) % Dsrc(Msrc) )
       SOURCES(ng) % Dsrc = IniVal

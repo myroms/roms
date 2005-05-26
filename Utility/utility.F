@@ -2,7 +2,7 @@
       MODULE utility_mod
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !=======================================================================
 !                                                                      !
 !  This module contains several all purpuse generic routines:          !
@@ -29,7 +29,7 @@
      &                     IJspv, Npos, Xpos, Ypos, Ipos, Jpos)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  Given position vectors Xpos and Ypos of size Npos,  this routine    !
@@ -204,13 +204,13 @@
      &                            Imin, Imax, Jmin, Jmax, Xo, Yo)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  Given a grided domain with matrix coordinates Xgrd and Ygrd, this   !
 !  function finds if the point (Xo,Yo)  is inside the box defined by   !
 !  the requested corners (Imin,Jmin) and (Imax,Jmax). It will return   !
-!  logical switch  try_range=.true.  if (Xo,Yo) is inside, otherwise   !
+!  logical switch  try_range=.TRUE.  if (Xo,Yo) is inside, otherwise   !
 !  it will return false.                                               !
 !                                                                      !
 !  Calls:   inside                                                     !
@@ -282,7 +282,7 @@
       LOGICAL FUNCTION inside (Nb, Xb, Yb, Xo, Yo)
 !
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !========================================== Alexander F. Shchepetkin ===
 !                                                                      !
 !  Given the vectors Xb and Yb of size Nb, defining the coordinates    !
@@ -434,9 +434,9 @@
 !  Determine if point (Xo,Yo) is inside of closed polygon.
 !
   10  IF (crossings.eq.0) THEN
-        inside=.false.
+        inside=.FALSE.
       ELSE
-        inside=.true.
+        inside=.TRUE.
       END IF
       RETURN
       END FUNCTION inside
@@ -481,7 +481,7 @@
 !
       CALL urng (ix, a, n, ierr)
 !
-      if (ierr.ne.0) RETURN
+      IF (ierr.ne.0) RETURN
 !
       IF (n.gt.1) THEN
         m=n/2
@@ -492,8 +492,8 @@
           a(i  )=r*COS(phi)
           a(i+1)=r*SIN(phi)
         END DO
-         if (m.eq.n) RETURN
-      end if
+         IF (m.eq.n) RETURN
+      END IF
 !
       CALL urng (ix, temp, 1, ierr)
 !
@@ -552,8 +552,8 @@
         RETURN
       END IF
       IF ((ix.le.0).or.(ix.ge.p)) THEN
-         ierr=2
-         RETURN
+        ierr=2
+        RETURN
       END IF
 !
       ierr=0

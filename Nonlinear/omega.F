@@ -3,7 +3,7 @@
 #ifdef SOLVE3D
 !
 !========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes S-coordinate vertical velocity (m^3/s),       !
@@ -34,7 +34,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 13)
+      CALL wclock_on (ng, iNLM, 13)
 # endif
       CALL omega_tile (ng, Istr, Iend, Jstr, Jend,                      &
      &                 LBi, UBi, LBj, UBj,                              &
@@ -43,7 +43,7 @@
      &                 GRID(ng) % z_w,                                  &
      &                 OCEAN(ng) % W)
 # ifdef PROFILE
-      CALL wclock_off (ng, 13)
+      CALL wclock_off (ng, iNLM, 13)
 # endif
       RETURN
       END SUBROUTINE omega
@@ -117,7 +117,8 @@
 !
         DO k=N(ng)-1,1,-1
           DO i=Istr,Iend
-            W(i,j,k)=W(i,j,k)-wrk(i)*(z_w(i,j,k)-z_w(i,j,0))
+            W(i,j,k)=W(i,j,k)-                                          &
+     &               wrk(i)*(z_w(i,j,k)-z_w(i,j,0))
           END DO
         END DO
         DO i=Istr,Iend
@@ -127,8 +128,10 @@
 !
 !  Set lateral boundary conditions.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng), W)
+      CALL bc_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
+     &                  NghostPoints,                                   &
+     &                  W)
       RETURN
       END SUBROUTINE omega_tile
 !

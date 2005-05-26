@@ -3,7 +3,7 @@
 #ifdef SOLVE3D
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine computes  "in situ" density and other associated       !
@@ -56,7 +56,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, 14)
+      CALL wclock_on (ng, iNLM, 14)
 # endif
       CALL rho_eos_tile (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj,                            &
@@ -64,7 +64,9 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 # endif
+# ifdef VAR_RHO_2D
      &                   GRID(ng) % Hz,                                 &
+# endif
      &                   GRID(ng) % z_r,                                &
      &                   GRID(ng) % z_w,                                &
      &                   OCEAN(ng) % t,                                 &
@@ -82,15 +84,12 @@
      &                   MIXING(ng) % alfaobeta,                        &
 #  endif
 # endif
-# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-     &                   MIXING(ng) % neutral,                          &
-# endif
 # if defined LMD_SKPP || defined LMD_BKPP
      &                   OCEAN(ng) % pden,                              &
 # endif
      &                   OCEAN(ng) % rho)
 # ifdef PROFILE
-      CALL wclock_off (ng, 14)
+      CALL wclock_off (ng, iNLM, 14)
 # endif
       RETURN
       END SUBROUTINE rho_eos
@@ -100,39 +99,42 @@
       SUBROUTINE rho_eos_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         nrhs,                                    &
-# ifdef MASKING
+#  ifdef MASKING
      &                         rmask,                                   &
-# endif
-     &                         Hz, z_r, z_w, t,                         &
-# ifdef VAR_RHO_2D
-     &                         rhoA, rhoS,                              &
-# endif
-# ifdef BV_FREQUENCY
-     &                         bvf,                                     &
-# endif
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
-     &                         alpha, beta,                             &
-#  ifdef LMD_DDMIX
-     &                         alfaobeta,                               &
 #  endif
-# endif
-# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-     &                         neutral,                                 &
-# endif
-# if defined LMD_SKPP || defined LMD_BKPP
+#  ifdef VAR_RHO_2D
+     &                         Hz,                                      &
+#  endif
+     &                         z_r, z_w, t,                             &
+#  ifdef VAR_RHO_2D
+     &                         rhoA, rhoS,                              &
+#  endif
+#  ifdef BV_FREQUENCY
+     &                         bvf,                                     &
+#  endif
+#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+     &                         alpha, beta,                             &
+#   ifdef LMD_DDMIX
+     &                         alfaobeta,                               &
+#   endif
+#  endif
+#  if defined LMD_SKPP || defined LMD_BKPP
      &                         pden,                                    &
-# endif
+#  endif
      &                         rho)
 !***********************************************************************
 !
       USE mod_param
       USE mod_eoscoef
       USE mod_scalars
+#  ifdef SEDIMENT
+      USE mod_sediment
+#  endif
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+#  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       USE exchange_2d_mod
       USE exchange_3d_mod
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -140,87 +142,93 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
-#  endif
+#   endif
+#   ifdef VAR_RHO_2D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+#   endif
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
-#  ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D
       real(r8), intent(out) :: rhoA(LBi:,LBj:)
       real(r8), intent(out) :: rhoS(LBi:,LBj:)
-#  endif
-#  ifdef BV_FREQUENCY
+#   endif
+#   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:,LBj:,0:)
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   endif
+#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
       real(r8), intent(out) :: alpha(LBi:,LBj:)
       real(r8), intent(out) :: beta(LBi:,LBj:)
-#   ifdef LMD_DDMIX
+#    ifdef LMD_DDMIX
       real(r8), intent(out) :: alfaobeta(LBi:,LBj:,0:)
+#    endif
 #   endif
-#  endif
-#  if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      real(r8), intent(out) :: neutral(LBi:,LBj:,0:)
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
-#  endif
+#   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
-# else
-#  ifdef MASKING
+#  else
+#   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-#  endif
+#   endif
+#   ifdef VAR_RHO_2D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+#   endif
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-#  ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D
       real(r8), intent(out) :: rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: rhoS(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef BV_FREQUENCY
+#   endif
+#   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:UBi,LBj:UBj,0:N(ng))
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   endif
+#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
       real(r8), intent(out) :: alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: beta(LBi:UBi,LBj:UBj)
-#   ifdef LMD_DDMIX
+#    ifdef LMD_DDMIX
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
+#    endif
 #   endif
-#  endif
-#  if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      real(r8), intent(out) :: neutral(LBi:UBi,LBj:UBj,0:N(ng))
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
-#  endif
+#   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
-# endif
+#  endif
 !
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, k
+      integer :: i, ised, itrc, j, k
 
-      real(r8) :: DbulkDP, DbulkDS, DbulkDT, Dden1DS, Dden1DT
-      real(r8) :: Tp, Tpr10, Ts, Tt
-      real(r8) :: bulk_dn, bulk_up, cff1, cff2, den_dn, den_up
-      real(r8) :: rhogamma, sound2, sqrtTs
+      real(r8) :: SedDen, Tp, Tpr10, Ts, Tt, sqrtTs
+#  ifdef BV_FREQUENCY
+      real(r8) :: bulk_dn, bulk_up, den_dn, den_up
+#  endif
+      real(r8) :: cff, cff1, cff2
 
-      real(r8), dimension(23) :: cff
+      real(r8), dimension(0:9) :: C
+#  ifdef EOS_TDERIVATIVE
+      real(r8), dimension(0:9) :: dCdT(0:9)
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: Scof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: Tcof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: bulk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: bulk0
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: bulk1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: bulk2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: den
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: den1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: wrk
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DbulkDS
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DbulkDT
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Dden1DS
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Dden1DT
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Scof
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Tcof
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: wrk
+#  endif
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk0
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk1
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk2
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: den
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: den1
 
 #  include "set_bounds.h"
 !
@@ -233,6 +241,10 @@
       DO j=JstrR,JendR
         DO k=1,N(ng)
           DO i=IstrR,IendR
+!
+!  Check temperature and salinity lower values. Assign depth to the
+!  pressure.
+!  
             Tt=MAX(-2.0_r8,t(i,j,k,nrhs,itemp))
 #  ifdef SALINITY
             Ts=MAX(0.0_r8,t(i,j,k,nrhs,isalt))
@@ -248,69 +260,108 @@
 !  Compute density (kg/m3) at standard one atmosphere pressure.
 !-----------------------------------------------------------------------
 !
-            cff(1)=Q00+Tt*(Q01+Tt*(Q02+Tt*(Q03+Tt*(Q04+Tt*Q05))))
-            cff(2)=U00+Tt*(U01+Tt*(U02+Tt*(U03+Tt*U04)))
-            cff(3)=V00+Tt*(V01+Tt*V02)
+            C(0)=Q00+Tt*(Q01+Tt*(Q02+Tt*(Q03+Tt*(Q04+Tt*Q05))))
+            C(1)=U00+Tt*(U01+Tt*(U02+Tt*(U03+Tt*U04)))
+            C(2)=V00+Tt*(V01+Tt*V02)
+#  ifdef EOS_TDERIVATIVE
 !
-            den1(i,k)=cff(1)+Ts*(cff(2)+sqrtTs*cff(3)+Ts*W00)
+            dCdT(0)=Q01+Tt*(2.0_r8*Q02+Tt*(3.0_r8*Q03+Tt*(4.0_r8*Q04+   &
+     &                      Tt*5.0_r8*Q05)))
+            dCdT(1)=U01+Tt*(2.0_r8*U02+Tt*(3.0_r8*U03+Tt*4.0_r8*U04))
+            dCdT(2)=V01+Tt*2.0_r8*V02
+#  endif  
 !
-!-----------------------------------------------------------------------
-!  Compute secant bulk modulus (bulk = bulk0 - bulk1*z + bulk2*z*z).
-!-----------------------------------------------------------------------
+            den1(i,k)=C(0)+Ts*(C(1)+sqrtTs*C(2)+Ts*W00)
+
+#  ifdef EOS_TDERIVATIVE
 !
-            cff(4)=A00+Tt*(A01+Tt*(A02+Tt*(A03+Tt*A04)))
-            cff(5)=B00+Tt*(B01+Tt*(B02+Tt*B03))
-            cff(6)=D00+Tt*(D01+Tt*D02)
-            cff(7)=E00+Tt*(E01+Tt*(E02+Tt*E03))
-            cff(8)=F00+Tt*(F01+Tt*F02)
-            cff(9)=G01+Tt*(G02+Tt*G03)
-            cff(10)=H00+Tt*(H01+Tt*H02)
+!  Compute d(den1)/d(S) and d(den1)/d(T) derivatives used in the
+!  computation of thermal expansion and saline contraction
+!  coefficients.
 !
-            bulk0(i,k)=cff(4)+Ts*(cff(5)+sqrtTs*cff(6))
-            bulk1(i,k)=cff(7)+Ts*(cff(8)+sqrtTs*G00)
-            bulk2(i,k)=cff(9)+Ts*cff(10)
-!
-            bulk(i,k)=bulk0(i,k)-Tp*(bulk1(i,k)-Tp*bulk2(i,k))
-!
-!-----------------------------------------------------------------------
-!  Compute "in situ" density anomaly (kg/m3).
-!-----------------------------------------------------------------------
-!
-            den(i,k)=(den1(i,k)*bulk(i,k))/(bulk(i,k)+Tpr10)
-            rho(i,j,k)=(den(i,k)-1000.0_r8)
-!!          rho(i,j,k)=(den1(i,k)-1000.0_r8)
-#  ifdef MASKING
-            rho(i,j,k)=rho(i,j,k)*rmask(i,j)
+            Dden1DS(i,k)=C(1)+1.5_r8*C(2)*sqrtTs+2.0_r8*W00*Ts
+            Dden1DT(i,k)=dCdT(0)+Ts*(dCdT(1)+sqrtTs*dCdT(2))
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
 !
 !-----------------------------------------------------------------------
-!  Compute "in situ" density anomaly (kg/m3) referenced to the
-!  surface.
+!  Compute secant bulk modulus.
 !-----------------------------------------------------------------------
 !
-            pden(i,j,k)=(den1(i,k)-1000.0_r8)
-#   ifdef MASKING
-            pden(i,j,k)=pden(i,j,k)*rmask(i,j)
-#   endif
+            C(3)=A00+Tt*(A01+Tt*(A02+Tt*(A03+Tt*A04)))
+            C(4)=B00+Tt*(B01+Tt*(B02+Tt*B03))
+            C(5)=D00+Tt*(D01+Tt*D02)
+            C(6)=E00+Tt*(E01+Tt*(E02+Tt*E03))
+            C(7)=F00+Tt*(F01+Tt*F02)
+            C(8)=G01+Tt*(G02+Tt*G03)
+            C(9)=H00+Tt*(H01+Tt*H02)
+#  ifdef EOS_TDERIVATIVE
+!
+            dCdT(3)=A01+Tt*(2.0_r8*A02+Tt*(3.0_r8*A03+Tt*4.0_r8*A04))
+            dCdT(4)=B01+Tt*(2.0_r8*B02+Tt*3.0_r8*B03)
+            dCdT(5)=D01+Tt*2.0_r8*D02
+            dCdT(6)=E01+Tt*(2.0_r8*E02+Tt*3.0_r8*E03)
+            dCdT(7)=F01+Tt*2.0_r8*F02
+            dCdT(8)=G02+Tt*2.0_r8*G03
+            dCdT(9)=H01+Tt*2.0_r8*H02
+#  endif
+!
+            bulk0(i,k)=C(3)+Ts*(C(4)+sqrtTs*C(5))
+            bulk1(i,k)=C(6)+Ts*(C(7)+sqrtTs*G00)
+            bulk2(i,k)=C(8)+Ts*C(9)
+            bulk (i,k)=bulk0(i,k)-Tp*(bulk1(i,k)-Tp*bulk2(i,k))
+
+#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+!
+!  Compute d(bulk)/d(S) and d(bulk)/d(T) derivatives used
+!  in the computation of thermal expansion and saline contraction
+!  coefficients.
+!
+            DbulkDS(i,k)=C(4)+sqrtTs*1.5_r8*C(5)-                       &
+     &                   Tp*(C(7)+sqrtTs*1.5_r8*G00-Tp*C(9))
+            DbulkDT(i,k)=dCdT(3)+Ts*(dCdT(4)+sqrtTs*dCdT(5))-           &
+     &                   Tp*(dCdT(6)+Ts*dCdT(7)-                        &
+     &                       Tp*(dCdT(8)+Ts*dCdT(9)))
+#  endif
+!
+!-----------------------------------------------------------------------
+!  Compute local "in situ" density anomaly (kg/m3 - 1000).
+!-----------------------------------------------------------------------
+!
+            cff=1.0_r8/(bulk(i,k)+Tpr10)
+            den(i,k)=den1(i,k)*bulk(i,k)*cff
+#  if defined SEDIMENT && defined SED_DENS
+            SedDen=0.0_r8
+            DO ised=1,NST
+              itrc=idsed(ised)
+              cff1=1.0_r8/Srho(ised,ng)
+              SedDen=SedDen+                                            &
+     &               t(i,j,k,nrhs,itrc)*                                &
+     &               (Srho(ised,ng)-den(i,k))*cff1
+            END DO
+            den(i,k)=den(i,k)+SedDen
+#  endif
+            den(i,k)=den(i,k)-1000.0_r8
+#  ifdef MASKING
+            den(i,k)=den(i,k)*rmask(i,j)
 #  endif
           END DO
         END DO
+
 #  ifdef VAR_RHO_2D
 !
 !-----------------------------------------------------------------------
-!  Compute vertical averaged density and density perturbation used
-!  in barotropic pressure gradient.
+!  Compute vertical averaged density (rhoA) and density perturbation
+!  (rhoS) used in barotropic pressure gradient.
 !-----------------------------------------------------------------------
 !
         DO i=IstrR,IendR
-          cff1=rho(i,j,N(ng))*Hz(i,j,N(ng))
+          cff1=den(i,N(ng))*Hz(i,j,N(ng))
           rhoS(i,j)=0.5_r8*cff1*Hz(i,j,N(ng))
           rhoA(i,j)=cff1
         END DO
         DO k=N(ng)-1,1,-1
           DO i=IstrR,IendR
-            cff1=rho(i,j,k)*Hz(i,j,k)
+            cff1=den(i,k)*Hz(i,j,k)
             rhoS(i,j)=rhoS(i,j)+Hz(i,j,k)*(rhoA(i,j)+0.5_r8*cff1)
             rhoA(i,j)=rhoA(i,j)+cff1
           END DO
@@ -322,7 +373,8 @@
           rhoS(i,j)=2.0_r8*cff1*cff1*cff2*rhoS(i,j)
         END DO
 #  endif
-#  ifdef BV_FREQUENCY
+
+#  if defined BV_FREQUENCY
 !
 !-----------------------------------------------------------------------
 !  Compute Brunt-Vaisala frequency (1/s2) at horizontal RHO-points
@@ -342,8 +394,10 @@
             bulk_dn=bulk0(i,k  )-                                       &
      &              z_w(i,j,k)*(bulk1(i,k  )-                           &
      &                          bulk2(i,k  )*z_w(i,j,k))
-            den_up=(den1(i,k+1)*bulk_up)/(bulk_up+0.1_r8*z_w(i,j,k))
-            den_dn=(den1(i,k  )*bulk_dn)/(bulk_dn+0.1_r8*z_w(i,j,k))
+            cff1=1.0_r8/(bulk_up+0.1_r8*z_w(i,j,k))
+            cff2=1.0_r8/(bulk_dn+0.1_r8*z_w(i,j,k))
+            den_up=cff1*(den1(i,k+1)*bulk_up)
+            den_dn=cff2*(den1(i,k  )*bulk_dn)
             bvf(i,j,k)=-g*(den_up-den_dn)/                              &
      &                 (0.5_r8*(den_up+den_dn)*                         &
      &                  (z_r(i,j,k+1)-z_r(i,j,k)))
@@ -356,6 +410,7 @@
           bvf(i,j,N(ng))=0.0_r8
         END DO
 #  endif
+
 #  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
 !
 !-----------------------------------------------------------------------
@@ -366,178 +421,149 @@
 #   ifdef LMD_DDMIX
         DO k=1,N(ng)
 #   else
-        k=N(ng)
-#   endif /* LMD_DDMIX */
-          DO i=IstrR,IendR
-            Tt=MAX(-2.0_r8,t(i,j,k,nrhs,itemp))
-#  ifdef SALINITY
-            Ts=MAX(0.0_r8,t(i,j,k,nrhs,isalt))
-            sqrtTs=SQRT(Ts)
-#   else
-            Ts=0.0_r8
-            sqrtTs=0.0_r8
+        DO k=N(ng),N(ng)
 #   endif
-            Tp=z_r(i,j,k)
-            Tpr10=0.1_r8*Tp
-!
-!  Compute d(den1)/d(S) and d(den1)/d(T) derivatives.
-!
-            cff(2)=U00+Tt*(U01+Tt*(U02+Tt*(U03+Tt*U04)))
-            cff(3)=V00+Tt*(V01+Tt*V02)
-            cff(11)=Q01+Tt*(2.0_r8*Q02+                                 &
-     &                      Tt*(3.0_r8*Q03+                             &
-     &                          Tt*(4.0_r8*Q04+Tt*5.0_r8*Q05)))
-            cff(12)=U01+Tt*(2.0_r8*U02+                                 &
-     &                      Tt*(3.0_r8*U03+Tt*4.0_r8*U04))
-            cff(13)=V01+Tt*2.0_r8*V02
-!
-            Dden1DS=cff(2)+1.5_r8*cff(3)*sqrtTs+2.0_r8*W00*Ts
-            Dden1DT=cff(11)+Ts*(cff(12)+sqrtTs*cff(13))
-!
-!  Compute d(bulk)/d(S) and d(bulk)/d(T) derivatives.
-!
-            cff(5)=B00+Tt*(B01+Tt*(B02+Tt*B03))
-            cff(6)=D00+Tt*(D01+Tt*D02)
-            cff(8)=F00+Tt*(F01+Tt*F02)
-            cff(10)=H00+Tt*(H01+Tt*H02)
-            cff(14)=A01+Tt*(2.0_r8*A02+Tt*(3.0_r8*A03+Tt*4.0_r8*A04))
-            cff(15)=B01+Tt*(2.0_r8*B02+Tt*3.0_r8*B03)
-            cff(16)=D01+Tt*2.0_r8*D02
-            cff(17)=E01+Tt*(2.0_r8*E02+Tt*3.0_r8*E03)
-            cff(18)=F01+Tt*2.0_r8*F02
-            cff(19)=G02+Tt*2.0_r8*G03
-            cff(20)=H01+Tt*2.0_r8*H02
-!
-            DbulkDS=cff(5)+sqrtTs*1.5_r8*cff(6)-                        &
-     &              Tp*(cff(8)+sqrtTs*1.5_r8*G00-Tp*cff(10))
-            DbulkDT=cff(14)+Ts*(cff(15)+sqrtTs*cff(16))-                &
-     &              Tp*(cff(17)+Ts*cff(18)-Tp*(cff(19)+Ts*cff(20)))
+          DO i=IstrR,IendR
+            Tpr10=0.1_r8*z_r(i,j,k)
 !
 !  Compute thermal expansion and saline contraction coefficients.
 !
-            cff(21)=Tpr10*den1(i,k)
-            cff(22)=bulk(i,k)*(bulk(i,k)+Tpr10)
-            wrk(i,k)=den(i,k)*(bulk(i,k)+Tpr10)*(bulk(i,k)+Tpr10)
-            Tcof(i,k)=-(DbulkDT*cff(21)+Dden1DT*cff(22))
-            Scof(i,k)= (DbulkDS*cff(21)+Dden1DS*cff(22))
+            cff=bulk(i,k)+Tpr10
+            cff1=Tpr10*den1(i,k)
+            cff2=bulk(i,k)*cff
+            wrk(i,k)=(den(i,k)+1000.0_r8)*cff*cff
+            Tcof(i,k)=-(DbulkDT(i,k)*cff1+                              &
+     &                  Dden1DT(i,k)*cff2)
+            Scof(i,k)= (DbulkDS(i,k)*cff1+                              &
+     &                  Dden1DS(i,k)*cff2)
 #   ifdef LMD_DDMIX
             alfaobeta(i,j,k)=Tcof(i,k)/Scof(i,k)
 #   endif
           END DO
           IF (k.eq.N(ng)) THEN
             DO i=IstrR,IendR
-              alpha(i,j)=Tcof(i,N(ng))/wrk(i,N(ng))
-              beta (i,j)=Scof(i,N(ng))/wrk(i,N(ng))
+              cff=1.0_r8/wrk(i,N(ng))
+              alpha(i,j)=cff*Tcof(i,N(ng))
+              beta (i,j)=cff*Scof(i,N(ng))
             END DO
           END IF
-#   ifdef LMD_DDMIX
         END DO
-#   endif
 #  endif
-#  if defined MIX_ISO_TS || defined GENT_McWILLIAMS
 !
 !-----------------------------------------------------------------------
-!  Compute factor to convert isopycnal, "in situ" density slopes to
-!  to isopycnal, neutral slopes:
-!
-!    neutral = [1 + g^2 / (c^2 * bvf)];    c^2 = 10000/(rho*gamma)
-!
-!  were "c" is the sound speed (m/s) and "gamma" is the adiabatic and
-!  isentropic compressibility coefficient (1/Pa).
+!  Load "in situ" density anomaly (kg/m3 - 1000) and potential
+!  density anomaly (kg/m3 - 1000) referenced to the surface into global
+!  arrays. Notice that this is done in a separate (i,k) DO-loops to
+!  facilitate the adjoint.
 !-----------------------------------------------------------------------
 !
         DO k=1,N(ng)
           DO i=IstrR,IendR
-            Tp=z_r(i,j,k)
-            Tpr10=0.1_r8*Tp
-            cff(23)=(bulk(i,k)+Tpr10)*(bulk(i,k)+Tpr10)
-            DbulkDP=-bulk1(i,k)+Tp*2.0_r8*bulk2(i,k)
-            rhogamma=ABS(0.1_r8*den1(i,k)*                              &
-     &                   ((Tp*DbulkDP-bulk(i,k))/cff(23)))
-            sound2=10000.0_r8/rhogamma
-            neutral(i,j,k)=1.0_r8+g*g/(sound2*bvf(i,j,k))
+            rho(i,j,k)=den(i,k)
+#  if defined LMD_SKPP || defined LMD_BKPP
+            pden(i,j,k)=(den1(i,k)-1000.0_r8)
+#   ifdef MASKING
+            pden(i,j,k)=pden(i,j,k)*rmask(i,j)
+#   endif
+#  endif
           END DO
         END DO
-#  endif
       END DO
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
-!------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !  Exchange boundary data.
-!------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), rho)
+      CALL exchange_r3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        rho)
 #   if defined LMD_SKPP || defined LMD_BKPP
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), pden)
+      CALL exchange_r3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        pden)
 #   endif
 #   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
 #    ifdef LMD_DDMIX
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng), alfaobeta)
+      CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        alfaobeta)
 #    endif
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, alpha)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, beta)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        alpha)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        beta)
 #   endif    
-#   if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), neutral)
-#   endif
 #   ifdef VAR_RHO_2D
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rhoA)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rhoS)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        rhoA)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        rhoS)
 #   endif
 #   ifdef BV_FREQUENCY
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng), bvf)
+      CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        bvf)
 #   endif
 #  endif
+
       RETURN
       END SUBROUTINE rho_eos_tile
 # endif
+
 # ifndef NONLIN_EOS
 !
 !***********************************************************************
       SUBROUTINE rho_eos_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         nrhs,                                    &
-# ifdef MASKING
+#  ifdef MASKING
      &                         rmask,                                   &
-# endif
-     &                         Hz, z_r, z_w, t,                         &
-# ifdef VAR_RHO_2D
-     &                         rhoA, rhoS,                              &
-# endif
-# ifdef BV_FREQUENCY
-     &                         bvf,                                     &
-# endif
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
-     &                         alpha, beta,                             &
-#  ifdef LMD_DDMIX
-     &                         alfaobeta,                               &
 #  endif
-# endif
-# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-     &                         neutral,                                 &
-# endif
-# if defined LMD_SKPP || defined LMD_BKPP
+#  ifdef VAR_RHO_2D
+     &                         Hz,                                      &
+#  endif
+     &                         z_r, z_w, t,                             &
+#  ifdef VAR_RHO_2D
+     &                         rhoA, rhoS,                              &
+#  endif
+#  ifdef BV_FREQUENCY
+     &                         bvf,                                     &
+#  endif
+#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+     &                         alpha, beta,                             &
+#   ifdef LMD_DDMIX
+     &                         alfaobeta,                               &
+#   endif
+#  endif
+#  if defined LMD_SKPP || defined LMD_BKPP
      &                         pden,                                    &
-# endif
+#  endif
      &                         rho)
 !***********************************************************************
 !
       USE mod_param
       USE mod_scalars
+#  ifdef SEDIMENT
+      USE mod_sediment
+#  endif
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+#  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
       USE exchange_2d_mod
       USE exchange_3d_mod
-# endif
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -545,72 +571,70 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#  ifdef ASSUMED_SHAPE
+#   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
-#  endif
+#   endif
+#   ifdef VAR_RHO_2D
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+#   endif
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
 
-#  ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D
       real(r8), intent(out) :: rhoA(LBi:,LBj:)
       real(r8), intent(out) :: rhoS(LBi:,LBj:)
-#  endif
-#  ifdef BV_FREQUENCY
+#   endif
+#   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:,LBj:,0:)
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   endif
+#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
       real(r8), intent(out) :: alpha(LBi:,LBj:)
       real(r8), intent(out) :: beta(LBi:,LBj:)
-#   ifdef LMD_DDMIX
+#    ifdef LMD_DDMIX
       real(r8), intent(out) :: alfaobeta(LBi:,LBj:,0:)
+#    endif
 #   endif
-#  endif
-#  if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      real(r8), intent(out) :: neutral(LBi:,LBj:,0:)
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP
       real(r8), intent(out) :: pden(LBi:,LBj:,:)
-#  endif
+#   endif
       real(r8), intent(out) :: rho(LBi:,LBj:,:)
-# else
-#  ifdef MASKING
+#  else
+#   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-#  endif
+#   endif
+#   ifdef VAR_RHO_2D
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+#   endif
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-#  ifdef VAR_RHO_2D
+#   ifdef VAR_RHO_2D
       real(r8), intent(out) :: rhoA(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: rhoS(LBi:UBi,LBj:UBj)
-#  endif
-#  ifdef BV_FREQUENCY
+#   endif
+#   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:UBi,LBj:UBj,0:N(ng))
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   endif
+#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
       real(r8), intent(out) :: alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: beta(LBi:UBi,LBj:UBj)
-#   ifdef LMD_DDMIX
+#    ifdef LMD_DDMIX
       real(r8), intent(out) :: alfaobeta(LBi:UBi,LBj:UBj,0:N(ng))
+#    endif
 #   endif
-#  endif
-#  if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      real(r8), intent(out) :: neutral(LBi:UBi,LBj:UBj,0:N(ng))
-#  endif
-#  if defined LMD_SKPP || defined LMD_BKPP
+#   if defined LMD_SKPP || defined LMD_BKPP
       real(r8), intent(out) :: pden(LBi:UBi,LBj:UBj,N(ng))
-#  endif
+#   endif
       real(r8), intent(out) :: rho(LBi:UBi,LBj:UBj,N(ng))
-# endif
+#  endif
 !
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, k
-      real(r8) :: cff, cff1, cff2
+      integer :: i, ised, itrc, j, k
+      real(r8) :: SedDen, cff, cff1, cff2
 
 #  include "set_bounds.h"
 !
@@ -619,16 +643,31 @@
 !=======================================================================
 !
 !-----------------------------------------------------------------------
-!  Compute "in situ" density anomaly (kg/m3).
+!  Compute "in situ" density anomaly (kg/m3 - 1000) using the linear
+!  equation of state.
 !-----------------------------------------------------------------------
 !
       DO j=JstrR,JendR
         DO k=1,N(ng)
           DO i=IstrR,IendR
-            rho(i,j,k)=R0(ng)+Tcoef(ng)*t(i,j,k,nrhs,itemp)
+            rho(i,j,k)=R0(ng)-                                          &
+     &                 R0(ng)*Tcoef(ng)*(t(i,j,k,nrhs,itemp)-T0(ng))
 #  ifdef SALINITY
-            rho(i,j,k)=rho(i,j,k)+Scoef(ng)*t(i,j,k,nrhs,isalt)
+            rho(i,j,k)=rho(i,j,k)+                                      &
+     &                 R0(ng)*Scoef(ng)*(t(i,j,k,nrhs,isalt)-S0(ng))
 #  endif
+#  if defined SEDIMENT && defined SED_DENS
+            SedDen=0.0_r8
+            DO ised=1,NST
+              itrc=idsed(ised)
+              cff1=1.0_r8/Srho(ised,ng)
+              SedDen=SedDen+                                            &
+     &               t(i,j,k,nrhs,itrc)*                                &
+     &               (Srho(ised,ng)-rho(i,j,k))*cff1
+            END DO
+            rho(i,j,k)=rho(i,j,k)+SedDen
+#  endif
+            rho(i,j,k)=rho(i,j,k)-1000.0_r8
 #  ifdef MASKING
             rho(i,j,k)=rho(i,j,k)*rmask(i,j)
 #  endif
@@ -637,11 +676,12 @@
 #  endif
           END DO
         END DO
+
 #  ifdef VAR_RHO_2D
 !
 !-----------------------------------------------------------------------
-!  Compute vertical averaged density and density perturbation used
-!  in barotropic pressure gradient.
+!  Compute vertical averaged density (rhoA) and density perturbation
+!  used (rhoS) in barotropic pressure gradient.
 !-----------------------------------------------------------------------
 !
         DO i=IstrR,IendR
@@ -663,6 +703,7 @@
           rhoS(i,j)=2.0_r8*cff1*cff1*cff2*rhoS(i,j)
         END DO
 #  endif
+
 #  ifdef BV_FREQUENCY
 !
 !-----------------------------------------------------------------------
@@ -677,6 +718,7 @@
           END DO
         END DO
 #  endif
+
 #  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
 !
 !-----------------------------------------------------------------------
@@ -712,39 +754,51 @@
       END DO
 #  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
-!------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !  Exchange boundary data.
-!------------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), rho)
+      CALL exchange_r3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        rho)
 #   if defined LMD_SKPP || defined LMD_BKPP
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), pden)
+      CALL exchange_r3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        pden)
 #   endif
 #   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
 #    ifdef LMD_DDMIX
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng), alfaobeta)
+      CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        alfaobeta)
 #    endif
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, alpha)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, beta)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        alpha)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        beta)
 #   endif    
-#   if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 1, N(ng), neutral)
-#   endif
 #   ifdef VAR_RHO_2D
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rhoA)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, rhoS)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        rhoA)
+      CALL exchange_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints,                             &
+     &                        rhoS)
 #   endif
 #   ifdef BV_FREQUENCY
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, 0, N(ng), bvf)
+      CALL exchange_w3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        NghostPoints,                             &
+     &                        bvf)
 #   endif
 #  endif
       RETURN

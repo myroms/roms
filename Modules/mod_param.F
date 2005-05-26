@@ -2,7 +2,7 @@
       MODULE mod_param
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  Grid parameters:                                                    !
@@ -34,6 +34,7 @@
 !  MTC        Maximum number of tidal components.                      !
 !  Msrc       Maximum number of point Sources/Sinks.                   !
 !  NFT        Number of float time levels (minus one).                 !
+!  NFV        Number of float variables.                               !
 !  NSV        Number of model state variables.                         !
 !                                                                      !
 !  Tracer parameters:                                                  !
@@ -41,8 +42,9 @@
 !  NAT        Number of active tracer type variables (usually,         !
 !               NAT=2 for potential temperature and salinity).         !
 !  NBT        Number of biological tracer type variables.              !
-!  NFV        Number of float variables.                               !
 !  NST        Number of sediment tracer type variables (NCS+NNS).      !
+!  NPT        Number of extra passive tracer type variables to         !
+!               advect and diffuse only (dyes, etc).                   !
 !  NT         Total number of tracer type variables.                   !
 !  MT         Maximum number of tracer type variables.                 !
 !                                                                      !
@@ -77,21 +79,39 @@
         integer, private :: ig
 
         integer, parameter :: Msev = 300
-        integer, parameter :: Msrc = 25
+        integer, parameter :: Msrc = 200
 #ifdef ECOSIM
         integer, parameter :: NBands = 60
 #endif
+#if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
+# ifdef CARBON
+#  ifdef OXYGEN
+        integer, parameter :: NDbio2d = 4
+        integer, parameter :: NDbio3d = 2
+#  else
+        integer, parameter :: NDbio2d = 3
+        integer, parameter :: NDbio3d = 2
+#  endif
+# else
+#  ifdef OXYGEN
         integer, parameter :: NDbio2d = 2
         integer, parameter :: NDbio3d = 2
-        integer, parameter :: MTC = 7
+#  else
+        integer, parameter :: NDbio2d = 1
+        integer, parameter :: NDbio3d = 2
+#  endif
+# endif
+#endif
+!!      integer, parameter :: MTC = 7
+        integer, parameter :: MTC = 20
         integer, parameter :: NFT = 4
 
-#if defined ADRIATIC1
+#if defined ADRIA02
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
-        integer, parameter, dimension(Ngrids) :: Lm = (/ 40  /)
-        integer, parameter, dimension(Ngrids) :: Mm = (/ 140 /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 40  /)
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 158 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 58  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
 #elif defined BASIN
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 1
@@ -134,12 +154,6 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 39  /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 4   /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
-#elif defined CALCOFI
-        integer, parameter :: Ngrids = 1
-        integer, parameter :: NAT = 2
-        integer, parameter, dimension(Ngrids) :: Lm = (/ 78  /)
-        integer, parameter, dimension(Ngrids) :: Mm = (/ 118 /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
 #elif defined CANYON_A
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 1
@@ -176,10 +190,18 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 54  /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 108 /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 4   /)
+!!      integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
+#elif defined EAC
+        integer, parameter :: Ngrids = 1
+        integer, parameter ::  NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 160 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
 #elif defined ESTUARY_TEST
         integer, parameter :: Ngrids = 1
         integer, parameter ::  NAT = 2
-        integer, parameter, dimension(Ngrids) :: Lm = (/ 200 /)
+!!      integer, parameter, dimension(Ngrids) :: Lm = (/ 200 /)
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 50 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 3   /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
 #elif defined FLT_TEST
@@ -190,10 +212,16 @@
         integer, parameter, dimension(Ngrids) :: N  = (/ 4   /)
 #elif defined GRAV_ADJ
         integer, parameter :: Ngrids = 1
-        integer, parameter :: NAT = 1
+        integer, parameter :: NAT = 2
         integer, parameter, dimension(Ngrids) :: Lm = (/ 128 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 4   /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 40  /)
+#elif defined IAS
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 256 /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 30  /)
 #elif defined KELVIN
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 1
@@ -211,7 +239,7 @@
         integer, parameter :: NAT = 2
         integer, parameter, dimension(Ngrids) :: Lm = (/ 100 /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 20  /)
-        integer, parameter, dimension(Ngrids) :: N  = (/ 8  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 8   /)
 #elif defined LMD_TEST
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
@@ -249,12 +277,24 @@
         integer, parameter, dimension(Ngrids) :: Lm = (/ 4   /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 128 /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
-#elif defined RIVERPLUME
+#elif defined RIVERPLUME1
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
         integer, parameter, dimension(Ngrids) :: Lm = (/ 39  /)
         integer, parameter, dimension(Ngrids) :: Mm = (/ 67  /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 13  /)
+#elif defined RIVERPLUME2
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 50  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 70  /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 13  /)
+#elif defined SCB
+        integer, parameter :: Ngrids = 1
+        integer, parameter :: NAT = 2
+        integer, parameter, dimension(Ngrids) :: Lm = (/ 72  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 50 /)
+        integer, parameter, dimension(Ngrids) :: N  = (/ 20  /)
 #elif defined SEAMOUNT
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 1
@@ -281,12 +321,14 @@
         integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
 !!      integer, parameter, dimension(Ngrids) :: Mm = (/ 3   /)
 !!      integer, parameter, dimension(Ngrids) :: N  = (/ 40  /)
-#elif defined TEST_CHAN
+#elif defined SED_TOY
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
+!!      integer, parameter, dimension(Ngrids) :: Lm = (/ 5 /)
         integer, parameter, dimension(Ngrids) :: Lm = (/ 100 /)
-        integer, parameter, dimension(Ngrids) :: Mm = (/ 3  /)
+        integer, parameter, dimension(Ngrids) :: Mm = (/ 4  /)
         integer, parameter, dimension(Ngrids) :: N  = (/ 10  /)
+!!      integer, parameter, dimension(Ngrids) :: N  = (/ 100  /)
 #elif defined UPWELLING
         integer, parameter :: Ngrids = 1
         integer, parameter :: NAT = 2
@@ -314,19 +356,31 @@
 #else
         Illegal choice of  parameters Im, Jm, N, NAT
 #endif
+!
+!  Set nonlinear, tangent linear, and adjoint models identifiers.
+!
+        integer, parameter :: iNLM = 1
+        integer, parameter :: iTLM = 2
+        integer, parameter :: iRPM = 3
+        integer, parameter :: iADM = 4
+!
+!  Set number of extra passive tracers to advect and diffuse only
+!  (like dyes, etc). This parameter is independent of the number of
+!  biological and/or sediment tracers. It can be used 
+!
+#ifdef T_PASSIVE
+        integer, parameter :: NPT = 1
+#else
+        integer, parameter :: NPT = 0
+#endif
 
 #ifdef SEDIMENT
 !
 !  Sediment tracers parameters.
 !
-# if defined SED_TEST1
-        integer, parameter :: Nbed = 1
-        integer, parameter :: NCS = 1
-        integer, parameter :: NNS = 1
-        integer, parameter :: NST = NCS + NNS
-# elif defined TEST_CHAN
-        integer, parameter :: Nbed = 5
-        integer, parameter :: NCS = 2
+# if defined ADRIA02
+        integer, parameter :: Nbed = 8
+        integer, parameter :: NCS = 8
         integer, parameter :: NNS = 0
         integer, parameter :: NST = NCS + NNS
 # elif defined ESTUARY_TEST
@@ -336,7 +390,17 @@
         integer, parameter :: NST = NCS + NNS
 # elif defined LAKE_SIGNELL
         integer, parameter :: Nbed = 5
-        integer, parameter :: NCS = 3
+        integer, parameter :: NCS = 2
+        integer, parameter :: NNS = 1
+        integer, parameter :: NST = NCS + NNS
+# elif defined SED_TEST1
+        integer, parameter :: Nbed = 1
+        integer, parameter :: NCS = 1
+        integer, parameter :: NNS = 1
+        integer, parameter :: NST = NCS + NNS
+# elif defined SED_TOY
+        integer, parameter :: Nbed = 1
+        integer, parameter :: NCS = 1
         integer, parameter :: NNS = 0
         integer, parameter :: NST = NCS + NNS
 # else
@@ -353,9 +417,17 @@
 !
 # if defined BIO_FASHAM
 #  ifdef CARBON
+#    ifdef OXYGEN
+        integer, parameter :: NBT = 12
+#    else
         integer, parameter :: NBT = 11
+#    endif
 #  else
+#    ifdef OXYGEN
+        integer, parameter :: NBT = 8
+#    else
         integer, parameter :: NBT = 7
+#    endif
 #  endif
 # elif defined ECOSIM
         integer, parameter :: Nbac = 1
@@ -423,6 +495,11 @@
         integer, dimension(Ngrids) :: NtileI, NtileJ
         integer, dimension(Ngrids) :: NtileX, NtileE
 !
+!  Set number of ghost-points in the halo region.  It is only used
+!  in distributed-memory applications.
+!
+        integer :: NghostPoints = GHOST_POINTS
+!
 !  Diagnostic fields parameters.
 !
         integer :: NDT, NDM2d, NDM3d, NDrhs
@@ -432,7 +509,7 @@
         SUBROUTINE initialize_param
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This routine initializes several parameters in module "mod_param"   !
@@ -455,7 +532,7 @@
 !             DOM: CDM, C, N, P                  (Ndom*4)
 !           Fecal: C, Fe, N, P, Si               (Nfec*5)
 !    Phytoplakton: C, Fe, N, P                   (Nfec*4 + Si)
-!        Pigments:  look table
+!        Pigments: look table
 !
         NBT=6+(Nbac*4)+(Ndom*4)+(Nfec*5)+(Nphy*4)
 !
@@ -542,7 +619,7 @@
           J_padd=(Mm(ng)+2)/2-(Mm(ng)+1)/2
           Im(ng)=Lm(ng)+I_padd
           Jm(ng)=Mm(ng)+J_padd
-          NT(ng)=NAT+NBT+NST
+          NT(ng)=NAT+NBT+NST+NPT
 #ifdef FLOAT_VWALK
           NFV(ng)=NT(ng)+12
 #else

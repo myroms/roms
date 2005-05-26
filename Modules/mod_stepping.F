@@ -2,11 +2,14 @@
       MODULE mod_stepping
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This MODULE contains time stepping indices.                         !
 !                                                                      !
+!  Lbck      Background state index.                                   !
+!  Lnew      New descent algorithm state solution index.               !
+!  Lold      Previous descent algorithm state solution index.          !
 !  knew      Fast time index corresponding to the newest time step     !
 !              for variables associated with 2D primitive equations    !
 !  krhs      Fast time index corresponding to the time step 2D         !
@@ -56,8 +59,11 @@
         integer, dimension(Ngrids) :: NTC
 #endif
 #if defined UV_PSOURCE || defined TS_PSOURCE
-       integer, dimension(Ngrids) :: Nsrc
+        integer, dimension(Ngrids) :: Nsrc
 #endif
+        integer, dimension(Ngrids) :: Lbck = (/ (1, ig=1,Ngrids) /)
+        integer, dimension(Ngrids) :: Lnew = (/ (1, ig=1,Ngrids) /)
+        integer, dimension(Ngrids) :: Lold = (/ (1, ig=1,Ngrids) /)
 
       END MODULE mod_stepping
 

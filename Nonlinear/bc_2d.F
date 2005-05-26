@@ -2,7 +2,7 @@
       MODULE bc_2d_mod
 !
 !=======================================================================
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
 !================================================== Hernan G. Arango ===
 !                                                                      !
 !  This package applies gradient or periodic boundary conditions for   !
@@ -19,16 +19,13 @@
       implicit none
 
       CONTAINS
-!
-      SUBROUTINE bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
-!
-!=======================================================================
-!                                                                      !
-!  This routine sets gradient or periodic boundary conditions for      !
-!  2D variables at RHO-points.                                         !
-!                                                                      !
-!=======================================================================
+! 
+!***********************************************************************
+      SUBROUTINE bc_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Nghost,                                   &
+     &                        A)
+!***********************************************************************
 !
       USE mod_param
 
@@ -39,8 +36,9 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Nghost
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:)
@@ -72,6 +70,7 @@
         END DO
       END IF
 #endif
+
 #ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -89,46 +88,53 @@
         END DO
       END IF
 #endif
+
 #if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(Istr-1,Jstr-1)=0.5_r8*(A(Istr  ,Jstr-1)+A(Istr-1,Jstr  ))
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr-1,Jstr-1)=0.5_r8*(A(Istr  ,Jstr-1)+                      &
+     &                           A(Istr-1,Jstr  ))
       END IF
-      IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend+1,Jstr  )+A(Iend  ,Jstr-1))
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                      &
+     &                           A(Iend+1,Jstr  ))
       END IF
-      IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+A(Istr  ,Jend+1))
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                      &
+     &                           A(Istr  ,Jend+1))
       END IF
-      IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+A(Iend  ,Jend+1))
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
+     &                           A(Iend  ,Jend+1))
       END IF
 #endif
+
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+      CALL exchange_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Nghost,                                   &
+     &                        A)
 #endif
+
       RETURN
       END SUBROUTINE bc_r2d_tile
 
-      SUBROUTINE bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
 !
-!=======================================================================
-!                                                                      !
-!  This routine sets gradient or periodic boundary conditions for      !
-!  2D variables at U-points.                                           !
-!                                                                      !
-!=======================================================================
+!***********************************************************************
+      SUBROUTINE bc_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Nghost,                                   &
+     &                        A)
+!***********************************************************************
 !
       USE mod_param
 
@@ -139,8 +145,9 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Nghost
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:)
@@ -172,6 +179,7 @@
         END DO
       END IF
 #endif
+
 #ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -189,46 +197,53 @@
         END DO
       END IF
 #endif
+
 #if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(Istr  ,Jstr-1)=0.5_r8*(A(Istr+1,Jstr-1)+A(Istr  ,Jstr))
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr  ,Jstr-1)=0.5_r8*(A(Istr+1,Jstr-1)+                      &
+     &                           A(Istr  ,Jstr  ))
       END IF
-      IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+A(Iend+1,Jstr))
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jstr-1)=0.5_r8*(A(Iend  ,Jstr-1)+                      &
+     &                           A(Iend+1,Jstr  ))
       END IF
-      IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(Istr  ,Jend+1)=0.5_r8*(A(Istr+1,Jend+1)+A(Istr  ,Jend))
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr  ,Jend+1)=0.5_r8*(A(Istr  ,Jend  )+                      &
+     &                           A(Istr+1,Jend+1)) 
       END IF
-      IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Iend+1,Jend+1)=0.5_r8*(A(Iend  ,Jend+1)+A(Iend+1,Jend))
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
+     &                           A(Iend  ,Jend+1))
       END IF
 #endif
+
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+      CALL exchange_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Nghost,                                   &
+     &                        A)
 #endif
+
       RETURN
       END SUBROUTINE bc_u2d_tile
 
-      SUBROUTINE bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
 !
-!=======================================================================
-!                                                                      !
-!  This routine sets gradient or periodic boundary conditions for      !
-!  2D variables at V-points.                                           !
-!                                                                      !
-!=======================================================================
+!***********************************************************************
+      SUBROUTINE bc_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Nghost,                                   &
+     &                        A)
+!***********************************************************************
 !
       USE mod_param
 
@@ -239,8 +254,9 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Nghost
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: A(LBi:,LBj:)
@@ -272,6 +288,7 @@
         END DO
       END IF
 #endif
+
 #ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -289,34 +306,44 @@
         END DO
       END IF
 #endif
+
 #if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
 !  Boundary corners.
 !-----------------------------------------------------------------------
 !
-      IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(Istr-1,Jstr  )=0.5_r8*(A(Istr-1,Jstr+1)+A(Istr,Jstr  ))
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr-1,Jstr  )=0.5_r8*(A(Istr  ,Jstr  )+                      &
+     &                           A(Istr-1,Jstr+1))
       END IF
-      IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Iend+1,Jstr  )=0.5_r8*(A(Iend+1,Jstr+1)+A(Iend,Jstr  ))
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jstr  )=0.5_r8*(A(Iend  ,Jstr  )+                      &
+     &                           A(Iend+1,Jstr+1))
       END IF
-      IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
-        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+A(Istr,Jend+1))
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        A(Istr-1,Jend+1)=0.5_r8*(A(Istr-1,Jend  )+                      &
+     &                           A(Istr  ,Jend+1))
       END IF
-      IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
-        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+A(Iend,Jend+1))
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        A(Iend+1,Jend+1)=0.5_r8*(A(Iend+1,Jend  )+                      &
+     &                           A(Iend  ,Jend+1))
       END IF
 #endif
+
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  Exchange boundary data.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
-     &                        LBi, UBi, LBj, UBj, A)
+      CALL exchange_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Nghost,                                   &
+     &                        A)
 #endif
+
       RETURN
       END SUBROUTINE bc_v2d_tile
+
       END MODULE bc_2d_mod

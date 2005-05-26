@@ -1,41 +1,31 @@
 #include "cppdefs.h"
-      MODULE t3dmix4_geo_mod
-#if defined TS_DIF4 && defined MIX_GEO_TS && defined SOLVE3D
-# ifdef EW_PERIODIC
-#  define I_RANGE Istr-1,Iend+1
-# else
-#  define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
-# endif
-# ifdef NS_PERIODIC
-#  define J_RANGE Jstr-1,Jend+1
-# else
-#  define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
-# endif
+
+#ifdef EW_PERIODIC
+# define I_RANGE Istr-1,Iend+1
+#else
+# define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
+#endif
+#ifdef NS_PERIODIC
+# define J_RANGE Jstr-1,Jend+1
+#else
+# define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
+#endif
+
+      SUBROUTINE t3dmix4 (ng, tile)
 !
-!========================================== Alexander F. Shchepetkin ===
-!  Copyright (c) 2002 ROMS/TOMS Group                                  !
-!================================================== Hernan G. Arango ===
+!****************************************** Alexander F. Shchepetkin ***
+!  Copyright (c) 2005 ROMS/TOMS Group                                  !
+!************************************************** Hernan G. Arango ***
 !                                                                      !
 !  This subroutine computes horizontal biharmonic mixing of tracers    !
 !  along geopotential surfaces.                                        !
 !                                                                      !
-!=======================================================================
-!
-      implicit none
-
-      PRIVATE
-      PUBLIC  :: t3dmix4_geo
-
-      CONTAINS
-!
-!***********************************************************************
-      SUBROUTINE t3dmix4_geo (ng, tile)
 !***********************************************************************
 !
       USE mod_param
-# ifdef DIAGNOSTICS_TS
+#ifdef DIAGNOSTICS_TS
       USE mod_diags
-# endif
+#endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -43,48 +33,49 @@
 !
       integer, intent(in) :: ng, tile
 
-# include "tile.h"
+#include "tile.h"
 !
-# ifdef PROFILE
-      CALL wclock_on (ng, 28)
-# endif
-      CALL t3dmix4_geo_tile (ng, Istr, Iend, Jstr, Jend,                &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       nrhs(ng), nnew(ng),                        &
-# ifdef MASKING
-     &                       GRID(ng) % umask,                          &
-     &                       GRID(ng) % vmask,                          &
-# endif
-     &                       GRID(ng) % Hz,                             &
-     &                       GRID(ng) % om_v,                           &
-     &                       GRID(ng) % on_u,                           &
-     &                       GRID(ng) % pm,                             &
-     &                       GRID(ng) % pn,                             &
-     &                       GRID(ng) % z_r,                            &
-     &                       MIXING(ng) % diff4,                        &
-# ifdef DIAGNOSTICS_TS
-                             DIAGS(ng) % DiaTwrk,                       &
-# endif
-     &                       OCEAN(ng) % t)
-# ifdef PROFILE
-      CALL wclock_off (ng, 28)
-# endif
+#ifdef PROFILE
+      CALL wclock_on (ng, iNLM, 28)
+#endif
+      CALL t3dmix4_tile (ng, Istr, Iend, Jstr, Jend,                    &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   nrhs(ng), nnew(ng),                            &
+#ifdef MASKING
+     &                   GRID(ng) % umask,                              &
+     &                   GRID(ng) % vmask,                              &
+#endif
+     &                   GRID(ng) % om_v,                               &
+     &                   GRID(ng) % on_u,                               &
+     &                   GRID(ng) % pm,                                 &
+     &                   GRID(ng) % pn,                                 &
+     &                   GRID(ng) % Hz,                                 &
+     &                   GRID(ng) % z_r,                                &
+     &                   MIXING(ng) % diff4,                            &
+#ifdef DIAGNOSTICS_TS
+     &                   DIAGS(ng) % DiaTwrk,                           &
+#endif
+     &                   OCEAN(ng) % t)
+#ifdef PROFILE
+      CALL wclock_off (ng, iNLM, 28)
+#endif
       RETURN
-      END SUBROUTINE t3dmix4_geo
+      END SUBROUTINE t3dmix4
 !
 !***********************************************************************
-      SUBROUTINE t3dmix4_geo_tile (ng, Istr, Iend, Jstr, Jend,          &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             nrhs, nnew,                          &
-# ifdef MASKING
-     &                             umask, vmask,                        &
-# endif
-     &                             Hz, om_v, on_u, pm, pn, z_r,         &
-     &                             diff4,                               &
-# ifdef DIAGNOSTICS_TS
-                                   DiaTwrk,                             &
-# endif
-     &                             t)
+      SUBROUTINE t3dmix4_tile (ng, Istr, Iend, Jstr, Jend,              &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         nrhs, nnew,                              &
+#ifdef MASKING
+     &                         umask, vmask,                            &
+#endif
+     &                         om_v, on_u, pm, pn,                      &
+     &                         Hz, z_r,                                 &
+     &                         diff4,                                   &
+#ifdef DIAGNOSTICS_TS
+     &                         DiaTwrk,                                 &
+#endif
+     &                         t)
 !***********************************************************************
 !
       USE mod_param
@@ -96,49 +87,49 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs, nnew
 
-# ifdef ASSUMED_SHAPE
-#  ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
-#  endif
-      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+# endif
+      real(r8), intent(in) :: diff4(LBi:,LBj:,:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
-      real(r8), intent(in) :: diff4(LBi:,LBj:,:)
-#  ifdef DIAGNOSTICS_TS
+# ifdef DIAGNOSTICS_TS
       real(r8), intent(inout) :: DiaTwrk(LBi:,LBj:,:,:,:)
-#  endif
+# endif
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
-# else
-#  ifdef MASKING
+#else
+# ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-#  endif
-      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+# endif
+      real(r8), intent(in) :: diff4(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: diff4(LBi:UBi,LBj:UBj,NT(ng))
-#  ifdef DIAGNOSTICS_TS
-      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),
+# ifdef DIAGNOSTICS_TS
+      real(r8), intent(inout) :: DiaTwrk(LBi:UBi,LBj:UBj,N(ng),NT(ng),  &
      &                                   NDT)
-#  endif
-      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
+      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+#endif
 !
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k, k1, k2
 
-      real(r8) :: cff, cff1, cff2, cff3, cff4, fac
+      real(r8) :: cff, cff1, cff2, cff3, cff4
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: LapT
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: LapT
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
@@ -150,13 +141,13 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZde
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZdx
 
-# include "set_bounds.h"
+#include "set_bounds.h"
 !
-!----------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !  Compute horizontal biharmonic diffusion along geopotential
 !  surfaces.  The biharmonic operator is computed by applying
 !  the harmonic operator twice.
-!----------------------------------------------------------------------
+!-----------------------------------------------------------------------
 !
 !  Compute horizontal and vertical gradients associated with the
 !  first rotated harmonic operator.  Notice the recursive blocking
@@ -164,22 +155,23 @@
 !
 !        dTdx,dTde(:,:,k1) k     rho-points
 !        dTdx,dTde(:,:,k2) k+1   rho-points
-!          FC,dTdz(:,:,k1) k-1/2   W-points
-!          FC,dTdz(:,:,k2) k+1/2   W-points
+!          FS,dTdz(:,:,k1) k-1/2   W-points
+!          FS,dTdz(:,:,k2) k+1/2   W-points
 !
-      DO itrc=1,NT(ng)
+      T_LOOP : DO itrc=1,NT(ng)
         k2=1
-        DO k=0,N(ng)
+        K_LOOP1 : DO k=0,N(ng)
           k1=k2
           k2=3-k1
           IF (k.lt.N(ng)) THEN
             DO j=J_RANGE
               DO i=I_RANGE+1
                 cff=0.5_r8*(pm(i,j)+pm(i-1,j))
-# ifdef MASKING
+#ifdef MASKING
                 cff=cff*umask(i,j)
-# endif
-                dZdx(i,j,k2)=cff*(z_r(i,j,k+1)-z_r(i-1,j,k+1))
+#endif
+                dZdx(i,j,k2)=cff*(z_r(i  ,j,k+1)-                       &
+     &                            z_r(i-1,j,k+1))
                 dTdx(i,j,k2)=cff*(t(i  ,j,k+1,nrhs,itrc)-               &
      &                            t(i-1,j,k+1,nrhs,itrc))
               END DO
@@ -187,10 +179,11 @@
             DO j=J_RANGE+1
               DO i=I_RANGE
                 cff=0.5_r8*(pn(i,j)+pn(i,j-1))
-# ifdef MASKING
+#ifdef MASKING
                 cff=cff*vmask(i,j)
-# endif
-                dZde(i,j,k2)=cff*(z_r(i,j,k+1)-z_r(i,j-1,k+1))
+#endif
+                dZde(i,j,k2)=cff*(z_r(i,j  ,k+1)-                       &
+     &                            z_r(i,j-1,k+1))
                 dTde(i,j,k2)=cff*(t(i,j  ,k+1,nrhs,itrc)-               &
      &                            t(i,j-1,k+1,nrhs,itrc))
               END DO
@@ -206,58 +199,75 @@
           ELSE
             DO j=-1+J_RANGE+1
               DO i=-1+I_RANGE+1
-                dTdz(i,j,k2)=(t(i,j,k+1,nrhs,itrc)-t(i,j,k,nrhs,itrc))/ &
-     &                       (z_r(i,j,k+1)-z_r(i,j,k))
+                cff=1.0_r8/(z_r(i,j,k+1)-                               &
+     &                      z_r(i,j,k  ))
+                dTdz(i,j,k2)=cff*(t(i,j,k+1,nrhs,itrc)-                 &
+     &                            t(i,j,k  ,nrhs,itrc))
               END DO
             END DO
           END IF
           IF (k.gt.0) THEN
             DO j=J_RANGE
               DO i=I_RANGE+1
-                FX(i,j)=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*    &
-     &                  (Hz(i,j,k)+Hz(i-1,j,k))*on_u(i,j)*              &
+                cff=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*        &
+     &              on_u(i,j)
+                FX(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
      &                  (dTdx(i,j,k1)-                                  &
      &                   0.5_r8*(MIN(dZdx(i,j,k1),0.0_r8)*              &
-     &                              (dTdz(i-1,j,k1)+dTdz(i,j,k2))+      &
+     &                              (dTdz(i-1,j,k1)+                    &
+     &                               dTdz(i  ,j,k2))+                   &
      &                           MAX(dZdx(i,j,k1),0.0_r8)*              &
-     &                            (dTdz(i-1,j,k2)+dTdz(i,j,k1))))
+     &                              (dTdz(i-1,j,k2)+                    &
+     &                               dTdz(i  ,j,k1))))
               END DO
             END DO
-!
             DO j=J_RANGE+1
               DO i=I_RANGE
-                FE(i,j)=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*    &
-     &                  (Hz(i,j,k)+Hz(i,j-1,k))*om_v(i,j)*              &
+                cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*        &
+     &              om_v(i,j)
+                FE(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
      &                  (dTde(i,j,k1)-                                  &
      &                   0.5_r8*(MIN(dZde(i,j,k1),0.0_r8)*              &
-     &                              (dTdz(i,j-1,k1)+dTdz(i,j,k2))+      &
+     &                              (dTdz(i,j-1,k1)+                    &
+     &                               dTdz(i,j  ,k2))+                   &
      &                           MAX(dZde(i,j,k1),0.0_r8)*              &
-     &                              (dTdz(i,j-1,k2)+dTdz(i,j,k1))))
+     &                              (dTdz(i,j-1,k2)+                    &
+     &                               dTdz(i,j  ,k1))))
               END DO
             END DO
-!
             IF (k.lt.N(ng)) THEN
               DO j=J_RANGE
                 DO i=I_RANGE
+                  cff=0.5_r8*diff4(i,j,itrc)
                   cff1=MIN(dZdx(i  ,j,k1),0.0_r8)
                   cff2=MIN(dZdx(i+1,j,k2),0.0_r8)
                   cff3=MAX(dZdx(i  ,j,k2),0.0_r8)
                   cff4=MAX(dZdx(i+1,j,k1),0.0_r8)
-                  FS(i,j,k2)=0.5_r8*diff4(i,j,itrc)*                    &
-     &                       (cff1*(cff1*dTdz(i,j,k2)-dTdx(i  ,j,k1))+  &
-     &                        cff2*(cff2*dTdz(i,j,k2)-dTdx(i+1,j,k2))+  &
-     &                        cff3*(cff3*dTdz(i,j,k2)-dTdx(i  ,j,k2))+  &
-     &                        cff4*(cff4*dTdz(i,j,k2)-dTdx(i+1,j,k1)))
+                  FS(i,j,k2)=cff*                                       &
+     &                       (cff1*(cff1*dTdz(i,j,k2)-                  &
+     &                              dTdx(i  ,j,k1))+                    &
+     &                        cff2*(cff2*dTdz(i,j,k2)-                  &
+     &                              dTdx(i+1,j,k2))+                    &
+     &                        cff3*(cff3*dTdz(i,j,k2)-                  &
+     &                              dTdx(i  ,j,k2))+                    &
+     &                        cff4*(cff4*dTdz(i,j,k2)-                  &
+     &                              dTdx(i+1,j,k1)))
                   cff1=MIN(dZde(i,j  ,k1),0.0_r8)
                   cff2=MIN(dZde(i,j+1,k2),0.0_r8)
                   cff3=MAX(dZde(i,j  ,k2),0.0_r8)
                   cff4=MAX(dZde(i,j+1,k1),0.0_r8)
                   FS(i,j,k2)=FS(i,j,k2)+                                &
-     &                       0.5_r8*diff4(i,j,itrc)*                    &
-     &                       (cff1*(cff1*dTdz(i,j,k2)-dTde(i,j  ,k1))+  &
-     &                        cff2*(cff2*dTdz(i,j,k2)-dTde(i,j+1,k2))+  &
-     &                        cff3*(cff3*dTdz(i,j,k2)-dTde(i,j  ,k2))+  &
-     &                        cff4*(cff4*dTdz(i,j,k2)-dTde(i,j+1,k1)))
+     &                       cff*                                       &
+     &                       (cff1*(cff1*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j  ,k1))+                    &
+     &                        cff2*(cff2*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j+1,k2))+                    &
+     &                        cff3*(cff3*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j  ,k2))+                    &
+     &                        cff4*(cff4*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j+1,k1)))
                 END DO
               END DO
             END IF
@@ -268,121 +278,125 @@
 !
             DO j=J_RANGE
               DO i=I_RANGE
-                LapT(i,j,k)=(pm(i,j)*pn(i,j)*(FX(i+1,j  )-FX(i,j)+      &
-     &                                        FE(i  ,j+1)-FE(i,j))+     &
-     &                       (FS(i,j,k2)-FS(i,j,k1)))/                  &
-     &                      Hz(i,j,k)
+                cff=pm(i,j)*pn(i,j)
+                cff1=1.0_r8/Hz(i,j,k)
+                LapT(i,j,k)=cff1*(cff*                                  &
+     &                            (FX(i+1,j)-FX(i,j)+                   &
+     &                             FE(i,j+1)-FE(i,j))+                  &
+     &                            (FS(i,j,k2)-FS(i,j,k1)))
               END DO
             END DO
           END IF
-        END DO
+        END DO K_LOOP1
 !
 !  Apply boundary conditions (except periodic; closed or gradient)
 !  to the first harmonic operator.
 !
-# ifndef EW_PERIODIC
+#ifndef EW_PERIODIC
         IF (WESTERN_EDGE) THEN
           DO k=1,N(ng)
             DO j=J_RANGE
-#  ifdef WESTERN_WALL
+# ifdef WESTERN_WALL
               LapT(Istr-1,j,k)=0.0_r8
-#  else
+# else
               LapT(Istr-1,j,k)=LapT(Istr,j,k)
-#  endif
+# endif
             END DO
           END DO
         END IF
         IF (EASTERN_EDGE) THEN
           DO k=1,N(ng)
             DO j=J_RANGE
-#  ifdef EASTERN_WALL
+# ifdef EASTERN_WALL
               LapT(Iend+1,j,k)=0.0_r8
-#  else
+# else
               LapT(Iend+1,j,k)=LapT(Iend,j,k)
-#  endif
+# endif
             END DO
           END DO
         END IF
-# endif
-# ifndef NS_PERIODIC
+#endif
+#ifndef NS_PERIODIC
         IF (SOUTHERN_EDGE) THEN
           DO k=1,N(ng)
             DO i=I_RANGE
-#  ifdef SOUTHERN_WALL
+# ifdef SOUTHERN_WALL
               LapT(i,Jstr-1,k)=0.0_r8
-#  else
+# else
               LapT(i,Jstr-1,k)=LapT(i,Jstr,k)
-#  endif
+# endif
             END DO
           END DO
         END IF
         IF (NORTHERN_EDGE) THEN
           DO k=1,N(ng)
             DO i=I_RANGE
-#  ifdef NORTHERN_WALL
+# ifdef NORTHERN_WALL
               LapT(i,Jend+1,k)=0.0_r8
-#  else
+# else
               LapT(i,Jend+1,k)=LapT(i,Jend,k)
-#  endif
+# endif
             END DO
           END DO
         END IF
-# endif
-# undef I_RANGE
-# undef J_RANGE
-# if !defined EW_PERIODIC && !defined NS_PERIODIC
-        IF (SOUTHERN_EDGE.and.WESTERN_EDGE) THEN
+#endif
+#if !defined EW_PERIODIC && !defined NS_PERIODIC
+        IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
           DO k=1,N(ng)
-            LapT(Istr-1,Jend-1,k)=0.5_r8*(LapT(Istr  ,Jend-1,k)+        &
-     &                                    LapT(Istr-1,Jend  ,k))
+            LapT(Istr-1,Jstr-1,k)=0.5_r8*(LapT(Istr  ,Jstr-1,k)+        &
+     &                                    LapT(Istr-1,Jstr  ,k))
           END DO
         END IF
-        IF (SOUTHERN_EDGE.and.EASTERN_EDGE) THEN
+        IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
           DO k=1,N(ng)
             LapT(Iend+1,Jstr-1,k)=0.5_r8*(LapT(Iend  ,Jstr-1,k)+        &
      &                                    LapT(Iend+1,Jstr  ,k))
           END DO
         END IF
-        IF (NORTHERN_EDGE.and.WESTERN_EDGE) THEN
+        IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
           DO k=1,N(ng)
             LapT(Istr-1,Jend+1,k)=0.5_r8*(LapT(Istr  ,Jend+1,k)+        &
      &                                    LapT(Istr-1,Jend  ,k))
           END DO
         END IF
-        IF (NORTHERN_EDGE.and.EASTERN_EDGE) THEN
+        IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
           DO k=1,N(ng)
             LapT(Iend+1,Jend+1,k)=0.5_r8*(LapT(Iend  ,Jend+1,k)+        &
      &                                    LapT(Iend+1,Jend  ,k))
           END DO
         END IF
-# endif
+#endif
 !
 !  Compute horizontal and vertical gradients associated with the
 !  second rotated harmonic operator.
 !
         k2=1
-        DO k=0,N(ng)
+        K_LOOP2: DO k=0,N(ng)
           k1=k2
           k2=3-k1
           IF (k.lt.N(ng)) THEN
             DO j=Jstr,Jend
               DO i=Istr,Iend+1
                 cff=0.5_r8*(pm(i,j)+pm(i-1,j))
-# ifdef MASKING
+#ifdef MASKING
                 cff=cff*umask(i,j)
-# endif
-                dZdx(i,j,k2)=cff*(z_r(i,j,k+1)-z_r(i-1,j,k+1))
-                dTdx(i,j,k2)=cff*(LapT(i,j,k+1)-LapT(i-1,j,k+1))
+#endif
+                dZdx(i,j,k2)=cff*(z_r(i  ,j,k+1)-                       &
+     &                            z_r(i-1,j,k+1))
+                dTdx(i,j,k2)=cff*(LapT(i  ,j,k+1)-                      &
+     &                            LapT(i-1,j,k+1))
               END DO
             END DO
             DO j=Jstr,Jend+1
               DO i=Istr,Iend
                 cff=0.5_r8*(pn(i,j)+pn(i,j-1))
-# ifdef MASKING
+#ifdef MASKING
                 cff=cff*vmask(i,j)
-# endif
-                dZde(i,j,k2)=cff*(z_r(i,j,k+1)-z_r(i,j-1,k+1))
-                dTde(i,j,k2)=cff*(LapT(i,j,k+1)-LapT(i,j-1,k+1))
+#endif
+                dZde(i,j,k2)=cff*(z_r(i,j  ,k+1)-                       &
+     &                            z_r(i,j-1,k+1))
+                dTde(i,j,k2)=cff*(LapT(i,j  ,k+1)-                      &
+     &                            LapT(i,j-1,k+1))
               END DO
             END DO
           END IF
@@ -396,78 +410,104 @@
           ELSE
             DO j=Jstr-1,Jend+1
               DO i=Istr-1,Iend+1
-                dTdz(i,j,k2)=(LapT(i,j,k+1)-LapT(i,j,k))/               &
-     &                       (z_r(i,j,k+1)-z_r(i,j,k))
+                cff=1.0_r8/(z_r(i,j,k+1)-                               &
+     &                      z_r(i,j,k  ))
+                dTdz(i,j,k2)=cff*(LapT(i,j,k+1)-                        &
+     &                            LapT(i,j,k  ))
               END DO
             END DO
           END IF
+!
+!  Compute components of the rotated tracer flux (T m4/s) along
+!  geopotential surfaces.
+!
           IF (k.gt.0) THEN
             DO j=Jstr,Jend
               DO i=Istr,Iend+1
-                FX(i,j)=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*    &
-     &                  (Hz(i,j,k)+Hz(i-1,j,k))*on_u(i,j)*              &
+                cff=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*        &
+     &              on_u(i,j)
+                FX(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
      &                  (dTdx(i  ,j,k1)-                                &
      &                   0.5_r8*(MIN(dZdx(i,j,k1),0.0_r8)*              &
-     &                              (dTdz(i-1,j,k1)+dTdz(i,j,k2))+      &
+     &                              (dTdz(i-1,j,k1)+                    &
+     &                               dTdz(i  ,j,k2))+                   &
      &                           MAX(dZdx(i,j,k1),0.0_r8)*              &
-     &                              (dTdz(i-1,j,k2)+dTdz(i,j,k1))))
+     &                              (dTdz(i-1,j,k2)+                    &
+     &                               dTdz(i  ,j,k1))))
               END DO
             END DO
             DO j=Jstr,Jend+1
               DO i=Istr,Iend
-                FE(i,j)=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*    &
-     &                  (Hz(i,j,k)+Hz(i,j-1,k))*om_v(i,j)*              &
+                cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*        &
+     &              om_v(i,j)
+                FE(i,j)=cff*                                            &
+     &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
      &                  (dTde(i,j,k1)-                                  &
      &                   0.5_r8*(MIN(dZde(i,j,k1),0.0_r8)*              &
-     &                              (dTdz(i,j-1,k1)+dTdz(i,j,k2))+      &
+     &                              (dTdz(i,j-1,k1)+                    &
+     &                               dTdz(i,j  ,k2))+                   &
      &                           MAX(dZde(i,j,k1),0.0_r8)*              &
-     &                              (dTdz(i,j-1,k2)+dTdz(i,j,k1))))
+     &                              (dTdz(i,j-1,k2)+                    &
+     &                               dTdz(i,j  ,k1))))
               END DO
             END DO
             IF (k.lt.N(ng)) THEN
               DO j=Jstr,Jend
                 DO i=Istr,Iend
+                  cff=0.5_r8*diff4(i,j,itrc)
                   cff1=MIN(dZdx(i  ,j,k1),0.0_r8)
                   cff2=MIN(dZdx(i+1,j,k2),0.0_r8)
                   cff3=MAX(dZdx(i  ,j,k2),0.0_r8)
                   cff4=MAX(dZdx(i+1,j,k1),0.0_r8)
-                  FS(i,j,k2)=0.5_r8*diff4(i,j,itrc)*                    &
-     &                       (cff1*(cff1*dTdz(i,j,k2)-dTdx(i  ,j,k1))+  &
-     &                        cff2*(cff2*dTdz(i,j,k2)-dTdx(i+1,j,k2))+  &
-     &                        cff3*(cff3*dTdz(i,j,k2)-dTdx(i  ,j,k2))+  &
-     &                        cff4*(cff4*dTdz(i,j,k2)-dTdx(i+1,j,k1)))
+                  FS(i,j,k2)=cff*                                       &
+     &                       (cff1*(cff1*dTdz(i,j,k2)-                  &
+     &                              dTdx(i  ,j,k1))+                    &
+     &                        cff2*(cff2*dTdz(i,j,k2)-                  &
+     &                              dTdx(i+1,j,k2))+                    &
+     &                        cff3*(cff3*dTdz(i,j,k2)-                  &
+     &                              dTdx(i  ,j,k2))+                    &
+     &                        cff4*(cff4*dTdz(i,j,k2)-                  &
+     &                              dTdx(i+1,j,k1)))
                   cff1=MIN(dZde(i,j  ,k1),0.0_r8)
                   cff2=MIN(dZde(i,j+1,k2),0.0_r8)
                   cff3=MAX(dZde(i,j  ,k2),0.0_r8)
                   cff4=MAX(dZde(i,j+1,k1),0.0_r8)
                   FS(i,j,k2)=FS(i,j,k2)+                                &
-     &                       0.5_r8*diff4(i,j,itrc)*                    &
-     &                       (cff1*(cff1*dTdz(i,j,k2)-dTde(i,j  ,k1))+  &
-     &                        cff2*(cff2*dTdz(i,j,k2)-dTde(i,j+1,k2))+  &
-     &                        cff3*(cff3*dTdz(i,j,k2)-dTde(i,j  ,k2))+  &
-     &                        cff4*(cff4*dTdz(i,j,k2)-dTde(i,j+1,k1)))
+     &                       cff*                                       &
+     &                       (cff1*(cff1*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j  ,k1))+                    &
+     &                        cff2*(cff2*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j+1,k2))+                    &
+     &                        cff3*(cff3*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j  ,k2))+                    &
+     &                        cff4*(cff4*dTdz(i,j,k2)-                  &
+     &                              dTde(i,j+1,k1)))
                 END DO
               END DO
             END IF
 !
-! Time-step biharmonic, geopotential diffusion term (m Tunits).
+!  Time-step biharmonic, geopotential diffusion term (m Tunits).
 !
             DO j=Jstr,Jend
               DO i=Istr,Iend
-                fac=dt(ng)*pm(i,j)*pn(i,j)*                             &
-     &                     (FX(i+1,j  )-FX(i,j)+                        &
-     &                      FE(i  ,j+1)-FE(i,j))+                       &
+                cff=dt(ng)*pm(i,j)*pn(i,j)*                             &
+     &                     (FX(i+1,j)-FX(i,j)+                          &
+     &                      FE(i,j+1)-FE(i,j))+                         &
      &              dt(ng)*(FS(i,j,k2)-FS(i,j,k1))
-                t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-fac
-# ifdef DIAGNOSTICS_TS
-                DiaTwrk(i,j,k,itrc,iThdif)=-fac
-# endif
+                t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff
+#ifdef TS_MPDATA
+                t(i,j,k,3,itrc)=t(i,j,k,nnew,itrc)
+#endif
+#ifdef DIAGNOSTICS_TS
+                DiaTwrk(i,j,k,itrc,iThdif)=-cff
+#endif
               END DO
             END DO
           END IF
-        END DO
-      END DO
+        END DO K_LOOP2
+      END DO T_LOOP
+#undef I_RANGE
+#undef J_RANGE
       RETURN
-      END SUBROUTINE t3dmix4_geo_tile
-#endif
-      END MODULE t3dmix4_geo_mod
+      END SUBROUTINE t3dmix4_tile

@@ -1,6 +1,7 @@
+#include "cppdefs.h"
 /*
 ************************************************************************
-*** Copyright (c) 2002 ROMS/TOMS Group, version 2.1                   **
+*** Copyright (c) 2005 ROMS/TOMS Group, Version 2.2                   **
 *************************************************** Hernan G. Arango ***
 **                                                                    **
 **  Master program to run ROMS/TOMS on single ocean mode or to couple **
