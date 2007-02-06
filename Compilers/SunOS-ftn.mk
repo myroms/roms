@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for CRAY FTN cross-compiler with SUN
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -21,7 +27,6 @@
            FFLAGS := -e I -e m
               CPP := $(HOME)/bin/cpp
          CPPFLAGS := -P -DCRAYX1 -DCRAY
-            CLEAN := Bin/cpp_clean
                LD := $(FC)
           LDFLAGS :=
                AR := ar
@@ -43,6 +48,10 @@
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/lib
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
     ARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif

@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for Compaq Visual Fortran compiler on Cygwin
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -23,8 +29,7 @@
                FC := df
            FFLAGS := /stand:f95
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -DCYGWIN
-            CLEAN := Bin/cpp_clean
+         CPPFLAGS := -P
                LD := $(FC)
           LDFLAGS := /nodefaultlib:libcmt /stack:67108864 
                AR := ar
@@ -43,17 +48,18 @@
 # the NETCDF and ARPACK library locations.
 #
 
-#   NETCDF_INCDIR ?= /netcdf-win32/include
-#   NETCDF_LIBDIR ?= /netcdf-win32/lib
-
-    NETCDF_INCDIR ?= 'C:\\include\\'
-    NETCDF_LIBDIR ?= 'C:\\lib\\'
+    NETCDF_INCDIR ?= /usr/local/netcdf-win32/include
+    NETCDF_LIBDIR ?= /usr/local/netcdf-win32/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
        NETCDF_LIB := $(NETCDF_LIBDIR)/netcdfs.lib
 
 ifdef ARPACK
-    ARPACK_LIBDIR ?= /arpack-win32/lib
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/arpack-win32/lib
+       ARPACK_LIB := $(PARPACK_LIBDIR)/parpack.lib
+ endif
+    ARPACK_LIBDIR ?= /usr/local/arpack-win32/lib
        ARPACK_LIB := $(ARPACK_LIBDIR)/arpack.lib
 endif
 
@@ -62,7 +68,7 @@ endif
 #
 
 ifdef DEBUG
-           FFLAGS += /debug:full /traceback
+           FFLAGS += /debug:full /traceback /nopdbfile
 else
            FFLAGS += /fast
 endif

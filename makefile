@@ -1,8 +1,13 @@
-#:::::::::::::::::::::::::::::::::::::::::::::::::::::::: Kate Hedstrom :::
+# $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group             Kate Hedstrom :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #                                                                       :::
-#  ROMS/TOMS Version 2.2 Master Makefile                                :::
+#  ROMS/TOMS Framework Master Makefile, Version 3.0                     :::
 #                                                                       :::
-#  This makefile is designed to work only with GNU Make version 3.79 or :::
+#  This makefile is designed to work only with GNU Make version 3.77 or :::
 #  higher. It can be used in any architecture provided that there is a  :::
 #  machine/compiler rules file in the  "Compilers"  subdirectory.  You  :::
 #  may need to modify the rules file to specify the  correct path  for  :::
@@ -21,19 +26,19 @@
 #  The USER needs to provide a value for the  macro FORT.  Choose  the  :::
 #  appropriate value from the list below.                               :::
 #                                                                       :::
-#::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 #--------------------------------------------------------------------------
 #  Initialize some things.
 #--------------------------------------------------------------------------
 
-  clean_list := core *.o *.mod *.f90 lib*.a *.bak
+  clean_list := core *.o *.oo *.mod *.f90 lib*.a *.bak
   sources    := 
   path_srcs  := 
   libraries  :=
 
-     objects  = $(subst .F,.o,$(sources)
+     objects  = $(subst .F,.o,$(sources))
 
 #==========================================================================
 #  Start of user-defined options. Modify macro variables: on is TRUE while
@@ -47,12 +52,22 @@
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
 
-         MPI := 
+         MPI := on
       OpenMP :=
+
+#  If distributed-memory, turn on compilation via the script "mpif90".
+#  This is needed in some Linux operating systems. In some systems with
+#  native MPI libraries the compilation does not require MPICH type
+#  scripts. This macro is also convient when there are several fortran
+#  compiliers (ifort, pgf90, pathf90) in the system that use mpif90.
+#  In this, case the user need to select the desired compiler below and
+#  turn on both MPI and MPIF90 macros.
+
+      MPIF90 := on
 
 #  If applicable, compile with the ARPACK library (GST analysis):
 
-      ARPACK :=
+      ARPACK := on
 
 #  If applicable, activate 64-bit compilation:
 
@@ -69,9 +84,9 @@
 #     AIX:                    xlf
 #     ALPHA:                  f90
 #     CYGWIN:                 g95, df
-#     Darwin:                 f90
+#     Darwin:                 f90, xlf
 #     IRIX:                   f90
-#     Linux:                  ifc, ifort, pgi, path, g95, mpif90
+#     Linux:                  ifc, ifort, pgi, path, g95
 #     SunOS:                  f95
 #     UNICOS-mp:              ftn
 #     SunOS/Linux:            ftn (Cray cross-compiler)
@@ -107,16 +122,22 @@
 	$(CPP) $(CPPFLAGS) $< > $*.f90
 	$(CLEAN) $*.f90
 
+CLEAN := ROMS/Bin/cpp_clean
+
 #--------------------------------------------------------------------------
 #  Set ROMS/TOMS executable file name.
 #--------------------------------------------------------------------------
 
 BIN := $(BINDIR)/oceanS
-ifdef MPI
-  BIN := $(BINDIR)/oceanM
-endif
-ifdef OpenMP
-  BIN := $(BINDIR)/oceanO
+ifdef DEBUG
+  BIN := $(BINDIR)/oceanG
+else
+ ifdef MPI
+   BIN := $(BINDIR)/oceanM
+ endif
+ ifdef OpenMP
+   BIN := $(BINDIR)/oceanO
+ endif
 endif
 
 #--------------------------------------------------------------------------
@@ -128,16 +149,19 @@ endif
 
 OS := $(shell uname -s | sed 's/[\/ ]/-/g')
 OS := $(patsubst CYGWIN_%,CYGWIN,$(OS))
+OS := $(patsubst MINGW%,MINGW,$(OS))
 OS := $(patsubst sn%,UNICOS-sn,$(OS))
 
 CPU := $(shell uname -m | sed 's/[\/ ]/-/g')
+
+COMPILERS := ./Compilers
 
 ifndef FORT
   $(error Variable FORT not set)
 endif
 
 ifneq "$(MAKECMDGOALS)" "clean"
-  include Compilers/$(OS)-$(strip $(FORT)).mk
+  include $(COMPILERS)/$(OS)-$(strip $(FORT)).mk
 endif
 
 #--------------------------------------------------------------------------
@@ -157,9 +181,23 @@ CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 
 all: $(BIN)
 
-modules  := Nonlinear Utility Modules Drivers
+modules  :=	ROMS/Adjoint \
+		ROMS/Representer \
+		ROMS/Tangent \
+		ROMS/Nonlinear \
+		ROMS/SeaIce \
+		ROMS/Utility \
+		ROMS/Modules \
+		Master
 
-includes := Include Nonlinear Drivers
+includes :=	ROMS/Include \
+		ROMS/Adjoint \
+		ROMS/Nonlinear \
+		ROMS/Representer \
+		ROMS/Tangent \
+		ROMS/SeaIce \
+		ROMS/Drivers \
+		Master
 
 vpath %.F $(modules)
 vpath %.h $(includes)
@@ -169,6 +207,20 @@ include $(addsuffix /Module.mk,$(modules))
 MDEPFLAGS += $(patsubst %,-I %,$(includes))
 
 CPPFLAGS += $(patsubst %,-I%,$(includes))
+
+#--------------------------------------------------------------------------
+#  Add profiling.
+#--------------------------------------------------------------------------
+
+# FFLAGS += -check bounds                 # ifort
+# FFLAGS += -C                            # pgi
+# FFLAGS += -xpg                          # Sun
+# FFLAGS += -pg                           # g95
+# FFLAGS += -qp                           # ifort
+# FFLAGS += -Mprof=func,lines             # pgi
+# FFLAGS += -Mprof=mpi,lines              # pgi
+# FFLAGS += -Mprof=mpi,hwcts              # pgi
+# FFLAGS += -Mprof=func                   # pgi
 
 #--------------------------------------------------------------------------
 #  Special CPP macros for mod_strings.F
@@ -194,12 +246,14 @@ libraries: $(libraries)
 
 .PHONY: depend
 
+SFMAKEDEPEND := ./ROMS/Bin/sfmakedepend
+
 depend:
-	mv Compilers/MakeDepend Compilers/MakeDepend.orig
-	Bin/sfmakedepend $(MDEPFLAGS) $(path_srcs) > Compilers/MakeDepend 
+	mv $(COMPILERS)/MakeDepend $(COMPILERS)/MakeDepend.orig
+	$(SFMAKEDEPEND) $(MDEPFLAGS) $(path_srcs) > $(COMPILERS)/MakeDepend 
 
 ifneq "$(MAKECMDGOALS)" "clean"
-  -include Compilers/MakeDepend
+  -include $(COMPILERS)/MakeDepend
 endif
 
 #--------------------------------------------------------------------------
@@ -209,12 +263,12 @@ endif
 .PHONY: tarfile
 
 tarfile:
-		tar -cvf ocean-2_2.tar *
+		tar -cvf ocean-3_0.tar *
 
 .PHONY: zipfile
 
 zipfile:
-		zip -r ocean-2_2.zip *
+		zip -r ocean-3_0.zip *
 
 
 #--------------------------------------------------------------------------
@@ -240,3 +294,5 @@ clean:
 
 print-%:
 	@echo $* = $($*)
+
+# DO NOT DELETE

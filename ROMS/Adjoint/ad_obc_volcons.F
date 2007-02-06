@@ -1,0 +1,669 @@
+#include "cppdefs.h"
+      MODULE ad_obc_volcons_mod
+#if defined ADJOINT && defined OBC_VOLCONS
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  This routines computes adjoint integral mass flux  "obc_flux"       !
+!  across the open boundaries, which is needed to enforce global       !
+!  mass conservation constraint.                                       !
+!                                                                      !
+!=======================================================================
+!
+      implicit none
+
+      PRIVATE
+      PUBLIC  :: ad_obc_flux_tile, ad_set_DUV_bc_tile
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE ad_obc_flux (ng, tile, kinp)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_ocean
+      USE mod_stepping
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, kinp
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+      CALL ad_obc_flux_tile (ng, Istr, Iend, Jstr, Jend,                &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       kinp,                                      &
+# ifdef MASKING
+     &                       GRID(ng) % umask,                          &
+     &                       GRID(ng) % vmask,                          &
+# endif
+     &                       GRID(ng) % h,                              &
+     &                       GRID(ng) % ad_h,                           &
+     &                       GRID(ng) % om_v,                           &
+     &                       GRID(ng) % on_u,                           &
+     &                       OCEAN(ng) % ubar,                          &
+     &                       OCEAN(ng) % vbar,                          &
+     &                       OCEAN(ng) % zeta,                          &
+     &                       OCEAN(ng) % ad_ubar,                       &
+     &                       OCEAN(ng) % ad_vbar,                       &
+     &                       OCEAN(ng) % ad_zeta)
+      RETURN
+      END SUBROUTINE ad_obc_flux
+!
+!***********************************************************************
+      SUBROUTINE ad_obc_flux_tile (ng, Istr, Iend, Jstr, Jend,          &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             kinp,                                &
+# ifdef MASKING
+     &                             umask, vmask,                        &
+# endif
+     &                             h, ad_h,                             &
+     &                             om_v, on_u,                          &
+     &                             ubar, vbar, zeta,                    &
+     &                             ad_ubar, ad_vbar, ad_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: kinp
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: h(LBi:,LBj:)
+      real(r8), intent(in) :: om_v(LBi:,LBj:)
+      real(r8), intent(in) :: on_u(LBi:,LBj:)
+
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
+      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+
+      real(r8), intent(inout) :: ad_h(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
+
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+
+      real(r8), intent(inout) :: ad_h(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: NSUB, i, j
+
+      real(r8) :: cff, my_area, my_flux
+      real(r8) :: adfac, ad_cff, ad_my_area, ad_my_flux
+
+# ifdef DISTRIBUTE
+      real(r8), dimension(2) :: buffer
+      character (len=3), dimension(2) :: op_handle
+# endif
+!
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Initialize adjoint private variables.
+!-----------------------------------------------------------------------
+!
+      ad_cff=0.0_r8
+
+# if defined WEST_VOLCONS  || defined EAST_VOLCONS  || \
+     defined SOUTH_VOLCONS || defined NORTH_VOLCONS
+!
+!-----------------------------------------------------------------------
+!  Perform adjoint global summation and compute correction velocity.
+!-----------------------------------------------------------------------
+!
+!>    tl_ubar_xs=tl_bc_flux/bc_area-                                    &
+!>   &           tl_bc_area*ubar_xs/bc_area
+!>
+      ad_bc_area=-ad_ubar_xs*ubar_xs/bc_area
+      ad_bc_flux=ad_ubar_xs/bc_area
+      ad_ubar_xs=0.0_r8
+!>    tl_bc_flux=tl_bc_flux+tl_my_flux
+!>
+      ad_my_flux=ad_bc_flux
+!>    tl_bc_area=tl_bc_area+tl_my_area
+!>
+      ad_my_area=ad_bc_area
+# endif
+!
+!-----------------------------------------------------------------------
+!  Compute open segments cross-section area and mass flux.
+!-----------------------------------------------------------------------
+!
+# ifdef NORTH_VOLCONS
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          cff=0.5_r8*om_v(i,Jend+1)*                                    &
+     &        (zeta(i,Jend  ,kinp)+h(i,Jend  )+                         &
+     &         zeta(i,Jend+1,kinp)+h(i,Jend+1))
+#  ifdef MASKING
+          cff=cff*vmask(i,Jend+1)
+#  endif
+!>        tl_my_flux=tl_my_flux-                                        &
+!>   &               tl_cff*vbar(i,Jend+1,kinp)-                        &
+!>   &               cff*tl_vbar(i,Jend+1,kinp)
+!>
+          ad_vbar(i,Jend+1,kinp)=ad_vbar(i,Jend+1,kinp)-                &
+     &                           cff*ad_my_flux           
+          ad_cff=ad_cff-ad_my_flux*vbar(i,Jend+1,kinp)
+!>        tl_my_area=tl_my_area+tl_cff
+!>
+          ad_cff=ad_cff+ad_my_area
+#  ifdef MASKING
+!>        tl_cff=tl_cff*vmask(i,Jend+1)
+!>
+          ad_cff=ad_cff*vmask(i,Jend+1)
+#  endif
+!>        tl_cff=0.5_r8*om_v(i,Jend+1)*                                 &
+!>   &           (tl_zeta(i,Jend  ,kinp)+tl_h(i,Jend  )+                &
+!>   &            tl_zeta(i,Jend+1,kinp)+tl_h(i,Jend+1))
+!>
+          adfac=0.5_r8*om_v(i,Jend+1)*ad_cff
+          ad_zeta(i,Jend  ,kinp)=ad_zeta(i,Jend  ,kinp)+adfac
+          ad_zeta(i,Jend+1,kinp)=ad_zeta(i,Jend+1,kinp)+adfac
+          ad_h(i,Jend  )=ad_h(i,Jend  )+adfac
+          ad_h(i,Jend+1)=ad_h(i,Jend+1)+adfac
+          ad_cff=0.0_r8
+        END DO
+      END IF
+# endif
+# ifdef SOUTH_VOLCONS
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          cff=0.5_r8*om_v(i,Jstr)*                                      &
+     &        (zeta(i,Jstr-1,kinp)+h(i,Jstr-1)+                         &
+     &         zeta(i,Jstr  ,kinp)+h(i,Jstr  ))
+#  ifdef MASKING
+          cff=cff*vmask(i,Jstr)
+#  endif
+!>        tl_my_flux=tl_my_flux+                                        &
+!>   &               tl_cff*vbar(i,JstrV-1,kinp)+                       &
+!>   &               cff*tl_vbar(i,JstrV-1,kinp)
+!>
+          ad_vbar(i,JstrV-1,kinp)=ad_vbar(i,JstrV-1,kinp)+              &
+     &                            cff*ad_my_flux
+          ad_cff=ad_cff+ad_my_flux*vbar(i,JstrV-1,kinp)
+!>        tl_my_area=tl_my_area+tl_cff
+!>
+          ad_cff=ad_cff+ad_my_area
+#  ifdef MASKING
+!>        tl_cff=tl_cff*vmask(i,Jstr)
+!>
+          ad_cff=ad_cff*vmask(i,Jstr)
+#  endif
+!>        tl_cff=0.5_r8*om_v(i,Jstr)*                                   &
+!>   &           (tl_zeta(i,Jstr-1,kinp)+tl_h(i,Jstr-1)+                &
+!>   &            tl_zeta(i,Jstr  ,kinp)+tl_h(i,Jstr  ))
+!>
+          adfac=0.5_r8*om_v(i,Jstr)*ad_cff
+          ad_zeta(i,Jstr-1,kinp)=ad_zeta(i,Jstr-1,kinp)+adfac
+          ad_zeta(i,Jstr  ,kinp)=ad_zeta(i,Jstr  ,kinp)+adfac
+          ad_h(i,Jstr-1)=ad_h(i,Jstr-1)+adfac
+          ad_h(i,Jstr  )=ad_h(i,Jstr  )+adfac
+          ad_cff=0.0_r8
+        END DO
+      END IF
+# endif
+# ifdef EAST_VOLCONS
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          cff=0.5_r8*on_u(Iend+1,j)*                                    &
+     &        (zeta(Iend  ,j,kinp)+h(Iend  ,j)+                         &
+     &         zeta(Iend+1,j,kinp)+h(Iend+1,j))
+#  ifdef MASKING
+          cff=cff*umask(Iend+1,j)
+#  endif
+!>        tl_my_flux=tl_my_flux-                                        &
+!>   &               tl_cff*ubar(Iend+1,j,kinp)-                        &
+!>   &               cff*tl_ubar(Iend+1,j,kinp)
+!>
+          ad_ubar(Iend+1,j,kinp)=ad_ubar(Iend+1,j,kinp)-                &
+     &                           cff*ad_my_flux
+          ad_cff=ad_cff-ad_my_flux*ubar(Iend+1,j,kinp)
+!>        tl_my_area=tl_my_area+tl_cff
+!>
+          ad_cff=ad_cff+ad_my_area
+#  ifdef MASKING
+!>        tl_cff=tl_cff*umask(Iend+1,j)
+!>
+          ad_cff=ad_cff*umask(Iend+1,j)
+#  endif
+!>        tl_cff=0.5_r8*on_u(Iend+1,j)*                                 &
+!>   &           (tl_zeta(Iend  ,j,kinp)+tl_h(Iend  ,j)+                &
+!>   &            tl_zeta(Iend+1,j,kinp)+tl_h(Iend+1,j))
+!>
+          adfac=0.5_r8*on_u(Iend+1,j)*ad_cff
+          ad_zeta(Iend  ,j,kinp)=ad_zeta(Iend  ,j,kinp)+adfac
+          ad_zeta(Iend+1,j,kinp)=ad_zeta(Iend+1,j,kinp)+adfac
+          ad_h(Iend  ,j)=ad_h(Iend  ,j)+adfac
+          ad_h(Iend+1,j)=ad_h(Iend+1,j)+adfac
+          ad_cff=0.0_r8
+        END DO
+      END IF
+# endif
+# ifdef WEST_VOLCONS
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          cff=0.5_r8*on_u(Istr,j)*                                      &
+     &        (zeta(Istr-1,j,kinp)+h(Istr-1,j)+                         &
+     &         zeta(Istr  ,j,kinp)+h(Istr  ,j))
+#  ifdef MASKING
+          cff=cff*umask(Istr,j)
+#  endif
+!>        tl_my_flux=tl_my_flux+                                        &
+!>   &               tl_cff*ubar(Istr,j,kinp)+                          &
+!>   &               cff*tl_ubar(Istr,j,kinp)
+!>
+          ad_ubar(Istr,j,kinp)=ad_ubar(Istr,j,kinp)+                    &
+     &                         cff*ad_my_flux
+          ad_cff=ad_cff+ad_my_flux*ubar(Istr,j,kinp)
+!>        tl_my_area=tl_my_area+tl_cff
+!>
+          ad_cff=ad_cff+ad_my_area
+#  ifdef MASKING
+!>        tl_cff=tl_cff*umask(Istr,j)
+!>
+          ad_cff=ad_cff*umask(Istr,j)
+#  endif
+!>        tl_cff=0.5_r8*on_u(Istr,j)*                                   &
+!>   &           (tl_zeta(Istr-1,j,kinp)+tl_h(Istr-1,j)+                &
+!>   &            tl_zeta(Istr  ,j,kinp)+tl_h(Istr  ,j))
+!>
+          adfac=0.5_r8*on_u(Istr,j)*ad_cff
+          ad_zeta(Istr-1,j,kinp)=ad_zeta(Istr-1,j,kinp)+adfac
+          ad_zeta(Istr  ,j,kinp)=ad_zeta(Istr  ,j,kinp)+adfac
+          ad_h(Istr-1,j)=ad_h(Istr-1,j)+adfac
+          ad_h(Istr-1,j)=ad_h(Istr-1,j)+adfac
+          ad_cff=0.0_r8
+        END DO
+      END IF
+# endif
+!>    tl_my_area=0.0_r8
+!>    tl_my_flux=0.0_r8
+!>
+      ad_my_area=0.0_r8
+      ad_my_flux=0.0_r8
+
+      RETURN
+      END SUBROUTINE ad_obc_flux_tile
+!
+!***********************************************************************
+      SUBROUTINE ad_set_DUV_bc_tile (ng, Istr, Iend, Jstr, Jend,        &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               ILB, IUB, JLB, JUB,                &
+     &                               kinp,                              &
+# ifdef MASKING
+     &                               umask, vmask,                      &
+# endif
+     &                               om_v, on_u,                        &
+     &                               ubar, vbar,                        &
+     &                               ad_ubar, ad_vbar,                  &
+     &                               Drhs, Duon, Dvom,                  &
+     &                               ad_Drhs, ad_Duon, ad_Dvom)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+# ifdef DISTRIBUTE
+!
+      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: ILB, IUB, JLB, JUB
+      integer, intent(in) :: kinp
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: om_v(LBi:,LBj:)
+      real(r8), intent(in) :: on_u(LBi:,LBj:)
+
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
+      real(r8), intent(in) :: Drhs(ILB:,JLB:)
+      real(r8), intent(in) :: Duon(ILB:,JLB:)
+      real(r8), intent(in) :: Dvom(ILB:,JLB:)
+
+      real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_Drhs(ILB:,JLB:)
+      real(r8), intent(inout) :: ad_Duon(ILB:,JLB:)
+      real(r8), intent(inout) :: ad_Dvom(ILB:,JLB:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
+
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: Drhs(ILB:IUB,JLB:JUB)
+      real(r8), intent(in) :: Duon(ILB:IUB,JLB:JUB)
+      real(r8), intent(in) :: Dvom(ILB:IUB,JLB:JUB)
+
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_Drhs(ILB:IUB,JLB:JUB)
+      real(r8), intent(inout) :: ad_Duon(ILB:IUB,JLB:JUB)
+      real(r8), intent(inout) :: ad_Dvom(ILB:IUB,JLB:JUB)
+# endif
+!
+!  Local variable declarations.
+!
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j
+
+      real(r8) :: adfac, adfac1, adfac2
+
+# include "set_bounds.h"
+
+# ifdef DISTRIBUTE
+#  define I_RANGE IstrU,MIN(Iend+1,Lm(ng))
+#  define J_RANGE JstrV,MIN(Jend+1,Mm(ng))
+# else
+#  define I_RANGE MAX(2,IstrU-1),MIN(Iend+1,Lm(ng))
+#  define J_RANGE MAX(2,JstrV-1),MIN(Jend+1,Mm(ng))
+# endif
+!
+!-----------------------------------------------------------------------
+!  Set vertically integrated mass fluxes "Duon" and "Dvom" along
+!  the open boundaries in such a way that the integral volume is
+!  conserved.  This is done by applying "ubar_xs" correction to
+!  the velocities.
+!-----------------------------------------------------------------------
+!
+# ifdef DISTRIBUTE
+
+! Do a special exchange to avoid having three ghost points for high
+! order numerical stencil.
+!
+#  if defined SOUTH_VOLCONS || defined NORTH_VOLCONS
+!>      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>     &                    ILB, IUB, JLB, JUB,                           &
+!>     &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>     &                    tl_Dvom)
+        CALL ad_mp_exchange2d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+       &                    ILB, IUB, JLB, JUB,                           &
+       &                    NghostPoints, EWperiodic, NSperiodic,         &
+       &                    ad_Dvom)
+#  endif
+#  if defined WEST_VOLCONS || defined EAST_VOLCONS
+!>      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>     &                    ILB, IUB, JLB, JUB,                           &
+!>     &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>     &                    tl_Duon)
+        CALL ad_mp_exchange2d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+       &                    ILB, IUB, JLB, JUB,                           &
+       &                    NghostPoints, EWperiodic, NSperiodic,         &
+       &                    ad_Duon)
+#  endif
+# endif
+
+# ifdef NORTH_VOLCONS
+      IF (NORTHERN_EDGE) THEN
+        DO i=-2+I_RANGE+1
+#  ifdef MASKING
+!>        tl_Dvom(i,Jend+1)=tl_Dvom(i,Jend+1)*vmask(i,Jend+1)
+!>
+          ad_Dvom(i,Jend+1)=ad_Dvom(i,Jend+1)*vmask(i,Jend+1)
+#  endif
+!>        tl_Dvom(i,Jend+1)=0.5_r8*                                     &
+!>   &                      ((tl_Drhs(i,Jend+1)+tl_Drhs(i,Jend))*       &
+!>   &                       (vbar(i,Jend+1,kinp)+ubar_xs)+             &
+!>   &                       (Drhs(i,Jend+1)+Drhs(i,Jend))*             &
+!>   &                       (tl_vbar(i,Jend+1,kinp)+tl_ubar_xs))*      &
+!>   &                      om_v(i,Jend+1)
+!>
+          adfac=0.5_r8*om_v(i,Jend+1)*ad_Dvom(i,Jend+1)
+          adfac1=adfac*(vbar(i,Jend+1,kinp)+ubar_xs)
+          adfac2=adfac*(Drhs(i,Jend+1)+Drhs(i,Jend))
+          ad_Drhs(i,Jend+1)=ad_Drhs(i,Jend+1)+adfac1
+          ad_Drhs(i,Jend  )=ad_Drhs(i,Jend  )+adfac1
+          ad_vbar(i,Jend+1,kinp)=ad_vbar(i,Jend+1,kinp)+adfac2
+          ad_ubar_xs=ad_ubar_xs+adfac2
+          ad_Dvom(i,Jend+1)=0.0_r8
+        END DO
+      END IF
+# endif
+# ifdef SOUTH_VOLCONS
+      IF (SOUTHERN_EDGE) THEN
+        DO i=-2+I_RANGE+1
+#  ifdef MASKING
+!>        tl_Dvom(i,Jstr)=tl_Dvom(i,Jstr)*vmask(i,Jstr)
+!>
+          ad_Dvom(i,Jstr)=ad_Dvom(i,Jstr)*vmask(i,Jstr)
+#  endif
+!>        tl_Dvom(i,Jstr)=0.5_r8*                                       &
+!>   &                    ((tl_Drhs(i,Jstr)+tl_Drhs(i,Jstr-1))*         &
+!>   &                     (vbar(i,Jstr,kinp)-ubar_xs)+                 &
+!>   &                     (Drhs(i,Jstr)+Drhs(i,Jstr-1))*               &
+!>   &                     (tl_vbar(i,Jstr,kinp)-tl_ubar_xs))*          &
+!>   &                    om_v(i,Jstr)
+!>
+          adfac=0.5_r8*om_v(i,Jstr)*ad_Dvom(i,Jstr)
+          adfac1=adfac*(vbar(i,Jstr,kinp)-ubar_xs)
+          adfac2=adfac*(Drhs(i,Jstr)+Drhs(i,Jstr-1))
+          ad_Drhs(i,Jstr-1)=ad_Drhs(i,Jstr-1)+adfac1
+          ad_Drhs(i,Jstr  )=ad_Drhs(i,Jstr  )+adfac1
+          ad_vbar(i,Jstr,kinp)=ad_vbar(i,Jstr,kinp)+adfac2
+          ad_ubar_xs=ad_ubar_xs-adfac2
+          ad_Dvom(i,Jstr)=0.0_r8
+        END DO
+      END IF
+# endif
+# ifdef EAST_VOLCONS
+      IF (EASTERN_EDGE) THEN
+        DO j=-2+J_RANGE+1
+#  ifdef MASKING
+!>        tl_Duon(Iend+1,j)=tl_Duon(Iend+1,j)*umask(Iend+1,j)
+!>
+          ad_Duon(Iend+1,j)=ad_Duon(Iend+1,j)*umask(Iend+1,j)
+#  endif
+!>        tl_Duon(Iend+1,j)=0.5_r8*                                     &
+!>   &                      ((tl_Drhs(Iend+1,j)+tl_Drhs(Iend,j))*       &
+!>   &                       (ubar(Iend+1,j,kinp)+ubar_xs)+             &
+!>   &                       (Drhs(Iend+1,j)+Drhs(Iend,j))*             &
+!>   &                       (tl_ubar(Iend+1,j,kinp)+tl_ubar_xs))*      &
+!>   &                      on_u(Iend+1,j)
+!>
+          adfac=0.5_r8*on_u(Iend+1,j)*ad_Duon(Iend+1,j)
+          adfac1=adfac*(ubar(Iend+1,j,kinp)+ubar_xs)
+          adfac2=adfac*(Drhs(Iend+1,j)+Drhs(Iend,j))
+          ad_Drhs(Iend  ,j)=ad_Drhs(Iend  ,j)+adfac1
+          ad_Drhs(Iend+1,j)=ad_Drhs(Iend+1,j)+adfac1
+          ad_ubar(Iend+1,j,kinp)=ad_ubar(Iend+1,j,kinp)+adfac2
+          ad_ubar_xs=ad_ubar_xs+adfac2
+          ad_Duon(Iend+1,j)=0.0_r8
+        END DO
+      END IF
+# endif
+# ifdef WEST_VOLCONS
+      IF (WESTERN_EDGE) THEN
+        DO j=-2+J_RANGE+1
+#  ifdef MASKING
+!>        tl_Duon(Istr,j)=tl_Duon(Istr,j)*umask(Istr,j)
+!>
+          ad_Duon(Istr,j)=ad_Duon(Istr,j)*umask(Istr,j)
+#  endif
+!>        tl_Duon(Istr,j)=0.5_r8*                                       &
+!>   &                    ((tl_Drhs(Istr,j)+tl_Drhs(Istr-1,j))*         &
+!>   &                     (ubar(Istr,j,kinp)-ubar_xs)+                 &
+!>   &                     (Drhs(Istr,j)+Drhs(Istr-1,j))*               &
+!>   &                     (tl_ubar(Istr,j,kinp)-tl_ubar_xs))*          &
+!>   &                    on_u(Istr,j)
+!>
+          adfac=0.5_r8*on_u(Istr,j)*ad_Duon(Istr,j)
+          adfac1=adfac*(ubar(Istr,j,kinp)-ubar_xs)
+          adfac2=adfac*(Drhs(Istr,j)+Drhs(Istr-1,j))
+          ad_Drhs(Istr-1,j)=ad_Drhs(Istr-1,j)+adfac1
+          ad_Drhs(Istr  ,j)=ad_Drhs(Istr  ,j)+adfac1
+          ad_ubar(Istr,j,kinp)=ad_ubar(Istr,j,kinp)+adfac2
+          ad_ubar_xs=ad_ubar_xs-adfac2
+          ad_Duon(Istr,j)=0.0_r8
+        END DO
+      END IF
+# endif
+# undef I_RANGE
+# undef J_RANGE
+
+      RETURN
+      END SUBROUTINE ad_set_DUV_bc_tile
+!
+!***********************************************************************
+      SUBROUTINE ad_conserve_mass_tile (ng, Istr, Iend, Jstr, Jend,     &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  kinp,                           &
+# ifdef MASKING
+     &                                  umask, vmask,                   &
+# endif
+     &                                  ad_ubar, ad_vbar)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: kinp
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: i, j
+!
+!-----------------------------------------------------------------------
+!  Corrects velocities across the open boundaries to enforce global
+!  mass conservation constraint.
+!-----------------------------------------------------------------------
+!
+# ifdef NORTH_VOLCONS
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+#  ifdef MASKING
+!>        vbar(i,Jend+1,kinp)=vbar(i,Jend+1,kinp)*vmask(i,Jend+1)
+!>
+          ad_vbar(i,Jend+1,kinp)=ad_vbar(i,Jend+1,kinp)*vmask(i,Jend+1)
+#  endif
+!>        tl_vbar(i,Jend+1,kinp)=(tl_vbar(i,Jend+1,kinp)+tl_ubar_xs)
+!>
+          ad_ubar_xs=ad_ubar_xs+ad_vbar(i,Jend+1,kinp)
+        END DO
+      END IF
+# endif
+# ifdef SOUTH_VOLCONS
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+#  ifdef MASKING
+!>        tl_vbar(i,Jstr,kinp)=tl_vbar(i,Jstr,kinp)*vmask(i,Jstr)
+!>
+          ad_vbar(i,Jstr,kinp)=ad_vbar(i,Jstr,kinp)*vmask(i,Jstr)
+#  endif
+!>        tl_vbar(i,Jstr,kinp)=(tl_vbar(i,Jstr,kinp)-tl_ubar_xs)
+!>
+          ad_ubar_xs=ad_ubar_xs-ad_vbar(i,Jstr,kinp)
+        END DO
+      END IF
+# endif
+# ifdef EAST_VOLCONS
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr,Jend
+#  ifdef MASKING
+!>        tl_ubar(Iend+1,j,kinp)=tl_ubar(Iend+1,j,kinp)*umask(Iend+1,j)
+!>
+          ad_ubar(Iend+1,j,kinp)=ad_ubar(Iend+1,j,kinp)*umask(Iend+1,j)
+#  endif
+!>        tl_ubar(Iend+1,j,kinp)=tl_ubar(Iend+1,j,kinp)+tl_ubar_xs
+!>
+          ad_ubar_xs=ad_ubar_xs+ad_ubar(Iend+1,j,kinp)
+        END DO
+      END IF
+# endif
+# ifdef WEST_VOLCONS
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr,Jend
+#  ifdef MASKING
+!>        tl_ubar(Istr,j,kinp)=tl_ubar(Istr,j,kinp)*umask(Istr,j)
+!>
+          ad_ubar(Istr,j,kinp)=ad_ubar(Istr,j,kinp)*umask(Istr,j)
+#  endif
+!>        tl_ubar(Istr,j,kinp)=tl_ubar(Istr,j,kinp)-tl_ubar_xs
+!>
+          ad_ubar_xs=ad_ubar_xs-ad_ubar(Istr,j,kinp)
+        END DO
+      END IF
+# endif
+      RETURN
+      END SUBROUTINE ad_conserve_mass_tile
+#endif
+      END MODULE ad_obc_volcons_mod

@@ -1,0 +1,66 @@
+!
+! !USES:
+!
+
+  use MCT_WRF_IO_PIPE_MODULE, only : &
+    PIPE_RECV => RECV
+
+  implicit none
+
+! !INPUT PARAMETERS: 
+!
+  integer,          intent(in   ) :: DATA_HANDLE
+  character(LEN=*), intent(in   ) :: STAGGER
+  integer,          intent(in   ) :: PATCH_START (2)
+  integer,          intent(in   ) :: PATCH_END   (2)
+  integer,          intent(in   ) :: MEMORY_START(2)
+  integer,          intent(in   ) :: MEMORY_END  (2)
+  character(LEN=*), intent(in   ) :: VAR_NAME
+
+! !OUTPUT PARAMETERS: 
+!
+  IN_TYPE         , intent(out)   :: FIELD(MEMORY_START(1) : MEMORY_END(1), &
+                                           MEMORY_START(2) : MEMORY_END(2))
+
+! !INPUT/OUTPUT PARAMETERS: 
+!
+  type (T_CLASS)   , intent(inout) :: THIS
+  integer          , intent(inout) :: ISTATUS
+
+! !DESCRIPTION:  
+! Receive data from the pipe corresponding to DATA_HANDLE and pack it
+! into the interior of FIELD.  
+!
+! !DEFINED PARAMETERS:
+! none
+
+! !LOCAL VARIABLES: 
+  IN_TYPE , allocatable :: FIELD_INTERIOR_ONLY(:,:)
+
+! !SEE ALSO:
+!  none
+
+! !REVISION HISTORY:
+! 06/02/03 - Dan Schaffer - Initial version
+!EOP ___________________________________________________________________
+
+  allocate(FIELD_INTERIOR_ONLY ( PATCH_START(1):PATCH_END(1), &
+                                 PATCH_START(2):PATCH_END(2)), stat=ISTATUS)
+  ASSERT(ISTATUS == 0)
+
+  call PIPE_RECV ( &
+    THIS%EXCHANGE_PIPES(DATA_HANDLE), &
+    STAGGER, &
+    VAR_NAME, &
+    FIELD_INTERIOR_ONLY, &
+    ISTATUS )
+
+  ASSERT(ISTATUS == 0)
+
+  FIELD(PATCH_START(1):PATCH_END(1), &
+        PATCH_START(2):PATCH_END(2)) = FIELD_INTERIOR_ONLY
+
+  deallocate(FIELD_INTERIOR_ONLY, stat=ISTATUS)
+
+  ASSERT(ISTATUS == 0)
+

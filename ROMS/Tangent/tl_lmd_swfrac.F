@@ -1,0 +1,91 @@
+#include "cppdefs.h"
+
+#if defined TANGENT  && defined SOLVE3D       && \
+   (defined LMD_SKPP_NOT_YET || defined SOLAR_SOURCE)
+
+      SUBROUTINE tl_lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend,        &
+     &                               Zscale, Z, tl_Z, tl_swdk)
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!======================================================================= 
+!                                                                      !
+!  This routine computes the  tangent linear  fraction of solar        !
+!  shortwave flux penetrating to specified depth (times Zscale)        !
+!  due to exponential decay in Jerlov water type.                      !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     Zscale   Scale factor to apply to depth array.                   !
+!     Z        Vertical height (meters, negative) for                  !
+!                desired solar short-wave fraction.                    !
+!     tl_Z     Tangent linear vertical height for                      !
+!                desired solar short-wave fraction.                    !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     tl_swdk  Tangent linear shortwave (radiation) fractional decay.  !
+!                                                                      !
+!  Reference:                                                          !
+!                                                                      !
+!  Paulson, C.A., and J.J. Simpson, 1977: Irradiance meassurements     !
+!     in the upper ocean, J. Phys. Oceanogr., 7, 952-956.              !
+!                                                                      !
+!  This routine was adapted from Bill Large 1995 code.                 !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_mixing
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+
+      real(r8), intent(in) :: Zscale
+
+      real(r8), intent(in) :: Z(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8), intent(in) :: tl_Z(PRIVATE_2D_SCRATCH_ARRAY)
+
+      real(r8), intent(out) :: tl_swdk(PRIVATE_2D_SCRATCH_ARRAY)
+!
+!  Local variable declarations.
+!
+      integer :: Jindex, i, j
+
+      real(r8) :: fac1, fac2, cff1, cff2
+      real(r8) :: tl_cff1, tl_cff2
+!
+!-----------------------------------------------------------------------
+!  Use Paulson and Simpson (1977) two wavelength bands solar
+!  absorption model.
+!-----------------------------------------------------------------------
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          Jindex=MIXING(ng)%Jwtype(i,j)
+          fac1=Zscale/lmd_mu1(Jindex)
+          fac2=Zscale/lmd_mu2(Jindex)
+          cff1=EXP(Z(i,j)*fac1)
+          tl_cff1=fac1*tl_Z(i,j)*cff1
+          cff2=EXP(Z(i,j)*fac2)
+          tl_cff2=fac2*tl_Z(i,j)*cff2
+!>        swdk(i,j)=cff1*lmd_r1(Jindex)+                                &
+!>   &              cff2*(1.0_r8-lmd_r1(Jindex))
+!>
+          tl_swdk(i,j)=tl_cff1*lmd_r1(Jindex)+                          &
+     &                 tl_cff2*(1.0_r8-lmd_r1(Jindex))
+        END DO
+      END DO
+      END SUBROUTINE tl_lmd_swfrac_tile
+#else
+      SUBROUTINE tl_lmd_swfrac
+      RETURN
+      END SUBROUTINE tl_lmd_swfrac
+#endif

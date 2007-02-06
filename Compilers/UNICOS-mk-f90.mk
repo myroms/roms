@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for UNICOS F90 compiler on CRAY
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -21,13 +27,12 @@
            FFLAGS := -e I -e m
               CPP := /opt/ctl/bin/cpp
          CPPFLAGS := -P -N -DCRAY
-            CLEAN := Bin/cpp_clean
                LD := $(FC)
           LDFLAGS :=
                AR := ar
           ARFLAGS := -r
                RM := rm -f
-           RANLIB := touch
+           RANLIB := ranlib
              PERL := perl
 
         MDEPFLAGS := --cpp --fext=f90 --file=-
@@ -42,6 +47,10 @@
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/lib
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
     ARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
@@ -59,11 +68,3 @@ ifdef DEBUG
 else
            FFLAGS += -O3
 endif
-
-# Cray specials
-
-lmd_skpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
-lmd_bkpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
-
-lmd_skpp.o: lmd_wscale.f90
-lmd_bkpp.o: lmd_wscale.f90

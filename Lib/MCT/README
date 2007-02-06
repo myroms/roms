@@ -1,0 +1,129 @@
+######################################################################
+
+ -- Mathematics + Computer Science Div. / Argonne National Laboratory
+
+    Model Coupling Toolkit (mct)
+    Points of contact: Jay Larson <larson@mcs.anl.gov>
+                       630 252 7806
+		       Robert Jacob <jacob@mcs.anl.gov>
+		       630 252 2983
+
+######################################################################
+
+  This is version 1.0 of the Model Coupling Toolkit (mct).
+
+  Our purpose in creating this toolkit is to support the construction
+  of highly portable and extensible high-performance couplers 
+  for distributed memory parallel coupled models.
+
+  For more information, see http://www.mcs.anl.gov/mct
+
+######################################################################
+
+
+  Current Contents of the directory MCT:
+
+  README -- this file
+
+  mpeu   -- Source code for the message-passing environment utilities
+            library (mpeu), which provides support for mct 
+
+  mct    -- Source code for the model coupling toolkit, which is built
+            on top of mpeu.
+
+  ut-mct -- Source code for a unit tester which demonstrates the
+	    use of MCT in a simple parallel ocean-atmosphere "model".
+
+  doc    -- documentation for MCT
+
+  protex -- tool for constructing documentation from source code
+
+######################################################################
+  REQUIREMENTS:
+
+  Building MCT requires a Fortran90 compiler and the MPI library.
+  Makefiles are provided and have been tested with the following
+  system/compiler combinations:
+
+  IBM (AIX) xlf 8.1
+  SGI (IRIX64) f90 MIPSpro 7.30
+  SUN (Solaris) f90 WorkShop 5.0
+  Compaq  Compaq Fortran Compiler X5.5-2801-48CAG
+  Linux pgf90
+  Linux NAG
+  NEC
+  Fujitsu
+
+  We are fairly confident of the following but have not verified:
+  Linux Absoft
+  Sun NAG
+  CrayT3E
+
+  Running the unit tester requires a parallel platform 
+  (the default is for 16 processors).  Memory requirements 
+  are reasonable.
+
+######################################################################
+  BUILD INSTRUCTIONS:
+
+  1) cd mpeu, and in that directory perform the following steps:
+
+	$ ./configure
+	$ make all
+
+  2) go over to the mct directory and perform the following steps:
+
+	$ ./configure
+	$ make all
+
+  3) Usage of mct is then available through use of its modules, and
+     by linking in the libraries mpeu/libmpeu.a and mct/libmct.a
+
+  4) go to the ut-mct directory and perform the following steps:
+	$ ./configure
+	$ make all
+
+There should also be a MCT/data directory which contains interpolation
+weights needed for the test case.   This data is available at the
+website.
+
+######################################################################
+
+  Both mct and mpeu source code are self-documenting.  All modules 
+  and routines contain prologues that can be extracted processed 
+  into LaTeX source code by the public-domain tool ProTeX.  ProTeX is
+  available by anonymous ftp from:
+
+     Software:
+      ftp://dao.gsfc.nasa.gov/pub/papers/sawyer/protex1.4.tar.Z 
+     Documentation:
+      ftp://dao.gsfc.nasa.gov/pub/office_notes/on9711r0.ps.Z 
+
+  You can build the documentation with protex and latex by following
+  the directions in the doc directory.
+
+######################################################################
+
+N.B.:  mpeu is Authored and maintained by Jing Guo of NASA's Data 
+       Assimilation Office at Goddard Space Flight Center.  We have
+       established a branch in their repository to allow us to track
+       future DAO development of mpeu, and to allow us to incorporate
+       our own enhancements into their product.
+
+######################################################################
+
+  REVISION HISTORY:
+
+  18 Oct, 2000 -- Initial prototype
+  09 Feb, 2001 -- working MxN transfer
+  27 Apr, 2001 -- Sparse Matrix Multiply
+  13 Jun, 2001 -- General Grid
+  23 Aug, 2001 -- Linux PGF90 port
+  14 Dec, 2001 -- PCM support
+  29 Mar, 2002 -- Rearranger
+  14 Nov, 2002 -- version 1.0.0
+  11 Feb, 2003 -- version 1.0.4
+
+Tag $Name: MCT_1_0_12 $
+$Id$
+

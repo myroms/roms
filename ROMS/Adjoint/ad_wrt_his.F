@@ -1,0 +1,587 @@
+#include "cppdefs.h"
+#ifdef ADJOINT
+      SUBROUTINE ad_wrt_his (ng)
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  This routine writes requested adjoint model fields into adjoint     !
+!  history NetCDF file.                                                !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_forces
+      USE mod_grid
+      USE mod_iounits
+      USE mod_mixing
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_ocean
+      USE mod_scalars
+# if defined SEDIMENT_NOT_YET || defined BBL_MODEL_NOT_YET
+      USE mod_sediment
+# endif
+      USE mod_stepping
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng
+!
+!  Local variable declarations.
+!
+      integer :: LBi, UBi, LBj, UBj
+      integer :: i, j, gfactor, gtype, status
+      integer :: kout
+# ifdef SOLVE3D
+      integer :: itrc, k, nout
+# endif
+      integer :: nf_fwrite2d
+# ifdef SOLVE3D
+      integer :: nf_fwrite3d
+# endif
+
+      real(r8) :: scale
+!
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
+!
+!-----------------------------------------------------------------------
+!  Write out adjoint fields.
+!-----------------------------------------------------------------------
+!
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Set grid type factor to write full (gfactor=1) fields or water
+!  points (gfactor=-1) fields only.
+!
+# if defined WRITE_WATER && defined MASKING
+      gfactor=-1
+# else
+      gfactor=1
+# endif
+!
+!  Determine time index to write.
+!
+# ifdef SOLVE3D
+      kout=kstp(ng)
+# else
+      kout=kstp(ng)
+# endif
+# ifdef SOLVE3D
+      IF (iic(ng).ne.ntend) THEN
+        nout=nnew(ng)
+      ELSE
+        nout=nstp(ng)
+      END IF
+# endif
+!
+!  Set time record index.
+!
+      tADJindx(ng)=tADJindx(ng)+1
+      NrecADJ(ng)=NrecADJ(ng)+1
+!
+!  If requested, set time index to recycle time records in the adjoint
+!  file.
+!
+      IF (LcycleADJ(ng)) THEN
+        tADJindx(ng)=MOD(tADJindx(ng)-1,2)+1
+      END IF
+!
+!  Write out model time (s).
+!
+      IF (OutThread) THEN
+        IF (LwrtPER(ng)) THEN
+          status=nf_put_var1_TYPE(ncADJid(ng),adjVid(idtime,ng),        &
+     &                            tADJindx(ng),                         &
+     &                            REAL(Nrun,r8)*day2sec)
+        ELSE
+          status=nf_put_var1_TYPE(ncADJid(ng),adjVid(idtime,ng),        &
+     &                            tADJindx(ng),time)
+        END IF
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idtime)), tADJindx(ng)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out bathymetry.
+!
+      scale=1.0_r8
+      gtype=gfactor*r2dvar
+      status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idbath,ng),      &
+     &                   tADJindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+# ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+# endif
+     &                   GRID(ng)% ad_h(LBi,LBj))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idbath)), tADJindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Write out free-surface (m).
+!
+      IF (Hout(idFsur,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        IF (LwrtState2d(ng)) THEN
+          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idFsur,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+# ifdef MASKING
+     &                       GRID(ng) % rmask(LBi,LBj),                 &
+# endif
+     &                       OCEAN(ng)% ad_zeta(LBi,LBj,kout))
+        ELSE
+          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idFsur,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+# ifdef MASKING
+     &                       GRID(ng) % rmask(LBi,LBj),                 &
+# endif
+     &                       OCEAN(ng)% ad_zeta_sol(LBi,LBj))
+        ENDIF
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idFsur)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D momentum component (m/s) in the XI-direction.
+!
+      IF (Hout(idUbar,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u2dvar
+        IF (LwrtState2d(ng)) THEN
+          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUbar,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+# ifdef MASKING
+     &                       GRID(ng) % umask(LBi,LBj),                 &
+# endif
+     &                       OCEAN(ng) % ad_ubar(LBi,LBj,kout))
+        ELSE
+          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUbar,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+# ifdef MASKING
+     &                       GRID(ng) % umask(LBi,LBj),                 &
+# endif
+     &                       OCEAN(ng) % ad_ubar_sol(LBi,LBj))
+        END IF
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUbar)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D momentum component (m/s) in the ETA-direction.  Use
+!  global GRID(ng)%xp to accumulate correct adjoint solution.
+!
+      IF (Hout(idVbar,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v2dvar
+        IF (LwrtState2d(ng)) THEN
+          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVbar,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+# ifdef MASKING
+      &                      GRID(ng) % vmask(LBi,LBj),                 &
+# endif
+     &                       OCEAN(ng) % ad_vbar(LBi,LBj,kout))
+        ELSE
+          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVbar,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, scale,                 &
+# ifdef MASKING
+      &                      GRID(ng) % vmask(LBi,LBj),                 &
+# endif
+     &                       OCEAN(ng) % ad_vbar_sol(LBi,LBj))
+        END IF
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVbar)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# ifdef SOLVE3D
+!
+!  Write out 3D momentum component (m/s) in the XI-direction.
+!
+      IF (Hout(idUvel,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u3dvar
+        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idUvel,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     OCEAN(ng) % ad_u(LBi,LBj,1,nout))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUvel)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D momentum component (m/s) in the ETA-direction.
+!
+      IF (Hout(idVvel,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v3dvar
+        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idVvel,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+#  endif
+     &                     OCEAN(ng) % ad_v(LBi,LBj,1,nout))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVvel)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out tracer type variables.
+!
+      DO itrc=1,NT(ng)
+        IF (Hout(idTvar(itrc),ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*r3dvar
+          status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjTid(itrc,ng),    &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#  ifdef MASKING
+     &                       GRID(ng) % rmask(LBi,LBj),                 &
+#  endif
+     &                       OCEAN(ng) % ad_t(LBi,LBj,1,nout,itrc))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),            &
+     &                          tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END DO
+!
+!  Write out density anomaly.
+!
+      IF (Hout(idDano,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idDano,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#  endif
+     &                     OCEAN(ng) % ad_rho(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idDano)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out vertical viscosity coefficient.
+!
+      IF (Hout(idVvis,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*w3dvar
+        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idVvis,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % ad_Akv(LBi,LBj,0))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVvis)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out vertical diffusion coefficient for potential temperature.
+!
+      IF (Hout(idTdif,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*w3dvar
+        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idTdif,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % ad_Akt(LBi,LBj,0,itemp))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTdif)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# ifdef SALINITY
+!
+!  Write out vertical diffusion coefficient for salinity.
+!
+      IF (Hout(idSdif,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*w3dvar
+        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idSdif,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 0, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#  endif
+     &                     MIXING(ng) % ad_Akt(LBi,LBj,0,isalt))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idSdif)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
+!
+!  Write out surface net heat flux.
+!
+      IF (Hout(idTsur(itemp),ng)) THEN
+!!      scale=rho0*Cp
+# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+        scale=1.0_r8/(rho0*Cp)
+# else
+        scale=1.0_r8
+# endif
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng),                       &
+     &                     adjVid(idTsur(itemp),ng),                    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % ad_stflx(LBi,LBj,itemp))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTsur(itemp))),             &
+     &                      tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out surface net salt flux.
+!
+      IF (Hout(idTsur(isalt),ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng),                       &
+     &                     adjVid(idTsur(isalt),ng),                    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % ad_stflx(LBi,LBj,isalt))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTsur(isalt))),             &
+     &                        tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
+!
+!  Write out surface U-momentum stress.
+!
+      IF (Hout(idUsms,ng)) THEN
+!!      scale=rho0
+# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+        scale=1.0_r8/rho0
+# else
+        scale=1.0_r8
+# endif
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUsms,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % ad_sustr(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUsms)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out surface V-momentum stress.
+!
+      IF (Hout(idVsms,ng)) THEN
+!!      scale=rho0
+# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+        scale=1.0_r8/rho0
+# else
+        scale=1.0_r8
+# endif
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVsms,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % ad_svstr(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVsms)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out bottom U-momentum stress.
+!
+      IF (Hout(idUbms,ng)) THEN
+!!      scale=-rho0
+        scale=1.0_r8
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUbms,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % ad_bustr_sol(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUbms)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out bottom V-momentum stress.
+!
+      IF (Hout(idVbms,ng)) THEN
+!!      scale=-rho0
+        scale=1.0_r8
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVbms,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % ad_bvstr_sol(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVbms)), tADJindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Synchronize adjoint history NetCDF file to disk to allow other
+!  processes to access data immediately after it is written.
+!-----------------------------------------------------------------------
+!
+      IF (OutThread) THEN
+        status=nf_sync(ncADJid(ng))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,20)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+# ifdef SOLVE3D
+        WRITE (stdout,30) kout, nout, tADJindx(ng)
+# else
+        WRITE (stdout,30) kout, tADJindx(ng)
+# endif
+      END IF
+!
+  10  FORMAT (/,' AD_WRT_HIS - error while writing variable: ',a,/,14x, &
+     &        'into adjoint NetCDF file for time record: ',i4)
+  20  FORMAT (/,' AD_WRT_HIS - unable to synchronize adjoint NetCDF ',  &
+     &        'to disk.')
+# ifdef SOLVE3D
+  30  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
+     &        ',',i1,') into time record = ',i7.7)
+# else
+  30  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
+     &        ') into time record = ',i7.7)
+# endif
+      RETURN
+      END SUBROUTINE ad_wrt_his
+#else
+      SUBROUTINE ad_wrt_his
+      RETURN
+      END SUBROUTINE ad_wrt_his
+#endif

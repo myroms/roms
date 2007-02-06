@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for PGI Fortran compiler on Linux
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -20,8 +26,7 @@
                FC := pgf90
            FFLAGS :=
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional -DLINUX
-            CLEAN := Bin/cpp_clean
+         CPPFLAGS := -P -traditional
                LD := $(FC)
           LDFLAGS := 
                AR := ar
@@ -36,20 +41,58 @@
 # Library locations, can be overridden by environment variables.
 #
 
-    NETCDF_INCDIR ?= /opt/pgi/netcdf/include
-    NETCDF_LIBDIR ?= /opt/pgi/netcdf/lib
+    NETCDF_INCDIR ?= /opt/pgisoft/netcdf/include
+    NETCDF_LIBDIR ?= /opt/pgisoft/netcdf/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
+#            LIBS := -L$(NETCDF_LIBDIR) -lnetcdf -lgmalloc
 
 ifdef ARPACK
-    ARPACK_LIBDIR ?= /opt/pgisoft/ARPACK
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_LINUX
+ ifdef MPI
+#  PARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+   PARPACK_LIBDIR ?= $(ROMSHOME)/Lib
+  ifdef MPIF90
+   ifdef DEBUG
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_daggoo
+   else
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_daggoo
+   endif
+  else
+   ifdef DEBUG
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_moby
+   else
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_moby
+#            LIBS += -L$(PARPACK_LIBDIR) -lparpack
+   endif
+  endif
+ endif
+#   ARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+    ARPACK_LIBDIR ?= $(ROMSHOME)/Lib
+ ifdef MPIF90
+  ifdef DEBUG
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_daggoo
+  else
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_daggoo
+  endif
+ else
+  ifdef DEBUG
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_moby
+  else
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_moby
+#            LIBS += -L$(ARPACK_LIBDIR) -larpack
+  endif
+ endif
 endif
 
 ifdef MPI
          CPPFLAGS += -DMPI
+ ifdef MPIF90
+               FC := /opt/pgisoft/mpich/bin/mpif90
+               LD := $(FC)
+ else
              LIBS += -lfmpi-pgi -lmpi-pgi 
+ endif
 endif
 
 ifdef OpenMP
@@ -57,7 +100,9 @@ ifdef OpenMP
 endif
 
 ifdef DEBUG
-           FFLAGS += -g
+#          FFLAGS += -g -C -Mchkstk -Mchkfpstk
+           FFLAGS += -g -C
+#          FFLAGS += -g
 else
            FFLAGS += -u -Bstatic -fastsse -Mipa=fast
 endif

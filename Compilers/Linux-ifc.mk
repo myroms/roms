@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for Intel IFC (version 7.x) compiler on Linux
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -20,8 +26,7 @@
                FC := ifc
            FFLAGS := 
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional -DLINUX
-            CLEAN := Bin/cpp_clean
+         CPPFLAGS := -P -traditional
                LD := $(FC)
           LDFLAGS := -Vaxlib
                AR := ar
@@ -36,19 +41,29 @@
 # Library locations, can be overridden by environment variables.
 #
 
-    NETCDF_INCDIR ?= /opt/intel/compiler70/ia32/include
-    NETCDF_LIBDIR ?= /opt/intel/compiler70/ia32/lib
+    NETCDF_INCDIR ?= /opt/intelsoft/netcdf/include
+    NETCDF_LIBDIR ?= /opt/intelsoft/netcdf/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
-    ARPACK_LIBDIR ?= /opt/intelsoft//ARPACK
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_LINUX
+ ifdef MPI
+   PARPACK_LIBDIR ?= /opt/intelsoft/ARPACK
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
+    ARPACK_LIBDIR ?= /opt/intelsoft/ARPACK
+             LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
 ifdef MPI
          CPPFLAGS += -DMPI
+ ifdef MPIF90
+               FC := /opt/intelsoft/mpich2/bin/mpif90
+               LD := $(FC)
+ else
+             LIBS += -lfmpi-pgi -lmpi-pgi 
+ endif
 endif
 
 ifdef OpenMP

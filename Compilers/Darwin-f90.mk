@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for Absoft compiler on Mac (Darwin)
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -21,7 +27,6 @@
            FFLAGS := -N11 -YEXT_NAMES=LCS -YEXT_SFX=_ -YCFRL=1 -w
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DMAC -traditional
-            CLEAN := Bin/cpp_clean
                LD := $(FC)
           LDFLAGS :=
                AR := ar
@@ -43,6 +48,10 @@
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf -lU77
 
 ifdef ARPACK
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/lib
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
     ARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif

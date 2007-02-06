@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for GNU G95 compiler on Linux
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -18,10 +24,9 @@
 # First the defaults
 #
                FC := g95
-           FFLAGS :=
+           FFLAGS := -fno-second-underscore -fsloppy-char
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional -DLINUX
-            CLEAN := Bin/cpp_clean
+         CPPFLAGS := -P -traditional
                LD := $(FC)
           LDFLAGS :=
                AR := ar
@@ -36,19 +41,32 @@
 # Library locations, can be overridden by environment variables.
 #
 
-    NETCDF_INCDIR ?= /usr/local/include
-    NETCDF_LIBDIR ?= /usr/local/lib
+#   NETCDF_INCDIR ?= /opt/gnusoft/netcdf/include
+    NETCDF_INCDIR ?= /opt/g95soft/netcdf/include
+#   NETCDF_LIBDIR ?= /opt/gnusoft/netcdf/lib
+    NETCDF_LIBDIR ?= /opt/g95soft/netcdf/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/lib
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
     ARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
 ifdef MPI
          CPPFLAGS += -DMPI
+ ifdef MPIF90
+#              FC := /opt/gnusoft/mpich/bin/mpif90
+               FC := /opt/g95soft/mpich2/bin/mpif90
+               LD := $(FC)
+ else
+             LIBS += -lfmpi-pgi -lmpi-pgi 
+ endif
 endif
 
 ifdef OpenMP
@@ -56,7 +74,7 @@ ifdef OpenMP
 endif
 
 ifdef DEBUG
-           FFLAGS += -g -fbounds-check
+           FFLAGS += -g -fbounds-check -ftrace=full
 else
            FFLAGS += -O3 -ffast-math
 endif

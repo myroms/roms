@@ -1,0 +1,432 @@
+#include "cppdefs.h"
+      MODULE rp_set_depth_mod
+#ifdef TL_IOMS
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  This routine computes the time evolving depths of the model grid    !
+!  and its associated vertical transformation metric (thickness).      !
+!                                                                      !
+!  BASIC STATE variables needed: NONE                                  !
+!  Independent Variables: tl_Hz, tl_z_r, tl_z_w                        !
+!                                                                      !
+!=======================================================================
+!
+      implicit none
+
+      PRIVATE
+# ifdef SOLVE3D
+      PUBLIC  :: rp_set_depth, rp_set_depth_tile
+# endif
+      PUBLIC  :: rp_bath, rp_bath_tile
+
+      CONTAINS
+
+# ifdef SOLVE3D
+!
+!***********************************************************************
+      SUBROUTINE rp_set_depth (ng, tile)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_coupling
+      USE mod_grid
+      USE mod_ocean
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+!
+!  Local variable declarations.
+!
+#  include "tile.h"
+!
+      CALL rp_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        GRID(ng) % h,                             &
+     &                        GRID(ng) % tl_h,                          &
+#  ifdef ICESHELF
+     &                        GRID(ng) % zice,                          &
+#  endif
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                        OCEAN(ng) % tl_bed,                       &
+     &                        GRID(ng) % tl_bed_thick0,                 &
+#  endif
+     &                        COUPLING(ng) % Zt_avg1,                   &
+     &                        COUPLING(ng) % tl_Zt_avg1,                &
+     &                        GRID(ng) % tl_Hz,                         &
+     &                        GRID(ng) % tl_z_r,                        &
+     &                        GRID(ng) % tl_z_w)
+      RETURN
+      END SUBROUTINE rp_set_depth
+!
+!***********************************************************************
+      SUBROUTINE rp_set_depth_tile (ng, Istr, Iend, Jstr, Jend,         &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              h, tl_h,                            &
+#  ifdef ICESHELF
+     &                              zice,                               &
+#  endif
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                              tl_bed, bed_thick0,                 &
+#  endif
+     &                              Zt_avg1, tl_Zt_avg1,                &
+     &                              tl_Hz, tl_z_r, tl_z_w)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      USE mod_sediment
+#  endif
+!
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+      USE exchange_2d_mod
+      USE exchange_3d_mod
+#  endif
+#  ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d, mp_exchange3d
+#  endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+!
+#  ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: h(LBi:,LBj:)
+#   ifdef ICESHELF
+      real(r8), intent(in) :: zice(LBi:,LBj:)
+#   endif
+#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(in) :: tl_bed(LBi:,LBj:,:,:)
+      real(r8), intent(inout):: bed_thick0(LBi:,LBj:)
+#   endif
+      real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
+      real(r8), intent(inout) :: tl_h(LBi:,LBj:)
+      real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
+      real(r8), intent(out) :: tl_Hz(LBi:,LBj:,:)
+      real(r8), intent(out) :: tl_z_r(LBi:,LBj:,:)
+      real(r8), intent(out) :: tl_z_w(LBi:,LBj:,0:)
+#  else
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+#   ifdef ICESHELF
+      real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
+#   endif
+#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(in) :: tl_bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
+      real(r8), intent(inout):: bed_thick0(LBi:UBi,LBj:UBi)
+#   endif
+      real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: tl_h(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(out) :: tl_z_r(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(out) :: tl_z_w(LBi:UBi,LBj:UBj,0:N(ng))
+#  endif
+!
+!  Local variable declarations.
+!
+#  ifdef DISTRIBUTE
+#   ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#   else
+      logical :: EWperiodic=.FALSE.
+#   endif
+#   ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#   else
+      logical :: NSperiodic=.FALSE.
+#   endif
+#  endif
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j, k, kbed
+
+      real(r8) :: cff, cff_r, cff1_r, cff2_r, cff_w, cff1_w, cff2_w
+      real(r8) :: hinv, hwater, z_r0, z_w0
+      real(r8) :: tl_hinv, tl_hwater, tl_z_r0, tl_z_w0
+
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_BedThick
+#  endif
+
+#  include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Compute time evolving depths and vertical thicknesses.
+!-----------------------------------------------------------------------
+!
+!  Compute vertical depths (meters, negative) at RHO- and W-points,
+!  and vertical grid thicknesses.
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+!>        z_w(i,j,0)=-h(i,j)
+!>
+          tl_z_w(i,j,0)=-tl_h(i,j)
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+!>        BedThick(i,j)=0.0_r8
+!>
+          tl_BedThick(i,j)=0.0_r8
+          DO kbed=1,Nbed
+!>          BedThick(i,j)=BedThick(i,j)+bed(i,j,kbed,ithck)
+!>
+            tl_BedThick(i,j)=tl_BedThick(i,j)+tl_bed(i,j,kbed,ithck)
+          END DO
+!>        BedThick(i,j)=BedThick(i,j)-bed_thick0(i,j)
+!>
+          tl_BedThick(i,j)=tl_BedThick(i,j)-tl_bed_thick0(i,j)
+!>        z_w(i,j,0)=z_w(i,j,0)+BedThick(i,j)
+!>
+          tl_z_w(i,j,0)=tl_z_w(i,j,0)+tl_BedThick(i,j)
+#  endif
+        END DO
+        DO k=1,N(ng)
+          cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
+          cff1_w=SCALARS(ng)%Cs_w(k)
+          cff2_w=SCALARS(ng)%sc_w(k)+1.0_r8
+          cff_r=hc(ng)*(SCALARS(ng)%sc_r(k)-SCALARS(ng)%Cs_r(k))
+          cff1_r=SCALARS(ng)%Cs_r(k)
+          cff2_r=SCALARS(ng)%sc_r(k)+1.0_r8
+          DO i=IstrR,IendR
+            hwater=h(i,j)
+#  ifdef ICESHELF
+            hwater=hwater-ABS(zice(i,j))
+#  endif
+            tl_hwater=tl_h(i,j)
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+            hwater=hwater-BedThick(i,j)
+            tl_hwater=tl_hwater-tl_BedThick(i,j)
+#  endif
+            hinv=1.0_r8/hwater
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+            tl_hinv=-hinv*hinv*tl_hwater+                               &
+#   ifdef TL_IOMS
+     &              2.0_r8*hinv
+#   endif
+#  endif
+            z_w0=cff_w+cff1_w*hwater
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+            tl_z_w0=cff1_w*tl_hwater+                                   &
+#   ifdef TL_IOMS
+     &              cff_w
+#   endif
+#  endif
+!>          z_w(i,j,k)=z_w0+Zt_avg1(i,j)*(1.0_r8+z_w0*hinv)
+!>
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+            tl_z_w(i,j,k)=tl_z_w0+                                      &
+     &                    tl_Zt_avg1(i,j)*(1.0_r8+z_w0*hinv)+           &
+     &                    Zt_avg1(i,j)*z_w0*tl_hinv+                    &
+     &                    Zt_avg1(i,j)*tl_z_w0*hinv-                    &
+#   ifdef TL_IOMS
+     &                    2.0_r8*Zt_avg1(i,j)*z_w0*hinv
+#   endif
+#  else
+            tl_z_w(i,j,k)=tl_Zt_avg1(i,j)*(1.0_r8+z_w0*hinv)+           &
+#   ifdef TL_IOMS
+     &                    z_w0
+#   endif
+#  endif
+            z_r0=cff_r+cff1_r*hwater
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+            tl_z_r0=cff1_r*tl_hwater+                                   &
+#   ifdef TL_IOMS
+     &              cff_r
+#   endif
+#  endif
+!>          z_r(i,j,k)=z_r0+Zt_avg1(i,j)*(1.0_r8+z_r0*hinv)
+!>
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+            tl_z_r(i,j,k)=tl_z_r0+                                      &
+     &                    tl_Zt_avg1(i,j)*(1.0_r8+z_r0*hinv)+           &
+     &                    Zt_avg1(i,j)*z_r0*tl_hinv+                    &
+     &                    Zt_avg1(i,j)*tl_z_r0*hinv-                    &
+#   ifdef TL_IOMS
+     &                    2.0_r8*Zt_avg1(i,j)*z_r0*hinv
+#   endif
+#  else
+            tl_z_r(i,j,k)=tl_Zt_avg1(i,j)*(1.0_r8+z_r0*hinv)+           &
+#   ifdef TL_IOMS
+     &                    z_r0
+#   endif
+#  endif
+#  ifdef ICESHELF
+!>          z_w(i,j,k)=z_w(i,j,k)-ABS(zice(i,j))
+!>          z_r(i,j,k)=z_r(i,j,k)-ABS(zice(i,j))
+#  endif
+!>          Hz(i,j,k)=z_w(i,j,k)-z_w(i,j,k-1)
+!>
+            tl_Hz(i,j,k)=tl_z_w(i,j,k)-tl_z_w(i,j,k-1)
+          END DO
+        END DO
+      END DO
+#  if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+!
+!-----------------------------------------------------------------------
+!  Exchange boundary information.
+!-----------------------------------------------------------------------
+!
+#   if defined EW_PERIODIC || defined NS_PERIODIC
+!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        h)
+!>
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_h)
+!>    CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+!>   &                        z_w)
+!>
+      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
+     &                        tl_z_w)
+!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+!>   &                        z_r)
+!>
+      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        tl_z_r)
+!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+!>   &                        Hz)
+!>
+      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
+     &                        tl_Hz)
+#   endif
+#   ifdef DISTRIBUTE
+!>    CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    h)
+!>
+      CALL mp_exchange2d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_h)
+!>    CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    z_w)
+!>
+      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_z_w)
+!>    CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+!>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    z_r, Hz)
+!>
+      CALL mp_exchange3d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_z_r, tl_Hz)
+#   endif
+#  endif
+      RETURN
+      END SUBROUTINE rp_set_depth_tile
+# endif
+!
+!***********************************************************************
+      SUBROUTINE rp_bath (ng, tile)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+      CALL rp_bath_tile (ng, Istr, Iend, Jstr, Jend,                    &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   GRID(ng) % h,                                  &
+     &                   GRID(ng) % tl_h)
+      RETURN
+      END SUBROUTINE rp_bath
+!
+!***********************************************************************
+      SUBROUTINE rp_bath_tile (ng, Istr, Iend, Jstr, Jend,              &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         h, tl_h)
+!***********************************************************************
+!
+      USE mod_param
+!
+# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE exchange_2d_mod
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+!
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: h(LBi:,LBj:)
+      real(r8), intent(out) :: tl_h(LBi:,LBj:)
+# else
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: tl_h(LBi:UBi,LBj:UBj)
+# endif
+!
+!  Local variable declarations.
+!
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Initialize tangent linear bathymetry tl_h(i,j) to h(i,j) so some of
+!  the terms are cancelled in the barotropic pressure gradient.
+!-----------------------------------------------------------------------
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          tl_h(i,j)=h(i,j)
+        END DO
+      END DO
+# if defined EW_PERIODIC || defined NS_PERIODIC
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_h)
+# endif
+# ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_h)
+# endif
+      RETURN
+      END SUBROUTINE rp_bath_tile
+#endif
+      END MODULE rp_set_depth_mod

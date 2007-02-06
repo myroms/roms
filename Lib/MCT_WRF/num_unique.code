@@ -1,0 +1,52 @@
+!
+! !USES:
+!
+  implicit none
+
+! !INPUT PARAMETERS: 
+!
+  IN_TYPE  , intent(in)  :: ARR(:)
+
+  integer :: RES
+
+! !DESCRIPTION:  Determine how many unique values there are in ARR.
+!
+! !DEFINED PARAMETERS:
+! none
+
+! !LOCAL VARIABLES: 
+  IN_TYPE ,  allocatable :: ARR_TMP(:)
+  integer :: I
+  integer :: NUM_SO_FAR
+  integer :: ISTATUS
+
+! !SEE ALSO:
+!  none
+
+! !REVISION HISTORY:
+! 05/31/03 - Dan Schaffer - Initial version
+!EOP ___________________________________________________________________
+
+  allocate(ARR_TMP(size(ARR)), stat=ISTATUS)
+  ASSERT(ISTATUS == 0)
+
+  ARR_TMP = INIT_VALUE
+
+  NUM_SO_FAR = 0
+  ! Bad here
+
+  do I = 1, size(ARR)
+    ASSERT(ARR(I) /= INIT_VALUE )
+    if (.not. VALUE_IN_ARRAY (ARR(I), ARR_TMP)) then
+      NUM_SO_FAR = NUM_SO_FAR + 1
+      ARR_TMP(NUM_SO_FAR) = ARR(I)
+    end if
+  end do
+
+  deallocate(ARR_TMP, stat=ISTATUS)
+  ASSERT(ISTATUS == 0)
+
+  RES = NUM_SO_FAR
+
+#undef IN_TYPE
+#undef INIT_VALUE

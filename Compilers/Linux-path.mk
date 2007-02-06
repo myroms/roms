@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for PathScale compiler on Linux
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -18,10 +24,9 @@
 # First the defaults
 #
                FC := pathf90
-           FFLAGS := -fno-second-underscore
+           FFLAGS := -fno-second-underscore -I/usr/include
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional -DLINUX -I/usr/include -DpgiFortran
-            CLEAN := Bin/cpp_clean
+         CPPFLAGS := -P -traditional -I/usr/include -DpgiFortran
                LD := $(FC)
           LDFLAGS := 
                AR := ar
@@ -36,20 +41,29 @@
 # Library locations, can be overridden by environment variables.
 #
 
-    NETCDF_INCDIR ?= /opt/netcdf-3.6.0-pathscale/include
-    NETCDF_LIBDIR ?= /opt/netcdf-3.6.0-pathscale/include
+    NETCDF_INCDIR ?= /opt/pathscalesoft/netcdf-3.6.0-p1/include
+    NETCDF_LIBDIR ?= /opt/pathscalesoft/netcdf-3.6.0-p1/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
-    ARPACK_LIBDIR ?= /opt/pathscalesoft/ARPACK
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_LINUX
+ ifdef MPI
+   PARPACK_LIBDIR ?= /opt/pathscalesoft/PARPACK
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
+    ARPACK_LIBDIR ?= /opt/pathscalesoft/PARPACK
+             LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
 ifdef MPI
          CPPFLAGS += -DMPI
-             LIBS +=  -lfmpi-pgi -lmpi-pgi 
+ ifdef MPIF90
+               FC := /opt/pathscalesoft/mpich/bin/mpif90
+               LD := $(FC)
+ else
+             LIBS += -lfmpi-pgi -lmpi-pgi 
+ endif
 endif
 
 ifdef OpenMP

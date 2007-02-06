@@ -1,0 +1,737 @@
+#include "cppdefs.h"
+      MODULE mod_fourdvar
+
+#if defined FOUR_DVAR || defined VERIFICATION
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  Variational data assimilation variables:                            !
+!                                                                      !
+!  ADmodVal     Adjoint model values at observation locations.         !
+!  BackCost     Current background cost function misfit (mean squared  !
+!                 difference) between model and background state, Jb.  !
+!  CostFun      Current iteration total cost function (background      !
+!                 plus observations), J.                               !    
+!  CostFunOld   Previous iteration total cost function (background     !
+!                 plus observations), J.                               !    
+!  CostGrad     Cost function gradient norm.                           !
+!  CostGradDot  Adjoint solution (gradient) dot product used to adjust !
+!                 cost function values in the cgradient algorithm.     !
+!  CostGradOld  Cost function gradient norm from previous iteration.   !
+!  CostNorm     Total cost function normalization scales (minimization !
+!                 starting value, Jb+Jo).                              !
+!  DTsizeH      Horizontal diffusion time-step size for spatial        !
+!                 convolutions.                                        !
+!  DTsizeV      Vertical diffusion time-step size for spatial          !
+!                 convolutions.                                        !
+!  NLmodVal     Nonlinear model values at observation locations.       !
+!  KhMax        Maximum  horizontal diffusion coefficient.             !
+!  KhMin        Minimum  horizontal diffusion coefficient.             !
+!  KvMax        Maximum  vertical diffusion coefficient.               !
+!  KvMin        Minimum  vertical diffusion coefficient.               !
+!  Load_Zobs    Logical switch indicating that input Zobs is negative  !
+!                 and fractional vertical positions are computed in    !
+!                 "extract_obs3d" and written to observation NetCDF    !
+!                 file for latter use.                                 !
+!  NHsteps      Full number of horizontal diffusion steps for spatial  !
+!                 convolutions.                                        !
+!  NVsteps      Full number of vertical diffusion steps for spatial    !
+!                 convolutions.                                        !
+!  ObsCost      Current observation cost function misfit (mean squared !
+!                 difference) between model and observations, Jo.      !
+!  ObsCount     Current observation counts per state variable.         !
+!  ObsErr       Observation error.                                     !
+!  ObsReject    Current rejected observation counts per state variable.!
+!  ObsScale     Observation scale used during screenning and/or        !
+!                 normalization of the observations.                   !
+!  ObsType      Observation type identifier.                           !
+!  ObsVal       Observation values.                                    !
+!  ObsVar       Global observation variance for each state variable.   !
+!  Optimality   normalized, optimal cost function minimum.             !
+!  TLmodVal     Tangent linear model values at observation locations.  !
+!  Vdecay       Covariance vertical decorrelation scale (m).           !
+!  Tobs         Observations time (days).                              !
+!  Xobs         Observations X-locations (grid coordinates).           !
+!  Yobs         Observations Y-locations (grid coordinates).           !
+!  Zobs         Observations Z-locations (grid coordinates).           !
+# if defined WEAK_CONSTRAINT || defined IOM
+!  cg_p         Weak constraint conjugate gradient vector.             !
+!  cg_r         Weak constraint conjugate gradient vector,             !
+!                 approximation PSI for representer coeffiecients.     !
+!  cg_s         Weak constraint conjugate gradient vector,             !
+!                 right-hand-side term: R_n*PSI + Cobs*PSI.            !
+!  cg_v         Weak constraint conjugate gradient vector.             !
+!  cg_x         Weak constraint conjugate gradient vector.             !
+!  cg_z         Weak constraint conjugate gradient vector.             !
+# endif
+!  haveADmod    Logical switch indicating that there is representer    !
+!                 coefficients available to process in MODname file.   !
+!  haveNLmod    Logical switch indicating that there is nonlinear      !
+!                 model data available to process in MODname file.     !
+!  haveTLmod    Logical switch indicating that there is tangent        !
+!                 model data available to process in MODname file.     !
+!                                                                      !
+!=======================================================================
+!
+        USE mod_param
+!
+        implicit none
+
+# ifdef OBSERVATIONS
+        integer,  allocatable :: ObsType(:)
+
+        real(r8), allocatable :: ObsErr(:)
+        real(r8), allocatable :: ObsScale(:)
+        real(r8), allocatable :: ObsVal(:)
+        real(r8), allocatable :: Tobs(:)
+        real(r8), allocatable :: Xobs(:)
+        real(r8), allocatable :: Yobs(:)
+#  ifdef SOLVE3D
+        real(r8), allocatable :: Zobs(:)
+#  endif          
+        real(r8), allocatable :: ADmodVal(:)
+#  ifdef S4DVAR
+        real(r8), allocatable :: NLmodVal(:,:)
+#  else
+        real(r8), allocatable :: NLmodVal(:)
+#  endif
+#  ifdef TLM_OBS
+#   ifdef IS4DVAR_OLD
+        real(r8), allocatable :: TLmodVal(:,:)
+#   else
+        real(r8), allocatable :: TLmodVal(:)
+#   endif
+#  endif
+#  if defined WEAK_CONSTRAINT || defined IOM
+        real(r8), allocatable :: cg_p(:)
+        real(r8), allocatable :: cg_r(:)
+        real(r8), allocatable :: cg_s(:)
+        real(r8), allocatable :: cg_v(:)
+        real(r8), allocatable :: cg_x(:)
+        real(r8), allocatable :: cg_z(:)
+#  endif
+!
+        TYPE T_FOURDVAR
+
+          integer , pointer :: NobsSurvey(:)
+          integer , pointer :: ObsCount(:)
+          integer , pointer :: ObsReject(:)
+#  ifdef FOUR_DVAR
+          real(r8), pointer :: BackCost(:)
+          real(r8), pointer :: CostFun(:)
+          real(r8), pointer :: CostFunOld(:)
+          real(r8), pointer :: CostGrad(:)
+          real(r8), pointer :: CostGradOld(:)
+          real(r8), pointer :: CostGradDot(:)
+          real(r8), pointer :: CostNorm(:)
+          real(r8), pointer :: ObsCost(:)
+#  endif
+          real(r8), pointer :: ObsVar(:)
+          real(r8), pointer :: SurveyTime(:)
+  
+        END TYPE T_FOURDVAR
+
+        TYPE (T_FOURDVAR), allocatable :: FOURDVAR(:)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Observations parameters.
+!-----------------------------------------------------------------------
+!
+!  Switches indicating that at input observations vertical position were
+!  given in meters (Zobs < 0) so the fractional vertical level position
+!  is computed during extraction and written to Observation NetCDF file.
+!
+        logical, dimension(Ngrids) :: Load_Zobs
+        logical, dimension(Ngrids) :: wrote_Zobs
+!
+!  Maximum number of observations to process.
+!
+        integer :: Mobs
+!
+!  Number of model state variables to process.
+!
+        integer, dimension(Ngrids) :: NstateVar
+!
+!  Number of interpolation weights and (I,J,K) indices offsets.
+!
+# ifdef SOLVE3D
+        integer, parameter :: Nweights = 8
+
+        integer, parameter, dimension(Nweights) :: Ioffset =            &
+     &                      (/ 0, 1, 0, 1, 0, 1, 0, 1 /)
+        integer, parameter, dimension(Nweights) :: Joffset =            &
+     &                      (/ 0, 0, 1, 1, 0, 0, 1, 1 /)
+        integer, parameter, dimension(Nweights) :: Koffset =            &
+     &                      (/ 0, 0, 0, 0, 1, 1, 1, 1 /)
+# else
+        integer, parameter :: Nweights = 4
+
+        integer, parameter, dimension(Nweights) :: Ioffset =            &
+     &                      (/ 0, 1, 0, 1 /)
+        integer, parameter, dimension(Nweights) :: Joffset =            &
+     &                      (/ 0, 0, 1, 1 /)
+# endif
+!
+!  Size of observation NetCDF file unlimited dimension.
+!
+        integer, dimension(Ngrids) :: Ndatum         
+!
+!  Number of observations surveys available.
+!
+        integer, dimension(Ngrids) :: Nsurvey
+!
+!  Observation surveys counter.
+!
+        integer, dimension(Ngrids) :: ObsSurvey
+!
+!  Current number of observations processed.
+!
+        integer, dimension(Ngrids) :: Nobs
+!
+!  Current starting and ending observation file index processed.
+!
+        integer, dimension(Ngrids) :: NstrObs
+        integer, dimension(Ngrids) :: NendObs
+!
+!  Background error covariance normalization method:
+!
+!       [0] Exact, very expensive
+!       [1] Approximated, randomization
+!
+        integer, dimension(Ngrids) :: Nmethod
+!
+!  Random number generation scheme for randomization:
+!
+!       [0] Intrinsic F90 routine "randon_number"
+!       [1] Gaussian distributed deviates, numerical recipes
+!
+        integer, dimension(Ngrids) :: Rscheme
+!
+!  Number of iterations in the randomization ensemble used to
+!  compute the background error covariance, B, normalization
+!  factors. This factors ensure that the diagonal elements of
+!  B are equal to unity (Fisher and Coutier, 1995).
+!
+        integer :: Nrandom = 1000
+!
+!  Optimal, normalized cost funtion minimum.  If the statistical
+!  hypotheses between the background and observations errors
+!  is consistemt, the cost function value at the minimum, Jmin,
+!  is idealy equal to half the number of observations assimilated
+!  (Optimality=1=2*Jmin/Nobs), for a linear system.
+!
+        real(r8), dimension(Ngrids) :: Optimality
+!
+!  Switch to activate the processing of model state at the observation
+!  locations.
+!
+        logical, dimension(Ngrids) :: ProcessObs
+!
+!  Switch to activate writting of nonlinear model values at
+!  observations locations into observations NetCDF file.
+!
+        logical, dimension(Ngrids) :: wrtNLmod
+!
+!  Switch to activate writting of representer model values at
+!  observations locations into observations NetCDF file.
+!
+        logical, dimension(Ngrids) :: wrtRPmod
+!
+!  Switch to activate writting of tangent linear model values at
+!  observations locations into observations NetCDF file.
+!
+        logical, dimension(Ngrids) :: wrtTLmod
+!
+!  Switch to activate writting of initial and final model-observation
+!  misfit (innovation) vector into 4DVAR output NetCDF file.
+!
+        logical, dimension(Ngrids) :: wrtMisfit
+!
+!  Swiches indicating that there is representer coeffiecients,
+!  nonlinear, and tangent linear model data available to process
+!  in 4DVAR NetCDF output file (MODname).  At the beeginning,
+!  there is not data since this file has been just defined.
+!
+        logical, dimension(Ngrids) :: haveADmod
+        logical, dimension(Ngrids) :: haveNLmod
+        logical, dimension(Ngrids) :: haveTLmod
+!
+!-----------------------------------------------------------------------
+!  Spatial convolutions parameters
+!-----------------------------------------------------------------------
+!
+!  Full number of horizontal and vertical diffusion operator step for
+!  spatial convolutions.
+!
+        integer, allocatable :: NHsteps(:)
+        integer, allocatable :: NVsteps(:)
+!
+!  Horizontal and vertical diffusion operator time-step size for
+!  spatial convolutions.
+!
+        real(r8), allocatable :: DTsizeH(:)
+        real(r8), allocatable :: DTsizeV(:)
+!
+!  Minimum and maximum Horizontal and vertical diffusion coefficients
+!  used in spatial convolutions.
+!
+        real(r8), dimension(Ngrids) :: KhMin
+        real(r8), dimension(Ngrids) :: KhMax
+        real(r8), dimension(Ngrids) :: KvMin
+        real(r8), dimension(Ngrids) :: KvMax
+!
+!-----------------------------------------------------------------------
+!  Descent algorithm parameters.
+!-----------------------------------------------------------------------
+!
+!  Number of iteration between each steepest descent step.
+!
+        integer :: NiterSD
+!
+!  Iteration of the last steepest descent.
+!
+        integer :: IterSD
+!
+!  Conjugate gradient algorithm: [0] Fletcher-Reeves [1] Polak-Riviere
+!
+        integer :: ICG
+!
+!  Pass number into the descent algorithm within the same iteration.
+!
+        integer :: Ipass = 0
+!
+!  Conjugate gradient alogorithm step size.
+!
+        real(r8) :: CGstepI              ! initial step size
+        real(r8) :: CGstepF              ! first guess step size
+        real(r8) :: CGstepR              ! refined step size
+!
+!  Step size contributions from background and observations
+!
+        real(r8) :: StepBotBck = 0.0_r8  ! background denominator
+        real(r8) :: StepBotObs = 0.0_r8  ! observation denominator
+        real(r8) :: StepTopBck = 0.0_r8  ! background numerator
+        real(r8) :: StepTopObs = 0.0_r8  ! observation numerator
+!
+!  Strong constraint conjugate gradient orthogonality tolerance: dot
+!  product orthogonality between current and previous search.
+!
+        real(r8) :: CGtol
+!
+!  Weak constraint conjugate gradient algorithm convergence criteria.
+!
+        real(r8) :: CGeps
+!
+!  Weak contraint conjugate gradient norms.
+!
+        real(r8) :: cg_gammam1 = 0.0_r8
+        real(r8) :: cg_sigmam1 = 0.0_r8
+        real(r8) :: cg_rnorm = 0.0_r8
+!
+!  Cost function percentage change between succesive iterations for
+!  convergence.
+!
+        real(r8) :: CostFunFac
+!
+!  Brunt-Vaisala expansion polynomial used for cost function
+!  normalization.
+!
+        integer :: npN2
+        real(r8), allocatable :: pcoef_N2(:)
+
+# ifdef FOUR_DVAR
+!
+!------------------------------------------------------------------------
+!  Dot product parameters.
+!------------------------------------------------------------------------
+!
+!  Dot product between tangent linear and adjoint vectors.
+!
+        real(r8) :: DotProduct
+        real(r8) :: adDotProduct
+!
+!  Tangent linear model linearization check dot products.
+!
+        integer :: ig1count            ! counter for g1 dot product
+        integer :: ig2count            ! counter for g2 dot product
+
+        real(r8), dimension(1000) :: g1
+        real(r8), dimension(1000) :: g2
+# endif
+
+      CONTAINS
+
+      SUBROUTINE initialize_fourdvar
+!
+!=======================================================================
+!                                                                      !
+!  This routine initializes several variables in module "mod_fourdvar" !
+!  for all nested grids.                                               !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_parallel
+      USE mod_scalars
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: ng
+
+# ifdef OBSERVATIONS
+      integer :: i, ndims, ngatts, recdim, status, varid
+      integer :: dimid, dimsiz
+
+      real(r8), parameter :: IniVal = 0.0_r8
+
+      character (len=20) :: dimnam
+      character (len=80) :: fname
+!
+!-----------------------------------------------------------------------
+!  Inquire observations NetCDF and determine the maxumum dimension of
+!  several observations arrays.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        IF (InpThread) THEN
+!
+!  Open observation NetCDF.
+!
+          status=nf_open (TRIM(OBSname(ng)),nf_nowrite,ncOBSid(ng))
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(OBSname(ng))
+            exit_flag=4
+            ioerror=status
+            RETURN
+          END IF
+!
+!  Inquire about the size of the "datum" unlimitted dimension and
+!  "survey" dimension.
+!
+          Ndatum(ng)=0
+          Nsurvey(ng)=0
+          status=nf_inq(ncOBSid(ng),ndims,nvars,ngatts,recdim)
+          IF (status.eq.nf_noerr) THEN
+            DO i=1,ndims
+              dimid=i
+              status=nf_inq_dim(ncOBSid(ng),dimid,dimnam,dimsiz)
+              IF (TRIM(dimnam).eq.'datum') then
+                Ndatum(ng)=dimsiz
+              ELSE IF (TRIM(dimnam).eq.'survey') THEN
+                Nsurvey(ng)=dimsiz
+              END IF
+            END DO
+            IF (Ndatum(ng).eq.0) THEN
+              WRITE (stdout,20) 'datum', TRIM(OBSname(ng))
+              exit_flag=4
+            END IF
+            IF (Nsurvey(ng).eq.0) THEN
+              WRITE (stdout,20) 'survey', TRIM(OBSname(ng))
+              exit_flag=4
+            END IF
+          ELSE
+            WRITE(stdout,30) OBSname(ng)
+          END IF
+        END IF
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, Nsurvey(ng), 1)
+        CALL mp_bcasti (ng, iNLM, Ndatum(ng), 1)
+#  endif
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Allocate module structure.
+!-----------------------------------------------------------------------
+!
+      allocate ( FOURDVAR(Ngrids) )
+
+       DO ng=1,Ngrids
+
+#  ifdef SOLVE3D
+        NstateVar(ng)=5+NT(ng)
+#  else
+        NstateVar(ng)=3
+#  endif
+        allocate ( FOURDVAR(ng) % NobsSurvey(Nsurvey(ng)) )
+        FOURDVAR(ng) % NobsSurvey = 0
+
+        allocate ( FOURDVAR(ng) % SurveyTime(Nsurvey(ng)) )
+        FOURDVAR(ng) % SurveyTime = IniVal
+
+#  ifdef FOUR_DVAR
+        allocate ( FOURDVAR(ng) % BackCost(0:NstateVar(ng)) )
+        FOURDVAR(ng) % BackCost = IniVal
+
+        allocate ( FOURDVAR(ng) % CostFun(0:NstateVar(ng)) )
+        FOURDVAR(ng) % CostFun = IniVal
+
+        allocate ( FOURDVAR(ng) % CostFunOld(0:NstateVar(ng)) )
+        FOURDVAR(ng) % CostFunOld = IniVal
+
+        allocate ( FOURDVAR(ng) % CostGrad(0:NstateVar(ng)) )
+        FOURDVAR(ng) % CostGrad = IniVal
+
+        allocate ( FOURDVAR(ng) % CostGradOld(0:NstateVar(ng)) )
+        FOURDVAR(ng) % CostGradOld = IniVal
+
+        allocate ( FOURDVAR(ng) % CostGradDot(0:NstateVar(ng)) )
+        FOURDVAR(ng) % CostGradDot = IniVal
+
+        allocate ( FOURDVAR(ng) % CostNorm(0:NstateVar(ng)) )
+        FOURDVAR(ng) % CostNorm = IniVal
+
+        allocate ( FOURDVAR(ng) % ObsCost(0:NstateVar(ng)) )
+        FOURDVAR(ng) % ObsCost = IniVal
+#  endif
+        allocate ( FOURDVAR(ng) % ObsVar(NstateVar(ng)) )
+        FOURDVAR(ng) % ObsVar = 1.0_r8
+
+        allocate ( FOURDVAR(ng) % ObsCount(0:NstateVar(ng)) )
+        FOURDVAR(ng) % ObsCount = 0
+
+        allocate ( FOURDVAR(ng) % ObsReject(0:NstateVar(ng)) )
+        FOURDVAR(ng) % ObsReject = 0
+
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Read in number of observations available per survey at their times.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+!
+!  Read in number of observations available per survey.
+!
+        IF (InpThread) THEN
+          status=nf_inq_varid(ncOBSid(ng),TRIM(Vname(1,idNobs)),varid)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,40) TRIM(Vname(1,idNobs)), TRIM(OBSname(ng))
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+          status=nf_get_vara_int(ncOBSid(ng), varid, 1, Nsurvey(ng),    &
+     &                           FOURDVAR(ng)%NobsSurvey)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,50) TRIM(Vname(1,idNobs)), TRIM(OBSname(ng))
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, FOURDVAR(ng)%NobsSurvey, Nsurvey(ng))
+#  endif
+!
+!  Read in the time of each observation survey.
+!
+        IF (InpThread) THEN
+          status=nf_inq_varid(ncOBSid(ng),TRIM(Vname(1,idOday)),varid)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,40) TRIM(Vname(1,idOday)), TRIM(OBSname(ng))
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+          status=nf_get_vara_TYPE(ncOBSid(ng), varid, 1, Nsurvey(ng),   &
+     &                            FOURDVAR(ng)%SurveyTime)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,50) TRIM(Vname(1,idOday)), TRIM(OBSname(ng))
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+#  ifdef DISTRIBUTE
+        CALL mp_bcastf (ng, iNLM, FOURDVAR(ng)%SurveyTime, Nsurvey(ng))
+#  endif
+!
+!  Determine maximum size of observation arrays.
+!
+#  if defined WEAK_CONSTRAINT || defined IOM
+        Mobs=MAXVAL(Ndatum)
+#  else
+        Mobs=0
+        DO i=1,Nsurvey(ng)
+          Mobs=MAX(Mobs, FOURDVAR(ng)%NobsSurvey(i))
+        END DO
+#  endif
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Allocate and initialize model and observation variables. 
+!-----------------------------------------------------------------------
+!
+      allocate ( ObsType(Mobs) )
+      ObsType = 0
+
+      allocate ( ObsErr(Mobs) )
+      ObsErr = IniVal
+
+      allocate ( ObsScale(Mobs) )
+      ObsScale = IniVal
+
+      allocate ( ObsVal(Mobs) )
+      ObsVal = IniVal
+
+      allocate ( Tobs(Mobs) )
+      Tobs = IniVal
+
+      allocate ( Xobs(Mobs) )
+      Xobs = IniVal
+ 
+      allocate ( Yobs(Mobs) )
+      Yobs = IniVal
+
+#  ifdef SOLVE3D
+      allocate ( Zobs(Mobs) )
+      Zobs = IniVal
+#  endif
+ 
+      allocate ( ADmodVal(Mobs) )
+      ADmodVal = IniVal
+
+#  ifdef S4DVAR
+      allocate ( NLmodVal(Mobs,2) )
+#  else
+      allocate ( NLmodVal(Mobs) )
+#  endif
+      NLmodVal = IniVal
+
+#  ifdef TLM_OBS
+#   ifdef IS4DVAR_OLD
+      allocate ( TLmodVal(Mobs,2) )
+#   else
+      allocate ( TLmodVal(Mobs) )
+#   endif
+      TLmodVal = IniVal
+#  endif
+#  if defined WEAK_CONSTRAINT || defined IOM
+!
+!  Allocate and initialize weak constraint conjugate gradient vectors.
+!
+      allocate ( cg_p(Mobs) )
+      cg_p = IniVal
+
+      allocate ( cg_r(Mobs) )
+      cg_r = IniVal
+
+      allocate ( cg_s(Mobs) )
+      cg_s = IniVal
+
+      allocate ( cg_v(Mobs) )
+      cg_v = IniVal
+
+      allocate ( cg_x(Mobs) )
+      cg_x = IniVal
+
+      allocate ( cg_z(Mobs) )
+      cg_z = IniVal
+#  endif
+# else
+!
+!-----------------------------------------------------------------------
+!  Allocate module variables.
+!-----------------------------------------------------------------------
+!
+!  Set number of state variables.
+!
+      DO ng=1,Ngrids
+#  ifdef SOLVE3D
+        NstateVar(ng)=5+NT(ng)
+#  else
+        NstateVar(ng)=3
+#  endif
+      END DO
+# endif
+!
+!  Allocate convolution parameters.
+!
+      allocate ( NHsteps(5+MT) )
+      allocate ( NVsteps(5+MT) )
+      allocate ( DTsizeH(5+MT) )
+      allocate ( DTsizeV(5+MT) )
+!
+!-----------------------------------------------------------------------
+!  Initialize various variables.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        Load_Zobs(ng)=.FALSE.
+        ProcessObs(ng)=.FALSE.
+        wrote_Zobs(ng)=.FALSE.
+        wrtMisfit(ng)=.FALSE.
+        wrtNLmod(ng)=.FALSE.
+        wrtRPmod(ng)=.FALSE.
+        wrtTLmod(ng)=.FALSE.
+        KhMin(ng)=1.0_r8
+        KhMax(ng)=1.0_r8
+        KvMin(ng)=1.0_r8
+        KvMax(ng)=1.0_r8
+        Optimality(ng)=0.0_r8
+
+# ifdef OBSERVATIONS
+!
+!  Read in observations global variance.
+!
+        IF (InpThread) THEN
+          status=nf_inq_varid(ncOBSid(ng),TRIM(Vname(1,idOvar)),varid)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,40) TRIM(Vname(1,idOvar)), TRIM(OBSname(ng))
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+          status=nf_get_vara_TYPE(ncOBSid(ng), varid, 1,                &
+     &                            NstateVar(ng),                        &
+     &                            FOURDVAR(ng)%ObsVar)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,50) TRIM(Vname(1,idOvar)), TRIM(OBSname(ng))
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+# ifdef DISTRIBUTE
+        CALL mp_bcastf (ng, iNLM, FOURDVAR(ng)%ObsVar, NstateVar(ng))
+# endif
+!
+!  Close observation NetCDF file.
+!
+        IF (InpThread) THEN
+          status=nf_close (ncOBSid(ng))
+          ncOBSid(ng)=-1
+        END IF
+# endif
+      END DO
+
+# ifdef OBSERVATIONS
+!
+ 10   FORMAT (/,' MOD_FOURDVAR - unable to open input NetCDF file: ',a)
+ 20   FORMAT (/,' MOD_FOURDVAR - error inquiring dimension: ',a,2x,      &
+     &          ' in input NetCDF file: ',a)
+ 30   FORMAT (/,' MOD_FOURDVAR - unable to inquire size of dimension',   &
+     &          ' in variable: ',a)
+ 40   FORMAT (/,' MOD_FOURDVAR - error inquiring variable ID for: ',a,   &
+     &        2x,' in input NetCDF file: ',a)
+ 50   FORMAT (/,' MOD_FOURDVAR - error while reading variable: ',a,2x,   &
+     &          ' in input NetCDF file: ',a)
+# endif
+
+      RETURN
+      END SUBROUTINE initialize_fourdvar
+#endif
+      END MODULE mod_fourdvar

@@ -1,0 +1,223 @@
+#include "cppdefs.h"
+      MODULE tl_ini_adjust_mod
+
+#if defined IS4DVAR || defined IS4DVAR_OLD
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!======================================================================= 
+!                                                                      !
+!  This routine computes new tangent linear model initial conditions   !
+!  after the minimization as:                                          !
+!                                                                      !
+!       deltaX(inner) = B^(1/2) deltaV - (Xi(outer) - Xb)              !
+!                                                                      !
+!  where                                                               !
+!                                                                      !
+!            deltaX : new increment vector (TLM initial conditions)    !
+!    B^(1/2) deltaV : convolved increment after minimization           !
+!                Xi : NLM initial conditions for current outer loop    !
+!                Xb : background state                                 ! 
+!                                                                      !
+!  Here, the TLM state at index Lnew is adjusted by substracting the   !
+!  current NLM initial condition departures from the background. The   !
+!  convolved vector B^(1/2) deltaV, also at index Lnew, is distroyed.  !
+!                                                                      !
+!=======================================================================
+!
+      implicit none
+
+      PRIVATE
+      PUBLIC :: tl_ini_adjust
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE tl_ini_adjust (ng, tile, Lbck, Lini, Lnew)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_ocean
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, Lbck, Lini, Lnew
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+# ifdef PROFILE
+      CALL wclock_on (ng, iTLM, 7)
+# endif
+      CALL tl_ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,              &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         Lbck, Lini, Lnew,                        &
+# ifdef SOLVE3D
+     &                         OCEAN(ng) % t,                           &
+     &                         OCEAN(ng) % tl_t,                        &
+     &                         OCEAN(ng) % u,                           &
+     &                         OCEAN(ng) % tl_u,                        &
+     &                         OCEAN(ng) % v,                           &
+     &                         OCEAN(ng) % tl_v,                        &
+# else
+     &                         OCEAN(ng) % ubar,                        &
+     &                         OCEAN(ng) % tl_ubar,                     &
+     &                         OCEAN(ng) % vbar,                        &
+     &                         OCEAN(ng) % tl_vbar,                     &
+# endif
+     &                         OCEAN(ng) % zeta,                        &
+     &                         OCEAN(ng) % tl_zeta)
+# ifdef PROFILE
+      CALL wclock_off (ng, iTLM, 7)
+# endif
+      RETURN
+      END SUBROUTINE tl_ini_adjust
+
+!
+!***********************************************************************
+      SUBROUTINE tl_ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,        &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               Lbck, Lini, Lnew,                  &
+# ifdef SOLVE3D
+     &                               t, tl_t,                           &
+     &                               u, tl_u,                           &
+     &                               v, tl_v,                           &
+# else
+     &                               ubar, tl_ubar,                     &
+     &                               vbar, tl_vbar,                     &
+# endif
+     &                               zeta, tl_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Lbck, Lini, Lnew
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
+#  else
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
+#  else
+      real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
+#  endif
+      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+# else
+#  ifdef SOLVE3D
+      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
+#  else
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+#  else
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+#  endif
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j
+# ifdef SOLVE3D
+      integer :: itrc, k
+# endif
+
+# include "set_bounds.h"
+!      
+!-----------------------------------------------------------------------
+!  Adjust tangent linear initial conditions: substract nonlinear model
+!  departures from background.
+!-----------------------------------------------------------------------
+!
+!  Free-sruface.
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          tl_zeta(i,j,Lnew)=tl_zeta(i,j,Lnew)-                          &
+     &                      (zeta(i,j,Lini)-zeta(i,j,Lbck))
+        END DO
+      END DO
+
+# ifndef SOLVE3D
+!
+!  2D momentum.
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          tl_ubar(i,j,Lnew)=tl_ubar(i,j,Lnew)-                          &
+     &                      (ubar(i,j,Lini)-ubar(i,j,Lbck))
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          tl_vbar(i,j,Lnew)=tl_vbar(i,j,Lnew)-                          &
+     &                      (vbar(i,j,Lini)-vbar(i,j,Lbck))
+        END DO
+      END DO
+# else
+!
+!  3D momentum.
+!
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            tl_u(i,j,k,Lnew)=tl_u(i,j,k,Lnew)-                          &
+     &                       (u(i,j,k,Lini)-u(i,j,k,Lbck))
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            tl_v(i,j,k,Lnew)=tl_v(i,j,k,Lnew)-                          &
+     &                       (v(i,j,k,Lini)-v(i,j,k,Lbck))
+          END DO
+        END DO
+      END DO
+!
+!  Tracers.
+!
+      DO itrc=1,NT(ng)
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              tl_t(i,j,k,Lnew,itrc)=tl_t(i,j,k,Lnew,itrc)-              &
+     &                              (t(i,j,k,Lini,itrc)-                &
+     &                               t(i,j,k,Lbck,itrc))
+            END DO
+          END DO          
+        END DO
+      END DO
+# endif
+      RETURN
+      END SUBROUTINE tl_ini_adjust_tile
+#endif       
+      END MODULE tl_ini_adjust_mod

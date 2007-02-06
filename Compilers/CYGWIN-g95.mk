@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for GNU g95 on Cygwin
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -21,10 +27,9 @@
               BIN := $(BIN).exe
 
                FC := g95
-           FFLAGS := 
+           FFLAGS := -fno-second-underscore -ftrace=full
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional -DCYGWIN
-            CLEAN := Bin/cpp_clean
+         CPPFLAGS := -P -traditional
                LD := $(FC)
           LDFLAGS := 
                AR := ar
@@ -46,6 +51,10 @@
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/lib
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
     ARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif

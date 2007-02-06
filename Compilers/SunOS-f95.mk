@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for Solaris F95 compiler on SUN
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -21,7 +27,6 @@
            FFLAGS := -u -U
               CPP := /usr/lib/cpp
          CPPFLAGS := -P -DSUN
-            CLEAN := Bin/cpp_clean
                LD := $(FC)
           LDFLAGS :=
                AR := ar
@@ -48,13 +53,18 @@ endif
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/lib
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
     ARPACK_LIBDIR ?= /usr/local/lib
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_LINUX
+             LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
 ifdef MPI
          CPPFLAGS += -DMPI
                FC := tmf90
+               LD := $(FC)
              LIBS += -lmpi
 endif
 
@@ -64,9 +74,9 @@ ifdef OpenMP
 endif
 
 ifdef DEBUG
-           FFLAGS += -g
+           FFLAGS += -g -C
 else
-           FFLAGS += -O3
+           FFLAGS += -fast
 endif
 
              LIBS += -lnsl

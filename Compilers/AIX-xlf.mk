@@ -1,6 +1,12 @@
+# svn $Id$
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
+#   Licensed under a MIT/X style license                                :::
+#   See License_ROMS.txt                                                :::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
 # Include file for IBM xlf95_r Fortran Compiler
-# -----------------------------------------------------------------
+# -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
 # FC             Name of the fortran compiler to use
@@ -17,11 +23,10 @@
 #
 # First the defaults
 #
-               FC := xlf95_r
+               FC  = xlf95_r
            FFLAGS := -qsuffix=f=f90 -qmaxmem=-1 -qarch=pwr4 -qtune=pwr4
               CPP := /usr/lib/cpp
-         CPPFLAGS := -P -DAIX
-            CLEAN := Bin/cpp_clean
+         CPPFLAGS := -P
                LD := $(FC)
           LDFLAGS :=
                AR := ar
@@ -51,6 +56,10 @@ endif
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
+ ifdef MPI
+   PARPACK_LIBDIR ?= /usr/local/lib
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+ endif
     ARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
@@ -58,6 +67,7 @@ endif
 ifdef MPI
          CPPFLAGS += -DMPI
                FC := mpxlf95_r
+               LD := $(FC)
 endif
 
 ifdef OpenMP

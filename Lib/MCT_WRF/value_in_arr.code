@@ -1,0 +1,37 @@
+!
+! !USES:
+!
+  implicit none
+
+! !INPUT PARAMETERS: 
+!
+  IN_TYPE, intent(in) :: VALUE
+  IN_TYPE, intent(in) :: ARRAY(:)
+
+  logical :: RES
+
+! !DESCRIPTION:  Determine if VALUE is in ARRAY.
+!
+! !DEFINED PARAMETERS:
+! none
+
+! !LOCAL VARIABLES: 
+  integer :: I
+
+! !SEE ALSO:
+!  none
+
+! !REVISION HISTORY:
+! 05/31/03 - Dan Schaffer - Initial version
+!EOP ___________________________________________________________________
+
+  do I = 1, size(ARRAY)
+    if (ARRAY(I) == VALUE) then
+      RES = .true.
+      return
+    end if
+  end do
+
+  RES = .false.
+
+#undef IN_TYPE

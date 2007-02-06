@@ -1,0 +1,516 @@
+#include "cppdefs.h"
+      MODULE bc_3d_mod
+#ifdef SOLVE3D
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  This package applies gradient or periodic boundary conditions for   !
+!  generic 3D fields.                                                  !
+!                                                                      !
+!  Routines:                                                           !
+!                                                                      !
+!    bc_r3d_tile        Boundary conditions for field at RHO-points    !
+!    bc_u3d_tile        Boundary conditions for field at U-points      !
+!    bc_v3d_tile        Boundary conditions for field at V-points      !
+!    bc_w3d_tile        Boundary conditions for field at W-points      !
+!                                                                      !
+!=======================================================================
+!
+      implicit none
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+!***********************************************************************
+!
+      USE mod_param
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      USE exchange_3d_mod, ONLY : exchange_r3d_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+!
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
+# else
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j, k
+
+# include "set_bounds.h"
+
+# ifndef EW_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  East-West gradient boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (EASTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=Jstr,Jend
+            A(Iend+1,j,k)=A(Iend,j,k)
+          END DO
+        END DO
+      END IF
+      IF (WESTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=Jstr,Jend
+            A(Istr-1,j,k)=A(Istr,j,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifndef NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  North-South gradient boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (NORTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=Istr,Iend
+            A(i,Jend+1,k)=A(i,Jend,k)
+          END DO
+        END DO
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=Istr,Iend
+            A(i,Jstr-1,k)=A(i,Jstr,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# if !defined EW_PERIODIC && !defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Boundary corners.
+!-----------------------------------------------------------------------
+!
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+                &
+     &                               A(Istr-1,Jstr  ,k))
+        END DO
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+                &
+     &                               A(Iend+1,Jstr  ,k))
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+                &
+     &                               A(Istr  ,Jend+1,k))
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+                &
+     &                               A(Iend  ,Jend+1,k))
+        END DO
+      END IF
+# endif
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Exchange boundary data.
+!-----------------------------------------------------------------------
+!
+      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+# endif
+
+      RETURN
+      END SUBROUTINE bc_r3d_tile
+
+!
+!***********************************************************************
+      SUBROUTINE bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+!***********************************************************************
+!
+      USE mod_param
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      USE exchange_3d_mod, ONLY : exchange_u3d_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+!
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
+# else
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j, k
+
+# include "set_bounds.h"
+
+# ifndef EW_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  East-West gradient boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (EASTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=Jstr,Jend
+            A(Iend+1,j,k)=A(Iend,j,k)
+          END DO
+        END DO
+      END IF
+      IF (WESTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=Jstr,Jend
+            A(Istr,j,k)=A(Istr+1,j,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifndef NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  North-South gradient boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (NORTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=IstrU,Iend
+            A(i,Jend+1,k)=A(i,Jend,k)
+          END DO
+        END DO
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=IstrU,Iend
+            A(i,Jstr-1,k)=A(i,Jstr,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# if !defined EW_PERIODIC && !defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Boundary corners.
+!-----------------------------------------------------------------------
+!
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr  ,Jstr-1,k)=0.5_r8*(A(Istr+1,Jstr-1,k)+                &
+     &                               A(Istr  ,Jstr  ,k))
+        END DO
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+                &
+     &                               A(Iend+1,Jstr  ,k))
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr  ,Jend+1,k)=0.5_r8*(A(Istr  ,Jend  ,k)+                &
+     &                               A(Istr+1,Jend+1,k))
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+                &
+     &                               A(Iend  ,Jend+1,k))
+        END DO
+      END IF
+# endif
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Exchange boundary data.
+!-----------------------------------------------------------------------
+!
+      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+# endif
+
+      RETURN
+      END SUBROUTINE bc_u3d_tile
+
+!
+!***********************************************************************
+      SUBROUTINE bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+!***********************************************************************
+!
+      USE mod_param
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      USE exchange_3d_mod, ONLY : exchange_v3d_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+!
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: A(LBi:,LBj:,:)
+# else
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j, k
+
+# include "set_bounds.h"
+
+# ifndef EW_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  East-West gradient boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (EASTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=JstrV,Jend
+            A(Iend+1,j,k)=A(Iend,j,k)
+          END DO
+        END DO
+      END IF
+      IF (WESTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=JstrV,Jend
+            A(Istr-1,j,k)=A(Istr,j,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifndef NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  North-South periodic boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (NORTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=Istr,Iend
+            A(i,Jend+1,k)=A(i,Jend,k)
+          END DO
+        END DO
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=Istr,Iend
+            A(i,Jstr,k)=A(i,Jstr+1,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# if !defined EW_PERIODIC && !defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Boundary corners.
+!-----------------------------------------------------------------------
+!
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr-1,Jstr  ,k)=0.5_r8*(A(Istr  ,Jstr  ,k)+                &
+     &                               A(Istr-1,Jstr+1,k))
+        END DO
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jstr  ,k)=0.5_r8*(A(Iend  ,Jstr  ,k)+                &
+     &                               A(Iend+1,Jstr+1,k))  
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+                &
+     &                               A(Istr  ,Jend+1,k))
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+                &
+     &                               A(Iend  ,Jend+1,k))
+        END DO
+      END IF
+# endif
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Exchange boundary data.
+!-----------------------------------------------------------------------
+!
+      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+# endif
+
+      RETURN
+      END SUBROUTINE bc_v3d_tile
+
+!
+!***********************************************************************
+      SUBROUTINE bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+!***********************************************************************
+!
+      USE mod_param
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+      USE exchange_3d_mod, ONLY : exchange_w3d_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+!
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(inout) :: A(LBi:,LBj:,LBk:)
+# else
+      real(r8), intent(inout) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j, k
+
+# include "set_bounds.h"
+
+# ifndef EW_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  East-West gradient boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (EASTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=Jstr,Jend
+            A(Iend+1,j,k)=A(Iend,j,k)
+          END DO
+        END DO
+      END IF
+      IF (WESTERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO j=Jstr,Jend
+            A(Istr-1,j,k)=A(Istr,j,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# ifndef NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  North-South gradient boundary conditions.
+!-----------------------------------------------------------------------
+!
+      IF (NORTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=Istr,Iend
+            A(i,Jend+1,k)=A(i,Jend,k)
+          END DO
+        END DO
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        DO k=LBk,UBk
+          DO i=Istr,Iend
+            A(i,Jstr-1,k)=A(i,Jstr,k)
+          END DO
+        END DO
+      END IF
+# endif
+
+# if !defined EW_PERIODIC && !defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Boundary corners.
+!-----------------------------------------------------------------------
+!
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr-1,Jstr-1,k)=0.5_r8*(A(Istr  ,Jstr-1,k)+                &
+     &                               A(Istr-1,Jstr  ,k))
+        END DO
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jstr-1,k)=0.5_r8*(A(Iend  ,Jstr-1,k)+                &
+     &                               A(Iend+1,Jstr  ,k))
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Istr-1,Jend+1,k)=0.5_r8*(A(Istr-1,Jend  ,k)+                &
+     &                               A(Istr  ,Jend+1,k))
+        END DO
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        DO k=LBk,UBk
+          A(Iend+1,Jend+1,k)=0.5_r8*(A(Iend+1,Jend  ,k)+                &
+     &                               A(Iend  ,Jend+1,k))
+        END DO
+      END IF
+# endif
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!
+!-----------------------------------------------------------------------
+!  Exchange boundary data.
+!-----------------------------------------------------------------------
+!
+      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
+     &                        A)
+# endif
+
+      RETURN
+      END SUBROUTINE bc_w3d_tile
+
+#endif
+      END MODULE bc_3d_mod
