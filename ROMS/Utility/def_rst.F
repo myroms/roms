@@ -45,7 +45,9 @@
       integer :: i, j, nrec, nvd, nvd3, nvd4, nvd5
       integer :: recdim, status, varid
 
-      integer :: DimIDs(31), t2dgrd(4), u2dgrd(4), v2dgrd(4)
+      integer :: DimIDs(31)
+      integer :: r2dgrd(4), ru2dgrd(4), rv2dgrd(4)
+      integer :: t2dgrd(4), u2dgrd(4), v2dgrd(4)
       integer :: Vsize(4)
 
       integer :: def_info, def_var, wrt_info
@@ -53,9 +55,9 @@
 #ifdef SOLVE3D
       integer :: itrc
 
-      integer :: b3dgrd(4), r2dgrd(4),  r3dgrd(4), t3dgrd(5)
-      integer :: ru2dgrd(4), ru3dgrd(5), rv2dgrd(4), rv3dgrd(5)
-      integer :: k3dgrd(5), u3dgrd(5), v3dgrd(5), w3dgrd(4)
+      integer :: b3dgrd(4), k3dgrd(5), t3dgrd(5)
+      integer :: r3dgrd(4), ru3dgrd(5), rv3dgrd(5) 
+      integer :: u3dgrd(5), v3dgrd(5), w3dgrd(4)
 #endif
 
       real(r8) :: Aval(6)
