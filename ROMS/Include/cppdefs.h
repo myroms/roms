@@ -549,46 +549,57 @@
 
 /*
 **-----------------------------------------------------------------------------
-**  Choose a pre-defined model application.  If building a new application,
-**  choose a unique CPP flag for it and select the appropriate configuration.
+**  Choose a pre-defined model application by uncommenting its definition. That
+**  is, remove ! from definition column 1. Alternatively, the user can activate
+**  the desired application from the makefile. For example, to activate the
+**  upwelling test problem (UPWELLING) from the makefile set
+**
+**    ROMS_APPLICATION := UPWELLING
+**
+**  If doing so, all the definitions below need to be commented out since only
+**  one application is allowed.
+** 
+**  If building a new application, choose a unique CPP flag for it and
+**  create its associate include file (*.h) to specify the appropriate 
+**  configuration options.
 **----------------------------------y------------------------------------------
 **
 **  Idealized Applications, test configurations.
 */
 
-#undef  A4DVAR_TOY      /* for 4DVAR Data Assimilation Toy */
-#undef  BASIN           /* for Big Bad Basin Example */
-#undef  BENCHMARK1      /* for Small Benchmark Test */
-#undef  BENCHMARK2      /* for Medium Benchmark Test */
-#undef  BENCHMARK3      /* for Big Benchmark Test */
-#undef  BIO_TOY         /* for One-dimension (vertical) Biology Toy */
-#undef  BL_TEST         /* for Boundary Layers Test */
-#undef  CANYON_A        /* for Canyon_A Example */
-#undef  CANYON_B        /* for Canyon_B Example */
-#undef  CHANNEL_NECK    /* Channel with a Constriction */
-#undef  COUPLING_TEST   /* for two-way atmosphere-ocean coupling test */
-#undef  DOUBLE_GYRE     /* for idealized double-gyre Example */
-#undef  ESTUARY_TEST    /* test estuary for sediment*/
-#undef  FLT_TEST        /* for Float Tracking Example */
-#undef  GRAV_ADJ        /* for Graviational Adjustment Example */
-#undef  INNER_PRODUCT   /* Tangent/Adjoint State Matrix Inner Product Test */
-#undef  KELVIN          /* for Kelvin wave test */
-#undef  LAB_CANYON      /* for Lab Canyon, Polar Coordinates Example */
-#undef  LAKE_SIGNELL    /* for Lake Signell Sediment Test Case */
-#undef  LMD_TEST        /* Test for LMD and KPP */
-#undef  OVERFLOW        /* for Graviational/Overflow Example */
-#undef  RIVERPLUME1     /* for River plume Example 1 */
-#undef  RIVERPLUME2     /* for River plume Example 2 (Hyatt and Signell) */
-#undef  OPT_PERT2D      /* Optimal Perturbation 2D Test */
-#undef  OPT_PERT3D      /* Optimal Perturbation 3D Test */
-#undef  SEAMOUNT        /* for Seamount Example */
-#undef  SED_TEST1       /* for Suspended Sediment Test in a Channel */
-#undef  SED_TOY         /* for One-dimension (vertical) Sediment Toy */
-#undef  SOLITON         /* for Equatorial Rossby Wave Example */
+!#define A4DVAR_TOY      /* for 4DVAR Data Assimilation Toy */
+!#define BASIN           /* for Big Bad Basin Example */
+!#define BENCHMARK1      /* for Small Benchmark Test */
+!#define BENCHMARK2      /* for Medium Benchmark Test */
+!#define BENCHMARK3      /* for Big Benchmark Test */
+!#define BIO_TOY         /* for One-dimension (vertical) Biology Toy */
+!#define BL_TEST         /* for Boundary Layers Test */
+!#define CANYON_A        /* for Canyon_A Example */
+!#define CANYON_B        /* for Canyon_B Example */
+!#define CHANNEL_NECK    /* Channel with a Constriction */
+!#define COUPLING_TEST   /* for two-way atmosphere-ocean coupling test */
+!#define DOUBLE_GYRE     /* for idealized double-gyre Example */
+!#define ESTUARY_TEST    /* test estuary for sediment*/
+!#define FLT_TEST        /* for Float Tracking Example */
+!#define GRAV_ADJ        /* for Graviational Adjustment Example */
+!#define INNER_PRODUCT   /* Tangent/Adjoint State Matrix Inner Product Test */
+!#define KELVIN          /* for Kelvin wave test */
+!#define LAB_CANYON      /* for Lab Canyon, Polar Coordinates Example */
+!#define LAKE_SIGNELL    /* for Lake Signell Sediment Test Case */
+!#define LMD_TEST        /* Test for LMD and KPP */
+!#define OVERFLOW        /* for Graviational/Overflow Example */
+!#define RIVERPLUME1     /* for River plume Example 1 */
+!#define RIVERPLUME2     /* for River plume Example 2 (Hyatt and Signell) */
+!#define OPT_PERT2D      /* Optimal Perturbation 2D Test */
+!#define OPT_PERT3D      /* Optimal Perturbation 3D Test */
+!#define SEAMOUNT        /* for Seamount Example */
+!#define SED_TEST1       /* for Suspended Sediment Test in a Channel */
+!#define SED_TOY         /* for One-dimension (vertical) Sediment Toy */
+!#define SOLITON         /* for Equatorial Rossby Wave Example */
 #define UPWELLING       /* for Upwelling Example */
-#undef  USWEST          /* for US West Coast Application */
-#undef  WEDDELL         /* for Idealized Weddell Sea Shelf Application */
-#undef  WINDBASIN       /* linear wind-driven constant Coriolis basin */
+!#define USWEST          /* for US West Coast Application */
+!#define WEDDELL         /* for Idealized Weddell Sea Shelf Application */
+!#define WINDBASIN       /* linear wind-driven constant Coriolis basin */
 
 /*
 **  Realitic Applications. Currently, only the input files for the coarse
@@ -596,20 +607,20 @@
 **  of the ROMS/TOMS website.
 */
 
-#undef  ADRIA02         /* for Adriatic Sea Application */
-#undef  BISCAY          /* for Bay of Biscay Aplication */
-#undef  CBLAST          /* for CBLAST application */
-#undef  DAMEE_4         /* for North Atlantic DAMEE Application Grid 4 */
-#undef  EAC_4           /* for East Australia Current, 1/4 resolution */
-#undef  EAC_8           /* for East Australia Current, 1/8 resolution */
-#undef  IAS             /* for Intra-Americas Sea Application */
-#undef  NATL            /* for high resolution North Atlantic Application */
-#undef  NENA            /* for North East North America Application */
-#undef  NJ_BIGHT        /* for New Jersey Bight Application */
-#undef  NPACIFIC        /* for North Pacific Application */
-#undef  SCB             /* for Southern California Bight */
-#undef  SW06_COARSE     /* for Shallow Water 2005 Experiment, Coarse Grid */
-#undef  SW06_FINE       /* for Shallow Water 2005 Experiment, Fine Grid */
+!#define ADRIA02         /* for Adriatic Sea Application */
+!#define BISCAY          /* for Bay of Biscay Aplication */
+!#define CBLAST          /* for CBLAST application */
+!#define DAMEE_4         /* for North Atlantic DAMEE Application Grid 4 */
+!#define EAC_4           /* for East Australia Current, 1/4 resolution */
+!#define EAC_8           /* for East Australia Current, 1/8 resolution */
+!#define IAS             /* for Intra-Americas Sea Application */
+!#define NATL            /* for high resolution North Atlantic Application */
+!#define NENA            /* for North East North America Application */
+!#define NJ_BIGHT        /* for New Jersey Bight Application */
+!#define NPACIFIC        /* for North Pacific Application */
+!#define SCB             /* for Southern California Bight */
+!#define SW06_COARSE     /* for Shallow Water 2005 Experiment, Coarse Grid */
+!#define SW06_FINE       /* for Shallow Water 2005 Experiment, Fine Grid */
 
 /*
 **-----------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #                                                                       :::
-#  ROMS/TOMS Framework Master Makefile, Version 3.0                     :::
+#  ROMS/TOMS Framework Master Makefile                                  :::
 #                                                                       :::
 #  This makefile is designed to work only with GNU Make version 3.77 or :::
 #  higher. It can be used in any architecture provided that there is a  :::
@@ -45,6 +45,18 @@
 #  blank is FALSE.
 #==========================================================================
 #
+#  The CPP option defining a particular application can be specified in
+#  header file  ROMS/Include/cppdefs.h  or here.  If defined here, all
+#  the applications definition in  cppdefs.h  must be commented out with
+#  an ! (exclamation mark) in column 1. Otherwise, leave this macro blank.
+#  For example, to activate the upwelling application (UPWELLING) here,
+#  set:
+#
+#    ROMS_APPLICATION := UPWELLING
+#
+
+ROMS_APPLICATION := 
+
 #  Activate debugging compiler options:
 
        DEBUG :=
@@ -52,7 +64,7 @@
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
 
-         MPI := on
+         MPI :=
       OpenMP :=
 
 #  If distributed-memory, turn on compilation via the script "mpif90".
@@ -63,11 +75,11 @@
 #  In this, case the user need to select the desired compiler below and
 #  turn on both MPI and MPIF90 macros.
 
-      MPIF90 := on
+      MPIF90 :=
 
 #  If applicable, compile with the ARPACK library (GST analysis):
 
-      ARPACK := on
+      ARPACK :=
 
 #  If applicable, activate 64-bit compilation:
 
@@ -166,12 +178,17 @@ endif
 
 #--------------------------------------------------------------------------
 #  Pass the platform variables to the preprocessor as macros. Convert to
-#  valid, upper-case identifiers.
+#  valid, upper-case identifiers. If applicable, attach ROMS application
+#  CPP option.
 #--------------------------------------------------------------------------
 
 CPPFLAGS += -D$(shell echo ${OS} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${CPU} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
+
+ifdef ROMS_APPLICATION
+  CPPFLAGS += -D$(ROMS_APPLICATION)
+endif
 
 #--------------------------------------------------------------------------
 #  Build target directories.
