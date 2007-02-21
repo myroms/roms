@@ -1274,12 +1274,11 @@
 !    bvf_nu0c      Convective diffusion (m2/s) in static unstable
 !                    regime.
 !
-        real(r8) :: bvf_numax = 3.0E-5_r8      ! m2/s
-        real(r8) :: bvf_numin = 4.0E-4_r8      ! m2/s
+        real(r8) :: bvf_numax = 4.0E-4_r8      ! m2/s
+        real(r8) :: bvf_numin = 3.0E-5_r8      ! m2/s
         real(r8) :: bvf_nu0 = 1.0E-7_r8        ! m2/s2
         real(r8) :: bvf_nu0c = 1.0_r8          ! m2/s
 #endif
-
 !
 !-----------------------------------------------------------------------
 !  Tangent linear and adjoint model parameters.
