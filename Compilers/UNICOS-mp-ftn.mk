@@ -41,6 +41,7 @@
 # Library locations, can be overridden by environment variables.
 #
 
+       MCT_LIBDIR ?= /usr/local/pkg/mct/lib
     NETCDF_INCDIR ?= /usr/local/pkg/netcdf/netcdf-3.5.1-x1/include
     NETCDF_LIBDIR ?= /usr/local/pkg/netcdf/netcdf-3.5.1-x1/lib
 
@@ -68,4 +69,9 @@ ifdef DEBUG
            FFLAGS += -G 0
 else
            FFLAGS += -O 3,aggress
+endif
+
+ifdef SWAN_COUPLE
+           FFLAGS += -f fixed -I/usr/local/mct/include
+             LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif

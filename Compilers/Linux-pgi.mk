@@ -41,6 +41,7 @@
 # Library locations, can be overridden by environment variables.
 #
 
+       MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /opt/pgisoft/netcdf/include
     NETCDF_LIBDIR ?= /opt/pgisoft/netcdf/lib
 
@@ -105,6 +106,11 @@ ifdef DEBUG
 #          FFLAGS += -g
 else
            FFLAGS += -u -Bstatic -fastsse -Mipa=fast
+endif
+
+ifdef SWAN_COUPLE
+           FFLAGS += -Mfixed -I/usr/local/mct/include
+             LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 
        clean_list += ifc* work.pc*

@@ -43,9 +43,11 @@
 
 ifdef LARGE
            FFLAGS += -xarch=v9
+       MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /usr/local/include
     NETCDF_LIBDIR ?= /usr/local/lib64
 else
+       MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /usr/local/include
     NETCDF_LIBDIR ?= /usr/local/lib
 endif
@@ -80,3 +82,8 @@ else
 endif
 
              LIBS += -lnsl
+
+ifdef SWAN_COUPLE
+           FFLAGS += -fixed -I/usr/local/mct/include
+             LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
+endif

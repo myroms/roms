@@ -45,10 +45,13 @@ ifdef LARGE
            FFLAGS += -q64
           ARFLAGS += -X 64
           LDFLAGS += -bmaxdata:0x200000000
+       MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /usr/local/pkg/netcdf/netcdf-3.5.0_64/include
     NETCDF_LIBDIR ?= /usr/local/pkg/netcdf/netcdf-3.5.0_64/lib
+
 else
           LDFLAGS += -bmaxdata:0x70000000
+       MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /usr/local/include
     NETCDF_LIBDIR ?= /usr/local/lib
 endif
@@ -79,4 +82,9 @@ ifdef DEBUG
            FFLAGS += -g -qfullpath
 else
            FFLAGS += -O3 -qstrict
+endif
+
+ifdef SWAN_COUPLE
+           FFLAGS += -qfixed -I/usr/local/mct/include
+             LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif

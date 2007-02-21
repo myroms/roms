@@ -41,6 +41,7 @@
 # Library locations, can be overridden by environment variables.
 #
 
+       MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /usr/local/netcdf-3.6.1-intel/include
     NETCDF_LIBDIR ?= /usr/local/netcdf-3.6.1-intel/lib
 
@@ -81,6 +82,11 @@ else
  ifeq ($(CPU),x86_64)
            FFLAGS += -xW
  endif
+endif
+
+ifdef SWAN_COUPLE
+           FFLAGS += -fixed -I/usr/local/mct/include
+             LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 
        clean_list += ifc* work.pc*

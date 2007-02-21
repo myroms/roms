@@ -29,9 +29,9 @@
                FC := df
            FFLAGS := /stand:f95
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P
+         CPPFLAGS := -P -DCYGWIN
                LD := $(FC)
-          LDFLAGS := /nodefaultlib:libcmt /stack:67108864 
+          LDFLAGS := /nodefaultlib:libcmt /nodefaultlib:libifcore /stack:67108864 
                AR := ar
           ARFLAGS := r
                RM := rm -f
@@ -61,6 +61,23 @@ ifdef ARPACK
  endif
     ARPACK_LIBDIR ?= /usr/local/arpack-win32/lib
        ARPACK_LIB := $(ARPACK_LIBDIR)/arpack.lib
+endif
+
+ifdef MPI
+       MPI_INCDIR ?= c:\\work\\models\\MPICH2\\include
+       MPI_LIBDIR ?= c:\\work\\models\\MPICH2\\lib
+       LIBS_WIN32 += $(MPI_LIBDIR)\\fmpich2s.lib 
+           FFLAGS += -I$(MPI_INCDIR)
+         CPPFLAGS += -DMPI -I$(MPI_INCDIR)
+endif
+
+ifdef SWAN_COUPLE
+       MCT_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mct
+      MPEU_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mpeu
+       LIBS_WIN32 += $(MCT_LIBDIR)\\libmct.a $(MPEU_LIBDIR)\\libmpeu.a
+         CPPFLAGS += -traditional-cpp
+           FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
+           FFLAGS += /fixed /noextend_source -assume:byterecl
 endif
 
 #
