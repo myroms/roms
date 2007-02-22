@@ -85,6 +85,10 @@ ROMS_APPLICATION :=
 
        LARGE := on
 
+#  If applicable, activate Coupling to SWAN wave model.
+
+      SWAN_COUPLE := 
+
 #--------------------------------------------------------------------------
 #  We are going to include a file with all the settings that depend on
 #  the system and the compiler. We are going to build up the name of the
@@ -216,6 +220,11 @@ includes :=	ROMS/Include \
 		ROMS/Drivers \
 		Master
 
+ifdef SWAN_COUPLE
+ modules  += SWAN
+ includes += SWAN
+endif
+
 vpath %.F $(modules)
 vpath %.h $(includes)
 
@@ -286,7 +295,6 @@ tarfile:
 
 zipfile:
 		zip -r ocean-3_0.zip *
-
 
 #--------------------------------------------------------------------------
 #  Cleaning targets.

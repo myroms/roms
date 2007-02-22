@@ -103,6 +103,14 @@
 #define DOUBLE_PRECISION
 
 /*
+** Turn ON masking when wetting and drying is activated.
+*/
+
+#if !defined MASKING && defined WET_DRY
+# define MASKING
+#endif
+
+/*
 ** Define macro for the first 2D time-step.
 */
 
@@ -728,6 +736,78 @@
 # define BIOLOGY
 #endif
 
+/*
+** Define internal option to couple to other models.
+**
+*/
+
+#if defined WRF_COUPLING
+# define AIR_OCEAN
+#endif
+
+#if defined REFDIF_COUPLING || defined SWAN_COUPLING
+# define WAVES_OCEAN
+#endif
+
+#if defined AIR_OCEAN || defined WAVES_OCEAN
+# define MODEL_COUPLING
+# define MCT
+#endif
+
+/*
+** Define internal option to process wave data.
+*/
+
+#if defined BBL_MODEL   || defined NEARSHORE_MELLOR || \
+    defined WAVES_OCEAN
+# define WAVES_DIR
+#endif
+
+#if  defined BBL_MODEL   && \
+   !(defined SSW_CALC_UB || defined MB_CALC_UB ||  \
+     defined SG_CALC_UB)
+# define WAVES_UB
+#endif
+
+#if (defined BBL_MODEL        && !defined WAVES_UB) ||  \
+     defined NEARSHORE_MELLOR || \
+     defined ZOS_HSIG         || defined COARE_TAYLOR_YELLAND || \
+     defined BEDLOAD_SOULSBY  || defined WAVES_OCEAN
+# define WAVES_HEIGHT
+#endif
+
+#if (!defined DEEPWATER_WAVES      && \
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)) || \
+      defined NEARSHORE_MELLOR     || \
+      defined BEDLOAD_SOULSBY      || defined WAVES_OCEAN
+# define WAVES_LENGTH
+#endif
+
+#if defined COARE_TAYLOR_YELLAND   || defined COARE_OOST || \
+    defined WAVES_OCEAN
+# define WAVES_TOP_PERIOD
+#endif
+
+#if defined BBL_MODEL || defined WAVES_OCEAN
+# define WAVES_BOT_PERIOD
+#endif
+
+#if !defined WAVES_OCEAN  && \
+    (defined BULK_FLUXES  || defined SVENDSEN_ROLLER  || \
+     defined TKE_WAVEDISS || \
+     defined WAVES_DIR    || defined WAVES_BOT_PERIOD || \
+     defined WAVES_HEIGHT || defined WAVES_TOP_PERIOD || \
+     defined WAVES_LENGTH)
+# define WAVE_DATA
+#endif
+
+/*
+** Define internal option for bedload treatment.
+*/
+
+#if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
+# define BEDLOAD
+#endif
 
 /*
 ** Define internal flag indicating processing of input forcing
@@ -744,7 +824,8 @@
 #  endif
 # endif
 # if !defined ANA_BTFLUX   || \
-    (!defined AIR_OCEAN    && !defined BULK_FLUXES   && !defined ANA_SMFLUX) || \
+    (!defined AIR_OCEAN    && \
+     !defined BULK_FLUXES  && !defined ANA_SMFLUX)   || \
     (!defined BULK_FLUXES  && !defined ANA_STFLUX)   || \
     ( defined SALINITY     && !defined ANA_SSFLUX)   || \
     ( defined BULK_FLUXES  && !defined LONGWAVE)     || \
@@ -756,11 +837,14 @@
     ( defined BULK_FLUXES  && !defined ANA_SRFLUX)   || \
     ( defined LMD_SKPP     && !defined ANA_SRFLUX)   || \
     ( defined SOLAR_SOURCE && !defined ANA_SRFLUX)   || \
-    ( defined BBL_MODEL    && !defined ANA_WWAVE)    || \
+    ( defined BBL_MODEL    && (!defined ANA_WWAVE    && \
+     !defined WAVES_OCEAN))                          || \
     ( defined BIOLOGY      && !defined ANA_SPFLUX)   || \
     ( defined BIOLOGY      && !defined ANA_BPFLUX)   || \
     ( defined SEDIMENT     && !defined ANA_SPFLUX)   || \
-    ( defined SEDIMENT     && !defined ANA_BPFLUX)
+    ( defined SEDIMENT     && !defined ANA_BPFLUX)   || \
+    ( defined WAVE_DATA    && (!defined ANA_WWAVE    && \
+			       !defined WAVES_OCEAN))
 #  define FRC_FILE
 # endif
 #else

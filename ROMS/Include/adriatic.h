@@ -39,14 +39,12 @@
 # undef SUSPLOAD
 # define ANA_SEDIMENT
 # undef  ANA_WWAVE
-# define SWAN
 # undef RIVER_SEDIMENT
 #else
 # define SEDIMENT
 # define SUSPLOAD
 # undef  ANA_SEDIMENT
 # undef  ANA_WWAVE
-# define SWAN
 # define RIVER_SEDIMENT
 #endif
 

@@ -22,9 +22,6 @@
       USE mod_scalars
       USE mod_stepping
 !
-# ifdef AIR_OCEAN
-      USE atm_coupler_mod, ONLY : atmos_coupling
-# endif
       USE diag_mod, ONLY : diag
 # ifdef TLM_CHECK
       USE dotproduct_mod, ONLY : nl_dotproduct
@@ -33,8 +30,17 @@
       USE forcing_mod, ONLY : forcing
 # endif
       USE ini_fields_mod, ONLY : ini_fields
+# ifdef AIR_OCEAN
+      USE ocean_coupler_mod, ONLY : atmos_coupling
+# endif
+# ifdef WAVES_OCEAN
+      USE ocean_coupler_mod, ONLY : waves_coupling
+# endif
 # ifdef ASSIMILATION
       USE oi_update_mod, ONLY : oi_update
+# endif
+# ifdef NEARSHORE_MELLOR
+      USE radiation_stress_mod, ONLY : radiation_stress
 # endif
 # if defined AVERAGES && !defined ADJOINT
       USE set_avg_mod, ONLY : set_avg
@@ -170,11 +176,11 @@
 # ifdef AIR_OCEAN
 !
 !-----------------------------------------------------------------------
-!  Couple to atmospheric model every "nOCN_steps" timesteps: get
-!  air/sea fluxes.
+!  Couple to atmospheric model every "nOCN_ATM" timesteps: get air/sea
+!  fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),nOCN_steps).eq.0) THEN
+      IF (MOD(iic(ng),nOCN_ATM(ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -184,6 +190,41 @@
         END DO
 !$OMP END PARALLEL DO
       END IF
+# endif
+
+# ifdef WAVES_OCEAN
+!
+!-----------------------------------------------------------------------
+!  Couple to waves model every "nOCN_WAV" timesteps: get waves/sea
+!  fluxes.
+!-----------------------------------------------------------------------
+!
+      IF (MOD(iic(ng),nOCN_WAV(ng)).eq.0) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL waves_coupling (ng, TILE)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
+# ifdef NEARSHORE_MELLOR
+!
+!-----------------------------------------------------------------------
+!  Compute radiation stress terms.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*(thread+1)-1,subs*thread,-1
+          CALL radiation_stress (ng, TILE)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
 # endif
 !
 !-----------------------------------------------------------------------

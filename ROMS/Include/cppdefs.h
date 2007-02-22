@@ -79,7 +79,6 @@
 **   outgoing longwave radiation (LONGWAVE_OUT) as a function of the model   **
 **   sea surface temperature; (3) provide net longwave radiation (default).  **
 **                                                                           **
-** AIR_OCEAN           use if two-way atmosphere-ocean models coupling       **
 ** BULK_FLUXES         use if bulk fluxes computation                        **
 ** COOL_SKIN           use if cool skin correction                           **
 ** LONGWAVE            use if computing net longwave radiation               **
@@ -529,6 +528,12 @@
 ** SED_MORPH           use to allow bottom model elevation to evolve         **
 ** SUSPLOAD            use to activate suspended load transport              **
 **                                                                           **
+** OPTIONS for two-way coupling to other models:                             **
+**                                                                           **
+** REFDIF_COUPLING     use if coupling to REFDIT wave model                  **
+** SWAN_COUPLING       use if coupling to SWAN wave model                    **
+** WRF_COUPLING        use if coupling to WRF atmospheric model              **
+**                                                                           **
 ** NetCDF input/output OPTIONS:                                              **
 **                                                                           **
 ** NO_WRITE_GRID       use if not writing grid arrays                        **
@@ -596,7 +601,7 @@
 !#define SED_TEST1       /* for Suspended Sediment Test in a Channel */
 !#define SED_TOY         /* for One-dimension (vertical) Sediment Toy */
 !#define SOLITON         /* for Equatorial Rossby Wave Example */
-#define UPWELLING       /* for Upwelling Example */
+ #define UPWELLING       /* for Upwelling Example */
 !#define USWEST          /* for US West Coast Application */
 !#define WEDDELL         /* for Idealized Weddell Sea Shelf Application */
 !#define WINDBASIN       /* linear wind-driven constant Coriolis basin */
@@ -722,10 +727,3 @@
 */
 
 #include "globaldefs.h"
-
-
-
-
-
-
-

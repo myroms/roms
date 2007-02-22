@@ -106,12 +106,6 @@
       Coptions(is:is+16)=' AFT_EIGENMODES,'
       idriver=idriver+1
 #endif
-#ifdef AIR_OCEAN
-      IF (Master) WRITE (stdout,20) 'AIR_OCEAN',                        &
-     &   'Two-way atmosphere-ocean models coupling.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' AIR_OCEAN,'
-#endif
 #if defined ALBEDO && defined ANA_SRFLUX
       IF (Master) WRITE (stdout,20) 'ALBEDO',                           &
      &   'Shortwave radiation from albedo equation.'
@@ -2215,6 +2209,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' STOCHASTIC_OPT,'
 #endif
+#ifdef SWAN_COUPLING
+      IF (Master) WRITE (stdout,20) 'SWAN_COUPLING',                    &
+     &   'Two-way SWAN/ROMS coupling.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' SWAN_COUPLING,'
+#endif
 #ifdef SW06_COARSE
       IF (Master) WRITE (stdout,20) 'SW06_COARSE',                      &
      &   'Shallow Water Acoustics 2006 Experiment, Coarse Grid.'
@@ -2715,6 +2715,12 @@
      &   'Weighted Jacobians pressure gradient adjustment.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' WJ_GRADP,'
+#endif
+#ifdef WRF_COUPLING
+      IF (Master) WRITE (stdout,20) 'WRF_COUPLING',                     &
+     &   'Two-way WRF/ROMS coupling.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' WRF_COUPLING,'
 #endif
 #ifdef ZCLIMATOLOGY
       IF (Master) WRITE (stdout,20) 'ZCLIMATOLOGY',                     &

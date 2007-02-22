@@ -45,7 +45,10 @@
       USE mod_scalars
 !
 #ifdef AIR_OCEAN 
-      USE atm_coupler_mod, ONLY : initialize_coupling
+      USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
+#endif
+#ifdef WAVES_OCEAN
+      USE ocean_coupler_mod, ONLY : initialize_waves_coupling
 #endif
 !
 !  Imported variable declarations.
@@ -58,6 +61,9 @@
 !
       logical :: allocate_vars = .TRUE.
 
+#ifdef DISTRIBUTE
+      integer :: MyError, MySize
+#endif
       integer :: ng, thread
 
 #ifdef DISTRIBUTE
@@ -71,6 +77,8 @@
       ELSE
         OCN_COMM_WORLD=MPI_COMM_WORLD
       END IF
+      CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
+      CALL mpi_comm_size (OCN_COMM_WORLD, MySize, MyError)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -102,14 +110,6 @@
           END DO
 !$OMP END PARALLEL DO
         END DO
-
-#ifdef AIR_OCEAN 
-!
-!  Initialize coupling streams between atmosphere and ocean using the
-!  Model Coupling Toolkit (MCT).
-!
-        CALL initialize_coupling (MyRank)
-#endif
 !
 !  Read in model tunable parameters from standard input.
 !
@@ -125,6 +125,19 @@
 !
         CALL mod_arrays (allocate_vars)
 
+#if defined AIR_OCEAN || defined WAVES_OCEAN
+!
+!  Initialize coupling streams between model(s).
+!
+        DO ng=1,Ngrids
+# ifdef AIR_OCEAN
+          CALL initialize_atmos_coupling (ng, MyRank)
+# endif
+# ifdef WAVES_OCEAN
+          CALL initialize_waves_coupling (ng, MyRank)
+# endif
+        END DO
+#endif
 #ifdef VERIFICATION
 !
 !  Allocate and initialize observation arrays.

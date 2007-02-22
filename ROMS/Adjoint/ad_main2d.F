@@ -28,9 +28,6 @@
       USE mod_storage
 # endif
 !
-# ifdef AIR_OCEAN_NOT_YET
-      USE atm_coupler_mod, ONLY : atmos_coupling
-# endif
 # if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
       USE adsen_force_mod, ONLY : adsen_force
 # endif
@@ -46,6 +43,9 @@
       USE ad_misfit_mod, ONLY : ad_misfit
 #  endif
 # endif
+# ifdef NEARSHORE_MELLOR_NOT_YET
+      USE ad_radiation_stress_mod, ONLY : ad_radiation_stress
+# endif
 # ifdef AVERAGES
       USE ad_set_avg_mod, ONLY : ad_set_avg
 # endif
@@ -56,6 +56,12 @@
       USE ad_step2d_mod, ONLY : ad_step2d
 # ifdef FLOATS_NOT_YET
       USE ad_step_floats_mod, ONLY : tl_step_floats
+# endif
+# ifdef AIR_OCEAN_NOT_YET
+      USE ocean_coupler_mod, ONLY : atmos_coupling
+# endif
+# ifdef WAVES_OCEAN_NOT_YET
+      USE ocean_coupler_mod, ONLY : waves_coupling
 # endif
 # ifdef ASSIMILATION
 !!    USE oi_update_mod, ONLY : oi_update
@@ -284,14 +290,49 @@
       END DO
 !$OMP END PARALLEL DO
 
+# ifdef NEARSHORE_MELLOR_NOT_YET
+!
+!-----------------------------------------------------------------------
+!  Compute radiation stress terms.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*(thread+1)-1,subs*thread,-1
+          CALL ad_radiation_stress (ng, TILE)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
+
+# ifdef WAVES_OCEAN_NOT_YET
+!
+!-----------------------------------------------------------------------
+!  Couple to waves model every "nOCN_WAV" timesteps: get waves/sea
+!  fluxes.
+!-----------------------------------------------------------------------
+!
+      IF (MOD(iic(ng),nOCN_WAV(ng)).eq.0) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL waves_coupling (ng, TILE)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
+
 # ifdef AIR_OCEAN_NOT_YET
 !
 !-----------------------------------------------------------------------
-!  Couple to atmospheric model every "nOCN_steps" timesteps: get
-!  air/sea fluxes.
+!  Couple to atmospheric model every "nOCN_ATM" timesteps: get air/sea
+!  fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),nOCN_steps).eq.0) THEN
+      IF (MOD(iic(ng),nOCN_ATM(ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

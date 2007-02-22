@@ -15,9 +15,9 @@ local_objs := $(subst .F,.o,$(local_src))
 
 sources    += $(local_src)
 
-ifeq ($(OS)-$(strip $(FORT)),CYGWIN-df)
+ifdef LD_WINDOWS
 $(BIN):	$(libraries) $(local_objs)
-	$(LD) $(FFLAGS) $(local_objs) $(libraries) $(LIBS_WIN32) /exe:$(BIN_WIN32) /link $(LDFLAGS)
+	$(LD) $(FFLAGS) $(local_objs) -o $@ $(libraries) $(LIBS_WIN32) $(LDFLAGS)
 else
 $(BIN):	$(libraries) $(local_objs)
 	$(LD) $(FFLAGS) $(LDFLAGS) $(local_objs) -o $@ $(libraries) $(LIBS)

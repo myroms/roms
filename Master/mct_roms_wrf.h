@@ -1,7 +1,4 @@
 #include "cppdefs.h"
-      MODULE atm_coupler_mod
-
-#ifdef AIR_OCEAN
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -25,7 +22,7 @@
 
       CONTAINS
 
-      SUBROUTINE initialize_coupling (tile)
+      SUBROUTINE initialize_atmos_coupling (ng, tile)
 !
 !=======================================================================
 !                                                                      !
@@ -44,7 +41,7 @@
 !
 !  Imported variable definitions.
 !
-      integer, intent(in) :: tile
+      integer, intent(in) :: ng, tile
 !
 !  Local variable declarations.  Currently, WRF I/O API supports
 !  single precision only.
@@ -74,7 +71,6 @@
 !  Set Model Coupling Toolkit (MCT) parameters.
 !-----------------------------------------------------------------------
 !
-
       Stagger=""
       DimNames=""
       DateStr=""
@@ -112,7 +108,8 @@
      &                                  ATM_TO_OCN_T_HANDLE,            &
      &                                  MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling stream open for read failed")
+        CALL finalize_atmos_coupling                                    &
+     &                      ("Coupling stream open for read failed")
       END IF
 !
 !  Ocean to atmosphere model.
@@ -124,7 +121,8 @@
      &                                  OCN_TO_ATM_T_HANDLE,            &
      &                                  MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling stream open for read failed")
+        CALL finalize_atmos_coupling                                    &
+     &                      ("Coupling stream open for read failed")
       END IF
 !
 !-----------------------------------------------------------------------
@@ -151,7 +149,7 @@
      &                         PatchStr, PatchEnd,                      &
      &                         MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling training read failed")
+        CALL finalize_atmos_coupling ("Coupling training read failed")
       END IF
 !
 !  Surface wind stress in the ETA-direction.
@@ -173,7 +171,7 @@
      &                         PatchStr, PatchEnd,                      &
      &                         MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling training read failed")
+        CALL finalize_atmos_coupling ("Coupling training read failed")
       END IF
 !
 !  Sea surface temperature.
@@ -195,7 +193,7 @@
      &                          PatchStr, PatchEnd,                     &
      &                          MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling training write failed")
+        CALL finalize_atmos_coupling ("Coupling training write failed")
       END IF
 !
 !-----------------------------------------------------------------------
@@ -208,7 +206,7 @@
       CALL ext_mct_open_for_read_commit (ATM_TO_OCN_T_HANDLE,           &
      &                                   MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling read commit failed")
+        CALL finalize_atmos_coupling ("Coupling read commit failed")
       END IF
 !
 !  Write: ocean to atmosphere model.
@@ -216,10 +214,10 @@
       CALL ext_mct_open_for_write_commit (OCN_TO_ATM_T_HANDLE,          &
      &                                    MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling write commit failed")
+        CALL finalize_atmos_coupling ("Coupling write commit failed")
       END IF
 
-      END SUBROUTINE initialize_coupling
+      END SUBROUTINE initialize_atmos_coupling
 
       SUBROUTINE atmos_coupling (ng, tile)
 !
@@ -274,9 +272,12 @@
       USE mod_scalars
       USE mod_parallel
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+#if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod, ONLY : exchange_u2d_tile, exchange_v2d_tile
-# endif
+#endif
+#ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+#endif
 !
       implicit none
 !
@@ -305,6 +306,18 @@
 !  Local variable declarations.  Currently, WRF I/O API supports
 !  single precision only.
 !
+#ifdef DISTRIBUTE
+# ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+# else
+      logical :: EWperiodic=.FALSE.
+# endif
+# ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+# else
+      logical :: NSperiodic=.FALSE.
+# endif
+#endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: MyStatus, RealType, i, j
 
@@ -381,7 +394,7 @@
      &                         PatchStr, PatchEnd,                      &
      &                         MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling read failed")
+        CALL finalize_atmos_coupling ("Coupling read failed")
       END IF
 !
 !  Compute global average.
@@ -391,7 +404,7 @@
       CALL mpi_allreduce (var_sum, var_sum_g, 1, MPI_REAL, MPI_SUM,     &
      &                    OCN_COMM_WORLD, MyStatus)
       IF (MyStatus.ne.MPI_SUCCESS) THEN
-        CALL error_coupling ("Coupling global sum failed")
+        CALL finalize_atmos_coupling ("Coupling global sum failed")
       END IF
       IF (Master) THEN
         cff=(DomainEnd(1)-DomainStr(1)+1)*                              &
@@ -419,7 +432,7 @@
      &                         PatchStr, PatchEnd,                      &
      &                         MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling read failed")
+        CALL finalize_atmos_coupling ("Coupling read failed")
       END IF
 !
 !  Compute global average.
@@ -429,7 +442,7 @@
       CALL mpi_allreduce (var_sum, var_sum_g, 1, MPI_REAL, MPI_SUM,     &
      &                    OCN_COMM_WORLD, MyStatus)
       IF (MyStatus.ne.MPI_SUCCESS) THEN
-        CALL error_coupling ("Coupling global sum failed")
+        CALL finalize_atmos_coupling ("Coupling global sum failed")
       END IF
       IF (Master) THEN
         cff=(DomainEnd(1)-DomainStr(1)+1)*                              &
@@ -448,19 +461,30 @@
         END DO
       END DO
 
-# if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
+#if defined EW_PERIODIC || defined NS_PERIODIC
 !
-!  Exchange boundary informaton.
+!-----------------------------------------------------------------------
+!  Apply periodic boundary conditions.
+!-----------------------------------------------------------------------
 !
       CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints,                             &
      &                        sustr)
       CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        NghostPoints,                             &
      &                        svstr)
-# endif
+#endif
+#ifdef DISTRIBUTE
+!
+!-----------------------------------------------------------------------
+!  Exchange tile boundaries.
+!-----------------------------------------------------------------------
+!
+      CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    sustr, svstr)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Send sea surface temperature to atmosphere model.
@@ -481,7 +505,7 @@
       CALL mpi_allreduce (var_sum, var_sum_g, 1, MPI_REAL, MPI_SUM,     &
      &                    OCN_COMM_WORLD, MyStatus)
       IF (MyStatus.ne.MPI_SUCCESS) THEN
-        CALL error_coupling ("Coupling global sum failed")
+        CALL finalize_atmos_coupling ("Coupling global sum failed")
       END IF
 !
 !  Send sea surface temperature to atmospheric model.
@@ -508,13 +532,13 @@
      &                          PatchStr, PatchEnd,                     &
      &                          MyStatus)
       IF (MyStatus.ne.0) THEN
-        CALL error_coupling ("Coupling write failed")
+        CALL finalize_atmos_coupling ("Coupling write failed")
       END IF
 
       RETURN
       END SUBROUTINE atmos_coupling_tile
 
-      SUBROUTINE error_coupling (string)
+      SUBROUTINE finalize_atmos_coupling (string)
 !
 !=======================================================================
 !                                                                    ===
@@ -538,7 +562,7 @@
       CALL mpi_finalize (MyStatus)
 
       STOP
-      END SUBROUTINE error_coupling
+      END SUBROUTINE finalize_atmos_coupling
 #endif
 
       END MODULE atm_coupler_mod

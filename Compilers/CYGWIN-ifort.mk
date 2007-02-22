@@ -32,7 +32,7 @@
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DCYGWIN -DCYGWIN_ifort -traditional
                LD := $(FC)
-          LDFLAGS := /nodefaultlib:libcmt  /nodefaultlib:msvcrt /stack:67108864 
+          LDFLAGS := /link /nodefaultlib:libcmt  /nodefaultlib:msvcrt /stack:67108864 
                AR := ar
           ARFLAGS := r
                RM := rm -f
@@ -96,11 +96,14 @@ endif
 # file names needed when linking. Use of the "=" sign means that
 # variables will be evaluated only when needed.
 #
+
          BIN_WIN32 = "$$(cygpath --windows $(BIN))"
         LIBS_WIN32 += "$$(cygpath --windows $(NETCDF_LIB))"
 ifdef ARPACK
         LIBS_WIN32 += "$$(cygpath --windows $(ARPACK_LIB))"
 endif
+
+        LD_WINDOWS := on
 
 #
 # For a Windows compiler, override the compilation rule

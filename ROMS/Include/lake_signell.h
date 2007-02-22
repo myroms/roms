@@ -60,7 +60,6 @@
 #if defined MB_BBL || defined SG_BBL || defined SSW_BBL
 # define ANA_WWAVE
 # ifndef ANA_WWAVE
-#  define SWAN
 # endif
 #endif
 

@@ -31,7 +31,7 @@
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DCYGWIN
                LD := $(FC)
-          LDFLAGS := /nodefaultlib:libcmt /nodefaultlib:libifcore /stack:67108864 
+          LDFLAGS := /link /nodefaultlib:libcmt /nodefaultlib:libifcore /stack:67108864 
                AR := ar
           ARFLAGS := r
                RM := rm -f
@@ -101,6 +101,8 @@ endif
 ifdef ARPACK
         LIBS_WIN32 += "$$(cygpath --windows $(ARPACK_LIB))"
 endif
+
+        LD_WINDOWS := on
 
 #
 # For a Windows compiler, override the compilation rule
