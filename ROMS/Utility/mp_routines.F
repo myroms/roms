@@ -35,7 +35,8 @@
 !
       integer, intent(in) :: unit
 !
-#ifdef AIX
+#if defined CYGWIN
+#elif defined AIX
       CALL flush_ (unit)
 #else
       CALL flush (unit)
@@ -82,7 +83,9 @@
 
       integer :: getpid, my_getpid
 
-#ifdef CRAYX1
+#if defined CRAYX1
+      my_getpid=0
+#elif defined CYGWIN
       my_getpid=0
 #else
       my_getpid=getpid()

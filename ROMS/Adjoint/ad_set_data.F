@@ -59,7 +59,7 @@
       USE mod_obs
 # endif
       USE mod_scalars
-# if defined TS_PSOURCE || defined UV_PSOURCE
+# if defined TS_PSOURCE || defined UV_PSOURCE || defined Q_PSOURCE
       USE mod_sources
 # endif
 !
@@ -228,7 +228,7 @@
      &                      update)
 #  endif
 
-#  if defined BULK_FLUXES || defined ECOSIM
+#  if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 !
 !-----------------------------------------------------------------------
 !  Set surface air pressure (mb).
@@ -243,6 +243,8 @@
      &                      FORCES(ng)%Pair,                            &
      &                      update)
 #   endif
+#  endif
+#  if defined BULK_FLUXES || defined ECOSIM
 !
 !-----------------------------------------------------------------------
 !  Set surface winds (m/s).
@@ -428,7 +430,7 @@
 #   endif
 #  endif
 
-#  if defined SEDIMENT || defined BIOLOGY
+#  if defined SEDIMENT_NOT_YET || defined BIOLOGY
 !
 !-----------------------------------------------------------------------
 !  Set kinematic surface and bottom pasive tracer fluxes (T m/s).
@@ -522,7 +524,7 @@
 #  endif
 # endif
 
-# ifdef BBL_MODEL_NOT_YET
+# ifdef WAVE_DATA
 !
 !-----------------------------------------------------------------------
 !  Set surface wind-induced wave amplitude, direction and period.
@@ -531,30 +533,13 @@
 #  ifdef ANA_WWAVE
       CALL ana_wwave (ng, tile, iADM)
 #  else
-#   ifdef SWAN
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWorb,   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%Ub_swanG,                        &
-     &                      FORCES(ng)%Ub_swan,                         &
-     &                      update)
-#   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWamp,   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%AwaveG,                          &
-     &                      FORCES(ng)%Awave,                           &
-     &                      update)
-#   endif
+#   ifdef WAVES_DIR
       CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWdir,   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%DwaveG,                          &
      &                      FORCES(ng)%Dwave,                           &
      &                      update)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWper,   &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      FORCES(ng)%PwaveG,                          &
-     &                      FORCES(ng)%Pwave,                           &
-     &                      update)
-#   ifdef CURVGRID
+#    ifdef CURVGRID
 !
 !  If input point-data, rotate direction to curvilinear coordinates.
 !
@@ -572,13 +557,62 @@
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%Dwave)
 #     endif
-#    ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+#     ifdef DISTRIBUTE
+        CALL mp_exchange2d (ng, iADM, 1, Istr, Iend, Jstr, Jend,        &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      FORCES(ng)%Dwave)
+#     endif
 #    endif
-      END IF
+#   endif
+#   ifdef WAVES_HEIGHT
+      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWamp,   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%HwaveG,                          &
+     &                      FORCES(ng)%Hwave,                           &
+     &                      update)
+#   endif
+#   ifdef WAVES_LENGTH
+      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWlen,   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%LwaveG,                          &
+     &                      FORCES(ng)%Lwave,                           &
+     &                      update)
+#   endif
+#   ifdef WAVES_TOP_PERIOD
+      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWptp,   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%Pwave_topG,                      &
+     &                      FORCES(ng)%Pwave_top,                       &
+     &                      update)
+#   endif
+#   ifdef WAVES_BOT_PERIOD
+      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWpbt,   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%Pwave_botG,                      &
+     &                      FORCES(ng)%Pwave_bot,                       &
+     &                      update)
+#   endif
+#   if defined WAVES_UB
+      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWorb,   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%Ub_swanG,                        &
+     &                      FORCES(ng)%Ub_swan,                         &
+     &                      update)
+#   endif
+#   if defined TKE_WAVEDISS
+      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWdis,   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%Wave_dissipG,                    &
+     &                      FORCES(ng)%Wave_dissip,                     &
+     &                      update)
+#   endif
+#   if defined SVENDSEN_ROLLER
+      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWbrk,   &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      FORCES(ng)%Wave_breakG,                     &
+     &                      FORCES(ng)%Wave_break,                      &
+     &                      update)
 #   endif
 #  endif
 # endif
@@ -603,7 +637,7 @@
       CALL ana_spinning (ng, tile, iADM)
 # endif
 
-# if defined UV_PSOURCE || defined TS_PSOURCE
+# if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
 !
 !-----------------------------------------------------------------------
 !  Set point Sources/Sinks (river runoff).
@@ -613,7 +647,7 @@
 #  ifdef ANA_PSOURCE
         CALL ana_psource (ng, tile, iADM)
 #  else
-#   ifdef UV_PSOURCE
+#   if defined UV_PSOURCE || defined Q_PSOURCE
         CALL set_ngfldr (ng, iADM, idRtra, 1, Msrc, 1,                  &
      &                   1, Nsrc(ng), 1,                                &
      &                   SOURCES(ng) % QbarG,                           &
@@ -1016,7 +1050,7 @@
      &                            OBS(ng)%Tobs(:,:,:,itemp))
 #   endif
 #   ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,      &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        OBS(ng)%EobsT(:,:,:,itemp),               &
@@ -1362,7 +1396,7 @@
 !
 !  Set forward vertical mixing length scale.
 !
-      CALL set_3dfldr_tile (ng, iTLM, Istr, Iend, Jstr, Jend,           &
+      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
      &                      idVmLS,                                     &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      MIXING(ng)%LscaleG,                         &
@@ -1371,7 +1405,7 @@
 !
 !  Set forward vertical mixing coefficient for turbulent kinetic energy.
 !
-      CALL set_3dfldr_tile (ng, iTLM, Istr, Iend, Jstr, Jend,           &
+      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
      &                      idVmKK,                                     &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      MIXING(ng)%AkkG,                            &
@@ -1381,7 +1415,7 @@
 !
 !  Set forward vertical mixing coefficient for turbulent length scale.
 !
-      CALL set_3dfldr_tile (ng, iTLM, Istr, Iend, Jstr, Jend,           &
+      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
      &                      idVmKP,                                     &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      MIXING(ng)%AkpG,                            &
@@ -1401,7 +1435,6 @@
      &                      MIXING(ng)%hsbl,                            &
      &                      update)
 #   endif
-
 #   ifdef LMD_BKPP_NOT_YET
 !
 !  Set forward depth of bottom oceanic boundary layer.
@@ -1413,7 +1446,6 @@
      &                      MIXING(ng)%hbbl,                            &
      &                      update)
 #   endif
-
 #   ifdef LMD_NONLOCAL_NOT_YET
 !
 !  Set forward boundary layer nonlocal transport.

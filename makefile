@@ -45,17 +45,26 @@
 #  blank is FALSE.
 #==========================================================================
 #
-#  The CPP option defining a particular application can be specified in
-#  header file  ROMS/Include/cppdefs.h  or here.  If defined here, all
-#  the applications definition in  cppdefs.h  must be commented out with
-#  an ! (exclamation mark) in column 1. Otherwise, leave this macro blank.
-#  For example, to activate the upwelling application (UPWELLING) here,
-#  set:
+#  The CPP option defining a particular application is specified below.
+#  See header file "ROMS/Include/cppdefs.h" for all available idealized
+#  and realistic applications CPP flags. For example, to activate the
+#  upwelling test case (UPWELLING) set:
 #
 #    ROMS_APPLICATION := UPWELLING
 #
+#  Notice that this makefile will include the associated application header
+#  file, which is located in the "ROMS/Include" directory. The application
+#  header file name is the lowercase value of ROMS_APPLICATION with the
+#  .h extension.  For example, the upwelling application includes the
+#  "upwelling.h" header file.  
 
-ROMS_APPLICATION := 
+ROMS_APPLICATION := UPWELLING
+
+#  Set number of ROMS nested and/or composed grid.  Currently, only
+#  one grid is supported.  This option will be available in the near
+#  future.
+
+ NestedGrids := 1
 
 #  Activate debugging compiler options:
 
@@ -64,7 +73,7 @@ ROMS_APPLICATION :=
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
 
-         MPI :=
+         MPI := 
       OpenMP :=
 
 #  If distributed-memory, turn on compilation via the script "mpif90".
@@ -75,7 +84,7 @@ ROMS_APPLICATION :=
 #  In this, case the user need to select the desired compiler below and
 #  turn on both MPI and MPIF90 macros.
 
-      MPIF90 :=
+      MPIF90 := 
 
 #  If applicable, compile with the ARPACK library (GST analysis):
 
@@ -102,6 +111,7 @@ ROMS_APPLICATION :=
 #     CYGWIN:                 g95, df
 #     Darwin:                 f90, xlf
 #     IRIX:                   f90
+#     Darwin:                 f90, xlf
 #     Linux:                  ifc, ifort, pgi, path, g95
 #     SunOS:                  f95
 #     UNICOS-mp:              ftn
@@ -191,7 +201,10 @@ CPPFLAGS += -D$(shell echo ${CPU} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 
 ifdef ROMS_APPLICATION
+  HEADER := $(addsuffix .h,$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
   CPPFLAGS += -D$(ROMS_APPLICATION)
+  CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
+  CPPFLAGS += -DNestedGrids=$(NestedGrids)
 endif
 
 #--------------------------------------------------------------------------
@@ -202,28 +215,31 @@ endif
 
 all: $(BIN)
 
-modules  :=	ROMS/Adjoint \
+modules   :=	ROMS/Adjoint \
 		ROMS/Representer \
 		ROMS/Tangent \
 		ROMS/Nonlinear \
+		ROMS/Functionals \
 		ROMS/SeaIce \
 		ROMS/Utility \
-		ROMS/Modules \
-		Master
+		ROMS/Modules
 
-includes :=	ROMS/Include \
+includes  :=	ROMS/Include \
+		ROMS/Functionals \
 		ROMS/Adjoint \
 		ROMS/Nonlinear \
 		ROMS/Representer \
 		ROMS/Tangent \
 		ROMS/SeaIce \
-		ROMS/Drivers \
-		Master
+		ROMS/Drivers
 
 ifdef SWAN_COUPLE
- modules  += SWAN
- includes += SWAN
+ modules  +=	SWAN/Src
+ includes +=	SWAN/Src
 endif
+
+modules   +=	Master
+includes  +=	Master
 
 vpath %.F $(modules)
 vpath %.h $(includes)
@@ -289,12 +305,17 @@ endif
 .PHONY: tarfile
 
 tarfile:
-		tar -cvf ocean-3_0.tar *
+		tar -cvf roms-3_0.tar *
 
 .PHONY: zipfile
 
 zipfile:
-		zip -r ocean-3_0.zip *
+		zip -r roms-3_0.zip *
+
+.PHONY: gzipfile
+
+gzipfile:
+		gzip -v roms-3_0.gzip *
 
 #--------------------------------------------------------------------------
 #  Cleaning targets.

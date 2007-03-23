@@ -34,8 +34,7 @@
       CALL wclock_on (ng, iNLM, 5)
 # endif
       CALL set_diags_tile (ng, Istr, Iend, Jstr, Jend,                  &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     KOUT, NOUT)
+     &                     LBi, UBi, LBj, UBj)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 5)
 # endif
@@ -44,8 +43,7 @@
 !
 !***********************************************************************
       SUBROUTINE set_diags_tile (ng, Istr, Iend, Jstr, Jend,            &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           Kout, Nout)
+     &                           LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
       USE mod_param
@@ -67,7 +65,6 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Kout, Nout
 !
 !  Local variable declarations.
 !
@@ -223,8 +220,8 @@
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        DIAGS(ng)%DiaTrc(:,:,:,:,idiag))
 #  endif
-# endif
         END DO
+# endif
 # ifdef DIAGNOSTICS_UV
 !
 !  Apply periodic or gradient boundary conditions for output purposes.

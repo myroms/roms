@@ -14,7 +14,7 @@
 #define UV_QDRAG
 #undef  TS_U3HADVECTION
 #define TS_MPDATA
-#undef  SALINITY
+#define SALINITY
 #define SOLVE3D
 #define SPLINES
 #define SEDIMENT

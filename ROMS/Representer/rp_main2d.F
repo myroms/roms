@@ -56,8 +56,6 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng
-
-      real(r8) :: HalfDT
 !
 !  Local variable declarations.
 !
@@ -78,17 +76,14 @@
 # if defined WEAK_CONSTRAINT || defined IOM
 !
 !-----------------------------------------------------------------------
-!  If appropriate, add convolved adjoint solution as impulse forcing to
-!  the tangent linear solution. Read next impulse record, if available.
+!  If appropriate, add convolved adjoint solution impulse forcing to
+!  the representer model solution. Notice that the forcing is only 
+!  needed after finishing all inner loops. The forcing is continuous.
+!  That is, it is time interpolated at every time-step from available
+!  snapshots (FrequentImpulse=TRUE).
 !-----------------------------------------------------------------------
 !
-      HalfDT=0.5_r8*dt(ng)
-      IF (((time(ng)-HalfDT).le.FrcTime(ng)).and.                       &
-     &    (FrcTime(ng).lt.(time(ng)+HalfDT)).and.                       &
-     &    (outer.ge.1)) THEN
-!
-!  Add impulse forcing.
-!
+      IF (FrequentImpulse) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -97,13 +92,6 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-!
-!  Read in impulse forcing record, if any.
-!
-        FrcRec(ng)=FrcRec(ng)+1
-        IF (FrcRec(ng).le.NrecFrc(ng)) THEN
-          CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
-        END IF
       END IF
 # endif
 !

@@ -2592,6 +2592,7 @@
 #endif
       END IF
 #ifndef NO_WRITE_GRID
+# if !(defined SED_MORPH && defined SEDIMENT)
 !
 !  Bathymetry.
 !
@@ -2599,7 +2600,7 @@
         scale=1.0_r8
         wrt_info=nf_inq_varid(ncid,'h',varid)
         IF (ncid.eq.ncSTAid(ng)) THEN
-# ifdef STATIONS
+#  ifdef STATIONS
           CALL extract_sta2d (ng, model, Cgrid, varid, r2dvar,          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        scale, GRID(ng)%h,                        &
@@ -2608,13 +2609,13 @@
           IF (wrtThread) THEN
             wrt_info=nf_put_vara_TYPE(ncid,varid,1,Nstation(ng),wrk)
           END IF
-# endif
+#  endif
         ELSE
           wrt_info=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,       &
      &                         LBi, UBi, LBj, UBj, scale,               &
-# ifdef MASKING
+#  ifdef MASKING
      &                         GRID(ng) % rmask(LBi,LBj),               &
-# endif
+#  endif
      &                         GRID(ng) % h(LBi,LBj))
         END IF
         IF (wrtThread.and.(wrt_info.ne.nf_noerr)) THEN
@@ -2623,6 +2624,9 @@
           ioerror=wrt_info
           RETURN
         END IF
+      END IF
+# endif
+      IF (ncid.ne.ncFLTid(ng)) THEN
 !
 !  Coriolis parameter.
 !

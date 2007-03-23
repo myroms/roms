@@ -314,10 +314,10 @@
           Vinfo( 4)='360_day'
         ELSE IF (INT(time_ref).eq.0) THEN
           Vinfo( 3)='seconds since 0000-01-01 00:00:00'
-          Vinfo( 4)='365.25_day'
+          Vinfo( 4)='julian'
         ELSE IF (time_ref.gt.0.0_r8) THEN
           WRITE (Vinfo( 3),'(a,1x,a)') 'seconds since', TRIM(r_text)
-          Vinfo( 4)='standard'
+          Vinfo( 4)='gregorian'
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ncHISid(ng),hisVid(idtime,ng),NF_TYPE,           &
@@ -336,6 +336,25 @@
         Vinfo( 2)='Ritz eigenvectors Euclidean norm'
         status=def_var(ncHISid(ng),varid,NF_TYPE,                       &
      &                 1,recdim,Aval,Vinfo,ncname)
+#endif
+#if defined SEDIMENT && defined SED_MORPH
+!
+!  Define bathymetry.
+!
+        IF (Hout(idbath,ng)) THEN
+          Vinfo( 1)=Vname(1,idbath)
+          Vinfo( 2)=Vname(2,idbath)
+          Vinfo( 3)=Vname(3,idbath)
+          Vinfo(14)=Vname(4,idbath)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idbath,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idbath,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
 #endif
 !
 !  Define free-surface.
@@ -1377,6 +1396,359 @@
         END DO
 # endif
 #endif
+#ifdef NEARSHORE_MELLOR
+!
+!  Define 2D radiation stress, Sxx-component.
+!
+        IF (Hout(idW2xx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2xx)
+          Vinfo( 2)=Vname(2,idW2xx)
+          Vinfo( 3)=Vname(3,idW2xx)
+          Vinfo(14)=Vname(4,idW2xx)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW2xx,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D radiation stress, Sxy-component.
+!
+        IF (Hout(idW2xy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2xy)
+          Vinfo( 2)=Vname(2,idW2xy)
+          Vinfo( 3)=Vname(3,idW2xy)
+          Vinfo(14)=Vname(4,idW2xy)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW2xy,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D radiation stress, Syy-component.
+!
+        IF (Hout(idW2yy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2yy)
+          Vinfo( 2)=Vname(2,idW2yy)
+          Vinfo( 3)=Vname(3,idW2yy)
+          Vinfo(14)=Vname(4,idW2yy)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW2yy,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D total u-radiation stress.
+!
+        IF (Hout(idU2rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idU2rs)
+          Vinfo( 2)=Vname(2,idU2rs)
+          Vinfo( 3)=Vname(3,idU2rs)
+          Vinfo(14)=Vname(4,idU2rs)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u2dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idU2rs,ng),NF_FOUT,         &
+     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D total v-radiation stress.
+!
+        IF (Hout(idV2rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idV2rs)
+          Vinfo( 2)=Vname(2,idV2rs)
+          Vinfo( 3)=Vname(3,idV2rs)
+          Vinfo(14)=Vname(4,idV2rs)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v2dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idV2rs,ng),NF_FOUT,         &
+     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D u-Stokes drift velocity.
+!
+        IF (Hout(idU2Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idU2Sd)
+          Vinfo( 2)=Vname(2,idU2Sd)
+          Vinfo( 3)=Vname(3,idU2Sd)
+          Vinfo(14)=Vname(4,idU2Sd)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idU2Sd,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idU2Sd,ng),NF_FOUT,         &
+     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D v-Stokes drift velocity.
+!
+        IF (Hout(idV2Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idV2Sd)
+          Vinfo( 2)=Vname(2,idV2Sd)
+          Vinfo( 3)=Vname(3,idV2Sd)
+          Vinfo(14)=Vname(4,idV2Sd)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idV2Sd,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idV2Sd,ng),NF_FOUT,         &
+     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+        END IF
+
+# ifdef SOLVE3D
+!
+!  Define 3D radiation stress, Sxx-component.
+!
+        IF (Hout(idW3xx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3xx)
+          Vinfo( 2)=Vname(2,idW3xx)
+          Vinfo( 3)=Vname(3,idW3xx)
+          Vinfo(14)=Vname(4,idW3xx)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r3dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW3xx,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress, Sxy-component.
+!
+        IF (Hout(idW3xy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3xy)
+          Vinfo( 2)=Vname(2,idW3xy)
+          Vinfo( 3)=Vname(3,idW3xy)
+          Vinfo(14)=Vname(4,idW3xy)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r3dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW3xy,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress, Syy-component.
+!
+        IF (Hout(idW3yy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3yy)
+          Vinfo( 2)=Vname(2,idW3yy)
+          Vinfo( 3)=Vname(3,idW3yy)
+          Vinfo(14)=Vname(4,idW3yy)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r3dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW3yy,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress, Spx-component.
+!
+        IF (Hout(idW3zx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3zx)
+          Vinfo( 2)=Vname(2,idW3zx)
+          Vinfo( 3)=Vname(3,idW3zx)
+          Vinfo(14)=Vname(4,idW3zx)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r3dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW3zx,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress, Spy-component.
+!
+        IF (Hout(idW3zy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3zy)
+          Vinfo( 2)=Vname(2,idW3zy)
+          Vinfo( 3)=Vname(3,idW3zy)
+          Vinfo(14)=Vname(4,idW3zy)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r3dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idW3zy,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D total u-radiation stress.
+!
+        IF (Hout(idU3rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idU3rs)
+          Vinfo( 2)=Vname(2,idU3rs)
+          Vinfo( 3)=Vname(3,idU3rs)
+          Vinfo(14)=Vname(4,idU3rs)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idU3rs,ng),NF_FOUT,         &
+     &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D total v-radiation stress.
+!
+        IF (Hout(idV3rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idV3rs)
+          Vinfo( 2)=Vname(2,idV3rs)
+          Vinfo( 3)=Vname(3,idV3rs)
+          Vinfo(14)=Vname(4,idV3rs)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v3dvar,r8)
+          status=def_var(ncHISid(ng),hisVid(idV3rs,ng),NF_FOUT,         &
+     &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D u-Stokes velocity.
+!
+        IF (Hout(idU3Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idU3Sd)
+          Vinfo( 2)=Vname(2,idU3Sd)
+          Vinfo( 3)=Vname(3,idU3Sd)
+          Vinfo(14)=Vname(4,idU3Sd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idU3Sd,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idU3Sd,ng),NF_FOUT,         &
+     &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D v-Stokes velocity.
+!
+        IF (Hout(idV3Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idV3Sd)
+          Vinfo( 2)=Vname(2,idV3Sd)
+          Vinfo( 3)=Vname(3,idV3Sd)
+          Vinfo(14)=Vname(4,idV3Sd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idV3Sd,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idV3Sd,ng),NF_FOUT,         &
+     &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
+        END IF
+# endif
+#endif
+#ifdef WET_DRY
+!
+!  Define wet_dry masking.
+!
+!        IF (Hout(idWmsk,ng)) THEN
+          Vinfo( 1)=Vname(1,idWmsk)
+          Vinfo( 2)=Vname(2,idWmsk)
+          Vinfo( 3)=Vname(3,idWmsk)
+          Vinfo(14)=Vname(4,idWmsk)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWmsk,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idWmsk,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+!        END IF
+#endif
+#ifdef WAVES_HEIGHT
+!
+!  Define Hwave.
+!
+        IF (Hout(idWamp,ng)) THEN
+          Vinfo( 1)=Vname(1,idWamp)
+          Vinfo( 2)=Vname(2,idWamp)
+          Vinfo( 3)=Vname(3,idWamp)
+          Vinfo(14)=Vname(4,idWamp)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWamp,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idWamp,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+#endif
+#ifdef WAVES_LENGTH
+!
+!  Define Lwave.
+!
+        IF (Hout(idWlen,ng)) THEN
+          Vinfo( 1)=Vname(1,idWlen)
+          Vinfo( 2)=Vname(2,idWlen)
+          Vinfo( 3)=Vname(3,idWlen)
+          Vinfo(14)=Vname(4,idWlen)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWlen,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idWlen,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+#endif
+#ifdef WAVES_DIR
+!
+!  Define Dwave.
+!
+        IF (Hout(idWdir,ng)) THEN
+          Vinfo( 1)=Vname(1,idWdir)
+          Vinfo( 2)=Vname(2,idWdir)
+          Vinfo( 3)=Vname(3,idWdir)
+          Vinfo(14)=Vname(4,idWdir)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWdir,ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idWdir,ng),NF_FOUT,         &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  Leave definition mode.
@@ -1432,6 +1804,13 @@
             status=nf_inq_varid(ncHISid(ng),TRIM(Vname(1,idtime)),      &
      &                          hisVid(idtime,ng))
           END IF
+#if defined SEDIMENT && defined SED_MORPH
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idbath))) THEN
+            got_var(idbath)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),TRIM(Vname(1,idbath)),      &
+     &                          hisVid(idbath,ng))
+          END IF
+#endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
             status=nf_inq_varid(ncHISid(ng),TRIM(Vname(1,idFsur)),      &
@@ -1752,7 +2131,7 @@
      &                            hisVid(idfrac(itrc),ng))
             END IF
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBmas(itrc)))) THEN
-              got_var(idfrac(itrc))=.TRUE.
+              got_var(idBmas(itrc))=.TRUE.
               status=nf_inq_varid(ncHISid(ng),                          &
      &                            TRIM(Vname(1,idBmas(itrc))),          &
      &                            hisVid(idBmas(itrc),ng))
@@ -1778,6 +2157,114 @@
           END DO
 # endif
 #endif
+#if defined WET_DRY
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idWmsk))) THEN
+            got_var(idWmsk)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idWmsk)),                  &
+     &                          hisVid(idWmsk,ng))
+          END IF
+#endif
+#if defined NEARSHORE_MELLOR
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW2xx))) THEN
+            got_var(idW2xx)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW2xx)),                  &
+     &                          hisVid(idW2xx,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW2xy))) THEN
+            got_var(idW2xy)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW2xy)),                  &
+     &                          hisVid(idW2xy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW2yy))) THEN
+            got_var(idW2yy)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW2yy)),                  &
+     &                          hisVid(idW2yy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
+            got_var(idU2Sd)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idU2Sd)),                  &
+     &                          hisVid(idU2Sd,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV2Sd))) THEN
+            got_var(idV2Sd)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idV2Sd)),                  &
+     &                          hisVid(idV2Sd,ng))
+          END IF
+# ifdef SOLVE3D
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3xx))) THEN
+            got_var(idW3xx)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW3xx)),                  &
+     &                          hisVid(idW3xx,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3xy))) THEN
+            got_var(idW3xy)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW3xy)),                  &
+     &                          hisVid(idW3xy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3yy))) THEN
+            got_var(idW3yy)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW3yy)),                  &
+     &                          hisVid(idW3yy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3zx))) THEN
+            got_var(idW3zx)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW3zx)),                  &
+     &                          hisVid(idW3zx,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3zy))) THEN
+            got_var(idW3zy)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idW3zy)),                  &
+     &                          hisVid(idW3zy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
+            got_var(idU3Sd)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idU3Sd)),                  &
+     &                          hisVid(idU3Sd,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV3Sd))) THEN
+            got_var(idV3Sd)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idV3Sd)),                  &
+     &                          hisVid(idV3Sd,ng))
+          END IF
+# endif
+#endif
+#ifdef WAVES_HEIGHT
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idWamp))) THEN
+            got_var(idWamp)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idWamp)),                  &
+     &                          hisVid(idWamp,ng))
+          END IF
+#endif
+#ifdef WAVES_LENGTH
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idWlen))) THEN
+            got_var(idWlen)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idWlen)),                  &
+     &                          hisVid(idWlen,ng))
+          END IF
+#endif
+#ifdef WAVES_DIR
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idWdir))) THEN
+            got_var(idWdir)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idWdir)),                  &
+     &                          hisVid(idWdir,ng))
+          END IF
+#endif
         END DO
 !
 !  Check if history variables are available in input NetCDF file.
@@ -1787,6 +2274,13 @@
           exit_flag=3
           RETURN
         END IF
+#if defined SEDIMENT && defined SED_MORPH
+        IF (.not.got_var(idbath).and.Hout(idbath,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idbath)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
         IF (.not.got_var(idFsur).and.Hout(idFsur,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idFsur)), TRIM(ncname)
           exit_flag=3
@@ -2054,6 +2548,99 @@
           END IF
         END DO
 # endif
+#endif
+#if defined WET_DRY
+!        IF (.not.got_var(idWmsk).and.Hout(idWmsk,ng)) THEN
+        IF (.not.got_var(idWmsk)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idWmsk)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#if defined NEARSHORE_MELLOR
+        IF (.not.got_var(idW2xx).and.Hout(idW2xx,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW2xx)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW2xy).and.Hout(idW2xy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW2xy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW2yy).and.Hout(idW2yy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW2yy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU2Sd).and.Hout(idU2Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU2Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2Sd).and.Hout(idV2Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV2Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# ifdef SOLVE3D
+        IF (.not.got_var(idW3xx).and.Hout(idW3xx,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3xx)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3xy).and.Hout(idW3xy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3xy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3yy).and.Hout(idW3yy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3yy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3zx).and.Hout(idW3zx,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3zx)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3zy).and.Hout(idW3zy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3zy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU3Sd).and.Hout(idU3Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU3Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV3Sd).and.Hout(idV3Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV3Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+#endif
+#ifdef WAVES_HEIGHT
+        IF (.not.got_var(idWamp).and.Hout(idWamp,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idWamp)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#ifdef WAVES_LENGTH
+        IF (.not.got_var(idWlen).and.Hout(idWlen,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idWlen)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
+#ifdef WAVES_DIR
+        IF (.not.got_var(idWdir).and.Hout(idWdir,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idWdir)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 #endif
 !
 !  Set unlimited time record dimension to the appropriate value.

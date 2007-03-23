@@ -336,7 +336,7 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
-     &                  zeta_west(JLB))
+     &                  zeta_west)
 #   endif
 #  endif
 #  if defined EAST_FSOBC || defined EAST_M2OBC
@@ -354,7 +354,7 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
-     &                  zeta_east(JLB))
+     &                  zeta_east)
 #   endif
 #  endif
 #  if defined SOUTH_FSOBC || defined SOUTH_M2OBC
@@ -372,7 +372,7 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
-     &                  zeta_south(ILB))
+     &                  zeta_south)
 #   endif
 #  endif
 #  if defined NORTH_FSOBC || defined NORTH_M2OBC
@@ -390,7 +390,7 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
-     &                  zeta_north(ILB))
+     &                  zeta_north)
 #   endif
 #  endif
 # endif
@@ -493,9 +493,9 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
-     &                  ubar_west(JLB))
+     &                  ubar_west)
       CALL mp_boundary (ng, iNLM, Jstr,  JendR, JLB, JUB, 1, 1, update, &
-     &                  vbar_west(JLB))
+     &                  vbar_west)
 #   endif
 #  endif
 #  ifdef EAST_M2OBC
@@ -519,9 +519,9 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, JstrR, JendR, JLB, JUB, 1, 1, update, &
-     &                  ubar_east(JLB))
+     &                  ubar_east)
       CALL mp_boundary (ng, iNLM, Jstr,  JendR, JLB, JUB, 1, 1, update, &
-     &                  vbar_east(JLB))
+     &                  vbar_east)
 #   endif
 #  endif
 #  ifdef SOUTH_M2OBC
@@ -545,9 +545,9 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, Istr,  IendR, ILB, IUB, 1, 1, update, &
-     &                  ubar_south(ILB))
+     &                  ubar_south)
       CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
-     &                  vbar_south(ILB))
+     &                  vbar_south)
 #   endif
 #  endif
 #  ifdef NORTH_M2OBC
@@ -571,9 +571,9 @@
       END IF
 #   ifdef DISTRIBUTE
       CALL mp_boundary (ng, iNLM, Istr,  IendR, ILB, IUB, 1, 1, update, &
-     &                  ubar_north(ILB))
+     &                  ubar_north)
       CALL mp_boundary (ng, iNLM, IstrR, IendR, ILB, IUB, 1, 1, update, &
-     &                  vbar_north(ILB))
+     &                  vbar_north)
 #   endif
 #  endif
 # endif

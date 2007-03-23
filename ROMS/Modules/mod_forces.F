@@ -28,18 +28,30 @@
 !                                                                      !
 !  Surface wind induced waves.                                         !
 !                                                                      !
-!  Awave        Surface wind induced wave amplitude (m).               !
-!  AwaveG       Latest two-time snapshots of input "Awave" grided      !
+!  Hwave        Surface wind induced wave height (m).                  !
+!  HwaveG       Latest two-time snapshots of input "Hwave" grided      !
 !                 data used for interpolation.                         !
 !  Dwave        Surface wind induced wave direction (radians).         !
 !  DwaveG       Latest two-time snapshots of input "Dwave" grided      !
 !                 data used for interpolation.                         !
-!  Pwave        Surface wind induced wave period (s).                  !
-!  PwaveG       Latest two-time snapshots of input "Pwave" grided      !
+!  Lwave        Mean surface wavelength read in from swan output       !
+!  LwaveG       Latest two-time snapshots of input "Lwave" grided      !
+!                 data used for interpolation.                         !
+!  Pwave_top    Wind induced surface wave period (s).                  !
+!  Pwave_topG   Latest two-time snapshots of input "Pwave_top" grided  !
+!                 data used for interpolation.                         !
+!  Pwave_bot    Wind induced bottom wave period (s).                   !
+!  Pwave_botG   Latest two-time snapshots of input "Pwave_bot" grided  !
 !                 data used for interpolation.                         !
 !  Ub_swan      Bottom orbital velocity read in from swan output       !
 !  Ub_swanG     Latest two-time snapshots of input "Ub_swan" grided    !
 !                 data used for interpolation.                         !
+!  wave_dissip  Wave dissipation                                       !
+!  wave_dissipG Latest two-time snapshots of input "wave_dissip"       !
+!                 gridded data used for interpolation.                 !
+!  Wave_break   Percent of wave breaking for use with roller model.    !
+!  Wave_breakG  Latest two-time snapshots of input "wave_break"        !
+!                 gridded data used for interpolation.                 !
 !                                                                      !
 !  Solar shortwave radiation flux.                                     !
 !                                                                      !
@@ -154,16 +166,59 @@
           real(r8), pointer :: bustr(:,:)
           real(r8), pointer :: bvstr(:,:)
 
-#ifdef BBL_MODEL
-          real(r8), pointer :: UB_swan(:,:)
-          real(r8), pointer :: Awave(:,:)
+#ifdef WAVES_DIR
           real(r8), pointer :: Dwave(:,:)
-          real(r8), pointer :: Pwave(:,:)
 # ifndef ANA_WWAVE
-          real(r8), pointer :: UB_swanG(:,:,:)
-          real(r8), pointer :: AwaveG(:,:,:)
           real(r8), pointer :: DwaveG(:,:,:)
-          real(r8), pointer :: PwaveG(:,:,:)
+# endif
+#endif
+
+#ifdef WAVES_HEIGHT
+          real(r8), pointer :: Hwave(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: HwaveG(:,:,:)
+# endif
+#endif
+
+#ifdef WAVES_LENGTH
+          real(r8), pointer :: Lwave(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: LwaveG(:,:,:)
+# endif
+#endif
+
+#ifdef WAVES_TOP_PERIOD
+          real(r8), pointer :: Pwave_top(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: Pwave_topG(:,:,:)
+# endif
+#endif
+
+#ifdef WAVES_BOT_PERIOD
+          real(r8), pointer :: Pwave_bot(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: Pwave_botG(:,:,:)
+# endif
+#endif
+
+#if defined BBL_MODEL || defined WAVES_OCEAN
+          real(r8), pointer :: Ub_swan(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: Ub_swanG(:,:,:)
+# endif
+#endif
+
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+          real(r8), pointer :: wave_dissip(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: wave_dissipG(:,:,:)
+# endif
+#endif
+
+#if defined SVENDSEN_ROLLER
+          real(r8), pointer :: wave_break(:,:)
+# ifndef ANA_WWAVE
+          real(r8), pointer :: wave_breakG(:,:,:)
 # endif
 #endif
 
@@ -203,11 +258,13 @@
 #  endif
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           real(r8), pointer :: Pair(:,:)
 #  ifndef ANA_PAIR
           real(r8), pointer :: PairG(:,:,:)
 #  endif
+# endif
+# if defined BULK_FLUXES || defined ECOSIM
           real(r8), pointer :: Uwind(:,:)
           real(r8), pointer :: Vwind(:,:)
 #  ifndef ANA_WINDS
@@ -346,17 +403,59 @@
       allocate ( FORCES(ng) % bustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % bvstr(LBi:UBi,LBj:UBj) )
 
-#ifdef BBL_MODEL
-      allocate ( FORCES(ng) % UB_swan(LBi:UBi,LBj:UBj) )
-      allocate ( FORCES(ng) % Awave(LBi:UBi,LBj:UBj) )
+#ifdef WAVES_DIR
       allocate ( FORCES(ng) % Dwave(LBi:UBi,LBj:UBj) )
-      allocate ( FORCES(ng) % Pwave(LBi:UBi,LBj:UBj) )
-
 # ifndef ANA_WWAVE
-      allocate ( FORCES(ng) % UB_swanG(LBi:UBi,LBj:UBj,2) )
-      allocate ( FORCES(ng) % AwaveG(LBi:UBi,LBj:UBj,2) )
       allocate ( FORCES(ng) % DwaveG(LBi:UBi,LBj:UBj,2) )
-      allocate ( FORCES(ng) % PwaveG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
+#ifdef WAVES_HEIGHT
+      allocate ( FORCES(ng) % Hwave(LBi:UBi,LBj:UBj) )
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % HwaveG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
+#ifdef WAVES_LENGTH
+      allocate ( FORCES(ng) % Lwave(LBi:UBi,LBj:UBj) )
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % LwaveG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
+#ifdef WAVES_TOP_PERIOD
+      allocate ( FORCES(ng) % Pwave_top(LBi:UBi,LBj:UBj) )
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Pwave_topG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
+#ifdef WAVES_BOT_PERIOD
+      allocate ( FORCES(ng) % Pwave_bot(LBi:UBi,LBj:UBj) )
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Pwave_botG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
+#if defined BBL_MODEL || defined WAVES_OCEAN
+      allocate ( FORCES(ng) % Ub_swan(LBi:UBi,LBj:UBj) )
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Ub_swanG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+      allocate ( FORCES(ng) % wave_dissip(LBi:UBi,LBj:UBj) )
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Wave_dissipG(LBi:UBi,LBj:UBj,2) )
+# endif
+#endif
+
+#if defined SVENDSEN_ROLLER
+      allocate ( FORCES(ng) % wave_break(LBi:UBi,LBj:UBj) )
+# ifndef ANA_WWAVE
+      allocate ( FORCES(ng) % Wave_breakG(LBi:UBi,LBj:UBj,2) )
 # endif
 #endif
 
@@ -404,13 +503,15 @@
 #  endif
 # endif
 
-# if defined BULK_FLUXES || defined ECOSIM
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
       allocate ( FORCES(ng) % Pair(LBi:UBi,LBj:UBj) )
 
 #  ifndef ANA_PAIR
       allocate ( FORCES(ng) % PairG(LBi:UBi,LBj:UBj,2) )
 #  endif
+# endif
 
+# if defined BULK_FLUXES || defined ECOSIM
       allocate ( FORCES(ng) % Uwind(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % Vwind(LBi:UBi,LBj:UBj) )
 
@@ -598,22 +699,63 @@
 #endif
           FORCES(ng) % bustr(i,j) = IniVal
           FORCES(ng) % bvstr(i,j) = IniVal
-#ifdef BBL_MODEL
-          FORCES(ng) % UB_swan(i,j) = IniVal
-          FORCES(ng) % Awave(i,j) = IniVal
+#ifdef WAVES_DIR
           FORCES(ng) % Dwave(i,j) = IniVal
-          FORCES(ng) % Pwave(i,j) = IniVal
+# ifndef ANA_WWAVE
+          FORCES(ng) % DwaveG(i,j,1) = IniVal
+          FORCES(ng) % DwaveG(i,j,2) = IniVal
+# endif
+#endif
+#ifdef WAVES_HEIGHT
+          FORCES(ng) % Hwave(i,j) = IniVal
+# ifndef ANA_WWAVE
+          FORCES(ng) % HwaveG(i,j,1) = IniVal
+          FORCES(ng) % HwaveG(i,j,2) = IniVal
+# endif
+#endif
+#ifdef WAVES_LENGTH
+          FORCES(ng) % Lwave(i,j) = IniVal
+# ifndef ANA_WWAVE
+          FORCES(ng) % LwaveG(i,j,1) = IniVal
+          FORCES(ng) % LwaveG(i,j,2) = IniVal
+# endif
+#endif
+#ifdef WAVES_TOP_PERIOD
+          FORCES(ng) % Pwave_top(i,j) = IniVal
+# ifndef ANA_WWAVE
+          FORCES(ng) % Pwave_topG(i,j,1) = IniVal
+          FORCES(ng) % Pwave_topG(i,j,2) = IniVal
+# endif
+#endif
+#ifdef WAVES_BOT_PERIOD
+          FORCES(ng) % Pwave_bot(i,j) = IniVal
+# ifndef ANA_WWAVE
+          FORCES(ng) % Pwave_botG(i,j,1) = IniVal
+          FORCES(ng) % Pwave_botG(i,j,2) = IniVal
+# endif
+#endif
+#if defined BBL_MODEL || defined WAVES_OCEAN
+          FORCES(ng) % Ub_swan(i,j) = IniVal
 # ifndef ANA_WWAVE
           FORCES(ng) % Ub_swanG(i,j,1) = IniVal
           FORCES(ng) % Ub_swanG(i,j,2) = IniVal
-          FORCES(ng) % AwaveG(i,j,1) = IniVal
-          FORCES(ng) % AwaveG(i,j,2) = IniVal
-          FORCES(ng) % DwaveG(i,j,1) = IniVal
-          FORCES(ng) % DwaveG(i,j,2) = IniVal
-          FORCES(ng) % PwaveG(i,j,1) = IniVal
-          FORCES(ng) % PwaveG(i,j,2) = IniVal
 # endif
 #endif
+#if defined TKE_WAVEDISS || defined WAVES_OCEAN
+          FORCES(ng) % Wave_dissip(i,j) = IniVal
+# ifndef ANA_WWAVE
+          FORCES(ng) % Wave_dissipG(i,j,1) = IniVal
+          FORCES(ng) % Wave_dissipG(i,j,2) = IniVal
+# endif
+#endif
+#if defined SVENDSEN_ROLLER
+          FORCES(ng) % Wave_break(i,j) = IniVal
+# ifndef ANA_WWAVE
+          FORCES(ng) % Wave_breakG(i,j,1) = IniVal
+          FORCES(ng) % Wave_breakG(i,j,2) = IniVal
+# endif
+#endif
+
 #ifdef SOLVE3D
 # ifdef SHORTWAVE
           FORCES(ng) % srflx(i,j) = IniVal
@@ -639,8 +781,10 @@
           FORCES(ng) % Hair(i,j) = IniVal
           FORCES(ng) % Tair(i,j) = IniVal
 # endif
-# if defined BULK_FLUXES || defined ECOSIM
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
           FORCES(ng) % Pair(i,j) = IniVal
+# endif
+# if defined BULK_FLUXES || defined ECOSIM
           FORCES(ng) % Uwind(i,j) = IniVal
           FORCES(ng) % Vwind(i,j) = IniVal
 # endif
@@ -659,10 +803,14 @@
           FORCES(ng) % HairG(i,j,1) = IniVal
           FORCES(ng) % HairG(i,j,2) = IniVal
 #  endif
+# endif
+# if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 #  ifndef ANA_PAIR
           FORCES(ng) % PairG(i,j,1) = IniVal
           FORCES(ng) % PairG(i,j,2) = IniVal
 #  endif
+# endif
+# if defined BULK_FLUXES || defined ECOSIM
 #  ifndef ANA_TAIR
           FORCES(ng) % TairG(i,j,1) = IniVal
           FORCES(ng) % TairG(i,j,2) = IniVal
@@ -786,7 +934,7 @@
           END DO
         END DO
 # endif
-      END DO 
+      END DO
 #endif
 
       RETURN

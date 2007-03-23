@@ -11,14 +11,20 @@ master.o: overflow.h sw06.h seamount.h ias.h a4dvar_toy.h lake_signell.h
 master.o: lmd_test.h kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h
 master.o: bio_toy.h grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
 master.o: adriatic.h soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
-master.o: riverplume.h cblast.h basin.h sed_test.h cppdefs.h benchmark.h
-master.o: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
-master.o: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+master.o: riverplume.h cblast.h basin.h sed_test.h waves_ocean.h cppdefs.h
+master.o: benchmark.h inner_product.h channel_neck.h estuary_test.h npacific.h
+master.o: nena.h canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
 master.o: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
 master.o: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
 master.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 master.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
-master.o: basin.h sed_test.h
+master.o: basin.h sed_test.h cppdefs.h benchmark.h inner_product.h
+master.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+master.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+master.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
+master.o: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h flt_test.h
+master.o: scb.h coupling_test.h adriatic.h soliton.h damee.h bl_test.h
+master.o: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h sed_test.h
 master.f90: ocean.h cppdefs.h benchmark.h inner_product.h channel_neck.h
 master.f90: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h eac.h
 master.f90: weddell.h overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
@@ -27,6 +33,13 @@ master.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h flt_test.h
 master.f90: scb.h coupling_test.h adriatic.h soliton.h damee.h bl_test.h
 master.f90: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h sed_test.h
 master.f90: air_ocean.h cppdefs.h benchmark.h inner_product.h channel_neck.h
+master.f90: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h eac.h
+master.f90: weddell.h overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
+master.f90: lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
+master.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h flt_test.h
+master.f90: scb.h coupling_test.h adriatic.h soliton.h damee.h bl_test.h
+master.f90: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h sed_test.h
+master.f90: waves_ocean.h cppdefs.h benchmark.h inner_product.h channel_neck.h
 master.f90: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h eac.h
 master.f90: weddell.h overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
 master.f90: lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
@@ -425,15 +438,68 @@ ocean_control.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
 ocean_control.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 ocean_control.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h
 ocean_control.f90: cblast.h basin.h sed_test.h
-ocean_control.o: ad_convolution.o ad_variability.o analytical.o atm_coupler.o
-ocean_control.o: back_cost.o back_cov.o back_step.o cgradient.o cost_grad.o
-ocean_control.o: cost_norm.o descent.o distribute.o dotproduct.o downhill.o
-ocean_control.o: impulse.o ini_adjust.o ini_fields.o mod_forces.o
-ocean_control.o: mod_fourdvar.o mod_grid.o mod_iounits.o mod_ncparam.o
-ocean_control.o: mod_netcdf.o mod_ocean.o mod_parallel.o mod_param.o
-ocean_control.o: mod_scalars.o mod_stepping.o mod_storage.o normalization.o
-ocean_control.o: packing.o propagator.o tl_convolution.o tl_ini_adjust.o
-ocean_control.o: tl_variability.o ocean_control.f90
+ocean_control.o: ad_convolution.o ad_variability.o analytical.o back_cost.o
+ocean_control.o: back_cov.o back_step.o cgradient.o cost_grad.o cost_norm.o
+ocean_control.o: descent.o distribute.o dotproduct.o downhill.o impulse.o
+ocean_control.o: ini_adjust.o ini_fields.o mod_forces.o mod_fourdvar.o
+ocean_control.o: mod_grid.o mod_iounits.o mod_ncparam.o mod_netcdf.o
+ocean_control.o: mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o
+ocean_control.o: mod_stepping.o mod_storage.o normalization.o ocean_coupler.o
+ocean_control.o: packing.o propagator.o tl_balance.o tl_convolution.o
+ocean_control.o: tl_ini_adjust.o tl_variability.o ocean_control.f90
+
+ocean_coupler.o: mct_roms_wrf.h set_bounds.h wrf_io_flags.h tile.h cppdefs.h
+ocean_coupler.o: benchmark.h inner_product.h channel_neck.h estuary_test.h
+ocean_coupler.o: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
+ocean_coupler.o: overflow.h sw06.h seamount.h ias.h a4dvar_toy.h lake_signell.h
+ocean_coupler.o: lmd_test.h kelvin.h uswest.h lab_canyon.h upwelling.h
+ocean_coupler.o: sed_toy.h bio_toy.h grav_adj.h windbasin.h flt_test.h scb.h
+ocean_coupler.o: coupling_test.h adriatic.h soliton.h damee.h bl_test.h
+ocean_coupler.o: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
+ocean_coupler.o: sed_test.h mct_roms_swan.h tile.h cppdefs.h benchmark.h
+ocean_coupler.o: inner_product.h channel_neck.h estuary_test.h npacific.h
+ocean_coupler.o: nena.h canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h
+ocean_coupler.o: sw06.h seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h
+ocean_coupler.o: kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h
+ocean_coupler.o: grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
+ocean_coupler.o: adriatic.h soliton.h damee.h bl_test.h double_gyre.h
+ocean_coupler.o: nj_bight.h riverplume.h cblast.h basin.h sed_test.h cppdefs.h
+ocean_coupler.o: benchmark.h inner_product.h channel_neck.h estuary_test.h
+ocean_coupler.o: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
+ocean_coupler.o: overflow.h sw06.h seamount.h ias.h a4dvar_toy.h lake_signell.h
+ocean_coupler.o: lmd_test.h kelvin.h uswest.h lab_canyon.h upwelling.h
+ocean_coupler.o: sed_toy.h bio_toy.h grav_adj.h windbasin.h flt_test.h scb.h
+ocean_coupler.o: coupling_test.h adriatic.h soliton.h damee.h bl_test.h
+ocean_coupler.o: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
+ocean_coupler.o: sed_test.h
+ocean_coupler.f90: mct_roms_wrf.h set_bounds.h wrf_io_flags.h tile.h cppdefs.h
+ocean_coupler.f90: benchmark.h inner_product.h channel_neck.h estuary_test.h
+ocean_coupler.f90: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h
+ocean_coupler.f90: weddell.h overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
+ocean_coupler.f90: lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
+ocean_coupler.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
+ocean_coupler.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+ocean_coupler.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h
+ocean_coupler.f90: cblast.h basin.h sed_test.h mct_roms_swan.h tile.h cppdefs.h
+ocean_coupler.f90: benchmark.h inner_product.h channel_neck.h estuary_test.h
+ocean_coupler.f90: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h
+ocean_coupler.f90: weddell.h overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
+ocean_coupler.f90: lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
+ocean_coupler.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
+ocean_coupler.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+ocean_coupler.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h
+ocean_coupler.f90: cblast.h basin.h sed_test.h cppdefs.h benchmark.h
+ocean_coupler.f90: inner_product.h channel_neck.h estuary_test.h npacific.h
+ocean_coupler.f90: nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
+ocean_coupler.f90: overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
+ocean_coupler.f90: lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
+ocean_coupler.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
+ocean_coupler.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+ocean_coupler.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h
+ocean_coupler.f90: cblast.h basin.h sed_test.h
+ocean_coupler.o: exchange_2d.o mod_forces.o mod_grid.o mod_iounits.o
+ocean_coupler.o: mod_kinds.o mod_ocean.o mod_parallel.o mod_param.o
+ocean_coupler.o: mod_scalars.o mod_stepping.o mp_exchange.o ocean_coupler.f90
 
 propagator.o: propagator_fsv.h propagator_fte.h propagator_so_semi.h
 propagator.o: propagator_op.h propagator_afte.h cppdefs.h benchmark.h
@@ -612,8 +678,8 @@ ad_convolution.f90: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 ad_convolution.f90: sed_test.h
 ad_convolution.o: ad_conv_2d.o ad_conv_3d.o mod_fourdvar.o mod_grid.o
 ad_convolution.o: mod_kinds.o mod_mixing.o mod_ncparam.o mod_ocean.o
-ad_convolution.o: mod_param.o mod_scalars.o mp_exchange.o set_depth.o
-ad_convolution.o: ad_convolution.f90
+ad_convolution.o: mod_param.o mod_scalars.o mod_stepping.o mp_exchange.o
+ad_convolution.o: set_depth.o ad_convolution.f90
 
 ad_def_his.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 ad_def_his.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -845,9 +911,10 @@ ad_main2d.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
 ad_main2d.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 ad_main2d.f90: sed_test.h
 ad_main2d.o: ad_diag.o ad_forcing.o ad_htobs.o ad_ini_fields.o ad_misfit.o
-ad_main2d.o: ad_set_avg.o ad_set_vbc.o ad_step2d.o adsen_force.o atm_coupler.o
-ad_main2d.o: mod_fourdvar.o mod_iounits.o mod_parallel.o mod_param.o
-ad_main2d.o: mod_scalars.o mod_stepping.o mod_storage.o packing.o ad_main2d.f90
+ad_main2d.o: ad_set_avg.o ad_set_vbc.o ad_step2d.o adsen_force.o mod_fourdvar.o
+ad_main2d.o: mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+ad_main2d.o: mod_stepping.o mod_storage.o ocean_coupler.o packing.o
+ad_main2d.o: ad_main2d.f90
 
 ad_main3d.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 ad_main3d.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -868,9 +935,9 @@ ad_main3d.o: ad_biology.o ad_bulk_flux.o ad_diag.o ad_forcing.o ad_htobs.o
 ad_main3d.o: ad_ini_fields.o ad_misfit.o ad_omega.o ad_rho_eos.o ad_rhs3d.o
 ad_main3d.o: ad_set_avg.o ad_set_massflux.o ad_set_vbc.o ad_step2d.o
 ad_main3d.o: ad_step3d_t.o ad_step3d_uv.o adsen_force.o analytical.o
-ad_main3d.o: atm_coupler.o bulk_flux.o mod_fourdvar.o mod_iounits.o
-ad_main3d.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
-ad_main3d.o: mod_storage.o omega.o packing.o rho_eos.o set_depth.o
+ad_main3d.o: bulk_flux.o mod_fourdvar.o mod_iounits.o mod_parallel.o
+ad_main3d.o: mod_param.o mod_scalars.o mod_stepping.o mod_storage.o
+ad_main3d.o: ocean_coupler.o omega.o packing.o rho_eos.o set_depth.o
 ad_main3d.o: set_massflux.o ad_main3d.f90
 
 ad_misfit.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
@@ -931,7 +998,7 @@ ad_omega.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 ad_omega.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
 ad_omega.f90: basin.h sed_test.h
 ad_omega.o: ad_bc_3d.o bc_3d.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
-ad_omega.o: mp_exchange.o ad_omega.f90
+ad_omega.o: mod_sources.o mod_stepping.o mp_exchange.o ad_omega.f90
 
 ad_output.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 ad_output.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -1154,7 +1221,33 @@ ad_set_vbc.f90: riverplume.h cblast.h basin.h sed_test.h
 ad_set_vbc.o: ad_bc_2d.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
 ad_set_vbc.o: mod_scalars.o mod_stepping.o mp_exchange.o ad_set_vbc.f90
 
-ad_step2d.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+ad_set_zeta.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+ad_set_zeta.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+ad_set_zeta.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+ad_set_zeta.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
+ad_set_zeta.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+ad_set_zeta.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
+ad_set_zeta.o: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+ad_set_zeta.o: riverplume.h cblast.h basin.h sed_test.h
+ad_set_zeta.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+ad_set_zeta.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h
+ad_set_zeta.f90: natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+ad_set_zeta.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h
+ad_set_zeta.f90: kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h
+ad_set_zeta.f90: grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
+ad_set_zeta.f90: adriatic.h soliton.h damee.h bl_test.h double_gyre.h
+ad_set_zeta.f90: nj_bight.h riverplume.h cblast.h basin.h sed_test.h
+ad_set_zeta.o: ad_exchange_2d.o mod_coupling.o mod_ocean.o mod_param.o
+ad_set_zeta.o: mod_scalars.o mp_exchange.o ad_set_zeta.f90
+
+ad_step2d.o: ad_step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h benchmark.h
+ad_step2d.o: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+ad_step2d.o: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+ad_step2d.o: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+ad_step2d.o: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+ad_step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+ad_step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+ad_step2d.o: basin.h sed_test.h cppdefs.h benchmark.h inner_product.h
 ad_step2d.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
 ad_step2d.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
 ad_step2d.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
@@ -1162,11 +1255,18 @@ ad_step2d.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
 ad_step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 ad_step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
 ad_step2d.o: basin.h sed_test.h
-ad_step2d.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
-ad_step2d.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
-ad_step2d.f90: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
-ad_step2d.f90: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
-ad_step2d.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+ad_step2d.f90: ad_step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h benchmark.h
+ad_step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+ad_step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+ad_step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+ad_step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+ad_step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
+ad_step2d.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+ad_step2d.f90: riverplume.h cblast.h basin.h sed_test.h cppdefs.h benchmark.h
+ad_step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+ad_step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+ad_step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+ad_step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
 ad_step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
 ad_step2d.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
 ad_step2d.f90: riverplume.h cblast.h basin.h sed_test.h
@@ -1600,6 +1700,63 @@ adsen_initial.f90: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 adsen_initial.f90: sed_test.h
 adsen_initial.o: mod_clima.o mod_grid.o mod_ncparam.o mod_ocean.o mod_param.o
 adsen_initial.o: mod_scalars.o mod_stepping.o adsen_initial.f90
+
+analytical.o: ana_ssh.h set_bounds.h tile.h ana_tobc.h set_bounds.h tile.h
+analytical.o: ana_fsobc.h set_bounds.h tile.h ana_bmflux.h set_bounds.h tile.h
+analytical.o: ana_passive.h set_bounds.h tile.h ana_stflux.h set_bounds.h
+analytical.o: tile.h ana_spinning.h set_bounds.h tile.h ana_m2clima.h
+analytical.o: set_bounds.h tile.h ana_psource.h ana_rain.h set_bounds.h tile.h
+analytical.o: ana_cloud.h set_bounds.h tile.h ana_specir.h set_bounds.h tile.h
+analytical.o: ana_scope.h set_bounds.h tile.h ana_humid.h set_bounds.h tile.h
+analytical.o: ana_initial.h set_bounds.h tile.h ana_sst.h set_bounds.h tile.h
+analytical.o: ana_grid.h set_bounds.h tile.h ana_wwave.h set_bounds.h tile.h
+analytical.o: ana_m3obc.h set_bounds.h tile.h ana_sss.h set_bounds.h tile.h
+analytical.o: ana_diag.h tile.h ana_tclima.h set_bounds.h tile.h ana_mask.h
+analytical.o: set_bounds.h tile.h ana_pair.h set_bounds.h tile.h ana_m2obc.h
+analytical.o: set_bounds.h tile.h ana_winds.h set_bounds.h tile.h ana_biology.h
+analytical.o: set_bounds.h tile.h ana_m3clima.h set_bounds.h tile.h
+analytical.o: ana_smflux.h set_bounds.h tile.h ana_perturb.h set_bounds.h
+analytical.o: tile.h ana_vmix.h set_bounds.h tile.h ana_tair.h set_bounds.h
+analytical.o: tile.h cppdefs.h benchmark.h inner_product.h channel_neck.h
+analytical.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
+analytical.o: eac.h weddell.h overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
+analytical.o: lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
+analytical.o: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h flt_test.h
+analytical.o: scb.h coupling_test.h adriatic.h soliton.h damee.h bl_test.h
+analytical.o: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h sed_test.h
+analytical.o: ana_srflux.h set_bounds.h tile.h ana_sediment.h set_bounds.h
+analytical.o: tile.h
+analytical.f90: ana_ssh.h set_bounds.h tile.h ana_tobc.h set_bounds.h tile.h
+analytical.f90: ana_fsobc.h set_bounds.h tile.h ana_bmflux.h set_bounds.h
+analytical.f90: tile.h ana_passive.h set_bounds.h tile.h ana_stflux.h
+analytical.f90: set_bounds.h tile.h ana_spinning.h set_bounds.h tile.h
+analytical.f90: ana_m2clima.h set_bounds.h tile.h ana_psource.h ana_rain.h
+analytical.f90: set_bounds.h tile.h ana_cloud.h set_bounds.h tile.h
+analytical.f90: ana_specir.h set_bounds.h tile.h ana_scope.h set_bounds.h
+analytical.f90: tile.h ana_humid.h set_bounds.h tile.h ana_initial.h
+analytical.f90: set_bounds.h tile.h ana_sst.h set_bounds.h tile.h ana_grid.h
+analytical.f90: set_bounds.h tile.h ana_wwave.h set_bounds.h tile.h ana_m3obc.h
+analytical.f90: set_bounds.h tile.h ana_sss.h set_bounds.h tile.h ana_diag.h
+analytical.f90: tile.h ana_tclima.h set_bounds.h tile.h ana_mask.h set_bounds.h
+analytical.f90: tile.h ana_pair.h set_bounds.h tile.h ana_m2obc.h set_bounds.h
+analytical.f90: tile.h ana_winds.h set_bounds.h tile.h ana_biology.h
+analytical.f90: set_bounds.h tile.h ana_m3clima.h set_bounds.h tile.h
+analytical.f90: ana_smflux.h set_bounds.h tile.h ana_perturb.h set_bounds.h
+analytical.f90: tile.h ana_vmix.h set_bounds.h tile.h ana_tair.h set_bounds.h
+analytical.f90: tile.h cppdefs.h benchmark.h inner_product.h channel_neck.h
+analytical.f90: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
+analytical.f90: eac.h weddell.h overflow.h sw06.h seamount.h ias.h a4dvar_toy.h
+analytical.f90: lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
+analytical.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
+analytical.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
+analytical.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+analytical.f90: basin.h sed_test.h ana_srflux.h set_bounds.h tile.h
+analytical.f90: ana_sediment.h set_bounds.h tile.h
+analytical.o: distribute.o exchange_2d.o exchange_3d.o mod_biology.o
+analytical.o: mod_boundary.o mod_clima.o mod_eclight.o mod_forces.o mod_grid.o
+analytical.o: mod_iounits.o mod_mixing.o mod_ncparam.o mod_ocean.o
+analytical.o: mod_parallel.o mod_param.o mod_scalars.o mod_sediment.o
+analytical.o: mod_sources.o mod_stepping.o mp_exchange.o analytical.f90
 
 mod_arrays.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 mod_arrays.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -2112,48 +2269,6 @@ mod_tides.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
 mod_tides.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 mod_tides.f90: sed_test.h
 mod_tides.o: mod_kinds.o mod_param.o mod_tides.f90
-
-analytical.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
-analytical.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
-analytical.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
-analytical.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
-analytical.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
-analytical.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
-analytical.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
-analytical.o: basin.h sed_test.h
-analytical.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
-analytical.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
-analytical.f90: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
-analytical.f90: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
-analytical.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
-analytical.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
-analytical.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
-analytical.f90: riverplume.h cblast.h basin.h sed_test.h
-analytical.o: distribute.o exchange_2d.o exchange_3d.o mod_biology.o
-analytical.o: mod_boundary.o mod_clima.o mod_eclight.o mod_forces.o mod_grid.o
-analytical.o: mod_iounits.o mod_mixing.o mod_ncparam.o mod_ocean.o
-analytical.o: mod_parallel.o mod_param.o mod_scalars.o mod_sediment.o
-analytical.o: mod_sources.o mod_stepping.o mp_exchange.o analytical.f90
-
-atm_coupler.o: set_bounds.h wrf_io_flags.h tile.h cppdefs.h benchmark.h
-atm_coupler.o: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
-atm_coupler.o: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
-atm_coupler.o: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
-atm_coupler.o: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
-atm_coupler.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
-atm_coupler.o: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
-atm_coupler.o: riverplume.h cblast.h basin.h sed_test.h
-atm_coupler.f90: set_bounds.h wrf_io_flags.h tile.h cppdefs.h benchmark.h
-atm_coupler.f90: inner_product.h channel_neck.h estuary_test.h npacific.h
-atm_coupler.f90: nena.h canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h
-atm_coupler.f90: sw06.h seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h
-atm_coupler.f90: kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h
-atm_coupler.f90: grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
-atm_coupler.f90: adriatic.h soliton.h damee.h bl_test.h double_gyre.h
-atm_coupler.f90: nj_bight.h riverplume.h cblast.h basin.h sed_test.h
-atm_coupler.o: exchange_2d.o mod_forces.o mod_grid.o mod_kinds.o mod_ocean.o
-atm_coupler.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
-atm_coupler.o: atm_coupler.f90
 
 bbl.o: mb_bbl.h set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
 bbl.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
@@ -2668,10 +2783,10 @@ main2d.f90: lmd_test.h kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h
 main2d.f90: bio_toy.h grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
 main2d.f90: adriatic.h soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
 main2d.f90: riverplume.h cblast.h basin.h sed_test.h
-main2d.o: atm_coupler.o diag.o dotproduct.o forcing.o ini_fields.o
-main2d.o: mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
-main2d.o: oi_update.o set_avg.o set_tides.o set_vbc.o step2d.o step_floats.o
-main2d.o: main2d.f90
+main2d.o: diag.o dotproduct.o forcing.o ini_fields.o mod_iounits.o
+main2d.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
+main2d.o: ocean_coupler.o oi_update.o set_avg.o set_tides.o set_vbc.o step2d.o
+main2d.o: step_floats.o main2d.f90
 
 main3d.o: cppdefs.h benchmark.h inner_product.h channel_neck.h estuary_test.h
 main3d.o: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
@@ -2687,13 +2802,13 @@ main3d.f90: lmd_test.h kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h
 main3d.f90: bio_toy.h grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
 main3d.f90: adriatic.h soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
 main3d.f90: riverplume.h cblast.h basin.h sed_test.h
-main3d.o: analytical.o atm_coupler.o bbl.o biology.o bulk_flux.o bvf_mix.o
-main3d.o: diag.o dotproduct.o forcing.o gls_corstep.o gls_prestep.o
-main3d.o: ini_fields.o lmd_vmix.o mod_iounits.o mod_parallel.o mod_param.o
-main3d.o: mod_scalars.o mod_stepping.o my25_corstep.o my25_prestep.o
+main3d.o: analytical.o bbl.o biology.o bulk_flux.o bvf_mix.o diag.o
+main3d.o: dotproduct.o forcing.o gls_corstep.o gls_prestep.o ini_fields.o
+main3d.o: lmd_vmix.o mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+main3d.o: mod_stepping.o my25_corstep.o my25_prestep.o ocean_coupler.o
 main3d.o: oi_update.o omega.o rho_eos.o rhs3d.o sediment.o set_avg.o
-main3d.o: set_massflux.o set_tides.o set_vbc.o step2d.o step3d_t.o step3d_uv.o
-main3d.o: step_floats.o wvelocity.o main3d.f90
+main3d.o: set_massflux.o set_tides.o set_vbc.o set_zeta.o step2d.o step3d_t.o
+main3d.o: step3d_uv.o step_floats.o wvelocity.o main3d.f90
 
 mpdata_adiff.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 mpdata_adiff.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -2789,8 +2904,8 @@ omega.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
 omega.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
 omega.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 omega.f90: sed_test.h
-omega.o: bc_3d.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o mp_exchange.o
-omega.o: omega.f90
+omega.o: bc_3d.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o mod_sources.o
+omega.o: mod_stepping.o mp_exchange.o omega.f90
 
 output.o: cppdefs.h benchmark.h inner_product.h channel_neck.h estuary_test.h
 output.o: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
@@ -2995,7 +3110,7 @@ set_depth.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
 set_depth.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
 set_depth.f90: riverplume.h cblast.h basin.h sed_test.h
 set_depth.o: exchange_2d.o exchange_3d.o mod_coupling.o mod_grid.o mod_ocean.o
-set_depth.o: mod_param.o mod_scalars.o mod_sediment.o mp_exchange.o
+set_depth.o: mod_param.o mod_scalars.o mod_stepping.o mp_exchange.o
 set_depth.o: set_depth.f90
 
 set_massflux.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
@@ -3057,21 +3172,68 @@ set_vbc.f90: basin.h sed_test.h
 set_vbc.o: bc_2d.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
 set_vbc.o: mod_scalars.o mod_stepping.o mp_exchange.o set_vbc.f90
 
-step2d.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+set_zeta.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+set_zeta.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+set_zeta.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+set_zeta.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
+set_zeta.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
+set_zeta.o: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
+set_zeta.o: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
+set_zeta.o: sed_test.h
+set_zeta.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+set_zeta.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+set_zeta.f90: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+set_zeta.f90: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
+set_zeta.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+set_zeta.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+set_zeta.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+set_zeta.f90: basin.h sed_test.h
+set_zeta.o: exchange_2d.o mod_coupling.o mod_ocean.o mod_param.o mod_scalars.o
+set_zeta.o: mp_exchange.o set_zeta.f90
+
+step2d.o: step2d_LF_AM3s.h set_bounds.h tile.h cppdefs.h benchmark.h
+step2d.o: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+step2d.o: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+step2d.o: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+step2d.o: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+step2d.o: basin.h sed_test.h step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h
+step2d.o: benchmark.h inner_product.h channel_neck.h estuary_test.h npacific.h
+step2d.o: nena.h canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+step2d.o: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+step2d.o: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+step2d.o: basin.h sed_test.h cppdefs.h benchmark.h inner_product.h
 step2d.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
 step2d.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
 step2d.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h lab_canyon.h
 step2d.o: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h flt_test.h
 step2d.o: scb.h coupling_test.h adriatic.h soliton.h damee.h bl_test.h
 step2d.o: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h sed_test.h
-step2d.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
-step2d.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
-step2d.f90: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
-step2d.f90: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
-step2d.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
-step2d.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
-step2d.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
-step2d.f90: sed_test.h
+step2d.f90: step2d_LF_AM3s.h set_bounds.h tile.h cppdefs.h benchmark.h
+step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+step2d.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+step2d.f90: basin.h sed_test.h step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h
+step2d.f90: benchmark.h inner_product.h channel_neck.h estuary_test.h
+step2d.f90: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
+step2d.f90: overflow.h sw06.h seamount.h ias.h a4dvar_toy.h lake_signell.h
+step2d.f90: lmd_test.h kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h
+step2d.f90: bio_toy.h grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
+step2d.f90: adriatic.h soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+step2d.f90: riverplume.h cblast.h basin.h sed_test.h cppdefs.h benchmark.h
+step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+step2d.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+step2d.f90: basin.h sed_test.h
 step2d.o: exchange_2d.o mod_clima.o mod_coupling.o mod_diags.o mod_forces.o
 step2d.o: mod_grid.o mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
 step2d.o: mod_sediment.o mod_sources.o mod_stepping.o mp_exchange.o
@@ -3643,9 +3805,9 @@ rp_main2d.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
 rp_main2d.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
 rp_main2d.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 rp_main2d.f90: sed_test.h
-rp_main2d.o: atm_coupler.o mod_iounits.o mod_parallel.o mod_param.o
-rp_main2d.o: mod_scalars.o mod_stepping.o rp_diag.o rp_set_vbc.o rp_step2d.o
-rp_main2d.o: tl_forcing.o tl_ini_fields.o rp_main2d.f90
+rp_main2d.o: mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
+rp_main2d.o: mod_stepping.o ocean_coupler.o rp_diag.o rp_ini_fields.o
+rp_main2d.o: rp_set_vbc.o rp_step2d.o tl_forcing.o rp_main2d.f90
 
 rp_main3d.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 rp_main3d.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -3662,12 +3824,12 @@ rp_main3d.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
 rp_main3d.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
 rp_main3d.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 rp_main3d.f90: sed_test.h
-rp_main3d.o: analytical.o atm_coupler.o mod_iounits.o mod_parallel.o
-rp_main3d.o: mod_param.o mod_scalars.o mod_stepping.o omega.o rp_biology.o
+rp_main3d.o: analytical.o mod_iounits.o mod_parallel.o mod_param.o
+rp_main3d.o: mod_scalars.o mod_stepping.o ocean_coupler.o omega.o rp_biology.o
 rp_main3d.o: rp_bulk_flux.o rp_diag.o rp_ini_fields.o rp_omega.o rp_rho_eos.o
-rp_main3d.o: rp_rhs3d.o rp_set_massflux.o rp_set_vbc.o rp_step2d.o
-rp_main3d.o: rp_step3d_t.o rp_step3d_uv.o set_depth.o set_massflux.o
-rp_main3d.o: tl_forcing.o rp_main3d.f90
+rp_main3d.o: rp_rhs3d.o rp_set_massflux.o rp_set_vbc.o rp_set_zeta.o
+rp_main3d.o: rp_step2d.o rp_step3d_t.o rp_step3d_uv.o set_depth.o
+rp_main3d.o: set_massflux.o tl_forcing.o rp_main3d.f90
 
 rp_obc_volcons.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
 rp_obc_volcons.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h
@@ -3708,7 +3870,7 @@ rp_omega.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 rp_omega.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
 rp_omega.f90: basin.h sed_test.h
 rp_omega.o: bc_3d.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
-rp_omega.o: mp_exchange.o rp_omega.f90
+rp_omega.o: mod_sources.o mod_stepping.o mp_exchange.o rp_omega.f90
 
 rp_output.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 rp_output.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -3851,7 +4013,7 @@ rp_set_depth.f90: coupling_test.h adriatic.h soliton.h damee.h bl_test.h
 rp_set_depth.f90: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 rp_set_depth.f90: sed_test.h
 rp_set_depth.o: exchange_2d.o exchange_3d.o mod_coupling.o mod_grid.o
-rp_set_depth.o: mod_ocean.o mod_param.o mod_scalars.o mod_sediment.o
+rp_set_depth.o: mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
 rp_set_depth.o: mp_exchange.o rp_set_depth.f90
 
 rp_set_massflux.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
@@ -3895,7 +4057,33 @@ rp_set_vbc.f90: riverplume.h cblast.h basin.h sed_test.h
 rp_set_vbc.o: bc_2d.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
 rp_set_vbc.o: mod_scalars.o mod_stepping.o mp_exchange.o rp_set_vbc.f90
 
-rp_step2d.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+rp_set_zeta.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+rp_set_zeta.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+rp_set_zeta.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+rp_set_zeta.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
+rp_set_zeta.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+rp_set_zeta.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
+rp_set_zeta.o: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+rp_set_zeta.o: riverplume.h cblast.h basin.h sed_test.h
+rp_set_zeta.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+rp_set_zeta.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h
+rp_set_zeta.f90: natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+rp_set_zeta.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h
+rp_set_zeta.f90: kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h
+rp_set_zeta.f90: grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
+rp_set_zeta.f90: adriatic.h soliton.h damee.h bl_test.h double_gyre.h
+rp_set_zeta.f90: nj_bight.h riverplume.h cblast.h basin.h sed_test.h
+rp_set_zeta.o: exchange_2d.o mod_coupling.o mod_ocean.o mod_param.o
+rp_set_zeta.o: mod_scalars.o mp_exchange.o rp_set_zeta.f90
+
+rp_step2d.o: rp_step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h benchmark.h
+rp_step2d.o: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+rp_step2d.o: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+rp_step2d.o: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+rp_step2d.o: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+rp_step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+rp_step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+rp_step2d.o: basin.h sed_test.h cppdefs.h benchmark.h inner_product.h
 rp_step2d.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
 rp_step2d.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
 rp_step2d.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
@@ -3903,11 +4091,18 @@ rp_step2d.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
 rp_step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 rp_step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
 rp_step2d.o: basin.h sed_test.h
-rp_step2d.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
-rp_step2d.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
-rp_step2d.f90: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
-rp_step2d.f90: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
-rp_step2d.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+rp_step2d.f90: rp_step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h benchmark.h
+rp_step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+rp_step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+rp_step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+rp_step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+rp_step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
+rp_step2d.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+rp_step2d.f90: riverplume.h cblast.h basin.h sed_test.h cppdefs.h benchmark.h
+rp_step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+rp_step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+rp_step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+rp_step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
 rp_step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
 rp_step2d.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
 rp_step2d.f90: riverplume.h cblast.h basin.h sed_test.h
@@ -4288,6 +4483,25 @@ rp_zetabc.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 rp_zetabc.o: mod_stepping.o rp_zetabc.f90
 
 
+tl_balance.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+tl_balance.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+tl_balance.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+tl_balance.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
+tl_balance.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+tl_balance.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+tl_balance.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+tl_balance.o: basin.h sed_test.h
+tl_balance.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+tl_balance.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+tl_balance.f90: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+tl_balance.f90: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
+tl_balance.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+tl_balance.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
+tl_balance.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+tl_balance.f90: riverplume.h cblast.h basin.h sed_test.h
+tl_balance.o: mod_grid.o mod_kinds.o mod_ocean.o mod_param.o mod_scalars.o
+tl_balance.o: tl_balance.f90
+
 tl_biology.o: tl_npzd_Franks.h set_bounds.h tile.h cppdefs.h benchmark.h
 tl_biology.o: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
 tl_biology.o: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
@@ -4411,8 +4625,8 @@ tl_convolution.f90: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 tl_convolution.f90: sed_test.h
 tl_convolution.o: mod_fourdvar.o mod_grid.o mod_kinds.o mod_mixing.o
 tl_convolution.o: mod_ncparam.o mod_ocean.o mod_param.o mod_scalars.o
-tl_convolution.o: mp_exchange.o set_depth.o tl_conv_2d.o tl_conv_3d.o
-tl_convolution.o: tl_convolution.f90
+tl_convolution.o: mod_stepping.o mp_exchange.o set_depth.o tl_conv_2d.o
+tl_convolution.o: tl_conv_3d.o tl_convolution.f90
 
 tl_def_his.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 tl_def_his.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -4607,9 +4821,10 @@ tl_main2d.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
 tl_main2d.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
 tl_main2d.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 tl_main2d.f90: sed_test.h
-tl_main2d.o: atm_coupler.o dotproduct.o mod_iounits.o mod_parallel.o
-tl_main2d.o: mod_param.o mod_scalars.o mod_stepping.o tl_diag.o tl_forcing.o
-tl_main2d.o: tl_ini_fields.o tl_set_vbc.o tl_step2d.o tl_main2d.f90
+tl_main2d.o: dotproduct.o mod_iounits.o mod_parallel.o mod_param.o
+tl_main2d.o: mod_scalars.o mod_stepping.o ocean_coupler.o tl_diag.o
+tl_main2d.o: tl_forcing.o tl_ini_fields.o tl_set_vbc.o tl_step2d.o
+tl_main2d.o: tl_main2d.f90
 
 tl_main3d.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 tl_main3d.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -4626,12 +4841,12 @@ tl_main3d.f90: upwelling.h sed_toy.h bio_toy.h grav_adj.h windbasin.h
 tl_main3d.f90: flt_test.h scb.h coupling_test.h adriatic.h soliton.h damee.h
 tl_main3d.f90: bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 tl_main3d.f90: sed_test.h
-tl_main3d.o: analytical.o atm_coupler.o dotproduct.o mod_iounits.o
-tl_main3d.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o omega.o
-tl_main3d.o: set_depth.o set_massflux.o tl_biology.o tl_bulk_flux.o tl_diag.o
-tl_main3d.o: tl_forcing.o tl_ini_fields.o tl_omega.o tl_rho_eos.o tl_rhs3d.o
-tl_main3d.o: tl_set_massflux.o tl_set_vbc.o tl_step2d.o tl_step3d_t.o
-tl_main3d.o: tl_step3d_uv.o tl_main3d.f90
+tl_main3d.o: analytical.o dotproduct.o mod_iounits.o mod_parallel.o mod_param.o
+tl_main3d.o: mod_scalars.o mod_stepping.o ocean_coupler.o omega.o set_depth.o
+tl_main3d.o: set_massflux.o tl_biology.o tl_bulk_flux.o tl_diag.o tl_forcing.o
+tl_main3d.o: tl_ini_fields.o tl_omega.o tl_rho_eos.o tl_rhs3d.o
+tl_main3d.o: tl_set_massflux.o tl_set_vbc.o tl_set_zeta.o tl_step2d.o
+tl_main3d.o: tl_step3d_t.o tl_step3d_uv.o tl_main3d.f90
 
 tl_obc_volcons.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
 tl_obc_volcons.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h
@@ -4672,7 +4887,7 @@ tl_omega.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 tl_omega.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
 tl_omega.f90: basin.h sed_test.h
 tl_omega.o: bc_3d.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
-tl_omega.o: mp_exchange.o tl_omega.f90
+tl_omega.o: mod_sources.o mod_stepping.o mp_exchange.o tl_omega.f90
 
 tl_output.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 tl_output.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -4815,7 +5030,7 @@ tl_set_depth.f90: coupling_test.h adriatic.h soliton.h damee.h bl_test.h
 tl_set_depth.f90: double_gyre.h nj_bight.h riverplume.h cblast.h basin.h
 tl_set_depth.f90: sed_test.h
 tl_set_depth.o: exchange_2d.o exchange_3d.o mod_coupling.o mod_grid.o
-tl_set_depth.o: mod_ocean.o mod_param.o mod_scalars.o mod_sediment.o
+tl_set_depth.o: mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
 tl_set_depth.o: mp_exchange.o tl_set_depth.f90
 
 tl_set_massflux.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
@@ -4859,7 +5074,33 @@ tl_set_vbc.f90: riverplume.h cblast.h basin.h sed_test.h
 tl_set_vbc.o: bc_2d.o mod_forces.o mod_grid.o mod_ocean.o mod_param.o
 tl_set_vbc.o: mod_scalars.o mod_stepping.o mp_exchange.o tl_set_vbc.f90
 
-tl_step2d.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+tl_set_zeta.o: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+tl_set_zeta.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
+tl_set_zeta.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
+tl_set_zeta.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
+tl_set_zeta.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+tl_set_zeta.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
+tl_set_zeta.o: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+tl_set_zeta.o: riverplume.h cblast.h basin.h sed_test.h
+tl_set_zeta.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
+tl_set_zeta.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h
+tl_set_zeta.f90: natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+tl_set_zeta.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h
+tl_set_zeta.f90: kelvin.h uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h
+tl_set_zeta.f90: grav_adj.h windbasin.h flt_test.h scb.h coupling_test.h
+tl_set_zeta.f90: adriatic.h soliton.h damee.h bl_test.h double_gyre.h
+tl_set_zeta.f90: nj_bight.h riverplume.h cblast.h basin.h sed_test.h
+tl_set_zeta.o: exchange_2d.o mod_coupling.o mod_ocean.o mod_param.o
+tl_set_zeta.o: mod_scalars.o mp_exchange.o tl_set_zeta.f90
+
+tl_step2d.o: tl_step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h benchmark.h
+tl_step2d.o: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+tl_step2d.o: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+tl_step2d.o: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+tl_step2d.o: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+tl_step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
+tl_step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
+tl_step2d.o: basin.h sed_test.h cppdefs.h benchmark.h inner_product.h
 tl_step2d.o: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
 tl_step2d.o: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
 tl_step2d.o: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
@@ -4867,11 +5108,18 @@ tl_step2d.o: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
 tl_step2d.o: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h soliton.h
 tl_step2d.o: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
 tl_step2d.o: basin.h sed_test.h
-tl_step2d.f90: set_bounds.h tile.h cppdefs.h benchmark.h inner_product.h
-tl_step2d.f90: channel_neck.h estuary_test.h npacific.h nena.h canyon.h natl.h
-tl_step2d.f90: globaldefs.h eac.h weddell.h overflow.h sw06.h seamount.h ias.h
-tl_step2d.f90: a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h uswest.h
-tl_step2d.f90: lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+tl_step2d.f90: tl_step2d_LF_AM3.h set_bounds.h tile.h cppdefs.h benchmark.h
+tl_step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+tl_step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+tl_step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+tl_step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
+tl_step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
+tl_step2d.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
+tl_step2d.f90: riverplume.h cblast.h basin.h sed_test.h cppdefs.h benchmark.h
+tl_step2d.f90: inner_product.h channel_neck.h estuary_test.h npacific.h nena.h
+tl_step2d.f90: canyon.h natl.h globaldefs.h eac.h weddell.h overflow.h sw06.h
+tl_step2d.f90: seamount.h ias.h a4dvar_toy.h lake_signell.h lmd_test.h kelvin.h
+tl_step2d.f90: uswest.h lab_canyon.h upwelling.h sed_toy.h bio_toy.h grav_adj.h
 tl_step2d.f90: windbasin.h flt_test.h scb.h coupling_test.h adriatic.h
 tl_step2d.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
 tl_step2d.f90: riverplume.h cblast.h basin.h sed_test.h
@@ -6124,10 +6372,11 @@ ini_adjust.f90: soliton.h damee.h bl_test.h double_gyre.h nj_bight.h
 ini_adjust.f90: riverplume.h cblast.h basin.h sed_test.h
 ini_adjust.o: distribute.o exchange_2d.o exchange_3d.o mod_coupling.o
 ini_adjust.o: mod_fourdvar.o mod_grid.o mod_iounits.o mod_ncparam.o mod_ocean.o
-ini_adjust.o: mod_parallel.o mod_param.o mod_scalars.o mp_exchange.o
-ini_adjust.o: set_depth.o t3dbc_im.o tl_set_depth.o tl_t3dbc_im.o tl_u2dbc_im.o
-ini_adjust.o: tl_u3dbc_im.o tl_v2dbc_im.o tl_v3dbc_im.o tl_zetabc.o u2dbc_im.o
-ini_adjust.o: u3dbc_im.o v2dbc_im.o v3dbc_im.o zetabc.o ini_adjust.f90
+ini_adjust.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
+ini_adjust.o: mp_exchange.o set_depth.o t3dbc_im.o tl_set_depth.o tl_t3dbc_im.o
+ini_adjust.o: tl_u2dbc_im.o tl_u3dbc_im.o tl_v2dbc_im.o tl_v3dbc_im.o
+ini_adjust.o: tl_zetabc.o u2dbc_im.o u3dbc_im.o v2dbc_im.o v3dbc_im.o zetabc.o
+ini_adjust.o: ini_adjust.f90
 
 inp_par.o: cppdefs.h benchmark.h inner_product.h channel_neck.h estuary_test.h
 inp_par.o: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
@@ -6183,7 +6432,7 @@ metrics.f90: damee.h bl_test.h double_gyre.h nj_bight.h riverplume.h cblast.h
 metrics.f90: basin.h sed_test.h
 metrics.o: distribute.o exchange_2d.o mod_fourdvar.o mod_grid.o mod_iounits.o
 metrics.o: mod_ncparam.o mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o
-metrics.o: mp_exchange.o set_depth.o metrics.f90
+metrics.o: mod_stepping.o mp_exchange.o set_depth.o metrics.f90
 
 mp_exchange.o: cppdefs.h benchmark.h inner_product.h channel_neck.h
 mp_exchange.o: estuary_test.h npacific.h nena.h canyon.h natl.h globaldefs.h
@@ -6353,9 +6602,9 @@ normalization.f90: sed_test.h
 normalization.o: ad_conv_2d.o ad_conv_3d.o bc_2d.o bc_3d.o distribute.o
 normalization.o: mod_fourdvar.o mod_grid.o mod_iounits.o mod_kinds.o
 normalization.o: mod_mixing.o mod_ncparam.o mod_netcdf.o mod_ocean.o
-normalization.o: mod_parallel.o mod_param.o mod_scalars.o mp_exchange.o
-normalization.o: set_depth.o tl_conv_2d.o tl_conv_3d.o white_noise.o
-normalization.o: normalization.f90
+normalization.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
+normalization.o: mp_exchange.o set_depth.o tl_conv_2d.o tl_conv_3d.o
+normalization.o: white_noise.o normalization.f90
 
 nrutil.o: mod_kinds.o nrutil.f90
 
@@ -6816,6 +7065,7 @@ stiffness.f90: riverplume.h cblast.h basin.h sed_test.h
 stiffness.o: distribute.o mod_grid.o mod_iounits.o mod_ocean.o mod_parallel.o
 stiffness.o: mod_param.o mod_scalars.o stiffness.f90
 
+
 timers.o: cppdefs.h benchmark.h inner_product.h channel_neck.h estuary_test.h
 timers.o: npacific.h nena.h canyon.h natl.h globaldefs.h eac.h weddell.h
 timers.o: overflow.h sw06.h seamount.h ias.h a4dvar_toy.h lake_signell.h
@@ -7078,6 +7328,7 @@ ad_set_avg_mod.mod: ad_set_avg.o
 ad_set_depth_mod.mod: ad_set_depth.o
 ad_set_massflux_mod.mod: ad_set_massflux.o
 ad_set_vbc_mod.mod: ad_set_vbc.o
+ad_set_zeta_mod.mod: ad_set_zeta.o
 ad_step2d_mod.mod: ad_step2d.o
 ad_step3d_t_mod.mod: ad_step3d_t.o
 ad_step3d_uv_mod.mod: ad_step3d_uv.o
@@ -7093,7 +7344,6 @@ ad_zetabc_mod.mod: ad_zetabc.o
 adsen_force_mod.mod: adsen_force.o
 adsen_initial_mod.mod: adsen_initial.o
 analytical_mod.mod: analytical.o
-atm_coupler_mod.mod: atm_coupler.o
 back_cost_mod.mod: back_cost.o
 back_cov_mod.mod: back_cov.o
 back_step_mod.mod: back_step.o
@@ -7136,6 +7386,7 @@ my25_prestep_mod.mod: my25_prestep.o
 normalization_mod.mod: normalization.o
 obc_volcons_mod.mod: obc_volcons.o
 ocean_control_mod.mod: ocean_control.o
+ocean_coupler_mod.mod: ocean_coupler.o
 oi_update_mod.mod: oi_update.o
 omega_mod.mod: omega.o
 packing_mod.mod: packing.o
@@ -7157,6 +7408,7 @@ rp_rhs3d_mod.mod: rp_rhs3d.o
 rp_set_depth_mod.mod: rp_set_depth.o
 rp_set_massflux_mod.mod: rp_set_massflux.o
 rp_set_vbc_mod.mod: rp_set_vbc.o
+rp_set_zeta_mod.mod: rp_set_zeta.o
 rp_step2d_mod.mod: rp_step2d.o
 rp_step3d_t_mod.mod: rp_step3d_t.o
 rp_step3d_uv_mod.mod: rp_step3d_uv.o
@@ -7180,15 +7432,18 @@ set_depth_mod.mod: set_depth.o
 set_massflux_mod.mod: set_massflux.o
 set_tides_mod.mod: set_tides.o
 set_vbc_mod.mod: set_vbc.o
+set_zeta_mod.mod: set_zeta.o
 shapiro_mod.mod: shapiro.o
 step2d_mod.mod: step2d.o
 step3d_t_mod.mod: step3d_t.o
 step3d_uv_mod.mod: step3d_uv.o
 step_floats_mod.mod: step_floats.o
 stiffness_mod.mod: stiffness.o
+sv_perturb_mod.mod: sv_perturb.o
 t3dbc_mod.mod: t3dbc_im.o
 t3dmix_mod.mod: t3dmix.o
 tkebc_mod.mod: tkebc_im.o
+tl_balance_mod.mod: tl_balance.o
 tl_biology_mod.mod: tl_biology.o
 tl_bulk_flux_mod.mod: tl_bulk_flux.o
 tl_conv_2d_mod.mod: tl_conv_2d.o
@@ -7207,6 +7462,7 @@ tl_rhs3d_mod.mod: tl_rhs3d.o
 tl_set_depth_mod.mod: tl_set_depth.o
 tl_set_massflux_mod.mod: tl_set_massflux.o
 tl_set_vbc_mod.mod: tl_set_vbc.o
+tl_set_zeta_mod.mod: tl_set_zeta.o
 tl_step2d_mod.mod: tl_step2d.o
 tl_step3d_t_mod.mod: tl_step3d_t.o
 tl_step3d_uv_mod.mod: tl_step3d_uv.o

@@ -31,6 +31,12 @@
       USE mod_param
       USE mod_grid
       USE mod_ocean
+# ifdef Q_PSOURCE
+      USE mod_sources
+# endif
+# if defined Q_PSOURCE || (defined SEDIMENT && defined SED_MORPH)
+      USE mod_stepping
+# endif
 !
 !  Imported variable declarations.
 !
@@ -45,6 +51,20 @@
 # endif
       CALL omega_tile (ng, Istr, Iend, Jstr, Jend,                      &
      &                 LBi, UBi, LBj, UBj,                              &
+# if defined SEDIMENT && defined SED_MORPH
+     &                 nstp(ng), nnew(ng),                              &
+# endif
+# ifdef Q_PSOURCE
+     &                 Nsrc(ng),                                        &
+     &                 SOURCES(ng) % Isrc,                              &
+     &                 SOURCES(ng) % Jsrc,                              &
+     &                 SOURCES(ng) % Dsrc,                              &
+     &                 SOURCES(ng) % Qsrc,                              &
+# endif
+# if defined SEDIMENT && defined SED_MORPH
+     &                 GRID(ng) % omn,                                  &
+     &                 GRID(ng) % bed_thick,                            &
+# endif
      &                 GRID(ng) % Huon,                                 &
      &                 GRID(ng) % Hvom,                                 &
      &                 GRID(ng) % z_w,                                  &
@@ -58,7 +78,18 @@
 !***********************************************************************
       SUBROUTINE omega_tile (ng, Istr, Iend, Jstr, Jend,                &
      &                       LBi, UBi, LBj, UBj,                        &
-     &                       Huon, Hvom, z_w, W)
+# if defined SEDIMENT && defined SED_MORPH
+     &                       nstp, nnew,                                &
+# endif
+# ifdef Q_PSOURCE
+     &                       Nsrc, Isrc, Jsrc, Dsrc, Qsrc,              &
+# endif
+# if defined SEDIMENT && defined SED_MORPH
+     &                       omn, bed_thick,                            &
+# endif
+     &                       Huon, Hvom,                                &
+     &                       z_w,                                       &
+     &                       W)
 !***********************************************************************
 !
       USE mod_param
@@ -73,13 +104,39 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+# if defined SEDIMENT && defined SED_MORPH
+      integer, intent(in) :: nstp, nnew
+# endif
+# ifdef Q_PSOURCE
+      integer, intent(in) :: Nsrc
+# endif
 !
 # ifdef ASSUMED_SHAPE
+#  ifdef Q_PSOURCE
+      integer, intent(in) :: Isrc(:)
+      integer, intent(in) :: Jsrc(:)
+      real(r8), intent(in) :: Dsrc(:)
+      real(r8), intent(in) :: Qsrc(:,:)
+#  endif
+#  if defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(in) :: omn(LBi:,LBj:)
+      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
+#  endif
       real(r8), intent(in) :: Huon(LBi:,LBj:,:)
       real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(out) :: W(LBi:,LBj:,0:)
 # else
+#  ifdef Q_PSOURCE
+      integer, intent(in) :: Isrc(Msrc)
+      integer, intent(in) :: Jsrc(Msrc)
+      real(r8), intent(in) :: Dsrc(Msrc)
+      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
+#  endif
+#  if defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
+#  endif
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
@@ -102,22 +159,36 @@
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
+# ifdef Q_PSOURCE
+      integer :: ii, jj, is
+# endif
+# if defined SEDIMENT && defined SED_MORPH
+      real(r8) :: cff1
+# endif
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: wrk
 
 # include "set_bounds.h"
 !
-!-----------------------------------------------------------------------
-!  Vertically integrage horizontal mass flux divergence.
-!-----------------------------------------------------------------------
+!------------------------------------------------------------------------
+!  Vertically integrate horizontal mass flux divergence.
+!------------------------------------------------------------------------
 !
 !  Starting with zero vertical velocity at the bottom, integrate
 !  from the bottom (k=0) to the free-surface (k=N).  The w(:,:,N(ng))
 !  contains the vertical velocity at the free-surface, d(zeta)/d(t).
 !  Notice that barotropic mass flux divergence is not used directly.
 !
+# if defined SEDIMENT && defined SED_MORPH
+      cff1=1.0_r8/dt(ng)
+# endif
       DO j=Jstr,Jend
         DO i=Istr,Iend
+# if defined SEDIMENT && defined SED_MORPH
+          W(i,j,0)=-cff1*(bed_thick(i,j,nstp)-                          &
+     &                    bed_thick(i,j,nnew))*omn(i,j)
+# else
           W(i,j,0)=0.0_r8
+# endif
         END DO
         DO k=1,N(ng)
           DO i=Istr,Iend
@@ -126,6 +197,23 @@
      &                Hvom(i,j+1,k)-Hvom(i,j,k))
           END DO
         END DO
+# ifdef Q_PSOURCE
+!
+!  Apply mass point sources - Volume influx.
+!
+        DO is=1,Nsrc
+          ii=Isrc(is)
+          jj=Jsrc(is)
+          IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                    &
+     &        ((JstrR.le.jj).and.(jj.le.JendR)).and.                    &
+     &        (j.eq.jj)) THEN
+            DO k=1,N(ng)
+              W(ii,jj,k)=W(ii,jj,k)+Qsrc(is,k)
+            END DO
+          END IF
+        END DO
+# endif
+!
         DO i=Istr,Iend
           wrk(i)=W(i,j,N(ng))/(z_w(i,j,N(ng))-z_w(i,j,0))
         END DO

@@ -47,6 +47,8 @@
 
       integer :: DimIDs(31)
       integer :: r2dgrd(4), ru2dgrd(4), rv2dgrd(4)
+      integer :: sr2dgrd(3), su2dgrd(3), sv2dgrd(3)
+      integer :: sr3dgrd(4), su3dgrd(4), sv3dgrd(4)
       integer :: t2dgrd(4), u2dgrd(4), v2dgrd(4)
       integer :: Vsize(4)
 
@@ -55,7 +57,7 @@
 #ifdef SOLVE3D
       integer :: itrc
 
-      integer :: b3dgrd(4), k3dgrd(5), t3dgrd(5)
+      integer :: k3dgrd(5), t3dgrd(5)
       integer :: r3dgrd(4), ru3dgrd(5), rv3dgrd(5) 
       integer :: u3dgrd(5), v3dgrd(5), w3dgrd(4)
 #endif
@@ -370,16 +372,45 @@
 #  endif
 # endif
 !
-!  Define dimension vector for sediment bed layer type variables.
+!  Define dimension vector for sediment, radiation stress variables.
 !
 # if defined WRITE_WATER && defined MASKING
-        b3dgrd(1)=DimIDs(24)
-        b3dgrd(2)=DimIDs(12)
+        sr2dgrd(1)=DimIDs(17)
+        sr2dgrd(2)=DimIDs(12)
+        su2dgrd(1)=DimIDs(18)
+        su2dgrd(2)=DimIDs(12)
+        sv2dgrd(1)=DimIDs(19)
+        sv2dgrd(2)=DimIDs(12)
+
+        sr3dgrd(1)=DimIDs(24)
+        sr3dgrd(2)=DimIDs(12)
+        su3dgrd(1)=DimIDs(21)
+        su3dgrd(2)=DimIDs(12)
+        sv3dgrd(1)=DimIDs(22)
+        sv3dgrd(2)=DimIDs(12)
 # else
-        b3dgrd(1)=DimIDs( 1)
-        b3dgrd(2)=DimIDs( 5)
-        b3dgrd(3)=DimIDs(16)
-        b3dgrd(4)=DimIDs(12)
+        sr2dgrd(1)=DimIDs( 1)
+        sr2dgrd(2)=DimIDs( 5)
+        sr2dgrd(3)=DimIDs(12)
+        su2dgrd(1)=DimIDs( 2)
+        su2dgrd(2)=DimIDs( 6)
+        su2dgrd(3)=DimIDs(12)
+        sv2dgrd(1)=DimIDs( 3)
+        sv2dgrd(2)=DimIDs( 7)
+        sv2dgrd(3)=DimIDs(12)
+
+        sr3dgrd(1)=DimIDs( 1)
+        sr3dgrd(2)=DimIDs( 5)
+        sr3dgrd(3)=DimIDs(16)
+        sr3dgrd(4)=DimIDs(12)
+        su3dgrd(1)=DimIDs( 2)
+        su3dgrd(2)=DimIDs( 6)
+        su3dgrd(3)=DimIDs( 9)
+        su3dgrd(4)=DimIDs(12)
+        sv3dgrd(1)=DimIDs( 3)
+        sv3dgrd(2)=DimIDs( 7)
+        sv3dgrd(3)=DimIDs( 9)
+        sv3dgrd(4)=DimIDs(12)
 # endif
 #endif
 !
@@ -457,14 +488,31 @@
           Vinfo( 4)='360_day'
         ELSE IF (INT(time_ref).eq.0) THEN
           Vinfo( 3)='seconds since 0001-01-01 00:00:00'
-          Vinfo( 4)='365.25_day'
+          Vinfo( 4)='julian'
         ELSE IF (time_ref.gt.0.0_r8) THEN
           WRITE (Vinfo( 3),'(a,1x,a)') 'seconds since', TRIM(r_text)
-          Vinfo( 4)='standard'
+          Vinfo( 4)='gregorian'
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ncRSTid(ng),rstVid(idtime,ng),NF_TYPE,           &
      &                 1,recdim,Aval,Vinfo,ncname)
+#if defined SEDIMENT && defined SED_MORPH
+!
+!  Define free-surface.
+!
+        Vinfo( 1)=Vname(1,idbath)
+        Vinfo( 2)=Vname(2,idbath)
+        Vinfo( 3)=Vname(3,idbath)
+        Vinfo(14)=Vname(4,idbath)
+        Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_rho'
+# endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idbath,ng),r8)
+        status=def_var(ncRSTid(ng),rstVid(idbath,ng),NF_FRST,           &
+     &                 nvd3,t2dgrd,Aval,Vinfo,ncname)
+#endif
 !
 !  Define free-surface.
 !
@@ -876,7 +924,7 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUbld(i),ng),r8)
           status=def_var(ncRSTid(ng),rstVid(idUbld(i),ng),NF_FRST,      &
-     &                     nvd3,u2dgrd,Aval,Vinfo,ncname)
+     &                     nvd3,su2dgrd,Aval,Vinfo,ncname)
 !
 !  Define Bedload V-direction.
 !
@@ -891,7 +939,7 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVbld(i),ng),r8)
           status=def_var(ncRSTid(ng),rstVid(idVbld(i),ng),NF_FRST,      &
-     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+     &                   nvd3,sv2dgrd,Aval,Vinfo,ncname)
         END DO
 #  endif
 !
@@ -910,7 +958,7 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idfrac(i),ng),r8)
           status=def_var(ncRSTid(ng),rstVid(idfrac(i),ng),NF_FRST,      &
-     &                   nvd4,b3dgrd,Aval,Vinfo,ncname)
+     &                   nvd4,sr3dgrd,Aval,Vinfo,ncname)
         END DO
 !
 !  Define sediment mass of each size class in each bed layer.
@@ -928,7 +976,7 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idBmas(i),ng),r8)
           status=def_var(ncRSTid(ng),rstVid(idBmas(i),ng),NF_FRST,      &
-     &                   nvd4,b3dgrd,Aval,Vinfo,ncname)
+     &                   nvd4,sr3dgrd,Aval,Vinfo,ncname)
         END DO
 !
 !  Define sediment properties in each bed layer.
@@ -945,7 +993,7 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idSbed(i),ng),r8)
           status=def_var(ncRSTid(ng),rstVid(idSbed(i),ng),NF_FRST,      &
-     &                   nvd4,b3dgrd,Aval,Vinfo,ncname)
+     &                   nvd4,sr3dgrd,Aval,Vinfo,ncname)
         END DO
 # endif
 # if defined SEDIMENT || defined BBL_MODEL
@@ -967,9 +1015,90 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idBott(i),ng),r8)
           status=def_var(ncRSTid(ng),rstVid(idBott(i),ng),NF_FRST,      &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+     &                   nvd3,sr2dgrd,Aval,Vinfo,ncname)
         END DO
 # endif
+#endif
+#ifdef NEARSHORE_MELLOR
+!
+!  Define 2D u-stokes velocity.
+!
+          Vinfo( 1)=Vname(1,idU2Sd)
+          Vinfo( 2)=Vname(2,idU2Sd)
+          Vinfo( 3)=Vname(3,idU2Sd)
+          Vinfo(14)=Vname(4,idU2Sd)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idU2Sd,ng),r8)
+          status=def_var(ncRSTid(ng),rstVid(idU2Sd,ng),NF_FRST,         &
+     &                   nvd3,su2dgrd,Aval,Vinfo,ncname)
+!
+!  Define 2D v-stokes velocity.
+!
+          Vinfo( 1)=Vname(1,idV2Sd)
+          Vinfo( 2)=Vname(2,idV2Sd)
+          Vinfo( 3)=Vname(3,idV2Sd)
+          Vinfo(14)=Vname(4,idV2Sd)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idV2Sd,ng),r8)
+          status=def_var(ncRSTid(ng),rstVid(idV2Sd,ng),NF_FRST,         &
+     &                   nvd3,sv2dgrd,Aval,Vinfo,ncname)
+# ifdef SOLVE3D
+!
+!  Define 3D u-stokes velocity.
+!
+          Vinfo( 1)=Vname(1,idU3Sd)
+          Vinfo( 2)=Vname(2,idU3Sd)
+          Vinfo( 3)=Vname(3,idU3Sd)
+          Vinfo(14)=Vname(4,idU3Sd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idU3Sd,ng),r8)
+          status=def_var(ncRSTid(ng),rstVid(idU3Sd,ng),NF_FRST,         &
+     &                   nvd4,su3dgrd,Aval,Vinfo,ncname)
+!
+!  Define 3D v-stokes velocity.
+!
+          Vinfo( 1)=Vname(1,idV3Sd)
+          Vinfo( 2)=Vname(2,idV3Sd)
+          Vinfo( 3)=Vname(3,idV3Sd)
+          Vinfo(14)=Vname(4,idV3Sd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idV3Sd,ng),r8)
+          status=def_var(ncRSTid(ng),rstVid(idV3Sd,ng),NF_FRST,         &
+     &                   nvd4,sv3dgrd,Aval,Vinfo,ncname)
+# endif
+#endif
+#ifdef WET_DRY
+!
+!  Define wet_dry masking.
+!
+          Vinfo( 1)=Vname(1,idWmsk)
+          Vinfo( 2)=Vname(2,idWmsk)
+          Vinfo( 3)=Vname(3,idWmsk)
+          Vinfo(14)=Vname(4,idWmsk)
+          Vinfo(16)=Vname(1,idtime)
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idWmsk,ng),r8)
+          status=def_var(ncRSTid(ng),rstVid(idWmsk,ng),NF_FRST,         &
+     &                   nvd3,sr2dgrd,Aval,Vinfo,ncname)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -1027,6 +1156,13 @@
             status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idtime)),      &
      &                          rstVid(idtime,ng))
           END IF
+#if defined SEDIMENT && defined SED_MORPH
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idbath))) THEN
+            got_var(idbath)=.TRUE.
+            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idbath)),      &
+     &                          rstVid(idbath,ng))
+          END IF
+#endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
             status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idFsur)),      &
@@ -1198,7 +1334,7 @@
             END IF
           END DO
 # endif
-# if defined SEDIIMENT || defined BBL_MODEL
+# if defined SEDIMENT || defined BBL_MODEL
           DO itrc=1,6
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
               got_var(idBott(itrc))=.TRUE.
@@ -1207,6 +1343,42 @@
      &                            rstVid(idBott(itrc),ng))
             END IF
           END DO
+# endif
+#endif
+#if defined WET_DRY
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idWmsk))) THEN
+            got_var(idWmsk)=.TRUE.
+            status=nf_inq_varid(ncRSTid(ng),                            &
+     &                          TRIM(Vname(1,idWmsk)),                  &
+     &                          rstVid(idWmsk,ng))
+            END IF
+#endif
+#if defined NEARSHORE_MELLOR
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
+            got_var(idU2Sd)=.TRUE.
+            status=nf_inq_varid(ncRSTid(ng),                            &
+     &                          TRIM(Vname(1,idU2Sd)),                  &
+     &                          rstVid(idU2Sd,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV2Sd))) THEN
+            got_var(idV2Sd)=.TRUE.
+            status=nf_inq_varid(ncRSTid(ng),                            &
+     &                          TRIM(Vname(1,idV2Sd)),                  &
+     &                          rstVid(idV2Sd,ng))
+          END IF
+# ifdef SOLVE3D
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
+            got_var(idU3Sd)=.TRUE.
+            status=nf_inq_varid(ncRSTid(ng),                            &
+     &                          TRIM(Vname(1,idU3Sd)),                  &
+     &                          rstVid(idU3Sd,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV3Sd))) THEN
+            got_var(idV3Sd)=.TRUE.
+            status=nf_inq_varid(ncRSTid(ng),                            &
+     &                          TRIM(Vname(1,idV3Sd)),                  &
+     &                          rstVid(idV3Sd,ng))
+          END IF
 # endif
 #endif
         END DO
@@ -1219,6 +1391,13 @@
           exit_flag=3
           RETURN
         END IF
+#if defined SEDIMENT && defined SED_MORPH
+        IF (.not.got_var(idbath)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idbath)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#endif
         IF (.not.got_var(idFsur)) THEN
           WRITE (stdout,40) TRIM(Vname(1,idFsur)), TRIM(ncname)
           exit_flag=3
@@ -1364,6 +1543,37 @@
           END IF
         END DO
 # endif
+#endif
+#if defined NEARSHORE_MELLOR
+        IF (.not.got_var(idU2Sd)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idU2Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2Sd)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idV2Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# ifdef SOLVE3D
+        IF (.not.got_var(idU3Sd)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idU3Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV3Sd)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idV3Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
+#endif
+#if defined WET_DRY
+        IF (.not.got_var(idWmsk)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idWmsk)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 #endif
 !
 !  Set unlimited time record dimension to current value.

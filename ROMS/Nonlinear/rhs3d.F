@@ -138,7 +138,9 @@
      &                 OCEAN(ng) % u,                                   &
      &                 OCEAN(ng) % v,                                   &
      &                 OCEAN(ng) % W,                                   &
+# ifndef SET_ZETA
      &                 COUPLING(ng) % Zt_avg1,                          &
+# endif
      &                 COUPLING(ng) % rufrc,                            &
      &                 COUPLING(ng) % rvfrc,                            &
 # ifdef DIAGNOSTICS_UV
@@ -148,8 +150,12 @@
      &                 DIAGS(ng) % DiaRV,                               &
 # endif
      &                 OCEAN(ng) % ru,                                  &
+# ifdef SET_ZETA
+     &                 OCEAN(ng) % rv)
+# else
      &                 OCEAN(ng) % rv,                                  &
      &                 OCEAN(ng) % zeta)
+# endif
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 21)
 # endif
@@ -191,25 +197,33 @@
      &                       EobsUV, Uobs, Vobs,                        &
 # endif
      &                       u, v, W,                                   &
+# ifndef SET_ZETA
      &                       Zt_avg1,                                   &
+# endif
      &                       rufrc, rvfrc,                              &
 # ifdef DIAGNOSTICS_UV
      &                       DiaRUfrc, DiaRVfrc,                        &
      &                       DiaRU, DiaRV,                              &
 # endif
+# ifdef SET_ZETA
+     &                       ru, rv)
+# else
      &                       ru, rv,                                    &
      &                       zeta)
+# endif
 !***********************************************************************
 !
       USE mod_param
       USE mod_scalars
 
-# if defined EW_PERIODIC || defined NS_PERIODIC
+# ifndef SET_ZETA
+#  if defined EW_PERIODIC || defined NS_PERIODIC
 !
       USE exchange_2d_mod, ONLY : exchange_r2d_tile
-# endif
-# ifdef DISTRIBUTE
+#  endif
+#  ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
+#  endif
 # endif
 !
 !  Imported variable declarations.
@@ -250,8 +264,9 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: W(LBi:,LBj:,0:)
+#  ifndef SET_ZETA
       real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
-
+#  endif
       real(r8), intent(inout) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: rv(LBi:,LBj:,0:,:)
 #  ifdef DIAGNOSTICS_UV
@@ -263,7 +278,9 @@
 
       real(r8), intent(out) :: rufrc(LBi:,LBj:)
       real(r8), intent(out) :: rvfrc(LBi:,LBj:)
+#  ifndef SET_ZETA
       real(r8), intent(out) :: zeta(LBi:,LBj:,:)
+#  endif
 # else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
@@ -296,8 +313,9 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
+#  ifndef SET_ZETA
       real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
-
+#  endif
       real(r8), intent(inout) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
 #  ifdef DIAGNOSTICS_UV
@@ -309,7 +327,9 @@
 
       real(r8), intent(out) :: rufrc(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: rvfrc(LBi:UBi,LBj:UBj)
+#  ifndef SET_ZETA
       real(r8), intent(out) :: zeta(LBi:UBi,LBj:UBj,3)
+#  endif
 # endif
 !
 !  Local variable declarations.
@@ -1346,6 +1366,7 @@
 # endif
         END IF
       END DO J_LOOP
+# ifndef SET_ZETA
 !
 !  Prepare to time-step 2D equations:  set initial free-surface
 !  to its fast-time averaged values (which corresponds to the time
@@ -1357,22 +1378,22 @@
           zeta(i,j,2)=Zt_avg1(i,j)
         END DO
       END DO
-# if defined EW_PERIODIC || defined NS_PERIODIC
+#  if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        zeta(:,:,1))
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        zeta(:,:,2))
-# endif
-# ifdef DISTRIBUTE
+#  endif
+#  ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    zeta(:,:,1),                                  &
      &                    zeta(:,:,2))
+#  endif
 # endif
-
       RETURN
       END SUBROUTINE rhs3d_tile
 #endif

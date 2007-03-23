@@ -6,80 +6,72 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 **
-** Options for One-Dimensional Sediment Toy.
+** Options for One-Dimensional (vertical) Sediment Toy.
 **
 */
 
-#define UV_ADV
-#undef  UV_COR
-#undef  UV_LOGDRAG
-#define UV_QDRAG
-#define BODYFORCE
+#undef  BODYFORCE
+#undef  LOG_PROFILE
 #define DJ_GRADPS
 #undef  TS_U3HADVECTION
+#undef  TS_C2VADVECTION
 #define TS_MPDATA
-#undef  NONLIN_EOS
 #undef  SALINITY
-
-#undef  FLOATS
-#undef  SPLINES
-#define SOLVE3D
-#define AVERAGES
-#undef  AVERAGES_AKV
-#undef  AVERAGES_AKT
-#undef  AVERAGES_AKS
-#define AVERAGES_BEDLOAD
+#define SPLINES
 #define OUT_DOUBLE
-
 #define EW_PERIODIC
 #define NS_PERIODIC
-
-#define ANA_BPFLUX
-#define ANA_BSFLUX
-#define ANA_BTFLUX
 #define ANA_GRID
 #define ANA_INITIAL
-#define ANA_SEDIMENT
 #define ANA_SMFLUX
-#define ANA_SPFLUX
-#define ANA_SRFLUX
-#define ANA_SSFLUX
-#define ANA_STFLUX
-#define ANA_WWAVE
-
-#undef  MB_BBL
+#define SOLVE3D
+#ifdef SOLVE3D
+# define ANA_SEDIMENT
+# define ANA_BPFLUX
+# define ANA_BSFLUX
+# define ANA_BTFLUX
+# define ANA_SPFLUX
+# define ANA_SRFLUX
+# define ANA_SSFLUX
+# define ANA_STFLUX
+#endif
+#undef  ANA_WWAVE
+#define UV_LOGDRAG
+#undef  UV_LDRAG
+#undef  UV_QDRAG
 #undef  SG_BBL
-#undef  SSW_BBL
-
 #ifdef SG_BBL
 # undef  SG_CALC_ZNOT
 # undef  SG_LOGINT
 #endif
-
+#undef  MB_BBL
 #ifdef MB_BBL
 # undef  MB_CALC_ZNOT
 # undef  MB_Z0BIO
 # undef  MB_Z0BL
 # undef  MB_Z0RIP
 #endif
-
+#undef SSW_BBL
 #ifdef SSW_BBL
 # define SSW_CALC_ZNOT
 # undef  SSW_LOGINT
 #endif
-
+#undef ANA_VMIX
 #define GLS_MIXING
 #ifdef GLS_MIXING
 # define KANTHA_CLAYSON
 # define N2S2_HORAVG
 # undef  CRAIG_BANNER
 # undef  CHARNOK
+# undef  ZOS_HSIG
+# undef  TKE_WAVEDISS
 #endif
-
 #define SEDIMENT
 #ifdef SEDIMENT
 # define SUSPLOAD
-# undef  BEDLOAD
-# undef  SED_DENS
-# undef  SED_MORPH
+# undef  BEDLOAD_SOULSBY
+# undef  BEDLOAD_MPM
+# define SED_DENS
+# define SED_MORPH
+# undef  SED_BIODIFF
 #endif

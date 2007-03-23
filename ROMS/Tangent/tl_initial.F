@@ -163,32 +163,33 @@
 !  If variational data assimilation, reset several IO switches and
 !  variables.
 !-----------------------------------------------------------------------
-#  ifndef WEAK_CONSTRAINT
 !
 !  Set switches to create (TRUE) tangent linear initial conditions and
 !  history NetCDF files or append (FALSE) to existing NetCDF files.
 !  Set record to read from initial tangent linear NetCDF file.
 !
-#   ifdef IS4DVAR
+#  if defined WEAK_CONSTRAINT
+      IF (Nrun.eq.ERstr) THEN
+#  elif defined IS4DVAR
       IF ((Nrun.eq.ERstr).and.(inner.eq.0)) THEN
-#   else    
+#  else    
       IF ((Nrun.eq.ERstr).and.((inner.eq.1).and.(Ipass.le.1))) THEN
-#   endif
-#   ifdef ANA_INITIAL
+#  endif
+#  ifdef ANA_INITIAL
         LdefITL(ng)=.TRUE.
-#   endif
+#  endif
+#  ifndef WEAK_CONSTRAINT
         LdefTLM(ng)=.TRUE.
+#  endif
         CALL tl_def_ini (ng)
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#   endif
+#  endif
         IF (exit_flag.ne.NoError) RETURN
-        IniRec=nrrec
-        tITLindx(ng)=IniRec
-      ELSE
-!!      IniRec=tITLindx(ng)
-        IniRec=1
       END IF
+      IniRec=tITLindx(ng)
+
+#  ifndef WEAK_CONSTRAINT
 !
 !  Reset tangent linear model history time record counters. These
 !  counters are reset in every iteration pass. This file is created
@@ -227,8 +228,8 @@
 !  If weak constraint 4DVAR, activate writting of history NetCDF
 !  file.
 !
-      LdefTLM(ng)=.TRUE.
-      LwrtTLM(ng)=.TRUE.
+!!    LdefTLM(ng)=.TRUE.
+!!    LwrtTLM(ng)=.TRUE.
 #  endif
 !
 !  Open observations NetCDF file and initialize various variables
@@ -629,18 +630,16 @@
 # if defined WEAK_CONSTRAINT || defined IOM
 !
 !-----------------------------------------------------------------------
-!  If available, read in second TLM impulse forcing and its application
-!  time. Notice that the initial impulse was already read from ITLname
-!  above into the appropriate intialization time index. In true weak
-!  constraint applications, the impulse records after the initial are
-!  associated with the model error and are processed with different
-!  statistics. If there is only one (initial) impulse forcing available,
-!  the assimilation is similar to strong constraint but in observation
-!  space.
+!  If available, read in first TLM impulse forcing and its application
+!  time. In true weak constraint applications, the impulse records
+!  after the initial are associated with the model error and are
+!  processed with different statistics. If there is only one (initial)
+!  impulse forcing available, the assimilation tis similar to strong
+!  constraint but in observation space.
 !-----------------------------------------------------------------------
 !
-      IF (NrecFrc(ng).gt.1) THEN
-        FrcRec(ng)=2
+      IF (nADJ(ng).lt.ntimes) THEN
+        FrcRec(ng)=1
         CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
 #  ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, exit_flag, 1)

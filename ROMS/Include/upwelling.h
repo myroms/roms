@@ -52,9 +52,10 @@
 #endif
 
 #undef  BIO_FASHAM
-#undef  NPZD_POWELL
+#define NPZD_POWELL
+#undef  ECOSIM
 
-#if defined BIO_FASHAM || defined NPZD_POWELL
+#if defined BIO_FASHAM || defined ECOSIM || defined NPZD_POWELL
 # define ANA_BIOLOGY
 # define ANA_SPFLUX
 # define ANA_BPFLUX
@@ -68,4 +69,11 @@
 # define DIAGNOSTICS_BIO
 #endif
 
-#undef  PERFECT_RESTART
+#define  PERFECT_RESTART
+#ifdef PERFECT_RESTART
+# undef  AVERAGES
+# undef  DIAGNOSTICS_BIO
+# undef  DIAGNOSTICS_TS
+# undef  DIAGNOSTICS_UV
+# define OUT_DOUBLE
+#endif

@@ -1,4 +1,3 @@
-#include "cppdefs.h"
       SUBROUTINE ad_biology (ng,tile)
 !
 !svn $Id$

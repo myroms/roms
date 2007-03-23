@@ -53,6 +53,23 @@
 !  kbbl         Index of grid level above bottom  boundary layer.      !
 !  ksbl         Index of grid level below surface boundary layer.      !
 !                                                                      !
+#ifdef NEARSHORE_MELLOR
+!  Nearshore radiation stresses.                                       !
+!                                                                      !
+!  Sxx_bar      2D nearshore radiation stress, xx-component.           !
+!  Sxy_bar      2D nearshore radiation stress, xy-component.           !
+!  Syy_bar      2D nearshore radiation stress, yy-component.           !
+!  Sxx          3D Nearshore horizontal radiation stress, xx-component.!
+!  Sxy          3D Nearshore horizontal radiation stress, xx-component.!
+!  Syy          3D Nearshore horizontal radiation stress, xx-component.!
+!  Szx          3D Nearshore vertical radiation stress, xx-component.  !
+!  Szy          3D Nearshore vertical radiation stress, xx-component.  !
+!  rustr2d      2D radiation stress tensor in Xi-direction.            !
+!  rvstr2d      2D radiation stress tensor in ETA-direction.           !
+!  rustr3d      3D radiation stress tensor in Xi-direction.            !
+!  rvstr3d      3D radiation stress tensor in ETA-direction.           !
+!                                                                      !
+#endif
 !=======================================================================
 !
         USE mod_kinds
@@ -82,6 +99,22 @@
 #ifdef UV_VIS4
           real(r8), pointer :: visc4_p(:,:)
           real(r8), pointer :: visc4_r(:,:)
+#endif
+#ifdef NEARSHORE_MELLOR
+          real(r8), pointer :: Sxx_bar(:,:)
+          real(r8), pointer :: Sxy_bar(:,:)
+          real(r8), pointer :: Syy_bar(:,:)
+          real(r8), pointer :: rustr2d(:,:)
+          real(r8), pointer :: rvstr2d(:,:)
+# ifdef SOLVE3D
+          real(r8), pointer :: Sxx(:,:,:)
+          real(r8), pointer :: Sxy(:,:,:)
+          real(r8), pointer :: Syy(:,:,:)
+          real(r8), pointer :: Szx(:,:,:)
+          real(r8), pointer :: Szy(:,:,:)
+          real(r8), pointer :: rustr3d(:,:,:)
+          real(r8), pointer :: rvstr3d(:,:,:)
+# endif
 #endif
 #ifdef SOLVE3D
 # ifdef TS_DIF2
@@ -257,6 +290,23 @@
 #ifdef UV_VIS4
       allocate ( MIXING(ng) % visc4_p(LBi:UBi,LBj:UBj) )
       allocate ( MIXING(ng) % visc4_r(LBi:UBi,LBj:UBj) )
+#endif
+
+#ifdef NEARSHORE_MELLOR
+      allocate ( MIXING(ng) % Sxx_bar(LBi:UBi,LBj:UBj) )
+      allocate ( MIXING(ng) % Sxy_bar(LBi:UBi,LBj:UBj) )
+      allocate ( MIXING(ng) % Syy_bar(LBi:UBi,LBj:UBj) )
+      allocate ( MIXING(ng) % rustr2d(LBi:UBi,LBj:UBj) )
+      allocate ( MIXING(ng) % rvstr2d(LBi:UBi,LBj:UBj) )
+# ifdef SOLVE3D
+      allocate ( MIXING(ng) % Sxx(LBi:UBi,LBj:UBj,1:N(ng)) )
+      allocate ( MIXING(ng) % Sxy(LBi:UBi,LBj:UBj,1:N(ng)) )
+      allocate ( MIXING(ng) % Syy(LBi:UBi,LBj:UBj,1:N(ng)) )
+      allocate ( MIXING(ng) % Szx(LBi:UBi,LBj:UBj,1:N(ng)) )
+      allocate ( MIXING(ng) % Szy(LBi:UBi,LBj:UBj,1:N(ng)) )
+      allocate ( MIXING(ng) % rustr3d(LBi:UBi,LBj:UBj,1:N(ng)) )
+      allocate ( MIXING(ng) % rvstr3d(LBi:UBi,LBj:UBj,1:N(ng)) )
+# endif
 #endif
 
 #ifdef SOLVE3D
@@ -506,6 +556,26 @@
         DO i=Imin,Imax
           MIXING(ng) % visc4_p(i,j) = visc4(ng)
           MIXING(ng) % visc4_r(i,j) = visc4(ng)
+        END DO
+#endif
+#ifdef NEARSHORE_MELLOR
+        DO i=Imin,Imax
+          MIXING(ng) % Sxx_bar(i,j) = IniVal
+          MIXING(ng) % Sxy_bar(i,j) = IniVal
+          MIXING(ng) % Syy_bar(i,j) = IniVal
+          MIXING(ng) % rustr2d(i,j) = IniVal
+          MIXING(ng) % rvstr2d(i,j) = IniVal
+# ifdef SOLVE3D
+          DO k=1,N(ng)
+            MIXING(ng) % Sxx(i,j,k) = IniVal
+            MIXING(ng) % Sxy(i,j,k) = IniVal
+            MIXING(ng) % Syy(i,j,k) = IniVal
+            MIXING(ng) % Szx(i,j,k) = IniVal
+            MIXING(ng) % Szy(i,j,k) = IniVal
+            MIXING(ng) % rustr3d(i,j,k) = IniVal
+            MIXING(ng) % rvstr3d(i,j,k) = IniVal
+          END DO
+#endif
         END DO
 #endif
 #ifdef SOLVE3D

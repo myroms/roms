@@ -37,7 +37,7 @@
       USE mod_obs, ONLY : allocate_obs, initialize_obs
 #endif
       USE mod_ocean, ONLY : allocate_ocean, initialize_ocean
-#if defined UV_PSOURCE || defined TS_PSOURCE
+#if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
       USE mod_sources, ONLY : allocate_sources
 #endif
 #if defined SSH_TIDES || defined UV_TIDES
@@ -98,7 +98,7 @@
 #if defined SSH_TIDES || defined UV_TIDES
           CALL allocate_tides (ng, LBi, UBi, LBj, UBj)
 #endif
-#if defined UV_PSOURCE || defined TS_PSOURCE
+#if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
           CALL allocate_sources (ng)
 #endif
         END DO

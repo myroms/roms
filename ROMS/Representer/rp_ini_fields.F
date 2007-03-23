@@ -56,9 +56,9 @@
 # endif
 # ifdef SOLVE3D
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                         OCEAN(ng) %  bed,                        &
      &                         OCEAN(ng) %  tl_bed,                     &
-     &                         GRID(ng) % bed_thick0,                   &
+     &                         GRID(ng) % tl_bed_thick0,                &
+     &                         GRID(ng) % tl_bed_thick,                 &
 #  endif
      &                         GRID(ng) % Hz,                           &
      &                         GRID(ng) % tl_Hz,                        &
@@ -99,8 +99,8 @@
 # endif
 # ifdef SOLVE3D
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                               bed, tl_bed,                       &
-     &                               bed_thick0,                        &
+     &                               tl_bed,                            &
+     &                               tl_bed_thick0, tl_bed_thick,       &
 #  endif
      &                               Hz, tl_Hz,                         &
      &                               h, tl_h,                           &
@@ -163,12 +163,10 @@
 #  endif
 #  ifdef SOLVE3D
 #   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_bed(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: bed_thick0(LBi:,LBj:)
 #   endif
-      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: h(LBi:,LBj:)
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
@@ -181,6 +179,10 @@
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
 
+#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(inout) :: tl_bed_thick0(LBi:,LBj:)
+      real(r8), intent(inout) :: tl_bed_thick(LBi:,LBj:,:)
+#   endif
       real(r8), intent(inout) :: tl_h(LBi:,LBj:)
       real(r8), intent(inout) :: tl_Hz(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
@@ -202,12 +204,10 @@
 #  endif
 #  ifdef SOLVE3D
 #   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
       real(r8), intent(in) :: tl_bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-      real(r8), intent(in) :: bed_thick0(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
@@ -220,6 +220,10 @@
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
 
+#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(inout) :: tl_bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: tl_bed_thick(LBi:UBi,LBj:UBj,2)
+#   endif
       real(r8), intent(inout) :: tl_h(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
@@ -282,7 +286,6 @@
 !>        zeta(i,j,kstp)=cff1
 !>
           tl_zeta(i,j,kstp)=tl_cff1
-
 # ifdef SOLVE3D
 !>        zeta(i,j,knew)=cff1
 !>
@@ -330,7 +333,6 @@
      &                     zeta,                                        &
      &                     tl_zeta)
 # endif
-
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
 !>   &                        LBi, UBi, LBj, UBj,                       &
@@ -438,6 +440,11 @@
 !>
             tl_bed_thick0(i,j)=tl_bed_thick0(i,j)+tl_bed(i,j,kbed,ithck)
           END DO
+!>        bed_thick(i,j,1)=bed_thick0(i,j)
+!>        bed_thick(i,j,2)=bed_thick0(i,j)
+!>
+          tl_bed_thick(i,j,1)=tl_bed_thick0(i,j)
+          tl_bed_thick(i,j,2)=tl_bed_thick0(i,j)
         END DO
       END DO
 
@@ -449,17 +456,33 @@
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_bed_thick0)
+!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        bed_thick(:,:,1))
+!>
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_bed_thick(:,:,1))
+!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        bed_thick(:,:,2))
+!>
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_bed_thick(:,:,2))
 #   endif
 #   ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
-!>   &                    LBi, UBi, LBj, UBj,                           &
+!>    CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+!>   &                    LBi, UBi, LBj, UBj, 1, 1,                     &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    bed_thick0)
+!>   &                    bed_thick0,                                   &
+!>   &                    bed_thick(:,:,1), bed_thick(:,:,2))
 !>
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_bed_thick0)
+     &                    tl_bed_thick0,                                &
+     &                    tl_bed_thick(:,:,1), tl_bed_thick(:,:,2))
 #   endif
 #  endif
 # endif
@@ -767,7 +790,6 @@
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      nstp, nnew,                                 &
      &                      tl_t)
-
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !>      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
@@ -805,24 +827,26 @@
 !
 !>    CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
 !>   &                     LBi, UBi, LBj, UBj,                          &
+!>   &                     nstp, nnew,                                  &
 !>   &                     h,                                           &
 #  ifdef ICESHELF
 !>   &                     zice,                                        &
 #  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!>   &                     bed, bed_thick0,                             &
+!>   &                     bed_thick,                                   &
 #  endif
 !>   &                     Zt_avg1,                                     &
 !>   &                     Hz, z_r, z_w)
 !>
       CALL rp_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        nstp, nnew,                               &
      &                        h, tl_h,                                  &
 #  ifdef ICESHELF
      &                        zice,                                     &
 #  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                        tl_bed, bed_thick0,                       &
+     &                        tl_bed_thick,                             &
 #  endif
      &                        Zt_avg1, tl_Zt_avg1,                      &
      &                        tl_Hz, tl_z_r, tl_z_w)
@@ -832,7 +856,7 @@
 !  momentum (u,v).
 !-----------------------------------------------------------------------
 !
-!  Compute adjoint 2D velocity component in the ETA-direction.  Here
+!  Compute adjoint 2D velocity component in the XI-direction.  Here
 !  DC(i,1:N) are the thicknesses of U-boxes, DC(i,0) is total depth of
 !  the water column, and CF(i,0) is the vertical integral.
 !
@@ -1007,7 +1031,7 @@
 #  endif
 #  ifdef DISTRIBUTE
 !>    CALL mp_exchange2d (ng, model, 4, Istr, Iend, Jstr, Jend,         &
-!>   &                    LBi, UBi, LBj, UBj, 1, 1,                     &
+!>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
 !>   &                    ubar(:,:,knew), vbar(:,:,knew))

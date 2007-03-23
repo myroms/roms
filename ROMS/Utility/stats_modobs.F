@@ -10,7 +10,7 @@
 !=======================================================================
 !                                                                      !
 !  This subroutine computes several statistical quantities between     !
-!  model and observations:                                             ! 
+!  model and observations:                                             !
 !                                                                      !
 !     CC         Cross-Correlation                                     !
 !     MB         Model Bias                                            !

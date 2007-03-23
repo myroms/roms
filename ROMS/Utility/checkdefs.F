@@ -47,10 +47,9 @@
       integer :: ibbl = 0
       integer :: ibiology = 0
       integer :: idriver = 0
-      integer :: iexample = 0
       integer :: ivmix = 0
 
-      integer :: is, ng
+      integer :: is, lstr, ng
 !
 !-----------------------------------------------------------------------
 !  Report activated C-preprocessing options.
@@ -60,6 +59,16 @@
       IF (Master) WRITE (stdout,10)
   10  FORMAT (/,' Activated C-preprocessing Options:',/)
   20  FORMAT (2x,a,t22,a)
+!
+      IF (Master) THEN
+        WRITE (stdout,20) TRIM(ADJUSTL(MyAppCPP)), TRIM(ADJUSTL(title))
+      END IF
+      is=LEN_TRIM(Coptions)+1
+      lstr=LEN_TRIM(MyAppCPP)
+      Coptions(is:is+lstr)=TRIM(ADJUSTL(MyAppCPP))
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is)=','
+!
 #if defined ADD_FSOBC && defined SSH_TIDES
       IF (Master) WRITE (stdout,20) 'ADD_FSOBC',                        &
      &   'Adding tidal elevation to proccesed OBC data.'
@@ -92,13 +101,6 @@
       Coptions(is:is+15)=' AD_SENSITIVITY,'
       idriver=idriver+1
 #endif
-#ifdef ADRIA02
-      IF (Master) WRITE (stdout,20) 'ADRIA02',                          &
-     &   'Adriatic Sea Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' ADRIA02,'
-      iexample=iexample+1
-#endif
 #ifdef AFT_EIGENMODES
       IF (Master) WRITE (stdout,20) 'AFT_EIGENMODES',                   &
      &   'Adjoint Finite Time Eigenvalues.'
@@ -112,12 +114,11 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' ALBEDO,'
 #endif
-#ifdef A4DVAR_TOY
-      IF (Master) WRITE (stdout,20) 'A4DVAR_TOY',                       &
-     &   '4DVAR Data Assimilation Toy.'
+#ifdef ATM_PRESS
+      IF (Master) WRITE (stdout,20) 'ATM_PRESS',                        &
+     &   'Impose atmospheric pressure onto sea surface.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' A4DVAR_TOY,'
-      iexample=iexample+1
+      Coptions(is:is+11)=' ATM_PRESS,'
 #endif
 #ifdef BALANCE_OPERATOR
       IF (Master) WRITE (stdout,20) 'BALANCE_OPERATOR',                 &
@@ -144,13 +145,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' CORRELATION,'
       idriver=idriver+1
-#endif
-#ifdef COUPLING_TEST
-      IF (Master) WRITE (stdout,20) 'COUPLING_TEST',                    &
-     &   'Two-way Atmosphere-Ocean Models Coupling Test.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+15)=' COUPLING_TEST,'
-      iexample=iexample+1
 #endif
 #if defined BIOLOGY && defined ANA_BIOLOGY
       IF (Master) WRITE (stdout,20) 'ANA_BIOLOGY',                      &
@@ -432,6 +426,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' AVERAGES_FLUXES,'
 # endif
+# ifdef AVERAGES_NEARSHORE
+      IF (Master) WRITE (stdout,20) 'AVERAGES_NEARSHORE',               &
+     &   'Writing out time-averaged nearshore radiation fields.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+20)=' AVERAGES_NEARSHORE,'
+# endif
 # ifdef AVERAGES_QUADRATIC
       IF (Master) WRITE (stdout,20) 'AVERAGES_QUADRATIC',               &
      &   'Writing out time-averaged quadratic terms.'
@@ -445,39 +445,17 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' BACKGROUND,'
 #endif
-#ifdef BASIN
-      IF (Master) WRITE (stdout,20) 'BASIN',                            &
-     &   'Big Bad Basin Example.'
+#if defined SEDIMENT && defined BEDLOAD_MPM
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_MPM',                      &
+     &   'Activate bed load sediment transport Meyer-Peter-Mueller.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+7)=' BASIN,'
-      iexample=iexample+1
+      Coptions(is:is+13)=' BEDLOAD_MPM,'
 #endif
-#if defined SEDIMENT && defined BEDLOAD
-      IF (Master) WRITE (stdout,20) 'BEDLOAD',                          &
-     &   'Activate bed load sediment transport.'
+#if defined SEDIMENT && defined BEDLOAD_SOULSBY
+      IF (Master) WRITE (stdout,20) 'BEDLOAD_SOULSBY',                  &
+     &   'Activate bed load sediment transport Soulsby formula.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' BEDLOAD,'
-#endif
-#ifdef BENCHMARK1
-      IF (Master) WRITE (stdout,20) 'BENCHMARK1',                       &
-     &   'Small Benchmark, Idealized Southern Ocean.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' BENCHMARK1,'
-      iexample=iexample+1
-#endif
-#ifdef BENCHMARK2
-      IF (Master) WRITE (stdout,20) 'BENCHMARK2',                       &
-     &   'Medium Benchmark, Idealized Southern Ocean.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' BENCHMARK2,'
-      iexample=iexample+1
-#endif
-#ifdef BENCHMARK3
-      IF (Master) WRITE (stdout,20) 'BENCHMARK3',                       &
-     &   'Big Benchmark, Idealized Southern Ocean.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' BENCHMARK3,'
-      iexample=iexample+1
+      Coptions(is:is+17)=' BEDLOAD_SOULSBY,'
 #endif
 #ifdef BIO_FASHAM
       IF (Master) WRITE (stdout,20) 'BIO_FASHAM',                       &
@@ -491,27 +469,6 @@
      &   'Restore fallen particulate material to the nutrient pool.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' BIO_SEDIMENT,'
-#endif
-#ifdef BIO_TOY
-      IF (Master) WRITE (stdout,20) 'BIO_TOY',                          &
-     &   'One-dimension (vertical) Biology Toy.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' BIO_TOY,'
-      iexample=iexample+1
-#endif
-#ifdef BISCAY
-      IF (Master) WRITE (stdout,20) 'BISCAY',                           &
-     &   'Bay of Biscay Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+8)=' BISCAY,'
-      iexample=iexample+1
-#endif
-#ifdef BL_TEST
-      IF (Master) WRITE (stdout,20) 'BL_TEST',                          &
-     &   'Boundary Layers Test.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' BL_TEST,'
-      iexample=iexample+1
 #endif
 #ifdef BODYFORCE
       IF (Master) WRITE (stdout,20) 'BODYFORCE',                        &
@@ -543,20 +500,6 @@
      &   'Canuto B-stability function formulation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' CANUTO_B,'
-#endif
-#ifdef CANYON_A
-      IF (Master) WRITE (stdout,20) 'CANYON_A',                         &
-     &   'Canyon A Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' CANYON_A,'
-      iexample=iexample+1
-#endif
-#ifdef CANYON_B
-      IF (Master) WRITE (stdout,20) 'CANYON_B',                         &
-     &   'Canyon B Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' CANYON_B,'
-      iexample=iexample+1
 #endif
 #if defined CARBON && defined BIO_FASHAM
       IF (Master) WRITE (stdout,20) 'CARBON',                           &
@@ -594,6 +537,18 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' CRAIG_BANNER,'
 #endif
+#if defined COARE_OOST
+      IF (Master) WRITE (stdout,20) 'COARE_OOST',                       &
+     &   'Oost et al (2002) relation for ZoW in bulk fluxes.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' COARE_OOST,'
+#endif
+#if defined COARE_TAYLOR_YELLAND
+      IF (Master) WRITE (stdout,20) 'COARE_TAYLOR_YELLAND',             &
+     &   'Taylor and Yelland (2001) relation for ZoW in bulk fluxes.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+22)=' COARE_TAYLOR_YELLAND,'
+#endif
 #if defined COOL_SKIN && defined BULK_FLUXES
       IF (Master) WRITE (stdout,20) 'COOL_SKIN',                        &
      &   'Surface cool skin correction.'
@@ -612,18 +567,17 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' CURVGRID,'
 #endif
-#ifdef DAMEE_4
-      IF (Master) WRITE (stdout,20) 'DAMEE_4',                          &
-     &   'North Atlantic DAMEE Application, Grid #4.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' DAMEE_4,'
-      iexample=iexample+1
-#endif
 #ifdef DEBUGGING
       IF (Master) WRITE (stdout,20) 'DEBUGGING',                        &
      &   'Internal debugging switch activated.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' DEBUGGING,'
+#endif
+#ifdef DEEPWATER_WAVES
+      IF (Master) WRITE (stdout,20) 'DEEPWATER_WAVES',                  &
+     &   'Deep water waves approx in bulk fluxes.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' DEEPWATER_WAVES,'
 #endif
 #if defined DENITRIFICATION && defined BIO_FASHAM
       IF (Master) WRITE (stdout,20) 'DENITRIFICATION',                  &
@@ -669,32 +623,11 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' DJ_GRADPS,'
 #endif
-#ifdef DOUBLE_GYRE
-      IF (Master) WRITE (stdout,20) 'DOUBLE_GYRE',                      &
-     &   'Idealized Double Gyre Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' DOUBLE_GYRE,'
-      iexample=iexample+1
-#endif
 #ifdef DOUBLE_PRECISION
       IF (Master) WRITE (stdout,20) 'DOUBLE_PRECISION',                 &
      &   'Double precision arithmetic.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' DOUBLE_PRECISION,'
-#endif
-#ifdef EAC_4
-      IF (Master) WRITE (stdout,20) 'EAC_4',                            &
-     &   'Eastern Australia Current Application, 1/4 Resolution'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+7)=' EAC_4,'
-      iexample=iexample+1
-#endif
-#ifdef EAC_8
-      IF (Master) WRITE (stdout,20) 'EAC_8',                            &
-     &   'Eastern Australia Current Application, 1/8 Resolution'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+7)=' EAC_8,'
-      iexample=iexample+1
 #endif
 #ifdef EAST_FSCLAMPED
       IF (Master) WRITE (stdout,20) 'EAST_FSCLAMPED',                   &
@@ -893,13 +826,6 @@
       Coptions(is:is+14)=' ENERGY3_NORM,'
       EnergyN=EnergyN+1
 #endif
-#ifdef ESTUARY_TEST
-      IF (Master) WRITE (stdout,20) 'ESTUARY_TEST',                     &
-     &   'Suspended sediment test in an estuary.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+14)=' ESTUARY_TEST,'
-      iexample=iexample+1
-#endif
 #ifdef EW_PERIODIC
       IF (Master) WRITE (stdout,20) 'EW_PERIODIC',                      &
      &   'East-West periodic boundaries.'
@@ -927,13 +853,6 @@
      &   'Lagrangian drifter vertical diffusion.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' FLOAT_VWALK,'
-#endif
-#ifdef FLT_TEST
-      IF (Master) WRITE (stdout,20) 'FLT_TEST',                         &
-     &   'Float Tracking Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' FLT_TEST,'
-      iexample=iexample+1
 #endif
 #ifdef FORCING_SV
       IF (Master) WRITE (stdout,20) 'FORCING_SV',                       &
@@ -1014,25 +933,11 @@
       Coptions(is:is+16)=' GRADIENT_CHECK,'
       idriver=idriver+1
 #endif
-#ifdef GRAV_ADJ
-      IF (Master) WRITE (stdout,20) 'GRAV_ADJ',                         &
-     &   'Gravitational Adjustment Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' GRAV_ADJ,'
-      iexample=iexample+1
-#endif
 #ifdef ICESHELF
       IF (Master) WRITE (stdout,20) 'ICESHELF',                         &
      &   'Include Ice Shelf Cavities.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ICESHELF,'
-#endif
-#ifdef IAS
-      IF (Master) WRITE (stdout,20) 'IAS',                              &
-     &   'Intra-Americas Sea Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+5)=' IAS,'
-      iexample=iexample+1
 #endif
 #if defined IMPLICIT_VCONV && defined FOUR_DVAR && defined VCONVOLUTION
       IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &
@@ -1085,27 +990,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' KANTHA_CLAYSON,'
 #endif
-#ifdef KELVIN
-      IF (Master) WRITE (stdout,20) 'KELVIN',                           &
-     &   'Kelvin wave test.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+8)=' KELVIN,'
-      iexample=iexample+1
-#endif
-#ifdef LAB_CANYON
-      IF (Master) WRITE (stdout,20) 'LAB_CANYON',                       &
-     &   'Lab Canyon, an annulus example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' LAB_CANYON,'
-      iexample=iexample+1
-#endif
-#ifdef LAKE_SIGNELL
-      IF (Master) WRITE (stdout,20) 'LAKE_SIGNELL',                     &
-     &   'Lake Signell sediment test.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+14)=' LAKE_SIGNELL,'
-      iexample=iexample+1
-#endif
 #ifdef LMD_BKPP
       IF (Master) WRITE (stdout,20) 'LMD_BKPP',                         &
      &   'KPP bottom boundary layer mixing.'
@@ -1148,13 +1032,6 @@
      &   'KPP surface boundary layer mixing.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' LMD_SKPP,'
-#endif
-#ifdef LMD_TEST
-      IF (Master) WRITE (stdout,20) 'LMD_TEST',                         &
-     &   'Large et al. Inertial Response Test.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' LMD_TEST,'
-      iexample=iexample+1
 #endif
 #if defined LONGWAVE && defined BULK_FLUXES
       IF (Master) WRITE (stdout,20) 'LONGWAVE',                         &
@@ -1218,6 +1095,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' MB_BBL,'
       ibbl=ibbl+1
+# ifdef MB_CALC_UB
+      IF (Master) WRITE (stdout,20) 'MB_CALC_UB',                       &
+     &   'Internal computation of bottom orbital velocity.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' MB_CALC_UB,'
+# endif
 # ifdef MB_CALC_ZNOT
       IF (Master) WRITE (stdout,20) 'MB_CALC_ZNOT',                     &
      &   'Internal computation of bottom roughness.'
@@ -1296,26 +1179,11 @@
       Coptions(is:is+13)=' MY25_MIXING,'
       ivmix=ivmix+1
 #endif
-#ifdef NATL
-      IF (Master) WRITE (stdout,20) 'NATL',                             &
-     &   'High Resolution North Atlantic DAMEE Application.'
+#ifdef NEARSHORE_MELLOR
+      IF (Master) WRITE (stdout,20) 'NEARSHORE_MELLOR',                 &
+     &   'Nearshore RAdiation Stress Terms.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+6)=' NATL,'
-      iexample=iexample+1
-#endif
-#ifdef NENA
-      IF (Master) WRITE (stdout,20) 'NENA',                             &
-     &   'North East North America Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+6)=' NENA,'
-      iexample=iexample+1
-#endif
-#ifdef NJ_BIGHT
-      IF (Master) WRITE (stdout,20) 'NJ_BIGHT',                         &
-     &   'New Jersey Bight Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' NJ_BIGHT,'
-      iexample=iexample+1
+      Coptions(is:is+18)=' NEARSHORE_MELLOR,'
 #endif
 #if defined NLM_OUTER && (defined WEAK_CONSTRAINT || defined IOM)
       IF (Master) WRITE (stdout,20) 'NLM_OUTER',                        &
@@ -1353,13 +1221,6 @@
      &   'Wall boundary at Northern edge.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' NORTHERN_WALL,'
-#endif
-#ifdef NPACIFIC
-      IF (Master) WRITE (stdout,20) 'PACIFIC',                          &
-     &   'North Pacific Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' NPACIFIC,'
-      iexample=iexample+1
 #endif
 #ifdef NORTH_FSCLAMPED
       IF (Master) WRITE (stdout,20) 'NORTH_FSCLAMPED',                  &
@@ -1616,27 +1477,6 @@
       Coptions(is:is+18)=' OPT_PERTURBATION,'
       idriver=idriver+1
 #endif
-#ifdef OPT_PERT2D
-      IF (Master) WRITE (stdout,20) 'OPT_PERT2D',                       &
-     &   'Optimal Perturbation 2D Test.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' OPT_PERT2D,'
-      iexample=iexample+1
-#endif
-#ifdef OPT_PERT3D
-      IF (Master) WRITE (stdout,20) 'OPT_PERT3D',                       &
-     &   'Optimal Perturbation 3D Test.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+12)=' OPT_PERT3D,'
-      iexample=iexample+1
-#endif
-#ifdef OVERFLOW
-      IF (Master) WRITE (stdout,20) 'OVERFLOW',                         &
-     &   'gravitational/overflow Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' OVERFLOW,'
-      iexample=iexample+1
-#endif
 #if defined OXYGEN && defined BIO_FASHAM
 # ifdef OCMIP_OXYGEN_SC
       IF (Master) WRITE (stdout,20) 'OCMIP_OXYGEN_SC',                  &
@@ -1797,20 +1637,6 @@
       Coptions(is:is+11)=' RI_VERAVG,'
 # endif
 #endif
-#ifdef RIVERPLUME1
-      IF (Master) WRITE (stdout,20) 'RIVERPLUME1',                      &
-     &   'River Plume Example 1.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' RIVERPLUME1,'
-      iexample=iexample+1
-#endif
-#ifdef RIVERPLUME2
-      IF (Master) WRITE (stdout,20) 'RIVERPLUME2',                      &
-     &   'River Plume Example 2.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' RIVERPLUME2,'
-      iexample=iexample+1
-#endif
 #if !(defined PJ_GRADPQ4 || defined PJ_GRADPQ2 || defined PJ_GRADP || \
       defined DJ_GRADPS) && defined RHO_SURF   && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'RHO_SURF',                         &
@@ -1862,25 +1688,11 @@
       Coptions(is:is+14)=' SANITY_CHECK,'
       idriver=idriver+1
 #endif
-#ifdef SCB
-      IF (Master) WRITE (stdout,20) 'SCB',                              &
-     &   'Southern California Bight Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+5)=' SCB,'
-      iexample=iexample+1
-#endif
 #ifdef SCORRECTION
       IF (Master) WRITE (stdout,20) 'SCORRECTION',                      &
      &   'Surface salinity flux correction.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' SCORRECTION,'
-#endif
-#ifdef SEAMOUNT
-      IF (Master) WRITE (stdout,20) 'SEAMOUNT',                         &
-     &   'Seamount Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+10)=' SEAMOUNT,'
-      iexample=iexample+1
 #endif
 #ifdef SEDIMENT
       IF (Master) WRITE (stdout,20) 'SEDIMENT',                         &
@@ -1906,26 +1718,18 @@
       Coptions(is:is+10)=' SUSPLOAD,'
 # endif
 #endif
-#ifdef SED_TEST1
-      IF (Master) WRITE (stdout,20) 'SED_TEST1',                        &
-     &   'Suspended sediment test in a Channel.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' SED_TEST1,'
-      iexample=iexample+1
-#endif
-#ifdef SED_TOY
-      IF (Master) WRITE (stdout,20) 'SED_TOY',                          &
-     &   'One-dimension (vertical) Sediment Toy.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' SED_TOY,'
-      iexample=iexample+1
-#endif
 #ifdef SG_BBL
       IF (Master) WRITE (stdout,20) 'SG_BBL',                           &
      &   'Styles and Glenn Bottom Boundary Layer.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+8)=' SG_BBL,'
       ibbl=ibbl+1
+# ifdef SG_CALC_UB
+      IF (Master) WRITE (stdout,20) 'SG_CALC_UB',                       &
+     &   'Internal computation of bottom orbital velocity.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' SG_CALC_UB,'
+# endif
 # ifdef SG_CALC_ZNOT
       IF (Master) WRITE (stdout,20) 'SG_CALC_ZNOT',                     &
      &   'Internal computation of bottom roughness.'
@@ -1950,13 +1754,6 @@
      &   'Solar Radiation Source Term.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' SOLAR_SOURCE,'
-#endif
-#ifdef SOLITON
-      IF (Master) WRITE (stdout,20) 'SOLITON',                          &
-     &   'Equatorial Rossby Soliton Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' SOLITON,'
-      iexample=iexample+1
 #endif
 #ifdef SOLVE3D
       IF (Master) WRITE (stdout,20) 'SOLVE3D',                          &
@@ -2178,11 +1975,41 @@
        is=LEN_TRIM(Coptions)+1
        Coptions(is:is+8)=' SSW_BBL,'
        ibbl=ibbl+1
+# ifdef SSW_CALC_UB
+       IF (Master) WRITE (stdout,20) 'SSW_CALC_UB',                     &
+     &   'Internal computation of bottom orbital velocity.'
+       is=LEN_TRIM(Coptions)+1
+       Coptions(is:is+14)=' SSW_CALC_UB,'
+# endif
 # ifdef SSW_CALC_ZNOT
        IF (Master) WRITE (stdout,20) 'SSW_CALC_ZNOT',                   &
      &   'Internal computation of bottom roughness.'
        is=LEN_TRIM(Coptions)+1
        Coptions(is:is+14)=' SSW_CALC_ZNOT,'
+# endif
+# ifdef SSW_FORM_DRAG_COR
+       IF (Master) WRITE (stdout,20) 'SSW_FORM_DRAG_COR',               &
+     &   'Form drag coefficient.'
+       is=LEN_TRIM(Coptions)+1
+       Coptions(is:is+19)=' SSW_FORM_DRAG_COR,'
+# endif
+# ifdef SSW_Z0BIO
+       IF (Master) WRITE (stdout,20) 'SSW_Z0BIO',                       &
+     &   'Biogenic bedfrom roughness from ripples.'
+       is=LEN_TRIM(Coptions)+1
+       Coptions(is:is+11)=' SSW_Z0BIO,'
+# endif
+# ifdef SSW_Z0BL
+       IF (Master) WRITE (stdout,20) 'SSW_Z0BL',                        &
+     &   'Bedload roughness from ripples.'
+       is=LEN_TRIM(Coptions)+1
+       Coptions(is:is+10)=' SSW_Z0BL,'
+# endif
+# ifdef SSW_Z0RIP
+       IF (Master) WRITE (stdout,20) 'SSW_Z0RIP',                       &
+     &   'Bedfrom roughness from ripples.'
+       is=LEN_TRIM(Coptions)+1
+       Coptions(is:is+11)=' SSW_Z0RIP,'
 # endif
 # ifdef SSW_LOGINT
        IF (Master) WRITE (stdout,20) 'SSW_LOGINT',                      &
@@ -2214,20 +2041,6 @@
      &   'Two-way SWAN/ROMS coupling.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' SWAN_COUPLING,'
-#endif
-#ifdef SW06_COARSE
-      IF (Master) WRITE (stdout,20) 'SW06_COARSE',                      &
-     &   'Shallow Water Acoustics 2006 Experiment, Coarse Grid.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' SW06_COARSE,'
-      iexample=iexample+1
-#endif
-#ifdef SW06_FINE
-      IF (Master) WRITE (stdout,20) 'SW06_FINE',                        &
-     &   'Shallow Water Acoustics 2006 Experiment, Fine Grid.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' SW06_FINE,'
-      iexample=iexample+1
 #endif
 #if defined CARBON && defined BIO_FASHAM
 # ifdef TALK_PROGNOSTIC
@@ -2272,6 +2085,12 @@
      &   'Using three Ghost Points in halo regions.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' THREE_GHOST,'
+#endif
+#if defined GLS_MIXING && defined TKE_WAVEDISS
+      IF (Master) WRITE (stdout,20) 'TKE_WAVEDISS',                     &
+     &   'Wave breaking surface tke flux based on wave amplitude.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' TKE_WAVEDISS,'
 #endif
 #ifdef TL_IOMS
       IF (Master) WRITE (stdout,20) 'TL_IOMS',                          &
@@ -2370,20 +2189,6 @@
      &   'Tracers point sources and sinks.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' TS_PSOURCE,'
-#endif
-#ifdef UPWELLING
-      IF (Master) WRITE (stdout,20) 'UPWELLING',                        &
-     &   'Upwelling/Downwelling Example.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' UPWELLING,'
-      iexample=iexample+1
-#endif
-#ifdef USWEST
-      IF (Master) WRITE (stdout,20) 'USWEST',                           &
-     &   'US West Coast Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+8)=' USWEST,'
-      iexample=iexample+1
 #endif
 #ifdef UV_ADV
       IF (Master) WRITE (stdout,20) 'UV_ADV',                           &
@@ -2520,8 +2325,14 @@
       Coptions(is:is+8)=' W4DVAR,'
       idriver=idriver+1
 #endif
+#ifdef WAVES_OCEAN
+      IF (Master) WRITE (stdout,20) 'WAVES_OCEAN',                      &
+     &   'Two-way wave-ocean models coupling.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' WAVES_OCEAN,'
+#endif
 #ifdef WEAK_CONSTRAINT
-      IF (Master) WRITE (stdout,20) 'WEAK_CONSTRAINT',                     &
+      IF (Master) WRITE (stdout,20) 'WEAK_CONSTRAINT',                  &
      &   'Activated weak constraint assimilation set-up.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' WEAK_CONSTRAINT,'
@@ -2531,13 +2342,6 @@
      &   'Writing data at water points only.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' WRITE_WATER,'
-#endif
-#ifdef WEDDELL
-      IF (Master) WRITE (stdout,20) 'WEDDELL',                          &
-     &   'Idealized Weddell Sea Shelf Application.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' WEDDELL,'
-      iexample=iexample+1
 #endif
 #ifdef WEST_FSCLAMPED
       IF (Master) WRITE (stdout,20) 'WEST_FSCLAMPED',                   &
@@ -2696,12 +2500,11 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' WESTERN_WALL,'
 #endif
-#ifdef WINDBASIN
-      IF (Master) WRITE (stdout,20) 'WINDBASIN',                        &
-     &   'Wind-Driven Constant Coriolis Basin Example.'
+#ifdef WET_DRY
+      IF (Master) WRITE (stdout,20) 'WET_DRY',                          &
+     &   'Wetting and drying activated.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+11)=' WINDBASIN,'
-      iexample=iexample+1
+      Coptions(is:is+9)=' WET_DRY,'
 #endif
 #ifdef WIND_WAVES
       IF (Master) WRITE (stdout,20) 'WIND_WAVES',                       &
@@ -2733,6 +2536,12 @@
      &   'Nudging toward sea surface height climatology.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' ZCLM_NUDGING,'
+#endif
+#ifdef ZOS_HSIG
+      IF (Master) WRITE (stdout,20) 'ZOS_HSIG',                         &
+     &   'Wave amplitude used for Zos calculation.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+14)=' ZOS_HSIG,'
 #endif
 !
 !-----------------------------------------------------------------------
@@ -2774,19 +2583,11 @@
         exit_flag=5
       END IF
 !
-!  Stop if more than one model example is selected.
-!
-      IF (Master.and.(iexample.gt.1)) THEN
-        WRITE (stdout,70)
-  70    FORMAT (/,' CHECKDEFS - only one model application is allowed.')
-        exit_flag=5
-      END IF
-!
 !  Stop if more that one model driver is selected.
 !
       IF (Master.and.(idriver.gt.1)) THEN
-        WRITE (stdout,80)
-  80    FORMAT (/,' CHECKDEFS - only one model example is allowed.')
+        WRITE (stdout,70)
+  70    FORMAT (/,' CHECKDEFS - only one model example is allowed.')
         exit_flag=5
       END IF
 !
@@ -2794,41 +2595,41 @@
 !  is selected at each boundary edge.
 !
       IF (Master.and.(FS_east.gt.1)) THEN
-        WRITE (stdout,90) 'free-surface','eastern edge'
+        WRITE (stdout,80) 'free-surface','eastern edge'
         exit_flag=5
       END IF
       IF (Master.and.(FS_west.gt.1)) THEN
-        WRITE (stdout,90) 'free-surface','western edge'
+        WRITE (stdout,80) 'free-surface','western edge'
         exit_flag=5
       END IF
       IF (Master.and.(FS_north.gt.1)) THEN
-        WRITE (stdout,90) 'free-surface','northern edge'
+        WRITE (stdout,80) 'free-surface','northern edge'
         exit_flag=5
       END IF
       IF (Master.and.(FS_south.gt.1)) THEN
-        WRITE (stdout,90) 'free-surface','southern edge'
+        WRITE (stdout,80) 'free-surface','southern edge'
         exit_flag=5
       END IF
-  90  FORMAT (/,' CHECKDEFS - only one boundary condition option for',  &
+  80  FORMAT (/,' CHECKDEFS - only one boundary condition option for',  &
      &        1x,a,/,13x,'is allowed at the',1x,a,'.')
 !
 !  Stop if more than one boundary conditions option for 2D momentum
 !  is selected at each boundary edge.
 !
       IF (Master.and.(M2_east.gt.1)) THEN
-        WRITE (stdout,90) '2D momentum','eastern edge'
+        WRITE (stdout,80) '2D momentum','eastern edge'
         exit_flag=5
       END IF
       IF (Master.and.(M2_west.gt.1)) THEN
-        WRITE (stdout,90) '2D momentum','western edge'
+        WRITE (stdout,80) '2D momentum','western edge'
         exit_flag=5
       END IF
       IF (Master.and.(M2_north.gt.1)) THEN
-        WRITE (stdout,90) '2D momentum','northern edge'
+        WRITE (stdout,80) '2D momentum','northern edge'
         exit_flag=5
       END IF
       IF (Master.and.(M2_south.gt.1)) THEN
-        WRITE (stdout,90) '2D momentum','southern edge'
+        WRITE (stdout,80) '2D momentum','southern edge'
         exit_flag=5
       END IF
 #ifdef SOLVE3D
@@ -2837,19 +2638,19 @@
 !  is selected at each boundary edge.
 !
       IF (Master.and.(M3_east.gt.1)) THEN
-        WRITE (stdout,90) '3D momentum','eastern edge'
+        WRITE (stdout,80) '3D momentum','eastern edge'
         exit_flag=5
       END IF
       IF (Master.and.(M3_west.gt.1)) THEN
-        WRITE (stdout,90) '3D momentum','western edge'
+        WRITE (stdout,80) '3D momentum','western edge'
         exit_flag=5
       END IF
       IF (Master.and.(M3_north.gt.1)) THEN
-        WRITE (stdout,90) '3D momentum','northern edge'
+        WRITE (stdout,80) '3D momentum','northern edge'
         exit_flag=5
       END IF
       IF (Master.and.(M3_south.gt.1)) THEN
-        WRITE (stdout,90) '3D momentum','southern edge'
+        WRITE (stdout,80) '3D momentum','southern edge'
         exit_flag=5
       END IF
 !
@@ -2857,19 +2658,19 @@
 !  selected at each boundary edge.
 !
       IF (Master.and.(T_east.gt.1)) THEN
-        WRITE (stdout,90) 'tracers','eastern edge'
+        WRITE (stdout,80) 'tracers','eastern edge'
         exit_flag=5
       END IF
       IF (Master.and.(T_west.gt.1)) THEN
-        WRITE (stdout,90) 'tracers','western edge'
+        WRITE (stdout,80) 'tracers','western edge'
         exit_flag=5
       END IF
       IF (Master.and.(T_north.gt.1)) THEN
-        WRITE (stdout,90) 'tracers','northern edge'
+        WRITE (stdout,80) 'tracers','northern edge'
         exit_flag=5
       END IF
       IF (Master.and.(T_south.gt.1)) THEN
-        WRITE (stdout,90) 'tracers','southern edge'
+        WRITE (stdout,80) 'tracers','southern edge'
         exit_flag=5
       END IF
 # if defined GLS_MIXING || defined MY25_MIXING
@@ -2878,19 +2679,19 @@
 !  selected at each boundary edge.
 !
       IF (Master.and.(K_east.gt.1)) THEN
-        WRITE (stdout,90) 'TKE fields','eastern edge'
+        WRITE (stdout,80) 'TKE fields','eastern edge'
         exit_flag=5
       END IF
       IF (Master.and.(K_west.gt.1)) THEN
-        WRITE (stdout,90) 'TKE fields','western edge'
+        WRITE (stdout,80) 'TKE fields','western edge'
         exit_flag=5
       END IF
       IF (Master.and.(K_north.gt.1)) THEN
-        WRITE (stdout,90) 'TKE fields','northern edge'
+        WRITE (stdout,80) 'TKE fields','northern edge'
         exit_flag=5
       END IF
       IF (Master.and.(K_south.gt.1)) THEN
-        WRITE (stdout,90) 'TKE fields','southern edge'
+        WRITE (stdout,80) 'TKE fields','southern edge'
         exit_flag=5
       END IF
 # endif
@@ -2901,8 +2702,8 @@
 !
       DO ng=1,Ngrids
         IF (Master.and.(ndtfast(ng).gt.1)) THEN
-          WRITE (stdout,100)
- 100      FORMAT (/,' CHECKDEFS - explicit time-step splitting is ',    &
+          WRITE (stdout,90)
+ 90       FORMAT (/,' CHECKDEFS - explicit time-step splitting is ',    &
      &              ' inconsistent.',                                   &
      &            /,13x,'Change parameter NDTFAST to unity.')
           exit_flag=5
@@ -2914,16 +2715,16 @@
 !  Stop if more that one energy norm is defined.
 !
       IF (Master.and.(EnergyN.gt.1)) THEN
-        WRITE (stdout,110)
- 110    FORMAT (/,' CHECKDEFS - only one energy norm scaling is',       &
+        WRITE (stdout,100)
+ 100    FORMAT (/,' CHECKDEFS - only one energy norm scaling is',       &
      &            ' allowed')
         exit_flag=5
       END IF
 #endif
 #if defined ADJOINT && defined _OPENMP
       IF (Master) THEN
-        WRITE (stdout,120)
- 120    FORMAT (/,' CHECKDEFS - cannot run the adjoint model in',       &
+        WRITE (stdout,110)
+ 110    FORMAT (/,' CHECKDEFS - cannot run the adjoint model in',       &
      &            ' shared-memory mode')
         exit_flag=5
       END IF

@@ -10,59 +10,72 @@
 !                                                                      !
 !  2D Primitive Variables.                                             !
 !                                                                      !
-!  rubar      Right-hand-side of 2D U-momentum equation (m4/s2).       !
-!  rvbar      Right-hand-side of 2D V-momentum equation (m4/s2).       !
-!  rzeta      Right-hand-side of free surface equation (m3/s).         !
-!  ubar       Vertically integrated U-momentum component (m/s).        !
-!  vbar       Vertically integrated V-momentum component (m/s).        !
-!  zeta       Free surface (m).                                        !
+!  rubar        Right-hand-side of 2D U-momentum equation (m4/s2).     !
+!  rvbar        Right-hand-side of 2D V-momentum equation (m4/s2).     !
+!  rzeta        Right-hand-side of free surface equation (m3/s).       !
+!  ubar         Vertically integrated U-momentum component (m/s).      !
+!  vbar         Vertically integrated V-momentum component (m/s).      !
+!  zeta         Free surface (m).                                      !
 !                                                                      !
 !  3D Primitive Variables.                                             !
 !                                                                      !
-!  pden       Potential Density anomaly (kg/m3).                       !
-!  rho        Density anomaly (kg/m3).                                 !
-!  ru         Right-hand-side of 3D U-momentum equation (m4/s2).       !
-!  rv         Right hand side of 3D V-momentum equation (m4/s2).       !
-!  t          Tracer type variables (active and passive).              !
-!  u          3D U-momentum component (m/s).                           !
-!  v          3D V-momentum component (m/s).                           !
-!  W          S-coordinate (omega*Hz/mn) vertical velocity (m3/s).     !
+!  pden         Potential Density anomaly (kg/m3).                     !
+!  rho          Density anomaly (kg/m3).                               !
+!  ru           Right-hand-side of 3D U-momentum equation (m4/s2).     !
+!  rv           Right hand side of 3D V-momentum equation (m4/s2).     !
+!  t            Tracer type variables (active and passive).            !
+!  u            3D U-momentum component (m/s).                         !
+!  v            3D V-momentum component (m/s).                         !
+!  W            S-coordinate (omega*Hz/mn) vertical velocity (m3/s).   !
 !                                                                      !
 !  Biology Variables.                                                  !
 !                                                                      !
-!  pH         Surface concentration of hydrogen ions.                  !
+!  pH           Surface concentration of hydrogen ions.                !
 !                                                                      !
 !  Sediment Variables.                                                 !
 !                                                                      !
-!  bed        Sediment properties in each bed layer:                   !
-!               bed(:,:,:,ithck) => layer thickness                    !
-!               bed(:,:,:,iaged) => layer age                          !
-!               bed(:,:,:,iporo) => layer porosity                     !
-!               bed(:,:,:,idiff) => layer bio-diffusivity              !
-!  bedldu     Bed load transport in xi  direction at u points (kg/m/s) !
-!  bedldv     Bed load transport in eta direction at v points (kg/m/s) !
-!  bed_frac   Sediment fraction of each size class in each bed layer   !
-!               (nondimensional: 0-1.0).  Sum of bed_frac = 1.0        !
-!  bed_mass   Sediment mass of each size class in each bed layer       !
-!               (kg/m2).                                               !
-!  bottom     Exposed sediment layer properties:                       !
-!               bottom(:,:,isd50) => mean grain diameter               !
-!               bottom(:,:,idens) => mean grain density                !
-!               bottom(:,:,iwsed) => mean settling velocity            !
-!               bottom(:,:,itauc) => mean critical erosion stress      !
-!               bottom(:,:,irlen) => ripple length                     !
-!               bottom(:,:,irhgt) => ripple height                     !
-!               bottom(:,:,ibwav) => bed wave excursion amplitude      !
-!               bottom(:,:,izNik) => Nikuradse bottom roughness        !
-!               bottom(:,:,izbio) => biological bottom roughness       !
-!               bottom(:,:,izbfm) => bed form bottom roughness         !
-!               bottom(:,:,izbld) => bed load bottom roughness         !
-!               bottom(:,:,izapp) => apparent bottom roughness         !
-!               bottom(:,:,izwbl) => wave bottom roughness             !
-!               bottom(:,:,izdef) => default bottom roughness          !
-!               bottom(:,:,iactv) => active layer thickness            !
-!               bottom(:,:,ishgt) => saltation height                  !
-!
+!  bed          Sediment properties in each bed layer:                 !
+!                 bed(:,:,:,ithck) => layer thickness                  !
+!                 bed(:,:,:,iaged) => layer age                        !
+!                 bed(:,:,:,iporo) => layer porosity                   !
+!                 bed(:,:,:,idiff) => layer bio-diffusivity            !
+!  bedldu         Bed load u-transport (kg/m/s)                        !
+!  bedldv         Bed load v-transport (kg/m/s)                        !
+!  bed_frac     Sediment fraction of each size class in each bed layer !
+!                 (nondimensional: 0-1.0).  Sum of bed_frac = 1.0      !
+!  bed_mass     Sediment mass of each size class in each bed layer     !
+!                 (kg/m2).                                             !
+!  bottom       Exposed sediment layer properties:                     !
+!                 bottom(:,:,isd50) => mean grain diameter             !
+!                 bottom(:,:,idens) => mean grain density              !
+!                 bottom(:,:,iwsed) => mean settling velocity          !
+!                 bottom(:,:,itauc) => mean critical erosion stress    !
+!                 bottom(:,:,irlen) => ripple length                   !
+!                 bottom(:,:,irhgt) => ripple height                   !
+!                 bottom(:,:,ibwav) => bed wave excursion amplitude    !
+!                 bottom(:,:,izNik) => Nikuradse bottom roughness      !
+!                 bottom(:,:,izbio) => biological bottom roughness     !
+!                 bottom(:,:,izbfm) => bed form bottom roughness       !
+!                 bottom(:,:,izbld) => bed load bottom roughness       !
+!                 bottom(:,:,izapp) => apparent bottom roughness       !
+!                 bottom(:,:,izwbl) => wave bottom roughness           !
+!                 bottom(:,:,izdef) => default bottom roughness        !
+!                 bottom(:,:,iactv) => active layer thickness          !
+!                 bottom(:,:,ishgt) => saltation height                !
+!                                                                      !
+#ifdef NEARSHORE_MELLOR
+!  Nearshore radiation stresses:                                       !
+!                                                                      !
+!  rulag2d      2D U-Stokes tendency term (m4/s2).                     !
+!  rvlag2d      2D V-Stokes tendency term (m4/s2).                     !
+!  ubar_stokes  2D U-Stokes drift velocity (m/s).                      !
+!  vbar_stokes  2D V-Stokes drift velocity (m/s).                      !
+!  rulag3d      3D U-Stokes tendency term (m4/s2).                     !
+!  rvlag3d      3D V-Stokes tendency term (m4/s2).                     !
+!  u_stokes     3D U-Stokes drift velocity (m/s).                      !
+!  v_stokes     3D V-Stokes drift velocity (m/s).                      !
+!                                                                      !
+#endif
 !=======================================================================
 !
         USE mod_kinds
@@ -79,6 +92,12 @@
           real(r8), pointer :: ubar(:,:,:)
           real(r8), pointer :: vbar(:,:,:)
           real(r8), pointer :: zeta(:,:,:)
+#if defined NEARSHORE_MELLOR
+          real(r8), pointer :: rulag2d(:,:)
+          real(r8), pointer :: rvlag2d(:,:)
+          real(r8), pointer :: ubar_stokes(:,:)
+          real(r8), pointer :: vbar_stokes(:,:)
+#endif
 #ifdef SOLVE3D
           real(r8), pointer :: pden(:,:,:)
           real(r8), pointer :: rho(:,:,:)
@@ -89,6 +108,12 @@
           real(r8), pointer :: v(:,:,:,:)
           real(r8), pointer :: W(:,:,:)
           real(r8), pointer :: wvel(:,:,:)
+# if defined NEARSHORE_MELLOR
+          real(r8), pointer :: rulag3d(:,:,:)
+          real(r8), pointer :: rvlag3d(:,:,:)
+          real(r8), pointer :: u_stokes(:,:,:)
+          real(r8), pointer :: v_stokes(:,:,:)
+# endif
 # if defined BIO_FASHAM && defined CARBON
           real(r8), pointer :: pH(:,:)
 # endif
@@ -116,6 +141,12 @@
           real(r8), pointer :: tl_ubar(:,:,:)
           real(r8), pointer :: tl_vbar(:,:,:)
           real(r8), pointer :: tl_zeta(:,:,:)
+# if defined NEARSHORE_MELLOR
+          real(r8), pointer :: tl_rulag2d(:,:)
+          real(r8), pointer :: tl_rvlag2d(:,:)
+          real(r8), pointer :: tl_ubar_stokes(:,:)
+          real(r8), pointer :: tl_vbar_stokes(:,:)
+# endif
 # ifdef SOLVE3D
           real(r8), pointer :: tl_pden(:,:,:)
           real(r8), pointer :: tl_rho(:,:,:)
@@ -125,6 +156,12 @@
           real(r8), pointer :: tl_u(:,:,:,:)
           real(r8), pointer :: tl_v(:,:,:,:)
           real(r8), pointer :: tl_W(:,:,:)
+#  if defined NEARSHORE_MELLOR
+          real(r8), pointer :: tl_rulag3d(:,:,:)
+          real(r8), pointer :: tl_rvlag3d(:,:,:)
+          real(r8), pointer :: tl_u_stokes(:,:,:)
+          real(r8), pointer :: tl_v_stokes(:,:,:)
+#  endif
 # endif
 #endif
 
@@ -141,6 +178,12 @@
           real(r8), pointer :: ad_ubar_sol(:,:)
           real(r8), pointer :: ad_vbar_sol(:,:)
           real(r8), pointer :: ad_zeta_sol(:,:)
+# if defined NEARSHORE_MELLOR
+          real(r8), pointer :: ad_rulag2d(:,:)
+          real(r8), pointer :: ad_rvlag2d(:,:)
+          real(r8), pointer :: ad_ubar_stokes(:,:)
+          real(r8), pointer :: ad_vbar_stokes(:,:)
+# endif
 # ifdef SOLVE3D
           real(r8), pointer :: ad_pden(:,:,:)
           real(r8), pointer :: ad_rho(:,:,:)
@@ -150,6 +193,12 @@
           real(r8), pointer :: ad_u(:,:,:,:)
           real(r8), pointer :: ad_v(:,:,:,:)
           real(r8), pointer :: ad_W(:,:,:)
+#  if defined NEARSHORE_MELLOR
+          real(r8), pointer :: ad_rulag3d(:,:,:)
+          real(r8), pointer :: ad_rvlag3d(:,:,:)
+          real(r8), pointer :: ad_u_stokes(:,:,:)
+          real(r8), pointer :: ad_v_stokes(:,:,:)
+#  endif
 # endif
 #endif
 
@@ -263,6 +312,13 @@
       allocate ( OCEAN(ng) % vbar(LBi:UBi,LBj:UBj,3) )
       allocate ( OCEAN(ng) % zeta(LBi:UBi,LBj:UBj,3) )
 
+#if defined NEARSHORE_MELLOR
+      allocate ( OCEAN(ng) % rulag2d(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % rvlag2d(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % ubar_stokes(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % vbar_stokes(LBi:UBi,LBj:UBj) )
+#endif
+
 #ifdef SOLVE3D
       allocate ( OCEAN(ng) % pden(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( OCEAN(ng) % rho(LBi:UBi,LBj:UBj,N(ng)) )
@@ -275,6 +331,13 @@
       allocate ( OCEAN(ng) % v(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % W(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( OCEAN(ng) % wvel(LBi:UBi,LBj:UBj,0:N(ng)) )
+
+# if defined NEARSHORE_MELLOR
+      allocate ( OCEAN(ng) % rulag3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % rvlag3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % u_stokes(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % v_stokes(LBi:UBi,LBj:UBj,N(ng)) )
+# endif
 
 # if defined BIO_FASHAM && defined CARBON
       allocate ( OCEAN(ng) % pH(LBi:UBi,LBj:UBj) )
@@ -306,6 +369,13 @@
       allocate ( OCEAN(ng) % tl_vbar(LBi:UBi,LBj:UBj,3) )
       allocate ( OCEAN(ng) % tl_zeta(LBi:UBi,LBj:UBj,3) )
 
+# if defined NEARSHORE_MELLOR
+      allocate ( OCEAN(ng) % tl_rulag2d(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % tl_rvlag2d(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % tl_ubar_stokes(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % tl_vbar_stokes(LBi:UBi,LBj:UBj) )
+# endif
+
 # ifdef SOLVE3D
       allocate ( OCEAN(ng) % tl_pden(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( OCEAN(ng) % tl_rho(LBi:UBi,LBj:UBj,N(ng)) )
@@ -317,6 +387,13 @@
       allocate ( OCEAN(ng) % tl_u(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % tl_v(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % tl_W(LBi:UBi,LBj:UBj,0:N(ng)) )
+
+#  if defined NEARSHORE_MELLOR
+      allocate ( OCEAN(ng) % tl_rulag3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % tl_rvlag3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % tl_u_stokes(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % tl_v_stokes(LBi:UBi,LBj:UBj,N(ng)) )
+#  endif
 # endif
 #endif
 
@@ -335,6 +412,14 @@
       allocate ( OCEAN(ng) % ad_ubar_sol(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % ad_vbar_sol(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % ad_zeta_sol(LBi:UBi,LBj:UBj) )
+
+# if defined NEARSHORE_MELLOR
+      allocate ( OCEAN(ng) % ad_rulag2d(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % ad_rvlag2d(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % ad_ubar_stokes(LBi:UBi,LBj:UBj) )
+      allocate ( OCEAN(ng) % ad_vbar_stokes(LBi:UBi,LBj:UBj) )
+# endif
+
 # ifdef SOLVE3D
       allocate ( OCEAN(ng) % ad_pden(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( OCEAN(ng) % ad_rho(LBi:UBi,LBj:UBj,N(ng)) )
@@ -346,6 +431,13 @@
       allocate ( OCEAN(ng) % ad_u(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % ad_v(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % ad_W(LBi:UBi,LBj:UBj,0:N(ng)) )
+
+#  if defined NEARSHORE_MELLOR
+      allocate ( OCEAN(ng) % ad_rulag3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % ad_rvlag3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % ad_u_stokes(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( OCEAN(ng) % ad_v_stokes(LBi:UBi,LBj:UBj,N(ng)) )
+#  endif
 # endif
 #endif
 
@@ -517,6 +609,12 @@
             OCEAN(ng) % zeta(i,j,1) = IniVal
             OCEAN(ng) % zeta(i,j,2) = IniVal
             OCEAN(ng) % zeta(i,j,3) = IniVal
+# if defined NEARSHORE_MELLOR
+            OCEAN(ng) % rulag2d(i,j) = IniVal
+            OCEAN(ng) % rvlag2d(i,j) = IniVal
+            OCEAN(ng) % ubar_stokes(i,j) = IniVal
+            OCEAN(ng) % vbar_stokes(i,j) = IniVal
+# endif
 # if defined BIO_FASHAM && defined CARBON && defined SOLVE3D
             OCEAN(ng) % pH(i,j) = 8.0_r8
 # endif
@@ -531,6 +629,12 @@
               OCEAN(ng) % u(i,j,k,2) = IniVal
               OCEAN(ng) % v(i,j,k,1) = IniVal
               OCEAN(ng) % v(i,j,k,2) = IniVal
+# if defined NEARSHORE_MELLOR
+              OCEAN(ng) % rulag3d(i,j,k) = IniVal
+              OCEAN(ng) % rvlag3d(i,j,k) = IniVal
+              OCEAN(ng) % u_stokes(i,j,k) = IniVal
+              OCEAN(ng) % v_stokes(i,j,k) = IniVal
+# endif
             END DO
           END DO
           DO k=0,N(ng)
@@ -613,6 +717,12 @@
             OCEAN(ng) % tl_zeta(i,j,1) = IniVal
             OCEAN(ng) % tl_zeta(i,j,2) = IniVal
             OCEAN(ng) % tl_zeta(i,j,3) = IniVal
+# if defined NEARSHORE_MELLOR
+            OCEAN(ng) % tl_rulag2d(i,j) = IniVal
+            OCEAN(ng) % tl_rvlag2d(i,j) = IniVal
+            OCEAN(ng) % tl_ubar_stokes(i,j) = IniVal
+            OCEAN(ng) % tl_vbar_stokes(i,j) = IniVal
+# endif
           END DO
 # ifdef SOLVE3D
           DO k=1,N(ng)
@@ -624,6 +734,12 @@
               OCEAN(ng) % tl_u(i,j,k,2) = IniVal
               OCEAN(ng) % tl_v(i,j,k,1) = IniVal
               OCEAN(ng) % tl_v(i,j,k,2) = IniVal
+#  if defined NEARSHORE_MELLOR
+              OCEAN(ng) % tl_rulag3d(i,j,k) = IniVal
+              OCEAN(ng) % tl_rvlag3d(i,j,k) = IniVal
+              OCEAN(ng) % tl_u_stokes(i,j,k) = IniVal
+              OCEAN(ng) % tl_v_stokes(i,j,k) = IniVal
+#  endif
             END DO
           END DO
           DO k=0,N(ng)
@@ -677,6 +793,12 @@
             OCEAN(ng) % ad_ubar_sol(i,j) = IniVal
             OCEAN(ng) % ad_vbar_sol(i,j) = IniVal
             OCEAN(ng) % ad_zeta_sol(i,j) = IniVal
+# if defined NEARSHORE_MELLOR
+            OCEAN(ng) % ad_rulag2d(i,j) = IniVal
+            OCEAN(ng) % ad_rvlag2d(i,j) = IniVal
+            OCEAN(ng) % ad_ubar_stokes(i,j) = IniVal
+            OCEAN(ng) % ad_vbar_stokes(i,j) = IniVal
+# endif
           END DO
 # ifdef SOLVE3D
           DO k=1,N(ng)
@@ -688,6 +810,12 @@
               OCEAN(ng) % ad_u(i,j,k,2) = IniVal
               OCEAN(ng) % ad_v(i,j,k,1) = IniVal
               OCEAN(ng) % ad_v(i,j,k,2) = IniVal
+#  if defined NEARSHORE_MELLOR
+              OCEAN(ng) % ad_rulag3d(i,j,k) = IniVal
+              OCEAN(ng) % ad_rvlag3d(i,j,k) = IniVal
+              OCEAN(ng) % ad_u_stokes(i,j,k) = IniVal
+              OCEAN(ng) % ad_v_stokes(i,j,k) = IniVal
+#  endif
             END DO
           END DO
           DO k=0,N(ng)

@@ -1,4 +1,3 @@
-#include "cppdefs.h"
       SUBROUTINE biology (ng, tile)
 !
 !svn $Id$
@@ -1186,28 +1185,22 @@
      &                                     FV1
                   Bio_new(i,k,iDIC_)=Bio_new(i,k,iDIC_)-                &
      &                               FV1
-                END IF
+!
+!  Pigment growth calculations.
+!
+ 		  DO ipig=1,Npig
+		    IF (iPigs(iphy,ipig).gt.0) THEN
+                      itrc=iPigs(iphy,ipig)
+                        IF (Bio(i,k,iPhyC(iphy)).gt.0.0_r8) THEN
+                          FV1=Bio(i,k,itrc)*GtALG_r(i,k,iphy)
+                          Bio_new(i,k,itrc)=Bio_new(i,k,itrc)+FV1
+                        END IF
+		      END IF
+		    END DO
+                  END IF
+                END DO
               END DO
             END DO
-          END DO
-!
-!  Pigment growth calculations. 
-!
-          DO ipig=1,Npig
-            DO iphy=1,Nphy
-              IF (iPigs(iphy,ipig).gt.0) THEN
-                itrc=iPigs(iphy,ipig)
-                DO k=N(ng),Keuphotic(i),-1
-                  DO i=Istr,Iend
-                    IF (Bio(i,k,iPhyC(iphy)).gt.0.0_r8) THEN
-                      FV1=Bio(i,k,itrc)*GtALG_r(i,k,iphy)
-                      Bio_new(i,k,itrc)=Bio_new(i,k,itrc)+FV1
-                    END IF
-                  END DO
-                END DO
-              END IF
-            END DO
-          END DO
 !
 !-----------------------------------------------------------------------
 !  Bacterioplankton carbon growth terms.

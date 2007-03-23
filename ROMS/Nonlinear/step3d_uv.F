@@ -5,9 +5,9 @@
 !svn $Id$
 !=======================================================================
 !  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                           Hernan G. Arango   !
-!========================================== Alexander F. Shchepetkin ===
+!    Licensed under a MIT/X style license           Hernan G. Arango   !
+!    See License_ROMS.txt                   Alexander F. Shchepetkin   !
+!==================================================== John C. Warner ===
 !                                                                      !
 !  This subroutine time-steps the nonlinear  horizontal  momentum      !
 !  equations. The vertical viscosity terms are time-stepped using      !
@@ -93,6 +93,12 @@
      &                     OCEAN(ng) % v,                               &
      &                     OCEAN(ng) % ubar,                            &
      &                     OCEAN(ng) % vbar,                            &
+# ifdef NEARSHORE_MELLOR
+     &                     OCEAN(ng) % ubar_stokes,                     &
+     &                     OCEAN(ng) % vbar_stokes,                     &
+     &                     OCEAN(ng) % u_stokes,                        &
+     &                     OCEAN(ng) % v_stokes,                        &
+# endif
      &                     GRID(ng) % Huon,                             &
      &                     GRID(ng) % Hvom)
 # ifdef PROFILE
@@ -126,6 +132,10 @@
 # endif
      &                           u, v,                                  &
      &                           ubar, vbar,                            &
+# ifdef NEARSHORE_MELLOR
+     &                           ubar_stokes, vbar_stokes,              &
+     &                           u_stokes, v_stokes,                    &
+# endif
      &                           Huon, Hvom)
 !***********************************************************************
 !
@@ -174,6 +184,10 @@
       real(r8), intent(in) :: DV_avg2(LBi:,LBj:)
       real(r8), intent(in) :: ru(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: rv(LBi:,LBj:,0:,:)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
+      real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
+#  endif
 #  ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaU2wrk(LBi:,LBj:,:)
       real(r8), intent(inout) :: DiaV2wrk(LBi:,LBj:,:)
@@ -186,6 +200,10 @@
 #  endif
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(inout) :: u_stokes(LBi:,LBj:,:)
+      real(r8), intent(inout) :: v_stokes(LBi:,LBj:,:)
+#  endif
       real(r8), intent(out) :: ubar(LBi:,LBj:,:)
       real(r8), intent(out) :: vbar(LBi:,LBj:,:)
       real(r8), intent(out) :: Huon(LBi:,LBj:,:)
@@ -216,6 +234,10 @@
       real(r8), intent(in) :: DV_avg2(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(in) :: rv(LBi:UBi,LBj:UBj,0:N(ng),2)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
+#  endif
 #  ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaU2wrk(LBi:UBi,LBj:UBj,NDM2d)
       real(r8), intent(inout) :: DiaV2wrk(LBi:UBi,LBj:UBj,NDM2d)
@@ -228,6 +250,10 @@
 #  endif
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(inout) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
+#  endif
       real(r8), intent(out) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(out) :: vbar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(out) :: Huon(LBi:UBi,LBj:UBj,N(ng))
@@ -258,7 +284,10 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-
+# ifdef NEARSHORE_MELLOR
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CFs
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DCs
+# endif
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: oHz
 # ifdef DIAGNOSTICS_UV
@@ -326,6 +355,14 @@
      &                             oHz(i,k)
             DiaU3wrk(i,j,k,M3vadv)=(DiaU3wrk(i,j,k,M3vadv)+             &
      &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3vadv))*  &
+     &                             oHz(i,k)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+            DiaU3wrk(i,j,k,M3hrad)=(DiaU3wrk(i,j,k,M3hrad)+             &
+     &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3hrad))*  &
+     &                             oHz(i,k)
+            DiaU3wrk(i,j,k,M3vrad)=(DiaU3wrk(i,j,k,M3vrad)+             &
+     &                              DC(i,0)*DiaRU(i,j,k,nrhs,M3vrad))*  &
      &                             oHz(i,k)
 #  endif
             DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)*oHz(i,k)
@@ -467,9 +504,12 @@
         DO i=IstrU,Iend
           CF(i,0)=Hzk(i,1)
           DC(i,0)=u(i,j,1,nnew)*Hzk(i,1)
+# ifdef NEARSHORE_MELLOR
+          DCs(i,0)=u_stokes(i,j,1)*Hzk(i,1)
+# endif
 # ifdef DIAGNOSTICS_UV
           Dwrk(i,M2pgrd)=DiaU3wrk(i,j,1,M3pgrd)*Hzk(i,1)
-          Dwrk(i,M2strs)=DiaU3wrk(i,j,1,M3vvis)*Hzk(i,1)
+          Dwrk(i,M2bstr)=DiaU3wrk(i,j,1,M3vvis)*Hzk(i,1)
 #  ifdef UV_COR
           Dwrk(i,M2fcor)=DiaU3wrk(i,j,1,M3fcor)*Hzk(i,1)
 #  endif
@@ -479,16 +519,22 @@
 #  ifdef UV_ADV
           Dwrk(i,M2hadv)=DiaU3wrk(i,j,1,M3hadv)*Hzk(i,1)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+          Dwrk(i,M2hrad)=DiaU3wrk(i,j,1,M3hrad)*Hzk(i,1)
+#  endif
 # endif
         END DO
         DO k=2,N(ng)
           DO i=IstrU,Iend
             CF(i,0)=CF(i,0)+Hzk(i,k)
             DC(i,0)=DC(i,0)+u(i,j,k,nnew)*Hzk(i,k)
+# ifdef NEARSHORE_MELLOR
+            DCs(i,0)=DCs(i,0)+u_stokes(i,j,k)*Hzk(i,k)
+# endif
 # ifdef DIAGNOSTICS_UV
             Dwrk(i,M2pgrd)=Dwrk(i,M2pgrd)+                              &
      &                     DiaU3wrk(i,j,k,M3pgrd)*Hzk(i,k)
-            Dwrk(i,M2strs)=Dwrk(i,M2strs)+                              &
+            Dwrk(i,M2bstr)=Dwrk(i,M2bstr)+                              &
      &                     DiaU3wrk(i,j,k,M3vvis)*Hzk(i,k)
 #  ifdef UV_COR
             Dwrk(i,M2fcor)=Dwrk(i,M2fcor)+                              &
@@ -502,17 +548,26 @@
             Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                              &
      &                     DiaU3wrk(i,j,k,M3hadv)*Hzk(i,k)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+            Dwrk(i,M2hrad)=Dwrk(i,M2hrad)+                              &
+     &                     DiaU3wrk(i,j,k,M3hrad)*Hzk(i,k)
+#  endif
 # endif
           END DO
         END DO
         DO i=IstrU,Iend
           cff1=1.0_r8/(CF(i,0)*on_u(i,j))
           DC(i,0)=(DC(i,0)*on_u(i,j)-DU_avg1(i,j))*cff1      ! recursive
+# ifdef NEARSHORE_MELLOR
+          cff2=1.0_r8/CF(i,0)
+          DCs(i,0)=DCs(i,0)*cff2-ubar_stokes(i,j)            ! recursive
+# endif
 # ifdef DIAGNOSTICS_UV
           Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*on_u(i,j)-                     &
      &                    DiaU2wrk(i,j,M2pgrd))*cff1
-          Dwrk(i,M2strs)=(Dwrk(i,M2strs)*on_u(i,j)-                     &
-     &                    DiaU2wrk(i,j,M2strs))*cff1
+          Dwrk(i,M2bstr)=(Dwrk(i,M2bstr)*on_u(i,j)-                     &
+     &                    DiaU2wrk(i,j,M2bstr)-DiaU2wrk(i,j,M2sstr))*   &
+     &                   cff1
 #  ifdef UV_COR
           Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*on_u(i,j)-                     &
      &                    DiaU2wrk(i,j,M2fcor))*cff1
@@ -525,6 +580,10 @@
           Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*on_u(i,j)-                     &
      &                    DiaU2wrk(i,j,M2hadv))*cff1
 #  endif
+#  ifdef NEARSHORE_MELLOR
+          Dwrk(i,M2hrad)=(Dwrk(i,M2hrad)*on_u(i,j)-                     &
+     &                    DiaU2wrk(i,j,M2hrad))*cff1
+#  endif
 # endif
         END DO
 !
@@ -536,11 +595,17 @@
 # ifdef MASKING
             u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
 # endif
+# ifdef NEARSHORE_MELLOR
+            u_stokes(i,j,k)=u_stokes(i,j,k)-DCs(i,0)
+#  ifdef MASKING
+            u_stokes(i,j,k)=u_stokes(i,j,k)*umask(i,j)
+#  endif
+# endif
 # ifdef DIAGNOSTICS_UV
             DiaU3wrk(i,j,k,M3pgrd)=DiaU3wrk(i,j,k,M3pgrd)-              &
      &                             Dwrk(i,M2pgrd)
             DiaU3wrk(i,j,k,M3vvis)=DiaU3wrk(i,j,k,M3vvis)-              &
-     &                             Dwrk(i,M2strs)
+     &                             Dwrk(i,M2bstr)
 #  ifdef UV_COR
             DiaU3wrk(i,j,k,M3fcor)=DiaU3wrk(i,j,k,M3fcor)-              &
      &                             Dwrk(i,M2fcor)
@@ -552,6 +617,10 @@
 #  ifdef UV_ADV
             DiaU3wrk(i,j,k,M3hadv)=DiaU3wrk(i,j,k,M3hadv)-              &
      &                             Dwrk(i,M2hadv)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+            DiaU3wrk(i,j,k,M3hrad)=DiaU3wrk(i,j,k,M3hrad)-              &
+     &                             Dwrk(i,M2hrad)
 #  endif
 # endif
           END DO
@@ -614,6 +683,14 @@
      &                               oHz(i,k)
               DiaV3wrk(i,j,k,M3vadv)=(DiaV3wrk(i,j,k,M3vadv)+           &
      &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3vadv))*&
+     &                               oHz(i,k)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+              DiaV3wrk(i,j,k,M3hrad)=(DiaV3wrk(i,j,k,M3hrad)+           &
+     &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3hrad))*&
+     &                               oHz(i,k)
+              DiaV3wrk(i,j,k,M3vrad)=(DiaV3wrk(i,j,k,M3vrad)+           &
+     &                                DC(i,0)*DiaRV(i,j,k,nrhs,M3vrad))*&
      &                               oHz(i,k)
 #  endif
               DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)*oHz(i,k)
@@ -755,9 +832,12 @@
           DO i=Istr,Iend
             CF(i,0)=Hzk(i,1)
             DC(i,0)=v(i,j,1,nnew)*Hzk(i,1)
+# ifdef NEARSHORE_MELLOR
+            DCs(i,0)=v_stokes(i,j,1)*Hzk(i,1)
+# endif
 # ifdef DIAGNOSTICS_UV
             Dwrk(i,M2pgrd)=DiaV3wrk(i,j,1,M3pgrd)*Hzk(i,1)
-            Dwrk(i,M2strs)=DiaV3wrk(i,j,1,M3vvis)*Hzk(i,1)
+            Dwrk(i,M2bstr)=DiaV3wrk(i,j,1,M3vvis)*Hzk(i,1)
 #  ifdef UV_COR
             Dwrk(i,M2fcor)=DiaV3wrk(i,j,1,M3fcor)*Hzk(i,1)
 #  endif
@@ -767,16 +847,22 @@
 #  ifdef UV_ADV
             Dwrk(i,M2hadv)=DiaV3wrk(i,j,1,M3hadv)*Hzk(i,1)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+            Dwrk(i,M2hrad)=DiaV3wrk(i,j,1,M3hrad)*Hzk(i,1)
+#  endif
 # endif
           END DO
           DO k=2,N(ng)
             DO i=Istr,Iend
               CF(i,0)=CF(i,0)+Hzk(i,k)
               DC(i,0)=DC(i,0)+v(i,j,k,nnew)*Hzk(i,k)
+# ifdef NEARSHORE_MELLOR
+              DCs(i,0)=DCs(i,0)+v_stokes(i,j,k)*Hzk(i,k)
+# endif
 # ifdef DIAGNOSTICS_UV
               Dwrk(i,M2pgrd)=Dwrk(i,M2pgrd)+                            &
      &                       DiaV3wrk(i,j,k,M3pgrd)*Hzk(i,k)
-              Dwrk(i,M2strs)=Dwrk(i,M2strs)+                            &
+              Dwrk(i,M2bstr)=Dwrk(i,M2bstr)+                            &
      &                       DiaV3wrk(i,j,k,M3vvis)*Hzk(i,k)
 #  ifdef UV_COR
               Dwrk(i,M2fcor)=Dwrk(i,M2fcor)+                            &
@@ -790,17 +876,26 @@
               Dwrk(i,M2hadv)=Dwrk(i,M2hadv)+                            &
      &                       DiaV3wrk(i,j,k,M3hadv)*Hzk(i,k)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+              Dwrk(i,M2hrad)=Dwrk(i,M2hrad)+                            &
+     &                       DiaV3wrk(i,j,k,M3hrad)*Hzk(i,k)
+#  endif
 # endif
             END DO
           END DO
           DO i=Istr,Iend
             cff1=1.0_r8/(CF(i,0)*om_v(i,j))
             DC(i,0)=(DC(i,0)*om_v(i,j)-DV_avg1(i,j))*cff1    ! recursive
+# ifdef NEARSHORE_MELLOR
+            cff2=1.0_r8/CF(i,0)
+            DCs(i,0)=DCs(i,0)*cff2-vbar_stokes(i,j)          ! recursive
+# endif
 # ifdef DIAGNOSTICS_UV
             Dwrk(i,M2pgrd)=(Dwrk(i,M2pgrd)*om_v(i,j)-                   &
      &                      DiaV2wrk(i,j,M2pgrd))*cff1
-            Dwrk(i,M2strs)=(Dwrk(i,M2strs)*om_v(i,j)-                   &
-     &                      DiaV2wrk(i,j,M2strs))*cff1
+            Dwrk(i,M2bstr)=(Dwrk(i,M2bstr)*om_v(i,j)-                   &
+     &                      DiaV2wrk(i,j,M2bstr)-DiaV2wrk(i,j,M2sstr))* &
+     &                     cff1
 #  ifdef UV_COR
             Dwrk(i,M2fcor)=(Dwrk(i,M2fcor)*om_v(i,j)-                   &
      &                      DiaV2wrk(i,j,M2fcor))*cff1
@@ -813,6 +908,10 @@
             Dwrk(i,M2hadv)=(Dwrk(i,M2hadv)*om_v(i,j)-                   &
      &                      DiaV2wrk(i,j,M2hadv))*cff1
 #  endif
+#  ifdef NEARSHORE_MELLOR
+            Dwrk(i,M2hrad)=(Dwrk(i,M2hrad)*om_v(i,j)-                   &
+     &                      DiaV2wrk(i,j,M2hrad))*cff1
+#  endif
 # endif
           END DO
 !
@@ -824,11 +923,17 @@
 # ifdef MASKING
               v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
 # endif
+# ifdef NEARSHORE_MELLOR
+              v_stokes(i,j,k)=v_stokes(i,j,k)-DCs(i,0)
+#  ifdef MASKING
+              v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
+#  endif
+# endif
 # ifdef DIAGNOSTICS_UV
               DiaV3wrk(i,j,k,M3pgrd)=DiaV3wrk(i,j,k,M3pgrd)-            &
      &                               Dwrk(i,M2pgrd)
               DiaV3wrk(i,j,k,M3vvis)=DiaV3wrk(i,j,k,M3vvis)-            &
-     &                               Dwrk(i,M2strs)
+     &                               Dwrk(i,M2bstr)
 #  ifdef UV_COR
               DiaV3wrk(i,j,k,M3fcor)=DiaV3wrk(i,j,k,M3fcor)-            &
      &                               Dwrk(i,M2fcor)
@@ -840,6 +945,10 @@
 #  ifdef UV_ADV
               DiaV3wrk(i,j,k,M3hadv)=DiaV3wrk(i,j,k,M3hadv)-            &
      &                               Dwrk(i,M2hadv)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+              DiaV3wrk(i,j,k,M3hrad)=DiaV3wrk(i,j,k,M3hrad)-            &
+     &                               Dwrk(i,M2hrad)
 #  endif
 # endif
             END DO
@@ -914,6 +1023,9 @@
         DO i=IU_RANGE
           DC(i,0)=0.0_r8
           CF(i,0)=0.0_r8
+# ifdef NEARSHORE_MELLOR
+          CFs(i,0)=0.0_r8
+# endif
           FC(i,0)=0.0_r8
         END DO
 !
@@ -929,12 +1041,22 @@
             DC(i,0)=DC(i,0)+DC(i,k)
             CF(i,0)=CF(i,0)+                                            &
      &              DC(i,k)*u(i,j,k,nnew)
+# ifdef NEARSHORE_MELLOR
+            CFs(i,0)=CFs(i,0)+                                          &
+     &               DC(i,k)*u_stokes(i,j,k)
+# endif
           END DO
         END DO
         DO i=IU_RANGE
           cff1=DC(i,0)                                  ! intermediate
+# ifdef NEARSHORE_MELLOR
+          cff2=on_u(i,j)*DC(i,0)*ubar_stokes(i,j)
+# endif
           DC(i,0)=1.0_r8/DC(i,0)                        ! recursive
           CF(i,0)=DC(i,0)*(CF(i,0)-DU_avg1(i,j))        ! recursive
+# ifdef NEARSHORE_MELLOR
+          CFs(i,0)=DC(i,0)*(CFs(i,0)-cff2)              ! recursive
+# endif
           ubar(i,j,1)=DC(i,0)*DU_avg1(i,j)
           ubar(i,j,2)=ubar(i,j,1)
 # ifdef DIAGNOSTICS_UV
@@ -971,6 +1093,12 @@
 #  ifdef MASKING
             u(Istr,j,k,nnew)=u(Istr,j,k,nnew)*umask(Istr,j)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+            u_stokes(Istr,j,k)=u_stokes(Istr,j,k)-CFs(Istr,0)
+#   ifdef MASKING
+            u_stokes(Istr,j,k)=u_stokes(Istr,j,k)*umask(Istr,j)
+#   endif
+#  endif
           END DO
         END IF
         IF (Iend.eq.Lm(ng)) THEN
@@ -978,6 +1106,12 @@
             u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)-CF(Iend+1,0)
 #  ifdef MASKING
             u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)*umask(Iend+1,j)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+            u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)-CFs(Iend+1,0)
+#   ifdef MASKING
+            u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)*umask(Iend+1,j)
+#   endif
 #  endif
           END DO
         END IF
@@ -990,6 +1124,12 @@
 #  ifdef MASKING
               u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+              u_stokes(i,j,k)=u_stokes(i,j,k)-CFs(i,0)
+#   ifdef MASKING
+              u_stokes(i,j,k)=u_stokes(i,j,k)*umask(i,j)
+#   endif
+#  endif
             END DO
           END DO
         END IF
@@ -999,6 +1139,12 @@
               u(i,j,k,nnew)=u(i,j,k,nnew)-CF(i,0)
 #  ifdef MASKING
               u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+              u_stokes(i,j,k)=u_stokes(i,j,k)-CFs(i,0)
+#   ifdef MASKING
+              u_stokes(i,j,k)=u_stokes(i,j,k)*umask(i,j)
+#   endif
 #  endif
             END DO
           END DO
@@ -1010,6 +1156,9 @@
         DO k=N(ng),1,-1
           DO i=IU_RANGE
             Huon(i,j,k)=0.5_r8*(Huon(i,j,k)+u(i,j,k,nnew)*DC(i,k))
+# ifdef NEARSHORE_MELLOR
+            Huon(i,j,k)=Huon(i,j,k)+0.5_r8*u_stokes(i,j,k)*DC(i,k)
+# endif
             FC(i,0)=FC(i,0)+Huon(i,j,k)
 # ifdef DIAGNOSTICS_UV
             DiaU3wrk(i,j,k,M3rate)=u(i,j,k,nnew)-DiaU3wrk(i,j,k,M3rate)
@@ -1031,6 +1180,9 @@
           DO i=IV_RANGE
             DC(i,0)=0.0_r8
             CF(i,0)=0.0_r8
+# ifdef NEARSHORE_MELLOR
+            CFs(i,0)=0.0_r8
+# endif
             FC(i,0)=0.0_r8
           END DO
 !
@@ -1044,13 +1196,24 @@
               cff=0.5_r8*om_v(i,j)
               DC(i,k)=cff*(Hz(i,j,k)+Hz(i,j-1,k))
               DC(i,0)=DC(i,0)+DC(i,k)
-              CF(i,0)=CF(i,0)+DC(i,k)*v(i,j,k,nnew)
+              CF(i,0)=CF(i,0)+                                          &
+     &                DC(i,k)*v(i,j,k,nnew)
+# ifdef NEARSHORE_MELLOR
+              CFs(i,0)=CFs(i,0)+                                        &
+     &                 DC(i,k)*v_stokes(i,j,k)
+# endif
             END DO
           END DO
           DO i=IV_RANGE
-            cff1=DC(i,0)
-            DC(i,0)=1.0_r8/DC(i,0)                      ! recursive
-            CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))      ! recursive
+            cff1=DC(i,0)                                 ! Intermediate
+# ifdef NEARSHORE_MELLOR
+            cff2=om_v(i,j)*DC(i,0)*vbar_stokes(i,j)
+# endif
+            DC(i,0)=1.0_r8/DC(i,0)                       ! recursive
+            CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))       ! recursive
+# ifdef NEARSHORE_MELLOR
+            CFs(i,0)=DC(i,0)*(CFs(i,0)-cff2)             ! recursive
+# endif
             vbar(i,j,1)=DC(i,0)*DV_avg1(i,j)
             vbar(i,j,2)=vbar(i,j,1)
 # ifdef DIAGNOSTICS_UV
@@ -1090,6 +1253,12 @@
 #  ifdef MASKING
               v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)*vmask(Istr-1,j)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)-CFs(Istr-1,0)
+#   ifdef MASKING
+              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)*vmask(Istr-1,j)
+#   endif
+#  endif
             END DO
           END IF
           IF (Iend.eq.Lm(ng)) THEN
@@ -1097,6 +1266,12 @@
               v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)-CF(Iend+1,0)
 #  ifdef MASKING
               v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*vmask(Iend+1,j)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)-CFs(Iend+1,0)
+#   ifdef MASKING
+              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)*vmask(Iend+1,j)
+#   endif
 #  endif
             END DO
           END IF
@@ -1109,6 +1284,12 @@
 #  ifdef MASKING
                 v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+                v_stokes(i,j,k)=v_stokes(i,j,k)-CFs(i,0)
+#   ifdef MASKING
+                v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
+#   endif
+#  endif
               END DO
             END DO
           END IF
@@ -1118,6 +1299,12 @@
                 v(i,j,k,nnew)=v(i,j,k,nnew)-CF(i,0)
 #  ifdef MASKING
                 v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+                v_stokes(i,j,k)=v_stokes(i,j,k)-CFs(i,0)
+#   ifdef MASKING
+                v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
+#   endif
 #  endif
               END DO
             END DO
@@ -1129,6 +1316,9 @@
           DO k=N(ng),1,-1
             DO i=IV_RANGE
               Hvom(i,j,k)=0.5_r8*(Hvom(i,j,k)+v(i,j,k,nnew)*DC(i,k))
+# ifdef NEARSHORE_MELLOR
+              Hvom(i,j,k)=Hvom(i,j,k)+0.5_r8*v_stokes(i,j,k)*DC(i,k)
+# endif
               FC(i,0)=FC(i,0)+Hvom(i,j,k)
 # ifdef DIAGNOSTICS_UV
               DiaV3wrk(i,j,k,M3rate)=v(i,j,k,nnew)-                     &

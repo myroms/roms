@@ -238,7 +238,7 @@
       IF ((model.eq.0).or.(model.eq.iNLM).or.                           &
      &    (model.eq.iTLM).or.(model.eq.iRPM)) THEN
         IF (((model.eq.iTLM).or.(model.eq.iRPM)).and.                   &
-            (INPtime.ne.(dstart*day2sec))) THEN
+     &      (INPtime.ne.(dstart*day2sec))) THEN
           INPtime=dstart*day2sec
         END IF
         time(ng)=INPtime
@@ -355,15 +355,50 @@
           END IF
         END IF
 # endif
+# if defined SEDIMENT && defined SED_MORPH
+!
+!  Read in time-evolving bathymetry (m).
+!
+        IF (get_var(idbath)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idbath)), varid)
+            gtype=vflag(varid)*r2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % rmask(LBi,LBj),                  &
+#  endif
+     &                      GRID(ng) % h(LBi,LBj))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idbath)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idbath)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+# endif
 !
 !  Read in nonlinear free-surface (m).
 !
         IF (get_var(idFsur)) THEN
           IF (InpThread) THEN
             status=nf_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
+            IF (Perfect2d) THEN
+              gtype=vflag(varid)*r3dvar
+            ELSE
+              gtype=vflag(varid)*r2dvar
+            END IF
           END IF
           IF (Perfect2d) THEN
-            gtype=vflag(varid)*r3dvar
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, 3,          &
      &                        Fscl, Fmin, Fmax,                         &
@@ -372,7 +407,6 @@
 # endif
      &                        OCEAN(ng) % zeta(LBi,LBj,1))
           ELSE
-            gtype=vflag(varid)*r2dvar
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -401,8 +435,8 @@
         IF (get_var(idRzet).and.Perfect2D) THEN
           IF (InpThread) THEN
             status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRzet)), varid)
+            gtype=vflag(varid)*r3dvar
           END IF
-          gtype=vflag(varid)*r3dvar
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
      &                      Fscl, Fmin, Fmax,                           &
@@ -430,9 +464,13 @@
         IF (get_var(idUbar)) THEN
           IF (InpThread) THEN
             status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
+            IF (Perfect2D) THEN
+              gtype=vflag(varid)*u3dvar
+            ELSE
+              gtype=vflag(varid)*u2dvar
+            END IF
           END IF
           IF (Perfect2D) THEN
-            gtype=vflag(varid)*u3dvar
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, 3,          &
      &                        Fscl, Fmin, Fmax,                         &
@@ -441,7 +479,6 @@
 # endif
      &                        OCEAN(ng) % ubar(LBi,LBj,1))
           ELSE
-            gtype=vflag(varid)*u2dvar
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -470,8 +507,8 @@
         IF (get_var(idRu2d).and.Perfect2D) THEN
           IF (InpThread) THEN
             status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRu2d)), varid)
+            gtype=vflag(varid)*u3dvar
           END IF
-          gtype=vflag(varid)*u3dvar
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
      &                      Fscl, Fmin, Fmax,                           &
@@ -499,9 +536,13 @@
         IF (get_var(idVbar)) THEN
           IF (InpThread) THEN
             status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
+            IF (Perfect2D) THEN
+              gtype=vflag(varid)*v3dvar
+            ELSE
+              gtype=vflag(varid)*v2dvar
+            END IF
           END IF
           IF (Perfect2D) THEN
-            gtype=vflag(varid)*v3dvar
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, 3,          &
      &                        Fscl, Fmin, Fmax,                         &
@@ -510,7 +551,6 @@
 # endif
      &                        OCEAN(ng) % vbar(LBi,LBj,1))
           ELSE
-            gtype=vflag(varid)*v2dvar
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -539,8 +579,8 @@
         IF (get_var(idRv2d).and.Perfect2D) THEN
           IF (InpThread) THEN
             status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRv2d)), varid)
+            gtype=vflag(varid)*v3dvar
           END IF
-          gtype=vflag(varid)*v3dvar
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
      &                      Fscl, Fmin, Fmax,                           &

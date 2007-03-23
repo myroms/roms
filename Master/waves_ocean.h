@@ -1,4 +1,3 @@
-#include "cppdefs.h"
       PROGRAM waves_ocean
 !
 !==================================================== John C. Warner ===

@@ -48,6 +48,7 @@
 # ifdef SOLVE3D
      &                      nstp(ng), nnew(ng),                         &
 # endif
+     &                      GRID(ng) % h,                               &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
      &                      GRID(ng) % umask,                           &
@@ -67,9 +68,9 @@
 #  if defined SEDIMENT && defined SED_MORPH
      &                      OCEAN(ng) %  bed,                           &
      &                      GRID(ng) % bed_thick0,                      &
+     &                      GRID(ng) % bed_thick,                       &
 #  endif
      &                      GRID(ng) % Hz,                              &
-     &                      GRID(ng) % h,                               &
 #  ifdef ICESHELF
      &                      GRID(ng) % zice,                            &
 #  endif
@@ -94,6 +95,7 @@
 # ifdef SOLVE3D
      &                            nstp, nnew,                           &
 # endif
+     &                            h,                                    &
 # ifdef MASKING
      &                            rmask, umask, vmask,                  &
 # endif
@@ -106,9 +108,9 @@
 # endif
 # ifdef SOLVE3D
 #  if defined SEDIMENT && defined SED_MORPH
-     &                            bed, bed_thick0,                      &
+     &                            bed, bed_thick0, bed_thick,           &
 #  endif
-     &                            Hz, h,                                &
+     &                            Hz,                                   &
 #  ifdef ICESHELF
      &                            zice,                                 &
 #  endif
@@ -182,12 +184,12 @@
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: bed_thick0(LBi:,LBj:)
 #   endif
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
 #  endif
+      real(r8), intent(inout) :: h(LBi:,LBj:)
 #  if defined PERFECT_RESTART && \
      (defined EW_PERIODIC || defined NS_PERIODIC)
 #   ifdef SOLVE3D
@@ -199,7 +201,10 @@
       real(r8), intent(inout) :: rzeta(LBi:,LBj:,:)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(inout) :: h(LBi:,LBj:)
+#   if defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(inout) :: bed_thick0(LBi:,LBj:)
+      real(r8), intent(inout) :: bed_thick(LBi:,LBj:,:)
+#   endif
       real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: v(LBi:,LBj:,:,:)
@@ -221,12 +226,12 @@
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-      real(r8), intent(in) :: bed_thick0(LBi:UBi,LBj:UBj)
 #   endif
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
 #  endif
+      real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 #  if defined PERFECT_RESTART && \
      (defined EW_PERIODIC || defined NS_PERIODIC)
 #   ifdef SOLVE3D
@@ -238,7 +243,10 @@
       real(r8), intent(inout) :: rzeta(LBi:UBi,LBj:UBj,2)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
+#   if defined SEDIMENT && defined SED_MORPH
+      real(r8), intent(inout) :: bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: bed_thick(LBi:UBi,LBj:UBj,2)
+#   endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: v(LBi:UBi,LBj:UBj,N(ng),2)
@@ -276,6 +284,11 @@
             cff1=zeta(i,j,kstp)
 # ifdef MASKING
             cff1=cff1*rmask(i,j)
+# endif
+# ifdef WET_DRY
+            IF (cff1.le.(Dcrit(ng)-h(i,j))) THEN
+              cff1=Dcrit(ng)-h(i,j)
+            END IF
 # endif
             zeta(i,j,kstp)=cff1
 # ifdef SOLVE3D
@@ -319,6 +332,17 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        zeta(:,:,krhs))
 #  endif
+      IF (PerfectRST(ng)) THEN
+#  ifdef SOLVE3D
+        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          zeta(:,:,krhs))
+#  else
+        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          zeta(:,:,knew))
+#  endif
+      END IF
 # endif
 # ifdef DISTRIBUTE
 #  ifdef SOLVE3D
@@ -334,6 +358,19 @@
      &                    zeta(:,:,kstp),                               &
      &                    zeta(:,:,krhs))
 #  endif
+      IF (PerfectRST(ng)) THEN
+#  ifdef SOLVE3D
+        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      zeta(:,:,krhs))
+#  else
+        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      zeta(:,:,knew))
+#  endif
+      END IF
 # endif
 
 # ifdef SOLVE3D
@@ -373,6 +410,8 @@
           DO kbed=1,Nbed
             bed_thick0(i,j)=bed_thick0(i,j)+bed(i,j,kbed,ithck)
           END DO
+          bed_thick(i,j,1)=bed_thick0(i,j)
+          bed_thick(i,j,2)=bed_thick0(i,j)
         END DO
       END DO
 
@@ -380,12 +419,19 @@
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        bed_thick0)
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        bed_thick(:,:,1))
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        bed_thick(:,:,2))
 #   endif
 #   ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    bed_thick0)
+     &                    bed_thick0,                                   &
+     &                    bed_thick(:,:,1), bed_thick(:,:,2))
 #   endif
 #  endif
 # endif
@@ -452,6 +498,14 @@
       CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        vbar(:,:,krhs))
+      IF (PerfectRST(ng)) THEN
+        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          ubar(:,:,knew))
+        CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          vbar(:,:,knew))
+      END IF
 #  endif
 #  ifdef DISTRIBUTE
 !
@@ -460,6 +514,12 @@
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
      &                    ubar(:,:,krhs), vbar(:,:,krhs))
+      IF (PerfectRST(ng)) THEN
+        CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,       &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      ubar(:,:,knew), vbar(:,:,knew))
+      END IF
 #  endif
 
 # else
@@ -597,12 +657,13 @@
 !
       CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     nstp, nnew,                                  &
      &                     h,                                           &
 #  ifdef ICESHELF
      &                     zice,                                        &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                     bed, bed_thick0,                             &
+     &                     bed_thick,                                   &
 #  endif
      &                     Zt_avg1,                                     &
      &                     Hz, z_r, z_w)

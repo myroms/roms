@@ -1,4 +1,3 @@
-#include "cppdefs.h"
       SUBROUTINE ad_t3dmix2 (ng, tile)
 !
 !svn $Id$

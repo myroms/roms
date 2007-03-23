@@ -1,0 +1,78 @@
+      SUBROUTINE ana_passive (ng, tile, model)
+!
+!! svn $Id$
+!!======================================================================
+!! Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!!   Licensed under a MIT/X style license                              !
+!!   See License_ROMS.txt                                              !
+!!                                                                     !
+!=======================================================================
+!                                                                      !
+!  This routine sets initial conditions for passive inert tracers      !
+!  using analytical expressions.                                       !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_ocean
+!
+! Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+
+#include "tile.h"
+!
+      CALL ana_passive_tile (ng, model, Istr, Iend, Jstr, Jend,         &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       OCEAN(ng) % t)
+      RETURN
+      END SUBROUTINE ana_passive
+!
+!***********************************************************************
+      SUBROUTINE ana_passive_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             t)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+!
+#ifdef ASSUMED_SHAPE
+      real(r8), intent(out) :: t(LBi:,LBj:,:,:,:)
+#else
+      real(r8), intent(out) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+#endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, ip, itrc, j, k
+
+#include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Set analytical initial conditions for passive inert tracers.
+!-----------------------------------------------------------------------
+!
+#if defined MY_OPTION
+      DO ip=1,NPT
+        itrc=inert(ip)        
+        DO k=1,N(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              t(i,j,k,1,itrc)=???
+              t(i,j,k,2,itrc)=t(i,j,k,1,itrc)
+            END DO
+          END DO
+        END DO
+      END DO
+#else
+      ANA_PASSIVE: no values provided for t(:,:,:,1,inert(itrc))
+#endif
+      RETURN
+      END SUBROUTINE ana_passive_tile

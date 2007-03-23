@@ -85,6 +85,7 @@
       USE mod_fourdvar
       USE mod_mixing
       USE mod_ocean
+      USE mod_stepping
 !
 !  Imported variable declarations.
 !
@@ -100,7 +101,7 @@
       IF (Nmethod(ng).eq.0) THEN
         CALL normalization_tile (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           ifac,                                  &
+     &                           nstp(ng), nnew(ng), ifac,              &
      &                           GRID(ng) % pm,                         &
      &                           GRID(ng) % om_r,                       &
      &                           GRID(ng) % om_u,                       &
@@ -127,8 +128,7 @@
      &                           GRID(ng) % zice,                       &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                           OCEAN(ng) % bed,                       &
-     &                           GRID(ng) % bed_thick0,                 &
+     &                           GRID(ng) % bed_thick,                  &
 #  endif
      &                           GRID(ng) % Hz,                         &
      &                           GRID(ng) % z_r,                        &
@@ -151,7 +151,7 @@
       ELSE IF (Nmethod(ng).eq.1) THEN
         CALL randomization_tile (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           ifac,                                  &
+     &                           nstp(ng), nnew(ng), ifac,              &
      &                           GRID(ng) % pm,                         &
      &                           GRID(ng) % om_r,                       &
      &                           GRID(ng) % om_u,                       &
@@ -178,8 +178,7 @@
      &                           GRID(ng) % zice,                       &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                           OCEAN(ng) % bed,                       &
-     &                           GRID(ng) % bed_thick0,                 &
+     &                           GRID(ng) % bed_thick,                  &
 #  endif
      &                           GRID(ng) % Hz,                         &
      &                           GRID(ng) % z_r,                        &
@@ -203,7 +202,7 @@
 !***********************************************************************
       SUBROUTINE normalization_tile (ng, Istr, Iend, Jstr, Jend,        &
      &                               LBi, UBi, LBj, UBj,                &
-     &                               ifac,                              &
+     &                               nstp, nnew, ifac,                  &
      &                               pm, om_r, om_u, om_v,              &
      &                               pn, on_r, on_u, on_v,              &
      &                               pmon_p, pmon_r, pmon_u,            &
@@ -217,7 +216,7 @@
      &                               zice,                              &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                               bed, bed_thick0,                   &
+     &                               bed_thick,                         &
 #  endif
      &                               Hz, z_r, z_w,                      &
 # endif
@@ -257,7 +256,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: ifac
+      integer, intent(in) :: nstp, nnew, ifac
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: pm(LBi:,LBj:)
@@ -287,8 +286,7 @@
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
 #   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
-      real(r8), intent(inout):: bed_thick0(LBi:,LBj:)
+      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
 #   endif
       real(r8), intent(inout) :: h(LBi:,LBj:)
 #  endif
@@ -333,8 +331,7 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
 #   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-      real(r8), intent(inout):: bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(in):: bed_thick0(LBi:UBi,LBj:UBj,2)
 #   endif
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 #  endif
@@ -401,12 +398,13 @@
 
       CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     nstp, nnew,                                  &
      &                     h,                                           &
 #  ifdef ICESHELF
      &                     zice,                                        &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                     bed, bed_thick0,                             &
+     &                     bed_thick,                                   &
 #  endif
      &                     A2d,                                         &
      &                     Hz, z_r, z_w)
@@ -1166,7 +1164,7 @@
 !***********************************************************************
       SUBROUTINE randomization_tile (ng, Istr, Iend, Jstr, Jend,        &
      &                               LBi, UBi, LBj, UBj,                &
-     &                               ifac,                              &
+     &                               nstp, nnew, ifac,                  &
      &                               pm, om_r, om_u, om_v,              &
      &                               pn, on_r, on_u, on_v,              &
      &                               pmon_p, pmon_r, pmon_u,            &
@@ -1180,7 +1178,7 @@
      &                               zice,                              &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                               bed, bed_thick0,                   &
+     &                               bed_thick,                         &
 #  endif
      &                               Hz, z_r, z_w,                      &
 # endif
@@ -1219,7 +1217,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: ifac
+      integer, intent(in) :: nstp, nnew, ifac
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: pm(LBi:,LBj:)
@@ -1249,8 +1247,7 @@
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
 #   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
-      real(r8), intent(inout):: bed_thick0(LBi:,LBj:)
+      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
 #   endif
       real(r8), intent(inout) :: h(LBi:,LBj:)
 #  endif
@@ -1295,8 +1292,7 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
 #   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-      real(r8), intent(inout):: bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
 #   endif
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
 #  endif
@@ -1366,12 +1362,13 @@
 
       CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     nstp, nnew,                                  &
      &                     h,                                           &
 #  ifdef ICESHELF
      &                     zice,                                        &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                     bed, bed_thick0,                             &
+     &                     bed_thick,                                   &
 #  endif
      &                     A2d,                                         &
      &                     Hz, z_r, z_w)

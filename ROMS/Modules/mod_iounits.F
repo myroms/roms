@@ -32,6 +32,7 @@
 !  ITLname     Input tangent linear initial conditions file name.      !
 !  Iname       Physical parameters standard input script file name.    !
 !  MODname     Output 4DVAR processed fields file name.                !
+!  MyAppCPP    Application C-preprocessing flag.                       !
 !  NRMname     Input/output correlations normalization file name.      !
 !  OBSname     Input/output datum observations file name.              !
 !  REPname     Input/output representer coefficients file name.        !
@@ -122,6 +123,7 @@
         character (len=80), dimension(Ngrids) :: STDname
 
         character (len=80) :: Iname
+        character (len=80) :: MyAppCPP
         character (len=80) :: USRname
         character (len=80) :: aparnam
         character (len=80) :: bparnam

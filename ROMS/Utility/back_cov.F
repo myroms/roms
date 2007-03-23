@@ -46,7 +46,7 @@
 !
       CALL back_cov_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Lold(ng),                                     &
+     &                    nstp(ng), nnew(ng), Lold(ng),                 &
      &                    GRID(ng) % h,                                 &
      &                    GRID(ng) % omn,                               &
      &                    GRID(ng) % om_u,                              &
@@ -62,8 +62,7 @@
 #  endif
      &                    COUPLING(ng) % Zt_avg1,                       &
 #  if defined SEdIMENT && defined SED_MORPH
-     &                    OCEAN(ng) % bed,                              &
-     &                    GRID(ng) % bed_thick0,                        &
+     &                    GRID(ng) % bed_thick,                         &
 #  endif
      &                    OCEAN(ng) % b_u,                              &
      &                    OCEAN(ng) % b_v,                              &
@@ -78,7 +77,7 @@
 !***********************************************************************
       SUBROUTINE back_cov_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          Lold,                                   &
+     &                          nstp, nnew, Lold,                       &
      &                          h, omn, om_u, om_v, on_u, on_v,         &
 # ifdef SOLVE3D
      &                          Hz, z_r, z_w,                           &
@@ -87,7 +86,7 @@
 #  endif
      &                          Zt_avg1,                                &
 #  if defined SEdIMENT && defined SED_MORPH
-     &                          bed, bed_thick0,                        &
+     &                          bed_thick,                              &
 #  endif
      &                          b_u, b_v, b_t,                          &
 # endif
@@ -109,7 +108,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold
+      integer, intent(in) :: Lold, nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: omn(LBi:,LBj:)
@@ -122,9 +121,7 @@
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
 #   if defined SEdIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
-
-      real(r8), intent(inout) :: bed_thick0(LBi:,LBj:)
+      real(r8), intent(in) :: bed_thick(LBi:,LBj:,:)
 #   endif
 #  endif
       real(r8), intent(inout) :: h(LBi:,LBj:)
@@ -151,9 +148,7 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
 #   if defined SEdIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-
-      real(r8), intent(inout) :: bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: bed_thick(LBi:UBi,LBj:UBj,2)
 #   endif
 #  endif
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
@@ -220,12 +215,13 @@
 ! 
       CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     nstp, nnew,                                  &
      &                     h,                                           &
 #  ifdef ICESHELF
      &                     zice,                                        &
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-     &                     bed, bed_thick0,                             &
+     &                     bed_thick,                                   &
 #  endif
      &                     Zt_avg1,                                     &
      &                     Hz, z_r, z_w)

@@ -10,10 +10,10 @@
 **
 */
 
-#define NLM_DRIVER
+#undef  NLM_DRIVER
 #undef  IS4DVAR
 #undef  W4DPSAS
-#undef  W4DVAR
+#define W4DVAR
 #undef  CORRELATION
 #undef  CONVOLUTION
 #undef  R_SYMMETRY

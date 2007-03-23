@@ -60,7 +60,7 @@
 #if defined SSH_TIDES || defined UV_TIDES
         integer, dimension(Ngrids) :: NTC
 #endif
-#if defined UV_PSOURCE || defined TS_PSOURCE
+#if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
         integer, dimension(Ngrids) :: Nsrc
 #endif
         integer, dimension(Ngrids) :: Lnew = (/ (1, ig=1,Ngrids) /)

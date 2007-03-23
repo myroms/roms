@@ -70,6 +70,12 @@
      &                       FORCES(ng) % bvstr,                        &
      &                       FORCES(ng) % sustr,                        &
      &                       FORCES(ng) % svstr,                        &
+# ifdef ZOS_HSIG
+     &                       FORCES(ng) % Hwave,                        &
+# endif
+# ifdef TKE_WAVEDISS
+     &                       FORCES(ng) % Wave_dissip,                  &
+# endif
      &                       MIXING(ng) % Akt,                          &
      &                       MIXING(ng) % Akv,                          &
      &                       MIXING(ng) % bvf,                          &
@@ -94,6 +100,12 @@
      &                             Huon, Hvom, Hz, pm, pn, z_r, z_w,    &
      &                             u, v, W,                             &
      &                             bustr, bvstr, sustr, svstr,          &
+# ifdef ZOS_HSIG
+     &                             Hwave,                               &
+# endif
+# ifdef TKE_WAVEDISS
+     &                             Wave_dissip,                         &
+# endif
      &                             Akt, Akv, bvf,                       &
      &                             Akk, Akp, Lscale, gls, tke)
 !***********************************************************************
@@ -134,6 +146,12 @@
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
       real(r8), intent(in) :: sustr(LBi:,LBj:)
       real(r8), intent(in) :: svstr(LBi:,LBj:)
+#  ifdef ZOS_HSIG
+      real(r8), intent(in) :: Hwave(LBi:,LBj:)
+#  endif
+#  ifdef TKE_WAVEDISS
+      real(r8), intent(in) :: Wave_dissip(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: bvf(LBi:,LBj:,0:)
 
       real(r8), intent(inout) :: Akt(LBi:,LBj:,0:,:)
@@ -162,6 +180,12 @@
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: svstr(LBi:UBi,LBj:UBj)
+#  if defined ZOS_HSIG
+      real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef TKE_WAVEDISS
+      real(r8), intent(in) :: Wave_dissip(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(in) :: bvf(LBi:UBi,LBj:UBj,0:N(ng))
 
       real(r8), intent(inout) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
@@ -193,21 +217,17 @@
 
       real(r8), parameter :: Gadv = 1.0_r8/3.0_r8
       real(r8), parameter :: eps = 1.0E-10_r8
-# ifdef CRAIG_BANNER
-      real(r8), parameter :: crgban_cw = 100.0_r8
-# endif
-# ifdef CHARNOK
-      real(r8), parameter :: charnok_alpha = 1400.0_r8
-# endif
       real(r8) :: Zos_min, Zob_min
 
       real(r8) :: Gh, Gm, Kprod, Ls_unlmt, Ls_lmt, Pprod, Sh, Sm
-      real(r8) :: cff, cff1, cff2, cff3, cmu_fac1, cmu_fac2, cmu_fac3
+      real(r8) :: cff, cff1, cff2, cff3
+      real(r8) :: cmu_fac1, cmu_fac2, cmu_fac3, cmu_fac4
       real(r8) :: gls_c3, gls_exp1, gls_fac1, gls_fac2, gls_fac3
       real(r8) :: gls_fac4, gls_fac5, gls_fac6, ql, sqrt2, strat2
       real(r8) :: tke_exp1, tke_exp2, tke_exp3, tke_exp4, wall_fac
-# ifdef CRAIG_BANNER
-      real(r8) :: L_sft, cb_wallE
+      real(r8) :: L_sft
+# if defined CRAIG_BANNER || defined TKE_WAVEDISS
+      real(r8) :: cb_wallE
 # endif
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: tke_fluxt
@@ -252,7 +272,7 @@
         Lmy25=.TRUE.
       END IF
 
-#ifdef CRAIG_BANNER
+#if defined CRAIG_BANNER || defined TKE_WAVEDISS
 !
 !  Select asymptotic value of wall function. The parabolic wall function
 !  with the free surface correction (default below) asymptotes to
@@ -280,13 +300,16 @@
      &                gls_sigp(ng)*gls_c2(ng)*                          &
      &                (gls_n(ng)**2.0_r8-cff2)))/                       &
      &          (gls_n(ng)*gls_n(ng)-cff2))
+#else
+      L_sft=vonKar
 #endif
 !
       sqrt2=SQRT(2.0_r8)
       cmu_fac1=gls_cmu0(ng)**(-gls_p(ng)/gls_n(ng))
       cmu_fac2=gls_cmu0(ng)**(3.0_r8+gls_p(ng)/gls_n(ng))
       cmu_fac3=1.0_r8/gls_cmu0(ng)**2.0_r8
-!
+      cmu_fac4=(1.5_r8*gls_sigk(ng))**(1.0_r8/3.0_r8)/                  &
+     &         (gls_cmu0(ng)**(4.0_r8/3.0_r8))
 !!    gls_fac1=gls_cmu0(ng)**(1.0_r8+gls_p(ng))*gls_n(ng)*              &
 !!   &         vonKar**(1.0_r8+gls_n(ng))
       gls_fac2=gls_cmu0(ng)**(gls_p(ng))*gls_n(ng)*                     &
@@ -611,15 +634,11 @@
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-                            &
      &                      cff*(FXK(i+1,j)-FXK(i,j)+                   &
      &                           FEK(i,j+1)-FEK(i,j))
+            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
             gls(i,j,k,nnew)=gls(i,j,k,nnew)-                            &
      &                      cff*(FXP(i+1,j)-FXP(i,j)+                   &
      &                           FEP(i,j+1)-FEP(i,j))
-!!          IF (tke(i,j,k,nnew).lt.0.0_r8) THEN
-            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
-!!          END IF
-!!          IF (gls(i,j,k,nnew).lt.0.0_r8) THEN
             gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
-!!          END IF
           END DO
         END DO
       END DO
@@ -679,14 +698,10 @@
             cff=dt(ng)*pm(i,j)*pn(i,j)
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-                            &
      &                      cff*(FCK(i,k+1)-FCK(i,k))
+            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
             gls(i,j,k,nnew)=gls(i,j,k,nnew)-                            &
      &                      cff*(FCP(i,k+1)-FCP(i,k))
-!!          IF (tke(i,j,k,nnew).lt.0.0_r8) THEN
-            tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew),gls_Kmin(ng))
-!!          END IF
-!!          IF (gls(i,j,k,nnew).lt.0.0_r8) THEN
             gls(i,j,k,nnew)=MAX(gls(i,j,k,nnew),gls_Pmin(ng))
-!!          END IF
           END DO
         END DO
 !
@@ -718,13 +733,7 @@
 !  Compute shear and bouyant production of turbulent energy (m3/s3)
 !  at W-points (ignore small negative values of buoyancy).
 !
-!!          IF ((buoy2(i,j,k).gt.-5.0E-5_r8).and.                       &
-!!   &          (buoy2(i,j,k).lt.0.0_r8)) THEN
-!!            strat2=0.0_r8
-!!          ELSE
-              strat2=buoy2(i,j,k)
-!!          END IF
-!
+            strat2=buoy2(i,j,k)
             IF (strat2.gt.0.0_r8) THEN
               gls_c3=gls_c3m(ng)
             ELSE
@@ -825,51 +834,54 @@
 !  Banner wave breaking surface flux, if appropriate.
 !
         DO i=Istr,Iend
-#ifdef CHARNOK
-          Zos_eff(i)=MAX(charnok_alpha/g*0.5_r8*                        &
+# if defined CHARNOK
+          Zos_eff(i)=MAX(charnok_alpha(ng)/g*0.5_r8*                    &
      &                   SQRT((sustr(i,j)+sustr(i+1,j))**2+             &
      &                        (svstr(i,j)+svstr(i,j+1))**2),            &
      &                   Zos_min)
-#else
+# elif defined ZOS_HSIG
+          Zos_eff(i)=MAX(zos_hsig_alpha(ng)*Hwave(i,j), Zos_min)
+# else
           Zos_eff(i)=Zos_min
-#endif
-#ifdef CRAIG_BANNER
-          tke(i,j,N(ng),nnew)=MAX(cmu_fac3*0.5_r8*                      &
-     &                            SQRT((sustr(i,j)+sustr(i+1,j))**2+    &
-     &                                 (svstr(i,j)+svstr(i,j+1))**2)*   &
-     &                            (SQRT(1.5_r8*gls_sigk(ng))*           &
-     &                             gls_cmu0(ng)*                        &
-     &                             crgban_cw)**(2.0_r8/3.0_r8),         &
-     &                            gls_Kmin(ng))
+# endif
           gls(i,j,N(ng),nnew)=MAX(gls_cmu0(ng)**gls_p(ng)*              &
      &                            tke(i,j,N(ng),nnew)**gls_m(ng)*       &
      &                            (L_sft*Zos_eff(i))**gls_n(ng),        &
      &                            gls_Pmin(ng))
-#else
+# if defined CRAIG_BANNER
+          tke(i,j,N(ng),nnew)=MAX(cmu_fac4*0.5_r8*                      &
+     &                            SQRT((sustr(i,j)+sustr(i+1,j))**2+    &
+     &                                 (svstr(i,j)+svstr(i,j+1))**2)*   &
+     &                            crgban_cw(ng)**(2.0_r8/3.0_r8),       &
+     &                            gls_Kmin(ng))
+# elif defined TKE_WAVEDISS
+          tke(i,j,N(ng),nnew)=MAX(cmu_fac4*(sz_alpha(ng)*               &
+     &                            Wave_dissip(i,j))**                   &
+     &                            (2.0_r8/3.0_r8), gls_Kmin(ng))
+# else
           tke(i,j,N(ng),nnew)=MAX(cmu_fac3*0.5_r8*                      &
      &                            SQRT((sustr(i,j)+sustr(i+1,j))**2+    &
      &                                 (svstr(i,j)+svstr(i,j+1))**2),   &
-                                  gls_Kmin(ng))
-          gls(i,j,N(ng),nnew)=MAX(gls_cmu0(ng)**gls_p(ng)*              &
-     &                            tke(i,j,N(ng),nnew)**gls_m(ng)*       &
-     &                            (vonKar*Zos_eff(i))**gls_n(ng),       &
-                                  gls_Pmin(Ng))
-#endif
+     &                            gls_Kmin(ng))
+# endif
           tke(i,j,0,nnew)=MAX(cmu_fac3*0.5_r8*                          &
      &                        SQRT((bustr(i,j)+bustr(i+1,j))**2+        &
      &                             (bvstr(i,j)+bvstr(i,j+1))**2),       &
-                              gls_Kmin(ng))
+     &                        gls_Kmin(ng))
           gls(i,j,0,nnew)=MAX(gls_fac4*tke(i,j,0,nnew)**(gls_m(ng)),    &
-                              gls_Pmin(ng))
+     &                        gls_Pmin(ng))
         END DO
 !
-!  Solve tri-diagonal system for tubulent kinetic energy.
+!  Solve tri-diagonal system for turbulent kinetic energy.
 !
         DO i=Istr,Iend
-#ifdef CRAIG_BANNER
-        tke_fluxt(i)=dt(ng)*crgban_cw*                                  &
-     &            (0.50_r8*SQRT((sustr(i,j)+sustr(i+1,j))**2+           &
-     &                          (svstr(i,j)+svstr(i,j+1))**2))**1.5_r8
+#if defined CRAIG_BANNER
+        tke_fluxt(i)=dt(ng)*crgban_cw(ng)*                              &
+     &               (0.50_r8*                                          &
+     &                SQRT((sustr(i,j)+sustr(i+1,j))**2+                &
+     &                     (svstr(i,j)+svstr(i,j+1))**2))**1.5_r8
+#elif defined TKE_WAVEDISS
+        tke_fluxt(i)=dt(ng)*sz_alpha(ng)*Wave_dissip(i,j)
 #else
         tke_fluxt(i)=0.0_r8
 #endif
@@ -887,19 +899,17 @@
      &                           FCK(i,k+1)*tke(i,j,k+1,nnew))
           END DO
           tke(i,j,1,nnew)=tke(i,j,1,nnew)-cff*tke_fluxb(i)
-!!        tke(i,j,1,nnew)=MAX(tke(i,j,1,nnew), gls_Kmin(ng))
         END DO
         DO k=2,N(ng)-1
           DO i=Istr,Iend
             tke(i,j,k,nnew)=tke(i,j,k,nnew)-CF(i,k)*tke(i,j,k-1,nnew)
-!!          tke(i,j,k,nnew)=MAX(tke(i,j,k,nnew), gls_Kmin(ng))
           END DO
         END DO
 !
 !  Solve tri-diagonal system for generic statistical field.
 !
         DO i=Istr,Iend
-#ifdef CRAIG_BANNER
+# ifdef CRAIG_BANNER
           gls_fluxt(i)=dt(ng)*                                          &
      &                 (gls_n(ng)*gls_cmu0(ng)**(gls_p(ng)+1.0_r8)*     &
      &                  L_sft**(gls_n(ng)+1.0_r8)*                      &
@@ -909,29 +919,38 @@
      &                  gls_m(ng)*(gls_cmu0(ng)**gls_p(ng))*            &
      &                  tke(i,j,N(ng),nnew)**(gls_m(ng)-1.0_r8)*        &
      &                  (Zos_eff(i)*L_sft)**gls_n(ng)*                  &
-     &                  crgban_cw*gls_sigk(ng)/gls_sigp(ng)*            &
+     &                  crgban_cw(ng)*gls_sigk(ng)/gls_sigp(ng)*        &
      &                  (0.5_r8*                                        &
      &                   SQRT((sustr(i,j)+sustr(i+1,j))**2+             &
      &                        (svstr(i,j)+svstr(i,j+1))**2))**1.5_r8)
-#else
+# elif defined TKE_WAVEDISS
+          gls_fluxt(i)=dt(ng)*                                          &
+     &                 (gls_n(ng)*gls_cmu0(ng)**(gls_p(ng)+1.0_r8)*     &
+     &                  L_sft**(gls_n(ng)+1.0_r8)*                      &
+     &                  (0.5_r8*(tke(i,j,N(ng)  ,nnew)+                 &
+     &                           tke(i,j,N(ng)-1,nnew)))**              &
+     &                          (gls_m(ng)+0.5_r8)*                     &
+     &                  (Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))**gls_n(ng)/   &
+     &                  gls_sigp(ng)-                                   &
+     &                  gls_m(ng)*(gls_cmu0(ng)**gls_p(ng))*            &
+     &                  (0.5_r8*(tke(i,j,N(ng)  ,nnew)+                 &
+     &                           tke(i,j,N(ng)-1,nnew)))**              &
+     &                          (gls_m(ng)-1.0_r8)*                     &
+     &                  ((Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))*L_sft)**     &
+     &                  gls_n(ng)*                                      &
+     &                  gls_sigk(ng)/gls_sigp(ng)*sz_alpha(ng)*         &
+     &                  Wave_dissip(i,j))
+# else
         gls_fluxt(i)=dt(ng)*gls_fac2*(0.5_r8*(tke(i,j,N(ng),nnew)+      &
      &               tke(i,j,N(ng)-1,nnew)))**gls_m(ng)*                &
      &               (0.5_r8*Hz(i,j,N(ng))+Zos_eff(i))**                &
      &               (gls_n(ng)-1.0_r8)*                                &
      &               0.5_r8*(Akp(i,j,N(ng))+Akp(i,j,N(ng)-1))
-!!      gls_fluxt(i)=dt(ng)*gls_fac2*(0.5_r8*(tke(i,j,N(ng)-1,nnew)+    &
-!!   &               tke(i,j,N(ng)-1,nnew)))**gls_m(ng)*                &
-!!   &               (0.5_r8*Hz(i,j,N(ng)))**(gls_n(ng)-1.0_r8)*        &
-!!   &               0.5_r8*(Akp(i,j,N(ng))+Akp(i,j,N(ng)-1))
-#endif
+# endif
         gls_fluxb(i)=dt(ng)*gls_fac2*(0.5_r8*(tke(i,j,0,nnew)+          &
      &               tke(i,j,1,nnew)))**(gls_m(ng))*                    &
-     &               (0.5_r8*Hz(i,j,1)+Zob_min)**(gls_n(ng)-1.0_r8)*    &
+     &               (0.5_r8*Hz(i,j,1))**(gls_n(ng)-1.0_r8)*            &
      &               0.5_r8*(Akp(i,j,0)+Akp(i,j,1))
-!!      gls_fluxb(i)=dt(ng)*gls_fac2*(0.5_r8*(tke(i,j,1,nnew)+          &
-!!   &               tke(i,j,1,nnew)))**(gls_m(ng))*                    &
-!!   &               (0.5_r8*Hz(i,j,1))**(gls_n(ng)-1.0_r8)*            &
-!!   &               0.5_r8*(Akp(i,j,0)+Akp(i,j,1))
 !
           cff=1.0_r8/BCP(i,N(ng)-1)
           CF(i,N(ng)-1)=cff*FCP(i,N(ng)-1)
@@ -1031,7 +1050,7 @@
             cff=1.0_r8-my_Sh2*Gh
             Sh=my_Sh1/cff
             Sm=(my_B1pm1o3+my_Sm4*Sh*Gh)/(1.0_r8-my_Sm2*Gh)
-# else ! Galperin
+# else  /* Galperin */
             cff=1.0_r8-my_Sh2*Gh
             Sh=my_Sh1/cff
             Sm=(my_Sm3+Sh*Gh*my_Sm4)/(1.0_r8-my_Sm2*Gh)
@@ -1064,13 +1083,8 @@
 !  Compute vertical mixing coefficients at the surface and bottom.
 !
 !
-#ifdef CRAIG_BANNER
           Akv(i,j,N(ng))=Akv_bak(ng)+L_sft*Zos_eff(i)*gls_cmu0(ng)*     &
      &                   SQRT(tke(i,j,N(ng),nnew))
-#else
-          Akv(i,j,N(ng))=Akv_bak(ng)+vonKar*Zos_eff(i)*gls_cmu0(ng)*    &
-     &                   SQRT(tke(i,j,N(ng),nnew))
-#endif
           Akv(i,j,0)=Akv_bak(ng)+vonKar*Zob_min*gls_cmu0(ng)*           &
      &               SQRT(tke(i,j,0,nnew))
 !

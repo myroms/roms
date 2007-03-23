@@ -99,6 +99,30 @@
           RETURN
         END IF
       END IF
+#if defined SEDIMENT && defined SED_MORPH
+!
+!  Write out time-dependent bathymetry (m)
+!
+      IF (Hout(idBath,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idbath,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     GRID(ng) % h(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idbath)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#endif
 !
 !  Write out free-surface (m)
 !
@@ -1393,7 +1417,11 @@
 !
       DO i=1,MBOTP
         IF (Hout(idBott(i),ng)) THEN
-          scale=1.0_r8
+          IF (i.eq.itauc) THEN
+            scale=rho0
+          ELSE
+            scale=1.0_r8
+          END IF
           gtype=gfactor*r2dvar
           status=nf_fwrite2d(ng, iNLM, ncHISid(ng),                     &
      &                       hisVid(idBott(i),ng),                      &
@@ -1415,6 +1443,456 @@
       END DO
 # endif
 #endif
+#ifdef WET_DRY
+!
+!  Write out wet mask at RHO-points.
+!
+      scale=1.0_r8
+      gtype=gfactor*r2dvar
+      status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWmsk,ng),      &
+     &                   tHISindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+# ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+# endif
+     &                   GRID(ng) % rmask_wet(LBi,LBj))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idWmsk)), tHISindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+#endif
+#ifdef NEARSHORE_MELLOR
+!
+!  Write out 2D radiation stress, Sxx-component.
+!
+      IF (Hout(idW2xx,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idW2xx,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Sxx_bar(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW2xx)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D radiation stress, Sxy-component.
+!
+      IF (Hout(idW2xy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idW2xy,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Sxy_bar(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW2xy)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D radiation stress, Syy-component.
+!
+      IF (Hout(idW2yy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idW2yy,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Syy_bar(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW2yy)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out total 2D U-radiation stress.
+!
+      IF (Hout(idU2rs,ng)) THEN
+        scale=rho0
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idU2rs,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % rustr2d(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU2rs)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out total 2D V-radiation stress.
+!
+      IF (Hout(idV2rs,ng)) THEN
+        scale=rho0
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idV2rs,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % rvstr2d(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV2rs)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D U-momentum Stokes drift velocity.
+!
+      IF (Hout(idU2Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idU2sd,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+# endif
+     &                     OCEAN(ng) % ubar_stokes(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU2Sd)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D V-momentum Stokes drift velocity.
+!
+      IF (Hout(idV2Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idV2Sd,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+# endif
+     &                     OCEAN(ng) % vbar_stokes(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV2Sd)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# ifdef SOLVE3D
+!
+!  Write out 3D radiation stress, Sxx-horizontal component.
+!
+      IF (Hout(idW3xx,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng), hisVid(idW3xx,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Sxx(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3xx)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Sxy-horizontal component.
+!
+      IF (Hout(idW3xy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng), hisVid(idW3xy,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Sxy(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3xy)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Syy-horizontal component.
+!
+      IF (Hout(idW3yy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng), hisVid(idW3yy,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Syy(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3yy)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Szx-vertical component.
+!
+      IF (Hout(idW3zx,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng), hisVid(idW3zx,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Szx(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3zx)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Szy-vertical component.
+!
+      IF (Hout(idW3zy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng), hisVid(idW3zy,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     MIXING(ng) % Szy(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3zy)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D total U-radiation stress.
+!
+      IF (Hout(idU3rs,ng)) THEN
+        scale=rho0
+        gtype=gfactor*u3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng),hisVid(idU3rs,ng),     &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     MIXING(ng) % rustr3d(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU3rs)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D total V-radiation stress.
+!
+      IF (Hout(idV3rs,ng)) THEN
+        scale=rho0
+        gtype=gfactor*v3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng),hisVid(idV3rs,ng),     &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+#  endif
+     &                     MIXING(ng) % rvstr3d(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV3rs)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D U-momentum Stokes drift velocity.
+!
+      IF (Hout(idU3Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng),hisVid(idU3Sd,ng),     &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     OCEAN(ng) % u_stokes(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU3Sd)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D V-momentum stokes velocity.
+!
+      IF (Hout(idV3Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v3dvar
+        status=nf_fwrite3d(ng, iNLM, ncHISid(ng),hisVid(idV3Sd,ng),     &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+#  endif
+     &                     OCEAN(ng) % v_stokes(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV3Sd)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
+#endif
+#ifdef WAVES_HEIGHT
+!
+!  Write out wind-induced wave height.
+!
+      IF (Hout(idWamp,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWamp,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % Hwave(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idWamp)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#endif
+#ifdef WAVES_LENGTH
+!
+!  Write out wind-induced wave length.
+!
+      IF (Hout(idWlen,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWlen,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % Lwave(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idWlen)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#endif
+#ifdef WAVES_DIR
+!
+!  Write out wind-induced wave direction.
+!
+      IF (Hout(idWdir,ng)) THEN
+        scale=rad2deg
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncHISid(ng), hisVid(idWdir,ng),    &
+     &                     tHISindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     FORCES(ng) % Dwave(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idWdir)), tHISindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  Synchronize history NetCDF file to disk to allow other processes
@@ -1430,9 +1908,9 @@
           RETURN
         END IF
 #ifdef SOLVE3D
-        WRITE (stdout,30) KOUT, NOUT, tHISindx
+        WRITE (stdout,30) KOUT, NOUT, tHISindx(ng)
 #else
-        WRITE (stdout,30) KOUT, tHISindx
+        WRITE (stdout,30) KOUT, tHISindx(ng)
 #endif
       END IF
 !

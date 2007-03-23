@@ -6,7 +6,9 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 **
-** Options for Benchmark Test.
+** Options for Benchmark Tests.  There are several grids configurations to run,
+** choose the appropriate standard input script: small ("ocean_bench1.in"),
+** medium ("ocean_bench2.in"), and large (ocean_bench3.in).
 **
 */
 

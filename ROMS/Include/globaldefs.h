@@ -725,6 +725,9 @@
 #  endif
 # endif
 #endif
+#if defined AVERAGES_NEARSHORE && !defined NEARSHORE_MELLOR
+# undef AVERAGES_NEARSHORE
+#endif
 
 /*
 ** Activate internal biology option when using any type of biological
@@ -792,11 +795,12 @@
 # define WAVES_BOT_PERIOD
 #endif
 
-#if !defined WAVES_OCEAN  && \
-    (defined BULK_FLUXES  || defined SVENDSEN_ROLLER  || \
-     defined TKE_WAVEDISS || \
-     defined WAVES_DIR    || defined WAVES_BOT_PERIOD || \
-     defined WAVES_HEIGHT || defined WAVES_TOP_PERIOD || \
+#if !defined WAVES_OCEAN     && \
+   ((defined BULK_FLUXES     && defined COARE_TAYLOR_YELLAND) || \
+    (defined BULK_FLUXES     && defined COARE_OOST)           || \
+     defined SVENDSEN_ROLLER || defined TKE_WAVEDISS          || \
+     defined WAVES_DIR       || defined WAVES_BOT_PERIOD      || \
+     defined WAVES_HEIGHT    || defined WAVES_TOP_PERIOD      || \
      defined WAVES_LENGTH)
 # define WAVE_DATA
 #endif
@@ -834,6 +838,7 @@
     ( defined BULK_FLUXES  && !defined ANA_HUMIDITY) || \
     ( defined BULK_FLUXES  && !defined ANA_CLOUD)    || \
     ( defined BULK_FLUXES  && !defined ANA_RAIN)     || \
+    ( defined BULK_FLUXES  && !defined ANA_WINDS)    || \
     ( defined BULK_FLUXES  && !defined ANA_SRFLUX)   || \
     ( defined LMD_SKPP     && !defined ANA_SRFLUX)   || \
     ( defined SOLAR_SOURCE && !defined ANA_SRFLUX)   || \
@@ -919,4 +924,16 @@
 #if defined DIAGNOSTICS_BIO || defined DIAGNOSTICS_TS || \
     defined DIAGNOSTICS_UV
 # define DIAGNOSTICS
+#endif
+
+/*
+** Activate switch to modify MAIN3D to allow perfect restart. To
+** achieve this, the call to OUTPUT needs to be before to RHS3D.
+** Therefore, and additional routine (set_zeta) is needed to set
+** the free-surface to its time-averaged value.  This strategy
+** needs to be tested in the TLM, RPM, and ADM.
+*/
+
+#if !(defined ADJOINT || defined TANGENT || defined TL_IOMS)
+# define SET_ZETA
 #endif

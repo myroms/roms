@@ -155,28 +155,24 @@
 !  switches and variables.
 !-----------------------------------------------------------------------
 !
-!  Set switches to create (TRUE) representer model initial conditions
-!  and history NetCDF files or append (FALSE) to existing NetCDF files.
+!  Set switch to create (TRUE) representer model initial conditions
+!  NetCDF file or append (FALSE) to existing NetCDF files.
 !
       IF (Nrun.eq.ERstr) THEN
 #  ifdef ANA_INITIAL
-        LdefITL(ng)=.TRUE.
+        LdefIRP(ng)=.TRUE.
 #  endif
-        LdefTLM(ng)=.TRUE.
-        CALL tl_def_ini (ng)
+        CALL rp_def_ini (ng)
         IF (exit_flag.ne.NoError) RETURN
-        IniRec=nrrec
-        tITLindx(ng)=IniRec
       ELSE
-        IniRec=tITLindx(ng)
       END IF
+      IniRec=tIRPindx(ng)
 !
 !  Reset representer model history time record counters. These
 !  counters are reset in every iteration pass but the NetCDF is
 !  created on the first iteration pass.
 !
       LcycleTLM(ng)=.FALSE.
-      LwrtTLM(ng)=.TRUE.
       tTLMindx(ng)=0
       NrecTLM(ng)=0
 !
@@ -412,7 +408,7 @@
       END IF
 # endif
 !
-!  Read in initial conditions for initial or restart NetCDF file.
+!  Read in representer model initial conditions.
 !
 # ifdef INI_FILE
       CALL get_state (ng, iRPM, 1, IRPname(ng), IniRec, Tindex)
@@ -496,7 +492,7 @@
       CALL rp_get_data (ng)
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# if defined WEAK_CONSTRAINT_NOT || defined IOM_NOT
 !
 !-----------------------------------------------------------------------
 !  Read in convolved adjoint impulse forcing (first record) and its

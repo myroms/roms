@@ -39,7 +39,7 @@
       USE mod_ocean
 # endif
       USE mod_scalars
-# if defined UV_PSOURCE || defined TS_PSOURCE
+# if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
       USE mod_sources
 # endif
       USE mod_stepping
@@ -184,7 +184,7 @@
 # endif
 
 # if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
-                              defined TS_PSOURCE)
+                              defined TS_PSOURCE || defined Q_PSOURCE)
 !
 !-----------------------------------------------------------------------
 !  Point Sources/Sinks position, direction, special flag, and mass
@@ -262,7 +262,7 @@
      &                MAX(1,MIN(NINT(SOURCES(ng)%Ysrc(is)),Mm(ng)+1))
         END DO
       END IF
-#  ifdef UV_PSOURCE
+#  if defined UV_PSOURCE || defined Q_PSOURCE
 !
 !  Point Source/Sink vertically integrated mass transport.
 !
@@ -332,31 +332,13 @@
 #  endif
 # endif
 
-# ifdef SOLVE3D
-
-#  if !defined ANA_WWAVE && defined BBL_MODEL_NOT_YET
+# if !defined ANA_WWAVE && defined WAVE_DATA
 !
 !-----------------------------------------------------------------------
 !  Surface wind induced wave amplitude, direction and period.
 !-----------------------------------------------------------------------
 !
-#   ifdef SWAN
-      CALL get_2dfld (ng, iRPM, idWorb, ncFRCid(idWorb,ng),             &
-     &                nFfiles(ng), FRCname(1,ng), update(1),            &
-     &                LBi, UBi, LBj, UBj, 2, 1,                         &
-#    ifdef MASKING
-     &                GRID(ng) % rmask(LBi,LBj),                        &
-#    endif
-     &                FORCES(ng) % UB_swanG(LBi,LBj,1))
-#   else
-      CALL get_2dfld (ng, iRPM, idWamp, ncFRCid(idWamp,ng),             &
-     &                nFfiles(ng), FRCname(1,ng), update(1),            &
-     &                LBi, UBi, LBj, UBj, 2, 1,                         &
-#    ifdef MASKING
-     &                GRID(ng) % rmask(LBi,LBj),                        &
-#    endif
-     &                FORCES(ng) % AwaveG(LBi,LBj,1))
-#   endif
+#  ifdef WAVES_DIR
       CALL get_2dfld (ng, iRPM, idWdir, ncFRCid(idWdir,ng),             &
      &                nFfiles(ng), FRCname(1,ng), update(1),            &
      &                LBi, UBi, LBj, UBj, 2, 1,                         &
@@ -364,14 +346,73 @@
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #   endif
      &                FORCES(ng) % DwaveG(LBi,LBj,1))
-      CALL get_2dfld (ng, iRPM, idWper, ncFRCid(idWper,ng),             &
+#  endif
+#  ifdef WAVES_HEIGHT
+      CALL get_2dfld (ng, iRPM, idWamp, ncFRCid(idWamp,ng),             &
      &                nFfiles(ng), FRCname(1,ng), update(1),            &
      &                LBi, UBi, LBj, UBj, 2, 1,                         &
 #   ifdef MASKING
      &                GRID(ng) % rmask(LBi,LBj),                        &
 #   endif
-     &                FORCES(ng) % PwaveG(LBi,LBj,1))
+     &                FORCES(ng) % HwaveG(LBi,LBj,1))
 #  endif
+#  ifdef WAVES_LENGTH
+      CALL get_2dfld (ng, iRPM, idWlen, ncFRCid(idWlen,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#   endif
+     &                FORCES(ng) % LwaveG(LBi,LBj,1))
+#  endif
+#  ifdef WAVES_TOP_PERIOD
+      CALL get_2dfld (ng, iRPM, idWptp, ncFRCid(idWptp,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#   endif
+     &                FORCES(ng) % Pwave_topG(LBi,LBj,1))
+#  endif
+#  ifdef WAVES_BOT_PERIOD
+      CALL get_2dfld (ng, iRPM, idWpbt, ncFRCid(idWpbt,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#   endif
+     &                FORCES(ng) % Pwave_botG(LBi,LBj,1))
+#  endif
+#  if defined WAVES_UB
+      CALL get_2dfld (ng, iRPM, idWorb, ncFRCid(idWorb,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#   endif
+     &                FORCES(ng) % Ub_swanG(LBi,LBj,1))
+#  endif
+#  if defined TKE_WAVEDISS
+      CALL get_2dfld (ng, iRPM, idWdis, ncFRCid(idWdis,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#   endif
+     &                FORCES(ng) % Wave_dissipG(LBi,LBj,1))
+#  endif
+#  if defined SVENDSEN_ROLLER
+      CALL get_2dfld (ng, iRPM, idWbrk, ncFRCid(idWbrk,ng),             &
+     &                nFfiles(ng), FRCname(1,ng), update(1),            &
+     &                LBi, UBi, LBj, UBj, 2, 1,                         &
+#   ifdef MASKING
+     &                GRID(ng) % rmask(LBi,LBj),                        &
+#   endif
+     &                FORCES(ng) % Wave_breakG(LBi,LBj,1))
+#  endif
+# endif
+
+# ifdef SOLVE3D
 
 #  if !defined ANA_CLOUD && defined CLOUDS
 !
@@ -433,7 +474,8 @@
      &                FORCES(ng) % lrflxG(LBi,LBj,1))
 #  endif
 
-#  if !defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM)
+#  if !defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM || \
+                            defined ATM_PRESS)
 !
 !-----------------------------------------------------------------------
 !  Surface air pressure.

@@ -1,4 +1,3 @@
-#include "cppdefs.h"
       PROGRAM air_ocean
 !
 !svn $Id$

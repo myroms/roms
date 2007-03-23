@@ -134,7 +134,7 @@
       END DO
 #   ifdef BEDLOAD
       DO itrc=1,NST
-        IF (IniRec.ne.0) THEN
+        IF (nrrec.ne.0) THEN
           get_var(idUbld(itrc))=.TRUE.
           get_var(idVbld(itrc))=.TRUE.
         END IF
@@ -186,6 +186,11 @@
             tvarnam=TRIM(varnam(i))
             have_var(idtime)=.TRUE.
           END IF
+#if defined SEDIMENT && defined SED_MORPH
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idbath))) THEN
+            have_var(idbath)=.TRUE.
+          END IF
+#endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
             have_var(idFsur)=.TRUE.
           END IF
@@ -300,6 +305,13 @@
           exit_flag=2
           RETURN
         END IF
+#if defined SEDIMENT && defined SED_MORPH
+        IF (.not.have_var(idbath).and.get_var(idbath)) THEN
+          WRITE (stdout,10) string, TRIM(Vname(1,idbath)), TRIM(ncname)
+          exit_flag=2
+          RETURN
+        END IF
+#endif
         IF (.not.have_var(idFsur).and.get_var(idFsur)) THEN
           WRITE (stdout,10) string, TRIM(Vname(1,idFsur)), TRIM(ncname)
           exit_flag=2

@@ -67,9 +67,9 @@
         integer :: inert(NPT)         ! inert tracers
 #endif
 #ifdef SEDIMENT
-        integer :: idsed(NST)         ! Cohesive and non-cohesive
-        integer :: idmud(NCS+1)       ! Cohesive sediment
-        integer :: isand(NNS+1)       ! Non-cohesive sediment
+        integer, pointer :: idsed(:)  ! Cohesive and non-cohesive
+        integer, pointer :: idmud(:)  ! Cohesive sediment
+        integer, pointer :: isand(:)  ! Non-cohesive sediment
 #endif
 #if defined NPZD_FRANKS || defined NPZD_POWELL
         integer, pointer :: idbio(:)  ! Biological tracers
@@ -177,12 +177,20 @@
         integer :: M2fcor            ! 2D momentum, Coriolis
         integer :: M2rate            ! 2D momentum, time rate of change
         integer :: M2hadv            ! 2D momentum, horizontal advection
+#  ifdef NEARSHORE_MELLOR
+        integer :: M2hrad            ! 2D momentum, horizontal stresses
+#  endif
         integer :: M2hvis            ! 2D momentum, horizontal viscosity
-        integer :: M2strs            ! 2D momentum, stresses
+        integer :: M2sstr            ! 2D momentum, surface stress
+        integer :: M2bstr            ! 2D momentum, bottom stress
 #  ifdef SOLVE3D
         integer :: M3fcor            ! 3D momentum, Coriolis
         integer :: M3rate            ! 3D momentum, time rate of change
         integer :: M3hadv            ! 3D momentum, horizontal advection
+#   ifdef NEARSHORE_MELLOR
+        integer :: M3hrad            ! 3D momentum, horizontal stresses
+        integer :: M3vrad            ! 3D momentum, vertical stresses
+#   endif
         integer :: M3hvis            ! 3D momentum, horizontal viscosity
         integer :: M3pgrd            ! 3D momentum, pressure gradient
         integer :: M3vadv            ! 3D momentum, vertical advection
@@ -322,17 +330,34 @@
 !  a multiple of "ntimes".
 !
         integer :: Nintervals = 1
-
-#ifdef AIR_OCEAN
 !
-!  Number of atmosphere model time-steps.
+!  Number of coupling models.
 !
-        integer :: nATM_steps
+        integer :: Ncouple
 !
-!  Number of time-steps between two-way coupling to atmosphere model.
+!  Number of parallel nodes assigned to each model in the coupled
+!  system.
 !
-        integer :: nOCN_steps
-#endif
+        integer :: NnodesATM
+        integer :: NnodesWAV
+        integer :: NnodesOCN
+!
+!  Time interval (seconds) between coupling of models.
+!
+        real(r8) :: TI_ATM_WAV        ! atmosphere-wave coupling interval
+        real(r8) :: TI_ATM_OCN        ! atmosphere-ocean coupling interval
+        real(r8) :: TI_WAV_OCN        ! wave-ocean coupling interval
+!
+!  Number of atmosphere model time-steps and atmosphere model ID.
+!
+        integer, dimension(Ngrids) :: nOCN_ATM
+        integer, dimension(Ngrids) :: nOCN_WAV
+!
+!  Coupled model components IDs.
+!
+        integer :: ATMid = 3
+        integer :: WAVid = 2
+        integer :: OCNid = 1
 !
 !  Starting, current, and ending ensemble run parameters.
 !
@@ -555,6 +580,10 @@
         real(r8), dimension(Ngrids) :: Zos
         real(r8), dimension(Ngrids) :: Zob
 !
+!  Minimum depth for wetting and drying (m).
+!
+        real(r8), dimension(Ngrids) :: Dcrit
+!
 !  Mean density (Kg/m3) used when the Boussinesq approximation is
 !  inferred.
 !
@@ -653,6 +682,7 @@
         logical, dimension(Ngrids) :: LdefFLT    ! Floats file
         logical, dimension(Ngrids) :: LdefHIS    ! History file
         logical, dimension(Ngrids) :: LdefINI    ! Initial file
+        logical, dimension(Ngrids) :: LdefIRP    ! Initial RPM file
         logical, dimension(Ngrids) :: LdefITL    ! Initial TLM file
         logical, dimension(Ngrids) :: LdefMOD    ! 4DVAR file
         logical, dimension(Ngrids) :: LdefNRM    ! Norm file
@@ -672,9 +702,11 @@
         logical, dimension(Ngrids) :: LwrtTLF    ! Write impulse file
 !
 !  Switch to write adjoint out 2D state arrays instead of IO solution
-!  arrays.  This is used in 4DVAR for IO maniputations.
+!  arrays and adjoint ocean time. This is used in 4DVAR for IO
+!  maniputations.
 !
         logical, dimension(Ngrids) :: LwrtState2d
+        logical, dimension(Ngrids) :: LwrtTime
 !
 !  Switch used to create new output NetCDF files. If TRUE, new output
 !  files are created. If FALSE, data is appended to an existing output
@@ -1207,6 +1239,18 @@
         real(r8), parameter :: gls_Ghmin = -0.28_r8
         real(r8), parameter :: gls_E2 = 1.33_r8
 #endif
+!
+! Constants used in the various formulation of surface flux boundary
+! conditions for the GLS vertical turbulence closure in terms of
+! Charnok surface roughness (CHARNOK_ALPHA), roughness from wave
+! amplitude (zos_hsig_alpha), wave dissipation (SZ_ALPHA), and
+! Craig and Banner wave breaking (CRGBAN_CW).
+!
+        real(r8), dimension(Ngrids) :: charnok_alpha
+        real(r8), dimension(Ngrids) :: zos_hsig_alpha
+        real(r8), dimension(Ngrids) :: sz_alpha
+        real(r8), dimension(Ngrids) :: crgban_cw
+
 #if defined MY25_MIXING || defined GLS_MIXING
 !
 !-----------------------------------------------------------------------
@@ -1498,8 +1542,15 @@
       Tobc_in = IniVal
       allocate ( Tobc_out(MT,Ngrids,4) )
       Tobc_out = IniVal
+
+
 # ifdef BIOLOGY
       allocate ( idbio(NBT) )
+# endif
+# ifdef SEDIMENT
+      allocate ( idsed(MAX(1,NST)) )
+      allocate ( idmud(MAX(1,NCS)) )
+      allocate ( isand(MAX(1,NNS)) )
 # endif
 #endif
       allocate ( Tnudg(MT,Ngrids) )
@@ -1722,7 +1773,13 @@
       M2hadv=ic+1
       ic=ic+1
 #  endif
-      M2strs=ic+1
+#  if defined NEARSHORE_MELLOR
+      M2hrad=ic+1
+      ic=ic+1
+#  endif
+      M2sstr=ic+1
+      ic=ic+1
+      M2bstr=ic+1
 #  if defined UV_VIS2 || defined UV_VIS4
       M2hvis=ic+2
 #  endif
@@ -1741,6 +1798,11 @@
 #   if defined UV_ADV
       M3hadv=ic+1
       M3vadv=ic+2
+      ic=ic+2
+#   endif
+#   if defined NEARSHORE_MELLOR
+      M3hrad=ic+1
+      M3vrad=ic+2
       ic=ic+2
 #   endif
       M3vvis=ic+1
@@ -1778,6 +1840,16 @@
      &       vonKar*(lmd_cs*vonKar*lmd_epsilon)**(1.0_r8/3.0_r8)
 #endif
 !
+!  Set number of couple models.
+!
+      Ncouple=1
+#ifdef AIR_OCEAN
+      Ncouple=Ncouple+1
+#endif
+#ifdef WAVES_OCEAN
+      Ncouple=Ncouple+1
+#endif
+!
 !  Initialize several IO flags.
 !
       DO ng=1,Ngrids
@@ -1790,6 +1862,7 @@
         LdefFLT(ng)=.TRUE.
         LdefHIS(ng)=.TRUE.
         LdefINI(ng)=.FALSE.
+        LdefIRP(ng)=.FALSE.
         LdefITL(ng)=.FALSE.
         LdefMOD(ng)=.FALSE.
         LdefRST(ng)=.TRUE.
@@ -1804,6 +1877,7 @@
         LwrtRST(ng)=.FALSE.
         LwrtTLM(ng)=.FALSE.
         LwrtState2d(ng)=.FALSE.
+        LwrtTime(ng)=.TRUE.
         ldefout(ng)=.FALSE.
 
         synchro_flag(ng)=.FALSE.

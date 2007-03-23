@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE mod_sources
-#if defined UV_PSOURCE || defined TS_PSOURCE
+#if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

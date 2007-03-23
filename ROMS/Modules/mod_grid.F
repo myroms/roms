@@ -23,7 +23,8 @@
 !  Vscope     Adjoint sensitivity spatial scope mask at V-points.      !
 !  angler     Angle (radians) between XI-axis and true EAST at         !
 !               RHO-points.                                            !
-!  bed_thick0 Initial sum all bed layer thicknesses (m)                !
+!  bed_thick0 Sum all initial bed layer thicknesses (m)                !
+!  bed_thick  Instantaneous total bed thickness, 2 time levels (m)     !
 !  dmde       ETA-derivative of inverse metric factor pm,              !
 !               d(1/pm)/d(ETA).                                        !
 !  dndx       XI-derivative  of inverse metric factor pn,              !
@@ -66,8 +67,11 @@
 !  pnom_u     Compound term, pn/pm at U-points.                        !
 !  pnom_v     Compound term, pn/pm at V-points.                        !
 !  rmask      Mask at RHO-points (0=Land, 1=Sea).                      !
+!  rmask_wet  Mask at RHO-points for wetting and drying (0=Land, 1=Sea)!
 !  umask      Mask at U-points (0=Land, 1=Sea).                        !
+!  umask_wet  Mask at U-points for wetting and drying (0=Land, 1=Sea)  !
 !  vmask      Mask at V-points (0=Land, 1=Sea).                        !
+!  vmask_wet  Mask at V-points for wetting and drying (0=Land, 1=Sea)  !
 !  xp         XI-coordinates (m) at PSI-points.                        !
 !  xr         XI-coordinates (m) at RHO-points.                        !
 !  xu         XI-coordinates (m) at U-points.                          !
@@ -100,9 +104,6 @@
 #endif
 
           real(r8), pointer :: angler(:,:)
-#ifdef SEDIMENT
-          real(r8), pointer :: bed_thick0(:,:)
-#endif
 #if defined CURVGRID && defined UV_ADV
           real(r8), pointer :: dmde(:,:)
           real(r8), pointer :: dndx(:,:)
@@ -148,6 +149,10 @@
           real(r8), pointer :: yu(:,:)
           real(r8), pointer :: yv(:,:)
 #ifdef SOLVE3D
+# if defined SEDIMENT && defined SED_MORPH
+          real(r8), pointer :: bed_thick0(:,:)
+          real(r8), pointer :: bed_thick(:,:,:)
+# endif
           real(r8), pointer :: Hz(:,:,:)
           real(r8), pointer :: Huon(:,:,:)
           real(r8), pointer :: Hvom(:,:,:)
@@ -164,6 +169,11 @@
           real(r8), pointer :: umask(:,:)
           real(r8), pointer :: vmask(:,:)
 #endif
+#ifdef WET_DRY
+          real(r8), pointer :: rmask_wet(:,:)
+          real(r8), pointer :: umask_wet(:,:)
+          real(r8), pointer :: vmask_wet(:,:)
+#endif
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
           real(r8), pointer :: Rscope(:,:)
@@ -176,6 +186,10 @@
 !
           real(r8), pointer :: tl_h(:,:)
 # ifdef SOLVE3D
+#  if defined SEDIMENT && defined SED_MORPH
+          real(r8), pointer :: tl_bed_thick0(:,:)
+          real(r8), pointer :: tl_bed_thick(:,:,:)
+#  endif
           real(r8), pointer :: tl_Hz(:,:,:)
           real(r8), pointer :: tl_Huon(:,:,:)
           real(r8), pointer :: tl_Hvom(:,:,:)
@@ -190,6 +204,10 @@
 !
           real(r8), pointer :: ad_h(:,:)
 # ifdef SOLVE3D
+#  if defined SEDIMENT && defined SED_MORPH
+          real(r8), pointer :: ad_bed_thick0(:,:)
+          real(r8), pointer :: ad_bed_thick(:,:,:)
+#  endif
           real(r8), pointer :: ad_Hz(:,:,:)
           real(r8), pointer :: ad_Huon(:,:,:)
           real(r8), pointer :: ad_Hvom(:,:,:)
@@ -233,9 +251,6 @@
 #endif
 
       allocate ( GRID(ng) % angler(LBi:UBi,LBj:UBj) )
-#ifdef SEDIMENT
-      allocate ( GRID(ng) % bed_thick0(LBi:UBi,LBj:UBj) )
-#endif
 #if defined CURVGRID && defined UV_ADV
       allocate ( GRID(ng) % dmde(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % dndx(LBi:UBi,LBj:UBj) )
@@ -283,7 +298,10 @@
       allocate ( GRID(ng) % yv(LBi:UBi,LBj:UBj) )
 
 #ifdef SOLVE3D
-
+# if defined SEDIMENT && defined SED_MORPH
+      allocate ( GRID(ng) % bed_thick0(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % bed_thick(LBi:UBi,LBj:UBj,1:2) )
+# endif
       allocate ( GRID(ng) % Hz(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( GRID(ng) % Huon(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( GRID(ng) % Hvom(LBi:UBi,LBj:UBj,N(ng)) )
@@ -304,6 +322,12 @@
       allocate ( GRID(ng) % vmask(LBi:UBi,LBj:UBj) )
 #endif
 
+#ifdef WET_DRY
+      allocate ( GRID(ng) % rmask_wet(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % umask_wet(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % vmask_wet(LBi:UBi,LBj:UBj) )
+#endif
+
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
       allocate ( GRID(ng) % Rscope(LBi:UBi,LBj:UBj) )
@@ -317,6 +341,10 @@
 !
       allocate ( GRID(ng) % tl_h(LBi:UBi,LBj:UBj) )
 # ifdef SOLVE3D
+#  if defined SEDIMENT && defined SED_MORPH
+      allocate ( GRID(ng) % tl_bed_thick0(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % tl_bed_thick(LBi:UBi,LBj:UBj,1:2) )
+#  endif
       allocate ( GRID(ng) % tl_Hz(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( GRID(ng) % tl_Huon(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( GRID(ng) % tl_Hvom(LBi:UBi,LBj:UBj,N(ng)) )
@@ -416,9 +444,6 @@
           GRID(ng) % IJwaterV(i,j) = 0
 #endif
           GRID(ng) % angler(i,j) = IniVal
-#ifdef SEDIMENT
-          GRID(ng) % bed_thick0(i,j) = IniVal
-#endif
 #if defined CURVGRID && defined UV_ADV
           GRID(ng) % dmde(i,j) = IniVal
           GRID(ng) % dndx(i,j) = IniVal
@@ -481,6 +506,12 @@
           GRID(ng) % vmask(i,j) = IniVal
 #endif
 
+#ifdef WET_DRY
+          GRID(ng) % rmask_wet(i,j) = IniVal
+          GRID(ng) % umask_wet(i,j) = IniVal
+          GRID(ng) % vmask_wet(i,j) = IniVal
+#endif
+
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
           GRID(ng) % Rscope(i,j) = IniVal
@@ -490,6 +521,13 @@
         END DO
 
 #ifdef SOLVE3D
+# if defined SEDIMENT && defined SED_MORPH
+        DO i=Imin,Imax
+          GRID(ng) % bed_thick0(i,j) = IniVal
+          GRID(ng) % bed_thick(i,j,1) = IniVal
+          GRID(ng) % bed_thick(i,j,2) = IniVal
+        END DO
+# endif
         DO k=1,N(ng)
           DO i=Imin,Imax
             GRID(ng) % Hz(i,j,k) = IniVal
@@ -515,6 +553,13 @@
           GRID(ng) % tl_h(i,j) = IniVal
         END DO
 # ifdef SOLVE3D
+#  if defined SEDIMENT && defined SED_MORPH
+        DO i=Imin,Imax
+          GRID(ng) % tl_bed_thick0(i,j) = IniVal
+          GRID(ng) % tl_bed_thick(i,j,1) = IniVal
+          GRID(ng) % tl_bed_thick(i,j,2) = IniVal
+        END DO
+#  endif
         DO k=1,N(ng)
           DO i=Imin,Imax
             GRID(ng) % tl_Hz(i,j,k) = IniVal
@@ -541,6 +586,13 @@
           GRID(ng) % ad_h(i,j) = IniVal
         END DO
 # ifdef SOLVE3D
+#  if defined SEDIMENT && defined SED_MORPH
+        DO i=Imin,Imax
+          GRID(ng) % ad_bed_thick0(i,j) = IniVal
+          GRID(ng) % ad_bed_thick(i,j,1) = IniVal
+          GRID(ng) % ad_bed_thick(i,j,2) = IniVal
+        END DO
+#  endif
         DO k=1,N(ng)
           DO i=Imin,Imax
             GRID(ng) % ad_Hz(i,j,k) = IniVal

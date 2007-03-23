@@ -1,4 +1,3 @@
-#include "cppdefs.h"
 !
 !svn $Id$
 !==================================================== John C. Warner ===
@@ -387,6 +386,7 @@
       integer, pointer :: points(:)
 
       real(r8) :: cff, ramp
+      real(r8), parameter ::  Lwave_max=500.0_r8
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ubar_rho
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: vbar_rho
@@ -441,7 +441,7 @@
         IF (Master) THEN
           WRITE (stdout,30) MyError
         END IF
-        CALL exit_coupling
+        CALL finalize_waves_coupling
       END IF
 !
 !  Set ramp coefficient.
@@ -523,7 +523,10 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           ij=ij+1
-          Lwave(i,j)=MAX(0.0_r8,A(ij))
+            Lwave(i,j)=MAX(0.0_r8,A(ij))
+            IF (Lwave(i,j).eq.1.0_r8/0.0_r8) THEN
+              Lwave(i,j)=Lwave_max
+            END IF
         END DO
       END DO
 
@@ -726,7 +729,7 @@
         IF (Master) THEN
           WRITE (stdout,40) MyError
         END IF
-        CALL exit_coupling
+        CALL finalize_waves_coupling
       END IF
 !
 !  Deallocate communication arrays.

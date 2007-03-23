@@ -13,6 +13,8 @@
 !                                                                      !
 !  avgu2d     2D velocity component (m/s) in the XI-direction.         !
 !  avgv2d     2D velocity component (m/s) in the ETA-direction.        !
+!  avgu2Sd    2D stokes velocity component (m/s) in the XI-direction.  !
+!  avgv2Sd    2D stokes velocity component (m/s) in the ETA-direction. !
 !  avgzeta    Free surface (m).                                        !
 !                                                                      !
 !  3D Time-averaged fields for output purposes.                        !
@@ -54,6 +56,8 @@
 !  avgZZ      Quadratic term <zeta*zeta> for free-surface.             !
 !  avgu3d     3D velocity component (m/s) in the XI-direction.         !
 !  avgv3d     3D velocity component (m/s) in the ETA-direction.        !
+!  avgu3Sd    3D stokes velocity component (m/s) in the XI-direction.  !
+!  avgv3Sd    3D stokes velocity component (m/s) in the ETA-direction. !
 !  avgw3d     S-coordinate [omega*Hz/mn] vertical velocity (m3/s).     !
 !  avgwvel    3D "true" vertical velocity (m/s).                       !
 !                                                                      !
@@ -67,6 +71,10 @@
 
           real(r8), pointer :: avgu2d(:,:)
           real(r8), pointer :: avgv2d(:,:)
+# ifdef AVERAGES_NEARSHORE
+          real(r8), pointer :: avgu2Sd(:,:)
+          real(r8), pointer :: avgv2Sd(:,:)
+# endif
           real(r8), pointer :: avgzeta(:,:)
 # ifdef AVERAGES_QUADRATIC
           real(r8), pointer :: avgU2(:,:)
@@ -80,6 +88,10 @@
           real(r8), pointer :: avgv3d(:,:,:)
           real(r8), pointer :: avgw3d(:,:,:)
           real(r8), pointer :: avgwvel(:,:,:)
+#  ifdef AVERAGES_NEARSHORE
+          real(r8), pointer :: avgu3Sd(:,:,:)
+          real(r8), pointer :: avgv3Sd(:,:,:)
+#  endif
 #  ifdef AVERAGES_QUADRATIC
 #   ifdef SALINITY
           real(r8), pointer :: avgSS(:,:,:)
@@ -165,6 +177,10 @@
 !
       allocate ( AVERAGE(ng) % avgu2d(LBi:UBi,LBj:UBj) )
       allocate ( AVERAGE(ng) % avgv2d(LBi:UBi,LBj:UBj) )
+# ifdef AVERAGES_NEARSHORE
+      allocate ( AVERAGE(ng) % avgu2Sd(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgv2Sd(LBi:UBi,LBj:UBj) )
+# endif
       allocate ( AVERAGE(ng) % avgzeta(LBi:UBi,LBj:UBj) )
 # ifdef AVERAGES_QUADRATIC
       allocate ( AVERAGE(ng) % avgU2(LBi:UBi,LBj:UBj) )
@@ -176,6 +192,10 @@
       allocate ( AVERAGE(ng) % avgt(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       allocate ( AVERAGE(ng) % avgu3d(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( AVERAGE(ng) % avgv3d(LBi:UBi,LBj:UBj,N(ng)) )
+#  ifdef AVERAGES_NEARSHORE
+      allocate ( AVERAGE(ng) % avgu3Sd(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgv3Sd(LBi:UBi,LBj:UBj,N(ng)) )
+#  endif
       allocate ( AVERAGE(ng) % avgw3d(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( AVERAGE(ng) % avgwvel(LBi:UBi,LBj:UBj,0:N(ng)) )
 #  ifdef AVERAGES_QUADRATIC
@@ -308,6 +328,10 @@
         DO i=Imin,Imax
           AVERAGE(ng) % avgu2d(i,j) = IniVal
           AVERAGE(ng) % avgv2d(i,j) = IniVal
+# ifdef AVERAGES_NEARSHORE
+          AVERAGE(ng) % avgu2Sd(i,j) = IniVal
+          AVERAGE(ng) % avgv2Sd(i,j) = IniVal
+# endif
           AVERAGE(ng) % avgzeta(i,j) = IniVal
 # ifdef AVERAGES_QUADRATIC
           AVERAGE(ng) % avgU2(i,j) = IniVal
@@ -349,6 +373,10 @@
             AVERAGE(ng) % avgrho(i,j,k) = IniVal
             AVERAGE(ng) % avgu3d(i,j,k) = IniVal
             AVERAGE(ng) % avgv3d(i,j,k) = IniVal
+#  ifdef AVERAGES_NEARSHORE
+          AVERAGE(ng) % avgu3Sd(i,j,k) = IniVal
+          AVERAGE(ng) % avgv3Sd(i,j,k) = IniVal
+#  endif
 #  ifdef AVERAGES_QUADRATIC
             AVERAGE(ng) % avgHuon(i,j,k) = IniVal
             AVERAGE(ng) % avgHvom(i,j,k) = IniVal

@@ -326,10 +326,10 @@
           Vinfo( 4)='360_day'
         ELSE IF (INT(time_ref).eq.0) THEN
           Vinfo( 3)='seconds since 0000-01-01 00:00:00'
-          Vinfo( 4)='365.25_day'
+          Vinfo( 4)='julian'
         ELSE IF (time_ref.gt.0.0_r8) THEN
           WRITE (Vinfo( 3),'(a,1x,a)') 'seconds since', TRIM(r_text)
-          Vinfo( 4)='standard'
+          Vinfo( 4)='gregorian'
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ncAVGid(ng),avgVid(idtime,ng),NF_TYPE,           &
@@ -1044,6 +1044,197 @@
      &                     nvd3,v2dgrd,Aval,Vinfo,ncname)
           END IF
         END DO
+# endif
+# ifdef NEARSHORE_MELLOR
+!
+!  Define 2D radiation stress Sxx.
+!
+        IF (Hout(idW2xx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2xx)
+          Vinfo( 2)=Vname(2,idW2xx)
+          Vinfo( 3)=Vname(3,idW2xx)
+          Vinfo(14)=Vname(4,idW2xx)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW2xx,ng),NF_FOUT,           &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D radiation stress Sxy.
+!
+        IF (Hout(idW2xy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2xy)
+          Vinfo( 2)=Vname(2,idW2xy)
+          Vinfo( 3)=Vname(3,idW2xy)
+          Vinfo(14)=Vname(4,idW2xy)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW2xy,ng),NF_FOUT,           &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D radiation stress Syy.
+!
+        IF (Hout(idW2yy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW2yy)
+          Vinfo( 2)=Vname(2,idW2yy)
+          Vinfo( 3)=Vname(3,idW2yy)
+          Vinfo(14)=Vname(4,idW2yy)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW2yy,ng),NF_FOUT,           &
+     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D total u-radiation stress.
+!
+        IF (Hout(idU2rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idU2rs)
+          Vinfo( 2)=Vname(2,idU2rs)
+          Vinfo( 3)=Vname(3,idU2rs)
+          Vinfo(14)=Vname(4,idU2rs)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u2dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idU2rs,ng),NF_FOUT,         &
+     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D total v-radiation stress.
+!
+        IF (Hout(idV2rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idV2rs)
+          Vinfo( 2)=Vname(2,idV2rs)
+          Vinfo( 3)=Vname(3,idV2rs)
+          Vinfo(14)=Vname(4,idV2rs)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v2dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idV2rs,ng),NF_FOUT,         &
+     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D u-stokes velocity.
+!
+        IF (Hout(idU2Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idU2Sd)
+          Vinfo( 2)=Vname(2,idU2Sd)
+          Vinfo( 3)=Vname(3,idU2Sd)
+          Vinfo(14)=Vname(4,idU2Sd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idU2Sd,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idU2Sd,ng),NF_FOUT,         &
+     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 2D v-stokes velocity.
+!
+        IF (Hout(idV2Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idV2Sd)
+          Vinfo( 2)=Vname(2,idV2Sd)
+          Vinfo( 3)=Vname(3,idV2Sd)
+          Vinfo(14)=Vname(4,idV2Sd)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idV2Sd,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idV2Sd,ng),NF_FOUT,         &
+     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+        END IF
+#  ifdef SOLVE3D
+!
+!  Define 3D total u-radiation stress.
+!
+        IF (Hout(idU3rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idU3rs)
+          Vinfo( 2)=Vname(2,idU3rs)
+          Vinfo( 3)=Vname(3,idU3rs)
+          Vinfo(14)=Vname(4,idU3rs)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idU3rs,ng),NF_FOUT,         &
+     &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D total v-radiation stress.
+!
+        IF (Hout(idV3rs,ng)) THEN
+          Vinfo( 1)=Vname(1,idV3rs)
+          Vinfo( 2)=Vname(2,idV3rs)
+          Vinfo( 3)=Vname(3,idV3rs)
+          Vinfo(14)=Vname(4,idV3rs)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(v3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idV3rs,ng),NF_FOUT,         &
+     &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D u-stokes velocity.
+!
+        IF (Hout(idU3Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idU3Sd)
+          Vinfo( 2)=Vname(2,idU3Sd)
+          Vinfo( 3)=Vname(3,idU3Sd)
+          Vinfo(14)=Vname(4,idU3Sd)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idU3Sd,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idU3Sd,ng),NF_FOUT,         &
+     &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D v-stokes velocity.
+!
+        IF (Hout(idV3Sd,ng)) THEN
+          Vinfo( 1)=Vname(1,idV3Sd)
+          Vinfo( 2)=Vname(2,idV3Sd)
+          Vinfo( 3)=Vname(3,idV3Sd)
+          Vinfo(14)=Vname(4,idV3Sd)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idV3Sd,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idV3Sd,ng),NF_FOUT,         &
+     &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
+        END IF
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------

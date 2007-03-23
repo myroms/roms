@@ -2,6 +2,9 @@
 #undef NEUMANN
 #undef LINEAR_CONTINUATION
 #undef REMIX_BED
+#define SLOPE_NEMETH
+#undef  SLOPE_LESSER
+#define BSTRESS_UPWIND
 
       MODULE sediment_mod
 #if defined NONLINEAR && defined SEDIMENT
@@ -22,6 +25,14 @@
 !    between water column and the bed.                                 !
 !  * Transport of multiple grain sizes.                                !
 !  * Bed layer stratigraphy.                                           !
+!  * Bed morphology.                                                   !
+!  * Bedload based on Meyer Peter Mueller.                             !
+!  * Bedload based on Soulsby combined waves + currents                !
+!    (p166 Soulsby 1997)                                               !
+!  * Bedload slope term options: Nemeth et al, 2006, Coastal           !
+!    Engineering, v 53, p 265-275; Lesser et al, 2004, Coastal         !
+!    Engineering, v 51, p 883-915.
+!  
 !  * Seawater/sediment vertical level distribution:                    !
 !                                                                      !
 !         W-level  RHO-level                                           !
@@ -95,21 +106,38 @@
      &                    GRID(ng) % umask,                             &
      &                    GRID(ng) % vmask,                             &
 # endif
+# ifdef WET_DRY
+     &                    GRID(ng) % rmask_wet,                         &
+# endif
      &                    GRID(ng) % Hz,                                &
      &                    GRID(ng) % z_w,                               &
 # ifdef BBL_MODEL
      &                    BBL(ng) % bustrc,                             &
      &                    BBL(ng) % bvstrc,                             &
+     &                    BBL(ng) % bustrw,                             &
+     &                    BBL(ng) % bvstrw,                             &
      &                    BBL(ng) % bustrcwmax,                         &
      &                    BBL(ng) % bvstrcwmax,                         &
+     &                    FORCES(ng) % Dwave,                           &
+     &                    FORCES(ng) % Pwave_bot,                       &
 # endif
      &                    FORCES(ng) % bustr,                           &
      &                    FORCES(ng) % bvstr,                           &
      &                    OCEAN(ng) % t,                                &
-# ifdef BEDLOAD
+# if defined BEDLOAD_SOULSBY
+     &                    FORCES(ng) % Hwave,                           &
+     &                    FORCES(ng) % Lwave,                           &
+     &                    GRID(ng) % angler,                            &
+# endif
+# if defined SED_MORPH
+     &                    GRID(ng) % bed_thick,                         &
+# endif
+# if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
      &                    GRID(ng) % h,                                 &
      &                    GRID(ng) % om_r,                              &
+     &                    GRID(ng) % om_u,                              &
      &                    GRID(ng) % on_r,                              &
+     &                    GRID(ng) % on_v,                              &
      &                    OCEAN(ng) % bedldu,                           &
      &                    OCEAN(ng) % bedldv,                           &
 # endif
@@ -131,15 +159,27 @@
 # ifdef MASKING
      &                          rmask, umask, vmask,                    &
 # endif
+# ifdef WET_DRY
+     &                          rmask_wet,                              &
+# endif
      &                          Hz, z_w,                                &
 # ifdef BBL_MODEL
      &                          bustrc, bvstrc,                         &
+     &                          bustrw, bvstrw,                         &
      &                          bustrcwmax, bvstrcwmax,                 &
+     &                          Dwave, Pwave_bot,                       &
 # endif
      &                          bustr, bvstr,                           &
      &                          t,                                      &
-# ifdef BEDLOAD
-     &                          h, om_r, on_r,                          &
+# if defined BEDLOAD_SOULSBY
+     &                          Hwave, Lwave,                           &
+     &                          angler,                                 &
+# endif
+# if defined SED_MORPH
+     &                          bed_thick,                              &
+# endif
+# if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
+     &                          h, om_r, om_u, on_r, on_v,              &
      &                          bedldu, bedldv,                         &
 # endif
      &                          bed, bed_frac, bed_mass,                &
@@ -151,6 +191,9 @@
       USE mod_sediment
 !
       USE bc_3d_mod, ONLY : bc_r3d_tile
+# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE exchange_2d_mod, ONLY : exchange_r2d_tile
+# endif
 # ifdef BEDLOAD
 #  if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod, ONLY : exchange_u2d_tile, exchange_v2d_tile
@@ -180,20 +223,37 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
 #  ifdef BBL_MODEL
       real(r8), intent(in) :: bustrc(LBi:,LBj:)
       real(r8), intent(in) :: bvstrc(LBi:,LBj:)
+      real(r8), intent(in) :: bustrw(LBi:,LBj:)
+      real(r8), intent(in) :: bvstrw(LBi:,LBj:)
       real(r8), intent(in) :: bustrcwmax(LBi:,LBj:)
       real(r8), intent(in) :: bvstrcwmax(LBi:,LBj:)
+      real(r8), intent(in) :: Dwave(LBi:,LBj:)
+      real(r8), intent(in) :: Pwave_bot(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: bustr(LBi:,LBj:)
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
-#  ifdef BEDLOAD
+#  if defined BEDLOAD_SOULSBY
+      real(r8), intent(in) :: Hwave(LBi:,LBj:)
+      real(r8), intent(in) :: Lwave(LBi:,LBj:)
+      real(r8), intent(in) :: angler(LBi:,LBj:)
+#  endif
+#  if defined SED_MORPH
+      real(r8), intent(inout):: bed_thick(LBi:,LBj:,:)
+#  endif
+#  if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
       real(r8), intent(in) :: h(LBi:,LBj:)
       real(r8), intent(in) :: om_r(LBi:,LBj:)
+      real(r8), intent(in) :: om_u(LBi:,LBj:)
       real(r8), intent(in) :: on_r(LBi:,LBj:)
+      real(r8), intent(in) :: on_v(LBi:,LBj:)
       real(r8), intent(inout) :: bedldu(LBi:,LBj:,:)
       real(r8), intent(inout) :: bedldv(LBi:,LBj:,:)
 #  endif
@@ -210,20 +270,37 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #  ifdef BBL_MODEL
       real(r8), intent(in) :: bustrc(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstrc(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: bustrw(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: bvstrw(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bustrcwmax(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstrcwmax(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Dwave(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Pwave_bot(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
-#  ifdef BEDLOAD
+#  if defined BEDLOAD_SOULSBY
+      real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Lwave(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
+#  endif
+#  if defined SED_MORPH
+      real(r8), intent(inout):: bed_thick(LBi:UBi,LBj:UBj,2)
+#  endif
+#  if defined BEDLOAD_MPM || defined BEDLOAD_SOULSBY
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_r(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_r(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: on_v(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: bedldu(LBi:UBi,LBj:UBj,NST)
       real(r8), intent(inout) :: bedldv(LBi:UBi,LBj:UBj,NST)
 #  endif
@@ -273,19 +350,45 @@
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,NST) :: dep_mass
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_w
-
+# ifdef BSTRESS_UPWIND
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_wX
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_wE
+# endif
 # ifdef BEDLOAD
-      real(r8) :: a_slopex, a_slopey, angleu, anglev
-      real(r8) :: bedld, bedld_mass
-      real(r8) :: dzdx, dzdy, orsmgd, slope_coeff
-      real(r8) :: smgd, smgdr, Umag
+      real(r8) :: a_slopex, a_slopey, sed_angle, cff5
+      real(r8) :: bedld, bedld_mass, dzdx, dzdy
+      real(r8) :: smgd, smgdr, osmgd, Umag
+      real(r8) :: rhs_bed, Ua, Ra, phi, Clim
+      integer :: iff
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX_r
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE_r
 # endif
+# if defined BEDLOAD_MPM
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: angleu
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: anglev
+# endif
+# if defined BEDLOAD_SOULSBY
+      real(r8) :: theta_mean, theta_wav, w_asym
+      real(r8) :: theta_max, theta_max1, theta_max2
+      real(r8) :: phi_x1, phi_x2, phi_x, phi_y, Dstp
+      real(r8) :: bedld_x, bedld_y, tau_cur, waven, wavec
 
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phic
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phicw
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_wav
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_mean
+      real(r8), parameter :: kdmax = 100.0_r8      
+# endif
+# if defined SED_MORPH
+      integer :: kbed
+# endif
+# ifdef SED_BIODIFF
+!      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_cr_max
+!      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_cr_min
+# endif
 # include "set_bounds.h"
 
 # ifdef BEDLOAD
@@ -295,40 +398,65 @@
 # endif
 !
 !-----------------------------------------------------------------------
-! Compute bottom stresses.
+! Compute maximum bottom stress for MPM bedload or suspended load.
 !-----------------------------------------------------------------------
 !
-# ifdef BBL_MODEL
+# if defined BEDLOAD_MPM || defined SUSPLOAD
+#  ifdef BBL_MODEL
       DO j=Jstr-1,Jend+1
         DO i=Istr-1,Iend+1
           tau_w(i,j)=SQRT(bustrcwmax(i,j)*bustrcwmax(i,j)+              &
      &                    bvstrcwmax(i,j)*bvstrcwmax(i,j))
+#   ifdef WET_DRY
+          tau_w(i,j)=tau_w(i,j)*rmask_wet(i,j)
+#   endif
         END DO
       END DO
-# else
-#  ifdef EW_PERIODIC
-#   define I_RANGE Istr-1,Iend+1
 #  else
-#   define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
-#  endif
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-1,Jend+1
-#  else
-#   define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
-#  endif
+#   ifdef EW_PERIODIC
+#    define I_RANGE Istr-1,Iend+1
+#   else
+#    define I_RANGE MAX(Istr-1,1),MIN(Iend+1,Lm(ng))
+#   endif
+#   ifdef NS_PERIODIC
+#    define J_RANGE Jstr-1,Jend+1
+#   else
+#    define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
+#   endif
       DO i=I_RANGE
         DO j=J_RANGE
+#   ifdef BSTRESS_UPWIND
+            cff1=0.5_r8*(1.0_r8+SIGN(1.0_r8,bustr(i+1,j)))
+            cff2=0.5_r8*(1.0_r8-SIGN(1.0_r8,bustr(i+1,j)))
+            cff3=0.5_r8*(1.0_r8+SIGN(1.0_r8,bustr(i  ,j)))
+            cff4=0.5_r8*(1.0_r8-SIGN(1.0_r8,bustr(i  ,j)))
+            tau_wX(i,j)=cff3*(cff1*bustr(i,j)+                          &
+     &                  cff2*0.5_r8*(bustr(i,j)+bustr(i+1,j)))+         &
+     &                  cff4*(cff2*bustr(i+1,j)+                        &
+     &                  cff1*0.5_r8*(bustr(i,j)+bustr(i+1,j)))
+            cff1=0.5_r8*(1.0_r8+SIGN(1.0_r8,bvstr(i,j+1)))
+            cff2=0.5_r8*(1.0_r8-SIGN(1.0_r8,bvstr(i,j+1)))
+            cff3=0.5_r8*(1.0_r8+SIGN(1.0_r8,bvstr(i,j)))
+            cff4=0.5_r8*(1.0_r8-SIGN(1.0_r8,bvstr(i,j)))
+            tau_wE(i,j)=cff3*(cff1*bvstr(i,j)+                          &
+     &                  cff2*0.5_r8*(bvstr(i,j)+bvstr(i,j+1)))+         &
+     &                  cff4*(cff2*bvstr(i,j+1)+                        &
+     &                  cff1*0.5_r8*(bvstr(i,j)+bvstr(i,j+1)))
+#   endif
           tau_w(i,j)=0.5_r8*SQRT((bustr(i,j)+bustr(i+1,j))*             &
      &                           (bustr(i,j)+bustr(i+1,j))+             &
      &                           (bvstr(i,j)+bvstr(i,j+1))*             &
      &                           (bvstr(i,j)+bvstr(i,j+1)))
+#   ifdef WET_DRY
+          tau_w(i,j)=tau_w(i,j)*rmask_wet(i,j)
+#   endif
         END DO
       END DO
-#  undef I_RANGE
-#  undef J_RANGE
+#   undef I_RANGE
+#   undef J_RANGE
+#  endif
 # endif
 
-!
 # ifdef BEDLOAD
 !
 !-----------------------------------------------------------------------
@@ -345,79 +473,212 @@
 #  else
 #   define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
 #  endif
-
-      DO ised=1,NST
-        smgd=(Srho(ised,ng)/rho0-1.0_r8)*g*Sd50(ised,ng)
-        smgdr=SQRT(smgd)*Sd50(ised,ng)*Srho(ised,ng)
-        orsmgd=1.0_r8/(rho0*smgd)
 !
-        DO j=J_RANGE
-          DO i=I_RANGE
+! Compute some constant bed slope parameters.
+!
+       sed_angle=DTAN(33.0_r8*pi/180.0_r8)
+!
+!  Compute angle between currents and waves (radians).
+!
+      DO j=J_RANGE
+        DO i=I_RANGE
+#  if defined BEDLOAD_SOULSBY
+!
+! Compute angle between currents and waves, measure CCW from current
+! direction toward wave vector.
+!
+          IF (bustrc(i,j).eq.0.0_r8) THEN
+            phic(i,j)=0.5_r8*pi*SIGN(1.0_r8,bvstrc(i,j))
+          ELSE
+            phic(i,j)=ATAN2(bvstrc(i,j),bustrc(i,j))
+          ENDIF
+          phicw(i,j)=1.5_r8*pi-Dwave(i,j)-phic(i,j)-angler(i,j)
 !
 ! Compute stress components at rho points.
 !
-#  ifdef BBL_MODEL
-            cff1=bustrc(i,j)
-            cff2=bvstrc(i,j)
-            Umag=SQRT(cff1*cff1+cff2*cff2)+eps
-            angleu=cff1/Umag
-            anglev=cff2/Umag
-#  else
-            cff1=0.5_r8*(bustr(i,j)+bustr(i+1,j))
-            cff2=0.5_r8*(bvstr(i,j)+bvstr(i,j+1))
-            Umag=SQRT(cff1*cff1+cff2*cff2)+eps
-            angleu=cff1/Umag
-            anglev=cff2/Umag
+          tau_cur=SQRT(bustrc(i,j)*bustrc(i,j)+                         &
+     &                 bvstrc(i,j)*bvstrc(i,j))
+          tau_wav(i,j)=SQRT(bustrw(i,j)*bustrw(i,j)+                    &
+     &                      bvstrw(i,j)*bvstrw(i,j))
+          tau_mean(i,j)=tau_cur*(1.0_r8+1.2_r8*((tau_wav(i,j)/          &
+     &                  (tau_cur+tau_wav(i,j)+eps))**3.2_r8))
+!
+#  elif defined BEDLOAD_MPM
+          cff1=0.5_r8*(bustr(i,j)+bustr(i+1,j))
+          cff2=0.5_r8*(bvstr(i,j)+bvstr(i,j+1))
+          Umag=SQRT(cff1*cff1+cff2*cff2)+eps
+          angleu(i,j)=cff1/Umag
+          anglev(i,j)=cff2/Umag
 #  endif
+        END DO
+      END DO
+!
+      DO ised=1,NST
+        smgd=(Srho(ised,ng)/rho0-1.0_r8)*g*Sd50(ised,ng)
+        osmgd=1.0_r8/smgd 
+        smgdr=SQRT(smgd)*Sd50(ised,ng)*Srho(ised,ng)
+!
+        DO j=J_RANGE
+          DO i=I_RANGE
+#  ifdef BEDLOAD_SOULSBY
+!
+! Compute wave asymmetry factor, based on Fredosoe and Deigaard.
+!
+            Dstp=z_w(i,j,N(ng))+h(i,j)
+            waven=2.0_r8*pi/(Lwave(i,j)+eps)
+            wavec=SQRT(g/waven*tanh(waven*Dstp))
+            cff4=MIN(waven*Dstp,kdmax)
+            cff1=-0.1875_r8*wavec*(waven*Dstp)**2/(SINH(cff4))**4
+            cff2=0.125_r8*g*Hwave(i,j)**2/(wavec*Dstp+eps)
+            cff3=pi*Hwave(i,j)/(Pwave_bot(i,j)*SINH(cff4)+eps)
+            w_asym=MAX(MIN((cff1-cff2)/cff3,0.2_r8),0.0_r8)
+!
+! Compute nondimensional stresses.
+!
+            theta_wav=tau_wav(i,j)*osmgd+eps
+            theta_mean=tau_mean(i,j)*osmgd
+!
+            cff1=theta_wav*(1.0_r8+w_asym)
+            cff2=theta_wav*(1.0_r8-w_asym)
+            theta_max1=SQRT((theta_mean+                                &
+     &                       cff1*COS(phicw(i,j)))**2+                  &
+     &                      (cff1*SIN(phicw(i,j)))**2)
+            theta_max2=SQRT((theta_mean+                                &
+     &                       cff2*COS(phicw(i,j)+pi))**2+               &
+     &                      (cff2*SIN(phicw(i,j)+pi))**2)
+            theta_max=MAX(theta_max1,theta_max2)
+!
+! Motion initiation factor.
+!
+            cff3=0.5_r8*(1.0_r8+SIGN(1.0_r8,                            &
+     &                               theta_max/tau_ce(ised,ng)-1.0_r8))
+!
+! Calc bed loads in direction of current and perpendicular direction.
+!
+            phi_x1=12.0_r8*SQRT(theta_mean)*                            &
+     &             (theta_mean-tau_ce(ised,ng))
+            phi_x2=12.0_r8*(0.9534_r8+0.1907*COS(2.0_r8*phicw(i,j)))*   &
+     &             SQRT(theta_wav)*theta_mean+                          &
+     &             12.0_r8*(0.229_r8*w_asym*theta_wav**1.5_r8*          &
+     &                      COS(phicw(i,j)))
+            phi_x=MAX(phi_x1,phi_x2)*cff3
+            bedld_x=phi_x*smgdr
+!
+            cff5=theta_wav**1.5_r8+1.5_r8*(theta_mean**1.5_r8)
+            phi_y=12.0_r8*0.1907_r8*theta_wav*theta_wav*                &
+     &            (theta_mean*SIN(2.0_r8*phicw(i,j))+1.2_r8*w_asym*     &
+     &            SIN(phicw(i,j)))/cff5*cff3
+            bedld_y=phi_y*smgdr
+!
+! Partition bedld into xi and eta directions, still at rho points.
+! FX_r and FE_r have dimensions of kg.
+!
+            FX_r(i,j)=(bedld_x*COS(phic(i,j))-bedld_y*SIN(phic(i,j)))*  &
+     &                on_r(i,j)*dt(ng)
+            FE_r(i,j)=(bedld_x*SIN(phic(i,j))+bedld_y*COS(phic(i,j)))*  &
+     &                om_r(i,j)*dt(ng)
+#  elif defined BEDLOAD_MPM
+#   ifdef BSTRESS_UPWIND
+!
+! Magnitude of bed load at rho points. Meyer-Peter Muller formulation.
+! bedld has dimensions of kg m-1 s-1. Use partitions of stress 
+! from upwind direction, still at rho points.
+! FX_r and FE_r have dimensions of kg.
+!
+            bedld=8.0_r8*(MAX((ABS(tau_wX(i,j))*osmgd-0.047_r8),        &
+     &                        0.0_r8)**1.5_r8)*smgdr*                   &
+     &                        SIGN(1.0_r8,tau_wX(i,j))
+            FX_r(i,j)=bedld*on_r(i,j)*dt(ng)
+            bedld=8.0_r8*(MAX((ABS(tau_wE(i,j))*osmgd-0.047_r8),        &
+     &                        0.0_r8)**1.5_r8)*smgdr*                   &
+     &                        SIGN(1.0_r8,tau_wE(i,j))
+            FE_r(i,j)=bedld*om_r(i,j)*dt(ng)
+#   else
 !
 ! Magnitude of bed load at rho points. Meyer-Peter Muller formulation.
 ! bedld has dimensions of kg m-1 s-1
 !
-            bedld=8.0_r8*(MAX((tau_w(i,j)*rho0*orsmgd-0.047_r8),        &
+            bedld=8.0_r8*(MAX((tau_w(i,j)*osmgd-0.047_r8),              &
      &                        0.0_r8)**1.5_r8)*smgdr
 !
 ! Partition bedld into xi and eta directions, still at rho points.
 ! FX_r and FE_r have dimensions of kg.
 !
-            FX_r(i,j)=angleu*bedld*on_r(i,j)*dt(ng)
-            FE_r(i,j)=anglev*bedld*om_r(i,j)*dt(ng)
+            FX_r(i,j)=angleu(i,j)*bedld*on_r(i,j)*dt(ng)
+            FE_r(i,j)=anglev(i,j)*bedld*om_r(i,j)*dt(ng)
+#   endif
+#  endif
 !
-! Correct for along-direction slope.
+! Correct for along-direction slope. Limit slope to 0.9*sed angle.
 !
             cff1=0.5_r8*(1.0_r8+SIGN(1.0_r8,FX_r(i,j)))
             cff2=0.5_r8*(1.0_r8-SIGN(1.0_r8,FX_r(i,j)))
-            dzdx=cff1*(h(i+1,j)-h(i,j))*0.5_r8*(pm(i+1,j)+pm(i,j))+     &
-     &           cff2*(h(i,j)-h(i-1,j))*0.5_r8*(pm(i-1,j)+pm(i,j))
-            cff1=0.5_r8*(1.0_r8+SIGN(1.0_r8,FE_r(i,j)))
-            cff2=0.5_r8*(1.0_r8-SIGN(1.0_r8,FE_r(i,j)))
-            dzdy=cff1*(h(i,j+1)-h(i,j))*0.5_r8*(pn(i,j+1)+pn(i,j))+     &
-     &           cff2*(h(i,j)-h(i,j-1))*0.5_r8*(pn(i,j-1)+pn(i,j))
-            slope_coeff=1.0_r8
-            a_slopex=1.0_r8+slope_coeff*                                &
-     &               (TAN(30.0_r8*pi/180.0_r8)/                         &
-     &               (COS(ATAN(dzdx))*(tan(30.0_r8*pi/180.0_r8)-        &
-     &                dzdx))-1.0_r8)
-            a_slopey=1.0_r8+slope_coeff*                                &
-     &               (TAN(30.0_r8*pi/180.0_r8)/                         &
-     &               (COS(ATAN(dzdy))*(tan(30.0_r8*pi/180.0_r8)-        &
-     &                dzdy))-1.0_r8)
+#  if defined SLOPE_NEMETH
+            dzdx=(h(i+1,j)-h(i  ,j))/om_u(i+1,j)*cff1+                  &
+     &           (h(i-1,j)-h(i  ,j))/om_u(i  ,j)*cff2
+            dzdy=(h(i,j+1)-h(i,j  ))/on_v(i,j+1)*cff1+                  &
+     &           (h(i,j-1)-h(i,j  ))/on_v(i  ,j)*cff2
+#   ifdef BEDLOAD_MPM
+            cff=ABS(tau_w(i,j))
+#   else
+            cff=ABS(tau_mean(i,j))
+#   endif
+            a_slopex=0.3_r8*cff**0.5_r8*0.002_r8*dzdx+                  &
+     &               0.3_r8*cff**1.5_r8*3.330_r8*dzdx
+            a_slopey=0.3_r8*cff**0.5_r8*0.002_r8*dzdy+                  &
+     &               0.3_r8*cff**1.5_r8*3.330_r8*dzdy
+!
+! Add contriubiton of bed slope to bed load transport fluxes.
+!
+            FX_r(i,j)=FX_r(i,j)+a_slopex
+            FE_r(i,j)=FE_r(i,j)+a_slopey
+#  elif defined SLOPE_LESSER
+            dzdx=MIN(((h(i+1,j)-h(i  ,j))/om_u(i+1,j)*cff1+             &
+     &                (h(i  ,j)-h(i-1,j))/om_u(i  ,j)*cff2),0.52_r8)*   &
+     &                SIGN(1.0_r8,FX_r(i,j))
+            dzdy=MIN(((h(i,j+1)-h(i,j  ))/on_v(i,j+1)*cff1+             &
+     &                (h(i,j  )-h(i,j-1))/on_v(i  ,j)*cff2),0.52_r8)*   &
+     &                SIGN(1.0_r8,FE_r(i,j))
+            cff=DATAN(dzdx)
+            a_slopex=sed_angle/(COS(cff)*(sed_angle-dzdx))
+            cff=DATAN(dzdy)
+            a_slopey=sed_angle/(COS(cff)*(sed_angle-dzdy))
+!
+! Add contriubiton of bed slope to bed load transport fluxes.
+!
             FX_r(i,j)=FX_r(i,j)*a_slopex
             FE_r(i,j)=FE_r(i,j)*a_slopey
+#  endif
 !
-            bedld_mass=ABS(FX_r(i,j))+ABS(FE_r(i,j))+eps
+!
+#  ifdef SED_MORPH
+!
+! Apply morphology factor.
+!
+            FX_r(i,j)=FX_r(i,j)*morph_fac(ised,ng)
+            FE_r(i,j)=FE_r(i,j)*morph_fac(ised,ng)
+
+#  endif
+!
+! Apply bedload transport rate coefficient. Also limit
+! bedload to the fraction of each sediment class.
+!
+            FX_r(i,j)=FX_r(i,j)*bedload_coeff(ng)*bed_frac(i,j,1,ised)
+            FE_r(i,j)=FE_r(i,j)*bedload_coeff(ng)*bed_frac(i,j,1,ised)
 !
 ! Limit bed load to available bed mass.
 !
+            bedld_mass=ABS(FX_r(i,j))+ABS(FE_r(i,j))+eps
             FX_r(i,j)=MIN(ABS(FX_r(i,j)),                               &
      &                    bed_mass(i,j,1,nstp,ised)*                    &
      &                    om_r(i,j)*on_r(i,j)*ABS(FX_r(i,j))/           &
      &                    bedld_mass)*                                  &
-     &                SIGN(1.0_r8,FX_r(i,j))
+     &                    SIGN(1.0_r8,FX_r(i,j))
             FE_r(i,j)=MIN(ABS(FE_r(i,j)),                               &
      &                    bed_mass(i,j,1,nstp,ised)*                    &
      &                    om_r(i,j)*on_r(i,j)*ABS(FE_r(i,j))/           &
      &                    bedld_mass)*                                  &
-     &                SIGN(1.0_r8,FE_r(i,j))
+     &                    SIGN(1.0_r8,FE_r(i,j))
           END DO
         END DO
 #  ifndef EW_PERIODIC
@@ -510,37 +771,57 @@
           END DO
         END DO
 !
-# ifndef EW_PERIODIC
+! Limit fluxes to prevent bottom from breaking thru water surface.
+!
+!        DO j=Jstr,Jend
+!          DO i=Istr,Iend
+!            cff1=1.0_r8/(Srho(ised,ng)*(1.0_r8-bed(i,j,1,iporo)))
+!            rhs_bed=(FX(i+1,j)-FX(i,j)+                                 &
+!     &               FE(i,j+1)-FE(i,j))*pm(i,j)*pn(i,j)
+!            cff2=MAX(rhs_bed*cff1+h(i,j)-Dcrit(ng),0.0_r8)
+!            cff=cff2/ABS(cff2+eps)
+!            FX(i  ,j  )=MAX(FX(i  ,j  ),0.0_r8)*cff+                    &
+!     &                  MIN(FX(i  ,j  ),0.0_r8)
+!            FX(i+1,j  )=MAX(FX(i+1,j  ),0.0_r8)+                        &
+!     &                  MIN(FX(i+1,j  ),0.0_r8)*cff
+!            FE(i  ,j  )=MAX(FE(i  ,j  ),0.0_r8)*cff+                    &
+!     &                  MIN(FE(i  ,j  ),0.0_r8)
+!            FE(i  ,j+1)=MAX(FE(i  ,j+1),0.0_r8)+                        &
+!     &                  MIN(FE(i  ,j+1),0.0_r8)*cff
+!          END DO
+!        END DO
+!
+#  ifndef EW_PERIODIC
+#   ifdef WESTERN_WALL
         IF (WESTERN_EDGE) THEN
           DO j=Jstr-1,Jend+1
-#  ifdef WESTERN_WALL
             FX(Istr,j)=0.0_r8
-#  endif
           END DO
         END IF
+#   endif
+#   ifdef EASTERN_WALL
         IF (EASTERN_EDGE) THEN
           DO j=Jstr-1,Jend+1
-#  ifdef EASTERN_WALL
             FX(Iend+1,j)=0.0_r8
-#  endif
           END DO
         END IF
+#   endif
 #  endif
 #  ifndef NS_PERIODIC
+#   ifdef SOUTHERN_WALL
         IF (SOUTHERN_EDGE) THEN
           DO i=Istr-1,Iend+1
-#  ifdef SOUTHERN_WALL
             FE(i,Jstr)=0.0_r8
-#  endif
           END DO
         END IF
+#   endif
+#   ifdef NORTHERN_WALL
         IF (NORTHERN_EDGE) THEN
           DO i=Istr-1,Iend+1
-#  ifdef NORTHERN_WALL
             FE(i,Jend+1)=0.0_r8
-#  endif
           END DO
         END IF
+#   endif
 #  endif
 !
 !  Determine flux divergence and evaluate change in bed properties.
@@ -551,11 +832,11 @@
      &           FE(i,j+1)-FE(i,j))*pm(i,j)*pn(i,j)
             bed_mass(i,j,1,nnew,ised)=MAX(bed_mass(i,j,1,nstp,ised)-    &
      &                                    cff,0.0_r8)
-#if !defined SUSPLOAD
+#  if !defined SUSPLOAD
             DO k=2,Nbed
               bed_mass(i,j,k,nnew,ised)=bed_mass(i,j,k,nstp,ised)
             END DO
-#endif
+#  endif
             bed(i,j,1,ithck)=MAX(bed(i,j,1,ithck)-                      &
      &                           cff/(Srho(ised,ng)*                    &
      &                                (1.0_r8-bed(i,j,1,iporo))),       &
@@ -631,7 +912,7 @@
           bottom(i,j,iactv)=MAX(0.0_r8,                                 &
      &                          0.007_r8*                               &
      &                          (tau_w(i,j)-bottom(i,j,itauc))*rho0)+   &
-     &                      6.0_r8*bottom(i,j,isd50)
+     &                          6.0_r8*bottom(i,j,isd50)
 !
 !  Ensure top bed layer thickness is greater or equal than the active
 !  layer thickness. If need to add sediment to top layer, then entrain
@@ -822,28 +1103,28 @@
           END DO
           DO i=Istr,Iend
             FC(i,N(ng))=0.0_r8              ! no-flux boundary condition
-# if defined LINEAR_CONTINUATION
+#  if defined LINEAR_CONTINUATION
             qL(i,N(ng))=qR(i,N(ng)-1)
             qR(i,N(ng))=2.0_r8*qc(i,N(ng))-qL(i,N(ng))
-# elif defined NEUMANN
+#  elif defined NEUMANN
             qL(i,N(ng))=qR(i,N(ng)-1)
             qR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*qL(i,N(ng))
-# else
+#  else
             qR(i,N(ng))=qc(i,N(ng))         ! default strictly monotonic
             qL(i,N(ng))=qc(i,N(ng))         ! conditions
             qR(i,N(ng)-1)=qc(i,N(ng))
-# endif
-# if defined LINEAR_CONTINUATION 
+#  endif
+#  if defined LINEAR_CONTINUATION 
             qR(i,1)=qL(i,2)
             qL(i,1)=2.0_r8*qc(i,1)-qR(i,1)
-# elif defined NEUMANN
+#  elif defined NEUMANN
             qR(i,1)=qL(i,2)
             qL(i,1)=1.5_r8*qc(i,1)-0.5_r8*qR(i,1)
-# else  
+#  else  
             qL(i,2)=qc(i,1)                 ! bottom grid boxes are
             qR(i,1)=qc(i,1)                 ! re-assumed to be
             qL(i,1)=qc(i,1)                 ! piecewise constant.
-# endif
+#  endif
           END DO
 !
 !  Apply monotonicity constraint again, since the reconciled interfacial
@@ -943,11 +1224,21 @@
             cff1=(1.0_r8-bed(i,j,1,iporo))*bed_frac(i,j,1,ised)
             cff2=dt(ng)*Erate(ised,ng)*cff1
             cff3=Srho(ised,ng)*cff1
+            cff4=bed_mass(i,j,1,bnew,ised)
             ero_flux=MIN(MAX(0.0_r8,cff2*(cff*tau_w(i,j)-1.0_r8)),      &
-     &                   MIN(cff3*bottom(i,j,iactv),                    &
-     &                   bed_mass(i,j,1,bnew,ised))+FC(i,0))
+     &                   MIN(cff3*bottom(i,j,iactv),cff4)+FC(i,0))
 !
-!  Check if depositional.
+!  Compute new sedidiment concentrations.
+!
+            qc(i,1)=qc(i,1)+ero_flux*Hz_inv(i,1)
+
+#  ifdef SED_MORPH
+!
+! Apply morphology factor.
+!
+            ero_flux=ero_flux*morph_fac(ised,ng)
+            FC(i,0)=FC(i,0)*morph_fac(ised,ng)
+#  endif
 !
             IF ((ero_flux-FC(i,0)).lt.0.0_r8) THEN
 !
@@ -955,54 +1246,16 @@
 !  temporary array, dep_mass.
 !
               IF ((time(ng).gt.(bed(i,j,1,iaged)+1.1_r8*dt(ng))).and.   &
-                  (bed(i,j,1,ithck).gt.0.005_r8))THEN
-                dep_mass(i,ised)=-(ero_flux-FC(i,0))+eps
-              ELSE
-!
-!  If it is not first time step of deposit, update bed thickness of
-!  top layer.
-!  
-                bed(i,j,1,ithck)=MAX(bed(i,j,1,ithck)-                  &
-     &                               (ero_flux-FC(i,0))/                &
-     &                               (Srho(ised,ng)*                    &
-     &                               (1.0_r8-bed(i,j,1,iporo))),0.0_r8)
-# ifdef MASKING
-                bed(i,j,1,ithck)=bed(i,j,1,ithck)*rmask(i,j)
-# endif 
-!
-!  Upate bed mass of top layer.
-!
-                bed_mass(i,j,1,nnew,ised)=MAX(bed_mass(i,j,1,bnew,ised)-&
-          &                                   (ero_flux-FC(i,0)),0.0_r8)
-                bed(i,j,1,iaged)=time(ng)
+     &            (bed(i,j,1,ithck).gt.newlayer_thick(ng)))THEN
+                dep_mass(i,ised)=-(ero_flux-FC(i,0))
               END IF
-!
-!  Else, if erosional.
-!
-            ELSE
-!
-!  Update bed thickness of top layer.
-!  
-              bed(i,j,1,ithck)=MAX(bed(i,j,1,ithck)-                    &
-     &                             (ero_flux-FC(i,0))/                  &
-     &                             (Srho(ised,ng)*                      &
-     &                             (1.0_r8-bed(i,j,1,iporo))),0.0_r8)
-# ifdef MASKING
-              bed(i,j,1,ithck)=bed(i,j,1,ithck)*rmask(i,j)
-# endif 
-!
-!  Upate bed mass of top layer.
-!
-              bed_mass(i,j,1,nnew,ised)=MAX(bed_mass(i,j,1,bnew,ised)-  &
-     &                                      (ero_flux-FC(i,0)),0.0_r8)
+                bed(i,j,1,iaged)=time(ng)
             END IF
-!
-!  Compute new sedidiment concentrations.
-!
-            qc(i,1)=qc(i,1)+ero_flux*Hz_inv(i,1)
 !
 !  Update bed mass arrays.
 !
+            bed_mass(i,j,1,nnew,ised)=MAX(bed_mass(i,j,1,bnew,ised)-    &
+     &                                   (ero_flux-FC(i,0)),0.0_r8)
             DO k=2,Nbed
               bed_mass(i,j,k,nnew,ised)=bed_mass(i,j,k,nstp,ised)
             END DO
@@ -1015,107 +1268,82 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
               t(i,j,k,nnew,indx)=Hz(i,j,k)*qc(i,k)
-# ifdef TS_MPDATA
+#  ifdef TS_MPDATA
               t(i,j,k,3,indx)=Hz(i,j,k)*qc(i,k)
-# endif
+#  endif
             END DO
           END DO
         END DO SED_LOOP
 !
-!  Upate bed fraction of top layer.
-!
-        DO i=Istr,Iend
-          cff3=0.0_r8
-          DO ised=1,NST
-             cff3=cff3+bed_mass(i,j,1,nnew,ised)
-          END DO
-          DO ised=1,NST
-            bed_frac(i,j,1,ised)=bed_mass(i,j,1,nnew,ised)/MAX(cff3,eps)
-          END DO
-        END DO
-!
 !  If first time step of deposit, create new layer and combine bottom
 !  two bed layers.
 !
-          DO i=Istr,Iend
-            cff=0.0_r8
+        DO i=Istr,Iend
+          cff=0.0_r8
 !
 !  Determine if deposition ocurred here.
 !
+          IF (Nbed.gt.1) THEN
             DO ised=1,NST
-               cff=cff+dep_mass(i,ised)
+              cff=cff+dep_mass(i,ised)
             END DO
             IF (cff.gt.0.0_r8) THEN
-              IF (NBED.gt.1) THEN
 !
 !  Combine bottom layers.
 !
-                bed(i,j,Nbed,ithck)=bed(i,j,Nbed-1,ithck)+              &
-                                    bed(i,j,Nbed  ,ithck)
-                bed(i,j,Nbed,iporo)=0.5_r8*(bed(i,j,Nbed-1,iporo)+      &
-     &                                      bed(i,j,Nbed,iporo))
-                bed(i,j,Nbed,iaged)=0.5_r8*(bed(i,j,Nbed-1,iaged)+      &
-     &                                      bed(i,j,Nbed,iaged))
-                cff3=0.0_r8
-                DO ised=1,NST
-                  bed_mass(i,j,Nbed,nnew,ised)=                         &
-     &                               bed_mass(i,j,Nbed-1,nnew,ised)+    &
-     &                               bed_mass(i,j,Nbed  ,nnew,ised)
-                  cff3=cff3+bed_mass(i,j,Nbed,nnew,ised)
-                END DO
-                cff3=1.0_r8/MAX(cff3,eps)
-                DO ised=1,NST
-                  bed_frac(i,j,Nbed,ised)=bed_mass(i,j,Nbed,nnew,ised)* &
-     &                                    cff3
-                END DO
+              bed(i,j,Nbed,iporo)=0.5_r8*(bed(i,j,Nbed-1,iporo)+        &
+     &                                    bed(i,j,Nbed,iporo))
+              bed(i,j,Nbed,iaged)=0.5_r8*(bed(i,j,Nbed-1,iaged)+        &
+     &                                    bed(i,j,Nbed,iaged))
+              DO ised=1,NST
+                bed_mass(i,j,Nbed,nnew,ised)=                           &
+     &                             bed_mass(i,j,Nbed-1,nnew,ised)+      &
+     &                             bed_mass(i,j,Nbed  ,nnew,ised)
+              END DO
 !
 !  Push layers down.
 !
-                DO k=Nbed-1,2,-1
-                  bed(i,j,k,ithck)=bed(i,j,k-1,ithck)
-                  bed(i,j,k,iporo)=bed(i,j,k-1,iporo)
-                  bed(i,j,k,iaged)=bed(i,j,k-1,iaged)
-                  DO ised =1,NST
-                    bed_frac(i,j,k,ised)=bed_frac(i,j,k-1,ised)
-                    bed_mass(i,j,k,nnew,ised)=bed_mass(i,j,k-1,nnew,ised)
-                  END DO
+              DO k=Nbed-1,2,-1
+                bed(i,j,k,iporo)=bed(i,j,k-1,iporo)
+                bed(i,j,k,iaged)=bed(i,j,k-1,iaged)
+                DO ised =1,NST
+                  bed_mass(i,j,k,nnew,ised)=bed_mass(i,j,k-1,nnew,ised)
                 END DO
+              END DO
 !
 !  Set new top layer parameters.
 !
-                bed(i,j,1,ithck)=0.0_r8
-                DO ised=1,NST
-                  bed_mass(i,j,1,nnew,ised)=0.0_r8
-                END DO
-              END IF !NBED=1
-              cff3=0.0_r8
               DO ised=1,NST
-                bed_mass(i,j,1,nnew,ised)=bed_mass(i,j,1,nnew,ised)+    &
-     &                                    dep_mass(i,ised)
-                cff3=cff3+bed_mass(i,j,1,nnew,ised)
-                bed(i,j,1,ithck)=bed(i,j,1,ithck)+                      &
-     &                           dep_mass(i,ised)/                      &
-     &                           (Srho(ised,ng)*                        &
-     &                            (1.0_r8-bed(i,j,1,iporo)))
-              END DO
-              bed(i,j,1,iaged)=time(ng)
-              DO ised=1,NST
-                bed_frac(i,j,1,ised)=bed_mass(i,j,1,nnew,ised)/         &
-     &                               MAX(cff3,eps)
-!
-!  Reset deposition mass.
-!
-                dep_mass(i,ised)=0.0_r8
+                bed_mass(i,j,2,nnew,ised)=MAX(bed_mass(i,j,2,nnew,ised)- &
+     &                                    dep_mass(i,ised),0.0_r8)
+                bed_mass(i,j,1,nnew,ised)=dep_mass(i,ised)
               END DO
             END IF
+          END IF !NBED=1
 !
+! Recalculate thickness and fractions for all layers.
+!
+          DO k=1,Nbed
+            cff3=0.0_r8
+            DO ised=1,NST
+              cff3=cff3+bed_mass(i,j,k,nnew,ised)
+            END DO
+            bed(i,j,k,ithck)=0.0_r8
+            DO ised=1,NST
+              bed_frac(i,j,k,ised)=bed_mass(i,j,k,nnew,ised)/           &
+     &                             MAX(cff3,eps)
+              bed(i,j,k,ithck)=MAX(bed(i,j,k,ithck)+                    &
+     &                         bed_mass(i,j,k,nnew,ised)/               &
+     &                         (Srho(ised,ng)*                          &
+     &                          (1.0_r8-bed(i,j,k,iporo))),0.0_r8)
+            END DO
           END DO
+        END DO
       END DO J_LOOP
-# endif
 !
 !  End of Suspended Sediment only section.
 !
-!  Determine top layer to be at least active layer thickness.
+# endif
 !
 !  Ensure top bed layer thickness is greater or equal than active layer
 !  thickness. If need to add sed to top layer, then entrain from lower
@@ -1129,7 +1357,15 @@
           bottom(i,j,iactv)=MAX(0.0_r8,                                 &
      &                          0.007_r8*                               &
      &                          (tau_w(i,j)-bottom(i,j,itauc))*rho0)+   &
-     &                      6.0_r8*bottom(i,j,isd50)
+     &                          6.0_r8*bottom(i,j,isd50)
+!
+# ifdef SED_MORPH
+!
+! Apply morphology factor.
+!
+          bottom(i,j,iactv)=MAX(bottom(i,j,iactv)*morph_fac(1,ng),     &
+     &                          bottom(i,j,iactv))
+# endif
 !
           IF (bottom(i,j,iactv).gt.bed(i,j,1,ithck)) THEN
             IF (Nbed.eq.1) THEN
@@ -1235,7 +1471,39 @@
           bottom(i,j,iwsed)=cff3
           bottom(i,j,idens)=MAX(cff4,1050.0_r8)
         END DO
+# ifdef SED_BIODIFF
+!
+! Sediment bio_diffusivity routines.
+!
+      DO i=Istr,Iend
+        DO k=1,Nbed
+          DO ised=1,NST
+          END DO
+        END DO
+      END DO
+#endif
       END DO J_LOOP2
+!
+!-----------------------------------------------------------------------
+! Store old bed thickness.
+!-----------------------------------------------------------------------
+!
+# if defined SED_MORPH
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+            bed_thick(i,j,nnew)=0.0_r8
+            DO kbed=1,Nbed
+              bed_thick(i,j,nnew)=bed_thick(i,j,nnew)+                  &
+     &                            bed(i,j,kbed,ithck)
+            END DO
+          END DO
+        END DO
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          bed_thick(:,:,nnew))
+#  endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  Apply periodic or gradient boundary conditions to property arrays.
@@ -1262,10 +1530,11 @@
      &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, NST,          &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bed_frac,                                     &
-     &                    bed_mass(:,:,:,nnew,:)
+     &                    bed_mass(:,:,:,nnew,:))
 #  if defined BEDLOAD && (defined EW_PERIODIC || defined NS_PERIODIC)
       CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
      &                    LBi, UBi, LBj, UBj, 1, NST,                   &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bedldu, bedldv)
 #  endif
 # endif
@@ -1273,7 +1542,6 @@
       DO i=1,MBEDP
         CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
-     &                    NghostPoints,                                 &
      &                    bed(:,:,:,i))
       END DO
 # ifdef DISTRIBUTE
@@ -1283,9 +1551,8 @@
      &                    bed)
 # endif
 
-      CALL bc_r3d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj, 1, MBOTP,                   &
-     &                  NghostPoints,                                   &
      &                  bottom)
 # ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &

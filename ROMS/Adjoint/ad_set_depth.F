@@ -32,6 +32,7 @@
       USE mod_coupling
       USE mod_grid
       USE mod_ocean
+      USE mod_stepping
 !
 !  Imported variable declarations.
 !
@@ -43,6 +44,7 @@
 !
       CALL ad_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % h,                             &
      &                        GRID(ng) % ad_h,                          &
 # ifdef ICESHELF
@@ -64,6 +66,7 @@
 !***********************************************************************
       SUBROUTINE ad_set_depth_tile (ng, Istr, Iend, Jstr, Jend,         &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              nstp, nnew,                         &
      &                              h, ad_h,                            &
 # ifdef ICESHELF
      &                              zice,                               &
@@ -93,6 +96,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: h(LBi:,LBj:)

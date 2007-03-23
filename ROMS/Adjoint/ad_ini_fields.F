@@ -56,9 +56,9 @@
 # endif
 # ifdef SOLVE3D
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                         OCEAN(ng) %  bed,                        &
      &                         OCEAN(ng) %  ad_bed,                     &
-     &                         GRID(ng) % bed_thick0,                   &
+     &                         GRID(ng) % ad_bed_thick0,                &
+     &                         GRID(ng) % ad_bed_thick,                 &
 #  endif
      &                         GRID(ng) % Hz,                           &
      &                         GRID(ng) % ad_Hz,                        &
@@ -162,10 +162,6 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
 #  ifdef SOLVE3D
-#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: bed_thick0(LBi:,LBj:)
-#   endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: h(LBi:,LBj:)
 #   ifdef ICESHELF
@@ -182,6 +178,8 @@
 
 #   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(inout) :: ad_bed(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_bed_thick0(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_bed_thick(LBi:,LBj:,:)
 #   endif
       real(r8), intent(inout) :: ad_h(LBi:,LBj:)
       real(r8), intent(inout) :: ad_Hz(LBi:,LBj:,:)
@@ -207,10 +205,6 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
-#   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-      real(r8), intent(in) :: bed_thick0(LBi:UBi,LBj:UBj)
-#   endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 #   ifdef ICESHELF
@@ -227,6 +221,8 @@
 
 #   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(inout) :: ad_bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
+      real(r8), intent(inout) :: ad_bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_bed_thick(LBi:UBi,LBj:UBj,2)
 #   endif
       real(r8), intent(inout) :: ad_h(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_Hz(LBi:UBi,LBj:UBj,N(ng))
@@ -669,24 +665,26 @@
 !
 !>    CALL tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
 !>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        nstp, nnew,                               &
 !>   &                        h, tl_h,                                  &
 #  ifdef ICESHELF
 !>   &                        zice,                                     &
 #  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!>   &                        tl_bed, bed_thick0,                       &
+!>   &                        tl_bed_thick,                             &
 #  endif
 !>   &                        Zt_avg1, tl_Zt_avg1,                      &
 !>   &                        tl_Hz, tl_z_r, tl_z_w)
 !>
       CALL ad_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        nstp, nnew,                               &
      &                        h, ad_h,                                  &
 #  ifdef ICESHELF
      &                        zice,                                     &
 #  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                        ad_bed, bed_thick0,                       &
+     &                        ad_bed_thick,                             &
 #  endif
      &                        Zt_avg1, ad_Zt_avg1,                      &
      &                        ad_Hz, ad_z_r, ad_z_w)
@@ -920,17 +918,33 @@
 !-----------------------------------------------------------------------
 !
 #   ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+!>    CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    tl_bed_thick0)
+!>   &                    tl_bed_thick0,                                &
+!>   &                    tl_bed_thick(:,:,1), tl_bed_thick(:,:,2))
 !>
-      CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,      &
+      CALL ad_mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,      &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_bed_thick0)
+     &                       ad_bed_thick0,                             &
+     &                       ad_bed_thick(:,:,1), ad_bed_thick(:,:,2))
 #   endif
 #   if defined EW_PERIODIC || defined NS_PERIODIC
+!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        tl_bed_thick(:,:,2))
+!>
+      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           ad_bed_thick(:,:,2))
+!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        tl_bed_thick(:,:,1))
+!>
+      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           ad_bed_thick(:,:,1))
 !>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_bed_thick0)
@@ -942,6 +956,13 @@
 
       DO j=JstrR,JendR
         DO i=IstrR,IendR
+!>        tl_bed_thick(i,j,2)=tl_bed_thick0(i,j)
+!>        tl_bed_thick(i,j,1)=tl_bed_thick0(i,j)
+!>
+          ad_bed_thick0(i,j)=ad_bed_thick0(i,j)+                        &
+     &                       ad_bed_thick(i,j,1)+ad_bed_thick(i,j,1)
+          ad_bed_thick(i,j,1)=0.0_r8
+          ad_bed_thick(i,j,2)=0.0_r8
           DO kbed=1,Nbed
 !>          tl_bed_thick0(i,j)=tl_bed_thick0(i,j)+tl_bed(i,j,kbed,ithck)
 !>

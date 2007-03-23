@@ -1,4 +1,3 @@
-#include "cppdefs.h"
       MODULE ocean_control_mod
 !
 !svn $Id$
@@ -114,11 +113,9 @@
       IF (first) THEN
         first=.FALSE.
 !
-!  Initialize model internal parameters.
+!  Initialize parallel parameters.
 !
-        CALL initialize_param
         CALL initialize_parallel
-        CALL initialize_scalars
 !
 !  Initialize wall clocks.
 !
@@ -142,7 +139,8 @@
         CALL initialize_coupling (MyRank)
 #endif
 !
-!  Read in model tunable parameters from standard input.
+!  Read in model tunable parameters from standard input. Initialize
+!  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
         IF (exit_flag.ne.NoError) THEN
@@ -227,6 +225,9 @@
 
       integer :: AdjRec, Lbck, Lini, Lsav, Rec1, Rec2, Rec3
       integer :: i, my_iic, ng, subs, tile, thread
+#ifdef MULTIPLE_TLM
+      integer :: lstr, status
+#endif
       integer :: Lcon, LTLM1, LTLM2, LTLM3
 
       real(r8) :: rate
@@ -387,6 +388,7 @@
 !  by the conjugate gradient algorithm in previous inner loop. The TLM
 !  initial conditions are read from ITLname, record 1.
 ! 
+            tITLindx(ng)=1
             CALL tl_initial (ng)
             IF (exit_flag.ne.NoError) THEN
               IF (Master) THEN

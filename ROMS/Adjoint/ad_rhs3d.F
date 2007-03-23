@@ -136,7 +136,9 @@
      &                    OCEAN(ng) % ad_v,                             &
      &                    OCEAN(ng) % W,                                &
      &                    OCEAN(ng) % ad_W,                             &
+# ifndef SET_ZETA
      &                    COUPLING(ng) % ad_Zt_avg1,                    &
+# endif
      &                    COUPLING(ng) % ad_rufrc,                      &
      &                    COUPLING(ng) % ad_rvfrc,                      &
 # ifdef DIAGNOSTICS_UV
@@ -145,10 +147,15 @@
 !!   &                    DIAGS(ng) % DiaRU,                            &
 !!   &                    DIAGS(ng) % DiaRV,                            &
 # endif
+# ifdef SET_ZETA
+     &                    OCEAN(ng) % ad_ru,                            &
+     &                    OCEAN(ng) % ad_rv)
+# else
      &                    OCEAN(ng) % ad_zeta_sol,                      &
      &                    OCEAN(ng) % ad_ru,                            &
      &                    OCEAN(ng) % ad_rv,                            &
      &                    OCEAN(ng) % ad_zeta)
+# endif
 # ifdef PROFILE
       CALL wclock_off (ng, iADM, 21)
 # endif
@@ -211,26 +218,34 @@
      &                          u, ad_u,                                &
      &                          v, ad_v,                                &
      &                          W, ad_W,                                &
+# ifndef SET_ZETA
      &                          ad_Zt_avg1,                             &
+# endif
      &                          ad_rufrc,                               &
      &                          ad_rvfrc,                               &
 # ifdef DIAGNOSTICS_UV
 !!   &                          DiaRUfrc, DiaRVfrc,                     &
 !!   &                          DiaRU, DiaRV,                           &
 # endif
+# ifdef SET_ZETA
+     &                          ad_ru, ad_rv)
+# else
      &                          ad_zeta_sol,                            &
      &                          ad_ru, ad_rv,                           &
      &                          ad_zeta)
+# endif
 !***********************************************************************
 !
       USE mod_param
       USE mod_scalars
 !
-# if defined EW_PERIODIC || defined NS_PERIODIC
+# ifndef SET_ZETA
+#  if defined EW_PERIODIC || defined NS_PERIODIC
       USE ad_exchange_2d_mod, ONLY : ad_exchange_r2d_tile
-# endif
-# ifdef DISTRIBUTE
+#  endif
+#  ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange2d
+#  endif
 # endif
 !
 !  Imported variable declarations.
@@ -287,14 +302,18 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_W(LBi:,LBj:,0:)
+#  ifndef SET_ZETA
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
+#  endif
       real(r8), intent(inout) :: ad_ru(LBi:,LBj:,0:,:)
       real(r8), intent(inout) :: ad_rv(LBi:,LBj:,0:,:)
 
       real(r8), intent(inout) :: ad_rufrc(LBi:,LBj:)
       real(r8), intent(inout) :: ad_rvfrc(LBi:,LBj:)
+#  ifndef SET_ZETA
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
       real(r8), intent(out) :: ad_zeta_sol(LBi:,LBj:)
+#  endif
 # else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
@@ -343,14 +362,18 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_W(LBi:UBi,LBj:UBj,0:N(ng))
+#  ifndef SET_ZETA
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(inout) :: ad_ru(LBi:UBi,LBj:UBj,0:N(ng),2)
       real(r8), intent(inout) :: ad_rv(LBi:UBi,LBj:UBj,0:N(ng),2)
 
       real(r8), intent(inout) :: ad_rufrc(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_rvfrc(LBi:UBi,LBj:UBj)
+#  ifndef SET_ZETA
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
       real(r8), intent(out) :: ad_zeta_sol(LBi:UBi,LBj:UBj)
+#  endif
 # endif
 !
 !  Local variable declarations.
@@ -457,6 +480,7 @@
           ad_FC(i,k)=0.0_r8
         END DO
       END DO
+# ifndef SET_ZETA
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint 3D momentum right-hand-side terms.
@@ -466,7 +490,7 @@
 !  to its fast-time averaged values (which corresponds to the time
 !  step "n").
 !
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !>    CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
@@ -478,8 +502,8 @@
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_zeta(:,:,1),                            &
      &                       ad_zeta(:,:,2))
-# endif
-# if defined EW_PERIODIC || defined NS_PERIODIC
+#  endif
+#  if defined EW_PERIODIC || defined NS_PERIODIC
 !>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_zeta(:,:,2))
@@ -494,7 +518,7 @@
       CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_zeta(:,:,1))
-# endif
+#  endif
 !
 !  Save the adjoint free-surface solution for the current time-step
 !  (sum of time indices 1 and 2).
@@ -516,6 +540,7 @@
           ad_zeta(i,j,1)=0.0_r8
         END DO
       END DO
+# endif
 !
       J_LOOP : DO j=Jstr,Jend
 !

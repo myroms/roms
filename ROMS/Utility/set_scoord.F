@@ -46,7 +46,11 @@
 !  RHO-points.
 !-----------------------------------------------------------------------
 !
+# if defined WET_DRY
+      hc(ng)=MIN(MAX(hmin(ng),0.0_r8),Tcline(ng))
+# else
       hc(ng)=MIN(hmin(ng),Tcline(ng))
+# endif
       IF (theta_s(ng).ne.0.0_r8) THEN
         cff1=1.0_r8/SINH(theta_s(ng))
         cff2=0.5_r8/TANH(0.5_r8*theta_s(ng))

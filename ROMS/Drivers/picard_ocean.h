@@ -1,4 +1,3 @@
-#include "cppdefs.h"
       MODULE ocean_control_mod
 !
 !svn $Id$
@@ -92,11 +91,9 @@
       IF (first) THEN
         first=.FALSE.
 !
-!  Initialize model internal parameters.
+!  Initialize parallel parameters.
 !
-        CALL initialize_param
         CALL initialize_parallel
-        CALL initialize_scalars
 !
 !  Initialize wall clocks.
 !
@@ -120,7 +117,8 @@
         CALL initialize_coupling (MyRank)
 #endif
 !
-!  Read in model tunable parameters from standard input.
+!  Read in model tunable parameters from standard input. Initialize
+!  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
         IF (exit_flag.ne.NoError) THEN

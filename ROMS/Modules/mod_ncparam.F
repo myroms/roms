@@ -69,8 +69,8 @@
 !  Maximum number of variables in a generic NetCDF file (MV) and
 !  maximum number of variables in information arrays (NV).
 !
-        integer, parameter :: MV = 350
-        integer, parameter :: NV = 350
+        integer, parameter :: MV = 500
+        integer, parameter :: NV = 500
 !
 !  Input/output grid-type variables.
 !
@@ -221,6 +221,10 @@
         integer  :: idTvph        ! tidal current phase
         integer  :: idTzam        ! tidal elevation amplitude
         integer  :: idTzph        ! tidal elevation phase
+        integer  :: idU2rs        ! 2D total U-radiation stress
+        integer  :: idU3rs        ! 3D total U-radiation stress
+        integer  :: idU2Sd        ! 2D U-Stokes drift velocity
+        integer  :: idU3Sd        ! 3D U-Stokes drift velocity
         integer  :: idUads        ! 3D U-velocity adjoint sensitivity
         integer  :: idUair        ! surface U-wind
         integer  :: idUbar        ! 2D U-velocity
@@ -243,6 +247,10 @@
         integer  :: idUVer        ! 3D velocity error variance
         integer  :: idUVse        ! surface velocity error variance
         integer  :: idUvel        ! 3D U-velocity
+        integer  :: idV2rs        ! 2D total V-radiation stress
+        integer  :: idV3rs        ! 3D total V-radiation stress
+        integer  :: idV2Sd        ! 2D U-Stokes drift velocity
+        integer  :: idV3Sd        ! 3D U-Stokes drift velocity
         integer  :: idVads        ! 3D V-velocity adjoint sensitivity
         integer  :: idVair        ! surface V-wind
         integer  :: idVbar        ! 2D V-velocity
@@ -256,8 +264,8 @@
         integer  :: idVbvr        ! bottom V-velocity above bed
         integer  :: idVbws        ! bottom V-wave stress
         integer  :: idVclm        ! 3D V-velocity climatology
-        integer  :: idVfx1        ! 2D momentum time-averaged V-flux 
-        integer  :: idVfx2        ! 3D momentum time-averaged V-flux  
+        integer  :: idVfx1        ! 2D momentum time-averaged V-flux
+        integer  :: idVfx2        ! 3D momentum time-averaged V-flux
         integer  :: idVice        ! ice V-velocity
         integer  :: idVmLS        ! vertical mixing length scale
         integer  :: idVmKK        ! Kinetic energy vertical mixing
@@ -267,9 +275,22 @@
         integer  :: idVsur        ! surface V-velocity observations
         integer  :: idVvel        ! 3D V-velocity
         integer  :: idVvis        ! vertical viscosity coefficient
+        integer  :: idW2xx        ! 2D radiation stress, Sxx-component
+        integer  :: idW2xy        ! 2D radiation stress, Sxy-component
+        integer  :: idW2yy        ! 2D radiation stress, Syy-component
+        integer  :: idW3xx        ! 3D radiation stress, Sxx-component
+        integer  :: idW3xy        ! 3D radiation stress, Sxy-component
+        integer  :: idW3yy        ! 3D radiation stress, Syy-component
+        integer  :: idW3zx        ! 3D radiation stress, Szx-component
+        integer  :: idW3zy        ! 3D radiation stress, Szy-component
         integer  :: idWamp        ! wind-induced wave amplitude
+        integer  :: idWbrk        ! wind-induced wave breaking
+        integer  :: idWdis        ! wind-induced wave dissipation
         integer  :: idWdir        ! wind-induced wave direction
-        integer  :: idWper        ! wind-induced wave period
+        integer  :: idWlen        ! wind-induced wave length
+        integer  :: idWmsk        ! wet-dry masking
+        integer  :: idWptp        ! wind-induced surface wave period
+        integer  :: idWpbt        ! wind-induced bottom wave period
         integer  :: idWorb        ! wind-induced wave orbital velocity
         integer  :: idWvel        ! true vertical velocity
         integer  :: idZads        ! Free-surface adjoint sensitivity
@@ -301,11 +322,13 @@
         integer  :: idUVav                    ! <u*v>
         integer  :: idVVav                    ! <v*v>
 
-        integer  :: iHUTav(NAT)               ! <Huon*t> for active tracers
-        integer  :: iHVTav(NAT)               ! <Hvom*t> for active tracers
-        integer  :: idTTav(NAT)               ! <t*t> for active tracers
-        integer  :: idUTav(NAT)               ! <u*t> for active tracers
-        integer  :: idVTav(NAT)               ! <v*t> for active tracers
+        integer, allocatable :: iHUTav(:)     ! <Huon*t> for active tracers
+        integer, allocatable :: iHVTav(:)     ! <Hvom*t> for active tracers
+        integer, allocatable :: idTTav(:)     ! <t*t> for active tracers
+        integer, allocatable :: idUTav(:)     ! <u*t> for active tracers
+        integer, allocatable :: idVTav(:)     ! <v*t> for active tracers
+
+#ifdef DIAGNOSTICS
 !
 !  Biological 2D diagnostic variable IDs.
 !
@@ -330,6 +353,7 @@
         integer, allocatable :: idDv2d(:)     ! 2D v-momentum terms
         integer, allocatable :: idDu3d(:)     ! 3D u-momentum terms
         integer, allocatable :: idDv3d(:)     ! 3D v-momentum terms
+#endif
 !
 !  Assimilation state variables indices (order is important).
 !
@@ -362,6 +386,7 @@
         integer  :: ncGSTid(Ngrids)     ! input/output GST restart
         integer  :: ncHISid(Ngrids)     ! output history
         integer  :: ncINIid(Ngrids)     ! input/output NLM initial
+        integer  :: ncIRPid(Ngrids)     ! input/output RPM initial
         integer  :: ncITLid(Ngrids)     ! input/output TLM initial
         integer  :: ncMODid(Ngrids)     ! output 4DVAR fields
         integer  :: ncNRMid(Ngrids)     ! input/output covariance norm
@@ -390,6 +415,7 @@
         integer, allocatable :: fltTid(:,:)   ! floats tracers IDs
         integer, allocatable :: hisTid(:,:)   ! history tracers IDs
         integer, allocatable :: iniTid(:,:)   ! initial NLM tracers IDs
+        integer, allocatable :: irpTid(:,:)   ! initial RPM tracers IDs
         integer, allocatable :: itlTid(:,:)   ! initial TLM tracers IDs
         integer, allocatable :: nrmTid(:,:)   ! norm tracers IDs
         integer, allocatable :: obsTid(:,:)   ! observations tracers IDs
@@ -404,6 +430,7 @@
         integer  :: fltVid(-6:NV,Ngrids) ! floats variables IDs
         integer  :: hisVid(NV,Ngrids)    ! history variables IDs
         integer  :: iniVid(NV,Ngrids)    ! initial NLM variables IDs
+        integer  :: irpVid(NV,Ngrids)    ! initial RPM variables IDs
         integer  :: itlVid(NV,Ngrids)    ! initial TLM variables IDs
         integer  :: modVid(NV,Ngrids)    ! 4DVAR variables IDs
         integer  :: nrmVid(NV,Ngrids)    ! norm variables IDs
@@ -419,6 +446,7 @@
         integer  :: tFLTindx(Ngrids)     ! floats time record index
         integer  :: tHISindx(Ngrids)     ! history time record index
         integer  :: tINIindx(Ngrids)     ! initial NLM time record index
+        integer  :: tIRPindx(Ngrids)     ! initial RPM time record index
         integer  :: tITLindx(Ngrids)     ! initial TLM time record index
         integer  :: tNRMindx(Ngrids)     ! norm time record index
         integer  :: tRSTindx(Ngrids)     ! restart time record index
@@ -453,8 +481,8 @@
         character (len=40 ) :: varnam(MV)
         character (len=44 ) :: date_str
         character (len=46 ) :: Tname(0:NV)
-        character (len=80 ) :: Vname(5,0:NV)
         character (len=80 ) :: Cinfo(NV,Ngrids)
+        character (len=100) :: Vname(5,0:NV)
         character (len=120) :: history
 
       CONTAINS
@@ -510,6 +538,7 @@
         allocate ( fltTid(MT,Ngrids) )
         allocate ( hisTid(MT,Ngrids) )
         allocate ( iniTid(MT,Ngrids) )
+        allocate ( irpTid(MT,Ngrids) )
         allocate ( itlTid(MT,Ngrids) )
         allocate ( nrmTid(MT,Ngrids) )
         allocate ( obsTid(MT,Ngrids) )
@@ -518,17 +547,29 @@
         allocate ( tlfTid(MT,Ngrids) )
         allocate ( tlmTid(MT,Ngrids) )
 
-#if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
+        allocate ( iHUTav(NAT) )
+        allocate ( iHVTav(NAT) )
+        allocate ( idTTav(NAT) )
+        allocate ( idUTav(NAT) )
+        allocate ( idVTav(NAT) )
+
+#ifdef SEDIMENT
+        allocate ( idBmas(NST) )
+        allocate ( idfrac(NST) )
+        allocate ( idUbld(NST) )
+        allocate ( idVbld(NST) )
+#endif
+#ifdef DIAGNOSTICS
+# if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
         allocate ( iDbio2(NDbio2d) )
         allocate ( iDbio3(NDbio3d) )
-#endif
-
+# endif
         allocate ( idDtrc(MT,NDT) )
         allocate ( idDu2d(NDM2d) )
         allocate ( idDv2d(NDM2d) )
         allocate ( idDu3d(NDM3d) )
         allocate ( idDv3d(NDM3d) )
-
+#endif
         allocate ( idSvar(MAXVAL(NSV)+1) )
 
 #if defined SSH_TIDES || defined UV_TIDES
@@ -659,6 +700,7 @@
           ncGRDid(ng)=-1
           ncHISid(ng)=-1
           ncINIid(ng)=-1
+          ncIRPid(ng)=-1
           ncITLid(ng)=-1
           ncMODid(ng)=-1
           ncNRMid(ng)=-1
@@ -679,7 +721,8 @@
           tFLTindx(ng)=0
           tHISindx(ng)=0
           tINIindx(ng)=0
-          tITLindx(ng)=0
+          tIRPindx(ng)=1
+          tITLindx(ng)=1
           tNRMindx(ng)=0
           tRSTindx(ng)=0
           tSTAindx(ng)=0
@@ -991,12 +1034,54 @@
                 idVair=varid
               CASE ('idWamp')
                 idWamp=varid
+              CASE ('idWbrk')
+                idWbrk=varid
+              CASE ('idWdis')
+                idWdis=varid
               CASE ('idWdir')
                 idWdir=varid
-              CASE ('idWper')
-                idWper=varid
+              CASE ('idWlen')
+                idWlen=varid
+              CASE ('idWmsk')
+                idWmsk=varid
+              CASE ('idWptp')
+                idWptp=varid
+              CASE ('idWpbt')
+                idWpbt=varid
               CASE ('idWorb')
                 idWorb=varid
+              CASE ('idW2xx')
+                idW2xx=varid
+              CASE ('idW2xy')
+                idW2xy=varid
+              CASE ('idW2yy')
+                idW2yy=varid
+              CASE ('idW3xx')
+                idW3xx=varid
+              CASE ('idW3xy')
+                idW3xy=varid
+              CASE ('idW3yy')
+                idW3yy=varid
+              CASE ('idW3zx')
+                idW3zx=varid
+              CASE ('idW3zy')
+                idW3zy=varid
+              CASE ('idU2rs')
+                idU2rs=varid
+              CASE ('idV2rs')
+                idV2rs=varid
+              CASE ('idU2Sd')
+                idU2Sd=varid
+              CASE ('idV2Sd')
+                idV2Sd=varid
+              CASE ('idU3rs')
+                idU3rs=varid
+              CASE ('idV3rs')
+                idV3rs=varid
+              CASE ('idU3Sd')
+                idU3Sd=varid
+              CASE ('idV3Sd')
+                idV3Sd=varid
               CASE ('idTper')
                 idTper=varid
               CASE ('idTzam')
@@ -1227,6 +1312,10 @@
                 idSbed(iporo)=varid
               CASE ('idSbed(idiff)')
                 idSbed(idiff)=varid
+# ifdef SED_BIODIFF
+              CASE ('idSbed(ibtcr)')
+                idSbed(ibtcr)=varid
+# endif
               CASE ('idBott(isd50)')
                 idBott(isd50)=varid
               CASE ('idBott(idens)')
@@ -1241,24 +1330,42 @@
                 idBott(irhgt)=varid
               CASE ('idBott(ibwav)')
                 idBott(ibwav)=varid
-              CASE ('idBott(ishgt)')
-                idBott(ishgt)=varid
+              CASE ('idBott(izdef)')
+                idBott(izdef)=varid
+              CASE ('idBott(izapp)')
+                idBott(izapp)=varid
               CASE ('idBott(izNik)')
                 idBott(izNik)=varid
               CASE ('idBott(izbio)')
                 idBott(izbio)=varid
-              CASE ('idBott(izbld)')
-                idBott(izbld)=varid
               CASE ('idBott(izbfm)')
                 idBott(izbfm)=varid
-              CASE ('idBott(izapp)')
-                idBott(izapp)=varid
+              CASE ('idBott(izbld)')
+                idBott(izbld)=varid
               CASE ('idBott(izwbl)')
                 idBott(izwbl)=varid
-              CASE ('idBott(izdef)')
-                idBott(izdef)=varid
               CASE ('idBott(iactv)')
                 idBott(iactv)=varid
+              CASE ('idBott(ishgt)')
+                idBott(ishgt)=varid
+# ifdef SED_BIODIFF
+              CASE ('idBott(idoff)')
+                idBott(idoff)=varid
+              CASE ('idBott(idslp)')
+                idBott(idslp)=varid
+              CASE ('idBott(idtim)')
+                idBott(idtim)=varid
+              CASE ('idBott(idbmx)')
+                idBott(idbmx)=varid
+              CASE ('idBott(idbmm)')
+                idBott(idbmm)=varid
+              CASE ('idBott(idbzs)')
+                idBott(idbzs)=varid
+              CASE ('idBott(idbzm)')
+                idBott(idbzm)=varid
+              CASE ('idBott(idbzp)')
+                idBott(idbzp)=varid
+# endif
 #endif
 #if defined NPZD_FRANKS || defined NPZD_POWELL
               CASE ('idTvar(iNO3_)')
@@ -1692,10 +1799,14 @@
                 idDu2d(M2pgrd)=varid
               CASE ('idDv2d(M2pgrd)')
                 idDv2d(M2pgrd)=varid
-              CASE ('idDu2d(M2strs)')
-                idDu2d(M2strs)=varid
-              CASE ('idDv2d(M2strs)')
-                idDv2d(M2strs)=varid
+              CASE ('idDu2d(M2sstr)')
+                idDu2d(M2sstr)=varid
+              CASE ('idDu2d(M2bstr)')
+                idDu2d(M2bstr)=varid
+              CASE ('idDv2d(M2sstr)')
+                idDv2d(M2sstr)=varid
+              CASE ('idDv2d(M2bstr)')
+                idDv2d(M2bstr)=varid
               CASE ('idDu2d(M2rate)')
                 idDu2d(M2rate)=varid
               CASE ('idDv2d(M2rate)')
@@ -1705,6 +1816,12 @@
                 idDu2d(M2hadv)=varid
               CASE ('idDv2d(M2hadv)')
                 idDv2d(M2hadv)=varid
+# endif
+# ifdef NEARSHORE_MELLOR
+              CASE ('idDu2d(M2hrad)')
+                idDu2d(M2hrad)=varid
+              CASE ('idDv2d(M2hrad)')
+                idDv2d(M2hrad)=varid
 # endif
 # ifdef UV_COR
               CASE ('idDu2d(M2fcor)')
@@ -1740,6 +1857,16 @@
                 idDu3d(M3vadv)=varid
               CASE ('idDv3d(M3vadv)')
                 idDv3d(M3vadv)=varid
+#  endif
+#  ifdef NEARSHORE_MELLOR
+              CASE ('idDu3d(M3hrad)')
+                idDu3d(M3hrad)=varid
+              CASE ('idDv3d(M3hrad)')
+                idDv3d(M3hrad)=varid
+              CASE ('idDu3d(M3vrad)')
+                idDu3d(M3vrad)=varid
+              CASE ('idDv3d(M3vrad)')
+                idDv3d(M3vrad)=varid
 #  endif
 #  ifdef UV_COR
               CASE ('idDu3d(M3fcor)')

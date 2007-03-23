@@ -148,6 +148,52 @@
           RETURN
         END IF
       END IF
+# ifdef AVERAGES_NEARSHORE
+!
+!  Write out 2D stokes momentum component (m/s) in the XI-direction.
+!
+      IF (Hout(idU2Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idU2Sd,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgu2Sd(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU2Sd)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D stokes momentum component (m/s) in the ETA-direction.
+!
+      IF (Hout(idV2Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idV2Sd,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgv2Sd(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV2Sd)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Write out 3D momentum component (m/s) in the XI-direction.
@@ -193,6 +239,52 @@
           RETURN
         END IF
       END IF
+#  ifdef AVERAGES_NEARSHORE
+!
+!  Write out 3D stokes momentum component (m/s) in the XI-direction.
+!
+      IF (Hout(idU3Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idU3Sd,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgu3Sd(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU3Sd)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D stokes momentum component (m/s) in the ETA-direction.
+!
+      IF (Hout(idV3Sd,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idV3Sd,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgv3Sd(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV3Sd)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#  endif
 !
 !  Write out S-coordinate omega vertical velocity (m/s).
 !

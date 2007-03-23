@@ -1,7 +1,7 @@
-#include "cppdefs.h"
 #define M94WC
 #undef SGWC
-#define FORM_DRAG_COR
+#define N92_RIPRUF
+
       SUBROUTINE bblm (ng, tile)
 !
 !svn $Id$
@@ -49,21 +49,21 @@
      &                GRID(ng) % z_r,                                   &
      &                GRID(ng) % z_w,                                   &
      &                GRID(ng) % angler,                                &
-#ifdef SWAN
-     &                FORCES(ng) % Ub_swan,                             &
+#if defined SSW_CALC_UB
+     &                FORCES(ng) % Hwave,                               &
 #else
-     &                FORCES(ng) % Awave,                               &
+     &                FORCES(ng) % Ub_swan,                             &
 #endif
      &                FORCES(ng) % Dwave,                               &
-     &                FORCES(ng) % Pwave,                               &
-     &                OCEAN(ng) % rho,                                  &
-     &                OCEAN(ng) % u,                                    &
-     &                OCEAN(ng) % v,                                    &
-     &                OCEAN(ng) % bottom,                               &
+     &                FORCES(ng) % Pwave_bot,                           &
 #ifdef BEDLOAD
      &                OCEAN(ng) % bedldu,                               &
      &                OCEAN(ng) % bedldv,                               &
 #endif
+     &                OCEAN(ng) % bottom,                               &
+     &                OCEAN(ng) % rho,                                  &
+     &                OCEAN(ng) % u,                                    &
+     &                OCEAN(ng) % v,                                    &
      &                BBL(ng) % Iconv,                                  &
      &                BBL(ng) % Ubot,                                   &
      &                BBL(ng) % Vbot,                                   &
@@ -88,16 +88,16 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nrhs,                                       &
      &                      h, z_r, z_w, angler,                        &
-#ifdef SWAN
-     &                      UB_swan,                                    &
+#if defined SSW_CALC_UB
+     &                      Hwave,                                      &
 #else
-     &                      Awave,                                      &
+     &                      UB_swan,                                    &
 #endif
-     &                      Dwave, Pwave,                               &
-     &                      rho, u, v, bottom,                          &
+     &                      Dwave, Pwave_bot,                           &
 #ifdef BEDLOAD
      &                      bedldu, bedldv,                             &
 #endif
+     &                      bottom, rho, u, v,                          &
      &                      Iconv,                                      &
      &                      Ubot, Vbot, Ur, Vr,                         &
      &                      bustrc, bvstrc,                             &
@@ -107,6 +107,7 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_parallel
       USE mod_scalars
       USE mod_sediment
 !
@@ -129,22 +130,21 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: angler(LBi:,LBj:)
-# ifdef SWAN
-      real(r8), intent(in) :: UB_swan(LBi:,LBj:)
+# if defined SSW_CALC_UB
+      real(r8), intent(in) :: Hwave(LBi:,LBj:)
 # else
-      real(r8), intent(in) :: Awave(LBi:,LBj:)
+      real(r8), intent(in) :: UB_swan(LBi:,LBj:)
 # endif
       real(r8), intent(in) :: Dwave(LBi:,LBj:)
-      real(r8), intent(in) :: Pwave(LBi:,LBj:)
-      real(r8), intent(in) :: rho(LBi:,LBj:,:)
-      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
-
-      real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
+      real(r8), intent(in) :: Pwave_bot(LBi:,LBj:)
 # ifdef BEDLOAD
       real(r8), intent(in) :: bedldu(LBi:,LBj:,:)
       real(r8), intent(in) :: bedldv(LBi:,LBj:,:)
 # endif
+      real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
+      real(r8), intent(in) :: rho(LBi:,LBj:,:)
+      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(out) :: Ubot(LBi:,LBj:)
       real(r8), intent(out) :: Vbot(LBi:,LBj:)
       real(r8), intent(out) :: Ur(LBi:,LBj:)
@@ -164,22 +164,21 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)   
-# ifdef SWAN
-      real(r8), intent(in) :: UB_swan(LBi:UBi,LBj:UBj)
+# if defined SSW_CALC_UB
+      real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
 # else
-      real(r8), intent(in) :: Awave(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: UB_swan(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(in) :: Dwave(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Pwave(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
-
-      real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
+      real(r8), intent(in) :: Pwave_bot(LBi:UBi,LBj:UBj)
 # ifdef BEDLOAD
       real(r8), intent(in) :: bedldu(LBi:UBi,LBj:UBj,1:NST)
       real(r8), intent(in) :: bedldv(LBi:UBi,LBj:UBj,1:NST)
 # endif
+      real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
+      real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(out) :: Ubot(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Vbot(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Ur(LBi:UBi,LBj:UBj)
@@ -196,18 +195,18 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
+#ifdef DISTRIBUTE
+# ifdef EW_PERIODIC
       logical :: EWperiodic=.TRUE.
-#  else
+# else
       logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
 # endif
+# ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+# else
+      logical :: NSperiodic=.FALSE.
+# endif
+#endif
       logical :: ITERATE
 
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
@@ -251,19 +250,18 @@
       real(r8), parameter :: coef_a2=0.442_r8         ! ripple predictor
       real(r8), parameter :: coef_a3=2.280_r8         ! (Wiberg-Harris)
 
-# define N92_RIPRUF
-# if defined GM82_RIPRUF
+#if defined GM82_RIPRUF
       real(r8), parameter :: ar = 27.7_r8/30.0_r8  ! Grant-Madsen (1982)
-# elif defined N92_RIPRUF
+#elif defined N92_RIPRUF
       real(r8), parameter :: ar = 0.267_r8         ! Nielsen (1992)
-# elif defined R88_RIPRUF
+#elif defined R88_RIPRUF
       real(r8), parameter :: ar = 0.533_r8         ! Raudkivi (1988)
-# else
+#else
       No ripple roughness coeff. chosen
-# endif
+#endif
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ab
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Fwave
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Fwave_bot
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauc
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauw
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Taucwmax
@@ -334,18 +332,18 @@
 !  from wave models (SWAN) or use Dean and Dalrymple (1991) 6th-degree
 !  polynomial to approximate wave number on shoaling water.
 
-          Fwave(i,j)=twopi/(MAX(Pwave(i,j),0.0_r8)+eps)
-#ifdef SWAN
-          Ub(i,j)=MAX(Ub_swan(i,j),0.0_r8)+eps
-          Ab(i,j)=Ub(i,j)/Fwave(i,j)+eps
-#else
-          Kdh=h(i,j)*Fwave(i,j)**2/g
+          Fwave_bot(i,j)=twopi/MAX(Pwave_bot(i,j),0.05_r8)
+#ifdef SSW_CALC_UB
+          Kdh=h(i,j)*Fwave_bot(i,j)**2/g
           Kbh2=Kdh*Kdh+                                                 &
      &         Kdh/(1.0_r8+Kdh*(K1+Kdh*(K2+Kdh*(K3+Kdh*(K4+             &
      &              Kdh*(K5+K6*Kdh))))))
           Kbh=SQRT(Kbh2)
-          Ab(i,j)=Awave(i,j)/SINH(Kbh)+eps
-          Ub(i,j)=Fwave(i,j)*Ab(i,j)+eps
+          Ab(i,j)=0.5_r8*Hwave(i,j)/SINH(Kbh)+eps
+          Ub(i,j)=Fwave_bot(i,j)*Ab(i,j)+eps
+#else
+          Ub(i,j)=MAX(Ub_swan(i,j),0.0_r8)+eps
+          Ab(i,j)=Ub(i,j)/Fwave_bot(i,j)+eps
 #endif
 !
 !  Compute bottom current magnitude at RHO-points.
@@ -376,26 +374,15 @@
           d50=bottom(i,j,isd50)
           rhos=bottom(i,j,idens)/(rho(i,j,1)+1000.0_r8)
           wsedr=bottom(i,j,iwsed)
-          taucr=bottom(i,j,itauc)
+          Taucr=bottom(i,j,itauc)
           Tauc(i,j)=SQRT(bustrc(i,j)**2+bvstrc(i,j)**2)
           Tauw(i,j)=SQRT(bustrw(i,j)**2+bvstrw(i,j)**2)
           Taucwmax(i,j)=SQRT( bustrcwmax(i,j)**2+bvstrcwmax(i,j)**2)
 !
           rheight(i,j)=bottom(i,j,irhgt)
           rlength(i,j)=bottom(i,j,irlen)
-          znot(i,j)=bottom(i,j,izwbl)
-          znotc(i,j)=bottom(i,j,izapp)
           zoMAX=0.9_r8*Zr(i,j)
           zoMIN=MAX(absolute_zoMIN,2.5_r8*d50/30.0_r8) 
-          znot(i,j)=MAX(znot(i,j),zoMIN)
-          znotc(i,j)=MAX(znot(i,j),znotc(i,j))
-!
-!  Provide initial values for ripple dimensions.
-!
-          IF (rlength(i,j).lt.eps) THEN
-            rheight(i,j)=znot(i,j)*(30.0_r8/27.7_r8)/0.17_r8
-            rlength(i,j)=rheight(i,j)/0.17_r8
-          END IF
 !
 !  Initialize arrays.
 !
@@ -413,10 +400,9 @@
 !  determine if sediment is mobile.
 !
           tstar=Taucwmax(i,j)/(Taucr+eps)
-!!        zoBIO(i,j)=0.0_r8
           IF (tstar.lt.1.0_r8) THEN                         ! no motion
             zoST(i,j)=0.0_r8
-            zoBF(i,j)=(27.7_r8/30.0_r8)*rheight(i,j)**2/rlength(i,j)
+            zoBF(i,j)=ar*rheight(i,j)**2/rlength(i,j)
           ELSE
 !
 !  Threshold of motion exceeded - calculate new zoST and zoBF
@@ -427,18 +413,18 @@
              coef_st=0.0204_r8*LOG(100.0_r8*d50)**2+                    &
      &               0.0220_r8*LOG(100.0_r8*d50)+0.0709_r8
              zoST(i,j)=0.056_r8*d50*0.68_r8*tstar/                      &
-     &                   (1.0_r8+coef_st*tstar)
+     &                 (1.0_r8+coef_st*tstar)
              IF (zoST(i,j).lt.0.0_r8) THEN
-               WRITE(*,*) 'Warning: zoST<0  tstar, d50, coef_st:'
-!!             WRITE(*,*) tstar,d50,coef_st
+               WRITE (*,*) 'Warning: zoST<0  tstar, d50, coef_st:'
+!!             WRITE (*,*) tstar,d50,coef_st
              END IF
 !
 !  Calculate ripple height and wavelength.
 !  Use Malarkey & Davies (2003) explict version of Wiberg & Harris.
 !
-             coef_b1 = 1.0_r8 / coef_a1
-             coef_b2 = 0.5_r8 * (1.0_r8 + coef_a2)*coef_b1
-             coef_b3 = coef_b2**2 - coef_a3*coef_b1
+             coef_b1=1.0_r8/coef_a1
+             coef_b2=0.5_r8*(1.0_r8 + coef_a2)*coef_b1
+             coef_b3=coef_b2**2-coef_a3*coef_b1
              d0=2.0_r8*Ab(i,j)
              IF ((d0/d50).gt.13000.0_r8) THEN              ! sheet flow
                rheight(i,j)=0.0_r8
@@ -466,15 +452,25 @@
 !
              zoBF(i,j)=ar*rheight(i,j)**2/rlength(i,j)
           END IF
-          zo=zoN(i,j)+zoST(i,j)+zoBF(i,j)
-!!        zo=zoN(i,j)
+          zo=zoN(i,j)
+# ifdef SSW_ZOBL
+          zo=zo+zoST(i,j)
+# endif
+# ifdef SSW_ZORIP
+          zo=zo+zoBF(i,j)
+# endif
+# ifdef SSW_ZOBIO
+          zo=zo+zoBIO(i,j)
+# endif
 #else
           IF (zoDEF(i,j).lt.absolute_zoMIN) THEN
-            zoDEF(i,j) = absolute_zoMIN
-            WRITE (*,*) 'Warning: default zo < 0.05 mm.'
-!!          WRITE (*,*) Replaced with: ,zoDEF
+            zoDEF(i,j)=absolute_zoMIN
+            IF (Master) THEN
+              WRITE (*,*) 'Warning: default zo < 0.05 mm.'
+              WRITE (*,*) Replaced with: ,zoDEF
+            END IF
           END IF
-          zo = zoDEF(i,j)
+          zo=zoDEF(i,j)
 #endif
 !
 !  Compute stresses.
@@ -488,10 +484,10 @@
           Tauc(i,j)=cff2*Umag(i,j)*Umag(i,j)
           Tauw(i,j)=0.0_r8
           Taucwmax(i,j)=Tauc(i,j)
-          znot(i,j)= zo
+          znot(i,j)=zo
           znotc(i,j)=zo
 !
-          IF ((Umag(i,j).le.0.0_r8).and.(Ub(i,j).gt.eps)) THEN
+          IF ((Umag(i,j).le.eps).and.(Ub(i,j).gt.eps)) THEN
 !
 !  Pure waves - use wave friction factor approach from Madsen
 !  (1994, eqns 32-33).
@@ -513,7 +509,9 @@
 !
 !  Waves and currents, but zr <= zo.
 !
-            WRITE (*,*) 'Warning: w-c calcs ignored because zr <= zo'
+            IF (Master) THEN
+              WRITE (*,*) 'Warning: w-c calcs ignored because zr <= zo'
+            END IF
           ELSE IF ((Umag(i,j).gt.0.0_r8).and.(Ub(i,j).gt.eps).and.      &
      &             ((Zr(i,j)/zo).gt.1.0_r8)) THEN
 !
@@ -606,12 +604,12 @@
               END IF
             END IF
 #elif defined M94WC
-            m_ubr = Ub(i,j)
-            m_wr = Fwave(i,j)
-            m_ucr = Umag(i,j)
-            m_zr = Zr(i,j)
-            m_phicw = phicw(i,j)
-            m_kb = 30.0_r8*zo
+            m_ubr=Ub(i,j)
+            m_wr=Fwave_bot(i,j)
+            m_ucr=Umag(i,j)
+            m_zr=Zr(i,j)
+            m_phicw=phicw(i,j)
+            m_kb=30.0_r8*zo
             CALL madsen94 (m_ubr, m_wr, m_ucr,                          &
      &                     m_zr, m_phicw, m_kb,                         &
      &                     m_ustrc, m_ustrwm, m_ustrr, m_fwc, m_zoa)
@@ -621,7 +619,7 @@
             znotc(i,j)=min( m_zoa, zoMAX )
             u100(i,j)=(m_ustrc/vonKar)*LOG(1.0_r8/m_zoa)
 #endif
-#if defined FORM_DRAG_COR
+#if defined SSW_FORM_DRAG_COR
             IF (rheight(i,j).gt.(zoN(i,j)+zoST(i,j))) THEN
               coef_fd=0.5_r8*Cd_fd*(rheight(i,j)/rlength(i,j))*         &
      &                (1.0_r8/(vonKar*vonKar))*                         &
@@ -655,7 +653,7 @@
       END DO
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          anglec=Ur_sg(i,j)/Umag(i,j)
+          anglec=Ucur(i,j)/Umag(i,j)
           anglew=COS(1.5_r8*pi-Dwave(i,j)-angler(i,j))
           bustrc(i,j)=Tauc(i,j)*anglec
           bustrw(i,j)=Tauw(i,j)*anglew
@@ -663,7 +661,7 @@
           Ubot(i,j)=Ub(i,j)*anglew
           Ur(i,j)=Ucur(i,j)
 !
-          anglec=Vr_sg(i,j)/Umag(i,j)
+          anglec=Vcur(i,j)/Umag(i,j)
           anglew=SIN(1.5_r8*pi-Dwave(i,j)-angler(i,j))
           bvstrc(i,j)=Tauc(i,j)*anglec
           bvstrw(i,j)=Tauw(i,j)*anglew
@@ -687,93 +685,71 @@
 !  Apply periodic or gradient boundary conditions for output
 !  purposes only.
 !
-      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bustr)
-      CALL bc_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstr)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bustrc)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstrc)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bustrw)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstrw)
-      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   & 
      &                  bustrcwmax)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstrcwmax)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  Ubot)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  Vbot)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  Ur)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
-     &                  Vr)      
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+     &                  Vr)
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,ibwav))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,irhgt))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,irlen))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izdef))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izapp))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izNik))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izbio))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izbfm))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izbld))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izwbl))
 #ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, iNLM, 4, Istr, Iend, Jstr, Jend,          &
@@ -800,7 +776,7 @@
      &                    bottom(:,:,izdef),                            &
      &                    bottom(:,:,izapp))
       CALL mp_exchange2d (ng, iNLM, 4, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj, 1, 1,                     &
+     &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bottom(:,:,izNik),                            &
      &                    bottom(:,:,izbio),                            &

@@ -26,6 +26,7 @@
       USE mod_param
       USE mod_grid
       USE mod_ocean
+      USE mod_stepping
 !
 !  Imported variable declarations.
 !
@@ -37,6 +38,7 @@
 !
       CALL metrics_tile (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   nstp(ng), nnew(ng),                            &
      &                   GRID(ng) % f,                                  &
      &                   GRID(ng) % h,                                  &
      &                   GRID(ng) % pm,                                 &
@@ -50,8 +52,7 @@
      &                   GRID(ng) % zice,                               &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
-     &                   OCEAN(ng) % bed,                               &
-     &                   GRID(ng) % bed_thick0,                         &
+     &                   GRID(ng) % bed_thick,                          &
 # endif
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % z_r,                                &
@@ -84,6 +85,7 @@
 !***********************************************************************
       SUBROUTINE metrics_tile (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         nstp, nnew,                              &
      &                         f, h, pm, pn,                            &
 #ifdef MASKING
      &                         pmask, rmask,                            &
@@ -93,7 +95,7 @@
      &                         zice,                                    &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
-     &                         bed, bed_thick0,                         &
+     &                         bed_thick,                               &
 # endif
      &                         Hz, z_r, z_w,                            &
 #endif
@@ -135,6 +137,7 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: f(LBi:,LBj:)
@@ -151,8 +154,7 @@
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
-      real(r8), intent(inout):: bed_thick0(LBi:,LBj:)
+      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
 #  endif
 # endif
 # if defined VISC_GRID || defined DIFF_GRID
@@ -196,8 +198,7 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #  endif
 #  if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-      real(r8), intent(inout):: bed_thick0(LBi:UBi,LBj:UBj)
+      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
 #  endif
 # endif
 # if defined VISC_GRID || defined DIFF_GRID
@@ -509,12 +510,13 @@
 
       CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     nstp, nnew,                                  &
      &                     h,                                           &
 # ifdef ICESHELF
      &                     zice,                                        &
 # endif
 # if defined SEDIMENT && defined SED_MORPH
-     &                     bed, bed_thick0,                             &
+     &                     bed_thick,                                   &
 # endif
      &                     A2d,                                         &
      &                     Hz, z_r, z_w)
@@ -573,8 +575,8 @@
 #ifdef MASKING
           IF (rmask(i,j).gt.0.0_r8) THEN
 #endif
-            cff=dtfast(ng)*SQRT(g*h(i,j)*                               &
-     &          (pm(i,j)*pm(i,j)+pn(i,j)*pn(i,j)))
+            cff=dtfast(ng)*                                             &
+     &          SQRT(g*ABS(h(i,j))*(pm(i,j)*pm(i,j)+pn(i,j)*pn(i,j)))
             my_Cu_min=MIN(my_Cu_min,cff)
             my_Cu_max=MAX(my_Cu_max,cff)
 

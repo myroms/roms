@@ -514,10 +514,6 @@
           END IF
         END DO
 # endif
-!
-!  Set unlimited time record dimension to the appropriate value.
-!
-        tITLindx(ng)=tsize
       END IF
 !
   10  FORMAT (/,' TL_DEF_INI - unable to create tangent initial',       &

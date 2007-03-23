@@ -1712,7 +1712,8 @@
           END DO
         END DO
         mp_ncwrite=nf_inq_varid(ncid, TRIM(ncvar), varid)
-        mp_ncwrite=nf_put_vara_TYPE(ncid, varid, start, total, Arecv)
+        mp_ncwrite=nf_put_vara_TYPE(ncid, varid, start, total,          &
+     &                              Arecv)
 !
 !  If master node, loop over other nodes and receive the data.
 !
@@ -1744,7 +1745,8 @@
           DO i=1,np
             Arecv(i)=Arecv(i)*Ascale
           END DO
-          mp_ncwrite=nf_put_vara_TYPE(ncid, varid, start, total, Arecv)
+          mp_ncwrite=nf_put_vara_TYPE(ncid, varid, start,               &
+     &                                total, Arecv)
         END DO
 !
 !  Otherwise, send data to master node.

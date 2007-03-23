@@ -82,6 +82,9 @@
       USE rp_set_tides_mod, ONLY : rp_set_tides
 # endif
       USE rp_set_vbc_mod, ONLY : rp_set_vbc
+# ifdef SET_ZETA
+      USE rp_set_zeta_mod, ONLY : rp_set_zeta
+# endif
       USE rp_step2d_mod, ONLY : rp_step2d
 # ifndef TS_FIXED
       USE rp_step3d_t_mod, ONLY : rp_step3d_t
@@ -100,8 +103,6 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng
-
-      real(r8) :: HalfDT
 !
 !  Local variable declarations.
 !
@@ -125,17 +126,14 @@
 # if defined WEAK_CONSTRAINT || defined IOM
 !
 !-----------------------------------------------------------------------
-!  If appropriate, add convolved adjoint solution as impulse forcing to
-!  the tangent linear solution. Read next impulse record, if available.
+!  If appropriate, add convolved adjoint solution impulse forcing to
+!  the representer model solution. Notice that the forcing is only 
+!  needed after finishing all inner loops. The forcing is continuous.
+!  That is, it is time interpolated at every time-step from available
+!  snapshots (FrequentImpulse=TRUE).
 !-----------------------------------------------------------------------
 !
-      HalfDT=0.5_r8*dt(ng)
-      IF (((time(ng)-HalfDT).le.FrcTime(ng)).and.                       &
-     &    (FrcTime(ng).lt.(time(ng)+HalfDT)).and.                       &
-     &    (outer.ge.1)) THEN
-!
-!  Add impulse forcing.
-!
+      IF (FrequentImpulse) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -144,13 +142,6 @@
           END DO
         END DO
 !$OMP END PARALLEL DO
-!
-!  Read in impulse forcing record, if any.
-!
-        FrcRec(ng)=FrcRec(ng)+1
-        IF (FrcRec(ng).le.NrecFrc(ng)) THEN
-          CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
-        END IF
       END IF
 # endif
 !
@@ -333,9 +324,11 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# ifdef SET_ZETA
 !
 !-----------------------------------------------------------------------
-!  Compute right-hand-side terms for 3D equations.  If applicable,
+!  Set free-surface to it time-averaged value.  If applicable,
 !  accumulate time-averaged output data.
 !-----------------------------------------------------------------------
 !
@@ -344,18 +337,13 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
-# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+          CALL set_zeta (ng, TILE)
+#  if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 !!        CALL rp_set_diags (ng, TILE)
-# endif
-          CALL rp_rhs3d (ng, TILE)
-# ifdef MY25_MIXING_NOT_YET
-          CALL rp_my25_prestep (ng, TILE)
-# elif defined GLS_MIXING_NOT_YET
-          CALL rp_gls_prestep (ng, TILE)
-# endif
-# ifdef AVERAGES
+#  endif
+#  ifdef AVERAGES
 !!        CALL rp_set_avg (ng, TILE)
-# endif
+#  endif
         END DO
       END DO
 !$OMP END PARALLEL DO
@@ -368,6 +356,63 @@
 !
       CALL rp_output (ng)
       IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
+!
+!-----------------------------------------------------------------------
+!  Compute right-hand-side terms for 3D equations.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
+!$OMP&         SHARED(ng,Lnew,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL rp_rhs3d (ng, TILE)
+#  ifdef MY25_MIXING_NOT_YET
+          CALL rp_my25_prestep (ng, TILE)
+#  elif defined GLS_MIXING_NOT_YET
+          CALL rp_gls_prestep (ng, TILE)
+#  endif
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+
+# else
+!
+!-----------------------------------------------------------------------
+!  Compute right-hand-side terms for 3D equations.  If applicable,
+!  accumulate time-averaged output data.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
+!$OMP&         SHARED(ng,Lnew,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+#  if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+!!        CALL rp_set_diags (ng, TILE)
+#  endif
+          CALL rp_rhs3d (ng, TILE)
+#  ifdef MY25_MIXING_NOT_YET
+          CALL rp_my25_prestep (ng, TILE)
+#  elif defined GLS_MIXING_NOT_YET
+          CALL rp_gls_prestep (ng, TILE)
+#  endif
+#  ifdef AVERAGES
+!!        CALL rp_set_avg (ng, TILE)
+#  endif
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+!
+!-----------------------------------------------------------------------
+!  If appropriate, write out fields into output NetCDF files.  Notice
+!  that IO data is written in delayed and serial mode.  Exit if last
+!  time step.
+!-----------------------------------------------------------------------
+!
+      CALL rp_output (ng)
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
+# endif
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the

@@ -534,7 +534,7 @@
 !  application time.
 !-----------------------------------------------------------------------
 !
-      IF (outer.ge.1) THEN
+      IF (SporadicImpulse) THEN
         FrcRec(ng)=1
         CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
 # ifdef DISTRIBUTE

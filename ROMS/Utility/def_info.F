@@ -391,7 +391,7 @@
         Vinfo( 4)='360_day'
       ELSE IF (INT(time_ref).eq.0) THEN
         Vinfo( 3)='days since 0000-01-01 00:00:00'
-        Vinfo( 4)='365.25_day'
+        Vinfo( 4)='julian'
       ELSE IF (time_ref.gt.0.0_r8) THEN
         WRITE (Vinfo( 3),'(a,1x,a)') 'days since', TRIM(r_text)
       END IF
@@ -1788,6 +1788,7 @@
       END IF
 #endif
 #ifndef NO_WRITE_GRID
+# if !(defined SED_MORPH && defined SEDIMENT)
 !
 !  Bathymetry.
 !
@@ -1805,6 +1806,9 @@
           status=def_var(ncid,varid,NF_TYPE,2,t2dgrd,Aval,Vinfo,        &
      &                   ncname)
         END IF
+      END IF
+# endif
+      IF (ncid.ne.ncFLTid(ng)) THEN
 !
 !  Coriolis Parameter.
 !

@@ -557,19 +557,21 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        visc4_p)
 #  endif
-#  ifdef TS_DIF2
+#  ifdef SOLVE3D
+#   ifdef TS_DIF2
       DO itrc=1,NT(ng)
         CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          diff2(:,:,itrc))
       END DO
-#  endif
-#  ifdef TS_DIF4
+#   endif
+#   ifdef TS_DIF4
       DO itrc=1,NT(ng)
         CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          diff4(:,:,itrc))
       END DO
+#   endif
 #  endif
 # endif
 # ifdef DISTRIBUTE

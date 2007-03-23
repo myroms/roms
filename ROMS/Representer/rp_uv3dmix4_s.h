@@ -1,5 +1,3 @@
-#include "cppdefs.h"
-
 # ifdef EW_PERIODIC
 #  define IV_RANGE Istr-1,Iend+1
 #  define IU_RANGE Istr-1,Iend+1

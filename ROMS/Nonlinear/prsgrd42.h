@@ -1,5 +1,4 @@
-#include "cppdefs.h"
-# undef NEUMANN
+#undef NEUMANN
       SUBROUTINE prsgrd (ng, tile)
 !
 !svn $Id$

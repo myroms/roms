@@ -62,11 +62,18 @@
 **   pressure Jacobian options. They differ on how the WENO reconsicliation  **
 **   step is done and in the monotonicity constraining algorithms.           **
 **                                                                           **
+** DJ_GRADPS           use if splines density Jacobian (Shchepetkin, 2000)   **
 ** PJ_GRADP            use if finite volume Pressure Jacobian (Lin,1997)     **
 ** PJ_GRADPQ2          use if quartic 2 Pressure Jacobian (Shchepetkin,2000) **
 ** PJ_GRADPQ4          use if quartic 4 Pressure Jacobian (Shchepetkin,2000) **
-** DJ_GRADPS           use if splines density Jacobian (Shchepetkin, 2000)   **
 ** WJ_GRADP            use if weighted density Jacobian (Song,1998)          **
+**                                                                           **
+** ATM_PRESS           use to impose atmospheric pressure onto sea surface   **
+**                                                                           **
+** Model coupling OPTIONS:                                                   **
+**                                                                           **
+** SWAN_COUPLING       use if two-way coupling to SWAN                       **
+** WRF_COUPLING        use if two-way coupling to WRF                        **
 **                                                                           **
 ** OPTIONS for surface fluxes formutalion using atmospheric boundary layer   **
 ** (Fairall et al, 1996):                                                    **
@@ -84,6 +91,12 @@
 ** LONGWAVE            use if computing net longwave radiation               **
 ** LONGWAVE_OUT        use if computing ougoing longwave radiation           **
 ** EMINUSP             use if computing E-P                                  **
+**                                                                           **
+** OPTIONS forw ave roughness formulation in bulk fluxes:                    **
+**                                                                           **
+** COARE_TAYLOR_YELLAND  use Taylor and Yelland (2001) relation              **
+** COARE_OOST            use Oost et al (2002) relation                      **
+** DEEPWATER_WAVES       use Deep water waves approximation                  **
 **                                                                           **
 ** OPTIONS for shortwave radiation:                                          **
 **                                                                           **
@@ -108,6 +121,7 @@
 ** AVERAGES_AKT        use if writing out time-averaged AKt                  **
 ** AVERAGES_AKS        use if writing out time-averaged AKs                  **
 ** AVERAGES_FLUXES     use if writing out time-averaged fluxes               **
+** AVERAGES_NEARSHORE  use if writing out time-averaged nearshore stresses   **
 ** AVERAGES_QUADRATIC  use if writing out quadratic terms                    **
 ** AVERAGES_BEDLOAD    use if writing out time-averaged bed load             **
 ** DIAGNOSTICS_BIO     use if writing out biological diagnostics             **
@@ -204,6 +218,8 @@
 ** K_C2ADVECTION       use if 2nd-order centered advection                   **
 ** K_C4ADVECTION       use if 4th-order centered advection                   **
 ** N2S2_HORAVG         use if horizontal smoothing of buoyancy/shear         **
+** ZOS_HSIG            use if surface roughness from wave amplitude          **
+** TKE_WAVEDISS        use if wave breaking surface flux from wave amplitude **
 **                                                                           **
 ** OPTIONS for the Mellor/Yamada level 2.5 closure:                          **
 **                                                                           **
@@ -236,7 +252,8 @@
 **   The Options MB_Z0BL and MB_Z0RIP should be activated concurrently.      **
 **                                                                           **
 ** MB_BBL              use if Meinte Blaas BBL closure                       **
-** MB_CALC_ZNOT        use if internal computation of bottom roughness       **
+** MB_CALC_ZNOT        use if computing bottom roughness internally          **
+** MB_CALC_UB          use if computing bottom orbital velocity internally   **
 ** MB_Z0BIO            use if biogenic bedform roughness for ripples         **
 ** MB_Z0BL             use if bedload roughness for ripples                  **
 ** MB_Z0RIP            use if bedform roughness for ripples                  **
@@ -244,14 +261,20 @@
 ** OPTIONS for Styles and Glenn (2000) bottom boundary layer closure:        **
 **                                                                           **
 ** SG_BBL              use if Styles and Glenn (2000) BBL closure            **
-** SG_CALC_ZNOT        use if internal computation of bottom roughness       **
+** SG_CALC_ZNOT        use if computing bottom roughness internally          **
+** SG_CALC_UB          use if computing bottom orbital velocity internally   **
 ** SG_LOGINT           use if logarithmic interpolation of (Ur,Vr)           **
 **                                                                           **
 ** OPTIONS for the Sherwood/Signell/Warner bottom boundary layer closure:    **
 **                                                                           **
 ** SSW_BBL             use if Sherwood et al. BBL closure                    **
-** SSW_CALC_ZNOT       use if internal computation of bottom roughness       **
+** SSW_CALC_ZNOT       use if computing bottom roughness internally          **
 ** SSW_LOGINT          use if logarithmic interpolation of (Ur,Vr)           **
+** SSW_CALC_UB         use if computing bottom orbital velocity internally   **
+** SSW_FORM_DRAG_COR   use to activate form drag coefficient                 **
+** SSW_Z0BIO           use if biogenic bedform roughness from ripples        **
+** SSW_Z0BL            use if bedload roughness for ripples                  **
+** SSW_Z0RIP           use if bedform roughness from ripples                 **
 **                                                                           **
 ** Lateral boundary conditions OPTIONS:                                      **
 **                                                                           **
@@ -522,7 +545,8 @@
 ** Sediment transport model OPTIONS:                                         **
 **                                                                           **
 ** SEDIMENT            use to activate sediment transport model              **
-** BEDLOAD             use to activate bed load transport                    **
+** BEDLOAD_MPM         use to activate Meyer-Peter-Mueller bed load          **
+** BEDLOAD_SOULSBY     use to activate Soulsby wave/current bed load         **
 ** RIVER_SEDIMENT      use to process river sediment point-sources           **
 ** SED_DENS            use to activate sediment to affect equation of state  **
 ** SED_MORPH           use to allow bottom model elevation to evolve         **
@@ -533,6 +557,11 @@
 ** REFDIF_COUPLING     use if coupling to REFDIT wave model                  **
 ** SWAN_COUPLING       use if coupling to SWAN wave model                    **
 ** WRF_COUPLING        use if coupling to WRF atmospheric model              **
+**                                                                           **
+** Nearshore and shallow water model OPTIONS:                                **
+**                                                                           **
+** WET_DRY             use to activate wetting and drying                    **
+** NEARSHORE_MELLOR    use to activate radiation stress terms.               **
 **                                                                           **
 ** NetCDF input/output OPTIONS:                                              **
 **                                                                           **
@@ -550,180 +579,101 @@
 ** INLINE_2DIO         use if processing 3D IO level by level                **
 **                                                                           **
 *******************************************************************************
+*******************************************************************************
+*******************************************************************************
+**                                                                           **
+** Idealized Test Problems:                                                  **
+**                                                                           **
+** A4DVAR_TOY          4DVAR Data Assimilation Toy                           **
+** BASIN               Big Bad Basin Example                                 **
+** BENCHMARK           Benchmark Tests (small, Medium, big grids)            **
+** BIO_TOY             One-dimension (vertical) Biology Toy                  **
+** BL_TEST             Boundary Layers Test                                  **
+** CANYON_A            Canyon_A Example                                      **
+** CANYON_B            Canyon_B Example                                      **
+** CHANNEL_NECK        Channel with a Constriction                           **
+** COUPLING_TEST       Two-way Atmosphere-Ocean Coupling Test                **
+** DOUBLE_GYRE         Idealized Double-gyre Example                         **
+** ESTUARY_TEST        Test Estuary for Sediment                             **
+** FLT_TEST            Float Tracking Example                                **
+** GRAV_ADJ            Graviational Adjustment Example                       **
+** INLET_TEST          Test Inlet Application                                **
+** INNER_PRODUCT       Tangent/Adjoint State Matrix Inner Product Test       **
+** KELVIN              Kelvin wave test                                      **
+** LAB_CANYON          Lab Canyon, Polar Coordinates Example                 **
+** LAKE_SIGNELL        Lake Signell Sediment Test Case                       **
+** LMD_TEST            Test for LMD and KPP                                  **
+** MUD_TOY             Sediment Mud Test Case                                **
+** OVERFLOW            Graviational/Overflow Example                         **
+** RIP_CURRENT         Rip Current Test Case                                 **
+** RIVERPLUME1         River Plume Example 1                                 **
+** RIVERPLUME2         River plume Example 2 (Hyatt and Signell)             **
+** SANDWAVE            Sand Wave Test Case                                   **
+** SEAMOUNT            Seamount Example                                      **
+** SED_TEST1           Suspended Sediment Test in a Channel                  **
+** SED_TOY             One-dimension (vertical) Sediment Toy                 **
+** SHOREFACE           Shore Face Planar Beach Test Case                     **
+** SOLITON             Equatorial Rossby Wave Example                        **
+** TEST_CHAN           Sediment Test Channel Case                            **
+** TEST_HEAD           Sediment Test Headland Case                           **
+** TRENCH              Migrating Trench Sediment Test Case                   **
+** UPWELLING           Upwelling Example (default)                           **
+** WEDDELL             Idealized Weddell Sea Shelf Application               **
+** WINDBASIN           Linear Wind-driven Constant Coriolis Basin            **
+**                                                                           **
+** Climatological Applications: (See www.myroms.org/Datasets)                **
+**                                                                           **
+** DAMEE_4             North Atlantic DAMEE Application, 3/4 degree          **
+**                                                                           **
+** Selected Realistic Applications:                                          **
+**                                                                           **
+** ADRIA02             Adriatic Sea Application                              **
+** CBLAST              CBLAST application                                    **
+** EAC_4               East Australia Current, 1/4 Resolution                **
+** EAC_8               East Australia Current, 1/8 Resolution                **
+** IAS                 Intra-Americas Sea Application                        **
+** NATL                High resolution North Atlantic Application            **
+** NENA                North East North America Application                  **
+** NJ_BIGHT            New Jersey Bight Application                          **
+** NPACIFIC            North Pacific Application                             **
+** SCB                 Southern California Bight                             **
+** SW06_COARSE         Shallow Water 2006 Experiment, Coarse Grid            **
+** SW06_FINE           Shallow Water 2006 Experiment, Fine Grid              **
+**                                                                           **
+*******************************************************************************
+*******************************************************************************
+*******************************************************************************
+**                                                                           **
+**  The user needs to choose either a pre-defined application or his/her     **
+**  own application. The application CPP flag to run is activated in the     **
+**  makefile. For example, to activate the upwelling example (UPWELLING)     **
+**  set:                                                                     **
+**                                                                           **
+**    ROMS_APPLICATION := UPWELLING                                          **
+**                                                                           **
+**  in the makefile. ROMS will include the associated header file located    **
+**  in the ROMS/Include directory. The application header file name is the   **
+**  lowercase value of ROMS_APPLICATION with the .h extension and passed     **
+**  as ROMS_HEADER definition during  C-preprocessing.  For example, the     **
+**  upwelling test problem includes the "upwelling.h" header file:           **
+**                                                                           **
+**    ROMS_HEADER="upwelling.h"                                              **
+**                                                                           **
+**  If building a new application, choose an unique CPP flag for it and      **
+**  create its associated include file (*.h) to specify the appropriate      **
+**  configuration options.                                                   **
+**                                                                           **
+*******************************************************************************
 */
 
-/*
-**-----------------------------------------------------------------------------
-**  Choose a pre-defined model application by uncommenting its definition. That
-**  is, remove ! from definition column 1. Alternatively, the user can activate
-**  the desired application from the makefile. For example, to activate the
-**  upwelling test problem (UPWELLING) from the makefile set
-**
-**    ROMS_APPLICATION := UPWELLING
-**
-**  If doing so, all the definitions below need to be commented out since only
-**  one application is allowed.
-** 
-**  If building a new application, choose a unique CPP flag for it and
-**  create its associate include file (*.h) to specify the appropriate 
-**  configuration options.
-**----------------------------------y------------------------------------------
-**
-**  Idealized Applications, test configurations.
-*/
-
-!#define A4DVAR_TOY      /* for 4DVAR Data Assimilation Toy */
-!#define BASIN           /* for Big Bad Basin Example */
-!#define BENCHMARK1      /* for Small Benchmark Test */
-!#define BENCHMARK2      /* for Medium Benchmark Test */
-!#define BENCHMARK3      /* for Big Benchmark Test */
-!#define BIO_TOY         /* for One-dimension (vertical) Biology Toy */
-!#define BL_TEST         /* for Boundary Layers Test */
-!#define CANYON_A        /* for Canyon_A Example */
-!#define CANYON_B        /* for Canyon_B Example */
-!#define CHANNEL_NECK    /* Channel with a Constriction */
-!#define COUPLING_TEST   /* for two-way atmosphere-ocean coupling test */
-!#define DOUBLE_GYRE     /* for idealized double-gyre Example */
-!#define ESTUARY_TEST    /* test estuary for sediment*/
-!#define FLT_TEST        /* for Float Tracking Example */
-!#define GRAV_ADJ        /* for Graviational Adjustment Example */
-!#define INNER_PRODUCT   /* Tangent/Adjoint State Matrix Inner Product Test */
-!#define KELVIN          /* for Kelvin wave test */
-!#define LAB_CANYON      /* for Lab Canyon, Polar Coordinates Example */
-!#define LAKE_SIGNELL    /* for Lake Signell Sediment Test Case */
-!#define LMD_TEST        /* Test for LMD and KPP */
-!#define OVERFLOW        /* for Graviational/Overflow Example */
-!#define RIVERPLUME1     /* for River plume Example 1 */
-!#define RIVERPLUME2     /* for River plume Example 2 (Hyatt and Signell) */
-!#define OPT_PERT2D      /* Optimal Perturbation 2D Test */
-!#define OPT_PERT3D      /* Optimal Perturbation 3D Test */
-!#define SEAMOUNT        /* for Seamount Example */
-!#define SED_TEST1       /* for Suspended Sediment Test in a Channel */
-!#define SED_TOY         /* for One-dimension (vertical) Sediment Toy */
-!#define SOLITON         /* for Equatorial Rossby Wave Example */
- #define UPWELLING       /* for Upwelling Example */
-!#define USWEST          /* for US West Coast Application */
-!#define WEDDELL         /* for Idealized Weddell Sea Shelf Application */
-!#define WINDBASIN       /* linear wind-driven constant Coriolis basin */
-
-/*
-**  Realitic Applications. Currently, only the input files for the coarse
-**  North Atlantic (DAMEE) application are provided in the "Datasets" menu
-**  of the ROMS/TOMS website.
-*/
-
-!#define ADRIA02         /* for Adriatic Sea Application */
-!#define BISCAY          /* for Bay of Biscay Aplication */
-!#define CBLAST          /* for CBLAST application */
-!#define DAMEE_4         /* for North Atlantic DAMEE Application Grid 4 */
-!#define EAC_4           /* for East Australia Current, 1/4 resolution */
-!#define EAC_8           /* for East Australia Current, 1/8 resolution */
-!#define IAS             /* for Intra-Americas Sea Application */
-!#define NATL            /* for high resolution North Atlantic Application */
-!#define NENA            /* for North East North America Application */
-!#define NJ_BIGHT        /* for New Jersey Bight Application */
-!#define NPACIFIC        /* for North Pacific Application */
-!#define SCB             /* for Southern California Bight */
-!#define SW06_COARSE     /* for Shallow Water 2005 Experiment, Coarse Grid */
-!#define SW06_FINE       /* for Shallow Water 2005 Experiment, Fine Grid */
-
-/*
-**-----------------------------------------------------------------------------
-**  Include the appropriate header file for IDEALIZED APPLICATION.
-**-----------------------------------------------------------------------------
-*/
-
-#if defined A4DVAR_TOY
-# include "a4dvar_toy.h"
-#elif defined BASIN
-# include "basin.h"
-#elif defined BENCHMARK1 || defined BENCHMARK2 || defined BENCHMARK3
-# include "benchmark.h"
-#elif defined  BIO_TOY
-# include "bio_toy.h"
-#elif defined BL_TEST
-# include "bl_test.h"
-#elif defined CANYON_A || defined CANYON_B
-# include "canyon.h"
-#elif defined CHANNEL_NECK
-# include "channel_neck.h"
-#elif defined COUPLING_TEST
-# include "coupling_test.h"
-#elif defined DOUBLE_GYRE
-# include "double_gyre.h"
-#elif defined ESTUARY_TEST
-# include "estuary_test.h"
-#elif defined FLT_TEST
-# include "flt_test.h"
-#elif defined GRAV_ADJ
-# include "grav_adj.h"
-#elif defined INNER_PRODUCT
-# include "inner_product.h"
-#elif defined KELVIN
-# include "kelvin.h"
-#elif defined LAB_CANYON
-# include "lab_canyon.h"
-#elif defined LAKE_SIGNELL
-# include "lake_signell.h"
-#elif defined LMD_TEST
-# include "lmd_test.h"
-#elif defined OVERFLOW
-# include "overflow.h"
-#elif defined RIVERPLUME1 || defined RIVERPLUME2
-# include "riverplume.h"
-#elif defined SEAMOUNT
-# include "seamount.h"
-#elif defined SED_TEST1
-# include "sed_test.h"
-#elif defined SED_TOY
-# include "sed_toy.h"
-#elif defined SOLITON
-# include "soliton.h"
-#elif defined UPWELLING
-# include "upwelling.h"
-#elif defined WEDDELL
-# include "weddell.h"
-#elif defined WINDBASIN
-# include "windbasin.h"
-
-/*
-**-----------------------------------------------------------------------------
-**  Include the appropriate header file for REALISTIC APPLICATION.
-**-----------------------------------------------------------------------------
-*/
-
-#elif defined ADRIA02
-# include "adriatic.h"
-#elif defined CBLAST
-# include "cblast.h"
-#elif defined DAMEE_4
-# include "damee.h"
-#elif defined EAC_4 || defined EAC_8
-# include "eac.h"
-#elif defined IAS
-# include "ias.h"
-#elif defined NATL
-# include "natl.h"
-#elif defined NENA
-# include "nena.h"
-#elif defined NJ_BIGHT
-# include "nj_bight.h"
-#elif defined NPACIFIC
-# include "npacific.h"
-#elif defined SCB
-# include "scb.h"
-#elif defined SW06_COARSE || defined SW06_FINE
-# include "sw06.h"
-#elif defined USWEST
-# include "uswest.h"
+#if defined ROMS_HEADER
+# include ROMS_HEADER
 #else
-  CPPDEFS - Choose an appropriate ROMS application.
+   CPPDEFS - Choose an appropriate ROMS application.
 #endif
 
 /*
-**-----------------------------------------------------------------------------
 **  Include internal CPP definitions.
-**-----------------------------------------------------------------------------
 */
 
 #include "globaldefs.h"

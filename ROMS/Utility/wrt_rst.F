@@ -38,10 +38,12 @@
       integer :: gfactor, gtype, i, itrc, ntmp, status, varid
 
       integer :: nf_fwrite2d
+# if defined PERFECT_RESTART || defined SOLVE3D
       integer :: nf_fwrite3d
-#if defined PERFECT_RESTART && defined SOLVE3D
+# endif
+# if defined PERFECT_RESTART && defined SOLVE3D
       integer :: nf_fwrite4d
-#endif
+# endif
       real(r8) :: scale
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
@@ -113,6 +115,30 @@
           RETURN
         END IF
       END IF
+#if defined SEDIMENT && defined SED_MORPH
+!
+!  Write out time-dependent bathymetry (m)
+!
+      IF (Hout(idbath,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncRSTid(ng), rstVid(idbath,ng),    &
+     &                     tRSTindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+# ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+# endif
+     &                     GRID(ng) % h(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idbath)), tRSTindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+#endif
 !
 !  Write out free-surface (m).
 !
@@ -738,7 +764,11 @@
 !  Write out sediment properties in each bed layer.
 !
       DO i=1,MBEDP
-        scale=1.0_r8
+        IF (i.eq.itauc) THEN
+          scale=rho0
+        ELSE
+          scale=1.0_r8
+        END IF
         gtype=gfactor*b3dvar
         status=nf_fwrite3d(ng, iNLM, ncRSTid(ng), rstVid(idSbed(i),ng), &
      &                     tRSTindx(ng), gtype,                         &
@@ -783,6 +813,104 @@
           RETURN
         END IF
       END DO
+# endif
+#endif
+#ifdef WET_DRY
+!
+!  Write out wet mask at RHO-points.
+!
+      scale=1.0_r8
+      gtype=gfactor*r2dvar
+      status=nf_fwrite2d(ng, iNLM, ncRSTid(ng), rstVid(idWmsk,ng),      &
+     &                   tRSTindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+# ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+# endif
+     &                   GRID(ng) % rmask_wet(LBi,LBj))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idWmsk)), tRSTindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+#endif
+#ifdef NEARSHORE_MELLOR
+!
+!  Write out 2D U-momentum stokes velocity.
+!
+        scale=1.0_r8
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iNLM, ncRSTid(ng), rstVid(idU2Sd,ng),    &
+     &                   tRSTindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+# ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+# endif
+     &                   OCEAN(ng) % ubar_stokes(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idU2Sd)),tRSTindx(ng)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+!  Write out 2D V-momentum stokes velocity.
+!
+        scale=1.0_r8
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iNLM, ncRSTid(ng), rstVid(idV2Sd,ng),    &
+     &                   tRSTindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+# ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+# endif
+     &                   OCEAN(ng) % vbar_stokes(LBi,LBj))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idV2Sd)),tRSTindx(ng)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+# ifdef SOLVE3D
+!
+!  Write out 3D U-momentum stokes velocity.
+!
+        scale=1.0_r8
+        gtype=gfactor*u3dvar
+        status=nf_fwrite3d(ng, iNLM, ncRSTid(ng), rstVid(idU3Sd,ng),    &
+     &                   tRSTindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   OCEAN(ng) % u_stokes(LBi,LBj,1))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idU3Sd)),tRSTindx(ng)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+!  Write out 3D V-momentum stokes velocity.
+!
+        scale=1.0_r8
+        gtype=gfactor*v3dvar
+        status=nf_fwrite3d(ng, iNLM, ncRSTid(ng), rstVid(idV3Sd,ng),    &
+     &                   tRSTindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   OCEAN(ng) % v_stokes(LBi,LBj,1))
+        IF (OutThread.and.(status.ne.nf_noerr)) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idV3Sd)),tRSTindx(ng)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
 # endif
 #endif
 !

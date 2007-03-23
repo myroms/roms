@@ -37,6 +37,7 @@
       USE mod_coupling
       USE mod_grid
       USE mod_ocean
+      USE mod_stepping
 !
 !  Imported variable declarations.
 !
@@ -48,14 +49,14 @@
 !
       CALL tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % h,                             &
      &                        GRID(ng) % tl_h,                          &
 #  ifdef ICESHELF
      &                        GRID(ng) % zice,                          &
 #  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                        OCEAN(ng) % tl_bed,                       &
-     &                        GRID(ng) % tl_bed_thick0,                 &
+     &                        GRID(ng) % tl_bed_thick,                  &
 #  endif
      &                        COUPLING(ng) % Zt_avg1,                   &
      &                        COUPLING(ng) % tl_Zt_avg1,                &
@@ -68,12 +69,13 @@
 !***********************************************************************
       SUBROUTINE tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,         &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              nstp, nnew,                         &
      &                              h, tl_h,                            &
 #  ifdef ICESHELF
      &                              zice,                               &
 #  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-     &                              tl_bed, bed_thick0,                 &
+     &                              tl_bed_thick,                       &
 #  endif
      &                              Zt_avg1, tl_Zt_avg1,                &
      &                              tl_Hz, tl_z_r, tl_z_w)
@@ -81,9 +83,6 @@
 !
       USE mod_param
       USE mod_scalars
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      USE mod_sediment
-#  endif
 !
 #  if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
@@ -97,6 +96,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: nstp, nnew
 !
 #  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: h(LBi:,LBj:)
@@ -145,14 +145,14 @@
 #   endif
 #  endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, k, kbed
+      integer :: i, j, k
 
-      real(r8) :: cff, cff_r, cff1_r, cff2_r, cff_w, cff1_w, cff2_w
+      real(r8) :: cff, cff_r, cff1_r, cff_w, cff1_w
       real(r8) :: hinv, hwater, z_r0, z_w0
       real(r8) :: tl_hinv, tl_hwater, tl_z_r0, tl_z_w0
 
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_BedThick
+#  ifdef WET_DRY
+      real(r8), parameter :: eps = 1.0E-14_r8
 #  endif
 
 #  include "set_bounds.h"
@@ -166,43 +166,34 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
+# if defined SEDIMENT && defined SED_MORPH
+!>        h(i,j)=h(i,j)-bed_thick(i,j,nstp)+bed_thick(i,j,nnew)
+!>
+          tl_h(i,j)=tl_h(i,j)-                                          &
+     &              tl_bed_thick(i,j,nstp)+tl_bed_thick(i,j,nnew)
+# endif
+# if defined WET_DRY
+          IF (h(i,j).eq.0.0_r8) THEN
+!>          h(i,j)=eps
+!>
+            tl_h(i,j)=0.0_r8           
+          END IF
+# endif
 !>        z_w(i,j,0)=-h(i,j)
 !>
           tl_z_w(i,j,0)=-tl_h(i,j)
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!>        BedThick(i,j)=0.0_r8
-!>
-          tl_BedThick(i,j)=0.0_r8
-          DO kbed=1,Nbed
-!>          BedThick(i,j)=BedThick(i,j)+bed(i,j,kbed,ithck)
-!>
-            tl_BedThick(i,j)=tl_BedThick(i,j)+tl_bed(i,j,kbed,ithck)
-          END DO
-!>        BedThick(i,j)=BedThick(i,j)-bed_thick0(i,j)
-!>
-          tl_BedThick(i,j)=tl_BedThick(i,j)-tl_bed_thick0(i,j)
-!>        z_w(i,j,0)=z_w(i,j,0)+BedThick(i,j)
-!>
-          tl_z_w(i,j,0)=tl_z_w(i,j,0)+tl_BedThick(i,j)
-#  endif
         END DO
         DO k=1,N(ng)
           cff_w=hc(ng)*(SCALARS(ng)%sc_w(k)-SCALARS(ng)%Cs_w(k))
           cff1_w=SCALARS(ng)%Cs_w(k)
-          cff2_w=SCALARS(ng)%sc_w(k)+1.0_r8
           cff_r=hc(ng)*(SCALARS(ng)%sc_r(k)-SCALARS(ng)%Cs_r(k))
           cff1_r=SCALARS(ng)%Cs_r(k)
-          cff2_r=SCALARS(ng)%sc_r(k)+1.0_r8
           DO i=IstrR,IendR
             hwater=h(i,j)
 #  ifdef ICESHELF
             hwater=hwater-ABS(zice(i,j))
 #  endif
             tl_hwater=tl_h(i,j)
-#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-            hwater=hwater-BedThick(i,j)
-            tl_hwater=tl_hwater-tl_BedThick(i,j)
-#  endif
             hinv=1.0_r8/hwater
             tl_hinv=-hinv*hinv*tl_hwater
 

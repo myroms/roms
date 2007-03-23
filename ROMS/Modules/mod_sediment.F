@@ -22,6 +22,9 @@
 !              Vwater/(Vwater+Vsed).                                   !
 !   tau_ce   Kinematic critical shear for erosion (m2/s2).             !
 !   tau_cd   Kinematic critical shear for deposition (m2/s2).          !
+!   morph_fac  Morphological scale factor (nondimensional).             !
+!   newlayer_thick    New layer deposit thickness criteria (m).        !
+!   bedload_coeff     Bedload rate coefficient (nondimensional).       !
 !                                                                      !
 !  BED properties indices:                                             !
 !                                                                      !
@@ -45,15 +48,23 @@
 !   irlen    Sediment ripple length (m).                               !
 !   irhgt    Sediment ripple height (m).                               !
 !   ibwav    Bed wave excursion amplitude (m).                         !
+!   izdef    Default bottom roughness (m).                             !
+!   izapp    Apparent bottom roughness (m).                            !
 !   izNik    Nikuradse bottom roughness (m).                           !
 !   izbio    Biological bottom roughness (m).                          !
 !   izbfm    Bed form bottom roughness (m).                            !
 !   izbld    Bed load bottom roughness (m).                            !
-!   izapp    Apparent bottom roughness (m).                            !
 !   izwbl    Bottom roughness used wave BBL (m).                       ! 
-!   izdef    Default bottom roughness (m).                             !
 !   iactv    Active layer thickness for erosive potential (m).         !
 !   ishgt    Sediment saltation height (m).                            !
+!   idoff    Offset for calculation of dmix erodibility profile (m)    !
+!   idslp    Slope for calculation of dmix or erodibility profile      !
+!   idtim    Time scale for restoring erodibility profile (s)          !
+!   idbmx    bed biodifusivity max                                     !
+!   idbmm    bed biodifusivity m                                       !
+!   idbzs    bed biodifusivity zs                                      !
+!   idbzm    bed biodifusivity zm                                      !
+!   idbzp    bed biodifusivity phi                                     !
 !                                                                      !
 !=======================================================================
 !
@@ -61,13 +72,24 @@
 
         implicit none
 
+# ifdef SED_BIODIFF
+        integer, parameter :: MBEDP = 5    ! Bed Properties:
+# else
         integer, parameter :: MBEDP = 4    ! Bed Properties:
+# endif
         integer, parameter :: ithck = 1    ! layer thickness
         integer, parameter :: iaged = 2    ! layer age
         integer, parameter :: iporo = 3    ! layer porosity
         integer, parameter :: idiff = 4    ! layer bio-diffusivity
- 
+# ifdef SED_BIODIFF
+        integer, parameter :: ibtcr = 5    ! layer critical stress
+# endif 
+
+# ifdef SED_BIODIFF
+        integer, parameter :: MBOTP = 24   ! Bottom Properties:
+# else
         integer, parameter :: MBOTP = 16   ! Bottom Properties:
+# endif
         integer, parameter :: isd50 = 1    ! mean grain diameter
         integer, parameter :: idens = 2    ! mean grain density
         integer, parameter :: iwsed = 3    ! mean settle velocity
@@ -84,23 +106,37 @@
         integer, parameter :: izwbl = 14   ! wave bottom roughness
         integer, parameter :: iactv = 15   ! active layer thickness
         integer, parameter :: ishgt = 16   ! saltation height
+#ifdef SED_BIODIFF
+        integer, parameter :: idoff = 17   ! mixing depth offset
+        integer, parameter :: idslp = 18   ! mixing depth slope
+        integer, parameter :: idtim = 19   ! erodibility time scale
+        integer, parameter :: idbmx = 20   ! diffusivity db_max
+        integer, parameter :: idbmm = 21   ! diffusivity db_m
+        integer, parameter :: idbzs = 22   ! diffusivity db_zs
+        integer, parameter :: idbzm = 23   ! diffusivity db_zm
+        integer, parameter :: idbzp = 24   ! diffusivity db_zphi
+#endif
 
-        integer  :: idBmas(NST)            ! class mass indices
         integer  :: idBott(MBOTP)          ! bottom properties IDs
-        integer  :: idfrac(NST)            ! class fraction indices
         integer  :: idSbed(MBEDP)          ! bed properties IDs
-        integer  :: idUbld(NST)            ! bed load u-points
-        integer  :: idVbld(NST)            ! bed load v-points
 
-        real(r8) :: Csed(NST,Ngrids)       ! initial concentration
-        real(r8) :: Erate(NST,Ngrids)      ! erosion rate
-        real(r8) :: Sd50(NST,Ngrids)       ! mediam grain diameter
-        real(r8) :: Srho(NST,Ngrids)       ! grain density
-        real(r8) :: Wsed(NST,Ngrids)       ! settling velocity
-        real(r8) :: poros(NST,Ngrids)      ! porosity
-        real(r8) :: tau_ce(NST,Ngrids)     ! shear for erosion
-        real(r8) :: tau_cd(NST,Ngrids)     ! shear for deposition
+        integer, allocatable :: idBmas(:)  ! class mass indices
+        integer, allocatable :: idfrac(:)  ! class fraction indices
+        integer, allocatable :: idUbld(:)  ! bed load u-points
+        integer, allocatable :: idVbld(:)  ! bed load v-points
 
+        real(r8) :: newlayer_thick(Ngrids) ! deposit thickness criteria
+        real(r8) :: bedload_coeff(Ngrids)  ! bedload rate coefficient
+
+        real(r8), allocatable :: Csed(:,:)       ! initial concentration
+        real(r8), allocatable :: Erate(:,:)      ! erosion rate
+        real(r8), allocatable :: Sd50(:,:)       ! mediam grain diameter
+        real(r8), allocatable :: Srho(:,:)       ! grain density
+        real(r8), allocatable :: Wsed(:,:)       ! settling velocity
+        real(r8), allocatable :: poros(:,:)      ! porosity
+        real(r8), allocatable :: tau_ce(:,:)     ! shear for erosion
+        real(r8), allocatable :: tau_cd(:,:)     ! shear for deposition
+        real(r8), allocatable :: morph_fac(:,:)  ! morphological factor
 #endif
  
       END MODULE mod_sediment

@@ -33,6 +33,12 @@
       USE mod_param
       USE mod_grid
       USE mod_ocean
+# ifdef Q_PSOURCE
+      USE mod_sources
+# endif
+# if defined Q_PSOURCE || (defined SEDIMENT && defined SED_MORPH)
+      USE mod_stepping
+# endif
 !
 !  Imported variable declarations.
 !
@@ -47,6 +53,21 @@
 # endif
       CALL ad_omega_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj,                           &
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                    nstp(ng), nnew(ng),                           &
+# endif
+# ifdef Q_PSOURCE
+     &                    Nsrc(ng),                                     &
+     &                    SOURCES(ng) % Isrc,                           &
+     &                    SOURCES(ng) % Jsrc,                           &
+     &                    SOURCES(ng) % Dsrc,                           &
+     &                    SOURCES(ng) % Qsrc,                           &
+# endif
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                    GRID(ng) % omn,                               &
+     &                    GRID(ng) % bed_thick,                         &
+     &                    GRID(ng) % ad_bed_thick,                      &
+# endif
      &                    GRID(ng) % Huon,                              &
      &                    GRID(ng) % Hvom,                              &
      &                    GRID(ng) % z_w,                               &
@@ -64,6 +85,16 @@
 !***********************************************************************
       SUBROUTINE ad_omega_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                          nstp, nnew,                             &
+# endif
+# ifdef Q_PSOURCE
+     &                          Nsrc, Isrc, Jsrc, Dsrc, Qsrc,           &
+# endif
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+     &                          omn,
+     &                          bed_thick, ad_bed_thick,                &
+# endif
      &                          Huon, Hvom, z_w,                        &
      &                          ad_Huon, ad_Hvom, ad_z_w,               &
      &                          W, ad_W)
@@ -83,12 +114,28 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      integer, intent(in) :: nstp, nnew
+# endif
+# ifdef Q_PSOURCE
+      integer, intent(in) :: Nsrc
+# endif
 !
 # ifdef ASSUMED_SHAPE
+#  ifdef Q_PSOURCE
+      integer, intent(in) :: Isrc(:)
+      integer, intent(in) :: Jsrc(:)
+      real(r8), intent(in) :: Dsrc(:)
+      real(r8), intent(in) :: Qsrc(:,:)
+#  endif
       real(r8), intent(in) :: Huon(LBi:,LBj:,:)
       real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
-
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(in) :: omn(LBi:,LBj:)
+      real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
+      real(r8), intent(inout):: ad_bed_thick(LBi:,LBj:,:)
+#  endif
       real(r8), intent(inout) :: ad_Huon(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_Hvom(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_z_w(LBi:,LBj:,0:)
@@ -96,10 +143,20 @@
 
       real(r8), intent(out) :: W(LBi:,LBj:,0:)
 # else
+#  ifdef Q_PSOURCE
+      integer, intent(in) :: Isrc(Msrc)
+      integer, intent(in) :: Jsrc(Msrc)
+      real(r8), intent(in) :: Dsrc(Msrc)
+      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
+#  endif
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
-
+#  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
+      real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout):: ad_bed_thick(LBi:UBi,LBj:UBj,2)
+#  endif
       real(r8), intent(inout) :: ad_Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_z_w(LBi:UBi,LBj:UBj,0:N(ng))
@@ -125,10 +182,14 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB
       integer :: i, j, k
-
+# ifdef Q_PSOURCE
+      integer :: ii, jj, is
+# endif
       real(r8) :: cff
       real(r8) :: ad_cff, adfac
-
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      real(r8) :: cff1
+# endif
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: wrk
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_wrk
 
@@ -181,9 +242,18 @@
 !  Notice that here we need to recompute the intermediate value
 !  of W which is needed for wrk.
 !
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+      cff1=1.0_r8/dt(ng)
+# endif
       DO j=Jstr,Jend
         DO i=Istr,Iend
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+          W(i,j,0)=-cff1*(bed_thick(i,j,nstp)-                          &
+     &                    bed_thick(i,j,nnew))*omn(i,j)
+# else
           W(i,j,0)=0.0_r8
+# endif
+
         END DO
         DO k=1,N(ng)
           DO i=Istr,Iend
@@ -192,6 +262,22 @@
      &                Hvom(i,j+1,k)-Hvom(i,j,k))
           END DO
         END DO
+# ifdef Q_PSOURCE
+!
+!  Apply mass point sources - Volume influx.
+!
+        DO is=1,Nsrc
+          ii=Isrc(is)
+          jj=Jsrc(is)
+          IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                    &
+     &        ((JstrR.le.jj).and.(jj.le.JendR)).and.                    &
+     &        (j.eq.jj)) THEN
+            DO k=1,N(ng)
+              W(ii,jj,k)=W(ii,jj,k)+Qsrc(is,k)
+            END DO
+          END IF
+        END DO
+# endif
         DO i=Istr,Iend
           wrk(i)=W(i,j,N(ng))/(z_w(i,j,N(ng))-z_w(i,j,0))
         END DO
@@ -233,6 +319,24 @@
           ad_z_w(i,j,N(ng))=ad_z_w(i,j,N(ng))+adfac
           ad_cff=0.0_r8
         END DO
+# ifdef Q_PSOURCE
+!
+!  Apply mass point sources - Volume influx.
+!
+        DO is=1,Nsrc
+          ii=Isrc(is)
+          jj=Jsrc(is)
+          IF (((IstrR.le.ii).and.(ii.le.IendR)).and.                    &
+     &        ((JstrR.le.jj).and.(jj.le.JendR)).and.                    &
+     &        (j.eq.jj)) THEN
+            DO k=1,N(ng)
+!>            tl_W(ii,jj,k)=tl_W(ii,jj,k)+0.0_r8
+!>
+!!            ad_W(ii,jj,k)=ad_W(ii,jj,k)+0.0_r8
+            END DO
+          END IF
+        END DO
+# endif
 !>      DO k=1,N(ng)
 !>
         DO k=N(ng),1,-1
@@ -259,9 +363,19 @@
           END DO
         END DO
         DO i=Istr,Iend
+# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
+!>        tl_W(i,j,0)=-cff1*(tl_bed_thick(i,j,nstp)-                    &
+!>   &                       tl_bed_thick(i,j,nnew))*omn(i,j)
+!>
+          adfac=cff1*omn(i,j)*ad_W(i,j,0)
+          ad_bed_thick(i,j,nnew)=ad_bed_thick(i,j,nnew)+adfac
+          ad_bed_thick(i,j,nstp)=ad_bed_thick(i,j,nstp)+adfac
+          ad_W(i,j,0)=0.0_r8
+# else
 !>        tl_W(i,j,0)=0.0_r8
 !>
           ad_W(i,j,0)=0.0_r8
+# endif
         END DO
 !
 !  Complete the computation of BASIC STATE W here so that it is correct

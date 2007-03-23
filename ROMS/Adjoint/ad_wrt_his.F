@@ -99,7 +99,7 @@
 !
 !  Write out model time (s).
 !
-      IF (OutThread) THEN
+      IF (OutThread.and.LwrtTime(ng)) THEN
         IF (LwrtPER(ng)) THEN
           status=nf_put_var1_TYPE(ncADJid(ng),adjVid(idtime,ng),        &
      &                            tADJindx(ng),                         &

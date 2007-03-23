@@ -70,7 +70,11 @@
 #elif defined S4DVAR
 # include "s4dvar_ocean.h"
 #elif defined IS4DVAR
-# include "is4dvar_ocean.h"
+# ifdef LANCZOS
+#  include "is4dvar_ocean_new.h"
+# else
+#  include "is4dvar_ocean.h"
+# endif
 #elif defined IS4DVAR_OLD
 # include "is4dvar_ocean_old.h"
 #elif defined W4DPSAS

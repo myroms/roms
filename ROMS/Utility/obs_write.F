@@ -87,32 +87,6 @@
         Jend=Mm(ng)
 # endif
 # include "set_bounds.h"
-# if !(defined WEAK_CONSTRAINT || defined IOM)
-!
-!  Some entries are not computed in the extraction routine.  Set values
-!  to zero to avoid problems when writing non initialized values.
-!
-        IF (wrtNLmod(ng)) THEN
-          DO iobs=1,Mobs
-#  ifdef S4DVAR
-            NLmodVal(iobs,Ipass)=IniVal
-#  else
-            NLmodVal(iobs)=IniVal
-#  endif
-          END DO
-        END IF
-#  ifdef TLM_OBS
-        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
-          DO iobs=1,Mobs
-#   ifdef IS4DVAR_OLD
-            TLmodVal(iobs,Ipass)=IniVal
-#   else
-            TLmodVal(iobs)=IniVal
-#   endif
-          END DO
-        END IF
-#  endif
-# endif
 !
 !  Set starting and ending indices of observations to process for the
 !  current time survey. In weak constraint, the entire observation
@@ -125,6 +99,34 @@
 # else
         Mstr=1
         Mend=Nobs(ng)
+# endif
+!
+!  Some entries are not computed in the extraction routine.  Set values
+!  to zero to avoid problems when writing non initialized values.
+# ifdef DISTRIBUTE
+!  Notice that only the appropriate indices are zero-out to facilate
+!  collecting all the extrated data as sum between all nodes.
+# endif
+!
+        IF (wrtNLmod(ng)) THEN
+          DO iobs=Mstr,Mend
+# ifdef S4DVAR
+            NLmodVal(iobs,Ipass)=IniVal
+# else
+            NLmodVal(iobs)=IniVal
+# endif
+          END DO
+        END IF
+# ifdef TLM_OBS
+        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+          DO iobs=Mstr,Mend
+#  ifdef IS4DVAR_OLD
+            TLmodVal(iobs,Ipass)=IniVal
+#  else
+            TLmodVal(iobs)=IniVal
+#  endif
+          END DO
+        END IF
 # endif
 # if !(defined WEAK_CONSTRAINT || defined IOM)
 !

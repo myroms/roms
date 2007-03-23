@@ -458,7 +458,7 @@
 !
       allocate ( FOURDVAR(Ngrids) )
 
-       DO ng=1,Ngrids
+      DO ng=1,Ngrids
 
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)

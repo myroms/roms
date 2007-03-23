@@ -238,7 +238,7 @@
         integer, dimension(Ngrids) :: BioIter
 
 #  ifdef ANA_BIOLOGY
-        real(r8), dimension(NAT+NBT+NST+NPT,Ngrids) :: BioIni
+        real(r8), allocatable :: BioIni(:,:)
 #  endif
         real(r8), dimension(Ngrids) :: DetRR         ! 1/day
         real(r8), dimension(Ngrids) :: K_ext         ! 1/m
@@ -308,7 +308,7 @@
         integer, dimension(Ngrids) :: BioIter
 
 #  ifdef ANA_BIOLOGY
-        real(r8), dimension(NAT+NBT+NST+NPT,Ngrids) :: BioIni
+        real(r8), allocatable :: BioIni(:,:)
 #  endif
         real(r8), dimension(Ngrids) :: AttPhy        ! m2/mmole
         real(r8), dimension(Ngrids) :: AttSW         !/m

@@ -36,15 +36,32 @@
 !                                                                             !
 !==============================================================================
 !
-
 ! Application title.
 
-       TITLE = ROMS/TOMS 3.0 - Large et al. (1994) KPP Test
+       TITLE = Large et al. (1994) KPP Test
+
+! C-preprocessing Flag.
+
+    MyAppCPP = LMD_TEST
 
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
 
      VARNAME = ROMS/External/varinfo.dat
+
+! Grid dimension parameters. See notes below in the Glossary for how to set
+! these parameters correctly.
+
+          Lm == 10            ! Number of I-direction INTERIOR RHO-points
+          Mm == 10            ! Number of J-direction INTERIOR RHO-points
+           N == 50            ! Number of vertical levels
+
+        Nbed =  0             ! Number of sediment bed layers
+
+         NAT =  2             ! Number of active tracers (usually, 2)
+         NPT =  0             ! Number of inactive passive tracers
+         NCS =  0             ! Number of cohesive (mud) sediment tracers
+         NNS =  0             ! Number of non-cohesive (sand) sediment tracers
 
 ! Domain decomposition parameters for serial, distributed-memory or
 ! shared-memory configurations used to determine tile horizontal range
@@ -83,7 +100,7 @@
         NFLT == 1
        NINFO == 1
 
-! Output history and average files parameters.
+! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
         NHIS == 60
@@ -155,12 +172,23 @@
     GLS_SIGK == 1.0d0
     GLS_SIGP == 1.30d0
 
+! Constants used in surface turbulent kinetic energy flux computation.
+
+  CHARNOK_ALPHA == 1400.0d0         ! Charnok surface roughness
+ ZOS_HSIG_ALPHA == 0.5d0            ! roughness from wave amplitude
+       SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
+      CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
+
 ! Constants used in momentum stress computation.
-                                     
+
         RDRG == 3.0d-04                    ! m/s
        RDRG2 == 3.0d-03                    ! nondimensional
          Zob == 0.02d0                     ! m
          Zos == 0.02d0                     ! m
+
+! Minimum depth for wetting and drying.
+
+       DCRIT == 0.10d0                     ! m
 
 ! Various parameters.
 
@@ -168,7 +196,7 @@
      LEVSFRC == 15
      LEVBFRC == 1
 
-! Vertical S-coordinates parameters
+! Vertical S-coordinates parameters, [1:Ngrids].
 
      THETA_S == 1.0d-4                     ! 0 < THETA_S < 20
      THETA_B == 0.0d0                      ! 0 < THETA_B < 1
@@ -183,7 +211,7 @@
 ! origin for tidal forcing, and model reference time for output
 ! NetCDF units attribute.
 
-      DSTART =  0.0d0                      ! days                 
+      DSTART =  0.0d0                      ! days
   TIDE_START =  0.0d0                      ! days
     TIME_REF =  0.0d0                      ! yyyymmdd.dd
 
@@ -215,7 +243,7 @@
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their
-! values are rest internally to the full range of the adjoint integration.
+! values are reset internally to the full range of the adjoint integration.
 
        DstrS == 0.0d0                      ! starting day
        DendS == 0.0d0                      ! ending day
@@ -273,6 +301,7 @@ Hout(idOvel) == T                          ! omega vertical velocity
 Hout(idUbar) == T                          ! 2D U-velocity
 Hout(idVbar) == T                          ! 2D V-velocity
 Hout(idFsur) == T                          ! free-surface
+Hout(idBath) == T                          ! time-dependent bathymetry
 
 Hout(idTvar) == T T                        ! temperature and salinity
 
@@ -293,6 +322,28 @@ Hout(idVbot) == F                          ! bed wave orbital V-velocity
 Hout(idUbur) == F                          ! bottom U-velocity above bed
 Hout(idVbvr) == F                          ! bottom V-velocity above bed
 
+Hout(idW2xx) == F                          ! 2D radiation stress, Sxx component
+Hout(idW2xy) == F                          ! 2D radiation stress, Sxy component
+Hout(idW2yy) == F                          ! 2D radiation stress, Syy component
+Hout(idU2rs) == F                          ! 2D radiation U-stress
+Hout(idV2rs) == F                          ! 2D radiation V-stress
+Hout(idU2Sd) == F                          ! 2D U-Stokes velocity
+Hout(idV2Sd) == F                          ! 2D V-Stokes velocity
+
+Hout(idW3xx) == F                          ! 3D radiation stress, Sxx component
+Hout(idW3xy) == F                          ! 3D radiation stress, Sxy component
+Hout(idW3yy) == F                          ! 3D radiation stress, Syy component
+Hout(idW3zx) == F                          ! 3D radiation stress, Szx component
+Hout(idW3zy) == F                          ! 3D radiation stress, Szy component
+Hout(idU3rs) == F                          ! 3D U-radiation stress
+Hout(idV3rs) == F                          ! 3D V-radiation stress
+Hout(idU3Sd) == F                          ! 3D U-Stokes velocity
+Hout(idV3Sd) == F                          ! 3D V-Stokes velocity
+
+Hout(idWamp) == F                          ! wave height
+Hout(idWlen) == F                          ! wave length
+Hout(idWdir) == F                          ! wave direction
+
 Hout(idTsur) == F F                        ! surface net heat and salt flux
 Hout(idLhea) == F                          ! latent heat flux
 Hout(idShea) == F                          ! sensible heat flux
@@ -310,11 +361,11 @@ Hout(idHbbl) == T                          ! depth of bottom boundary layer
 Hout(idMtke) == F                          ! turbulent kinetic energy
 Hout(idMtls) == F                          ! turbulent length scale
 
-! Logical switches (TRUE/FALSE) to activate writinf of extra inert passive
+! Logical switches (TRUE/FALSE) to activate writing of extra inert passive
 ! tracers other than biological and sediment tracers. An inert passive tracer
 ! is one that it is only advected and diffused. Other processes are ignored.
 ! These tracers include, for example, dyes, pollutants, oil spills, etc.
-! NPT values are expected. However, these switched can be activated using
+! NPT values are expected. However, these switches can be activated using
 ! compact parameter specification.
 
  Hout(inert) == T                          ! inert passive tracers
@@ -391,7 +442,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 
 ! Input ASCII parameter filenames.
 
-     APARNAM =  ROMS/External/assimilation.in
+     APARNAM =  ROMS/External/s4dvar.in
      SPOSNAM =  ROMS/External/stations.in
      FPOSNAM =  ROMS/External/floats.in
      BPARNAM =  ROMS/External/bioFasham.in
@@ -403,10 +454,13 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  =========
 !
 !------------------------------------------------------------------------------
-! Application tile (string with a maximum of eighty characters).
+! Application tile (string with a maximum of eighty characters) and 
+! C-preprocessing flag.
 !------------------------------------------------------------------------------
 !
-!  TITLE       Title of model Run.
+!  TITLE       Application title.
+!
+!  MyAppCPP    Application C-preprocession option.
 !
 !------------------------------------------------------------------------------
 ! Variable information file name (string with a maximum of eighty characters).
@@ -415,6 +469,73 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  VARNAME     Input/Output variable information file name.  This file need to
 !              be processed first so all information arrays and indices can be
 !              initialized properly in "mod_ncparam.F".
+!
+!------------------------------------------------------------------------------
+! Grid dimension parameters.
+!------------------------------------------------------------------------------
+!
+! These parameters are very important since it determine the grid of the
+! application to solve. They need to be read first in order to dynamically
+! allocate all model variables.
+!
+! WARNING: It is trivial and posible to change these dimension parameters in
+! -------  idealized applications via analytical expressions.  However, in
+! realistic applications any change to these parameters requires redoing all
+! input NetCDF files. 
+!
+!  Lm          Number of INTERIOR grid RHO-points in the XI-direction for
+!                each nested grid, [1:Ngrids]. If using NetCDF files as
+!                input, Lm=xi_rho-2 where "xi_rho" is the NetCDF file 
+!                dimension of RHO-points. Recall that all RHO-point
+!                variables have a computational I-range of [0:Lm+1].
+!
+!  Mm          Number of INTERIOR grid RHO-points in the ETA-direction for
+!                each nested grid, [1:Ngrids]. If using NetCDF files as
+!                input, Mm=eta_rho-2 where "eta_rho" is the NetCDF file 
+!                dimension of RHO-points. Recall that all RHO-point
+!                variables have a computational J-range of [0:Mm+1].
+!
+!  N           Number of vertical terrain-following levels at RHO-points,
+!                [1:Ngrids].
+!
+!  Nbed        Number of sediment bed layers, [1:Ngrids]. This parameter
+!                is only relevant if CPP option SEDIMENT is activated.
+!
+!                Mm+1  ___________________                _______  Kw = N
+!                     |                   |              |       |
+!                  Mm |   _____________   |              |       | Kr = N
+!                     |  |             |  |              |_______|
+!                     |  |             |  |              |       |
+!                  Jr |  |             |  |              |       |
+!                     |  |             |  |              |_______|
+!                     |  |             |  |              |       |
+!                   1 |  |_____________|  |              |       |
+!                     |                   |              |_______|
+!                   0 |___________________|              |       |
+!                              Ir                        |       | 1
+!                     0  1            Lm  Lm+1    h(i,j) |_______| 
+!                                                        ::::::::: 0
+!                                                        :::::::::
+!                                                        ::::::::: Nbed-1
+!                                                        ::::::::: Nbed
+!
+!  NAT         Number of active tracer type variables. Usually, NAT=2 for
+!                potential temperature and salinity.
+!
+!  NPT         Number of inert (dyes, age, etc) passive tracer type variables
+!                to advect and diffuse only. This parameter is only relevant
+!                if CPP option T_PASSIVE is activated.
+!
+!  NCS         Number of cohesive (mud) sediment tracer type variables. This
+!                parameter is only relevant if CPP option SEDIMENT is
+!                activated.
+!
+!  NNS         Number of non-cohesive (sand) sediment tracer type variables.
+!                This parameter is only relevant if CPP option SEDIMENT is
+!                activated.
+!
+!              The total of sediment tracers is NST=NCS+NNS.  Notice that
+!              NST must be greater than zero (NST>0).
 !
 !------------------------------------------------------------------------------
 ! Domain tile partition parameters.
@@ -735,21 +856,38 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !
 ! Suggested values for various parameterizations:
 !
-!              MY2.5         K-epsilon    K-omega      K-omega      K-tao
+!              k-kl         k-epsilon    k-omega      gen
 !
-!      GLS_P = 0.d0          3.0d0       -1.0d0       -1.0d0       -3.0d0
-!      GLS_M = 1.d0          1.5d0        0.5d0        0.5d0        0.5d0
-!      GLS_N = 1.d0         -1.0d0       -1.0d0       -1.0d0        1.0d0
-!   GLS_Kmin = 5.0d-6        7.6d-6       7.6d-6       7.6d-6       7.6d-6
-!   GLS_Pmin = 5.0d-6        1.0d-12      1.0d-12      1.0d-12      1.0d-12
+!      GLS_P = 0.d0          3.0d0       -1.0d0        2.0d0
+!      GLS_M = 1.d0          1.5d0        0.5d0        1.0d0
+!      GLS_N = 1.d0         -1.0d0       -1.0d0       -0.67d0
+!   GLS_Kmin = 5.0d-6        7.6d-6       7.6d-6       1.0d-8
+!   GLS_Pmin = 5.0d-6        1.0d-12      1.0d-12      1.0d-8
 !
-!   GLS_CMU0 = 0.5544d0      0.5477d0     0.5477d0     0.5477d0     0.5477d0
-!     GLS_C1 = 0.9d0         1.44d0       0.555d0      0.52d0       0.173d0
-!     GLS_C2 = 0.5d0         1.92d0       0.833d0      0.8d0        0.225d0
-!    GLS_C3M = 0.9d0        -0.4d0       -0.6d0       -0.6d0        0.0d0
-!    GLS_C3P = 0.9d0         1.0d0        1.0d0        1.0d0        0.0d0
-!   GLS_SIGK = 1.96d0        1.0d0        2.0d0        2.0d0        1.46d0
-!   GLS_SIGP = 1.96d0        1.30d0       2.0d0        2.0d0       10.8d0
+!   GLS_CMU0 = 0.5544d0      0.5477d0     0.5477d0     0.5544d0
+!     GLS_C1 = 0.9d0         1.44d0       0.555d0      1.00d0
+!     GLS_C2 = 0.52d0        1.92d0       0.833d0      1.22d0
+!    GLS_C3M = 2.5d0        -0.4d0       -0.6d0        0.1d0
+!    GLS_C3P = 1.0d0         1.0d0        1.0d0        1.0d0
+!   GLS_SIGK = 1.96d0        1.0d0        2.0d0        0.8d0
+!   GLS_SIGP = 1.96d0        1.30d0       2.0d0        1.07d0
+!
+!------------------------------------------------------------------------------
+! Constants used in the various formulation of surface turbulent kinetic
+! energy flux in the GLS.
+!------------------------------------------------------------------------------
+!
+!  CHARNOK_ALPHA   Charnok surface roughness,
+!                    Zos:   (charnok_alpha * u_star**2) / g
+!   
+!  ZOS_HSIG_ALPHA  Roughness from wave amplitude,
+!                    Zos:   zos_hsig_alpha * Hsig
+!
+!  SZ_ALPHA        Surface flux from wave dissipation,
+!                    flux:  dt * sz_alpha * Wave_dissip
+!
+!  CRGBAN_CW       Surface flux due to Craig and Banner wave breaking,
+!                    flux:  dt * crgban_cw * u_star**3
 !
 !------------------------------------------------------------------------------
 ! Constants used in the computation of momentum stress.
@@ -762,6 +900,12 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  Zob         Bottom roughness (m).
 !
 !  Zos         Surface roughness (m).
+!
+!------------------------------------------------------------------------------
+! Wetting and drying parameters.
+!------------------------------------------------------------------------------
+!
+!  DCRIT       Minimum depth (m) for wetting and drying.
 !
 !------------------------------------------------------------------------------
 ! Jerlow Water type.
@@ -966,6 +1110,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  Hout(idUbar)  Write out 2D U-velocity component.
 !  Hout(idVbar)  Write out 2D V-velocity component.
 !  Hout(idFsur)  Write out free-surface.
+!  Hout(idBath)  Write out time-dependent bathymetry.
 !
 !  Hout(idTvar)  Write out active (NAT) tracers: temperature and salinity.
 !
@@ -985,6 +1130,28 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  Hout(idVbot)  Write out wind-induced, bed wave orbital V-velocity.
 !  Hout(idUbur)  Write out bottom U-velocity above bed.
 !  Hout(idVbvr)  Write out bottom V-velocity above bed.
+!
+!  Hout(idW2xx)  Write out 2D radiation stress, Sxx component.
+!  Hout(idW2xy)  Write out 2D radiation stress, Sxy component.
+!  Hout(idW2yy)  Write out 2D radiation stress, Syy component.
+!  Hout(idU2rs)  Write out 2D U-radiation stress.
+!  Hout(idV2rs)  Write out 2D V-radiation stress.
+!  Hout(idU2Sd)  Write out 2D U-Stokes velocity.
+!  Hout(idV2Sd)  Write out 2D V-Stokes velocity.
+!
+!  Hout(idW3xx)  Write out 3D radiation stress, Sxx component.
+!  Hout(idW3xy)  Write out 3D radiation stress, Sxy component.
+!  Hout(idW3yy)  Write out 3D radiation stress, Syy component.
+!  Hout(idW3zx)  Write out 3D radiation stress, Szx component.
+!  Hout(idW3zy)  Write out 3D radiation stress, Szy component.
+!  Hout(idU3rs)  Write out 3D U-radiation stress.
+!  Hout(idV3rs)  Write out 3D V-radiation stress.
+!  Hout(idU3Sd)  Write out 3D U-Stokes velocity.
+!  Hout(idV3Sd)  Write out 3D V-Stokes velocity.
+!
+!  Hout(idWamp)  Write out wave height.
+!  Hout(idWlen)  Write out wave length.
+!  Hout(idWdir)  Write out wave direction.
 !
 !  Hout(idTsur)  Write out surface net heat and salt flux
 !  Hout(idLhea)  Write out latent heat flux.

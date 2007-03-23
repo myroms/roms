@@ -39,9 +39,16 @@
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
-!     Fairall et al., 2003: Bulk Parameterization od Air-Sea           !
-!       Fluxes:  Updates  and  Verification  for  the  COARE           !
-!       Algorithm, J. Climate, 16, 571-591.                            !
+!     Fairall et al., 2003: J. Climate, 16, 571-591.                   !
+!                                                                      !
+!     Taylor, P. K., and M. A. Yelland, 2001: The dependence of sea    !
+!     surface roughness on the height and steepness of the waves.      !
+!     J. Phys. Oceanogr., 31, 572-590.                                 !
+!                                                                      !
+!     Oost, W. A., G. J. Komen, C. M. J. Jacobs, and C. van Oort, 2002:!
+!     New evidence for a relation between wind stress and wave age     !
+!     from measurements during ASGAMAGE. Bound.-Layer Meteor., 103,    !
+!     409-438.                                                         !
 !                                                                      !
 !=======================================================================
 !
@@ -94,9 +101,15 @@
 # ifdef CLOUDS
      &                     FORCES(ng) % cloud,                          &
 # endif
-# ifdef BBL_MODEL
-     &                     FORCES(ng) % Awave,                          &
-     &                     FORCES(ng) % Pwave,                          &
+# ifdef COARE_TAYLOR_YELLAND
+     &                     FORCES(ng) % Hwave,                          &
+# endif
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+     &                     FORCES(ng) % Pwave_top,                      &
+# endif
+# if !defined DEEPWATER_WAVES      && \
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
+     &                     FORCES(ng) % Lwave,                          &
 # endif
      &                     FORCES(ng) % rain,                           &
      &                     FORCES(ng) % lhflx,                          &
@@ -127,8 +140,15 @@
 # ifdef CLOUDS
      &                           cloud,                                 &
 # endif
-# ifdef BBL_MODEL
-     &                           Awave, Pwave,                          &
+# ifdef COARE_TAYLOR_YELLAND
+     &                           Hwave,                                 &
+# endif
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+     &                           Pwave_top,                             &
+# endif
+# if !defined DEEPWATER_WAVES      && \
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
+     &                           Lwave,                                 &
 # endif
      &                           rain, lhflx, lrflx, shflx,             &
      &                           srflx, stflx,                          &
@@ -172,10 +192,16 @@
 #  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:,LBj:)
 #  endif
-#  ifdef BBL_MODEL
-      real(r8), intent(in) :: Awave(LBi:,LBj:)
-      real(r8), intent(in) :: Pwave(LBi:,LBj:)
-#  endif
+# ifdef COARE_TAYLOR_YELLAND
+      real(r8), intent(in) :: Hwave(LBi:,LBj:)
+# endif
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+      real(r8), intent(in) :: Pwave_top(LBi:,LBj:)
+# endif
+# if !defined DEEPWATER_WAVES      && \
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
+      real(r8), intent(in) :: Lwave(LBi:,LBj:)
+# endif
       real(r8), intent(in) :: rain(LBi:,LBj:)
 
       real(r8), intent(inout) :: lhflx(LBi:,LBj:)
@@ -207,10 +233,16 @@
 #  ifdef CLOUDS
       real(r8), intent(in) :: cloud(LBi:UBi,LBj:UBj)
 #  endif
-#  ifdef BBL_MODEL
-      real(r8), intent(in) :: Awave(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Pwave(LBi:UBi,LBj:UBj)
-#  endif
+# ifdef COARE_TAYLOR_YELLAND
+      real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
+# endif
+# if defined COARE_TAYLOR_YELLAND || defined COARE_OOST
+      real(r8), intent(in) :: Pwave_top(LBi:UBi,LBj:UBj)
+# endif
+# if !defined DEEPWATER_WAVES      && \
+     (defined COARE_TAYLOR_YELLAND || defined COARE_OOST)
+      real(r8), intent(in) :: Lwave(LBi:UBi,LBj:UBj)
+# endif
       real(r8), intent(in) :: rain(LBi:UBi,LBj:UBj)
 
       real(r8), intent(inout) :: lhflx(LBi:UBi,LBj:UBj)
@@ -275,7 +307,6 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delW
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Lwave
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Q
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qair
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qpsi
@@ -296,6 +327,7 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tstar
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: u10
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: VisAir
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: WaveLength
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wgus
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wmag
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wpsi
@@ -532,9 +564,14 @@
           ELSE
             charn(i)=0.011_r8
           END IF
-# ifdef BBL_MODEL
-          Cwave(i)=g*Pwave(i,j)*twopi_inv
-          Lwave(i)=Cwave(i)*Pwave(i,j)
+# if defined COARE_OOST || defined COARE_TAYLOR_YELLAND
+#  if defined DEEPWATER_WAVES
+          Cwave(i)=g*MAX(Pwave_top(i,j),eps)*twopi_inv
+          WaveLength(i)=Cwave(i)*MAX(Pwave_top(i,j),eps)
+#  else
+          Cwave(i)=Lwave(i,j)/MAX(Pwave_top(i,j),eps)
+          WaveLength(i)=Lwave(i,j)
+#  endif
 # endif
         END DO
 !
@@ -543,17 +580,15 @@
 !
         DO Iter=1,IterMax
           DO i=MIN(Istr-1,IstrR),IendR
-# ifdef BBL_MODEL
 !
 !  Use wave info if we have it, two different options.
 !
-#  ifdef WIND_WAVES
-            ZoW(i)=(25._r8/pi)*Lwave(i)*(Wstar(i)/Cwave(i))**4.5+       &
+# ifdef COARE_OOST
+            ZoW(i)=(25._r8/pi)*WaveLength(i)*(Wstar(i)/Cwave(i))**4.5+  &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
-#  else
-            ZoW(i)=1200._r8*Awave(i,j)*(Awave(i,j)/Lwave(i))**4.5+      &
+# elif defined COARE_TAYLOR_YELLAND
+            ZoW(i)=1200._r8*Hwave(i,j)*(Hwave(i,j)/WaveLength(i))**4.5+ &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
-#  endif
 # else
             ZoW(i)=charn(i)*Wstar(i)*Wstar(i)/g+                        &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
