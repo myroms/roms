@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name:  $ 
+! CVS $Id: m_AttrVect.F90,v 1.73 2005/11/28 20:40:26 larson Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_AttrVect - Multi-field Storage
@@ -21,7 +21,7 @@
 ! the fieldnames in {\tt List} format, along with the direct mapping
 ! between {\tt List} items and locations in the data buffer, allows 
 ! the user to have {\em random access} to the field data.  This 
-! approach alsoallows the user to set the number and the names of fields 
+! approach also allows the user to set the number and the names of fields 
 ! stored in an {\tt AttrVect} at run-time.  
 !
 ! The {\tt AttrVect} stores field data in a {\em pointwise} fashion 
@@ -65,6 +65,8 @@
 !
 ! !USES:
 !
+      use m_realkinds,only : SP,DP,FP          ! Real types definitions
+
       use m_List, only : List   ! Support for rList and iList components.
 
       implicit none
@@ -76,10 +78,13 @@
       public :: AttrVect        ! The class data structure
 
     type AttrVect
+#ifdef SEQUENCE
+      sequence
+#endif
       type(List) :: iList
       type(List) :: rList
       integer,dimension(:,:),pointer :: iAttr
-      real   ,dimension(:,:),pointer :: rAttr
+      real(FP) ,dimension(:,:),pointer :: rAttr
     end type AttrVect
 
 ! !PUBLIC MEMBER FUNCTIONS:
@@ -107,13 +112,14 @@
       public :: Copy		! copy attributes from one Av to another
       public :: Sort            ! sort entries, and return permutation
       public :: Permute         ! permute entries
+      public :: Unpermute       ! Unpermute entries
       public :: SortPermute     ! sort and permute entries
       public :: SharedAttrIndexList  ! Cross-indices of shared
                                      ! attributes of two AttrVects
 
 
     interface init   ; module procedure	&
-       init_,	&
+       init_,  &
        initv_, &
        initl_
     end interface
@@ -138,13 +144,18 @@
     interface appendRAttr  ; module procedure appendRAttr_  ; end interface
     interface exportIAttr; module procedure exportIAttr_; end interface
     interface exportRAttr; module procedure &
-       exportRAttr_
+       exportRAttrSP_, &
+       exportRAttrDP_
     end interface
     interface importIAttr; module procedure importIAttr_; end interface
-    interface importRAttr; module procedure importRAttr_; end interface
+    interface importRAttr; module procedure &
+         importRAttrSP_, &
+         importRAttrDP_
+    end interface
     interface Copy    ; module procedure Copy_    ; end interface
     interface Sort    ; module procedure Sort_    ; end interface
     interface Permute ; module procedure Permute_ ; end interface
+    interface Unpermute ; module procedure Unpermute_ ; end interface
     interface SortPermute ; module procedure SortPermute_ ; end interface
     interface SharedAttrIndexList ; module procedure &
         aVaVSharedAttrIndexList_ 
@@ -187,7 +198,7 @@
  contains
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: init_ - Initialize an AttrVect Given Attribute Lists and Length
@@ -288,7 +299,7 @@
  end subroutine init_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: initv_ - Initialize One AttrVect from Another
@@ -375,7 +386,7 @@
  end subroutine initv_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: initl_ - Initialize an AttrVect Using the List Type
@@ -507,7 +518,7 @@
  end subroutine initl_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: clean_ - Deallocate Allocated Memory Structures of an AttrVect
@@ -633,7 +644,7 @@
  end subroutine clean_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: lsize_ - Length of an AttrVect
@@ -743,6 +754,7 @@
 
 ! !USES:
 
+
      use m_die,only	: die
      use m_stdio,only	: stderr
 
@@ -792,21 +804,23 @@
   endif
 
   if(myZeroInts) then ! zero out INTEGER attributes
-  if(List_allocated(aV%iList)) then
-     if(associated(aV%iAttr).and. (nIAttr_(aV)>0)) aV%iAttr=0
-  endif
+     if(List_allocated(aV%iList)) then
+!CDIR COLLAPSE
+        if(associated(aV%iAttr) .and. (nIAttr_(aV)>0)) aV%iAttr=0
+     endif
   endif
 
   if(myZeroReals) then ! zero out REAL attributes
-  if(List_allocated(aV%rList)) then
-     if(associated(aV%rAttr) .and. (nRAttr_(aV)>0)) aV%rAttr=0.
-  endif
+     if(List_allocated(aV%rList)) then
+!CDIR COLLAPSE
+        if(associated(aV%rAttr) .and. (nRAttr_(aV)>0)) aV%rAttr=0._FP
+     endif
   endif
 
  end subroutine zero_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: nIAttr_ - Return the Number of Integer Attributes
@@ -846,7 +860,7 @@
  end function nIAttr_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: nRAttr_ - Return the Number of Real Attributes
@@ -886,7 +900,7 @@
  end function nRAttr_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: getIList_ - Retrieve the Name of a Numbered Integer Attribute
@@ -928,7 +942,7 @@
  end subroutine getIList_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: getRList_ - Retrieve the Name of a Numbered Real Attribute
@@ -970,7 +984,7 @@
  end subroutine getRList_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: indexIA_ - Index an Integer Attribute
@@ -995,6 +1009,8 @@
 ! \item if {\tt perrWith} is present, but {\tt dieWith} is not, an error 
 ! message is written to {\tt stderr} incorporating user-supplied traceback
 ! information stored in the argument {\tt perrWith};
+! \item if {\tt perrWith} is present, but {\tt dieWith} is not, and
+! {\tt perrWith} is equal to ``quiet'', no error message is written.
 ! \item if {\tt dieWith} is present, execution terminates with an error 
 ! message written to {\tt stderr} that incorporates user-supplied traceback
 ! information stored in the argument {\tt dieWith}; and 
@@ -1033,6 +1049,7 @@
 ! !REVISION HISTORY:
 ! 27Apr98 - Jing Guo <guo@thunder> - initial prototype/prolog/code
 !  2Aug02 - J. Larson - Solidified error handling using perrWith/dieWith
+!  1Jan05 - R. Jacob - add quiet option for error handling
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::indexIA_'
@@ -1053,10 +1070,14 @@
 
   if(indexIA_==0) then ! The attribute was not found!
        ! As per the prologue, decide how to handle this error
-     if(present(perrWith) .and. (.not. present(dieWith))) then ! Return
-	write(stderr,'(5a)') myname_, &
-	     ':: ERROR--attribute not found: "',trim(item),'" ', &
-	     'Traceback:  ',String_ToChar(myTrace)
+     if(present(perrWith) .and. (.not. present(dieWith))) then
+       if (trim(perrWith).eq.'quiet') then
+        ! do nothing
+       else
+        write(stderr,'(5a)') myname_, &
+             ':: ERROR--attribute not found: "',trim(item),'" ', &
+             'Traceback:  ',String_ToChar(myTrace)
+       endif
      else ! Shutdown
 	write(stderr,'(5a)') myname_, &
 	     ':: FATAL--attribute not found: "',trim(item),'" ', &
@@ -1070,7 +1091,7 @@
  end function indexIA_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!     Math and Computer Science Division, Argonne National Laboratory  !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: indexRA_ - Index a Real Attribute
@@ -1095,6 +1116,8 @@
 ! \item if {\tt perrWith} is present, but {\tt dieWith} is not, an error 
 ! message is written to {\tt stderr} incorporating user-supplied traceback
 ! information stored in the argument {\tt perrWith};
+! \item if {\tt perrWith} is present, but {\tt dieWith} is not, and
+! {\tt perrWith} is equal to ``quiet'', no error message is written.
 ! \item if {\tt dieWith} is present, execution terminates with an error 
 ! message written to {\tt stderr} that incorporates user-supplied traceback
 ! information stored in the argument {\tt dieWith}; and 
@@ -1133,6 +1156,7 @@
 ! !REVISION HISTORY:
 ! 27Apr98 - Jing Guo <guo@thunder> - initial prototype/prolog/code
 !  2Aug02 - J. Larson - Solidified error handling using perrWith/dieWith
+! 18Jan05 - R. Jacob - add quiet option for error handling
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::indexRA_'
@@ -1153,11 +1177,15 @@
 
   if(indexRA_==0) then ! The attribute was not found!
        ! As per the prologue, decide how to handle this error
-     if(present(perrWith) .and. (.not. present(dieWith))) then ! Return
+     if(present(perrWith) .and. (.not. present(dieWith))) then
+       if (trim(perrWith).eq.'quiet') then
+        ! do nothing
+       else
 	write(stderr,'(5a)') myname_, &
 	     ':: ERROR--attribute not found: "',trim(item),'" ', &
 	     'Traceback:  ',String_ToChar(myTrace)
-     else ! Shutdown
+       endif
+     else ! Shutdown if dieWith or no arguments present
 	write(stderr,'(5a)') myname_, &
 	     ':: FATAL--attribute not found: "',trim(item),'" ', &
 	     'Traceback:  ',String_ToChar(myTrace)
@@ -1177,7 +1205,9 @@
 !
 ! !DESCRIPTION:  This routine takes an input {\tt AttrVect} argument 
 ! {\tt aV}, and an input character string {\tt rList} and Appends {\tt rList}
-! to the INTEGER part of {\tt aV}.
+! to the INTEGER part of {\tt aV}. The success (failure) of this operation is
+! signified by a zero (nonzero) value for the optional {\tt INTEGER} 
+! output argument {\tt status}.  
 !
 ! !INTERFACE:
 
@@ -1273,7 +1303,9 @@
 !
 ! !DESCRIPTION:  This routine takes an input {\tt AttrVect} argument 
 ! {\tt aV}, and an input character string {\tt rList} and Appends {\tt rList}
-! to the REAL part of {\tt aV}.
+! to the REAL part of {\tt aV}. The success (failure) of this operation is
+! signified by a zero (nonzero) value for the optional {\tt INTEGER} 
+! output argument {\tt status}.  
 !
 ! !INTERFACE:
 
@@ -1530,6 +1562,7 @@
       use m_List,  only : List_allocated => allocated
       use m_List,  only : List_copy => copy
       use m_List,  only : List_exportToChar => exportToChar
+      use m_List,  only : List_clean => clean
 
       implicit none
 
@@ -1569,6 +1602,7 @@
   if(List_allocated(aV%iList)) then
      call List_copy(iListCopy,aV%iList)
      exportIListToChar_ = List_exportToChar(iListCopy)
+     call List_clean(iListCopy)
   else
      exportIListToChar_ = ''
   endif
@@ -1606,6 +1640,7 @@
       use m_List,  only : List_allocated => allocated
       use m_List,  only : List_copy => copy
       use m_List,  only : List_exportToChar => exportToChar
+      use m_List,  only : List_clean => clean
 
       implicit none
 
@@ -1645,6 +1680,7 @@
   if(List_allocated(aV%rList)) then
      call List_copy(rListCopy,aV%rList)
      exportRListToChar_ = List_exportToChar(rListCopy)
+     call List_clean(rListCopy)
   else
      exportRListToChar_ = ''
   endif
@@ -1792,7 +1828,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: exportRAttr_ - Return REAL Attribute as a Pointer to Array
+! !IROUTINE: exportRAttrSP_ - Return REAL Attribute as a Pointer to Array
 !
 ! !DESCRIPTION:
 ! This routine extracts from the input {\tt AttrVect} argument {\tt aV} 
@@ -1836,13 +1872,14 @@
 !
 ! !INTERFACE:
 
- subroutine exportRAttr_(aV, AttrTag, outVect, lsize, perrWith, dieWith)
+ subroutine exportRAttrSP_(aV, AttrTag, outVect, lsize, perrWith, dieWith)
 
 !
 ! !USES:
 !
       use m_die ,          only : die
       use m_stdio ,        only : stderr
+
 
       use m_String, only : String
       use m_String, only : String_init => init
@@ -1862,7 +1899,7 @@
 
 ! !OUTPUT PARAMETERS: 
 
-      real,         dimension(:), pointer     :: outVect
+      real(SP),        dimension(:),  pointer     :: outVect
       integer,                    intent(out) :: lsize
 
 ! !REVISION HISTORY:
@@ -1873,7 +1910,7 @@
 !
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_=myname//'::exportRAttr_'
+  character(len=*),parameter :: myname_=myname//'::exportRAttrSP_'
 
   integer :: index, ierr, n
   type(String) :: myTrace
@@ -1919,18 +1956,112 @@
 
        ! Copy the attribute data into outVect
 
-  ! De-referencing the pointer yields a bit of speedup.
-  call do_copy(outVect, aV%rAttr(index,:))
+  do n=1,lsize
+     outVect(n) = aV%rAttr(index,n)
+  end do
 
-  contains
+ end subroutine exportRAttrSP_
 
-  subroutine do_copy(outvar, invar)
-  real, intent(in ) :: invar(:)
-  real, intent(out) :: outvar(:)
-  outvar = invar
-  end subroutine do_copy
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! ----------------------------------------------------------------------
+!
+! !IROUTINE: exportRAttrDP_ - Return REAL Attribute as a Pointer to Array
+!
+! !DESCRIPTION:
+! Double precision version of exportRAttrSP_
+!
+! !INTERFACE:
 
- end subroutine exportRAttr_
+ subroutine exportRAttrDP_(aV, AttrTag, outVect, lsize, perrWith, dieWith)
+
+!
+! !USES:
+!
+      use m_die ,          only : die
+      use m_stdio ,        only : stderr
+
+
+      use m_String, only : String
+      use m_String, only : String_init => init
+      use m_String, only : String_clean => clean
+      use m_String, only : String_ToChar => ToChar
+
+      use m_TraceBack, only : GenTraceBackString
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      type(AttrVect),             intent(in) :: aV
+      character(len=*),           intent(in) :: AttrTag
+      character(len=*), optional, intent(in) :: perrWith
+      character(len=*), optional, intent(in) :: dieWith
+
+! !OUTPUT PARAMETERS: 
+
+      real(DP),    dimension(:),  pointer     :: outVect
+      integer,                    intent(out) :: lsize
+
+! !REVISION HISTORY:
+! 19Oct01 - J.W. Larson <larson@mcs.anl.gov> - initial (slow) 
+!           prototype.
+!  6May02 - J.W. Larson <larson@mcs.anl.gov> - added capability 
+!           to work with pre-allocated outVect.
+!
+! ______________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::exportRAttrDP_'
+
+  integer :: index, ierr, n
+  type(String) :: myTrace
+
+  if(present(dieWith)) then ! Append onto TraceBack
+     call GenTraceBackString(myTrace, dieWith, myname_)
+  else
+     if(present(perrWith)) then ! Append onto TraceBack
+	call GenTraceBackString(myTrace, perrWith, myname_)
+     else ! Start a TraceBackString
+	call GenTraceBackString(myTrace, myname_)
+     endif
+  endif
+
+       ! Index the attribute we wish to extract:
+
+  index = indexRA_(aV, attrTag, dieWith=String_ToChar(myTrace))
+
+       ! Determine the number of data points:
+
+  lsize = lsize_(aV)
+
+       ! Allocate space for outVect (if it is not already dimensioned)
+
+  if(associated(outVect)) then ! check the size of outVect
+     if(size(outVect) < lsize) then
+	write(stderr,'(3a,i8,a,i8)') myname_, &
+	    ':: ERROR length of output array outVect ', &
+	    ' less than length of aV.  size(outVect)=',size(outVect), &
+	    ', length of aV=',lsize
+	write(stderr,'(2a)') 'Traceback:  ',String_ToChar(myTrace)
+	call die(myname_)
+     endif
+  else ! allocate space for outVect
+     allocate(outVect(lsize), stat=ierr)
+     if(ierr /= 0) then
+	write(stderr,'(2a,i8)') myname_, &
+	     ':: Error - allocate(outVect(...) failed. ierr = ',ierr
+	write(stderr,'(2a)') 'Traceback:  ',String_ToChar(myTrace)	
+	call die(myname_)
+     endif
+  endif
+
+       ! Copy the attribute data into outVect
+
+  do n=1,lsize
+     outVect(n) = aV%rAttr(index,n)
+  end do
+
+ end subroutine exportRAttrDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -2022,7 +2153,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: importRAttr_ - Import REAL Vector as an Attribute
+! !IROUTINE: importRAttrSP_ - Import REAL Vector as an Attribute
 !
 ! !DESCRIPTION:
 ! This routine imports into the input/output {\tt AttrVect} argument 
@@ -2036,7 +2167,7 @@
 !
 ! !INTERFACE:
 
- subroutine importRAttr_(aV, AttrTag, inVect, lsize)
+ subroutine importRAttrSP_(aV, AttrTag, inVect, lsize)
 !
 ! !USES:
 !
@@ -2048,7 +2179,7 @@
 ! !INPUT PARAMETERS: 
 
       character(len=*),   intent(in)    :: AttrTag
-      real, dimension(:), pointer       :: inVect
+      real(SP), dimension(:), pointer   :: inVect
       integer, optional,  intent(in)    :: lsize
 
 ! !INPUT/OUTPUT PARAMETERS: 
@@ -2063,7 +2194,7 @@
 !
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_=myname//'::importRAttr_'
+  character(len=*),parameter :: myname_=myname//'::importRAttrSP_'
 
   integer :: index, aVsize, ierr, n, mysize
 
@@ -2099,17 +2230,91 @@
 
        ! Copy the attribute data into outVect
 
-  call do_copy(aV%rAttr(index,:), inVect)
+  do n=1,mysize
+     aV%rAttr(index,n) = inVect(n)
+  end do
 
-  contains
+ end subroutine importRAttrSP_
 
-  subroutine do_copy(outvar, invar)
-  real, intent(in ) :: invar(:)
-  real, intent(out) :: outvar(:)
-  outvar = invar
-  end subroutine do_copy
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! ----------------------------------------------------------------------
+!
+! !IROUTINE: importRAttrDP_ - Import REAL Vector as an Attribute
+!
+! !DESCRIPTION:
+! Double precision version of importRAttrSP_
+!
+! !INTERFACE:
 
- end subroutine importRAttr_
+ subroutine importRAttrDP_(aV, AttrTag, inVect, lsize)
+!
+! !USES:
+!
+      use m_die ,          only : die
+      use m_stdio ,        only : stderr
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      character(len=*),   intent(in)    :: AttrTag
+      real(DP), dimension(:), pointer   :: inVect
+      integer, optional,  intent(in)    :: lsize
+
+! !INPUT/OUTPUT PARAMETERS: 
+
+      type(AttrVect),     intent(inout) :: aV
+
+
+
+! !REVISION HISTORY:
+! 19Oct01 - J.W. Larson <larson@mcs.anl.gov> - initial (slow) 
+!           prototype.
+!
+!EOP ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::importRAttrDP_'
+
+  integer :: index, aVsize, ierr, n, mysize
+
+       ! Index the attribute we wish to extract:
+
+  index = indexRA_(aV, attrTag)
+
+       ! Determine the number of data points:
+
+  aVsize = lsize_(aV)
+
+       ! Check input array size vs. lsize_(aV):
+
+  if(present(lsize)) then
+     if(aVsize < lsize) then
+	write(stderr,'(3a,i8,a,i8)') myname_, &
+	               ':: ERROR--attempt to import too many entries ', &
+                       'into AttrVect aV.  AttrVect_lsize(aV)=',aVsize, &
+                       ', number of entries to be imported=',lsize
+	call die(myname_)
+     endif
+     mysize=lsize
+  else
+     if(aVsize < size(inVect)) then
+	write(stderr,'(3a,i8,a,i8)') myname_, &
+	               ':: ERROR--attempt to import too many entries ', &
+                       'into AttrVect aV.  AttrVect_lsize(aV)=',aVsize, &
+                       ' , number of entries to be imported=',size(inVect)
+	call die(myname_)
+     endif
+     mysize=aVsize
+  endif
+
+       ! Copy the attribute data into outVect
+
+  do n=1,mysize
+     aV%rAttr(index,n) = inVect(n)
+  end do
+
+ end subroutine importRAttrDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -2130,12 +2335,15 @@
 ! be identical to the {\tt rList} or {\tt iList} but with the correct {\tt aVout}
 ! name subsititued at the appropriate place.
 !
+! If the optional argument {\tt Vector} is present and true, the vector 
+! architecture-friendly portions of this routine will be invoked.
+!
 ! {\bf N.B.:}  This routine will fail if the {\tt aVout} is not initialized or
 ! if any of the specified attributes are not present in either {\tt aVout} or {\tt aVin}.
 !
 ! !INTERFACE:
 
- subroutine Copy_(aVin, aVout, rList, TrList, iList, TiList)
+ subroutine Copy_(aVin, aVout, rList, TrList, iList, TiList, vector)
 
 !
 ! !USES:
@@ -2155,6 +2363,7 @@
       character(len=*), optional, intent(in)    :: rList
       character(len=*), optional, intent(in)    :: TiList
       character(len=*), optional, intent(in)    :: TrList
+      logical, optional,          intent(in)    :: vector 
 
 ! !OUTPUT PARAMETERS: 
 
@@ -2169,6 +2378,8 @@
 !           optional arguments last
 ! 19Feb02 - E. Ong <eong@mcs.anl.gov> - new implementation using 
 !           new list function get_indices and faster memory copy  
+! 28Oct03 - R. Jacob <jacob@mcs.anl.gov> - add optional vector
+!           argument to use vector-friendly code provided by Fujitsu
 !
 !EOP ___________________________________________________________________
 
@@ -2181,6 +2392,7 @@
   integer :: inxmin, outxmin, inx, outx      ! Index variables
   logical :: TiListIsPresent, TrListIsPresent! true if list argument is present
   logical :: contiguous    ! true if index segments are contiguous in memory  
+  logical :: usevector    ! true if vector flag is present and true.
   character*7 :: data_flag ! character variable used as data type flag
 
   ! Overlapping attribute index storage arrays:
@@ -2194,6 +2406,12 @@
       'MCTERROR: Input aV and output aV do not have the same size'
      call die(myname_,'MCTERROR: Input aV and output aV &
                        &do not have the same size',2)
+  endif
+
+  ! check vector flag.
+  usevector = .false.
+  if (present(vector)) then
+   if(vector) usevector = .true.
   endif
 
   ! Copy the listed real attributes
@@ -2236,23 +2454,38 @@
 	! Start copying (arranged loop order optimized for xlf90)
 	if(contiguous) then
 
-	   outxmin=aVoutindices(1)-1
-	   inxmin=aVinindices(1)-1
-	   do j=1,aVsize
+           if(usevector) then
+	      outxmin=aVoutindices(1)-1
+	      inxmin=aVinindices(1)-1
+!DIR$ CONCURRENT
 	      do i=1,num_indices
-		 aVout%rAttr(outxmin+i,j) = aVin%rAttr(inxmin+i,j)       
+!CDIR SELECT(VECTOR)
+	         do j=1,aVsize
+	   	    aVout%rAttr(outxmin+i,j) = aVin%rAttr(inxmin+i,j)       
+	         enddo
 	      enddo
-	   enddo
+           else
+	      outxmin=aVoutindices(1)-1
+	      inxmin=aVinindices(1)-1
+!DIR$ CONCURRENT
+	      do j=1,aVsize
+	         do i=1,num_indices
+	   	    aVout%rAttr(outxmin+i,j) = aVin%rAttr(inxmin+i,j)       
+	         enddo
+	      enddo
+           endif
 
 	else
 
-	   do i=1,num_indices
-	      outx=aVoutindices(i)
-	      inx=aVinindices(i)
-	      do j=1,aVsize
-		 aVout%rAttr(outx,j) = aVin%rAttr(inx,j)
-	      enddo
-	   enddo
+!DIR$ PREFERVECTOR
+           do j=1,aVsize
+              do i=1,num_indices
+                 outx=aVoutindices(i)
+                 inx=aVinindices(i)     
+                 aVout%rAttr(outx,j) = aVin%rAttr(inx,j)
+              enddo
+           enddo
+
 	endif
 
 	deallocate(aVinindices, aVoutindices, stat=ier)
@@ -2302,23 +2535,37 @@
 	! Start copying (arranged loop order optimized for xlf90)
 	if(contiguous) then
 
-	   outxmin=aVoutindices(1)-1
-	   inxmin=aVinindices(1)-1
-	   do j=1,aVsize
+           if(usevector) then
+	      outxmin=aVoutindices(1)-1
+	      inxmin=aVinindices(1)-1
+!DIR$ CONCURRENT
 	      do i=1,num_indices
-		 aVout%iAttr(outxmin+i,j) = aVin%iAttr(inxmin+i,j)       
+!CDIR SELECT(VECTOR)
+	         do j=1,aVsize
+	   	    aVout%iAttr(outxmin+i,j) = aVin%iAttr(inxmin+i,j)       
+	         enddo
 	      enddo
-	   enddo
+           else
+	      outxmin=aVoutindices(1)-1
+	      inxmin=aVinindices(1)-1
+!DIR$ CONCURRENT
+	      do j=1,aVsize
+	         do i=1,num_indices
+	   	    aVout%iAttr(outxmin+i,j) = aVin%iAttr(inxmin+i,j)       
+	         enddo
+	      enddo
+           endif
 
 	else
 
-	   do i=1,num_indices
-	      outx=aVoutindices(i)
-	      inx=aVinindices(i)
-	      do j=1,aVsize
-		 aVout%iAttr(outx,j) = aVin%iAttr(inx,j)
-	      enddo
-	   enddo
+!DIR$ PREFERVECTOR
+           do j=1,aVsize
+              do i=1,num_indices
+                outx=aVoutindices(i)
+                inx=aVinindices(i)     
+                aVout%iAttr(outx,j) = aVin%iAttr(inx,j)
+              enddo
+           enddo
 
 	endif
                 
@@ -2349,27 +2596,45 @@
         enddo
      endif
      
-     ! Start copying (arranged loop order optimized for xlf90)
-     if( contiguous .and. (num_indices > 0) ) then
+     ! Start copying 
+     if(num_indices > 0) then
 
-        outxmin=aVoutindices(1)-1
-        inxmin=aVinindices(1)-1
-        do j=1,aVsize
-           do i=1,num_indices
-              aVout%rAttr(outxmin+i,j) = aVin%rAttr(inxmin+i,j)
+        if(contiguous) then
+
+           if(usevector) then
+              outxmin=aVoutindices(1)-1
+              inxmin=aVinindices(1)-1
+              do i=1,num_indices
+!CDIR SELECT(VECTOR)
+!DIR$ CONCURRENT
+                 do j=1,aVsize
+                    aVout%rAttr(outxmin+i,j) = aVin%rAttr(inxmin+i,j)
+                 enddo
+              enddo
+           else
+              outxmin=aVoutindices(1)-1
+              inxmin=aVinindices(1)-1
+!DIR$ CONCURRENT
+              do j=1,aVsize
+                 do i=1,num_indices
+                    aVout%rAttr(outxmin+i,j) = aVin%rAttr(inxmin+i,j)
+                 enddo
+              enddo
+           endif
+
+        else
+           
+!DIR$ PREFERVECTOR
+           do j=1,aVsize
+              do i=1,num_indices
+                 outx=aVoutindices(i)
+                 inx=aVinindices(i)     
+                 aVout%rAttr(outx,j) = aVin%rAttr(inx,j)
+              enddo
            enddo
-        enddo
-
-     else
-
-	do i=1,num_indices
-	   outx=aVoutindices(i)
-	   inx=aVinindices(i)
-	   do j=1,aVsize
-              aVout%rAttr(outx,j) = aVin%rAttr(inx,j)
-           enddo
-        enddo
         
+        endif
+
      endif
 
      deallocate(aVinindices, aVoutindices,stat=ier)
@@ -2391,27 +2656,45 @@
         enddo
      endif
 
-     ! Start copying (arranged loop order optimized for xlf90)
-     if( contiguous .and. (num_indices > 0) ) then
+     ! Start copying 
+     if(num_indices > 0) then
+
+        if(contiguous) then
       
-        outxmin=aVoutindices(1)-1
-        inxmin=aVinindices(1)-1
-        do j=1,aVsize
-           do i=1,num_indices
-              aVout%iAttr(outxmin+i,j) = aVin%iAttr(inxmin+i,j)
-           enddo
-        enddo
+           if(usevector) then
+              outxmin=aVoutindices(1)-1
+              inxmin=aVinindices(1)-1
+              do i=1,num_indices
+!CDIR SELECT(VECTOR)
+!DIR$ CONCURRENT
+                 do j=1,aVsize
+                    aVout%iAttr(outxmin+i,j) = aVin%iAttr(inxmin+i,j)
+                 enddo
+              enddo
+           else
+              outxmin=aVoutindices(1)-1
+              inxmin=aVinindices(1)-1
+!DIR$ CONCURRENT
+              do j=1,aVsize
+                 do i=1,num_indices
+                    aVout%iAttr(outxmin+i,j) = aVin%iAttr(inxmin+i,j)
+                 enddo
+              enddo
+           endif
 
-     else
+        else
 
-	do i=1,num_indices
-	   outx=aVoutindices(i)
-	   inx=aVinindices(i)
-	   do j=1,aVsize
-             aVout%iAttr(outx,j) = aVin%iAttr(inx,j)
+!DIR$ PREFERVECTOR
+           do j=1,aVsize
+              do i=1,num_indices
+                 outx=aVoutindices(i)
+                 inx=aVinindices(i)     
+                 aVout%iAttr(outx,j) = aVin%iAttr(inx,j)
+              enddo
            enddo
-        enddo
         
+        endif
+
      endif
 
      deallocate(aVinindices, aVoutindices,stat=ier)
@@ -2437,10 +2720,11 @@
 ! as defined by {\tt key\_list} (the ordering in {\tt key\_list} being from
 ! left to right.
 !
-! {\bf N.B.:}  This routine will fail if {\tt aV\%rList} and 
+! {\bf N.B.:}  This routine will fail if {\tt aV\%iList} and 
 ! {\tt aV\%rList} share one or more common entries. 
 !
-! {\bf N.B.:}  This routine will fail if {\tt aV\%rList} and 
+! {\bf N.B.:}  This routine will fail if one of the sorting keys presented is 
+! not present in {\tt aV\%iList} nor {\tt aV\%rList}.
 !
 ! !INTERFACE:
 
@@ -2450,6 +2734,7 @@
 !
       use m_String,        only : String
       use m_String,        only : String_tochar => tochar
+      use m_String,        only : String_clean => clean
       use m_List ,         only : List_allocated => allocated
       use m_List ,         only : List_index => index
       use m_List ,         only : List_nitem => nitem
@@ -2606,6 +2891,10 @@
      if (iIndex(n) > 0) rIndex(n) = 0
      if (rIndex(n) > 0) iIndex(n) = 0
 
+        ! Clean up temporary string -key-
+
+     call String_clean(key)
+
   enddo ! do n=1,nkeys
 
         ! Now we have the locations of the keys in the integer and
@@ -2706,8 +2995,6 @@
 
 ! local variables
 
-  integer, dimension(:,:), allocatable :: iAtmp
-  real,    dimension(:,:), allocatable :: rAtmp
   integer :: i
 
         ! Check input arguments for compatibility--assure
@@ -2747,6 +3034,91 @@
   endif
 
  end subroutine Permute_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: Unpermute_ - Unpermute AttrVect Elements
+!
+! !DESCRIPTION:
+! The subroutine {\tt Unpermute\_()} uses a a permutation {\tt perm} (which can
+! be generated by the routine {\tt Sort\_()} in this module) to rearrange
+! the entries in the attribute integer and real storage areas of the
+! input attribute vector {\tt aV}--{\tt aV\%iAttr} and {\tt aV\%rAttr}, 
+! respectively.  This is meant to be called on an {\tt aV} that has already
+! been permuted but it could also be used to perform the inverse operation
+! implied by {\tt perm} on an unpermuted {\tt aV}.
+!
+! !INTERFACE:
+
+ subroutine Unpermute_(aV, perm, perrWith, dieWith)
+!
+! !USES:
+!
+      use m_die ,          only : die
+      use m_stdio ,        only : stderr
+      use m_SortingTools , only : Unpermute
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+!
+      integer, dimension(:),           intent(in)    :: perm
+      character(len=*),      optional, intent(in)    :: perrWith
+      character(len=*),      optional, intent(in)    :: dieWith
+
+! !INPUT/OUTPUT PARAMETERS: 
+!
+      type(AttrVect),                  intent(inout) :: aV
+
+! !REVISION HISTORY:
+! 23Nov05 - R. Jacob <jacob@mcs.anl.gov> - based on Permute
+!EOP ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::Unpermute_'
+
+! local variables
+
+  integer :: i
+
+        ! Check input arguments for compatibility--assure
+        ! lsize_(aV) = size(perm); that is, make sure the
+        ! index permutation is the same length as the vectors
+        ! it will re-arrange.
+
+  if (size(perm) /= lsize_(aV)) then
+     if(.not.present(dieWith)) then
+	if(present(perrWith)) write(stderr,'(4a,i8,a,i8)') myname, &
+	  ":: size mismatch, ", perrWith, &
+	  "size(perm)=",size(perm)," lsize_(aV)=",lsize_(aV)
+     else
+	write(stderr,'(4a,i8,a,i8)') myname, &
+	 ":: size mismatch, ", dieWith,	&
+	 "size(perm)=",size(perm)," lsize_(aV)=",lsize_(aV)
+	call die(dieWith)
+     endif
+  endif
+
+  if(size(perm) == lsize_(aV)) then
+
+        ! Unpermute integer attributes:
+     if(nIAttr_(aV) /= 0) then
+	do i=1,nIAttr_(aV)
+	   call Unpermute(aV%iAttr(i,:),perm,lsize_(aV))
+	end do
+     endif
+
+        ! Permute real attributes:
+     if(nRAttr_(aV) /= 0) then
+	do i=1,nRAttr_(aV)
+	   call Unpermute(aV%rAttr(i,:),perm,lsize_(aV))
+	end do
+     endif
+
+  endif
+
+ end subroutine Unpermute_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !

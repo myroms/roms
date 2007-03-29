@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_SparseMatrixComms.F90,v 1.16 2004/05/18 00:07:49 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SparseMatrixComms -- sparse matrix communications methods.
@@ -14,6 +14,11 @@
 ! type.  These services include scattering matrix elements based on row or 
 ! column decompositions, gathering of matrix elements to the root, and 
 ! broadcasting from the root.
+!
+! {\bf N.B.:}  These routines will not communicate the vector portion
+! of a {\tt SparseMatrix}, if it has been initialized.  A WARNING will
+! be issued in most cases.  In general, do communication first,  then 
+! call {\tt vecinit}.
 !
 ! !INTERFACE:
 
@@ -50,7 +55,7 @@
 !           and cleaned up prologues.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_SparseMatrixComms'
+  character(len=*),parameter :: myname='MCT::m_SparseMatrixComms'
 
  contains
 
@@ -59,7 +64,7 @@
 !-------------------------------------------------------------------------
 !BOP
 !
-! !IROUTINE:  ScatterByColumnGSMap_()--Column-based scatter for SparseMatrix.
+! !IROUTINE:  ScatterByColumnGSMap_ - Column-based scatter for SparseMatrix.
 ! 
 ! !DESCRIPTION: This routine scatters the input {\tt SparseMatrix} 
 ! argument {\tt GsMat} (valid only on the root) to a distributed 
@@ -148,9 +153,14 @@
        ! Which process am I?
 
   call MPI_COMM_RANK(comm, myID, ierr)
-
   if(ierr /= 0) then
 	call MP_perr_die(myname_,"MPI_COMM_RANK() failed",ierr)
+  endif
+
+       ! can't scatter vector parts.
+  if((myID.eq.root) .and. GsMat%vecinit) then
+      write(stderr,*) myname_,&
+      "WARNING: will not scatter vector parts of GsMat"
   endif
 
        ! Create from columnGSMap the corresponding GlobalSegMap
@@ -194,6 +204,9 @@
   LsMat%nrows = NumRowsColumns(1)
   LsMat%ncols = NumRowsColumns(2)
 
+       ! Set the value of vecinit
+  LsMat%vecinit = .FALSE.
+
        ! Finally, lets sort the distributed local matrix elements
 
        ! Sort the matrix entries in sMat by column, then row.  
@@ -216,7 +229,7 @@
 !-------------------------------------------------------------------------
 !BOP
 !
-! !IROUTINE:  ScatterByRowGSMap_()--Row-based scatter for SparseMatrix.
+! !IROUTINE:  ScatterByRowGSMap_ -Row-based scatter for SparseMatrix.
 ! 
 ! !DESCRIPTION: This routine scatters the input  {\tt SparseMatrix} 
 ! argument {\tt GsMat} (valid only on the root) to a distributed 
@@ -309,6 +322,12 @@
      call MP_perr_die(myname_,"MPI_COMM_RANK() failed",ierr)
   endif
 
+       ! can't scatter vector parts.
+  if((myID.eq.root) .and. GsMat%vecinit) then
+      write(stderr,*) myname_,&
+      "WARNING: will not scatter vector parts of GsMat."
+  endif
+
        ! Create from rowGSMap the corresponding GlobalSegMap
        ! that will decompose GsMat by row the same way.
 
@@ -346,6 +365,9 @@
   LsMat%nrows = NumRowsColumns(1)
   LsMat%ncols = NumRowsColumns(2)
 
+       ! Set the value of vecinit
+  LsMat%vecinit = .FALSE.
+
        ! Sort the matrix entries in sMat by row, then column.  
        ! First, create the key list...
 
@@ -366,7 +388,7 @@
 !-------------------------------------------------------------------------
 !BOP
 !
-! !IROUTINE:  GM_gather_()--Gather a distributed SparseMatrix to the root.
+! !IROUTINE:  GM_gather_ - Gather a distributed SparseMatrix to the root.
 !
 ! !DESCRIPTION: This routine gathers the input distributed 
 ! {\tt SparseMatrix} argument {\tt LsMat} to the {\tt SparseMatrix} 
@@ -427,6 +449,11 @@
 
   if(present(stat))  stat = 0
 
+  if(LsMat%vecinit) then
+      write(stderr,*) myname_,&
+      "WARNING: will not gather vector parts of LsMat."
+  endif
+
   call AttrVect_gather(LsMat%data, GsMat%data, GMap, root, comm, ierr)
   if(ierr /= 0) then
      if(present(stat)) then
@@ -446,6 +473,8 @@
   GsMat%nrows = SparseMatrix_nRows(LsMat)
   GsMat%ncols = SparseMatrix_nCols(LsMat)
 
+  GsMat%vecinit = .FALSE.
+
  end subroutine GM_gather_
 
 !-------------------------------------------------------------------------
@@ -453,7 +482,7 @@
 !-------------------------------------------------------------------------
 !BOP
 !
-! !IROUTINE:  GSM_gather_()--Gather a distributed SparseMatrix to the root.
+! !IROUTINE:  GSM_gather_ - Gather a distributed SparseMatrix to the root.
 !
 ! !DESCRIPTION: This routine gathers the input distributed 
 ! {\tt SparseMatrix} argument {\tt LsMat} to the {\tt SparseMatrix} 
@@ -512,6 +541,11 @@
 
   if(present(stat))  stat = 0
 
+  if(LsMat%vecinit) then
+      write(stderr,*) myname_,&
+      "WARNING: will not gather vector parts of LsMat."
+  endif
+
        ! Gather the AttrVect component of LsMat to GsMat...
 
   call AttrVect_gather(LsMat%data, GsMat%data, GSMap, root, comm, ierr)
@@ -533,6 +567,8 @@
   GsMat%nrows = SparseMatrix_nRows(LsMat)
   GsMat%ncols = SparseMatrix_nCols(LsMat)
 
+  GsMat%vecinit = .FALSE.
+
  end subroutine GSM_gather_
 
 !-------------------------------------------------------------------------
@@ -540,7 +576,7 @@
 !-------------------------------------------------------------------------
 !BOP
 !
-! !IROUTINE:  Bcast_()--Broadcast a SparseMatrix.
+! !IROUTINE:  Bcast_ - Broadcast a SparseMatrix.
 ! 
 ! !DESCRIPTION: This routine broadcasts the {\tt SparseMatrix} argument 
 ! {\tt sMat} from the root to all processes on the communicator associated
@@ -550,6 +586,9 @@
 ! {\bf N.B.:}  This routine returns an allocated {\tt SparseMatrix} 
 ! variable {\tt sMat}.  The user must destroy this variable when it
 ! is no longer needed by invoking {\tt SparseMatrix\_Clean()}.
+!
+! {\bf N.B.:}  This routine will exit with an error if the vector portion
+! of {\tt sMat} has been initialized prior to broadcast.
 !
 ! !INTERFACE:
 
@@ -613,8 +652,13 @@
 
   call MPI_COMM_RANK(comm, myID, ierr)
   if(ierr /= 0) then
-     write(stderr,'(2a,i8)') myname_, &
-                        ':: FATAL--call MPI_COMM_RANK() failed with ierr=',ierr
+     call MP_perr_die(myname_,"MPI_COMM_RANK() failed",ierr)
+  endif
+
+  if((myID.eq.root) .and. sMat%vecinit) then
+      write(stderr,*) myname_,&
+      "Cannot broadcast SparseMatrix with initialized vector parts." 
+      call die(myname_,"Gather SparseMatrix with vecinit TRUE.") 
   endif
 
        ! Broadcast sMat%data from the root
@@ -647,6 +691,8 @@
      sMat%nrows = NumRowsColumns(1)
      sMat%ncols = NumRowsColumns(2)
   endif
+
+  sMat%vecinit = .FALSE.
 
  end subroutine Bcast_
 

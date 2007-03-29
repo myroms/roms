@@ -114,6 +114,9 @@
       public :: SparseMatrixPlus
 
       Type SparseMatrixPlus
+#ifdef SEQUENCE
+        sequence
+#endif
         type(String) :: Strategy
         integer :: XPrimeLength
         type(Rearranger) :: XToXPrime
@@ -126,6 +129,7 @@
 ! !PUBLIC MEMBER FUNCTIONS:
 
       public :: init
+      public :: vecinit
       public :: clean
       public :: initialized
 
@@ -133,6 +137,7 @@
         initFromRoot_, &
         initDistributed_
       end interface
+      interface vecinit ; module procedure vecinit_ ; end interface
       interface clean ; module procedure clean_ ; end interface
       interface initialized ; module procedure initialized_ ; end interface
 
@@ -165,7 +170,7 @@
       character(len=*), parameter :: Yonly = 'Yonly'
       character(len=*), parameter :: XandY = 'XandY'
 
-      character(len=*), parameter :: myname = 'm_SparseMatrixPlus'
+      character(len=*), parameter :: myname = 'MCT::m_SparseMatrixPlus'
 
  contains
 
@@ -218,7 +223,6 @@
       use m_GlobalSegMap, only : GlobalSegMap_clean => clean
 
       use m_SparseMatrix, only : SparseMatrix
-      use m_SparseMatrix, only : SparseMatrix_init => init
       use m_SparseMatrix, only : SparseMatrix_nRows => nRows
       use m_SparseMatrix, only : SparseMatrix_nCols => nCols
 
@@ -268,6 +272,9 @@
 
   SMatPlus%Tag = DefaultTag
   if(present(Tag)) SMatPlus%Tag = Tag
+
+       ! set vector flag
+  SMatPlus%Matrix%vecinit = .FALSE.
 
        ! Get local process ID number
 
@@ -412,7 +419,6 @@
       use m_GlobalSegMap, only : GlobalSegMap_clean => clean
 
       use m_SparseMatrix, only : SparseMatrix
-      use m_SparseMatrix, only : SparseMatrix_init => init
       use m_SparseMatrix, only : SparseMatrix_nRows => nRows
       use m_SparseMatrix, only : SparseMatrix_nCols => nCols
       use m_SparseMatrix, only : SparseMatrix_Copy => Copy
@@ -531,6 +537,42 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
+! !IROUTINE: vecinit_ - Initialize vector parts of a SparseMatrixPlus
+!
+! !DESCRIPTION:  
+! This routine will initialize the parts of the SparseMatrix in
+! the SparseMatrixPlus object that are used in the vector-friendly
+! version of the sparse matrix multiply.
+!
+! !INTERFACE:
+
+ subroutine vecinit_(SMatP)
+!
+! !USES:
+!
+      use m_die
+      use m_SparseMatrix, only : SparseMatrix_vecinit => vecinit
+
+      implicit none
+
+! !INPUT/OUTPUT PARAMETERS:
+
+      type(SparseMatrixPlus), intent(inout)  :: SMatP
+
+! !REVISION HISTORY:
+! 29Oct03 - R. Jacob <jacob@mcs.anl.gov> - initial prototype
+!EOP ___________________________________________________________________
+!
+  character(len=*),parameter :: myname_=myname//'::vecinit_'
+
+  call SparseMatrix_vecinit(SMatP%Matrix)
+
+ end subroutine vecinit_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
 ! !IROUTINE: clean_ - Destruction of a SparseMatrixPlus Object
 !
 ! !DESCRIPTION:  
@@ -609,14 +651,13 @@
 
      call Rearranger_clean(SMatP%XToXprime, myStatus)
      if(myStatus /= 0) then ! something went wrong
-	write(stderr,'(3a,i8)') myname_, &
-	     ':: ERROR - call to Rearranger_clean(SMatP%XToXprime) failed.', &
-	     ' stat = ',myStatus
 	if(present(status)) then
 	   status = myStatus
 	   return
 	else
-	   call die(myname_)
+	   write(stderr,'(3a,i8)') myname_, &
+	     ':: ERROR - call to Rearranger_clean(SMatP%XToXprime) failed.', &
+	     ' stat = ',myStatus
 	endif
      endif
 
@@ -624,14 +665,13 @@
 
      call Rearranger_clean(SMatP%YprimeToY, myStatus)
      if(myStatus /= 0) then ! something went wrong
-	write(stderr,'(3a,i8)') myname_, &
-	     ':: ERROR - call to Rearranger_clean(SMatP%YPrimeToY) failed.', &
-	     ' stat = ',myStatus
 	if(present(status)) then
 	   status = myStatus
 	   return
 	else
-	   call die(myname_)
+	   write(stderr,'(3a,i8)') myname_, &
+	     ':: ERROR - call to Rearranger_clean(SMatP%YPrimeToY) failed.', &
+	     ' stat = ',myStatus
 	endif
      endif
 
@@ -639,27 +679,25 @@
 
      call Rearranger_clean(SMatP%XToXprime, myStatus)
      if(myStatus /= 0) then ! something went wrong
-	write(stderr,'(3a,i8)') myname_, &
-	     ':: ERROR - call to Rearranger_clean(SMatP%XToXprime) failed.', &
-	     ' stat = ',myStatus
 	if(present(status)) then
 	   status = myStatus
 	   return
 	else
-	   call die(myname_)
+	   write(stderr,'(3a,i8)') myname_, &
+	     ':: ERROR - call to Rearranger_clean(SMatP%XToXprime) failed.', &
+	     ' stat = ',myStatus
 	endif
      endif
 
      call Rearranger_clean(SMatP%YprimeToY, myStatus)
      if(myStatus /= 0) then ! something went wrong
-	write(stderr,'(3a,i8)') myname_, &
-	     ':: ERROR - call to Rearranger_clean(SMatP%YPrimeToY) failed.', &
-	     ' stat = ',myStatus
 	if(present(status)) then
 	   status = myStatus
 	   return
 	else
-	   call die(myname_)
+	   write(stderr,'(3a,i8)') myname_, &
+	     ':: ERROR - call to Rearranger_clean(SMatP%YPrimeToY) failed.', &
+	     ' stat = ',myStatus
 	endif
      endif
 
@@ -675,13 +713,12 @@
 
   call SparseMatrix_clean(SMatP%Matrix, myStatus)
   if(myStatus /= 0) then ! something went wrong
-     write(stderr,'(2a,i8)') myname_, &
-	  ':: ERROR - call to SparseMatrix_clean() failed with stat=',myStatus
      if(present(status)) then
 	status = myStatus
 	return
      else
-	call die(myname_)
+        write(stderr,'(2a,i8)') myname_, &
+	  ':: ERROR - call to SparseMatrix_clean() failed with stat=',myStatus
      endif
   endif
 
@@ -696,7 +733,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: initialized_() - Confirmation of Initialization
+! !IROUTINE: initialized_ - Confirmation of Initialization
 !
 ! !DESCRIPTION:
 ! This {\tt LOGICAL} query function tells the user if the input 

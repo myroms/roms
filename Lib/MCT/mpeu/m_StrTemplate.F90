@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_StrTemplate.F90,v 1.6 2004/04/21 22:54:46 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_StrTemplate - A template formatting a string with variables
@@ -52,7 +52,7 @@
 !                 interpret them (spooky).
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_StrTemplate'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_StrTemplate'
 
   character(len=3),parameter,dimension(12) :: mon_lc =	(/	&
 	'jan','feb','mar','apr','may','jun',	&

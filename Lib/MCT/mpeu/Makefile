@@ -1,18 +1,9 @@
-#!/bin/make
+
+SHELL           = /bin/sh
+
+# SOURCE FILES
 
 MODULE		= mpeu
-
-SRCS_mks	= Makefile			\
-		  Makefile.conf.in              \
-		  Makefile.rules		\
-		  configure			\
-		  unconfigure			\
-		  externals.mk			\
-		  README
-
-SRCS_C		= get_zeits.c
-
-SRCS_F		= m_mpif.F
 
 SRCS_F90	= m_IndexBin_char.F90		\
 		  m_IndexBin_integer.F90	\
@@ -32,81 +23,65 @@ SRCS_F90	= m_IndexBin_char.F90		\
 		  m_inpak90.F90			\
 		  m_ioutil.F90			\
 		  m_mall.F90			\
+		  m_mpif.F90			\
 		  m_mpif90.F90			\
 		  m_mpout.F90			\
 		  m_rankMerge.F90		\
 		  m_realkinds.F90		\
 		  m_stdio.F90			\
 		  m_TraceBack.F90		\
-		  m_zeit.F90			
+		  m_zeit.F90
 
-SRCS_ALL	= $(SRCS_f)		\
-		  $(SRCS_F)		\
-		  $(SRCS_f90)		\
-		  $(SRCS_F90)		\
-		  $(SRCS_C)
+SRCS_C		= get_zeits.c
 
-OBJS_ALL	= $(SRCS_f:.f=.o)	\
-		  $(SRCS_F:.F=.o)	\
-		  $(SRCS_f90:.f90=.o)	\
-		  $(SRCS_F90:.F90=.o)	\
+OBJS_ALL	= $(SRCS_F90:.F90=.o)	\
 		  $(SRCS_C:.c=.o)
 
-ARCH_TARGETS	= $(SRCS_mks) $(SRCS_ALL)
-ALL_TARGETS	= lib$(MODULE).a 
-SUBD_TARGETS	= 
-CLEAN_FILES	= 
+# MACHINE AND COMPILER FLAGS
 
-M		= mod
-MODS_OBJ        = m_chars.o		\
-		  m_die.o		\
-		  m_flow.o		\
-		  m_inpak90.o 		\
-		  m_ioutil.o 		\
-		  m_List.o 		\
-		  m_mall.o		\
-		  m_mpif90.o		\
-		  m_mpout.o		\
-		  m_Filename.o		\
-		  m_Permuter.o		\
-		  m_realkinds.o		\
-		  m_SortingTools.o	\
-		  m_stdio.o		\
-		  m_String.o		\
-		  m_StrTemplate.o	\
-		  m_zeit.o              \
-                  m_FileResolv.o        \
-                  m_MergeSorts.o	\
-                  m_TraceBack.o		\
-		  assert.H
+include ../Makefile.conf
 
-include Makefile.rules
-include Makefile.conf
+# TARGETS
 
-# targets
+all:	lib$(MODULE).a
 
 lib$(MODULE).a:	$(OBJS_ALL)
 	$(RM) $@
-	@ echo $(AR) $@ $(OBJS_ALL)
-	@ $(AR) $@ $(OBJS_ALL)
+	$(AR) $@ $(OBJS_ALL)
 
-# mpi0 targets:
+# ADDITIONAL FLAGS SPECIFIC FOR MPEU COMPILATION
 
-#libeu.a: $(OBJS_ALL) mpi0/libmpi0.a
-#	$(RM) $@
-#	cp -p mpi0/libmpi0.a $@
-#	@ echo $(AR) $@ $(OBJS_ALL)
-#	@ $(AR) $@ $(OBJS_ALL)
+MPEUFLAGS =
 
-#mpi0/libmpi0.a:
-#	@(cd mpi0; make libmpi0.a)
+# RULES
 
-#$(MODULE): $(MODS_OBJ)
-#	env M=$M $(MUPDATE) $@ $?
+.SUFFIXES:
+.SUFFIXES: .F90 .c .o
 
-# dependencies:
+$(CRULE):
+	$(CC) -c $(ALLCFLAGS) $*.c
 
-m_mpif.o:
+$(F90RULE):
+	$(FC) -c $(INCPATH) $(DEFS) $(FCFLAGS) $(F90FLAGS) $(MPEUFLAGS) $*.F90
+
+$(F90RULECPP):
+	$(FPP) $(DEFS) $(FPPFLAGS) $*.F90 $*.f90
+	$(FC) -c $(INCPATH) $(FCFLAGS) $(F90FLAGS) $(MPEUFLAGS) $*.f90
+	$(RM) $*.f90
+
+clean:
+	${RM} *.o *.mod lib$(MODULE).a
+
+install: all
+	$(MKINSTALLDIRS) $(libdir) $(includedir)
+	$(INSTALL) lib$(MODULE).a -m 644 $(libdir)
+	@for modfile in *.mod; do                         \
+	  echo $(INSTALL) $$modfile -m 644 $(includedir); \
+	  $(INSTALL) $$modfile -m 644 $(includedir);      \
+	done
+
+# DEPENDENCIES
+
 m_IndexBin_char.o: m_die.o m_stdio.o
 m_IndexBin_integer.o: m_die.o m_stdio.o
 m_IndexBin_logical.o: m_die.o m_stdio.o
@@ -124,6 +99,7 @@ m_flow.o: m_chars.o
 m_inpak90.o: m_die.o m_ioutil.o m_mall.o m_mpif90.o m_realkinds.o m_stdio.o
 m_ioutil.o: m_stdio.o
 m_mall.o: m_chars.o m_die.o m_ioutil.o m_realkinds.o m_stdio.o
+m_mpif.o:
 m_mpif90.o: m_mpif.o m_realkinds.o m_stdio.o
 m_mpout.o: m_dropdead.o m_ioutil.o m_mpif90.o m_stdio.o
 m_rankMerge.o:
@@ -134,4 +110,16 @@ get_zeits.o:
 m_FileResolv.o: m_die.o m_StrTemplate.o
 m_TraceBack.o:	m_die.o m_stdio.o m_String.o
 
-#.
+
+
+
+
+
+
+
+
+
+
+
+
+

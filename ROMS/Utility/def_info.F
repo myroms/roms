@@ -324,6 +324,15 @@
       status=nf_put_att_text(ncid,nf_global,'spos_file',                &
      &                       LEN_TRIM(sposnam),sposnam)
 #endif
+!
+!  SVN repository information.
+!
+      status=nf_put_att_text(ncid,nf_global,'svn_url',                  &
+     &                       LEN_TRIM(svn_url),svn_url)
+#ifdef SVN_REV
+      status=nf_put_att_text(ncid,nf_global,'svn_rev',                  &
+     &                       LEN_TRIM(svn_rev),svn_rev)
+#endif
 #ifndef DEBUGGING
 !
 !  Attributes describing platform and compiler
@@ -1159,9 +1168,9 @@
       Vinfo( 3)='parts per million by volume'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
-# elif defined NPZD
+# elif defined NPZD_FRANKS
 !
-!  Define Fasham biological model parameters.
+!  Define NPZD (Franks et al., 1986) biological model parameters.
 !
       Vinfo( 1)='BioIter'
       Vinfo( 2)='number of iterations to achieve convergence'
@@ -1217,6 +1226,91 @@
       Vinfo( 1)='DetRR'
       Vinfo( 2)='detritus remineralization rate'
       Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='wDet'
+      Vinfo( 2)='detrital sinking rate'
+      Vinfo( 3)='m day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+# elif defined NPZD_POWELL
+!
+!  Define NPZD (Powell et al., 2006) biological model parameters.
+!
+      Vinfo( 1)='BioIter'
+      Vinfo( 2)='number of iterations to achieve convergence'
+      status=def_var(ncid,varid,nf_int,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='AttSW'
+      Vinfo( 2)='light attenuation due to sea water'
+      Vinfo( 3)='meter-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='AttPhy'
+      Vinfo( 2)='light attenuation due to phytoplankton'
+      Vinfo( 3)='meter2/millimole_N'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='PhyIS'
+      Vinfo( 2)='phytoplankton initial slopw of the P-I cureve'
+      Vinfo( 3)='m2/W'
+      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='Vm_NO3'
+      Vinfo( 2)='nitrate uptake rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='PhyMRD'
+      Vinfo( 2)='phytoplankton mortality rate to the detritus pool'
+      Vinfo( 3)='day-1'
+      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='PhyMRN'
+      Vinfo( 2)='phytoplankton mortality rate to the Nitrogen pool'
+      Vinfo( 3)='day-1'
+      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='K_NO3'
+      Vinfo( 2)='inverse half-saturation for phytoplankton NO3 uptake'
+      Vinfo( 3)='meter3 millimole-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='Ivlev'
+      Vinfo( 2)='Ivlev constant for zooplankton grazing'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ZooGR'
+      Vinfo( 2)='zooplankton grazing rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ZooEED'
+      Vinfo( 2)='zooplankton excretion efficiency to detritus pool'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ZooEEN'
+      Vinfo( 2)='zooplankton excretion efficiency to Nitrogen pool'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ZooMRD'
+      Vinfo( 2)='zooplankton mortality rate to the detritus pool'
+      Vinfo( 3)='day-1'
+      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='ZooMRN'
+      Vinfo( 2)='zootoplankton mortality rate to the Nitrogen pool'
+      Vinfo( 3)='day-1'
+      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='DetRR'
+      Vinfo( 2)='detritus remineralization rate'
+      Vinfo( 3)='day-1'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='wPhy'
+      Vinfo( 2)='phytoplankton sinking rate'
+      Vinfo( 3)='m day-1'
       status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='wDet'

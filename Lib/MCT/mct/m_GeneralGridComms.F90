@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_GeneralGridComms.F90,v 1.23 2004/04/21 22:16:33 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_GeneralGridComms - Communications for the GeneralGrid type.
@@ -52,7 +52,7 @@
 !                 error checks to avoid making bad MPI calls
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_GeneralGridComms'
+  character(len=*),parameter :: myname='MCT::m_GeneralGridComms'
 
  contains
 

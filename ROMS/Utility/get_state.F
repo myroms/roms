@@ -26,6 +26,9 @@
       USE mod_parallel
       USE mod_grid
       USE mod_iounits
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+      USE mod_forces
+#endif
 #ifdef FOUR_DVAR
       USE mod_fourdvar
 #endif
@@ -1288,6 +1291,67 @@
             END IF
           END IF
         END IF
+
+# ifdef ADJUST_WSTRESS
+!
+!  Read in tangent linear surface U-momentum stress.
+!
+        IF (get_var(idUsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            gtype=vflag(varid)*u2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % umask(LBi,LBj),                  &
+#  endif
+     &                      FORCES(ng) % tl_ustr(LBi,LBj,Tindex))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+!
+!  Read in tangent linear surface V-momentum stress.
+!
+        IF (get_var(idVsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            gtype=vflag(varid)*v2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % vmask(LBi,LBj),                  &
+#  endif
+     &                      FORCES(ng) % tl_vstr(LBi,LBj))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+# endif
 !
 !  Read in tangent linear 2D momentum component (m/s) in the
 !  ETA-direction.
@@ -1413,6 +1477,41 @@
           END IF
         END DO
 
+#  ifdef ADJUST_STFLUX
+!
+!  Read in tangent linear surface tracers flux.
+!
+        DO itrc=1,NT(ng)
+          IF (get_var(idTsur(itrc))) THEN
+            IF (InpThread) THEN
+              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
+     &                            varid)
+              gtype=vflag(varid)*r2dvar
+            END IF
+            status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj,                &
+     &                        Fscl, Fmin, Fmax,                         &
+#   ifdef MASKING
+     &                        GRID(ng) % rmask(LBi,LBj),                &
+#   endif
+     &                        FORCES(ng)% tl_tflux(LBi,LBj,Tindex,itrc))
+            IF (status.ne.nf_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
+     &                            InpRec, TRIM(ncname)
+              END IF             
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
+     &                             Fmin, Fmax
+              END IF
+            END IF
+          END IF
+        END DO
+#  endif
 #  ifdef SEDIMENT
 !
 !  Read in tangent linear sediment fraction of each size class in each
@@ -1707,6 +1806,67 @@
             END IF
           END IF
         END IF
+
+# ifdef ADJUST_WSTRESS
+!
+!  Read in adjoint linear surface U-momentum stress.
+!
+        IF (get_var(idUsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            gtype=vflag(varid)*u2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % umask(LBi,LBj),                  &
+#  endif
+     &                      FORCES(ng) % ad_ustr(LBi,LBj,Tindex))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+!
+!  Read in adjoint linear surface V-momentum stress.
+!
+        IF (get_var(idVsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            gtype=vflag(varid)*v2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % vmask(LBi,LBj),                  &
+#  endif
+     &                      FORCES(ng) % ad_vstr(LBi,LBj))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Read in adjoint 3D momentum component (m/s) in the XI-direction.
@@ -1799,6 +1959,42 @@
             END IF
           END IF
         END DO
+
+#  ifdef ADJUST_STFLUX
+!
+!  Read in adjoint surface tracers flux.
+!
+        DO itrc=1,NT(ng)
+          IF (get_var(idTsur(itrc))) THEN
+            IF (InpThread) THEN
+              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
+     &                            varid)
+              gtype=vflag(varid)*r2dvar
+            END IF
+            status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj,                &
+     &                        Fscl, Fmin, Fmax,                         &
+#   ifdef MASKING
+     &                        GRID(ng) % rmask(LBi,LBj),                &
+#   endif
+     &                        FORCES(ng)% ad_tflux(LBi,LBj,Tindex,itrc))
+            IF (status.ne.nf_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
+     &                            InpRec, TRIM(ncname)
+              END IF             
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
+     &                             Fmin, Fmax
+              END IF
+            END IF
+          END IF
+        END DO
+#  endif
 
 #  ifdef SEDIMENT
 !
@@ -2093,6 +2289,66 @@
             END IF
           END IF
         END IF
+# ifdef ADJUST_WSTRESS
+!
+!  Read in surface U-momentum stress norm.
+!
+        IF (get_var(idUsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            gtype=vflag(varid)*u2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % umask(LBi,LBj),                  &
+#  endif
+     &                      OCEAN(ng) % b_sustr(LBi,LBj))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+!
+!  Read in surface V-momentum stress norm.
+!
+        IF (get_var(idVsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            gtype=vflag(varid)*v2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % vmask(LBi,LBj),                  &
+#  endif
+     &                      OCEAN(ng) % b_svstr(LBi,LBj))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Read in 3D momentum norm in the XI-direction.
@@ -2185,6 +2441,41 @@
             END IF
           END IF
         END DO
+#  ifdef ADJUST_STFLUX
+!
+!  Read in surface tracer flux norm.
+!
+        DO itrc=1,NT(ng)
+          IF (get_var(idTsur(itrc))) THEN
+            IF (InpThread) THEN
+              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
+     &                            varid)
+              gtype=vflag(varid)*r2dvar
+            END IF
+            status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj,                &
+     &                        Fscl, Fmin, Fmax,                         &
+#   ifdef MASKING
+     &                        GRID(ng) % rmask(LBi,LBj),                &
+#   endif
+     &                        OCEAN(ng) % b_stflx(LBi,LBj,itrc))
+            IF (status.ne.nf_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
+     &                             Fmin, Fmax
+              END IF
+            END IF
+          END IF
+        END DO
+#  endif
 # endif
       END IF NRM_STATE
 #endif
@@ -2283,7 +2574,66 @@
             END IF
           END IF
         END IF
-
+# ifdef ADJUST_WSTRESS
+!
+!  Read in surface U-momentum stress standard deviation.
+!
+        IF (get_var(idUsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            gtype=vflag(varid)*u2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % umask(LBi,LBj),                  &
+#  endif
+     &                      OCEAN(ng) % e_sustr(LBi,LBj))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+!
+!  Read in surface V-momentum stress standard deviation.
+!
+        IF (get_var(idVsms)) THEN
+          IF (InpThread) THEN
+            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            gtype=vflag(varid)*v2dvar
+          END IF
+          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+     &                      Fscl, Fmin, Fmax,                           &
+#  ifdef MASKING
+     &                      GRID(ng) % vmask(LBi,LBj),                  &
+#  endif
+     &                      OCEAN(ng) % e_svstr(LBi,LBj))
+          IF (status.ne.nf_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Read in 3D momentum standard deviation in the XI-direction.
@@ -2376,6 +2726,41 @@
             END IF
           END IF
         END DO
+#  ifdef ADJUST_STFLUX
+!
+!  Read in surface tracer flux standard deviations.
+!
+        DO itrc=1,NT(ng)
+          IF (get_var(idTsur(itrc))) THEN
+            IF (InpThread) THEN
+              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
+     &                            varid)
+              gtype=vflag(varid)*r2dvar
+            END IF
+            status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj,                &
+     &                        Fscl, Fmin, Fmax,                         &
+#   ifdef MASKING
+     &                        GRID(ng) % rmask(LBi,LBj),                &
+#   endif
+     &                        OCEAN(ng) % e_stflx(LBi,LBj,itrc))
+            IF (status.ne.nf_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
+     &                             Fmin, Fmax
+              END IF
+            END IF
+          END IF
+        END DO
+#  endif
 # endif
 !
 !  Read in convolution horizontal diffusion coefficients.

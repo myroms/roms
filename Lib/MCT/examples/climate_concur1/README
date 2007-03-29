@@ -1,65 +1,38 @@
 
-Test features of the Model Coupling Toolkit within a
-pseudo coupled model system.
+This program demonstrates the use of MCT in a simple
+coupled system consisting of a "model" and a "coupler".
 
-Uses the Single Executable -- No Overlap version of MPH.
+The grids used are taken from a real climate model.
+"model" uses an atmosphere grid and "coupler" interpolates
+data on it to an ocean grid.
 
-Default is for 16 processors total
+The model and coupler run on separate pools of processors.
 
-To build, first build the mpeu and mct libraries
-then type "./configure" and "make all".
+master.F90  - the top level program
+model.F90   - the first component, an atmosphere model.
+               sends data to the coupler. 
+coupler.F90 - the second component, a coupler which takes
+                 the received atmosphere data and maps it to
+                 the ocean grid.
 
+-----------------------------------------------------
+To compile: 
+First make sure you have compiled MCT. See instructions in
+MCT/README
 
-runscripts are provided for various platforms.
-You may need to edit to change directory paths,
-project numbers, etc.
+Type "make" here or "make examples" in the top-level directory.
 
-NOTE: utmct now reads in sparsematrix elements.  The
-file containing this is assumed to be in ../data.
+The executable is called "climate"
 
-THINGS TO TRY:
+-----------------------------------------------------
+To run:
+"climate" requires a data file of interpolation weights in
+the directory MCT/data.  If this directory was not present when
+you untarred MCT, you can get it from the MCT website.
 
->Change the number of processors the unit tester uses.
+climate requires at least 2 MPI processes to run but can run on
+any even number of processors.  Consult your
+local documentation for how to run parallel programs.
+Typical command:  mpirun -np 8 climate
 
-For the ocean (pop.F) and coupler (cpl.F), you only need to edit the
-entries in processors_in.map.  No need to recompile.  The MCT will
-recalculate the Router based on the new coupler GlobalSegMap.
-MPH will assign the specified processors to the model.
-
-For the atmosphere (ccm.F), edit the Makefile and look for
-the definition of _D  (line 28 or so).  Change NPROCS_LATA and
-NPROCS_LONA to the combination you want to try.  (Each must
-be a power of two.) Then do a "make clean" and "make all".
-Also be sure to edit processors.map to accommodate the larger
-number of processors.
-
->Change the number of points in the Atmosphere grid.
-
-Edit Nax and Nay in the _D definition in the Makefile.
-recompile.  Each must be a power-of-two if you're going to
-use the same decomposition strategy.
-
->Change the decomposition strategy.
-
-Comment out or delete the relevant code in cpl.F or atm.F and
-describe your own decomposition strategy.  Initialize the
-GlobalSegMap appropriately.
-
-R. Jacob  ANL/MCS  jacob@mcs.anl.gov   Feb 2001
-
---------------------------------------------------------------------
-
-
-Atmosphere Grid Resolutions
-
-T85: 256 lons x 128 lats
-T63: 192 lons x 96 lats
-T42: 128 lons x 64 lats
-T31: 96 lons x 48 lats
-
-
-Added by E.T. Ong <eong@mcs.anl.gov> Aug 2001
-
------------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+This program will not work with mpi-serial.

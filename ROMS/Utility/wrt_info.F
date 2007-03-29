@@ -1503,9 +1503,9 @@
           RETURN
         END IF
 
-# elif defined NPZD
+# elif defined NPZD_FRANKS
 !
-!  Write out NPZD biological model parameters.
+!  Write out NPZD (Franks et al., 1986) biological model parameters.
 !
         wrt_info=nf_inq_varid(ncid,'BioIter',varid)
         wrt_info=nf_put_var1_int(ncid,varid,1,BioIter(ng))
@@ -1610,6 +1610,163 @@
         wrt_info=nf_put_var1_TYPE(ncid,varid,1,DetRR(ng))
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'DetRR', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'wDet',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wDet(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'wDet', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+# elif defined NPZD_POWELL
+!
+!  Write out NPZD (Powell et al., 2006) biological model parameters.
+!
+        wrt_info=nf_inq_varid(ncid,'BioIter',varid)
+        wrt_info=nf_put_var1_int(ncid,varid,1,BioIter(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'BioIter', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'AttSW',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,AttSW(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'AttSW', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'AttPhy',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,AttPhy(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'AttPhy', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'PhyIS',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,PhyIS(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'PhyIS', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'Vm_NO3',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,Vm_NO3(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'Vm_NO3', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'PhyMRD',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,PhyMRD(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'PhyMRD', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'PhyMRN',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,PhyMRN(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'PhyMRN', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'K_NO3',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,K_NO3(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'K_NO3', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'Ivlev',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,Ivlev(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'Ivlev', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'ZooGR',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooGR(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'ZooGR', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'ZooEED',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooEED(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'ZooEED', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'ZooEEN',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooEEN(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'ZooEEN', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'ZooMRD',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooMRD(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'ZooMRD', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'ZooMRN',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,ZooMRN(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'ZooMRN', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'DetRR',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,DetRR(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'DetRR', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'wPhy',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,wPhy(ng))
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'wPhy', TRIM(ncname)
           exit_flag=3
           ioerror=wrt_info
           RETURN

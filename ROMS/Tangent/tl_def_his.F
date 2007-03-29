@@ -333,7 +333,7 @@
 !
         IF (Hout(idFsur,ng)) THEN
           Vinfo( 1)=Vname(1,idFsur)
-          Vinfo( 2)=Vname(2,idFsur)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idFsur))
           Vinfo( 3)=Vname(3,idFsur)
           Vinfo(14)=Vname(4,idFsur)
           Vinfo(16)=Vname(1,idtime)
@@ -346,7 +346,7 @@
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
 # if defined FORWARD_WRITE && defined FORWARD_RHS
           Vinfo( 1)=Vname(1,idRzet)
-          Vinfo( 2)=Vname(2,idRzet)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idRzet))
           Vinfo( 3)=Vname(3,idRzet)
           Vinfo(14)=Vname(4,idRzet)
           Vinfo(16)=Vname(1,idtime)
@@ -364,7 +364,7 @@
 !
         IF (Hout(idUbar,ng)) THEN
           Vinfo( 1)=Vname(1,idUbar)
-          Vinfo( 2)=Vname(2,idUbar)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUbar))
           Vinfo( 3)=Vname(3,idUbar)
           Vinfo(14)=Vname(4,idUbar)
           Vinfo(16)=Vname(1,idtime)
@@ -378,7 +378,7 @@
 # ifdef FORWARD_WRITE
 #  ifdef FORWARD_RHS
           Vinfo( 1)=Vname(1,idRu2d)
-          Vinfo( 2)=Vname(2,idRu2d)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idRu2d))
           Vinfo( 3)=Vname(3,idRu2d)
           Vinfo(14)=Vname(4,idRu2d)
           Vinfo(16)=Vname(1,idtime)
@@ -394,7 +394,7 @@
 #  ifdef SOLVE3D
 #   ifdef FORWARD_RHS
           Vinfo( 1)=Vname(1,idRuct)
-          Vinfo( 2)=Vname(2,idRuct)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idRuct))
           Vinfo( 3)=Vname(3,idRuct)
           Vinfo(14)=Vname(4,idRuct)
           Vinfo(16)=Vname(1,idtime)
@@ -407,7 +407,7 @@
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
 #   endif
           Vinfo( 1)=Vname(1,idUfx1)
-          Vinfo( 2)=Vname(2,idUfx1)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUfx1))
           Vinfo( 3)=Vname(3,idUfx1)
           Vinfo(14)=Vname(4,idUfx1)
           Vinfo(16)=Vname(1,idtime)
@@ -419,7 +419,7 @@
           status=def_var(ncTLMid(ng),tlmVid(idUfx1,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
           Vinfo( 1)=Vname(1,idUfx2)
-          Vinfo( 2)=Vname(2,idUfx2)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUfx2))
           Vinfo( 3)=Vname(3,idUfx2)
           Vinfo(14)=Vname(4,idUfx2)
           Vinfo(16)=Vname(1,idtime)
@@ -438,7 +438,7 @@
 !
         IF (Hout(idVbar,ng)) THEN
           Vinfo( 1)=Vname(1,idVbar)
-          Vinfo( 2)=Vname(2,idVbar)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVbar))
           Vinfo( 3)=Vname(3,idVbar)
           Vinfo(14)=Vname(4,idVbar)
           Vinfo(16)=Vname(1,idtime)
@@ -452,7 +452,7 @@
 # ifdef FORWARD_WRITE
 #  ifdef FORWARD_RHS
           Vinfo( 1)=Vname(1,idRv2d)
-          Vinfo( 2)=Vname(2,idRv2d)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idRv2d))
           Vinfo( 3)=Vname(3,idRv2d)
           Vinfo(14)=Vname(4,idRv2d)
           Vinfo(16)=Vname(1,idtime)
@@ -467,7 +467,7 @@
 #  ifdef SOLVE3D
 #   ifdef FORWARD_RHS
           Vinfo( 1)=Vname(1,idRvct)
-          Vinfo( 2)=Vname(2,idRvct)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idRvct))
           Vinfo( 3)=Vname(3,idRvct)
           Vinfo(14)=Vname(4,idRvct)
           Vinfo(16)=Vname(1,idtime)
@@ -480,7 +480,7 @@
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
 #   endif
           Vinfo( 1)=Vname(1,idVfx1)
-          Vinfo( 2)=Vname(2,idVfx1)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVfx1))
           Vinfo( 3)=Vname(3,idVfx1)
           Vinfo(14)=Vname(4,idVfx1)
           Vinfo(16)=Vname(1,idtime)
@@ -492,7 +492,7 @@
           status=def_var(ncTLMid(ng),tlmVid(idVfx1,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
           Vinfo( 1)=Vname(1,idVfx2)
-          Vinfo( 2)=Vname(2,idVfx2)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVfx2))
           Vinfo( 3)=Vname(3,idVfx2)
           Vinfo(14)=Vname(4,idVfx2)
           Vinfo(16)=Vname(1,idtime)
@@ -512,7 +512,7 @@
 !
         IF (Hout(idUvel,ng)) THEN
           Vinfo( 1)=Vname(1,idUvel)
-          Vinfo( 2)=Vname(2,idUvel)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUvel))
           Vinfo( 3)=Vname(3,idUvel)
           Vinfo(14)=Vname(4,idUvel)
           Vinfo(16)=Vname(1,idtime)
@@ -525,7 +525,7 @@
      &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
 #  if defined FORWARD_WRITE && defined FORWARD_RHS
           Vinfo( 1)=Vname(1,idRu3d)
-          Vinfo( 2)=Vname(2,idRu3d)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idRu3d))
           Vinfo( 3)=Vname(3,idRu3d)
           Vinfo(14)=Vname(4,idRu3d)
           Vinfo(16)=Vname(1,idtime)
@@ -543,7 +543,7 @@
 !
         IF (Hout(idVvel,ng)) THEN
           Vinfo( 1)=Vname(1,idVvel)
-          Vinfo( 2)=Vname(2,idVvel)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVvel))
           Vinfo( 3)=Vname(3,idVvel)
           Vinfo(14)=Vname(4,idVvel)
           Vinfo(16)=Vname(1,idtime)
@@ -556,7 +556,7 @@
      &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
 #  if defined FORWARD_WRITE && defined FORWARD_RHS
           Vinfo( 1)=Vname(1,idRv3d)
-          Vinfo( 2)=Vname(2,idRv3d)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idRv3d))
           Vinfo( 3)=Vname(3,idRv3d)
           Vinfo(14)=Vname(4,idRv3d)
           Vinfo(16)=Vname(1,idtime)
@@ -575,14 +575,14 @@
         DO itrc=1,NT(ng)
           IF (Hout(idTvar(itrc),ng)) THEN
             Vinfo( 1)=Vname(1,idTvar(itrc))
-            Vinfo( 2)=Vname(2,idTvar(itrc))
+            WRITE (Vinfo( 2),40) TRIM(Vname(2,idTvar(itrc)))
             Vinfo( 3)=Vname(3,idTvar(itrc))
             Vinfo(14)=Vname(4,idTvar(itrc))
             Vinfo(16)=Vname(1,idtime)
 #  ifdef SEDIMENT_NOT_YET
             DO i=1,NST
               IF (itrc.eq.idsed(i)) THEN
-                WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
               END IF
             END DO
 #  endif
@@ -600,7 +600,7 @@
 !
         IF (Hout(idDano,ng)) THEN
           Vinfo( 1)=Vname(1,idDano)
-          Vinfo( 2)=Vname(2,idDano)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idDano))
           Vinfo( 3)=Vname(3,idDano)
           Vinfo(14)=Vname(4,idDano)
           Vinfo(16)=Vname(1,idtime)
@@ -621,7 +621,7 @@
 !
         IF (Hout(idVvis,ng)) THEN
           Vinfo( 1)=Vname(1,idVvis)
-          Vinfo( 2)=Vname(2,idVvis)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVvis))
           Vinfo( 3)=Vname(3,idVvis)
           Vinfo(14)=Vname(4,idVvis)
           Vinfo(16)=Vname(1,idtime)
@@ -638,7 +638,7 @@
 !
         IF (Hout(idTdif,ng)) THEN
           Vinfo( 1)=Vname(1,idTdif)
-          Vinfo( 2)=Vname(2,idTdif)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idTdif))
           Vinfo( 3)=Vname(3,idTdif)
           Vinfo(14)=Vname(4,idTdif)
           Vinfo(16)=Vname(1,idtime)
@@ -656,7 +656,7 @@
 !
         IF (Hout(idSdif,ng)) THEN
           Vinfo( 1)=Vname(1,idSdif)
-          Vinfo( 2)=Vname(2,idSdif)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idSdif))
           Vinfo( 3)=Vname(3,idSdif)
           Vinfo(14)=Vname(4,idSdif)
           Vinfo(16)=Vname(1,idtime)
@@ -675,7 +675,7 @@
 !
         IF (Hout(idMtke,ng)) THEN
           Vinfo( 1)=Vname(1,idMtke)
-          Vinfo( 2)=Vname(2,idMtke)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idMtke))
           Vinfo( 3)=Vname(3,idMtke)
           Vinfo(14)=Vname(4,idMtke)
           Vinfo(16)=Vname(1,idtime)
@@ -688,7 +688,7 @@
      &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
 
           Vinfo( 1)=Vname(1,idVmKK)
-          Vinfo( 2)=Vname(2,idVmKK)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVmKK))
           Vinfo( 3)=Vname(3,idVmKK)
           Vinfo(14)=Vname(4,idVmKK)
           Vinfo(16)=Vname(1,idtime)
@@ -706,7 +706,7 @@
 !
         IF (Hout(idMtls,ng)) THEN
           Vinfo( 1)=Vname(1,idMtls)
-          Vinfo( 2)=Vname(2,idMtls)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idMtls))
           Vinfo( 3)=Vname(3,idMtls)
           Vinfo(14)=Vname(4,idMtls)
           Vinfo(16)=Vname(1,idtime)
@@ -719,7 +719,7 @@
      &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
 
           Vinfo( 1)=Vname(1,idVmLS)
-          Vinfo( 2)=Vname(2,idVmLS)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVmLS))
           Vinfo( 3)=Vname(3,idVmLS)
           Vinfo(14)=Vname(4,idVmLS)
           Vinfo(16)=Vname(1,idtime)
@@ -732,7 +732,7 @@
      &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
 #    ifdef GLS_MIXING_NOT_YET
           Vinfo( 1)=Vname(1,idVmKP)
-          Vinfo( 2)=Vname(2,idVmKP)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVmKP))
           Vinfo( 3)=Vname(3,idVmKP)
           Vinfo(14)=Vname(4,idVmKP)
           Vinfo(16)=Vname(1,idtime)
@@ -747,6 +747,55 @@
         END IF
 #   endif
 #  endif
+#  ifdef ADJUST_STFLUX
+!
+!  Define surface net heat flux.
+!
+        DO itrc=1,NT(ng)
+          IF (Hout(idTsur(itrc),ng)) THEN
+            Vinfo( 1)=Vname(1,idTsur(itemp))
+            WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
+            Vinfo( 3)=Vname(3,idTsur(itemp))
+            Vinfo(14)=Vname(4,idTsur(itemp))
+            Vinfo(16)=Vname(1,idtime)
+            status=def_var(ncTLMid(ng),tlmVid(idTsur(itrc),ng),         &
+     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
+          END IF
+        END DO
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+!
+!  Define surface U-momentum stress.
+!
+        IF (Hout(idUsms,ng)) THEN
+          Vinfo( 1)=Vname(1,idUsms)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
+          Vinfo( 3)=Vname(3,idUsms)
+          Vinfo(14)=Vname(4,idUsms)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          status=def_var(ncTLMid(ng),tlmVid(idUsms,ng),NF_FOUT,         &
+     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define surface V-momentum stress.
+!
+        IF (Hout(idVsms,ng)) THEN
+          Vinfo( 1)=Vname(1,idVsms)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
+          Vinfo( 2)=Vname(2,idVsms)
+          Vinfo( 3)=Vname(3,idVsms)
+          Vinfo(14)=Vname(4,idVsms)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          status=def_var(ncTLMid(ng),tlmVid(idVsms,ng),NF_FOUT,         &
+     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+        END IF
 # endif
 !
 !-----------------------------------------------------------------------
@@ -782,7 +831,7 @@
 !
         status=nf_open(TRIM(ncname),nf_write,ncTLMid(ng))
         IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,50) TRIM(ncname)
+          WRITE (stdout,60) TRIM(ncname)
           exit_flag=3
           ioerror=status
           RETURN
@@ -961,80 +1010,102 @@
 #    endif
 #   endif
 #  endif
+#  ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+              got_var(idTsur(itrc))=.TRUE.
+              status=nf_inq_varid(ncTLMid(ng),                          &
+     &                            TRIM(Vname(1,idTsur(itrc))),          &
+     &                            tlmVid(idTsur(itrc),ng))
+            END IF
+          END DO
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUsms))) THEN
+            got_var(idUsms)=.TRUE.
+            status=nf_inq_varid(ncTLMid(ng),TRIM(Vname(1,idUsms)),      &
+     &                          tlmVid(idUsms,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVsms))) THEN
+            got_var(idVsms)=.TRUE.
+            status=nf_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVsms)),      &
+     &                          tlmVid(idVsms,ng))
+          END IF
 # endif
         END DO
 !
 !  Check if tangent variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idtime)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idtime)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur).and.Hout(idFsur,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idFsur)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idFsur)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar).and.Hout(idUbar,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUbar)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUbar)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar).and.Hout(idVbar,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVbar)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVbar)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef FORWARD_WRITE
         IF (.not.got_var(idRzet)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idRzet)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idRzet)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRu2d)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idRu2d)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idRu2d)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRv2d)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idRv2d)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idRv2d)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef SOLVE3D
         IF (.not.got_var(idRuct)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idRuct)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idRuct)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRvct)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idRvct)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idRvct)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUfx1)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUfx1)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUfx1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUfx2)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUfx2)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUfx2)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVfx1)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVfx1)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVfx1)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVfx2)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVfx2)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVfx2)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRu3d)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idRu3d)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idRu3d)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -1047,76 +1118,97 @@
 # endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Hout(idUvel,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUvel)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUvel)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel).and.Hout(idVvel,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVvel)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVvel)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc)).and.Hout(idTvar(itrc),ng)) THEN
-            WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
+            WRITE (stdout,70) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
         END DO
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idDano)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idDano)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  if defined FORWARD_MIXING     && \
      (defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET)
         IF (.not.got_var(idVvis).and.Hout(idVvis,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVvis)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVvis)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idTdif).and.Hout(idTdif,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idTdif)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idTdif)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #   ifdef SALINITY
         IF (.not.got_var(idSdif).and.Hout(idSdif,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idSdif)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idSdif)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #   endif
 #   if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
         IF (.not.got_var(idMtke).and.Hout(idMtke,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idMtke)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idMtke)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVmKK).and.Hout(idVmKK,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVmKK)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVmKK)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idMtls).and.Hout(idMtls,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idMtls)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idMtls)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVmLS).and.Hout(idVmLS,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVmLS)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVmLS)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #    ifdef GSL_MIXING
         IF (.not.got_var(idVmKP).and.Hout(idVmKP,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVmKP)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVmKP)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #    endif
 #   endif
 #  endif
+#  ifdef ADJUST_STFLUX
+        DO itrc=1,NT(ng)
+          IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN
+            WRITE (stdout,70) TRIM(Vname(1,idTsur(itrc))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+        IF (.not.got_var(idUsms).and.Hout(idUsms,ng)) THEN
+          WRITE (stdout,70) TRIM(Vname(1,idUsms)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVsms).and.Hout(idVsms,ng)) THEN
+          WRITE (stdout,70) TRIM(Vname(1,idVsms)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
 # endif
 !
 !  Set unlimited time record dimension to the appropriate value.
@@ -1142,9 +1234,10 @@
   20  FORMAT (3x,'TL_DEF_HIS   - inquiring tangent file: ',a)
   30  FORMAT (/,' TL_DEF_HIS - unable to create tangent NetCDF file: ', &
      &        a)
-  40  FORMAT (1pe11.4,1x,'millimeter')
-  50  FORMAT (/,' TL_DEF_HIS - unable to open tangent NetCDF file: ',a)
-  60  FORMAT (/,' TL_DEF_HIS - unable to find variable: ',a,2x,         &
+  40  FORMAT ('tangent linear',1x,a)
+  50  FORMAT (1pe11.4,1x,'millimeter')
+  60  FORMAT (/,' TL_DEF_HIS - unable to open tangent NetCDF file: ',a)
+  70  FORMAT (/,' TL_DEF_HIS - unable to find variable: ',a,2x,         &
      &        ' in tangent NetCDF file: ',a)
       RETURN
       END SUBROUTINE tl_def_his

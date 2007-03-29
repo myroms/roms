@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_zeit.F90,v 1.10 2004/04/21 22:54:49 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !-----------------------------------------------------------------------
 !BOP
 !
@@ -155,7 +155,7 @@
 !
 !EOP
 !_______________________________________________________________________
-  character(len=*),parameter :: myname='m_zeit'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_zeit'
 
   integer,parameter ::  MWTIME =  1
   integer,parameter ::  XWTIME =  2

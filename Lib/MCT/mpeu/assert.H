@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: assert.H,v 1.2 2002/08/22 23:14:49 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: assert.H - an #include section of ASSERT() macro for Fortran

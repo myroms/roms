@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_ExchangeMaps.F90,v 1.19 2004/04/21 22:16:32 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_ExchangeMaps - Exchange of Global Mapping Objects.
@@ -78,6 +78,8 @@
 !           MP_COMM_WORLD
 !EOP ___________________________________________________________________
 !
+  character(len=*),parameter :: myname='MCT::m_ExchangeMaps'
+
 ! Map Handshaking Parameters:  Map handshaking occurs via 
 ! exchange of an array of INTEGER flags. 
 
@@ -114,8 +116,6 @@
   ! For a GlobalSegMap, this is the number of global segments (ngseg).
 
   integer, parameter :: NumSegIndex = 4
-
-  character(len=*),parameter :: myname='m_ExchangeMaps'
 
  contains
 

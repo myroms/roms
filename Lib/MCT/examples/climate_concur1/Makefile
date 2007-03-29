@@ -1,47 +1,54 @@
-#!/bin/make
 
-MODULE		= utmct
+SHELL           = /bin/sh
 
-makefiles	= configure	Makefile	Makefile.rules	\
-		  Makefile.conf
+# SOURCE FILES
 
-SRCS_C		= 
+SRCS_F90	= master.F90 coupler.F90 model.F90
 
-SRCS_F		= 
+OBJS_ALL	= $(SRCS_F90:.F90=.o)
 
-SRCS_f		= 
+# MACHINE AND COMPILER FLAGS
 
-SRCS_F90	= mph.F90 master.F90 convertgauss.F90 convertPOPT.F90 \
-	          cpl.F90 ccm.F90 pop.F90 mpe_logging_init.F90 \
-                  ReadSparseMatrixAsc.F90
+include ../../Makefile.conf
 
-SRCS_f90	= 
+# ADDITIONAL FLAGS SPECIFIC FOR UTMCT COMPILATION
 
-SRCS_ALL	= $(SRCS_f) $(SRCS_F) $(SRCS_f90) $(SRCS_F90) $(SRCS_C)
+MCTLIBS    = -L$(MPEUPATH) -L$(MCTPATH) -lmct -lmpeu 
+UTLDFLAGS  = $(REAL8)
+UTCMPFLAGS = $(REAL8) $(INCFLAG)$(MPEUPATH) $(INCFLAG)$(MCTPATH)
 
-OBJS_ALL	= $(SRCS_F:.F=.o)	$(SRCS_F90:.F90=.o)	\
-		  $(SRCS_f90:.f90=.o)	$(SRCS_f:.f=.o) \
-		  $(SRCS_C:.c=.o)
+# TARGETS
 
-ARCH_TARGETS	= $(makefiles) $(SRCS_ALL) ut_mp_sym_Cxpy.F90 \
-		  ut_mp_rec_Cxpy.F90
+all: climate
 
-include Makefile.rules
-include Makefile.conf
+climate: $(OBJS_ALL) 
+	$(FC) -o $@ $(OBJS_ALL) $(FCFLAGS) $(UTLDFLAGS) $(MCTLIBS) $(MPILIBS)
 
-# targets
+# RULES
 
-pt:
-	protex $(SRCS_ALL)
+.SUFFIXES:
+.SUFFIXES: .F90 .o
 
-utmct:	$(OBJS_ALL) 
-	$(LD) -o $@ $(OBJS_ALL) $(LDFLAGS) $(_L) $(_l)
+$(F90RULE):
+	$(FC) -c $(INCPATH) $(DEFS) $(FCFLAGS) $(F90FLAGS) $(UTCMPFLAGS) $*.F90
 
-all:	utmct
+$(F90RULECPP):
+	$(FPP) $(DEFS) $(FPPFLAGS) $*.F90 $*.f90
+	$(FC) -c $(INCPATH) $(FCFLAGS) $(F90FLAGS) $(UTCMPFLAGS) $*.f90
+	$(RM) $*.f90
+
+clean:
+	${RM} *.o *.mod climate
+
+# DEPENDENCIES:
+
+$(OBJS_ALL): $(MCTPATH)/libmct.a
 
 
 
-# dependencies:
+
+
+
 
 
 

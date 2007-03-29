@@ -1692,10 +1692,11 @@
 #ifdef DISTRIBUTE
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
      &                 TRIM(my_fort), TRIM(my_fc), TRIM(my_fflags),     &
-     &                 TRIM(Iname)
+     &                 TRIM(Iname), TRIM(svn_url), TRIM(svn_rev)
 #else
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
-     &                 TRIM(my_fort), TRIM(my_fc), TRIM(my_fflags)
+     &                 TRIM(my_fort), TRIM(my_fc), TRIM(my_fflags),     &
+     &                 TRIM(svn_url), TRIM(svn_rev)
 #endif
 
         DO ng=1,Ngrids
@@ -2640,14 +2641,18 @@
      &        /,1x,'Compiler system  : ',a,                             &
      &        /,1x,'Compiler command : ',a,                             &
      &        /,1x,'Compiler flags   : ',a,/,                           &
-     &        /,1x,'Input Script: ',a)
+     &        /,1x,'Input Script: ',a,/,                                &
+     &        /,1x,'SVN Root URL: ',a,                                  &
+     &        /,1x,'SVN Revision: ',a)
 #else
   60  FORMAT (/,1x,a,/,                                                 &
      &        /,1x,'Operating system : ',a,                             &
      &        /,1x,'CPU/hardware     : ',a,                             &
      &        /,1x,'Compiler system  : ',a,                             &
      &        /,1x,'Compiler command : ',a,                             &
-     &        /,1x,'Compiler flags   : ',a)
+     &        /,1x,'Compiler flags   : ',a,/,                           &
+     &        /,1x,'SVN Root URL: ',a,                                  &
+     &        /,1x,'SVN Revision: ',a)
 #endif
   70  FORMAT (/,' Resolution, Grid ',i2.2,': ',i4.4,'x',i4.4,'x',i3.3,  &
      &        ',',2x,'Parallel Nodes: ',i3,',',2x,'Tiling: ',i3.3,      &
@@ -3443,7 +3448,9 @@
 !  Read in Fasham biological model parameters.
 !-----------------------------------------------------------------------
 !
+#  ifdef ANA_BIOLOGY
       IF (.not.allocated(BioIni)) allocate ( BioIni(MT,Ngrids) )
+#  endif
       DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
@@ -3660,7 +3667,9 @@
 !  Read in Fasham biological model parameters.
 !-----------------------------------------------------------------------
 !
+#  ifdef ANA_BIOLOGY
       IF (.not.allocated(BioIni)) allocate ( BioIni(MT,Ngrids) )
+#  endif
       DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=10,END=20) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
@@ -5627,18 +5636,26 @@
         IF (status.gt.0) THEN
           IF (TRIM(KeyWord).eq.'LcycleINI') THEN 
             Npts=load_l(Nval, Cval, Ngrids, LcycleINI)
-          ELSE IF (TRIM(KeyWord).eq.'NiterSD') THEN
-            Npts=load_i(Nval, Rval, 1, NiterSD)
           ELSE IF (TRIM(KeyWord).eq.'ICG') THEN
             Npts=load_i(Nval, Rval, 1, ICG)
-          ELSE IF (TRIM(KeyWord).eq.'CGstepI') THEN
-            Npts=load_r(Nval, Rval, 1, CGstepI)
+          ELSE IF (TRIM(KeyWord).eq.'NiterSD') THEN
+            Npts=load_i(Nval, Rval, 1, NiterSD)
           ELSE IF (TRIM(KeyWord).eq.'CGtol') THEN
             Npts=load_r(Nval, Rval, 1, CGtol)
+          ELSE IF (TRIM(KeyWord).eq.'CGstepI') THEN
+            Npts=load_r(Nval, Rval, 1, CGstepI)
           ELSE IF (TRIM(KeyWord).eq.'CGeps') THEN
             Npts=load_r(Nval, Rval, 1, CGeps)
           ELSE IF (TRIM(KeyWord).eq.'CostFunFac') THEN
             Npts=load_r(Nval, Rval, 1, CostFunFac)
+          ELSE IF (TRIM(KeyWord).eq.'GradErr') THEN
+            Npts=load_r(Nval, Rval, 1, GradErr)
+          ELSE IF (TRIM(KeyWord).eq.'HevecErr') THEN
+            Npts=load_r(Nval, Rval, 1, HevecErr)
+          ELSE IF (TRIM(KeyWord).eq.'LhessianEV') THEN
+            Npts=load_l(Nval, Cval, 1, LhessianEV)
+          ELSE IF (TRIM(KeyWord).eq.'Lprecond') THEN
+            Npts=load_l(Nval, Cval, 1, Lprecond)
           ELSE IF (TRIM(KeyWord).eq.'tl_M2diff') THEN
             Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
           ELSE IF (TRIM(KeyWord).eq.'tl_M3diff') THEN
@@ -5672,6 +5689,20 @@
               STOP
             END IF
             Npts=load_l(Nval, Cval, 1, Cnorm(isVbar))
+#  ifdef ADJUST_WSTRESS
+          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isUstr)') THEN
+            IF (isUstr.eq.0) THEN
+              WRITE (out,170) 'isUstr'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, 1, Cnorm(isUstr))
+          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isVstr)') THEN
+            IF (isVstr.eq.0) THEN
+              WRITE (out,170) 'isVstr'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, 1, Cnorm(isVstr))
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'Cnorm(isUvel)') THEN
             IF (isUvel.eq.0) THEN
               WRITE (out,170) 'isUvel'
@@ -5694,6 +5725,18 @@
               i=isTvar(itrc)
               Cnorm(i)=Ltracer(itrc)
             END DO
+#  ifdef ADJUST_STFLUX
+          ELSE IF (TRIM(KeyWord).eq.'Cnorm(isTsur)') THEN
+            IF (MAXVAL(isTsur).eq.0) THEN
+              WRITE (out,170) 'isTsur'
+              STOP
+            END IF
+            Npts=load_l(Nval, Cval, MT, Ltracer)
+            DO itrc=1,MT
+              i=isTsur(itrc)
+              Cnorm(i)=Ltracer(itrc)
+            END DO
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'Nmethod') THEN
             Npts=load_i(Nval, Rval, Ngrids, Nmethod)
           ELSE IF (TRIM(KeyWord).eq.'Rscheme') THEN
@@ -5712,6 +5755,12 @@
             Npts=load_r(Nval, Rval, Ngrids, Hdecay(isUbar,1))
           ELSE IF (TRIM(KeyWord).eq.'Hdecay(isVbar)') THEN
             Npts=load_r(Nval, Rval, Ngrids, Hdecay(isVbar,1))
+#  ifdef ADJUST_WSTRESS
+          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isUstr)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isUstr,1))
+          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isVstr)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Hdecay(isVstr,1))
+#  endif
 #  ifdef SOLVE3D
           ELSE IF (TRIM(KeyWord).eq.'Hdecay(isUvel)') THEN
             Npts=load_r(Nval, Rval, Ngrids, Hdecay(isUvel,1))
@@ -5724,6 +5773,15 @@
                 Hdecay(isTvar(itrc),ng)=Rtracer(itrc,ng)
               END DO
             END DO
+#   ifdef ADJUST_STFLUX
+          ELSE IF (TRIM(KeyWord).eq.'Hdecay(isTsur)') THEN
+            Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
+            DO ng=1,Ngrids
+              DO itrc=1,NT(ng)
+                Hdecay(isTsur(itrc),ng)=Rtracer(itrc,ng)
+              END DO
+            END DO
+#   endif
           ELSE IF (TRIM(KeyWord).eq.'Vdecay(isUvel)') THEN
             Npts=load_r(Nval, Rval, Ngrids, Vdecay(isUvel,1))
           ELSE IF (TRIM(KeyWord).eq.'Vdecay(isVvel)') THEN
@@ -5758,6 +5816,11 @@
               OBSname(Nval)(i:i)=blank
             END DO
             OBSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'HSSname') THEN
+            DO i=1,LEN(HSSname(Nval))
+              HSSname(Nval)(i:i)=blank
+            END DO
+            HSSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'MODname') THEN
             DO i=1,LEN(MODname(Nval))
               MODname(Nval)(i:i)=blank
@@ -5782,11 +5845,11 @@
      &            'Switch to recycle time-record in initial file.'
 #   if !(defined WEAK_CONSTRAINT || defined IOM)
 #    ifndef IS4DVAR
-          WRITE (out,80) NiterSD, 'NiterSD',                            &
-     &            'Number of iterations between a steepest descent.'
           WRITE (out,90) ICG, 'ICG',                                    &
      &            'Conjugate gradient descent scheme: ',                &
      &            '[0] Fletcher-reeves, [1] Polak-Ribiere'
+          WRITE (out,80) NiterSD, 'NiterSD',                            &
+     &            'Number of iterations between a steepest descent.'
           WRITE (out,100) CGtol, 'CGtol',                               &
      &            'Conjugate gradient orthogonality tolerance.'
 #    endif
@@ -5810,6 +5873,16 @@
           END DO
 #     endif
 #    endif
+#   endif
+#   if defined IS4DVAR && defined LANCZOS
+          WRITE (out,100) GradErr, 'GradErr',                           &
+     &            'Upper bound on relative error of the gradient.'
+          WRITE (out,100) HevecErr, 'HevecErr',                         &
+     &            'Accuracy required for Hessian eigenvectors.'
+          WRITE (out,70) LhessianEV, 'LhessianEV',                      &
+     &            'Switch to compute Hessian eigenvectors.'
+          WRITE (out,70) Lprecond, 'Lprecond',                          &
+     &           'Switch to pre-conditioning with Hessian eigenvectors.'
 #   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
           WRITE (out,70) LdefNRM(ng), 'LdefNRM',                        &
@@ -5841,6 +5914,12 @@
      &            'Compute 2D normalization factors at U-points.'
             WRITE (out,70) Cnorm(isVbar), 'Cnorm(isVbar)',              &
      &            'Compute 2D normalization factors at V-points.'
+#    ifdef ADJUST_WSTRESS
+            WRITE (out,70) Cnorm(isUstr), 'Cnorm(isUstr)',              &
+     &            'Compute normalization factors at surface U-stress.'
+            WRITE (out,70) Cnorm(isVstr), 'Cnorm(isVstr)',              &
+     &            'Compute normalization factors at surface V-stress.'
+#    endif
 #    ifdef SOLVE3D
             WRITE (out,70) Cnorm(isUvel), 'Cnorm(isUvel)',              &
      &            'Compute 3D normalization factors at U-points.'
@@ -5851,6 +5930,13 @@
      &            'Compute normalization factors for tracer ',itrc,     &
      &            TRIM(Vname(1,idTvar(itrc)))
             END DO
+#     ifdef ADJUST_STFLUX
+            DO itrc=1,NT(ng)
+              WRITE (out,110) Cnorm(isTsur(itrc)), 'Cnorm(isTsur)',     &
+     &            'Compute normalization factors for flux of tracer ',  &
+     &            itrc, TRIM(Vname(1,idTvar(itrc)))
+            END DO
+#     endif
 #    endif
           END IF
           WRITE (out,100) Hgamma, 'Hgamma',                             &
@@ -5865,6 +5951,12 @@
      &            'Horizontal decorrelation scale (m), 2D U-momentum.'
           WRITE (out,120) Hdecay(isVbar,ng), 'Hdecay(isVbar)',          &
      &            'Horizontal decorrelation scale (m), 2D V-momentum.'
+#    ifdef ADJUST_WSTRESS
+          WRITE (out,120) Hdecay(isUstr,ng), 'Hdecay(isUstr)',          &
+     &            'Horizontal decorrelation scale (m), U-stress.'
+          WRITE (out,120) Hdecay(isVstr,ng), 'Hdecay(isVstr)',          &
+     &            'Horizontal decorrelation scale (m), V-stress.'
+#    endif
 #    ifdef SOLVE3D
           WRITE (out,120) Hdecay(isUvel,ng), 'Hdecay(isUvel)',          &
      &            'Horizontal decorrelation scale (m), 3D U-momentum.'
@@ -5875,6 +5967,13 @@
      &            'Horizontal decorrelation scale (m), ',               &
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
+#     ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            WRITE (out,130) Hdecay(isTsur(itrc),ng), 'Hdecay(idTsur)',  &
+     &            'Horizontal decorrelation scale (m), ',               &
+     &            TRIM(Vname(1,idTsur(itrc)))
+          END DO
+#     endif
           WRITE (out,120) Vdecay(isUvel,ng), 'Vdecay(isUvel)',          &
      &            'Vertical decorrelation scale (m), 3D U-momentum.'
           WRITE (out,120) Vdecay(isVvel,ng), 'Vdecay(isVvel)',          &
@@ -5937,6 +6036,8 @@
      &                    TRIM(fname)
 #   endif
 #  endif
+          WRITE (out,160) '    Input/Output Hessian File:  ',           &
+     &                    TRIM(HSSname(ng))
 #  ifdef VERIFICATION
           WRITE (out,160) '     Output verification File:  ',           &
      &                    TRIM(MODname(ng))

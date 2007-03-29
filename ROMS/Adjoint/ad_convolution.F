@@ -103,6 +103,9 @@
 !***********************************************************************
 !
       USE mod_param
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+# endif
       USE mod_grid
       USE mod_mixing
       USE mod_ocean
@@ -157,6 +160,13 @@
      &                          OCEAN(ng) % b_t,                        &
      &                          OCEAN(ng) % b_u,                        &
      &                          OCEAN(ng) % b_v,                        &
+#  ifdef ADJUST_STFLUX
+     &                          OCEAN(ng) % b_stflx,                    &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                          OCEAN(ng) % b_sustr,                    &
+     &                          OCEAN(ng) % b_svstr,                    &
 # endif
      &                          OCEAN(ng) % b_zeta,                     &
      &                          OCEAN(ng) % b_ubar,                     &
@@ -165,6 +175,13 @@
      &                          OCEAN(ng) % ad_t,                       &
      &                          OCEAN(ng) % ad_u,                       &
      &                          OCEAN(ng) % ad_v,                       &
+#  ifdef ADJUST_STFLUX
+     &                          FORCES(ng) % ad_stflx,                  &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                          FORCES(ng) % ad_sustr,                  &
+     &                          FORCES(ng) % ad_svstr,                  &
 # endif
      &                          OCEAN(ng) % ad_ubar,                    &
      &                          OCEAN(ng) % ad_vbar,                    &
@@ -197,10 +214,22 @@
 # ifdef SOLVE3D
      &                                Kv,                               &
      &                                VnormR, VnormU, VnormV,           &
+#  ifdef ADJUST_STFLUX
+     &                                HnormSTF,                         &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                                HnormSUS, HnormSVS,               &
 # endif
      &                                HnormR, HnormU, HnormV,           &
 # ifdef SOLVE3D
      &                                ad_t, ad_u, ad_v,                 &
+#  ifdef ADJUST_STFLUX
+     &                                ad_stflx,                         &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                                ad_sustr, ad_svstr,               &
 # endif
      &                                ad_ubar, ad_vbar, ad_zeta)
 !***********************************************************************
@@ -261,6 +290,13 @@
       real(r8), intent(in) :: VnormR(LBi:,LBj:,:,:)
       real(r8), intent(in) :: VnormU(LBi:,LBj:,:)
       real(r8), intent(in) :: VnormV(LBi:,LBj:,:)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: HnormSTF(LBi:,LBj:,:)
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: HnormSUS(LBi:,LBj:)
+      real(r8), intent(in) :: HnormSVS(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: HnormR(LBi:,LBj:)
       real(r8), intent(in) :: HnormU(LBi:,LBj:)
@@ -269,6 +305,13 @@
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:)
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_svstr(LBi:,LBj:)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -314,6 +357,13 @@
       real(r8), intent(in) :: VnormR(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: VnormU(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: VnormV(LBi:UBi,LBj:UBj,N(ng))
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: HnormSTF(LBi:UBi,LBj:UBj,NT(ng))
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: HnormSUS(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: HnormSVS(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: HnormR(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: HnormU(LBi:UBi,LBj:UBj)
@@ -322,6 +372,13 @@
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,2,N(ng))
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,2,N(ng))
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_svstr(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -420,6 +477,28 @@
      &                       ad_ubar(:,:,Linp),                         &
      &                       ad_vbar(:,:,Linp))
 # endif
+# ifdef ADJUST_WSTRESS
+!
+!  Adjoint surface momentum stress.
+!
+      DO j=JU_RANGE
+        DO i=IU_RANGE
+          ad_sustr(i,j)=ad_sustr(i,j)*HnormSUS(i,j)
+        END DO
+      END DO
+      DO j=JV_RANGE
+        DO i=IV_RANGE
+          ad_svstr(i,j)=ad_svstr(i,j)*HnormSVS(i,j)
+        END DO
+      END DO
+#  ifdef DISTRIBUTE
+      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_sustr,                                  &
+     &                       ad_svstr)
+#  endif
+# endif
 # ifdef SOLVE3D
 !
 !  Adjoint 3D momentum.
@@ -461,6 +540,24 @@
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,Linp,:))
+#  endif
+#  ifdef ADJUST_STFLUX
+!
+!  Adjoint surface tracers flux.
+!
+      DO itrc=1,NT(ng)
+        DO j=JR_RANGE
+          DO i=IR_RANGE
+            ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)*HnormSTF(i,j,itrc)
+          END DO
+        END DO
+      END DO
+#   ifdef DISTRIBUTE
+      CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1, NT(ng),             &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_stflx)
+#   endif
 #  endif
 # endif
 !
@@ -509,6 +606,34 @@
      &                       vmask, pmask,                              &
 # endif
      &                       ad_vbar(:,:,Linp))
+# ifdef ADJUST_WSTRESS
+!
+!  Adjoint surface momentum stress.
+!
+      CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints,                              &
+     &                       NHsteps(isUstr)/ifac,                      &
+     &                       DTsizeH(isUstr),                           &
+     &                       Kh,                                        &
+     &                       pm, pn, pmon_r, pnom_p,                    &
+#  ifdef MASKING
+     &                       umask, pmask,                              &
+#  endif
+     &                       ad_sustr)
+
+      CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints,                              &
+     &                       NHsteps(isVstr)/ifac,                      &
+     &                       DTsizeH(isVstr),                           &
+     &                       Kh,                                        &
+     &                       pm, pn, pmon_p, pnom_r,                    &
+#  ifdef MASKING
+     &                       vmask, pmask,                              &
+#  endif
+     &                       ad_svstr)
+# endif
 # ifdef SOLVE3D
 !
 !  Adjoint 3D momentum.
@@ -562,6 +687,25 @@
      &                         Hz, z_r,                                 &
      &                         ad_t(:,:,:,Linp,itrc))
       END DO
+#  ifdef ADJUST_STFLUX
+!
+!  Adjoint surface tracers flux.
+!
+      DO itrc=1,NT(ng)
+        is=isTsur(itrc)
+        CALL ad_conv_r2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,        &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         NghostPoints,                            &
+     &                         NHsteps(is)/ifac,                        &
+     &                         DTsizeH(is),                             &
+     &                         Kh,                                      &
+     &                         pm, pn, pmon_u, pnom_v,                  &
+#   ifdef MASKING
+     &                         rmask, umask, vmask,                     &
+#   endif
+     &                         ad_stflx(:,:,itrc))
+      END DO
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------
@@ -599,6 +743,30 @@
      &                       ad_zeta(:,:,Linp),                         &
      &                       ad_ubar(:,:,Linp),                         &
      &                       ad_vbar(:,:,Linp))
+# endif
+# ifdef ADJUST_WSTRESS
+!
+!  Adjoint surface momentum stress.
+!
+      DO j=JU_RANGE
+        DO i=IU_RANGE
+          ad_sustr(i,j)=ad_sustr(i,j)/                                  &
+     &                  SQRT(om_u(i,j)*on_u(i,j))
+        END DO
+      END DO
+      DO j=JV_RANGE
+        DO i=IV_RANGE
+          ad_svstr(i,j)=ad_svstr(i,j)/                                  &
+     &                  SQRT(om_v(i,j)*on_v(i,j))
+        END DO
+      END DO
+#  ifdef DISTRIBUTE
+      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_sustr,                                  &
+     &                       ad_svstr)
+#  endif
 # endif
 # ifdef SOLVE3D
 !
@@ -648,6 +816,25 @@
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,Linp,:))
+#  endif
+#  ifdef ADJUST_STFLUX
+!
+!  Adjoint surface tracers flux.
+!
+      DO j=JR_RANGE
+        DO i=IR_RANGE
+          fac=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+          DO itrc=1,NT(ng)
+            ad_stflx(i,j,itrc)=fac*ad_stflx(i,j,itrc)
+          END DO
+        END DO
+      END DO
+#   ifdef DISTRIBUTE
+      CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1, NT(ng),             &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_stflx)
+#   endif
 #  endif
 # endif
 # undef IR_RANGE

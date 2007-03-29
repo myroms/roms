@@ -40,16 +40,25 @@
 
      LcycleINI == T
 
-! Descent algorithm parameters.
+! Simple descent (numerical recipes) algorithm method:
+!
+!   [0]  Fletcher-Reeves scheme
+!   [1]  Polak-Riviere scheme
+
+           ICG =  1
+
+! Number of iterations between each steepest descent step.
 
        NiterSD =  5
-           ICG =  1
-       CGstepI =  1.0d-4
 
 ! Strong constraint conjugate gradient orthogonality tolerance: dot
 ! product orthogonality between current and previous search.
 
          CGtol =  0.1d+2
+
+! Conjugate gradient algorithm initial step size.
+
+       CGstepI =  1.0d-4
 
 ! Weak constraint conjugate gradient algorithm convergence criteria.
 
@@ -59,14 +68,35 @@
 
     CostFunFac =  5.0d-5
 
+! Upper bound on the relative error of the gradient for the Lanczos
+! conjugate gradient algorithm.
+
+       GradErr = 1.0d-4
+
+! Maximum error bound on Hessian eigenvectors in the Lanczos conjugate
+! gradient algorithm.  Note that even quite inaccurate eigenvectors are
+! useful for pre-conditioning purposes.
+
+      HevecErr = 1.0d-1
+
+! Switch (T/F) to compute approximated Hessian eigenpairs in the Lanzos
+! conjugate gradient algorithm.
+
+    LhessianEV = F
+
+! Switch (T/F) to pre-conditioning with Hessian eigenpairs computed
+! by the Lanczos algorithm and saved in HSSname NetCDF file.
+ 
+      Lprecond = F 
+
 ! If weak constraint 4DVar, set diffusive relaxation coefficients (m2/s)
 ! used to relax representer tangent linear solution to privious Picard
 ! iteration linearized trajectory.
 
-    tl_M2diff ==   0.0d0                  ! 2D momentum
-    tl_M3diff == 100.0d0                  ! 3D momentum
+     tl_M2diff ==   0.0d0                 ! 2D momentum
+     tl_M3diff == 100.0d0                 ! 3D momentum
 
-     tl_Tdiff ==  50.0d0  50.0d0          ! NT tracers
+      tl_Tdiff ==  50.0d0  50.0d0         ! NT tracers
 
 ! Switches (T/F) to create and write correlation normalization coefficients
 ! for background or model error covariance. If TRUE, these factors are
@@ -86,9 +116,12 @@
  Cnorm(isFsur) = T                        ! 2D variable at RHO-points
  Cnorm(isUbar) = T                        ! 2D variable at U-points
  Cnorm(isVbar) = T                        ! 2D variable at V-points
+ Cnorm(isUstr) = T                        ! surface U-momentum stress
+ Cnorm(isVstr) = T                        ! surface V-momentum stress
  Cnorm(isUvel) = T                        ! 3D variable at U-points
  Cnorm(isVvel) = T                        ! 3D variable at V-points
  Cnorm(isTvar) = T T                      ! NT tracers
+ Cnorm(isTsur) = T T                      ! NT surface tracers flux
 
 ! Correlation normalization method:
 !
@@ -122,9 +155,12 @@
 Hdecay(isFsur) == 100.0d+3                         ! free-surface
 Hdecay(isUbar) == 100.0d+3                         ! 2D U-momentum
 Hdecay(isVbar) == 100.0d+3                         ! 2D V-momentum
+Hdecay(isUstr) == 100.0d+3                         ! surface U-momentum stress
+Hdecay(isVstr) == 100.0d+3                         ! surface V-momentum stress
 Hdecay(isUvel) == 100.0d+3                         ! 3D U-momentum
 Hdecay(isVvel) == 100.0d+3                         ! 3D V-momentum
 Hdecay(isTvar) == 100.0d+3  100.0d+3               ! 1:NT tracers
+Hdecay(isTsur) == 100.0d+3  100.0d+3               ! 1:NT surface tracers flux
 
 ! Vertical, isotropic decorrelation scales (m).
 
@@ -165,6 +201,10 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 
        OBSname == ocean_obs.nc
 
+! Input/output Hessian eigenvectors file name, [1:Ngrids].
+
+       HSSname == ocean_hss.nc
+
 ! Output model data at observation locations file name, [1:Ngrids].
 
        MODname == ocean_mod.nc
@@ -184,30 +224,36 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !                  descent algorithm without recycling.
 !
 !------------------------------------------------------------------------------
-! Descent algorithm parameters.
+! Descent algorithm (descent.F, downhill.F) parameters.
 !------------------------------------------------------------------------------
+!
+!  ICG            Simple conjugate gradient algorithm.  This alorithm is
+!                 similar to the one found in numerical recipes.  
+!
+!                   ICG = 0   Fletcher-Reeves scheme
+!                   ICG = 1   Polak-Riviere scheme
 !
 !  NiterSD        Number of iterations between each steepest descent step.
 !                 The descent algorithm is reinitialized every NiterSD
 !                 iterations to avoid searching in directions which have
 !                 been searched previously.
 !
-!  ICG            Conjugate gradient algorithm:
-!
-!                   ICG = 0   Fletcher-Reeves scheme
-!                   ICG = 1   Polak-Riviere scheme
-!
-!  CGstepI        Conjugate gradient algorithm initial step size.
-!
 !  CGtol          Strong constraint conjugate gradient orthogonality
 !                 tolerance: dot product orthogonality between current and
 !                 previous search.
+!
+!------------------------------------------------------------------------------
+! Conjugate gradient parameters.
+!------------------------------------------------------------------------------
+!
+!  CGstepI        Conjugate gradient algorithm initial step size.
+!
 !
 !  CGeps          Weak constraint conjugate gradient algorithm convergence
 !                 criteria.
 !
 !------------------------------------------------------------------------------
-! Misfit cost function convergence
+! Misfit cost function convergence.
 !------------------------------------------------------------------------------
 !
 !  CostFunFac     Cost function percentage change between succesive
@@ -218,6 +264,23 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !                 DO WHILE ((inner.le.Ninner).or.
 !    &                      (ABS(CostFunOld(0)-CostFun(0)).le.
 !    &                       CostFunFac*CostFunOld(0)) THEN
+!
+!------------------------------------------------------------------------------
+! Lanczos conjugate gradient algorithm parameters.
+!------------------------------------------------------------------------------
+!
+!  GradErr        Upper bound on the relative error of the gradient.
+!
+!  HevecErr       Maximum error bound on Hessian eigenvectors. Note that
+!                 even quite inaccurate eigenvectors are useful
+!                 for pre-conditioning purposes.
+!
+!  LhessianEV     Switch (T/F) to compute approximated Hessian eigenvalues
+!                 and eigenvectors.
+!
+!  Lprecond       Switch (T/F) to pre-conditioning with Hessian eigenpairs
+!                 computed by the Lanczos algorithm and saved in HSSname
+!                 NetCDF file.
 !
 !------------------------------------------------------------------------------
 ! Diffusive relaxation coefficients.
@@ -260,9 +323,12 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !  Cnorm(isFsur)  Compute 2D normalization factors at RHO-points.
 !  Cnorm(isUbar)  Compute 2D normalization factors at U-points.
 !  Cnorm(isVbar)  Compute 2D normalization factors at V-points.
+!  Cnorm(isUstr)  Compute normalization factors for surface U-stress.
+!  Cnorm(isVstr)  Compute normalization factors for surface V-stress.
 !  Cnorm(isUvel)  Compute 3D normalization factors at U-points.
 !  Cnorm(isVvel)  Compute 3D normalization factors at V-points.
 !  Cnorm(isTvar)  Compute tracer normalization factors at RHO-points.
+!  Cnorm(isTsur)  Compute surface tracers flux normalization factors.
 !
 !  Nmethod        Correlation normalization method:
 !
@@ -294,9 +360,12 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !                   Hdecay(isFsur)                free-surface
 !                   Hdecay(isUbar)                2D U-momentum
 !                   Hdecay(isVbar)                2D V-momentum
+!                   Hdecay(isUstr)                surface U-stress
+!                   Hdecay(isVstr)                surface V-stress
 !                   Hdecay(isUvel)                3D U-momentum
 !                   Hdecay(isVvel)                3D V-momentum
 !                   Hdecay(isTvar)                tracers (1:NT)
+!                   Hdecay(isTsur)                surfce tracers flux (1:NT)
 !
 !  Vdecay         Vertical, isotropic decorrelation scale (m):
 !
@@ -326,6 +395,8 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !                   name.
 !
 !  OBSname        Input/Output observations data file name.
+!
+!  HSSname        Input/Output Hessian eigenvectors file name.
 !
 !  MODname        Output model data at observations locations file name.
 !

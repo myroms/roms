@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_GlobalSegMap.F90,v 1.42 2005/11/21 23:39:40 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_GlobalSegMap - a nontrivial 1-D decomposition of an array.
@@ -69,6 +69,9 @@
 ! !PUBLIC TYPES:
 
     type GlobalSegMap
+#ifdef SEQUENCE
+      sequence
+#endif
       integer :: comp_id			! Component ID number
       integer :: ngseg				! No. of Global segments
       integer :: gsize				! No. of Global elements
@@ -78,15 +81,17 @@
     end type GlobalSegMap
 
     interface init ; module procedure	&
-        initd_,	&	! initialize from all PEs
-        initr_, &	! initialize from the root
-        initp_,	&	! initialize in parallel from replicated arrays
+        initd_,	&       ! initialize from all PEs
+        initr_, &       ! initialize from the root
+        initp_,	&       ! initialize in parallel from replicated arrays
         initp1_, &      ! initialize in parallel from 1 replicated array
-        initp0_         ! null constructor using replicated data
+        initp0_, &      ! null constructor using replicated data
+        init_index_     ! initialize from local index arrays
     end interface
-    interface clean ; module procedure clean_ ; end interface
-    interface comp_id  ; module procedure comp_id_  ; end interface
-    interface gsize ; module procedure gsize_ ; end interface
+
+    interface clean   ; module procedure clean_   ; end interface
+    interface comp_id ; module procedure comp_id_ ; end interface
+    interface gsize   ; module procedure gsize_   ; end interface
     interface GlobalStorage ; module procedure &
        GlobalStorage_
     end interface
@@ -103,7 +108,7 @@
     interface peLocs ; module procedure peLocs_ ; end interface
     interface haloed ; module procedure haloed_ ; end interface
     interface rank  ; module procedure &
-	rank1_ , &	! single rank case
+	rank1_ , &      ! single rank case
 	rankm_	        ! degenerate (multiple) ranks for halo case
     end interface
     interface Sort ; module procedure Sort_ ; end interface
@@ -431,7 +436,9 @@
 
         ! Clean up the array pe_loc(:) if it was allocated
 
-  if(.not. present(pe_loc)) then
+  if(present(pe_loc)) then
+     nullify(my_pe_loc) 
+  else
      deallocate(my_pe_loc, stat=ier)
      if(ier /= 0) call die(myname_, 'deallocate(my_pe_loc)', ier)
   endif
@@ -737,7 +744,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: initp1_ - define the map from replicated data.
+! !IROUTINE: initp1_ - define the map from replicated data using 1 array.
 !
 ! !DESCRIPTION:
 !
@@ -897,6 +904,136 @@
   endif
 
  end subroutine initp0_
+
+
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: init_index_ - initialize GSM from local index arrays
+!
+! !DESCRIPTION:
+!
+! The routine {\tt init\_index\_()} takes a local array of indices 
+! {\tt lindx} and uses them to create a {\tt GlobalSegMap}.  
+! {\tt lindx} is parsed to determine the lengths of the runs, and 
+! then a call is made to {\tt initd\_}.  The optional argument 
+! {\tt lsize} can be used if only the first {\tt lsize} number 
+! of elements of {\tt lindx} are valid.  The optional argument
+! {\tt gsize} is used to specify the global number of unique points
+! if this can not be determined from the collective {\tt lindx}.
+!
+!
+! !INTERFACE:
+
+    subroutine init_index_(GSMap, lindx, my_comm, comp_id, lsize, gsize)
+
+!
+! !USES:
+!
+
+!  use m_GlobalSegMap,only: GlobalSegMap
+!  use m_GlobalSegMap,only: MCT_GSMap_init => init
+
+!  use shr_sys_mod
+  implicit none
+
+! !INPUT PARAMETERS: 
+
+     integer , dimension(:),intent(in) :: lindx   ! index buffer
+     integer , intent(in) :: my_comm         ! mpi communicator group (mine)
+     integer , intent(in) :: comp_id         ! component id (mine)
+
+     integer , intent(in),optional :: lsize  ! size of index buffer
+     integer , intent(in),optional :: gsize  ! global vector size
+
+! !OUTPUT PARAMETERS:
+
+     type(GlobalSegMap),intent(out) :: GSMap ! Output GlobalSegMap
+     
+
+! !REVISION HISTORY:
+!       30Jul02 - T. Craig - initial version in cpl6.
+!       17Nov05 - R. Loy <rloy@mcs.anl.gov> - install into MCT
+!       18Nov05 - R. Loy <rloy@mcs.anl.gov> - make lsize optional
+!EOP ___________________________________________________________________
+
+
+     !--- local ---
+     integer             :: i,j,k,n      ! generic indicies
+     integer             :: nseg         ! counts number of segments for GSMap
+     integer,allocatable :: start(:)     ! used to init GSMap 
+     integer,allocatable :: count(:)     ! used to init GSMap 
+     integer,parameter   :: pid0=0       ! mpi process id for root pe
+     integer,parameter   :: debug=0      ! 
+
+     integer rank,ierr
+     integer mysize
+
+
+     if (present(lsize)) then
+       mysize=lsize
+     else
+       mysize=size(lindx)
+     endif
+
+     call MPI_COMM_RANK(my_comm,rank, ierr)
+
+     ! compute segment's start indicies and length counts 
+
+     ! first pass - count how many runs of consecutive numbers
+
+     nseg=1
+     do n = 2,mysize
+        i = lindx(n-1)
+        j = lindx(n)
+        if ( j-i /= 1) nseg=nseg+1
+     end do
+
+     allocate(start(nseg),count(nseg))
+
+     ! second pass - determine how long each run is
+
+     nseg = 1
+     start(nseg) = lindx(1)
+     count(nseg) = 1
+     do n = 2,mysize
+        i = lindx(n-1)
+        j = lindx(n)
+        if ( j-i /= 1) then
+            nseg = nseg+1
+            start(nseg) = lindx(n)
+            count(nseg) = 1
+         else
+            count(nseg) = count(nseg)+1
+         end if
+      end do
+
+
+     if (debug.ne.0) then
+	write(6,*) rank,'init_index: SIZE ',nseg
+
+	do n=1,nseg
+          write(6,*) rank,'init_index: START,COUNT ',start(n),count(n)
+	end do
+     endif
+
+
+      if (present(gsize)) then
+        call initd_( GSMap, start, count, pid0, my_comm,  &
+                     comp_id, gsize=gsize)
+      else
+        call initd_( GSMap, start, count, pid0, my_comm,  &
+  	             comp_id)
+      endif
+
+
+      deallocate(start, count)
+
+   end subroutine init_index_
+
+
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !

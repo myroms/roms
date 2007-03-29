@@ -184,7 +184,7 @@
       RETURN
       END SUBROUTINE allocate_coupling
 
-      SUBROUTINE initialize_coupling (ng, tile)
+      SUBROUTINE initialize_coupling (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -200,7 +200,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 !
 !  Local variable declarations.
 !
@@ -247,64 +247,80 @@
 !
 !  Nonlinear model state.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
-          COUPLING(ng) % DU_avg1(i,j) = IniVal
-          COUPLING(ng) % DU_avg2(i,j) = IniVal
+      IF ((model.eq.0).or.(model.eq.iNLM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            COUPLING(ng) % DU_avg1(i,j) = IniVal
+            COUPLING(ng) % DU_avg2(i,j) = IniVal
 
-          COUPLING(ng) % DV_avg1(i,j) = IniVal
-          COUPLING(ng) % DV_avg2(i,j) = IniVal
+            COUPLING(ng) % DV_avg1(i,j) = IniVal
+            COUPLING(ng) % DV_avg2(i,j) = IniVal
 
-          COUPLING(ng) % Zt_avg1(i,j) = IniVal
+            COUPLING(ng) % Zt_avg1(i,j) = IniVal
 
-          COUPLING(ng) % rufrc(i,j) = IniVal
-          COUPLING(ng) % rvfrc(i,j) = IniVal
+            COUPLING(ng) % rufrc(i,j) = IniVal
+            COUPLING(ng) % rvfrc(i,j) = IniVal
 
 # ifdef VAR_RHO_2D
-          COUPLING(ng) % rhoA(i,j) = IniVal
-          COUPLING(ng) % rhoS(i,j) = IniVal
+            COUPLING(ng) % rhoA(i,j) = IniVal
+            COUPLING(ng) % rhoS(i,j) = IniVal
 # endif
+          END DO
+        END DO
+      END IF
 
 # if defined TANGENT || defined TL_IOMS
 !
 !  Tangent linear model state.
 !
-          COUPLING(ng) % tl_DU_avg1(i,j) = IniVal
-          COUPLING(ng) % tl_DU_avg2(i,j) = IniVal
+      IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            COUPLING(ng) % tl_DU_avg1(i,j) = IniVal
+            COUPLING(ng) % tl_DU_avg2(i,j) = IniVal
 
-          COUPLING(ng) % tl_DV_avg1(i,j) = IniVal
-          COUPLING(ng) % tl_DV_avg2(i,j) = IniVal
+            COUPLING(ng) % tl_DV_avg1(i,j) = IniVal
+            COUPLING(ng) % tl_DV_avg2(i,j) = IniVal
 
-          COUPLING(ng) % tl_Zt_avg1(i,j) = IniVal
+            COUPLING(ng) % tl_Zt_avg1(i,j) = IniVal
 
-          COUPLING(ng) % tl_rufrc(i,j) = IniVal
-          COUPLING(ng) % tl_rvfrc(i,j) = IniVal
+            COUPLING(ng) % tl_rufrc(i,j) = IniVal
+            COUPLING(ng) % tl_rvfrc(i,j) = IniVal
 
 #  ifdef VAR_RHO_2D
-          COUPLING(ng) % tl_rhoA(i,j) = IniVal
-          COUPLING(ng) % tl_rhoS(i,j) = IniVal
+            COUPLING(ng) % tl_rhoA(i,j) = IniVal
+            COUPLING(ng) % tl_rhoS(i,j) = IniVal
 #  endif
+          END DO
+        END DO
+      END IF
 # endif
 
 # ifdef ADJOINT
 !
 !  Adjoint model state.
 !
-          COUPLING(ng) % ad_DU_avg1(i,j) = IniVal
-          COUPLING(ng) % ad_DU_avg2(i,j) = IniVal
+      IF ((model.eq.0).or.(model.eq.iADM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            COUPLING(ng) % ad_DU_avg1(i,j) = IniVal
+            COUPLING(ng) % ad_DU_avg2(i,j) = IniVal
 
-          COUPLING(ng) % ad_DV_avg1(i,j) = IniVal
-          COUPLING(ng) % ad_DV_avg2(i,j) = IniVal
+            COUPLING(ng) % ad_DV_avg1(i,j) = IniVal
+            COUPLING(ng) % ad_DV_avg2(i,j) = IniVal
 
-          COUPLING(ng) % ad_Zt_avg1(i,j) = IniVal
+            COUPLING(ng) % ad_Zt_avg1(i,j) = IniVal
 
-          COUPLING(ng) % ad_rufrc(i,j) = IniVal
-          COUPLING(ng) % ad_rvfrc(i,j) = IniVal
+            COUPLING(ng) % ad_rufrc(i,j) = IniVal
+            COUPLING(ng) % ad_rvfrc(i,j) = IniVal
 
 #  ifdef VAR_RHO_2D
-          COUPLING(ng) % ad_rhoA(i,j) = IniVal
-          COUPLING(ng) % ad_rhoS(i,j) = IniVal
+            COUPLING(ng) % ad_rhoA(i,j) = IniVal
+            COUPLING(ng) % ad_rhoS(i,j) = IniVal
 #  endif
+          END DO
+        END DO
+      END IF
 # endif
 
 # if defined FORWARD_READ && \
@@ -313,23 +329,27 @@
 !  Latest two records of the nonlinear trajectory used to interpolate
 !  the background state in the tangent linear and adjoint models.
 !
-         COUPLING(ng) % DU_avg1G(i,j,1) = IniVal
-         COUPLING(ng) % DU_avg1G(i,j,2) = IniVal
-         COUPLING(ng) % DU_avg2G(i,j,1) = IniVal
-         COUPLING(ng) % DU_avg2G(i,j,2) = IniVal
+      IF (model.eq.0) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            COUPLING(ng) % DU_avg1G(i,j,1) = IniVal
+            COUPLING(ng) % DU_avg1G(i,j,2) = IniVal
+            COUPLING(ng) % DU_avg2G(i,j,1) = IniVal
+            COUPLING(ng) % DU_avg2G(i,j,2) = IniVal
 
-         COUPLING(ng) % DV_avg1G(i,j,1) = IniVal
-         COUPLING(ng) % DV_avg1G(i,j,2) = IniVal
-         COUPLING(ng) % DV_avg2G(i,j,1) = IniVal
-         COUPLING(ng) % DV_avg2G(i,j,2) = IniVal
+            COUPLING(ng) % DV_avg1G(i,j,1) = IniVal
+            COUPLING(ng) % DV_avg1G(i,j,2) = IniVal
+            COUPLING(ng) % DV_avg2G(i,j,1) = IniVal
+            COUPLING(ng) % DV_avg2G(i,j,2) = IniVal
 
-         COUPLING(ng) % rufrcG(i,j,1) = IniVal
-         COUPLING(ng) % rufrcG(i,j,2) = IniVal
-         COUPLING(ng) % rvfrcG(i,j,1) = IniVal
-         COUPLING(ng) % rvfrcG(i,j,2) = IniVal
-# endif
+            COUPLING(ng) % rufrcG(i,j,1) = IniVal
+            COUPLING(ng) % rufrcG(i,j,2) = IniVal
+            COUPLING(ng) % rvfrcG(i,j,1) = IniVal
+            COUPLING(ng) % rvfrcG(i,j,2) = IniVal
+          END DO
         END DO
-      END DO
+      END IF
+# endif
 
       RETURN
       END SUBROUTINE initialize_coupling

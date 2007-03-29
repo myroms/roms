@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_GlobalToLocal.F90,v 1.15 2004/04/21 22:16:06 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_GlobalToLocal - Global to Local Index Translation
@@ -70,7 +70,7 @@
 !  2Feb01 - J.W. Larson <larson@mcs.anl.gov> - initial prototype
 !EOP ___________________________________________________________________
 
-  character(len=len('m_GlobalToLocal')),parameter :: myname='m_GlobalToLocal'
+  character(len=*),parameter :: myname='MCT::m_GlobalToLocal'
 
  contains
 

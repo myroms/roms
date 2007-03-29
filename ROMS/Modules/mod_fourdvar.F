@@ -29,7 +29,8 @@
 !                 convolutions.                                        !
 !  DTsizeV      Vertical diffusion time-step size for spatial          !
 !                 convolutions.                                        !
-!  NLmodVal     Nonlinear model values at observation locations.       !
+!  GradErr      Upper bound on relatice error of the gradient.         !
+!  HevecErr     Maximum error bound on Hessian eigenvectors.           !
 !  KhMax        Maximum  horizontal diffusion coefficient.             !
 !  KhMin        Minimum  horizontal diffusion coefficient.             !
 !  KvMax        Maximum  vertical diffusion coefficient.               !
@@ -38,6 +39,10 @@
 !                 and fractional vertical positions are computed in    !
 !                 "extract_obs3d" and written to observation NetCDF    !
 !                 file for latter use.                                 !
+!  LhessianEV   Logical switch to compute Hessian eigenvectors.        !
+!  Lprecond     Logical switch to pre-conditioning with Hessian        !
+!                 eigenvectors.                                        !
+!  NLmodVal     Nonlinear model values at observation locations.       !
 !  NHsteps      Full number of horizontal diffusion steps for spatial  !
 !                 convolutions.                                        !
 !  NVsteps      Full number of vertical diffusion steps for spatial    !
@@ -59,6 +64,11 @@
 !  Xobs         Observations X-locations (grid coordinates).           !
 !  Yobs         Observations Y-locations (grid coordinates).           !
 !  Zobs         Observations Z-locations (grid coordinates).           !
+!  cg_alpha     Conjugate gradient coefficient.                        !
+!  cg_beta      Conjugate gradient coefficient.                        !
+!  cg_delta     Lanczos algorithm coefficient.                         !
+!  cg_gamma     Lanczos algorithm coefficient.                         !
+!  cg_tau       Conjugate gradient coefficient.                        !
 # if defined WEAK_CONSTRAINT || defined IOM
 !  cg_p         Weak constraint conjugate gradient vector.             !
 !  cg_r         Weak constraint conjugate gradient vector,             !
@@ -290,6 +300,14 @@
 !  Descent algorithm parameters.
 !-----------------------------------------------------------------------
 !
+!  Switch to compute Hessian approximated eigenvalues and eigenvectors.
+!
+        logical :: LhessianEV
+!
+!  Switch to pre-conditioning with Hessian eigenpairs.
+!
+        logical :: Lprecond
+
 !  Number of iteration between each steepest descent step.
 !
         integer :: NiterSD
@@ -338,6 +356,16 @@
 !  convergence.
 !
         real(r8) :: CostFunFac
+!
+!  Upper bound on the relative error of the gradient when computing
+!  Hessian eigenvectors.
+!
+        real(r8) :: GradErr
+!
+!  Maximum error bound on Hessian eigenvectors.  Note that even quite
+!  innacurate eigenvectors are usefull for pre-condtioning purposes.
+!
+        real(r8) :: HevecErr
 !
 !  Brunt-Vaisala expansion polynomial used for cost function
 !  normalization.
@@ -462,9 +490,16 @@
 
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)
+#   ifdef ADJUST_STFLUX
+        NstateVar(ng)=NstateVar(ng)+NT(ng)
+#   endif
 #  else
         NstateVar(ng)=3
 #  endif
+#  ifdef ADJUST_WSTRESS
+        NstateVar(ng)=NstateVar(ng)+2
+#  endif
+
         allocate ( FOURDVAR(ng) % NobsSurvey(Nsurvey(ng)) )
         FOURDVAR(ng) % NobsSurvey = 0
 

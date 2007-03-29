@@ -87,6 +87,18 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' ADJOINT,'
 #endif
+#if defined ADJUST_STFLUX && defined IS4DVAR
+      IF (Master) WRITE (stdout,20) 'ADJUST_STFLUX',                    &
+     &   'Including surface tracer flux in 4DVar state estimation.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+15)=' ADJUST_STFLUX,'
+#endif
+#if defined ADJUST_WSTRESS && defined IS4DVAR
+      IF (Master) WRITE (stdout,20) 'ADJUST_WSTRESS',                   &
+     &   'Including surface wind stress in 4DVar state estimation.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' ADJUST_WSTRESS,'
+#endif
 #ifdef ADM_DRIVER
       IF (Master) WRITE (stdout,20) 'ADM_DRIVER',                       &
      &   'Generic adjoint model driver.'
@@ -989,6 +1001,12 @@
      &   'Kantha and Clayson stability function formulation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' KANTHA_CLAYSON,'
+#endif
+#if defined LANCZOS && defined IS4DVAR
+      IF (Master) WRITE (stdout,20) 'LANCZOS',                          &
+     &   'Using Lanczos conjugate gradient algorithm.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' LANCZOS,'
 #endif
 #ifdef LMD_BKPP
       IF (Master) WRITE (stdout,20) 'LMD_BKPP',                         &

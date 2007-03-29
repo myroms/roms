@@ -30,6 +30,7 @@
 !  INIname     Input nonlinear initial conditions file name.           !
 !  IPRname     Input representer initial conditions file name.         !
 !  ITLname     Input tangent linear initial conditions file name.      !
+!  HSSname     Input/output Hessian eigenvectors file name.            !
 !  Iname       Physical parameters standard input script file name.    !
 !  MODname     Output 4DVAR processed fields file name.                !
 !  MyAppCPP    Application C-preprocessing flag.                       !
@@ -106,6 +107,7 @@
         character (len=80), dimension(Ngrids) :: INIname
         character (len=80), dimension(Ngrids) :: IRPname
         character (len=80), dimension(Ngrids) :: ITLname
+        character (len=80), dimension(Ngrids) :: HSSname
         character (len=80), dimension(Ngrids) :: MODname
         character (len=80), dimension(Ngrids) :: NRMname
         character (len=80), dimension(Ngrids) :: OBSname

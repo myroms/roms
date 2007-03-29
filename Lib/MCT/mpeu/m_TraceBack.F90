@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_TraceBack.F90,v 1.3 2004/04/21 22:54:46 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_TraceBack - Generation of Traceback Information
@@ -46,7 +46,7 @@
 
 ! Parameters local to this module:
 
-  character(len=*),parameter :: myname='m_TraceBackString'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_TraceBackString'
 
   character(len=len('|X|')), parameter :: StartChar = '|X|'
   character(len=len('->')), parameter :: ArrowChar = '->'

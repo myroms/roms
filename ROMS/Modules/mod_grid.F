@@ -370,7 +370,7 @@
       RETURN
       END SUBROUTINE allocate_grid
 
-      SUBROUTINE initialize_grid (ng, tile)
+      SUBROUTINE initialize_grid (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -386,7 +386,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 !
 !  Local variable declarations.
 !
@@ -436,178 +436,184 @@
 !
 !  Nonlinear model state.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
+      IF ((model.eq.0).or.(model.eq.iNLM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
 #if defined MASKING && defined PROPAGATOR
-          GRID(ng) % IJwaterR(i,j) = 0
-          GRID(ng) % IJwaterU(i,j) = 0
-          GRID(ng) % IJwaterV(i,j) = 0
+            GRID(ng) % IJwaterR(i,j) = 0
+            GRID(ng) % IJwaterU(i,j) = 0
+            GRID(ng) % IJwaterV(i,j) = 0
 #endif
-          GRID(ng) % angler(i,j) = IniVal
+            GRID(ng) % angler(i,j) = IniVal
 #if defined CURVGRID && defined UV_ADV
-          GRID(ng) % dmde(i,j) = IniVal
-          GRID(ng) % dndx(i,j) = IniVal
+            GRID(ng) % dmde(i,j) = IniVal
+            GRID(ng) % dndx(i,j) = IniVal
 #endif
-          GRID(ng) % f(i,j) = IniVal
-          GRID(ng) % fomn(i,j) = IniVal
-          GRID(ng) % grdscl(i,j) = IniVal
+            GRID(ng) % f(i,j) = IniVal
+            GRID(ng) % fomn(i,j) = IniVal
+            GRID(ng) % grdscl(i,j) = IniVal
 
-          GRID(ng) % h(i,j) = IniVal
-          GRID(ng) % hinv(i,j) = IniVal
+            GRID(ng) % h(i,j) = IniVal
+            GRID(ng) % hinv(i,j) = IniVal
 
-          GRID(ng) % latp(i,j) = IniVal
-          GRID(ng) % latr(i,j) = IniVal
-          GRID(ng) % latu(i,j) = IniVal
-          GRID(ng) % latv(i,j) = IniVal
-          GRID(ng) % lonp(i,j) = IniVal
-          GRID(ng) % lonr(i,j) = IniVal
-          GRID(ng) % lonu(i,j) = IniVal
-          GRID(ng) % lonv(i,j) = IniVal
+            GRID(ng) % latp(i,j) = IniVal
+            GRID(ng) % latr(i,j) = IniVal
+            GRID(ng) % latu(i,j) = IniVal
+            GRID(ng) % latv(i,j) = IniVal
+            GRID(ng) % lonp(i,j) = IniVal
+            GRID(ng) % lonr(i,j) = IniVal
+            GRID(ng) % lonu(i,j) = IniVal
+            GRID(ng) % lonv(i,j) = IniVal
 
-          GRID(ng) % omn(i,j) = IniVal
-          GRID(ng) % om_p(i,j) = IniVal
-          GRID(ng) % om_r(i,j) = IniVal
-          GRID(ng) % om_u(i,j) = IniVal
-          GRID(ng) % om_v(i,j) = IniVal
-          GRID(ng) % on_p(i,j) = IniVal
-          GRID(ng) % on_r(i,j) = IniVal
-          GRID(ng) % on_u(i,j) = IniVal
-          GRID(ng) % on_v(i,j) = IniVal
+            GRID(ng) % omn(i,j) = IniVal
+            GRID(ng) % om_p(i,j) = IniVal
+            GRID(ng) % om_r(i,j) = IniVal
+            GRID(ng) % om_u(i,j) = IniVal
+            GRID(ng) % om_v(i,j) = IniVal
+            GRID(ng) % on_p(i,j) = IniVal
+            GRID(ng) % on_r(i,j) = IniVal
+            GRID(ng) % on_u(i,j) = IniVal
+            GRID(ng) % on_v(i,j) = IniVal
 
-          GRID(ng) % pm(i,j) = IniVal
-          GRID(ng) % pn(i,j) = IniVal
+            GRID(ng) % pm(i,j) = IniVal
+            GRID(ng) % pn(i,j) = IniVal
 
-          GRID(ng) % pmon_p(i,j) = IniVal
-          GRID(ng) % pmon_r(i,j) = IniVal
-          GRID(ng) % pmon_u(i,j) = IniVal
-          GRID(ng) % pmon_v(i,j) = IniVal
-          GRID(ng) % pnom_p(i,j) = IniVal
-          GRID(ng) % pnom_r(i,j) = IniVal
-          GRID(ng) % pnom_u(i,j) = IniVal
-          GRID(ng) % pnom_v(i,j) = IniVal
+            GRID(ng) % pmon_p(i,j) = IniVal
+            GRID(ng) % pmon_r(i,j) = IniVal
+            GRID(ng) % pmon_u(i,j) = IniVal
+            GRID(ng) % pmon_v(i,j) = IniVal
+            GRID(ng) % pnom_p(i,j) = IniVal
+            GRID(ng) % pnom_r(i,j) = IniVal
+            GRID(ng) % pnom_u(i,j) = IniVal
+            GRID(ng) % pnom_v(i,j) = IniVal
 
-          GRID(ng) % xp(i,j) = IniVal
-          GRID(ng) % xr(i,j) = IniVal
-          GRID(ng) % xu(i,j) = IniVal
-          GRID(ng) % xv(i,j) = IniVal
-          GRID(ng) % yp(i,j) = IniVal
-          GRID(ng) % yu(i,j) = IniVal
-          GRID(ng) % yv(i,j) = IniVal
+            GRID(ng) % xp(i,j) = IniVal
+            GRID(ng) % xr(i,j) = IniVal
+            GRID(ng) % xu(i,j) = IniVal
+            GRID(ng) % xv(i,j) = IniVal
+            GRID(ng) % yp(i,j) = IniVal
+            GRID(ng) % yu(i,j) = IniVal
+            GRID(ng) % yv(i,j) = IniVal
 
 #if defined ICESHELF && defined SOLVE3D
-          GRID(ng) % IcePress(i,j) = IniVal
-          GRID(ng) % zice(i,j) = IniVal
+            GRID(ng) % IcePress(i,j) = IniVal
+            GRID(ng) % zice(i,j) = IniVal
 #endif
 
 #ifdef MASKING
-          GRID(ng) % pmask(i,j) = IniVal
-          GRID(ng) % rmask(i,j) = IniVal
-          GRID(ng) % umask(i,j) = IniVal
-          GRID(ng) % vmask(i,j) = IniVal
+            GRID(ng) % pmask(i,j) = IniVal
+            GRID(ng) % rmask(i,j) = IniVal
+            GRID(ng) % umask(i,j) = IniVal
+            GRID(ng) % vmask(i,j) = IniVal
 #endif
 
 #ifdef WET_DRY
-          GRID(ng) % rmask_wet(i,j) = IniVal
-          GRID(ng) % umask_wet(i,j) = IniVal
-          GRID(ng) % vmask_wet(i,j) = IniVal
+            GRID(ng) % rmask_wet(i,j) = IniVal
+            GRID(ng) % umask_wet(i,j) = IniVal
+            GRID(ng) % vmask_wet(i,j) = IniVal
 #endif
 
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
-          GRID(ng) % Rscope(i,j) = IniVal
-          GRID(ng) % Uscope(i,j) = IniVal
-          GRID(ng) % Vscope(i,j) = IniVal
+            GRID(ng) % Rscope(i,j) = IniVal
+            GRID(ng) % Uscope(i,j) = IniVal
+            GRID(ng) % Vscope(i,j) = IniVal
 #endif
-        END DO
+          END DO
 
 #ifdef SOLVE3D
 # if defined SEDIMENT && defined SED_MORPH
-        DO i=Imin,Imax
-          GRID(ng) % bed_thick0(i,j) = IniVal
-          GRID(ng) % bed_thick(i,j,1) = IniVal
-          GRID(ng) % bed_thick(i,j,2) = IniVal
-        END DO
+          DO i=Imin,Imax
+            GRID(ng) % bed_thick0(i,j) = IniVal
+            GRID(ng) % bed_thick(i,j,1) = IniVal
+            GRID(ng) % bed_thick(i,j,2) = IniVal
+          END DO
 # endif
-        DO k=1,N(ng)
-          DO i=Imin,Imax
-            GRID(ng) % Hz(i,j,k) = IniVal
-            GRID(ng) % Huon(i,j,k) = IniVal
-            GRID(ng) % Hvom(i,j,k) = IniVal
-            GRID(ng) % z_r(i,j,k) = IniVal
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              GRID(ng) % Hz(i,j,k) = IniVal
+              GRID(ng) % Huon(i,j,k) = IniVal
+              GRID(ng) % Hvom(i,j,k) = IniVal
+              GRID(ng) % z_r(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            GRID(ng) % z_w(i,j,k) = IniVal
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              GRID(ng) % z_w(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
 #endif
-      END DO
+        END DO
+      END IF
 
 #if defined TANGENT || defined TL_IOMS
 !
 !  Tangent linear model state.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
-          GRID(ng) % tl_h(i,j) = IniVal
-        END DO
+      IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            GRID(ng) % tl_h(i,j) = IniVal
+          END DO
 # ifdef SOLVE3D
 #  if defined SEDIMENT && defined SED_MORPH
-        DO i=Imin,Imax
-          GRID(ng) % tl_bed_thick0(i,j) = IniVal
-          GRID(ng) % tl_bed_thick(i,j,1) = IniVal
-          GRID(ng) % tl_bed_thick(i,j,2) = IniVal
-        END DO
+          DO i=Imin,Imax
+            GRID(ng) % tl_bed_thick0(i,j) = IniVal
+            GRID(ng) % tl_bed_thick(i,j,1) = IniVal
+            GRID(ng) % tl_bed_thick(i,j,2) = IniVal
+          END DO
 #  endif
-        DO k=1,N(ng)
-          DO i=Imin,Imax
-            GRID(ng) % tl_Hz(i,j,k) = IniVal
-            GRID(ng) % tl_Huon(i,j,k) = IniVal
-            GRID(ng) % tl_Hvom(i,j,k) = IniVal
-            GRID(ng) % tl_z_r(i,j,k) = IniVal
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              GRID(ng) % tl_Hz(i,j,k) = IniVal
+              GRID(ng) % tl_Huon(i,j,k) = IniVal
+              GRID(ng) % tl_Hvom(i,j,k) = IniVal
+              GRID(ng) % tl_z_r(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            GRID(ng) % tl_z_w(i,j,k) = IniVal
-          END DO
-        END DO          
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              GRID(ng) % tl_z_w(i,j,k) = IniVal
+            END DO
+          END DO          
 # endif
-      END DO
+        END DO
+      END IF
 #endif
 
 #ifdef ADJOINT
 !
 !  Adjoint model state.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
-          GRID(ng) % ad_h(i,j) = IniVal
-        END DO
+      IF ((model.eq.0).or.(model.eq.iADM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            GRID(ng) % ad_h(i,j) = IniVal
+          END DO
 # ifdef SOLVE3D
 #  if defined SEDIMENT && defined SED_MORPH
-        DO i=Imin,Imax
-          GRID(ng) % ad_bed_thick0(i,j) = IniVal
-          GRID(ng) % ad_bed_thick(i,j,1) = IniVal
-          GRID(ng) % ad_bed_thick(i,j,2) = IniVal
-        END DO
+          DO i=Imin,Imax
+            GRID(ng) % ad_bed_thick0(i,j) = IniVal
+            GRID(ng) % ad_bed_thick(i,j,1) = IniVal
+            GRID(ng) % ad_bed_thick(i,j,2) = IniVal
+          END DO
 #  endif
-        DO k=1,N(ng)
-          DO i=Imin,Imax
-            GRID(ng) % ad_Hz(i,j,k) = IniVal
-            GRID(ng) % ad_Huon(i,j,k) = IniVal
-            GRID(ng) % ad_Hvom(i,j,k) = IniVal
-            GRID(ng) % ad_z_r(i,j,k) = IniVal
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              GRID(ng) % ad_Hz(i,j,k) = IniVal
+              GRID(ng) % ad_Huon(i,j,k) = IniVal
+              GRID(ng) % ad_Hvom(i,j,k) = IniVal
+              GRID(ng) % ad_z_r(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            GRID(ng) % ad_z_w(i,j,k) = IniVal
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              GRID(ng) % ad_z_w(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
 # endif
-      END DO
+        END DO
+      END IF
 #endif
 
       RETURN

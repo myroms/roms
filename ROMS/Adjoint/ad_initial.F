@@ -18,11 +18,18 @@
 # ifdef BBL_MODEL_NOT_YET
       USE mod_bbl
 # endif
+# ifdef SOLVE3D
+      USE mod_coupling
+# endif
+      USE mod_forces
 # ifdef FOUR_DVAR
       USE mod_fourdvar
 # endif
       USE mod_grid
       USE mod_iounits
+# ifdef SOLVE3D
+      USE mod_mixing
+# endif
       USE mod_ncparam
       USE mod_ocean
       USE mod_scalars
@@ -39,6 +46,7 @@
       USE horz_mix_mod, ONLY : horz_mix
       USE metrics_mod, ONLY : metrics
 # ifdef SOLVE3D
+
       USE set_depth_mod, ONLY : set_depth
       USE omega_mod, ONLY : omega
       USE rho_eos_mod, ONLY : rho_eos
@@ -128,6 +136,11 @@
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
+!
+! Initialize few parameters.
+!
+      ubar_xs=0.0_r8
+      ad_ubar_xs=0.0_r8
 
 # ifdef PROFILE
 !
@@ -308,6 +321,12 @@
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1
           CALL initialize_ocean (ng, TILE, iADM)
+#  if defined SOLVE3D
+          CALL initialize_coupling (ng, TILE, iADM)
+          CALL initialize_mixing (ng, TILE, iADM)  
+#  endif
+          CALL initialize_forces (ng, TILE, iADM)
+          CALL initialize_grid (ng, TILE, iADM)
         END DO
       END DO
 !$OMF END PARALLEL DO
@@ -326,6 +345,12 @@
         DO tile=subs*thread,subs*(thread+1)-1
           CALL initialize_ocean (ng, TILE, iNLM)
           CALL initialize_ocean (ng, TILE, iADM)
+#  if defined SOLVE3D
+          CALL initialize_coupling (ng, TILE, iADM)
+          CALL initialize_mixing (ng, TILE, iADM)  
+#  endif
+          CALL initialize_forces (ng, TILE, iADM)
+          CALL initialize_grid (ng, TILE, iADM)
         END DO
       END DO
 !$OMF END PARALLEL DO

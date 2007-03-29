@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_MCTWorld.F90,v 1.25 2005/11/29 22:50:53 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_MCTWorld -- MCTWorld Class
@@ -32,12 +32,16 @@
 
     type MCTWorld
       integer :: MCT_comm                          ! MCT communicator
-      integer :: ncomps	                           ! number of components
-      integer :: mygrank                           ! rank of this processor in 
-                                                   ! global communicator
-      integer,dimension(:),pointer :: nprocspid	   ! number of processes 
-                                                   ! each component is on
-      integer,dimension(:,:),pointer :: idGprocid  ! translate between local component
+      integer :: ncomps	                           ! Total number of components
+      integer :: mygrank                           ! Rank of this processor in 
+                                                   ! global communicator.
+      integer,dimension(:),pointer :: nprocspid	   ! Number of processes 
+                                                   ! each component is on (e.g. rank of its
+						   ! local communicator.
+      integer,dimension(:,:),pointer :: idGprocid  ! Translate between local component rank
+                                                   ! rank in global communicator.
+						   ! idGprocid(modelid,localrank)=globalrank
+
     end type MCTWorld
 
 ! !PUBLIC DATA MEMBERS:
@@ -100,7 +104,7 @@
 !           globalcomm
 !EOP __________________________________________________________________
 
-  character(len=*),parameter :: myname='m_MCTWorld'
+  character(len=*),parameter :: myname='MCT::m_MCTWorld'
 
  contains
 
@@ -138,7 +142,7 @@
       integer, intent(in)	       :: globalcomm      ! global communicator
       integer, intent(in)	       :: mycomm          ! my communicator
       integer, intent(in),optional     :: myid            ! my component id
-      integer, dimension(:),optional   :: myids    ! component ids
+      integer, dimension(:),pointer,optional  :: myids    ! component ids
 
 ! !REVISION HISTORY:
 ! 19Jan01 - R. Jacob <jacob@mcs.anl.gov> - initial prototype
@@ -164,6 +168,11 @@
   integer, dimension(:,:),pointer :: tmparray
   integer,dimension(:),pointer :: apoint
 ! ------------------------------------------------------------------
+
+! Check that ncomps is a legal value
+  if(ncomps < 1) then
+     call die(myname_, "argument ncomps can't less than one!",ncomps)
+  endif
 
 ! only one of myid and myids should be present
   if(present(myid) .and. present(myids)) then
@@ -256,11 +265,10 @@
 ! make the master list of global proc ids
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! allocate space on local root to hold global ids
-  if(myLid == 0) then
-    allocate(Gprocids(mysize),stat=ier)
-    if(ier/=0) call die(myname_,'allocate(Gprocids)',ier)
-  endif
+! allocate space to hold global ids
+! only needed on root, but allocate everywhere to avoid complaints.
+  allocate(Gprocids(mysize),stat=ier)
+  if(ier/=0) call die(myname_,'allocate(Gprocids)',ier)
 
 ! gather over the LOCAL comm
   call MPI_GATHER(myGid,1,MP_INTEGER,Gprocids,1,MP_INTEGER,0,mycomm,ier)
@@ -389,6 +397,11 @@
   character(len=*),parameter :: myname_=myname//'::initr_'
   integer :: ier,Gsize,myGid,MCTcomm,i,j
 
+! Check that ncomps is a legal value
+  if(ncomps < 1) then
+     call die(myname_, "argument ncomps can't less than one!",ncomps)
+  endif
+
 ! determine overall size
   call MP_comm_size(globalcomm,Gsize,ier)
   if(ier /= 0) call MP_perr_die(myname_,'MP_comm_size()',ier)
@@ -468,7 +481,7 @@
   integer :: ier
 
   deallocate(ThisMCTWorld%nprocspid,ThisMCTWorld%idGprocid,stat=ier)
-  if(ier /= 0) call die(myname_,'deallocate(MCTW,...)',ier)
+  if(ier /= 0) call warn(myname_,'deallocate(MCTW,...)',ier)
 
   ThisMCTWorld%ncomps = 0
   ThisMCTWorld%mygrank = 0

@@ -30,7 +30,7 @@
 #undef  TLM_CHECK               /* Tangent Linear Model Check */
 #undef  W4DPSAS                 /* Weak constraint 4D-PSAS */
 #undef  W4DVAR                  /* Weak constraint 4DVAR */
- 
+
 /*
 **-----------------------------------------------------------------------------
 **  Nonlinear basic state tracjectory.
@@ -295,6 +295,9 @@
 #  ifdef W4DVAR
 #   define RPM_RELAXATION
 #   undef  CONVOLVE
+#  endif
+#  ifdef IS4DVAR
+#   define LANCZOS
 #  endif
 #  ifdef IS4DVAR_OLD
 #   undef  MULTIPLE_TLM

@@ -297,10 +297,10 @@
           CALL initialize_ocean (ng, TILE, iNLM)
           CALL initialize_ocean (ng, TILE, iRPM)
 #  ifdef SOLVE3D
-          CALL initialize_coupling (ng, TILE)
+          CALL initialize_coupling (ng, TILE, 0)
           CALL initialize_mixing (ng, TILE, iRPM)
 #  endif
-          CALL initialize_forces (ng, TILE)
+          CALL initialize_forces (ng, TILE, 0)
         END DO
       END DO
 !$OMP END PARALLEL DO

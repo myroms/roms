@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_Rearranger.F90,v 1.22 2005/11/28 17:07:59 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_Rearranger -- Remaps an AttrVect within a group of processes
@@ -42,6 +42,9 @@
       public :: Rearranger  ! The class data structure
 
       type :: Rearranger
+#ifdef SEQUENCE
+         sequence
+#endif
          private
          type(Router) :: SendRouter
          type(Router) :: RecvRouter
@@ -74,7 +77,7 @@
 !           and use Router%lAvsize instead for sanity check.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_Rearranger'
+  character(len=*),parameter :: myname='MCT::m_Rearranger'
 
  contains
 
@@ -88,6 +91,9 @@
 ! This routine takes two {\tt GlobalSegMap} inputs, {\tt SourceGSMap}
 ! and {\tt TargetGSMap} and build a Rearranger {\tt OutRearranger}
 ! between them. {\tt myComm} is used for the internal communication.
+!
+! {\bf N.B.} The two {\tt GlolbalSegMap} inputs must be initialized so
+! that the index values on a processor are in ascending order.
 !
 ! !INTERFACE:
 
@@ -438,25 +444,23 @@
 
    call Router_clean(ReArr%SendRouter,ier)
    if(ier /= 0) then
-      write(stderr,'(2a,i8)') myname_, &
-	   ':: ERROR--Router_clean(ReArr%SendRouter) failed with ier=',ier
       if(present(status)) then
 	 status = ier
 	 return
       else
-	 call die(myname_)
+         write(stderr,'(2a,i8)') myname_, &
+	   ':: ERROR--Router_clean(ReArr%SendRouter) failed with ier=',ier
       endif
    endif
 
    call Router_clean(ReArr%RecvRouter,ier)
    if(ier /= 0) then
-      write(stderr,'(2a,i8)') myname_, &
-	   ':: ERROR--Router_clean(ReArr%RecvRouter) failed with ier=',ier
       if(present(status)) then
 	 status = ier
 	 return
       else
-	 call die(myname_)
+         write(stderr,'(2a,i8)') myname_, &
+	   ':: ERROR--Router_clean(ReArr%RecvRouter) failed with ier=',ier
       endif
    endif
 
@@ -465,12 +469,11 @@
    if(associated(ReArr%LocalPack)) then
       deallocate(ReArr%LocalPack, stat=ier)
       if(ier /= 0) then
-	 write(stderr,'(2a,i8)') myname_, &
-	      ':: ERROR--deallocate(ReArr%LocalPack) failed with stat=',ier
 	 if(present(status)) then
 	    status=ier
 	 else
-	    call die(myname_)
+	    write(stderr,'(2a,i8)') myname_, &
+	      ':: ERROR--deallocate(ReArr%LocalPack) failed with stat=',ier
 	 endif
       endif
    endif
@@ -496,6 +499,9 @@
 ! physical point coming from two or more processes will be summed.
 ! Otherwise, data is overwritten.
 !
+! If the optional argument {\tt Vector} is present and true,
+! vector architecture-friendly parts of this routine will be invoked.
+!
 ! The size of the {\tt SourceAv} and {\tt TargetAv}
 ! argument must match those stored in the {\tt InRearranger} or
 ! and error will result.
@@ -506,7 +512,7 @@
 !
 ! !INTERFACE:
 
- subroutine rearrange_(SourceAV,TargetAV,InRearranger,Tag,Sum)
+ subroutine rearrange_(SourceAV,TargetAV,InRearranger,Tag,Sum,Vector)
 
 !
 ! !USES:
@@ -520,6 +526,7 @@
    use m_AttrVect,  only : AttrVect_zero => zero
    use m_AttrVect,  only : nIAttr,nRAttr
    use m_Router,    only : Router     
+   use m_realkinds, only : FP
    use m_mpif90
    use m_die
    use m_stdio
@@ -536,27 +543,31 @@
    type(Rearranger), target,   intent(in)      :: InRearranger
    integer,          optional, intent(in)      :: Tag
    logical,          optional, intent(in)      :: Sum
+   logical,          optional, intent(in)      :: Vector
 
 ! !REVISION HISTORY:
 ! 31Jan02 - E.T. Ong <eong@mcs.anl.gov> - initial prototype
 ! 20Mar02 - E.T. Ong <eong@mcs.anl.gov> - working code
 ! 08Jul02 - E.T. Ong <eong@mcs.anl.gov> - change intent of Target,Source
+! 29Oct03 - R. Jacob <jacob@mcs.anl.gov> - add optional argument vector
+!           to control use of vector-friendly mods provided by Fujitsu.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_=myname//'Rearrange_'
+  character(len=*),parameter :: myname_=myname//'::Rearrange_'
   integer ::	numi,numr,i,j,k,ier
   integer ::    VectIndex,AttrIndex,seg_start,seg_end
   integer ::    localindex,SrcVectIndex,TrgVectIndex,IAttrIndex,RAttrIndex
   integer ::    proc,numprocs,nseg
   integer ::    mp_Type_rp
   integer ::    mytag
+  logical ::    usevector
 !-----------------------------------------------------------------------
 
    ! DECLARE STRUCTURES FOR MPI ARGUMENTS.
 
    ! declare a pointer structure for the real data
    type :: rptr
-      real,dimension(:),pointer :: pr
+      real(FP),dimension(:),pointer :: pr
    end type rptr
 
    ! declare a pointer structure for the integer data
@@ -621,6 +632,11 @@
       "Number of attributes in SourceAV and TargetAV do not match")
       call die(myname_,"nRAttr(SourceAV)", nRAttr(SourceAV), &
                         "nRAttr(TargetAV)", nRAttr(TargetAV))
+   endif
+
+   usevector=.false.
+   if(present(Vector)) then
+    if(Vector) usevector=.true.
    endif
 
    ! ASSIGN VARIABLES
@@ -738,7 +754,7 @@
 	allocate(recv_rstatus(MP_STATUS_SIZE),stat=ier)
 	if(ier/=0) call die(myname_,'allocate(rstatus)',ier)
 
-	mp_Type_rp=MP_Type(rp2(2)%pr(1))
+	mp_Type_rp=MP_Type(rp2(1)%pr(1))
 
      endif
 
@@ -903,7 +919,30 @@
 
   ! LOAD THE LOCAL PIECES OF THE INTEGER AND REAL VECTOR
 
-  do localindex=1,InRearranger%LocalSize
+  if(usevector) then
+    do IAttrIndex=1,numi
+!CDIR SELECT(VECTOR)
+!DIR$ PREFERVECTOR
+     do localindex=1,InRearranger%LocalSize
+        TrgVectIndex = InRearranger%LocalPack(1,localindex)
+        SrcVectIndex = InRearranger%LocalPack(2,localindex)
+        TargetAV%iAttr(IAttrIndex,TrgVectIndex) = &
+             SourceAV%iAttr(IAttrIndex,SrcVectIndex)
+      enddo
+    enddo
+    do RAttrIndex=1,numr
+!CDIR SELECT(VECTOR)
+!DIR$ PREFERVECTOR
+     do localindex=1,InRearranger%LocalSize
+        TrgVectIndex = InRearranger%LocalPack(1,localindex)
+        SrcVectIndex = InRearranger%LocalPack(2,localindex)
+        TargetAV%rAttr(RAttrIndex,TrgVectIndex) = &
+             SourceAV%rAttr(RAttrIndex,SrcVectIndex)
+     enddo
+    enddo
+
+  else
+    do localindex=1,InRearranger%LocalSize
      TrgVectIndex = InRearranger%LocalPack(1,localindex)
      SrcVectIndex = InRearranger%LocalPack(2,localindex)
      do IAttrIndex=1,numi
@@ -914,7 +953,8 @@
 	TargetAV%rAttr(RAttrIndex,TrgVectIndex) = &
 	     SourceAV%rAttr(RAttrIndex,SrcVectIndex)
      enddo
-  enddo
+    enddo
+  endif
 
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 

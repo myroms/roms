@@ -361,7 +361,7 @@
         DO tile=subs*thread,subs*(thread+1)-1
           CALL initialize_ocean (ng, TILE, iTLM)
 #   ifdef SOLVE3D
-          CALL initialize_coupling (ng, TILE)
+          CALL initialize_coupling (ng, TILE, 0)
 #   endif
         END DO
       END DO

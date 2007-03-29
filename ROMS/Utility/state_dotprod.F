@@ -6,13 +6,21 @@
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                          s1_sustr, s2_sustr,                     &
+     &                          s1_svstr, s2_svstr,                     &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                          s1_stflx, s2_stflx,                     &
+# endif
      &                          s1_t, s2_t,                             &
      &                          s1_u, s2_u,                             &
      &                          s1_v, s2_v,                             &
-#endif
+#else
      &                          s1_ubar, s2_ubar,                       &
      &                          s1_vbar, s2_vbar,                       &
+#endif
      &                          s1_zeta, s2_zeta)
 !
 !svn $Id$
@@ -29,12 +37,22 @@
 !  where                                                               !
 !                                                                      !
 !      DotProd(0)           All state variable dot product             !
-!      DotProd(isFsur)      Free-surface contribution                  !
-!      DotProd(isUbar)      2D U-momentum contribution                 !
-!      DotProd(isVbar)      2D V-momentum contribution                 !
+#ifdef ADJUST_WSTRESS
+!      DotProd(isUbar)      Surface U-momentum stress contribution     !
+!      DotProd(isVbar)      Surface V-momentum stress contribution     !
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+!      DotProd(isTsur(:))   Surface Tracer flux  contribution          !
+# endif
 !      DotProd(isUvel)      3D U-momentum contribution                 !
 !      DotProd(isVvel)      3D V-momentum contribution                 !
-!      DotProd(isTvar(:))   Tracer-type variables contribution         !   
+!      DotProd(isTvar(:))   Tracer-type variables contribution         !
+#else
+!      DotProd(isUbar)      2D U-momentum contribution                 !
+!      DotProd(isVbar)      2D V-momentum contribution                 !
+#endif
+!      DotProd(isFsur)      Free-surface contribution                  !
 !                                                                      !
 !-----------------------------------------------------------------------
 !
@@ -59,18 +77,29 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #endif
+#ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: s1_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: s2_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: s1_svstr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: s2_svstr(LBi:UBi,LBj:UBj)
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: s1_stflx(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(in) :: s2_stflx(LBi:UBi,LBj:UBj,NT(ng))
+# endif
       real(r8), intent(in) :: s1_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: s2_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: s1_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: s2_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: s1_v(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: s2_v(LBi:UBi,LBj:UBj,N(ng))
-#endif
+#else
       real(r8), intent(in) :: s1_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s1_vbar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_vbar(LBi:UBi,LBj:UBj)
+#endif
       real(r8), intent(in) :: s1_zeta(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_zeta(LBi:UBi,LBj:UBj)
 !
@@ -99,9 +128,23 @@
         my_DotProd(i)=0.0_r8
       END DO
 !
-!  2D state variables.
+!  Free-surface.
 !
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          cff=s1_zeta(i,j)*s2_zeta(i,j)
+#ifdef MASKING
+          cff=cff*rmask(i,j)
+#endif
+          my_DotProd(0)=my_DotProd(0)+cff
+          my_DotProd(isFsur)=my_DotProd(isFsur)+cff
+        END DO
+      END DO
+
 #ifndef SOLVE3D
+!
+!  2D momentum.
+!
       DO j=JstrR,JendR
         DO i=Istr,IendR
           cff=s1_ubar(i,j)*s2_ubar(i,j)
@@ -123,19 +166,36 @@
         END DO
       END DO
 #endif
+
+#ifdef ADJUST_WSTRESS
+!
+!  Surface momentum stress.
+!
       DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          cff=s1_zeta(i,j)*s2_zeta(i,j)
-#ifdef MASKING
-          cff=cff*rmask(i,j)
-#endif
+        DO i=Istr,IendR
+          cff=s1_sustr(i,j)*s2_sustr(i,j)
+# ifdef MASKING
+          cff=cff*umask(i,j)
+# endif
           my_DotProd(0)=my_DotProd(0)+cff
-          my_DotProd(isFsur)=my_DotProd(isFsur)+cff
+          my_DotProd(isUsms)=my_DotProd(isUsms)+cff
         END DO
       END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          cff=s1_svstr(i,j)*s2_svstr(i,j)
+# ifdef MASKING
+          cff=cff*vmask(i,j)
+# endif
+          my_DotProd(0)=my_DotProd(0)+cff
+          my_DotProd(isVsms)=my_DotProd(isVsms)+cff
+        END DO
+      END DO
+#endif
+
 #ifdef SOLVE3D
 !
-!  3D state variables.
+!  3D momentum.
 !
       DO k=1,N(ng)
         DO j=JstrR,JendR
@@ -161,6 +221,9 @@
           END DO
         END DO
       END DO
+!
+!  Tracers.
+!
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -175,6 +238,24 @@
           END DO
         END DO
       END DO
+
+# ifdef ADJUST_STFLUX
+!
+!  Surface tracers flux.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            cff=s1_stflx(i,j,itrc)*s2_stflx(i,j,itrc)
+#  ifdef MASKING
+            cff=cff*rmask(i,j)
+#  endif
+            my_DotProd(0)=my_DotProd(0)+cff
+            my_DotProd(isTsur(itrc))=my_DotProd(isTsur(itrc))+cff
+          END DO
+        END DO
+      END DO
+# endif
 #endif
 !
 !-----------------------------------------------------------------------

@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !     Math + Computer Science Division / Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name:  $ 
+! CVS $Id: m_MatAttrVectMul.F90,v 1.25 2005/01/19 21:56:45 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_MatAttrVectMul - Sparse Matrix AttrVect Multipication.
@@ -55,7 +55,7 @@
 !
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_MatAttrVectMul'
+  character(len=*),parameter :: myname='MCT::m_MatAttrVectMul'
 
  contains
 
@@ -81,15 +81,21 @@
 ! The multiplication occurs for each of the common {\tt REAL} attributes 
 ! shared by {\tt xAV} and {\tt yAV}.  This routine is capable of 
 ! cross-indexing the attributes and performing the necessary multiplications.
+! 
+! If the optional argument {\tt Vector} is present and true, the vector
+! architecture-friendly portions of this routine will be invoked.  It
+! will also cause the vector parts of {\\ sMat} to be initialized if they
+! have not been already.
 !
 ! !INTERFACE:
 
- subroutine sMatAvMult_DataLocal_(xAV, sMat, yAV)
+ subroutine sMatAvMult_DataLocal_(xAV, sMat, yAV, Vector)
 !
 ! !USES:
 !
-      use m_stdio, only : stderr
-      use m_die,   only : MP_perr_die, die, warn
+      use m_realkinds, only : FP 
+      use m_stdio,     only : stderr
+      use m_die,       only : MP_perr_die, die, warn
 
       use m_List, only : List_identical => identical
       use m_List, only : List_nitem => nitem
@@ -105,16 +111,18 @@
       use m_SparseMatrix, only : SparseMatrix_lsize => lsize
       use m_SparseMatrix, only : SparseMatrix_indexIA => indexIA
       use m_SparseMatrix, only : SparseMatrix_indexRA => indexRA
+      use m_SparseMatrix, only : SparseMatrix_vecinit => vecinit
 
       implicit none
 
 ! !INPUT PARAMETERS:
 
       type(AttrVect),     intent(in)    :: xAV
-      type(SparseMatrix), intent(in)    :: sMat
+      logical,optional,   intent(in)    :: Vector
 
 ! !INPUT/OUTPUT PARAMETERS:
 
+      type(SparseMatrix), intent(inout)    :: sMat
       type(AttrVect),     intent(inout) :: yAV
 
 ! !REVISION HISTORY:
@@ -135,6 +143,9 @@
 ! 29Nov01 - E.T. Ong <eong@mcs.anl.gov> - Removed MP_PERR_DIE if
 !           there are zero elements in sMat. This allows for
 !           decompositions where a process may own zero points.
+! 29Oct03 - R. Jacob <jacob@mcs.anl.gov> - add Vector argument to
+!           optionally use the vector-friendly version provided by
+!           Fujitsu
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::sMatAvMult_DataLocal_'
@@ -153,13 +164,21 @@
 
 ! Temporary variables for multiply do-loop
   integer :: row, col
-  real :: wgt
+  real(FP) :: wgt
 
 ! Error flag and loop indices
-  integer :: ierr, m, n
+  integer :: ierr, i, m, n, l
 
 ! Character variable used as a data type flag:
   character*7 :: data_flag
+
+! logical flag
+  logical :: usevector 
+
+  usevector = .false.
+  if(present(Vector)) then
+    if(Vector) usevector = .true.
+  endif
 
        ! Retrieve the number of elements in sMat:
 
@@ -180,24 +199,46 @@
   if(List_identical(xAV%rList, yAV%rList)) then ! no cross-indexing
 
      num_indices = List_nitem(xAV%rList)
-  
-       ! loop over matrix elements
 
-     do n=1,num_elements
+     if(usevector) then
 
-	row = sMat%data%iAttr(irow,n)
-	col = sMat%data%iAttr(icol,n)
-	wgt = sMat%data%rAttr(iwgt,n)
+       if(.not.sMat%vecinit) then
+            call SparseMatrix_vecinit(sMat)
+       endif
 
-       ! loop over attributes being regridded.
+!DIR$ CONCURRENT
+       do m=1,num_indices
+          do l=1,sMat%tbl_end
+!CDIR NOLOOPCHG
+!DIR$ CONCURRENT
+             do i=sMat%row_s(l),sMat%row_e(l)
+               col = sMat%tcol(i,l)
+               wgt = sMat%twgt(i,l)
+               if (col < 0) cycle
+               yAV%rAttr(m,i) = yAV%rAttr(m,i) + wgt * xAV%rAttr(m,col)
+             enddo
+          enddo
+       enddo
+ 
+     else
 
-	do m=1,num_indices
+       do n=1,num_elements
 
-	   yAV%rAttr(m,row) = yAV%rAttr(m,row) + wgt * xAV%rAttr(m,col)
+    	  row = sMat%data%iAttr(irow,n)
+    	  col = sMat%data%iAttr(icol,n)
+	  wgt = sMat%data%rAttr(iwgt,n)
 
-	end do ! m=1,num_indices
+         ! loop over attributes being regridded.
 
-     end do ! n=1,num_elements
+	  do m=1,num_indices
+
+	     yAV%rAttr(m,row) = yAV%rAttr(m,row) + wgt * xAV%rAttr(m,col)
+
+  	  end do ! m=1,num_indices
+
+       end do ! n=1,num_elements
+
+     endif
 
   else
 
@@ -260,7 +301,7 @@
 !
 ! !INTERFACE:
 
- subroutine sMatAvMult_SMPlus_(xAV, sMatPlus, yAV)
+ subroutine sMatAvMult_SMPlus_(xAV, sMatPlus, yAV, Vector)
 !
 ! !USES:
 !
@@ -288,26 +329,37 @@
 ! !INPUT PARAMETERS:
 
       type(AttrVect),         intent(in)    :: xAV
-      type(SparseMatrixPlus), intent(in)    :: sMatPlus
+      logical, optional,      intent(in)    :: Vector
 
 ! !INPUT/OUTPUT PARAMETERS:
 
       type(AttrVect),         intent(inout) :: yAV
+      type(SparseMatrixPlus), intent(inout) :: sMatPlus
 
 ! !SEE ALSO:
 ! The MCT module m_AttrVect for more information about the AttrVect type.
 ! The MCT module m_SparseMatrixPlus for more information about the 
 ! SparseMatrixPlus type.
+
 ! !REVISION HISTORY:
 ! 26Sep02 - J.W. Larson <larson@mcs.anl.gov> - API specification and
 !           implementation.
+! 29Oct03 - R. Jacob <jacob@mcs.anl.gov> - add vector argument to all
+!           calls to Rearrange and DataLocal_.  Add optional input
+!           argument to change value (assumed false)
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::sMatAvMult_SMPlus_'
   type(AttrVect) :: xPrimeAV, yPrimeAV
   integer :: ierr
+  logical ::  usevector
   character(len=5) :: strat
 
+
+  usevector = .FALSE.
+  if(present(Vector)) then
+   if(Vector)usevector = .TRUE.
+  endif
        ! Examine the parallelization strategy, and act accordingly
 
   strat = String_ToChar(sMatPlus%Strategy)
@@ -316,18 +368,20 @@
        ! Create intermediate AttrVect for x'
      call AttrVect_init(xPrimeAV, xAV, sMatPlus%XPrimeLength)
        ! Rearrange data from x to get x'
-     call Rearrange(xAV, xPrimeAV, sMatPlus%XToXPrime, sMatPlus%Tag )
+     call Rearrange(xAV, xPrimeAV, sMatPlus%XToXPrime, &
+                    sMatPlus%Tag ,vector=usevector)
        ! Perform perfectly data-local multiply y = Mx'
-     call sMatAvMult_DataLocal_(xPrimeAV, sMatPlus%Matrix, yaV)
+     call sMatAvMult_DataLocal_(xPrimeAV, sMatPlus%Matrix, yaV, Vector=usevector)
        ! Clean up space occupied by x'
      call AttrVect_clean(xPrimeAV, ierr)
   case('Yonly')
        ! Create intermediate AttrVect for y'
      call AttrVect_init(yPrimeAV, yAV, sMatPlus%YPrimeLength)
        ! Perform perfectly data-local multiply y' = Mx
-     call sMatAvMult_DataLocal_(xAV, sMatPlus%Matrix, yPrimeAV)
+     call sMatAvMult_DataLocal_(xAV, sMatPlus%Matrix, yPrimeAV, Vector=usevector)
        ! Rearrange/reduce partial sums in y' to get y
-     call Rearrange(yPrimeAV, yAV, sMatPlus%YPrimeToY, sMatPlus%Tag, .TRUE.)
+     call Rearrange(yPrimeAV, yAV, sMatPlus%YPrimeToY, sMatPlus%Tag, &
+                    .TRUE., Vector=usevector)
        ! Clean up space occupied by y'
      call AttrVect_clean(yPrimeAV, ierr)
   case('XandY')
@@ -336,11 +390,14 @@
        ! Create intermediate AttrVect for y'
      call AttrVect_init(yPrimeAV, yAV, sMatPlus%YPrimeLength)
        ! Rearrange data from x to get x'
-     call Rearrange(xAV, xPrimeAV, sMatPlus%XToXPrime, sMatPlus%Tag)
+     call Rearrange(xAV, xPrimeAV, sMatPlus%XToXPrime, sMatPlus%Tag, &
+                       Vector=usevector)
        ! Perform perfectly data-local multiply y' = Mx'
-     call sMatAvMult_DataLocal_(xPrimeAV, sMatPlus%Matrix, yPrimeAV)
+     call sMatAvMult_DataLocal_(xPrimeAV, sMatPlus%Matrix, yPrimeAV, &
+                             Vector=usevector)
        ! Rearrange/reduce partial sums in y' to get y
-     call Rearrange(yPrimeAV, yAV, sMatPlus%YPrimeToY, sMatPlus%Tag, .TRUE.)
+     call Rearrange(yPrimeAV, yAV, sMatPlus%YPrimeToY, sMatPlus%Tag, &
+                            .TRUE., Vector=usevector)
        ! Clean up space occupied by x'
      call AttrVect_clean(xPrimeAV, ierr)
        ! Clean up space occupied by y'

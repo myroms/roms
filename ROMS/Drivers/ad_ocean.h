@@ -42,10 +42,12 @@
 #endif
       USE mod_iounits
       USE mod_scalars
-
-#ifdef AIR_OCEAN 
 !
-      USE atm_coupler_mod, ONLY : initialize_coupling
+#ifdef AIR_OCEAN 
+      USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
+#endif
+#ifdef WAVES_OCEAN
+      USE ocean_coupler_mod, ONLY : initialize_waves_coupling
 #endif
 !
 !  Imported variable declarations.
@@ -101,12 +103,18 @@
 !$OMP END PARALLEL DO
         END DO
 
-#ifdef AIR_OCEAN 
+#if defined AIR_OCEAN || defined WAVES_OCEAN
 !
-!  Initialize coupling streams between atmosphere and ocean using the
-!  Model Coupling Toolkit (MCT).
+!  Initialize coupling streams between model(s).
 !
-        CALL initialize_coupling (MyRank)
+        DO ng=1,Ngrids
+# ifdef AIR_OCEAN
+          CALL initialize_atmos_coupling (ng, MyRank)
+# endif
+# ifdef WAVES_OCEAN
+          CALL initialize_waves_coupling (ng, MyRank)
+# endif
+        END DO
 #endif
 !
 !  Read in model tunable parameters from standard input. Initialize

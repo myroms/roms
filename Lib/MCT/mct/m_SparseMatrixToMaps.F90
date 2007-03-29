@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_SparseMatrixToMaps.F90,v 1.12 2004/04/21 22:16:35 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SparseMatrixToMaps -- Maps from the Sparse Matrix 
@@ -46,7 +46,7 @@
 !           and API specifications.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_SparseMatrixToMaps'
+  character(len=*),parameter :: myname='MCT::m_SparseMatrixToMaps'
 
  contains
 

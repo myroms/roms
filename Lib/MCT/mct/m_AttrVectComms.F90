@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_AttrVectComms.F90,v 1.32 2005/11/26 06:01:02 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_AttrVectComms - MPI Communications Methods for the AttrVect
@@ -80,7 +80,7 @@
 !           m_die routines throughout this module.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_AttrVectComms'
+  character(len=*),parameter :: myname='MCT::m_AttrVectComms'
 
  contains
 
@@ -405,7 +405,7 @@
  end subroutine recv_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: GM_gather_ - Gather an AttrVect Distributed by a GlobalMap
@@ -596,7 +596,8 @@
 ! for each distributed piece of {\tt iV}.  On the root, a complete 
 ! (including halo points) gathered copy of {\tt iV} is collected into 
 ! the temporary {\tt AttrVect} variable {\tt workV} (the length of
-! {\tt workV} is {\tt GlobalSegMap\_GlobalStorage(GSMap)}).  The 
+! {\tt workV} is the larger of {\tt GlobalSegMap\_GlobalStorage(GSMap)} or
+! {\tt GlobalSegMap\_GlobalSize(GSMap)}).  The 
 ! variable {\tt workV} is segmented by process, and segments are 
 ! copied into it by process, but ordered in the same order the segments
 ! appear in {\tt GSMap}.  Once {\tt workV} is loaded, the data are 
@@ -625,6 +626,7 @@
 ! AttrVect and associated services:
       use m_AttrVect, only : AttrVect
       use m_AttrVect, only : AttrVect_init => init
+      use m_AttrVect, only : AttrVect_zero => zero
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_nIAttr => nIAttr
       use m_AttrVect, only : AttrVect_nRAttr => nRAttr
@@ -659,6 +661,8 @@
 ! 20Aug01 - E.T. Ong <eong@mcs.anl.gov> - Added error checking for
 !           matching processors in gsmap and comm. Corrected
 !           current_pos assignment.
+! 23Nov01 - R. Jacob <jacob@mcs.anl.gov> - zero the oV before copying in
+!           gathered data.
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::GSM_gather_'
@@ -681,6 +685,8 @@
   integer :: m, n, ilb, iub, olb, oub, pe
 ! workV segment tracking index array:
   integer, dimension(:), allocatable :: current_pos
+! workV sizes
+  integer :: gssize, gstorage
 
       ! Initialize stat (if present)
 
@@ -755,9 +761,15 @@
 
   if(myID == root) then
 
-     global_storage = GlobalSegMap_GlobalStorage(GSMap)
+! bug fix:  gstorage will be bigger than gssize if GSmap is
+! haloed.  But gstorage may be smaller than gsize if GSmap
+! is masked.  So take the maximum.  RLJ
+     gstorage = GlobalSegMap_GlobalStorage(GSMap)
+     gssize = GlobalSegMap_gsize(GSMap)
+     global_storage = MAX(gstorage,gssize)
 
      call AttrVect_init(oV,iV,global_storage)
+     call AttrVect_zero(oV)
 
        ! On the root, allocate current position index for
        ! each process chunk:
@@ -852,7 +864,7 @@
  end subroutine GSM_gather_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: GM_scatter_ - Scatter an AttrVect Using a GlobalMap
@@ -1456,7 +1468,7 @@
  end subroutine GSM_scatter_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: bcast_ - Broadcast an AttrVect

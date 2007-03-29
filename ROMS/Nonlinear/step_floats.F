@@ -122,7 +122,7 @@
 
       real(r8), parameter :: Fspv = 0.0_r8
 
-      real(r8) :: cff1, cff2, cff3, cff4, cff5, cff6, cff7, cff8
+      real(r8) :: cff1, cff2, cff3, cff4, cff5, cff6, cff7, cff8, cff9
       real(r8) :: p1, p2, q1, q2, xrhs, yrhs, zrhs, zfloat
 
 # ifdef FLOAT_VWALK
@@ -277,24 +277,45 @@
 !  location. Use bilinear interpolation to determine the isobaric in
 !  terms vertical grid units.
 !
-         IF (Ftype(l).eq.1) THEN
-!!         zfloat=Tinfo(izgrd,l)
-           zfloat=Fz0(l)
-           Ir=INT(track(ixgrd,nfp1,l))
-           Jr=INT(track(iygrd,nfp1,l))
+          IF ((Ftype(l).eq.1).or.(Ftype(l).eq.2)) THEN
+            Ir=INT(track(ixgrd,nfp1,l))
+            Jr=INT(track(iygrd,nfp1,l))
 !
-           i1=MIN(MAX(Ir  ,0),Lm(ng)+1)
-           i2=MIN(MAX(Ir+1,1),Lm(ng)+1)
-           j1=MIN(MAX(Jr  ,0),Mm(ng)+1)
-           j2=MIN(MAX(Jr+1,0),Mm(ng)+1)
+            i1=MIN(MAX(Ir  ,0),Lm(ng)+1)
+            i2=MIN(MAX(Ir+1,1),Lm(ng)+1)
+            j1=MIN(MAX(Jr  ,0),Mm(ng)+1)
+            j2=MIN(MAX(Jr+1,0),Mm(ng)+1)
 !
             p2=REAL(i2-i1,r8)*(track(ixgrd,nfp1,l)-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(track(iygrd,nfp1,l)-REAL(j1,r8))
             p1=1.0_r8-p2
             q1=1.0_r8-q2
+#  ifdef MASKING
+            cff7=p1*q1*GRID(ng)%z_w(i1,j1,N(ng))*GRID(ng)%rmask(i1,j1)+ &
+     &           p2*q1*GRID(ng)%z_w(i2,j1,N(ng))*GRID(ng)%rmask(i2,j1)+ &
+     &           p1*q2*GRID(ng)%z_w(i1,j2,N(ng))*GRID(ng)%rmask(i1,j2)+ &
+     &           p2*q2*GRID(ng)%z_w(i2,j2,N(ng))*GRID(ng)%rmask(i2,j2)
+            cff8=p1*q1*GRID(ng)%rmask(i1,j1)+                           &
+     &           p2*q1*GRID(ng)%rmask(i2,j1)+                           &
+     &           p1*q2*GRID(ng)%rmask(i1,j2)+                           &
+     &           p2*q2*GRID(ng)%rmask(i2,j2)
+            cff9=0.0_r8
+            IF (cff8.gt.0.0_r8) cff9=cff7/cff8
+#  else
+            cff9=p1*q1*GRID(ng)%z_w(i1,j1,N(ng))+                       &
+     &           p2*q1*GRID(ng)%z_w(i2,j1,N(ng))+                       &
+     &           p1*q2*GRID(ng)%z_w(i1,j2,N(ng))+                       &
+     &           p2*q2*GRID(ng)%z_w(i2,j2,N(ng))
+#  endif
+            cff6=cff9
 !
-            cff6=0.0_r8
-            DO k=N(ng),1,-1
+            IF (Ftype(l).eq.1) THEN
+              zfloat=Fz0(l)
+            ELSEIF (Ftype(l).eq.2) THEN
+              zfloat=Fz0(l)+cff9
+            END IF
+!
+            DO k=N(ng)-1,1,-1
 #  ifdef MASKING
               cff7=p1*q1*GRID(ng)%z_w(i1,j1,k)*GRID(ng)%rmask(i1,j1)+   &
      &             p2*q1*GRID(ng)%z_w(i2,j1,k)*GRID(ng)%rmask(i2,j1)+   &
@@ -317,12 +338,12 @@
               END IF
               cff6=cff5
             END DO
-         ELSE
-           track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                     &
-     &                         dt(ng)*(cff1*track(izrhs,nf  ,l)-        &
-     &                                 cff2*track(izrhs,nfm1,l)+        &
-     &                                 cff1*track(izrhs,nfm2,l))
-         ENDIF
+          ELSE
+            track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                    &
+     &                          dt(ng)*(cff1*track(izrhs,nf  ,l)-       &
+     &                                  cff2*track(izrhs,nfm1,l)+       &
+     &                                  cff1*track(izrhs,nfm2,l))
+          END IF
 # endif
         END IF
       END DO
@@ -420,10 +441,7 @@
 !  location. Use bilinear interpolation to determine the isobaric in
 !  terms vertical grid units.
 !
-          IF (Ftype(l).eq.1) THEN
-!!          zfloat=Tinfo(izgrd,l)
-            zfloat=Fz0(l)
-!
+          IF ((Ftype(l).eq.1).or.(Ftype(l).eq.2)) THEN
             Ir=INT(track(ixgrd,nfp1,l))
             Jr=INT(track(iygrd,nfp1,l))
 !
@@ -435,10 +453,33 @@
             p2=REAL(i2-i1,r8)*(track(ixgrd,nfp1,l)-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(track(iygrd,nfp1,l)-REAL(j1,r8))
             p1=1.0_r8-p2
-            q1=1.0_r8-q2 
+            q1=1.0_r8-q2
+#  ifdef MASKING
+            cff7=p1*q1*GRID(ng)%z_w(i1,j1,N(ng))*GRID(ng)%rmask(i1,j1)+ &
+     &           p2*q1*GRID(ng)%z_w(i2,j1,N(ng))*GRID(ng)%rmask(i2,j1)+ &
+     &           p1*q2*GRID(ng)%z_w(i1,j2,N(ng))*GRID(ng)%rmask(i1,j2)+ &
+     &           p2*q2*GRID(ng)%z_w(i2,j2,N(ng))*GRID(ng)%rmask(i2,j2)
+            cff8=p1*q1*GRID(ng)%rmask(i1,j1)+                           &
+     &           p2*q1*GRID(ng)%rmask(i2,j1)+                           &
+     &           p1*q2*GRID(ng)%rmask(i1,j2)+                           &
+     &           p2*q2*GRID(ng)%rmask(i2,j2)
+            cff9=0.0_r8
+            IF (cff8.gt.0.0_r8) cff9=cff7/cff8
+#  else
+            cff9=p1*q1*GRID(ng)%z_w(i1,j1,N(ng))+                       &
+     &           p2*q1*GRID(ng)%z_w(i2,j1,N(ng))+                       &
+     &           p1*q2*GRID(ng)%z_w(i1,j2,N(ng))+                       &
+     &           p2*q2*GRID(ng)%z_w(i2,j2,N(ng))
+#  endif
+            cff6=cff9
 !
-            cff6=0.0_r8
-            DO k=N(ng),1,-1
+            IF (Ftype(l).eq.1) THEN
+              zfloat=Fz0(l)
+            ELSEIF (Ftype(l).eq.2) THEN
+              zfloat=Fz0(l)+cff9
+            END IF
+!
+            DO k=N(ng)-1,1,-1
 #  ifdef MASKING
               cff7=p1*q1*GRID(ng)%z_w(i1,j1,k)*GRID(ng)%rmask(i1,j1)+   &
      &             p2*q1*GRID(ng)%z_w(i2,j1,k)*GRID(ng)%rmask(i2,j1)+   &

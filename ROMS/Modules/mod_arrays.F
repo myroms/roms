@@ -129,14 +129,14 @@
             CALL initialize_clima (ng, TILE)
 #endif
 #ifdef SOLVE3D
-            CALL initialize_coupling (ng, TILE)
+            CALL initialize_coupling (ng, TILE, model)
 #endif
 #ifdef DIAGNOSTICS
             CALL initialize_diags (ng, TILE)
 #endif
-            CALL initialize_forces (ng, TILE)
-            CALL initialize_grid (ng, TILE)
-            CALL initialize_mixing (ng, TILE, 0)
+            CALL initialize_forces (ng, TILE, model)
+            CALL initialize_grid (ng, TILE, model)
+            CALL initialize_mixing (ng, TILE, model)
 #if defined ASSIMILATION || defined NUDGING
             CALL initialize_obs (ng, TILE)
 #endif

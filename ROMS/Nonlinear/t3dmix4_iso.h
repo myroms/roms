@@ -528,7 +528,8 @@
      &              dt(ng)*(FS(i,j,k2)-FS(i,j,k1))
                 t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff
 #ifdef TS_MPDATA
-                t(i,j,k,3,itrc)=t(i,j,k,nnew,itrc)
+                cff1=1.0_r8/Hz(i,j,k)
+                t(i,j,k,3,itrc)=cff1*t(i,j,k,nnew,itrc)
 #endif
 #ifdef DIAGNOSTICS_TS
                 DiaTwrk(i,j,k,itrc,iThdif)=-cff

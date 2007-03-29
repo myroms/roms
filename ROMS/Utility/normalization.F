@@ -140,6 +140,13 @@
      &                           OCEAN(ng) % b_t,                       &
      &                           OCEAN(ng) % b_u,                       &
      &                           OCEAN(ng) % b_v,                       &
+#  ifdef ADJUST_STFLUX
+     &                           OCEAN(ng) % b_stflx,                   &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                           OCEAN(ng) % b_sustr,                   &
+     &                           OCEAN(ng) % b_svstr,                   &
 # endif
      &                           OCEAN(ng) % b_zeta,                    &
      &                           OCEAN(ng) % b_ubar,                    &
@@ -190,6 +197,13 @@
      &                           OCEAN(ng) % b_t,                       &
      &                           OCEAN(ng) % b_u,                       &
      &                           OCEAN(ng) % b_v,                       &
+#  ifdef ADJUST_STFLUX
+     &                           OCEAN(ng) % b_stflx,                   &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                           OCEAN(ng) % b_sustr,                   &
+     &                           OCEAN(ng) % b_svstr,                   &
 # endif
      &                           OCEAN(ng) % b_zeta,                    &
      &                           OCEAN(ng) % b_ubar,                    &
@@ -224,6 +238,12 @@
 # ifdef SOLVE3D
      &                               Kv,                                &
      &                               VnormR, VnormU, VnormV,            &
+#  ifdef ADJUST_STFLUX
+     &                               HnormSTF,                          &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                               HnormSUS, HnormSVS,                &
 # endif
      &                               HnormR, HnormU, HnormV)
 !***********************************************************************
@@ -294,6 +314,13 @@
       real(r8), intent(out) :: VnormR(LBi:,LBj:,:,:)
       real(r8), intent(out) :: VnormU(LBi:,LBj:,:)
       real(r8), intent(out) :: VnormV(LBi:,LBj:,:)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(out) :: HnormSTF(LBi:,LBj:,:)
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(out) :: HnormSUS(LBi:,LBj:)
+      real(r8), intent(out) :: HnormSVS(LBi:,LBj:)
 #  endif
       real(r8), intent(out) :: HnormR(LBi:,LBj:)
       real(r8), intent(out) :: HnormU(LBi:,LBj:)
@@ -339,6 +366,13 @@
       real(r8), intent(out) :: VnormR(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(out) :: VnormU(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: VnormV(LBi:UBi,LBj:UBj,N(ng))
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(out) :: HnormSTF(LBi:UBi,LBj:UBj,NT(ng))
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(out) :: HnormSUS(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: HnormSVS(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(out) :: HnormR(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: HnormU(LBi:UBi,LBj:UBj)
@@ -745,6 +779,221 @@
      &                   HnormV)
       END IF
 
+# ifdef ADJUST_WSTRESS
+!
+!  2D norm at U-stress points.
+!
+      IF (Cnorm(isUstr)) THEN
+#  ifdef EW_PERIODIC
+        Imin=1
+        Imax=Lm(ng)
+        Jmin=1
+        Jmax=Mm(ng)
+#  else
+        Imin=2
+        Imax=Lm(ng)
+        Jmin=1
+        Jmax=Mm(ng)
+#  endif
+        IF (Master) THEN
+          WRITE (stdout,30)                                             &
+     &          '2D normalization factors at SUS-points'
+          CALL my_flush (stdout)
+        END IF
+        DO j=JU_RANGE
+          DO i=IU_RANGE
+            Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
+          END DO
+        END DO
+        DO jc=Jmin,Jmax
+          DO ic=Imin,Imax
+#  ifdef MASKING
+            compute=0.0_r8
+            IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                    &
+     &          ((Istr.le.ic).and.(ic.le.Iend))) THEN
+              IF (umask(ic,jc).gt.0) compute=1.0_r8
+            END IF
+#   ifdef DISTRIBUTE
+            CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
+#   endif
+#  else
+            compute=1.0_r8
+#  endif
+            IF (compute.gt.0.0_r8) THEN
+              DO j=LBj,UBj
+                DO i=LBi,UBi
+                  A2d(i,j)=0.0_r8
+                END DO
+              END DO
+              IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
+     &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                A2d(ic,jc)=Hscale(ic,jc)
+              END IF
+              CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,  &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               NghostPoints,                      &
+     &                               NHsteps(isUstr)/ifac,              &
+     &                               DTsizeH(isUstr),                   &
+     &                               Kh,                                &
+     &                               pm, pn, pmon_r, pnom_p,            &
+#  ifdef MASKING
+     &                               umask, pmask,                      &
+#  endif
+     &                               A2d)
+              DO j=JU_RANGE
+                DO i=IU_RANGE
+                  A2d(i,j)=A2d(i,j)*Hscale(i,j)
+                END DO
+              END DO
+              CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,  &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               NghostPoints,                      &
+     &                               NHsteps(isUstr)/ifac,              &
+     &                               DTsizeH(isUstr),                   &
+     &                               Kh,                                &
+     &                               pm, pn, pmon_r, pnom_p,            &
+#  ifdef MASKING
+     &                               umask, pmask,                      &
+#  endif
+     &                               A2d)
+              IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
+     &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                cff=1.0_r8/SQRT(A2d(ic,jc))
+              END IF
+            ELSE
+              cff=0.0_r8
+            END IF
+            IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                    &
+     &          ((Istr.le.ic).and.(ic.le.Iend))) THEN
+              HnormSUS(ic,jc)=cff
+            END IF
+          END DO
+        END DO
+        CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    HnormSUS)
+#  ifdef DISTRIBUTE
+        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      HnormSUS)
+#  endif
+        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+     &                   LBi, UBi, LBj, UBj, idUsms,                    &
+     &                   ncNRMid(ng), nrmVid(idUsms,ng), tNRMindx(ng),  &
+#  ifdef MASKING
+     &                   umask,                                         &
+#  endif
+     &                   HnormSUS)
+      END IF
+!
+!  2D norm at V-stress points.
+!
+      IF (Cnorm(isVstr)) THEN
+#  ifdef NS_PERIODIC
+        Imin=1
+        Imax=Lm(ng)
+        Jmin=1
+        Jmax=Mm(ng)
+#  else
+        Imin=1
+        Imax=Lm(ng)
+        Jmin=2
+        Jmax=Mm(ng)
+#  endif
+        IF (Master) THEN
+          WRITE (stdout,30)                                             &
+     &          '2D normalization factors at SVS-stress points'
+          CALL my_flush (stdout)
+        END IF
+        DO j=JV_RANGE
+          DO i=IV_RANGE
+            Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
+          END DO
+        END DO
+        DO jc=Jmin,Jmax
+          DO ic=Imin,Imax
+#  ifdef MASKING
+            compute=0.0_r8
+            IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                    &
+     &          ((Istr.le.ic).and.(ic.le.Iend))) THEN
+              IF (vmask(ic,jc).gt.0) compute=1.0_r8
+            END IF
+#   ifdef DISTRIBUTE
+            CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
+#   endif
+#  else
+            compute=1.0_r8
+#  endif
+            IF (compute.gt.0.0_r8) THEN
+              DO j=LBj,UBj
+                DO i=LBi,UBi
+                  A2d(i,j)=0.0_r8
+                END DO
+              END DO
+              IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
+     &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                A2d(ic,jc)=Hscale(ic,jc)
+              END IF
+              CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,  &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               NghostPoints,                      &
+     &                               NHsteps(isVstr)/ifac,              &
+     &                               DTsizeH(isVstr),                   &
+     &                               Kh,                                &
+     &                               pm, pn, pmon_p, pnom_r,            &
+#  ifdef MASKING
+     &                               vmask, pmask,                      &
+#  endif
+     &                               A2d)
+              DO j=JV_RANGE
+                DO i=IV_RANGE
+                  A2d(i,j)=A2d(i,j)*Hscale(i,j)
+                END DO
+              END DO
+              CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,  &
+     &                               LBi, UBi, LBj, UBj,                &
+     &                               NghostPoints,                      &
+     &                               NHsteps(isVstr)/ifac,              &
+     &                               DTsizeH(isVstr),                   &
+     &                               Kh,                                &
+     &                               pm, pn, pmon_p, pnom_r,            &
+#  ifdef MASKING
+     &                               vmask, pmask,                      &
+#  endif
+     &                               A2d)
+              IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
+     &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                cff=1.0_r8/SQRT(A2d(ic,jc))
+              END IF
+            ELSE
+              cff=0.0_r8
+            END IF
+            IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                    &
+     &          ((Istr.le.ic).and.(ic.le.Iend))) THEN
+              HnormSVS(ic,jc)=cff
+            END IF
+          END DO
+        END DO
+        CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    HnormSVS)
+#  ifdef DISTRIBUTE
+        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      HnormSVS)
+#  endif
+        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+     &                   LBi, UBi, LBj, UBj, idVsms,                    &
+     &                   ncNRMid(ng), nrmVid(idVsms,ng), tNRMindx(ng),  &
+#  ifdef MASKING
+     &                   vmask,                                         &
+#  endif
+     &                   HnormSVS)
+      END IF
+# endif
+
 # ifdef SOLVE3D
 !
 !  3D norm U-points.
@@ -1145,6 +1394,153 @@
      &                     VnormR(:,:,:,itrc))
         END IF
       END DO
+
+#  ifdef ADJUST_STFLUX
+!
+!  2D norm at surface tracer fluxes points.
+!
+      IF (Master) THEN
+        Lsame=.FALSE.
+        DO itrc=1,NT(ng)
+          is=isTsur(itrc)
+          IF (Cnorm(is)) Lsame=.TRUE.
+        END DO
+        IF (Lsame) THEN
+          WRITE (stdout,30)
+     &       '2D normalization factors at STF-points'
+          CALL my_flush (stdout)
+        END IF
+      END IF
+!
+!  Check if the decorrelation scales for all the surface tracer fluxes
+!  are different. If not, just compute the normalization factors for the
+!  first tracer and assign the same value to the rest.  Recall that this
+!  computation is very expensive.
+!
+      Ldiffer=.FALSE.
+      Imin=1
+      Imax=Lm(ng)
+      Jmin=1
+      Jmax=Mm(ng)
+      DO itrc=2,NT(ng)
+        IF (Hdecay(isTsur(itrc  ),ng).ne.                               &
+     &      Hdecay(isTsur(itrc-1),ng))
+          Ldiffer=.TRUE.
+        END IF
+      END DO
+      IF (.not.Ldiffer) THEN
+        Lsame=.TRUE.
+        UBt=1
+      ELSE
+        Lsame=.FALSE.
+        UBt=NT(ng)
+      END IF
+!
+      DO j=JR_RANGE
+        DO i=IR_RANGE
+          Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+        END DO
+      END DO
+      DO itrc=1,UBt
+        is=isTsur(itrc)
+        IF (Cnorm(is)) THEN
+          DO jc=Jmin,Jmax
+            DO ic=Imin,Imax
+#   ifdef MASKING
+              compute=0.0_r8
+              IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
+     &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                IF (rmask(ic,jc).gt.0) compute=1.0_r8
+              END IF
+#    ifdef DISTRIBUTE
+              CALL mp_reduce (ng, iTLM, 1, compute, 'SUM')
+#    endif
+#   else
+              compute=1.0_r8
+#   endif
+              IF (compute.gt.0.0_r8) THEN
+                DO j=LBj,UBj
+                  DO i=LBi,UBi
+                    A2d(i,j)=0.0_r8
+                  END DO
+                END DO
+                IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
+     &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                  A2d(ic,jc)=Hscale(ic,jc)
+                END IF
+                CALL ad_conv_r2d_tile (ng, iADM,                        &
+     &                                 Istr, Iend, Jstr, Jend,          &
+     &                                 LBi, UBi, LBj, UBj,              &
+     &                                 NghostPoints,                    &
+     &                                 NHsteps(is)/ifac,                &
+     &                                 DTsizeH(is),                     &
+     &                                 Kh,                              &
+     &                                 pm, pn, pmon_u, pnom_v,          &
+#   ifdef MASKING
+     &                                 rmask, umask, vmask,             &
+#   endif
+     &                                 A2d)
+                DO j=JR_RANGE
+                  DO i=IR_RANGE
+                    A2d(i,j)=A2d(i,j)*Hscale(i,j)
+                  END DO
+                END DO
+                CALL tl_conv_r3d_tile (ng, iTLM,                        &
+     &                                 Istr, Iend, Jstr, Jend,          &
+     &                                 LBi, UBi, LBj, UBj,              &
+     &                                 NghostPoints,                    &
+     &                                 NHsteps(is)/ifac,                &
+     &                                 DTsizeH(is),                     &
+     &                                 Kh,                              &
+     &                                 pm, pn, pmon_u, pnom_v,          &
+#   ifdef MASKING
+     &                                 rmask, umask, vmask,             &
+#   endif
+     &                                 A2d)
+                IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                &
+     &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                  cff=1.0_r8/SQRT(A2d(ic,jc))
+                END IF
+              ELSE
+                cff=0.0_r8
+              END IF
+              IF (((Jstr.le.jc).and.(jc.le.Jend)).and.                  &
+     &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
+                IF (Lsame) THEN
+                  DO ntrc=1,NT(ng)
+                    HnormSTF(ic,jc,ntrc)=cff
+                  END DO
+                ELSE
+                  HnormSTF(ic,jc,itrc)=cff
+                END IF
+              END IF
+            END DO
+          END DO
+        END IF
+      END DO
+      DO itrc=1,NT(ng)
+        is=isTsur(itrc)
+        IF (Cnorm(is)) THEN
+          CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      HnormSTF(:,:,itrc))
+#   ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,      &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        HnormSTF(:,:,itrc))
+#   endif
+          CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,            &
+     &                     LBi, UBi, LBj, UBj, idTsur(itrc),            &
+     &                     ncNRMid(ng), nrmVid(idTsur(itrc),ng),        &
+     &                     tNRMindx(ng),                                &
+#   ifdef MASKING
+     &                     rmask,                                       &
+#   endif
+     &                     HnormSTF(:,:,itrc))
+        END IF
+      END DO
+#  endif
 # endif
 !
       IF (Master) THEN
@@ -1186,6 +1582,12 @@
 # ifdef SOLVE3D
      &                               Kv,                                &
      &                               VnormR, VnormU, VnormV,            &
+#  ifdef ADJUST_STFLUX
+     &                               HnormSTF,                          &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                               HnormSUS, HnormSVS,                &
 # endif
      &                               HnormR, HnormU, HnormV)
 !***********************************************************************
@@ -1255,6 +1657,13 @@
       real(r8), intent(out) :: VnormR(LBi:,LBj:,:,:)
       real(r8), intent(out) :: VnormU(LBi:,LBj:,:)
       real(r8), intent(out) :: VnormV(LBi:,LBj:,:)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(out) :: HnormSTF(LBi:,LBj:,:)
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(out) :: HnormSUS(LBi:,LBj:)
+      real(r8), intent(out) :: HnormSVS(LBi:,LBj:)
 #  endif
       real(r8), intent(out) :: HnormR(LBi:,LBj:)
       real(r8), intent(out) :: HnormU(LBi:,LBj:)
@@ -1300,6 +1709,13 @@
       real(r8), intent(out) :: VnormR(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(out) :: VnormU(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: VnormV(LBi:UBi,LBj:UBj,N(ng))
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(out) :: HnormSTF(LBi:UBi,LBj:UBj,NT(ng))
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(out) :: HnormSUS(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: HnormSVS(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(out) :: HnormR(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: HnormU(LBi:UBi,LBj:UBj)
@@ -1641,6 +2057,161 @@
      &                   HnormV)
       END IF
 
+# ifdef ADJUST_WSTRESS
+!
+!  2D norm at U-stress points.
+!
+      IF (Cnorm(isUbar)) THEN
+        IF (Master) THEN
+          WRITE (stdout,30) '2D normalization factors at SUS-points'
+          CALL my_flush (stdout)
+        END IF
+        DO j=JU_RANGE
+          DO i=IU_RANGE
+            A2davg(i,j)=0.0_r8
+            A2dsqr(i,j)=0.0_r8
+            Hscale(i,j)=1.0_r8/SQRT(om_u(i,j)*on_u(i,j))
+          END DO
+        END DO
+        DO iter=1,Nrandom
+          CALL white_noise2d (ng, iTLM, u2dvar, Rscheme(ng),            & 
+     &                        Istr, IendR, JstrR, JendR,                &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Amin, Amax, A2d)
+          DO j=JU_RANGE
+            DO i=IU_RANGE
+              A2d(i,j)=A2d(i,j)*Hscale(i,j)
+            END DO
+          END DO
+          CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NghostPoints,                          &
+     &                           NHsteps(isUstr)/ifac,                  &
+     &                           DTsizeH(isUstr),                       &
+     &                           Kh,                                    &
+     &                           pm, pn, pmon_r, pnom_p,                &
+#  ifdef MASKING
+     &                           umask, pmask,                          &
+#  endif
+     &                           A2d)
+          DO j=Jstr,Jend
+            DO i=IstrU,Iend
+              A2davg(i,j)=A2davg(i,j)+A2d(i,j)
+              A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
+            END DO
+          END DO
+        END DO
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+            Aavg=FacAvg*A2davg(i,j)
+#  ifdef MASKING
+            IF (umask(i,j).gt.0.0_r8) THEN
+!!            HnormSUS(i,j)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
+              HnormSUS(i,j)=FacSqr/SQRT(A2dsqr(i,j))
+            ELSE
+              HnormSUS(i,j)=0.0_r8
+            END IF
+#  else
+!!          HnormSUS(i,j)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
+            HnormSUS(i,j)=FacSqr/SQRT(A2dsqr(i,j))
+#  endif
+          END DO
+        END DO
+        CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    HnormSUS)
+#  ifdef DISTRIBUTE
+        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      HnormSUS)
+#  endif
+        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+     &                   LBi, UBi, LBj, UBj, idUsms,                    &
+     &                   ncNRMid(ng), nrmVid(idUsms,ng), tNRMindx(ng),  &
+#  ifdef MASKING
+     &                   umask,                                         &
+#  endif
+     &                   HnormU)
+      END IF
+!
+!  2D norm at V-stress points.
+!
+      IF (Cnorm(isVbar)) THEN
+        IF (Master) THEN
+          WRITE (stdout,30) '2D normalization factors at SVS-points'
+          CALL my_flush (stdout)
+        END IF
+        DO j=JV_RANGE
+          DO i=IV_RANGE
+            A2davg(i,j)=0.0_r8
+            A2dsqr(i,j)=0.0_r8
+            Hscale(i,j)=1.0_r8/SQRT(om_v(i,j)*on_v(i,j))
+          END DO
+        END DO
+        DO iter=1,Nrandom
+          CALL white_noise2d (ng, iTLM, v2dvar, Rscheme(ng),            & 
+     &                        IstrR, IendR, Jstr, JendR,                &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Amin, Amax, A2d)
+          DO j=JV_RANGE
+            DO i=IV_RANGE
+              A2d(i,j)=A2d(i,j)*Hscale(i,j)
+            END DO
+          END DO
+          CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NghostPoints,                          &
+     &                           NHsteps(isVstr)/ifac,                  &
+     &                           DTsizeH(isVstr),                       &
+     &                           Kh,                                    &
+     &                           pm, pn, pmon_p, pnom_r,                &
+#  ifdef MASKING
+     &                           vmask, pmask,                          &
+#  endif
+     &                           A2d)
+          DO j=JstrV,Jend
+            DO i=Istr,Iend
+              A2davg(i,j)=A2davg(i,j)+A2d(i,j)
+              A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
+            END DO
+          END DO
+        END DO
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+            Aavg=FacAvg*A2davg(i,j)
+#  ifdef MASKING
+            IF (vmask(i,j).gt.0.0_r8) THEN
+!!            HnormSVS(i,j)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
+              HnormSVS(i,j)=FacSqr/SQRT(A2dsqr(i,j))
+            ELSE
+              HnormSVS(i,j)=0.0_r8
+            END IF
+#  else
+!!          HnormSVS(i,j)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
+            HnormSVS(i,j)=FacSqr/SQRT(A2dsqr(i,j))
+#  endif
+          END DO
+        END DO
+        CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    HnormSVS)
+#  ifdef DISTRIBUTE
+        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      HnormSVS)
+#  endif
+        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+     &                   LBi, UBi, LBj, UBj, idVsms,                    &
+     &                   ncNRMid(ng), nrmVid(idVsms,ng), tNRMindx(ng),  &
+#  ifdef MASKING
+     &                   vmask,                                         &
+#  endif
+     &                   HnormSVS)
+      END IF
+# endif
+
 # ifdef SOLVE3D
 !
 !  3D norm U-points.
@@ -1962,6 +2533,138 @@
      &                     VnormR(:,:,:,itrc))
         END IF
       END DO
+
+#  ifdef ADJUST_STFLUX
+!
+!  2D norm at surface treace flux points.
+!
+      IF (Master) THEN
+        Lsame=.FALSE.
+        DO itrc=1,NT(ng)
+          is=isTsur(itrc)
+          IF (Cnorm(is)) Lsame=.TRUE.
+        END DO
+        IF (Lsame) THEN
+          WRITE (stdout,30) '3D normalization factors at STF-points'
+          CALL my_flush (stdout)
+        END IF
+      END IF
+!
+!  Check if the decorrelation scales for all the surface tracer fluxes
+!  are different. If not, just compute the normalization factors for the
+!  first tracer and assign the same value to the rest.  Recall that this
+!  computation is very expensive.
+!
+      Ldiffer=.FALSE.
+      DO itrc=2,NT(ng)
+        IF (Hdecay(isTvar(itrc  ),ng).ne.                               &
+     &      Hdecay(isTvar(itrc-1),ng)) THEN
+          Ldiffer=.TRUE.
+        END IF
+      END DO
+      IF (.not.Ldiffer) THEN
+        Lsame=.TRUE.
+        UBt=1
+      ELSE
+        Lsame=.FALSE.
+        UBt=NT(ng)
+      END IF
+!
+      DO j=JR_RANGE
+        DO i=IR_RANGE
+          Hscale(i,j,k)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+        END DO
+      END DO
+      DO itrc=1,UBt
+        is=isTsur(itrc)
+        IF (Cnorm(is)) THEN
+          DO j=JR_RANGE
+            DO i=IR_RANGE
+              A2davg(i,j)=0.0_r8
+              A2dsqr(i,j)=0.0_r8
+            END DO
+          END DO
+          DO iter=1,Nrandom
+            CALL white_noise2d (ng, iTLM, r3dvar, Rscheme(ng),          & 
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Amin, Amax, A2d)
+            DO j=JR_RANGE
+              DO i=IR_RANGE
+                A2d(i,j)=A2d(i,j)*Hscale(i,j)
+              END DO
+            END DO
+            CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,    &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             NghostPoints,                        &
+     &                             NHsteps(is)/ifac,                    &
+     &                             DTsizeH(is),                         &
+     &                             Kh,                                  &
+     &                             pm, pn, pmon_u, pnom_v,              &
+#   ifdef MASKING
+     &                             rmask, umask, vmask,                 &
+#   endif
+     &                             A2d)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                A2davg(i,j)=A2davg(i,j)+A2d(i,j)
+                A2dsqr(i,j)=A2dsqr(i,j)+A2d(i,j)*A2d(i,j)
+              END DO
+            END DO
+          END DO
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              Aavg=FacAvg*A2davg(i,j)
+#   ifdef MASKING
+              IF (rmask(i,j).gt.0.0_r8) THEN
+!!              HnormSTF(i,j,itrc)=FacSqr/                              &
+!!   &                             SQRT(A2dsqr(i,j)-Aavg*Aavg)
+                HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j))
+              ELSE
+                HnormSTF(i,j,itrc)=0.0_r8
+              END IF
+#   else
+!!            HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j)-Aavg*Aavg)
+              HnormSTF(i,j,itrc)=FacSqr/SQRT(A2dsqr(i,j))
+#   endif
+            END DO
+          END DO
+        END IF
+      END DO
+      IF (Lsame) THEN
+        DO itrc=2,NT(ng)
+          DO k=1,N(ng)
+            DO j=Jstr,Jend
+              DO i=Istr,Iend
+                VnormR(i,j,k,itrc)=VnormR(i,j,k,1)
+              END DO
+            END DO
+          END DO
+        END DO
+      END IF
+      DO itrc=1,NT(ng)
+        is=isTsur(itrc)
+        IF (Cnorm(is)) THEN
+          CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      HnormSTF(:,:,itrc))
+#   ifdef DISTRIBUTE
+          CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,      &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NghostPoints, EWperiodic, NSperiodic,     &
+     &                        HnormSTF(:,:,itrc))
+#   endif
+          CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,            &
+     &                     LBi, UBi, LBj, UBj, idTsur(itrc),            &
+     &                     ncNRMid(ng), nrmVid(idTsur(itrc),ng),        &
+     &                     tNRMindx(ng),                                &
+#   ifdef MASKING
+     &                     rmask,                                       &
+#   endif
+     &                     HnormSTF(:,:,itrc))
+        END IF
+      END DO
+#  endif
 # endif
 !
       IF (Master) THEN

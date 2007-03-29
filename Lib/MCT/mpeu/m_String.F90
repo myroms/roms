@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_String.F90,v 1.7 2004/10/19 23:00:39 steder Exp $
+! CVS $Name: MCT_2_2_0 $  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_String - The String Datatype
@@ -28,6 +28,9 @@
       public :: String		! The class data structure
 
     Type String
+#ifdef SEQUENCE
+      sequence
+#endif
       character(len=1),dimension(:),pointer :: c
     End Type String
 
@@ -105,7 +108,7 @@
 ! 	22Apr98 - Jing Guo <guo@thunder> - initial prototype/prolog/code
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_String'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_String'
 
 contains
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

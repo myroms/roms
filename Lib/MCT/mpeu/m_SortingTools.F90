@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_SortingTools.F90,v 1.4 2004/04/21 22:54:46 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SortingTools - A collection of different sorting tools
@@ -91,6 +91,6 @@
 !                 Unpermuter to list of public functions.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_SortingTools'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_SortingTools'
 
 end module m_SortingTools

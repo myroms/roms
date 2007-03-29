@@ -15,7 +15,6 @@ m_GlobalToLocal.tex	\
 m_MCTWorld.tex		\
 m_MatAttrVectMul.tex    \
 m_Merge.tex		\
-m_NBSend.tex		\
 m_Navigator.tex         \
 m_Rearranger.tex	\
 m_Router.tex		\
@@ -25,6 +24,7 @@ m_SparseMatrixDecomp.tex \
 m_SparseMatrixToMaps.tex \
 m_SparseMatrixPlus.tex \
 m_SpatialIntegral.tex \
+m_SpatialIntegralV.tex \
 m_String.tex \
 m_Transfer.tex \
 m_List.tex

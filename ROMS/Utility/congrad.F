@@ -37,222 +37,306 @@
 !  one integration backward of the adjoint model  and one integration  !
 !  forward of the tangent linear model for any forcing vector PSI.     !
 !                                                                      !
-!  Congugate gradient variables:                                       !
-!                                                                      !
-!    cg_r      Current PSI approximation for Beta_n.                   !
-!                                                                      !
-!    cg_s      Right-hand-side terms:  R_n * PSI + Cobs * PSI   where  !
-!              R_n * PSI are the TLM or RPM values at the observation  !
-!              points.                                                 !
-!                                                                      !
 !  Notice that "ObsScale" vector is used for screenning observations.  !
 !  This scale is one (zero) for good (bad) observations.               !
 !                                                                      !
 !  Currently, parallelization of this algorithm is not needed because  !
 !  each parallel node has a full copy of the assimilation vectors.     !
 !                                                                      !
+!  This code solves Ax=b by minimizing the cost function               !
+!  0.5*x*A*x-x*b, assuming an initial guess of x=0. In this case the   !
+!  gradient is Ax-b and the Hessian is A.                              !
+!                                                                      !
 !  Reference:                                                          !
 !                                                                      !
 !    Chua, B. S. and A. F. Bennett,  2001:  An inverse ocean modeling  !
 !      sytem, Ocean Modelling, 3, 137-165.                             !
 !                                                                      !
-!  This code was adapted from IOM routine "congrad0".                  !
+!  Lanczos Algorithm Reference:                                        !
+!                                                                      !
+!    Fisher, M., 1998: Minimization Algorithms for Variational Data    !
+!      Assimilation. In Seminar on Recent Developments in Numerical    !
+!      Methods for Atmospheric Modelling, 1998.                        !
 !                                                                      !
 !=======================================================================
 !
       USE mod_param
       USE mod_parallel
       USE mod_fourdvar
-!
+
+# ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
+# endif
       implicit none
 !
 !  Imported variable declarations
 !
       integer, intent(in) :: ng, outer, inner, Ninner
-
       logical, intent(out) :: converged
 !
 !  Local variable declarations.
 !
-      integer :: iobs
+      integer :: iobs, jinner
+      real(r8), dimension(Ninner) :: zu, zgam
+      real(r8), dimension(Ndatum(ng)) :: px, pgrad, zw
+      real(r8), dimension(Ninner,3) :: zwork
+      real(r8) :: dla, zbet, eps, preduc, Jo
 
-      real(r8) :: cg_alpha, cg_beta, cg_delta, cg_eps
-      real(r8) :: cg_gamma, cg_sigma
+
 !
 !-----------------------------------------------------------------------
-!  If entering inner loop, initialize vector PSI needed to force the
-!  adjoint model to the misfit between observations and representer
-!  model, h_n.
+!  Since this is not run in parallel, we should be careful about who
+!  is calculating these vectors. Only Master will run this so that
+!  all nodes have computed their respective solutions.
 !-----------------------------------------------------------------------
 !
-      IF (inner.eq.0) THEN
-        DO iobs=1,Ndatum(ng)
-          cg_p(iobs)=0.0_r8
-          cg_s(iobs)=0.0_r8
-          cg_v(iobs)=0.0_r8
-          cg_x(iobs)=0.0_r8
-          cg_z(iobs)=0.0_r8
+
+      IF (Master) THEN
+
+!
+!-----------------------------------------------------------------------
+!  If this is the first call to the gradient algorithm, we will
+!  set up the vectors and store the first guess.
+!  The initial starting guess is assumed to be zero in which case
+!  the gradient is just -(obs-modval).
+!-----------------------------------------------------------------------
+!
+        IF (inner.eq.0) THEN
+          zgnorm=0.0
+          DO iobs=1,Ndatum(ng)
 # ifdef W4DPSAS
-          cg_r(iobs)=ObsScale(iobs)*                                    &
-     &               (ObsVal(iobs)-NLmodVal(iobs))
+            pgrad(iobs)=-1.0_r8*(ObsScale(iobs)*                        &
+     &                 (ObsVal(iobs)-NLmodVal(iobs)))
 # else
-          cg_r(iobs)=ObsScale(iobs)*                                    &
-     &               (ObsVal(iobs)-TLmodVal(iobs))
+            pgrad(iobs)=-1.0_r8*(ObsScale(iobs)*                        &
+     &                 (ObsVal(iobs)-TLmodVal(iobs)))
 # endif
-        END DO
-        cg_eps=0.0_r8
-        cg_gamma=0.0_r8
-        cg_sigma=0.0_r8
-        cg_rnorm=0.0_r8
+            zgrad0(iobs)=pgrad(iobs)
+            zgnorm=zgnorm+zgrad0(iobs)*zgrad0(iobs)
+          END DO
+          zgnorm=SQRT(zgnorm)
+
+          DO iobs=1,Ndatum(ng)
+            zcglwk(iobs,1)=pgrad(iobs)/zgnorm
+            ADmodVal(iobs)=zcglwk(iobs,1)
+          END DO
+
+          zqg0(1)=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            zqg0(1)=zqg0(1)+zcglwk(iobs,1)*zgrad0(iobs)
+          END DO
+
+        ELSE
+
 !
 !-----------------------------------------------------------------------
-!  First inner loop iteration.
+!  After the initialization, for every other inner value, we will
+!  calculate a new Lanczos vector, store it in the matrix, and update
+!  our search
 !-----------------------------------------------------------------------
 !
-      ELSE IF (inner.eq.1) THEN
+          zdelta(inner)=0.0
+          DO iobs=1,Ndatum(ng)
+            pgrad(iobs)=ObsScale(iobs)*                                 &
+     &                 (TLmodVal(iobs)+ObsErr(iobs)*zcglwk(iobs,inner))
+            zdelta(inner)=zdelta(inner)+zcglwk(iobs,inner)*pgrad(iobs)
+          END DO
+
+! HERNAN -- Do something here. If zdelta is < 0 then we are in deep doo-doo
+          IF (zdelta(inner).le.0.0) THEN
+            print *,'zdelta not positive definite!'
+            print *,'inner=',inner,' zdelta=',zdelta(inner)
+            STOP
+          END IF
 !
-!  Initialize.
+!    Compute the new Lanczos vector.
 !
-        DO iobs=1,Ndatum(ng)
-          cg_z(iobs)=cg_r(iobs)
-          cg_s(iobs)=ObsScale(iobs)*                                    &
-     &               (TLmodVal(iobs)+ObsErr(iobs)*cg_r(iobs))
-          cg_v(iobs)=cg_s(iobs)
-          cg_p(iobs)=cg_z(iobs)                              ! p_1 = z_1
-        END DO
+          DO iobs=1,Ndatum(ng)
+            pgrad(iobs)=pgrad(iobs)-zdelta(inner)*zcglwk(iobs,inner)
+          END DO
+
+          IF (inner.gt.1) THEN
+            DO iobs=1,Ndatum(ng)
+              pgrad(iobs)=pgrad(iobs)-zbeta(inner)*zcglwk(iobs,inner-1)
+            END DO
+          END IF
+
 !
-!  Compute dot products:  assumes that z_1 = M^(-1) * r_1
-!                                      v_1 = A * z_1
+!    Orthonormalize against previous Lanczos vectors.
 !
-        cg_gamma=0.0_r8
-        cg_sigma=0.0_r8
-        cg_rnorm=0.0_r8
-        DO iobs=1,Ndatum(ng)
-          cg_gamma=cg_gamma+cg_z(iobs)*cg_r(iobs)            ! <z_1,r_1>
-          cg_sigma=cg_sigma+cg_p(iobs)*cg_v(iobs)            ! <p_1,v_1>
-          cg_rnorm=cg_rnorm+cg_r(iobs)*cg_r(iobs)            ! <b  ,b  >
-        END DO
-        cg_gammam1=cg_gamma
-        cg_sigmam1=cg_sigma
-        cg_eps=ABS(cg_gamma/cg_rnorm)
-        cg_alpha=cg_gamma/cg_sigma
-!
-!  Update:   x_2 = x_1 + alpha * p_1,      recall x_1 = 0
-!            r_2 = r_1 - alpha * v_1
-!
-        DO iobs=1,Ndatum(ng)
-          cg_x(iobs)=cg_alpha*cg_p(iobs)
-          cg_r(iobs)=cg_r(iobs)-cg_alpha*cg_v(iobs)
-        END DO
+          DO jinner=inner,1,-1
+            dla=0.0_r8
+            DO iobs=1,Ndatum(ng)
+              dla=dla+pgrad(iobs)*zcglwk(iobs,jinner)
+            END DO
+            DO iobs=1,Ndatum(ng)
+              pgrad(iobs)=pgrad(iobs)-dla*zcglwk(iobs,jinner)
+            END DO
+          END DO
+
+          zbeta(inner+1)=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            zbeta(inner+1)=zbeta(inner+1)+pgrad(iobs)*pgrad(iobs)
+          END DO
+          zbeta(inner+1)=SQRT(zbeta(inner+1))
+
+          DO iobs=1,Ndatum(ng)
+            zcglwk(iobs,inner+1)=pgrad(iobs)/zbeta(inner+1)
+          END DO
+
+          zqg0(inner+1)=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            zqg0(inner+1)=zqg0(inner+1)+zcglwk(iobs,inner+1)*zgrad0(iobs)
+          END DO
+
+
 !
 !-----------------------------------------------------------------------
-!  Compute a new approximation of vector PSI for Beta_n (cg_r) based on
-!  previous iteration conjugate gradient vectors and new righ-hand-side
-!  term: cg_s = R_n*PSI + Cobs*PSI evaluated by integrating the adjoint
-!  and tangent linear model in the inner loop.
+!  Calculate the new solution based upon the new, orthonormalized
+!  Lanczos vector. First, the tridiagonal system is solved by
+!  decomposition and forward/back substitution.
 !-----------------------------------------------------------------------
 !
-      ELSE IF (inner.gt.1) THEN
+          zbet=zdelta(1)
+          zu(1)=-zqg0(1)/zbet
+          DO jinner=2,inner
+            zgam(jinner)=zbeta(jinner)/zbet
+            zbet=zdelta(jinner)-zbeta(jinner)*zgam(jinner)
+            zu(jinner)=(-zqg0(jinner)-zbeta(jinner)*zu(jinner-1))/zbet
+          END DO
+          zwork(inner,3)=zu(inner)
+
+          DO jinner=inner-1,1,-1
+            zu(jinner)=zu(jinner)-zgam(jinner+1)*zu(jinner+1)
+            zwork(jinner,3)=zu(jinner)
+          END DO
+
+          DO iobs=1,Ndatum(ng)
+            zw(iobs)=zgrad0(iobs)+zbeta(inner+1)*zcglwk(iobs,inner+1)   &
+     &                       *zwork(inner,3)
+          END DO
+
+          DO iobs=1,Ndatum(ng)
+            px(iobs)=0.0
+            DO jinner=1,inner
+              px(iobs)=px(iobs)+zcglwk(iobs,jinner)*zwork(jinner,3)
+              zw(iobs)=zw(iobs)-zcglwk(iobs,jinner)*zqg0(jinner)
+            END DO
+          END DO
 !
-!  Initialize.
+!   Compute the reduction in the gradient Ax-b.
 !
-        DO iobs=1,Ndatum(ng)
-          cg_z(iobs)=cg_r(iobs)
-          cg_s(iobs)=ObsScale(iobs)*                                    &
-     &               (TLmodVal(iobs)+ObsErr(iobs)*cg_r(iobs))
-        END DO
+          preduc=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            preduc=preduc+zw(iobs)*zw(iobs)
+          END DO
+          preduc=SQRT(preduc)/zgnorm
+
 !
-!  Compute dot products:  assumes that z_n = M^(-1) * r_n
-!                                      s_n = A * z_n
+!   Estimate the residual by: ||Ax-b||=zbeta(k+1)
 !
-        cg_gamma=0.0_r8
-        cg_delta=0.0_r8
-        DO iobs=1,Ndatum(ng)
-          cg_gamma=cg_gamma+cg_z(iobs)*cg_r(iobs)            ! <z_n,r_n>
-          cg_delta=cg_delta+cg_z(iobs)*cg_s(iobs)            ! <z_n,s_n>
-        END DO
-        cg_eps=ABS(cg_gamma/cg_rnorm)
-        cg_beta=cg_gamma/cg_gammam1
-        cg_sigma=cg_delta-cg_beta*cg_beta*cg_sigmam1
-        cg_alpha=cg_gamma/cg_sigma
-        cg_gammam1=cg_gamma
-        cg_sigmam1=cg_sigma
+          eps=ABS(zbeta(inner+1))
+
 !
-!  Update.
+!   Estimate the cost function
 !
-        DO iobs=1,Ndatum(ng)
-          cg_p(iobs)=cg_z(iobs)+cg_beta*cg_p(iobs)
-          cg_v(iobs)=cg_s(iobs)+cg_beta*cg_v(iobs)
-          cg_x(iobs)=cg_x(iobs)+cg_alpha*cg_p(iobs)
-          cg_r(iobs)=cg_r(iobs)-cg_alpha*cg_v(iobs)
-        END DO
+          Jo=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            Jo=Jo-px(iobs)*zgrad0(iobs)
+          END DO
+! Temporary printing to track the progress
+  print *,'zdelta=',(zdelta(jinner),jinner=1,inner)
+  print *,'zbeta=',(zbeta(jinner),jinner=1,inner+1)
+  print *,'zwork=',(zwork(jinner,3),jinner=1,inner)
+  print *,'eps=',eps
+  print *,'preduc=',preduc
+  print *,'Jo=',Jo
+  print *,'px=',(px(iobs),iobs=1,Ndatum(ng))
+
+!
+!   Check the convergence criteria
+!-----------------------------------------------------------------------
+!  The Lanczos algorithm should not be run for more loops than the
+!  size of the data. This will cause problems. If we have performed
+!  more loops than we have datum, then we set converged to TRUE so 
+!  that the inner loop stops. 
+!-----------------------------------------------------------------------
+!
+          converged=.FALSE.
+          IF (preduc.le.CGeps.or.inner.eq.Ndatum(ng)) THEN
+            converged=.TRUE.
+          END IF
+
+!
+!   Put the new trial solution into the adjoint vector for the next loop
+!   Put the final solution into the adjoint vector when converged
+!   of on the final inner-loop.
+!
+          IF ((inner.eq.Ninner).or.converged) THEN
+            DO iobs=1,Ndatum(ng)
+              ADmodVal(iobs)=px(iobs)
+            END DO
+          ELSE
+            DO iobs=1,Ndatum(ng)
+              ADmodVal(iobs)=zcglwk(iobs,inner+1)
+            END DO
+          END IF
+        END IF
+! DEBUG
+!       ADmodVal=(/1.0, 0.0, 0.0/)
       END IF
-!
-!-----------------------------------------------------------------------
-!  Check convergence and load representer coefficients (or its
-!  approximation into adjoint forcing vector ADmodVal.
-!-----------------------------------------------------------------------
-!
-      IF (((cg_eps.lt.CGeps).and.(inner.gt.0)).or.                      &
-     &    (inner.eq.Ninner)) THEN
-        converged=.TRUE.
-         DO iobs=1,Ndatum(ng)
-          ADmodVal(iobs)=cg_x(iobs)
-        END DO
-      ELSE
-        converged=.FALSE.
-        DO iobs=1,Ndatum(ng)
-          ADmodVal(iobs)=cg_r(iobs)
-        END DO
-      END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcastf (ng, iTLM, ADmodVal, Mobs)
+# endif
+
 !
 !  Write out conjugate gradient vectors into 4DVAR NetCDF file.
 !
-      CALL cg_write (ng, converged)
+!      CALL cg_write (ng, converged)
 !
 !  Report minimization parameters.
 !
-      IF (Master) THEN
-        PRINT 10, outer, inner, Ndatum(ng), converged,                  &
-     &            cg_eps,   outer, inner,                               &
-     &            CGeps,    outer, inner,                               &
-     &            cg_gamma, outer, inner,                               &
-     &            cg_sigma, outer, inner,                               &
-     &            cg_rnorm, outer, inner,                               &
-     &            MINVAL(cg_x), MAXVAL(cg_x),                           &
-     &            MINVAL(cg_z), MAXVAL(cg_z),                           &
-     &            MINVAL(cg_p), MAXVAL(cg_p),                           &
-     &            MINVAL(cg_v), MAXVAL(cg_v),                           &
-     &            MINVAL(cg_s), MAXVAL(cg_s),                           &
-     &            MINVAL(cg_r), MAXVAL(cg_r)
- 10     FORMAT (/,' CONGRAD - Conjugate Gradient Information: ',/,      &
-     &          /,11x,'Outer Loop = ',i3.3,                             &
-     &          /,11x,'Inner Loop = ',i3.3,                             &
-     &          /,11x,'Ndatum     = ',i7.7,                             &
-     &          /,11x,'converged  = ',l1,/,                             &
-     &          /,11x,'cg_eps   = ',1p,e15.8,0p,                        &
-     &            3x,'(',i3.3,', ',i3.3,')',                            &
-     &          /,11x,'cg_tol   = ',1p,e15.8,0p,                        &
-     &            3x,'(',i3.3,', ',i3.3,')',                            &
-     &          /,11x,'cg_gamma = ',1p,e15.8,0p,                        &
-     &            3x,'(',i3.3,', ',i3.3,')',                            &
-     &          /,11x,'cg_sigma = ',1p,e15.8,0p,                        &
-     &            3x,'(',i3.3,', ',i3.3,')',                            &
-     &          /,11x,'cg_rnorm = ',1p,e15.8,0p,                        &
-     &            3x,'(',i3.3,', ',i3.3,')',/,                          &
-     &          /,11x,'Min cg_x = ',1p,e15.8,0p,2x,                     &
-     &                'Max cg_x = ',1p,e15.8,0p,                        &
-     &          /,11x,'Min cg_z = ',1p,e15.8,0p,2x,                     &
-     &                'Max cg_z = ',1p,e15.8,0p,                        &
-     &          /,11x,'Min cg_p = ',1p,e15.8,0p,2x,                     &
-     &                'Max cg_p = ',1p,e15.8,0p,                        &
-     &          /,11x,'Min cg_v = ',1p,e15.8,0p,2x,                     &
-     &                'Max cg_v = ',1p,e15.8,0p,                        &
-     &          /,11x,'Min cg_s = ',1p,e15.8,0p,2x,                     &
-     &                'Max cg_s = ',1p,e15.8,0p,                        &
-     &          /,11x,'Min cg_r = ',1p,e15.8,0p,2x,                     &
-     &                'Max cg_r = ',1p,e15.8,0p)
-      END IF
+!      IF (Master) THEN
+!        PRINT 10, outer, inner, Ndatum(ng), converged,                  &
+!     &            eps,      outer, inner,                               &
+!     &            CGeps,    outer, inner,                               &
+!     &            zbeta,    outer, inner,                               &
+!     &            cg_sigma, outer, inner,                               &
+!     &            cg_rnorm, outer, inner,                               &
+!     &            MINVAL(cg_x), MAXVAL(cg_x),                           &
+!     &            MINVAL(cg_z), MAXVAL(cg_z),                           &
+!     &            MINVAL(cg_p), MAXVAL(cg_p),                           &
+!     &            MINVAL(cg_v), MAXVAL(cg_v),                           &
+!     &            MINVAL(cg_s), MAXVAL(cg_s),                           &
+!     &            MINVAL(cg_r), MAXVAL(cg_r)
+! 10     FORMAT (/,' CONGRAD - Conjugate Gradient Information: ',/,      &
+!     &          /,11x,'Outer Loop = ',i3.3,                             &
+!     &          /,11x,'Inner Loop = ',i3.3,                             &
+!     &          /,11x,'Ndatum     = ',i7.7,                             &
+!     &          /,11x,'converged  = ',l1,/,                             &
+!     &          /,11x,'cg_eps   = ',1p,e15.8,0p,                        &
+!     &            3x,'(',i3.3,', ',i3.3,')',                            &
+!     &          /,11x,'cg_tol   = ',1p,e15.8,0p,                        &
+!     &            3x,'(',i3.3,', ',i3.3,')',                            &
+!     &          /,11x,'cg_gamma = ',1p,e15.8,0p,                        &
+!     &            3x,'(',i3.3,', ',i3.3,')',                            &
+!     &          /,11x,'cg_sigma = ',1p,e15.8,0p,                        &
+!     &            3x,'(',i3.3,', ',i3.3,')',                            &
+!     &          /,11x,'cg_rnorm = ',1p,e15.8,0p,                        &
+!     &            3x,'(',i3.3,', ',i3.3,')',/,                          &
+!     &          /,11x,'Min cg_x = ',1p,e15.8,0p,2x,                     &
+!     &                'Max cg_x = ',1p,e15.8,0p,                        &
+!     &          /,11x,'Min cg_z = ',1p,e15.8,0p,2x,                     &
+!     &                'Max cg_z = ',1p,e15.8,0p,                        &
+!     &          /,11x,'Min cg_p = ',1p,e15.8,0p,2x,                     &
+!     &                'Max cg_p = ',1p,e15.8,0p,                        &
+!     &          /,11x,'Min cg_v = ',1p,e15.8,0p,2x,                     &
+!     &                'Max cg_v = ',1p,e15.8,0p,                        &
+!     &          /,11x,'Min cg_s = ',1p,e15.8,0p,2x,                     &
+!     &                'Max cg_s = ',1p,e15.8,0p,                        &
+!     &          /,11x,'Min cg_r = ',1p,e15.8,0p,2x,                     &
+!     &                'Max cg_r = ',1p,e15.8,0p)
+!      END IF
 
       RETURN
       END SUBROUTINE congrad
@@ -313,35 +397,6 @@
           RETURN
         END IF
 !
-!  Write out norms.
-!
-        status=nf_inq_varid(ncMODid(ng),'cg_gamma',varid)
-        status=nf_put_var1_TYPE(ncMODid(ng),varid,1,cg_gammam1)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'cg_gamma', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-
-        status=nf_inq_varid(ncMODid(ng),'cg_sigma',varid)
-        status=nf_put_var1_TYPE(ncMODid(ng),varid,1,cg_sigmam1)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'cg_sigma', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-
-        status=nf_inq_varid(ncMODid(ng),'cg_rnorm',varid)
-        status=nf_put_var1_TYPE(ncMODid(ng),varid,1,cg_rnorm)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) 'cg_rnorm', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-!
 !  Write out representer coefficients.
 !
         start(1)=1
@@ -357,62 +412,64 @@
 !
 !  Write out conjugate gradient vectors.
 !
-        start(1)=1
-        total(1)=Ndatum(ng)
-        status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_P,ng),         &
-     &                          start, total, cg_p)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCG_P)), TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
 
-        status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_R,ng),         &
-     &                        start, total, cg_r)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCG_R)), TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-
-        status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_S,ng),         &
-     &                          start, total, cg_s)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCG_S)), TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-
-        status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_V,ng),         &
-     &                          start, total, cg_v)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCG_V)), TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-
-        status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_X,ng),         &
-     &                          start, total, cg_x)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCG_X)), TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-
-        status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_Z,ng),         &
-     &                          start, total, cg_z)
-        IF (status.ne.nf_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCG_Z)), TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+! HERNAN -- Here we need to write out zdelta, zbeta, and zcglwk
+!         start(1)=1
+!         total(1)=Ndatum(ng)
+!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_P,ng),         &
+!      &                          start, total, cg_p)
+!         IF (status.ne.nf_noerr) THEN
+!           WRITE (stdout,10) TRIM(Vname(1,idCG_P)), TRIM(MODname(ng))
+!           exit_flag=3
+!           ioerror=status
+!           RETURN
+!         END IF
+! 
+!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_R,ng),         &
+!      &                        start, total, cg_r)
+!         IF (status.ne.nf_noerr) THEN
+!           WRITE (stdout,10) TRIM(Vname(1,idCG_R)), TRIM(MODname(ng))
+!           exit_flag=3
+!           ioerror=status
+!           RETURN
+!         END IF
+! 
+!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_S,ng),         &
+!      &                          start, total, cg_s)
+!         IF (status.ne.nf_noerr) THEN
+!           WRITE (stdout,10) TRIM(Vname(1,idCG_S)), TRIM(MODname(ng))
+!           exit_flag=3
+!           ioerror=status
+!           RETURN
+!         END IF
+! 
+!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_V,ng),         &
+!      &                          start, total, cg_v)
+!         IF (status.ne.nf_noerr) THEN
+!           WRITE (stdout,10) TRIM(Vname(1,idCG_V)), TRIM(MODname(ng))
+!           exit_flag=3
+!           ioerror=status
+!           RETURN
+!         END IF
+! 
+!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_X,ng),         &
+!      &                          start, total, cg_x)
+!         IF (status.ne.nf_noerr) THEN
+!           WRITE (stdout,10) TRIM(Vname(1,idCG_X)), TRIM(MODname(ng))
+!           exit_flag=3
+!           ioerror=status
+!           RETURN
+!         END IF
+! 
+!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_Z,ng),         &
+!      &                          start, total, cg_z)
+!         IF (status.ne.nf_noerr) THEN
+!           WRITE (stdout,10) TRIM(Vname(1,idCG_Z)), TRIM(MODname(ng))
+!           exit_flag=3
+!           ioerror=status
+!           RETURN
+!         END IF
+       END IF
 !
 !-----------------------------------------------------------------------
 !  Synchronize observations NetCDF file to disk.

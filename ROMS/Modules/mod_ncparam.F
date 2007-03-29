@@ -362,14 +362,11 @@
         integer  :: isVbar = 3                ! 2D V-velocity
         integer  :: isUvel = 4                ! 3D U-velocity
         integer  :: isVvel = 5                ! 3D V-velocity
+        integer  :: isUstr                    ! surface u-stress
+        integer  :: isVstr                    ! surface v-stress
+        integer, allocatable :: isTsur(:)     ! surface tracer flux
         integer, allocatable :: isTvar(:)     ! tracers
         integer, allocatable :: idSvar(:)     ! state vector indices
-!
-!  Stochastic optimals surface forcing IDs.
-!
-        integer  :: isUstr = 1                ! surface u-stress
-        integer  :: isVstr = 2                ! surface v-stress
-        integer, allocatable :: isTsur(:)     ! surface tracer flux
 !
 !  Input/Output NetCDF files IDs.
 !
@@ -388,6 +385,7 @@
         integer  :: ncINIid(Ngrids)     ! input/output NLM initial
         integer  :: ncIRPid(Ngrids)     ! input/output RPM initial
         integer  :: ncITLid(Ngrids)     ! input/output TLM initial
+        integer  :: ncHSSid(Ngrids)     ! input/output Hessian vectors
         integer  :: ncMODid(Ngrids)     ! output 4DVAR fields
         integer  :: ncNRMid(Ngrids)     ! input/output covariance norm
         integer  :: ncOBSid(Ngrids)     ! input/output observations
@@ -417,6 +415,7 @@
         integer, allocatable :: iniTid(:,:)   ! initial NLM tracers IDs
         integer, allocatable :: irpTid(:,:)   ! initial RPM tracers IDs
         integer, allocatable :: itlTid(:,:)   ! initial TLM tracers IDs
+        integer, allocatable :: hssTid(:,:)   ! Hessian vectors IDs
         integer, allocatable :: nrmTid(:,:)   ! norm tracers IDs
         integer, allocatable :: obsTid(:,:)   ! observations tracers IDs
         integer, allocatable :: rstTid(:,:)   ! restart tracers IDs
@@ -432,6 +431,7 @@
         integer  :: iniVid(NV,Ngrids)    ! initial NLM variables IDs
         integer  :: irpVid(NV,Ngrids)    ! initial RPM variables IDs
         integer  :: itlVid(NV,Ngrids)    ! initial TLM variables IDs
+        integer  :: hssVid(NV,Ngrids)    ! Hessian variables IDs
         integer  :: modVid(NV,Ngrids)    ! 4DVAR variables IDs
         integer  :: nrmVid(NV,Ngrids)    ! norm variables IDs
         integer  :: obsVid(NV,Ngrids)    ! observations variables IDs
@@ -448,6 +448,7 @@
         integer  :: tINIindx(Ngrids)     ! initial NLM time record index
         integer  :: tIRPindx(Ngrids)     ! initial RPM time record index
         integer  :: tITLindx(Ngrids)     ! initial TLM time record index
+        integer  :: tHSSindx(Ngrids)     ! Hessian time record index
         integer  :: tNRMindx(Ngrids)     ! norm time record index
         integer  :: tRSTindx(Ngrids)     ! restart time record index
         integer  :: tSTAindx(Ngrids)     ! stations time record index
@@ -484,6 +485,11 @@
         character (len=80 ) :: Cinfo(NV,Ngrids)
         character (len=100) :: Vname(5,0:NV)
         character (len=120) :: history
+!
+!  SVN revision and repository root URL.
+!
+        character (len=40 ) :: svn_Rev
+        character (len=120) :: svn_URL
 
       CONTAINS
 
@@ -511,7 +517,7 @@
 #ifdef DISTRIBUTE
         integer :: Itile, Jtile
 #endif
-        integer :: Lvar, gtype, i, j, ng, varid
+        integer :: Lvar, gtype, i, ic, ie, is, j, ng, varid
 
         real(r8) :: scale
 
@@ -540,6 +546,7 @@
         allocate ( iniTid(MT,Ngrids) )
         allocate ( irpTid(MT,Ngrids) )
         allocate ( itlTid(MT,Ngrids) )
+        allocate ( hssTid(MT,Ngrids) )
         allocate ( nrmTid(MT,Ngrids) )
         allocate ( obsTid(MT,Ngrids) )
         allocate ( rstTid(MT,Ngrids) )
@@ -736,21 +743,30 @@
           idefTLM(ng)=-1
         END DO
 !
-!  Set IDs for tracers state variables.
+!  Set IDs for state some state variables. 
 !
+#if defined FORCING_SV || defined SO_SEMI
+        isUstr=1
+        isVstr=2
+        ic=2
         DO i=1,MT
-          isTvar(i)=5+i
+          ic=ic+1
+          isTsur(i)=ic
         END DO
-
-#ifdef SOLVE3D
-!
-!  Set IDs for surface tracer flux variables.
-!
+#else
+        ic=5
         DO i=1,MT
-          isTsur(i)=2+i
+          ic=ic+1
+          isTvar(i)=ic
+        END DO
+        isUstr=ic+1
+        isVstr=ic+2
+        ic=ic+2
+        DO i=1,MT
+          ic=ic+1
+          isTsur(i)=ic
         END DO
 #endif
-
 #if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
 !
 !  Initialize biology diagnostic indices.
@@ -825,7 +841,20 @@
         DO WHILE (.TRUE.)
           READ (inp,*,ERR=30,END=40) Vinfo(1)
           Lvar=LEN_TRIM(Vinfo(1))
-          IF ((Lvar.gt.0).and.(Vinfo(1)(1:1).ne.CHAR(33))) THEN
+!
+!  Extract SVN Repository Root URL.
+!            
+          IF ((Lvar.gt.0).and.(Vinfo(1)(1:1).eq.CHAR(36))) THEN
+            is=INDEX(Vinfo(1),'https')
+            ie=INDEX(Vinfo(1),'/ROMS')-1
+            svn_url=Vinfo(1)(is:ie)
+#ifdef SVN_REV
+            svn_rev=SVN_REV
+#endif
+!
+!  Read in other variable information.
+!
+          ELSE IF ((Lvar.gt.0).and.(Vinfo(1)(1:1).ne.CHAR(33))) THEN
             READ (inp,*,ERR=30) Vinfo(2)
             READ (inp,*,ERR=30) Vinfo(3)
             READ (inp,*,ERR=30) Vinfo(4)

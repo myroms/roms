@@ -248,10 +248,10 @@
         real(r8), dimension(Ngrids) :: Vm_NO3        ! 1/day
         real(r8), dimension(Ngrids) :: wDet          ! m/day
 #  ifdef TANGENT
-        real(r8), dimension(Ngrids) :: tl_wDet       ! m/day
+        real(r8), dimension(Ngrids) :: tl_wDet
 #  endif
 #  ifdef ADJOINT
-        real(r8), dimension(Ngrids) :: ad_wDet       ! m/day
+        real(r8), dimension(Ngrids) :: ad_wDet
 #  endif
         real(r8), dimension(Ngrids) :: ZooGR         ! 1/day
         real(r8), dimension(Ngrids) :: ZooMR         ! 1/day
@@ -279,7 +279,7 @@
 !  DetRR     Detritus remineraliztion rate, [1/day].                   !
 !  K_NO3     Inverse half-saturation for phytoplankton nitrate uptake  !
 !              [1/(millimole_N m-3)].                                  !
-!  Ivlev     Ivlev constant for zooplankton grazin parameterization,   !
+!  Ivlev     Ivlev constant for zooplankton grazing parameterization,  !
 !              [nondimensional].                                       !
 !  PARfrac   Fraction of shortwave radiation that is available for     !
 !              photosyntesis [non-dimensional].                        !
@@ -311,7 +311,7 @@
         real(r8), allocatable :: BioIni(:,:)
 #  endif
         real(r8), dimension(Ngrids) :: AttPhy        ! m2/mmole
-        real(r8), dimension(Ngrids) :: AttSW         !/m
+        real(r8), dimension(Ngrids) :: AttSW         ! 1/m
         real(r8), dimension(Ngrids) :: DetRR         ! 1/day
         real(r8), dimension(Ngrids) :: K_NO3         ! 1/(mmol/m3)
         real(r8), dimension(Ngrids) :: Ivlev         ! nondimensional
@@ -321,6 +321,12 @@
         real(r8), dimension(Ngrids) :: PhyMRN        ! 1/day
         real(r8), dimension(Ngrids) :: Vm_NO3        ! 1/day
         real(r8), dimension(Ngrids) :: wDet          ! m/day
+#  ifdef TANGENT
+        real(r8), dimension(Ngrids) :: tl_wDet
+#  endif
+#  ifdef ADJOINT
+        real(r8), dimension(Ngrids) :: ad_wDet
+#  endif
         real(r8), dimension(Ngrids) :: wPhy          ! m/day
         real(r8), dimension(Ngrids) :: ZooEED        ! nondimensional
         real(r8), dimension(Ngrids) :: ZooEEN        ! nondimensional

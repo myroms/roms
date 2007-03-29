@@ -1,8 +1,8 @@
 !-------------------------------------------------------------------------
 !         NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-------------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_inpak90.F90,v 1.6 2004/04/21 22:54:47 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !-------------------------------------------------------------------------
 !BOI
 !
@@ -293,7 +293,7 @@
 
   integer,parameter :: MALLSIZE_=10	! just an estimation
 
-  character(len=*),parameter :: myname='m_inpak90'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_inpak90'
 !-----------------------------------------------------------------------
 
     integer,parameter :: i90_MXDEP = 4

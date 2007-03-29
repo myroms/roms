@@ -75,6 +75,9 @@
 !***********************************************************************
 !
       USE mod_param
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+# endif
       USE mod_ocean
 !
 !  Imported variable declarations.
@@ -92,6 +95,13 @@
      &                          OCEAN(ng) % e_t,                        &
      &                          OCEAN(ng) % e_u,                        &
      &                          OCEAN(ng) % e_v,                        &
+#  ifdef ADJUST_STFLUX
+     &                          OCEAN(ng) % e_stflx,                    &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                          OCEAN(ng) % e_sustr,                    &
+     &                          OCEAN(ng) % e_svstr,                    &
 # endif
      &                          OCEAN(ng) % e_ubar,                     &
      &                          OCEAN(ng) % e_vbar,                     &
@@ -100,6 +110,13 @@
      &                          OCEAN(ng) % tl_t,                       &
      &                          OCEAN(ng) % tl_u,                       &
      &                          OCEAN(ng) % tl_v,                       &
+#  ifdef ADJUST_STFLUX
+     &                          FORCES(ng) % tl_stflx,                  &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                          FORCES(ng) % tl_sustr,                  &
+     &                          FORCES(ng) % tl_svstr,                  &
 # endif
      &                          OCEAN(ng) % tl_ubar,                    &
      &                          OCEAN(ng) % tl_vbar,                    &
@@ -114,10 +131,22 @@
      &                                Linp,                             &
 # ifdef SOLVE3D
      &                                t_std, u_std, v_std,              &
+#  ifdef ADJUST_STFLUX
+     &                                stflx_std,                        &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                                sustr_std, svstr_std,             &
 # endif
      &                                ubar_std, vbar_std, zeta_std,     &
 # ifdef SOLVE3D
      &                                tl_t, tl_u, tl_v,                 &
+#  ifdef ADJUST_STFLUX
+     &                                tl_stflx,                         &
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+     &                                tl_sustr, tl_svstr,               &
 # endif
      &                                tl_ubar, tl_vbar, tl_zeta)
 !***********************************************************************
@@ -139,6 +168,13 @@
       real(r8), intent(in) :: t_std(LBi:,LBj:,:,:)
       real(r8), intent(in) :: u_std(LBi:,LBj:,:)
       real(r8), intent(in) :: v_std(LBi:,LBj:,:)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: stflx_std(LBi:,LBj:,:)
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: sustr_std(LBi:,LBj:)
+      real(r8), intent(in) :: svstr_std(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: ubar_std(LBi:,LBj:)
       real(r8), intent(in) :: vbar_std(LBi:,LBj:)
@@ -147,6 +183,13 @@
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_stflx(LBi:,LBj:,:)
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: tl_svstr(LBi:,LBj:)
 #  endif
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
@@ -156,6 +199,13 @@
       real(r8), intent(in) :: t_std(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: u_std(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: v_std(LBi:UBi,LBj:UBj,N(ng))
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: stflx_std(LBi:UBi,LBj:UBj,NT(ng))
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: sustr_std(LBi:,LBj:)
+      real(r8), intent(in) :: svstr_std(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: ubar_std(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vbar_std(LBi:UBi,LBj:UBj)
@@ -164,6 +214,13 @@
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,2,N(ng))
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,2,N(ng))
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: tl_svstr(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -226,6 +283,28 @@
      &                    tl_ubar(:,:,Linp),                            &
      &                    tl_vbar(:,:,Linp))
 # endif
+# ifdef ADJUST_WSTRESS
+!
+!  Tangent linear surface momentum stress.
+!
+      DO j=JU_RANGE
+        DO i=IU_RANGE
+          tl_sustr(i,j)=tl_sustr(i,j)*sustr_std(i,j)
+        END DO
+      END DO
+      DO j=JV_RANGE
+        DO i=IV_RANGE
+          tl_svstr(i,j)=tl_svstr(i,j)*svstr_std(i,j)
+        END DO
+      END DO
+#  ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_sustr,                                     &
+     &                    tl_svstr)
+#  endif
+# endif
 # ifdef SOLVE3D
 !
 !  Tangent linear 3D momentum.
@@ -267,6 +346,25 @@
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,Linp,:))
+#  endif
+#  ifdef ADJUST_STFLUX
+!
+!  Tangent linear surface tracers flux.
+!
+      DO itrc=1,NT(ng)
+        DO j=JR_RANGE
+          DO i=IR_RANGE
+              tl_stflx(i,j,itrc)=tl_stflx(i,j,itrc)*stflx_std(i,j,itrc)
+            END DO
+          END DO
+        END DO
+      END DO
+#   ifdef DISTRIBUTE
+      CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 1, NT(ng),                &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_stflx)
+#   endif
 #  endif
 # endif
 # undef IR_RANGE

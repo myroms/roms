@@ -57,21 +57,27 @@
 !
 ! http://marine.rutgers.edu/po/users/forum/viewtopic.php?t=294
 !
+!------------------------------------------------------------------------------
+!  SVN Repository
+!------------------------------------------------------------------------------
+!
 
-'ocean_time'
-  'time since initialization'
-  'second'
-  'time, scalar, series'
-  'ocean_time'
-  'idtime'
-  'nulvar'
-  1.0d0
+'$URL$'
 
 !
 !------------------------------------------------------------------------------
 !  Model state variables.
 !------------------------------------------------------------------------------
 !
+
+'ocean_time'                                       ! Input/Output
+  'time since initialization'
+  'second'                                         ! [s]
+  'time, scalar, series'
+  'ocean_time'
+  'idtime'
+  'nulvar'
+  1.0d0
 
 'bath'                                             ! Input/Output
   'bathymetry'

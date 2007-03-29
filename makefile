@@ -84,7 +84,7 @@ ROMS_APPLICATION := UPWELLING
 #  In this, case the user need to select the desired compiler below and
 #  turn on both MPI and MPIF90 macros.
 
-      MPIF90 := 
+      MPIF90 :=
 
 #  If applicable, compile with the ARPACK library (GST analysis):
 
@@ -180,6 +180,8 @@ OS := $(patsubst sn%,UNICOS-sn,$(OS))
 
 CPU := $(shell uname -m | sed 's/[\/ ]/-/g')
 
+SVNREV := $(shell svnversion -n .)
+
 COMPILERS := ./Compilers
 
 ifndef FORT
@@ -200,12 +202,20 @@ CPPFLAGS += -D$(shell echo ${OS} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${CPU} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 
+
 ifdef ROMS_APPLICATION
   HEADER := $(addsuffix .h,$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
   CPPFLAGS += -D$(ROMS_APPLICATION)
   CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
   CPPFLAGS += -DNestedGrids=$(NestedGrids)
 endif
+
+ifdef SVNREV
+  CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
+else
+  SVNREV := $(shell grep Revision ./ROMS/Version | sed 's/.* \([0-9]*\) .*/\1/')
+  CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
+endif  
 
 #--------------------------------------------------------------------------
 #  Build target directories.
@@ -231,6 +241,7 @@ includes  :=	ROMS/Include \
 		ROMS/Representer \
 		ROMS/Tangent \
 		ROMS/SeaIce \
+		ROMS/Utility \
 		ROMS/Drivers
 
 ifdef SWAN_COUPLE

@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_SparseMatrix.F90,v 1.30 2004/10/20 01:11:17 steder Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_SparseMatrix -- Sparse Matrix Object
@@ -52,6 +52,10 @@
 ! (i.e. the sum of each row is either zero or unity), and methods for 
 ! sorting and permuting matrix entries.
 !
+! For better performance of the Matrix-Vector multiply on vector
+! architectures, the {\tt SparseMatrix} object also contains arrays
+! for holding the sparse matrix data in a more vector-friendly form.
+!
 !
 ! !INTERFACE:
 
@@ -59,7 +63,9 @@
 !
 ! !USES:
 !
+      use m_realkinds, only : FP
       use m_AttrVect, only : AttrVect
+
 
       private   ! except
 
@@ -68,14 +74,24 @@
       public :: SparseMatrix      ! The class data structure
 
       Type SparseMatrix
-	 integer :: nrows
+#ifdef SEQUENCE
+     sequence
+#endif
+     integer :: nrows
 	 integer :: ncols
 	 type(AttrVect) :: data
+         logical :: vecinit       ! additional data for the vectorized sMat
+         integer,dimension(:),pointer :: row_s, row_e
+         integer, dimension(:,:), pointer :: tcol
+         real(FP), dimension(:,:), pointer :: twgt
+         integer :: row_max, row_min
+         integer :: tbl_end
       End Type SparseMatrix
 
 ! !PUBLIC MEMBER FUNCTIONS:
 
       public :: init              ! Create a SparseMatrix
+      public :: vecinit           ! Initialize the vector parts
       public :: clean             ! Destroy a SparseMatrix
       public :: lsize             ! Local number of elements
       public :: indexIA           ! Index integer attribute
@@ -123,6 +139,7 @@
       public :: SortPermute       ! Sort/Permute matrix entries
 
     interface init  ; module procedure init_  ; end interface
+    interface vecinit  ; module procedure vecinit_  ; end interface
     interface clean ; module procedure clean_ ; end interface
     interface lsize ; module procedure lsize_ ; end interface
     interface indexIA ; module procedure indexIA_ ; end interface
@@ -147,7 +164,8 @@
     end interface
 
     interface exportMatrixElements ; module procedure &
-	 exportMatrixElements_ 
+	 exportMatrixElementsSP_, &
+	 exportMatrixElementsDP_
     end interface
 
     interface importGlobalRowIndices ; module procedure &
@@ -167,7 +185,8 @@
     end interface
 
     interface importMatrixElements ; module procedure &
-	 importMatrixElements_ 
+	 importMatrixElementsSP_, & 
+	 importMatrixElementsDP_
     end interface
 
     interface Copy ; module procedure Copy_ ; end interface
@@ -177,7 +196,8 @@
     end interface
 
     interface ComputeSparsity ; module procedure &
-	 ComputeSparsity_ 
+	 ComputeSparsitySP_,  &
+	 ComputeSparsityDP_ 
     end interface
 
     interface local_row_range ; module procedure &
@@ -200,10 +220,14 @@
 	 CheckBounds_ 
     end interface
 
-    interface row_sum ; module procedure row_sum_ ; end interface
+    interface row_sum ; module procedure &
+	 row_sumSP_, &
+	 row_sumDP_
+    end interface
 
     interface row_sum_check ; module procedure &
-	 row_sum_check_ 
+	 row_sum_checkSP_, & 
+	 row_sum_checkDP_
     end interface
 
     interface Sort ; module procedure Sort_ ; end interface
@@ -220,9 +244,11 @@
 !           SparseMatrix is no longer a straight AttrVect type.  This
 !           also made necessary the addition of lsize(), indexIA(),
 !           and indexRA().
+! 29Oct03 - R. Jacob <jacob@mcs.anl.gov> - extend the SparseMatrix type
+!           to include mods from Fujitsu for a vector-friendly MatVecMul
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_SparseMatrix'
+  character(len=*),parameter :: myname='MCT::m_SparseMatrix'
 
 ! SparseMatrix_iList components:
   character(len=*),parameter :: SparseMatrix_iList='grow:gcol:lrow:lcol'
@@ -303,7 +329,131 @@
   call AttrVect_init(sMat%data, SparseMatrix_iList, &
                      SparseMatrix_rList, n)
 
+  ! vecinit is off by default
+  sMat%vecinit = .FALSE.
+
  end subroutine init_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+!BOP -------------------------------------------------------------------
+!
+! !IROUTINE: vecinit_ - Initialize vector parts of a SparseMatrix
+!
+! !DESCRIPTION:  This routine creates the storage space for 
+! and intializes the vector parts of a {\tt SparseMatrix}.
+!
+! {\bf N.B.}:  This routine assumes the locally indexed parts of a
+! {\tt SparseMatrix} have been initialized.  This is
+! accomplished by either importing the values directly with
+! {\tt importLocalRowIndices} and {\tt importLocalColIndices} or by
+! importing the Global Row and Col Indices and making two calls to 
+! {\tt GlobalToLocalMatrix}.
+!
+! {\bf N.B.}:   The vector portion can use a large amount of
+! memory so it is highly recommended that this routine only
+! be called on a {\tt SparseMatrix} that has been scattered
+! or otherwise sized locally.
+!
+! !INTERFACE:
+
+ subroutine vecinit_(sMat)
+!
+! !USES:
+!
+      use m_die
+      use m_stdio
+
+      implicit none
+
+! !INPUT/OUTPUT PARAMETERS:
+
+      type(SparseMatrix), intent(inout)  :: sMat
+
+! !REVISION HISTORY:
+! 27Oct03 - R. Jacob <jacob@mcs.anl.gov> - initial version
+!           using code provided by Yoshi et. al.
+!EOP ___________________________________________________________________
+!
+  character(len=*),parameter :: myname_=myname//'::vecinit_'
+
+  integer :: irow,icol,iwgt
+  integer :: num_elements
+  integer :: row,col
+  integer :: ier,l,n
+  integer, dimension(:)  , allocatable :: nr, rn
+
+  if(sMat%vecinit) then
+   write(stderr,'(2a)') myname_, &
+     'MCTERROR:  sMat vector parts have already been initialized...Continuing'
+     RETURN
+  endif
+
+  write(6,*) myname_,'Initializing vecMat'
+  irow = indexIA_(sMat,'lrow',dieWith=myname_)
+  icol = indexIA_(sMat,'lcol',dieWith=myname_)
+  iwgt = indexRA_(sMat,'weight',dieWith=myname_)
+
+  num_elements = lsize_(sMat)
+
+  sMat%row_min = sMat%data%iAttr(irow,1)
+  sMat%row_max = sMat%row_min
+  do n=1,num_elements
+     row = sMat%data%iAttr(irow,n)
+     if ( row > sMat%row_max ) sMat%row_max = row
+     if ( row < sMat%row_min ) sMat%row_min = row
+  enddo
+
+  allocate( nr(sMat%row_max), rn(num_elements), stat=ier)
+  if(ier/=0) call die(myname_,'allocate(nr,rn)',ier)
+
+  sMat%tbl_end = 0
+  nr(:) = 0
+  do n=1,num_elements
+     row = sMat%data%iAttr(irow,n)
+     nr(row) = nr(row)+1
+     rn(n)   = nr(row)
+  enddo
+  sMat%tbl_end = maxval(rn)
+
+  allocate( sMat%tcol(sMat%row_max,sMat%tbl_end),  &
+            sMat%twgt(sMat%row_max,sMat%tbl_end), stat=ier )
+  if(ier/=0) call die(myname_,'allocate(tcol,twgt)',ier)
+
+!CDIR COLLAPSE
+  sMat%tcol(:,:) = -1
+  do n=1,num_elements
+     row = sMat%data%iAttr(irow,n)
+     sMat%tcol(row,rn(n)) = sMat%data%iAttr(icol,n)
+     sMat%twgt(row,rn(n)) = sMat%data%rAttr(iwgt,n)
+  enddo
+
+  allocate( sMat%row_s(sMat%tbl_end) , sMat%row_e(sMat%tbl_end), &
+              stat=ier )
+  if(ier/=0) call die(myname_,'allocate(row_s,row_e',ier)
+  sMat%row_s = sMat%row_min
+  sMat%row_e = sMat%row_max
+  do l=1,sMat%tbl_end
+    do n=sMat%row_min,sMat%row_max
+      if (nr(n) >= l) then
+        sMat%row_s(l) = n
+        exit
+      endif
+    enddo
+    do n = sMat%row_max,sMat%row_min,-1
+      if (nr(n) >= l) then
+        sMat%row_e(l) = n
+        exit
+      endif
+    enddo
+  enddo
+
+  deallocate(nr,rn, stat=ier)
+  if(ier/=0) call die(myname_,'deallocate()',ier)
+
+  sMat%vecinit = .TRUE.
+
+ end subroutine vecinit_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -322,6 +472,7 @@
 ! !USES:
 !
       use m_AttrVect,only : AttrVect_clean => clean
+      use m_die
 
       implicit none
 
@@ -338,9 +489,11 @@
 ! 23Apr00 - J.W. Larson <larson@mcs.anl.gov> - added changes to
 !           accomodate clearing nrows and ncols.
 ! 01Mar02 - E.T. Ong <eong@mcs.anl.gov> Added stat argument.
+! 03Oct03 - R. Jacob <jacob@mcs.anl.gov> - clean vector parts
 !EOP ___________________________________________________________________
 
   character(len=*),parameter :: myname_=myname//'::clean_'
+  integer :: ier
 
        ! Deallocate memory held by sMat:
 
@@ -354,6 +507,31 @@
 
   sMat%nrows = 0
   sMat%ncols = 0
+
+  if(sMat%vecinit) then
+    sMat%row_max = 0
+    sMat%row_min = 0
+    sMat%tbl_end = 0
+    deallocate(sMat%row_s,sMat%row_e,stat=ier)
+    if(ier/=0) then
+      if(present(stat)) then
+        stat=ier
+      else
+        call warn(myname_,'deallocate(row_s,row_e)',ier)
+      endif
+    endif
+
+    deallocate(sMat%tcol,sMat%twgt,stat=ier)
+    if(ier/=0) then
+      if(present(stat)) then
+        stat=ier
+      else
+        call warn(myname_,'deallocate(tcol,twgt)',ier)
+      endif
+    endif
+    sMat%vecinit = .FALSE.
+  endif
+   
 
  end subroutine clean_
 
@@ -929,7 +1107,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: exportMatrixElements_ - Return Matrix Elements as Array
+! !IROUTINE: exportMatrixElementsSP_ - Return Matrix Elements as Array
 !
 ! !DESCRIPTION:
 ! This routine extracts the matrix elements from the input {\tt SparseMatrix} 
@@ -951,15 +1129,19 @@
 ! for deallocating this array once it is no longer needed.  Failure to 
 ! do so will result in a memory leak.
 !
+! The native precision version is described here.  A double precision version
+! is also available.
+!
 ! !INTERFACE:
 
- subroutine exportMatrixelements_(sMat, MatrixElements, length)
+ subroutine exportMatrixelementsSP_(sMat, MatrixElements, length)
 
 !
 ! !USES:
 !
       use m_die 
       use m_stdio
+      use m_realkinds, only : SP
 
       use m_AttrVect,      only : AttrVect_exportRAttr => exportRAttr
 
@@ -971,21 +1153,68 @@
 
 ! !OUTPUT PARAMETERS: 
 
-      real,  dimension(:),    pointer     :: MatrixElements
+      real(SP),  dimension(:),    pointer     :: MatrixElements
       integer,                intent(out) :: length
 
 ! !REVISION HISTORY:
 !  7May02 - J.W. Larson <larson@mcs.anl.gov> - initial version.
+!  6Jan04 - R. Jacob <jacob@mcs.anl.gov> - SP and DP versions
 !
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_=myname//'::exportMatrixElements_'
+  character(len=*),parameter :: myname_=myname//'::exportMatrixElementsSP_'
 
        ! Export the data (inheritance from AttrVect)
 
   call AttrVect_exportRAttr(sMat%data, 'weight', MatrixElements, length)
 
- end subroutine exportMatrixElements_
+ end subroutine exportMatrixElementsSP_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! -------------------------------------------------------------------
+!
+! !IROUTINE: exportMatrixElementsDP_ - Return Matrix Elements as Array
+!
+! !DESCRIPTION:
+! Double precision version of exportMatrixElementsSP_
+!
+! !INTERFACE:
+
+ subroutine exportMatrixelementsDP_(sMat, MatrixElements, length)
+
+!
+! !USES:
+!
+      use m_die 
+      use m_stdio
+      use m_realkinds, only : DP
+
+      use m_AttrVect,      only : AttrVect_exportRAttr => exportRAttr
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      type(SparseMatrix),     intent(in)  :: sMat
+
+! !OUTPUT PARAMETERS: 
+
+      real(DP),  dimension(:),    pointer     :: MatrixElements
+      integer,                intent(out) :: length
+
+! !REVISION HISTORY:
+!  7May02 - J.W. Larson <larson@mcs.anl.gov> - initial version.
+!
+! ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::exportMatrixElementsDP_'
+
+       ! Export the data (inheritance from AttrVect)
+
+  call AttrVect_exportRAttr(sMat%data, 'weight', MatrixElements, length)
+
+ end subroutine exportMatrixElementsDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -1219,7 +1448,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: importMatrixElements_ - Import Non-zero Matrix Elements
+! !IROUTINE: importMatrixElementsSP_ - Import Non-zero Matrix Elements
 !
 ! !DESCRIPTION:
 ! This routine imports matrix elements index data into the 
@@ -1231,13 +1460,14 @@
 !
 ! !INTERFACE:
 
- subroutine importMatrixElements_(sMat, inVect, lsize)
+ subroutine importMatrixElementsSP_(sMat, inVect, lsize)
 
 !
 ! !USES:
 !
       use m_die
       use m_stdio
+      use m_realkinds, only : SP
 
       use m_AttrVect,      only : AttrVect_importRAttr => importRAttr
 
@@ -1245,7 +1475,7 @@
 
 ! !INPUT PARAMETERS: 
 
-      real,  dimension(:),    pointer       :: inVect
+      real(SP),  dimension(:),    pointer       :: inVect
       integer,                intent(in)    :: lsize
 
 ! !INPUT/OUTPUT PARAMETERS: 
@@ -1254,10 +1484,11 @@
 
 ! !REVISION HISTORY:
 !  7May02 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
+!  6Jan04 - R. Jacob <jacob@mcs.anl.gov> - Make SP and DP versions.
 !
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_=myname//'::importMatrixElements_'
+  character(len=*),parameter :: myname_=myname//'::importMatrixElementsSP_'
 
        ! Argument Check:
 
@@ -1271,7 +1502,61 @@
 
   call AttrVect_importRAttr(sMat%data, 'weight', inVect, lsize)
 
- end subroutine importMatrixElements_
+ end subroutine importMatrixElementsSP_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! -------------------------------------------------------------------
+!
+! !IROUTINE: importMatrixElementsDP_ - Import Non-zero Matrix Elements
+!
+! !DESCRIPTION:
+! Double precision version of importMatrixElementsSP_
+!
+! !INTERFACE:
+
+ subroutine importMatrixElementsDP_(sMat, inVect, lsize)
+
+!
+! !USES:
+!
+      use m_die
+      use m_stdio
+      use m_realkinds, only : DP
+
+      use m_AttrVect,      only : AttrVect_importRAttr => importRAttr
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      real(DP),  dimension(:),    pointer       :: inVect
+      integer,                intent(in)    :: lsize
+
+! !INPUT/OUTPUT PARAMETERS: 
+
+      type(SparseMatrix),     intent(inout) :: sMat
+
+! !REVISION HISTORY:
+!  7May02 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
+!
+! ___________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::importMatrixElementsDP_'
+
+       ! Argument Check:
+
+  if(lsize > lsize_(sMat)) then
+     write(stderr,*) myname_,':: ERROR, lsize > lsize_(sMat).', &
+          'lsize = ',lsize,'lsize_(sMat) = ',lsize_(sMat)
+     call die(myname_)
+  endif
+
+       ! Import the data (inheritance from AttrVect)
+
+  call AttrVect_importRAttr(sMat%data, 'weight', inVect, lsize)
+
+ end subroutine importMatrixElementsDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -1325,6 +1610,8 @@
   sMatCopy%nrows = sMat%nrows
   sMatCopy%ncols = sMat%ncols
 
+  sMatCopy%vecinit = .FALSE.
+
        ! Step two:  Initialize the AttrVect sMatCopy%data off of sMat:
 
   call AttrVect_init(sMatCopy%data, sMat%data, AttrVect_lsize(sMat%data))
@@ -1332,6 +1619,8 @@
        ! Step three:  Copy sMat%data to sMatCopy%data:
 
   call AttrVect_Copy(sMat%data, aVout=sMatCopy%data)
+
+  if(sMat%vecinit) call vecinit_(sMatCopy)
 
  end subroutine Copy_
 
@@ -1581,7 +1870,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: ComputeSparsity_ - Compute Matrix Sparsity
+! !IROUTINE: ComputeSparsitySP_ - Compute Matrix Sparsity
 !
 ! !DESCRIPTION:  This routine computes the sparsity of a consolidated
 ! (all on one process) or distributed {\tt SparseMatrix}.  The input 
@@ -1598,13 +1887,14 @@
 !
 ! !INTERFACE:
 
- subroutine ComputeSparsity_(sMat, sparsity, comm)
+ subroutine ComputeSparsitySP_(sMat, sparsity, comm)
 
 !
 ! !USES:
 !
       use m_die
       use m_mpif90
+      use m_realkinds, only : SP, FP
 
       use m_AttrVect, only : AttrVect_lsize => lsize
 
@@ -1617,34 +1907,34 @@
 
 ! !OUTPUT PARAMETERS:
 
-      real,               intent(out) :: sparsity
+      real(SP),           intent(out) :: sparsity
 
 ! !REVISION HISTORY:
 ! 23Apr01 - Jay Larson <larson@mcs.anl.gov> - New routine.
 !
 !EOP ___________________________________________________________________
 !
-  character(len=*),parameter :: myname_=myname//'::ComputeSparsity_'
+  character(len=*),parameter :: myname_=myname//'::ComputeSparsitySP_'
 
-  integer :: num_elements, num_rows, num_cols
-  real    :: Lnum_elements, Lnum_rows, Lnum_cols, LMySparsity
-  real    :: MySparsity
-  integer :: ierr
+  integer  :: num_elements, num_rows, num_cols
+  real(FP) :: Lnum_elements, Lnum_rows, Lnum_cols, LMySparsity
+  real(FP) :: MySparsity
+  integer  :: ierr
 
        ! Extract number of nonzero elements and compute its logarithm
 
   num_elements = lsize_(sMat)
-  Lnum_elements = log(float(num_elements))
+  Lnum_elements = log(REAL(num_elements,FP))
 
        ! Extract number of rows and compute its logarithm
 
   num_rows = nRows_(sMat)
-  Lnum_rows = log(float(num_rows))
+  Lnum_rows = log(REAL(num_rows,FP))
 
        ! Extract number of columns and compute its logarithm
 
   num_cols = nCols_(sMat)
-  Lnum_cols = log(float(num_cols))  
+  Lnum_cols = log(REAL(num_cols,FP))  
 
        ! Compute logarithm of the (local) sparsity
 
@@ -1668,7 +1958,91 @@
      sparsity = MySparsity
   endif
 
- end subroutine ComputeSparsity_
+ end subroutine ComputeSparsitySP_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! ----------------------------------------------------------------------
+!
+! !IROUTINE: ComputeSparsityDP_ - Compute Matrix Sparsity
+!
+! !DESCRIPTION:
+! Double precision version of ComputeSparsitySP_
+!
+! !INTERFACE:
+
+ subroutine ComputeSparsityDP_(sMat, sparsity, comm)
+
+!
+! !USES:
+!
+      use m_die
+      use m_mpif90
+      use m_realkinds, only : DP, FP
+
+      use m_AttrVect, only : AttrVect_lsize => lsize
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      type(SparseMatrix), intent(in)  :: sMat
+      integer, optional,  intent(in)  :: comm
+
+! !OUTPUT PARAMETERS:
+
+      real(DP),           intent(out) :: sparsity
+
+! !REVISION HISTORY:
+! 23Apr01 - Jay Larson <larson@mcs.anl.gov> - New routine.
+!
+! ______________________________________________________________________
+!
+  character(len=*),parameter :: myname_=myname//'::ComputeSparsityDP_'
+
+  integer  :: num_elements, num_rows, num_cols
+  real(FP) :: Lnum_elements, Lnum_rows, Lnum_cols, LMySparsity
+  real(FP) :: MySparsity
+  integer  :: ierr
+
+       ! Extract number of nonzero elements and compute its logarithm
+
+  num_elements = lsize_(sMat)
+  Lnum_elements = log(REAL(num_elements,FP))
+
+       ! Extract number of rows and compute its logarithm
+
+  num_rows = nRows_(sMat)
+  Lnum_rows = log(REAL(num_rows,FP))
+
+       ! Extract number of columns and compute its logarithm
+
+  num_cols = nCols_(sMat)
+  Lnum_cols = log(REAL(num_cols,FP))  
+
+       ! Compute logarithm of the (local) sparsity
+
+  LMySparsity = Lnum_elements - Lnum_rows - Lnum_cols
+
+       ! Compute the (local) sparsity from its logarithm.
+
+  MySparsity = exp(LMySparsity)
+
+       ! If a communicator handle is present, sum up the
+       ! distributed sparsity values to all processes.  If not,
+       ! return the value of MySparsity computed above.
+
+  if(present(comm)) then
+     call MPI_ALLREDUCE(MySparsity, sparsity, 1, MP_INTEGER, &
+                        MP_SUM, comm, ierr)
+     if(ierr /= 0) then
+	call MP_perr_die(myname_,"MPI_ALLREDUCE(MySparsity...",ierr)
+     endif
+  else
+     sparsity = MySparsity
+  endif
+
+ end subroutine ComputeSparsityDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -1766,7 +2140,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: row_sum_ - Sum Elements in Each Row
+! !IROUTINE: row_sumSP_ - Sum Elements in Each Row
 !
 ! !DESCRIPTION:
 ! Given an input {\tt SparseMatrix} argument {\tt sMat}, {\tt row\_sum\_()}
@@ -1782,13 +2156,14 @@
 !
 ! !INTERFACE:
 
- subroutine row_sum_(sMat, num_rows, sums, comm)
+ subroutine row_sumSP_(sMat, num_rows, sums, comm)
 
 !
 ! !USES:
 !
       use m_die
       use m_mpif90
+      use m_realkinds, only : SP, FP
 
       use m_AttrVect, only : AttrVect_lsize => lsize
       use m_AttrVect, only : AttrVect_indexIA => indexIA
@@ -1804,7 +2179,7 @@
 ! !OUTPUT PARAMETERS:
 
       integer,            intent(out) :: num_rows
-      real, dimension(:), pointer     :: sums
+      real(SP), dimension(:), pointer :: sums
 
 
 
@@ -1817,12 +2192,13 @@
 !           to set type in the mpi_allreduce
 !EOP ___________________________________________________________________
 !
-  character(len=*),parameter :: myname_=myname//'::row_sum_'
+  character(len=*),parameter :: myname_=myname//'::row_sumSP_'
 
   integer :: i, igrow, ierr, iwgt, lsize, myID
   integer :: start_row, end_row
   integer :: mp_Type_lsums
-  real, dimension(:), allocatable :: lsums
+  real(FP), dimension(:), allocatable :: lsums
+  real(FP), dimension(:), allocatable :: gsums
 
        ! Determine local rank
 
@@ -1843,7 +2219,7 @@
 
        ! Allocate storage for the sums on each process.
 
-  allocate(lsums(num_rows), sums(num_rows), stat=ierr)
+  allocate(lsums(num_rows), gsums(num_rows), sums(num_rows), stat=ierr)
 
   if(ierr /= 0) then
      call die(myname_,"allocate(lsums(...",ierr)
@@ -1855,7 +2231,7 @@
   igrow = AttrVect_indexIA(aV=sMat%data,item='grow',dieWith=myname_)
   iwgt = AttrVect_indexRA(aV=sMat%data,item='weight',dieWith=myname_)
 
-  lsums = 0.
+  lsums = 0._FP
   do i=1,lsize
      lsums(sMat%data%iAttr(igrow,i)) = lsums(sMat%data%iAttr(igrow,i)) + &
 	                           sMat%data%rAttr(iwgt,i)
@@ -1865,25 +2241,152 @@
        ! processes own the global sums.
 
   mp_Type_lsums=MP_Type(lsums)
-  call MPI_ALLREDUCE(lsums, sums, num_rows, mp_Type_lsums, MP_SUM, comm, ierr)
+  call MPI_ALLREDUCE(lsums, gsums, num_rows, mp_Type_lsums, MP_SUM, comm, ierr)
   if(ierr /= 0) then
      call MP_perr_die(myname_,"MPI_ALLREDUCE(lsums...",ierr)
   endif
 
+       ! Copy our temporary array gsums into the output pointer sums
+       ! This was done so that lsums and gsums have the same precision (FP)
+       ! Precision conversion occurs here from FP to (SP or DP)
+
+  sums = gsums
+
        ! Clean up...
 
-  deallocate(lsums, stat=ierr)
+  deallocate(lsums, gsums, stat=ierr)
   if(ierr /= 0) then
      call die(myname_,"deallocate(lsums...",ierr)
   endif
 
- end subroutine row_sum_
+ end subroutine row_sumSP_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! ----------------------------------------------------------------------
+!
+! !IROUTINE: row_sumDP_ - Sum Elements in Each Row
+!
+! !DESCRIPTION:
+! Double precision version of row_sumSP_
+!
+! {\bf N.B.:  } This routine allocates an array {\tt sums}.  The user is
+! responsible for deallocating this array when it is no longer needed.  
+! Failure to do so will cause a memory leak.
+!
+! !INTERFACE:
+
+ subroutine row_sumDP_(sMat, num_rows, sums, comm)
+
+!
+! !USES:
+!
+      use m_die
+      use m_mpif90
+
+      use m_realkinds, only : DP, FP
+
+      use m_AttrVect, only : AttrVect_lsize => lsize
+      use m_AttrVect, only : AttrVect_indexIA => indexIA
+      use m_AttrVect, only : AttrVect_indexRA => indexRA
+
+      implicit none
+
+! !INPUT PARAMETERS:
+
+      type(SparseMatrix), intent(in)  :: sMat
+      integer,            intent(in)  :: comm
+
+! !OUTPUT PARAMETERS:
+
+      integer,            intent(out) :: num_rows
+      real(DP), dimension(:), pointer :: sums
+
+
+
+! !REVISION HISTORY:
+! 15Jan01 - Jay Larson <larson@mcs.anl.gov> - API specification.
+! 25Jan01 - Jay Larson <larson@mcs.anl.gov> - Prototype code.
+! 23Apr01 - Jay Larson <larson@mcs.anl.gov> - Modified to accomodate
+!           changes to the SparseMatrix type.
+! 18May01 - R. Jacob <jacob@mcs.anl.gov> - Use MP_TYPE function
+!           to set type in the mpi_allreduce
+! ______________________________________________________________________
+!
+  character(len=*),parameter :: myname_=myname//'::row_sumDP_'
+
+  integer :: i, igrow, ierr, iwgt, lsize, myID
+  integer :: start_row, end_row
+  integer :: mp_Type_lsums
+  real(FP), dimension(:), allocatable :: lsums
+  real(FP), dimension(:), allocatable :: gsums
+
+       ! Determine local rank
+
+  call MP_COMM_RANK(comm, myID, ierr)
+
+       ! Determine on each process the row of global row indices:
+
+  call global_row_range_(sMat, comm, start_row, end_row)
+
+       ! Determine across the communicator the _maximum_ value of
+       ! end_row, which will be assigned to num_rows on each process:
+
+  call MPI_ALLREDUCE(end_row, num_rows, 1, MP_INTEGER, MP_MAX, &
+                    comm, ierr)
+  if(ierr /= 0) then
+     call MP_perr_die(myname_,"MPI_ALLREDUCE(end_row...",ierr)
+  endif
+
+       ! Allocate storage for the sums on each process.
+
+  allocate(lsums(num_rows), gsums(num_rows), sums(num_rows), stat=ierr)
+
+  if(ierr /= 0) then
+     call die(myname_,"allocate(lsums(...",ierr)
+  endif
+
+       ! Compute the local entries to lsum(1:num_rows) for each process:
+
+  lsize = AttrVect_lsize(sMat%data)
+  igrow = AttrVect_indexIA(aV=sMat%data,item='grow',dieWith=myname_)
+  iwgt = AttrVect_indexRA(aV=sMat%data,item='weight',dieWith=myname_)
+
+  lsums = 0._FP
+  do i=1,lsize
+     lsums(sMat%data%iAttr(igrow,i)) = lsums(sMat%data%iAttr(igrow,i)) + &
+	                           sMat%data%rAttr(iwgt,i)
+  end do
+
+       ! Compute the global sum of the entries of lsums so that all
+       ! processes own the global sums.
+
+  mp_Type_lsums=MP_Type(lsums)
+  call MPI_ALLREDUCE(lsums, gsums, num_rows, mp_Type_lsums, MP_SUM, comm, ierr)
+  if(ierr /= 0) then
+     call MP_perr_die(myname_,"MPI_ALLREDUCE(lsums...",ierr)
+  endif
+
+       ! Copy our temporary array gsums into the output pointer sums
+       ! This was done so that lsums and gsums have the same precision (FP)
+       ! Precision conversion occurs here from FP to (SP or DP)
+
+  sums = gsums
+
+       ! Clean up...
+
+  deallocate(lsums, gsums, stat=ierr)
+  if(ierr /= 0) then
+     call die(myname_,"deallocate(lsums...",ierr)
+  endif
+
+ end subroutine row_sumDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: row_sum_check - Check Row Sums vs. Valid Values
+! !IROUTINE: row_sum_checkSP_ - Check Row Sums vs. Valid Values
 !
 ! !DESCRIPTION:  The routine {\tt row\_sum\_check()} sums the rows of 
 ! the input distributed (across the communicator identified by {\tt comm}) 
@@ -1896,12 +2399,13 @@
 !
 ! !INTERFACE:
 
- subroutine row_sum_check_(sMat, comm, num_valid, valid_sums, abs_tol, valid)
+ subroutine row_sum_checkSP_(sMat, comm, num_valid, valid_sums, abs_tol, valid)
 
 !
 ! !USES:
 !
       use m_die
+      use m_realkinds, only : SP, FP
 
       implicit none
 
@@ -1910,8 +2414,8 @@
       type(SparseMatrix), intent(in)  :: sMat
       integer,            intent(in)  :: comm
       integer,            intent(in)  :: num_valid
-      real,               intent(in)  :: valid_sums(num_valid)
-      real,               intent(in)  :: abs_tol
+      real(SP),           intent(in)  :: valid_sums(num_valid)
+      real(SP),           intent(in)  :: abs_tol
 
 ! !OUTPUT PARAMETERS:
 
@@ -1920,16 +2424,17 @@
 ! !REVISION HISTORY:
 ! 15Jan01 - Jay Larson <larson@mcs.anl.gov> - API specification.
 ! 25Feb01 - Jay Larson <larson@mcs.anl.gov> - Prototype code.
+! 06Jan03 - R. Jacob <jacob@mcs.anl.gov> - create DP and SP versions
 !EOP ___________________________________________________________________
 !
-  character(len=*),parameter :: myname_=myname//'::row_sum_check_'
+  character(len=*),parameter :: myname_=myname//'::row_sum_checkSP_'
 
   integer :: i, j, num_invalid, num_rows
-  real, dimension(:), pointer :: sums
+  real(FP), dimension(:), pointer :: sums
 
        ! Compute row sums:
 
-  call row_sum_(sMat, num_rows, sums, comm)
+  call row_sum(sMat, num_rows, sums, comm)
 
        ! Initialize for the scanning loop (assume the matrix row
        ! sums are valid):
@@ -1966,7 +2471,92 @@
 
   end do SCAN_LOOP
 
- end subroutine row_sum_check_
+ end subroutine row_sum_checkSP_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! ----------------------------------------------------------------------
+!
+! !IROUTINE: row_sum_checkDP_ - Check Row Sums vs. Valid Values
+!
+! !DESCRIPTION:
+! Double precision version of row_sum_checkSP
+!
+! !INTERFACE:
+
+ subroutine row_sum_checkDP_(sMat, comm, num_valid, valid_sums, abs_tol, valid)
+
+!
+! !USES:
+!
+      use m_die
+      use m_realkinds, only : DP, FP
+
+      implicit none
+
+! !INPUT PARAMETERS:
+
+      type(SparseMatrix), intent(in)  :: sMat
+      integer,            intent(in)  :: comm
+      integer,            intent(in)  :: num_valid
+      real(DP),           intent(in)  :: valid_sums(num_valid)
+      real(DP),           intent(in)  :: abs_tol
+
+! !OUTPUT PARAMETERS:
+
+      logical,            intent(out) :: valid
+
+! !REVISION HISTORY:
+! 15Jan01 - Jay Larson <larson@mcs.anl.gov> - API specification.
+! 25Feb01 - Jay Larson <larson@mcs.anl.gov> - Prototype code.
+! 06Jan03 - R. Jacob <jacob@mcs.anl.gov> - create DP and SP versions
+! ______________________________________________________________________
+!
+  character(len=*),parameter :: myname_=myname//'::row_sum_checkDP_'
+
+  integer :: i, j, num_invalid, num_rows
+  real(FP), dimension(:), pointer :: sums
+
+       ! Compute row sums:
+
+  call row_sum(sMat, num_rows, sums, comm)
+
+       ! Initialize for the scanning loop (assume the matrix row
+       ! sums are valid):
+
+  valid = .TRUE.
+  i = 1
+
+  SCAN_LOOP:  do 
+
+       ! Count the number of elements in valid_sums(:) that
+       ! are separated from sums(i) by more than abs_tol
+
+     num_invalid = 0
+
+     do j=1,num_valid
+	if(abs(sums(i) - valid_sums(j)) > abs_tol) then
+	   num_invalid = num_invalid + 1
+	endif
+     end do
+
+       ! If num_invalid = num_valid, then we have failed to
+       ! find a valid sum value within abs_tol of sums(i).  This
+       ! one failure is enough to halt the process.
+
+     if(num_invalid == num_valid) then
+	valid = .FALSE.
+	EXIT
+     endif
+
+       ! Prepare index i for the next element of sums(:)
+
+     i = i + 1
+     if( i > num_rows) EXIT
+
+  end do SCAN_LOOP
+
+ end subroutine row_sum_checkDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -2131,6 +2721,7 @@
 
   character(len=*),parameter :: myname_=myname//'::SortPermute_'
 
+  integer :: ier
   integer, dimension(:), pointer :: perm
 
        ! Create index permutation perm(:)
@@ -2144,6 +2735,11 @@
        ! Apply index permutation perm(:) to re-order sMat:
 
   call Permute_(sMat, perm)
+
+       ! Clean up
+
+  deallocate(perm, stat=ier)
+  if(ier/=0) call die(myname_, "deallocate(perm)", ier)
 
  end subroutine SortPermute_
 

@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $
+! CVS $Id: m_Router.F90,v 1.30 2005/11/28 17:07:59 jacob Exp $
+! CVS $Name: MCT_2_2_0 $
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_Router -- Router class 
@@ -17,24 +17,28 @@
 
  module m_Router
 
+      use m_realkinds, only : FP
+
       implicit none
 
       private   ! except
 
-! declare a private pointer structure for the real data
-  public :: rptr,iptr
-  type :: rptr
-    real,dimension(:),pointer :: pr
-  end type
+! !declare a private pointer structure for the real data
+      type :: rptr
+        sequence
+        real(FP),dimension(:),pointer :: pr
+      end type
 
-! declare a private pointer structure for the integer data
-  type :: iptr
-    integer,dimension(:),pointer :: pi
-  end type
-
+! !declare a private pointer structure for the integer data
+      type :: iptr
+        sequence
+        integer,dimension(:),pointer :: pi
+      end type
 
 ! !PUBLIC TYPES:
       public :: Router	        ! The class data structure
+
+      public :: rptr,iptr       ! pointer types used in Router
 !\end{verbatim}
 !% On return, pe_list is the processor ranks of the other
 !% component to receive from/send to.  num_segs is the
@@ -47,6 +51,7 @@
 !\begin{verbatim}
 
     type Router
+      sequence
       integer :: comp1id                           ! myid
       integer :: comp2id                           ! id of second component
       integer :: nprocs	                           ! number of procs to talk to
@@ -88,7 +93,7 @@
 !           for send/recv to the Router datatype.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_Router'
+  character(len=*),parameter :: myname='MCT::m_Router'
 
  contains
 
@@ -102,6 +107,9 @@
 ! The routine {\tt initd\_()} exchanges the {\tt GSMap} with the
 ! component identified by {\tt othercomp} and then calls {\tt initp\_()}
 ! to build a Router {\tt Rout} between them.
+!
+! {\bf N.B.} The  {\tt GSMap} argument must be declared so that the index values
+! on a processor are in ascending order.
 !
 ! !INTERFACE:
 
@@ -169,6 +177,9 @@
 !
 ! Given two GlobalSegmentMaps {\tt GSMap} and {\tt RGSMap}, intialize a
 ! Router {\tt Rout} between them.  Use local communicator {\tt mycomm}.
+!
+! {\bf N.B.} The two {\tt GSMap} arguments must be declared so that the index values
+! on a processor are in ascending order.
 !
 ! !INTERFACE:
 

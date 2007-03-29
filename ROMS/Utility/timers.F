@@ -30,7 +30,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: iregion, MyThread
+      integer :: iregion, MyModel, MyThread
 
       integer :: my_getpid
 #ifndef DISTRIBUTE
@@ -45,25 +45,29 @@
 ! Initialize timing for all threads.
 !-----------------------------------------------------------------------
 !
-      Cstr(region,model,ng)=my_wtime(wtime)
-      IF ((region.eq.0).and.(proc(1,model,ng).eq.0)) THEN
+!  Insure that MyModel is not zero.  Notice that zero value is used to
+!  indicate restart of the nonlinear model.
+!
+      MyModel=MAX(1,model)
+      Cstr(region,MyModel,ng)=my_wtime(wtime)
+      IF ((region.eq.0).and.(proc(1,MyModel,ng).eq.0)) THEN
         DO iregion=1,Nregion
-          Cend(iregion,model,ng)=0.0_r8
-          Csum(iregion,model,ng)=0.0_r8
+          Cend(iregion,MyModel,ng)=0.0_r8
+          Csum(iregion,MyModel,ng)=0.0_r8
         END DO
-        proc(1,model,ng)=1
-        proc(0,model,ng)=my_getpid()
+        proc(1,MyModel,ng)=1
+        proc(0,MyModel,ng)=my_getpid()
 
 !$OMP CRITICAL (START_WCLOCK)
 #ifdef DISTRIBUTE
         CALL mp_barrier (ng)
         WRITE (stdout,10) ' Node #', MyRank,                            &
-     &                    ' (pid=',proc(0,model,ng),') is active.'
+     &                    ' (pid=',proc(0,MyModel,ng),') is active.'
         CALL my_flush (stdout)
 #else
         MyThread=my_threadnum()
         WRITE (stdout,10) ' Thread #', MyThread,                        &
-     &                    ' (pid=',proc(0,model,ng),') is active.'
+     &                    ' (pid=',proc(0,MyModel,ng),') is active.'
 #endif
  10     FORMAT (a,i3,a,i8,a)
         thread_count=thread_count+1
@@ -98,7 +102,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: imodel, iregion, MyThread
+      integer :: imodel, iregion, MyModel, MyThread
 
       integer :: my_threadnum
 
@@ -119,16 +123,22 @@
 !  Compute elapsed wall time for all threads.
 !-----------------------------------------------------------------------
 !
+!  Insure that MyModel is not zero.  Notice that zero value is used to
+!  indicate restart of the nonlinear model.
+!
+      MyModel=MAX(1,model)
       IF (region.ne.0) THEN
-        Cend(region,model,ng)=Cend(region,model,ng)+                    &
-     &                        (my_wtime(wtime)-Cstr(region,model,ng))
+        Cend(region,MyModel,ng)=Cend(region,MyModel,ng)+                &
+     &                          (my_wtime(wtime)-                       &
+     &                           Cstr(region,MyModel,ng))
       END IF
 !
 !  Report elapsed wall time.
 !
-      IF ((region.eq.0).and.(proc(1,model,ng).eq.1)) THEN
-        Cend(region,model,ng)=Cend(region,model,ng)+                    &
-     &                        (my_wtime(wtime)-Cstr(region,model,ng))
+      IF ((region.eq.0).and.(proc(1,MyModel,ng).eq.1)) THEN
+        Cend(region,MyModel,ng)=Cend(region,MyModel,ng)+                &
+     &                          (my_wtime(wtime)-                       &
+     &                           Cstr(region,MyModel,ng))
         DO imodel=1,4
           proc(1,imodel,ng)=0
         END DO
@@ -140,12 +150,12 @@
 #ifdef DISTRIBUTE
         CALL mp_barrier (ng)
         WRITE (stdout,10) ' Node   #', MyRank, ' CPU:',                 &
-     &                    Cend(region,model,ng)
+     &                    Cend(region,MyModel,ng)
         CALL my_flush (stdout)
 #else
         MyThread=my_threadnum()
         WRITE (stdout,10) ' Thread #', MyThread, ' CPU:',               &
-     &                    Cend(region,model,ng)
+     &                    Cend(region,MyModel,ng)
 #endif
  10     FORMAT (a,i3,a,f12.3)
 !
@@ -161,7 +171,7 @@
           END DO
         END DO
         DO imodel=1,4
-          IF (imodel.ne.model) THEN
+          IF (imodel.ne.MyModel) THEN
             DO iregion=1,Nregion
               Csum(region,imodel,ng)=Csum( region,imodel,ng)+           &
      &                               Csum(iregion,imodel,ng)
@@ -176,7 +186,7 @@
             DO iregion=0,Nregion
               buffer(iregion)=Csum(iregion,imodel,ng)
             END DO
-            CALL mp_reduce (ng, model, Nregion+1, buffer(0),            &
+            CALL mp_reduce (ng, MyModel, Nregion+1, buffer(0),            &
      &                      op_handle(0))
             DO iregion=0,Nregion
               Csum(iregion,imodel,ng)=buffer(iregion)
@@ -209,8 +219,8 @@
             sumper=0.0_r8
             DO iregion=1,38
               IF (Csum(iregion,imodel,ng).gt.0.0_r8) THEN
-                percent=100.0_r8*Csum(iregion,imodel,ng)/               &
-     &                           Csum( region, model,ng)
+                percent=100.0_r8*Csum(iregion, imodel,ng)/              &
+     &                           Csum( region,MyModel,ng)
                 IF (Master) WRITE (stdout,40) Pregion(iregion),         &
      &                                        Csum(iregion,imodel,ng),  &
      &                                        percent
@@ -242,8 +252,8 @@
             IF (total.gt.0.0_r8) THEN
               DO iregion=39,Nregion
                 IF (Csum(iregion,imodel,ng).gt.0.0_r8) THEN
-                  percent=100.0_r8*Csum(iregion,imodel,ng)/             &
-     &                             Csum( region, model,ng)
+                  percent=100.0_r8*Csum(iregion, imodel,ng)/            &
+     &                             Csum( region,Mymodel,ng)
                   IF (Master) WRITE (stdout,40) Pregion(iregion),       &
      &                                          Csum(iregion,imodel,ng),&
      &                                          percent
@@ -257,7 +267,7 @@
             END IF
           END DO
 # endif
-          IF (Master) WRITE (stdout,60) Csum( region, model,ng)
+          IF (Master) WRITE (stdout,60) Csum(region,MyModel,ng)
   60      FORMAT (/,' All pecentages are with respect to total time =', &
      &            6x,f12.3)
 #endif

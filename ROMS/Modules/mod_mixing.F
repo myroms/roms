@@ -545,189 +545,191 @@
 !
 !  Nonlinear model state.
 !
-      DO j=Jmin,Jmax
+      IF ((model.eq.0).or.(model.eq.iNLM)) THEN
+        DO j=Jmin,Jmax
 #if defined UV_VIS2 || !defined SOLVE3D
-        DO i=Imin,Imax
-          MIXING(ng) % visc2_p(i,j) = visc2(ng)
-          MIXING(ng) % visc2_r(i,j) = visc2(ng)
-        END DO
-#endif
-#ifdef UV_VIS4
-        DO i=Imin,Imax
-          MIXING(ng) % visc4_p(i,j) = visc4(ng)
-          MIXING(ng) % visc4_r(i,j) = visc4(ng)
-        END DO
-#endif
-#ifdef NEARSHORE_MELLOR
-        DO i=Imin,Imax
-          MIXING(ng) % Sxx_bar(i,j) = IniVal
-          MIXING(ng) % Sxy_bar(i,j) = IniVal
-          MIXING(ng) % Syy_bar(i,j) = IniVal
-          MIXING(ng) % rustr2d(i,j) = IniVal
-          MIXING(ng) % rvstr2d(i,j) = IniVal
-# ifdef SOLVE3D
-          DO k=1,N(ng)
-            MIXING(ng) % Sxx(i,j,k) = IniVal
-            MIXING(ng) % Sxy(i,j,k) = IniVal
-            MIXING(ng) % Syy(i,j,k) = IniVal
-            MIXING(ng) % Szx(i,j,k) = IniVal
-            MIXING(ng) % Szy(i,j,k) = IniVal
-            MIXING(ng) % rustr3d(i,j,k) = IniVal
-            MIXING(ng) % rvstr3d(i,j,k) = IniVal
+          DO i=Imin,Imax
+            MIXING(ng) % visc2_p(i,j) = visc2(ng)
+            MIXING(ng) % visc2_r(i,j) = visc2(ng)
           END DO
 #endif
-        END DO
+#ifdef UV_VIS4
+          DO i=Imin,Imax
+            MIXING(ng) % visc4_p(i,j) = visc4(ng)
+            MIXING(ng) % visc4_r(i,j) = visc4(ng)
+          END DO
+#endif
+#ifdef NEARSHORE_MELLOR
+          DO i=Imin,Imax
+            MIXING(ng) % Sxx_bar(i,j) = IniVal
+            MIXING(ng) % Sxy_bar(i,j) = IniVal
+            MIXING(ng) % Syy_bar(i,j) = IniVal
+            MIXING(ng) % rustr2d(i,j) = IniVal
+            MIXING(ng) % rvstr2d(i,j) = IniVal
+# ifdef SOLVE3D
+            DO k=1,N(ng)
+              MIXING(ng) % Sxx(i,j,k) = IniVal
+              MIXING(ng) % Sxy(i,j,k) = IniVal
+              MIXING(ng) % Syy(i,j,k) = IniVal
+              MIXING(ng) % Szx(i,j,k) = IniVal
+              MIXING(ng) % Szy(i,j,k) = IniVal
+              MIXING(ng) % rustr3d(i,j,k) = IniVal
+              MIXING(ng) % rvstr3d(i,j,k) = IniVal
+            END DO
+#endif
+          END DO
 #endif
 #ifdef SOLVE3D
 # ifdef TS_DIF2
-        DO itrc=1,NT(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % diff2(i,j,itrc) = tnu2(itrc,ng)
+          DO itrc=1,NT(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % diff2(i,j,itrc) = tnu2(itrc,ng)
+            END DO
           END DO
-        END DO
 # endif
 # ifdef TS_DIF4
-        DO itrc=1,NT(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % diff4(i,j,itrc) = tnu4(itrc,ng)
+          DO itrc=1,NT(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % diff4(i,j,itrc) = tnu4(itrc,ng)
+            END DO
           END DO
-        END DO
 # endif
-        DO i=Imin,Imax
-          MIXING(ng) % Akv(i,j,0) = IniVal
-          MIXING(ng) % Akv(i,j,N(ng)) = IniVal
-        END DO
-        DO k=1,N(ng)-1
           DO i=Imin,Imax
-            MIXING(ng) % Akv(i,j,k) = Akv_bak(ng)
-          END DO
-        END DO
-        DO itrc=1,NAT
-          DO i=Imin,Imax
-            MIXING(ng) % Akt(i,j,0,itrc) = IniVal
-            MIXING(ng) % Akt(i,j,N(ng),itrc) = IniVal
+            MIXING(ng) % Akv(i,j,0) = IniVal
+            MIXING(ng) % Akv(i,j,N(ng)) = IniVal
           END DO
           DO k=1,N(ng)-1
             DO i=Imin,Imax
-              MIXING(ng) % Akt(i,j,k,itrc) = Akt_bak(itrc,ng)
+              MIXING(ng) % Akv(i,j,k) = Akv_bak(ng)
             END DO
           END DO
-        END DO
-# ifdef FLOAT_VWALK
-        DO k=1,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % dAktdz(i,j,k) = IniVal
+          DO itrc=1,NAT
+            DO i=Imin,Imax
+              MIXING(ng) % Akt(i,j,0,itrc) = IniVal
+              MIXING(ng) % Akt(i,j,N(ng),itrc) = IniVal
+            END DO
+            DO k=1,N(ng)-1
+              DO i=Imin,Imax
+                MIXING(ng) % Akt(i,j,k,itrc) = Akt_bak(itrc,ng)
+              END DO
+            END DO
           END DO
-        END DO
+# ifdef FLOAT_VWALK
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % dAktdz(i,j,k) = IniVal
+            END DO
+          END DO
 # endif
 # if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
-        DO i=Imin,Imax
-          MIXING(ng) % alpha(i,j) = IniVal
-          MIXING(ng) % beta(i,j) = IniVal
-        END DO
+          DO i=Imin,Imax
+            MIXING(ng) % alpha(i,j) = IniVal
+            MIXING(ng) % beta(i,j) = IniVal
+          END DO
 # endif
 # ifdef BV_FREQUENCY
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % bvf(i,j,k) = IniVal
-          END DO
-        END DO
-# endif
-# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
-        DO k=1,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % neutral(i,j,k) = IniVal
-          END DO
-        END DO
-# endif
-# if defined GLS_MIXING || defined MY25_MIXING
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % tke(i,j,k,1) = gls_Kmin(ng)
-            MIXING(ng) % tke(i,j,k,2) = gls_Kmin(ng)
-            MIXING(ng) % tke(i,j,k,3) = gls_Kmin(ng)
-            MIXING(ng) % gls(i,j,k,1) = gls_Pmin(ng)
-            MIXING(ng) % gls(i,j,k,2) = gls_Pmin(ng)
-            MIXING(ng) % gls(i,j,k,3) = gls_Pmin(ng)
-            MIXING(ng) % Lscale(i,j,k) = IniVal
-          END DO
-        END DO
-        DO i=Imin,Imax
-          MIXING(ng) % Akk(i,j,0) = IniVal
-          MIXING(ng) % Akk(i,j,N(ng)) = IniVal
-#  ifdef GLS_MIXING
-          MIXING(ng) % Akp(i,j,0) = IniVal
-          MIXING(ng) % Akp(i,j,N(ng)) = IniVal
-#  endif
-        END DO
-        DO k=1,N(ng)-1
-          DO i=Imin,Imax
-            MIXING(ng) % Akk(i,j,k) = Akk_bak(ng)
-#  ifdef GLS_MIXING
-            MIXING(ng) % Akp(i,j,k) = Akp_bak(ng)
-#  endif
-          END DO
-        END DO
-# endif
-# if defined LMD_MIXING && defined LMD_DDMIX
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % alfaobeta(i,j,k) = IniVal
-          END DO
-        END DO
-# endif
-# if defined LMD_SKPP || defined SOLAR_SOURCE
-        DO i=Imin,Imax
-          MIXING(ng) % Jwtype(i,j) = lmd_Jwt(ng)
-        END DO
-# endif
-# if defined LMD_SKPP || defined LMD_BKPP
-        DO i=Imin,Imax
-          MIXING(ng) % ksbl(i,j) = 0
-          MIXING(ng) % hsbl(i,j) = IniVal
-        END DO
-#  ifdef LMD_BKPP
-        DO i=Imin,Imax
-          MIXING(ng) % kbbl(i,j) = 0
-          MIXING(ng) % hbbl(i,j) = IniVal
-        END DO
-#  endif
-#  ifdef LMD_NONLOCAL
-        DO itrc=1,NAT
           DO k=0,N(ng)
             DO i=Imin,Imax
-              MIXING(ng) % ghats(i,j,k,itrc) = IniVal
+              MIXING(ng) % bvf(i,j,k) = IniVal
             END DO
           END DO
-        END DO
+# endif
+# if defined MIX_ISO_TS || defined GENT_McWILLIAMS
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % neutral(i,j,k) = IniVal
+            END DO
+          END DO
+# endif
+# if defined GLS_MIXING || defined MY25_MIXING
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % tke(i,j,k,1) = gls_Kmin(ng)
+              MIXING(ng) % tke(i,j,k,2) = gls_Kmin(ng)
+              MIXING(ng) % tke(i,j,k,3) = gls_Kmin(ng)
+              MIXING(ng) % gls(i,j,k,1) = gls_Pmin(ng)
+              MIXING(ng) % gls(i,j,k,2) = gls_Pmin(ng)
+              MIXING(ng) % gls(i,j,k,3) = gls_Pmin(ng)
+              MIXING(ng) % Lscale(i,j,k) = IniVal
+            END DO
+          END DO
+          DO i=Imin,Imax
+            MIXING(ng) % Akk(i,j,0) = IniVal
+            MIXING(ng) % Akk(i,j,N(ng)) = IniVal
+#  ifdef GLS_MIXING
+            MIXING(ng) % Akp(i,j,0) = IniVal
+            MIXING(ng) % Akp(i,j,N(ng)) = IniVal
+#  endif
+          END DO
+          DO k=1,N(ng)-1
+            DO i=Imin,Imax
+              MIXING(ng) % Akk(i,j,k) = Akk_bak(ng)
+#  ifdef GLS_MIXING
+              MIXING(ng) % Akp(i,j,k) = Akp_bak(ng)
+#  endif
+            END DO
+          END DO
+# endif
+# if defined LMD_MIXING && defined LMD_DDMIX
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % alfaobeta(i,j,k) = IniVal
+            END DO
+          END DO
+# endif
+# if defined LMD_SKPP || defined SOLAR_SOURCE
+          DO i=Imin,Imax
+            MIXING(ng) % Jwtype(i,j) = lmd_Jwt(ng)
+          END DO
+# endif
+# if defined LMD_SKPP || defined LMD_BKPP
+          DO i=Imin,Imax
+            MIXING(ng) % ksbl(i,j) = 0
+            MIXING(ng) % hsbl(i,j) = IniVal
+          END DO
+#  ifdef LMD_BKPP
+          DO i=Imin,Imax
+            MIXING(ng) % kbbl(i,j) = 0
+            MIXING(ng) % hbbl(i,j) = IniVal
+          END DO
+#  endif
+#  ifdef LMD_NONLOCAL
+          DO itrc=1,NAT
+            DO k=0,N(ng)
+              DO i=Imin,Imax
+                MIXING(ng) % ghats(i,j,k,itrc) = IniVal
+              END DO
+            END DO
+          END DO
 #  endif
 # endif
 #endif
-      END DO
+        END DO
 
 #ifdef FOUR_DVAR
 !
 !  Spatial convolution diffusion coefficients.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
-           MIXING(ng) % Kh(i,j) = 1.0_r8
-        END DO
-# ifdef SOLVE3D
-        DO k=0,N(ng)           
+        DO j=Jmin,Jmax
           DO i=Imin,Imax
-            MIXING(ng) % Kv(i,j,k) = 1.0_r8
+             MIXING(ng) % Kh(i,j) = 1.0_r8
           END DO
-        END DO
+# ifdef SOLVE3D
+          DO k=0,N(ng)           
+            DO i=Imin,Imax
+              MIXING(ng) % Kv(i,j,k) = 1.0_r8
+            END DO
+          END DO
 # endif
-      END DO
+        END DO
 #endif
+      END IF
 
 #if defined TANGENT || defined TL_IOMS
+# ifdef SOLVE3D
 !
 !  Tangent linear model state.
 !
-# ifdef SOLVE3D
 #  if defined GLS_MIXING || defined MY25_MIXING
       IF (model.eq.iRPM) THEN
         cff1=gls_Kmin(ng)
@@ -741,115 +743,119 @@
         cff4=IniVal
       END IF
 #  endif
-      DO j=Jmin,Jmax
-        DO k=0,N(ng)           
-          DO i=Imin,Imax
-            MIXING(ng) % tl_Akv(i,j,k) = IniVal
-          END DO
-        END DO
-        DO itrc=1,NAT
-          DO k=0,N(ng)
+      IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
+        DO j=Jmin,Jmax
+          DO k=0,N(ng)           
             DO i=Imin,Imax
-              MIXING(ng) % tl_Akt(i,j,k,itrc) = IniVal
+              MIXING(ng) % tl_Akv(i,j,k) = IniVal
             END DO
           END DO
-        END DO
+          DO itrc=1,NAT
+            DO k=0,N(ng)
+              DO i=Imin,Imax
+                MIXING(ng) % tl_Akt(i,j,k,itrc) = IniVal
+              END DO
+            END DO
+          END DO
 #  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
-        DO i=Imin,Imax
-          MIXING(ng) % tl_alpha(i,j) = IniVal
-          MIXING(ng) % tl_beta(i,j) = IniVal
-        END DO
+          DO i=Imin,Imax
+            MIXING(ng) % tl_alpha(i,j) = IniVal
+            MIXING(ng) % tl_beta(i,j) = IniVal
+          END DO
 #  endif
 #  ifdef BV_FREQUENCY
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % tl_bvf(i,j,k) = IniVal
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % tl_bvf(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
 #  endif
 #  if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % tl_tke(i,j,k,1) = cff1
-            MIXING(ng) % tl_tke(i,j,k,2) = cff1
-            MIXING(ng) % tl_tke(i,j,k,3) = cff1
-            MIXING(ng) % tl_gls(i,j,k,1) = cff2
-            MIXING(ng) % tl_gls(i,j,k,2) = cff2
-            MIXING(ng) % tl_gls(i,j,k,3) = cff2
-            MIXING(ng) % tl_Lscale(i,j,k) = IniVal
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % tl_tke(i,j,k,1) = cff1
+              MIXING(ng) % tl_tke(i,j,k,2) = cff1
+              MIXING(ng) % tl_tke(i,j,k,3) = cff1
+              MIXING(ng) % tl_gls(i,j,k,1) = cff2
+              MIXING(ng) % tl_gls(i,j,k,2) = cff2
+              MIXING(ng) % tl_gls(i,j,k,3) = cff2
+              MIXING(ng) % tl_Lscale(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
-        DO i=Imin,Imax
-          MIXING(ng) % tl_Akk(i,j,0) = IniVal
-          MIXING(ng) % tl_Akk(i,j,N(ng)) = IniVal
+          DO i=Imin,Imax
+            MIXING(ng) % tl_Akk(i,j,0) = IniVal
+            MIXING(ng) % tl_Akk(i,j,N(ng)) = IniVal
 #   ifdef GLS_MIXING_NOT_YET
-          MIXING(ng) % tl_Akp(i,j,0) = IniVal
-          MIXING(ng) % tl_Akp(i,j,N(ng)) = IniVal
-#   endif
-        END DO
-        DO k=1,N(ng)-1
-          DO i=Imin,Imax
-            MIXING(ng) % tl_Akk(i,j,k) = cff3
-#   ifdef GLS_MIXING
-            MIXING(ng) % tl_Akp(i,j,k) = cff4
+            MIXING(ng) % tl_Akp(i,j,0) = IniVal
+            MIXING(ng) % tl_Akp(i,j,N(ng)) = IniVal
 #   endif
           END DO
-        END DO
+          DO k=1,N(ng)-1
+            DO i=Imin,Imax
+              MIXING(ng) % tl_Akk(i,j,k) = cff3
+#   ifdef GLS_MIXING
+              MIXING(ng) % tl_Akp(i,j,k) = cff4
+#   endif
+            END DO
+          END DO
 #  endif
-      END DO
+        END DO
 # endif
+      END IF
 #endif
 
 #ifdef ADJOINT
+# ifdef SOLVE3D
 !
 !  Adjoint model state.
 !
-# ifdef SOLVE3D
-      DO j=Jmin,Jmax
-        DO k=0,N(ng)           
-          DO i=Imin,Imax
-            MIXING(ng) % ad_Akv(i,j,k) = IniVal
-          END DO
-        END DO
-        DO itrc=1,NAT
-          DO k=0,N(ng)
+      IF ((model.eq.0).or.(model.eq.iADM)) THEN
+        DO j=Jmin,Jmax
+          DO k=0,N(ng)           
             DO i=Imin,Imax
-              MIXING(ng) % ad_Akt(i,j,k,itrc) = IniVal
+              MIXING(ng) % ad_Akv(i,j,k) = IniVal
             END DO
           END DO
-        END DO
+          DO itrc=1,NAT
+            DO k=0,N(ng)
+              DO i=Imin,Imax
+                MIXING(ng) % ad_Akt(i,j,k,itrc) = IniVal
+              END DO
+            END DO
+          END DO
 #  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
-        DO i=Imin,Imax
-          MIXING(ng) % ad_alpha(i,j) = IniVal
-          MIXING(ng) % ad_beta(i,j) = IniVal
-        END DO
+          DO i=Imin,Imax
+            MIXING(ng) % ad_alpha(i,j) = IniVal
+            MIXING(ng) % ad_beta(i,j) = IniVal
+          END DO
 #  endif
 #  ifdef BV_FREQUENCY
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % ad_bvf(i,j,k) = IniVal
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % ad_bvf(i,j,k) = IniVal
+            END DO
           END DO
-        END DO
 #  endif
 #  if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % ad_tke(i,j,k,1) = IniVal
-            MIXING(ng) % ad_tke(i,j,k,2) = IniVal
-            MIXING(ng) % ad_tke(i,j,k,3) = IniVal
-            MIXING(ng) % ad_gls(i,j,k,1) = IniVal
-            MIXING(ng) % ad_gls(i,j,k,2) = IniVal
-            MIXING(ng) % ad_gls(i,j,k,3) = IniVal
-            MIXING(ng) % ad_Lscale(i,j,k) = IniVal
-            MIXING(ng) % ad_Akk(i,j,k) = IniVal
+          DO k=0,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % ad_tke(i,j,k,1) = IniVal
+              MIXING(ng) % ad_tke(i,j,k,2) = IniVal
+              MIXING(ng) % ad_tke(i,j,k,3) = IniVal
+              MIXING(ng) % ad_gls(i,j,k,1) = IniVal
+              MIXING(ng) % ad_gls(i,j,k,2) = IniVal
+              MIXING(ng) % ad_gls(i,j,k,3) = IniVal
+              MIXING(ng) % ad_Lscale(i,j,k) = IniVal
+              MIXING(ng) % ad_Akk(i,j,k) = IniVal
 #   ifdef GLS_MIXING
-            MIXING(ng) % ad_Akp(i,j,k) = IniVal
+              MIXING(ng) % ad_Akp(i,j,k) = IniVal
 #   endif
+            END DO
           END DO
-        END DO
 #  endif
-      END DO
+        END DO
 # endif
+      END IF
 #endif
 
 #if defined FORWARD_READ && defined FOWARD_MIXING && defined SOLVE3D && \
@@ -858,64 +864,66 @@
 !  Latest two records of the nonlinear trajectory used to interpolate
 !  the background state in the tangent linear and adjoint models.
 !
-      DO j=Jmin,Jmax
+      IF (model.eq.0) THEN
+        DO j=Jmin,Jmax
 # ifdef FORWARD_MIXING
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % AkvG(i,j,k,1) = IniVal
-            MIXING(ng) % AkvG(i,j,k,2) = IniVal
-          END DO
-        END DO
-        DO itrc=1,NAT
           DO k=0,N(ng)
             DO i=Imin,Imax
-              MIXING(ng) % AktG(i,j,k,1,itrc) = IniVal
-              MIXING(ng) % AktG(i,j,k,2,itrc) = IniVal
+              MIXING(ng) % AkvG(i,j,k,1) = IniVal
+              MIXING(ng) % AkvG(i,j,k,2) = IniVal
             END DO
           END DO
-        END DO
+          DO itrc=1,NAT
+            DO k=0,N(ng)
+              DO i=Imin,Imax
+                MIXING(ng) % AktG(i,j,k,1,itrc) = IniVal
+                MIXING(ng) % AktG(i,j,k,2,itrc) = IniVal
+              END DO
+            END DO
+          END DO
 # endif
 # if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
-        DO k=0,N(ng)
-          DO i=Imin,Imax
-            MIXING(ng) % tkeG(i,j,k,1) = IniVal
-            MIXING(ng) % tkeG(i,j,k,2) = IniVal
-            MIXING(ng) % glsG(i,j,k,1) = IniVal
-            MIXING(ng) % glsG(i,j,k,2) = IniVal
-            MIXING(ng) % LscaleG(i,j,k,1) = IniVal
-            MIXING(ng) % LscaleG(i,j,k,2) = IniVal
-            MIXING(ng) % AkkG(i,j,k,1) = IniVal
-            MIXING(ng) % AkkG(i,j,k,2) = IniVal
-#  ifdef GLS_MIXING_NOT_YET
-            MIXING(ng) % AkpG(i,j,k,1) = IniVal
-            MIXING(ng) % AkpG(i,j,k,2) = IniVal
-#  endif
-          END DO
-        END DO
-# endif
-# if defined LMD_MIXING_NOT_YET
-        DO i=Imin,Imax
-          MIXING(ng) % hsblG(i,j,1) = IniVal
-          MIXING(ng) % hsblG(i,j,2) = IniVal
-        END DO
-# endif
-# if defined LMD_BKPP_NOT_YET
-        DO i=Imin,Imax
-          MIXING(ng) % hbblG(i,j,1) = IniVal
-          MIXING(ng) % hbblG(i,j,2) = IniVal
-        END DO
-# endif
-# if defined LMD_NONLOCAL_NOT_YET
-        DO itrc=1,NAT
           DO k=0,N(ng)
             DO i=Imin,Imax
-              MIXING(ng) % ghatsG(i,j,0:N(ng),1,itrc) = IniVal
-              MIXING(ng) % ghatsG(i,j,0:N(ng),2,itrc) = IniVal
+              MIXING(ng) % tkeG(i,j,k,1) = IniVal
+              MIXING(ng) % tkeG(i,j,k,2) = IniVal
+              MIXING(ng) % glsG(i,j,k,1) = IniVal
+              MIXING(ng) % glsG(i,j,k,2) = IniVal
+              MIXING(ng) % LscaleG(i,j,k,1) = IniVal
+              MIXING(ng) % LscaleG(i,j,k,2) = IniVal
+              MIXING(ng) % AkkG(i,j,k,1) = IniVal
+              MIXING(ng) % AkkG(i,j,k,2) = IniVal
+#  ifdef GLS_MIXING_NOT_YET
+              MIXING(ng) % AkpG(i,j,k,1) = IniVal
+              MIXING(ng) % AkpG(i,j,k,2) = IniVal
+#  endif
             END DO
           END DO
-        END DO
 # endif
-      END DO
+# if defined LMD_MIXING_NOT_YET
+          DO i=Imin,Imax
+            MIXING(ng) % hsblG(i,j,1) = IniVal
+            MIXING(ng) % hsblG(i,j,2) = IniVal
+          END DO
+# endif
+# if defined LMD_BKPP_NOT_YET
+          DO i=Imin,Imax
+            MIXING(ng) % hbblG(i,j,1) = IniVal
+            MIXING(ng) % hbblG(i,j,2) = IniVal
+          END DO
+# endif
+# if defined LMD_NONLOCAL_NOT_YET
+          DO itrc=1,NAT
+            DO k=0,N(ng)
+              DO i=Imin,Imax
+                MIXING(ng) % ghatsG(i,j,0:N(ng),1,itrc) = IniVal
+                MIXING(ng) % ghatsG(i,j,0:N(ng),2,itrc) = IniVal
+              END DO
+            END DO
+          END DO
+# endif
+        END DO
+      END IF
 #endif
 
       RETURN

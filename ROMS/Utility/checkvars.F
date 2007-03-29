@@ -176,6 +176,22 @@
 # endif
        END IF
 #endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Determine aditional 4Dvar state varaibles to adjust.
+!
+       IF ((model.eq.5).or.(model.eq.6)) THEN
+# ifdef ADJUST_STFLUX
+         DO itrc=1,NT(ng)
+           get_var(idTsur(itrc))=.TRUE.
+         END DO
+# endif
+# ifdef ADJUST_WSTRESS
+         get_var(idUsms)=.TRUE.
+         get_var(idVsms)=.TRUE.
+# endif
+       END IF
+#endif
 !
 !  Scan variable list from input NetCDF and activate switches for
 !  model state variables.
@@ -212,6 +228,14 @@
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idKhor))) THEN
             have_var(idKhor)=.TRUE.
           END IF
+#ifdef ADJUST_WSTRESS
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUsms))) THEN
+            have_var(idUsms)=.TRUE.
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVsms))) THEN
+            have_var(idVsms)=.TRUE.
+          END IF
+#endif
 #ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idKver))) THEN
             have_var(idKver)=.TRUE.
@@ -233,6 +257,13 @@
               have_var(idTvar(itrc))=.TRUE.
             END IF
           END DO
+# ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+              have_var(idTsur(itrc))=.TRUE.
+            END IF
+          END DO
+# endif
 # if defined GLS_MIXING || defined MY25_MIXING || defined LMD_MIXING
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
             have_var(idVvis)=.TRUE.
@@ -342,6 +373,22 @@
           exit_flag=2
           RETURN
         END IF
+#ifdef ADJUST_WSTRESS
+        IF ((model.eq.5).or.(model.eq.6)) THEN
+          IF (.not.have_var(idUstr).and.get_var(idUsms)) THEN
+            WRITE (stdout,10) string, TRIM(Vname(1,idUsms)),            &
+     &                        TRIM(ncname)
+            exit_flag=2
+            RETURN
+          END IF
+          IF (.not.have_var(idUstr).and.get_var(idVsms)) THEN
+            WRITE (stdout,10) string, TRIM(Vname(1,idVsms)),            &
+     &                        TRIM(ncname)
+            exit_flag=2
+            RETURN
+          END IF
+        END IF
+#endif
 #ifdef SOLVE3D
         IF (.not.have_var(idUvel).and.get_var(idUvel)) THEN
           WRITE (stdout,10) string, TRIM(Vname(1,idUvel)), TRIM(ncname)
@@ -372,6 +419,19 @@
             RETURN
           END IF
         END DO
+# ifdef ADJUST_STFLUX
+        IF ((model.eq.5).or.(model.eq.6)) THEN
+          DO itrc=1,NT(ng)
+            IF (.not.have_var(idTsur(itrc)).and.                        &
+     &          get_var(idTsur(itrc))) THEN
+              WRITE (stdout,10) string, TRIM(Vname(1,idTsur(itrc))),    &
+     &                          TRIM(ncname)
+              exit_flag=2
+              RETURN
+            END IF
+          END DO
+        END IF
+# endif
 # if defined GLS_MIXING || defined MY25_MIXING
         IF (.not.have_var(idMtke).and.get_var(idMtke)) THEN
           WRITE (stdout,10) string, TRIM(Vname(1,idMtke)), TRIM(ncname)

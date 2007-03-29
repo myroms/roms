@@ -128,7 +128,7 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
-      real(r8) :: cff
+      real(r8) :: cff, cff1
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
@@ -260,7 +260,8 @@
      &                    FE(i,j+1)-FE(i,j))
               t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff
 #ifdef TS_MPDATA
-                t(i,j,k,3,itrc)=t(i,j,k,nnew,itrc)
+              cff1=1.0_r8/Hz(i,j,k)
+              t(i,j,k,3,itrc)=cff1*t(i,j,k,nnew,itrc)
 #endif
 #ifdef DIAGNOSTICS_TS
               DiaTwrk(i,j,k,itrc,iThdif)=-cff

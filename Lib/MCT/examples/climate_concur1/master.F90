@@ -1,32 +1,89 @@
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: master.F90,v 1.7 2004/04/23 05:43:11 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
+!BOP -------------------------------------------------------------------
+!
+! !ROUTINE: master  -- driver for simple concurrent coupled model
+!
+! !DESCRIPTION:  Provide a simple example of using MCT to connect to 
+!  components executing concurrently in a single executable. 
+!
+! !INTERFACE:
+!
+      program master
+!
+! !USES:
+!
+
+      implicit none
+
+      include "mpif.h"
+
+!
+!EOP ___________________________________________________________________
+
+!     local variables
+
+      character(len=*), parameter :: mastername='master.F90'
+
+      integer, parameter :: ncomps = 2   ! Must know total number of 
+                                         ! components in coupled system
+
+      integer, parameter :: AtmID = 1    ! pick an id for the atmosphere
+      integer, parameter :: CplID = 2    ! pick an id for the coupler
+
+
+
+
+! MPI variables
+      integer :: splitcomm, rank, nprocs,compid, myID, ierr,color
+      integer :: anprocs,cnprocs
+
 !-----------------------------------------------------------------------
-! A driver model code for Multi-Process Handshaking utility
-! to facilitate a plug & play style programming using single executable.
-! each processor only execute one component model once. 
-! Written by Yun (Helen) He and Chris Ding, NERSC/LBNL, October 2000.
+! The Main program. 
+! We are implementing a single-executable, concurrent-execution system.
+!
+! This small main program carves up MPI_COMM_WORLD and then starts
+! each component on its own processor set.
+
+      ! Initialize MPI
+      call MPI_INIT(ierr)
+
+      ! Get basic MPI information
+      call MPI_COMM_SIZE(MPI_COMM_WORLD,nprocs,ierr)
+      call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ierr)
+
+      ! Create MPI communicators for each component
+      !
+      ! each component will run on half the processors
+      !
+      ! set color
+      if (rank .lt. nprocs/2) then
+        color = 0
+      else
+        color = 1
+      endif
 
 
-       program main
-       use MPH_all
-       implicit none
-       integer myProc_global
+      ! Split MPI_COMM_WORLD into communicators for each component.
+      call MPI_COMM_SPLIT(MPI_COMM_WORLD,color,0,splitcomm,ierr)
 
-       external ccm3, cpl, pop2_2
 
-       call MPI_INIT(ierr)
-       call MPI_COMM_RANK(MPI_COMM_WORLD,myProc_global,ierr)
+      ! Start the components
+      select case (color)
+         case(0)
+            call model(splitcomm,ncomps,AtmID)
+         case(1)
+            call coupler(splitcomm,ncomps,CplID)
+         case default
+            print *, "color error, color = ", color
+      end select
 
-! here ccm3.8, pop2.2 etc are subroutine names in component models
-! you could list the components in any order or omit any of them
-       call MPH_setup_SE (atmosphere=ccm3, coupler=cpl, ocean=pop2_2)
+      ! Components are done
+      call MPI_FINALIZE(ierr)
 
-!     write(*,*)'I am proc ', MPH_global_proc_id(), 
-!    &  ' of global proc ', MPH_local_proc_id_ME_SE(), ' of ',
-!    &  MPH_myName_ME_SE()
-!     write(*,*)'=============================================='
 
-       call MPI_FINALIZE(ierr)
-       end program
-
+    end program master

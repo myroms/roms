@@ -71,6 +71,9 @@
 !***********************************************************************
 !
       USE mod_param
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+# endif
       USE mod_ocean
 !
 !  Imported variable declarations.
@@ -84,10 +87,17 @@
       CALL back_cost_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lbck,                                        &
+# ifdef ADJUST_WSTRESS
+     &                     FORCES(ng) % tl_sustr,                       &
+     &                     FORCES(ng) % tl_svstr,                       &
+# endif
 # ifdef SOLVE3D
      &                     OCEAN(ng) % tl_t,                            &
      &                     OCEAN(ng) % tl_u,                            &
      &                     OCEAN(ng) % tl_v,                            &
+#  ifdef ADJUST_STFLUX
+     &                     FORCES(ng) % tl_stflx,                       &
+#  endif
 # else
      &                     OCEAN(ng) % tl_ubar,                         &
      &                     OCEAN(ng) % tl_vbar,                         &
@@ -100,10 +110,16 @@
       SUBROUTINE back_cost_tile (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lbck,                                  &
+# ifdef ADJUST_WSTRESS
+     &                           tl_sustr, tl_svstr,                    &
+# endif
 # ifdef SOLVE3D
      &                           tl_t,                                  &
      &                           tl_u,                                  &
      &                           tl_v,                                  &
+#  ifdef ADJUST_STFLUX
+     &                           tl_stflx,                              &
+#  endif
 # else
      &                           tl_ubar,                               &
      &                           tl_vbar,                               &
@@ -129,20 +145,34 @@
       integer, intent(in) :: Lbck
 !
 # ifdef ASSUMED_SHAPE
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: tl_sustr(LBi:,LBj:)
+      real(r8), intent(in) :: tl_svstr(LBi:,LBj:)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: tl_stflx(LBi:,LBj:,:)
+#   endif
 #  else
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
 #  endif
       real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
 # else
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: tl_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: tl_svstr(LBi:UBi,LBj:UBj)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: tl_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#   endif
 #  else
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -239,6 +269,39 @@
               my_BackCost(isTvar(itrc))=my_BackCost(isTvar(itrc))+cff
             END DO
           END DO
+        END DO
+      END DO
+#  ifdef ADJUST_STFLUX
+!
+!  Surface tracers flux contribution.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            cff=0.5_r8*tl_stflx(i,j,itrc)*tl_stflx(i,j,itrc)
+            my_BackCost(0)=my_BackCost(0)+cff
+            my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+cff
+          END DO
+        END DO
+      END DO
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+!
+!  Surface momentum stress contribution.
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          cff=0.5_r8*tl_sustr(i,j)*tl_sustr(i,j)
+          my_BackCost(0)=my_BackCost(0)+cff
+          my_BackCost(isUstr)=my_BackCost(isUstr)+cff
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          cff=0.5_r8*tl_svstr(i,j)*tl_svstr(i,j)
+          my_BackCost(0)=my_BackCost(0)+cff
+          my_BackCost(isVstr)=my_BackCost(isVstr)+cff
         END DO
       END DO
 # endif

@@ -1,58 +1,57 @@
-#!/bin/make
 
-MODULE		= twocon
+SHELL           = /bin/sh
 
-makefiles	= configure	Makefile	Makefile.rules	\
-		  Makefile.conf 
+# SOURCE FILES
 
-SRCS_C		= 
+SRCS_F90	= twocmp.con.F90		\
+		  twocmp.seq.F90		\
+		  twocmp.seqUnvn.F90		\
+		  twocmp.seqNB.F90		\
 
-SRCS_F		= 
+OBJS_ALL	= $(SRCS_F90:.F90=.o)
 
-SRCS_f		= 
+# MACHINE AND COMPILER FLAGS
 
-SRCS_F90	= twocomponent.concurrent.F90 twocomponent.sequential.F90 \
-		  twocomponentUneven.sequential.F90
+include ../../Makefile.conf
 
-SRCS_f90	= 
+# ADDITIONAL DEFINITIONS SPECIFIC FOR UTMCT COMPILATION
 
-SRCS_ALL	= $(SRCS_f) $(SRCS_F) $(SRCS_f90) $(SRCS_F90) $(SRCS_C)
+MCTLIBS    = -L$(MPEUPATH) -L$(MCTPATH) -lmct -lmpeu 
+UTLDFLAGS  = $(REAL8)
+UTCMPFLAGS = $(REAL8) $(INCFLAG)$(MPEUPATH) $(INCFLAG)$(MCTPATH)
 
-OBJS_ALL	= $(SRCS_F:.F=.o)	$(SRCS_F90:.F90=.o)	\
-		  $(SRCS_f90:.f90=.o)	$(SRCS_f:.f=.o) \
-		  $(SRCS_C:.c=.o)
+# TARGETS
 
-ARCH_TARGETS	= $(makefiles) $(SRCS_ALL) 
+all:	twocon twoseq twosequn twoseqNB
 
-MPEU_IDIR       = ../../mpeu
-MPEU_LDIR       = ../../mpeu
-MCT_IDIR        = ../../mct
-MCT_LDIR        = ../../mct
+twocon:  twocmp.con.o
+	$(FC) -o $@ twocmp.con.o $(FCFLAGS) $(UTLDFLAGS) $(MCTLIBS) $(MPILIBS)
 
-include Makefile.rules
-include Makefile.conf
+twoseq:  twocmp.seq.o
+	$(FC) -o $@ twocmp.seq.o $(FCFLAGS) $(UTLDFLAGS) $(MCTLIBS) $(MPILIBS)
 
-# targets
+twosequn:  twocmp.seqUnvn.o
+	$(FC) -o $@ twocmp.seqUnvn.o $(FCFLAGS) $(UTLDFLAGS) $(MCTLIBS) $(MPILIBS)
 
-pt:
-	protex $(SRCS_ALL)
+twoseqNB:  twocmp.seqNB.o
+	$(FC) -o $@ twocmp.seqNB.o $(FCFLAGS) $(MCTLIBS) $(MPILIBS)
 
-twocon:  twocomponent.concurrent.o
-	$(LD) -o $@ twocomponent.concurrent.o $(LDFLAGS) $(_L) $(_l)
+# RULES
 
-twoseq:  twocomponent.sequential.o
-	$(LD) -o $@ twocomponent.sequential.o $(LDFLAGS) $(_L) $(_l)
+.SUFFIXES:
+.SUFFIXES: .F90 .o
 
-twosequn:  twocomponentUneven.sequential.o
-	$(LD) -o $@ twocomponentUneven.sequential.o $(LDFLAGS) $(_L) $(_l)
+$(F90RULE):
+	$(FC) -c $(INCPATH) $(DEFS) $(FCFLAGS) $(F90FLAGS) $(UTCMPFLAGS) $*.F90
 
-all:	twocon twoseq twosequn
+$(F90RULECPP):
+	$(FPP) $(DEFS) $(FPPFLAGS) $*.F90 $*.f90
+	$(FC) -c $(INCPATH) $(FCFLAGS) $(F90FLAGS) $(UTCMPFLAGS) $*.f90
+	$(RM) $*.f90
 
+clean:
+	${RM} *.o *.mod twocon twoseq twosequn twoseqNB
 
+# DEPENDENCIES:
 
-# dependencies:
-
-
-
-
-
+$(OBJS_ALL): $(MCTPATH)/libmct.a

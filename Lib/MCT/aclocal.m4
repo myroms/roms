@@ -23,7 +23,7 @@ AC_LANG_CASE([C], [
 [Fortran 77], [
 	AC_REQUIRE([AC_PROG_F77])
 	AC_ARG_VAR(MPIF77,[MPI Fortran compiler command])
-	AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf mpf77 mpif90 mpxlf90 mpxlf95 mpxlf90_r mpxlf_r mpifrt mpf90, $F77)
+	AC_CHECK_PROGS(MPIF77, mpif77 hf77 mpxlf_r mpxlf mpf77 mpif90 mpxlf90_r mpxlf90 mpxlf95 mpifrt mpf90, $F77)
 	acx_mpi_save_F77="$F77"
 	F77="$MPIF77"
 	AC_SUBST(MPIF77)
@@ -31,7 +31,7 @@ AC_LANG_CASE([C], [
 [Fortran 90], [
 	AC_REQUIRE([AC_PROG_F90])
 	AC_ARG_VAR(MPIF90,[MPI Fortran compiler command])
-	AC_CHECK_PROGS(MPIF90, mpif90 mpxlf90 mpxlf95 mpxlf90_r mpifrt mpf90, $F90)
+	AC_CHECK_PROGS(MPIF90, mpxlf90_r mpxlf90 mpxlf95 mpif90 mpifrt mpf90, $F90)
 	acx_mpi_save_F90="$F90"
 	F90="$MPIF90"
 	AC_SUBST(MPIF90)
@@ -68,12 +68,12 @@ fi],
 		AC_MSG_RESULT(no)])
 fi],
 [Fortran 77], [if test x != x"$MPILIBS"; then
-	AC_MSG_CHECKING([for mpi.h])
+	AC_MSG_CHECKING([for mpif.h])
 	AC_TRY_COMPILE([include "mpif.h"],[],[AC_MSG_RESULT(yes)], [MPILIBS=""
 		AC_MSG_RESULT(no)])
 fi],
 [Fortran 90], [if test x != x"$MPILIBS"; then
-	AC_MSG_CHECKING([for mpi.h])
+	AC_MSG_CHECKING([for mpif.h])
 	AC_TRY_COMPILE([include "mpif.h"],[],[AC_MSG_RESULT(yes)], [MPILIBS=""
 		AC_MSG_RESULT(no)])
 fi])
@@ -122,8 +122,8 @@ case $ac_cv_f90_mod_uppercase in
   yes)
     m4_default([$1],
       [AC_DEFINE([MODULE_UPPERCASE], 1,
-        [Define to 1 if your compiler creates module files in uppercase])],
-          [rm -f foobar.mod]) ;;
+        [Define to 1 if your compiler creates module files in uppercase])]
+          [rm -f FOOBAR.mod]) ;;
   no)
     m4_default([$2],
       [rm -f foobar.mod]) ;;
@@ -145,6 +145,7 @@ AC_CACHE_CHECK([if Fortran 90 compiler performs preprocessing],
 AC_LANG_PUSH(Fortran 90)
 AC_LANG_CONFTEST([AC_LANG_PROGRAM([$1])])
 AC_COMPILE_IFELSE([],[ac_cv_f90_fpp_compiler="yes"],[ac_cv_f90_fpp_compiler="no"])
+rm -f conftest.*
 F90=$old_F90
 ])])
 
@@ -165,11 +166,21 @@ fi
 if test "$old_ac_ext" = "F"; then
    AC_TRY_COMMAND([[$FPP $2 $FPPFLAGS conftest.$ac_ext conftest.f]])
    ac_ext="f"
-else
+fi
+if test "$old_ac_ext" = "F90"; then
+   AC_TRY_COMMAND([[$FPP $2 $FPPFLAGS conftest.$ac_ext conftest.f90]])
+   ac_ext="f90"
+fi
+if test "$old_ac_ext" = "f"; then
+   AC_TRY_COMMAND([[$FPP $2 $FPPFLAGS conftest.$ac_ext conftest.f]])
+   ac_ext="f"
+fi
+if test "$old_ac_ext" = "f90"; then
    AC_TRY_COMMAND([[$FPP $2 $FPPFLAGS conftest.$ac_ext conftest.f90]])
    ac_ext="f90"
 fi
 AC_COMPILE_IFELSE([],[ac_cv_f90_fpp_external="yes"],[ac_cv_f90_fpp_external="no"])])
+rm -f conftest.*
 ac_ext=$old_ac_ext
 ])
 # This file is part of Autoconf.                       -*- Autoconf -*-
@@ -371,40 +382,44 @@ AC_DEFUN([AC_LANG_COMPILER(Fortran 90)],
 #  1. F90, F95
 #  2. Good/tested native compilers, bad/untested native compilers
 #
-# pgf90 is the Portland Group F90 compilers.
 # xlf90/xlf95 are IBM (AIX) F90/F95 compilers.
+# pgf90 is the Portland Group F90 compilers.
+# ifort is the Intel 8.x compiler
+# pathf90 is the PathScale compiler
+# f90 is Absoft and SGI/MIPS fortran
+# ftn is Cray Fortran
+# frt is Fujitsu vpp Fortran
 # lf95 is the Lahey-Fujitsu compiler.
+# f95 is Absoft Fortran
 # epcf90 is the "Edinburgh Portable Compiler" F90.
 # fort is the Compaq Fortran 90 (now 95) compiler for Tru64 and Linux/Alpha.
+# g95 is the free GNU fortran compiler based on gfortran-gcc4.0
+# efc/ifc are the Intel 7.x and prior compilers
 AC_DEFUN([AC_PROG_F90],
 [AC_LANG_PUSH(Fortran 90)dnl
 AC_ARG_VAR([F90],      [Fortran 90 compiler command])dnl
 AC_ARG_VAR([F90FLAGS], [Fortran 90 compiler flags])dnl
+AC_ARG_VAR([F90SUFFIX], [Fortran 90 filename extension])dnl
 _AC_ARG_VAR_LDFLAGS()dnl
 AC_CHECK_TOOLS(F90,
       [m4_default([$1],
-                  [f90 xlf90 pgf90 ftn frt epcf90 f95 xlf95 lf95 ifc efc fort g95])])
+                  [xlf90 pgf90 ifort pathf90 f90 ftn frt lf95 f95 xlf95 fort efc ifc g95])])
 
-ac_ext=f90
-AC_MSG_CHECKING([Fortran compiler source file extension])
-ac_ext=F90
-AC_LANG_CONFTEST([AC_LANG_PROGRAM()])
-AS_IF([AC_TRY_EVAL(ac_compile)], [AC_MSG_RESULT([.F90])],
-[
-ac_ext=f90
-AC_LANG_CONFTEST([AC_LANG_PROGRAM()])
-AS_IF([AC_TRY_EVAL(ac_compile)], [AC_MSG_RESULT([.f90])],
-[
-ac_ext=F
-AC_LANG_CONFTEST([AC_LANG_PROGRAM()])
-AS_IF([AC_TRY_EVAL(ac_compile)], [AC_MSG_RESULT([.F])],
-[
-ac_ext=f
-AC_LANG_CONFTEST([AC_LANG_PROGRAM()])
-AS_IF([AC_TRY_EVAL(ac_compile)], [AC_MSG_RESULT([.f])],
-[
-AC_MSG_WARN([Cannot determine source file extension])
-])])])])
+# Check for a valid filname extension in the following order: F90, f90, F, f
+if test -z "$F90SUFFIX"; then
+   AC_MSG_CHECKING([Fortran 90 filename extension])
+   for suffix in F90 f90 F f; do
+     ac_ext=$suffix
+     AC_LANG_CONFTEST([AC_LANG_PROGRAM()])
+     AS_IF([AC_TRY_EVAL(ac_compile) && 
+	AC_TRY_COMMAND([test -s conftest.$ac_objext])], 
+     [AC_MSG_RESULT([.$suffix]); break 1])
+   done
+   F90SUFFIX=$ac_ext
+else
+   AC_MSG_NOTICE([FORTRAN 90 FILENAME EXTENSION HAS BEEN SET TO .$F90SUFFIX])
+   ac_ext=$F90SUFFIX
+fi
 
 # Provide some information about the compiler.
 echo "$as_me:__oline__:" \
@@ -424,6 +439,7 @@ _AC_LANG_COMPILER_GNU
 ac_ext=$ac_save_ext
 G95=`test $ac_compiler_gnu = yes && echo yes`
 AC_LANG_POP(Fortran 90)dnl
+rm -f a.out
 ])# AC_PROG_F90
 
 
@@ -1282,7 +1298,7 @@ AC_DEFUN([_AC_PROG_F90_VERSION],
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
 [ac_cv_prog_f90_version=
 # Try some options frequently used verbose output
-for ac_version in -V -version --version; do
+for ac_version in -V -version --version +version; do
   _AC_PROG_F90_VERSION_OUTPUT($ac_version)
   # look for "copyright" constructs in the output
   for ac_arg in $ac_f90_version_output; do

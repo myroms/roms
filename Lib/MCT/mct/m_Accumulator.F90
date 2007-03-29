@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_Accumulator.F90,v 1.31 2004/10/19 23:00:39 steder Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_Accumulator - Time Averaging/Accumlation Buffer
@@ -41,6 +41,7 @@
 !
       use m_List, only : List
       use m_AttrVect, only : AttrVect
+      use m_realkinds,only : SP,DP,FP
 
       implicit none
 
@@ -51,6 +52,9 @@
       public :: Accumulator ! The class data structure
 
     Type Accumulator
+#ifdef SEQUENCE
+      sequence
+#endif
       integer :: num_steps      ! total number of accumulation steps
       integer :: steps_done     ! number of accumulation steps performed
       integer, pointer, dimension(:) :: iAction ! index of integer actions
@@ -106,9 +110,15 @@
     interface getIList; module procedure getIList_; end interface
     interface getRList; module procedure getRList_; end interface
     interface exportIAttr ; module procedure exportIAttr_ ; end interface
-    interface exportRAttr ; module procedure exportRAttr_ ; end interface
+    interface exportRAttr ; module procedure &
+         exportRAttrSP_, &
+         exportRAttrDP_
+    end interface
     interface importIAttr ; module procedure importIAttr_ ; end interface
-    interface importRAttr ; module procedure importRAttr_ ; end interface
+    interface importRAttr ; module procedure &
+         importRAttrSP_, &
+         importRAttrDP_
+    end interface
     interface zero ; module procedure zero_ ; end interface
     interface SharedAttrIndexList ; module procedure   &
        aCaCSharedAttrIndexList_,  &   
@@ -136,7 +146,7 @@
 !            no added routines
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_Accumulator'
+  character(len=*),parameter :: myname='MCT::m_Accumulator'
 
  contains
 
@@ -369,7 +379,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: initv_-Initialize One Accumulator using Another
+! !IROUTINE: initv_ - Initialize One Accumulator using Another
 !
 ! !DESCRIPTION:
 ! This routine takes the integer and real attribute information (including
@@ -392,6 +402,7 @@
       use m_List,   only : ListExportToChar => exportToChar
       use m_List,   only : List_copy        => copy
       use m_List,   only : List_allocated   => allocated
+      use m_List,   only : List_clean       => clean
       use m_die
 
       implicit none
@@ -525,6 +536,9 @@
 
   endif
 
+  if(List_allocated(bC%data%iList)) call List_clean(temp_iList)
+  if(List_allocated(bC%data%rList)) call List_clean(temp_rList)
+
   deallocate(iActionArray,rActionArray,stat=ier)
   if(ier /= 0) call die(myname_,"iActionArray/rActionArray deallocate",ier)
 
@@ -597,7 +611,7 @@
 	 if(present(stat)) then
 	    stat=ier
 	 else
-	    call die(myname_,'deallocate(aC%iAction)',ier)
+	    call warn(myname_,'deallocate(aC%iAction)',ier)
 	 endif
       endif
 
@@ -611,7 +625,7 @@
 	 if(present(stat)) then
 	    stat=ier
 	 else
-	    call die(myname_,'deallocate(aC%rAction)',ier)
+	    call warn(myname_,'deallocate(aC%rAction)',ier)
 	 endif
       endif
 
@@ -1253,6 +1267,8 @@
 
  end function indexRA_
 
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: exportIAttr_ - Export INTEGER Attribute to a Vector
@@ -1318,9 +1334,11 @@
 
  end subroutine exportIAttr_
 
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: exportRAttr_ - Export REAL Attribute to a Vector
+! !IROUTINE: exportRAttrSP_ - Export REAL Attribute to a Vector
 !
 ! !DESCRIPTION:
 ! This routine extracts from the input {\tt Accumulator} argument 
@@ -1348,7 +1366,7 @@
 !
 ! !INTERFACE:
 
- subroutine exportRAttr_(aC, AttrTag, outVect, lsize)
+ subroutine exportRAttrSP_(aC, AttrTag, outVect, lsize)
 !
 ! !USES:
 !
@@ -1366,7 +1384,7 @@
 
 ! !OUTPUT PARAMETERS: 
 
-      real, dimension(:),     pointer     :: outVect
+      real(SP), dimension(:), pointer     :: outVect
       integer,                intent(out) :: lsize
 
 ! !REVISION HISTORY:
@@ -1374,14 +1392,61 @@
 !
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_=myname//'::exportRAttr_'
+  character(len=*),parameter :: myname_=myname//'::exportRAttrSP_'
 
        ! Export the data (inheritance from AttrVect)
 
   call AttrVect_exportRAttr(aC%data, AttrTag, outVect, lsize)
 
- end subroutine exportRAttr_
+ end subroutine exportRAttrSP_
 
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! ----------------------------------------------------------------------
+!
+! !IROUTINE: exportRAttrDP_ - Export REAL Attribute to a Vector
+!
+! !DESCRIPTION:
+! Double precision version of exportRAttrSP_
+!
+! !INTERFACE:
+
+ subroutine exportRAttrDP_(aC, AttrTag, outVect, lsize)
+!
+! !USES:
+!
+      use m_die 
+      use m_stdio
+
+      use m_AttrVect,      only : AttrVect_exportRAttr => exportRAttr
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      type(Accumulator),      intent(in)  :: aC
+      character(len=*),       intent(in)  :: AttrTag
+
+! !OUTPUT PARAMETERS: 
+
+      real(DP), dimension(:), pointer     :: outVect
+      integer,                intent(out) :: lsize
+
+! !REVISION HISTORY:
+!  6May02 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
+!
+! ______________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::exportRAttrDP_'
+
+       ! Export the data (inheritance from AttrVect)
+
+  call AttrVect_exportRAttr(aC%data, AttrTag, outVect, lsize)
+
+ end subroutine exportRAttrDP_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
 ! !IROUTINE: importIAttr_ - Import INTEGER Attribute from a Vector
@@ -1440,9 +1505,11 @@
 
  end subroutine importIAttr_
 
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: importRAttr_ - Import REAL Attribute from a Vector
+! !IROUTINE: importRAttrSP_ - Import REAL Attribute from a Vector
 !
 ! !DESCRIPTION:
 ! This routine imports data provided in the input {\tt REAL} vector 
@@ -1457,7 +1524,7 @@
 !
 ! !INTERFACE:
 
- subroutine importRAttr_(aC, AttrTag, inVect, lsize)
+ subroutine importRAttrSP_(aC, AttrTag, inVect, lsize)
 !
 ! !USES:
 !
@@ -1471,7 +1538,7 @@
 ! !INPUT PARAMETERS: 
 
       character(len=*),       intent(in)    :: AttrTag
-      real, dimension(:),     pointer       :: inVect
+      real(SP), dimension(:), pointer       :: inVect
       integer,                intent(in)    :: lsize
 
 ! !INPUT/OUTPUT PARAMETERS: 
@@ -1482,7 +1549,7 @@
 !  6May02 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname_=myname//'::importRAttr_'
+  character(len=*),parameter :: myname_=myname//'::importRAttrSP_'
 
        ! Argument Check:
 
@@ -1496,7 +1563,59 @@
 
   call AttrVect_importRAttr(aC%data, AttrTag, inVect, lsize)
 
- end subroutine importRAttr_
+ end subroutine importRAttrSP_
+
+!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!    Math and Computer Science Division, Argonne National Laboratory   !
+! ----------------------------------------------------------------------
+!
+! !IROUTINE: importRAttrDP_ - Import REAL Attribute from a Vector
+!
+! !DESCRIPTION:
+! Double precision version of importRAttrSP_
+!
+! !INTERFACE:
+
+ subroutine importRAttrDP_(aC, AttrTag, inVect, lsize)
+!
+! !USES:
+!
+      use m_die 
+      use m_stdio ,        only : stderr
+
+      use m_AttrVect,      only : AttrVect_importRAttr => importRAttr
+
+      implicit none
+
+! !INPUT PARAMETERS: 
+
+      character(len=*),       intent(in)    :: AttrTag
+      real(DP), dimension(:), pointer       :: inVect
+      integer,                intent(in)    :: lsize
+
+! !INPUT/OUTPUT PARAMETERS: 
+
+      type(Accumulator),      intent(inout) :: aC
+
+! !REVISION HISTORY:
+!  6May02 - J.W. Larson <larson@mcs.anl.gov> - initial prototype.
+! ______________________________________________________________________
+
+  character(len=*),parameter :: myname_=myname//'::importRAttrDP_'
+
+       ! Argument Check:
+
+  if(lsize > lsize_(aC)) then
+     write(stderr,*) myname_,':: ERROR, lsize > lsize_(aC).', &
+          'lsize = ',lsize,'lsize_(aC) = ',lsize_(ac)
+     call die(myname_)
+  endif
+
+       ! Import the data (inheritance from AttrVect)
+
+  call AttrVect_importRAttr(aC%data, AttrTag, inVect, lsize)
+
+ end subroutine importRAttrDP_
 
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
@@ -1757,7 +1876,7 @@
   integer :: ierr, l, n
 
 ! Averaging time-weighting factor:
-  real :: step_weight
+  real(FP) :: step_weight
   integer :: num_steps
 
 ! Character variable used as a data type flag:
@@ -1865,7 +1984,7 @@
 
   if(aC%steps_done == num_steps) then
 
-     step_weight = 1 / float(num_steps)
+     step_weight = 1.0_FP / REAL(num_steps,FP)
      do n=1,nRAttr_(aC)
         if( aC%rAction(n) == MCT_AVG ) then
            do l=1,lsize_(aC)

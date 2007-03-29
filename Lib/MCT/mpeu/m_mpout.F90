@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_mpout.F90,v 1.4 2004/04/21 22:54:48 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !-----------------------------------------------------------------------
 !BOP
 !
@@ -59,7 +59,7 @@
 ! \end{itemize}
 !EOP
 !_______________________________________________________________________
-  character(len=*),parameter :: myname='m_mpout'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_mpout'
 
   character(len=*),parameter :: def_pfix='mpout'
 

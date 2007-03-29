@@ -55,7 +55,7 @@
 !
 !   G      Nested grid number
 !   C      Initial horizontal coordinate type (0: grid units, 1: spherical)
-!   T      Float trajectory type (0: neutral 3D Lagrangian, 1:isobaric)
+!   T      Float trajectory type (1: neutral 3D Lagrangian, 2:isobaric)
 !   N      Number floats to be releazed at (Fx0,Fy0,Fz0)
 !   Ft0    Float release time (days) after model initialization
 !   Fx0    Initial float X-location (grid units or longitude)
@@ -68,8 +68,8 @@
 
 POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 
-      1  0  0  1    0.d0    5.d0    5.d0  -45.d0   0.d0     0.d0   0.d0   0.d0
-      1  0  0  8    0.d0   10.d0   10.d0  -25.d0   0.25d0   0.d0   0.d0   0.d0
+      1  0  1  1    0.d0    5.d0    5.d0  -45.d0   0.d0     0.d0   0.d0   0.d0
+      1  0  1  8    0.d0   10.d0   10.d0  -25.d0   0.25d0   0.d0   0.d0   0.d0
 
 !
 !  GLOSSARY:
@@ -121,9 +121,9 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !
 !  T         Float trajectory type [Ftype]:
 !
-!              Ftype = 0,  neutral density 3D Lagrangian particles.
+!              Ftype = 1,  neutral density 3D Lagrangian particles.
 !
-!              Ftype = 1,  isobaric (constant depth) floats.
+!              Ftype = 2,  isobaric (constant depth) floats.
 !
 !  N         Number of floats [Fcount] to be released at the (Fx0,Fy0,Fz0)
 !              location.  It must be equal or greater than one. If Fcount

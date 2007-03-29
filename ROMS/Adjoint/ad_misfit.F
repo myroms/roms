@@ -197,7 +197,7 @@
 !  Free-surface.
 !
         IF (FOURDVAR(ng)%ObsCount(isFsur).gt.0) THEN
-          CALL ad_extract_obs2d (ng, model, Istr, Iend, Istr, Jend,     &
+          CALL ad_extract_obs2d (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           rILB(ng), rIUB(ng),                    &
      &                           rJLB(ng), rJUB(ng),                    &
@@ -313,7 +313,7 @@
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs, Zobs,                &
      &                           ad_v(:,:,:,nfrc),                      &
-     &                           z_r,                                   &
+     &                           z_vel,                                 &
 #  ifdef MASKING
      &                           vmask,                                 &
 #  endif

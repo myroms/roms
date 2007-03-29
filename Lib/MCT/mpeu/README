@@ -1,26 +1,33 @@
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: README,v 1.5 2004/04/23 22:00:55 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !-----------------------------------------------------------------------
 
 This directory contains a version of MPEU distributed as part 
-of the Model Coupling Toolkit (MCT).  MPEU is a product of the NASA Data
-Assimilation Office.
+of the Model Coupling Toolkit (MCT).  MPEU was written by
+Jing Guo of the NASA Data Assimilation Office. 
+
+This copy of MPEU provided by Jing Guo.  Usage is covered
+by terms in the file MCT/COPYRIGHT.
 
 MCT distribution contents:
 MCT/
-MCT/doc
-MCT/mct
-MCT/mpeu   <- You are here
-MCT/protex
-MCT/ut-mct
+MCT/COPYRIGHT
+MCT/doc/
+MCT/examples/
+MCT/mct/
+MCT/mpeu/   <- You are here
+MCT/protex/
 
 A complete distribution of MCT can be obtained from http://www.mcs.anl.gov/mct.
 
 ---------------------------------------------------
 Build instructions:
-1) ./configure
-2) make all
+
+In top level directory, type "./configure", then "make".
+
+If "./configure" has already been run, you can also type "make"
+in this directory.
 
 ---------------------------------------------------
 NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS 

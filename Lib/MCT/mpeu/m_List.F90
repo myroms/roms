@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_List.F90,v 1.34 2004/10/19 23:00:39 steder Exp $
+! CVS $Name: MCT_2_2_0 $  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_List - A List Manager
@@ -61,6 +61,9 @@
       public :: List		! The class data structure
 
       Type List
+#ifdef SEQUENCE
+     sequence
+#endif
 	 character(len=1),dimension(:),pointer :: bf
 	 integer,       dimension(:,:),pointer :: lc
       End Type List
@@ -149,7 +152,7 @@
 !           from mct to this module.
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_List'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_List'
 
  contains
 
@@ -236,6 +239,10 @@
   end do
   if(ib<=ie) ni=ni+1
 
+  ! COMPILER MAY NOT SIGNAL AN ERROR IF 
+  ! ALIST HAS ALREADY BEEN INITIALIZED.
+  ! PLEASE CHECK FOR PREVIOUS INITIALIZATION
+  
   allocate(aList%bf(le),aList%lc(0:1,ni),stat=ier)
   if(ier /= 0) call die(myname_,'allocate()',ier)
 
@@ -1736,7 +1743,9 @@
 
        ! Initialize ioList off the root using DummStr
 
-  call initStr_(ioList, DummStr)
+  if(myID /= root) then
+     call initStr_(ioList, DummStr)
+  endif
 
        ! And now, the List broadcast is complete.
 

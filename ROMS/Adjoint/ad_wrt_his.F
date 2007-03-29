@@ -200,8 +200,7 @@
         END IF
       END IF
 !
-!  Write out 2D momentum component (m/s) in the ETA-direction.  Use
-!  global GRID(ng)%xp to accumulate correct adjoint solution.
+!  Write out 2D momentum component (m/s) in the ETA-direction.
 !
       IF (Hout(idVbar,ng)) THEN
         scale=1.0_r8

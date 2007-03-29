@@ -320,11 +320,18 @@
 !
           real(r8), pointer :: tl_sustr(:,:)
           real(r8), pointer :: tl_svstr(:,:)
+# ifdef ADJUST_WSTRESS
+          real(r8), pointer :: tl_ustr(:,:,:)
+          real(r8), pointer :: tl_vstr(:,:,:)
+# endif
           real(r8), pointer :: tl_bustr(:,:)
           real(r8), pointer :: tl_bvstr(:,:)
 # ifdef SOLVE3D
           real(r8), pointer :: tl_stflx(:,:,:)
           real(r8), pointer :: tl_btflx(:,:,:)
+#  ifdef ADJUST_STFLUX
+          real(r8), pointer :: tl_tflux(:,:,:,:)
+#  endif
 #  ifdef BULK_FLUXES
           real(r8), pointer :: tl_lhflx(:,:)
           real(r8), pointer :: tl_lrflx(:,:)
@@ -342,6 +349,10 @@
 !
           real(r8), pointer :: ad_sustr(:,:)
           real(r8), pointer :: ad_svstr(:,:)
+# ifdef ADJUST_WSTRESS
+          real(r8), pointer :: ad_ustr(:,:,:)
+          real(r8), pointer :: ad_vstr(:,:,:)
+# endif
           real(r8), pointer :: ad_bustr(:,:)
           real(r8), pointer :: ad_bvstr(:,:)
           real(r8), pointer :: ad_bustr_sol(:,:)
@@ -349,6 +360,9 @@
 # ifdef SOLVE3D
           real(r8), pointer :: ad_stflx(:,:,:)
           real(r8), pointer :: ad_btflx(:,:,:)
+#  ifdef ADJUST_STFLUX
+          real(r8), pointer :: ad_tflux(:,:,:,:)
+#  endif
 #  ifdef SHORTWAVE
           real(r8), pointer :: ad_srflx(:,:)
 #  endif
@@ -575,11 +589,18 @@
 !
       allocate ( FORCES(ng) % tl_sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % tl_svstr(LBi:UBi,LBj:UBj) )
+# ifdef ADJUST_WSTRESS
+      allocate ( FORCES(ng) % tl_ustr(LBi:UBi,LBj:UBj,2) )
+      allocate ( FORCES(ng) % tl_vstr(LBi:UBi,LBj:UBj,2) )
+# endif
       allocate ( FORCES(ng) % tl_bustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % tl_bvstr(LBi:UBi,LBj:UBj) )
 # ifdef SOLVE3D
       allocate ( FORCES(ng) % tl_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
       allocate ( FORCES(ng) % tl_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
+#  ifdef ADJUST_STFLUX
+      allocate ( FORCES(ng) % tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng)) )
+#  endif
 #  ifdef BULK_FLUXES
       allocate ( FORCES(ng) % tl_lhflx(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % tl_lrflx(LBi:UBi,LBj:UBj) )
@@ -597,6 +618,10 @@
 !
       allocate ( FORCES(ng) % ad_sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % ad_svstr(LBi:UBi,LBj:UBj) )
+# ifdef ADJUST_WSTRESS
+      allocate ( FORCES(ng) % ad_ustr(LBi:UBi,LBj:UBj,2) )
+      allocate ( FORCES(ng) % ad_vstr(LBi:UBi,LBj:UBj,2) )
+# endif
       allocate ( FORCES(ng) % ad_bustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % ad_bvstr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % ad_bustr_sol(LBi:UBi,LBj:UBj) )
@@ -604,6 +629,9 @@
 # ifdef SOLVE3D
       allocate ( FORCES(ng) % ad_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
       allocate ( FORCES(ng) % ad_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
+#  ifdef ADJUST_STFLUX
+      allocate ( FORCES(ng) % ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng)) )
+#  endif
 #  ifdef SHORTWAVE
       allocate ( FORCES(ng) % ad_srflx(LBi:UBi,LBj:UBj) )
 #  endif
@@ -621,7 +649,7 @@
       RETURN
       END SUBROUTINE allocate_forces
 
-      SUBROUTINE initialize_forces (ng, tile)
+      SUBROUTINE initialize_forces (ng, tile, model)
 !
 !=======================================================================
 !                                                                      !
@@ -637,7 +665,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile
+      integer, intent(in) :: ng, tile, model
 !
 !  Local variable declarations.
 !
@@ -687,254 +715,280 @@
 !
 !  Nonlinear model state.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
-          FORCES(ng) % sustr(i,j) = IniVal
-          FORCES(ng) % svstr(i,j) = IniVal
+      IF ((model.eq.0).or.(model.eq.iNLM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            FORCES(ng) % sustr(i,j) = IniVal
+            FORCES(ng) % svstr(i,j) = IniVal
 #if !defined ANA_SMFLUX && !defined BULK_FLUXES
-          FORCES(ng) % sustrG(i,j,1) = IniVal
-          FORCES(ng) % sustrG(i,j,2) = IniVal
-          FORCES(ng) % svstrG(i,j,1) = IniVal
-          FORCES(ng) % svstrG(i,j,2) = IniVal
+            FORCES(ng) % sustrG(i,j,1) = IniVal
+            FORCES(ng) % sustrG(i,j,2) = IniVal
+            FORCES(ng) % svstrG(i,j,1) = IniVal
+            FORCES(ng) % svstrG(i,j,2) = IniVal
 #endif
-          FORCES(ng) % bustr(i,j) = IniVal
-          FORCES(ng) % bvstr(i,j) = IniVal
+            FORCES(ng) % bustr(i,j) = IniVal
+            FORCES(ng) % bvstr(i,j) = IniVal
 #ifdef WAVES_DIR
-          FORCES(ng) % Dwave(i,j) = IniVal
+            FORCES(ng) % Dwave(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % DwaveG(i,j,1) = IniVal
-          FORCES(ng) % DwaveG(i,j,2) = IniVal
+            FORCES(ng) % DwaveG(i,j,1) = IniVal
+            FORCES(ng) % DwaveG(i,j,2) = IniVal
 # endif
 #endif
 #ifdef WAVES_HEIGHT
-          FORCES(ng) % Hwave(i,j) = IniVal
+            FORCES(ng) % Hwave(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % HwaveG(i,j,1) = IniVal
-          FORCES(ng) % HwaveG(i,j,2) = IniVal
+            FORCES(ng) % HwaveG(i,j,1) = IniVal
+            FORCES(ng) % HwaveG(i,j,2) = IniVal
 # endif
 #endif
 #ifdef WAVES_LENGTH
-          FORCES(ng) % Lwave(i,j) = IniVal
+            FORCES(ng) % Lwave(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % LwaveG(i,j,1) = IniVal
-          FORCES(ng) % LwaveG(i,j,2) = IniVal
+            FORCES(ng) % LwaveG(i,j,1) = IniVal
+            FORCES(ng) % LwaveG(i,j,2) = IniVal
 # endif
 #endif
 #ifdef WAVES_TOP_PERIOD
-          FORCES(ng) % Pwave_top(i,j) = IniVal
+            FORCES(ng) % Pwave_top(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % Pwave_topG(i,j,1) = IniVal
-          FORCES(ng) % Pwave_topG(i,j,2) = IniVal
+            FORCES(ng) % Pwave_topG(i,j,1) = IniVal
+            FORCES(ng) % Pwave_topG(i,j,2) = IniVal
 # endif
 #endif
 #ifdef WAVES_BOT_PERIOD
-          FORCES(ng) % Pwave_bot(i,j) = IniVal
+            FORCES(ng) % Pwave_bot(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % Pwave_botG(i,j,1) = IniVal
-          FORCES(ng) % Pwave_botG(i,j,2) = IniVal
+            FORCES(ng) % Pwave_botG(i,j,1) = IniVal
+            FORCES(ng) % Pwave_botG(i,j,2) = IniVal
 # endif
 #endif
 #if defined BBL_MODEL || defined WAVES_OCEAN
-          FORCES(ng) % Ub_swan(i,j) = IniVal
+            FORCES(ng) % Ub_swan(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % Ub_swanG(i,j,1) = IniVal
-          FORCES(ng) % Ub_swanG(i,j,2) = IniVal
+            FORCES(ng) % Ub_swanG(i,j,1) = IniVal
+            FORCES(ng) % Ub_swanG(i,j,2) = IniVal
 # endif
 #endif
 #if defined TKE_WAVEDISS || defined WAVES_OCEAN
-          FORCES(ng) % Wave_dissip(i,j) = IniVal
+            FORCES(ng) % Wave_dissip(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % Wave_dissipG(i,j,1) = IniVal
-          FORCES(ng) % Wave_dissipG(i,j,2) = IniVal
+            FORCES(ng) % Wave_dissipG(i,j,1) = IniVal
+            FORCES(ng) % Wave_dissipG(i,j,2) = IniVal
 # endif
 #endif
 #if defined SVENDSEN_ROLLER
-          FORCES(ng) % Wave_break(i,j) = IniVal
+            FORCES(ng) % Wave_break(i,j) = IniVal
 # ifndef ANA_WWAVE
-          FORCES(ng) % Wave_breakG(i,j,1) = IniVal
-          FORCES(ng) % Wave_breakG(i,j,2) = IniVal
+            FORCES(ng) % Wave_breakG(i,j,1) = IniVal
+            FORCES(ng) % Wave_breakG(i,j,2) = IniVal
 # endif
 #endif
 
 #ifdef SOLVE3D
 # ifdef SHORTWAVE
-          FORCES(ng) % srflx(i,j) = IniVal
+            FORCES(ng) % srflx(i,j) = IniVal
 #  ifndef ANA_SRFLUX
-          FORCES(ng) % srflxG(i,j,1) = IniVal
-          FORCES(ng) % srflxG(i,j,2) = IniVal
+            FORCES(ng) % srflxG(i,j,1) = IniVal
+            FORCES(ng) % srflxG(i,j,2) = IniVal
 #  endif
 # endif
 # ifdef CLOUDS
-          FORCES(ng) % cloud(i,j) = IniVal
+            FORCES(ng) % cloud(i,j) = IniVal
 #  ifndef ANA_CLOUD
-          FORCES(ng) % cloudG(i,j,1) = IniVal
-          FORCES(ng) % cloudG(i,j,2) = IniVal
+            FORCES(ng) % cloudG(i,j,1) = IniVal
+            FORCES(ng) % cloudG(i,j,2) = IniVal
 #  endif
 # endif
 # ifdef BULK_FLUXES
-          FORCES(ng) % lhflx(i,j) = IniVal
-          FORCES(ng) % lrflx(i,j) = IniVal
-          FORCES(ng) % shflx(i,j) = IniVal
+            FORCES(ng) % lhflx(i,j) = IniVal
+            FORCES(ng) % lrflx(i,j) = IniVal
+            FORCES(ng) % shflx(i,j) = IniVal
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || \
     (defined SHORTWAVE && defined ANA_SRFLUX)
-          FORCES(ng) % Hair(i,j) = IniVal
-          FORCES(ng) % Tair(i,j) = IniVal
+            FORCES(ng) % Hair(i,j) = IniVal
+            FORCES(ng) % Tair(i,j) = IniVal
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
-          FORCES(ng) % Pair(i,j) = IniVal
+            FORCES(ng) % Pair(i,j) = IniVal
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
-          FORCES(ng) % Uwind(i,j) = IniVal
-          FORCES(ng) % Vwind(i,j) = IniVal
+            FORCES(ng) % Uwind(i,j) = IniVal
+            FORCES(ng) % Vwind(i,j) = IniVal
 # endif
 # ifdef BULK_FLUXES
-          FORCES(ng) % rain(i,j) = IniVal
+            FORCES(ng) % rain(i,j) = IniVal
 #  ifdef EMINUSP
-          FORCES(ng) % evap(i,j) = IniVal
+            FORCES(ng) % evap(i,j) = IniVal
 #  endif
 # endif
 # if !defined LONGWAVE && defined BULK_FLUXES
-          FORCES(ng) % lrflxG(i,j,1) = IniVal
-          FORCES(ng) % lrflxG(i,j,2) = IniVal
+            FORCES(ng) % lrflxG(i,j,1) = IniVal
+            FORCES(ng) % lrflxG(i,j,2) = IniVal
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
 #  ifndef ANA_HUMIDITY
-          FORCES(ng) % HairG(i,j,1) = IniVal
-          FORCES(ng) % HairG(i,j,2) = IniVal
+            FORCES(ng) % HairG(i,j,1) = IniVal
+            FORCES(ng) % HairG(i,j,2) = IniVal
 #  endif
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
 #  ifndef ANA_PAIR
-          FORCES(ng) % PairG(i,j,1) = IniVal
-          FORCES(ng) % PairG(i,j,2) = IniVal
+            FORCES(ng) % PairG(i,j,1) = IniVal
+            FORCES(ng) % PairG(i,j,2) = IniVal
 #  endif
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
 #  ifndef ANA_TAIR
-          FORCES(ng) % TairG(i,j,1) = IniVal
-          FORCES(ng) % TairG(i,j,2) = IniVal
+            FORCES(ng) % TairG(i,j,1) = IniVal
+            FORCES(ng) % TairG(i,j,2) = IniVal
 #  endif
 #  ifndef ANA_WINDS
-          FORCES(ng) % UwindG(i,j,1) = IniVal
-          FORCES(ng) % UwindG(i,j,2) = IniVal
-          FORCES(ng) % VwindG(i,j,1) = IniVal
-          FORCES(ng) % VwindG(i,j,2) = IniVal
+            FORCES(ng) % UwindG(i,j,1) = IniVal
+            FORCES(ng) % UwindG(i,j,2) = IniVal
+            FORCES(ng) % VwindG(i,j,1) = IniVal
+            FORCES(ng) % VwindG(i,j,2) = IniVal
 #  endif
 # endif
 # if !defined ANA_RAIN && defined BULK_FLUXES
-          FORCES(ng) % rainG(i,j,1) = IniVal
-          FORCES(ng) % rainG(i,j,2) = IniVal
+            FORCES(ng) % rainG(i,j,1) = IniVal
+            FORCES(ng) % rainG(i,j,2) = IniVal
 # endif
 # ifdef QCORRECTION
-          FORCES(ng) % dqdt(i,j) = IniVal
-          FORCES(ng) % sst(i,j) = IniVal
+            FORCES(ng) % dqdt(i,j) = IniVal
+            FORCES(ng) % sst(i,j) = IniVal
 #  ifndef ANA_SST
-          FORCES(ng) % dqdtG(i,j,1) = IniVal
-          FORCES(ng) % dqdtG(i,j,2) = IniVal
-          FORCES(ng) % sstG(i,j,1) = IniVal
-          FORCES(ng) % sstG(i,j,2) = IniVal
+            FORCES(ng) % dqdtG(i,j,1) = IniVal
+            FORCES(ng) % dqdtG(i,j,2) = IniVal
+            FORCES(ng) % sstG(i,j,1) = IniVal
+            FORCES(ng) % sstG(i,j,2) = IniVal
 #  endif
 # endif
 # if defined SALINITY && (defined SCORRECTION || defined SRELAXATION)
-          FORCES(ng) % sss(i,j) = IniVal
+            FORCES(ng) % sss(i,j) = IniVal
 #  ifndef ANA_SSS
-          FORCES(ng) % sssG(i,j,1) = IniVal
-          FORCES(ng) % sssG(i,j,2) = IniVal
+            FORCES(ng) % sssG(i,j,1) = IniVal
+            FORCES(ng) % sssG(i,j,2) = IniVal
 #  endif
 # endif
-          DO itrc=1,NT(ng)
-            FORCES(ng) % stflx(i,j,itrc) = IniVal
-            FORCES(ng) % btflx(i,j,itrc) = IniVal
+            DO itrc=1,NT(ng)
+              FORCES(ng) % stflx(i,j,itrc) = IniVal
+              FORCES(ng) % btflx(i,j,itrc) = IniVal
 # if !defined ANA_STFLUX || !defined ANA_SSFLUX
-            FORCES(ng) % stflxG(i,j,1,itrc) = IniVal
-            FORCES(ng) % stflxG(i,j,2,itrc) = IniVal
+              FORCES(ng) % stflxG(i,j,1,itrc) = IniVal
+              FORCES(ng) % stflxG(i,j,2,itrc) = IniVal
 # endif
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX
-            FORCES(ng) % btflxG(i,j,1,itrc) = IniVal
-            FORCES(ng) % btflxG(i,j,2,itrc) = IniVal
+              FORCES(ng) % btflxG(i,j,1,itrc) = IniVal
+              FORCES(ng) % btflxG(i,j,2,itrc) = IniVal
 # endif
-          END DO
+            END DO
 
 # ifdef ECOSIM
-          DO itrc=1,NBands
-            FORCES(ng) % SpecIr(i,j,itrc) = IniVal
-            FORCES(ng) % avcos(i,j,itrc) = IniVal
-          END DO
+            DO itrc=1,NBands
+              FORCES(ng) % SpecIr(i,j,itrc) = IniVal
+              FORCES(ng) % avcos(i,j,itrc) = IniVal
+            END DO
 # endif
 #endif
+          END DO
         END DO
-      END DO
+      END IF
 
 #if defined TANGENT || defined TL_IOMS
 !
 !  Tangent linear model state.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
-          FORCES(ng) % tl_sustr(i,j) = IniVal
-          FORCES(ng) % tl_svstr(i,j) = IniVal
-          FORCES(ng) % tl_bustr(i,j) = IniVal
-          FORCES(ng) % tl_bvstr(i,j) = IniVal
-        END DO
+      IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            FORCES(ng) % tl_sustr(i,j) = IniVal
+            FORCES(ng) % tl_svstr(i,j) = IniVal
+# ifdef ADJUST_WSTRESS
+            FORCES(ng) % tl_ustr(i,j,1) = IniVal
+            FORCES(ng) % tl_ustr(i,j,2) = IniVal
+            FORCES(ng) % tl_vstr(i,j,1) = IniVal
+            FORCES(ng) % tl_vstr(i,j,1) = IniVal
+# endif
+            FORCES(ng) % tl_bustr(i,j) = IniVal
+            FORCES(ng) % tl_bvstr(i,j) = IniVal
+          END DO
 # ifdef SOLVE3D
 #  ifdef BULK_FLUXES
-        DO i=Imin,Imax
-          FORCES(ng) % tl_lhflx(i,j) = IniVal
-          FORCES(ng) % tl_lrflx(i,j) = IniVal
-          FORCES(ng) % tl_shflx(i,j) = IniVal
+          DO i=Imin,Imax
+            FORCES(ng) % tl_lhflx(i,j) = IniVal
+            FORCES(ng) % tl_lrflx(i,j) = IniVal
+            FORCES(ng) % tl_shflx(i,j) = IniVal
 #   ifdef EMINUSP
-          FORCES(ng) % tl_evap(i,j) = IniVal
+            FORCES(ng) % tl_evap(i,j) = IniVal
 #   endif
         END DO
 #  endif
-        DO itrc=1,NT(ng)
-          DO i=Imin,Imax
-            FORCES(ng) % tl_stflx(i,j,itrc) = IniVal
-            FORCES(ng) % tl_btflx(i,j,itrc) = IniVal
+          DO itrc=1,NT(ng)
+            DO i=Imin,Imax
+              FORCES(ng) % tl_stflx(i,j,itrc) = IniVal
+              FORCES(ng) % tl_btflx(i,j,itrc) = IniVal
+#  ifdef ADJUST_STFLUX
+              FORCES(ng) % tl_tflux(i,j,1,itrc) = IniVal
+              FORCES(ng) % tl_tflux(i,j,2,itrc) = IniVal
+#  endif
+            END DO
           END DO
-        END DO
 # endif
-      END DO
+        END DO
+      END IF
 #endif
 
 #ifdef ADJOINT
 !
 !  Adjoint model state.
 !
-      DO j=Jmin,Jmax
-        DO i=Imin,Imax
-          FORCES(ng) % ad_sustr(i,j) = IniVal
-          FORCES(ng) % ad_svstr(i,j) = IniVal
-          FORCES(ng) % ad_bustr(i,j) = IniVal
-          FORCES(ng) % ad_bvstr(i,j) = IniVal
-          FORCES(ng) % ad_bustr_sol(i,j) = IniVal
-          FORCES(ng) % ad_bvstr_sol(i,j) = IniVal
-        END DO
+      IF ((model.eq.0).or.(model.eq.iADM)) THEN
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            FORCES(ng) % ad_sustr(i,j) = IniVal
+            FORCES(ng) % ad_svstr(i,j) = IniVal
+# ifdef ADJUST_WSTRESS
+            FORCES(ng) % ad_ustr(i,j,1) = IniVal
+            FORCES(ng) % ad_ustr(i,j,2) = IniVal
+            FORCES(ng) % ad_vstr(i,j,1) = IniVal
+            FORCES(ng) % ad_vstr(i,j,1) = IniVal
+# endif
+            FORCES(ng) % ad_bustr(i,j) = IniVal
+            FORCES(ng) % ad_bvstr(i,j) = IniVal
+            FORCES(ng) % ad_bustr_sol(i,j) = IniVal
+            FORCES(ng) % ad_bvstr_sol(i,j) = IniVal
+          END DO
 # ifdef SOLVE3D
 #  ifdef SHORTWAVE
-        DO i=Imin,Imax
-          FORCES(ng) % ad_srflx(i,j) = IniVal
-        END DO
+          DO i=Imin,Imax
+            FORCES(ng) % ad_srflx(i,j) = IniVal
+          END DO
 #  endif
 #  ifdef BULK_FLUXES
-        DO i=Imin,Imax
-          FORCES(ng) % ad_lhflx(i,j) = IniVal
-          FORCES(ng) % ad_lrflx(i,j) = IniVal
-          FORCES(ng) % ad_shflx(i,j) = IniVal
-#   ifdef EMINUSP
-          FORCES(ng) % ad_evap(i,j) = IniVal
-#   endif
-        END DO
-#  endif
-        DO itrc=1,NT(ng)
           DO i=Imin,Imax
-            FORCES(ng) % ad_stflx(i,j,itrc) = IniVal
-            FORCES(ng) % ad_btflx(i,j,itrc) = IniVal
+            FORCES(ng) % ad_lhflx(i,j) = IniVal
+            FORCES(ng) % ad_lrflx(i,j) = IniVal
+            FORCES(ng) % ad_shflx(i,j) = IniVal
+#   ifdef EMINUSP
+            FORCES(ng) % ad_evap(i,j) = IniVal
+#   endif
           END DO
-        END DO
+#  endif
+          DO itrc=1,NT(ng)
+            DO i=Imin,Imax
+              FORCES(ng) % ad_stflx(i,j,itrc) = IniVal
+              FORCES(ng) % ad_btflx(i,j,itrc) = IniVal
+#  ifdef ADJUST_STFLUX
+              FORCES(ng) % ad_tflux(i,j,1,itrc) = IniVal
+              FORCES(ng) % ad_tflux(i,j,2,itrc) = IniVal
+#  endif
+            END DO
+          END DO
 # endif
-      END DO
+        END DO
+      END IF
 #endif
 
       RETURN

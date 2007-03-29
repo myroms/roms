@@ -495,6 +495,8 @@
 **                                                                           **
 ** OPTIONS associated with tangent linear, representer and adjoint models:   **
 **                                                                           **
+** ADJUST_STFLUX       use if including surface tracer flux in 4DVar state   **
+** ADJUST_WSTRESS      use if including wind-stress in 4DVar state           **
 ** BALANCE_OPERATOR    use if error covariance multivariate balance term     **
 ** CELERITY_WRITE      use if writing radiation celerity in forward file     **
 ** CONVOLVE            use if convolving solution with diffusion operators   **
@@ -508,6 +510,7 @@
 ** IMPLICIT_VCONV      use if implicit vertical convolution algorithm        **
 ** IMPULSE             use if processing adjoint impulse forcing             **
 ** IOM                 use to activate IOM multiple executables              **
+** LANCZOS             use to activate Lanczos conjugate gradient algorithm  **
 ** MULTIPLE_TLM        use if multiple TLM history files in 4DVAR            **
 ** N2NORM_PROFILE      use if N2(z) profile for energy normalization         **
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **

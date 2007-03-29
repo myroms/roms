@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !       NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_rankMerge.F90,v 1.3 2004/04/21 22:54:48 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_rankMerge - A merging tool through ranking
@@ -39,7 +39,7 @@
 !		- initial prototype/prolog/code
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_rankMerge'
+  character(len=*),parameter :: myname='MCT(MPEU)::m_rankMerge'
 
 contains
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

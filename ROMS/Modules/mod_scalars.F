@@ -64,7 +64,7 @@
         integer :: itemp              ! Potential temperature
         integer :: isalt              ! Salinity
 #ifdef T_PASSIVE
-        integer :: inert(NPT)         ! inert tracers
+        integer, pointer :: inert(:)  ! inert tracers
 #endif
 #ifdef SEDIMENT
         integer, pointer :: idsed(:)  ! Cohesive and non-cohesive
@@ -684,6 +684,7 @@
         logical, dimension(Ngrids) :: LdefINI    ! Initial file
         logical, dimension(Ngrids) :: LdefIRP    ! Initial RPM file
         logical, dimension(Ngrids) :: LdefITL    ! Initial TLM file
+        logical, dimension(Ngrids) :: LdefHSS    ! Hessian file
         logical, dimension(Ngrids) :: LdefMOD    ! 4DVAR file
         logical, dimension(Ngrids) :: LdefNRM    ! Norm file
         logical, dimension(Ngrids) :: LdefRST    ! Restart file
@@ -746,6 +747,7 @@
         integer, dimension(Ngrids) :: NrecFLT    ! Floats file
         integer, dimension(Ngrids) :: NrecINI    ! NLM Initial file
         integer, dimension(Ngrids) :: NrecITL    ! TLM Initial file
+        integer, dimension(Ngrids) :: NrecHSS    ! Hessian file
         integer, dimension(Ngrids) :: NrecNRM    ! norm file
         integer, dimension(Ngrids) :: NrecHIS    ! History file
         integer, dimension(Ngrids) :: NrecRST    ! Restart file
@@ -836,8 +838,12 @@
 !  Background/model error covariance parameters.
 !------------------------------------------------------------------------
 !
-!  Logical switches to compute correlation normalization oefficients for
-!  each state variable.
+!  Maximum number of model state variables to process.
+!
+        integer :: MstateVar
+
+!  Logical switches to compute correlation normalization coefficients
+!  for each state variable.
 !
         logical,  allocatable :: Cnorm(:)
 !
@@ -1339,10 +1345,6 @@
 !  Data assimilation parameters.
 !-----------------------------------------------------------------------
 !
-!  Number of state error vectors to use on perturbations.
-!
-        integer :: Nsev
-!
 !  Switches to assimilate and perturb state variables
 !
         logical, allocatable :: assi(:)
@@ -1531,6 +1533,16 @@
 !  allocate tracer type variables.
 !-----------------------------------------------------------------------
 !
+#if defined FOUR_DVAR || defined VERIFICATION
+      MstateVar=5+MT
+# ifdef ADJUST_WSTRESS
+      MstateVar=MstateVar+2
+# endif
+# ifdef ADJUST_STFLUX
+      MstateVar=MstateVar+MT
+# endif
+!
+#endif
       allocate ( Akt_bak(MT,Ngrids) )
       allocate ( Kdiff(MT,Ngrids) )
       allocate ( SO_sdev(2+MT,Ngrids) )
@@ -1542,10 +1554,11 @@
       Tobc_in = IniVal
       allocate ( Tobc_out(MT,Ngrids,4) )
       Tobc_out = IniVal
-
-
 # ifdef BIOLOGY
       allocate ( idbio(NBT) )
+# endif
+# ifdef T_PASSIVE
+      allocate ( inert(NPT) )
 # endif
 # ifdef SEDIMENT
       allocate ( idsed(MAX(1,NST)) )
@@ -1569,9 +1582,9 @@
       allocate ( Prms(NSV(ng)) )
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
-      allocate ( Cnorm(5+MT) )
-      allocate ( Hdecay(5+MT,Ngrids) )
-      allocate ( Vdecay(5+MT,Ngrids) )
+      allocate ( Cnorm(MstateVar) )
+      allocate ( Hdecay(MstateVar,Ngrids) )
+      allocate ( Vdecay(MstateVar,Ngrids) )
 #endif
 !
 !---------------------------------------------------------------------

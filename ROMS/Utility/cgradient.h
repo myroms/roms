@@ -97,29 +97,53 @@
      &                     GRID(ng) % umask,                            &
      &                     GRID(ng) % vmask,                            &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                     FORCES(ng) % tl_ustr,                        &
+     &                     FORCES(ng) % tl_vstr,                        &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     FORCES(ng) % tl_tflux,                       &
+# endif
      &                     OCEAN(ng) % tl_t,                            &
      &                     OCEAN(ng) % tl_u,                            &
      &                     OCEAN(ng) % tl_v,                            &
-#endif
+#else
      &                     OCEAN(ng) % tl_ubar,                         &
      &                     OCEAN(ng) % tl_vbar,                         &
+#endif
      &                     OCEAN(ng) % tl_zeta,                         &
+#ifdef ADJUST_WSTRESS
+     &                     OCEAN(ng) % d_sustr,                         &
+     &                     OCEAN(ng) % d_svstr,                         &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     OCEAN(ng) % d_stflx,                         &
+# endif
      &                     OCEAN(ng) % d_t,                             &
      &                     OCEAN(ng) % d_u,                             &
      &                     OCEAN(ng) % d_v,                             &
-#endif
+#else
      &                     OCEAN(ng) % d_ubar,                          &
      &                     OCEAN(ng) % d_vbar,                          &
+#endif
      &                     OCEAN(ng) % d_zeta,                          &
+#ifdef ADJUST_WSTRESS
+     &                     FORCES(ng) % ad_ustr,                        &
+     &                     FORCES(ng) % ad_vstr,                        &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     FORCES(ng) % ad_stflx,                       &
+# endif
      &                     OCEAN(ng) % ad_t,                            &
      &                     OCEAN(ng) % ad_u,                            &
      &                     OCEAN(ng) % ad_v,                            &
-#endif
+#else
      &                     OCEAN(ng) % ad_ubar,                         &
      &                     OCEAN(ng) % ad_vbar,                         &
+#endif
      &                     OCEAN(ng) % ad_zeta)
 #ifdef PROFILE
       CALL wclock_on (ng, model, 36)
@@ -134,18 +158,42 @@
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                           tl_ustr, tl_vstr,                      &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                           tl_tflux,                              &
+# endif
      &                           tl_t, tl_u, tl_v,                      &
+#else
+     &                           tl_ubar, tl_vbar,                      &
 #endif
-     &                           tl_ubar, tl_vbar, tl_zeta,             &
+     &                           tl_zeta,                               &
+#ifdef ADJUST_WSTRESS
+     &                           d_sustr, d_svstr,                      &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                           d_stflx,                               &
+# endif
      &                           d_t, d_u, d_v,                         &
+#else
+     &                           d_ubar, d_vbar,                        &
 #endif
-     &                           d_ubar, d_vbar, d_zeta,                &
+     &                           d_zeta,                                &
+#ifdef ADJUST_WSTRESS
+     &                           ad_ustr, ad_vstr,                      &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                           ad_stflx,                              &
+# endif
      &                           ad_t, ad_u, ad_v,                      &
+#else
+     &                           ad_ubar, ad_vbar,                      &
 #endif
-     &                           ad_ubar, ad_vbar, ad_zeta)
+     &                           ad_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -166,29 +214,53 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: d_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: d_svstr(LBi:,LBj:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: d_stflx(LBi:,LBj:,:)
+#  endif
       real(r8), intent(inout) :: d_t(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: d_u(LBi:,LBj:,:)
       real(r8), intent(inout) :: d_v(LBi:,LBj:,:)
-# endif
+# else
       real(r8), intent(inout) :: d_ubar(LBi:,LBj:)
       real(r8), intent(inout) :: d_vbar(LBi:,LBj:)
+# endif
       real(r8), intent(inout) :: d_zeta(LBi:,LBj:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
-# endif
+# else
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
+# endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 #else
 # ifdef MASKING
@@ -196,29 +268,53 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: d_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: d_svstr(LBi:UBi,LBj:UBj)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: d_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#  endif
       real(r8), intent(inout) :: d_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(inout) :: d_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: d_v(LBi:UBi,LBj:UBj,N(ng))
-# endif
+# else
       real(r8), intent(inout) :: d_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: d_vbar(LBi:UBi,LBj:UBj)
+# endif
       real(r8), intent(inout) :: d_zeta(LBi:UBi,LBj:UBj)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+# else
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
       real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #endif
 !
@@ -266,13 +362,21 @@
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                      d_sustr, ad_ustr(:,:,Lold),                 &
+     &                      d_svstr, ad_vstr(:,:,Lold),                 &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      d_stflx, ad_stflx(:,:,:,Lold,:),            &
+# endif
      &                      d_t, ad_t(:,:,:,Lold,:),                    &
      &                      d_u, ad_u(:,:,:,Lold),                      &
      &                      d_v, ad_v(:,:,:,Lold),                      &
-#endif
+#else
      &                      d_ubar, ad_ubar(:,:,Lold),                  &
      &                      d_vbar, ad_vbar(:,:,Lold),                  &
+#endif
      &                      d_zeta, ad_zeta(:,:,Lold))
 !
 !  Compute new dot product, <d(k), Ghat(k)>.
@@ -283,13 +387,21 @@
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                      d_sustr, ad_ustr(:,:,Lnew),                 &
+     &                      d_svstr, ad_vstr(:,:,Lnew),                 &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      d_stflx, ad_stflx(:,:,Lnew,:),              &
+# endif
      &                      d_t, ad_t(:,:,:,Lnew,:),                    &
      &                      d_u, ad_u(:,:,:,Lnew),                      &
      &                      d_v, ad_v(:,:,:,Lnew),                      &
-#endif
+#else
      &                      d_ubar, ad_ubar(:,:,Lnew),                  &
      &                      d_vbar, ad_vbar(:,:,Lnew),                  &
+#endif
      &                      d_zeta, ad_zeta(:,:,Lnew))
 !
 !  Compute new optimal step size.
@@ -328,13 +440,21 @@
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                    ad_ustr(:,:,Lold), ad_ustr(:,:,Lold),         &
+     &                    ad_vstr(:,:,Lold), ad_vstr(:,:,Lold),         &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                    ad_stflx(:,:,Lold,:), ad_stflx(:,:,Lold,:),   &
+# endif
      &                    ad_t(:,:,:,Lold,:), ad_t(:,:,:,Lold,:),       &
      &                    ad_u(:,:,:,Lold), ad_u(:,:,:,Lold),           &
      &                    ad_v(:,:,:,Lold), ad_v(:,:,:,Lold),           &
-#endif
+#else
      &                    ad_ubar(:,:,Lold), ad_ubar(:,:,Lold),         &
      &                    ad_vbar(:,:,Lold), ad_vbar(:,:,Lold),         &
+#endif
      &                    ad_zeta(:,:,Lold), ad_zeta(:,:,Lold))
 !
 !
@@ -353,10 +473,18 @@
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
 #endif
-#ifdef SOLVE3D
-     &                   ad_t, ad_u, ad_v,                              &
+#ifdef ADJUST_WSTRESS
+     &                   ad_ustr, ad_vstr,                              &
 #endif
-     &                   ad_ubar, ad_vbar, ad_zeta)
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                   ad_stflx,                                      &
+# endif
+     &                   ad_t, ad_u, ad_v,                              &
+#else
+     &                   ad_ubar, ad_vbar,                              &
+#endif
+     &                   ad_zeta)
 
 #ifdef ORTHOGONALIZATION
 !
@@ -372,14 +500,30 @@
 # ifdef MASKING
      &                      rmask, umask, vmask,                        &
 # endif
+# ifdef ADJUST_WSTRESS
+     &                      tl_ustr, tl_vstr,                           &
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+     &                      tl_tflux,                                   &
+#  endif
      &                      tl_t, tl_u, tl_v,                           &
+# else
+     &                      tl_ubar, tl_vbar,                           &
 # endif
-     &                      tl_ubar, tl_vbar, tl_zeta,                  &
+     &                      tl_zeta,                                    &
+# ifdef ADJUST_WSTRESS
+     &                      ad_ustr, ad_vstr,                           &
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+     &                      ad_stflx,                                   &
+#  endif
      &                      ad_t, ad_u, ad_v,                           &
+# else
+     &                      ad_ubar, ad_vbar,                           &
 # endif
-     &                      ad_ubar, ad_vbar, ad_zeta)
+     &                      ad_zeta)
       END IF
 #endif
 !
@@ -402,14 +546,30 @@
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                     d_sustr, d_svstr,                            &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     d_stflx,                                     &
+# endif
      &                     d_t, d_u, d_v,                               &
+#else
+     &                     d_ubar, d_vbar,                              &
 #endif
-     &                     d_ubar, d_vbar, d_zeta,                      &
+     &                     d_zeta,                                      &
+#ifdef ADJUST_WSTRESS
+     &                     tl_ustr, tl_vstr,                            &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     tl_tflux,                                    &
+# endif
      &                     tl_t, tl_u, tl_v,                            &
+#else
+     &                     tl_ubar, tl_vbar,                            &
 #endif
-     &                     tl_ubar, tl_vbar, tl_zeta)
+     &                     tl_zeta)
 !
 !  If last iteration of inner loop, skip remaining computations. The
 !  TLM increments computed here are the ones that are needed update
@@ -432,13 +592,21 @@
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                      ad_ustr(:,:,Lnew), ad_ustr(:,:,Lnew),       &
+     &                      ad_vstr(:,:,Lnew), ad_vstr(:,:,Lnew),       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      ad_stflx(:,:,Lnew,:), ad_stflx(:,:,Lnew,:), &
+# endif
      &                      ad_t(:,:,:,Lnew,:), ad_t(:,:,:,Lnew,:),     &
      &                      ad_u(:,:,:,Lnew), ad_u(:,:,:,Lnew),         &
      &                      ad_v(:,:,:,Lnew), ad_v(:,:,:,Lnew),         &
-#endif
+#else
      &                      ad_ubar(:,:,Lnew), ad_ubar(:,:,Lnew),       &
      &                      ad_vbar(:,:,Lnew), ad_vbar(:,:,Lnew),       &
+#endif
      &                      ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
 !
 !  Compute conjugate direction coefficient, beta(k+1).
@@ -456,14 +624,30 @@
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                    ad_ustr, ad_vstr,                             &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                    ad_stflx,                                     &
+# endif
      &                    ad_t, ad_u, ad_v,                             &
+#else
+     &                    ad_ubar, ad_vbar,                             &
 #endif
-     &                    ad_ubar, ad_vbar, ad_zeta,                    &
+     &                    ad_zeta,                                      &
+#ifdef ADJUST_WSTRESS
+     &                    d_sustr, d_svstr,                             &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                    d_stflx,                                      &
+# endif
      &                    d_t, d_u, d_v,                                &
+#else
+     &                    d_ubar, d_vbar,                               &
 #endif
-     &                    d_ubar, d_vbar, d_zeta)
+     &                    d_zeta)
 !
 !  Compute next iteration dot product, <d(k), G(k)>, using new d(k+1)
 !  and non-orthogonalized G(k+1) used to adjust cost function.
@@ -474,13 +658,21 @@
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                    d_sustr, ad_ustr(:,:,Lold),                   &
+     &                    d_svstr, ad_vstr(:,:,Lold),                   &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                    d_stflx, ad_stflx(:,:,:,Lold,:),              &
+# endif
      &                    d_t, ad_t(:,:,:,Lold,:),                      &
      &                    d_u, ad_u(:,:,:,Lold),                        &
      &                    d_v, ad_v(:,:,:,Lold),                        &
-#endif
+#else
      &                    d_ubar, ad_ubar(:,:,Lold),                    &
      &                    d_vbar, ad_vbar(:,:,Lold),                    &
+#endif
      &                    d_zeta, ad_zeta(:,:,Lold))
 !
 !-----------------------------------------------------------------------
@@ -501,14 +693,30 @@
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                   d_sustr, d_svstr,                              &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                   d_stflx,                                       &
+# endif
      &                   d_t, d_u, d_v,                                 &
+#else
+     &                   d_ubar, d_vbar,                                &
 #endif
-     &                   d_ubar, d_vbar, d_zeta,                        &
+     &                   d_zeta,                                        &
+#ifdef ADJUST_WSTRESS
+     &                   tl_ustr, tl_vstr,                              &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                   tl_tflux,                                      &
+# endif
      &                   tl_t, tl_u, tl_v,                              &
+#else
+     &                   tl_ubar, tl_vbar,                              &
 #endif
-     &                   tl_ubar, tl_vbar, tl_zeta)
+     &                   tl_zeta)
 !
 !-----------------------------------------------------------------------
 !  Report descent algorithm parameters.
@@ -547,14 +755,30 @@
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                         d_sustr, d_svstr,                        &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                         d_stflx,                                 &
+# endif
      &                         d_t, d_u, d_v,                           &
+#else
+     &                         d_ubar, d_vbar,                          &
 #endif
-     &                         d_ubar, d_vbar, d_zeta,                  &
+     &                         d_zeta,                                  &
+#ifdef ADJUST_WSTRESS
+     &                         tl_ustr, tl_vstr,                        &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                         tl_tflux,                                &
+# endif
      &                         tl_t, tl_u, tl_v,                        &
+#else
+     &                         tl_ubar, tl_vbar,                        &
 #endif
-     &                         tl_ubar, tl_vbar, tl_zeta)
+     &                         tl_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -573,21 +797,37 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: d_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: d_svstr(LBi:,LBj:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: d_stflx(LBi:,LBj:,:)
+#  endif
       real(r8), intent(inout) :: d_t(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: d_u(LBi:,LBj:,:)
       real(r8), intent(inout) :: d_v(LBi:,LBj:,:)
-# endif
+# else
       real(r8), intent(inout) :: d_ubar(LBi:,LBj:)
       real(r8), intent(inout) :: d_vbar(LBi:,LBj:)
+# endif
       real(r8), intent(inout) :: d_zeta(LBi:,LBj:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
-# endif
+# else
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
+# endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 #else
 # ifdef MASKING
@@ -595,21 +835,37 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: d_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: d_svstr(LBi:UBi,LBj:UBj)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: d_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#  endif
       real(r8), intent(inout) :: d_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(inout) :: d_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: d_v(LBi:UBi,LBj:UBj,N(ng))
-# endif
+# else
       real(r8), intent(inout) :: d_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: d_vbar(LBi:UBi,LBj:UBj)
+# endif
       real(r8), intent(inout) :: d_zeta(LBi:UBi,LBj:UBj)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+# else
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
       real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #endif
 !
@@ -627,75 +883,122 @@
 !  Compute new starting tangent linear state vector, X(k+1).
 !-----------------------------------------------------------------------
 !
-!  2D state variables.
+!  Free-surface.
 !
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          tl_zeta(i,j,Lout)=tl_zeta(i,j,Linp)+                          &
+     &                      alphaK*d_zeta(i,j)
+#ifdef MASKING
+          tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
+#endif
+        END DO
+      END DO
+
 #ifndef SOLVE3D
+!
+!  2D momentum.
+!
       DO j=JstrR,JendR
         DO i=Istr,IendR
           tl_ubar(i,j,Lout)=tl_ubar(i,j,Linp)+                          &
-# ifdef MASKING
-     &                      umask(i,j)*                                 &
-# endif
      &                      alphaK*d_ubar(i,j)
+# ifdef MASKING
+          tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
+# endif
         END DO
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
           tl_vbar(i,j,Lout)=tl_vbar(i,j,Linp)+                          &
-# ifdef MASKING
-     &                      vmask(i,j)*                                 &
-# endif
      &                      alphaK*d_vbar(i,j)
+# ifdef MASKING
+          tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
+# endif
         END DO
       END DO
 #endif
+#ifdef ADJUST_WSTRESS
+!
+!  Surface momentum stress.
+!
       DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          tl_zeta(i,j,Lout)=tl_zeta(i,j,Linp)+                          &
-#ifdef MASKING
-     &                      rmask(i,j)*                                 &
-#endif
-     &                      alphaK*d_zeta(i,j)
+        DO i=Istr,IendR
+          tl_ustr(i,j,Lout)=tl_ustr(i,j,Linp)+                          &
+     &                      alphaK*d_sustr(i,j)
+# ifdef MASKING
+          tl_ustr(i,j,Lout)=tl_ustr(i,j,Lout)*umask(i,j)
+# endif
         END DO
       END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          tl_vstr(i,j,Lout)=tl_vstr(i,j,Linp)+                          &
+     &                      alphaK*d_vbar(i,j)
+# ifdef MASKING
+          tl_vstr(i,j,Lout)=tl_vstr(i,j,Lout)*vmask(i,j)
+# endif
+        END DO
+      END DO
+#endif
+
 #ifdef SOLVE3D
 !
-!  3D state variables.
+!  3D momentum.
 !
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
             tl_u(i,j,k,Lout)=tl_u(i,j,k,Linp)+                          &
-# ifdef MASKING
-     &                       umask(i,j)*                                &
-# endif
      &                       alphaK*d_u(i,j,k)
+# ifdef MASKING
+            tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
+# endif
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             tl_v(i,j,k,Lout)=tl_v(i,j,k,Linp)+                          &
-# ifdef MASKING
-     &                       vmask(i,j)*                                &
-# endif
      &                       alphaK*d_v(i,j,k)
+# ifdef MASKING
+            tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
+# endif
           END DO
         END DO
       END DO
+!
+!  Tracers.
 !
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Linp,itrc)+              &
-# ifdef MASKING
-     &                              rmask(i,j)*                         &
-# endif
      &                              alphaK*d_t(i,j,k,itrc)
+# ifdef MASKING
+              tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
+# endif
             END DO
           END DO          
         END DO
       END DO
+
+# ifdef ADJUST_STFLUX
+!
+!  Surface tracers flux.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            tl_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Linp,itrc)+            &
+     &                              alphaK*d_t(i,j,k,itrc)
+#  ifdef MASKING
+            tl_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Lout,itrc)*rmask(i,j)
+#  endif
+          END DO          
+        END DO
+      END DO
+# endif
 #endif
 
       RETURN
@@ -708,10 +1011,18 @@
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
 #endif
-#ifdef SOLVE3D
-     &                         ad_t, ad_u, ad_v,                        &
+#ifdef ADJUST_WSTRESS
+     &                         ad_ustr, ad_vstr,                        &
 #endif
-     &                         ad_ubar, ad_vbar, ad_zeta)
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                         ad_stflx,                                &
+# endif
+     &                         ad_t, ad_u, ad_v,                        &
+#else
+     &                         ad_ubar, ad_vbar,                        &
+#endif
+     &                         ad_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -730,13 +1041,21 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
 #else
 # ifdef MASKING
@@ -744,13 +1063,21 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
 #endif
 !
@@ -772,43 +1099,75 @@
 !
       fac=alphaK/tauK
 !
-!  2D state variables.
+!  Free-surface.
 !
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          ad_zeta(i,j,Lnew)=ad_zeta(i,j,Lold)+                          &
+     &                      fac*(ad_zeta(i,j,Lnew)-                     &
+     &                           ad_zeta(i,j,Lold))
+#ifdef MASKING
+          ad_zeta(i,j,Lnew)=ad_zeta(i,j,Lnew)*rmask(i,j)
+#endif
+          ad_zeta(i,j,Lold)=ad_zeta(i,j,Lnew)
+        END DO
+      END DO
+
 #ifndef SOLVE3D
+!
+!  2D momentum.
+!
       DO j=JstrR,JendR
         DO i=Istr,IendR
           ad_ubar(i,j,Lnew)=ad_ubar(i,j,Lold)+                          &
-# ifdef MASKING
-     &                      umask(i,j)*                                 &
-# endif
      &                      fac*(ad_ubar(i,j,Lnew)-                     &
      &                           ad_ubar(i,j,Lold))
+# ifdef MASKING
+          ad_ubar(i,j,Lnew)=ad_ubar(i,j,Lnew)*umask(i,j)
+# endif
           ad_ubar(i,j,Lold)=ad_ubar(i,j,Lnew)
         END DO
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
           ad_vbar(i,j,Lnew)=ad_vbar(i,j,Lold)+                          &
-# ifdef MASKING
-     &                      vmask(i,j)*                                 &
-# endif
      &                      fac*(ad_vbar(i,j,Lnew)-                     &
      &                           ad_vbar(i,j,Lold))
+# ifdef MASKING
+          ad_vbar(i,j,Lnew)=ad_vbar(i,j,Lnew)*vmask(i,j)
+# endif
           ad_vbar(i,j,Lold)=ad_vbar(i,j,Lnew)
         END DO
       END DO
 #endif
+
+#ifdef ADJUST_WSTRESS
+!
+!  Surface momentum stress.
+!
       DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ad_zeta(i,j,Lnew)=ad_zeta(i,j,Lold)+                          &
-#ifdef MASKING
-     &                      rmask(i,j)*                                 &
-#endif
-     &                      fac*(ad_zeta(i,j,Lnew)-                     &
-     &                           ad_zeta(i,j,Lold))
-          ad_zeta(i,j,Lold)=ad_zeta(i,j,Lnew)
+        DO i=Istr,IendR
+          ad_ustr(i,j,Lnew)=ad_ustr(i,j,Lold)+                          &
+     &                      fac*(ad_ustr(i,j,Lnew)-                     &
+     &                           ad_ustr(i,j,Lold))
+# ifdef MASKING
+          ad_ustr(i,j,Lnew)=ad_ustr(i,j,Lnew)*umask(i,j)
+# endif
+          ad_ustr(i,j,Lold)=ad_ustr(i,j,Lnew)
         END DO
       END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          ad_vstr(i,j,Lnew)=ad_vstr(i,j,Lold)+                          &
+     &                      fac*(ad_vstr(i,j,Lnew)-                     &
+     &                          ad_vstr(i,j,Lold))
+# ifdef MASKING
+          ad_vstr(i,j,Lnew)=ad_vstr(i,j,Lnew)*vmask(i,j)
+# endif
+          ad_vstr(i,j,Lold)=ad_vstr(i,j,Lnew)
+        END DO
+      END DO
+#endif
 #ifdef SOLVE3D
 !
 !  3D state variables.
@@ -817,42 +1176,63 @@
         DO j=JstrR,JendR
           DO i=Istr,IendR
             ad_u(i,j,k,Lnew)=ad_u(i,j,k,Lold)+                          &
-# ifdef MASKING
-     &                       umask(i,j)*                                &
-# endif
      &                       fac*(ad_u(i,j,k,Lnew)-                     &
      &                            ad_u(i,j,k,Lold))
+# ifdef MASKING
+            ad_u(i,j,k,Lnew)=ad_u(i,j,k,Lnew)*umask(i,j)
+# endif
             ad_u(i,j,k,Lold)=ad_u(i,j,k,Lnew)
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             ad_v(i,j,k,Lnew)=ad_v(i,j,k,Lold)+                          &
-# ifdef MASKING
-     &                       vmask(i,j)*                                &
-# endif
      &                       fac*(ad_v(i,j,k,Lnew)-                     &
      &                            ad_v(i,j,k,Lold))
+# ifdef MASKING
+            ad_v(i,j,k,Lnew)=ad_v(i,j,k,Lnew)*vmask(i,j)
+# endif
             ad_v(i,j,k,Lold)=ad_v(i,j,k,Lnew)
           END DO
         END DO
       END DO
+!
+!  Tracers.
 !
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               ad_t(i,j,k,Lnew,itrc)=ad_t(i,j,k,Lold,itrc)+              &
-# ifdef MASKING
-     &                              rmask(i,j)*                         &
-# endif
      &                              fac*(ad_t(i,j,k,Lnew,itrc)-         &
      &                                   ad_t(i,j,k,Lold,itrc))
+# ifdef MASKING
+              ad_t(i,j,k,Lnew,itrc)=ad_t(i,j,k,Lnew,itrc)*rmask(i,j)
+# endif
               ad_t(i,j,k,Lold,itrc)=ad_t(i,j,k,Lnew,itrc)
             END DO
           END DO
         END DO
       END DO
+
+# ifdef ADJUST_STFLUX
+!
+!  Tracers.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            ad_stflx(i,j,Lnew,itrc)=ad_stflx(i,j,Lold,itrc)+            &
+     &                              fac*(ad_stflx(i,j,Lnew,itrc)-       &
+     &                                   ad_stflx(i,j,Lold,itrc))
+#  ifdef MASKING
+            ad_stflx(i,j,Lnew,itrc)=ad_stflx(i,j,Lnew,itrc)*rmask(i,j)
+#  endif
+            ad_stflx(i,j,Lold,itrc)=ad_stflx(i,j,Lnew,itrc)
+          END DO
+        END DO
+      END DO
+# endif
 #endif
 
       RETURN
@@ -865,14 +1245,30 @@
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                          tl_ustr, tl_vstr,                       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                          tl_tflux,                               &
+# endif
      &                          tl_t, tl_u, tl_v,                       &
+#else
+     &                          tl_ubar, tl_vbar,                       &
 #endif
-     &                          tl_ubar, tl_vbar, tl_zeta,              &
+     &                          tl_zeta,                                &
+#ifdef ADJUST_WSTRESS
+     &                          ad_ustr, ad_vstr,                       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                          ad_stflx,                               &
+# endif
      &                          ad_t, ad_u, ad_v,                       &
+#else
+     &                          ad_ubar, ad_vbar,                       &
 #endif
-     &                          ad_ubar, ad_vbar, ad_zeta)
+     &                          ad_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -893,21 +1289,37 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
-# endif
+# else
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
+# endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 #else
 # ifdef MASKING
@@ -915,21 +1327,37 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+# else
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
       real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #endif
 !
@@ -940,7 +1368,7 @@
 #ifdef SOLVE3D
       integer :: itrc, k
 #endif
-      real(r8) :: fac
+      real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
       real(r8), dimension(Iter) :: DotProd, dot_new, dot_old
@@ -981,10 +1409,18 @@
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
 #endif
-#ifdef SOLVE3D
-     &                     tl_t, tl_u, tl_v,                            &
+#ifdef ADJUST_WSTRESS
+     &                     tl_ustr, tl_vstr,                            &
 #endif
-     &                     tl_ubar, tl_vbar, tl_zeta)
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     tl_stlfx,                                    &
+# endif
+     &                     tl_t, tl_u, tl_v,                            &
+#else
+     &                     tl_ubar, tl_vbar,                            &
+#endif
+     &                     tl_zeta)
 !
 !  Compute dot product <G(k+1), G(rec)>.
 !
@@ -994,13 +1430,21 @@
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                      ad_ustr(:,:,Lnew), tl_ustr(:,:,Lwrk),       &
+     &                      ad_vstr(:,:,Lnew), tl_vstr(:,:,Lwrk),       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      ad_stflx(:,:,Lnew,:), tl_tflux(:,:,Lwrk,:), &
+# endif
      &                      ad_t(:,:,:,Lnew,:), tl_t(:,:,:,Lwrk,:),     &
      &                      ad_u(:,:,:,Lnew), tl_u(:,:,:,Lwrk),         &
      &                      ad_v(:,:,:,Lnew), tl_v(:,:,:,Lwrk),         &
-#endif
+#else
      &                      ad_ubar(:,:,Lnew), tl_ubar(:,:,Lwrk),       &
      &                      ad_vbar(:,:,Lnew), tl_vbar(:,:,Lwrk),       &
+#endif
      &                      ad_zeta(:,:,Lnew), tl_zeta(:,:,Lwrk))
         dot_new(rec)=dot(0)
 !
@@ -1012,13 +1456,21 @@
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                      tl_ustr(:,:,Lwrk), tl_ustr(:,:,Lwrk),       &
+     &                      tl_vstr(:,:,Lwrk), tl_vstr(:,:,Lwrk),       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      tl_tflux(:,:,Lwrk,:), tl_tflux(:,:,Lwrk,:), &
+# endif
      &                      tl_t(:,:,:,Lwrk,:), tl_t(:,:,:,Lwrk,:),     &
      &                      tl_u(:,:,:,Lwrk), tl_u(:,:,:,Lwrk),         &
      &                      tl_v(:,:,:,Lwrk), tl_v(:,:,:,Lwrk),         &
-#endif
+#else
      &                      tl_ubar(:,:,Lwrk), tl_ubar(:,:,Lwrk),       &
      &                      tl_vbar(:,:,Lwrk), tl_vbar(:,:,Lwrk),       &
+#endif
      &                      tl_zeta(:,:,Lwrk), tl_zeta(:,:,Lwrk))
         dot_old(rec)=dot(0)
 !
@@ -1028,147 +1480,32 @@
 !
 !  Gramm-Schmidt orthonormalization, 2D state gradient.
 !
-#ifndef SOLVE3D
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ad_ubar(i,j,Lnew)=ad_ubar(i,j,Lnew)-                        &
-# ifdef MASKING
-     &                        umask(i,j)*                               &
-# endif
-     &                        DotProd(rec)*tl_ubar(i,j,Lwrk)
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            ad_vbar(i,j,Lnew)=ad_vbar(i,j,Lnew)-                        &
-# ifdef MASKING
-     &                        vmask(i,j)*                               &
-# endif
-     &                        DotProd(rec)*tl_vbar(i,j,Lwrk)
-          END DO
-        END DO
+        fac1=1.0_r8
+        fac2=-DotProd(rec)
+
+        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
+#ifdef MASKING
+     &                       rmask, umask, vmask,                       &
 #endif
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            ad_zeta(i,j,Lnew)=ad_zeta(i,j,Lnew)-                        &
-# ifdef MASKING
-     &                        rmask(i,j)*                               &
-# endif
-     &                        DotProd(rec)*tl_zeta(i,j,Lwrk)
-          END DO
-        END DO
+#ifdef ADJUST_WSTRESS
+     &                       ad_ustr, tl_vstr,                          &
+#endif
 #ifdef SOLVE3D
-!
-!  Gramm-Schmidt orthonormalization, 3D state gradient.
-!
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=Istr,IendR
-              ad_u(i,j,k,Lnew)=ad_u(i,j,k,Lnew)-                        &
-# ifdef MASKING
-     &                         umask(i,j)*                              &
+# ifdef ADJUST_STFLUX
+     &                       ad_stflx, tl_tflux,                        &
 # endif
-     &                         DotProd(rec)*tl_u(i,j,k,Lwrk)
-            END DO
-          END DO
-          DO j=Jstr,JendR
-            DO i=IstrR,IendR
-              ad_v(i,j,k,Lnew)=ad_v(i,j,k,Lnew)-                        &
-# ifdef MASKING
-     &                         vmask(i,j)*                              &
-# endif
-     &                         DotProd(rec)*tl_v(i,j,k,Lwrk)
-            END DO
-          END DO
-        END DO
-!
-        DO itrc=1,NT(ng)
-          DO k=1,N(ng)
-            DO j=JstrR,JendR
-              DO i=IstrR,IendR
-                ad_t(i,j,k,Lnew,itrc)=ad_t(i,j,k,Lnew,itrc)-            &
-# ifdef MASKING
-     &                                rmask(i,j)*                       &
-# endif
-     &                                DotProd(rec)*tl_t(i,j,k,Lwrk,itrc)
-              END DO
-            END DO
-          END DO
-        END DO
+     &                       ad_t, tl_t,                                &
+     &                       ad_u, tl_u,                                &
+     &                       ad_v, tl_v,                                &
+#else
+     &                       ad_ubar, tl_ubar,                          &
+     &                       ad_vbar, tl_vbar,                          &
 #endif
+     &                       ad_zeta, tl_zeta)
       END DO
-#ifdef NORMALIZATION
-!
-!-----------------------------------------------------------------------
-!  Normalize current orthogonal gradient vector.
-!-----------------------------------------------------------------------
-!
-      CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NstateVar(ng), dot(0:),                       &
-# ifdef MASKING
-     &                    rmask, umask, vmask,                          &
-# endif
-# ifdef SOLVE3D
-     &                    ad_t(:,:,:,Lnew,:), ad_t(:,:,:,Lnew,:),       &
-     &                    ad_u(:,:,:,Lnew), ad_u(:,:,:,Lnew),           &
-     &                    ad_v(:,:,:,Lnew), ad_v(:,:,:,Lnew),           &
-# endif
-     &                    ad_ubar(:,:,Lnew), ad_ubar(:,:,Lnew),         &
-     &                    ad_vbar(:,:,Lnew), ad_vbar(:,:,Lnew),         &
-     &                    ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
-!
-!  Compute normaliztion factor.
-!
-      fac=1.0_r8/SQRT(dot(0))
-!
-!  Normalize current 2D state gradient vector.
-!
-# ifndef SOLVE3D
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          ad_ubar(i,j,Lnew)=fac*ad_ubar(i,j,Lnew)
-        END DO
-      END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          ad_vbar(i,j,Lnew)=fac*ad_vbar(i,j,Lnew)
-        END DO
-      END DO
-# endif
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ad_zeta(i,j,Lnew)=fac*ad_zeta(i,j,Lnew)
-        END DO
-      END DO
-# ifdef SOLVE3D
-!
-!  Normalize current 3D state gradient vector.
-!
-      DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ad_u(i,j,k,Lnew)=fac*ad_u(i,j,k,Lnew)
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            ad_v(i,j,k,Lnew)=fac*ad_v(i,j,k,Lnew)
-          END DO
-        END DO
-      END DO
-!
-      DO itrc=1,NT(ng)
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              ad_t(i,j,k,Lnew,itrc)=fac*ad_t(i,j,k,Lnew,itrc)
-            END DO
-          END DO
-        END DO
-      END DO
-# endif
-#endif
+
 #ifdef TEST_ORTHOGONALIZATION
 !
 !-----------------------------------------------------------------------
@@ -1197,10 +1534,18 @@
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
 #endif
-#ifdef SOLVE3D
-     &                     tl_t, tl_u, tl_v,                            &
+#ifdef ADJUST_WSTRESS
+     &                     tl_ustr, tl_vstr,                            &
 #endif
-     &                     tl_ubar, tl_vbar, tl_zeta)
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     tl_stlfx,                                    &
+# endif
+     &                     tl_t, tl_u, tl_v,                            &
+#else
+     &                     tl_ubar, tl_vbar,                            &
+#endif
+     &                     tl_zeta)
 !
         CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -1208,13 +1553,21 @@
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                      ad_ustr(:,:,Lnew), tl_ustr(:,:,Lwrk),       &
+     &                      ad_vstr(:,:,Lnew), tl_vstr(:,:,Lwrk),       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      ad_stflx(:,:,Lnew,:), tl_tflux(:,:,Lwrk,:), &
+# endif
      &                      ad_t(:,:,:,Lnew,:), tl_t(:,:,:,Lwrk,:),     &
      &                      ad_u(:,:,:,Lnew), tl_u(:,:,:,Lwrk),         &
      &                      ad_v(:,:,:,Lnew), tl_v(:,:,:,Lwrk),         &
-#endif
+#else
      &                      ad_ubar(:,:,Lnew), tl_ubar(:,:,Lwrk),       &
      &                      ad_vbar(:,:,Lnew), tl_vbar(:,:,Lwrk),       &
+#endif
      &                      ad_zeta(:,:,Lnew), tl_zeta(:,:,Lwrk))
         dot_new(rec)=dot(0)
       END DO
@@ -1252,10 +1605,18 @@
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
 #endif
-#ifdef SOLVE3D
-     &                         tl_t, tl_u, tl_v,                        &
+#ifdef ADJUST_WSTRESS
+     &                         s_ustr, s_vstr,                          &
 #endif
-     &                         tl_ubar, tl_vbar, tl_zeta)
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                         s_tflux,                                 &
+# endif
+     &                         s_t, s_u, s_v,                           &
+#else
+     &                         s_ubar, s_vbar,                          &
+#endif
+     &                         s_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -1279,28 +1640,44 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
-# ifdef SOLVE3D
-      real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s_vstr(LBi:,LBj:,:)
 # endif
-      real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s_tflux(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: s_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: s_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: s_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: s_zeta(LBi:,LBj:,:)
 #else
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
-# ifdef SOLVE3D
-      real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-      real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng))
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: s_vstr(LBi:UBi,LBj:UBj,2)
 # endif
-      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj)
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+      real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: s_v(LBi:UBi,LBj:UBj,N(ng))
+# else
+      real(r8), intent(inout) :: s_ubar(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: s_vbar(LBi:UBi,LBj:UBj)
+# endif
+      real(r8), intent(inout) :: s_zeta(LBi:UBi,LBj:UBj)
 #endif
 !
 !  Local variable declarations.
@@ -1339,42 +1716,74 @@
             ioerror=status
             RETURN
           END IF            
-#ifndef SOLVE3D
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
+#ifdef ADJUST_WSTRESS
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
 #endif
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
 #ifdef SOLVE3D
           status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
           status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
           DO itrc=1,NT(ng)
             status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),      &
      &                          vid(idTvar(itrc)))
+# ifdef ADJUST_STFLUX
+            status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),      &
+     &                          vid(idTsur(itrc)))
+# endif
           END DO
+#else
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
 #endif
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
         END IF
       ELSE
         ncid=ncADJid(ng)
-#ifndef SOLVE3D
-        vid(idUbar)=adjVid(idUbar,ng)
-        vid(idVbar)=adjVid(idVbar,ng)
+#ifdef ADJUST_WSTRESS
+        vid(idUsms)=adjVid(idUsms,ng)
+        vid(idVsms)=adjVid(idVsms,ng)
 #endif
-        vid(idFsur)=adjVid(idFsur,ng)
 #ifdef SOLVE3D
         vid(idUvel)=adjVid(idUvel,ng)
         vid(idVvel)=adjVid(idVvel,ng)
         DO itrc=1,NT(ng)
           vid(idTvar(itrc))=adjTid(itrc,ng)
+# ifdef ADJUST_STFLUX
+          vid(idTsur(itrc))=adjVid(idTsur(itrc),ng)
+# endif
         END DO
+#else
+        vid(idUbar)=adjVid(idUbar,ng)
+        vid(idVbar)=adjVid(idVbar,ng)
 #endif
+        vid(idFsur)=adjVid(idFsur,ng)
       END IF
       DO i=1,4
         Vsize(i)=0
       END DO
       scale=1.0_r8
+!
+!  Read in free-surface.
+!
+      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, r2dvar,       &
+     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+     &                  scale, Fmin, Fmax,                              &
+#ifdef MASKING
+     &                  rmask(LBi,LBj),                                 &
+#endif
+     &                  s_zeta(LBi,LBj,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idFsur)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+
 #ifndef SOLVE3D
 !
-!  Read in 2D adjoint momentum.
+!  Read in 2D momentum.
 !
       status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, u2dvar,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
@@ -1382,7 +1791,7 @@
 # ifdef MASKING
      &                  umask(LBi,LBj),                                 &
 # endif
-     &                  tl_ubar(LBi,LBj,Lwrk))
+     &                  s_ubar(LBi,LBj,Lwrk))
       IF (status.ne.nf_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUbar)), rec, TRIM(ncname)
@@ -1397,7 +1806,7 @@
 # ifdef MASKING
      &                  vmask(LBi,LBj),                                 &
 # endif
-     &                  tl_vbar(LBi,LBj,Lwrk))
+     &                  s_vbar(LBi,LBj,Lwrk))
       IF (status.ne.nf_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVbar)), rec, TRIM(ncname)
@@ -1407,27 +1816,46 @@
         RETURN
       END IF
 #endif
+
+#ifdef ADJUST_WSTRESS
 !
-!  Read in adjoint free-surface
+!  Read in surface momentum stress.
 !
-      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, r2dvar,       &
+      status=nf_fread2d(ng, iTLM, ncid, vid(idUsms), rec, u2dvar,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
-#ifdef MASKING
-     &                  rmask(LBi,LBj),                                 &
-#endif
-     &                  tl_zeta(LBi,LBj,Lwrk))
+# ifdef MASKING
+     &                  umask(LBi,LBj),                                 &
+# endif
+     &                  s_ustr(LBi,LBj,Lwrk))
       IF (status.ne.nf_noerr) THEN
         IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idFsur)), rec, TRIM(ncname)
+          WRITE (stdout,20) TRIM(Vname(1,idUsms)), rec, TRIM(ncname)
         END IF
         exit_flag=3
         ioerror=status
         RETURN
       END IF
+      status=nf_fread2d(ng, iTLM, ncid, vid(idVsms), rec, v2dvar,       &
+     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+     &                  scale, Fmin, Fmax,                              &
+# ifdef MASKING
+     &                  vmask(LBi,LBj),                                 &
+# endif
+     &                  s_vstr(LBi,LBj,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idVsms)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+#endif
+
 #ifdef SOLVE3D
 !
-!  Read in adjoint 3D momentum.
+!  Read in 3D momentum.
 !
       status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, u3dvar,       &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
@@ -1435,7 +1863,7 @@
 # ifdef MASKING
      &                  umask(LBi,LBj),                                 &
 # endif
-     &                  tl_u(LBi,LBj,1,Lwrk))
+     &                  s_u(LBi,LBj,1,Lwrk))
       IF (status.ne.nf_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUvel)), rec, TRIM(ncname)
@@ -1450,7 +1878,7 @@
 # ifdef MASKING
      &                  vmask(LBi,LBj),                                 &
 # endif
-     &                  tl_v(LBi,LBj,1,Lwrk))
+     &                  s_v(LBi,LBj,1,Lwrk))
       IF (status.ne.nf_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVvel)), rec, TRIM(ncname)
@@ -1460,7 +1888,7 @@
         RETURN
       END IF
 !
-!  Read in adjoint tracers.
+!  Read in tracers.
 !
       DO itrc=1,NT(ng)
         status=nf_fread3d(ng, iTLM, ncid, vid(idTvar(itrc)), rec,       &
@@ -1469,7 +1897,7 @@
 # ifdef MASKING
      &                    rmask(LBi,LBj),                               &
 # endif
-     &                    tl_t(LBi,LBj,1,Lwrk,itrc))
+     &                    s_t(LBi,LBj,1,Lwrk,itrc))
         IF (status.ne.nf_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))), rec,         &
@@ -1480,6 +1908,30 @@
           RETURN
         END IF
       END DO
+
+# ifdef ADJUST_STFLUX
+!
+!  Read in surface tracers flux.
+!
+      DO itrc=1,NT(ng)
+        status=nf_fread2d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
+     &                    r3dvar, Vsize, LBi, UBi, LBj, UBj,            &
+     &                    scale, Fmin, Fmax,                            &
+#  ifdef MASKING
+     &                    rmask(LBi,LBj),                               &
+#  endif
+     &                    s_tflux(LBi,LBj,Lwrk,itrc))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,         &
+     &                        TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+# endif
 #endif
 !
 !  If multiple files, close adjoint history file.
@@ -1502,14 +1954,30 @@
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                          ad_ustr, ad_vstr,                       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                          ad_stflx,                               &
+# endif
      &                          ad_t, ad_u, ad_v,                       &
+#else
+     &                          ad_ubar, ad_vbar,                       &
 #endif
-     &                          ad_ubar, ad_vbar, ad_zeta,              &
+     &                          ad_zeta,                                &
+#ifdef ADJUST_WSTRESS
+     &                          d_sustr, d_svstr,                       &
+#endif
 #ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                          d_stflx,                                &
+# endif
      &                          d_t, d_u, d_v,                          &
+#else
+     &                          d_ubar, d_vbar,                         &
 #endif
-     &                          d_ubar, d_vbar, d_zeta)
+     &                          d_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -1529,21 +1997,37 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: d_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: d_svstr(LBi:,LBj:)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: d_stflx(LBi:,LBj:,:)
+#  endif
       real(r8), intent(inout) :: d_t(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: d_u(LBi:,LBj:,:)
       real(r8), intent(inout) :: d_v(LBi:,LBj:,:)
-# endif
+# else
       real(r8), intent(inout) :: d_ubar(LBi:,LBj:)
       real(r8), intent(inout) :: d_vbar(LBi:,LBj:)
+# endif
       real(r8), intent(inout) :: d_zeta(LBi:,LBj:)
 #else
 # ifdef MASKING
@@ -1551,21 +2035,37 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-# endif
+# else
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+# endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: d_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: d_svstr(LBi:UBi,LBj:UBj)
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: d_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#  endif
       real(r8), intent(inout) :: d_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(inout) :: d_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: d_v(LBi:UBi,LBj:UBj,N(ng))
-# endif
+# else
       real(r8), intent(inout) :: d_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: d_vbar(LBi:UBi,LBj:UBj)
+# endif
       real(r8), intent(inout) :: d_zeta(LBi:UBi,LBj:UBj)
 #endif
 !
@@ -1585,9 +2085,21 @@
 !  d(0)=-G(0) since betaK=0 when Iter=0.
 !-----------------------------------------------------------------------
 !
-!  2D state variables.
+!  Free-surface.
 !
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          d_zeta(i,j)=-ad_zeta(i,j,Lnew)+betaK*d_zeta(i,j)
+#ifdef MASKING
+          d_zeta(i,j)=d_zeta(i,j)*rmask(i,j)
+#endif
+        END DO
+      END DO
+
 #ifndef SOLVE3D
+!
+!  2D momentum.
+!
       DO j=JstrR,JendR
         DO i=Istr,IendR
           d_ubar(i,j)=-ad_ubar(i,j,Lnew)+betaK*d_ubar(i,j)
@@ -1605,17 +2117,32 @@
         END DO
       END DO
 #endif
+
+#ifdef ADJUST_WSTRESS
+!
+!  Surface momentum stress.
+!
       DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          d_zeta(i,j)=-ad_zeta(i,j,Lnew)+betaK*d_zeta(i,j)
+        DO i=Istr,IendR
+          d_sustr(i,j)=-ad_ustr(i,j,Lnew)+betaK*d_sustr(i,j)
 # ifdef MASKING
-          d_zeta(i,j)=d_zeta(i,j)*rmask(i,j)
+          d_sustr(i,j)=d_sustr(i,j)*umask(i,j)
 # endif
         END DO
       END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          d_svstr(i,j)=-ad_vstr(i,j,Lnew)+betaK*d_svstr(i,j)
+# ifdef MASKING
+          d_svstr(i,j)=d_svstr(i,j)*vmask(i,j)
+# endif
+        END DO
+      END DO
+#endif
+
 #ifdef SOLVE3D
 !
-!  3D state variables.
+!  3D momentum.
 !
       DO k=1,N(ng)
         DO j=JstrR,JendR
@@ -1636,6 +2163,8 @@
         END DO
       END DO
 !
+!  Tracers.
+!
       DO itrc=1,NT(ng)
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -1649,6 +2178,23 @@
           END DO
         END DO
       END DO
+
+# ifdef ADJUST_STFLUX
+!
+!  Surface tracers flux.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            d_stflx(i,j,itrc)=-ad_stflx(i,j,Lnew,itrc)+                 &
+     &                        betaK*d_stflx(i,j,itrc)
+#  ifdef MASKING
+            d_stflx(i,j,itrc)=d_stflx(i,j,itrc)*rmask(i,j)
+#  endif
+          END DO
+        END DO
+      END DO
+# endif
 #endif
 
       RETURN

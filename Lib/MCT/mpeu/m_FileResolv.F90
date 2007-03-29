@@ -1,8 +1,8 @@
 !-------------------------------------------------------------------------
 !         NASA/GSFC, Data Assimilation Office, Code 910.3, GEOS/DAS      !
 !-------------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $  
+! CVS $Id: m_FileResolv.F90,v 1.2 2004/04/21 22:54:44 jacob Exp $
+! CVS $Name: MCT_2_2_0 $  
 !-----------------------------------------------------------------------
 !BOP
 !
@@ -93,7 +93,7 @@ CONTAINS
 !EOP
 !--------------------------------------------------------------------------
 
-   character(len=*), parameter	:: myname = 'FileResolv'
+   character(len=*), parameter	:: myname = 'MCT(MPEU)::FileResolv'
 
    integer, external  :: system
    character(len=255) :: path, host, dirn, basen, head, tail, cmd, filen

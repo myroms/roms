@@ -1,30 +1,29 @@
 #! /usr/bin/csh -f 
+####################################################
+#
+#  Example run script for LoadLeveler, the queue
+#  system used on most IBM's.
+#
+#  Your site may require different options.
+#
+####################################################
 # @ output = utmct.stdout.$(jobid).$(stepid)
 # @ error  = utmct.stderr.$(jobid).$(stepid)
-# @ job_name = mct
+# @ job_name = mctsimple
 # @ job_type = parallel
 # @ node = 4,4
 # @ tasks_per_node = 4
-# # @ total_tasks = 8
 # @ checkpoint = no
 # @ node_usage = not_shared
 # @ network.MPI = csss,not_shared,us 
 # @ class = share
-## @ class = com_reg
 # @ notification = never
-## @ account_no = 93300311
 # @ queue
 
 setenv MP_STDOUTMODE     ordered
 setenv MP_INFOLEVEL      2
-setenv ccm_out_env ccm.log
-setenv pop_out_env pop.log
-setenv cpl_out_env cpl.log
-
  
-cd /home/babyblue/robj/work/MCT/example1
-
 echo "`date` -- UTMCT EXECUTION BEGINS HERE" 
-poe simple
+poe twocon
 echo "`date` -- UTMCT EXECUTION finishes HERE" 
 

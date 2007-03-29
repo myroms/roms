@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name: MCT_1_0_12 $ 
+! CVS $Id: m_ConvertMaps.F90,v 1.10 2004/04/21 22:16:32 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_ConvertMaps - Conversion Between MCT Domain Decomposition Descriptors
@@ -48,7 +48,7 @@
 !
 !EOP ___________________________________________________________________
 
-  character(len=*),parameter :: myname='m_ConvertMap'
+  character(len=*),parameter :: myname='MCT::m_ConvertMap'
 
  contains
 
@@ -56,7 +56,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: GlobalMapToGlobalSegMap_() -- Convert GlobalMap to GlobalSegMap
+! !IROUTINE: GlobalMapToGlobalSegMap_ - Convert GlobalMap to GlobalSegMap
 !
 ! !DESCRIPTION:
 ! This routine takes an input {\tt GlobalMap} argument {\tt GMap}, and
@@ -151,7 +151,7 @@
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !BOP -------------------------------------------------------------------
 !
-! !IROUTINE: GlobalSegMapToGlobalMap_() -- Convert GlobalSegMap to GlobalMap
+! !IROUTINE: GlobalSegMapToGlobalMap_ - Convert GlobalSegMap to GlobalMap
 !
 ! !DESCRIPTION:
 ! This routine takes an input {\tt GlobalSegMap} argument {\tt GSMap}, 

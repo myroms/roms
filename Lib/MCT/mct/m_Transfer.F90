@@ -1,8 +1,8 @@
 !~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !    Math and Computer Science Division, Argonne National Laboratory   !
 !-----------------------------------------------------------------------
-! CVS $Id$
-! CVS $Name:  $ 
+! CVS $Id: m_Transfer.F90,v 1.10 2004/04/24 00:48:11 jacob Exp $
+! CVS $Name: MCT_2_2_0 $ 
 !BOP -------------------------------------------------------------------
 !
 ! !MODULE: m_Transfer - Routines for the MxN transfer of Attribute Vectors
@@ -20,7 +20,6 @@
  module m_Transfer
 
 ! !USES:
-
   use m_MCTWorld, only : MCTWorld
   use m_MCTWorld, only : ThisMCTWorld
   use m_AttrVect, only : AttrVect
@@ -46,12 +45,12 @@
   public  :: waitrecv
 
 
-  interface isend  ; module procedure isend_  ; end interface
-  interface send  ; module procedure send_  ; end interface
-  interface waitsend  ; module procedure waitsend_  ; end interface
-  interface irecv  ; module procedure irecv_  ; end interface
-  interface recv  ; module procedure recv_  ; end interface
-  interface waitrecv  ; module procedure waitrecv_  ; end interface
+  interface isend    ; module procedure isend_    ; end interface
+  interface send     ; module procedure send_     ; end interface
+  interface waitsend ; module procedure waitsend_ ; end interface
+  interface irecv    ; module procedure irecv_    ; end interface
+  interface recv     ; module procedure recv_     ; end interface
+  interface waitrecv ; module procedure waitrecv_ ; end interface
 
 ! !DEFINED PARAMETERS:
 
@@ -132,11 +131,12 @@
   integer ::    AttrIndex,VectIndex,seg_start,seg_end
   integer ::    proc,nseg,mytag
   integer ::    mp_Type_rp1
-  integer ::    ii
-  include 'mpif.h'
-  integer ::    STATUS(MPI_STATUS_SIZE)
 
 !--------------------------------------------------------
+
+! Return if no one to send to
+  if(Rout%nprocs .eq. 0 ) RETURN
+
 
 !check Av size against Router
 !
@@ -180,9 +180,6 @@
   mp_Type_rp1=MP_Type(Rout%rp1(1)%pr(1))
 
   endif
-
-! call MPI_SEND(ii, 1, MPI_INTEGER, 1, 999, MPI_COMM_WORLD, ier)
-! call MPI_RECV(ii, 1, MPI_INTEGER, 1, 999, MPI_COMM_WORLD, STATUS, ier)
 
 
   ! Load data going to each processor
@@ -295,6 +292,8 @@ end subroutine isend_
   character(len=*),parameter :: myname_=myname//'::waitsend_'
   integer ::   proc,ier
 
+! Return if nothing to wait for
+  if(Rout%nprocs .eq. 0 ) RETURN
 
   ! wait for all sends to complete
   if(Rout%numiatt .ge. 1) then
@@ -386,7 +385,8 @@ end subroutine send_
 ! result if the size of the attribute vector does not match the size
 ! parameter stored in the {\tt Router}.
 !
-! Requires a corresponding {\tt send\_} to be called on the other component.
+! Requires a corresponding {\tt send\_} or {\tt isend\_} to be called 
+! on the other component.
 !
 ! The optional argument {\tt Tag} can be used to set the tag value used in
 ! the data transfer.  DefaultTag will be used otherwise. {\tt Tag} must be
@@ -396,6 +396,9 @@ end subroutine send_
 ! will overwrite the duplicate values leaving the last received value
 ! in the output aV.  If the optional argument {\tt Sum} is invoked, the output
 ! will contain the sum of any duplicate values received for the same grid point.
+!
+! Will return as soon as MPI\_IRECV's are posted.  Call {\tt waitrecv\_} to
+! complete the receive operation.
 !
 ! {\bf N.B.:} The {\tt AttrVect} argument in the corresponding
 ! {\tt send\_} call is assumed to have exactly the same attributes
@@ -446,11 +449,11 @@ end subroutine send_
   integer ::    proc,numprocs,nseg,mytag
   integer ::    mp_Type_rp1
   logical ::    DoSum
-  integer :: ii
-  include 'mpif.h'
-  integer :: STATUS(MPI_STATUS_SIZE)
 
 !--------------------------------------------------------
+
+! Return if no one to receive from
+  if(Rout%nprocs .eq. 0 ) RETURN
 
 !check Av size against Router
 !
@@ -592,6 +595,9 @@ end subroutine irecv_
   integer ::   proc,ier,j,k,nseg
   integer ::   AttrIndex,VectIndex,seg_start,seg_end
   logical ::   DoSum
+
+! Return if nothing to wait for
+  if(Rout%nprocs .eq. 0 ) RETURN
 
 !check Av size against Router
 !
@@ -745,7 +751,8 @@ end subroutine waitrecv_
 ! result if the size of the attribute vector does not match the size
 ! parameter stored in the {\tt Router}.
 !
-! Requires a corresponding {\tt send\_} to be called on the other component.
+! Requires a corresponding {\tt send\_} or {\tt isend\_}to be called 
+! on the other component.
 !
 ! The optional argument {\tt Tag} can be used to set the tag value used in
 ! the data transfer.  DefaultTag will be used otherwise. {\tt Tag} must be
@@ -755,6 +762,8 @@ end subroutine waitrecv_
 ! will overwrite the duplicate values leaving the last received value
 ! in the output aV.  If the optional argument {\tt Sum} is invoked, the output
 ! will contain the sum of any duplicate values received for the same grid point.
+!
+! Will not return until all data has been received.
 !
 ! {\bf N.B.:} The {\tt AttrVect} argument in the corresponding
 ! {\tt send\_} call is assumed to have exactly the same attributes
