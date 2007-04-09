@@ -8,6 +8,8 @@
 **
 ** Options for Channel with a Constriction Test.
 **
+** Application flag:   CHANNEL_NECK
+** Input script:       ocean_channel_neck1.in, ocean_channel_neck3.in
 */
 
 #undef  AD_SENSITIVITY

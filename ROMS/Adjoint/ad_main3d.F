@@ -194,7 +194,7 @@
 !
 !  Avoid time-stepping if additional delayed IO time-step.
 !
-      IF (iic(ng).ne.ntstart) THEN
+      IF (iic(ng).ne.ntstart(ng)) THEN
 
 # ifdef FLOATS_NOT_YET
 !
@@ -405,6 +405,25 @@
 !$OMP END PARALLEL DO
       IF (exit_flag.ne.NoError) RETURN
 # endif
+
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!-----------------------------------------------------------------------
+!  If appropriate, add representer coefficients (Beta hat) impulse
+!  forcing to adjoint solution. Read next impulse record, if available.
+!-----------------------------------------------------------------------
+!
+      IF (ProcessObs(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_forcing (ng, TILE, kstp(ng), nnew(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint right-hand-side terms for 3D equations. If
@@ -580,7 +599,7 @@
 !
 !  The original forward time-stepping indices are advanced as follows:
 !
-!     nstp(ng)=1+MOD(iic(ng)-ntstart,2)
+!     nstp(ng)=1+MOD(iic(ng)-ntstart(ng),2)
 !     nnew(ng)=3-nstp(ng)
 !     nrhs(ng)=nstp(ng)
 !
@@ -603,7 +622,7 @@
 !     nrhs(ng)=nnew(ng)
 !     nnew(ng)=nstp(ng)
 !
-      IF (iic(ng).ne.ntend) THEN
+      IF (iic(ng).ne.ntend(ng)) THEN
         nrhs(ng)=nnew(ng)
         nnew(ng)=nstp(ng)
         nstp(ng)=nrhs(ng)
@@ -614,7 +633,7 @@
 !  initial fields.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntend) THEN
+      IF (iic(ng).eq.ntend(ng)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -633,7 +652,7 @@
       CALL ad_output (ng)
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined WEAK_CONSTRAINT || defined IOM
+# if defined WEAK_CONSTRAINT_OLD || defined IOM_OLD
 !
 !-----------------------------------------------------------------------
 !  If appropriate, add representer coefficients (Beta hat) impulse

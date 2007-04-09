@@ -229,15 +229,6 @@
           END DO
         END DO
       END IF
-#elif defined SANDWAVE
-      IF (EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            BOUNDARY(ng)%t_east(j,k,itemp)=20.0_r8
-            BOUNDARY(ng)%t_east(j,k,isalt)=0.0_r8
-          END DO
-        END DO
-      END IF
 #elif defined SED_TEST1
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)

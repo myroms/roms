@@ -19,6 +19,8 @@
 
 # if defined SWAN_COUPLING && defined MCT
 #  include "mct_roms_swan.h"
+# elif defined REFDIF_COUPLING && defined MCT
+#  include "mct_roms_refdif.h"
 # elif defined WRF_COUPLING && defined MCT
 #  include "mct_roms_wrf.h"
 # endif

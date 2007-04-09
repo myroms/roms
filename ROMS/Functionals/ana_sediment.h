@@ -154,7 +154,7 @@
 # elif defined RIP_CURRENT
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-!          bottom(i,j,isd50)=0.0005_r8
+!!        bottom(i,j,isd50)=0.0005_r8
           bottom(i,j,isd50)=0.005_r8
           bottom(i,j,idens)=2650.0_r8
         END DO
@@ -167,7 +167,8 @@
         END DO
       END DO
 # else
-      ANA_SEDIMENT: no values provided for bottom sediment properties.
+      ana_sediment.h: no values provided for bottom(:,:,isd50) and
+                                             bottom(:,:,idens)
 # endif
 # if defined MB_BBL || defined SSW_BBL
 #  undef YALIN
@@ -448,9 +449,9 @@
 !
              DO ised=1,NST
                bed_mass(i,j,k,1,ised)=bed(i,j,k,ithck)*                 &
-    &                                 Srho(ised,ng)*                    &
-    &                                 (1.0_r8-bed(i,j,k,iporo))*        &
-    &                                 bed_frac(i,j,k,ised)
+     &                                Srho(ised,ng)*                    &
+     &                                (1.0_r8-bed(i,j,k,iporo))*        &
+     &                                bed_frac(i,j,k,ised)
                bed_mass(i,j,k,2,ised)=bed_mass(i,j,k,1,ised)
              END DO
           END DO
@@ -496,54 +497,6 @@
           DO i=IstrR,IendR
              bed(i,j,k,iaged)=time(ng)
              bed(i,j,k,ithck)=15.00_r8
-             bed(i,j,k,iporo)=0.50_r8
-             DO ised=1,NST
-               bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
-             END DO
-!
-!  Calculate mass so it is consistent with density, thickness, and
-!  porosity.
-!
-             DO ised=1,NST
-               bed_mass(i,j,k,1,ised)=bed(i,j,k,ithck)*                 &
-    &                                 Srho(ised,ng)*                    &
-    &                                 (1.0_r8-bed(i,j,k,iporo))*        &
-    &                                 bed_frac(i,j,k,ised)
-               bed_mass(i,j,k,2,ised)=bed_mass(i,j,k,1,ised)
-             END DO
-          END DO
-        END DO
-      END DO
-!
-!  Set exposed sediment layer properties.
-!
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          cff1=1.0_r8
-          cff2=1.0_r8
-          cff3=1.0_r8
-          cff4=1.0_r8
-          DO ised=1,NST
-            cff1=cff1*Sd50(ised,ng)**bed_frac(i,j,1,ised)
-            cff2=cff2*Srho(ised,ng)**bed_frac(i,j,1,ised)
-            cff3=cff3*wsed(ised,ng)**bed_frac(i,j,1,ised)
-            cff4=cff4*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
-          END DO
-          bottom(i,j,isd50)=cff1
-          bottom(i,j,idens)=cff2
-          bottom(i,j,iwsed)=cff3
-          bottom(i,j,itauc)=cff4
-          bottom(i,j,irlen)=0.10_r8
-          bottom(i,j,irhgt)=0.01_r8
-          bottom(i,j,izdef)=Zob(ng)
-        END DO
-      END DO
-# elif defined SANDWAVE
-      DO k=1,Nbed
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-             bed(i,j,k,iaged)=time(ng)
-             bed(i,j,k,ithck)=0.25_r8
              bed(i,j,k,iporo)=0.50_r8
              DO ised=1,NST
                bed_frac(i,j,k,ised)=1.0_r8/FLOAT(NST)
@@ -681,7 +634,7 @@
             cff1=cff1*Sd50(ised,ng)**bed_frac(i,j,1,ised)
             cff2=cff2*Srho(ised,ng)**bed_frac(i,j,1,ised)
             cff3=cff3*wsed(ised,ng)**bed_frac(i,j,1,ised)
-            cff3=cff4*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
+            cff4=cff4*tau_ce(ised,ng)**bed_frac(i,j,1,ised)
           END DO
           bottom(i,j,isd50)=cff1
           bottom(i,j,idens)=cff2
@@ -701,7 +654,7 @@
         END DO
       END DO
 # else
-      ANA_SEDIMENT: no values provided for sediment fields.
+      ana_sediment.h: no values provided for bed, bed_mass, bottom.
 # endif
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE

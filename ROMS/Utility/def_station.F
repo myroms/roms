@@ -1273,7 +1273,7 @@
 !  Set unlimited time record dimension to the appropriate value.
 !
 !!      tSTAindx(ng)=tsize
-        tSTAindx(ng)=(ntstart-1)/nSTA(ng)
+        tSTAindx(ng)=(ntstart(ng)-1)/nSTA(ng)
       END IF
 !
   10  FORMAT (6x,'DEF_STATION - creating stations file: ',a)

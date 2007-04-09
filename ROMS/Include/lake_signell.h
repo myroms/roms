@@ -8,6 +8,10 @@
 **
 ** Options for Closed Basin (Lake) forced with wind.
 **
+** Application flag:   LAKE_SIGNELL
+** Input script:       ocean_lake_signell.in
+**                     floats_lake_signell.in
+**                     sediment_lake_signell.in
 */
 
 #define UV_ADV
@@ -62,13 +66,13 @@
 # undef  SED_MORPH
 #endif
 #if defined SEDIMENT || defined SG_BBL || defined MB_BBL || defined SSW_BBL
-# define ANA_SEDIMENT
+# undef ANA_SEDIMENT
 #endif
 #ifdef MASKING
 # define ANA_MASK
 #endif
 #define ANA_GRID
-#define ANA_INITIAL
+#undef ANA_INITIAL
 #define ANA_SMFLUX
 #define ANA_STFLUX
 #define ANA_SSFLUX

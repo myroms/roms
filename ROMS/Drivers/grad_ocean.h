@@ -231,7 +231,7 @@
 !  observation locations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart, ntend
+          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         wrtNLmod(ng)=.TRUE.
@@ -239,7 +239,7 @@
 
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP : DO my_iic=ntstart,ntend+1
+        NL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -295,12 +295,12 @@
 !  model and observations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'AD', ntstart, ntend
+          WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)+dt(ng)
 
-        AD_LOOP : DO my_iic=ntstart,ntend,-1
+        AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -377,12 +377,12 @@
 !  between model (nonlinear + tangent linear) and observations.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'TL', ntstart, ntend
+              WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
 
-            TL_LOOP : DO my_iic=ntstart,ntend+1
+            TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
 #ifdef SOLVE3D

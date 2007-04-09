@@ -72,8 +72,8 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES =  720
-          DT == 360.0d0                         ! 240 steps per day
+      NTIMES == 720
+          DT == 360.0d0
      NDTFAST == 20
 
 ! Model iteration loops parameters.
@@ -239,7 +239,7 @@
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 =  1.0d0
+      GAMMA2 == 1.0d0
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their

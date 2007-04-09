@@ -196,6 +196,8 @@
      &                  OCEAN(ng) % ad_zeta)
         IF (exit_flag.ne.NoError) RETURN
       END IF
+
+# ifndef SOLVE3D
 !
 !  Process 2D U-momentum component impulse.
 !
@@ -207,11 +209,11 @@
         CALL impulse2d (ng, model, gtype, Nrec, Nsave,                  &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idUbar,ng),    &
-     &                  IstrR, IendR, JstrR, JendR,                     &
+     &                  Istr, IendR, JstrR, JendR,                      &
      &                  LBi, UBi, LBj, UBj,                             &
-# ifdef MASKING
+#  ifdef MASKING
      &                  GRID(ng) % umask,                               &
-# endif
+#  endif
      &                  OCEAN(ng) % ad_ubar)
         IF (exit_flag.ne.NoError) RETURN
       END IF
@@ -226,16 +228,16 @@
         CALL impulse2d (ng, model, gtype, Nrec, Nsave,                  &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idVbar,ng),    &
-     &                  IstrR, IendR, JstrR, JendR,                     &
+     &                  IstrR, IendR, Jstr, JendR,                      &
      &                  LBi, UBi, LBj, UBj,                             &
-# ifdef MASKING
+#  ifdef MASKING
      &                  GRID(ng) % vmask,                               &
-# endif
+#  endif
      &                  OCEAN(ng) % ad_vbar)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 
-# ifdef SOLVE3D
+# else
 !
 !  Process 3D U-momentum component impulse. Notice that "ad_t" is used
 !  here as a temporary array since it has three-time levels.
@@ -248,7 +250,7 @@
         CALL impulse3d (ng, model, gtype, Nrec, Nsave,                  &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idUvel,ng),    &
-     &                  IstrR, IendR, JstrR, JendR,                     &
+     &                  Istr, IendR, JstrR, JendR,                      &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
 #  ifdef MASKING
      &                  GRID(ng) % umask,                               &
@@ -268,7 +270,7 @@
         CALL impulse3d (ng, model, gtype, Nrec, Nsave,                  &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idVvel,ng),    &
-     &                  IstrR, IendR, JstrR, JendR,                     &
+     &                  IstrR, IendR, Jstr, JendR,                      &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
 #  ifdef MASKING
      &                  GRID(ng) % vmask,                               &
@@ -417,16 +419,13 @@
       Inow=1
       Inxt=2
       Iold=3
-# if defined WEAK_CONSTRAINT || defined IOM
-      C1=1.0_r8
-      C2=0.0_r8
-      C3=1.0_r8
-# else
       cff=REAL(Nsave,r8)
       C1=(cff+1.0_r8)*(2.0_r8*cff+1.0_r8)/(6.0_r8*cff)
       C2=(cff*cff-1.0_r8)/(6.0_r8*cff)
       C3=(2.0_r8*cff*cff+1.0_r8)/(3.0_r8*cff)
-# endif
+!!    C1=1.0_r8
+!!    C2=0.0_r8
+!!    C3=1.0_r8
       scale=1.0_r8
 !
 !  Set Vsize to zero to deactivate interpolation of input data to model
@@ -663,7 +662,7 @@
 #   ifdef MASKING
       real(r8), intent(in) :: mask(LBi:,LBj:)
 #   endif
-      real(r8), intent(inout) :: ad_A(LBi:,LBj:,LBk:,LBk:)
+      real(r8), intent(inout) :: ad_A(LBi:,LBj:,LBk:,:)
 #  else
 #   ifdef MASKING
       real(r8), intent(in) :: mask(LBi:UBi,LBj:UBj)
@@ -694,16 +693,13 @@
       Inow=1
       Inxt=2
       Iold=3
-#  if defined WEAK_CONSTRAINT || defined IOM
-      C1=1.0_r8
-      C2=0.0_r8
-      C3=1.0_r8
-#  else
       cff=REAL(Nsave,r8)
       C1=(cff+1.0_r8)*(2.0_r8*cff+1.0_r8)/(6.0_r8*cff)
       C2=(cff*cff-1.0_r8)/(6.0_r8*cff)
       C3=(2.0_r8*cff*cff+1.0_r8)/(3.0_r8*cff)
-#  endif
+!!    C1=1.0_r8
+!!    C2=0.0_r8
+!!    C3=1.0_r8
       scale=1.0_r8
 !
 !  Set Vsize to zero to deactivate interpolation of input data to model

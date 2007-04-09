@@ -8,6 +8,8 @@
 **
 ** Options for Big Bad Basin.
 **
+** Application flag:   BASIN
+** Input script:       ocean_basin.in
 */
 
 #define UV_ADV
@@ -16,8 +18,8 @@
 #define UV_VIS4
 #define MIX_S_UV
 #define DJ_GRADPS
-#define TS_A4HADVECTION
-#define TS_A4VADVECTION
+#define TS_U3HADVECTION
+#define TS_C4VADVECTION
 #define SOLVE3D
 #define SPLINES
 #define EASTERN_WALL

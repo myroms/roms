@@ -61,7 +61,7 @@
 !
       IF (LdefHIS(ng)) THEN
         IF (ndefHIS(ng).gt.0) THEN
-          IF (idefHIS(ng).lt.0) idefHIS(ng)=ntstart-1
+          IF (idefHIS(ng).lt.0) idefHIS(ng)=ntstart(ng)-1
           IF ((iic(ng)-1).eq.idefHIS(ng)) THEN
             idefHIS(ng)=idefHIS(ng)+ndefHIS(ng)
             NrecHIS(ng)=0
@@ -72,7 +72,7 @@
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncHISid(ng).ne.-1) status=nf_close(ncHISid(ng))
-            IF ((iic(ng).eq.ntstart).and.                               &
+            IF ((iic(ng).eq.ntstart(ng)).and.                               &
      &          (MOD(iic(ng)-1,ndefHIS(ng)).gt.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -84,7 +84,7 @@
 !!          LdefHIS(ng)=.FALSE.
           END IF
         ELSE
-          IF (iic(ng).eq.ntstart) THEN
+          IF (iic(ng).eq.ntstart(ng)) THEN
             CALL def_his (ng, ldefout(ng))
             IF (exit_flag.ne.NoError) RETURN
             LwrtHIS(ng)=.TRUE.
@@ -98,7 +98,7 @@
 !
       IF (LwrtHIS(ng)) THEN
         IF (LwrtPER(ng)) THEN
-          IF ((iic(ng).gt.ntstart).and.                                 &
+          IF ((iic(ng).gt.ntstart(ng)).and.                                 &
      &        (MOD(iic(ng)-1,nHIS(ng)).eq.0)) THEN
             CALL wrt_his (ng)
             IF (exit_flag.ne.NoError) RETURN
@@ -123,8 +123,8 @@
 !
       IF (LdefAVG(ng)) THEN
         IF (ndefAVG(ng).gt.0) THEN
-          IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart-1
-!!        IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart+nAVG(ng)-1
+          IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart(ng)-1
+!!        IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart(ng)+nAVG(ng)-1
           IF ((iic(ng)-1).eq.idefAVG(ng)) THEN
             idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)+1
             ifile=(iic(ng)-1)/ndefAVG(ng)+1
@@ -135,7 +135,7 @@
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncAVGid(ng).ne.-1) status=nf_close(ncAVGid(ng))
-            IF ((iic(ng).eq.ntstart+nAVG(ng)).and.                      &
+            IF ((iic(ng).eq.ntstart(ng)+nAVG(ng)).and.                      &
      &           (MOD(iic(ng)-nAVG(ng)-1,ndefAVG(ng)).ne.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -147,7 +147,7 @@
 !!          LdefAVG(ng)=.FALSE.
           END IF
         ELSE
-          IF (iic(ng).eq.ntstart) THEN
+          IF (iic(ng).eq.ntstart(ng)) THEN
             CALL def_avg (ng, ldefout(ng))
             IF (exit_flag.ne.NoError) RETURN
             LwrtAVG(ng)=.TRUE.
@@ -159,7 +159,7 @@
 !  Write out data into time-averaged NetCDF file.
 !
       IF (LwrtAVG(ng)) THEN
-        IF ((iic(ng).gt.ntstart).and.                                   &
+        IF ((iic(ng).gt.ntstart(ng)).and.                                   &
      &      (MOD(iic(ng)-1,nAVG(ng)).eq.0)) THEN
           CALL wrt_avg (ng)
           IF (exit_flag.ne.NoError) RETURN
@@ -178,8 +178,8 @@
 !
       IF (LdefDIA(ng)) THEN
         IF (ndefDIA(ng).gt.0) THEN
-          IF (idefDIA(ng).lt.0) idefDIA(ng)=ntstart-1
-!!        IF (idefDIA(ng).lt.0) idefDIA(ng)=ntstart+nDIA(ng)-1
+          IF (idefDIA(ng).lt.0) idefDIA(ng)=ntstart(ng)-1
+!!        IF (idefDIA(ng).lt.0) idefDIA(ng)=ntstart(ng)+nDIA(ng)-1
           IF ((iic(ng)-1).eq.idefDIA(ng)) THEN
             idefDIA(ng)=idefDIA(ng)+ndefDIA(ng)+1
             ifile=(iic(ng)-1)/ndefDIA(ng)+1
@@ -190,7 +190,7 @@
   30          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncDIAid(ng).ne.-1) status=nf_close(ncDIAid(ng))
-            IF ((iic(ng).eq.ntstart+nDIA(ng)).and.                      &
+            IF ((iic(ng).eq.ntstart(ng)+nDIA(ng)).and.                      &
      &           (MOD(iic(ng)-nDIA(ng)-1,ndefDIA(ng)).ne.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -202,7 +202,7 @@
 !!          LdefDIA(ng)=.FALSE.
           END IF
         ELSE
-          IF (iic(ng).eq.ntstart) THEN
+          IF (iic(ng).eq.ntstart(ng)) THEN
             CALL def_diags (ng, ldefout(ng))
             IF (exit_flag.ne.NoError) RETURN
             LwrtDIA(ng)=.TRUE.
@@ -214,7 +214,7 @@
 !  Write out data into time-averaged diagnostics NetCDF file.
 !
       IF (LwrtDIA(ng)) THEN
-        IF ((iic(ng).gt.ntstart).and.                                   &
+        IF ((iic(ng).gt.ntstart(ng)).and.                                   &
      &      (MOD(iic(ng)-1,nDIA(ng)).eq.0)) THEN
           CALL wrt_diags (ng)
           IF (exit_flag.ne.NoError) RETURN
@@ -232,7 +232,7 @@
 !  Create output station NetCDF file or prepare existing file to
 !  append new data to it.
 !
-        IF (LdefSTA(ng).and.(iic(ng).eq.ntstart)) THEN
+        IF (LdefSTA(ng).and.(iic(ng).eq.ntstart(ng))) THEN
           CALL def_station (ng, ldefout(ng))
           IF (exit_flag.ne.NoError) RETURN
           LdefSTA(ng)=.FALSE.
@@ -268,7 +268,7 @@
 !  Write out data into floats NetCDF file.
 !
         IF ((MOD(iic(ng)-1,nFLT(ng)).eq.0).and.                         &
-     &      ((frrec(ng).eq.0).or.(iic(ng).ne.ntstart))) THEN
+     &      ((frrec(ng).eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
           CALL wrt_floats (ng)
           IF (exit_flag.ne.NoError) RETURN
         END IF
@@ -292,7 +292,7 @@
 !  Write out data into restart NetCDF file.
 !
       IF (LwrtRST(ng)) THEN
-        IF ((iic(ng).gt.ntstart).and.                                   &
+        IF ((iic(ng).gt.ntstart(ng)).and.                                   &
      &      (MOD(iic(ng)-1,nRST(ng)).eq.0)) THEN
           CALL wrt_rst (ng)
           IF (exit_flag.ne.NoError) RETURN

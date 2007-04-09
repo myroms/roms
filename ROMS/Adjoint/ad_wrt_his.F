@@ -78,7 +78,7 @@
       kout=kstp(ng)
 # endif
 # ifdef SOLVE3D
-      IF (iic(ng).ne.ntend) THEN
+      IF (iic(ng).ne.ntend(ng)) THEN
         nout=nnew(ng)
       ELSE
         nout=nstp(ng)

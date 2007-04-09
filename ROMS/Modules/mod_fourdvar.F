@@ -42,6 +42,7 @@
 !  LhessianEV   Logical switch to compute Hessian eigenvectors.        !
 !  Lprecond     Logical switch to pre-conditioning with Hessian        !
 !                 eigenvectors.                                        !
+!  nConvRitz    Number of converged Ritz eigenvalues.                  !
 !  NLmodVal     Nonlinear model values at observation locations.       !
 !  NHsteps      Full number of horizontal diffusion steps for spatial  !
 !                 convolutions.                                        !
@@ -58,6 +59,7 @@
 !  ObsVal       Observation values.                                    !
 !  ObsVar       Global observation variance for each state variable.   !
 !  Optimality   normalized, optimal cost function minimum.             !
+!  Ritz         Ritz eigenvalues to compute approximated Hessian.      !
 !  TLmodVal     Tangent linear model values at observation locations.  !
 !  Vdecay       Covariance vertical decorrelation scale (m).           !
 !  Tobs         Observations time (days).                              !
@@ -70,14 +72,14 @@
 !  cg_gamma     Lanczos algorithm coefficient.                         !
 !  cg_tau       Conjugate gradient coefficient.                        !
 # if defined WEAK_CONSTRAINT || defined IOM
-!  cg_p         Weak constraint conjugate gradient vector.             !
-!  cg_r         Weak constraint conjugate gradient vector,             !
-!                 approximation PSI for representer coeffiecients.     !
-!  cg_s         Weak constraint conjugate gradient vector,             !
-!                 right-hand-side term: R_n*PSI + Cobs*PSI.            !
-!  cg_v         Weak constraint conjugate gradient vector.             !
-!  cg_x         Weak constraint conjugate gradient vector.             !
-!  cg_z         Weak constraint conjugate gradient vector.             !
+!  zdelta       Weak constraint conjugate gradient vector.             !
+!                 new descent direction                                !
+!  zbeta        Weak constraint conjugate gradient vector.             !
+!                 normalized previous and current descent gradients    !
+!  zcglwk       Weak constraint Lanczos matrix                         !
+!  zgrad0       Initial gradient vector                                !
+!  zqg0                                                                !
+!  zgnorm                                                              !
 # endif
 !  haveADmod    Logical switch indicating that there is representer    !
 !                 coefficients available to process in MODname file.   !
@@ -118,12 +120,12 @@
 #   endif
 #  endif
 #  if defined WEAK_CONSTRAINT || defined IOM
-        real(r8), allocatable :: cg_p(:)
-        real(r8), allocatable :: cg_r(:)
-        real(r8), allocatable :: cg_s(:)
-        real(r8), allocatable :: cg_v(:)
-        real(r8), allocatable :: cg_x(:)
-        real(r8), allocatable :: cg_z(:)
+        real(r8), allocatable :: zdelta(:)
+        real(r8), allocatable :: zbeta(:)
+        real(r8), allocatable :: zcglwk(:,:)
+        real(r8), allocatable :: zgrad0(:)
+        real(r8), allocatable :: zqg0(:)
+        real(r8) :: zgnorm = 0.0_r8
 #  endif
 !
         TYPE T_FOURDVAR
@@ -366,6 +368,12 @@
 !  innacurate eigenvectors are usefull for pre-condtioning purposes.
 !
         real(r8) :: HevecErr
+!
+!  Number of converged Ritz eigenvalues computed by the Lanzos
+!  algorithm.
+!
+        integer :: nConvRitz
+        real(r8), allocatable :: Ritz(:)
 !
 !  Brunt-Vaisala expansion polynomial used for cost function
 !  normalization.
@@ -654,27 +662,27 @@
 #   endif
       TLmodVal = IniVal
 #  endif
+
+      allocate ( Ritz(Nouter*(Ninner+1)) )
+
 #  if defined WEAK_CONSTRAINT || defined IOM
 !
 !  Allocate and initialize weak constraint conjugate gradient vectors.
 !
-      allocate ( cg_p(Mobs) )
-      cg_p = IniVal
+      allocate ( zdelta(Ninner) )
+      zdelta = IniVal
 
-      allocate ( cg_r(Mobs) )
-      cg_r = IniVal
+      allocate ( zbeta(Ninner+1) )
+      zbeta = IniVal
 
-      allocate ( cg_s(Mobs) )
-      cg_s = IniVal
+      allocate ( zcglwk(Mobs,Ninner+1) )
+      zcglwk = IniVal
 
-      allocate ( cg_v(Mobs) )
-      cg_v = IniVal
+      allocate ( zgrad0(Mobs) )
+      zgrad0 = IniVal
 
-      allocate ( cg_x(Mobs) )
-      cg_x = IniVal
-
-      allocate ( cg_z(Mobs) )
-      cg_z = IniVal
+      allocate ( zqg0(Ninner+1) )
+      zqg0 = IniVal
 #  endif
 # else
 !

@@ -415,8 +415,10 @@
              zoST(i,j)=0.056_r8*d50*0.68_r8*tstar/                      &
      &                 (1.0_r8+coef_st*tstar)
              IF (zoST(i,j).lt.0.0_r8) THEN
-               WRITE (*,*) 'Warning: zoST<0  tstar, d50, coef_st:'
-!!             WRITE (*,*) tstar,d50,coef_st
+               IF (Master)
+                 PRINT *, ' Warning: zoST<0  tstar, d50, coef_st:'
+                 PRINT *, tstar,d50,coef_st
+               END IF
              END IF
 !
 !  Calculate ripple height and wavelength.
@@ -466,8 +468,8 @@
           IF (zoDEF(i,j).lt.absolute_zoMIN) THEN
             zoDEF(i,j)=absolute_zoMIN
             IF (Master) THEN
-              WRITE (*,*) 'Warning: default zo < 0.05 mm.'
-              WRITE (*,*) Replaced with: ,zoDEF
+              PRINT *, ' Warning: default zo < 0.05 mm, replaced with:',&
+     &                 zoDEF
             END IF
           END IF
           zo=zoDEF(i,j)
@@ -510,7 +512,7 @@
 !  Waves and currents, but zr <= zo.
 !
             IF (Master) THEN
-              WRITE (*,*) 'Warning: w-c calcs ignored because zr <= zo'
+              PRINT *,' Warning: w-c calcs ignored because zr <= zo'
             END IF
           ELSE IF ((Umag(i,j).gt.0.0_r8).and.(Ub(i,j).gt.eps).and.      &
      &             ((Zr(i,j)/zo).gt.1.0_r8)) THEN

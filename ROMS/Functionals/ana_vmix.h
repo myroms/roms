@@ -148,18 +148,6 @@
           END DO
         END DO
       END DO
-#elif defined SANDWAVE
-      DO k=1,N(ng)-1                         !  vonkar*ustar*z*(1-z/D)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            Akv(i,j,k)=0.025_r8*(h(i,j)+z_w(i,j,k))*                    &
-     &                 (1.0_r8-(h(i,j)+z_w(i,j,k))/                     &
-     &                  (h(i,j)+zeta(i,j,knew)))
-            Akt(i,j,k,itemp)=Akv(i,j,k)*0.49_r8/0.39_r8
-            Akt(i,j,k,isalt)=Akt(i,j,k,itemp)
-          END DO
-        END DO
-      END DO
 #elif defined SED_TEST1
       DO k=1,N(ng)-1                         !  vonkar*ustar*z*(1-z/D)
         DO j=JstrR,JendR
@@ -212,7 +200,7 @@
         END DO
       END DO
 #else
-      ANA_VMIX: no values provided for AKV.
+      ana_vmix.h: no values provided for Akv.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
@@ -321,7 +309,7 @@
         END DO
       END DO
 #else
-      ANA_VMIX: no values provided for AKT.
+      ana_vmix.h: no values provided for Akt.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       DO itrc=1,NAT

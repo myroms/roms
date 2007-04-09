@@ -68,6 +68,12 @@
      &                           OCEAN(ng) % v,                         &
      &                           OCEAN(ng) % tl_u,                      &
      &                           OCEAN(ng) % tl_v,                      &
+# ifdef NEARSHORE_MELLOR
+     &                           OCEAN(ng) % u_stokes,                  &
+     &                           OCEAN(ng) % v_stokes,                  &
+     &                           OCEAN(ng) % tl_u_stokes,               &
+     &                           OCEAN(ng) % tl_v_stokes,               &
+# endif
      &                           GRID(ng) % Hz,                         &
      &                           GRID(ng) % tl_Hz,                      &
      &                           GRID(ng) % om_v,                       &
@@ -86,6 +92,10 @@
      &                                 nrhs,                            &
      &                                 u, v,                            &
      &                                 tl_u, tl_v,                      &
+# ifdef NEARSHORE_MELLOR
+     &                                 u_stokes, v_stokes,              &
+     &                                 tl_u_stokes, tl_v_stokes,        &
+# endif
      &                                 Hz, tl_Hz,                       &
      &                                 om_v, on_u,                      &
      &                                 tl_Huon, tl_Hvom)
@@ -113,6 +123,12 @@
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_u_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_v_stokes(LBi:,LBj:,:)
+#  endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
@@ -125,6 +141,12 @@
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_v_stokes(LBi:UBi,LBj:UBj,N(ng))
+#  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
@@ -168,6 +190,18 @@
      &                      tl_u(i,j,k,nrhs)+                           &
      &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
      &                      u(i,j,k,nrhs))
+# ifdef NEARSHORE_MELLOR
+!>          Huon(i,j,k)=Huon(i,j,k)+                                    &
+!>   &                  0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))*                 &
+!>   &                  u_stokes(i,j,k)*on_u(i,j)
+!>
+            tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
+     &                     0.5_r8*on_u(i,j)*                            &
+     &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
+     &                      tl_u_stokes(i,j,k)+                         &
+     &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
+     &                      u_stokes(i,j,k))
+# endif
           END DO
         END DO
         DO j=JV_RANGE
@@ -180,6 +214,18 @@
      &                      tl_v(i,j,k,nrhs)+                           &
      &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
      &                      v(i,j,k,nrhs))
+# ifdef NEARSHORE_MELLOR
+!>          Hvom(i,j,k)=Hvom(i,j,k)+                                    &
+!>   &                  0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))*                 &
+!>   &                  v_stokes(i,j,k)*om_v(i,j)
+!>
+            tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
+     &                     0.5_r8*om_v(i,j)*                            &
+     &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
+     &                      tl_v_stokes(i,j,k)+                         &
+     &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
+     &                      v_stokes(i,j,k))
+# endif
           END DO
         END DO
       END DO

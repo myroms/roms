@@ -8,6 +8,9 @@
 **
 ** Options for One-Dimensional (vertical) Sediment Toy.
 **
+** Application flag:   SED_TOY
+** Input scripts:      ocean_sed_toy.in
+**                     sediment_sed_toy.in 
 */
 
 #undef  BODYFORCE
@@ -35,15 +38,19 @@
 # define ANA_SSFLUX
 # define ANA_STFLUX
 #endif
+#undef  ANA_VMIX
 #undef  ANA_WWAVE
+
 #define UV_LOGDRAG
 #undef  UV_LDRAG
 #undef  UV_QDRAG
+
 #undef  SG_BBL
 #ifdef SG_BBL
 # undef  SG_CALC_ZNOT
 # undef  SG_LOGINT
 #endif
+
 #undef  MB_BBL
 #ifdef MB_BBL
 # undef  MB_CALC_ZNOT
@@ -51,12 +58,13 @@
 # undef  MB_Z0BL
 # undef  MB_Z0RIP
 #endif
+
 #undef SSW_BBL
 #ifdef SSW_BBL
 # define SSW_CALC_ZNOT
 # undef  SSW_LOGINT
 #endif
-#undef ANA_VMIX
+
 #define GLS_MIXING
 #ifdef GLS_MIXING
 # define KANTHA_CLAYSON
@@ -66,6 +74,7 @@
 # undef  ZOS_HSIG
 # undef  TKE_WAVEDISS
 #endif
+
 #define SEDIMENT
 #ifdef SEDIMENT
 # define SUSPLOAD

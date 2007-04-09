@@ -1,5 +1,5 @@
 !
-!  ROMS/TOMS: Atmosphere-Ocean two-way coupling parameters.
+! Multiple model coupling parameters.
 !
 !svn $Id$
 !========================================================= Hernan G. Arango ===
@@ -36,57 +36,60 @@
 !                                                                             !
 !==============================================================================
 !
+! Number of parallel nodes assigned to each model in the coupled system.
+! Their sum must be equal to the total number of processors.
 
-! Assign parallel nodes for atmosphere model.
+  NnodesATM =  1                      ! atmospheric model
+  NnodesWAV =  1                      ! wave model
+  NnodesOCN =  1                      ! ocean model
 
- peATM_frst =  0                               ! first parallel node
- peATM_last =  5                               ! last  parallel node
+! Time interval (seconds) between coupling of models.
 
-! Assign parallel nodes for ocean model.
+ TI_ATM_WAV = 60.0d0                  ! atmosphere-wave coupling interval
+ TI_ATM_OCN = 10.0d0                  ! atmosphere-ocean coupling interval
+ TI_WAV_OCN = 60.0d0                  ! wave-ocean coupling interval
 
- peOCN_frst =  6                               ! first parallel node
- peOCN_last =  7                               ! last  parallel node
+! Coupled model standard input file name.
 
-! Number of atmospheric model (WRF) time-steps.
-
- nATM_steps =  100000
-
-! Number of ocean time-steps between coupling to atmopheric model.
-
- nOCN_steps == 10
-
-! ROMS/TOMS standard input script name.
-
-      Iname = ocean.in
+   ATM_name = atmos.in                ! atmospheric model
+   WAV_name = wave.in                 ! wave model
+   OCN_name = ocean.in                ! ocean model
 
 !
 !  GLOSSARY:
 !  =========
 !
 !------------------------------------------------------------------------------
-! Parallel nodes assigment.  Currently, two-way coupling is only possible
-! in distribute-memory mode.
+! Number of parallel nodes assigned to each model in the coupled system.
 !------------------------------------------------------------------------------
 !
-! peATM_frst    First parallel node assigned to the atmospheric model.
-! peATM_last    Last  parallel node assigned to the atmospheric model.
-! peOCN_frst    First parallel node assigned to the ocean model.
-! peOCN_last    Last  parallel node assigned to the ocean model.
+! NnodesATM     Number of processes allocated to the atmospheric model.
+! NnodesWAV     Number of processes allocated to the wave model.
+! NnodesOCN     Number of processes allocated to the ocean model.
+!
+! The total sum of active coupled model must be equal to the total number
+! of processors. Currently, ROMS/TOMS supports the following modes of
+! coupling with CPP-options (see Drivers/master.F):
+!
+!               AIR_OCEAN      Atmosphere-ocean coupling
+!               WAVES_OCEAN    Waves-ocean coupling
 !
 !------------------------------------------------------------------------------
-! Atmosphere-Ocean coupling parameters.
+! Time interval between coupling of models.
 !------------------------------------------------------------------------------
 !
-!  nATM_steps   Total number of time-step to run the atmospheric model.
+! It is assumed that the time interval is an integer multiple of the
+! individual coupled models in the system.
 !
-!  nOCN_steps   Number of ocean time-steps between  coupling to atmopheric
-!               model.  That is, the ocean model is coupled to the atmosphere
-!               model every "nOCN_steps" time-steps.
+! TI_ATM_WAV    Atmosphere-wave coupling interval (seconds; integer).
+! TI_ATM_OCN    Atmosphere-ocean coupling interval (seconds; integer).
+! TI_WAV_OCN    Wave-ocean coupling interval (seconds).
 !
 !------------------------------------------------------------------------------
-! Input file names (string with a maximum of eighty characters).
+! Coupled models standard input file names.
 !------------------------------------------------------------------------------
 !
-!  Iname        ROMS/TOMS standard input script name.  These script contain
-!               all input parameters read by routine "inp_par".
+!  ATM_name     Atmospheric model standand input.
+!  WAV_name     Wave model standard input.
+!  OCN_name     Ocean model standard input.
 !

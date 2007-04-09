@@ -1674,7 +1674,7 @@
         END DO
         DO j=JV_RANGE
 #  ifdef WESTERN_WALL
-          LapV(Istr-1,j)=gamma2*LapV(Istr,j)
+          LapV(Istr-1,j)=gamma2(ng)*LapV(Istr,j)
 #  else
           LapV(Istr-1,j)=0.0_r8
 #  endif
@@ -1690,7 +1690,7 @@
         END DO
         DO j=JV_RANGE
 #  ifdef EASTERN_WALL
-          LapV(Iend+1,j)=gamma2*LapV(Iend,j)
+          LapV(Iend+1,j)=gamma2(ng)*LapV(Iend,j)
 #  else
           LapV(Iend+1,j)=0.0_r8
 #  endif
@@ -1701,7 +1701,7 @@
       IF (SOUTHERN_EDGE) THEN
         DO i=IU_RANGE
 #  ifdef SOUTHERN_WALL
-          LapU(i,Jstr-1)=gamma2*LapU(i,Jstr)
+          LapU(i,Jstr-1)=gamma2(ng)*LapU(i,Jstr)
 #  else
           LapU(i,Jstr-1)=0.0_r8
 #  endif
@@ -1717,7 +1717,7 @@
       IF (NORTHERN_EDGE) THEN
         DO i=IU_RANGE
 #  ifdef NORTHERN_WALL
-          LapU(i,Jend+1)=gamma2*LapU(i,Jend)
+          LapU(i,Jend+1)=gamma2(ng)*LapU(i,Jend)
 #  else
           LapU(i,Jend+1)=0.0_r8
 #  endif
@@ -1826,23 +1826,27 @@
 !
       DO j=Jstr,Jend
         DO i=IstrU,Iend
-          fac=rustr2d(i,j)*om_u(i,j)*on_u(i,j)
+          fac1=rustr2d(i,j)*om_u(i,j)*on_u(i,j)
+          fac2=rulag2d(i,j)
 # ifndef SOLVE3D
-          rhs_ubar(i,j)=rhs_ubar(i,j)-fac
+          rhs_ubar(i,j)=rhs_ubar(i,j)-fac1-fac2
 # endif
 # ifdef DIAGNOSTICS_UV
-          DiaU2rhs(i,j,M2hrad)=-fac
+          DiaU2rhs(i,j,M2hrad)=-fac1
+!!        DiaU2rhs(i,j,M2srat)=-fac2
 # endif
         END DO
       END DO
       DO j=JstrV,Jend
         DO i=Istr,Iend
-          fac=rvstr2d(i,j)*om_v(i,j)*on_v(i,j)
+          fac1=rvstr2d(i,j)*om_v(i,j)*on_v(i,j)
+          fac2=rvlag2d(i,j)
 # ifndef SOLVE3D
-          rhs_vbar(i,j)=rhs_vbar(i,j)-fac
+          rhs_vbar(i,j)=rhs_vbar(i,j)-fac1-fac2
 # endif
 # ifdef DIAGNOSTICS_UV
-          DiaV2rhs(i,j,M2hrad)=-fac
+          DiaV2rhs(i,j,M2hrad)=-fac1
+!!        DiaV2rhs(i,j,M2srat)=-fac2
 # endif
         END DO
       END DO
@@ -1933,7 +1937,7 @@
 !  "rhs_ubar" and "rhs_vbar" during all subsequent time steps.
 !
       IF (FIRST_2D_STEP.and.PREDICTOR_2D_STEP(ng)) THEN
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           DO j=Jstr,Jend
             DO i=IstrU,Iend
               rufrc(i,j)=rufrc(i,j)-rhs_ubar(i,j)
@@ -2026,7 +2030,7 @@
 # endif
             END DO
           END DO
-        ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
           DO j=Jstr,Jend
             DO i=IstrU,Iend
               rufrc(i,j)=rufrc(i,j)-rhs_ubar(i,j)
@@ -2343,29 +2347,6 @@
           rhs_vbar(i,j)=rhs_vbar(i,j)+fac
 # ifdef DIAGNOSTICS_UV
           DiaV2rhs(i,j,M2sstr)=fac
-# endif
-        END DO
-      END DO
-#endif
-#ifdef NEARSHORE_MELLOR
-!
-!-----------------------------------------------------------------------
-!  Add in stokes tendency term.
-!-----------------------------------------------------------------------
-!
-      DO j=Jstr,Jend
-        DO i=IstrU,Iend
-          rhs_ubar(i,j)=rhs_ubar(i,j)-rulag2d(i,j)
-# ifdef DIAGNOSTICS_UV
-!!          DiaU2rhs(i,j,M2hrad)=-fac
-# endif
-        END DO
-      END DO
-      DO j=JstrV,Jend
-        DO i=Istr,Iend
-          rhs_vbar(i,j)=rhs_vbar(i,j)-rvlag2d(i,j)
-# ifdef DIAGNOSTICS_UV
-!!          DiaV2rhs(i,j,M2hrad)=-fac
 # endif
         END DO
       END DO

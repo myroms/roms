@@ -6,39 +6,62 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 **
-** Options for North Pacific Application.
+** Options for River Plume example by Hyatt and Signell described at
+** http://smig.usgs.gov/SMIG/features_0300/plumes_inline.html
 **
+** Application flag:   RIVERPLUME2
+** Input script:       ocean_riverplume2.in
 */
 
 #define UV_ADV
 #define UV_COR
 #define UV_QDRAG
+#define UV_PSOURCE
 #define DJ_GRADPS
 #define TS_A4HADVECTION
 #define TS_A4VADVECTION
-#define TS_DIF4
+#define TS_DIF2
 #define MIX_GEO_TS
-#define DIFF_GRID
+#define TS_PSOURCE
 #define NONLIN_EOS
 #define SALINITY
-#define SOLVE3D
-#define CURVGRID
 #define MASKING
+#define SOLVE3D
 #define SPLINES
-#define QCORRECTION
 #define AVERAGES
-#define EASTERN_WALL
+#define AVERAGES_AKV
+#define AVERAGES_AKT
+#define AVERAGES_AKS
+
+#undef  NS_PERIODIC
+#define SOUTH_FSCHAPMAN
+#define SOUTH_M2GRADIENT
+#define SOUTH_M3GRADIENT
+#define SOUTH_TGRADIENT
+#define NORTH_FSCHAPMAN
+#define NORTH_M2GRADIENT
+#define NORTH_M3GRADIENT
+#define NORTH_TGRADIENT
 #define WESTERN_WALL
-#define SOUTHERN_WALL
-#define NORTHERN_WALL
+#define EASTERN_WALL
+
+#undef  MY25_MIXING
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
 # define LMD_CONVEC
 # define LMD_SKPP
+# define LMD_BKPP
 # define LMD_NONLOCAL
 #endif
-#define TCLIMATOLOGY
-#define TCLM_NUDGING
+
+#define ANA_GRID
+#define ANA_INITIAL
+#define ANA_PSOURCE
+#define ANA_SMFLUX
+#define ANA_SRFLUX
+#define ANA_SSFLUX
+#define ANA_STFLUX
 #define ANA_BSFLUX
 #define ANA_BTFLUX
+

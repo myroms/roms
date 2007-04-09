@@ -82,7 +82,7 @@
           sss(i,j)=???
         END DO
       END DO
-      ANA_SST: no values provided for SST.
+      ana_sss.h: no values provided for sss.
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &

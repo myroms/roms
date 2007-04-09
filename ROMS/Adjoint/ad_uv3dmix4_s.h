@@ -329,7 +329,7 @@
           END DO
           DO j=JV_RANGE
 # ifdef WESTERN_WALL
-            LapV(Istr-1,j)=gamma2*LapV(Istr,j)
+            LapV(Istr-1,j)=gamma2(ng)*LapV(Istr,j)
 # else
             LapV(Istr-1,j)=0.0_r8
 # endif
@@ -345,7 +345,7 @@
           END DO
           DO j=JV_RANGE
 # ifdef EASTERN_WALL
-            LapV(Iend+1,j)=gamma2*LapV(Iend,j)
+            LapV(Iend+1,j)=gamma2(ng)*LapV(Iend,j)
 # else
             LapV(Iend+1,j)=0.0_r8
 # endif
@@ -356,7 +356,7 @@
         IF (SOUTHERN_EDGE) THEN
           DO i=IU_RANGE
 # ifdef SOUTHERN_WALL
-            LapU(i,Jstr-1)=gamma2*LapU(i,Jstr)
+            LapU(i,Jstr-1)=gamma2(ng)*LapU(i,Jstr)
 # else
             LapU(i,Jstr-1)=0.0_r8
 # endif
@@ -372,7 +372,7 @@
         IF (NORTHERN_EDGE) THEN
           DO i=IU_RANGE
 # ifdef NORTHERN_WALL
-            LapU(i,Jend+1)=gamma2*LapU(i,Jend)
+            LapU(i,Jend+1)=gamma2(ng)*LapU(i,Jend)
 # else
             LapU(i,Jend+1)=0.0_r8
 # endif
@@ -679,9 +679,9 @@
           END DO
           DO i=IU_RANGE
 #  ifdef NORTHERN_WALL
-!>          tl_LapU(i,Jend+1)=gamma2*tl_LapU(i,Jend)
+!>          tl_LapU(i,Jend+1)=gamma2(ng)*tl_LapU(i,Jend)
 !>
-            ad_LapU(i,Jend)=ad_LapU(i,Jend)+gamma2*ad_LapU(i,Jend+1)
+            ad_LapU(i,Jend)=ad_LapU(i,Jend)+gamma2(ng)*ad_LapU(i,Jend+1)
             ad_LapU(i,Jend+1)=0.0_r8
 #  else
 !>          tl_LapU(i,Jend+1)=0.0_r8
@@ -705,9 +705,9 @@
           END DO
           DO i=IU_RANGE
 #  ifdef SOUTHERN_WALL
-!>          tl_LapU(i,Jstr-1)=gamma2*tl_LapU(i,Jstr)
+!>          tl_LapU(i,Jstr-1)=gamma2(ng)*tl_LapU(i,Jstr)
 !>
-            ad_LapU(i,Jstr)=ad_LapU(i,Jstr)+gamma2*ad_LapU(i,Jstr-1)
+            ad_LapU(i,Jstr)=ad_LapU(i,Jstr)+gamma2(ng)*ad_LapU(i,Jstr-1)
             ad_LapU(i,Jstr-1)=0.0_r8
 #  else
 !>          tl_LapU(i,Jstr-1)=0.0_r8
@@ -721,9 +721,9 @@
         IF (EASTERN_EDGE) THEN
           DO j=JV_RANGE
 #  ifdef EASTERN_WALL
-!>          tl_LapV(Iend+1,j)=gamma2*tl_LapV(Iend,j)
+!>          tl_LapV(Iend+1,j)=gamma2(ng)*tl_LapV(Iend,j)
 !>
-            ad_LapV(Iend,j)=ad_LapV(Iend,j)+gamma2*ad_LapV(Iend+1,j)
+            ad_LapV(Iend,j)=ad_LapV(Iend,j)+gamma2(ng)*ad_LapV(Iend+1,j)
             ad_LapV(Iend+1,j)=0.0_r8
 #  else
 !>          tl_LapV(Iend+1,j)=0.0_r8
@@ -747,9 +747,9 @@
         IF (WESTERN_EDGE) THEN
           DO j=JV_RANGE
 #  ifdef WESTERN_WALL
-!>          tl_LapV(Istr-1,j)=gamma2*tl_LapV(Istr,j)
+!>          tl_LapV(Istr-1,j)=gamma2(ng)*tl_LapV(Istr,j)
 !>
-            ad_LapV(Istr,j)=ad_LapV(Istr,j)+gamma2*ad_LapV(Istr-1,j)
+            ad_LapV(Istr,j)=ad_LapV(Istr,j)+gamma2(ng)*ad_LapV(Istr-1,j)
             ad_LapV(Istr-1,j)=0.0_r8
 #  else
 !>          tl_LapV(Istr-1,j)=0.0_r8

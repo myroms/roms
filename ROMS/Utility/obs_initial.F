@@ -223,7 +223,7 @@
 !
       IF (backward) THEN
         Ifirst=0
-        tend=(time(ng)-(ntstart-1)*dt(ng))*sec2day
+        tend=(time(ng)-(ntstart(ng)-1)*dt(ng))*sec2day
         DO i=1,Nsurvey(ng)
           IF ((tend.le.FOURDVAR(ng)%SurveyTime(i)).and.                 &
      &        (FOURDVAR(ng)%SurveyTime(i).le.tdays(ng))) THEN
@@ -236,7 +236,7 @@
         END IF
       ELSE
         Ifirst=Nsurvey(ng)
-        tend=(time(ng)+ntend*dt(ng))*sec2day
+        tend=(time(ng)+ntend(ng)*dt(ng))*sec2day
         DO i=1,Nsurvey(ng)
           IF ((tdays(ng).le.FOURDVAR(ng)%SurveyTime(i)).and.            &
      &        (FOURDVAR(ng)%SurveyTime(i).le.tend)) THEN

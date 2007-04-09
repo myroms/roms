@@ -58,7 +58,7 @@
 !
       IF (LdefTLM(ng)) THEN
         IF (ndefTLM(ng).gt.0) THEN
-          IF (idefTLM(ng).lt.0) idefTLM(ng)=ntstart-1
+          IF (idefTLM(ng).lt.0) idefTLM(ng)=ntstart(ng)-1
           IF ((iic(ng)-1).eq.idefTLM(ng)) THEN
             idefTLM(ng)=idefTLM(ng)+ndefTLM(ng)
             NrecTLM(ng)=0
@@ -69,7 +69,7 @@
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncTLMid(ng).ne.-1) status=nf_close(ncTLMid(ng))
-            IF ((iic(ng).eq.ntstart).and.                               &
+            IF ((iic(ng).eq.ntstart(ng)).and.                               &
      &          (MOD(iic(ng)-1,ndefTLM(ng)).gt.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -81,7 +81,7 @@
 !!          LdefTLM(ng)=.FALSE.
           END IF
         ELSE
-          IF (iic(ng).eq.ntstart) THEN
+          IF (iic(ng).eq.ntstart(ng)) THEN
             CALL tl_def_his (ng, ldefout(ng))
             IF (exit_flag.ne.NoError) RETURN
             LwrtTLM(ng)=.TRUE.
@@ -95,14 +95,14 @@
 !
       IF (LwrtTLM(ng)) THEN
         IF (LwrtPER(ng)) THEN
-          IF ((iic(ng).gt.ntstart).and.                                 &
+          IF ((iic(ng).gt.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nTLM(ng)).eq.0)) THEN
             CALL tl_wrt_his (ng)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         ELSE
           IF ((MOD(iic(ng)-1,nTLM(ng)).eq.0).and.                       &
-     &        ((nrrec.eq.0).or.(iic(ng).ne.ntstart))) THEN
+     &        ((nrrec.eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
             CALL tl_wrt_his (ng)
             IF (exit_flag.ne.NoError) RETURN
           END IF

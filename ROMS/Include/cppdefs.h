@@ -92,7 +92,7 @@
 ** LONGWAVE_OUT        use if computing ougoing longwave radiation           **
 ** EMINUSP             use if computing E-P                                  **
 **                                                                           **
-** OPTIONS forw ave roughness formulation in bulk fluxes:                    **
+** OPTIONS for wave roughness formulation in bulk fluxes:                    **
 **                                                                           **
 ** COARE_TAYLOR_YELLAND  use Taylor and Yelland (2001) relation              **
 ** COARE_OOST            use Oost et al (2002) relation                      **
@@ -475,6 +475,7 @@
 ** FORCING_SV          use if forcing singular vectors driver                **
 ** FT_EIGENMODES       use if finite time eingenmodes driver: normal modes   **
 ** GRADIENT_CHECK      use if tangent linear and adjoint codes gradient test **
+** INNER_PRODUCT       use if tangent linear and adjoint inner product check **
 ** IS4DVAR             use if incremental 4DVar data assimilation            **
 ** IS4DVAR_OLD         use if old incremental 4DVar data assimilation        **
 ** OPT_OBSERVATIONS    use if optimal observations driver                    **
@@ -601,7 +602,6 @@
 ** FLT_TEST            Float Tracking Example                                **
 ** GRAV_ADJ            Graviational Adjustment Example                       **
 ** INLET_TEST          Test Inlet Application                                **
-** INNER_PRODUCT       Tangent/Adjoint State Matrix Inner Product Test       **
 ** KELVIN              Kelvin wave test                                      **
 ** LAB_CANYON          Lab Canyon, Polar Coordinates Example                 **
 ** LAKE_SIGNELL        Lake Signell Sediment Test Case                       **
@@ -634,11 +634,11 @@
 ** CBLAST              CBLAST application                                    **
 ** EAC_4               East Australia Current, 1/4 Resolution                **
 ** EAC_8               East Australia Current, 1/8 Resolution                **
-** IAS                 Intra-Americas Sea Application                        **
+** IAS                 Intra-Americas Sea Application, 20 km Resolution      **
+** IAS_40              Intra-Americas Sea Application, 40 km Resolution      **
 ** NATL                High resolution North Atlantic Application            **
 ** NENA                North East North America Application                  **
 ** NJ_BIGHT            New Jersey Bight Application                          **
-** NPACIFIC            North Pacific Application                             **
 ** SCB                 Southern California Bight                             **
 ** SW06_COARSE         Shallow Water 2006 Experiment, Coarse Grid            **
 ** SW06_FINE           Shallow Water 2006 Experiment, Fine Grid              **

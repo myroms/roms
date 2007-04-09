@@ -53,12 +53,35 @@
 #    ROMS_APPLICATION := UPWELLING
 #
 #  Notice that this makefile will include the associated application header
-#  file, which is located in the "ROMS/Include" directory. The application
-#  header file name is the lowercase value of ROMS_APPLICATION with the
-#  .h extension.  For example, the upwelling application includes the
+#  file, which is located either in the "ROMS/Include" or MY_HEADER_DIR
+#  directory.  This makefile is designed to search in both directories.
+#  The only constrain is that the application CPP option must be unique
+#  and header file name is the lowercase value of ROMS_APPLICATION with
+#  the .h extension. For example, the upwelling application includes the
 #  "upwelling.h" header file.  
 
 ROMS_APPLICATION := UPWELLING
+
+#  If application header files is not located in the "ROMS/Include",
+#  provide alternate directory.
+
+MY_HEADER_DIR :=
+
+#  Activate option below to include user analytical expressions from
+#  the provided templates in "User/Functionals" or MY_ANALYTICAL_DIR
+#  directory instead of official distributed expressions in
+#  "ROMS/Functionals". Notice that the user have the choice of 
+#  specifying any other directory for these expressions in macro
+#  MY_ANALYTICAL_DIR.
+
+MY_ANALYTICAL := 
+
+#  Provide directory path for your own analytical expressions. Notice
+#  that a template is provided in "User/Functionals".
+
+ifdef MY_ANALYTICAL
+  MY_ANALYTICAL_DIR :=
+endif
 
 #  Set number of ROMS nested and/or composed grid.  Currently, only
 #  one grid is supported.  This option will be available in the near
@@ -68,7 +91,7 @@ ROMS_APPLICATION := UPWELLING
 
 #  Activate debugging compiler options:
 
-       DEBUG :=
+       DEBUG := on
 
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
@@ -92,7 +115,7 @@ ROMS_APPLICATION := UPWELLING
 
 #  If applicable, activate 64-bit compilation:
 
-       LARGE := on
+       LARGE :=
 
 #  If applicable, activate Coupling to SWAN wave model.
 
@@ -108,7 +131,7 @@ ROMS_APPLICATION := UPWELLING
 #
 #     AIX:                    xlf
 #     ALPHA:                  f90
-#     CYGWIN:                 g95, df
+#     CYGWIN:                 g95, df, ifort
 #     Darwin:                 f90, xlf
 #     IRIX:                   f90
 #     Darwin:                 f90, xlf
@@ -182,6 +205,8 @@ CPU := $(shell uname -m | sed 's/[\/ ]/-/g')
 
 SVNREV := $(shell svnversion -n .)
 
+ROOTDIR := $(shell pwd)
+
 COMPILERS := ./Compilers
 
 ifndef FORT
@@ -203,11 +228,21 @@ CPPFLAGS += -D$(shell echo ${CPU} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 
 
+CPPFLAGS += -D'ROOT_DIR="$(ROOTDIR)"'
 ifdef ROMS_APPLICATION
   HEADER := $(addsuffix .h,$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
   CPPFLAGS += -D$(ROMS_APPLICATION)
   CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
   CPPFLAGS += -DNestedGrids=$(NestedGrids)
+endif
+
+ifndef MY_ANALYTICAL
+  MY_ANALYTICAL_DIR := ./ROMS/Functionals
+endif
+CPPFLAGS += -D'ANALYTICAL_DIR="$(MY_ANALYTICAL_DIR)"'
+
+ifdef MY_ANALYTICAL
+  CPPFLAGS += -D'MY_ANALYTICAL="$(MY_ANALYTICAL)"'
 endif
 
 ifdef SVNREV
@@ -244,6 +279,14 @@ includes  :=	ROMS/Include \
 		ROMS/Utility \
 		ROMS/Drivers
 
+ifdef MY_ANALYTICAL
+ includes +=	$(MY_ANALYTICAL_DIR)
+endif
+
+ifdef MY_HEADER_DIR
+ includes +=	$(MY_HEADER_DIR)
+endif
+
 ifdef SWAN_COUPLE
  modules  +=	SWAN/Src
  includes +=	SWAN/Src
@@ -260,6 +303,12 @@ include $(addsuffix /Module.mk,$(modules))
 MDEPFLAGS += $(patsubst %,-I %,$(includes))
 
 CPPFLAGS += $(patsubst %,-I%,$(includes))
+
+ifdef MY_HEADER_DIR
+  CPPFLAGS += -D'HEADER_DIR="$(MY_HEADER_DIR)"'
+else
+  CPPFLAGS += -D'HEADER_DIR="./ROMS/Include"'
+endif
 
 #--------------------------------------------------------------------------
 #  Add profiling.

@@ -196,7 +196,7 @@
       LworkL=3*NCV*NCV+6*NCV
 # endif
 # ifdef SO_SEMI
-      Nsemi=1+ntimes/nADJ(ng)
+      Nsemi=1+ntimes(ng)/nADJ(ng)
 # endif
 
       IF (ng.eq.1) THEN

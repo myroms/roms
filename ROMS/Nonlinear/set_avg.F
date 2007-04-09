@@ -65,6 +65,17 @@
      &                   OCEAN(ng) % wvel,                              &
      &                   OCEAN(ng) % t,                                 &
      &                   OCEAN(ng) % rho,                               &
+#  ifdef AVERAGES_NEARSHORE
+     &                   OCEAN(ng) % u_stokes,                          &
+     &                   OCEAN(ng) % v_stokes,                          &
+     &                   MIXING(ng) % rustr3d,                          &
+     &                   MIXING(ng) % rvstr3d,                          &
+     &                   MIXING(ng) % Sxx,                              &
+     &                   MIXING(ng) % Sxy,                              &
+     &                   MIXING(ng) % Syy,                              &
+     &                   MIXING(ng) % Szx,                              &
+     &                   MIXING(ng) % Szy,                              &
+#  endif
 #  ifdef LMD_SKPP
      &                   MIXING(ng) % hsbl,                             &
 #  endif
@@ -100,6 +111,15 @@
      &                   OCEAN(ng) % ubar,                              &
      &                   OCEAN(ng) % vbar,                              &
      &                   OCEAN(ng) % zeta,                              &
+# ifdef AVERAGES_NEARSHORE
+     &                   OCEAN(ng) % ubar_stokes,                       &
+     &                   OCEAN(ng) % vbar_stokes,                       &
+     &                   MIXING(ng) % rustr2d,                          &
+     &                   MIXING(ng) % rvstr2d,                          &
+     &                   MIXING(ng) % Sxx_bar,                          &
+     &                   MIXING(ng) % Sxy_bar,                          &
+     &                   MIXING(ng) % Syy_bar,                          &
+# endif
 # ifdef SOLVE3D
      &                   AVERAGE(ng) % avgu3d,                          &
      &                   AVERAGE(ng) % avgv3d,                          &
@@ -107,6 +127,17 @@
      &                   AVERAGE(ng) % avgwvel,                         &
      &                   AVERAGE(ng) % avgt,                            &
      &                   AVERAGE(ng) % avgrho,                          &
+#  ifdef AVERAGES_NEARSHORE
+     &                   AVERAGE(ng) % avgu3Sd,                         &
+     &                   AVERAGE(ng) % avgv3Sd,                         &
+     &                   AVERAGE(ng) % avgu3RS,                         &
+     &                   AVERAGE(ng) % avgv3RS,                         &
+     &                   AVERAGE(ng) % avgSxx3d,                        &
+     &                   AVERAGE(ng) % avgSxy3d,                        &
+     &                   AVERAGE(ng) % avgSyy3d,                        &
+     &                   AVERAGE(ng) % avgSzx3d,                        &
+     &                   AVERAGE(ng) % avgSzy3d,                        &
+#  endif
 #  ifdef LMD_SKPP
      &                   AVERAGE(ng) % avghsbl,                         &
 #  endif
@@ -160,6 +191,15 @@
      &                   AVERAGE(ng) % avgV2,                           &
      &                   AVERAGE(ng) % avgZZ,                           &
 # endif
+# ifdef AVERAGES_NEARSHORE
+     &                   AVERAGE(ng) % avgu2Sd,                         &
+     &                   AVERAGE(ng) % avgv2Sd,                         &
+     &                   AVERAGE(ng) % avgu2RS,                         &
+     &                   AVERAGE(ng) % avgv2RS,                         &
+     &                   AVERAGE(ng) % avgSxx2d,                        &
+     &                   AVERAGE(ng) % avgSxy2d,                        &
+     &                   AVERAGE(ng) % avgSyy2d,                        &
+# endif
      &                   AVERAGE(ng) % avgu2d,                          &
      &                   AVERAGE(ng) % avgv2d,                          &
      &                   AVERAGE(ng) % avgzeta)
@@ -180,7 +220,13 @@
 #  ifdef AVERAGES_QUADRATIC
      &                         Huon, Hvom,                              &
 #  endif
-     &                         u, v, W, wvel, t, rho,                   &
+     &                         u, v,                                    &
+     &                         W, wvel, t, rho,                         &
+#  ifdef AVERAGES_NEARSHORE
+     &                         u_stokes, v_stokes,                      &
+     &                         rustr3d, rvstr3d,                        &
+     &                         Sxx, Sxy, Syy, Szx, Szy,                 &
+#  endif
 #  ifdef LMD_SKPP
      &                         hsbl,                                    &
 #  endif
@@ -209,10 +255,23 @@
 # ifdef AVERAGES_FLUXES
      &                         sustr, svstr,                            &
 # endif
-     &                         ubar, vbar, zeta,                        &
+     &                         ubar, vbar,                              &
+     &                         zeta,                                    &
+#  ifdef AVERAGES_NEARSHORE
+     &                         ubar_stokes, vbar_stokes,                &
+     &                         rustr2d, rvstr2d,                        &
+     &                         Sxx_bar, Sxy_bar, Syy_bar,               &
+#  endif
 # ifdef SOLVE3D
-     &                         avgu3d, avgv3d, avgw3d, avgwvel,         &
+     &                         avgu3d, avgv3d,                          &
+     &                         avgw3d, avgwvel,                         &
      &                         avgt, avgrho,                            &
+#  ifdef AVERAGES_NEARSHORE
+     &                         avgu3Sd, avgv3Sd,                        &
+     &                         avgu3RS, avgv3RS,                        &
+     &                         avgSxx3d, avgSxy3d, avgSyy3d,            &
+     &                         avgSzx3d, avgSzy3d,                      &
+#  endif
 #  ifdef LMD_SKPP
      &                         avghsbl,                                 &
 #  endif
@@ -253,7 +312,13 @@
 #  endif     
      &                         avgU2, avgV2, avgZZ,                     &
 # endif
-     &                         avgu2d, avgv2d, avgzeta)
+# ifdef AVERAGES_NEARSHORE
+     &                         avgu2Sd, avgv2Sd,                        &
+     &                         avgu2RS, avgv2RS,                        &
+     &                         avgSxx2d, avgSxy2d, avgSyy2d,            &
+# endif
+     &                         avgu2d, avgv2d,                          &
+     &                         avgzeta)
 !***********************************************************************
 !
       USE mod_param
@@ -284,6 +349,17 @@
       real(r8), intent(in) :: wvel(LBi:,LBj:,0:)
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
+#   ifdef AVERAGES_NEARSHORE
+      real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: rustr3d(LBi:,LBj:,:)
+      real(r8), intent(in) :: rvstr3d(LBi:,LBj:,:)
+      real(r8), intent(in) :: Sxx(LBi:,LBj:,:)
+      real(r8), intent(in) :: Sxy(LBi:,LBj:,:)
+      real(r8), intent(in) :: Syy(LBi:,LBj:,:)
+      real(r8), intent(in) :: Szx(LBi:,LBj:,:)
+      real(r8), intent(in) :: Szy(LBi:,LBj:,:)
+#   endif
 #   ifdef LMD_SKPP
       real(r8), intent(in) :: hsbl(LBi:,LBj:)
 #   endif
@@ -319,6 +395,15 @@
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+#  ifdef AVERAGES_NEARSHORE
+      real(r8), intent(in) :: ubar_stokes(LBi:,LBj:)
+      real(r8), intent(in) :: vbar_stokes(LBi:,LBj:)
+      real(r8), intent(in) :: rustr2d(LBi:,LBj:)
+      real(r8), intent(in) :: rvstr2d(LBi:,LBj:)
+      real(r8), intent(in) :: Sxx_bar(LBi:,LBj:)
+      real(r8), intent(in) :: Sxy_bar(LBi:,LBj:)
+      real(r8), intent(in) :: Syy_bar(LBi:,LBj:)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: avgu3d(LBi:,LBj:,:)
       real(r8), intent(inout) :: avgv3d(LBi:,LBj:,:)
@@ -326,6 +411,17 @@
       real(r8), intent(inout) :: avgwvel(LBi:,LBj:,0:)
       real(r8), intent(inout) :: avgt(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: avgrho(LBi:,LBj:,:)
+#   ifdef AVERAGES_NEARSHORE
+      real(r8), intent(inout) :: avgu3Sd(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgv3Sd(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgu3RS(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgv3RS(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgSxx3d(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgSxy3d(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgSyy3d(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgSzx3d(LBi:,LBj:,:)
+      real(r8), intent(inout) :: avgSzy3d(LBi:,LBj:,:)
+#   endif
 #   ifdef LMD_SKPP
       real(r8), intent(inout) :: avghsbl(LBi:,LBj:)
 #   endif
@@ -379,6 +475,15 @@
       real(r8), intent(inout) :: avgV2(LBi:,LBj:)
       real(r8), intent(inout) :: avgZZ(LBi:,LBj:)
 #  endif
+#  ifdef AVERAGES_NEARSHORE
+      real(r8), intent(inout) :: avgu2Sd(LBi:,LBj:)
+      real(r8), intent(inout) :: avgv2Sd(LBi:,LBj:)
+      real(r8), intent(inout) :: avgu2RS(LBi:,LBj:)
+      real(r8), intent(inout) :: avgv2RS(LBi:,LBj:)
+      real(r8), intent(inout) :: avgSxx2d(LBi:,LBj:)
+      real(r8), intent(inout) :: avgSxy2d(LBi:,LBj:)
+      real(r8), intent(inout) :: avgSyy2d(LBi:,LBj:)
+#  endif
       real(r8), intent(inout) :: avgu2d(LBi:,LBj:)
       real(r8), intent(inout) :: avgv2d(LBi:,LBj:)
       real(r8), intent(inout) :: avgzeta(LBi:,LBj:)
@@ -398,6 +503,17 @@
       real(r8), intent(in) :: wvel(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
+#   ifdef AVERAGES_NEARSHORE
+      real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: rustr3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: rvstr3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Sxx(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Sxy(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Syy(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Szx(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Szy(LBi:UBi,LBj:UBj,N(ng))
+#   endif
 #   ifdef LMD_SKPP
       real(r8), intent(in) :: hsbl(LBi:UBi,LBj:UBj)
 #   endif
@@ -432,6 +548,10 @@
 #  endif
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+#   ifdef AVERAGES_NEARSHORE
+      real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
+#   endif
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: avgu3d(LBi:UBi,LBj:UBj,N(ng))
@@ -440,6 +560,17 @@
       real(r8), intent(inout) :: avgwvel(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(inout) :: avgt(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(inout) :: avgrho(LBi:UBi,LBj:UBj,N(ng))
+#   ifdef AVERAGES_NEARSHORE
+      real(r8), intent(inout) :: avgu3Sd(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgv3Sd(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgu3RS(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgv3RS(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgSxx3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgSxy3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgSyy3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgSzx3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: avgSzy3d(LBi:UBi,LBj:UBj,N(ng))
+#   endif
 #   ifdef LMD_SKPP
       real(r8), intent(inout) :: avghsbl(LBi:UBi,LBj:UBj)
 #   endif
@@ -493,6 +624,15 @@
       real(r8), intent(inout) :: avgV2(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: avgZZ(LBi:UBi,LBj:UBj)
 #  endif
+#  ifdef AVERAGES_NEARSHORE
+      real(r8), intent(inout) :: avgu2Sd(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgv2Sd(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgu2RS(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgv2RS(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgSxx2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgSxy2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgSyy2d(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(inout) :: avgu2d(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: avgv2d(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: avgzeta(LBi:UBi,LBj:UBj)
@@ -515,7 +655,7 @@
 !
       IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nAVG(ng)).eq.1)).or.                          &
-     &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart))) THEN
+     &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
 !
 !  Initialize 2D fields.
 !
@@ -524,6 +664,15 @@
             avgzeta(i,j)=zeta(i,j,Kout)
             avgu2d (i,j)=ubar(i,j,Kout)
             avgv2d (i,j)=vbar(i,j,Kout)
+# ifdef AVERAGES_NEARSHORE
+            avgu2Sd(i,j)=ubar_stokes(i,j)
+            avgv2Sd(i,j)=vbar_stokes(i,j)
+            avgu2RS(i,j)=rustr2d(i,j)
+            avgv2RS(i,j)=rvstr2d(i,j)
+            avgSxx2d(i,j)=Sxx_bar(i,j)
+            avgSxy2d(i,j)=Sxy_bar(i,j)
+            avgSyy2d(i,j)=Syy_bar(i,j)
+# endif
 # ifdef AVERAGES_QUADRATIC
             avgZZ(i,j)=zeta(i,j,Kout)*zeta(i,j,Kout)
             avgU2(i,j)=ubar(i,j,Kout)*ubar(i,j,Kout)
@@ -570,6 +719,17 @@
               avgu3d(i,j,k)=u(i,j,k,Nout)
               avgv3d(i,j,k)=v(i,j,k,Nout)
               avgrho(i,j,k)=rho(i,j,k)
+#  ifdef AVERAGES_NEARSHORE
+              avgu3Sd(i,j,k)=u_stokes(i,j,k)
+              avgv3Sd(i,j,k)=v_stokes(i,j,k)
+              avgu3RS(i,j,k)=rustr3d(i,j,k)
+              avgv3RS(i,j,k)=rvstr3d(i,j,k)
+              avgSxx3d(i,j,k)=Sxx(i,j,k)
+              avgSxy3d(i,j,k)=Sxy(i,j,k)
+              avgSyy3d(i,j,k)=Syy(i,j,k)
+              avgSzx3d(i,j,k)=Szx(i,j,k)
+              avgSzy3d(i,j,k)=Szy(i,j,k)
+#  endif
 #  ifdef AVERAGES_QUADRATIC
               avgHuon(i,j,k)=Huon(i,j,k)
               avgHvom(i,j,k)=Hvom(i,j,k)
@@ -666,6 +826,15 @@
             avgzeta(i,j)=avgzeta(i,j)+zeta(i,j,Kout)
             avgu2d (i,j)=avgu2d (i,j)+ubar(i,j,Kout)
             avgv2d (i,j)=avgv2d (i,j)+vbar(i,j,Kout)
+# ifdef AVERAGES_NEARSHORE
+            avgu2Sd(i,j)=avgu2Sd(i,j)+ubar_stokes(i,j)
+            avgv2Sd(i,j)=avgv2Sd(i,j)+vbar_stokes(i,j)
+            avgu2RS(i,j)=avgu2RS(i,j)+rustr2d(i,j)
+            avgv2RS(i,j)=avgv2RS(i,j)+rvstr2d(i,j)
+            avgSxx2d(i,j)=avgSxx2d(i,j)+Sxx_bar(i,j)
+            avgSxy2d(i,j)=avgSxy2d(i,j)+Sxy_bar(i,j)
+            avgSyy2d(i,j)=avgSyy2d(i,j)+Syy_bar(i,j)
+# endif
 # ifdef AVERAGES_QUADRATIC
             avgZZ(i,j)=avgZZ(i,j)+zeta(i,j,Kout)*zeta(i,j,Kout)
             avgU2(i,j)=avgU2(i,j)+ubar(i,j,Kout)*ubar(i,j,Kout)
@@ -712,6 +881,17 @@
               avgu3d(i,j,k)=avgu3d(i,j,k)+u(i,j,k,Nout)
               avgv3d(i,j,k)=avgv3d(i,j,k)+v(i,j,k,Nout)
               avgrho(i,j,k)=avgrho(i,j,k)+rho(i,j,k)
+#  ifdef AVERAGES_NEARSHORE
+              avgu3Sd(i,j,k)=avgu3Sd(i,j,k)+u_stokes(i,j,k)
+              avgv3Sd(i,j,k)=avgv3Sd(i,j,k)+v_stokes(i,j,k)
+              avgu3RS(i,j,k)=avgu3RS(i,j,k)+rustr3d(i,j,k)
+              avgv3RS(i,j,k)=avgv3RS(i,j,k)+rvstr3d(i,j,k)
+              avgSxx3d(i,j,k)=avgSxx3d(i,j,k)+Sxx(i,j,k)
+              avgSxy3d(i,j,k)=avgSxy3d(i,j,k)+Sxy(i,j,k)
+              avgSyy3d(i,j,k)=avgSyy3d(i,j,k)+Syy(i,j,k)
+              avgSzx3d(i,j,k)=avgSzx3d(i,j,k)+Szx(i,j,k)
+              avgSzy3d(i,j,k)=avgSzy3d(i,j,k)+Szy(i,j,k)
+#  endif
 #  ifdef AVERAGES_QUADRATIC
               avgHuon(i,j,k)=avgHuon(i,j,k)+Huon(i,j,k)
               avgHvom(i,j,k)=avgHvom(i,j,k)+Hvom(i,j,k)
@@ -808,7 +988,7 @@
 !
       IF ((iic(ng).gt.ntsAVG(ng)).and.                                  &
      &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
-     &    ((iic(ng).ne.ntstart).or.(nrrec.eq.0))) THEN
+     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec.eq.0))) THEN
         fac=1.0_r8/REAL(nAVG(ng),r8)
         IF (SOUTH_WEST_TEST) THEN
           AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
@@ -821,6 +1001,15 @@
             avgzeta(i,j)=fac*avgzeta(i,j)
             avgu2d (i,j)=fac*avgu2d (i,j)
             avgv2d (i,j)=fac*avgv2d (i,j)
+# ifdef AVERAGES_NEARSHORE
+            avgu2Sd(i,j)=fac*avgu2Sd(i,j)
+            avgv2Sd(i,j)=fac*avgv2Sd(i,j)
+            avgu2RS(i,j)=fac*avgu2RS(i,j)
+            avgv2RS(i,j)=fac*avgv2RS(i,j)
+            avgSxx2d(i,j)=fac*avgSxx2d(i,j)
+            avgSxy2d(i,j)=fac*avgSxy2d(i,j)
+            avgSyy2d(i,j)=fac*avgSyy2d(i,j)
+# endif
 # ifdef AVERAGES_QUADRATIC
             avgZZ(i,j)=fac*avgZZ(i,j)
             avgU2(i,j)=fac*avgU2(i,j)
@@ -867,6 +1056,17 @@
               avgu3d(i,j,k)=fac*avgu3d(i,j,k)
               avgv3d(i,j,k)=fac*avgv3d(i,j,k)
               avgrho(i,j,k)=fac*avgrho(i,j,k)
+#  ifdef AVERAGES_NEARSHORE
+              avgu3Sd(i,j,k)=fac*avgu3Sd(i,j,k)
+              avgv3Sd(i,j,k)=fac*avgv3Sd(i,j,k)
+              avgu3RS(i,j,k)=fac*avgu3RS(i,j,k)
+              avgv3RS(i,j,k)=fac*avgv3RS(i,j,k)
+              avgSxx3d(i,j,k)=fac*avgSxx3d(i,j,k)
+              avgSxy3d(i,j,k)=fac*avgSxy3d(i,j,k)
+              avgSyy3d(i,j,k)=fac*avgSyy3d(i,j,k)
+              avgSzx3d(i,j,k)=fac*avgSzx3d(i,j,k)
+              avgSzy3d(i,j,k)=fac*avgSzy3d(i,j,k)
+#  endif
 #  ifdef AVERAGES_QUADRATIC
               avgHuon(i,j,k)=fac*avgHuon(i,j,k)
               avgHvom(i,j,k)=fac*avgHvom(i,j,k)

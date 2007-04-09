@@ -1215,17 +1215,17 @@
 !
 !!      tTLMindx(ng)=tsize
         IF (ndefTLM(ng).gt.0) THEN
-          IF ((ntstart-1).lt.ndefTLM(ng)) THEN
-            tTLMindx(ng)=1+((ntstart-1)-                                &
-     &                       ndefTLM(ng)*((ntstart-1)/ndefTLM(ng)))/    &
+          IF ((ntstart(ng)-1).lt.ndefTLM(ng)) THEN
+            tTLMindx(ng)=1+((ntstart(ng)-1)-                            &
+     &                       ndefTLM(ng)*((ntstart(ng)-1)/ndefTLM(ng)))/&
      &                     nTLM(ng)
           ELSE
-            tTLMindx(ng)=((ntstart-1)-                                  &
-     &                     ndefTLM(ng)*((ntstart-1)/ndefTLM(ng)))/      &
+            tTLMindx(ng)=((ntstart(ng)-1)-                              &
+     &                     ndefTLM(ng)*((ntstart(ng)-1)/ndefTLM(ng)))/  &
      &                   nTLM(ng)
           END IF
         ELSE
-          tTLMindx(ng)=(ntstart-1)/nTLM(ng)
+          tTLMindx(ng)=(ntstart(ng)-1)/nTLM(ng)
         END IF
         tTLMindx(ng)=MIN(tTLMindx(ng),tsize)
       END IF

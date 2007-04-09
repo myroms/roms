@@ -8,6 +8,9 @@
 **
 ** Options one-dimensional (vertical) Biology Toy.
 **
+** Application flag:   BIO_TOY
+** Input script:       ocean_bio_toy.in
+**                     bioFasham.in, ecosim.in, npzd_Franks.in, npzd_Powell.in
 */
 
 #define UV_ADV

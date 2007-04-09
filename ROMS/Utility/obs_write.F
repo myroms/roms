@@ -608,7 +608,8 @@
 !
 !  Current outer and inner loop.
 !
-        IF (OutThread) THEN 
+        IF (OutThread.and.                                              &
+     &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
           status=nf_inq_varid(ncMODid(ng),'outer',varid)
           status=nf_put_var1_int(ncMODid(ng),varid,1,outer)
           IF (status.ne.nf_noerr) THEN
@@ -630,7 +631,8 @@
 !
 !  Observation screening/normalization scale.
 !
-        IF (OutThread.and.(Nrun.eq.1)) THEN 
+        IF (OutThread.and.(Nrun.eq.1).and.                              &
+     &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
           status=nf_put_vara_TYPE(ncMODid(ng),modVid(idObsS,ng),        &
@@ -714,7 +716,8 @@
 !  evolve in time, the fractional level coordinate is unknow during
 !  the processing of the observations.
 !  
-        IF (OutThread.and.Load_Zobs(ng)) THEN
+        IF (OutThread.and.Load_Zobs(ng).and.                            &
+     &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
           DO iobs=Mstr,Mend

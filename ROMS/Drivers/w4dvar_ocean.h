@@ -319,12 +319,12 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
         IF (Master) THEN
-          WRITE (stdout,30) 'NL', ntstart, ntend
+          WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP : DO my_iic=ntstart,ntend+1
+        NL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -418,12 +418,12 @@
 !  state.  Compute model solution at observation points, H * X_n.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'RP', ntstart, ntend
+            WRITE (stdout,30) 'RP', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          RP_LOOP1 : DO my_iic=ntstart,ntend+1
+          RP_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -475,12 +475,12 @@
 !  Time-step adjoint model backwards forced with current PSI vector.
 !
             IF (Master) THEN
-              WRITE (stdout,30) 'AD', ntstart, ntend
+              WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)+dt(ng)
 
-            AD_LOOP1 : DO my_iic=ntstart,ntend,-1
+            AD_LOOP1 : DO my_iic=ntstart(ng),ntend(ng),-1
 
               iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -723,13 +723,13 @@
 !  are used in the conjugate gradient algorithm.
 !
             IF (Master) THEN
-              WRITE (stdout,30) 'TL', ntstart, ntend
+              WRITE (stdout,30) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             MyTime=time(ng)
             time(ng)=time(ng)-dt(ng)
 
-            TL_LOOP : DO my_iic=ntstart,ntend+1
+            TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
 !
@@ -805,12 +805,12 @@
 !  coefficients, Beta_n.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'AD', ntstart, ntend
+            WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
 
-          AD_LOOP2 : DO my_iic=ntstart,ntend,-1
+          AD_LOOP2 : DO my_iic=ntstart(ng),ntend(ng),-1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -1061,12 +1061,12 @@
 !  basic state and forced with convolved adjoint trajectory impulses.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'RP', ntstart, ntend
+            WRITE (stdout,30) 'RP', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          RP_LOOP2 : DO my_iic=ntstart,ntend+1
+          RP_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D

@@ -262,10 +262,10 @@
             ad_u(i,Jend+1,k,nout)=ad_u(i,Jend+1,k,nout)*                &
      &                            GRID(ng)%umask(i,Jend+1)
 #   endif
-!>          tl_u(i,Jend+1,k,nout)=gamma2*tl_u(i,Jend,k,nout)
+!>          tl_u(i,Jend+1,k,nout)=gamma2(ng)*tl_u(i,Jend,k,nout)
 !>
             ad_u(i,Jend  ,k,nout)=ad_u(i,Jend  ,k,nout)+                &
-     &                            gamma2*ad_u(i,Jend+1,k,nout)
+     &                            gamma2(ng)*ad_u(i,Jend+1,k,nout)
             ad_u(i,Jend+1,k,nout)=0.0_r8
           END DO
         END DO
@@ -388,10 +388,10 @@
             ad_u(i,Jstr-1,k,nout)=ad_u(i,Jstr-1,k,nout)*                &
      &                            GRID(ng)%umask(i,Jstr-1)
 #   endif
-!>          tl_u(i,Jstr-1,k,nout)=gamma2*tl_u(i,Jstr,k,nout)
+!>          tl_u(i,Jstr-1,k,nout)=gamma2(ng)*tl_u(i,Jstr,k,nout)
 !>
             ad_u(i,Jstr  ,k,nout)=ad_u(i,Jstr  ,k,nout)+                &
-     &                            gamma2*ad_u(i,Jstr-1,k,nout)
+     &                            gamma2(ng)*ad_u(i,Jstr-1,k,nout)
             ad_u(i,Jstr-1,k,nout)=0.0_r8
           END DO
         END DO

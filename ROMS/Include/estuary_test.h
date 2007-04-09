@@ -8,6 +8,9 @@
 **
 ** Options for Estuary with Sediment Transport Test.
 **
+** Application flag:   ESTUARY_TEST
+** Input script:       ocean_estuary_test.in
+**                     sediment_estuary_test.in
 */
 
 #define UV_ADV

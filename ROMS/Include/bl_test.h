@@ -5,6 +5,11 @@
 **   Licensed under a MIT/X style license                                    **
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
+**
+** Boundary Layers Test.
+**
+** Application flag:   BL_TEST
+** Input script:       ocean_bl_test.in
 */
 
 #define UV_ADV

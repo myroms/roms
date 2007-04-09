@@ -391,7 +391,7 @@
       NSsize=Nvar*(Nghost+pp)*Ilen
       IF (SIZE(sendE).lt.EWsize) THEN
         WRITE (stdout,10) 'EWsize = ', EWsize, SIZE(sendE)
- 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer to small, ',   &
+ 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer too small, ',  &
      &          a, 2i8)
       END IF
       IF (SIZE(sendN).lt.NSsize) THEN
@@ -1006,7 +1006,7 @@
       NSsize=Nvar*(Nghost+pp)*IKlen
       IF (SIZE(sendE).lt.EWsize) THEN
         WRITE (stdout,10) 'EWsize = ', EWsize, SIZE(sendE)
- 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer to small, ',   &
+ 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer too small, ',  &
      &          a, 2i8)
       END IF
       IF (SIZE(sendN).lt.NSsize) THEN
@@ -1717,7 +1717,7 @@
       NSsize=Nvar*(Nghost+pp)*IKTlen
       IF (SIZE(sendE).lt.EWsize) THEN
         WRITE (stdout,10) 'EWsize = ', EWsize, SIZE(sendE)
- 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer to small, ',   &
+ 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer too small, ',  &
      &          a, 2i8)
       END IF
       IF (SIZE(sendN).lt.NSsize) THEN
@@ -2241,7 +2241,7 @@
       BufferSizeEW=Nvar*HaloSizeJ(ng)
       IF (SIZE(sendE).lt.EWsize) THEN
         WRITE (stdout,10) 'EWsize = ', EWsize, SIZE(sendE)
- 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer to small, ',   &
+ 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer too small, ',  &
      &          a, 2i8)
       END IF
       IF (SIZE(sendN).lt.NSsize) THEN
@@ -2986,7 +2986,7 @@
       BufferSizeEW=Nvar*HaloSizeJ(ng)*Klen
       IF (SIZE(sendE).lt.EWsize) THEN
         WRITE (stdout,10) 'EWsize = ', EWsize, SIZE(sendE)
- 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer to small, ',   &
+ 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer too small, ',  &
      &          a, 2i8)
       END IF
       IF (SIZE(sendN).lt.NSsize) THEN
@@ -3832,7 +3832,7 @@
       BufferSizeEW=Nvar*HaloSizeJ(ng)*Klen*Tlen
       IF (SIZE(sendE).lt.EWsize) THEN
         WRITE (stdout,10) 'EWsize = ', EWsize, SIZE(sendE)
- 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer to small, ',   &
+ 10     FORMAT (/,' MP_EXCHANGE2D - communication buffer too small, ',  &
      &          a, 2i8)
       END IF
       IF (SIZE(sendN).lt.NSsize) THEN

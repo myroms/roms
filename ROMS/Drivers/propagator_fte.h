@@ -87,9 +87,9 @@
 !
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
-      ntstart=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend=ntimes
-      ntfirst=ntstart
+      ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
+      ntend(ng)=ntimes(ng)
+      ntfirst(ng)=ntstart(ng)
 !
 !-----------------------------------------------------------------------
 !  Clear tangent linear state variables. There is not need to clean
@@ -172,12 +172,12 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        WRITE (stdout,30) 'TL', ntstart, ntend
+        WRITE (stdout,30) 'TL', ntstart(ng), ntend(ng)
       END IF
 
       time(ng)=time(ng)-dt(ng)
 
-      TL_LOOP : DO my_iic=ntstart,ntend+1
+      TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
         iic(ng)=my_iic
 #ifdef SOLVE3D

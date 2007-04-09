@@ -2647,17 +2647,17 @@
 !
 !!      tHISindx(ng)=tsize
         IF (ndefHIS(ng).gt.0) THEN
-          IF ((ntstart-1).lt.ndefHIS(ng)) THEN
-            tHISindx(ng)=1+((ntstart-1)-                                &
-     &                       ndefHIS(ng)*((ntstart-1)/ndefHIS(ng)))/    &
+          IF ((ntstart(ng)-1).lt.ndefHIS(ng)) THEN
+            tHISindx(ng)=1+((ntstart(ng)-1)-                            &
+     &                       ndefHIS(ng)*((ntstart(ng)-1)/ndefHIS(ng)))/&
      &                     nHIS(ng)
           ELSE
-            tHISindx(ng)=((ntstart-1)-                                  &
-     &                     ndefHIS(ng)*((ntstart-1)/ndefHIS(ng)))/      &
+            tHISindx(ng)=((ntstart(ng)-1)-                              &
+     &                     ndefHIS(ng)*((ntstart(ng)-1)/ndefHIS(ng)))/  &
      &                   nHIS(ng)
           END IF
         ELSE
-          tHISindx(ng)=(ntstart-1)/nHIS(ng)
+          tHISindx(ng)=(ntstart(ng)-1)/nHIS(ng)
         END IF
         tHISindx(ng)=MIN(tHISindx(ng),tsize)
       END IF

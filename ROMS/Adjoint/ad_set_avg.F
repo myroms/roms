@@ -480,7 +480,7 @@
 !
       IF (((iic(ng).lt.ntsAVG(ng)).and.                                 &
      &     (MOD(iic(ng),nAVG(ng)).eq.0)).or.                            &
-     &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart))) THEN
+     &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
 !
 !  Initialize 2D fields.
 !
@@ -755,7 +755,7 @@
 !
       IF ((iic(ng).lt.ntsAVG(ng)).and.                                  &
      &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
-     &    ((iic(ng).ne.ntstart).or.(nrrec.eq.0))) THEN
+     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec.eq.0))) THEN
 # if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
      defined SO_SEMI
         fac=1.0_r8

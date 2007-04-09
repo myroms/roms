@@ -72,8 +72,8 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES =  1500
-          DT == 60.0d0
+      NTIMES == 20000
+          DT == 2.0d0
      NDTFAST == 20
 
 ! Model iteration loops parameters.
@@ -95,15 +95,15 @@
 
        NRREC =  0
    LcycleRST == T
-        NRST == 100
+        NRST == 1000
         NSTA == 15
         NFLT == 15
-       NINFO == 1
+       NINFO == 100
 
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 100
+        NHIS == 1000
      NDEFHIS == 0
       NTSAVG == 1
         NAVG == 100
@@ -198,9 +198,9 @@
 
 ! Vertical S-coordinates parameters, [1:Ngrids].
 
-     THETA_S == 3.0d0                      ! 0 < THETA_S < 20
+     THETA_S == 1.0d0                      ! 0 < THETA_S < 20
      THETA_B == 0.8d0                      ! 0 < THETA_B < 1
-      TCLINE == 1.0d0                      ! m
+      TCLINE == 0.0d0                      ! m
 
 ! Mean Density and Brunt-Vaisala frequency.
 
@@ -239,7 +239,7 @@
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 = -1.0d0
+      GAMMA2 == 1.0d0
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their

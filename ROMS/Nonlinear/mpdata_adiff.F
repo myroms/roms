@@ -42,9 +42,11 @@
 #ifdef MASKING
      &                              rmask, umask, vmask,                &
 #endif
-     &                              pm, pn, omn, om_u, on_v,            &
-     &                              Hz, z_r,                            &
+     &                              pm, pn, omn, om_u, on_v, z_r,       &
      &                              t, u, v, w,                         &
+# ifdef NEARSHORE_MELLOR
+     &                              u_stokes, v_stokes,                 &
+# endif
      &                              Ta, Ua, Va, Wa)
 !***********************************************************************
 !
@@ -71,12 +73,15 @@
       real(r8), intent(in) :: omn(LBi:,LBj:)
       real(r8), intent(in) :: om_u(LBi:,LBj:)
       real(r8), intent(in) :: on_v(LBi:,LBj:)
-      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: w(LBi:,LBj:,0:)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
+#  endif
 
       real(r8), intent(inout) :: Ta(ILB:,JLB:,:)
 
@@ -94,12 +99,15 @@
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_v(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: w(LBi:UBi,LBj:UBj,0:N(ng))
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
+#  endif
 
       real(r8), intent(inout) :: Ta(ILB:IUB,JLB:JUB,N(ng))
 
@@ -112,7 +120,7 @@
 !
       integer :: i, is, j, k
 
-      real(r8), parameter :: eps = 1.0E-10_r8
+      real(r8), parameter :: eps = 1.0E-14_r8
 
       real(r8) :: A, B, Tmax, Tmin, Um, Vm, X, Y, Z
       real(r8) :: cff, cff1, cff2, sig_alfa
@@ -211,16 +219,16 @@
 !
 !  Compute inverse vertical grid spacing at W-points.
 !
-#  ifdef EW_PERIODIC 
-#   define I_RANGE Istr-2,Iend+2
-#  else
-#   define I_RANGE MAX(Istr-2,1),MIN(Iend+2,Lm(ng))
-#  endif
-#  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-2,Jend+2
-#  else
-#   define J_RANGE MAX(Jstr-2,1),MIN(Jend+2,Mm(ng))
-#  endif
+# ifdef EW_PERIODIC 
+#  define I_RANGE Istr-2,Iend+2
+# else
+#  define I_RANGE MAX(Istr-2,1),MIN(Iend+2,Lm(ng))
+# endif
+# ifdef NS_PERIODIC
+#  define J_RANGE Jstr-2,Jend+2
+# else
+#  define J_RANGE MAX(Jstr-2,1),MIN(Jend+2,Mm(ng))
+# endif
       DO k=1,N(ng)-1
         DO j=J_RANGE
           DO i=I_RANGE
@@ -286,7 +294,7 @@
         DO k=1,N(ng)
           DO i=I_RANGE
             IF ((Ta(i-1,j,k).le.0.0_r8).or.                             &
-                (Ta(i  ,j,k).le.0.0_r8)) THEN
+     &          (Ta(i  ,j,k).le.0.0_r8)) THEN
               Ua(i,j,k)=0.0_r8
             ELSE
               A=(Ta(i,j,k)-Ta(i-1,j,k))/                                &
@@ -310,6 +318,14 @@
      &            v(i-1,j+1,k,nrhs)*(pn(i-1,j  )+pn(i-1,j+1))+          &
      &            v(i  ,j  ,k,nrhs)*(pn(i  ,j  )+pn(i  ,j-1))+          &
      &            v(i  ,j+1,k,nrhs)*(pn(i  ,j  )+pn(i  ,j+1)))
+# ifdef NEARSHORE_MELLOR
+              Um=Um+0.5_r8*u_stokes(i,j,k)*dt(ng)*(pm(i-1,j)+pm(i,j))
+              Vm=Vm+0.125_r8*dt(ng)*                                    &
+     &           (v_stokes(i-1,j  ,k)*(pn(i-1,j  )+pn(i-1,j-1))+        &
+     &            v_stokes(i-1,j+1,k)*(pn(i-1,j  )+pn(i-1,j+1))+        &
+     &            v_stokes(i  ,j  ,k)*(pn(i  ,j  )+pn(i  ,j-1))+        &
+     &            v_stokes(i  ,j+1,k)*(pn(i  ,j  )+pn(i  ,j+1)))
+# endif
 !
               X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
               Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
@@ -467,7 +483,7 @@
         DO k=1,N(ng)
           DO i=I_RANGE
             IF ((Ta(i,j-1,k).le.0.0_r8).or.                             &
-                (Ta(i,j  ,k).le.0.0_r8)) THEN
+     &          (Ta(i,j  ,k).le.0.0_r8)) THEN
               Va(i,j,k)=0.0_r8
             ELSE
               A=0.03125_r8*                                             &
@@ -491,6 +507,14 @@
      &            u(i+1,j-1,k,nrhs)*(pm(i  ,j-1)+pm(i+1,j-1))+          &
      &            u(i+1,j  ,k,nrhs)*(pm(i  ,j  )+pm(i+1,j  )))
               Vm=0.5_r8*v(i,j,k,nrhs)*dt(ng)*(pn(i,j-1)+pn(i,j))
+# ifdef NEARSHORE_MELLOR
+              Um=Um+0.125_r8*dt(ng)*                                    &
+     &           (u_stokes(i  ,j-1,k)*(pm(i  ,j-1)+pm(i-1,j-1))+        &
+     &            u_stokes(i  ,j  ,k)*(pm(i  ,j  )+pm(i-1,j  ))+        &
+     &            u_stokes(i+1,j-1,k)*(pm(i  ,j-1)+pm(i+1,j-1))+        &
+     &            u_stokes(i+1,j  ,k)*(pm(i  ,j  )+pm(i+1,j  )))
+              Vm=Vm+0.5_r8*v_stokes(i,j,k)*dt(ng)*(pn(i,j-1)+pn(i,j))
+# endif
 !
               X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
               Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
@@ -611,7 +635,7 @@
         DO i=I_RANGE
           DO k=1,N(ng)-1
             IF ((Ta(i,j,k  ).le.0.0_r8).or.                             &
-                (Ta(i,j,k+1).le.0.0_r8)) THEN
+     &          (Ta(i,j,k+1).le.0.0_r8)) THEN
               Wa(i,j,k)=0.0_r8
             ELSE
               C(i,k)=(Ta(i,j,k+1)-Ta(i,j,k))/                           &
@@ -649,6 +673,18 @@
      &            (pn(i  ,j  )+pn(i  ,j-1))+                            &
      &            (v(i,j+1,k  ,nrhs)+v(i,j+1,k+1,nrhs))*                &
      &            (pn(i  ,j+1)+pn(i  ,j)))
+# ifdef NEARSHORE_MELLOR
+              Um=Um+0.125_r8*dt(ng)*                                    &
+     &           ((u_stokes(i  ,j,k  )+u_stokes(i  ,j,k+1))*            &
+     &            (pm(i  ,j  )+pm(i-1,j  ))+                            &
+     &            (u_stokes(i+1,j,k  )+u_stokes(i+1,j,k+1))*            &
+     &            (pm(i+1,j  )+pm(i  ,j  )))
+              Vm=Vm+0.125_r8*dt(ng)*                                    &
+     &           ((v_stokes(i,j  ,k  )+v_stokes(i,j  ,k+1))*            &
+     &            (pn(i  ,j  )+pn(i  ,j-1))+                            &
+     &            (v_stokes(i,j+1,k  )+v_stokes(i,j+1,k+1))*            &
+     &            (pn(i  ,j+1)+pn(i  ,j)))
+# endif
               Wm(i,k)=w(i,j,k)*odz(i,j,k)*pm(i,j)*pn(i,j)*dt(ng)
 !
               X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
@@ -751,8 +787,7 @@
       DO k=1,N(ng)
         DO j=-1+J_RANGE+1
           DO i=-1+I_RANGE+1
-            Tadv(i,j,k)=t(i,j,k,3,itrc)/Hz(i,j,k)
-!!          Tadv(i,j,k)=t(i,j,k,3,itrc)
+            Tadv(i,j,k)=t(i,j,k,3,itrc)
           END DO
         END DO
       END DO
@@ -862,20 +897,52 @@
 # else
 #  define I_RANGE MAX(Istr,2),MIN(Iend+1,Lm(ng))
 # endif
-#  define J_RANGE Jstr,Jend
+# define J_RANGE Jstr,Jend
         DO j=J_RANGE
           DO i=I_RANGE
             cff1=MIN(beta_dn(i-1,j,k),beta_up(i,j,k),1.0_r8)
             cff2=MIN(beta_up(i-1,j,k),beta_dn(i,j,k),1.0_r8)
             Ua(i,j,k)=(cff1*MAX(0.0_r8,Ua(i,j,k))+                      &
      &                 cff2*MIN(0.0_r8,Ua(i,j,k)))*                     &
-     &                cff*om_u(i,j)
+     &                 cff*om_u(i,j)
+# ifdef MASKING
+            Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
+# endif
           END DO
         END DO
+!
+!  Set boundary conditions.
+!
+# ifndef EW_PERIODIC
+      IF (WESTERN_EDGE) THEN
+          DO j=J_RANGE
+#  ifdef WESTERN_WALL
+            Ua(Istr,j,k)=0.0_r8
+#  else
+            Ua(Istr,j,k)=Ua(Istr+1,j,k)
+#  endif
+#  ifdef MASKING
+            Ua(Istr,j,k)=Ua(Istr,j,k)*umask(Istr,j)
+#  endif
+          END DO
+      END IF
+      IF (EASTERN_EDGE) THEN
+          DO j=J_RANGE
+#  ifdef EASTERN_WALL
+            Ua(Iend+1,j,k)=0.0_r8
+#  else
+            Ua(Iend+1,j,k)=Ua(Iend,j,k)
+#  endif
+# ifdef MASKING
+            Ua(Iend+1,j,k)=Ua(Iend+1,j,k)*umask(Iend+1,j)
+# endif
+          END DO
+      END IF
+# endif
 # undef I_RANGE
 # undef J_RANGE
 !
-#  define I_RANGE Istr,Iend
+# define I_RANGE Istr,Iend
 # ifdef NS_PERIODIC
 #  define J_RANGE Jstr,Jend+1
 # else
@@ -887,9 +954,41 @@
             cff2=MIN(beta_up(i,j-1,k),beta_dn(i,j,k),1.0_r8)
             Va(i,j,k)=(cff1*MAX(0.0_r8,Va(i,j,k))+                      &
      &                 cff2*MIN(0.0_r8,Va(i,j,k)))*                     &
-     &                cff*on_v(i,j)
+     &                 cff*on_v(i,j)
+# ifdef MASKING
+            Va(i,j,k)=Va(i,j,k)*vmask(i,j)
+# endif
           END DO
         END DO
+!
+!  Set boundary conditions.
+!
+# ifndef NS_PERIODIC
+      IF (SOUTHERN_EDGE) THEN
+          DO i=I_RANGE
+#  ifdef SOUTHERN_WALL
+            Va(i,Jstr,k)=0.0_r8
+#  else
+            Va(i,Jstr,k)=Va(i,Jstr+1,k)
+#  endif
+# ifdef MASKING
+            Va(i,Jstr,k)=Va(i,Jstr,k)*vmask(i,Jstr)
+# endif
+          END DO
+      END IF
+      IF (NORTHERN_EDGE) THEN
+          DO i=I_RANGE
+#  ifdef NORTHERN_WALL
+            Va(i,Jend+1,k)=0.0_r8
+#  else
+            Va(i,Jend+1,k)=Va(i,Jend,k)
+#  endif
+# ifdef MASKING
+            Va(i,Jend+1,k)=Va(i,Jend+1,k)*vmask(i,Jend+1)
+# endif
+          END DO
+      END IF
+# endif
 # undef I_RANGE
 # undef J_RANGE
         IF (k.lt.N(ng)) THEN
@@ -899,7 +998,10 @@
               cff2=MIN(beta_up(i,j,k),beta_dn(i,j,k+1),1.0_r8)
               Wa(i,j,k)=(cff1*MAX(0.0_r8,Wa(i,j,k))+                    &
      &                   cff2*MIN(0.0_r8,Wa(i,j,k)))*                   &
-     &                  cff*omn(i,j)*(z_r(i,j,k+1)-z_r(i,j,k))
+     &                   cff*omn(i,j)*(z_r(i,j,k+1)-z_r(i,j,k))
+# ifdef MASKING
+              Wa(i,j,k)=Wa(i,j,k)*rmask(i,j)
+# endif
             END DO
           END DO
         END IF

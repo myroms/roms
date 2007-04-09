@@ -8,12 +8,15 @@
 **
 ** Options for 4DVar Data Assimilation Toy
 **
+** Application flag:   A4DVAR_TOY
+** Input script:       ocean_a4dvar_toy.in
+**                     s4dvar.in
 */
 
 #undef  NLM_DRIVER
 #undef  IS4DVAR
-#undef  W4DPSAS
-#define W4DVAR
+#define W4DPSAS
+#undef  W4DVAR
 #undef  CORRELATION
 #undef  CONVOLUTION
 #undef  R_SYMMETRY

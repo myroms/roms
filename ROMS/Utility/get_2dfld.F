@@ -326,7 +326,7 @@
 !
       update=.FALSE.
       IF ((Tmono.lt.time(ng)).or.(iic(ng).eq.0).or.                     &
-     &    (iic(ng).eq.ntstart)) THEN
+     &    (iic(ng).eq.ntstart(ng))) THEN
         IF (Liocycle) THEN
           Trec=MOD(Trec,nrec)+1
         ELSE

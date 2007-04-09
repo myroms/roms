@@ -160,7 +160,7 @@
 !  Set tracer and/or mass point sources and/or sink.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntstart) THEN
+      IF (iic(ng).eq.ntstart(ng)) THEN
 !
 !  Set-up point Sources/Sink number (Nsrc), direction (Dsrc), I- and
 !  J-grid locations (Isrc,Jsrc), and logical switch for type of tracer
@@ -198,18 +198,6 @@
         Jsrc(Nsrc)=60
         Lsrc(Nsrc,itemp)=.TRUE.
         Lsrc(Nsrc,isalt)=.TRUE.
-#elif defined SANDWAVE
-        Nsrc=Mm(ng)*2
-        DO is=1,Nsrc/2
-          Dsrc(is)=0.0_r8
-          Isrc(is)=1
-          Jsrc(is)=is
-        END DO
-        DO is=Nsrc/2+1,Nsrc
-          Dsrc(is)=0.0_r8
-          Isrc(is)=Lm(ng)+1
-          Jsrc(is)=is-Mm(ng)
-        END DO
 #elif defined SED_TEST1
         Nsrc=Mm(ng)*2
         DO is=1,Nsrc/2
@@ -223,7 +211,7 @@
           Jsrc(is)=is-Mm(ng)
         END DO
 #else
-        ANA_PSOURCE: no values provided for Dsrc, Isrc, Jsrc, Lsrc.
+        ana_psource.h: No values provided for Dsrc, Isrc, Jsrc, Lsrc.
 #endif
       END IF
 #if defined UV_PSOURCE || defined Q_PSOURCE
@@ -232,19 +220,7 @@
 !  If appropriate, set-up nondimensional shape function to distribute
 !  mass point sources/sinks vertically.  It must add to unity!!.
 !
-#  if defined SANDWAVE
-        DO k=1,N(ng)
-          DO is=1,Nsrc
-            i=Isrc(is)
-            j=Jsrc(is)
-            Qshape(is,k)=ABS(u(i,j,k,nnew)/ubar(i,j,knew))*             &
-     &                   (z_w(i-1,Mm(ng)/2,k)-z_w(i-1,Mm(ng)/2,k-1)+    &
-     &                    z_w(i  ,Mm(ng)/2,k)-z_w(i  ,Mm(ng)/2,k-1))/   &
-     &                   (z_w(i-1,Mm(ng)/2,N(ng))-z_w(i-1,Mm(ng)/2,0)+  &
-     &                    z_w(i  ,Mm(ng)/2,N(ng))-z_w(i  ,Mm(ng)/2,0))
-          END DO
-        END DO
-#  elif defined SED_TEST1
+#  if defined SED_TEST1
         DO k=1,N(ng)
           DO is=1,Nsrc
             i=Isrc(is)
@@ -306,39 +282,6 @@
      &                                       zeta(i  ,j,knew)+h(i  ,j)))
       END DO
       Qbar(Nsrc)=1500.0_r8                   ! West wall
-# elif defined SANDWAVE
-      my_area=0.0_r8                         ! West end
-      DO is=1,Nsrc/2
-        i=Isrc(is)
-        j=Jsrc(is)
-        my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
-     &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
-      END DO
-!!    fac=-1000.0_r8*10.0_r8*1.0_r8
-      fac=-500.0_r8*10.0_r8*1.0_r8
-      DO is=1,Nsrc/2
-        i=Isrc(is)
-        j=Jsrc(is)
-        Qbar(is)=fac*(0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+                &
-     &                        zeta(i  ,j,knew)+h(i  ,j)))*              &
-     &           on_u(i,j)/my_area
-      END DO
-      my_area=0.0_r8                         ! East end
-      DO is=Nsrc/2+1,Nsrc
-        i=Isrc(is)
-        j=Jsrc(is)
-        my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
-     &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
-      END DO
-!!    fac=-1000.0_r8*10.0_r8*1.0_r8
-      fac=-500.0_r8*10.0_r8*1.0_r8
-      DO is=Nsrc/2+1,Nsrc
-        i=Isrc(is)
-        j=Jsrc(is)
-        Qbar(is)=fac*(0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+                &
-     &                        zeta(i  ,j,knew)+h(i  ,j)))*              &
-     &           on_u(i,j)/my_area
-      END DO
 # elif defined SED_TEST1
       my_area=0.0_r8                         ! West end
       DO is=1,Nsrc/2
@@ -373,7 +316,7 @@
      &           on_u(i,j)/my_area
       END DO
 # else
-      ANA_PSOURCE: no values provided for Qbar.
+      ana_psource.h: No values provided for Qbar.
 # endif
 # ifdef SOLVE3D
 !
@@ -412,7 +355,7 @@
         Tsrc(Nsrc,k,isalt)=0.0_r8
       END DO
 # else
-      ANA_PSOURCE: no values provided for Tsrc.
+      ana_psource.h: No values provided for Tsrc.
 # endif
 #endif
       RETURN

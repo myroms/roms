@@ -72,7 +72,7 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES =  28880
+      NTIMES == 28880
           DT == 120.0d0
      NDTFAST == 20
 
@@ -239,7 +239,7 @@
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 =  -1.0d0
+      GAMMA2 == -1.0d0
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their

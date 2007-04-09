@@ -223,7 +223,7 @@
         LwrtADJ(ng)=.TRUE.
         LwrtPER(ng)=.FALSE.
         LcycleADJ(ng)=.FALSE.
-        nADJ(ng)=ntimes
+        nADJ(ng)=ntimes(ng)
 !
 !-----------------------------------------------------------------------
 !  Implicit Restarted Arnoldi Method (IRAM) for the computation of
@@ -407,7 +407,7 @@
                 Nrun=0
                 NrecADJ(ng)=0
                 tADJindx(ng)=0
-!!              ndefADJ(ng)=ntimes         ! one file per eigenvector
+!!              ndefADJ(ng)=ntimes(ng)     ! one file per eigenvector
                 NconvRitz=iparam(5)
                 Lcomplex=.TRUE.
 !

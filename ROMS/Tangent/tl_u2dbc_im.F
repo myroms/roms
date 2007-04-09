@@ -250,12 +250,12 @@
      &                               tl_zeta(Istr  ,j,kout))
           cff2=GRID(ng)%om_u(Istr,j)*Cx
           tl_cff2=GRID(ng)%om_u(Istr,j)*tl_Cx
-!>        bry_val=ubar(Istr+1,j,kout)-                                  &
+!>        bry_val=ubar(Istr+1,j,kout)+                                  &
 !>   &            cff2*(bry_pgr+                                        &
 !>   &                  bry_cor+                                        &
 !>   &                  bry_str)
 !>
-          tl_bry_val=tl_ubar(Istr+1,j,kout)-                            &
+          tl_bry_val=tl_ubar(Istr+1,j,kout)+                            &
      &               tl_cff2*(bry_pgr+                                  &
      &                        bry_cor+                                  &
      &                        bry_str)+                                 &
@@ -268,9 +268,13 @@
           tl_bry_val=0.0_r8
 #   endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Istr-1,j)+                     &
-     &                        GRID(ng)%h(Istr  ,j)))
+     &                        zeta(Istr-1,j,know)+                      &
+     &                        GRID(ng)%h(Istr  ,j)+                     &
+     &                        zeta(Istr  ,j,know)))
           tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+             &
-     &                             GRID(ng)%tl_h(Istr  ,j)))
+     &                             tl_zeta(Istr-1,j,know)+              &
+     &                             GRID(ng)%tl_h(Istr  ,j)+             &
+     &                             tl_zeta(Istr  ,j,know)))
           Cx=SQRT(g*cff)
           tl_Cx=0.5_r8*g*tl_cff/Cx
 !>        ubar(Istr,j,kout)=bry_val-                                    &
@@ -556,9 +560,13 @@
           tl_bry_val=0.0_r8
 #   endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                     &
-     &                        GRID(ng)%h(Iend+1,j)))
+     &                        zeta(Iend  ,j,know)+                      &
+     &                        GRID(ng)%h(Iend+1,j)+                     &
+     &                        zeta(Iend+1,j,know)))
           tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+             &
-     &                             GRID(ng)%tl_h(Iend+1,j)))
+     &                             tl_zeta(Iend  ,j,know)+              &
+     &                             GRID(ng)%tl_h(Iend+1,j)+             &
+     &                             tl_zeta(Iend+1,j,know)))
           Cx=SQRT(g*cff)
           tl_Cx=0.5_r8*g*tl_cff/Cx
 !>        ubar(Iend+1,j,kout)=bry_val+                                  &
@@ -773,9 +781,13 @@
           cff=dt2d*0.5_r8*(GRID(ng)%pn(i-1,Jstr)+                       &
      &                     GRID(ng)%pn(i  ,Jstr))
           cff1=SQRT(g*0.5_r8*(GRID(ng)%h(i-1,Jstr)+                     &
-     &                        GRID(ng)%h(i  ,Jstr)))
+     &                        zeta(i-1,Jstr,know)+                      &
+     &                        GRID(ng)%h(i  ,Jstr)+                     &
+     &                        zeta(i  ,Jstr,know)))
           tl_cff1=0.25_r8*g*(GRID(ng)%tl_h(i-1,Jstr)+                   &
-     &                       GRID(ng)%tl_h(i  ,Jstr))/cff1
+     &                       tl_zeta(i-1,Jstr,know)+                    &
+     &                       GRID(ng)%tl_h(i  ,Jstr)+                   &
+     &                       tl_zeta(i  ,Jstr,know))/cff1
           Ce=cff*cff1
           tl_Ce=cff*tl_cff1
           cff2=1.0_r8/(1.0_r8+Ce)
@@ -839,9 +851,9 @@
 #    define I_RANGE Istr,IendR
 #   endif
         DO i=I_RANGE
-!>        ubar(i,Jstr-1,kout)=gamma2*ubar(i,Jstr,kout)
+!>        ubar(i,Jstr-1,kout)=gamma2(ng)*ubar(i,Jstr,kout)
 !>
-          tl_ubar(i,Jstr-1,kout)=gamma2*tl_ubar(i,Jstr,kout)
+          tl_ubar(i,Jstr-1,kout)=gamma2(ng)*tl_ubar(i,Jstr,kout)
 #   ifdef MASKING
 !>        ubar(i,Jstr-1,kout)=ubar(i,Jstr-1,kout)*                      &
 !>   &                        GRID(ng)%umask(i,Jstr-1)
@@ -925,9 +937,13 @@
           cff=dt2d*0.5_r8*(GRID(ng)%pn(i-1,Jend)+                       &
      &                     GRID(ng)%pn(i  ,Jend))
           cff1=SQRT(g*0.5_r8*(GRID(ng)%h(i-1,Jend)+                     &
-     &                        GRID(ng)%h(i  ,Jend)))
+     &                        zeta(i-1,Jend,know)+                      &
+     &                        GRID(ng)%h(i  ,Jend)+                     &
+     &                        zeta(i  ,Jend,know)))
           tl_cff1=0.25_r8*g*(GRID(ng)%tl_h(i-1,Jend)+                   &
-     &                       GRID(ng)%tl_h(i  ,Jend))/cff1
+     &                       tl_zeta(i-1,Jend,know)+                    &
+     &                       GRID(ng)%tl_h(i  ,Jend)+                   &
+     &                       tl_zeta(i  ,Jend,know))/cff1
           Ce=cff*cff1
           tl_Ce=cff*tl_cff1
           cff2=1.0_r8/(1.0_r8+Ce)
@@ -991,9 +1007,9 @@
 #    define I_RANGE Istr,IendR
 #   endif
         DO i=I_RANGE
-!>        ubar(i,Jend+1,kout)=gamma2*ubar(i,Jend,kout)
+!>        ubar(i,Jend+1,kout)=gamma2(ng)*ubar(i,Jend,kout)
 !>
-          tl_ubar(i,Jend+1,kout)=gamma2*tl_ubar(i,Jend,kout)
+          tl_ubar(i,Jend+1,kout)=gamma2(ng)*tl_ubar(i,Jend,kout)
 
 #   ifdef MASKING
 !>        ubar(i,Jend+1,kout)=ubar(i,Jend+1,kout)*                      &

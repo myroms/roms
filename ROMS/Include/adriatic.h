@@ -8,6 +8,11 @@
 **
 ** Options for Adriatic Sea Application.
 **
+** Application flag:   ADRIA02
+** Input script:       ocean_adria02.in
+**                     floats_adria02.in
+**                     sediment_adria02.in
+**                     stations_adria02.in
 */
 
 #define UV_ADV

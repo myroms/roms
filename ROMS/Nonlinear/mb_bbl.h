@@ -300,7 +300,7 @@
 !-----------------------------------------------------------------------
 !
           Fwave_bot=twopi/MAX(Pwave_bot(i,j),0.05_r8)
-# ifdef MB_BBL_CALCUB
+# ifdef MB_BBL_CALC_UB
           Kdh=h(i,j)*Fwave_bot*Fwave_bot/g
           Kbh2=Kdh*Kdh+                                                 &
      &         Kdh/(1.0_r8+Kdh*(K1+Kdh*(K2+Kdh*(K3+Kdh*(K4+             &
@@ -604,7 +604,7 @@
           angleW=COS(1.5_r8*pi-Dwave(i,j)-angler(i,j))
           bustrc(i,j)=tauCW(i,j)*angleC
           bustrw(i,j)=tauW(i,j)*angleW
-          bustrcwmax(i,j)=taucwmax(i,j)*angleW
+          bustrcwmax(i,j)=tauCWmax(i,j)*angleW
           Ubot(i,j)=Ub(i,j)*angleW
           Ur(i,j)=Ucur(i,j)
 !

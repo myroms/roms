@@ -43,6 +43,7 @@
 ! Logical switches (TRUE/FALSE) to activate writing of fields in STATION
 ! output file, [Sout(:,ng), ng=1, Ngrids].
 
+Sout(idBath) == T                          ! time-dependent bathymetry
 Sout(idFsur) == T                          ! free-surface
 Sout(idUbar) == T                          ! 2D U-velocity
 Sout(idVbar) == T                          ! 2D V-velocity
@@ -177,13 +178,14 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 ! for all switches.
 !------------------------------------------------------------------------------
 !
+!  Sout(idBath)  Write out time-dependent bathymetry.
+!  Sout(idFsur)  Write out free-surface.
+!  Sout(idUbar)  Write out 2D U-velocity component.
+!  Sout(idVbar)  Write out 2D V-velocity component.
 !  Sout(idUvel)  Write out 3D U-velocity component.
 !  Sout(idVvel)  Write out 3D V-velocity component.
 !  Sout(idWvel)  Write out 3D W-velocity component.
 !  Sout(idOvel)  Write out 3D omega vertical velocity.
-!  Sout(idUbar)  Write out 2D U-velocity component.
-!  Sout(idVbar)  Write out 2D V-velocity component.
-!  Sout(idFsur)  Write out free-surface.
 !
 !  Sout(idTvar)  Write out tracer type variables,  (NT,Ngrids) values are
 !                  Expected.

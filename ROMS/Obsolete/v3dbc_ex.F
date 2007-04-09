@@ -364,7 +364,7 @@
 #   endif
         DO k=1,N(ng)
           DO j=J_RANGE
-            v(Istr-1,j,k,nnew)=gamma2*v(Istr,j,k,nnew)
+            v(Istr-1,j,k,nnew)=gamma2(ng)*v(Istr,j,k,nnew)
 #   ifdef MASKING
             v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)*                      &
      &                         GRID(ng)%vmask(Istr-1,j)
@@ -469,7 +469,7 @@
 #   endif
         DO k=1,N(ng)
           DO j=J_RANGE
-            v(Iend+1,j,k,nnew)=gamma2*v(Iend,j,k,nnew)
+            v(Iend+1,j,k,nnew)=gamma2(ng)*v(Iend,j,k,nnew)
 #   ifdef MASKING
             v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*                      &
      &                         GRID(ng)%vmask(Iend+1,j)

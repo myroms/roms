@@ -8,6 +8,8 @@
 **
 ** Options for Southern California Bight.
 **
+** Application flag:   SCB
+** Input script:       ocean_scb.in
 */
 
 

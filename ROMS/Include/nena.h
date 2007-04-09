@@ -8,6 +8,8 @@
 **
 ** Options for North East North America Application.
 **
+** Application flag:   NENA
+** Input script:       ocean_nena.in
 */
 
 #define UV_ADV

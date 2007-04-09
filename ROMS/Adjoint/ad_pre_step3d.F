@@ -488,6 +488,17 @@
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,3,:))
+#   ifdef TS_MPDATA
+!>    CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
+!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    tl_t(:,:,:,nnew,:))
+!>
+      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
+     &                       NghostPoints, EWperiodic, NSperiodic,      &
+     &                       ad_t(:,:,:,nnew,:))
+#   endif
 #  endif
       DO itrc=1,NT(ng)
 #  if defined EW_PERIODIC || defined NS_PERIODIC
@@ -524,12 +535,16 @@
           DO i=Istr,Iend
             DC(i,0)=cff*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
           END DO
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
 # ifdef DIAGNOSTICS_UV
 #  ifdef UV_COR
 !!              DiaV3wrk(i,j,k,M3fcor)=0.0_r8
+#  endif
+#  ifdef NEARSHORE_MELLOR
+!!              DiaV3wrk(i,j,k,M3hrad)=0.0_r8
+!!              DiaV3wrk(i,j,k,M3vrad)=0.0_r8
 #  endif
 #  ifdef UV_ADV
 !!              DiaV3wrk(i,j,k,M3vadv)=0.0_r8
@@ -563,7 +578,7 @@
                 ad_cff1=0.0_r8
               END DO
             END DO
-          ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+          ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
 # ifdef DIAGNOSTICS_UV
@@ -575,6 +590,12 @@
 #  ifdef UV_COR
 !!              DiaV3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                 &
 !!   &                                  DiaRV(i,j,k,indx,M3fcor)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+!!              DiaV3wrk(i,j,k,M3hrad)=-0.5_r8*DC(i,0)*                 &
+!!   &                                  DiaRV(i,j,k,indx,M3hrad)
+!!              DiaV3wrk(i,j,k,M3vrad)=-0.5_r8*DC(i,0)*                 &
+!!   &                                  DiaRV(i,j,k,indx,M3vrad)
 #  endif
 #  ifdef UV_ADV
 !!              DiaV3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                 &
@@ -631,6 +652,14 @@
 !!              DiaV3wrk(i,j,k,M3fcor)=DC(i,0)*                         &
 !!   &                                 (cff1*DiaRV(i,j,k,nrhs,M3fcor)-  &
 !!   &                                  cff2*DiaRV(i,j,k,indx,M3fcor))
+#  endif
+#  ifdef NEARSHORE_MELLOR
+!!              DiaV3wrk(i,j,k,M3hrad)=DC(i,0)*                         &
+!!   &                                 (cff1*DiaRV(i,j,k,nrhs,M3hrad)-  &
+!!   &                                  cff2*DiaRV(i,j,k,indx,M3hrad))
+!!              DiaV3wrk(i,j,k,M3vrad)=DC(i,0)*                         &
+!!   &                                 (cff1*DiaRV(i,j,k,nrhs,M3vrad)-  &
+!!   &                                  cff2*DiaRV(i,j,k,indx,M3vrad))
 #  endif
 #  ifdef UV_ADV
 !!              DiaV3wrk(i,j,k,M3vadv)=DC(i,0)*                         &
@@ -752,12 +781,16 @@
         DO i=IstrU,Iend
           DC(i,0)=cff*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
         END DO
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
 # ifdef DIAGNOSTICS_UV
 #  ifdef UV_COR
 !!            DiaU3wrk(i,j,k,M3fcor)=0.0_r8
+#  endif
+#  ifdef NEARSHORE_MELLOR
+!!            DiaU3wrk(i,j,k,M3hrad)=0.0_r8
+!!            DiaU3wrk(i,j,k,M3vrad)=0.0_r8
 #  endif
 #  ifdef UV_ADV
 !!            DiaU3wrk(i,j,k,M3vadv)=0.0_r8
@@ -791,7 +824,7 @@
               ad_cff1=0.0_r8
             END DO
           END DO
-        ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
 # ifdef DIAGNOSTICS_UV
@@ -803,6 +836,12 @@
 #  ifdef UV_COR
 !!            DiaU3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                   &
 !!   &                               DiaRU(i,j,k,indx,M3fcor)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+!!            DiaU3wrk(i,j,k,M3hrad)=-0.5_r8*DC(i,0)*                   &
+!!   &                               DiaRU(i,j,k,indx,M3hrad)
+!!            DiaU3wrk(i,j,k,M3vrad)=-0.5_r8*DC(i,0)*                   &
+!!   &                               DiaRU(i,j,k,indx,M3vrad)
 #  endif
 #  ifdef UV_ADV
 !!            DiaU3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                   &
@@ -859,6 +898,14 @@
 !!            DiaU3wrk(i,j,k,M3fcor)=DC(i,0)*                           &
 !!   &                               (cff1*DiaRU(i,j,k,nrhs,M3fcor)-    &
 !!   &                                cff2*DiaRU(i,j,k,indx,M3fcor))
+#  endif
+#  ifdef NEARSHORE_MELLOR
+!!            DiaU3wrk(i,j,k,M3hrad)=DC(i,0)*                           &
+!!   &                               (cff1*DiaRU(i,j,k,nrhs,M3hrad)-    &
+!!   &                                cff2*DiaRU(i,j,k,indx,M3hrad))
+!!            DiaU3wrk(i,j,k,M3vrad)=DC(i,0)*                           &
+!!   &                               (cff1*DiaRU(i,j,k,nrhs,M3vrad)-    &
+!!   &                                cff2*DiaRU(i,j,k,indx,M3vrad))
 #  endif
 #  ifdef UV_ADV
 !!            DiaU3wrk(i,j,k,M3vadv)=DC(i,0)*                           &
@@ -996,10 +1043,19 @@
 !!            DiaTwrk(i,j,k,itrc,iTrate)=cff1
 #  endif
 #  ifdef TS_MPDATA
-!>            tl_t(i,j,k,3,itrc)=tl_t(i,j,k,nnew,itrc)
+              cff4=1.0_r8/Hz(i,j,k)
+!>            tl_t(i,j,k,3,itrc)=tl_t(i,j,k,nnew,itrc)*cff4+            &
+!>   &                           t(i,j,k,nnew,itrc)*tl_cff4
 !>
               ad_t(i,j,k,nnew,itrc)=ad_t(i,j,k,nnew,itrc)+              &
-     &                              ad_t(i,j,k,3,itrc)
+     &                              ad_t(i,j,k,3,itrc)*cff4       
+              ad_cff4=ad_cff4+                                          &
+     &                t(i,j,k,nnew,itrc)*ad_t(i,j,k,3,itrc)
+              ad_t(i,j,k,3,itrc)=0.0_r8
+!>            tl_cff4=-cff4*cff4*tl_Hz(i,j,k)
+!>
+              tl_Hz(i,j,k)=tl_Hz(i,j,k)-cff4*cff4*ad_cff4
+              ad_cff4=0.0_r8
 #  endif
 !>            tl_t(i,j,k,nnew,itrc)=tl_cff1+tl_cff2
 !>
@@ -1123,7 +1179,7 @@
 !  First, compute BASIC STATE artificial continuity equation and BASIC
 !  STATE tracer vertical advection flux needed for time-stepping.
 !
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           cff=0.5_r8*dt(ng)
         ELSE
           cff=(1.0_r8-Gamma)*dt(ng)
@@ -1274,7 +1330,7 @@
 !          STATE file and is in Tunits, so we need to multiply
 !          by level thickness (Hz).
 !
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.5_r8*dt(ng)
           ELSE
             cff=(1.0_r8-Gamma)*dt(ng)
@@ -1474,9 +1530,20 @@
 !>          tl_FC(i,N(ng))=0.0_r8
 !>
             ad_FC(i,N(ng))=0.0_r8
+#   ifdef SED_MORPH
+!>          tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)+                  &
+!>   &                 W(i,j,0)*tl_t(i,j,1,nstp,itrc)
+!>
+            ad_W(i,j,0)=ad_W(i,j,0)+                                    &
+     &                  t(i,j,1,nstp,itrc)*ad_FC(i,0)
+            ad_t(i,j,1,nstp,itrc)=ad_t(i,j,1,nstp,itrc)+                &
+     &                            W(i,j,0)*ad_FC(i,0)
+            ad_FC(i,0)=0.0_r8
+#   else
 !>          tl_FC(i,0)=0.0_r8
 !>
             ad_FC(i,0)=0.0_r8
+#   endif
           END DO
           cff1=1.0_r8/3.0_r8
           DO k=1,N(ng)-1
@@ -1562,9 +1629,20 @@
 !>          tl_FC(i,N(ng))=0.0_r8
 !>
             ad_FC(i,N(ng))=0.0_r8
+#   ifdef SED_MORPH
+!>          tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,nstp,itrc)                   &
+!>   &                 W(i,j,0)*tl_t(i,j,1,nstp,itrc)
+!>
+            ad_W(i,j,0)=ad_W(i,j,0)+                                    &
+     &                  t(i,j,1,nstp,itrc)*ad_FC(i,0)
+            ad_t(i,j,1,nstp,itrc)=ad_t(i,j,1,nstp,itrc)+                &
+     &                            W(i,j,0)*ad_FC(i,0)
+            ad_FC(i,0)=0.0_r8
+#   else
 !>          tl_FC(i,0)=0.0_r8
 !>
             ad_FC(i,0)=0.0_r8
+#   endif
           END DO
           DO k=1,N(ng)-1
             DO i=Istr,Iend
@@ -1637,9 +1715,27 @@
             ad_t(i,j,2,nstp,itrc)=ad_t(i,j,2,nstp,itrc)+cff2*adfac
             ad_t(i,j,3,nstp,itrc)=ad_t(i,j,3,nstp,itrc)-cff3*adfac
             ad_FC(i,1)=0.0_r8
+#   ifdef SED_MORPH
+!>          tl_FC(i,0)=2.0_r8*(tl_W(i,j,0)*                             &
+!>   &                         (cff2*t(i,j,1,nstp,itrc)-                &
+!>   &                          cff3*t(i,j,2,nstp,itrc))+               &
+!>   &                         W(i,j,0)*                                &
+!>   &                         (cff2*tl_t(i,j,1,nstp,itrc)-             &
+!>   &                          cff3*tl_t(i,j,2,nstp,itrc)))
+!>
+            adfac=2.0_r8*ad_FC(i,0)
+            adfac1=adfac*W(i,j,0)
+            ad_W(i,j,0)=ad_W(i,j,0)+                                    &
+     &                  (cff2*t(i,j,1,nstp,itrc)-                       &
+     &                   cff3*t(i,j,2,nstp,itrc))*adfac
+            ad_t(i,j,1,nstp,itrc)=ad_t(i,j,1,nstp,itrc)+cff2*adfac1
+            ad_t(i,j,2,nstp,itrc)=ad_t(i,j,2,nstp,itrc)-cff3*adfac1
+            ad_FC(i,0)=0.0_r8
+#   else
 !>          tl_FC(i,0)=0.0_r8
 !>
             ad_FC(i,0)=0.0_r8
+#   endif
           END DO
           DO k=2,N(ng)-2
             DO i=Istr,Iend
@@ -1680,7 +1776,7 @@
 !  Compute adjoint artificial continuity equation (same for all tracers)
 !  and load it into private array DC (1/m). Notice pipelined J-loop.
 !
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           cff=0.5_r8*dt(ng)
         ELSE
           cff=(1.0_r8-Gamma)*dt(ng)
@@ -1720,7 +1816,7 @@
 !
 !  Time-step horizontal advection (m Tunits).
 !
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.5_r8*dt(ng)
             cff1=1.0_r8
             cff2=0.0_r8
@@ -1763,7 +1859,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (Lsrc(is,itrc).and.                                      &
-                ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
+     &          ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
      &          ((Jstr.le.j).and.(j.le.Jend+1))) THEN
               IF (INT(Dsrc(is)).eq.0) THEN
 !>              tl_FX(i,j)=tl_Huon(i,j,k)*Tsrc(is,k,itrc)

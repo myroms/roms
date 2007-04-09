@@ -714,7 +714,7 @@
               allocate (tracer(MT,Ngrids))
             END IF
           ELSE IF (TRIM(KeyWord).eq.'NTIMES') THEN
-            Npts=load_i(Nval, Rval, 1, ntimes)
+            Npts=load_i(Nval, Rval, Ngrids, ntimes)
           ELSE IF (TRIM(KeyWord).eq.'DT') THEN
             Npts=load_r(Nval, Rval, Ngrids, dt)
 #ifdef AIR_OCEAN
@@ -787,7 +787,7 @@
             Npts=load_i(Nval, Rval, Ngrids, ntsAVG)
 # ifdef ADJOINT
             DO ng=1,Ngrids           
-              IF (ntsAVG(ng).eq.1) ntsAVG(ng)=ntimes
+              IF (ntsAVG(ng).eq.1) ntsAVG(ng)=ntimes(ng)
             END DO
 # endif
           ELSE IF (TRIM(KeyWord).eq.'NAVG') THEN
@@ -957,7 +957,7 @@
               Scoef(ng)=ABS(Scoef(ng))
             END DO
           ELSE IF (TRIM(KeyWord).eq.'GAMMA2') THEN
-            Npts=load_r(Nval, Rval, 1, gamma2)
+            Npts=load_r(Nval, Rval, Ngrids, gamma2)
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
           ELSE IF (TRIM(KeyWord).eq.'DstrS') THEN
@@ -1667,21 +1667,35 @@
 !  If strong constraint, write only final adjoint solution since only
 !  we are estimating initial conditions.
 !
-        nADJ(ng)=ntimes
+        nADJ(ng)=ntimes(ng)
 !
 !  Insure that restart file is written only at the end.  In sequential
 !  data assimilation the restart file is used as the first guess for
 !  the next assimilation cycle.
 !
-        nRST(ng)=ntimes
+        nRST(ng)=ntimes(ng)
 #endif
-        IF ((nrrec.eq.0).and.(nAVG(ng).gt.ntimes)) LdefAVG(ng)=.FALSE.
-        IF ((nrrec.eq.0).and.(nDIA(ng).gt.ntimes)) LdefDIA(ng)=.FALSE.
-        IF ((nrrec.eq.0).and.(nFLT(ng).gt.ntimes)) LdefFLT(ng)=.FALSE.
-        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes)) LdefHIS(ng)=.FALSE.
-        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes)) LdefHIS(ng)=.FALSE.
-        IF ((nrrec.eq.0).and.(nRST(ng).gt.ntimes)) LdefRST(ng)=.FALSE.
-        IF ((nrrec.eq.0).and.(nSTA(ng).gt.ntimes)) LdefSTA(ng)=.FALSE.
+        IF ((nrrec.eq.0).and.(nAVG(ng).gt.ntimes(ng))) THEN
+          LdefAVG(ng)=.FALSE.
+        END IF
+        IF ((nrrec.eq.0).and.(nDIA(ng).gt.ntimes(ng))) THEN
+          LdefDIA(ng)=.FALSE.
+        END IF
+        IF ((nrrec.eq.0).and.(nFLT(ng).gt.ntimes(ng))) THEN
+          LdefFLT(ng)=.FALSE.
+        END IF
+        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
+          LdefHIS(ng)=.FALSE.
+        END IF
+        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
+          LdefHIS(ng)=.FALSE.
+        END IF
+        IF ((nrrec.eq.0).and.(nRST(ng).gt.ntimes(ng))) THEN
+          LdefRST(ng)=.FALSE.
+        END  IF
+        IF ((nrrec.eq.0).and.(nSTA(ng).gt.ntimes(ng))) THEN
+          LdefSTA(ng)=.FALSE.
+        END IF
       END DO
 !
 !-----------------------------------------------------------------------
@@ -1692,11 +1706,13 @@
 #ifdef DISTRIBUTE
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
      &                 TRIM(my_fort), TRIM(my_fc), TRIM(my_fflags),     &
-     &                 TRIM(Iname), TRIM(svn_url), TRIM(svn_rev)
+     &                 TRIM(Iname), TRIM(svn_url), TRIM(svn_rev),       &
+     &                 TRIM(Rdir), TRIM(Hdir), TRIM(Hfile), TRIM(Adir)
 #else
         WRITE (out,60) TRIM(title), TRIM(my_os), TRIM(my_cpu),          &
      &                 TRIM(my_fort), TRIM(my_fc), TRIM(my_fflags),     &
-     &                 TRIM(svn_url), TRIM(svn_rev)
+     &                 TRIM(svn_url), TRIM(svn_rev), TRIM(Rdir),        &
+     &                 TRIM(Hdir), TRIM(Hfile), TRIM(Adir)
 #endif
 
         DO ng=1,Ngrids
@@ -1730,7 +1746,7 @@
 !  Report physical parameters.
 !
           WRITE (out,110) ng
-          WRITE (out,120) ntimes, 'ntimes',                             &
+          WRITE (out,120) ntimes(ng), 'ntimes',                         &
      &          'Number of timesteps for 3-D equations.'
           WRITE (out,140) dt(ng), 'dt',                                 &
      &          'Timestep size (s) for 3-D equations.'
@@ -2076,7 +2092,7 @@
      &          'Saline contraction coefficient (1/PSU).'
 # endif
 #endif
-          WRITE (out,160) gamma2, 'gamma2',                             &
+          WRITE (out,160) gamma2(ng), 'gamma2',                         &
      &          'Slipperiness variable: free-slip (1.0) or ',           &
      &          '                     no-slip (-1.0).'
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
@@ -2641,9 +2657,13 @@
      &        /,1x,'Compiler system  : ',a,                             &
      &        /,1x,'Compiler command : ',a,                             &
      &        /,1x,'Compiler flags   : ',a,/,                           &
-     &        /,1x,'Input Script: ',a,/,                                &
-     &        /,1x,'SVN Root URL: ',a,                                  &
-     &        /,1x,'SVN Revision: ',a)
+     &        /,1x,'Input Script  : ',a,/,                              &
+     &        /,1x,'SVN Root URL  : ',a,                                &
+     &        /,1x,'SVN Revision  : ',a,/,                              &
+     &        /,1x,'Local Root    : ',a,                                &
+     &        /,1x,'Header Dir    : ',a,                                &
+     &        /,1x,'Header file   : ',a,                                &
+     &        /,1x,'Analytical Dir: ',a)
 #else
   60  FORMAT (/,1x,a,/,                                                 &
      &        /,1x,'Operating system : ',a,                             &
@@ -2651,8 +2671,12 @@
      &        /,1x,'Compiler system  : ',a,                             &
      &        /,1x,'Compiler command : ',a,                             &
      &        /,1x,'Compiler flags   : ',a,/,                           &
-     &        /,1x,'SVN Root URL: ',a,                                  &
-     &        /,1x,'SVN Revision: ',a)
+     &        /,1x,'SVN Root URL  : ',a,                                &
+     &        /,1x,'SVN Revision  : ',a,/,                              &
+     &        /,1x,'Local Root    : ',a,                                &
+     &        /,1x,'Header Dir    : ',a,                                &
+     &        /,1x,'Header file   : ',a,                                &
+     &        /,1x,'Analytical Dir: ',a)
 #endif
   70  FORMAT (/,' Resolution, Grid ',i2.2,': ',i4.4,'x',i4.4,'x',i3.3,  &
      &        ',',2x,'Parallel Nodes: ',i3,',',2x,'Tiling: ',i3.3,      &
@@ -5881,9 +5905,9 @@
      &            'Accuracy required for Hessian eigenvectors.'
           WRITE (out,70) LhessianEV, 'LhessianEV',                      &
      &            'Switch to compute Hessian eigenvectors.'
-          WRITE (out,70) Lprecond, 'Lprecond',                          &
-     &           'Switch to pre-conditioning with Hessian eigenvectors.'
 #   endif
+          WRITE (out,70) Lprecond, 'Lprecond',                          &
+     &           'Switch to preconditioning with Hessian eigenpairs.'
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
           WRITE (out,70) LdefNRM(ng), 'LdefNRM',                        &
      &            'Switch to create a normalization NetCDF file.'
@@ -6378,6 +6402,16 @@
         IF (status.gt.0) THEN
           IF (TRIM(KeyWord).eq.'Lstations') THEN 
             Npts=load_l(Nval, Cval, Ngrids, Lstations)
+#if defined SEDIMENT && defined SED_MORPH
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idbath)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idbath,1))
+#endif
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idFsur)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idFsur,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idUbar)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbar,1))
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idVbar)') THEN
+            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbar,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idUvel)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idUvel,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idVvel)') THEN
@@ -6386,16 +6420,6 @@
             Npts=load_l(Nval, Cval, Ngrids, Sout(idWvel,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idOvel)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idOvel,1))
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idUbar)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idUbar,1))
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idVbar)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idVbar,1))
-#if defined SEDIMENT && defined SED_MORPH
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idbath)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idbath,1))
-#endif
-          ELSE IF (TRIM(KeyWord).eq.'Sout(idFsur)') THEN
-            Npts=load_l(Nval, Cval, Ngrids, Sout(idFsur,1))
           ELSE IF (TRIM(KeyWord).eq.'Sout(idTvar)') THEN
             Npts=load_l(Nval, Cval, MT*Ngrids, Lsta)
             DO ng=1,Ngrids

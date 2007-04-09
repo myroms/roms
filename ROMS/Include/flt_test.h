@@ -8,6 +8,9 @@
 **
 ** Options for Floats Tracking Test.
 **
+** Application flag:   FLT_TEST
+** Input script:       ocean_flt_test2d.in,  ocean_flt_test3d.in
+**                     floats_flt_test2d.in, floats_flt_test3d.in
 */
 
 #define UV_ADV

@@ -38,11 +38,11 @@
 !
 ! Application title.
 
-       TITLE = Wind-Driven Upwelling/Downwelling over a Periodic Channel
+       TITLE = Homogeneous Coastal Form Stress Canyon Test
 
 ! C-preprocessing Flag, default configuration.
 
-    MyAppCPP = UPWELLING
+    MyAppCPP = CANYON
 
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
@@ -52,13 +52,13 @@
 ! Grid dimension parameters. See notes below in the Glossary for how to set
 ! these parameters correctly.
 
-          Lm == 41            ! Number of I-direction INTERIOR RHO-points
-          Mm == 80            ! Number of J-direction INTERIOR RHO-points
-           N == 16            ! Number of vertical levels
+          Lm == 65            ! Number of I-direction INTERIOR RHO-points
+          Mm == 48            ! Number of J-direction INTERIOR RHO-points
+           N == 10            ! Number of vertical levels
 
         Nbed =  0             ! Number of sediment bed layers
 
-         NAT =  2             ! Number of active tracers (usually, 2)
+         NAT =  1             ! Number of active tracers (usually, 2)
          NPT =  0             ! Number of inactive passive tracers
          NCS =  0             ! Number of cohesive (mud) sediment tracers
          NNS =  0             ! Number of non-cohesive (sand) sediment tracers
@@ -68,13 +68,13 @@
 ! indices (Istr,Iend) and (Jstr,Jend), [1:Ngrids].
 
       NtileI == 1                               ! I-direction partition
-      NtileJ == 4                               ! J-direction partition
+      NtileJ == 1                               ! J-direction partition
 
 ! Time-Stepping parameters.
 
-      NTIMES =  1440
-          DT == 300.0d0
-     NDTFAST == 30
+      NTIMES == 103680
+          DT == 20.0d0
+     NDTFAST == 1
 
 ! Model iteration loops parameters.
 
@@ -95,7 +95,7 @@
 
        NRREC =  0
    LcycleRST == T
-        NRST == 288
+        NRST == 8640
         NSTA == 1
         NFLT == 1
        NINFO == 1
@@ -103,22 +103,22 @@
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 72
+        NHIS == 8640
      NDEFHIS == 0
       NTSAVG == 1
-        NAVG == 72
+        NAVG == 8640
      NDEFAVG == 0
       NTSDIA == 1
-        NDIA == 72
+        NDIA == 8640
      NDEFDIA == 0
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F
-        NTLM == 72
+        NTLM == 8640
      NDEFTLM == 0
    LcycleADJ == F
-        NADJ == 72
+        NADJ == 8640
      NDEFADJ == 0
 
 ! Output check pointing GST restart parameters.
@@ -133,21 +133,21 @@
 
 ! Harmonic/biharmonic horizontal diffusion of tracer: [1:NAT+NPT,Ngrids].
 
-        TNU2 == 0.0d0  0.0d0                    ! m2/s
-        TNU4 == 2*0.0d0                         ! m4/s
+        TNU2 == 5.0d0   5.0d0                   ! m2/s
+        TNU4 == 1.0d+7  1.0d+7                  ! m4/s
 
 ! Harmononic/biharmonic, horizontal viscosity coefficient: [Ngrids].
 
        VISC2 == 5.0d0                           ! m2/s
-       VISC4 == 0.0d0                           ! m4/s
+       VISC4 == 1.0d+8                          ! m4/s
 
 ! Vertical mixing coefficients for active tracers: [1:NAT+NPT,Ngrids]
 
-     AKT_BAK == 1.0d-6 1.0d-6                   ! m2/s
+     AKT_BAK == 0.0d0  0.0d0                    ! m2/s
 
 ! Vertical mixing coefficient for momentum: [Ngrids].
 
-     AKV_BAK == 1.0d-5                          ! m2/s
+     AKV_BAK == 0.0d0                           ! m2/s
 
 ! Turbulent closure parameters.
 
@@ -193,18 +193,18 @@
 ! Various parameters.
 
        WTYPE == 1
-     LEVSFRC == 15
+     LEVSFRC == 10
      LEVBFRC == 1
 
 ! Vertical S-coordinates parameters, [1:Ngrids].
 
-     THETA_S == 3.0d0                      ! 0 < THETA_S < 20
+     THETA_S == 0.0001d0                   ! 0 < THETA_S < 20
      THETA_B == 0.0d0                      ! 0 < THETA_B < 1
-      TCLINE == 50.0d0                     ! m
+      TCLINE == 90.0d0                     ! m
 
 ! Mean Density and Brunt-Vaisala frequency.
 
-        RHO0 =  1025.0d0                   ! kg/m3
+        RHO0 =  1000.0d0                   ! kg/m3
      BVF_BAK =  1.0d-5                     ! 1/s2
 
 ! Time-stamp assigned for model initialization, reference time
@@ -218,7 +218,7 @@
 ! Nudging/relaxation time scales, inverse scales will be computed
 ! internally, [1:Ngrids].
 
-       TNUDG == 2*0.0d0                    ! days
+       TNUDG == 0.0d0  0.0d0               ! days
        ZNUDG == 0.0d0                      ! days
       M2NUDG == 0.0d0                      ! days
       M3NUDG == 0.0d0                      ! days
@@ -231,7 +231,7 @@
 
 ! Linear equation of State parameters:
 
-          R0 == 1027.0d0                   ! kg/m3
+          R0 == 1020.0d0                   ! kg/m3
           T0 == 14.0d0                     ! Celsius
           S0 == 35.0d0                     ! PSU
        TCOEF == 1.7d-4                     ! 1/Celsius
@@ -239,7 +239,7 @@
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 =  1.0d0
+      GAMMA2 == 1.0d0
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their
@@ -303,7 +303,7 @@ Hout(idVbar) == T                          ! 2D V-velocity
 Hout(idFsur) == T                          ! free-surface
 Hout(idBath) == T                          ! time-dependent bathymetry
 
-Hout(idTvar) == T T                        ! temperature and salinity
+Hout(idTvar) == T F                        ! temperature and salinity
 
 Hout(idUsms) == F                          ! surface U-stress
 Hout(idVsms) == F                          ! surface V-stress

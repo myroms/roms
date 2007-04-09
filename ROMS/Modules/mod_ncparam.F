@@ -485,6 +485,15 @@
         character (len=80 ) :: Cinfo(NV,Ngrids)
         character (len=100) :: Vname(5,0:NV)
         character (len=120) :: history
+
+!
+!  Source code root directory, cpp header file and directory, and
+!  analytical expression directory.
+!
+        character (len=80 ) :: Rdir
+        character (len=80 ) :: Hdir
+        character (len=80 ) :: Hfile
+        character (len=80)  :: Adir
 !
 !  SVN revision and repository root URL.
 !
@@ -706,6 +715,7 @@
           ncFWDid(ng)=-1
           ncGRDid(ng)=-1
           ncHISid(ng)=-1
+          ncHSSid(ng)=-1
           ncINIid(ng)=-1
           ncIRPid(ng)=-1
           ncITLid(ng)=-1
@@ -820,6 +830,22 @@
             Vtime(2,i,ng)=0.0_r8
           END DO
         END DO
+!
+!  Set source code root directory, cpp header file and directory, and
+!  analytical expression directory.
+!
+#ifdef ROOT_DIR
+        Rdir=ROOT_DIR
+#endif
+#ifdef HEADER_DIR
+        Hdir=HEADER_DIR
+#endif
+#ifdef ROMS_HEADER
+        Hfile=ROMS_HEADER
+#endif
+#ifdef ANALYTICAL_DIR
+        Adir=ANALYTICAL_DIR
+#endif
 !
 !-----------------------------------------------------------------------
 !  Define names of variables for Input/Output NetCDF files.

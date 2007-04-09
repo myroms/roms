@@ -1,6 +1,7 @@
 #include "cppdefs.h"
       MODULE ad_htobs_mod
-#if defined ADJOINT && (defined WEAK_CONSTRAINT || defined IOM)
+#if defined ADJOINT && defined OBSERVATIONS && \
+    (defined WEAK_CONSTRAINT || defined IOM)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

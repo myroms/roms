@@ -197,12 +197,12 @@
 !  Time-step tangent linear model.
 !
         IF (Master) THEN
-          WRITE (stdout,10) ntstart, ntend
+          WRITE (stdout,10) ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
 
-        TL_LOOP : DO my_iic=ntstart,ntend+1
+        TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D

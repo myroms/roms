@@ -319,14 +319,14 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
         IF (Master) THEN
-          WRITE (stdout,30) 'NL', ntstart, ntend
+          WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         SporadicImpulse=.FALSE.
         FrequentImpulse=.FALSE.
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP1 : DO my_iic=ntstart,ntend+1
+        NL_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -418,12 +418,12 @@
 !  state.  Compute model solution at observation points, H * X_n.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'NL', ntstart, ntend
+            WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          NL_LOOP2 : DO my_iic=ntstart,ntend+1
+          NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -475,12 +475,12 @@
 !  Time-step adjoint model backwards forced with current PSI vector.
 !
             IF (Master) THEN
-              WRITE (stdout,30) 'AD', ntstart, ntend
+              WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)+dt(ng)
 
-            AD_LOOP1 : DO my_iic=ntstart,ntend,-1
+            AD_LOOP1 : DO my_iic=ntstart(ng),ntend(ng),-1
 
               iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -724,13 +724,13 @@
 !  are used in the conjugate gradient algorithm.
 !
             IF (Master) THEN
-              WRITE (stdout,30) 'TL', ntstart, ntend
+              WRITE (stdout,30) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             MyTime=time(ng)
             time(ng)=time(ng)-dt(ng)
 
-            TL_LOOP : DO my_iic=ntstart,ntend+1
+            TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
 !
@@ -806,12 +806,12 @@
 !  coefficients, Beta_n.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'AD', ntstart, ntend
+            WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
 
-          AD_LOOP2 : DO my_iic=ntstart,ntend,-1
+          AD_LOOP2 : DO my_iic=ntstart(ng),ntend(ng),-1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -924,7 +924,7 @@
 !  Write out representer model initial conditions into INIname, record
 !  Lini.
 !
-          CALL wrt_ini (ng, Lold(ng), Lini)      ! HGA check?
+          CALL wrt_ini (ng, Lbck)
 !
 !  If weak constraint, convolve adjoint records in ADJname and impose
 !  model error covariance.
@@ -1042,7 +1042,7 @@
 !
 !  Initialize nonlinear model INIname file, record Rec2.
 !
-          tINIindx(ng)=Rec2
+          tINIindx(ng)=outer+2
           CALL initial (ng)
           IF (exit_flag.ne.NoError) THEN
             IF (Master) THEN
@@ -1062,12 +1062,12 @@
 !  compute new basic state trajectory X_n.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'NL', ntstart, ntend
+            WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          NL_LOOP3 : DO my_iic=ntstart,ntend+1
+          NL_LOOP3 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D

@@ -306,7 +306,7 @@
 !
 !  Time-step horizontal advection.
 !
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           cff1=1.0_r8
           cff2=0.0_r8
           cff3=0.5_r8*dt(ng)
@@ -389,7 +389,7 @@
 !
 !  Time-step vertical advection term.
 !
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           cff3=0.5_r8*dt(ng)
         ELSE
           cff3=(1.0_r8-Gamma)*dt(ng)

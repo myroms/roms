@@ -267,8 +267,8 @@
      &                                    'trd'
  10         FORMAT (/,3x,a,2x,a,2x,a,4x,a,4x,a,3x,a,2x,a,/)
           END IF
-          IF (Master) WRITE (stdout,20) iic(ng)-1, tdays, avgke ,avgpe, &
-     &                                  avgkp,volume,trd
+          IF (Master) WRITE (stdout,20) iic(ng)-1, tdays(ng), avgke,    &
+     &                                  avgpe, avgkp,volume,trd
  20       FORMAT (i7,f12.5,4(1pe14.6),i4)
           IF (Master) CALL my_flush (stdout)
 !

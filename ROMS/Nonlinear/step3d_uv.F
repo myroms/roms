@@ -320,9 +320,9 @@
 !
 !  Time step right-hand-side terms.
 !
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           cff=0.25_r8*dt(ng)
-        ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
           cff=0.25_r8*dt(ng)*3.0_r8/2.0_r8
         ELSE
           cff=0.25_r8*dt(ng)*23.0_r8/12.0_r8
@@ -649,9 +649,9 @@
 !
 !  Time step right-hand-side terms.
 !
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.25_r8*dt(ng)
-          ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+          ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
             cff=0.25_r8*dt(ng)*3.0_r8/2.0_r8
           ELSE
             cff=0.25_r8*dt(ng)*23.0_r8/12.0_r8
@@ -1050,7 +1050,8 @@
         DO i=IU_RANGE
           cff1=DC(i,0)                                  ! intermediate
 # ifdef NEARSHORE_MELLOR
-          cff2=on_u(i,j)*DC(i,0)*ubar_stokes(i,j)
+!          cff2=on_u(i,j)*DC(i,0)*ubar_stokes(i,j)
+          cff2=DC(i,0)*ubar_stokes(i,j)
 # endif
           DC(i,0)=1.0_r8/DC(i,0)                        ! recursive
           CF(i,0)=DC(i,0)*(CF(i,0)-DU_avg1(i,j))        ! recursive
@@ -1207,7 +1208,8 @@
           DO i=IV_RANGE
             cff1=DC(i,0)                                 ! Intermediate
 # ifdef NEARSHORE_MELLOR
-            cff2=om_v(i,j)*DC(i,0)*vbar_stokes(i,j)
+!            cff2=om_v(i,j)*DC(i,0)*vbar_stokes(i,j)
+            cff2=DC(i,0)*vbar_stokes(i,j)
 # endif
             DC(i,0)=1.0_r8/DC(i,0)                       ! recursive
             CF(i,0)=DC(i,0)*(CF(i,0)-DV_avg1(i,j))       ! recursive

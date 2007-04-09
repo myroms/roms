@@ -8,6 +8,8 @@
 **
 ** Options for Gravitational Adjustment Test.
 **
+** Application flag:   GRAV_ADJ
+** Input script:       ocean_grav_adj.in
 */
 
 #define UV_ADV

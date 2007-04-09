@@ -415,7 +415,7 @@
 #   define I_RANGE Istr,IendR
 #  endif
         DO i=I_RANGE
-          ubar(i,Jstr-1,kout)=gamma2*ubar(i,Jstr,kout)
+          ubar(i,Jstr-1,kout)=gamma2(ng)*ubar(i,Jstr,kout)
 #  ifdef MASKING
           ubar(i,Jstr-1,kout)=ubar(i,Jstr-1,kout)*                      &
      &                        GRID(ng)%umask(i,Jstr-1)
@@ -530,7 +530,7 @@
 #   define I_RANGE Istr,IendR
 #  endif
         DO i=I_RANGE
-          ubar(i,Jend+1,kout)=gamma2*ubar(i,Jend,kout)
+          ubar(i,Jend+1,kout)=gamma2(ng)*ubar(i,Jend,kout)
 #  ifdef MASKING
           ubar(i,Jend+1,kout)=ubar(i,Jend+1,kout)*                      &
      &                        GRID(ng)%umask(i,Jend+1)

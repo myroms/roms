@@ -557,7 +557,7 @@
           DO i=IV_RANGE
             DC1(i,0)=DC(i,0)                            ! intermediate
 # ifdef NEARSHORE_MELLOR
-            cff2=om_v(i,j)*DC(i,0)*vbar_stokes(i,j)
+            cff2=DC(i,0)*vbar_stokes(i,j)
 # endif
             DC(i,0)=1.0_r8/DC(i,0)                      ! recursive
             CF1(i)=CF(i,0)                              ! intermediate
@@ -828,12 +828,11 @@
 !>
             ad_DC(i,0)=-ad_DC(i,0)/(DC1(i,0)*DC1(i,0))
 # ifdef NEARSHORE_MELLOR
-!>          tl_cff2=om_v(i,j)*(tl_DC(i,0)*vbar_stokes(i,j)+             &
-!>   &                         DC(i,0)*tl_vbar_stokes(i,j))
+!>          tl_cff2=tl_DC(i,0)*vbar_stokes(i,j)+                        &
+!>   &              DC(i,0)*tl_vbar_stokes(i,j))
 !>
-            adfac=om_v(i,j)*ad_cff2
-            ad_vbar_stokes(i,j)=ad_vbar_stokes(i,j)+DC(i,0)*adfac
-            ad_DC(i,0)=ad_DC(i,0)+vbar_stokes(i,j)*adfac
+            ad_vbar_stokes(i,j)=ad_vbar_stokes(i,j)+DC(i,0)*ad_cff2
+            ad_DC(i,0)=ad_DC(i,0)+vbar_stokes(i,j)*ad_cff2
             ad_cff2=0.0_r8
 # endif
           END DO
@@ -925,7 +924,7 @@
         DO i=IU_RANGE
           DC1(i,0)=DC(i,0)                              ! intermediate
 # ifdef NEARSHORE_MELLOR
-          cff2=on_u(i,j)*DC(i,0)*ubar_stokes(i,j)
+          cff2=DC(i,0)*ubar_stokes(i,j)
 # endif
           DC(i,0)=1.0_r8/DC(i,0)                        ! recursive
           CF1(i)=CF(i,0)                                ! intermediate
@@ -1188,12 +1187,11 @@
 !>
           ad_DC(i,0)=-ad_DC(i,0)/(DC1(i,0)*DC1(i,0))
 # ifdef NEARSHORE_MELLOR
-!>        tl_cff2=on_u(i,j)*(tl_DC(i,0)*ubar_stokes(i,j)+               &
-!>   &                       DC(i,0)*tl_ubar_stokes(i,j))
+!>        tl_cff2=tl_DC(i,0)*ubar_stokes(i,j)+                          &
+!>   &            DC(i,0)*tl_ubar_stokes(i,j)
 !>
-          adfac=on_u(i,j)*ad_cff2
-          ad_DC(i,0)=ad_DC(i,0)+ubar_stokes(i,j)*adfac
-          ad_ubar_stokes(i,j)=ad_ubar_stokes(i,j)+DC(i,0)*adfac
+          ad_DC(i,0)=ad_DC(i,0)+ubar_stokes(i,j)*ad_cff2
+          ad_ubar_stokes(i,j)=ad_ubar_stokes(i,j)+DC(i,0)*ad_cff2
           ad_cff2=0.0_r8
 # endif
         END DO
@@ -1919,9 +1917,9 @@
 !
 !  Time step adjoint right-hand-side terms.
 !
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.25_r8*dt(ng)
-          ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+          ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
             cff=0.25_r8*dt(ng)*3.0_r8/2.0_r8
           ELSE
             cff=0.25_r8*dt(ng)*23.0_r8/12.0_r8
@@ -2602,9 +2600,9 @@
 !
 !  Time step adjoint right-hand-side terms.
 !
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           cff=0.25_r8*dt(ng)
-        ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
           cff=0.25_r8*dt(ng)*3.0_r8/2.0_r8
         ELSE
           cff=0.25_r8*dt(ng)*23.0_r8/12.0_r8

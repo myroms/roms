@@ -626,7 +626,7 @@
           END DO
           DO j=JV_RANGE
 # ifdef WESTERN_WALL
-            LapV(Istr-1,j,k)=gamma2*LapV(Istr,j,k)
+            LapV(Istr-1,j,k)=gamma2(ng)*LapV(Istr,j,k)
 # else
             LapV(Istr-1,j,k)=0.0_r8
 # endif
@@ -644,7 +644,7 @@
           END DO
           DO j=JV_RANGE
 # ifdef EASTERN_WALL
-            LapV(Iend+1,j,k)=gamma2*LapV(Iend,j,k)
+            LapV(Iend+1,j,k)=gamma2(ng)*LapV(Iend,j,k)
 # else
             LapV(Iend+1,j,k)=0.0_r8
 # endif
@@ -657,7 +657,7 @@
         DO k=1,N(ng)
           DO i=IU_RANGE
 # ifdef SOUTHERN_WALL
-            LapU(i,Jstr-1,k)=gamma2*LapU(i,Jstr,k)
+            LapU(i,Jstr-1,k)=gamma2(ng)*LapU(i,Jstr,k)
 # else
             LapU(i,Jstr-1,k)=0.0_r8
 # endif
@@ -675,7 +675,7 @@
         DO k=1,N(ng)
           DO i=IU_RANGE
 # ifdef NORTHERN_WALL
-            LapU(i,Jend+1,k)=gamma2*LapU(i,Jend,k)
+            LapU(i,Jend+1,k)=gamma2(ng)*LapU(i,Jend,k)
 # else
             LapU(i,Jend+1,k)=0.0_r8
 # endif

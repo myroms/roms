@@ -246,21 +246,21 @@
         END IF
         time(ng)=INPtime
         tdays(ng)=time(ng)*sec2day
-        ntstart=NINT((time(ng)-dstart*day2sec)/dt(ng))+1
-        IF (ntstart.lt.1) ntstart=1
+        ntstart(ng)=NINT((time(ng)-dstart*day2sec)/dt(ng))+1
+        IF (ntstart(ng).lt.1) ntstart(ng)=1
         IF (PerfectRST(ng)) THEN
-          ntfirst=1
+          ntfirst(ng)=1
         ELSE
-          ntfirst=ntstart
+          ntfirst(ng)=ntstart(ng)
         END IF
       ELSE IF (model.eq.iADM) THEN
         IF (msg.ne.1) THEN
           time(ng)=INPtime
           tdays(ng)=time(ng)*sec2day
         END IF
-        ntstart=ntimes+1
-        ntend=1
-        ntfirst=ntend
+        ntstart(ng)=ntimes(ng)+1
+        ntend(ng)=1
+        ntfirst(ng)=ntend(ng)
       END IF
 !
 !  Over-write "IniRec" to the actual initial record processed.

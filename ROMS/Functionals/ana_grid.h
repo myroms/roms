@@ -259,12 +259,6 @@
       depth=1500.0_r8
       f0=5.0E-05_r8
       beta=0.0_r8
-#elif defined CRG_BAN_TEST
-      Xsize=1000.0_r8
-      Esize=1000.0_r8
-      depth=50.0_r8
-      f0=0.0_r8
-      beta=0.0_r8
 #elif defined DOUBLE_GYRE
       Xsize=1000.0E+03_r8
       Esize=2000.0E+03_r8
@@ -313,6 +307,12 @@
       depth=50.0_r8
       f0=1.09E-04_r8
       beta=0.0_r8
+# elif defined MIXED_LAYER
+      Xsize=500.0_r8
+      Esize=400.0_r8
+      depth=50.0_r8
+      f0=0.0_r8
+      beta=0.0_r8
 #elif defined OVERFLOW
       Xsize=4.0E+03_r8
       Esize=200.0E+03_r8
@@ -337,12 +337,6 @@
       depth=5000.0_r8
       f0=1.0E-04_r8
       beta=0.0_r8
-#elif defined SHELFRONT
-      Xsize=20.0E+03_r8
-      Esize=200.0E+03_r8
-      depth=1660.0_r8
-      f0=1.0E-04_r8
-      beta=0.0_r8
 #elif defined SOLITON
 !!    Xsize=0.5_r8*REAL(Lm(ng),r8)
 !!    Esize=0.5_r8*REAL(Mm(ng),r8)
@@ -352,12 +346,6 @@
       f0=0.0_r8
       beta=1.0_r8
       g=1.0_r8
-#elif defined SANDWAVE
-      Xsize=300.0_r8
-      Esize=36.0_r8
-      depth=10.0_r8
-      f0=0.0_r8
-      beta=0.0_r8
 #elif defined SED_TEST1
       Xsize=300.0_r8
       Esize=36.0_r8
@@ -369,6 +357,12 @@
       Esize=30.0_r8
       depth=0.5_r8
       f0=0.0_r8
+      beta=0.0_r8
+# elif defined SHOREFACE
+      Xsize=1180.0_r8
+      Esize=140.0_r8
+      depth=15.0_r8
+      f0=0.0E-04_r8
       beta=0.0_r8
 #elif defined TEST_CHAN
       Xsize=10000.0_r8
@@ -395,7 +389,7 @@
       f0=1.0E-04_r8
       beta=0.0_r8
 #else
-      ANA_GRID: no values provided for Xsize, Esize, depth, f0, and beta.
+      ana_grid.h: no values provided for Xsize, Esize, depth, f0, beta.
 #endif
 !
 !  Load grid parameters to global storage.
@@ -741,12 +735,6 @@
           h(i,j)=5.0_r8+(Xsize-xr(i,j))/Xsize*5.0_r8
         END DO
       END DO 
-#elif defined CRG_BAN_TEST
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          h(i,j)=50.0_r8
-        END DO
-      END DO 
 #elif defined LAB_CANYON
       DO j=JstrR,JendR
         DO i=IstrR,IendR
@@ -785,6 +773,12 @@
           h(i,j)=18.0_r8-16.0_r8*FLOAT(Mm(ng)-j)/FLOAT(Mm(ng)-1)
         END DO
       END DO
+# elif defined MIXED_LAYER
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          h(i,j)=50.0_r8
+        END DO
+      END DO
 #elif defined OVERFLOW
       val1=200.0_r8
       DO j=JstrR,JendR
@@ -813,12 +807,6 @@
      &                 REAL(Lm(ng)-6,r8)
         END DO
       END DO
-#elif defined SANDWAVE
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          h(i,j)=10.0_r8+SIN(6.*3.14159*REAL(i,r8)/REAL(Lm(ng)+1,r8))
-        END DO
-      END DO 
 #elif defined SEAMOUNT
       DO j=JstrR,JendR
         DO i=IstrR,IendR
@@ -831,24 +819,6 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           h(i,j)=20.0_r8
-        END DO
-      END DO
-#elif defined SHELFRONT
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          val1=yr(i,j)/1000.0_r8
-          IF (val1.lt.50.0_r8) THEN
-            h(i,j)=50.0_r8+2.0_r8*val1
-          ELSE IF (val1.lt.60.0_r8) THEN
-            h(i,j)=160.0_r8+1.5_r8*(val1-50.0_r8)**2                    &
-     &                      0.1_r8*(val1-60.0_r8)**2
-          ELSE IF (val1.lt.100.0_r8) THEN
-            h(i,j)=310.0_r8+30.0_r8*(val1-60.0_r8)
-          ELSE IF (val1.lt.110.0_r8) THEN
-            h(i,j)=1660.0_r8-1.5_r8*(val1-110.0_r8)**2
-          ELSE
-            h(i,j)=1660.0_r8
-          END IF
         END DO
       END DO
 #elif defined SHOREFACE

@@ -527,7 +527,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (Lsrc(is,itrc).and.                                      &
-                ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
+     &          ((Istr.le.i).and.(i.le.Iend+1)).and.                    &
      &          ((Jstr.le.j).and.(j.le.Jend+1))) THEN
               IF (INT(Dsrc(is)).eq.0) THEN
                 FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
@@ -540,7 +540,7 @@
 !
 !  Time-step horizontal advection (m Tunits).
 !
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.5_r8*dt(ng)
             cff1=1.0_r8
             cff2=0.0_r8
@@ -565,14 +565,15 @@
 !  load it into private array DC (1/m). Notice pipelined J-loop.
 !
       J_LOOP1 : DO j=Jstr,Jend
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           cff=0.5_r8*dt(ng)
         ELSE
           cff=(1.0_r8-Gamma)*dt(ng)
         END IF
         DO k=1,N(ng)
           DO i=Istr,Iend
-            DC(i,k)=1.0_r8/(Hz(i,j,k)-cff*pm(i,j)*pn(i,j)*              &
+            DC(i,k)=1.0_r8/(Hz(i,j,k)-                                  &
+     &                      cff*pm(i,j)*pn(i,j)*                        &
      &                      (Huon(i+1,j,k)-Huon(i,j,k)+                 &
      &                       Hvom(i,j+1,k)-Hvom(i,j,k)+                 &
      &                      (W(i,j,k)-W(i,j,k-1))))
@@ -664,7 +665,11 @@
             END DO
           END DO
           DO i=Istr,Iend
+#    ifdef SED_MORPH
+            FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
+#    else
             FC(i,0)=0.0_r8
+#    endif
             FC(i,N(ng))=0.0_r8
           END DO
 #   elif defined TS_C2VADVECTION
@@ -679,7 +684,11 @@
             END DO
           END DO
           DO i=Istr,Iend
+#    ifdef SED_MORPH
+            FC(i,0)=W(i,j,0)*t(i,j,1,nstp,itrc)
+#    else
             FC(i,0)=0.0_r8
+#    endif
             FC(i,N(ng))=0.0_r8
           END DO
 #   else
@@ -699,7 +708,13 @@
             END DO
           END DO
           DO i=Istr,Iend
+#    ifdef SED_MORPH
+            FC(i,0)=W(i,j,0)*2.0_r8*                                    &
+     &              (cff2*t(i,j,1,nstp,itrc)-                           &
+     &               cff3*t(i,j,2,nstp,itrc))
+#    else
             FC(i,0)=0.0_r8
+#    endif
             FC(i,1)=W(i,j,1)*                                           &
      &              (cff1*t(i,j,1,nstp,itrc)+                           &
      &               cff2*t(i,j,2,nstp,itrc)-                           &
@@ -714,7 +729,7 @@
 !
 ! Time-step vertical advection of tracers (Tunits).
 !
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             cff=0.5_r8*dt(ng)
           ELSE
             cff=(1.0_r8-Gamma)*dt(ng)
@@ -838,7 +853,7 @@
           DC(i,0)=cff*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
         END DO
         indx=3-nrhs
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
               cff1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
@@ -852,13 +867,17 @@
               DiaU3wrk(i,j,k,M3hadv)=0.0_r8
               DiaU3wrk(i,j,k,M3vadv)=0.0_r8
 #  endif
+#  ifdef NEARSHORE_MELLOR
+              DiaU3wrk(i,j,k,M3hrad)=0.0_r8
+              DiaU3wrk(i,j,k,M3vrad)=0.0_r8
+#  endif
 #  ifdef UV_COR
               DiaU3wrk(i,j,k,M3fcor)=0.0_r8
 #  endif
 # endif
             END DO
           END DO
-        ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
           DO k=1,N(ng)
             DO i=IstrU,Iend
               cff1=u(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i-1,j,k))
@@ -876,6 +895,12 @@
      &                               DiaRU(i,j,k,indx,M3hadv)
               DiaU3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                   &
      &                               DiaRU(i,j,k,indx,M3vadv)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+              DiaU3wrk(i,j,k,M3hrad)=-0.5_r8*DC(i,0)*                   &
+     &                               DiaRU(i,j,k,indx,M3hrad)
+              DiaU3wrk(i,j,k,M3vrad)=-0.5_r8*DC(i,0)*                   &
+     &                               DiaRU(i,j,k,indx,M3vrad)
 #  endif
 #  ifdef UV_COR
               DiaU3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                   &
@@ -913,6 +938,14 @@
               DiaU3wrk(i,j,k,M3vadv)=DC(i,0)*                           &
      &                               (cff1*DiaRU(i,j,k,nrhs,M3vadv)-    &
      &                                cff2*DiaRU(i,j,k,indx,M3vadv))
+#  endif
+#  ifdef NEARSHORE_MELLOR
+              DiaU3wrk(i,j,k,M3hrad)=DC(i,0)*                           &
+     &                               (cff1*DiaRU(i,j,k,nrhs,M3hrad)-    &
+     &                                cff2*DiaRU(i,j,k,indx,M3hrad))
+              DiaU3wrk(i,j,k,M3vrad)=DC(i,0)*                           &
+     &                               (cff1*DiaRU(i,j,k,nrhs,M3vrad)-    &
+     &                                cff2*DiaRU(i,j,k,indx,M3vrad))
 #  endif
 #  ifdef UV_COR
               DiaU3wrk(i,j,k,M3fcor)=DC(i,0)*                           &
@@ -967,7 +1000,7 @@
           DO i=Istr,Iend
             DC(i,0)=cff*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
           END DO
-          IF (iic(ng).eq.ntfirst) THEN
+          IF (iic(ng).eq.ntfirst(ng)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 cff1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
@@ -981,13 +1014,17 @@
                 DiaV3wrk(i,j,k,M3hadv)=0.0_r8
                 DiaV3wrk(i,j,k,M3vadv)=0.0_r8
 #  endif
+#  ifdef NEARSHORE_MELLOR
+                DiaV3wrk(i,j,k,M3hrad)=0.0_r8
+                DiaV3wrk(i,j,k,M3vrad)=0.0_r8
+#  endif
 #  ifdef UV_COR
                 DiaV3wrk(i,j,k,M3fcor)=0.0_r8
 #  endif
 # endif
               END DO
             END DO
-          ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+          ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
             DO k=1,N(ng)
               DO i=Istr,Iend
                 cff1=v(i,j,k,nstp)*0.5_r8*(Hz(i,j,k)+Hz(i,j-1,k))
@@ -1005,6 +1042,12 @@
      &                                  DiaRV(i,j,k,indx,M3hadv)
                 DiaV3wrk(i,j,k,M3vadv)=-0.5_r8*DC(i,0)*                 &
      &                                  DiaRV(i,j,k,indx,M3vadv)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+                DiaV3wrk(i,j,k,M3hrad)=-0.5_r8*DC(i,0)*                 &
+     &                                  DiaRV(i,j,k,indx,M3hrad)
+                DiaV3wrk(i,j,k,M3vrad)=-0.5_r8*DC(i,0)*                 &
+     &                                  DiaRV(i,j,k,indx,M3vrad)
 #  endif
 #  ifdef UV_COR
                 DiaV3wrk(i,j,k,M3fcor)=-0.5_r8*DC(i,0)*                 &
@@ -1043,6 +1086,14 @@
      &                                 (cff1*DiaRV(i,j,k,nrhs,M3vadv)-  &
      &                                  cff2*DiaRV(i,j,k,indx,M3vadv))
 #  endif
+#  ifdef NEARSHORE_MELLOR
+                DiaV3wrk(i,j,k,M3hrad)=DC(i,0)*                         &
+     &                                 (cff1*DiaRV(i,j,k,nrhs,M3hrad)-  &
+     &                                  cff2*DiaRV(i,j,k,indx,M3hrad))
+                DiaV3wrk(i,j,k,M3vrad)=DC(i,0)*                         &
+     &                                 (cff1*DiaRV(i,j,k,nrhs,M3vrad)-  &
+     &                                  cff2*DiaRV(i,j,k,indx,M3vrad))
+#  endif
 #  ifdef UV_COR
                 DiaV3wrk(i,j,k,M3fcor)=DC(i,0)*                         &
      &                                 (cff1*DiaRV(i,j,k,nrhs,M3fcor)-  &
@@ -1072,15 +1123,6 @@
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
      &                   nstp, 3,                                       &
      &                   t)
-#  ifdef TS_MPDATA
-        DO k=1,N(ng)
-          DO i=IstrR,IendR
-            DO j=JstrR,JendR
-              t(i,j,k,3,itrc)=t(i,j,k,3,itrc)*Hz(i,j,k)
-            END DO
-          END DO
-        END DO
-#  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
         CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &

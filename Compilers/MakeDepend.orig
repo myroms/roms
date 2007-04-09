@@ -7,17 +7,16 @@ ocean_control.o: ad_ocean.h w4dpsas_ocean.h tl_ocean.h correlation.h
 ocean_control.o: s4dvar_ocean.h w4dvar_ocean.h afte_ocean.h fsv_ocean.h
 ocean_control.o: grad_ocean.h so_semi_ocean.h is4dvar_lanczos_ocean.h cppdefs.h
 ocean_control.o: globaldefs.h convolution.h is4dvar_ocean.h pert_ocean.h
-ocean_control.o: nl_ocean.h optobs_ocean.h cppdefs.h globaldefs.h fte_ocean.h
-ocean_control.o: op_ocean.h tlcheck_ocean.h picard_ocean.h adsen_ocean.h
+ocean_control.o: nl_ocean.h optobs_ocean.h fte_ocean.h op_ocean.h
+ocean_control.o: tlcheck_ocean.h picard_ocean.h adsen_ocean.h
 ocean_control.o: is4dvar_ocean_old.h rp_ocean.h symmetry.h
 ocean_control.f90: ad_ocean.h w4dpsas_ocean.h tl_ocean.h correlation.h
 ocean_control.f90: s4dvar_ocean.h w4dvar_ocean.h afte_ocean.h fsv_ocean.h
 ocean_control.f90: grad_ocean.h so_semi_ocean.h is4dvar_lanczos_ocean.h
 ocean_control.f90: cppdefs.h globaldefs.h convolution.h is4dvar_ocean.h
-ocean_control.f90: pert_ocean.h nl_ocean.h optobs_ocean.h cppdefs.h
-ocean_control.f90: globaldefs.h fte_ocean.h op_ocean.h tlcheck_ocean.h
-ocean_control.f90: picard_ocean.h adsen_ocean.h is4dvar_ocean_old.h rp_ocean.h
-ocean_control.f90: symmetry.h
+ocean_control.f90: pert_ocean.h nl_ocean.h optobs_ocean.h fte_ocean.h
+ocean_control.f90: op_ocean.h tlcheck_ocean.h picard_ocean.h adsen_ocean.h
+ocean_control.f90: is4dvar_ocean_old.h rp_ocean.h symmetry.h
 ocean_control.o: ad_convolution.o ad_variability.o analytical.o back_cost.o
 ocean_control.o: back_cov.o back_step.o cgradient.o cost_grad.o cost_norm.o
 ocean_control.o: descent.o distribute.o dotproduct.o downhill.o impulse.o
@@ -29,9 +28,9 @@ ocean_control.o: packing.o propagator.o tl_convolution.o tl_ini_adjust.o
 ocean_control.o: tl_variability.o ocean_control.f90
 
 ocean_coupler.o: mct_roms_wrf.h set_bounds.h wrf_io_flags.h tile.h
-ocean_coupler.o: mct_roms_swan.h tile.h cppdefs.h globaldefs.h
+ocean_coupler.o: mct_roms_swan.h cppdefs.h globaldefs.h
 ocean_coupler.f90: mct_roms_wrf.h set_bounds.h wrf_io_flags.h tile.h
-ocean_coupler.f90: mct_roms_swan.h tile.h cppdefs.h globaldefs.h
+ocean_coupler.f90: mct_roms_swan.h cppdefs.h globaldefs.h
 ocean_coupler.o: exchange_2d.o mod_forces.o mod_grid.o mod_iounits.o
 ocean_coupler.o: mod_kinds.o mod_ocean.o mod_parallel.o mod_param.o
 ocean_coupler.o: mod_scalars.o mod_stepping.o mp_exchange.o ocean_coupler.f90
@@ -52,10 +51,10 @@ ad_bc_3d.o: set_bounds.h cppdefs.h globaldefs.h
 ad_bc_3d.f90: set_bounds.h cppdefs.h globaldefs.h
 ad_bc_3d.o: ad_exchange_3d.o mod_param.o ad_bc_3d.f90
 
-ad_biology.o: ad_npzd_Powell.h set_bounds.h tile.h ad_npzd_Franks.h
-ad_biology.o: set_bounds.h tile.h cppdefs.h globaldefs.h
-ad_biology.f90: ad_npzd_Powell.h set_bounds.h tile.h ad_npzd_Franks.h
-ad_biology.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+ad_biology.o: ad_npzd_Powell.h set_bounds.h tile.h ad_npzd_Franks.h cppdefs.h
+ad_biology.o: globaldefs.h
+ad_biology.f90: ad_npzd_Powell.h set_bounds.h tile.h ad_npzd_Franks.h cppdefs.h
+ad_biology.f90: globaldefs.h
 ad_biology.o: mod_biology.o mod_forces.o mod_grid.o mod_ncparam.o mod_ocean.o
 ad_biology.o: mod_param.o mod_scalars.o mod_stepping.o ad_biology.f90
 
@@ -105,7 +104,8 @@ ad_extract_obs.o: mod_kinds.o mod_param.o ad_extract_obs.f90
 
 ad_forcing.o: set_bounds.h tile.h cppdefs.h globaldefs.h
 ad_forcing.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
-ad_forcing.o: mod_coupling.o mod_ocean.o mod_param.o ad_forcing.f90
+ad_forcing.o: mod_coupling.o mod_ocean.o mod_param.o mod_stepping.o
+ad_forcing.o: ad_forcing.f90
 
 ad_get_data.o: cppdefs.h globaldefs.h
 ad_get_data.f90: cppdefs.h globaldefs.h
@@ -129,8 +129,8 @@ ad_ini_fields.o: mod_scalars.o mod_stepping.o mp_exchange.o ad_ini_fields.f90
 
 ad_initial.o: cppdefs.h globaldefs.h
 ad_initial.f90: cppdefs.h globaldefs.h
-ad_initial.o: adsen_initial.o analytical.o distribute.o horz_mix.o metrics.o
-ad_initial.o: mod_bbl.o mod_coupling.o mod_forces.o mod_fourdvar.o mod_grid.o
+ad_initial.o: adsen_initial.o analytical.o distribute.o metrics.o mod_bbl.o
+ad_initial.o: mod_coupling.o mod_forces.o mod_fourdvar.o mod_grid.o
 ad_initial.o: mod_iounits.o mod_mixing.o mod_ncparam.o mod_ocean.o
 ad_initial.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o omega.o
 ad_initial.o: rho_eos.o set_depth.o set_massflux.o stiffness.o wpoints.o
@@ -186,10 +186,10 @@ ad_pre_step3d.o: ad_exchange_3d.o ad_t3dbc_im.o mod_forces.o mod_grid.o
 ad_pre_step3d.o: mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
 ad_pre_step3d.o: mod_sources.o mod_stepping.o mp_exchange.o ad_pre_step3d.f90
 
-ad_prsgrd.o: ad_prsgrd32.h set_bounds.h tile.h ad_prsgrd31.h set_bounds.h
-ad_prsgrd.o: tile.h ad_prsgrd40.h set_bounds.h tile.h cppdefs.h globaldefs.h
-ad_prsgrd.f90: ad_prsgrd32.h set_bounds.h tile.h ad_prsgrd31.h set_bounds.h
-ad_prsgrd.f90: tile.h ad_prsgrd40.h set_bounds.h tile.h cppdefs.h globaldefs.h
+ad_prsgrd.o: ad_prsgrd32.h set_bounds.h tile.h ad_prsgrd31.h ad_prsgrd40.h
+ad_prsgrd.o: cppdefs.h globaldefs.h
+ad_prsgrd.f90: ad_prsgrd32.h set_bounds.h tile.h ad_prsgrd31.h ad_prsgrd40.h
+ad_prsgrd.f90: cppdefs.h globaldefs.h
 ad_prsgrd.o: mod_grid.o mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
 ad_prsgrd.o: ad_prsgrd.f90
 
@@ -270,14 +270,12 @@ ad_t3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 ad_t3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 ad_t3dbc_im.o: mod_stepping.o ad_t3dbc_im.f90
 
-ad_t3dmix.o: ad_t3dmix2_iso.h set_bounds.h tile.h ad_t3dmix2_s.h set_bounds.h
-ad_t3dmix.o: tile.h ad_t3dmix2_geo.h set_bounds.h tile.h ad_t3dmix4_s.h
-ad_t3dmix.o: set_bounds.h tile.h ad_t3dmix4_iso.h set_bounds.h tile.h
-ad_t3dmix.o: ad_t3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
-ad_t3dmix.f90: ad_t3dmix2_iso.h set_bounds.h tile.h ad_t3dmix2_s.h set_bounds.h
-ad_t3dmix.f90: tile.h ad_t3dmix2_geo.h set_bounds.h tile.h ad_t3dmix4_s.h
-ad_t3dmix.f90: set_bounds.h tile.h ad_t3dmix4_iso.h set_bounds.h tile.h
-ad_t3dmix.f90: ad_t3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+ad_t3dmix.o: ad_t3dmix2_iso.h set_bounds.h tile.h ad_t3dmix2_s.h
+ad_t3dmix.o: ad_t3dmix2_geo.h ad_t3dmix4_s.h ad_t3dmix4_iso.h ad_t3dmix4_geo.h
+ad_t3dmix.o: cppdefs.h globaldefs.h
+ad_t3dmix.f90: ad_t3dmix2_iso.h set_bounds.h tile.h ad_t3dmix2_s.h
+ad_t3dmix.f90: ad_t3dmix2_geo.h ad_t3dmix4_s.h ad_t3dmix4_iso.h
+ad_t3dmix.f90: ad_t3dmix4_geo.h cppdefs.h globaldefs.h
 ad_t3dmix.o: mod_grid.o mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
 ad_t3dmix.o: mod_stepping.o ad_t3dmix.f90
 
@@ -292,11 +290,9 @@ ad_u3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 ad_u3dbc_im.o: mod_stepping.o ad_u3dbc_im.f90
 
 ad_uv3dmix.o: ad_uv3dmix4_s.h set_bounds.h tile.h ad_uv3dmix4_geo.h
-ad_uv3dmix.o: set_bounds.h tile.h ad_uv3dmix2_s.h set_bounds.h tile.h
-ad_uv3dmix.o: ad_uv3dmix2_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+ad_uv3dmix.o: ad_uv3dmix2_s.h ad_uv3dmix2_geo.h cppdefs.h globaldefs.h
 ad_uv3dmix.f90: ad_uv3dmix4_s.h set_bounds.h tile.h ad_uv3dmix4_geo.h
-ad_uv3dmix.f90: set_bounds.h tile.h ad_uv3dmix2_s.h set_bounds.h tile.h
-ad_uv3dmix.f90: ad_uv3dmix2_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+ad_uv3dmix.f90: ad_uv3dmix2_s.h ad_uv3dmix2_geo.h cppdefs.h globaldefs.h
 ad_uv3dmix.o: mod_coupling.o mod_grid.o mod_mixing.o mod_ocean.o mod_param.o
 ad_uv3dmix.o: mod_scalars.o mod_stepping.o ad_uv3dmix.f90
 
@@ -336,45 +332,24 @@ adsen_initial.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 adsen_initial.o: mod_clima.o mod_grid.o mod_ncparam.o mod_ocean.o mod_param.o
 adsen_initial.o: mod_scalars.o mod_stepping.o adsen_initial.f90
 
-analytical.o: ana_ssh.h set_bounds.h tile.h ana_tobc.h set_bounds.h tile.h
-analytical.o: ana_fsobc.h set_bounds.h tile.h ana_bmflux.h set_bounds.h tile.h
-analytical.o: ana_passive.h set_bounds.h tile.h ana_stflux.h set_bounds.h
-analytical.o: tile.h ana_spinning.h set_bounds.h tile.h ana_m2clima.h
-analytical.o: set_bounds.h tile.h ana_psource.h ana_rain.h set_bounds.h tile.h
-analytical.o: ana_cloud.h set_bounds.h tile.h ana_specir.h set_bounds.h tile.h
-analytical.o: ana_scope.h set_bounds.h tile.h ana_humid.h set_bounds.h tile.h
-analytical.o: ana_initial.h set_bounds.h tile.h ana_sst.h set_bounds.h tile.h
-analytical.o: ana_grid.h set_bounds.h tile.h ana_wwave.h set_bounds.h tile.h
-analytical.o: ana_m3obc.h set_bounds.h tile.h ana_btflux.h set_bounds.h tile.h
-analytical.o: ana_sss.h set_bounds.h tile.h ana_diag.h tile.h ana_tclima.h
-analytical.o: set_bounds.h tile.h ana_mask.h set_bounds.h tile.h ana_pair.h
-analytical.o: set_bounds.h tile.h ana_m2obc.h set_bounds.h tile.h ana_winds.h
-analytical.o: set_bounds.h tile.h ana_biology.h set_bounds.h tile.h
-analytical.o: ana_m3clima.h set_bounds.h tile.h ana_smflux.h set_bounds.h
-analytical.o: tile.h ana_perturb.h set_bounds.h tile.h ana_vmix.h set_bounds.h
-analytical.o: tile.h ana_tair.h set_bounds.h tile.h cppdefs.h globaldefs.h
-analytical.o: ana_srflux.h set_bounds.h tile.h ana_sediment.h set_bounds.h
-analytical.o: tile.h
-analytical.f90: ana_ssh.h set_bounds.h tile.h ana_tobc.h set_bounds.h tile.h
-analytical.f90: ana_fsobc.h set_bounds.h tile.h ana_bmflux.h set_bounds.h
-analytical.f90: tile.h ana_passive.h set_bounds.h tile.h ana_stflux.h
-analytical.f90: set_bounds.h tile.h ana_spinning.h set_bounds.h tile.h
-analytical.f90: ana_m2clima.h set_bounds.h tile.h ana_psource.h ana_rain.h
-analytical.f90: set_bounds.h tile.h ana_cloud.h set_bounds.h tile.h
-analytical.f90: ana_specir.h set_bounds.h tile.h ana_scope.h set_bounds.h
-analytical.f90: tile.h ana_humid.h set_bounds.h tile.h ana_initial.h
-analytical.f90: set_bounds.h tile.h ana_sst.h set_bounds.h tile.h ana_grid.h
-analytical.f90: set_bounds.h tile.h ana_wwave.h set_bounds.h tile.h ana_m3obc.h
-analytical.f90: set_bounds.h tile.h ana_btflux.h set_bounds.h tile.h ana_sss.h
-analytical.f90: set_bounds.h tile.h ana_diag.h tile.h ana_tclima.h set_bounds.h
-analytical.f90: tile.h ana_mask.h set_bounds.h tile.h ana_pair.h set_bounds.h
-analytical.f90: tile.h ana_m2obc.h set_bounds.h tile.h ana_winds.h set_bounds.h
-analytical.f90: tile.h ana_biology.h set_bounds.h tile.h ana_m3clima.h
-analytical.f90: set_bounds.h tile.h ana_smflux.h set_bounds.h tile.h
-analytical.f90: ana_perturb.h set_bounds.h tile.h ana_vmix.h set_bounds.h
-analytical.f90: tile.h ana_tair.h set_bounds.h tile.h cppdefs.h globaldefs.h
-analytical.f90: ana_srflux.h set_bounds.h tile.h ana_sediment.h set_bounds.h
-analytical.f90: tile.h
+analytical.o: ana_ssh.h set_bounds.h tile.h ana_tobc.h ana_fsobc.h ana_bmflux.h
+analytical.o: ana_passive.h ana_stflux.h ana_spinning.h ana_m2clima.h
+analytical.o: ana_psource.h ana_rain.h ana_cloud.h ana_specir.h ana_scope.h
+analytical.o: ana_humid.h ana_initial.h ana_sst.h ana_grid.h ana_nudgcoef.h
+analytical.o: ana_wwave.h ana_m3obc.h ana_btflux.h ana_hmixcoef.h ana_sss.h
+analytical.o: ana_tclima.h ana_diag.h ana_mask.h ana_pair.h ana_m2obc.h
+analytical.o: ana_winds.h ana_biology.h ana_m3clima.h ana_smflux.h
+analytical.o: ana_perturb.h ana_vmix.h ana_tair.h cppdefs.h globaldefs.h
+analytical.o: ana_srflux.h ana_sediment.h
+analytical.f90: ana_ssh.h set_bounds.h tile.h ana_tobc.h ana_fsobc.h
+analytical.f90: ana_bmflux.h ana_passive.h ana_stflux.h ana_spinning.h
+analytical.f90: ana_m2clima.h ana_psource.h ana_rain.h ana_cloud.h ana_specir.h
+analytical.f90: ana_scope.h ana_humid.h ana_initial.h ana_sst.h ana_grid.h
+analytical.f90: ana_nudgcoef.h ana_wwave.h ana_m3obc.h ana_btflux.h
+analytical.f90: ana_hmixcoef.h ana_sss.h ana_tclima.h ana_diag.h ana_mask.h
+analytical.f90: ana_pair.h ana_m2obc.h ana_winds.h ana_biology.h ana_m3clima.h
+analytical.f90: ana_smflux.h ana_perturb.h ana_vmix.h ana_tair.h cppdefs.h
+analytical.f90: globaldefs.h ana_srflux.h ana_sediment.h
 analytical.o: distribute.o exchange_2d.o exchange_3d.o mod_biology.o
 analytical.o: mod_boundary.o mod_clima.o mod_eclight.o mod_forces.o mod_grid.o
 analytical.o: mod_iounits.o mod_mixing.o mod_ncparam.o mod_ocean.o
@@ -503,10 +478,8 @@ mod_tides.o: tile.h cppdefs.h globaldefs.h
 mod_tides.f90: tile.h cppdefs.h globaldefs.h
 mod_tides.o: mod_kinds.o mod_param.o mod_tides.f90
 
-bbl.o: mb_bbl.h set_bounds.h tile.h sg_bbl.h set_bounds.h tile.h ssw_bbl.h
-bbl.o: set_bounds.h tile.h cppdefs.h globaldefs.h
-bbl.f90: mb_bbl.h set_bounds.h tile.h sg_bbl.h set_bounds.h tile.h ssw_bbl.h
-bbl.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+bbl.o: mb_bbl.h set_bounds.h tile.h sg_bbl.h ssw_bbl.h cppdefs.h globaldefs.h
+bbl.f90: mb_bbl.h set_bounds.h tile.h sg_bbl.h ssw_bbl.h cppdefs.h globaldefs.h
 bbl.o: bc_2d.o mod_bbl.o mod_forces.o mod_grid.o mod_ocean.o mod_parallel.o
 bbl.o: mod_param.o mod_scalars.o mod_sediment.o mod_stepping.o mp_exchange.o
 bbl.o: bbl.f90
@@ -519,12 +492,10 @@ bc_3d.o: set_bounds.h cppdefs.h globaldefs.h
 bc_3d.f90: set_bounds.h cppdefs.h globaldefs.h
 bc_3d.o: exchange_3d.o mod_param.o bc_3d.f90
 
-biology.o: ecosim.h set_bounds.h tile.h fasham.h set_bounds.h tile.h
-biology.o: npzd_Franks.h set_bounds.h tile.h npzd_Powell.h set_bounds.h tile.h
+biology.o: ecosim.h set_bounds.h tile.h fasham.h npzd_Franks.h npzd_Powell.h
 biology.o: cppdefs.h globaldefs.h
-biology.f90: ecosim.h set_bounds.h tile.h fasham.h set_bounds.h tile.h
-biology.f90: npzd_Franks.h set_bounds.h tile.h npzd_Powell.h set_bounds.h
-biology.f90: tile.h cppdefs.h globaldefs.h
+biology.f90: ecosim.h set_bounds.h tile.h fasham.h npzd_Franks.h npzd_Powell.h
+biology.f90: cppdefs.h globaldefs.h
 biology.o: mod_biology.o mod_diags.o mod_forces.o mod_grid.o mod_iounits.o
 biology.o: mod_kinds.o mod_ncparam.o mod_ocean.o mod_param.o mod_scalars.o
 biology.o: mod_stepping.o biology.f90
@@ -593,10 +564,10 @@ ini_fields.o: v2dbc_im.o v3dbc_im.o zetabc.o ini_fields.f90
 
 initial.o: cppdefs.h globaldefs.h
 initial.f90: cppdefs.h globaldefs.h
-initial.o: analytical.o distribute.o horz_mix.o ini_adjust.o metrics.o
-initial.o: mod_bbl.o mod_fourdvar.o mod_grid.o mod_iounits.o mod_ncparam.o
-initial.o: mod_ocean.o mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
-initial.o: omega.o rho_eos.o set_depth.o set_massflux.o stiffness.o wpoints.o
+initial.o: analytical.o distribute.o ini_adjust.o metrics.o mod_bbl.o
+initial.o: mod_fourdvar.o mod_grid.o mod_iounits.o mod_ncparam.o mod_ocean.o
+initial.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o omega.o
+initial.o: rho_eos.o set_depth.o set_massflux.o stiffness.o wpoints.o
 initial.o: initial.f90
 
 interp_floats.o: cppdefs.h globaldefs.h
@@ -626,8 +597,8 @@ main2d.o: cppdefs.h globaldefs.h
 main2d.f90: cppdefs.h globaldefs.h
 main2d.o: diag.o dotproduct.o forcing.o ini_fields.o mod_iounits.o
 main2d.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
-main2d.o: ocean_coupler.o oi_update.o set_avg.o set_tides.o set_vbc.o step2d.o
-main2d.o: step_floats.o main2d.f90
+main2d.o: ocean_coupler.o oi_update.o radiation_stress.o set_avg.o set_tides.o
+main2d.o: set_vbc.o step2d.o step_floats.o main2d.f90
 
 main3d.o: cppdefs.h globaldefs.h
 main3d.f90: cppdefs.h globaldefs.h
@@ -635,9 +606,9 @@ main3d.o: analytical.o bbl.o biology.o bulk_flux.o bvf_mix.o diag.o
 main3d.o: dotproduct.o forcing.o gls_corstep.o gls_prestep.o ini_fields.o
 main3d.o: lmd_vmix.o mod_iounits.o mod_parallel.o mod_param.o mod_scalars.o
 main3d.o: mod_stepping.o my25_corstep.o my25_prestep.o ocean_coupler.o
-main3d.o: oi_update.o omega.o rho_eos.o rhs3d.o sediment.o set_avg.o
-main3d.o: set_massflux.o set_tides.o set_vbc.o set_zeta.o step2d.o step3d_t.o
-main3d.o: step3d_uv.o step_floats.o wvelocity.o main3d.f90
+main3d.o: oi_update.o omega.o radiation_stress.o rho_eos.o rhs3d.o sediment.o
+main3d.o: set_avg.o set_massflux.o set_tides.o set_vbc.o set_zeta.o step2d.o
+main3d.o: step3d_t.o step3d_uv.o step_floats.o wvelocity.o main3d.f90
 
 mpdata_adiff.o: cppdefs.h globaldefs.h
 mpdata_adiff.f90: cppdefs.h globaldefs.h
@@ -676,14 +647,19 @@ pre_step3d.o: exchange_3d.o mod_diags.o mod_forces.o mod_grid.o mod_mixing.o
 pre_step3d.o: mod_ocean.o mod_param.o mod_scalars.o mod_sources.o
 pre_step3d.o: mod_stepping.o mp_exchange.o t3dbc_im.o pre_step3d.f90
 
-prsgrd.o: prsgrd32.h set_bounds.h tile.h prsgrd31.h set_bounds.h tile.h
-prsgrd.o: prsgrd42.h set_bounds.h tile.h prsgrd40.h set_bounds.h tile.h
-prsgrd.o: prsgrd44.h set_bounds.h tile.h cppdefs.h globaldefs.h
-prsgrd.f90: prsgrd32.h set_bounds.h tile.h prsgrd31.h set_bounds.h tile.h
-prsgrd.f90: prsgrd42.h set_bounds.h tile.h prsgrd40.h set_bounds.h tile.h
-prsgrd.f90: prsgrd44.h set_bounds.h tile.h cppdefs.h globaldefs.h
+prsgrd.o: prsgrd32.h set_bounds.h tile.h prsgrd31.h prsgrd42.h prsgrd40.h
+prsgrd.o: prsgrd44.h cppdefs.h globaldefs.h
+prsgrd.f90: prsgrd32.h set_bounds.h tile.h prsgrd31.h prsgrd42.h prsgrd40.h
+prsgrd.f90: prsgrd44.h cppdefs.h globaldefs.h
 prsgrd.o: mod_diags.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 prsgrd.o: mod_stepping.o prsgrd.f90
+
+radiation_stress.o: set_bounds.h tile.h cppdefs.h globaldefs.h
+radiation_stress.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+radiation_stress.o: bc_2d.o bc_3d.o exchange_2d.o exchange_3d.o mod_coupling.o
+radiation_stress.o: mod_diags.o mod_forces.o mod_grid.o mod_mixing.o
+radiation_stress.o: mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
+radiation_stress.o: mp_exchange.o radiation_stress.f90
 
 rho_eos.o: set_bounds.h tile.h cppdefs.h globaldefs.h
 rho_eos.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
@@ -743,10 +719,10 @@ set_zeta.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 set_zeta.o: exchange_2d.o mod_coupling.o mod_ocean.o mod_param.o mod_scalars.o
 set_zeta.o: mp_exchange.o set_zeta.f90
 
-step2d.o: step2d_LF_AM3s.h set_bounds.h tile.h step2d_LF_AM3.h set_bounds.h
-step2d.o: tile.h cppdefs.h globaldefs.h
-step2d.f90: step2d_LF_AM3s.h set_bounds.h tile.h step2d_LF_AM3.h set_bounds.h
-step2d.f90: tile.h cppdefs.h globaldefs.h
+step2d.o: step2d_LF_AM3s.h set_bounds.h tile.h step2d_LF_AM3.h cppdefs.h
+step2d.o: globaldefs.h
+step2d.f90: step2d_LF_AM3s.h set_bounds.h tile.h step2d_LF_AM3.h cppdefs.h
+step2d.f90: globaldefs.h
 step2d.o: exchange_2d.o mod_clima.o mod_coupling.o mod_diags.o mod_forces.o
 step2d.o: mod_grid.o mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
 step2d.o: mod_sediment.o mod_sources.o mod_stepping.o mp_exchange.o
@@ -777,14 +753,10 @@ t3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 t3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 t3dbc_im.o: mod_stepping.o t3dbc_im.f90
 
-t3dmix.o: t3dmix4_geo.h set_bounds.h tile.h t3dmix2_geo.h set_bounds.h tile.h
-t3dmix.o: t3dmix2_s.h set_bounds.h tile.h t3dmix4_iso.h set_bounds.h tile.h
-t3dmix.o: t3dmix4_s.h set_bounds.h tile.h t3dmix2_iso.h set_bounds.h tile.h
-t3dmix.o: cppdefs.h globaldefs.h
-t3dmix.f90: t3dmix4_geo.h set_bounds.h tile.h t3dmix2_geo.h set_bounds.h tile.h
-t3dmix.f90: t3dmix2_s.h set_bounds.h tile.h t3dmix4_iso.h set_bounds.h tile.h
-t3dmix.f90: t3dmix4_s.h set_bounds.h tile.h t3dmix2_iso.h set_bounds.h tile.h
-t3dmix.f90: cppdefs.h globaldefs.h
+t3dmix.o: t3dmix4_geo.h set_bounds.h tile.h t3dmix2_geo.h t3dmix2_s.h
+t3dmix.o: t3dmix4_iso.h t3dmix4_s.h t3dmix2_iso.h cppdefs.h globaldefs.h
+t3dmix.f90: t3dmix4_geo.h set_bounds.h tile.h t3dmix2_geo.h t3dmix2_s.h
+t3dmix.f90: t3dmix4_iso.h t3dmix4_s.h t3dmix2_iso.h cppdefs.h globaldefs.h
 t3dmix.o: mod_diags.o mod_grid.o mod_mixing.o mod_ocean.o mod_param.o
 t3dmix.o: mod_scalars.o mod_stepping.o t3dmix.f90
 
@@ -803,12 +775,10 @@ u3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 u3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 u3dbc_im.o: mod_stepping.o u3dbc_im.f90
 
-uv3dmix.o: uv3dmix2_s.h set_bounds.h tile.h uv3dmix2_geo.h set_bounds.h tile.h
-uv3dmix.o: uv3dmix4_s.h set_bounds.h tile.h uv3dmix4_geo.h set_bounds.h tile.h
-uv3dmix.o: cppdefs.h globaldefs.h
-uv3dmix.f90: uv3dmix2_s.h set_bounds.h tile.h uv3dmix2_geo.h set_bounds.h
-uv3dmix.f90: tile.h uv3dmix4_s.h set_bounds.h tile.h uv3dmix4_geo.h
-uv3dmix.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+uv3dmix.o: uv3dmix2_s.h set_bounds.h tile.h uv3dmix2_geo.h uv3dmix4_s.h
+uv3dmix.o: uv3dmix4_geo.h cppdefs.h globaldefs.h
+uv3dmix.f90: uv3dmix2_s.h set_bounds.h tile.h uv3dmix2_geo.h uv3dmix4_s.h
+uv3dmix.f90: uv3dmix4_geo.h cppdefs.h globaldefs.h
 uv3dmix.o: mod_coupling.o mod_diags.o mod_grid.o mod_mixing.o mod_ocean.o
 uv3dmix.o: mod_param.o mod_scalars.o mod_stepping.o uv3dmix.f90
 
@@ -833,10 +803,10 @@ zetabc.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 zetabc.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 zetabc.o: mod_stepping.o zetabc.f90
 
-rp_biology.o: rp_npzd_Powell.h set_bounds.h tile.h rp_npzd_Franks.h
-rp_biology.o: set_bounds.h tile.h cppdefs.h globaldefs.h
-rp_biology.f90: rp_npzd_Powell.h set_bounds.h tile.h rp_npzd_Franks.h
-rp_biology.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+rp_biology.o: rp_npzd_Powell.h set_bounds.h tile.h rp_npzd_Franks.h cppdefs.h
+rp_biology.o: globaldefs.h
+rp_biology.f90: rp_npzd_Powell.h set_bounds.h tile.h rp_npzd_Franks.h cppdefs.h
+rp_biology.f90: globaldefs.h
 rp_biology.o: mod_biology.o mod_forces.o mod_grid.o mod_ncparam.o mod_ocean.o
 rp_biology.o: mod_param.o mod_scalars.o mod_stepping.o rp_biology.f90
 
@@ -874,8 +844,8 @@ rp_ini_fields.o: rp_zetabc.o rp_ini_fields.f90
 
 rp_initial.o: cppdefs.h globaldefs.h
 rp_initial.f90: cppdefs.h globaldefs.h
-rp_initial.o: analytical.o distribute.o horz_mix.o ini_adjust.o metrics.o
-rp_initial.o: mod_bbl.o mod_coupling.o mod_forces.o mod_fourdvar.o mod_grid.o
+rp_initial.o: analytical.o distribute.o ini_adjust.o metrics.o mod_bbl.o
+rp_initial.o: mod_coupling.o mod_forces.o mod_fourdvar.o mod_grid.o
 rp_initial.o: mod_iounits.o mod_mixing.o mod_ncparam.o mod_ocean.o
 rp_initial.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o omega.o
 rp_initial.o: rho_eos.o rp_omega.o rp_rho_eos.o rp_set_depth.o
@@ -923,10 +893,10 @@ rp_pre_step3d.o: exchange_3d.o mod_forces.o mod_grid.o mod_mixing.o mod_ocean.o
 rp_pre_step3d.o: mod_param.o mod_scalars.o mod_sources.o mod_stepping.o
 rp_pre_step3d.o: mp_exchange.o rp_t3dbc_im.o rp_pre_step3d.f90
 
-rp_prsgrd.o: rp_prsgrd32.h set_bounds.h tile.h rp_prsgrd31.h set_bounds.h
-rp_prsgrd.o: tile.h rp_prsgrd40.h set_bounds.h tile.h cppdefs.h globaldefs.h
-rp_prsgrd.f90: rp_prsgrd32.h set_bounds.h tile.h rp_prsgrd31.h set_bounds.h
-rp_prsgrd.f90: tile.h rp_prsgrd40.h set_bounds.h tile.h cppdefs.h globaldefs.h
+rp_prsgrd.o: rp_prsgrd32.h set_bounds.h tile.h rp_prsgrd31.h rp_prsgrd40.h
+rp_prsgrd.o: cppdefs.h globaldefs.h
+rp_prsgrd.f90: rp_prsgrd32.h set_bounds.h tile.h rp_prsgrd31.h rp_prsgrd40.h
+rp_prsgrd.f90: cppdefs.h globaldefs.h
 rp_prsgrd.o: mod_grid.o mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
 rp_prsgrd.o: rp_prsgrd.f90
 
@@ -999,14 +969,12 @@ rp_t3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 rp_t3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 rp_t3dbc_im.o: mod_stepping.o rp_t3dbc_im.f90
 
-rp_t3dmix.o: rp_t3dmix4_iso.h set_bounds.h tile.h rp_t3dmix2_s.h set_bounds.h
-rp_t3dmix.o: tile.h rp_t3dmix4_geo.h set_bounds.h tile.h rp_t3dmix2_geo.h
-rp_t3dmix.o: set_bounds.h tile.h rp_t3dmix2_iso.h set_bounds.h tile.h
-rp_t3dmix.o: rp_t3dmix4_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
-rp_t3dmix.f90: rp_t3dmix4_iso.h set_bounds.h tile.h rp_t3dmix2_s.h set_bounds.h
-rp_t3dmix.f90: tile.h rp_t3dmix4_geo.h set_bounds.h tile.h rp_t3dmix2_geo.h
-rp_t3dmix.f90: set_bounds.h tile.h rp_t3dmix2_iso.h set_bounds.h tile.h
-rp_t3dmix.f90: rp_t3dmix4_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+rp_t3dmix.o: rp_t3dmix4_iso.h set_bounds.h tile.h rp_t3dmix2_s.h
+rp_t3dmix.o: rp_t3dmix4_geo.h rp_t3dmix2_geo.h rp_t3dmix2_iso.h rp_t3dmix4_s.h
+rp_t3dmix.o: cppdefs.h globaldefs.h
+rp_t3dmix.f90: rp_t3dmix4_iso.h set_bounds.h tile.h rp_t3dmix2_s.h
+rp_t3dmix.f90: rp_t3dmix4_geo.h rp_t3dmix2_geo.h rp_t3dmix2_iso.h
+rp_t3dmix.f90: rp_t3dmix4_s.h cppdefs.h globaldefs.h
 rp_t3dmix.o: mod_grid.o mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
 rp_t3dmix.o: mod_stepping.o rp_t3dmix.f90
 
@@ -1026,11 +994,9 @@ rp_u3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 rp_u3dbc_im.o: mod_stepping.o rp_u3dbc_im.f90
 
 rp_uv3dmix.o: rp_uv3dmix4_s.h set_bounds.h tile.h rp_uv3dmix2_geo.h
-rp_uv3dmix.o: set_bounds.h tile.h rp_uv3dmix2_s.h set_bounds.h tile.h
-rp_uv3dmix.o: rp_uv3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+rp_uv3dmix.o: rp_uv3dmix2_s.h rp_uv3dmix4_geo.h cppdefs.h globaldefs.h
 rp_uv3dmix.f90: rp_uv3dmix4_s.h set_bounds.h tile.h rp_uv3dmix2_geo.h
-rp_uv3dmix.f90: set_bounds.h tile.h rp_uv3dmix2_s.h set_bounds.h tile.h
-rp_uv3dmix.f90: rp_uv3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+rp_uv3dmix.f90: rp_uv3dmix2_s.h rp_uv3dmix4_geo.h cppdefs.h globaldefs.h
 rp_uv3dmix.o: mod_coupling.o mod_grid.o mod_mixing.o mod_ocean.o mod_param.o
 rp_uv3dmix.o: mod_scalars.o mod_stepping.o rp_uv3dmix.f90
 
@@ -1061,10 +1027,10 @@ rp_zetabc.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 rp_zetabc.o: mod_stepping.o rp_zetabc.f90
 
 
-tl_biology.o: tl_npzd_Franks.h set_bounds.h tile.h tl_npzd_Powell.h
-tl_biology.o: set_bounds.h tile.h cppdefs.h globaldefs.h
-tl_biology.f90: tl_npzd_Franks.h set_bounds.h tile.h tl_npzd_Powell.h
-tl_biology.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
+tl_biology.o: tl_npzd_Franks.h set_bounds.h tile.h tl_npzd_Powell.h cppdefs.h
+tl_biology.o: globaldefs.h
+tl_biology.f90: tl_npzd_Franks.h set_bounds.h tile.h tl_npzd_Powell.h cppdefs.h
+tl_biology.f90: globaldefs.h
 tl_biology.o: mod_biology.o mod_forces.o mod_grid.o mod_ncparam.o mod_ocean.o
 tl_biology.o: mod_param.o mod_scalars.o mod_stepping.o tl_biology.f90
 
@@ -1133,8 +1099,8 @@ tl_ini_fields.o: tl_zetabc.o tl_ini_fields.f90
 
 tl_initial.o: cppdefs.h globaldefs.h
 tl_initial.f90: cppdefs.h globaldefs.h
-tl_initial.o: analytical.o distribute.o horz_mix.o ini_adjust.o metrics.o
-tl_initial.o: mod_bbl.o mod_coupling.o mod_fourdvar.o mod_grid.o mod_iounits.o
+tl_initial.o: analytical.o distribute.o ini_adjust.o metrics.o mod_bbl.o
+tl_initial.o: mod_coupling.o mod_fourdvar.o mod_grid.o mod_iounits.o
 tl_initial.o: mod_ncparam.o mod_ocean.o mod_parallel.o mod_param.o
 tl_initial.o: mod_scalars.o mod_stepping.o set_depth.o stiffness.o tl_omega.o
 tl_initial.o: tl_rho_eos.o tl_set_depth.o tl_set_massflux.o wpoints.o
@@ -1182,10 +1148,10 @@ tl_pre_step3d.o: exchange_3d.o mod_forces.o mod_grid.o mod_mixing.o mod_ocean.o
 tl_pre_step3d.o: mod_param.o mod_scalars.o mod_sources.o mod_stepping.o
 tl_pre_step3d.o: mp_exchange.o tl_t3dbc_im.o tl_pre_step3d.f90
 
-tl_prsgrd.o: tl_prsgrd40.h set_bounds.h tile.h tl_prsgrd31.h set_bounds.h
-tl_prsgrd.o: tile.h tl_prsgrd32.h set_bounds.h tile.h cppdefs.h globaldefs.h
-tl_prsgrd.f90: tl_prsgrd40.h set_bounds.h tile.h tl_prsgrd31.h set_bounds.h
-tl_prsgrd.f90: tile.h tl_prsgrd32.h set_bounds.h tile.h cppdefs.h globaldefs.h
+tl_prsgrd.o: tl_prsgrd40.h set_bounds.h tile.h tl_prsgrd31.h tl_prsgrd32.h
+tl_prsgrd.o: cppdefs.h globaldefs.h
+tl_prsgrd.f90: tl_prsgrd40.h set_bounds.h tile.h tl_prsgrd31.h tl_prsgrd32.h
+tl_prsgrd.f90: cppdefs.h globaldefs.h
 tl_prsgrd.o: mod_grid.o mod_ocean.o mod_param.o mod_scalars.o mod_stepping.o
 tl_prsgrd.o: tl_prsgrd.f90
 
@@ -1258,15 +1224,12 @@ tl_t3dbc_im.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 tl_t3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 tl_t3dbc_im.o: mod_stepping.o tl_t3dbc_im.f90
 
-tl_t3dmix.o: tl_t3dmix4_iso.h set_bounds.h tile.h tl_t3dmix2_geo.h set_bounds.h
-tl_t3dmix.o: tile.h tl_t3dmix2_iso.h set_bounds.h tile.h tl_t3dmix4_s.h
-tl_t3dmix.o: set_bounds.h tile.h tl_t3dmix2_s.h set_bounds.h tile.h
-tl_t3dmix.o: tl_t3dmix4_geo.h set_bounds.h tile.h cppdefs.h globaldefs.h
+tl_t3dmix.o: tl_t3dmix4_iso.h set_bounds.h tile.h tl_t3dmix2_geo.h
+tl_t3dmix.o: tl_t3dmix2_iso.h tl_t3dmix4_s.h tl_t3dmix2_s.h tl_t3dmix4_geo.h
+tl_t3dmix.o: cppdefs.h globaldefs.h
 tl_t3dmix.f90: tl_t3dmix4_iso.h set_bounds.h tile.h tl_t3dmix2_geo.h
-tl_t3dmix.f90: set_bounds.h tile.h tl_t3dmix2_iso.h set_bounds.h tile.h
-tl_t3dmix.f90: tl_t3dmix4_s.h set_bounds.h tile.h tl_t3dmix2_s.h set_bounds.h
-tl_t3dmix.f90: tile.h tl_t3dmix4_geo.h set_bounds.h tile.h cppdefs.h
-tl_t3dmix.f90: globaldefs.h
+tl_t3dmix.f90: tl_t3dmix2_iso.h tl_t3dmix4_s.h tl_t3dmix2_s.h tl_t3dmix4_geo.h
+tl_t3dmix.f90: cppdefs.h globaldefs.h
 tl_t3dmix.o: mod_grid.o mod_mixing.o mod_ocean.o mod_param.o mod_scalars.o
 tl_t3dmix.o: mod_stepping.o tl_t3dmix.f90
 
@@ -1281,11 +1244,9 @@ tl_u3dbc_im.o: mod_boundary.o mod_grid.o mod_ocean.o mod_param.o mod_scalars.o
 tl_u3dbc_im.o: mod_stepping.o tl_u3dbc_im.f90
 
 tl_uv3dmix.o: tl_uv3dmix4_geo.h set_bounds.h tile.h tl_uv3dmix2_geo.h
-tl_uv3dmix.o: set_bounds.h tile.h tl_uv3dmix4_s.h set_bounds.h tile.h
-tl_uv3dmix.o: tl_uv3dmix2_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+tl_uv3dmix.o: tl_uv3dmix4_s.h tl_uv3dmix2_s.h cppdefs.h globaldefs.h
 tl_uv3dmix.f90: tl_uv3dmix4_geo.h set_bounds.h tile.h tl_uv3dmix2_geo.h
-tl_uv3dmix.f90: set_bounds.h tile.h tl_uv3dmix4_s.h set_bounds.h tile.h
-tl_uv3dmix.f90: tl_uv3dmix2_s.h set_bounds.h tile.h cppdefs.h globaldefs.h
+tl_uv3dmix.f90: tl_uv3dmix4_s.h tl_uv3dmix2_s.h cppdefs.h globaldefs.h
 tl_uv3dmix.o: mod_coupling.o mod_grid.o mod_mixing.o mod_ocean.o mod_param.o
 tl_uv3dmix.o: mod_scalars.o mod_stepping.o tl_uv3dmix.f90
 
@@ -1337,11 +1298,11 @@ back_step.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 back_step.o: distribute.o mod_fourdvar.o mod_ocean.o mod_parallel.o mod_param.o
 back_step.o: mod_scalars.o back_step.f90
 
-cgradient.o: cgradient_lanczos.h set_bounds.h tile.h cgradient.h set_bounds.h
-cgradient.o: tile.h cppdefs.h globaldefs.h
-cgradient.f90: cgradient_lanczos.h set_bounds.h tile.h cgradient.h set_bounds.h
-cgradient.f90: tile.h cppdefs.h globaldefs.h
-cgradient.o: mod_coupling.o mod_forces.o mod_fourdvar.o mod_grid.o
+cgradient.o: cgradient_lanczos.h set_bounds.h tile.h cgradient.h cppdefs.h
+cgradient.o: globaldefs.h
+cgradient.f90: cgradient_lanczos.h set_bounds.h tile.h cgradient.h cppdefs.h
+cgradient.f90: globaldefs.h
+cgradient.o: distribute.o mod_coupling.o mod_forces.o mod_fourdvar.o mod_grid.o
 cgradient.o: mod_iounits.o mod_ncparam.o mod_netcdf.o mod_ocean.o
 cgradient.o: mod_parallel.o mod_param.o mod_scalars.o mod_stepping.o
 cgradient.o: cgradient.f90
@@ -1364,7 +1325,7 @@ close_io.o: mod_scalars.o close_io.f90
 
 congrad.o: cppdefs.h globaldefs.h
 congrad.f90: cppdefs.h globaldefs.h
-congrad.o: mod_fourdvar.o mod_iounits.o mod_ncparam.o mod_netcdf.o
+congrad.o: distribute.o mod_fourdvar.o mod_iounits.o mod_ncparam.o mod_netcdf.o
 congrad.o: mod_parallel.o mod_param.o mod_scalars.o congrad.f90
 
 cost_grad.o: set_bounds.h tile.h cppdefs.h globaldefs.h
@@ -1556,11 +1517,6 @@ grid_coords.f90: cppdefs.h globaldefs.h
 grid_coords.o: distribute.o interpolate.o mod_floats.o mod_grid.o
 grid_coords.o: mod_parallel.o mod_param.o mod_scalars.o grid_coords.f90
 
-horz_mix.o: set_bounds.h tile.h cppdefs.h globaldefs.h
-horz_mix.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
-horz_mix.o: exchange_2d.o mod_grid.o mod_mixing.o mod_param.o mod_scalars.o
-horz_mix.o: mp_exchange.o horz_mix.f90
-
 impulse.o: set_bounds.h cppdefs.h globaldefs.h
 impulse.f90: set_bounds.h cppdefs.h globaldefs.h
 impulse.o: distribute.o mod_grid.o mod_iounits.o mod_ncparam.o mod_netcdf.o
@@ -1735,11 +1691,6 @@ set_ngfldr.o: cppdefs.h globaldefs.h
 set_ngfldr.f90: cppdefs.h globaldefs.h
 set_ngfldr.o: mod_iounits.o mod_ncparam.o mod_parallel.o mod_param.o
 set_ngfldr.o: mod_scalars.o set_ngfldr.f90
-
-set_nudgcof.o: set_bounds.h tile.h cppdefs.h globaldefs.h
-set_nudgcof.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
-set_nudgcof.o: distribute.o mod_boundary.o mod_clima.o mod_grid.o mod_ncparam.o
-set_nudgcof.o: mod_parallel.o mod_param.o mod_scalars.o set_nudgcof.f90
 
 set_scoord.o: cppdefs.h globaldefs.h
 set_scoord.f90: cppdefs.h globaldefs.h
@@ -1932,7 +1883,6 @@ extract_sta_mod.mod: extract_sta.o
 forcing_mod.mod: forcing.o
 gls_corstep_mod.mod: gls_corstep.o
 gls_prestep_mod.mod: gls_prestep.o
-horz_mix_mod.mod: horz_mix.o
 impulse_mod.mod: impulse.o
 ini_adjust_mod.mod: ini_adjust.o
 ini_fields_mod.mod: ini_fields.o
@@ -1955,6 +1905,7 @@ packing_mod.mod: packing.o
 pre_step3d_mod.mod: pre_step3d.o
 propagator_mod.mod: propagator.o
 prsgrd_mod.mod: prsgrd.o
+radiation_stress_mod.mod: radiation_stress.o
 rho_eos_mod.mod: rho_eos.o
 rhs3d_mod.mod: rhs3d.o
 rp_biology_mod.mod: rp_biology.o

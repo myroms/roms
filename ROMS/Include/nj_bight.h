@@ -8,6 +8,8 @@
 **
 ** Options for 4DVar Data Assimilation Toy.
 **
+** Application flag:   NJ_BIGHT
+** Input script:       ocean_nj_bight.in
 */
 
 #define UV_ADV

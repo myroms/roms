@@ -138,7 +138,7 @@
         END DO
       END DO
 #else
-      ANA_WINDS: no values provided for UWIND and VWIND.
+      ana_winds.h: No values provided for Uwind and Vwind.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &

@@ -122,9 +122,9 @@
 !                         read and interpolated elsewhere) by the local
 !  diurnal cycle (a function of longitude, latitude and day-of-year).
 !  This option is provided for cases where SRFLX computed by SET_DATA is
-!  an average over >= 24 hours.  For DIURNAL_SRFLUX to work ANA_SRFLUX
+!  an average over >= 24 hours. For "diurnal_srflux" to work ana_srflux
 !  must be undefined. If you want a strictly analytical diurnal cycle
-!  enter it explicitly at the end of this subroutine or use the ALBEDO
+!  enter it explicitly at the end of this subroutine or use the "albedo"
 !  option.
 !-----------------------------------------------------------------------
 !

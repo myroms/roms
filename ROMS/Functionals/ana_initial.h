@@ -271,24 +271,11 @@
      &                EXP(-0.5_r8*y*y)
         END DO
       END DO
-#elif defined SANDWAVE
-      val1=100.0_r8
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          zeta(i,j,1)=9.0E-06_r8*REAL(i,r8)*val1
-        END DO
-      END DO
 #elif defined SED_TEST1
       val1=100.0_r8
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           zeta(i,j,1)=9.0E-06_r8*REAL(i,r8)*val1
-        END DO
-      END DO
-#elif defined SHOREFACE
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          zeta(i,j,1)=0.0_r8
         END DO
       END DO
 #elif defined TEST_CHAN
@@ -321,20 +308,6 @@
           DO i=IstrR,IendR
             v(i,j,k,1)=-0.05_r8*LOG((h(i,j)+z_r(i,j,k))/Zob(ng))/        &
      &                 (LOG(h(i,j)/Zob(ng))-1.0_r8+Zob(ng)/h(i,j))
-          END DO
-        END DO
-      END DO
-# elif defined SANDWAVE
-      DO k=1,N(ng)
-       DO j=JstrR,JendR
-         DO i=Istr,IendR
-            u(i,j,k,1)=-1.0_r8*LOG((h(i,j)+z_r(i,j,k))/Zob(ng))/        &
-     &                 (LOG(h(i,j)/Zob(ng))-1.0_r8+Zob(ng)/h(i,j))
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            v(i,j,k,1)=0.0_r8
           END DO
         END DO
       END DO
@@ -560,6 +533,16 @@
           END DO
         END DO
       END DO
+#  elif defined MIXED_LAYER
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            t(i,j,k,1,itemp)=10.0_r8+3.0_r8*(z_r(i,j,k)+h(i,j))/        &
+     &                       h(i,j)
+            t(i,j,k,1,isalt)=S0(ng)
+          END DO
+        END DO
+      END DO
 # elif defined NJ_BIGHT
       DO k=1,N(ng)
         DO j=JstrR,JendR
@@ -623,26 +606,6 @@
         DO j=JstrR,JendR
           DO i=IstrR,IendR
             t(i,j,k,1,itemp)=T0(ng)+7.5_r8*EXP(z_r(i,j,k)/1000.0_r8)
-          END DO
-        END DO
-      END DO
-# elif defined SHELFRONT
-      DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            t(i,j,k,1,itemp)=T0(ng)+2.5_r8*                             &
-     &                       TANH((yr(i,j)-50000.0_r8)/20000.0_r8)
-            t(i,j,k,1,isalt)=S0(ng)+                                    &
-     &                       TANH((yr(i,j)-50000.0_r8)/20000.0_r8)
-          END DO
-        END DO
-      END DO
-# elif defined SANDWAVE
-      DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            t(i,j,k,1,itemp)=20.0_r8
-            t(i,j,k,1,isalt)=0.0_r8
           END DO
         END DO
       END DO

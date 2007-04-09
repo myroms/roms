@@ -417,9 +417,9 @@
 
 #if defined GRADIENT_CHECK || defined IOM          || \
     defined IS4DVAR        || defined IS4DVAR_OLD  || \
-    defined R_SYMMETRY     || defined S4DVAR       || \
-    defined TLM_CHECK      || defined VERIFICATION || \
-    defined W4DPSAS        || defined W4DVAR
+    defined S4DVAR         || defined TLM_CHECK    || \
+    defined VERIFICATION   || defined W4DPSAS      || \
+    defined W4DVAR
 # define OBSERVATIONS
 #endif
 
@@ -519,6 +519,15 @@
 
 #if defined SSW_BBL || defined MB_BBL || defined SG_BBL
 # define BBL_MODEL
+#endif
+
+/*
+** Activate internal switch for imposing REFDIF as a 
+** monochromatic wave driver.
+*/
+
+#if defined REFDIF_COUPLING && defined SVENDSEN_ROLLER
+# define MONO_ROLLER
 #endif
 
 /*

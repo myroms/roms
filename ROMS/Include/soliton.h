@@ -8,6 +8,8 @@
 **
 ** Options for Equatorial Soliton Test.
 **
+** Application flag:   SOLITON
+** Input script:       ocean_soliton.in
 */
 
 #define UV_ADV

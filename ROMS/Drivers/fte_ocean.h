@@ -221,7 +221,7 @@
         LwrtTLM(ng)=.TRUE.
         LwrtPER(ng)=.FALSE.
         LcycleTLM(ng)=.FALSE.
-        nTLM(ng)=ntimes
+        nTLM(ng)=ntimes(ng)
 !
 !-----------------------------------------------------------------------
 !  Implicit Restarted Arnoldi Method (IRAM) for the computation of
@@ -405,7 +405,7 @@
                 Nrun=0
                 NrecTLM(ng)=0
                 tTLMindx(ng)=0
-!!              ndefTLM(ng)=ntimes         ! one file per eigenvector
+!!              ndefTLM(ng)=ntimes(ng)     ! one file per eigenvector
                 NconvRitz=iparam(5)
                 Lcomplex=.TRUE.
 !

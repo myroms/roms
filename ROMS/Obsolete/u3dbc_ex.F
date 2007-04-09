@@ -364,7 +364,7 @@
 #   endif
         DO k=1,N(ng)
           DO i=I_RANGE
-            u(i,Jstr-1,k,nnew)=gamma2*u(i,Jstr,k,nnew)
+            u(i,Jstr-1,k,nnew)=gamma2(ng)*u(i,Jstr,k,nnew)
 #   ifdef MASKING
             u(i,Jstr-1,k,nnew)=u(i,Jstr-1,k,nnew)*                      &
      &                         GRID(ng)%umask(i,Jstr-1)
@@ -469,7 +469,7 @@
 #   endif
         DO k=1,N(ng)
           DO i=I_RANGE
-            u(i,Jend+1,k,nnew)=gamma2*u(i,Jend,k,nnew)
+            u(i,Jend+1,k,nnew)=gamma2(ng)*u(i,Jend,k,nnew)
 #   ifdef MASKING
             u(i,Jend+1,k,nnew)=u(i,Jend+1,k,nnew)*                      &
      &                         GRID(ng)%umask(i,Jend+1)

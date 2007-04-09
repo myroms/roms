@@ -117,6 +117,110 @@
         dt2d=dtfast(ng)
       END IF
 
+# if defined WET_DRY
+!
+!-----------------------------------------------------------------------
+! Ensure that water level on boundary cells is above bed elevation.
+!-----------------------------------------------------------------------
+!
+      cff=Dcrit(ng)-eps
+
+#  if !defined EW_PERIODIC && !defined NS_PERIODIC
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (zeta(Iend+1,Jend+1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Iend+1,Jend+1))) THEN
+!>        tl_zeta(Iend+1,Jend+1,kout)=-GRID(ng)%tl_h(Iend+1,Jend+1)
+!>
+          GRID(ng)%ad_h(Iend+1,Jend+1)=GRID(ng)%ad_h(Iend+1,Jend+1)-    &
+     &                                 ad_zeta(Iend+1,Jend+1,kout)
+          ad_zeta(Iend+1,Jend+1,kout)=0.0_r8
+        END IF
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (zeta(Istr-1,Jend+1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Istr-1,Jend+1))) THEN
+!>        tl_zeta(Istr-1,Jend+1,kout)=-GRID(ng)%tl_h(Istr-1,Jend+1)
+!>
+          GRID(ng)%ad_h(Istr-1,Jend+1)=GRID(ng)%ad_h(Istr-1,Jend+1)-    &
+     &                                 ad_zeta(Istr-1,Jend+1,kout)
+          ad_zeta(Istr-1,Jend+1,kout)=0.0_r8
+        END IF
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (zeta(Iend+1,Jstr-1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Iend+1,Jstr-1))) THEN
+!>        tl_zeta(Iend+1,Jstr-1,kout)=-GRID(ng)%tl_h(Iend+1,Jstr-1)
+!>
+          GRID(ng)%ad_h(Iend+1,Jstr-1)=GRID(ng)%ad_h(Iend+1,Jstr-1)-    &
+     &                                 ad_zeta(Iend+1,Jstr-1,kout)
+          tl_zeta(Iend+1,Jstr-1,kout)=0.0_r8
+        END IF
+      END IF
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (zeta(Istr-1,Jstr-1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Istr-1,Jstr-1))) THEN
+!>        tl_zeta(Istr-1,Jstr-1,kout)=-GRID(ng)%tl_h(Istr-1,Jstr-1)
+!>
+          GRID(ng)%ad_h(Istr-1,Jstr-1)=GRID(ng)%ad_h(Istr-1,Jstr-1)-    &
+     &                                 ad_zeta(Istr-1,Jstr-1,kout)
+          ad_zeta(Istr-1,Jstr-1,kout)=0.0_r8
+        END IF
+      END IF
+#  endif
+#  ifndef NS_PERIODIC
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          IF (zeta(i,Jend+1,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(i,Jend+1))) THEN
+!>          tl_zeta(i,Jend+1,kout)=-GRID(ng)%tl_h(i,Jend+1)
+!>
+            GRID(ng)%ad_h(i,Jend+1)=GRID(ng)%ad_h(i,Jend+1)-            &
+     &                              ad_zeta(i,Jend+1,kout)
+            ad_zeta(i,Jend+1,kout)=0.0_r8
+          END IF
+        END DO
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          IF (zeta(i,Jstr-1,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(i,Jstr-1))) THEN
+!>          tl_zeta(i,Jstr-1,kout)=-GRID(ng)%tl_h(i,Jstr-1)
+!>
+            GRID(ng)%ad_h(i,Jstr-1)=GRID(ng)%ad_h(i,Jstr-1)-            &
+     &                              ad_zeta(i,Jstr-1,kout)
+            ad_zeta(i,Jstr-1,kout)=0.0_r8
+          END IF
+        END DO
+      END IF
+#  endif
+#  ifndef EW_PERIODIC
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          IF (zeta(Iend+1,j,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(Iend+1,j))) THEN
+!>          tl_zeta(Iend+1,j,kout)=-GRID(ng)%tl_h(Iend+1,j)
+!>
+            GRID(ng)%ad_h(Iend+1,j)=GRID(ng)%ad_h(Iend+1,j)-            &
+     &                              ad_zeta(Iend+1,j,kout)
+            ad_zeta(Iend+1,j,kout)=0.0_r8
+          END IF
+        END DO
+      END IF
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          IF (zeta(Istr-1,j,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(Istr-1,j))) THEN
+!>          tl_zeta(Istr-1,j,kout)=-GRID(ng)%tl_h(Istr-1,j)
+!>
+            GRID(ng)%ad_h(Istr-1,j)=GRID(ng)%ad_h(Istr-1,j)-            &
+     &                              ad_zeta(Istr-1,j,kout)  
+            ad_zeta(Istr-1,j,kout)=0.0_r8
+          END IF
+        END DO
+      END IF
+#  endif
+# endif
+
 # if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
@@ -230,7 +334,8 @@
 !
         DO i=Istr,Iend
           cff=dt2d*GRID(ng)%pn(i,Jend)
-          cff1=SQRT(g*GRID(ng)%h(i,Jend))
+          cff1=SQRT(g*(GRID(ng)%h(i,Jend)+                              &
+     &                 zeta(i,Jend,know)))
           Ce=cff*cff1
           cff2=1.0_r8/(1.0_r8+Ce)
 #   ifdef MASKING
@@ -262,10 +367,12 @@
 !>
           ad_cff1=ad_cff1+cff*ad_Ce
           ad_Ce=0.0_r8
-!>        tl_cff1=0.5_r8*g*GRID(ng)%tl_h(i,Jend)/cff1
+!>        tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(i,Jend)+                      &
+!>   &                      tl_zeta(i,Jend,know))/cff1
 !>
-          GRID(ng)%ad_h(i,Jend)=GRID(ng)%ad_h(i,Jend)+                  &
-     &                          0.5_r8*g*ad_cff1/cff1
+          adfac=0.5_r8*g*ad_cff1/cff1
+          GRID(ng)%ad_h(i,Jend)=GRID(ng)%ad_h(i,Jend)+adfac
+          ad_zeta(i,Jend,know)=ad_zeta(i,Jend,know)+adfac
           ad_cff1=0.0_r8
         END DO
 
@@ -382,7 +489,8 @@
 !
         DO i=Istr,Iend
           cff=dt2d*GRID(ng)%pn(i,Jstr)
-          cff1=SQRT(g*GRID(ng)%h(i,Jstr))
+          cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                              &
+     &                 zeta(i,Jstr,know))
           Ce=cff*cff1
           cff2=1.0_r8/(1.0_r8+Ce)
 #  ifdef MASKING
@@ -414,10 +522,12 @@
 !>
           ad_cff1=ad_cff1+cff*ad_Ce
           ad_Ce=0.0_r8
-!>        tl_cff1=0.5_r8*g*GRID(ng)%tl_h(i,Jstr)/cff1
+!>        tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(i,Jstr)+                      &
+!>   &                      tl_zeta(i,Jstr,know))/cff1
 !>
-          GRID(ng)%ad_h(i,Jstr)=GRID(ng)%ad_h(i,Jstr)+                  &
-     &                          0.5_r8*g*ad_cff1/cff1
+          adfac=0.5_r8*g*ad_cff1/cff1
+          GRID(ng)%ad_h(i,Jstr)=GRID(ng)%ad_h(i,Jstr)+adfac
+          ad_zeta(i,Jstr,know)=ad_zeta(i,Jstr,know)+adfac
           ad_cff1=0.0_r8
         END DO
 
@@ -537,7 +647,8 @@
 !
         DO j=Jstr,Jend
           cff=dt2d*GRID(ng)%pm(Iend,j)
-          cff1=SQRT(g*GRID(ng)%h(Iend,j))
+          cff1=SQRT(g*(GRID(ng)%h(Iend,j)+                              &
+     &                 zeta(Iend,j,know)))
           Cx=cff*cff1
           cff2=1.0_r8/(1.0_r8+Cx)
 #   ifdef MASKING
@@ -569,10 +680,12 @@
 !>
           ad_cff1=ad_cff1+cff*ad_Cx
           ad_Cx=0.0_r8
-!>        tl_cff1=0.5_r8*g*GRID(ng)%tl_h(Iend,j)/cff1
+!>        tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(Iend,j)+                      &
+!>   &                      tl_zeta(Iend,j,know))/cff1
 !>
-          GRID(ng)%ad_h(Iend,j)=GRID(ng)%ad_h(Iend,j)+                  &
-     &                          0.5_r8*g*ad_cff1/cff1
+          adfac=0.5_r8*g*ad_cff1/cff1
+          GRID(ng)%ad_h(Iend,j)=GRID(ng)%ad_h(Iend,j)+adfac
+          ad_zeta(Iend,j,know)=ad_zeta(Iend,j,know)+adfac
           ad_cff1=0.0_r8
         END DO
 
@@ -690,7 +803,8 @@
 !
         DO j=Jstr,Jend
           cff=dt2d*GRID(ng)%pm(Istr,j)
-          cff1=SQRT(g*GRID(ng)%h(Istr,j))
+          cff1=SQRT(g*(GRID(ng)%h(Istr,j)+                              &
+     &                 zeta(Istr,j,know)))
           Cx=cff*cff1
           cff2=1.0_r8/(1.0_r8+Cx)
 #  ifdef MASKING
@@ -722,10 +836,12 @@
 !>
           ad_cff1=ad_cff1+cff*ad_Cx
           ad_Cx=0.0_r8
-!>        tl_cff1=0.5_r8*g*GRID(ng)%tl_h(Istr,j)/cff1
+!>        tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(Istr,j)+                      &
+!>   &                      tl_zeta(Istr,j,know))/cff1
 !>
-          GRID(ng)%ad_h(Istr,j)=GRID(ng)%ad_h(Istr,j)+                  &
-     &                          0.5_r8*g*ad_cff1/cff1
+          adfac=0.5_r8*g*ad_cff1/cff1
+          GRID(ng)%ad_h(Istr,j)=GRID(ng)%ad_h(Istr,j)+adfac
+          ad_zeta(Istr,j,know)=ad_zeta(Istr,j,know)+adfac
           ad_cff1=0.0_r8
         END DO
 

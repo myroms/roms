@@ -449,7 +449,7 @@
 !
 !  The slipperiness mask is Sea=1, Land=0, and boundary=1-gamma2.
 !
-      IF (gamma2.lt.0.0_r8) THEN
+      IF (gamma2(ng).lt.0.0_r8) THEN
         DO j=Jstr,Jend
           DO i=Istr,Iend
             pmask(i,j)=2.0_r8-pmask(i,j)

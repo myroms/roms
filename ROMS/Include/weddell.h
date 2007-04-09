@@ -8,6 +8,8 @@
 **
 ** Options for Idealized Weddell Sea Application: Tides and Ice Shelf Test.
 **
+** Application flag:   WEDDELL
+** Input script:       ocean_wedell.in
 */
 
 #define UV_ADV

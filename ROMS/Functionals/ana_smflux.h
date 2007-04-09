@@ -121,7 +121,7 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
       real(r8) :: Ewind, Nwind, cff, val1, val2, windamp, winddir
-#if defined LAKE_SIGNELL || defined SANDWAVE
+#if defined LAKE_SIGNELL
       real(r8) :: cff1, mxst, ramp_u, ramp_time, ramp_d
 #endif
 
@@ -180,7 +180,7 @@
 # endif
         END DO
       END DO
-#elif defined CRG_BAN_TEST
+#elif defined MIXED_LAYER
       DO j=JstrR,JendR
          DO i=Istr,IendR
            sustr(i,j)=0.0001_r8        ! m2/s2
@@ -275,23 +275,6 @@
 # endif
         END DO
       END DO
-#elif defined SANDWAVE
-      mxst=1.0000_r8          ! N/m2
-      ramp_u=1.5_r8           ! start ramp UP at RAMP_UP hours
-      ramp_time=3.0_r8       ! ramp from 0 to 1 over RAMP_TIME hours
-      ramp_d=1.0e16_r8          ! start ramp DOWN at RAMP_DOWN hours
-      DO j=JstrR,JendR
-         DO i=Istr,IendR
-           cff1=MIN((0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_u)/          &
-     &                            (ramp_time/5.0_r8))+1.0_r8)),         &
-     &              (1.0_r8-(0.5_r8*(TANH((time(ng)/3600.0_r8-ramp_d)/  &
-     &                                    (ramp_time/5.0_r8))+1.0_r8))))
-           sustr(i,j)=mxst/rho0*cff1
-# ifdef TL_IOMS
-           tl_sustr(i,j)=mxst/rho0*cff1
-# endif
-         END DO
-      END DO
 #elif defined SED_TOY
       DO j=JstrR,JendR
          DO i=Istr,IendR
@@ -325,20 +308,6 @@
           sustr(i,j)=windamp
 # ifdef TL_IOMS
           tl_sustr(i,j)=windamp
-# endif
-        END DO
-      END DO
-#elif defined USWEST
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-!!        val1=(latr(i,j)-latr(Lm(ng)/2,Mm(ng)/2))/20.0_r8
-!!        sustr(i,j)=1.0E-04_r8*val1
-!!        sustr(i,j)=-1.0E-04_r8
-          sustr(i,j)=0.0_r8
-# ifdef TL_IOMS
-!!        tl_sustr(i,j)=1.0E-04_r8*val1
-!!        tl_sustr(i,j)=-1.0E-04_r8
-          tl_sustr(i,j)=0.0_r8
 # endif
         END DO
       END DO
@@ -421,15 +390,6 @@
           svstr(i,j)=0.0_r8
 # ifdef TL_IOMS
           tl_svstr(i,j)=0.0_r8
-# endif
-        END DO
-      END DO
-#elif defined USWEST
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          svstr(i,j)=-1.0E-04_r8
-# ifdef TL_IOMS
-          tl_svstr(i,j)=-1.0E-04_r8
 # endif
         END DO
       END DO

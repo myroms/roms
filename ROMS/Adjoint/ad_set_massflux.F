@@ -68,6 +68,12 @@
      &                           OCEAN(ng) % v,                         &
      &                           OCEAN(ng) % ad_u,                      &
      &                           OCEAN(ng) % ad_v,                      &
+# ifdef NEARSHORE_MELLOR
+     &                           OCEAN(ng) % u_stokes,                  &
+     &                           OCEAN(ng) % v_stokes,                  &
+     &                           OCEAN(ng) % ad_u_stokes,               &
+     &                           OCEAN(ng) % ad_v_stokes,               &
+# endif
      &                           GRID(ng) % Hz,                         &
      &                           GRID(ng) % ad_Hz,                      &
      &                           GRID(ng) % om_v,                       &
@@ -87,6 +93,10 @@
      &                                 nrhs,                            &
      &                                 u, v,                            &
      &                                 ad_u, ad_v,                      &
+# ifdef NEARSHORE_MELLOR
+     &                                 u_stokes, v_stokes,              &
+     &                                 ad_u_stokes, ad_v_stokes,        &
+# endif
      &                                 Hz, ad_Hz,                       &
      &                                 om_v, on_u,                      &
      &                                 ad_Huon, ad_Hvom)
@@ -111,12 +121,20 @@
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
+#  endif
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
 
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(inout) :: ad_u_stokes(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_v_stokes(LBi:,LBj:,:)
+#  endif
       real(r8), intent(inout) :: ad_Hz(LBi:,LBj:,:)
 
       real(r8), intent(inout) :: ad_Huon(LBi:,LBj:,:)
@@ -124,12 +142,20 @@
 # else
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
+#  endif
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
 
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(inout) :: ad_u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: ad_v_stokes(LBi:UBi,LBj:UBj,N(ng))
+#  endif
       real(r8), intent(inout) :: ad_Hz(LBi:UBi,LBj:UBj,N(ng))
 
       real(r8), intent(inout) :: ad_Huon(LBi:UBi,LBj:UBj,N(ng))
@@ -199,6 +225,21 @@
       DO k=1,N(ng)
         DO j=JV_RANGE
           DO i=IV_RANGE
+# ifdef NEARSHORE_MELLOR
+!>          tl_Hvom(i,j,k)=tl_Hvom(i,j,k)+                              &
+!>   &                     0.5_r8*om_v(i,j)*                            &
+!>   &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
+!>   &                      tl_v_stokes(i,j,k)+                         &
+!>   &                      (tl_Hz(i,j,k)+tl_Hz(i,j-1,k))*              &
+!>   &                      v_stokes(i,j,k))
+!>
+            adfac=0.5_r8*om_v(i,j)*tl_Hvom(i,j,k)
+            adfac1=adfac*v_stokes(i,j,k)
+            tl_v_stokes(i,j,k)=tl_v_stokes(i,j,k)+                      &
+     &                         adfac*(Hz(i,j,k)+Hz(i,j-1,k))
+            ad_Hz(i,j-1,k)=ad_Hz(i,j-1,k)+adfac1
+            ad_Hz(i,j  ,k)=ad_Hz(i,j  ,k)+adfac1
+# endif
 !>          tl_Hvom(i,j,k)=0.5_r8*om_v(i,j)*                            &
 !>   &                     ((Hz(i,j,k)+Hz(i,j-1,k))*                    &
 !>   &                      tl_v(i,j,k,nrhs)+                           &
@@ -216,19 +257,34 @@
         END DO
         DO j=JU_RANGE
           DO i=IU_RANGE
+# ifdef NEARSHORE_MELLOR
+!>          tl_Huon(i,j,k)=tl_Huon(i,j,k)+                              &
+!>   &                     0.5_r8*on_u(i,j)*                            &
+!>   &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
+!>   &                      tl_u_stokes(i,j,k)+                         &
+!>   &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
+!>   &                      u_stokes(i,j,k))
+!>
+            adfac=0.5_r8*on_u(i,j)*ad_Huon(i,j,k)
+            adfac1=adfac*u_stokes(i,j,k)
+            ad_u_stokes(i,j,k)=ad_u_stokes(i,j,k)+                      &
+     &                         adfac*(Hz(i,j,k)+Hz(i-1,j,k))
+            ad_Hz(i-1,j,k)=ad_Hz(i-1,j,k)+adfac1
+            ad_Hz(i  ,j,k)=ad_Hz(i  ,j,k)+adfac1
+# endif
 !>          tl_Huon(i,j,k)=0.5_r8*on_u(i,j)*                            &
 !>   &                     ((Hz(i,j,k)+Hz(i-1,j,k))*                    &
 !>   &                      tl_u(i,j,k,nrhs)+                           &
 !>   &                      (tl_Hz(i,j,k)+tl_Hz(i-1,j,k))*              &
 !>   &                      u(i,j,k,nrhs))
 !>
-             adfac=0.5_r8*on_u(i,j)*ad_Huon(i,j,k)
-             adfac1=adfac*u(i,j,k,nrhs)
-             ad_u(i,j,k,nrhs)=ad_u(i,j,k,nrhs)+                         &
-     &                        adfac*(Hz(i,j,k)+Hz(i-1,j,k))
-             ad_Hz(i-1,j,k)=ad_Hz(i-1,j,k)+adfac1
-             ad_Hz(i  ,j,k)=ad_Hz(i  ,j,k)+adfac1
-             ad_Huon(i,j,k)=0.0_r8
+            adfac=0.5_r8*on_u(i,j)*ad_Huon(i,j,k)
+            adfac1=adfac*u(i,j,k,nrhs)
+            ad_u(i,j,k,nrhs)=ad_u(i,j,k,nrhs)+                          &
+     &                       adfac*(Hz(i,j,k)+Hz(i-1,j,k))
+            ad_Hz(i-1,j,k)=ad_Hz(i-1,j,k)+adfac1
+            ad_Hz(i  ,j,k)=ad_Hz(i  ,j,k)+adfac1
+            ad_Huon(i,j,k)=0.0_r8
           END DO
         END DO
       END DO

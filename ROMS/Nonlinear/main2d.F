@@ -127,7 +127,7 @@
 !  Initialize all time levels and compute other initial fields.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntstart) THEN
+      IF (iic(ng).eq.ntstart(ng)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -240,7 +240,7 @@
 !-----------------------------------------------------------------------
 !
       CALL output (ng)
-      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the

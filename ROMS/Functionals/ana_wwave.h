@@ -230,7 +230,7 @@
         END DO
       END DO
 #else
-      ANA_WWAVE: no values provided for AWAVE, DWAVE, and PWAVE.
+      ana_wwave: No values provided for Hwave, Dwave, Pwave, Lwave.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
 # if defined WAVES_DIR

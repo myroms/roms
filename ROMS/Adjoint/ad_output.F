@@ -54,7 +54,7 @@
 !
       IF (LdefADJ(ng)) THEN
         IF (ndefADJ(ng).gt.0) THEN
-          IF (idefADJ(ng).lt.0) idefADJ(ng)=ntstart-1
+          IF (idefADJ(ng).lt.0) idefADJ(ng)=ntstart(ng)-1
           IF ((iic(ng)-1).eq.idefADJ(ng)) THEN
             idefADJ(ng)=idefADJ(ng)-ndefADJ(ng)
             NrecADJ(ng)=0
@@ -65,7 +65,7 @@
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncADJid(ng).ne.-1) status=nf_close(ncADJid(ng))
-            IF ((iic(ng).eq.ntstart).and.                               &
+            IF ((iic(ng).eq.ntstart(ng)).and.                           &
      &          (MOD(iic(ng)-1,ndefADJ(ng)).gt.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -77,7 +77,7 @@
 !!          LdefADJ(ng)=.FALSE.
           END IF
         ELSE
-          IF (iic(ng).eq.ntstart) THEN
+          IF (iic(ng).eq.ntstart(ng)) THEN
             CALL ad_def_his (ng, ldefout(ng))
             IF (exit_flag.ne.NoError) RETURN
             LwrtADJ(ng)=.TRUE.
@@ -90,14 +90,14 @@
 !
       IF (LwrtADJ(ng)) THEN
         IF (LwrtPER(ng)) THEN
-          IF ((iic(ng).ne.ntstart).and.                                 &
+          IF ((iic(ng).ne.ntstart(ng)).and.                             &
      &        (MOD(iic(ng)-1,nADJ(ng)).eq.0)) THEN
             CALL ad_wrt_his (ng)
             IF (exit_flag.ne.NoError) RETURN
           END IF
         ELSE
-          IF (nADJ(ng).eq.ntimes) THEN            ! avoid ntstart record
-            wrtHIS=(iic(ng).ne.ntstart).and.                            &
+          IF (nADJ(ng).eq.ntimes(ng)) THEN        ! avoid ntstart record
+            wrtHIS=(iic(ng).ne.ntstart(ng)).and.                        &
      &             (MOD(iic(ng)-1,nADJ(ng)).eq.0)
           ELSE                                    ! otherwise
             wrtHIS=(MOD(iic(ng)-1,nADJ(ng)).eq.0)
@@ -121,7 +121,7 @@
 !
       IF (LdefAVG(ng)) THEN
         IF (ndefAVG(ng).gt.0) THEN
-          IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart-1
+          IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart(ng)-1
           IF ((iic(ng)-1).eq.idefAVG(ng)) THEN
             idefAVG(ng)=idefAVG(ng)-ndefAVG(ng)+1
             NrecAVG(ng)=0
@@ -132,7 +132,7 @@
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncAVGid(ng).ne.-1) status=nf_close(ncAVGid(ng))
-            IF ((iic(ng).eq.ntstart).and.                               &
+            IF ((iic(ng).eq.ntstart(ng)).and.                           &
      &          (MOD(iic(ng)-1,ndefAVG(ng)).gt.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -144,7 +144,7 @@
 !!          LdefAVG(ng)=.FALSE.
           END IF
         ELSE
-          IF (iic(ng).eq.ntstart) THEN
+          IF (iic(ng).eq.ntstart(ng)) THEN
             CALL def_avg (ng, ldefout(ng))
             IF (exit_flag.ne.NoError) RETURN
             LwrtAVG(ng)=.TRUE.
@@ -156,7 +156,7 @@
 !  Write out data into time-averaged NetCDF file.
 !
       IF (LwrtAVG(ng)) THEN
-        IF ((iic(ng).ne.ntstart).and.                                   &
+        IF ((iic(ng).ne.ntstart(ng)).and.                               &
      &      (MOD(iic(ng),nAVG(ng)).eq.1)) THEN
           CALL wrt_avg (ng)
           IF (exit_flag.ne.NoError) RETURN

@@ -1,13 +1,11 @@
-#include "cppdefs.h"
-#ifdef NUDGING_COFF
-      SUBROUTINE set_nudgcof (ng, tile, model)
+      SUBROUTINE ana_nudgcoef (ng, tile, model)
 !
-!svn $Id$
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!=======================================================================
+!! svn $Id$
+!!================================================= Hernan G. Arango ===
+!! Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!!   Licensed under a MIT/X style license                              !
+!!   See License_ROMS.txt                                              !
+!!======================================================================
 !                                                                      !
 !  This routine set nudging coefficients time-scales (1/s).            !
 !                                                                      !
@@ -21,29 +19,30 @@
 !
 !  Local variable declarations.
 !
-# include "tile.h"
+#include "tile.h"
 !
-      CALL set_nudgcof_tile (ng, model, Istr, Iend, Jstr, Jend)
+      CALL ana_nudgcoef_tile (ng, model, Istr, Iend, Jstr, Jend)
+
       RETURN
-      end
+      END SUBROUTINE ana_nudgcoef
 !
 !***********************************************************************
-      SUBROUTINE set_nudgcof_tile (ng, model, Istr, Iend, Jstr, Jend)
+      SUBROUTINE ana_nudgcoef_tile (ng, model, Istr, Iend, Jstr, Jend)
 !***********************************************************************
 !
       USE mod_param
       USE mod_parallel
       USE mod_boundary
-# ifdef CLIMATOLOGY
+#ifdef CLIMATOLOGY
       USE mod_clima
-# endif
+#endif
       USE mod_grid
       USE mod_ncparam
       USE mod_scalars
-# ifdef DISTRIBUTE
+#ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcastf
-# endif
+#endif
 !
       implicit none
 !
@@ -60,7 +59,7 @@
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
 
-# include "set_bounds.h"
+#include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Set up nudging towards data time-scale coefficients (1/s).
@@ -74,7 +73,7 @@
         END DO
       END DO
 
-# if defined ADRIATIC1
+#if defined ADRIA02
       cff1=1.0_r8/(3.0_r8*86400.0_r8)
       cff2=1.0_r8/(30.0_r8*86400.0_r8)
       DO j=JstrR,MIN(6,JendR)
@@ -82,60 +81,22 @@
           wrk(i,j)=cff2+REAL(6-j,r8)*(cff1-cff2)/6.0_r8
         END DO
       END DO
-#  ifdef ZCLM_NUDGING
+# ifdef ZCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
         END DO
       END DO
-#  endif
-#  ifdef TCLM_NUDGING
+# endif
+# ifdef TCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
           CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
         END DO
       END DO
-#  endif
-# elif defined BISCAY
-      cff1=1.0_r8/( 5.0_r8*86400.0_r8)
-      cff2=1.0_r8/(30.0_r8*86400.0_r8)
-      cff3=(29.0_r8*cff1-cff2)/28.0_r8
-      DO i=IstrR,IendR
-        DO j=JstrR,MIN(6,JendR)
-          wrk(i,j)=cff2+REAL(6-j,r8)*(cff1-cff2)/6.0_r8
-        END DO
-        DO j=MAX(JstrR,Mm(ng)+1-6),JendR
-          wrk(i,j)=cff1+REAL(Mm(ng)+1-j,r8)*(cff2-cff1)/6.0_r8
-        END DO
-      END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
-          wrk(i,j)=cff2+REAL(6-i,r8)*(cff1-cff2)/6.0_r8
-        END DO
-      END DO
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-      DO j=MAX(JstrR,14),MIN(42,JendR)
-        DO i=MAX(IstrR,86),MIN(IendR,Lm(ng)+1)
-          cff1=SQRT(REAL((i-Lm(ng)+2)*(i-Lm(ng)+2)+(j-28)*(j-28),r8))
-          wrk(i,j)=MAX(0.0_r8,(cff3+cff1*(cff2-cff3)/28.0_r8))
-        END DO
-      END DO
-#  ifdef TCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
-          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-# elif defined DAMEE_4
+# endif
+#elif defined DAMEE_4
       cff1=1.0_r8/(5.0_r8*86400.0_r8)
       cff2=1.0_r8/(60.0_r8*86400.0_r8)
       cff3=(7.0_r8*cff1-cff2)/6.0_r8
@@ -149,28 +110,28 @@
           wrk(i,j)=cff1+REAL(Mm(ng)-j,r8)*(cff2-cff1)/7.0_r8
         END DO
       END DO
-#  ifdef ZCLM_NUDGING
+# ifdef ZCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
         END DO
       END DO
-#  endif
+# endif
       DO j=MAX(JstrR,74),MIN(80,JendR)
         DO i=MAX(IstrR,102),MIN(108,IendR)
           cff1=SQRT(REAL((i-109)*(i-109)+(j-77)*(j-77),r8))
           wrk(i,j)=MAX(0.0_r8,(cff3+cff1*(cff2-cff3)/6.0_r8))
         END DO
       END DO
-#  ifdef TCLM_NUDGING
+# ifdef TCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
           CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
         END DO
       END DO
-#  endif
-# elif defined NATL
+# endif
+#elif defined NATL
       cff1=1.0_r8/(5.0_r8*86400.0_r8)
       cff2=1.0_r8/(60.0_r8*86400.0_r8)
       DO j=JstrR,MIN(8,JendR)
@@ -183,45 +144,22 @@
           wrk(i,j)=cff1+REAL(Mm(ng)-j,r8)*(cff2-cff1)/7.0_r8
         END DO
       END DO
-#  ifdef ZCLM_NUDGING
+# ifdef ZCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
         END DO
       END DO
-#  endif
-#  ifdef TCLM_NUDGING
+# endif
+# ifdef TCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
           CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
         END DO
       END DO
-#  endif
-# elif defined NPACIFIC
-      cff1=1.0_r8/(5.0_r8*86400.0_r8)
-      cff2=1.0_r8/(60.0_r8*86400.0_r8)
-      DO j=JstrR,MIN(8,JendR)
-        DO i=IstrR,IendR
-          wrk(i,j)=cff2+REAL(8-j,r8)*(cff1-cff2)/7.0_r8
-        END DO
-      END DO
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-#  ifdef TCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
-          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-# elif defined SCB
+# endif
+#elif defined SCB
       cff1=1.0_r8/(5.0_r8*86400.0_r8)
       cff2=1.0_r8/(60.0_r8*86400.0_r8)
       DO j=JstrR,MIN(6,JendR)
@@ -239,94 +177,52 @@
           wrk(i,j)=cff2+REAL(6-i,r8)*(cff1-cff2)/6.0_r8
         END DO
       END DO
-#  ifdef ZCLM_NUDGING
+# ifdef ZCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
         END DO
       END DO
-#  endif
-#  ifdef M2CLM_NUDGING
+# endif
+# ifdef M2CLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%M2nudgcof(i,j)=wrk(i,j)
         END DO
       END DO
-#  endif
-#  ifdef M3CLM_NUDGING
+# endif
+# ifdef M3CLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%M3nudgcof(i,j)=wrk(i,j)
         END DO
       END DO
-#  endif
-#  ifdef TCLM_NUDGING
+# endif
+# ifdef TCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
           CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
         END DO
       END DO
-#  endif
-# elif defined USWEST
-      cff1=0.5_r8/(90.0_r8*86400.0_r8)
-      cff2=150.0_r8+3                    ! width (m) of nudging layer
-      Iwrk=INT(cff2*REAL(Lm(ng),r8)/                                    &
-     &         (GRID(ng)%xr(Lm(ng)+1,INT(0.5_r8*REAL(Mm(ng),r8)))-      &
-     &          GRID(ng)%xr(1       ,INT(0.5_r8*REAL(Mm(ng),r8)))))
-      DO j=JstrR,JendR
-        DO i=IstrR,MIN(Iwrk,IendR)
-          wrk(i,j)=cff1*(1.0_r8+COS(pi*REAL(i,r8)/REAL(Iwrk,r8)))
-        END DO
-        DO i=MAX(IstrR,Lm(ng)+1-Iwrk),IendR
-          wrk(i,j)=cff1*(1.0_r8+COS(pi*REAL(Lm(ng)+1-i,r8)/             &
-     &                                 REAL(Iwrk,r8)))
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)+1-Iwrk),MIN(Mm(ng)+1,JendR)
-        DO i=MAX(IstrR,Mm(ng)+1-j),MIN(Lm(ng)+1-Mm(ng)+1+j,IendR)
-          wrk(i,j)=cff1*(1.0_r8+COS(pi*REAL(Mm(ng)+1-j,r8)/             &
-     &                                 REAL(Iwrk,r8)))
-        END DO
-      END DO
-!!    do j=JstrR,MIN(Iwrk,JendR)
-!!      do i=MAX(IstrR,j),MIN(Lm(ng)+1-j,IendR)
-!!        wrk(i,j)=cff1*(1.0_r8+COS(pi*REAL(j,r8)/REAL(Iwrk,r8)))
-!!      enddo
-!!    enddo
-#  ifdef ZCLM_NUDGING
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
-        END DO
-      END DO
-#  endif
-#  ifdef TCLM_NUDGING
-      DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            CLIMA(ng)%Tnudgcof(i,j,itrc)=wrk(i,j)
-          END DO
-        END DO
-      END DO
-#  endif
-# else
-#  ifdef ZCLM_NUDGING
+# endif
+#else
+# ifdef ZCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%Znudgcof(i,j)=Znudg(ng)
         END DO
       END DO
-#  endif
-#  ifdef M2CLM_NUDGING
+# endif
+# ifdef M2CLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%M2nudgcof(i,j)=M2nudg(ng)
         END DO
       END DO
-#  endif
-#  ifdef SOLVE3D
-#   ifdef TCLM_NUDGING
+# endif
+# ifdef SOLVE3D
+#  ifdef TCLM_NUDGING
       DO itrc=1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
@@ -334,16 +230,16 @@
           END DO
         END DO
       END DO
-#   endif
-#   ifdef M3CLM_NUDGING
+#  endif
+#  ifdef M3CLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           CLIMA(ng)%M3nudgcof(i,j)=M3nudg(ng)
         END DO
       END DO
-#   endif
 #  endif
 # endif
+#endif
 !
 !-----------------------------------------------------------------------
 !  Set nudging coefficients (1/s) for passive/active (outflow/inflow)
@@ -354,10 +250,13 @@
 !  to adapt this to his/her application!
 !-----------------------------------------------------------------------
 !
+!! WARNING:  This section is generic for all applications. Please do not
+!!           change the code below.
+!!            
 !  Free-surface nudging coefficients.
 !
-# ifdef WEST_FSNUDGING
-#  ifdef ZCLM_NUDGING
+#ifdef WEST_FSNUDGING
+# ifdef ZCLM_NUDGING
       IF (SOUTH_WEST_CORNER) THEN
         FSobc_out(ng,iwest)=CLIMA(ng)%Znudgcof(0,1)
         FSobc_in (ng,iwest)=obcfac(ng)*FSobc_out(ng,iwest)
@@ -367,21 +266,21 @@
           CLIMA(ng)%Znudgcof(0,j)=0.0_r8
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, FSobc_out(:,iwest), Ngrids)
         CALL mp_bcastf (ng, model, FSobc_in (:,iwest), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (SOUTH_WEST_TEST) THEN
         FSobc_out(ng,iwest)=Znudg(ng)
         FSobc_in (ng,iwest)=obcfac(ng)*Znudg(ng)
       END IF
-#  endif
 # endif
-# ifdef EAST_FSNUDGING
-#  ifdef ZCLM_NUDGING
+#endif
+#ifdef EAST_FSNUDGING
+# ifdef ZCLM_NUDGING
       IF (NORTH_EAST_CORNER) THEN
         FSobc_out(ng,ieast)=CLIMA(ng)%Znudgcof(Lm(ng)+1,Mm(ng))
         FSobc_in (ng,ieast)=obcfac(ng)*FSobc_out(ng,ieast)
@@ -391,21 +290,21 @@
           CLIMA(ng)%Znudgcof(Lm(ng)+1,j)=0.0_r8
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, FSobc_out(:,ieast), Ngrids)
         CALL mp_bcastf (ng, model, FSobc_in (:,ieast), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (NORTH_EAST_TEST) THEN
         FSobc_out(ng,ieast)=Znudg(ng)
         FSobc_in (ng,ieast)=obcfac(ng)*Znudg(ng)
       END IF
-#  endif
 # endif
-# ifdef SOUTH_FSNUDGING
-#  ifdef ZCLM_NUDGING
+#endif
+#ifdef SOUTH_FSNUDGING
+# ifdef ZCLM_NUDGING
       IF (SOUTH_WEST_CORNER) THEN
         FSobc_out(ng,isouth)=CLIMA(ng)%Znudgcof(1,0)
         FSobc_in (ng,isouth)=obcfac(ng)*FSobc_out(ng,isouth)
@@ -415,21 +314,21 @@
           CLIMA(ng)%Znudgcof(i,0)=0.0_r8
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, FSobc_out(:,iwest), Ngrids)
         CALL mp_bcastf (ng, model, FSobc_in (:,iwest), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (SOUTH_WEST_TEST) THEN
         FSobc_out(ng,isouth)=Znudg(ng)
         FSobc_in (ng,isouth)=obcfac(ng)*Znudg(ng)
       END IF
-#  endif
 # endif
-# ifdef NORTH_FSNUDGING
-#  ifdef ZCLM_NUDGING
+#endif
+#ifdef NORTH_FSNUDGING
+# ifdef ZCLM_NUDGING
       IF (NORTH_EAST_CORNER) THEN
         FSobc_out(ng,inorth)=CLIMA(ng)%Znudgcof(Lm(ng),Mm(ng)+1)
         FSobc_in (ng,inorth)=obcfac(ng)*FSobc_out(ng,inorth)
@@ -439,24 +338,24 @@
           CLIMA(ng)%Znudgcof(i,Mm(ng)+1)=0.0_r8
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, FSobc_out(:,inorth), Ngrids)
         CALL mp_bcastf (ng, model, FSobc_in (:,inorth), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (NORTH_EAST_TEST) THEN
         FSobc_out(ng,inorth)=Znudg(ng)
         FSobc_in (ng,inorth)=obcfac(ng)*Znudg(ng)
       END IF
-#  endif
 # endif
+#endif
 !
 !  2D momentum nudging coefficients.
 !
-# ifdef WEST_M2NUDGING
-#  ifdef M2CLM_NUDGING
+#ifdef WEST_M2NUDGING
+# ifdef M2CLM_NUDGING
       IF (SOUTH_WEST_CORNER) THEN
         M2obc_out(ng,iwest)=0.5_r8*(CLIMA(ng)%M2nudgcof(0,1)+           &
      &                              CLIMA(ng)%M2nudgcof(1,1))
@@ -467,21 +366,21 @@
           CLIMA(ng)%M2nudgcof(0,j)=-CLIMA(ng)%M2nudgcof(1,j)
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M2obc_out(:,iwest), Ngrids)
         CALL mp_bcastf (ng, model, M2obc_in (:,iwest), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (SOUTH_WEST_TEST) THEN
         M2obc_out(ng,iwest)=M2nudg(ng)
         M2obc_in (ng,iwest)=obcfac(ng)*M2nudg(ng)
       END IF
-#  endif
 # endif
-# ifdef EAST_M2NUDGING
-#  ifdef M2CLM_NUDGING
+#endif
+#ifdef EAST_M2NUDGING
+# ifdef M2CLM_NUDGING
       IF (NORTH_EAST_CORNER) THEN
         M2obc_out(ng,ieast)=0.5_r8*                                     &
      &                      (CLIMA(ng)%M2nudgcof(Lm(ng)  ,Mm(ng))+      &
@@ -493,21 +392,21 @@
           CLIMA(ng)%M2nudgcof(Lm(ng)+1,j)=-CLIMA(ng)%M2nudgcof(Lm(ng),j)
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M2obc_out(:,ieast), Ngrids)
         CALL mp_bcastf (ng, model, M2obc_in (:,ieast), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (NORTH_EAST_TEST) THEN
         M2obc_out(ng,ieast)=M2nudg(ng)
         M2obc_in (ng,ieast)=obcfac(ng)*M2nudg(ng)
       END IF
-#  endif
 # endif
-# ifdef SOUTH_M2NUDGING
-#  ifdef M2CLM_NUDGING
+#endif
+#ifdef SOUTH_M2NUDGING
+# ifdef M2CLM_NUDGING
       IF (SOUTH_WEST_CORNER) THEN
         M2obc_out(ng,isouth)=0.5_r8*(CLIMA(ng)%M2nudgcof(1,0)+          &
      &                               CLIMA(ng)%M2nudgcof(1,1))
@@ -518,21 +417,21 @@
           CLIMA(ng)%M2nudgcof(i,0)=-CLIMA(ng)%M2nudgcof(i,1)
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M2obc_out(:,isouth), Ngrids)
         CALL mp_bcastf (ng, model, M2obc_in (:,isouth), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (SOUTH_WEST_TEST) THEN
         M2obc_out(ng,isouth)=M2nudg(ng)
         M2obc_in (ng,isouth)=obcfac(ng)*M2nudg(ng)
       END IF
-#  endif
 # endif
-# ifdef NORTH_M2NUDGING
-#  ifdef M2CLM_NUDGING
+#endif
+#ifdef NORTH_M2NUDGING
+# ifdef M2CLM_NUDGING
       IF (NORTH_EAST_CORNER) THEN
         M2obc_out(ng,inorth)=0.5_r8*                                    &
      &                       (CLIMA(ng)%M2nudgcof(Lm(ng),Mm(ng)  )+     &
@@ -544,25 +443,25 @@
           CLIMA(ng)%M2nudgcof(i,Mm(ng)+1)=-CLIMA(ng)%M2nudgcof(i,Mm(ng))
         END DO
       END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M2obc_out(:,inorth), Ngrids)
         CALL mp_bcastf (ng, model, M2obc_in (:,inorth), Ngrids)
       ENDIF
-#   endif
-#  else
+#  endif
+# else
       IF (NORTH_EAST_TEST) THEN
         M2obc_out(ng,inorth)=M2nudg(ng)
         M2obc_in (ng,inorth)=obcfac(ng)*M2nudg(ng)
       END IF
-#  endif
 # endif
-# ifdef SOLVE3D
+#endif
+#ifdef SOLVE3D
 !
 !  Tracers nudging coefficients.
 !
-#  ifdef WEST_TNUDGING
-#   ifdef TCLM_NUDGING
+# ifdef WEST_TNUDGING
+#  ifdef TCLM_NUDGING
       DO itrc=1,NT(ng)
         IF (SOUTH_WEST_CORNER) THEN
           Tobc_out(itrc,ng,iwest)=CLIMA(ng)%Tnudgcof(0,1,itrc)
@@ -574,21 +473,21 @@
           END DO
         END IF
       END DO
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       CALL mp_bcastf (ng, model, Tobc_out(:,ng,iwest), MT)
       CALL mp_bcastf (ng, model, Tobc_in (:,ng,iwest), MT)
-#    endif
-#   else
+#   endif
+#  else
       DO itrc=1,NT(ng)
         IF (SOUTH_WEST_TEST) THEN
           Tobc_out(itrc,ng,iwest)=Tnudg(itrc,ng)
           Tobc_in (itrc,ng,iwest)=obcfac(ng)*Tnudg(itrc,ng)
         END IF
       END DO
-#   endif
 #  endif
-#  ifdef EAST_TNUDGING
-#   ifdef TCLM_NUDGING
+# endif
+# ifdef EAST_TNUDGING
+#  ifdef TCLM_NUDGING
       DO itrc=1,NT(ng)
         IF (NORTH_EAST_CORNER) THEN
           Tobc_out(itrc,ng,ieast)=                                      &
@@ -601,21 +500,21 @@
           END DO
         END IF
       END DO
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       CALL mp_bcastf (ng, model, Tobc_out(:,ng,ieast), MT)
       CALL mp_bcastf (ng, model, Tobc_in (:,ng,ieast), MT)
-#    endif
-#   else
+#   endif
+#  else
       DO itrc=1,NT(ng)
         IF (NORTH_EAST_TEST) THEN
           Tobc_out(itrc,ng,ieast)=Tnudg(itrc,ng)
           Tobc_in (itrc,ng,ieast)=obcfac(ng)*Tnudg(itrc,ng)
         END IF
       END DO
-#   endif
 #  endif
-#  ifdef SOUTH_TNUDGING
-#   ifdef TCLM_NUDGING
+# endif
+# ifdef SOUTH_TNUDGING
+#  ifdef TCLM_NUDGING
       DO itrc=1,NT(ng)
         IF (SOUTH_WEST_CORNER) THEN
           Tobc_out(itrc,ng,isouth)=CLIMA(ng)%Tnudgcof(1,0,itrc)
@@ -627,21 +526,21 @@
           END DO
         END IF
       END DO
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       CALL mp_bcastf (ng, model, Tobc_out(:,ng,isouth), MT)
       CALL mp_bcastf (ng, model, Tobc_in (:,ng,isouth), MT)
-#    endif
-#   else
+#   endif
+#  else
       DO itrc=1,NT(ng)
         IF (SOUTH_WEST_TEST) THEN
           Tobc_out(itrc,ng,isouth)=Tnudg(itrc,ng)
           Tobc_in (itrc,ng,isouth)=obcfac(ng)*Tnudg(itrc,ng)
         END IF
       END DO
-#   endif
 #  endif
-#  ifdef NORTH_TNUDGING
-#   ifdef TCLM_NUDGING
+# endif
+# ifdef NORTH_TNUDGING
+#  ifdef TCLM_NUDGING
       DO itrc=1,NT(ng)
         IF (NORTH_EAST_CORNER) THEN
           Tobc_out(itrc,ng,inorth)=                                     &
@@ -654,24 +553,24 @@
           END DO
         END IF
       END DO
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       CALL mp_bcastf (ng, model, Tobc_out(:,ng,inorth), MT)
       CALL mp_bcastf (ng, model, Tobc_in (:,ng,inorth), MT)
-#    endif
-#   else
+#   endif
+#  else
       DO itrc=1,NT(ng)
         IF (NORTH_EAST_TEST) THEN
           Tobc_out(itrc,ng,inorth)=Tnudg(itrc,ng)
           Tobc_in (itrc,ng,inorth)=obcfac(ng)*Tnudg(itrc,ng)
         END IF
       END DO
-#   endif
 #  endif
+# endif
 !
 !  3D momentum nudging coefficients.
 !
-#  ifdef WEST_M3NUDGING
-#   ifdef M3CLM_NUDGING
+# ifdef WEST_M3NUDGING
+#  ifdef M3CLM_NUDGING
       IF (SOUTH_WEST_CORNER) THEN
         M3obc_out(ng,iwest)=0.5_r8*                                     &
      &                      (CLIMA(ng)%M3nudgcof(0,1)+                  &
@@ -683,21 +582,21 @@
           CLIMA(ng)%M3nudgcof(0,j)=-CLIMA(ng)%M3nudgcof(1,j)
         END DO
       END IF
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M3obc_out(:,iwest), Ngrids)
         CALL mp_bcastf (ng, model, M3obc_in (:,iwest), Ngrids)
       ENDIF
-#    endif
-#   else
+#   endif
+#  else
       IF (SOUTH_WEST_TEST) THEN
         M3obc_out(ng,iwest)=M3nudg(ng)
         M3obc_in (ng,iwest)=obcfac(ng)*M3nudg(ng)
       END IF
-#   endif
 #  endif
-#  ifdef EAST_M3NUDGING
-#   ifdef M3CLM_NUDGING
+# endif
+# ifdef EAST_M3NUDGING
+#  ifdef M3CLM_NUDGING
       IF (NORTH_EAST_CORNER) THEN
         M3obc_out(ng,ieast)=0.5_r8*                                     &
      &                      (CLIMA(ng)%M3nudgcof(Lm(ng)  ,Mm(ng))+      &
@@ -709,21 +608,21 @@
           CLIMA(ng)%M3nudgcof(Lm(ng)+1,j)=-CLIMA(ng)%M3nudgcof(Lm(ng),j)
         END DO
       END IF
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M3obc_out(:,ieast), Ngrids)
         CALL mp_bcastf (ng, model, M3obc_in (:,ieast), Ngrids)
       ENDIF
-#    endif
-#   else
+#   endif
+#  else
       IF (NORTH_EAST_TEST) THEN
         M3obc_out(ng,ieast)=M3nudg(ng)
         M3obc_in (ng,ieast)=obcfac(ng)*M3nudg(ng)
       END IF
-#   endif
 #  endif
-#  ifdef SOUTH_M3NUDGING
-#   ifdef M3CLM_NUDGING
+# endif
+# ifdef SOUTH_M3NUDGING
+#  ifdef M3CLM_NUDGING
       IF (SOUTH_WEST_CORNER) THEN
         M3obc_out(ng,isouth)=0.5_r8*                                    &
      &                       (CLIMA(ng)%M3nudgcof(1,0)+                 &
@@ -735,21 +634,21 @@
           CLIMA(ng)%M3nudgcof(i,0)=-CLIMA(ng)%M3nudgcof(i,1)
         END DO
       END IF
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M3obc_out(:,isouth), Ngrids)
         CALL mp_bcastf (ng, model, M3obc_in (:,isouth), Ngrids)
       ENDIF
-#    endif
-#   else
+#   endif
+#  else
       IF (SOUTH_WEST_TEST) THEN
         M3obc_out(ng,isouth)=M3nudg(ng)
         M3obc_in (ng,isouth)=obcfac(ng)*M3nudg(ng)
       END IF
-#   endif
 #  endif
-#  ifdef NORTH_M3NUDGING
-#   ifdef M3CLM_NUDGING
+# endif
+# ifdef NORTH_M3NUDGING
+#  ifdef M3CLM_NUDGING
       IF (NORTH_EAST_CORNER) THEN
         M3obc_out(ng,inorth)=0.5_r8*                                    &
      &                       (CLIMA(ng)%M3nudgcof(Lm(ng),Mm(ng)  )+     &
@@ -761,24 +660,21 @@
           CLIMA(ng)%M3nudgcof(i,Mm(ng)+1)=-CLIMA(ng)%M3nudgcof(i,Mm(ng))
         END DO
       END IF
-#    ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
         CALL mp_bcastf (ng, model, M3obc_out(:,inorth), Ngrids)
         CALL mp_bcastf (ng, model, M3obc_in (:,inorth), Ngrids)
       ENDIF
-#    endif
-#   else
+#   endif
+#  else
       IF (NORTH_EAST_TEST) THEN
         M3obc_out(ng,inorth)=M3nudg(ng)
         M3obc_in (ng,inorth)=obcfac(ng)*M3nudg(ng)
       END IF
-#   endif
 #  endif
 # endif
-      RETURN
-      END SUBROUTINE set_nudgcof_tile
-#else
-      SUBROUTINE set_nudgcof
-      RETURN
-      END SUBROUTINE set_nudgcof
 #endif
+
+      RETURN
+      END SUBROUTINE ana_nudgcoef_tile
+

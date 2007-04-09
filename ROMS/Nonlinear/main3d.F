@@ -115,7 +115,7 @@
 !
 !  Set time indices and time clock.
 !
-      nstp(ng)=1+MOD(iic(ng)-ntstart,2)
+      nstp(ng)=1+MOD(iic(ng)-ntstart(ng),2)
       nnew(ng)=3-nstp(ng)
       nrhs(ng)=nstp(ng)
       time(ng)=time(ng)+dt(ng)
@@ -169,7 +169,7 @@
 !  Initialize all time levels and compute other initial fields.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntstart) THEN
+      IF (iic(ng).eq.ntstart(ng)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -331,7 +331,7 @@
 !-----------------------------------------------------------------------
 !
       CALL output (ng)
-      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
 !
 !-----------------------------------------------------------------------
 !  Compute right-hand-side terms for 3D equations.
@@ -385,7 +385,7 @@
 !-----------------------------------------------------------------------
 !
       CALL output (ng)
-      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
 #endif
 !
 !-----------------------------------------------------------------------

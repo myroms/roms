@@ -72,7 +72,7 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES =  2000
+      NTIMES == 2000
           DT == 10.0d0
      NDTFAST == 20
        ERstr =  1
@@ -100,7 +100,7 @@
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 10
+        NHIS == 100
      NDEFHIS == 0
       NTSAVG == 1
         NAVG == 1000
@@ -236,7 +236,7 @@
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 =  1.0d0
+      GAMMA2 == 1.0d0
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their

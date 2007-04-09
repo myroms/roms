@@ -13,8 +13,6 @@
 !                                                                      !
 !  avgu2d     2D velocity component (m/s) in the XI-direction.         !
 !  avgv2d     2D velocity component (m/s) in the ETA-direction.        !
-!  avgu2Sd    2D stokes velocity component (m/s) in the XI-direction.  !
-!  avgv2Sd    2D stokes velocity component (m/s) in the ETA-direction. !
 !  avgzeta    Free surface (m).                                        !
 !                                                                      !
 !  3D Time-averaged fields for output purposes.                        !
@@ -56,11 +54,30 @@
 !  avgZZ      Quadratic term <zeta*zeta> for free-surface.             !
 !  avgu3d     3D velocity component (m/s) in the XI-direction.         !
 !  avgv3d     3D velocity component (m/s) in the ETA-direction.        !
-!  avgu3Sd    3D stokes velocity component (m/s) in the XI-direction.  !
-!  avgv3Sd    3D stokes velocity component (m/s) in the ETA-direction. !
 !  avgw3d     S-coordinate [omega*Hz/mn] vertical velocity (m3/s).     !
 !  avgwvel    3D "true" vertical velocity (m/s).                       !
+!
+# ifdef AVERAGES_NEARSHORE
+!  Time-averaged radiation stresses.                                   !
 !                                                                      !
+!  avgu2Sd    2D stokes velocity component (m/s) in the XI-direction.  !
+!  avgv2Sd    2D stokes velocity component (m/s) in the ETA-direction. !
+!  avgu2RS    2D radiation stress tensor in the XI-direction.          !
+!  avgv2RS    2D radiation stress tensor in the ETA-direction.         !
+!  avgSxx2d   2D radiation stress, xx-component.                       !
+!  avgSxy2d   2D radiation stress, xy-component.                       !
+!  avgSyy2d   2D radiation stress, yy-component.                       !
+!                                                                      !
+!  avgu3Sd    3D stokes velocity component (m/s) in the XI-direction.  !
+!  avgv3Sd    3D stokes velocity component (m/s) in the ETA-direction. !
+!  avgu3RS    3D radiation stress tensor in the XI-direction.          !
+!  avgv3RS    3D radiation stress tensor in the ETA-direction.         !
+!  avgSxx3d   3D radiation stress, xx-component.                       !
+!  avgSxy3d   3D radiation stress, xy-component.                       !
+!  avgSyy3d   3D radiation stress, yy-component.                       !
+!  avgSzx3d   3D radiation stress, zx-component.                       !
+!  avgSzy3d   3D radiation stress, zy-component.                       !
+# endif
 !=======================================================================
 !
         USE mod_kinds
@@ -74,6 +91,11 @@
 # ifdef AVERAGES_NEARSHORE
           real(r8), pointer :: avgu2Sd(:,:)
           real(r8), pointer :: avgv2Sd(:,:)
+          real(r8), pointer :: avgu2RS(:,:)
+          real(r8), pointer :: avgv2RS(:,:)
+          real(r8), pointer :: avgSxx2d(:,:)
+          real(r8), pointer :: avgSxy2d(:,:)
+          real(r8), pointer :: avgSyy2d(:,:)
 # endif
           real(r8), pointer :: avgzeta(:,:)
 # ifdef AVERAGES_QUADRATIC
@@ -91,6 +113,13 @@
 #  ifdef AVERAGES_NEARSHORE
           real(r8), pointer :: avgu3Sd(:,:,:)
           real(r8), pointer :: avgv3Sd(:,:,:)
+          real(r8), pointer :: avgu3RS(:,:,:)
+          real(r8), pointer :: avgv3RS(:,:,:)
+          real(r8), pointer :: avgSxx3d(:,:,:)
+          real(r8), pointer :: avgSxy3d(:,:,:)
+          real(r8), pointer :: avgSyy3d(:,:,:)
+          real(r8), pointer :: avgSzx3d(:,:,:)
+          real(r8), pointer :: avgSzy3d(:,:,:)
 #  endif
 #  ifdef AVERAGES_QUADRATIC
 #   ifdef SALINITY
@@ -177,11 +206,16 @@
 !
       allocate ( AVERAGE(ng) % avgu2d(LBi:UBi,LBj:UBj) )
       allocate ( AVERAGE(ng) % avgv2d(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgzeta(LBi:UBi,LBj:UBj) )
 # ifdef AVERAGES_NEARSHORE
       allocate ( AVERAGE(ng) % avgu2Sd(LBi:UBi,LBj:UBj) )
       allocate ( AVERAGE(ng) % avgv2Sd(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgu2RS(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgv2RS(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgSxx2d(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgSxy2d(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgSyy2d(LBi:UBi,LBj:UBj) )
 # endif
-      allocate ( AVERAGE(ng) % avgzeta(LBi:UBi,LBj:UBj) )
 # ifdef AVERAGES_QUADRATIC
       allocate ( AVERAGE(ng) % avgU2(LBi:UBi,LBj:UBj) )
       allocate ( AVERAGE(ng) % avgV2(LBi:UBi,LBj:UBj) )
@@ -195,6 +229,13 @@
 #  ifdef AVERAGES_NEARSHORE
       allocate ( AVERAGE(ng) % avgu3Sd(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( AVERAGE(ng) % avgv3Sd(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgu3RS(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgv3RS(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgSxx3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgSxy3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgSyy3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgSzx3d(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( AVERAGE(ng) % avgSzy3d(LBi:UBi,LBj:UBj,N(ng)) )
 #  endif
       allocate ( AVERAGE(ng) % avgw3d(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( AVERAGE(ng) % avgwvel(LBi:UBi,LBj:UBj,0:N(ng)) )
@@ -328,11 +369,16 @@
         DO i=Imin,Imax
           AVERAGE(ng) % avgu2d(i,j) = IniVal
           AVERAGE(ng) % avgv2d(i,j) = IniVal
+          AVERAGE(ng) % avgzeta(i,j) = IniVal
 # ifdef AVERAGES_NEARSHORE
           AVERAGE(ng) % avgu2Sd(i,j) = IniVal
           AVERAGE(ng) % avgv2Sd(i,j) = IniVal
+          AVERAGE(ng) % avgu2RS(i,j) = IniVal
+          AVERAGE(ng) % avgv2RS(i,j) = IniVal
+          AVERAGE(ng) % avgSxx2d(i,j) = IniVal
+          AVERAGE(ng) % avgSxy2d(i,j) = IniVal
+          AVERAGE(ng) % avgSyy2d(i,j) = IniVal
 # endif
-          AVERAGE(ng) % avgzeta(i,j) = IniVal
 # ifdef AVERAGES_QUADRATIC
           AVERAGE(ng) % avgU2(i,j) = IniVal
           AVERAGE(ng) % avgV2(i,j) = IniVal
@@ -374,8 +420,15 @@
             AVERAGE(ng) % avgu3d(i,j,k) = IniVal
             AVERAGE(ng) % avgv3d(i,j,k) = IniVal
 #  ifdef AVERAGES_NEARSHORE
-          AVERAGE(ng) % avgu3Sd(i,j,k) = IniVal
-          AVERAGE(ng) % avgv3Sd(i,j,k) = IniVal
+            AVERAGE(ng) % avgu3Sd(i,j,k) = IniVal
+            AVERAGE(ng) % avgv3Sd(i,j,k) = IniVal
+            AVERAGE(ng) % avgu3RS(i,j,k) = IniVal
+            AVERAGE(ng) % avgv3RS(i,j,k) = IniVal
+            AVERAGE(ng) % avgSxx3d(i,j,k) = IniVal
+            AVERAGE(ng) % avgSxy3d(i,j,k) = IniVal
+            AVERAGE(ng) % avgSyy3d(i,j,k) = IniVal
+            AVERAGE(ng) % avgSzx3d(i,j,k) = IniVal
+            AVERAGE(ng) % avgSzy3d(i,j,k) = IniVal
 #  endif
 #  ifdef AVERAGES_QUADRATIC
             AVERAGE(ng) % avgHuon(i,j,k) = IniVal

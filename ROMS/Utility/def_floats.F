@@ -542,7 +542,7 @@
           tFLTindx(ng)=tsize
         ELSE
          tFLTindx(ng)=ABS(frrec(ng))
-!!       tFLTindx(ng)=1+(ntstart-1)/nFLT(ng)
+!!       tFLTindx(ng)=1+(ntstart(ng)-1)/nFLT(ng)
         END IF
         NrecFLT=tFLTindx(ng)
 !

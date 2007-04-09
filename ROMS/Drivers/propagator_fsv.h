@@ -89,9 +89,9 @@
 !
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
-      ntstart=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend=ntimes
-      ntfirst=ntstart
+      ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
+      ntend(ng)=ntimes(ng)
+      ntfirst(ng)=ntstart(ng)
 !
 !-----------------------------------------------------------------------
 !  Clear tangent linear state variables. There is not need to clean
@@ -174,12 +174,12 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        WRITE (stdout,30) 'TL', ntstart, ntend
+        WRITE (stdout,30) 'TL', ntstart(ng), ntend(ng)
       END IF
 
       time(ng)=time(ng)-dt(ng)
 
-      TL_LOOP : DO my_iic=ntstart,ntend+1
+      TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
         iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -271,11 +271,11 @@
       nrhs(ng)=1
       nnew(ng)=2
 !
-      tdays(ng)=dstart+dt(ng)*FLOAT(ntimes)*sec2day
+      tdays(ng)=dstart+dt(ng)*FLOAT(ntimes(ng))*sec2day
       time(ng)=tdays(ng)*day2sec
-      ntstart=ntimes+1
-      ntend=1
-      ntfirst=ntend
+      ntstart(ng)=ntimes(ng)+1
+      ntend(ng)=1
+      ntfirst(ng)=ntend(ng)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint model with the final tangent linear solution
@@ -307,12 +307,12 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        WRITE (stdout,30) 'AD', ntstart, ntend
+        WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
       END IF
 
       time(ng)=time(ng)+dt(ng)
 
-      AD_LOOP : DO my_iic=ntstart,ntend,-1
+      AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
 
         iic(ng)=my_iic
 #ifdef SOLVE3D

@@ -66,7 +66,7 @@
 
     MUD_SD50 == 0.01d0  0.06d0  0.10d0
 
-! Sediment concentration (mg/l).
+! Sediment concentration (kg/m3).
 
     MUD_CSED == 0.0d0  0.0d0  0.0d0
 
@@ -127,7 +127,7 @@ Hout(iMVbld) == T                               ! bed load at V-points
 
    SAND_SD50 == 1.0d0
 
-! Sediment concentration (mg/l).
+! Sediment concentration (kg/m3).
 
    SAND_CSED == 0.0d0
 
@@ -213,7 +213,7 @@ Hout(iSVbld) == T                               ! bed load at V-points
 ! 
 !  NEWLAYER_THICK  Depositional bed layer thickness criteria to create a new
 !                    layer (m). If deposition exceeds this value, then a new
-!                    layer is created. .
+!                    layer is created.
 !
 !  BEDLOAD_COEFF   Bed load transport rate coefficient.
 !
@@ -223,7 +223,7 @@ Hout(iSVbld) == T                               ! bed load at V-points
 !
 !  MUD_SD50        Median sediment grain diameter (mm).
 !
-!  MUD_CSED        Sediment concentration (mg/l). It may be used to initialize
+!  MUD_CSED        Sediment concentration (kg/m3). It may be used to initialize
 !                    sediment fields using analytical expressions.
 !
 !  MUD_SRHO        Sediment grain density (kg/m3).
@@ -284,7 +284,7 @@ Hout(iSVbld) == T                               ! bed load at V-points
 !
 !  SAND_SD50       Median sediment grain diameter (mm).
 !
-!  SAND_CSED       Sediment concentration (mg/l). It may be used to initialize
+!  SAND_CSED       Sediment concentration (kg/m3). It may be used to initialize
 !                    sediment fields using analytical expressions.
 !
 !  SAND_SRHO       Sediment grain density (kg/m3).
@@ -349,4 +349,4 @@ Hout(iSVbld) == T                               ! bed load at V-points
 !
 !  Hout(iporo)     Sediment layer porosity.
 !
-!  Hout(idiff)     Biodiffusivity at eh bottom of each layer.
+!  Hout(idiff)     Biodiffusivity at the bottom of each layer.

@@ -415,7 +415,7 @@
 #   define J_RANGE Jstr,JendR
 #  endif
         DO j=J_RANGE
-          vbar(Istr-1,j,kout)=gamma2*vbar(Istr,j,kout)
+          vbar(Istr-1,j,kout)=gamma2(ng)*vbar(Istr,j,kout)
 #  ifdef MASKING
           vbar(Istr-1,j,kout)=vbar(Istr-1,j,kout)*                      &
      &                        GRID(ng)%vmask(Istr-1,j)
@@ -530,7 +530,7 @@
 #   define J_RANGE Jstr,JendR
 #  endif
         DO j=J_RANGE
-          vbar(Iend+1,j,kout)=gamma2*vbar(Iend,j,kout)
+          vbar(Iend+1,j,kout)=gamma2(ng)*vbar(Iend,j,kout)
 #  ifdef MASKING
           vbar(Iend+1,j,kout)=vbar(Iend+1,j,kout)*                      &
      &                        GRID(ng)%vmask(Iend+1,j)

@@ -432,9 +432,9 @@
 #   endif
         DO k=1,N(ng)
           DO j=J_RANGE
-!>          v(Istr-1,j,k,nout)=gamma2*v(Istr,j,k,nout)
+!>          v(Istr-1,j,k,nout)=gamma2(ng)*v(Istr,j,k,nout)
 !>
-            tl_v(Istr-1,j,k,nout)=gamma2*tl_v(Istr,j,k,nout)
+            tl_v(Istr-1,j,k,nout)=gamma2(ng)*tl_v(Istr,j,k,nout)
 #   ifdef MASKING
 !>          v(Istr-1,j,k,nout)=v(Istr-1,j,k,nout)*                      &
 !>   &                         GRID(ng)%vmask(Istr-1,j)
@@ -562,9 +562,9 @@
 #   endif
         DO k=1,N(ng)
           DO j=J_RANGE
-!>          v(Iend+1,j,k,nout)=gamma2*v(Iend,j,k,nout)
+!>          v(Iend+1,j,k,nout)=gamma2(ng)*v(Iend,j,k,nout)
 !>
-            tl_v(Iend+1,j,k,nout)=gamma2*tl_v(Iend,j,k,nout)
+            tl_v(Iend+1,j,k,nout)=gamma2(ng)*tl_v(Iend,j,k,nout)
 #   ifdef MASKING
 !>          v(Iend+1,j,k,nout)=v(Iend+1,j,k,nout)*                      &
 !>   &                         GRID(ng)%vmask(Iend+1,j)

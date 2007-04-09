@@ -1045,7 +1045,7 @@
           END IF
         END DO
 # endif
-# ifdef NEARSHORE_MELLOR
+# ifdef AVERAGES_NEARSHORE
 !
 !  Define 2D radiation stress Sxx.
 !
@@ -1166,6 +1166,91 @@
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
 #  ifdef SOLVE3D
+!
+!  Define 3D radiation stress Sxx.
+!
+        IF (Hout(idW3xx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3xx)
+          Vinfo( 2)=Vname(2,idW3xx)
+          Vinfo( 3)=Vname(3,idW3xx)
+          Vinfo(14)=Vname(4,idW3xx)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW3xx,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress Sxy.
+!
+        IF (Hout(idW3xy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3xy)
+          Vinfo( 2)=Vname(2,idW3xy)
+          Vinfo( 3)=Vname(3,idW3xy)
+          Vinfo(14)=Vname(4,idW3xy)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW3xy,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress Syy.
+!
+        IF (Hout(idW3yy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3yy)
+          Vinfo( 2)=Vname(2,idW3yy)
+          Vinfo( 3)=Vname(3,idW3yy)
+          Vinfo(14)=Vname(4,idW3yy)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW3yy,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress Szx.
+!
+        IF (Hout(idW3zx,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3zx)
+          Vinfo( 2)=Vname(2,idW3zx)
+          Vinfo( 3)=Vname(3,idW3zx)
+          Vinfo(14)=Vname(4,idW3zx)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW3zx,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define 3D radiation stress Szy.
+!
+        IF (Hout(idW3zy,ng)) THEN
+          Vinfo( 1)=Vname(1,idW3zy)
+          Vinfo( 2)=Vname(2,idW3zy)
+          Vinfo( 3)=Vname(3,idW3zy)
+          Vinfo(14)=Vname(4,idW3zy)
+          Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(u3dvar,r8)
+          status=def_var(ncAVGid(ng),avgVid(idW3zy,ng),NF_FOUT,         &
+     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+        END IF
 !
 !  Define 3D total u-radiation stress.
 !
@@ -1531,6 +1616,90 @@
             END IF
           END DO
 # endif
+# ifdef AVERAGES_NEARSHORE
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW2xx))) THEN
+            got_var(idW2xx)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW2xx)),      &
+     &                          avgVid(idW2xx,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW2xy))) THEN
+            got_var(idW2xy)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW2xy)),      &
+     &                          avgVid(idW2xy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW2yy))) THEN
+            got_var(idW2yy)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW2yy)),      &
+     &                          avgVid(idW2yy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2rs))) THEN
+            got_var(idU2rs)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idU2rs)),      &
+     &                          avgVid(idU2rs,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV2rs))) THEN
+            got_var(idV2rs)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idV2rs)),      &
+     &                          avgVid(idV2rs,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
+            got_var(idU2Sd)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idU2Sd)),      &
+     &                          avgVid(idU2Sd,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV2Sd))) THEN
+            got_var(idV2Sd)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idV2Sd)),      &
+     &                          avgVid(idV2Sd,ng))
+          END IF
+#  ifdef SOLVE3D
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3xx))) THEN
+            got_var(idW3xx)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW3xx)),      &
+     &                          avgVid(idW3xx,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3xy))) THEN
+            got_var(idW3xy)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW3xy)),      &
+     &                          avgVid(idW3xy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3yy))) THEN
+            got_var(idW3yy)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW3yy)),      &
+     &                          avgVid(idW3yy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3zx))) THEN
+            got_var(idW3zx)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW3zx)),      &
+     &                          avgVid(idW3zx,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idW3zy))) THEN
+            got_var(idW3zy)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idW3zy)),      &
+     &                          avgVid(idW3zy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU3rs))) THEN
+            got_var(idU3rs)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idU3rs)),      &
+     &                          avgVid(idU3rs,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV3rs))) THEN
+            got_var(idV3rs)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idV3rs)),      &
+     &                          avgVid(idV3rs,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
+            got_var(idU3Sd)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idU3Sd)),      &
+     &                          avgVid(idU3Sd,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV3Sd))) THEN
+            got_var(idV3Sd)=.TRUE.
+            status=nf_inq_varid(ncAVGid(ng),TRIM(Vname(1,idV3Sd)),      &
+     &                          avgVid(idV3Sd,ng))
+          END IF
+#  endif
+# endif
         END DO
 !
 !  Check if averages variables are available in input NetCDF file.
@@ -1771,16 +1940,100 @@
           END IF
         END DO
 # endif
+# ifdef AVERAGES_NEARSHORE
+        IF (.not.got_var(idW2xx).and.Hout(idW2xx,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW2xx)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW2xy).and.Hout(idW2xy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW2xy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW2yy).and.Hout(idW2yy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW2yy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU2rs).and.Hout(idU2rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU2rs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2rs).and.Hout(idV2rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV2rs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU2Sd).and.Hout(idU2Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU2Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2Sd).and.Hout(idV2Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV2Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  ifdef SOLVE3D
+        IF (.not.got_var(idW3xx).and.Hout(idW3xx,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3xx)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3xy).and.Hout(idW3xy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3xy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3yy).and.Hout(idW3yy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3yy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3zx).and.Hout(idW3zx,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3zx)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idW3zy).and.Hout(idW3zy,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idW3zy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU3rs).and.Hout(idU3rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU3rs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV3rs).and.Hout(idV3rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV3rs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU3Sd).and.Hout(idU3Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU3Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV3Sd).and.Hout(idV3Sd,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV3Sd)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
+# endif
 !
 !  Set unlimited time record dimension to the appropriate value.
 !
         IF (nRST(ng).eq.nAVG(ng)) THEN
           IF (ndefAVG(ng).gt.0) THEN
-            tAVGindx(ng)=((ntstart-1)-                                  &
-     &                    ndefAVG(ng)*((ntstart-1)/ndefAVG(ng)))/       &
+            tAVGindx(ng)=((ntstart(ng)-1)-                              &
+     &                    ndefAVG(ng)*((ntstart(ng)-1)/ndefAVG(ng)))/   &
      &                   nAVG(ng)
           ELSE
-            tAVGindx(ng)=(ntstart-1)/nAVG(ng)
+            tAVGindx(ng)=(ntstart(ng)-1)/nAVG(ng)
           END IF
         ELSE
           tAVGindx(ng)=tsize

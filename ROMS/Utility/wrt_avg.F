@@ -150,6 +150,116 @@
       END IF
 # ifdef AVERAGES_NEARSHORE
 !
+!  Write out 2D radiation stress, Sxx-component.
+!
+      IF (Hout(idW2xx,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idW2xx,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgSxx2d(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW2xx)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D radiation stress, Sxy-component.
+!
+      IF (Hout(idW2xy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idW2xy,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgSxy2d(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW2xy)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D radiation stress, Syy-component.
+!
+      IF (Hout(idW2yy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idW2yy,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgSyy2d(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW2yy)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D radiation stress in the XI-direction.
+!
+      IF (Hout(idU2rs,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idU2rs,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgu2RS(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU2rs)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 2D radiation stress in the ETA-direction
+!
+      IF (Hout(idV2rs,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idV2rs,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgu2Sd(LBi,LBj))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV2rs)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
 !  Write out 2D stokes momentum component (m/s) in the XI-direction.
 !
       IF (Hout(idU2Sd,ng)) THEN
@@ -240,6 +350,138 @@
         END IF
       END IF
 #  ifdef AVERAGES_NEARSHORE
+!
+!  Write out 3D radiation stress, Sxx-component.
+!
+      IF (Hout(idW3xx,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idW3xx,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgSxx3d(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3xx)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Sxy-component.
+!
+      IF (Hout(idW3xy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idW3xy,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgSxy3d(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3xy)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Szx-component.
+!
+      IF (Hout(idW3zx,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idW3zx,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgSzx3d(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3zx)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Sxx-component.
+!
+      IF (Hout(idW3zy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idW3zy,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgSzy3d(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3zy)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress in the XI-direction.
+!
+      IF (Hout(idU3rs,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idU3rs,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgSu3RS(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idU3rs)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress in the ETA-direction.
+!
+      IF (Hout(idV3rs,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idV3rs,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgv3RS(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idV3rs)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
 !
 !  Write out 3D stokes momentum component (m/s) in the XI-direction.
 !

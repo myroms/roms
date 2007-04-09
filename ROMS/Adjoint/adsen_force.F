@@ -168,7 +168,7 @@
 !  arrays.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntend) THEN
+      IF (iic(ng).eq.ntend(ng)) THEN
         Kfrc=knew
       ELSE
         Kfrc=1

@@ -1176,7 +1176,8 @@
      &                         rmask, umask, vmask,                     &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                         ad_ustr, tl_vstr,                        &
+     &                         ad_ustr, tl_ustr,                        &
+     &                         ad_vstr, tl_vstr,                        &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
@@ -1310,7 +1311,7 @@
 #ifdef SOLVE3D
       integer :: itrc, k
 #endif
-      integer :: ncid, status
+      integer :: gtype, ncid, status
       integer, dimension(NV) :: vid
       integer, dimension(4) :: Vsize
 
@@ -1371,7 +1372,8 @@
 !
 !  Read in free-surface.
 !
-      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, r2dvar,       &
+      gtype=r2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 #ifdef MASKING
@@ -1391,7 +1393,8 @@
 !
 !  Read in 2D momentum.
 !
-      status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, u2dvar,       &
+      gtype=u2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1407,7 +1410,8 @@
         RETURN
       END IF
 
-      status=nf_fread2d(ng, iTLM, ncid, vid(idVbar), rec, v2dvar,       &
+      gtype=v2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idVbar), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1428,7 +1432,8 @@
 !
 !  Read surface momentum stress.
 !
-      status=nf_fread2d(ng, iTLM, ncid, vid(idUsms), rec, u2dvar,       &
+      gtype=u2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idUsms), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1444,7 +1449,8 @@
         RETURN
       END IF
 
-      status=nf_fread2d(ng, iTLM, ncid, vid(idVsms), rec, v2dvar,       &
+      gtype=v2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idVsms), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1465,7 +1471,8 @@
 !
 !  Read in 3D momentum.
 !
-      status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, u3dvar,       &
+      gtype=u3dvar
+      status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1481,7 +1488,8 @@
         RETURN
       END IF
 
-      status=nf_fread3d(ng, iTLM, ncid, vid(idVvel), rec, v3dvar,       &
+      gtype=v3dvar
+      status=nf_fread3d(ng, iTLM, ncid, vid(idVvel), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -1499,9 +1507,10 @@
 !
 !  Read in tracers.
 !
+      gtype=r3dvar
       DO itrc=1,NT(ng)
         status=nf_fread3d(ng, iTLM, ncid, vid(idTvar(itrc)), rec,       &
-     &                    r3dvar, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),  &
+     &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),   &
      &                    scale, Fmin, Fmax,                            &
 # ifdef MASKING
      &                    rmask(LBi,LBj),                               &
@@ -1522,9 +1531,10 @@
 !
 !  Read in surface tracers flux.
 !
+      gtype=r2dvar
       DO itrc=1,NT(ng)
         status=nf_fread2d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
-     &                    r2dvar, Vsize, LBi, UBi, LBj, UBj,            &
+     &                    gtype, Vsize, LBi, UBi, LBj, UBj,             &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
      &                    rmask(LBi,LBj),                               &
@@ -2326,7 +2336,8 @@
      &                       rmask, umask, vmask,                       &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                       ad_ustr, tl_vstr,                          &
+     &                       ad_ustr, tl_ustr,                          &
+     &                       ad_vstr, tl_vstr,                          &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
@@ -2392,7 +2403,8 @@
      &                       rmask, umask, vmask,                       &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                       ad_ustr, tl_vstr,                          &
+     &                       ad_ustr, tl_ustr,                          &
+     &                       ad_vstr, tl_vstr,                          &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
@@ -2496,7 +2508,8 @@
      &                       rmask, umask, vmask,                       &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                       ad_ustr, tl_vstr,                          &
+     &                       ad_ustr, tl_ustr,                          &
+     &                       ad_vstr, tl_vstr,                          &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
@@ -3043,6 +3056,7 @@
       USE mod_fourdvar
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -3138,12 +3152,13 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, lstr, rec, kngood, nvec
+      integer :: i, j, lstr, rec, kngood, nvec, status, varid
 #ifdef SOLVE3D
       integer :: itrc, k
 #endif
       real(r8) :: fac, fac1, fac2
 
+      real(r8), dimension(500) :: RitzErr
       real(r8), dimension(0:NstateVar(ng)) :: dot
       real(r8), dimension(Iter) :: DotProd, dot_new, dot_old
 
@@ -3162,8 +3177,22 @@
         IF (zbnds(i).le.zbndlm) THEN
           kngood=kngood+1
           ztheta(kngood)=zritz(i)
+          RitzErr(kngood)=zbnds(i)
         END IF
       END DO
+!
+!  Write out number of converged eigenvalues.
+!      
+      IF (OutThread) THEN
+        status=nf_inq_varid(ncHSSid(ng),'nConvRitz',varid)
+        status=nf_put_var1_int(ncHSSid(ng),varid,1,kngood)
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'nConvRitz', TRIM(HSSname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
 !
 !-----------------------------------------------------------------------
 !  First, premultiply the converged eigenvectors of the tridiagonal
@@ -3206,8 +3235,7 @@
 !
             IF (ndefADJ(ng).gt.0) THEN
               lstr=LEN_TRIM(ADJbase(ng))
-              WRITE (ncname,10) ADJbase(ng)(1:lstr-3), rec
- 10           FORMAT (a,'_',i3.3,'.nc')
+              WRITE (ncname,20) ADJbase(ng)(1:lstr-3), rec
             ELSE
               ncname=ADJname(ng)
             END IF
@@ -3469,6 +3497,27 @@
 #endif
      &                    ad_zeta)
 !
+!  Write out converged Ritz eigenvalues and is associated accuracy.
+!
+      IF (OutThread) THEN
+        status=nf_inq_varid(ncHSSid(ng),'Ritz',varid)
+        status=nf_put_var1_TYPE(ncHSSid(ng),varid,nvec,ztheta(nvec))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'Ritz', TRIM(HSSname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+        status=nf_inq_varid(ncHSSid(ng),'Ritz_error',varid)
+        status=nf_put_var1_TYPE(ncHSSid(ng),varid,nvec,RitzErr(nvec))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'Ritz_error', TRIM(HSSname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
 !  Replace record "nvec" of Hessian eigenvectors NetCDF with the
 !  normalized value in adjoint state arrays at index Lnew.
 !
@@ -3479,6 +3528,10 @@
         IF (exit_flag.ne.NoERRor) RETURN
 
       END DO
+
+  10  FORMAT (/,' HESSIAN_EVECS - error while writing variable: ',a,/,  &
+     &        17x,'into NetCDF file: ',a)
+  20  FORMAT (a,'_',i3.3,'.nc')
 
       RETURN
       END SUBROUTINE hessian_evecs

@@ -352,7 +352,7 @@
               tTobs(2,itrc,ng)=tTobs(1,itrc,ng)
               synchro_flag(ng)=.TRUE.
               update_T(itrc,ng)=.FALSE.
-              ntfirst=iic(ng)+1
+              ntfirst(ng)=iic(ng)+1
               IF (update_SST(ng).and.(itrc.eq.itemp)) THEN
                 IF (Master) WRITE (stdout,10) 'SST', tTobs(1,itrc,ng)
  10             FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,  &
@@ -605,7 +605,7 @@
           IF (NORTH_EAST_TEST) THEN
             tVobs(2,ng)=tVobs(1,ng)
             synchro_flag(ng)=.TRUE.
-            ntfirst=iic(ng)+1
+            ntfirst(ng)=iic(ng)+1
             IF (update_UVsur(ng)) THEN
               update_UVsur(ng)=.FALSE.
               IF (Master) WRITE (stdout,10) 'UVsur', tVobs(1,ng)

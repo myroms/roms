@@ -202,13 +202,13 @@
 !  the sensitivity functional.
 !
         str_day=time(ng)*sec2day
-        end_day=str_day-ntimes*dt(ng)*sec2day
+        end_day=str_day-ntimes(ng)*dt(ng)*sec2day
         IF ((DstrS(ng).eq.0.0_r8).and.(DendS(ng).eq.0.0_r8)) THEN
           DstrS(ng)=end_day
           DendS(ng)=str_day
         END IF
         IF (Master) THEN
-          WRITE (stdout,20) ntstart, ntend, DendS(ng), DstrS(ng)
+          WRITE (stdout,20) ntstart(ng), ntend(ng), DendS(ng), DstrS(ng)
         END IF
         IF ((DstrS(ng).gt.str_day).or.(DstrS(ng).lt.end_day)) THEN
           IF (Master)  WRITE (stdout,30) 'DstrS = ', DstrS(ng),         &
@@ -225,7 +225,7 @@
 
         time(ng)=time(ng)+dt(ng)
 
-        AD_LOOP : DO my_iic=ntstart,ntend,-1
+        AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D

@@ -72,7 +72,7 @@
         END DO
       END DO
 #else
-      ANA_PASSIVE: no values provided for t(:,:,:,1,inert(itrc))
+      ana_passive.h: no values provided for t(:,:,:,1,inert(itrc))
 #endif
       RETURN
       END SUBROUTINE ana_passive_tile

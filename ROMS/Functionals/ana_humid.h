@@ -97,7 +97,7 @@
         END DO
       END DO
 #else
-      ANA_HUMIDITY: no values provided for HAIR.
+      ana_humidity.h: no values provided for Hair.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &

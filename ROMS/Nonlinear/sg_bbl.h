@@ -45,13 +45,13 @@
      &                GRID(ng) % z_r,                                   &
      &                GRID(ng) % z_w,                                   &
      &                GRID(ng) % angler,                                &
-# ifdef SWAN
-     &                FORCES(ng) % Ub_swan,                             &
+# if defined SG_CALC_UB
+     &                FORCES(ng) % Hwave,                               &
 # else
-     &                FORCES(ng) % Awave,                               &
+     &                FORCES(ng) % Ub_swan,                             &
 # endif
      &                FORCES(ng) % Dwave,                               &
-     &                FORCES(ng) % Pwave,                               &
+     &                FORCES(ng) % Pwave_bot,                           &
      &                OCEAN(ng) % rho,                                  &
      &                OCEAN(ng) % u,                                    &
      &                OCEAN(ng) % v,                                    &
@@ -80,13 +80,14 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nrhs,                                       &
      &                      h, z_r, z_w, angler,                        &
-# ifdef SWAN
-     &                      UB_swan,                                    &
+# if defined SG_CALC_UB
+     &                      Hwave,                                      &
 # else
-     &                      Awave,                                      &
+     &                      Ub_swan,                                    &
 # endif
-     &                      Dwave, Pwave,                               &
-     &                      rho, u, v, bottom,                          &
+     &                      Dwave, Pwave_bot,                           &
+     &                      rho, u, v,                                  &
+     &                      bottom,                                     &
      &                      Iconv,                                      &
      &                      Ubot, Vbot, Ur, Vr,                         &
      &                      bustrc, bvstrc,                             &
@@ -117,13 +118,13 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: angler(LBi:,LBj:)
-#ifdef SWAN
-      real(r8), intent(in) :: UB_swan(LBi:,LBj:)
-#else
-      real(r8), intent(in) :: Awave(LBi:,LBj:)
-#endif
+#  if defined SG_CALC_UB
+      real(r8), intent(in) :: Hwave(LBi:,LBj:)
+#  else
+      real(r8), intent(in) :: Ub_swan(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: Dwave(LBi:,LBj:)
-      real(r8), intent(in) :: Pwave(LBi:,LBj:)
+      real(r8), intent(in) :: Pwave_bot(LBi:,LBj:)
       real(r8), intent(in) :: rho(LBi:,LBj:,:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
@@ -149,13 +150,13 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)   
-#ifdef SWAN
+#  if defined SG_CALC_UB
+      real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
+#  else
       real(r8), intent(in) :: UB_swan(LBi:UBi,LBj:UBj)
-#else
-      real(r8), intent(in) :: Awave(LBi:UBi,LBj:UBj)
-#endif
+#  endif
       real(r8), intent(in) :: Dwave(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: Pwave(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Pwave_bot(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: rho(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
@@ -197,7 +198,7 @@
 
       real(r8), parameter :: eps = 1.0E-10_r8
 
-      real(r8) :: Fwave, Kb, Kbh, KboKb0, Kb0, Kdelta, Ustr
+      real(r8) :: Fwave_bot, Kb, Kbh, KboKb0, Kb0, Kdelta, Ustr
       real(r8) :: anglec, anglew
       real(r8) :: cff, cff1, cff2, cff3, og, fac, fac1, fac2
       real(r8) :: sg_ab, sg_abokb, sg_a1, sg_b1, sg_chi, sg_c1, sg_dd
@@ -275,7 +276,7 @@
               END IF
             END DO
           END IF
-#  endif
+# endif
         END DO
       END DO
 !
@@ -293,12 +294,16 @@
 !  Compute first guess for wavenumber, Kb0.  Use deep water (Kb0*h>1)
 !  and shallow water (Kb0*H<1) approximations.
 !
-          Fwave=twopi/Pwave(i,j)
-          Kb0=Fwave*Fwave*og
+          Fwave_bot=twopi/MAX(Pwave_bot(i,j),0.05_r8)
+!
+!  Compute bed wave orbital velocity and excursion amplitude.
+!
+# ifdef SG_CALC_UB
+          Kb0=Fwave_bot*Fwave_bot*og
           IF (Kb0*h(i,j).ge.1.0_r8) THEN
             Kb=Kb0
           ELSE
-            Kb=Fwave/SQRT(g*h(i,j))
+            Kb=Fwave_bot/SQRT(g*h(i,j))
           END IF
 !
 !  Compute bottom wave number via Newton-Raphson method.
@@ -314,15 +319,11 @@
               Kb=Kb*(1.0_r8+Kdelta)
             END IF
           END DO
-!
-!  Compute bed wave orbital velocity and excursion amplitude.
-!
-# ifdef SWAN
-          Ub(i,j)=ABS(Ub_swan(i,j))+eps
-          Ab(i,j)=Ub(i,j)/Fwave+eps
+          Ab(i,j)=0.5_r8*Hwave(i,j)/SINH(Kb*h(i,j))+eps
+          Ub(i,j)=Fwave_bot*Ab(i,j)+eps
 # else
-          Ab(i,j)=Awave(i,j)/SINH(Kb*h(i,j))+eps
-          Ub(i,j)=Fwave*Ab(i,j)+eps
+          Ub(i,j)=ABS(Ub_swan(i,j))+eps
+          Ab(i,j)=Ub(i,j)/Fwave_bot+eps
 # endif
 !
 !  Compute bottom current magnitude at RHO-points.
@@ -565,7 +566,7 @@
       END DO
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          anglec=Ur_sg(i,j)/Umag(i,j)
+          anglec=Ucur(i,j)/Umag(i,j)
           anglew=COS(1.5_r8*pi-Dwave(i,j)-angler(i,j))
           bustrc(i,j)=Tauc(i,j)*anglec
           bustrw(i,j)=Tauw(i,j)*anglew
@@ -573,7 +574,7 @@
           Ubot(i,j)=Ub(i,j)*anglew
           Ur(i,j)=Ucur(i,j)
 !
-          anglec=Vr_sg(i,j)/Umag(i,j)
+          anglec=Vcur(i,j)/Umag(i,j)
           anglew=SIN(1.5_r8*pi-Dwave(i,j)-angler(i,j))
           bvstrc(i,j)=Tauc(i,j)*anglec
           bvstrw(i,j)=Tauw(i,j)*anglew
@@ -592,73 +593,56 @@
 !  Apply periodic or gradient boundary conditions for output
 !  purposes only.
 !
-      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bustr)
-      CALL bc_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstr)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bustrc)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstrc)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bustrw)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstrw)
-      CALL bc_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   & 
      &                  bustrcwmax)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bvstrcwmax)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  Ubot)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  Vbot)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  Ur)
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  Vr)      
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,ibwav))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,irhgt))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,irlen))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izdef))
-      CALL bc_r2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,               &
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NghostPoints,                                   &
      &                  bottom(:,:,izapp))
 #ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, iNLM, 4, Istr, Iend, Jstr, Jend,          &

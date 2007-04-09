@@ -218,12 +218,12 @@
 !  Run nonlinear model and compute basic state trajectory.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart, ntend
+          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP : DO my_iic=ntstart,ntend+1
+        NL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -303,7 +303,7 @@
         DO i=1,NT(ng)
           StateVar(3+i)=isTvar(i)
         END DO
-        Lstate=3+NT(ng)
+        Lstate=MAXVAL(StateVar)
 #else
         ERend=NstateVar(ng)
         allocate ( StateVar(NstateVar(ng)) )
@@ -317,7 +317,7 @@
 !
 !  Initialize sample representer matrix to report.
 !
-        R(1:NstateVar(ng),1:NstateVar(ng))=0.0_r8
+        R(1:Lstate,1:Lstate)=0.0_r8
 !
 !  Set point to perturb and point to report.
 !
@@ -354,12 +354,12 @@
 !  Time-step adjoint model backwards forced with current PSI vector.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'AD', ntstart, ntend
+            WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
 
-          AD_LOOP : DO my_iic=ntstart,ntend,-1
+          AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -504,12 +504,12 @@
 !  are used in the conjugate gradient algorithm.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'TL', ntstart, ntend
+            WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          TL_LOOP : DO my_iic=ntstart,ntend+1
+          TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D

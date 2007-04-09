@@ -90,7 +90,7 @@
         END DO
       END DO
 #else
-      ANA_TAIR: no values provided for TAIR.
+      ana_tair.h: No values provided for Tair.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &

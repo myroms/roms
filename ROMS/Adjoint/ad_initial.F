@@ -43,10 +43,8 @@
      defined SO_SEMI
       USE adsen_initial_mod, ONLY : adsen_initial
 # endif
-      USE horz_mix_mod, ONLY : horz_mix
       USE metrics_mod, ONLY : metrics
 # ifdef SOLVE3D
-
       USE set_depth_mod, ONLY : set_depth
       USE omega_mod, ONLY : omega
       USE rho_eos_mod, ONLY : rho_eos
@@ -123,11 +121,11 @@
       nfm3(ng)=2
 # endif
 
-      tdays(ng)=dstart+dt(ng)*FLOAT(ntimes-ntfirst+1)*sec2day
+      tdays(ng)=dstart+dt(ng)*FLOAT(ntimes(ng)-ntfirst(ng)+1)*sec2day
       time(ng)=tdays(ng)*day2sec
-      ntstart=ntimes+1
-      ntend=ntfirst
-      ntfirst=ntend
+      ntstart(ng)=ntimes(ng)+1
+      ntend(ng)=ntfirst(ng)
+      ntfirst(ng)=ntend(ng)
 
       IniRec=nrrec
       Tindex=1
@@ -139,7 +137,6 @@
 !
 ! Initialize few parameters.
 !
-      ubar_xs=0.0_r8
       ad_ubar_xs=0.0_r8
 
 # ifdef PROFILE
@@ -281,7 +278,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL horz_mix (ng, TILE, iADM)
+            CALL ana_hmixcoef (ng, TILE, iADM)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -297,7 +294,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL set_nudgcof (ng, TILE, iADM)
+            CALL ana_nudgcoef (ng, TILE, iADM)
           END DO
         END DO
 !$OMP END PARALLEL DO

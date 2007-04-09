@@ -83,7 +83,7 @@
 !  Write out time-stepping indices.
 !
 # ifdef SOLVE3D
-      ntmp=1+MOD((iic(ng)-1)-ntstart,2)
+      ntmp=1+MOD((iic(ng)-1)-ntstart(ng),2)
       status=nf_inq_varid(ncRSTid(ng),'nstp',varid)
       status=nf_put_var1_int(ncRSTid(ng),varid,tRSTindx(ng),ntmp)
 

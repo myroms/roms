@@ -1239,7 +1239,7 @@
   'r3dvar'
   1.0d0
 
-'Spy'                                              ! Output
+'Szy'                                              ! Output
   '3D vertical radiation stress, Szy-component'
   'meter2 second2'                                 ! [s]
   'Szy, scalar, series'

@@ -108,7 +108,7 @@
       integer :: grdsphid, grdxlid
       integer :: grdxpid, grdxrid, grdxuid, grdxvid
       integer :: grdypid, grdyrid, grdyuid, grdyvid
-      integer :: i, nrec, nvd, status
+      integer :: gtype, i, nrec, nvd, status
 
       integer :: Vsize(4)
 
@@ -426,7 +426,8 @@
 !
 !  Read in Land/Sea masking arrays.
 !
-      status=nf_fread2d(ng, model, ncGRDid(ng), mskrid, 0, r2dvar,      &
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), mskrid, 0, gtype,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % rmask(LBi,LBj),                      &
@@ -439,7 +440,9 @@
         ioerror=status
         RETURN
       END IF
-      status=nf_fread2d(ng, model, ncGRDid(ng), mskuid, 0, u2dvar,      &
+
+      gtype=u2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), mskuid, 0, gtype,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % umask(LBi,LBj),                      &
@@ -452,7 +455,9 @@
         ioerror=status
         RETURN
       END IF
-      status=nf_fread2d(ng, model, ncGRDid(ng), mskvid, 0, v2dvar,      &
+
+      gtype=v2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), mskvid, 0, gtype,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % vmask(LBi,LBj),                      &
@@ -465,7 +470,9 @@
         ioerror=status
         RETURN
       END IF
-      status=nf_fread2d(ng, model, ncGRDid(ng), mskpid, 0, p2dvar,      &
+
+      gtype=p2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), mskpid, 0, gtype,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % pmask(LBi,LBj),                      &
@@ -510,7 +517,8 @@
 !
 !  Read in adjoint sensitivity spatial scope masking arrays.
 !
-      status=nf_fread2d(ng, model, ncGRDid(ng), Rscopeid, 0, r2dvar,    &
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), Rscopeid, 0, gtype,     &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % Rscope(LBi,LBj),                     &
@@ -523,7 +531,9 @@
         ioerror=status
         RETURN
       END IF
-      status=nf_fread2d(ng, model, ncGRDid(ng), Uscopeid, 0, u2dvar,    &
+
+      gtype=u2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), Uscopeid, 0, gtype,     &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % Uscope(LBi,LBj),                     &
@@ -536,7 +546,9 @@
         ioerror=status
         RETURN
       END IF
-      status=nf_fread2d(ng, model, ncGRDid(ng), Vscopeid, 0, v2dvar,    &
+
+      gtype=v2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), Vscopeid, 0, gtype,     &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % Vscope(LBi,LBj),                     &
@@ -574,7 +586,8 @@
 !
 !  Read in bathymetry.
 !
-      status=nf_fread2d(ng, model, ncGRDid(ng), grdhid, 0, r2dvar,      &
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), grdhid, 0, gtype,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, hmin(ng), hmax(ng),                       &
 # ifdef MASKING
@@ -604,7 +617,8 @@
 !
 !  Read in ice shelf thicknesses.
 !
-      status=nf_fread2d(ng, model, ncGRDid(ng), grdziceid, 0, r2dvar,   &
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), grdziceid, 0, gtype,    &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
 #  ifdef MASKING
@@ -634,7 +648,8 @@
 !
 !  Read in Coriolis parameter.
 !
-      status=nf_fread2d(ng, model, ncGRDid(ng), grdfid, 0, r2dvar,      &
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), grdfid, 0, gtype,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
 # ifdef MASKING
@@ -665,7 +680,8 @@
 !  Read in coordinate transfomation metrics (m,n) associated with the
 !  differential distances in XI and ETA.
 !
-      status=nf_fread2d(ng, model, ncGRDid(ng), grdpmid, 0, r2dvar,     &
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), grdpmid, 0, gtype,      &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
 # ifdef MASKING
@@ -680,7 +696,9 @@
         ioerror=status
         RETURN
       END IF
-      status=nf_fread2d(ng, model, ncGRDid(ng), grdpnid, 0, r2dvar,     &
+
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), grdpnid, 0, gtype,      &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
 # ifdef MASKING
@@ -715,7 +733,8 @@
 !
 !  Read in derivatives of inverse metrics factors: rotational factors.
 !
-      status=nf_fread2d(ng, model, ncGRDid(ng), grddmid, 0, r2dvar,     &
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), grddmid, 0, gtype,      &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
 # ifdef MASKING
@@ -730,7 +749,9 @@
         ioerror=status
         RETURN
       END IF
-      status=nf_fread2d(ng, model, ncGRDid(ng), grddnid, 0, r2dvar,     &
+
+      gtype=r2dvar
+      status=nf_fread2d(ng, model, ncGRDid(ng), grddnid, 0, gtype,      &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  Fscl, Fmin, Fmax,                               &
 # ifdef MASKING
@@ -765,7 +786,8 @@
 !  Read in (x,y) coordinates at PSI-points.
 !
       IF (gotxp) THEN
-        status=nf_fread2d(ng, model, ncGRDid(ng), grdxpid, 0, p2dvar,   &
+        gtype=p2dvar
+        status=nf_fread2d(ng, model, ncGRDid(ng), grdxpid, 0, gtype,    &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -788,7 +810,8 @@
 # endif
       END IF
       IF (gotyp) THEN
-        status=nf_fread2d(ng, model,  ncGRDid(ng), grdypid, 0, p2dvar,  &
+        gtype=p2dvar
+        status=nf_fread2d(ng, model,  ncGRDid(ng), grdypid, 0, gtype,   &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -814,7 +837,8 @@
 !  Read in (x,y) coordinates at RHO-points.
 !
       IF (gotxr) THEN
-        status=nf_fread2d(ng, model, ncGRDid(ng), grdxrid, 0, r2dvar,   &
+        gtype=r2dvar
+        status=nf_fread2d(ng, model, ncGRDid(ng), grdxrid, 0, gtype,    &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -837,7 +861,8 @@
 # endif
       END IF
       IF (gotyr) THEN
-        status=nf_fread2d(ng, model, ncGRDid(ng), grdyrid, 0, r2dvar,   &
+        gtype=r2dvar
+        status=nf_fread2d(ng, model, ncGRDid(ng), grdyrid, 0, gtype,    &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -863,7 +888,8 @@
 !  Read in (x,y) coordinates at U-points.
 !
       IF (gotxu) THEN
-        status=nf_fread2d(ng, model, ncGRDid(ng), grdxuid, 0, u2dvar,   &
+        gtype=u2dvar
+        status=nf_fread2d(ng, model, ncGRDid(ng), grdxuid, 0, gtype,    &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -886,7 +912,8 @@
 # endif
       END IF
       IF (gotyu) THEN
-        status=nf_fread2d(ng, model, ncGRDid(ng), grdyuid, 0, u2dvar,   &
+        gtype=u2dvar
+        status=nf_fread2d(ng, model, ncGRDid(ng), grdyuid, 0, gtype,    &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -912,7 +939,8 @@
 !  Read in (x,y) coordinates at V-points.
 !
       IF (gotxv) THEN
-        status=nf_fread2d(ng, model, ncGRDid(ng), grdxvid, 0, v2dvar,   &
+        gtype=v2dvar
+        status=nf_fread2d(ng, model, ncGRDid(ng), grdxvid, 0, gtype,    &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -935,7 +963,8 @@
 # endif
       END IF
       IF (gotyv) THEN
-        status=nf_fread2d(ng, model, ncGRDid(ng), grdyvid, 0, v2dvar,   &
+        gtype=v2dvar
+        status=nf_fread2d(ng, model, ncGRDid(ng), grdyvid, 0, gtype,    &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    Fscl, Fmin, Fmax,                             &
 # ifdef MASKING
@@ -962,8 +991,9 @@
 !
       IF (spherical) THEN
         IF (gotlonp) THEN
+          gtype=p2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlonpid, 0,       &
-     &                      p2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % pmask(LBi,LBj),                  &
@@ -985,8 +1015,9 @@
 # endif
         END IF
         IF (gotlatp) THEN
+          gtype=p2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlatpid, 0,       &
-     &                      p2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % pmask(LBi,LBj),                  &
@@ -1013,8 +1044,9 @@
 !
       IF (spherical) THEN
         IF (gotlonr) THEN
+          gtype=r2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlonrid, 0,       &
-     &                      r2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, LonMin(ng), LonMax(ng),               &
 # ifdef MASKING
      &                      GRID(ng) % rmask(LBi,LBj),                  &
@@ -1036,8 +1068,9 @@
 # endif
         END IF
         IF (gotlatr) THEN
+          gtype=r2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlatrid, 0,       &
-     &                      r2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, LatMin(ng), LatMax(ng),               &
 # ifdef MASKING
      &                      GRID(ng) % rmask(LBi,LBj),                  &
@@ -1064,8 +1097,9 @@
 !
       IF (spherical) THEN
         IF (gotlonu) THEN
+          gtype=u2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlonuid, 0,       &
-     &                      u2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
@@ -1087,8 +1121,9 @@
 # endif
         END IF
         IF (gotlatu) THEN
+          gtype=u2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlatuid, 0,       &
-     &                      u2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
@@ -1115,8 +1150,9 @@
 !
       IF (spherical) THEN
         IF (gotlonv) THEN
+          gtype=v2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlonvid, 0,       &
-     &                      v2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
@@ -1138,8 +1174,9 @@
 # endif
         END IF
         IF (gotlatv) THEN
+          gtype=v2dvar
           status=nf_fread2d(ng, model, ncGRDid(ng), grdlatvid, 0,       &
-     &                      v2dvar, Vsize, LBi, UBi, LBj, UBj,          &
+     &                      gtype, Vsize, LBi, UBi, LBj, UBj,           &
      &                      Fscl, Fmin, Fmax,                           &
 # ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
@@ -1166,8 +1203,9 @@
 !  Read in angle (radians) between XI-axis and EAST at RHO-points.
 !
       IF (gotang) THEN
+        gtype=r2dvar
         status=nf_fread2d(ng, model, ncGRDid(ng), grdangid, 0,          &
-     &                    r2dvar, Vsize, LBi, UBi, LBj, UBj,            &
+     &                    gtype, Vsize, LBi, UBi, LBj, UBj,             &
      &                    Fscl, Fmin, Fmax,                             &
 #  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &

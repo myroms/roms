@@ -222,7 +222,7 @@
 !-----------------------------------------------------------------------
 !
       IF ((outer.ge.1).and.(MOD(iic(ng)-1,nHIS(ng)).eq.0).and.          &
-     &    ((nrrec.eq.0).or.(iic(ng).ne.ntstart))) THEN
+     &    ((nrrec.eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
 !
 !  Set perturbation amplitude as a function of the inner loop.
 !
@@ -234,7 +234,7 @@
         ELSE IF (time(ng).eq.Tintrp(2,idFsur,ng)) THEN
           Tindex=2
         END IF
-        IF (iic(ng).eq.ntstart) THEN
+        IF (iic(ng).eq.ntstart(ng)) THEN
           text='------------'
         ELSE
           text='            '
@@ -1145,14 +1145,14 @@
 !-----------------------------------------------------------------------
 !
       IF ((outer.ge.1).and.(MOD(iic(ng)-1,nTLM(ng)).eq.0).and.          &
-     &    ((nrrec.eq.0).or.(iic(ng).ne.ntstart))) THEN
+     &    ((nrrec.eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
 !
 !  Set perturbation amplitude as a function of the inner loop.
 !
         p=10.0_r8**REAL(-inner,r8)
         my_dot=0.0_r8
         scale=1.0_r8/SQRT(adDotProduct)
-        IF (iic(ng).eq.ntstart) THEN
+        IF (iic(ng).eq.ntstart(ng)) THEN
           text='------------'
         ELSE
           text='            '

@@ -3384,7 +3384,7 @@
 !
       rov=1.0_r8/REAL(nADJ(ng),r8)
 !
-      IF ((ntAD.gt.1).and.(ntAD.lt.ntimes+1)) THEN
+      IF ((ntAD.gt.1).and.(ntAD.lt.ntimes(ng)+1)) THEN
         it1=ntAD
         it2=ntAD-nADJ(ng)
         CALL sp_acoef (ng, it1, ntTL, Acoef)
@@ -3403,11 +3403,11 @@
           df1=REAL(i,r8)*rov
           Bcoef=Bcoef+(1.0_r8-df1)*Acoef1
         END DO
-      ELSE IF (ntAD.eq.ntimes+1) THEN
-        CALL sp_acoef (ng, ntimes+1, ntTL, Acoef)
+      ELSE IF (ntAD.eq.ntimes(ng)+1) THEN
+        CALL sp_acoef (ng, ntimes(ng)+1, ntTL, Acoef)
         Bcoef=Acoef
         DO i=1,nADJ(ng)-1
-          CALL sp_acoef (ng, ntimes+1-nADJ(ng)+i, ntTL, Acoef1)
+          CALL sp_acoef (ng, ntimes(ng)+1-nADJ(ng)+i, ntTL, Acoef1)
           df1=REAL(i,r8)*rov
           Bcoef=Bcoef+df1*Acoef1
         END DO
@@ -3452,7 +3452,7 @@
 !  solution is saved.
 !
       rov=1.0_r8/REAL(nADJ(ng),r8)
-      IF ((ntTL.gt.1).and.(ntTL.lt.ntimes+1)) THEN
+      IF ((ntTL.gt.1).and.(ntTL.lt.ntimes(ng)+1)) THEN
         Acoef=0.0_r8
         DO i=1,nADJ(ng)-1
           idf1=IABS(ntAD-ntTL-i)+1
@@ -3472,14 +3472,14 @@
         END DO
         idf4=IABS(ntAD-1)+1
         Acoef=Acoef+sp_autoc(ng,idf4)
-      ELSE IF (ntTL.eq.ntimes+1) THEN
+      ELSE IF (ntTL.eq.ntimes(ng)+1) THEN
         Acoef=0.0_r8
         DO i=1,nADJ(ng)-1
-          idf2=IABS(ntAD-ntimes-1+nADJ(ng)-i)+1
+          idf2=IABS(ntAD-ntimes(ng)-1+nADJ(ng)-i)+1
           df3=REAL(i,r8)*rov
           Acoef=Acoef+sp_autoc(ng,idf2)*df3
         END DO
-        idf4=IABS(ntAD-ntimes-1)+1
+        idf4=IABS(ntAD-ntimes(ng)-1)+1
         Acoef=Acoef+sp_autoc(ng,idf4)
       END IF
 

@@ -146,27 +146,6 @@
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
         END DO
       END IF
-#elif defined SANDWAVE
-      IF (WESTERN_EDGE) THEN
-        DO j=JstrR,JendR
-          val=0.5_r8*(zeta(Istr-1,j,knew)+h(Istr-1,j)+                  &
-     &                zeta(Istr  ,j,knew)+h(Istr  ,j))
-          BOUNDARY(ng)%ubar_west(j)=-10.0_r8/val
-        END DO
-        DO j=Jstr,JendR
-          vbar_west(j)=0.0_r8
-        END DO
-      END IF
-      IF (EASTERN_EDGE) THEN
-        DO j=JstrR,JendR
-          val=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                  &
-     &                zeta(Iend+1,j,knew)+h(Iend+1,j))
-          BOUNDARY(ng)%ubar_east(j)=-10.0_r8/val
-        END DO
-        DO j=Jstr,JendR
-          BOUNDARY(ng)%vbar_east(j)=0.0_r8
-        END DO
-      END IF
 #elif defined SED_TEST1
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
@@ -214,6 +193,35 @@
           my_width=my_width+on_u(Iend,j)
         END DO
         fac=my_width*10.0_r8*1.0_r8*ramp           !(width  depth  ubar)
+        DO j=Jstr,Jend
+          BOUNDARY(ng)%ubar_east(j)=fac/my_area
+        END DO
+      END IF
+# elif defined TRENCH
+      IF (WESTERN_EDGE) THEN
+        my_area=0.0_r8
+        my_width=0.0_r8
+        DO j=Jstr,Jend
+          my_area=my_area+0.5_r8*(zeta(Istr-1,j,knew)+h(Istr-1,j)+      &
+     &                            zeta(Istr  ,j,knew)+h(Istr  ,j))*     &
+     &                           on_u(Istr,j)
+          my_width=my_width+on_u(Istr,j)
+        END DO
+        fac=my_width*0.39_r8*0.51_r8               !(width  depth  ubar)
+        DO j=Jstr,Jend
+          BOUNDARY(ng)%ubar_west(j)=fac/my_area
+        END DO
+      END IF
+      IF (EASTERN_EDGE) THEN
+        my_area=0.0_r8
+        my_width=0.0_r8
+        DO j=Jstr,Jend
+          my_area=my_area+0.5_r8*(zeta(Iend+1,j,knew)+h(Iend+1,j)+      &
+     &                            zeta(Iend  ,j,knew)+h(Iend  ,j))*     &
+     &                           on_u(Iend,j)
+         my_width=my_width+on_u(Iend,j)
+        END DO
+        fac=my_width*0.39_r8*0.51_r8               !(width  depth  ubar)
         DO j=Jstr,Jend
           BOUNDARY(ng)%ubar_east(j)=fac/my_area
         END DO

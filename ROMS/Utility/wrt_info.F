@@ -96,7 +96,7 @@
 !  Time stepping parameters.
 !
         wrt_info=nf_inq_varid(ncid,'ntimes',varid)
-        wrt_info=nf_put_var1_int(ncid,varid,1,ntimes)
+        wrt_info=nf_put_var1_int(ncid,varid,1,ntimes(ng))
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'ntimes', TRIM(ncname)
           exit_flag=3
@@ -905,7 +905,7 @@
 !  Slipperiness parameters.
 !
         wrt_info=nf_inq_varid(ncid,'gamma2',varid)
-        wrt_info=nf_put_var1_TYPE(ncid,varid,1,gamma2)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,gamma2(ng))
         IF (wrt_info.ne.nf_noerr) THEN
           WRITE (stdout,10) 'gamma2', TRIM(ncname)
           exit_flag=3
@@ -917,6 +917,24 @@
 !
 !  Incremental 4DVAR parameters.
 !
+        wrt_info=nf_inq_varid(ncid,'GradErr',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,Hgamma)
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'GradErr', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
+        wrt_info=nf_inq_varid(ncid,'HevecErr',varid)
+        wrt_info=nf_put_var1_TYPE(ncid,varid,1,Hgamma)
+        IF (wrt_info.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'HevecErr', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
+        END IF
+
         wrt_info=nf_inq_varid(ncid,'Nmethod',varid)
         wrt_info=nf_put_var1_int(ncid,varid,1,Nmethod(ng))
         IF (wrt_info.ne.nf_noerr) THEN

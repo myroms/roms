@@ -262,10 +262,10 @@
             ad_v(Iend+1,j,k,nout)=ad_v(Iend+1,j,k,nout)*                &
      &                            GRID(ng)%vmask(Iend+1,j)
 #   endif
-!>          tl_v(Iend+1,j,k,nout)=gamma2*tl_v(Iend,j,k,nout)
+!>          tl_v(Iend+1,j,k,nout)=gamma2(ng)*tl_v(Iend,j,k,nout)
 !>
             ad_v(Iend  ,j,k,nout)=ad_v(Iend  ,j,k,nout)+                &
-     &                            gamma2*ad_v(Iend+1,j,k,nout)
+     &                            gamma2(ng)*ad_v(Iend+1,j,k,nout)
             ad_v(Iend+1,j,k,nout)=0.0_r8
           END DO
         END DO
@@ -388,10 +388,10 @@
             ad_v(Istr-1,j,k,nout)=ad_v(Istr-1,j,k,nout)*                &
      &                            GRID(ng)%vmask(Istr-1,j)
 #   endif
-!>          tl_v(Istr-1,j,k,nout)=gamma2*tl_v(Istr,j,k,nout)
+!>          tl_v(Istr-1,j,k,nout)=gamma2(ng)*tl_v(Istr,j,k,nout)
 !>
             ad_v(Istr  ,j,k,nout)=ad_v(Istr  ,j,k,nout)+                &
-     &                            gamma2*ad_v(Istr-1,j,k,nout)
+     &                            gamma2(ng)*ad_v(Istr-1,j,k,nout)
             ad_v(Istr-1,j,k,nout)=0.0
           END DO
         END DO

@@ -42,8 +42,8 @@
 #
 
        MCT_LIBDIR ?= /usr/local/mct/lib
-    NETCDF_INCDIR ?= /usr/local/netcdf-3.6.1-intel/include
-    NETCDF_LIBDIR ?= /usr/local/netcdf-3.6.1-intel/lib
+    NETCDF_INCDIR ?= /usr/local/netcdf-3.6.2-intel/include
+    NETCDF_LIBDIR ?= /usr/local/netcdf-3.6.2-intel/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
@@ -73,12 +73,10 @@ ifdef OpenMP
 endif
 
 ifdef DEBUG
-           FFLAGS += -g -check bounds
+#           FFLAGS += -g -check bounds
+           FFLAGS += -g 
 else
-           FFLAGS += -ip -O3
- ifeq ($(CPU),i686)
-           FFLAGS += -pc80 -xW
- endif
+           FFLAGS += -ip -O3 -axP
  ifeq ($(CPU),x86_64)
            FFLAGS += -xW
  endif

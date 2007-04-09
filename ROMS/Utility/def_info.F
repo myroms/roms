@@ -333,6 +333,27 @@
       status=nf_put_att_text(ncid,nf_global,'svn_rev',                  &
      &                       LEN_TRIM(svn_rev),svn_rev)
 #endif
+!
+!  Local root directory, cpp header directory and file, and analytical
+!  directory
+!
+#ifdef ROOT_DIR
+      status=nf_put_att_text(ncid,nf_global,'code_dir',                 &
+     &                       LEN_TRIM(Rdir),Rdir)
+#endif
+#ifdef HEADER_DIR
+      status=nf_put_att_text(ncid,nf_global,'header_dir',               &
+     &                       LEN_TRIM(Hdir),Hdir)
+#endif
+#ifdef ROMS_HEADER
+      status=nf_put_att_text(ncid,nf_global,'header_file',              &
+     &                       LEN_TRIM(Hfile),Hfile)
+#endif
+#ifdef ANALYTICAL_DIR
+      status=nf_put_att_text(ncid,nf_global,'analytical_dir',           &
+     &                       LEN_TRIM(Adir),Adir)
+#endif
+
 #ifndef DEBUGGING
 !
 !  Attributes describing platform and compiler
@@ -838,6 +859,14 @@
 !
 !  Incremental 4DVAR parameters.
 !
+      Vinfo( 1)='GradErr'
+      Vinfo( 2)='Upper bound on relative error of the gradient'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
+      Vinfo( 1)='HevecErr'
+      Vinfo( 2)='Accuracy required for Hessian eigenvectors'
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+
       Vinfo( 1)='Nmethod'
       Vinfo( 2)='background error covariance normalization method'
       Vinfo( 9)='exact'
@@ -1254,7 +1283,7 @@
       Vinfo( 1)='PhyIS'
       Vinfo( 2)='phytoplankton initial slopw of the P-I cureve'
       Vinfo( 3)='m2/W'
-      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='Vm_NO3'
       Vinfo( 2)='nitrate uptake rate'
@@ -1264,12 +1293,12 @@
       Vinfo( 1)='PhyMRD'
       Vinfo( 2)='phytoplankton mortality rate to the detritus pool'
       Vinfo( 3)='day-1'
-      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='PhyMRN'
       Vinfo( 2)='phytoplankton mortality rate to the Nitrogen pool'
       Vinfo( 3)='day-1'
-      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='K_NO3'
       Vinfo( 2)='inverse half-saturation for phytoplankton NO3 uptake'
@@ -1296,12 +1325,12 @@
       Vinfo( 1)='ZooMRD'
       Vinfo( 2)='zooplankton mortality rate to the detritus pool'
       Vinfo( 3)='day-1'
-      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='ZooMRN'
       Vinfo( 2)='zootoplankton mortality rate to the Nitrogen pool'
       Vinfo( 3)='day-1'
-      status=def_vm2ar(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
+      status=def_var(ncid,varid,NF_TYPE,0,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='DetRR'
       Vinfo( 2)='detritus remineralization rate'

@@ -123,7 +123,7 @@
         END DO
       END DO
 #else
-      ANA_SCOPE: no values provided for spatial scope masking.
+      ana_scope.h: no values provided for spatial scope masking.
 #endif
 !
       DO j=JstrR,JendR

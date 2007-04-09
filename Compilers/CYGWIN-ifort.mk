@@ -28,11 +28,14 @@
               BIN := $(BIN).exe
 
                FC := ifort
-           FFLAGS := /align /G7 /MD /iface:cvf
+#          FFLAGS := /align /G7 /MD /iface:cvf
+#          FFLAGS := /align /G7 /MD /assume:underscore /names:lowercase
+           FFLAGS := /align /G7 /MD
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DCYGWIN -DCYGWIN_ifort -traditional
                LD := $(FC)
-          LDFLAGS := /link /nodefaultlib:libcmt  /nodefaultlib:msvcrt /stack:67108864 
+#         LDFLAGS := /link /nodefaultlib:libcmt  /nodefaultlib:msvcrt /stack:67108864
+          LDFLAGS := /link /stack:67108864
                AR := ar
           ARFLAGS := r
                RM := rm -f
@@ -53,7 +56,7 @@
    NETCDF_LIBDIR ?= /netcdf-win32/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
-       NETCDF_LIB := $(NETCDF_LIBDIR)/netcdfs.lib
+       NETCDF_LIB := $(NETCDF_LIBDIR)/libnetcdf.a
 
 ifdef ARPACK
     ARPACK_LIBDIR ?= /arpack-win32/lib
@@ -72,13 +75,13 @@ endif
 ifdef DEBUG
            FFLAGS += /debug:full /traceback /Od /Zi
 else
-           FFLAGS += /O2
+           FFLAGS += /Ox
 endif
 
 ifdef MPI
        MPI_INCDIR ?= c:\\work\\models\\MPICH2\\include
        MPI_LIBDIR ?= c:\\work\\models\\MPICH2\\lib
-       LIBS_WIN32 += "$(MPI_LIBDIR)\fmpich2s.lib "
+       LIBS_WIN32 += "$(MPI_LIBDIR)\fmpich2.lib "
          CPPFLAGS += -DMPI -I$(MPI_INCDIR)
            FFLAGS += -I$(MPI_INCDIR)
 endif
@@ -89,6 +92,7 @@ ifdef SWAN_COUPLE
          CPPFLAGS += -traditional-cpp
            FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
            FFLAGS += /fixed /noextend_source -assume:byterecl
+       LIBS_WIN32 += "$(MCT_LIBDIR)\libmct.a" "$(MPEU_LIBDIR)\libmpeu.a"
 endif
 
 #
@@ -99,6 +103,7 @@ endif
 
          BIN_WIN32 = "$$(cygpath --windows $(BIN))"
         LIBS_WIN32 += "$$(cygpath --windows $(NETCDF_LIB))"
+        LIBS_WIN32 += "c:\cygwin\lib\gcc\i686-pc-mingw32\3.4.4\libgcc.a"
 ifdef ARPACK
         LIBS_WIN32 += "$$(cygpath --windows $(ARPACK_LIB))"
 endif

@@ -240,8 +240,8 @@
         LcycleADJ(ng)=.FALSE.
         Hout(idUsms,ng)=.TRUE.
         Hout(idVsms,ng)=.TRUE.
-        nADJ(ng)=ntimes
-        nTLM(ng)=ntimes
+        nADJ(ng)=ntimes(ng)
+        nTLM(ng)=ntimes(ng)
 !
 !-----------------------------------------------------------------------
 !  Implicit Restarted Arnoldi Method (IRAM) for the computation of
@@ -442,7 +442,7 @@
                 NrecTLM(ng)=0
                 tADJindx(ng)=0
                 tTLMindx(ng)=0
-!!              ndefTLM(ng)=ntimes         ! one file per eigenvector
+!!              ndefTLM(ng)=ntimes(ng)     ! one file per eigenvector
                 NconvRitz=iparam(5)
 !
                 DO i=1,NconvRitz

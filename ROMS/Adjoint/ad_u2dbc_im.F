@@ -256,7 +256,9 @@
           cff=dt2d*0.5_r8*(GRID(ng)%pn(i-1,Jend)+                       &
      &                     GRID(ng)%pn(i  ,Jend))
           cff1=SQRT(g*0.5_r8*(GRID(ng)%h(i-1,Jend)+                     &
-     &                        GRID(ng)%h(i  ,Jend)))
+     &                        zeta(i-1,Jend,know)+                      &
+     &                        GRID(ng)%h(i  ,Jend)+                     &
+     &                        zeta(i  ,Jend,know)))
           Ce=cff*cff1
           cff2=1.0_r8/(1.0_r8+Ce)
 #   ifdef MASKING
@@ -288,11 +290,15 @@
           ad_cff1=ad_cff1+cff*ad_Ce
           ad_Ce=0.0_r8
 !>        tl_cff1=0.25_r8*g*(GRID(ng)%tl_h(i-1,Jend)+                   &
-!>   &                       GRID(ng)%tl_h(i  ,Jend))/cff1
+!>   &                       tl_zeta(i-1,Jend,know)+                    &
+!>   &                       GRID(ng)%tl_h(i  ,Jend)+                   &
+!>   &                       tl_zeta(i  ,Jend,know))/cff1
 !>
           adfac=0.25_r8*g*ad_cff1/cff1
           GRID(ng)%ad_h(i-1,Jend)=GRID(ng)%ad_h(i-1,Jend)+adfac
           GRID(ng)%ad_h(i  ,Jend)=GRID(ng)%ad_h(i  ,Jend)+adfac
+          ad_zeta(i-1,Jend,know)=ad_zeta(i-1,Jend,know)+adfac
+          ad_zeta(i  ,Jend,know)=ad_zeta(i  ,Jend,know)+adfac
           ad_cff1=0.0_r8
         END DO
 
@@ -343,10 +349,10 @@
           ad_ubar(i,Jend+1,kout)=ad_ubar(i,Jend+1,kout)*                &
      &                           GRID(ng)%umask(i,Jend+1)
 #   endif
-!>        tl_ubar(i,Jend+1,kout)=gamma2*tl_ubar(i,Jend,kout)
+!>        tl_ubar(i,Jend+1,kout)=gamma2(ng)*tl_ubar(i,Jend,kout)
 !>
           ad_ubar(i,Jend  ,kout)=ad_ubar(i,Jend,kout)+                  &
-     &                           gamma2*ad_ubar(i,Jend+1,kout)
+     &                           gamma2(ng)*ad_ubar(i,Jend+1,kout)
           ad_ubar(i,Jend+1,kout)=0.0_r8
         END DO
 #   undef I_RANGE
@@ -418,7 +424,9 @@
           cff=dt2d*0.5_r8*(GRID(ng)%pn(i-1,Jstr)+                       &
      &                     GRID(ng)%pn(i  ,Jstr))
           cff1=SQRT(g*0.5_r8*(GRID(ng)%h(i-1,Jstr)+                     &
-     &                        GRID(ng)%h(i  ,Jstr)))
+     &                        zeta(i-1,Jstr,know)+                      &
+     &                        GRID(ng)%h(i  ,Jstr)+                     &
+     &                        zeta(i  ,Jstr,know)))
           Ce=cff*cff1
           cff2=1.0_r8/(1.0_r8+Ce)
 #   ifdef MASKING
@@ -450,11 +458,15 @@
           ad_cff1=ad_cff1+cff*ad_Ce
           ad_Ce=0.0_r8
 !>        tl_cff1=0.25_r8*g*(GRID(ng)%tl_h(i-1,Jstr)+                   &
-!>   &                       GRID(ng)%tl_h(i  ,Jstr))/cff1
+!>   &                       tl_zeta(i-1,Jstr,know)+                    &
+!>   &                       GRID(ng)%tl_h(i  ,Jstr)+                   &
+!>   &                       tl_zeta(i  ,Jstr,know))/cff1
 !>
           adfac=0.25_r8*g*ad_cff1/cff1
           GRID(ng)%ad_h(i-1,Jstr)=GRID(ng)%ad_h(i-1,Jstr)+adfac
           GRID(ng)%ad_h(i  ,Jstr)=GRID(ng)%ad_h(i  ,Jstr)+adfac
+          ad_zeta(i-1,Jstr,know)=ad_zeta(i-1,Jstr,know)+adfac
+          ad_zeta(i  ,Jstr,know)=ad_zeta(i  ,Jstr,know)+adfac
           ad_cff1=0.0_r8
         END DO
 
@@ -505,10 +517,10 @@
           ad_ubar(i,Jstr-1,kout)=ad_ubar(i,Jstr-1,kout)*                &
      &                           GRID(ng)%umask(i,Jstr-1)
 #   endif
-!>        tl_ubar(i,Jstr-1,kout)=gamma2*tl_ubar(i,Jstr,kout)
+!>        tl_ubar(i,Jstr-1,kout)=gamma2(ng)*tl_ubar(i,Jstr,kout)
 !>
           ad_ubar(i,Jstr  ,kout)=ad_ubar(i,Jstr,kout)+                  &
-     &                           gamma2*ad_ubar(i,Jstr-1,kout)
+     &                           gamma2(ng)*ad_ubar(i,Jstr-1,kout)
           ad_ubar(i,Jstr-1,kout)=0.0_r8
         END DO
 #   undef I_RANGE
@@ -581,7 +593,9 @@
 !
         DO j=Jstr,Jend
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                     &
-     &                        GRID(ng)%h(Iend+1,j)))
+     &                        zeta(Iend  ,j,know)+                      &
+     &                        GRID(ng)%h(Iend+1,j)+                     &
+     &                        zeta(Iend+1,j,know)))
           Cx=SQRT(g*cff)
 #   ifdef MASKING
 !>        tl_ubar(Iend+1,j,kout)=tl_ubar(Iend+1,j,kout)*                &
@@ -611,11 +625,15 @@
           ad_cff=ad_cff+0.5_r8*g*ad_Cx/Cx
           ad_Cx=0.0_r8
 !>        tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+             &
-!>   &                             GRID(ng)%tl_h(Iend+1,j)))
+!>   &                             tl_zeta(Iend  ,j,know)+              &
+!>   &                             GRID(ng)%tl_h(Iend+1,j)+             &
+!>   &                             tl_zeta(Iend+1,j,know)))
 !>
           adfac=-cff*cff*0.5_r8*ad_cff
           GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%ad_h(Iend  ,j)+adfac 
           GRID(ng)%ad_h(Iend+1,j)=GRID(ng)%ad_h(Iend+1,j)+adfac
+          ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)+adfac
+          ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+adfac
           ad_cff=0.0_r8
 #   if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
 #    ifdef FSOBC_REDUCED
@@ -938,7 +956,9 @@
 !
         DO j=Jstr,Jend
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Istr-1,j)+                     &
-     &                        GRID(ng)%h(Istr  ,j)))
+     &                        zeta(Istr-1,j,know)+                      &
+     &                        GRID(ng)%h(Istr  ,j)+                     &
+     &                        zeta(Istr  ,j,know)))
           Cx=SQRT(g*cff)
 #   ifdef MASKING
 !>        tl_ubar(Istr,j,kout)=tl_ubar(Istr,j,kout)*                    &
@@ -968,11 +988,15 @@
           ad_cff=ad_cff+0.5_r8*g*ad_Cx/Cx
           ad_Cx=0.0_r8
 !>        tl_cff=-cff*cff*(0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+             &
-!>   &                             GRID(ng)%tl_h(Istr  ,j)))
+!>   &                             tl_zeta(Istr-1,j,know)+              &
+!>   &                             GRID(ng)%tl_h(Istr  ,j)+             &
+!>   &                             tl_zeta(Istr  ,j,know)))
 !>
           adfac=-cff*cff*0.5_r8*ad_cff
           GRID(ng)%ad_h(Istr-1,j)=GRID(ng)%ad_h(Istr-1,j)+adfac
           GRID(ng)%ad_h(Istr  ,j)=GRID(ng)%ad_h(Istr  ,j)+adfac
+          ad_zeta(Istr-1,j,know)=ad_zeta(Istr-1,j,know)+adfac
+          ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)+adfac
           ad_cff=0.0_r8
 #   if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
 #    ifdef FSOBC_REDUCED
@@ -1006,7 +1030,7 @@
      &                             GRID(ng)%h(Istr  ,j)+                &
      &                             zeta(Istr  ,j,kout)))
           cff2=GRID(ng)%om_u(Istr,j)*Cx
-!>        tl_bry_val=tl_ubar(Istr+1,j,kout)-                            &
+!>        tl_bry_val=tl_ubar(Istr+1,j,kout)+                            &
 !>   &               tl_cff2*(bry_pgr+                                  &
 !>   &                        bry_cor+                                  &
 !>   &                        bry_str)+                                 &
@@ -1015,10 +1039,10 @@
 !>   &                     tl_bry_str)
 !>
           adfac=cff2*ad_bry_val
-          ad_bry_pgr=ad_bry_pgr-adfac
-          ad_bry_cor=ad_bry_cor-adfac
-          ad_bry_str=ad_bry_str-adfac
-          ad_cff2=ad_cff2-(bry_pgr+                                     &
+          ad_bry_pgr=ad_bry_pgr+adfac
+          ad_bry_cor=ad_bry_cor+adfac
+          ad_bry_str=ad_bry_str+adfac
+          ad_cff2=ad_cff2+(bry_pgr+                                     &
      &                     bry_cor+                                     &
      &                     bry_str)*ad_bry_val
           ad_ubar(Istr+1,j,kout)=ad_ubar(Istr+1,j,kout)+ad_bry_val

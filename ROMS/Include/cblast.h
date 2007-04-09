@@ -8,6 +8,8 @@
 **
 ** Options for Coupled Boundary Layer Air-Sea Transfer Application.
 **
+** Application flag:   CBLAST
+** Input script:       ocean_cblast.in
 */
 
 #define	UV_ADV

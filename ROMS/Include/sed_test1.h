@@ -6,15 +6,13 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 **
-** Options for Sediment Tests.
+** Options for Suspended Sediment Test in a Channel.
 **
+** Application flag:   SED_TEST1
+** Input scripts:      ocean_sed_test1.in
+**                     sediment_sed_test1.in
 */
 
-#if defined SED_TEST1
-
-/*
-**  Suspended Sediment Test in a Channel.
-*/
 #define UV_ADV
 #define UV_PSOURCE
 #define UV_LOGDRAG
@@ -60,5 +58,3 @@
 #define ANA_PSOURCE
 #define ANA_TOBC
 #define ANA_FSOBC
-
-#endif

@@ -6,8 +6,26 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This module minimizes a quadratic cost function using the conjugate !
-!  gradient algorithm proposed by Mike Fisher (ECMWF).                 !
+!  This module minimizes  incremental  4Dvar  quadratic cost function  !
+!  using a preconditioned version of the conjugate gradient algorithm  !
+!  proposed by Mike Fisher (ECMWF).                                    !
+!                                                                      !
+!  In the following,  M represents the preconditioner.  Specifically,  !
+!                                                                      !
+!    M = I + SUM_i [ (mu_i-1) h_i (h_i)'],                             !
+!                                                                      !
+!  where mu_i can take the following values:                           !
+!                                                                      !
+!    Lscale= 1:    mu_i = lambda_i                                     !
+!    Lscale=-1:    mu_i = 1 / lambda_i                                 !
+!    Lscale= 2:    mu_i = SQRT (lambda_i)                              !
+!    Lscale=-2:    mu_i = 1 / SQRT(lambda_i)                           !
+!                                                                      !
+!  where lambda_i are the Hessian eigenvalues and h_i are the Hessian  !
+!  eigenvectors. For Lscale=-1 the preconditioner is an approximation  !
+!  of the inverse Hessian matrix constructed from the leading Hessian  !
+!  eigenvectors.  A full description is given in  Fisher and Courtier  !
+!  (1995), ECMWF Tech Memo 220.                                        !
 !                                                                      !
 !  Given an initial model state X(0), gradient G(0), descent direction !
 !  d(0), and trial step size tau(1), the minimization algorithm at the !
@@ -23,9 +41,11 @@
 !                                                                      !
 !  (3) Compute optimum step size, alpha(k):                            !
 !                                                                      !
-!      alpha(k) = tau(k) * <d(k),G(k)> / (<d(k),G(k)> - <d(k),Ghat(k)>)!
+!      alpha(k) = tau(k) * <d(k), G(k)> /                              !
 !                                                                      !
-!      here <...> denotes dot product                          (Eq 5c) !
+!                 (<d(k),G(k)> - <d(k), Ghat(k)>)              (Eq 5c) !
+!                                                                      !
+!      here <...> denotes dot product                                  !
 !                                                                      !
 !  (4) Compute new starting point (TLM increments), X(k+1):            !
 !                                                                      !
@@ -40,17 +60,23 @@
 !  (6) Orthogonalize new gradient, G(k+1), against all previous        !
 !      gradients [G(k), ..., G(0)], in reverse order, using the        !
 !      modified Gramm-Schmidt algorithm. Notice that we need to        !
-!      all inner loop gradient solutions.                              !
+!      save all inner loop gradient solutions.                         !
+!                                                                      !
+!      For the preconditioned case the appropriate inner-product       !
+!      for the orthonormalizatio is <G,MG>.                            !
 !                                                                      !
 !  (7) Compute new descent direction, d(k+1):                          !
 !                                                                      !
-!      beta(k+1) = <G(k+1),G(k+1)> / <G(k),G(k)>               (Eq 5g) !
+!      beta(k+1) = <G(k+1),M G(k+1)> / <G(k),M G(k)>           (Eq 5g) !
 !                                                                      !
-!      d(k+1) = - G(k+1) + beta(k+1) * d(k)                    (Eq 5f) !
+!      d(k+1) = - MG(k+1) + beta(k+1) * d(k)                   (Eq 5f) !
 !                                                                      !
 !  After the first iteration, the trial step size is:                  !
 !                                                                      !
 !      tau(k) = alpha(k-1)                                             !
+!                                                                      !
+!  NOTE: In all of the following computations we are using the NLM     !
+!        state variable arrays as temporary arrays.                    !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
@@ -74,9 +100,17 @@
 #ifdef SOLVE3D
       USE mod_coupling
 #endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+#endif
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
+
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
+#endif
 !
 !  Imported variable declarations.
 !
@@ -98,21 +132,21 @@
      &                     GRID(ng) % vmask,                            &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                     FORCES(ng) % tl_ustr,                        &
-     &                     FORCES(ng) % tl_vstr,                        &
+     &                     FORCES(ng) % sustrG,                         &
+     &                     FORCES(ng) % svstrG,                         &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                     FORCES(ng) % tl_tflux,                       &
+     &                     FORCES(ng) % tflux,                          &
 # endif
-     &                     OCEAN(ng) % tl_t,                            &
-     &                     OCEAN(ng) % tl_u,                            &
-     &                     OCEAN(ng) % tl_v,                            &
+     &                     OCEAN(ng) % t,                               &
+     &                     OCEAN(ng) % u,                               &
+     &                     OCEAN(ng) % v,                               &
 #else
-     &                     OCEAN(ng) % tl_ubar,                         &
-     &                     OCEAN(ng) % tl_vbar,                         &
+     &                     OCEAN(ng) % ubar,                            &
+     &                     OCEAN(ng) % vbar,                            &
 #endif
-     &                     OCEAN(ng) % tl_zeta,                         &
+     &                     OCEAN(ng) % zeta,                            &
 #ifdef ADJUST_WSTRESS
      &                     OCEAN(ng) % d_sustr,                         &
      &                     OCEAN(ng) % d_svstr,                         &
@@ -135,7 +169,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                     FORCES(ng) % ad_stflx,                       &
+     &                     FORCES(ng) % ad_tflux,                       &
 # endif
      &                     OCEAN(ng) % ad_t,                            &
      &                     OCEAN(ng) % ad_u,                            &
@@ -144,7 +178,23 @@
      &                     OCEAN(ng) % ad_ubar,                         &
      &                     OCEAN(ng) % ad_vbar,                         &
 #endif
-     &                     OCEAN(ng) % ad_zeta)
+     &                     OCEAN(ng) % ad_zeta,                         &
+#ifdef ADJUST_WSTRESS
+     &                     FORCES(ng) % tl_ustr,                        &
+     &                     FORCES(ng) % tl_vstr,                        &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     FORCES(ng) % tl_tflux,                       &
+# endif
+     &                     OCEAN(ng) % tl_t,                            &
+     &                     OCEAN(ng) % tl_u,                            &
+     &                     OCEAN(ng) % tl_v,                            &
+#else
+     &                     OCEAN(ng) % tl_ubar,                         &
+     &                     OCEAN(ng) % tl_vbar,                         &
+#endif
+     &                     OCEAN(ng) % tl_zeta)
 #ifdef PROFILE
       CALL wclock_on (ng, model, 36)
 #endif
@@ -159,17 +209,17 @@
      &                           rmask, umask, vmask,                   &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                           tl_ustr, tl_vstr,                      &
+     &                           nl_ustr, nl_vstr,                      &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                           tl_tflux,                              &
+     &                           nl_tflux,                              &
 # endif
-     &                           tl_t, tl_u, tl_v,                      &
+     &                           nl_t, nl_u, nl_v,                      &
 #else
-     &                           tl_ubar, tl_vbar,                      &
+     &                           nl_ubar, nl_vbar,                      &
 #endif
-     &                           tl_zeta,                               &
+     &                           nl_zeta,                               &
 #ifdef ADJUST_WSTRESS
      &                           d_sustr, d_svstr,                      &
 #endif
@@ -187,19 +237,33 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                           ad_stflx,                              &
+     &                           ad_tflux,                              &
 # endif
      &                           ad_t, ad_u, ad_v,                      &
 #else
      &                           ad_ubar, ad_vbar,                      &
 #endif
-     &                           ad_zeta)
+     &                           ad_zeta,                               &
+#ifdef ADJUST_WSTRESS
+     &                           tl_ustr, tl_vstr,                      &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                           tl_tflux,                              &
+# endif
+     &                           tl_t, tl_u, tl_v,                      &
+#else
+     &                           tl_ubar, tl_vbar,                      &
+#endif
+     &                           tl_zeta)
 !***********************************************************************
 !
       USE mod_param
       USE mod_parallel
       USE mod_fourdvar
       USE mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -220,7 +284,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
@@ -247,6 +311,22 @@
 # endif
       real(r8), intent(inout) :: d_zeta(LBi:,LBj:)
 # ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: nl_vstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: nl_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: nl_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: nl_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
 # endif
@@ -262,7 +342,9 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
@@ -274,7 +356,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -301,8 +383,24 @@
 # endif
       real(r8), intent(inout) :: d_zeta(LBi:UBi,LBj:UBj)
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,2)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: nl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: nl_v(LBi:UBi,LBj:UBj,N(ng),2)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: nl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: nl_tl_vstr(LBi:UBi,LBj:UBj,2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
@@ -320,7 +418,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: Linp, Lout, Lwrk, i
+      integer :: Linp, Lout, Lwrk, L1, L2, i, Lscale
+      integer :: status, varid
 
       real(r8) :: norm
 
@@ -345,17 +444,46 @@
           FOURDVAR(ng)%CostGradDot(i)=0.0_r8
         END DO
       END IF
-      WRITE (stdout,10)
- 10   FORMAT (/,' <<<< Descent Algorithm >>>>')
+      IF (Master) THEN
+        WRITE (stdout,10)
+ 10     FORMAT (/,' <<<< Descent Algorithm >>>>')
+      END IF
+!
+!  If preconditioning, read in number of converged eigenvectors and their
+!  associated eigenvalues.
+!
+      IF (Lprecond.and.((Iter.eq.0).and.(outer.eq.1))) THEN
+        IF (InpThread) THEN
+          status=nf_inq_varid(ncHSSid(ng),'nConvRitz',varid)
+          status=nf_get_var1_int(ncHSSid(ng), varid, 1, nConvRitz)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,20) 'nConvRitz', TRIM(HSSname(ng))
+ 20         FORMAT (/,' CGRADIENT - error while reading variable: ',    &
+     &              a,/,12x,'from NetCDF file: ',a)
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+          status=nf_inq_varid(ncHSSid(ng),'Ritz',varid)
+          status=nf_get_vara_TYPE(ncHSSid(ng), varid, 1, nConvRitz, Ritz)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,20) 'Ritz', TRIM(HSSname(ng))
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF
+        END IF        
+#ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iADM, nConvRitz, 1)
+        CALL mp_bcastf (ng, iADM, Ritz, nConvRitz)
+#endif
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Compute conjugate gradient optimum step size, alpha(k).
 !-----------------------------------------------------------------------
 !
       IF (Iter.gt.0) THEN
-!
-!  Compute old dot product, <d(k), G(k)>.
-!
         CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot_old(0:),                 &
@@ -368,7 +496,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      d_stflx, ad_stflx(:,:,:,Lold,:),            &
+     &                      d_stflx, ad_tflux(:,:,:,Lold,:),            &
 # endif
      &                      d_t, ad_t(:,:,:,Lold,:),                    &
      &                      d_u, ad_u(:,:,:,Lold),                      &
@@ -379,7 +507,7 @@
 #endif
      &                      d_zeta, ad_zeta(:,:,Lold))
 !
-!  Compute new dot product, <d(k), Ghat(k)>.
+!  If preconditioning, compute new dot product, <d(k), H^-1 * Ghat(k)>.
 !
         CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -393,7 +521,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      d_stflx, ad_stflx(:,:,Lnew,:),              &
+     &                      d_stflx, ad_tflux(:,:,Lnew,:),              &
 # endif
      &                      d_t, ad_t(:,:,:,Lnew,:),                    &
      &                      d_u, ad_u(:,:,:,Lnew),                      &
@@ -431,32 +559,88 @@
 !  Estimate the gradient for the new state vector, G(k+1).
 !-----------------------------------------------------------------------
 !
-!  Compute old dot product, <G(k), G(k)>, here since ad_*(Lold) will be
-!  used a as temporary storage after this.
+!  If preconditioning, compute old dot product, <G(k), H^-1 * G(k)>.
+!  The ADM arrays, index Lold, will be used a as temporary storage
+!  after this.
 !
-      CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NstateVar(ng), old_dot(0:),                   &
+      IF (Lprecond) THEN
+        Lscale=-1
+        Lwrk=2
+        CALL precond (ng, model, Istr, Iend, Jstr, Jend,                &
+     &                LBi, UBi, LBj, UBj,                               &
+     &                NstateVar(ng), Lold, Lwrk, Lscale,                &
+     &                nConvRitz, Ritz,                                  &
 #ifdef MASKING
-     &                    rmask, umask, vmask,                          &
+     &                rmask, umask, vmask,                              &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                    ad_ustr(:,:,Lold), ad_ustr(:,:,Lold),         &
-     &                    ad_vstr(:,:,Lold), ad_vstr(:,:,Lold),         &
+     &                ad_ustr, ustr, tl_ustr,                           &
+     &                ad_vstr, vstr, tl_vstr,                           &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                    ad_stflx(:,:,Lold,:), ad_stflx(:,:,Lold,:),   &
+     &                ad_tflux, nl_tflux, tl_tflx,                      &
 # endif
-     &                    ad_t(:,:,:,Lold,:), ad_t(:,:,:,Lold,:),       &
-     &                    ad_u(:,:,:,Lold), ad_u(:,:,:,Lold),           &
-     &                    ad_v(:,:,:,Lold), ad_v(:,:,:,Lold),           &
+     &                ad_t, nl_t, tl_t,                                 &
+     &                ad_u, nl_u, tl_u,                                 &
+     &                ad_v, nl_v, tl_v,                                 &
 #else
-     &                    ad_ubar(:,:,Lold), ad_ubar(:,:,Lold),         &
-     &                    ad_vbar(:,:,Lold), ad_vbar(:,:,Lold),         &
+     &                ad_ubar, nl_ubar, tl_ubar,                        &
+     &                ad_vbar, nl_vbar, tl_vbar,                        &
 #endif
-     &                    ad_zeta(:,:,Lold), ad_zeta(:,:,Lold))
+     &                ad_zeta, nl_zeta, tl_zeta)
 !
+        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NstateVar(ng), old_dot(0:),                 &
+#ifdef MASKING
+     &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                      ad_ustr(:,:,Lold), tl_ustr(:,:,Lwrk),       &
+     &                      ad_vstr(:,:,Lold), tl_vstr(:,:,Lwrk),       &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      ad_tflux(:,:,Lold,:), tl_tflux(:,:,Lwrk,:), &
+# endif
+     &                      ad_t(:,:,:,Lold,:), tl_t(:,:,:,Lwrk,:),     &
+     &                      ad_u(:,:,:,Lold), tl_u(:,:,:,Lwrk),         &
+     &                      ad_v(:,:,:,Lold), tl_v(:,:,:,Lwrk),         &
+#else
+     &                      ad_ubar(:,:,Lold), tl_ubar(:,:,Lwrk),       &
+     &                      ad_vbar(:,:,Lold), tl_vbar(:,:,Lwrk),       &
+#endif
+     &                      ad_zeta(:,:,Lold), tl_zeta(:,:,Lwrk))
+!
+!  If not preconditioning, compute old dot product, <G(k), G(k)>.
+!  The ADM arrays, index Lold, will be used a as temporary storage
+!  after this.
+!
+      ELSE
+        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NstateVar(ng), old_dot(0:),                 &
+#ifdef MASKING
+     &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                      ad_ustr(:,:,Lold), ad_ustr(:,:,Lold),       &
+     &                      ad_vstr(:,:,Lold), ad_vstr(:,:,Lold),       &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      ad_tflux(:,:,Lold,:), ad_tflux(:,:,Lold,:), &
+# endif
+     &                      ad_t(:,:,:,Lold,:), ad_t(:,:,:,Lold,:),     &
+     &                      ad_u(:,:,:,Lold), ad_u(:,:,:,Lold),         &
+     &                      ad_v(:,:,:,Lold), ad_v(:,:,:,Lold),         &
+#else
+     &                      ad_ubar(:,:,Lold), ad_ubar(:,:,Lold),       &
+     &                      ad_vbar(:,:,Lold), ad_vbar(:,:,Lold),       &
+#endif
+     &                      ad_zeta(:,:,Lold), ad_zeta(:,:,Lold))
+      END IF
 !
 !  Notice that the current gradient Ghat(k) in time index Lnew is
 !  overwritten with the new gradient G(k+1).
@@ -478,7 +662,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                   ad_stflx,                                      &
+     &                   ad_tflux,                                      &
 # endif
      &                   ad_t, ad_u, ad_v,                              &
 #else
@@ -497,9 +681,19 @@
         CALL orthogonalize (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Lold, Lnew, Lwrk, Iter,                     &
+     &                      nConvRitz, Ritz,                            &
 # ifdef MASKING
      &                      rmask, umask, vmask,                        &
 # endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+     &                      nl_tflux,                                   &
+#  endif
+     &                      nl_t, nl_u, nl_v,                           &
+# else
+     &                      nl_ubar, nl_vbar,                           &
+# endif
+     &                      nl_zeta,                                    &
 # ifdef ADJUST_WSTRESS
      &                      tl_ustr, tl_vstr,                           &
 # endif
@@ -513,11 +707,14 @@
 # endif
      &                      tl_zeta,                                    &
 # ifdef ADJUST_WSTRESS
+     &                      ustr, vstr,                                 &
+# endif
+# ifdef ADJUST_WSTRESS
      &                      ad_ustr, ad_vstr,                           &
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-     &                      ad_stflx,                                   &
+     &                      ad_tflux,                                   &
 #  endif
      &                      ad_t, ad_u, ad_v,                           &
 # else
@@ -582,32 +779,91 @@
 !  Compute new conjugate descent direction, d(k+1).
 !-----------------------------------------------------------------------
 !
-      IF (Iter.gt.0) THEN
+!  If preconditioning, multiply the new gradient by H^-1 and save in
+!  nl_var(Lwrk).
 !
-!  Compute new dot product, <G(k+1), G(k+1)>.
-!
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NstateVar(ng), new_dot(0:),                 &
+      IF (Lprecond) THEN
+        Lscale=-1
+        Lwrk=2
+        CALL precond (ng, model, Istr, Iend, Jstr, Jend,                &
+     &                LBi, UBi, LBj, UBj,                               &
+     &                NstateVar(ng), Lnew, Lwrk, Lscale,                &
+     &                nConvRitz, Ritz,                                  &
 #ifdef MASKING
-     &                      rmask, umask, vmask,                        &
+     &                rmask, umask, vmask,                              &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                      ad_ustr(:,:,Lnew), ad_ustr(:,:,Lnew),       &
-     &                      ad_vstr(:,:,Lnew), ad_vstr(:,:,Lnew),       &
+     &                ad_ustr, nl_ustr, nl_ustr,                        &
+     &                ad_vstr, nl_vstr, nl_vstr,                        &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      ad_stflx(:,:,Lnew,:), ad_stflx(:,:,Lnew,:), &
+     &                ad_tflux, tflux, tflux                            &
 # endif
-     &                      ad_t(:,:,:,Lnew,:), ad_t(:,:,:,Lnew,:),     &
-     &                      ad_u(:,:,:,Lnew), ad_u(:,:,:,Lnew),         &
-     &                      ad_v(:,:,:,Lnew), ad_v(:,:,:,Lnew),         &
+     &                ad_t, nl_t, nl_t,                                 &
+     &                ad_u, nl_u, nl_u,                                 &
+     &                ad_v, nl_v, nl_v,                                 &
 #else
-     &                      ad_ubar(:,:,Lnew), ad_ubar(:,:,Lnew),       &
-     &                      ad_vbar(:,:,Lnew), ad_vbar(:,:,Lnew),       &
+     &                ad_ubar, nl_ubar, nl_ubar,                        &
+     &                ad_vbar, nl_vbar, nl_vbar,                        &
 #endif
-     &                      ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
+     &                ad_zeta, nl_zeta, nl_zeta)
+       END IF
+!
+!  If preconditioning, compute new dot product, <G(k+1), H^-1 * G(k+1)>.
+!
+      IF (Iter.gt.0) THEN
+        IF (Lprecond) THEN
+          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NstateVar(ng), new_dot(0:),               &
+#ifdef MASKING
+     &                        rmask, umask, vmask,                      &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                        ad_ustr(:,:,Lnew), nl_ustr(:,:,Lwrk),     &
+     &                        ad_vstr(:,:,Lnew), nl_vstr(:,:,Lwrk),     &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                        ad_tflux(:,:,Lnew,:),nl_tflux(:,:,Lwrk,:),&
+# endif
+     &                        ad_t(:,:,:,Lnew,:), nl_t(:,:,:,Lwrk,:),   &
+     &                        ad_u(:,:,:,Lnew), nl_u(:,:,:,Lwrk),       &
+     &                        ad_v(:,:,:,Lnew), nl_v(:,:,:,Lwrk),       &
+#else
+     &                        ad_ubar(:,:,Lnew), nl_ubar(:,:,Lwrk),     &
+     &                        ad_vbar(:,:,Lnew), nl_vbar(:,:,Lwrk),     &
+#endif
+     &                        ad_zeta(:,:,Lnew), nl_zeta(:,:,Lwrk))
+        ELSE
+!
+!  If not preconditioning, compute new dot product, <G(k+1), G(k+1)>.
+!
+          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NstateVar(ng), new_dot(0:),               &
+#ifdef MASKING
+     &                        rmask, umask, vmask,                      &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                        ad_ustr(:,:,Lnew), ad_ustr(:,:,Lnew),     &
+     &                        ad_vstr(:,:,Lnew), ad_vstr(:,:,Lnew),     &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                        ad_tflux(:,:,Lnew,:),                     &
+     &                        ad_tflux(:,:,Lnew,:),                     &
+# endif
+     &                        ad_t(:,:,:,Lnew,:), ad_t(:,:,:,Lnew,:),   &
+     &                        ad_u(:,:,:,Lnew), ad_u(:,:,:,Lnew),       &
+     &                        ad_v(:,:,:,Lnew), ad_v(:,:,:,Lnew),       &
+#else
+     &                        ad_ubar(:,:,Lnew), ad_ubar(:,:,Lnew),     &
+     &                        ad_vbar(:,:,Lnew), ad_vbar(:,:,Lnew),     &
+#endif
+     &                        ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
+        END IF
 !
 !  Compute conjugate direction coefficient, beta(k+1).
 !
@@ -616,45 +872,83 @@
         betaK=0.0_r8
       END IF
 !
-!  Compute new conjugate direction, d(k+1).
+!  If preconditioning, compute new conjugate direction, d(k+1).  Notice
+!  that the preconditined gradient is in NLM (index Lwrk) state arrays.
 !
-      CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    Lold, Lnew, betaK,                            &
+      IF (Lprecond) THEN
+        CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,          &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      Lold, Lwrk, betaK,                          &
 #ifdef MASKING
-     &                    rmask, umask, vmask,                          &
+     &                      rmask, umask, vmask,                        &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                    ad_ustr, ad_vstr,                             &
+     &                      nl_ustr, nl_vstr,                           &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                    ad_stflx,                                     &
+     &                      nl_tflux,                                   &
 # endif
-     &                    ad_t, ad_u, ad_v,                             &
+     &                      nl_t, nl_u, nl_v,                           &
 #else
-     &                    ad_ubar, ad_vbar,                             &
+     &                      nl_ubar, nl_vbar,                           &
 #endif
-     &                    ad_zeta,                                      &
+     &                      nl_zeta,                                    &
 #ifdef ADJUST_WSTRESS
-     &                    d_sustr, d_svstr,                             &
+     &                      d_sustr, d_svstr,                           &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                    d_stflx,                                      &
+     &                      d_stflx,                                    &
 # endif
-     &                    d_t, d_u, d_v,                                &
+     &                      d_t, d_u, d_v,                              &
 #else
-     &                    d_ubar, d_vbar,                               &
+     &                      d_ubar, d_vbar,                             &
 #endif
-     &                    d_zeta)
+     &                      d_zeta)
+!
+!  If not preconditioning, compute new conjugate direction, d(k+1).
+!
+      ELSE
+        CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,          &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      Lold, Lnew, betaK,                          &
+#ifdef MASKING
+     &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                      ad_ustr, ad_vstr,                           &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      ad_tflux,                                   &
+# endif
+     &                      ad_t, ad_u, ad_v,                           &
+#else
+     &                      ad_ubar, ad_vbar,                           &
+#endif
+     &                      ad_zeta,                                    &
+#ifdef ADJUST_WSTRESS
+     &                      d_sustr, d_svstr,                           &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      d_stflx,                                    &
+# endif
+     &                      d_t, d_u, d_v,                              &
+#else
+     &                      d_ubar, d_vbar,                             &
+#endif
+     &                      d_zeta)
+      END IF
 !
 !  Compute next iteration dot product, <d(k), G(k)>, using new d(k+1)
 !  and non-orthogonalized G(k+1) used to adjust cost function.
 !
       CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NstateVar(ng), FOURDVAR(ng)%CostGradDot(0:),  &
+     &                    NstateVar(ng),                                &
+     &                    FOURDVAR(ng)%CostGradDot(0:),                 &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
@@ -664,7 +958,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                    d_stflx, ad_stflx(:,:,:,Lold,:),              &
+     &                    d_stflx, ad_tflux(:,:,:,Lold,:),              &
 # endif
      &                    d_t, ad_t(:,:,:,Lold,:),                      &
      &                    d_u, ad_u(:,:,:,Lold),                        &
@@ -723,7 +1017,7 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        WRITE (stdout,20) outer,inner,tauK,alphaK,betaK,                &
+        WRITE (stdout,30) outer,inner,tauK,alphaK,betaK,                &
      &                    outer,MAX(0,inner-1),Adjust(0),               &
      &                    outer,inner,                                  &
      &                    'dot product',inner,inner,dot_old(0),'alpha', &
@@ -731,7 +1025,7 @@
      &                    'dot product',inner,inner,old_dot(0),'beta',  &
      &                    'dot product',inner+1,inner+1,new_dot(0),     &
      &                    'beta'
- 20     FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                           &
+ 30     FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                           &
      &          'tau = ',1p,e14.7,                                      &
      &          ', alpha = ',1p,e14.7,                                  &
      &          ', Beta = ',1p,e14.7,                                   &
@@ -1016,7 +1310,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                         ad_stflx,                                &
+     &                         ad_tflux,                                &
 # endif
      &                         ad_t, ad_u, ad_v,                        &
 #else
@@ -1047,7 +1341,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
@@ -1069,7 +1363,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -1222,13 +1516,13 @@
       DO itrc=1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            ad_stflx(i,j,Lnew,itrc)=ad_stflx(i,j,Lold,itrc)+            &
-     &                              fac*(ad_stflx(i,j,Lnew,itrc)-       &
-     &                                   ad_stflx(i,j,Lold,itrc))
+            ad_tflux(i,j,Lnew,itrc)=ad_tflux(i,j,Lold,itrc)+            &
+     &                              fac*(ad_tflux(i,j,Lnew,itrc)-       &
+     &                                   ad_tflux(i,j,Lold,itrc))
 #  ifdef MASKING
-            ad_stflx(i,j,Lnew,itrc)=ad_stflx(i,j,Lnew,itrc)*rmask(i,j)
+            ad_tflux(i,j,Lnew,itrc)=ad_tflux(i,j,Lnew,itrc)*rmask(i,j)
 #  endif
-            ad_stflx(i,j,Lold,itrc)=ad_stflx(i,j,Lnew,itrc)
+            ad_tflux(i,j,Lold,itrc)=ad_tflux(i,j,Lnew,itrc)
           END DO
         END DO
       END DO
@@ -1242,9 +1536,22 @@
       SUBROUTINE orthogonalize (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Lold, Lnew, Lwrk, Iter,                 &
+     &                          nConvRitz, Ritz,                        &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
 #endif
+#ifdef ADJUST_WSTRESS
+     &                          nl_ustr, nl_vstr,                       &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                          nl_tflux,                               &
+# endif
+     &                          nl_t, nl_u, nl_v,                       &
+#else
+     &                          nl_ubar, nl_vbar,                       &
+#endif
+     &                          nl_zeta,                                &
 #ifdef ADJUST_WSTRESS
      &                          tl_ustr, tl_vstr,                       &
 #endif
@@ -1262,7 +1569,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                          ad_stflx,                               &
+     &                          ad_tflux,                               &
 # endif
      &                          ad_t, ad_u, ad_v,                       &
 #else
@@ -1275,6 +1582,7 @@
       USE mod_parallel
       USE mod_fourdvar
       USE mod_iounits
+      USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -1282,6 +1590,9 @@
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Lwrk, Iter
+      integer, intent(in) :: nConvRitz
+!
+      real(r8), intent(in) :: Ritz(:)
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -1295,7 +1606,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
@@ -1305,6 +1616,22 @@
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: nl_vstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: nl_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: nl_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: nl_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:,LBj:,:)
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
@@ -1321,7 +1648,9 @@
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
 #else
+
 # ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
@@ -1333,7 +1662,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -1343,6 +1672,22 @@
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 # endif
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,2)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: nl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: nl_v(LBi:UBi,LBj:UBj,N(ng),2)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: nl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:UBi,LBj:UBj,3)
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
@@ -1364,10 +1709,13 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, lstr, rec
+      integer :: i, j, lstr, rec, Lscale
 #ifdef SOLVE3D
       integer :: itrc, k
 #endif
+      integer :: L1 = 1
+      integer :: L2 = 2
+
       real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
@@ -1400,12 +1748,36 @@
         END IF
 !
 !  Read in each previous gradient state solutions, G(0) to G(k), and
-!  compute its associated dot angaint curret G(k+1). Each gradient
-!  solution is loaded into TANGENT LINEAR STATE ARRAYS at index Lwrk.
+!  compute its associated dot against current G(k+1). Each gradient
+!  solution is loaded NLM (index L2, if preconditioning) or
+!  TLM (index Lwrk, if not preconditioning) state arrays.
 !
-        CALL get_gradient (ng, model, Istr, Iend, Jstr, Jend,           &
+        IF (Lprecond) THEN
+          CALL read_state (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     Lwrk, rec, ncname,                           &
+     &                     L2, rec,                                     &
+     &                     ndefADJ(ng), ncADJid(ng), ncname,            &
+#ifdef MASKING
+     &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                     nl_ustr, nl_vstr,                            &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     nl_tflux,                                    &
+# endif
+     &                     nl_t, nl_u, nl_v,                            &
+#else
+     &                     nl_ubar, nl_vbar,                            &
+#endif
+     &                     nl_zeta)
+!
+        ELSE
+          CALL read_state (ng, model, Istr, Iend, Jstr, Jend,           &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     Lwrk, rec,                                   &
+     &                     ndefADJ(ng), ncADJid(ng), ncname,            &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
 #endif
@@ -1414,15 +1786,48 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                     tl_stlfx,                                    &
+     &                     tl_tflux,                                    &
 # endif
      &                     tl_t, tl_u, tl_v,                            &
 #else
      &                     tl_ubar, tl_vbar,                            &
 #endif
      &                     tl_zeta)
+        END IF
 !
-!  Compute dot product <G(k+1), G(rec)>.
+!  If preconditioning, compute  H^-1 * G(rec) and store it TLM state
+!  arrays (index Lwrk).
+!
+        IF (Lprecond) THEN
+          Lscale=-1
+          CALL precond (ng, model, Istr, Iend, Jstr, Jend,              &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NstateVar(ng), L2, Lwrk, Lscale,                 &
+     &                  nConvRitz, Ritz,                                &
+#ifdef MASKING
+     &                  rmask, umask, vmask,                            &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                  nl_ustr, nl_ustr, tl_ustr,                      &
+     &                  nl_vstr, nl_vstr, tl_vstr,                      &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                  nl_tflux, nl_tflux, tl_tflux,                   &
+# endif 
+     &                  nl_t, nl_t, tl_t,                               &
+     &                  nl_u, nl_u, tl_u,                               &
+     &                  nl_v, nl_v, tl_v,                               &
+#else
+     &                  nl_ubar, nl_ubar, tl_ubar,                      &
+     &                  nl_vbar, nl_vbar, tl_vbar,                      &
+#endif
+     &                  nl_zeta, nl_zeta, tl_zeta)
+        END IF
+!
+!  If preconditioning, compute dot product <G(k+1), H^-1 G(rec)>.
+!  Otherwise, compute <G(k+1), G(rec)>. Recall that the TLM
+!  (index Lwrk) contains either H^-1 G(rec) or G(rec).
 !
         CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -1436,7 +1841,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      ad_stflx(:,:,Lnew,:), tl_tflux(:,:,Lwrk,:), &
+     &                      ad_tflux(:,:,Lnew,:), tl_tflux(:,:,Lwrk,:), &
 # endif
      &                      ad_t(:,:,:,Lnew,:), tl_t(:,:,:,Lwrk,:),     &
      &                      ad_u(:,:,:,Lnew), tl_u(:,:,:,Lwrk),         &
@@ -1448,62 +1853,122 @@
      &                      ad_zeta(:,:,Lnew), tl_zeta(:,:,Lwrk))
         dot_new(rec)=dot(0)
 !
-!  Compute dot product <G(rec), G(rec)>.
+!  If preconditioning, compute dot product <G(rec), H^-1 * G(rec)>.
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NstateVar(ng), dot(0:),                     &
+        IF (Lprecond) THEN
+          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NstateVar(ng), dot(0:),                   &
 #ifdef MASKING
-     &                      rmask, umask, vmask,                        &
+     &                        rmask, umask, vmask,                      &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                      tl_ustr(:,:,Lwrk), tl_ustr(:,:,Lwrk),       &
-     &                      tl_vstr(:,:,Lwrk), tl_vstr(:,:,Lwrk),       &
+     &                        nl_ustr(:,:,L2), tl_ustr(:,:,Lwrk),       &
+     &                        nl_vstr(:,:,L2), tl_vstr(:,:,Lwrk),       &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      tl_tflux(:,:,Lwrk,:), tl_tflux(:,:,Lwrk,:), &
+     &                        nl_tflux(:,:,L2,:), tl_tflux(:,:,Lwrk,:), &
 # endif
-     &                      tl_t(:,:,:,Lwrk,:), tl_t(:,:,:,Lwrk,:),     &
-     &                      tl_u(:,:,:,Lwrk), tl_u(:,:,:,Lwrk),         &
-     &                      tl_v(:,:,:,Lwrk), tl_v(:,:,:,Lwrk),         &
+     &                        nl_t(:,:,:,L2,:), tl_t(:,:,:,Lwrk,:),     &
+     &                        nl_u(:,:,:,L2), tl_u(:,:,:,Lwrk),         &
+     &                        nl_v(:,:,:,L2), tl_v(:,:,:,Lwrk),         &
 #else
-     &                      tl_ubar(:,:,Lwrk), tl_ubar(:,:,Lwrk),       &
-     &                      tl_vbar(:,:,Lwrk), tl_vbar(:,:,Lwrk),       &
+     &                        nl_ubar(:,:,L2), tl_ubar(:,:,Lwrk),       &
+     &                        nl_vbar(:,:,L2), tl_vbar(:,:,Lwrk),       &
 #endif
-     &                      tl_zeta(:,:,Lwrk), tl_zeta(:,:,Lwrk))
+     &                        nl_zeta(:,:,L2), tl_zeta(:,:,Lwrk))
+!
+!  Otherwise, compute dot product <G(rec), G(rec)>.
+!
+        ELSE
+          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NstateVar(ng), dot(0:),                   &
+#ifdef MASKING
+     &                        rmask, umask, vmask,                      &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                        tl_ustr(:,:,Lwrk), tl_ustr(:,:,Lwrk),     &
+     &                        tl_vstr(:,:,Lwrk), tl_vstr(:,:,Lwrk),     &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                        tl_tflux(:,:,Lwrk,:),tl_tflux(:,:,Lwrk,:),&
+# endif
+     &                        tl_t(:,:,:,Lwrk,:), tl_t(:,:,:,Lwrk,:),   &
+     &                        tl_u(:,:,:,Lwrk), tl_u(:,:,:,Lwrk),       &
+     &                        tl_v(:,:,:,Lwrk), tl_v(:,:,:,Lwrk),       &
+#else
+     &                        tl_ubar(:,:,Lwrk), tl_ubar(:,:,Lwrk),     &
+     &                        tl_vbar(:,:,Lwrk), tl_vbar(:,:,Lwrk),     &
+#endif
+     &                        tl_zeta(:,:,Lwrk), tl_zeta(:,:,Lwrk))
+        END IF
         dot_old(rec)=dot(0)
 !
 !  Compute Gramm-Schmidt scaling coefficient.
 !
         DotProd(rec)=dot_new(rec)/dot_old(rec)
-!
-!  Gramm-Schmidt orthonormalization, 2D state gradient.
-!
+
         fac1=1.0_r8
         fac2=-DotProd(rec)
-
-        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
+!
+!  If preconditioning, perform Gramm-Schmidt orthonormalization as:
+!
+!    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * nl_var(L2)
+!
+        IF (Lprecond) THEN
+          CALL state_addition (ng, Istr, Iend, Jstr, Jend,              &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         Lnew, L2, Lnew, fac1, fac2,              &
 #ifdef MASKING
-     &                       rmask, umask, vmask,                       &
+     &                         rmask, umask, vmask,                     &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                       ad_ustr, tl_vstr,                          &
+     &                         ad_ustr, nl_ustr,                        &
+     &                         ad_vstr, nl_vstr,                        &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                       ad_stflx, tl_tflux,                        &
+     &                         ad_tflux, nl_tflux,                      &
 # endif
-     &                       ad_t, tl_t,                                &
-     &                       ad_u, tl_u,                                &
-     &                       ad_v, tl_v,                                &
+     &                         ad_t, nl_t,                              &
+     &                         ad_u, nl_u,                              &
+     &                         ad_v, nl_v,                              &
 #else
-     &                       ad_ubar, tl_ubar,                          &
-     &                       ad_vbar, tl_vbar,                          &
+     &                         ad_ubar, nl_ubar,                        &
+     &                         ad_vbar, nl_vbar,                        &
 #endif
-     &                       ad_zeta, tl_zeta)
+     &                         ad_zeta, nl_zeta)
+!
+!  If not preconditioning, perform Gramm-Schmidt orthonormalization as:
+!
+!    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
+!
+        ELSE
+          CALL state_addition (ng, Istr, Iend, Jstr, Jend,              &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         Lnew, Lwrk, Lnew, fac1, fac2,            &
+#ifdef MASKING
+     &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                         ad_ustr, tl_vstr,                        &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                         ad_tflux, tl_tflux,                      &
+# endif
+     &                         ad_t, tl_t,                              &
+     &                         ad_u, tl_u,                              &
+     &                         ad_v, tl_v,                              &
+#else
+     &                         ad_ubar, tl_ubar,                        &
+     &                         ad_vbar, tl_vbar,                        &
+#endif
+     &                         ad_zeta, tl_zeta)
+        END IF
       END DO
 
 #ifdef TEST_ORTHOGONALIZATION
@@ -1528,24 +1993,25 @@
 !  each gradient solution is loaded into TANGENT LINEAR STATE ARRAYS
 !  at index Lwrk.
 !
-        CALL get_gradient (ng, model, Istr, Iend, Jstr, Jend,           &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     Lwrk, rec, ncname,                           &
+        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Lwrk, rec,                                     &
+     &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 #ifdef MASKING
-     &                     rmask, umask, vmask,                         &
+     &                   rmask, umask, vmask,                           &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                     tl_ustr, tl_vstr,                            &
+     &                   tl_ustr, tl_vstr,                              &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                     tl_stlfx,                                    &
+     &                   tl_stlfx,                                      &
 # endif
-     &                     tl_t, tl_u, tl_v,                            &
+     &                   tl_t, tl_u, tl_v,                              &
 #else
-     &                     tl_ubar, tl_vbar,                            &
+     &                   tl_ubar, tl_vbar,                              &
 #endif
-     &                     tl_zeta)
+     &                   tl_zeta)
 !
         CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -1559,7 +2025,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      ad_stflx(:,:,Lnew,:), tl_tflux(:,:,Lwrk,:), &
+     &                      ad_tflux(:,:,Lnew,:), tl_tflux(:,:,Lwrk,:), &
 # endif
      &                      ad_t(:,:,:,Lnew,:), tl_t(:,:,:,Lwrk,:),     &
      &                      ad_u(:,:,:,Lnew), tl_u(:,:,:,Lwrk),         &
@@ -1597,360 +2063,12 @@
 
       RETURN
       END SUBROUTINE orthogonalize
-!
-!***********************************************************************
-      SUBROUTINE get_gradient (ng, model, Istr, Iend, Jstr, Jend,       &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         Lwrk, rec, ncname,                       &
-#ifdef MASKING
-     &                         rmask, umask, vmask,                     &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                         s_ustr, s_vstr,                          &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                         s_tflux,                                 &
-# endif
-     &                         s_t, s_u, s_v,                           &
-#else
-     &                         s_ubar, s_vbar,                          &
-#endif
-     &                         s_zeta)
-!***********************************************************************
-!
-      USE mod_param
-      USE mod_parallel
-      USE mod_iounits
-      USE mod_ncparam
-      USE mod_netcdf
-      USE mod_scalars
-!
-!  Imported variable declarations.
-!
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lwrk, rec
 
-      character (len=*), intent(in) :: ncname
-!
-#ifdef ASSUMED_SHAPE
-# ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:,LBj:)
-      real(r8), intent(in) :: umask(LBi:,LBj:)
-      real(r8), intent(in) :: vmask(LBi:,LBj:)
-# endif
-# ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: s_vstr(LBi:,LBj:,:)
-# endif
-# ifdef SOLVE3D
-#  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s_tflux(LBi:,LBj:,:,:)
-#  endif
-      real(r8), intent(inout) :: s_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(inout) :: s_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: s_v(LBi:,LBj:,:,:)
-# else
-      real(r8), intent(inout) :: s_ubar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: s_vbar(LBi:,LBj:,:)
-# endif
-      real(r8), intent(inout) :: s_zeta(LBi:,LBj:,:)
-#else
-# ifdef MASKING
-      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-# endif
-# ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: s_vstr(LBi:UBi,LBj:UBj,2)
-# endif
-# ifdef SOLVE3D
-#  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
-#  endif
-      real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-      real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: s_v(LBi:UBi,LBj:UBj,N(ng))
-# else
-      real(r8), intent(inout) :: s_ubar(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: s_vbar(LBi:UBi,LBj:UBj)
-# endif
-      real(r8), intent(inout) :: s_zeta(LBi:UBi,LBj:UBj)
-#endif
-!
-!  Local variable declarations.
-!
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
-#ifdef SOLVE3D
-      integer :: itrc, k
-#endif
-      integer :: ncid, status
-      integer, dimension(NV) :: vid
-      integer, dimension(4) :: Vsize
-
-      integer :: nf_fread2d
-#ifdef SOLVE3D
-      integer :: nf_fread3d
-#endif
-
-      real(r8) :: Fmin, Fmax, scale
-
-#include "set_bounds.h"
-!
-!-----------------------------------------------------------------------
-!  Read in requested gradient record. Load gradient solution into
-!  tangent linear state arrays at index Lwrk.
-!-----------------------------------------------------------------------
-!
-!  Determine file and variables ids.
-!
-      IF (ndefADJ(ng).gt.0) THEN
-        IF (InpThread) THEN
-          status=nf_open(TRIM(ncname), nf_nowrite, ncid)
-          IF (status.ne.nf_noerr) THEN
-            WRITE (stdout,10) TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF            
-#ifdef ADJUST_WSTRESS
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
-#endif
-#ifdef SOLVE3D
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
-          DO itrc=1,NT(ng)
-            status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),      &
-     &                          vid(idTvar(itrc)))
-# ifdef ADJUST_STFLUX
-            status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),      &
-     &                          vid(idTsur(itrc)))
-# endif
-          END DO
-#else
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
-#endif
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
-        END IF
-      ELSE
-        ncid=ncADJid(ng)
-#ifdef ADJUST_WSTRESS
-        vid(idUsms)=adjVid(idUsms,ng)
-        vid(idVsms)=adjVid(idVsms,ng)
-#endif
-#ifdef SOLVE3D
-        vid(idUvel)=adjVid(idUvel,ng)
-        vid(idVvel)=adjVid(idVvel,ng)
-        DO itrc=1,NT(ng)
-          vid(idTvar(itrc))=adjTid(itrc,ng)
-# ifdef ADJUST_STFLUX
-          vid(idTsur(itrc))=adjVid(idTsur(itrc),ng)
-# endif
-        END DO
-#else
-        vid(idUbar)=adjVid(idUbar,ng)
-        vid(idVbar)=adjVid(idVbar,ng)
-#endif
-        vid(idFsur)=adjVid(idFsur,ng)
-      END IF
-      DO i=1,4
-        Vsize(i)=0
-      END DO
-      scale=1.0_r8
-!
-!  Read in free-surface.
-!
-      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, r2dvar,       &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
-     &                  scale, Fmin, Fmax,                              &
-#ifdef MASKING
-     &                  rmask(LBi,LBj),                                 &
-#endif
-     &                  s_zeta(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idFsur)), rec, TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
-
-#ifndef SOLVE3D
-!
-!  Read in 2D momentum.
-!
-      status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, u2dvar,       &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
-     &                  scale, Fmin, Fmax,                              &
-# ifdef MASKING
-     &                  umask(LBi,LBj),                                 &
-# endif
-     &                  s_ubar(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idUbar)), rec, TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
-      status=nf_fread2d(ng, iTLM, ncid, vid(idVbar), rec, v2dvar,       &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
-     &                  scale, Fmin, Fmax,                              &
-# ifdef MASKING
-     &                  vmask(LBi,LBj),                                 &
-# endif
-     &                  s_vbar(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idVbar)), rec, TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
-#endif
-
-#ifdef ADJUST_WSTRESS
-!
-!  Read in surface momentum stress.
-!
-      status=nf_fread2d(ng, iTLM, ncid, vid(idUsms), rec, u2dvar,       &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
-     &                  scale, Fmin, Fmax,                              &
-# ifdef MASKING
-     &                  umask(LBi,LBj),                                 &
-# endif
-     &                  s_ustr(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idUsms)), rec, TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
-      status=nf_fread2d(ng, iTLM, ncid, vid(idVsms), rec, v2dvar,       &
-     &                  Vsize, LBi, UBi, LBj, UBj,                      &
-     &                  scale, Fmin, Fmax,                              &
-# ifdef MASKING
-     &                  vmask(LBi,LBj),                                 &
-# endif
-     &                  s_vstr(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idVsms)), rec, TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
-#endif
-
-#ifdef SOLVE3D
-!
-!  Read in 3D momentum.
-!
-      status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, u3dvar,       &
-     &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
-     &                  scale, Fmin, Fmax,                              &
-# ifdef MASKING
-     &                  umask(LBi,LBj),                                 &
-# endif
-     &                  s_u(LBi,LBj,1,Lwrk))
-      IF (status.ne.nf_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idUvel)), rec, TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
-      status=nf_fread3d(ng, iTLM, ncid, vid(idVvel), rec, v3dvar,       &
-     &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
-     &                  scale, Fmin, Fmax,                              &
-# ifdef MASKING
-     &                  vmask(LBi,LBj),                                 &
-# endif
-     &                  s_v(LBi,LBj,1,Lwrk))
-      IF (status.ne.nf_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,20) TRIM(Vname(1,idVvel)), rec, TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
-!
-!  Read in tracers.
-!
-      DO itrc=1,NT(ng)
-        status=nf_fread3d(ng, iTLM, ncid, vid(idTvar(itrc)), rec,       &
-     &                    r3dvar, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),  &
-     &                    scale, Fmin, Fmax,                            &
-# ifdef MASKING
-     &                    rmask(LBi,LBj),                               &
-# endif
-     &                    s_t(LBi,LBj,1,Lwrk,itrc))
-        IF (status.ne.nf_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))), rec,         &
-     &                        TRIM(ncname)
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END DO
-
-# ifdef ADJUST_STFLUX
-!
-!  Read in surface tracers flux.
-!
-      DO itrc=1,NT(ng)
-        status=nf_fread2d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
-     &                    r3dvar, Vsize, LBi, UBi, LBj, UBj,            &
-     &                    scale, Fmin, Fmax,                            &
-#  ifdef MASKING
-     &                    rmask(LBi,LBj),                               &
-#  endif
-     &                    s_tflux(LBi,LBj,Lwrk,itrc))
-        IF (status.ne.nf_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,         &
-     &                        TRIM(ncname)
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END DO
-# endif
-#endif
-!
-!  If multiple files, close adjoint history file.
-!
-      IF (ndefADJ(ng).gt.0) THEN
-        status=nf_close(ncid)
-      END IF
-!
- 10   FORMAT (' GET_GRADIENT - unable to open NetCDF file: ',a)
- 20   FORMAT (' GET_GRADIENT - error while reading variable: ',a,2x,    &
-     &        'at time record = ',i3,/,16x,'in NetCDF file: ',a)
-
-      RETURN
-      END SUBROUTINE get_gradient
 !
 !***********************************************************************
       SUBROUTINE new_direction (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          Lold, Lnew, betaK,                      &
+     &                          Lwrk, Lnew, betaK,                      &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
 #endif
@@ -1959,7 +2077,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                          ad_stflx,                               &
+     &                          ad_tflux,                               &
 # endif
      &                          ad_t, ad_u, ad_v,                       &
 #else
@@ -1987,7 +2105,7 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew
+      integer, intent(in) :: Lwrk, Lnew
 
       real(r8), intent(in) :: betaK      
 !
@@ -2003,7 +2121,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
@@ -2041,7 +2159,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -2186,7 +2304,7 @@
       DO itrc=1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            d_stflx(i,j,itrc)=-ad_stflx(i,j,Lnew,itrc)+                 &
+            d_stflx(i,j,itrc)=-ad_tflux(i,j,Lnew,itrc)+                 &
      &                        betaK*d_stflx(i,j,itrc)
 #  ifdef MASKING
             d_stflx(i,j,itrc)=d_stflx(i,j,itrc)*rmask(i,j)
@@ -2199,3 +2317,650 @@
 
       RETURN
       END SUBROUTINE new_direction
+
+!
+!**********************************************************************
+      SUBROUTINE precond (ng, model, Istr, Iend, Jstr, Jend,            &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NstateVars, Linp, Lwrk, Lscale,               &
+     &                    nConvRitz, Ritz,                              &
+#ifdef MASKING
+     &                    rmask, umask, vmask,                          &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                    ad_ustr, nl_ustr, tl_ustr,                    &
+     &                    ad_vstr, nl_vstr, tl_vstr,                    &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                    ad_tflux, nl_tflux, tl_tflux,                 &
+# endif
+     &                    ad_t, nl_t, tl_t,                             &
+     &                    ad_u, nl_u, tl_u,                             &
+     &                    ad_v, nl_v, tl_v,                             &
+#else
+     &                    ad_ubar, nl_ubar, tl_ubar,                    &
+     &                    ad_vbar, nl_vbar, tl_vbar,                    &
+#endif
+     &                    ad_zeta, nl_zeta, tl_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_iounits
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_reduce
+#endif
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: NstateVars, Linp, Lwrk, Lscale
+      integer, intent(in) :: nConvRitz
+!
+      real(r8), intent(in) :: Ritz(:)
+!
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+#ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:)
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: ad_tflux(LBi:,LBj:,:,:)
+# endif
+      real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
+#else
+      real(r8), intent(in) :: ad_ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: ad_vbar(LBi:,LBj:,:)
+#endif
+      real(r8), intent(in) :: ad_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: nl_vstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: nl_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: nl_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: nl_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+
+#else
+
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+#ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_sustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: ad_svstr(LBi:UBi,LBj:UBj,2)
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: ad_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+# endif
+      real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
+#else
+      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+#endif
+      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,2)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: nl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: nl_v(LBi:UBi,LBj:UBj,N(ng),2)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: nl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:UBi,LBj:UBj,3)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+      real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+# else
+      real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+#endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: NSUB, i, j, L1, L2, nvec
+#ifdef SOLVE3D
+      integer :: itrc, k
+#endif
+      real(r8) :: cff, fac, fac1, fac2
+      real(r8), dimension(0:NstateVars) :: Dotprod
+#ifdef DISTRIBUTE
+      character (len=3) :: op_handle
+#endif
+
+#include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Apply the preconditioner. The approximated Hessian matrix is computed
+!  from the eigenvectors computed by the Lanczos algorithm which are
+!  stored in HSSname NetCDF file.
+!-----------------------------------------------------------------------
+!
+!  Copy ad_var(Linp) into tl_var(Lwrk)
+!
+      CALL state_copy (ng, Istr, Iend, Jstr, Jend,                      &
+     &                 LBi, UBi, LBj, UBj,                              &
+     &                 Linp, Lwrk,                                      &
+#ifdef ADJUST_WSTRESS
+     &                 tl_ustr, ad_ustr,                                &
+     &                 tl_vstr, ad_vstr,                                &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                 tl_tflux, ad_tflux,                              &
+# endif
+     &                 tl_t, ad_t,                                      &
+     &                 tl_u, ad_u,                                      &
+     &                 tl_v, ad_v,                                      &
+#else
+     &                 tl_ubar, ad_ubar,                                &
+     &                 tl_vbar, ad_vbar,                                &
+#endif
+     &                 tl_zeta, ad_zeta)
+!
+!  Read the converged Hessian eigenvectors into NLM state array, 
+!  index L1.
+!
+      DO nvec=1,nConvRitz
+        L1=1
+        L2=2
+        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   L1, nvec,                                      &
+     &                   0, ncHSSid(ng), HSSname(ng),                   &
+#ifdef MASKING
+     &                   rmask, umask, vmask,                           &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                   nl_ustr, nl_vstr,                              &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                   nl_tflux,                                      &
+# endif
+     &                   nl_t, nl_u, nl_v,                              &
+#else
+     &                   nl_ubar, nl_vbar,                              &
+#endif
+     &                   nl_zeta)
+!
+!  Compute dot product between gradient and Hessian eigenvector.
+!
+        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NstateVars, Dotprod(0:),                    &
+#ifdef MASKING
+     &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                      ad_ustr(:,:,Linp), nl_ustr(:,:,L1),         &
+     &                      ad_vstr(:,:,Linp), nl_vstr(:,:,L1),         &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      ad_tflux(:,:,Linp,:), nl_tflux(:,:,L1,:),   &
+# endif
+     &                      ad_t(:,:,:,Linp,:), nl_t(:,:,:,L1,:),       &
+     &                      ad_u(:,:,:,Linp), nl_u(:,:,:,L1),           &
+     &                      ad_v(:,:,:,Linp), nl_v(:,:,:,L1),           &
+#else
+     &                      ad_ubar(:,:,Linp), nl_ubar(:,:,L1),         &
+     &                      ad_vbar(:,:,Linp), nl_vbar(:,:,L1),         &
+#endif
+     &                      ad_zeta(:,:,Linp), nl_zeta(:,:,L1))
+!
+!    Lscale determines the form of the preconditioner:
+!
+!       1= Hessian
+!      -1= Inverse Hessian
+!       2= Hessian square root
+!      -2= Inverse Hessian square root
+!      
+!    tl_var(Lwrk) = fac1 * tl_var(Lwrk) + fac2 * nl_var(L1)
+!
+        fac1=1.0_r8
+
+        IF (Lscale.eq.1) THEN
+          fac2=(Ritz(nvec)-1.0_r8)*Dotprod(0)
+        ELSE IF (Lscale.eq.-1) THEN
+          fac2=(1.0_r8/Ritz(nvec)-1.0_r8)*Dotprod(0)
+        ELSE IF (Lscale.eq.1) THEN
+          fac2=(SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
+        ELSE IF (Lscale.eq.-1) THEN
+          fac2=(1.0_r8/SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
+        END IF
+
+        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Lwrk, L1, Lwrk, fac1, fac2,                &
+#ifdef MASKING
+     &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                       tl_ustr, nl_ustr,                          &
+     &                       tl_vstr, nl_vstr,                          &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                       tl_tflux, nl_tflux,                        &
+# endif
+     &                       tl_t, nl_t,                                &
+     &                       tl_u, nl_u,                                &
+     &                       tl_v, nl_v,                                &
+#else
+     &                       tl_ubar, nl_ubar,                          &
+     &                       tl_vbar, nl_vbar,                          &
+#endif
+     &                       tl_zeta, nl_zeta)
+      END DO
+
+      RETURN
+      END SUBROUTINE precond
+!
+!***********************************************************************
+      SUBROUTINE read_state (ng, model, Istr, Iend, Jstr, Jend,         &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Lwrk, rec,                                 &
+     &                       ndef, ncfileid, ncname,                    &
+#ifdef MASKING
+     &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                       s_ustr, s_vstr,                            &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                       s_tflux,                                   &
+# endif
+     &                       s_t, s_u, s_v,                             &
+#else
+     &                       s_ubar, s_vbar,                            &
+#endif
+     &                       s_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Lwrk, rec, ndef, ncfileid
+
+      character (len=*), intent(in) :: ncname
+!
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s_vstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s_tflux(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: s_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: s_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: s_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: s_zeta(LBi:,LBj:,:)
+#else
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s_ubar(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: s_vbar(LBi:UBi,LBj:UBj,2)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+      real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: s_v(LBi:UBi,LBj:UBj,N(ng),2)
+# else
+      real(r8), intent(inout) :: s_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: s_vbar(LBi:UBi,LBj:UBj,3)
+# endif
+      real(r8), intent(inout) :: s_zeta(LBi:UBi,LBj:UBj,3)
+#endif
+!
+!  Local variable declarations.
+!
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j
+#ifdef SOLVE3D
+      integer :: itrc, k
+#endif
+      integer :: gtype, ncid, status
+      integer, dimension(NV) :: vid
+      integer, dimension(4) :: Vsize
+
+      integer :: nf_fread2d
+#ifdef SOLVE3D
+      integer :: nf_fread3d
+#endif
+
+      real(r8) :: Fmin, Fmax, scale
+
+#include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Read in requested model state record. Load data into state array
+!  index Lwrk.
+!-----------------------------------------------------------------------
+!
+!  Determine file and variables ids.
+!
+      IF (ndef.gt.0) THEN
+        IF (InpThread) THEN
+          status=nf_open(TRIM(ncname), nf_nowrite, ncid)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) TRIM(ncname)
+            exit_flag=2
+            ioerror=status
+            RETURN
+          END IF            
+        END IF
+      ELSE
+        ncid=ncfileid
+      END IF
+#ifndef SOLVE3D
+      status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
+      status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
+#endif
+      status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
+#ifdef ADJUST_WSTRESS
+      status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
+      status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
+#endif
+#ifdef SOLVE3D
+      status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
+      status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
+      DO itrc=1,NT(ng)
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),          &
+     &                      vid(idTvar(itrc)))
+# ifdef ADJUST_STFLUX
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),          &
+     &                      vid(idTsur(itrc)))
+# endif
+      END DO
+#endif
+      DO i=1,4
+        Vsize(i)=0
+      END DO
+      scale=1.0_r8
+!
+!  Read in free-surface.
+!
+      gtype=r2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, gtype,        &
+     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+     &                  scale, Fmin, Fmax,                              &
+#ifdef MASKING
+     &                  rmask(LBi,LBj),                                 &
+#endif
+     &                  s_zeta(LBi,LBj,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idFsur)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+
+#ifndef SOLVE3D
+!
+!  Read in 2D momentum.
+!
+      gtype=u2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, gtype,        &
+     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+     &                  scale, Fmin, Fmax,                              &
+# ifdef MASKING
+     &                  umask(LBi,LBj),                                 &
+# endif
+     &                  s_ubar(LBi,LBj,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idUbar)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+
+      gtype=v2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idVbar), rec, gtype,        &
+     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+     &                  scale, Fmin, Fmax,                              &
+# ifdef MASKING
+     &                  vmask(LBi,LBj),                                 &
+# endif
+     &                  s_vbar(LBi,LBj,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idVbar)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+#endif
+
+#ifdef ADJUST_WSTRESS
+!
+!  Read surface momentum stress.
+!
+      gtype=u2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idUsms), rec, gtype,        &
+     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+     &                  scale, Fmin, Fmax,                              &
+# ifdef MASKING
+     &                  umask(LBi,LBj),                                 &
+# endif
+     &                  s_ustr(LBi,LBj,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idUsms)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+
+      gtype=v2dvar
+      status=nf_fread2d(ng, iTLM, ncid, vid(idVsms), rec, gtype,        &
+     &                  Vsize, LBi, UBi, LBj, UBj,                      &
+     &                  scale, Fmin, Fmax,                              &
+# ifdef MASKING
+     &                  vmask(LBi,LBj),                                 &
+# endif
+     &                  s_vstr(LBi,LBj,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idVsms)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+#endif
+
+#ifdef SOLVE3D
+!
+!  Read in 3D momentum.
+!
+      gtype=u3dvar
+      status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, gtype,        &
+     &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
+     &                  scale, Fmin, Fmax,                              &
+# ifdef MASKING
+     &                  umask(LBi,LBj),                                 &
+# endif
+     &                  s_u(LBi,LBj,1,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idUvel)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+
+      gtype=v3dvar
+      status=nf_fread3d(ng, iTLM, ncid, vid(idVvel), rec, gtype,        &
+     &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
+     &                  scale, Fmin, Fmax,                              &
+# ifdef MASKING
+     &                  vmask(LBi,LBj),                                 &
+# endif
+     &                  s_v(LBi,LBj,1,Lwrk))
+      IF (status.ne.nf_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,20) TRIM(Vname(1,idVvel)), rec, TRIM(ncname)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Read in tracers.
+!
+      gtype=r3dvar
+      DO itrc=1,NT(ng)
+        status=nf_fread3d(ng, iTLM, ncid, vid(idTvar(itrc)), rec,       &
+     &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),   &
+     &                    scale, Fmin, Fmax,                            &
+# ifdef MASKING
+     &                    rmask(LBi,LBj),                               &
+# endif
+     &                    s_t(LBi,LBj,1,Lwrk,itrc))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))), rec,         &
+     &                        TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+
+# ifdef ADJUST_STFLUX
+!
+!  Read in surface tracers flux.
+!
+      gtype=r2dvar
+      DO itrc=1,NT(ng)
+        status=nf_fread2d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
+     &                    gtype, Vsize, LBi, UBi, LBj, UBj,             &
+     &                    scale, Fmin, Fmax,                            &
+#  ifdef MASKING
+     &                    rmask(LBi,LBj),                               &
+#  endif
+     &                    s_tflux(LBi,LBj,Lwrk,itrc))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,         &
+     &                        TRIM(ncname)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+# endif
+#endif
+!
+!  If multiple files, close current file.
+!
+      IF (ndef.gt.0) THEN
+        status=nf_close(ncid)
+      END IF
+!
+ 10   FORMAT (' READ_STATE - unable to open NetCDF file: ',a)
+ 20   FORMAT (' READ_STATE - error while reading variable: ',a,2x,      &
+     &        'at time record = ',i3,/,16x,'in NetCDF file: ',a)
+
+      RETURN
+      END SUBROUTINE read_state

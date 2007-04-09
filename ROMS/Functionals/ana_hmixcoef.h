@@ -1,12 +1,11 @@
-#include "cppdefs.h"
-      MODULE horz_mix_mod
+      SUBROUTINE ana_hmixcoef (ng, tile, model)
 !
-!svn $Id$
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!=======================================================================
+!! svn $Id$
+!!================================================= Hernan G. Arango ===
+!! Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!!   Licensed under a MIT/X style license                              !
+!!   See License_ROMS.txt                                              !
+!!======================================================================
 !                                                                      !
 !  This routine rescales horizontal mixing coefficients according      !
 !  to the grid size.  Also,  if applicable,  increases horizontal      !
@@ -18,14 +17,6 @@
 !             to harmonic operator.                                    !
 !                                                                      !
 !=======================================================================
-!
-      implicit none
-      
-      CONTAINS
-!
-!***********************************************************************
-      SUBROUTINE horz_mix (ng, tile, model)
-!***********************************************************************
 !
       USE mod_param
       USE mod_grid
@@ -40,50 +31,50 @@
 !
 #include "tile.h"
 
-      CALL horz_mix_tile (ng, model, Istr, Iend, Jstr, Jend,            &
-     &                    LBi, UBi, LBj, UBj,                           &
+      CALL ana_hmixcoef_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+     &                        LBi, UBi, LBj, UBj,                       &
 #ifdef SOLVE3D
 # ifdef TS_DIF2
-     &                    MIXING(ng) % diff2,                           &
+     &                        MIXING(ng) % diff2,                       &
 # endif
 # ifdef TS_DIF4
-     &                    MIXING(ng) % diff4,                           &
+     &                        MIXING(ng) % diff4,                       &
 # endif
 #endif
 #ifdef UV_VIS2
-     &                    MIXING(ng) % visc2_p,                         &
-     &                    MIXING(ng) % visc2_r,                         &
+     &                        MIXING(ng) % visc2_p,                     &
+     &                        MIXING(ng) % visc2_r,                     &
 #endif
 #ifdef UV_VIS4
-     &                    MIXING(ng) % visc4_p,                         &
-     &                    MIXING(ng) % visc4_r,                         &
+     &                        MIXING(ng) % visc4_p,                     &
+     &                        MIXING(ng) % visc4_r,                     &
 #endif
-     &                    GRID(ng) % grdscl,                            &
-     &                    GRID(ng) % xr,                                &
-     &                    GRID(ng) % yr)
+     &                        GRID(ng) % grdscl,                        &
+     &                        GRID(ng) % xr,                            &
+     &                        GRID(ng) % yr)
       RETURN
-      END SUBROUTINE horz_mix
+      END SUBROUTINE ana_hmixcoef
 !
 !***********************************************************************
-      SUBROUTINE horz_mix_tile (ng, model, Istr, Iend, Jstr, Jend,      &
-     &                          LBi, UBi, LBj, UBj,                     &
+      SUBROUTINE ana_hmixcoef_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+     &                              LBi, UBi, LBj, UBj,                 &
 #ifdef SOLVE3D
 # ifdef TS_DIF2
-     &                          diff2,                                  &
+     &                              diff2,                              &
 # endif
 # ifdef TS_DIF4
-     &                          diff4,                                  &
+     &                              diff4,                              &
 # endif
 #endif
 #ifdef UV_VIS2
-     &                          visc2_p,                                &
-     &                          visc2_r,                                &
+     &                              visc2_p,                            &
+     &                              visc2_r,                            &
 #endif
 #ifdef UV_VIS4
-     &                          visc4_p,                                &
-     &                          visc4_r,                                &
+     &                              visc4_p,                            &
+     &                              visc4_r,                            &
 #endif
-     &                          grdscl, xr, yr)
+     &                              grdscl, xr, yr)
 !***********************************************************************
 !
       USE mod_param
@@ -172,6 +163,9 @@
 !  Scale horizontal viscosity according to the grid size.
 !-----------------------------------------------------------------------
 !
+!! WARNING:  This section is generic for all applications. Please do not
+!!           change the code below.
+!!            
 # ifdef UV_VIS2
       cff=visc2(ng)/grdmax(ng)
       DO j=JstrR,JendR
@@ -209,6 +203,9 @@
 !  Scale horizontal diffusion according to the grid size.
 !-----------------------------------------------------------------------
 !
+!! WARNING:  This section is generic for all applications. Please do not
+!!           change the code below.
+!!            
 # ifdef TS_DIF2
       DO itrc=1,NT(ng)
         cff=tnu2(itrc,ng)/grdmax(ng)
@@ -236,7 +233,11 @@
 !  Increase horizontal mixing in the sponge areas.
 !-----------------------------------------------------------------------
 !
-# if defined ADRIATIC1
+!! User modifiable section.  Please specify the appropiate sponge area
+!! by increasing its horizontal mixing coefficients.
+!!            
+
+# if defined ADRIA02
 !
 !  Adriatic Sea southern sponge areas.
 !
@@ -267,69 +268,6 @@
         DO j=MAX(JstrR,7),JendR
           diff2(i,j,itemp)=0.0_r8
           diff2(i,j,isalt)=0.0_r8
-        END DO
-      END DO
-#  endif
-# elif defined BISCAY
-!
-!  Bay of Biscay sponge areas.
-!
-      fac=8.0_r8
-#  if defined UV_VIS2
-      DO j=JstrR,MIN(6,JendR)
-        cff=visc2(ng)+REAL(6-j,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
-        DO i=IstrR,IendR
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
-        cff=fac*visc2(ng)+                                              &
-     &      REAL(Mm(ng)+1-j,r8)*(visc2(ng)-fac*visc2(ng))/6.0_r8
-        DO i=IstrR,IendR
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
-          cff=visc2(ng)+REAL(6-i,r8)*(fac*visc2(ng)-visc2(ng))/6.0_r8
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-#  endif
-#  if defined TS_DIF2
-      DO j=JstrR,MIN(6,JendR)
-        cff1=tnu2(itemp,ng)+                                            &
-     &       REAL(6-j,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
-        cff2=tnu2(isalt,ng)+                                            &
-     &       REAL(6-j,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
-        DO i=IstrR,IendR
-          diff2(i,j,itemp)=cff1
-          diff2(i,j,isalt)=cff2
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
-        cff1=8.0_r8*tnu2(itemp,ng)+                                     &
-     &       REAL(Mm(ng)+1-j,r8)*(tnu2(itemp,ng)-                       &
-     &                            fac*tnu2(itemp,ng))/6.0_r8
-        cff2=8.0_r8*tnu2(isalt,ng)+                                     &
-     &       REAL(Mm(ng)+1-j,r8)*(tnu2(isalt,ng)-                       &
-     &                            fac*tnu2(isalt,ng))/6.0_r8
-        DO i=IstrR,IendR
-          diff2(i,j,itemp)=cff1
-          diff2(i,j,isalt)=cff2
-        END DO
-      END DO
-      DO i=IstrR,MIN(6,IendR)
-        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
-          cff1=tnu2(itemp,ng)+                                          &
-     &         REAL(6-j,r8)*(fac*tnu2(itemp,ng)-tnu2(itemp,ng))/6.0_r8
-          cff2=tnu2(isalt,ng)+                                          &
-     &         REAL(6-j,r8)*(fac*tnu2(isalt,ng)-tnu2(isalt,ng))/6.0_r8
-          diff2(i,j,itemp)=cff1
-          diff2(i,j,isalt)=cff2
         END DO
       END DO
 #  endif
@@ -465,73 +403,6 @@
         END DO
       END DO
 #  endif
-# elif defined USWEST
-!
-!  US West Coast sponge areas.
-!
-      cff1=150000.0_r8                    ! width (m) of sponge layer
-      Iwrk=INT(cff1*REAL(Lm(ng),r8)/                                    &
-     &         (xr(Lm(ng)+1,INT(0.5_r8*REAL(Mm(ng),r8)))-               &
-     &          xr(1,INT(0.5_r8*REAL(Mm(ng),r8)))))
-#  if defined UV_VIS2
-      DO j=JstrR,JendR
-        DO i=IstrR,MIN(Iwrk,IendR)
-          cff=visc2(ng)*0.5_r8*(1.0_r8+COS(pi*REAL(i,r8)/REAL(Iwrk,r8)))
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-        DO i=MAX(IstrR,Lm(ng)+1-Iwrk),IendR
-          cff=visc2(ng)*0.5_r8*(1.0_r8+COS(pi*REAL(Lm(ng)+1-i,r8)/          &
-     &                                     REAL(Iwrk,r8)))
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-      DO j=MAX(JstrR,Mm(ng)+1-Iwrk),MIN(Mm(ng)+1,JendR)
-        DO i=MAX(IstrR,Mm(ng)+1-j),MIN(Lm(ng)+1-Mm(ng)+1+j,IendR)
-          cff=visc2(ng)*0.5_r8*(1.0_r8+COS(pi*REAL(Mm(ng)+1-j,r8)/      &
-     &                                     REAL(Iwrk,r8)))
-          visc2_r(i,j)=cff
-          visc2_p(i,j)=cff
-        END DO
-      END DO
-!!    DO j=JstrR,MIN(Iwrk,JendR)
-!!      DO i=MAX(IstrR,j),MIN(Lm(ng)+1-j,IendR)
-!!        cff=visc2(ng)*0.5_r8*(1.0_r8+COS(pi*REAL(j,r8)/REAL(Iwrk,r8)))
-!!        visc2_r(i,j)=cff
-!!        visc2_p(i,j)=cff
-!!      END DO
-!!    END DO
-#  endif
-#  if defined TS_DIF2
-      DO itrc=1,NT(ng)
-        cff=tnu2(itrc,ng)*0.5_r8
-        DO j=JstrR,JendR
-          DO i=IstrR,MIN(Iwrk,IendR)
-            diff2(i,j,itrc)=cff*                                        &
-     &                      (1.0_r8+COS(pi*REAL(i,r8)/REAL(Iwrk,r8)))
-          END DO
-          DO i=MAX(IstrR,Lm(ng)+1-Iwrk),IendR
-            diff2(i,j,itrc)=cff*                                        &
-     &                      (1.0_r8+COS(pi*REAL(Lm(ng)+1-i,r8)/         &
-     &                                  REAL(Iwrk,r8)))
-          END DO
-        END DO
-        DO j=MAX(JstrR,Mm(ng)+1-Iwrk),MIN(Mm(ng)+1,JendR)
-          DO i=MAX(IstrR,Mm(ng)+1-j),MIN(Lm(ng)+1-Mm(ng)+1+j,IendR)
-            diff2(i,j,itrc)=cff*                                        &
-     &                      (1.0_r8+COS(pi*REAL(Mm(ng)+1-j,r8)/         &
-     &                                  REAL(Iwrk,r8)))
-          END DO
-        END DO
-!!      DO j=JstrR,MIN(Iwrk,JendR)
-!!        DO i=MAX(IstrR,j),MIN(Lm(ng)+1-j,IendR)
-!!          diff2(i,j,itrc)=cff*
-!!   &                      (1.0_r8+COS(pi*REAL(j,r8)/REAL(Iwrk,r8)))
-!!        END DO
-!!      END DO
-      END DO
-#  endif
 # endif
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
@@ -540,6 +411,9 @@
 !  Exchange boundary data.
 !-----------------------------------------------------------------------
 !
+!! WARNING:  This section is generic for all applications. Please do not
+!!           change the code below.
+!!            
 # if defined EW_PERIODIC || defined NS_PERIODIC
 #  ifdef UV_VIS2
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
@@ -605,5 +479,4 @@
 
 #endif
       RETURN
-      END SUBROUTINE horz_mix_tile
-      END MODULE horz_mix_mod
+      END SUBROUTINE ana_hmixcoef_tile

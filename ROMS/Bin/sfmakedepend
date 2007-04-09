@@ -1,17 +1,16 @@
 #!/usr/bin/perl -w
 #
-# svn $Id$
 #######################################################################
 # Copyright (c) 2002-2007 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #
 #   See License_ROMS.txt                                              #
 ##################################################### Kate Hedstrom ###
 #                                                                     #
-# Fortran 90/77 dependency checker.                                   #
+# Fortran 90/77 dependency checker, version 2007a.                    #
 #                                                                     #
 #######################################################################
 
-#use 5.6.0;
+use 5.6.0;
 use strict;
 use File::Basename;
 use Getopt::Long;
@@ -29,13 +28,13 @@ our $ext = 'f';
 Getopt::Long::Configure( "bundling" );
 GetOptions("help" => \$opt_help,    "man" => \$opt_man,
         "file=s" => \$opt_file,     "I=s@" => \@incdirs,
-	"srcdir=s@" => \@incdirs,   "moddir=s" => \$mod_dir,
+	"srcdir=s@" => \@srcdirs,   "moddir=s" => \$mod_dir,
         "fext=s" => \$ext,          "objext=s" => \$obj_ext,
 	"modext=s" => \$opt_modext, "addext=s" => \$add_ext,
 	"case=s" => \$opt_case,     "compiler=s" => \$compiler,
 	"depend=s" => \$opt_depend, "cpp" => \$cpp,
 	"libdeps" => \$libdeps,     "drop" => \$drop_circ,
-	"longpath" => \$longpath   )
+	"longpath" => \$longpath,   )
   or pod2usage("Try '$0 --help' for more information");
 pod2usage(-verbose => 1) if $opt_help;
 pod2usage(-verbose => 2) if $opt_man;
@@ -223,6 +222,7 @@ package Source_File;
 
 # hash containing names of included files
 my %inc_files = ();
+my %flist;
 
 # Constructor
 sub new {
@@ -266,14 +266,23 @@ sub find_includes {
 	    $after = $';
         # Fortran 90 "use"
         } elsif (/^\s*use\s+(\w+)/i) {   
-	    $use = $1;
-# Change the case as needed - compiler dependent.
-	    if ($main::case eq "upper") {
-		$use = uc($use);
-	    } elsif ($main::case eq "lower") {
-		$use = lc($use);
+	    # Gavin Salam attempt at dealing with multiple uses on one line
+	    # remove trailing comments (do not take uses after a comment!)
+	    s/\!.*//;
+	    # try and get multiple use commands
+	    my @commands = split(';',$_);
+	    while (my $command = shift @commands) {
+	      if ($command =~ /^\s*use\s+(\w+)/i) {
+		$use = $1;
+		# Change the case as needed - compiler dependent.
+		if ($main::case eq "upper") {
+		  $use = uc($use);
+		} elsif ($main::case eq "lower") {
+		  $use = lc($use);
+		}
+		$self->{'uses'}{$use} = 1;
+	      }
 	    }
-	    $self->{'uses'}{$use} = 1;
 	# Fortran 90 module
 	} elsif (/^\s*module\s+(\w+)/i) {
 	    $modname = $1;
@@ -319,24 +328,27 @@ sub print_includes {
     my $len;
 
     foreach $file (keys %{$self->{'includes'}}) {
-	my $ref = $inc_files{$file};
-	if ($longpath) {
-	    $len = length($ref->{'filepath'}) + 1;
-	} else {
-	    $len = length($ref->{'Source_File'}) + 1;
-	}
-	if (($len_sum + $len > $ll) &&
-	       (length($target) + 1 < $len_sum)) {
-	    print "\n$target:";
-	    $len_sum = length($target) + 1;
-	}
-	if ($longpath) {
-	    print " " . $ref->{'filepath'};
-	} else {
-	    print " " . $ref->{'Source_File'};
-	}
-	$len_sum += $len;
-	$len_sum = $ref->print_includes($target, $len_sum);
+	if (!$flist{$file}) {
+	    $flist{$file} = 1;
+	    my $ref = $inc_files{$file};
+	    if ($longpath) {
+                $len = length($ref->{'filepath'}) + 1;
+            } else {
+                $len = length($ref->{'Source_File'}) + 1;
+            }
+	    if (($len_sum + $len > $ll) &&
+	           (length($target) + 1 < $len_sum)) {
+	        print "\n$target:";
+	        $len_sum = length($target) + 1;
+	    }
+	    if ($longpath) {
+	        print " " . $ref->{'filepath'};
+	    } else {
+	        print " " . $ref->{'Source_File'};
+	    }
+    	    $len_sum += $len;
+	    $len_sum = $ref->print_includes($target, $len_sum);
+        }
     }
     $len_sum;
 }
@@ -417,6 +429,7 @@ sub print {
     $flag = $main::obj_dep_flag;
     
 # print out "include" dependencies
+    %flist = ();
     if (%{$self->{'includes'}}) {
 	my $len_sum = length($target) + 1;
 	if ($main::add_ext) {
@@ -427,6 +440,7 @@ sub print {
         $self->print_includes($target, $len_sum);
         print "\n";
         if ($main::cpp) {
+            %flist = ();
 	    $len_sum = length($ftarget) + 1;
             print "$ftarget:";
             $self->print_includes($ftarget, $len_sum);
@@ -671,6 +685,9 @@ Kate Hedstrom (kate@arsc.edu)
 
    Holger Bauer      (bauer@itsm.uni-stuttgart.de)
        Added the --drop option (2000).
+
+   Gavin Salam       (salam@lpthe.jussieu.fr)
+       Made it recognize multiple "use"s on one line (2005).
 
 Others I've doubtless forgotten.
 

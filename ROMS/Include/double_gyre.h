@@ -8,6 +8,8 @@
 **
 ** Options for 4DVar Data Assimilation Toy.
 **
+** Application flag:   DOUBLE_GYRE
+** Input script:       ocean_double_gyre.in
 */
 
 #define SOLVE3D
@@ -19,11 +21,11 @@
 #undef  FORCING_SV              /* Forcing Singular Vectors */
 #undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
 #undef  IS4DVAR_OLD             /* Old Incremental, strong constraint 4DVAR */
-#define IS4DVAR                 /* Incremental, strong constraint 4DVAR */
+#undef  IS4DVAR                 /* Incremental, strong constraint 4DVAR */
 #undef  NLM_DRIVER              /* Nonlinear Basic State trajectory */
 #undef  OPT_PERTURBATION        /* Optimal perturbations */
 #undef  PICARD_TEST             /* Picard Iterations Test */
-#undef  R_SYMMETRY              /* Representer Matrix Symmetry Test */
+#define R_SYMMETRY              /* Representer Matrix Symmetry Test */
 #undef  S4DVAR                  /* Strong constraint 4DVAR */
 #undef  SANITY_CHECK            /* Sanity Check */
 #undef  SO_SEMI                 /* Stochastic Optimals: Semi-norm */

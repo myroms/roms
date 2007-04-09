@@ -133,7 +133,7 @@
 !
 !  Avoid time-stepping if additional delayed IO time-step.
 !
-      IF (iic(ng).ne.ntstart) THEN
+      IF (iic(ng).ne.ntstart(ng)) THEN
 
 # if defined FOUR_DVAR && defined OBSERVATIONS
 !
@@ -143,7 +143,7 @@
 !-----------------------------------------------------------------------
 !
         HalfDT=0.5_r8*dt(ng)
-        IF (((iic(ng).eq.ntstart-1).and.                                &
+        IF (((iic(ng).eq.ntstart(ng)-1).and.                            &
      &       (ObsTime(ng)-HalfDT.eq.time(ng)+HalfDT)).or.               &
      &      (((time(ng)-HalfDT).le.(ObsTime(ng)-HalfDT)).and.           &
      &       ((ObsTime(ng)-HalfDT).lt.(time(ng)+HalfDT)))) THEN
@@ -243,7 +243,7 @@
 !  Set time indices for predictor step. The PREDICTOR_2D_STEP switch
 !  it is assumed to be false before the first time-step.
 !
-        IF (PREDICTOR_2D_STEP(ng).and.(iic(ng).ne.ntend)) THEN
+        IF (PREDICTOR_2D_STEP(ng).and.(iic(ng).ne.ntend(ng))) THEN
           PREDICTOR_2D_STEP(ng)=.FALSE.
           ksav=knew(ng)
           knew(ng)=krhs(ng)
@@ -349,7 +349,7 @@
 !  initial fields.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntend) THEN
+      IF (iic(ng).eq.ntend(ng)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

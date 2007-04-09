@@ -4,7 +4,7 @@
 #undef REMIX_BED
 #define SLOPE_NEMETH
 #undef  SLOPE_LESSER
-#define BSTRESS_UPWIND
+#undef  BSTRESS_UPWIND
 
       MODULE sediment_mod
 #if defined NONLINEAR && defined SEDIMENT
@@ -1269,7 +1269,7 @@
             DO i=Istr,Iend
               t(i,j,k,nnew,indx)=Hz(i,j,k)*qc(i,k)
 #  ifdef TS_MPDATA
-              t(i,j,k,3,indx)=Hz(i,j,k)*qc(i,k)
+              t(i,j,k,3,indx)=qc(i,k)
 #  endif
             END DO
           END DO

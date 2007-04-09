@@ -92,7 +92,7 @@
 !  size of models state variables (C-grid) at input and output are:
 !
 !    RH0-type variables:  [0:Lm+1, 0:Mm+1]        ----v(i,j+1)----
-!    PSI-type variables:  [1:Lm  , 1:Mm  ]        |              |
+!    PSI-type variables:  [1:Lm+1, 1:Mm+1]        |              |
 !      U-type variables:  [1:Lm+1, 0:Mm+1]     u(i,j)  r(i,j)  u(i+1,j)
 !      V-type variables:  [0:Lm+1, 1:Mm+1]        |              |
 !                                                 -----v(i,j)-----
@@ -308,7 +308,7 @@
 !  the Fasham model.
 !
         integer :: NDbio2d                ! 2D fields
-        integer :: NDbio2d                ! 3D fields
+        integer :: NDbio3d                ! 3D fields
 !
 !  Number of diagnostic 3D right-hand-side fields.
 !

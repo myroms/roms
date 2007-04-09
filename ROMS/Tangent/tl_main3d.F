@@ -123,22 +123,22 @@
 !
 !  Set time indices and time clock.
 !
-      nstp(ng)=1+MOD(iic(ng)-ntstart,2)
+      nstp(ng)=1+MOD(iic(ng)-ntstart(ng),2)
       nnew(ng)=3-nstp(ng)
       nrhs(ng)=nstp(ng)
       time(ng)=time(ng)+dt(ng)
       tdays(ng)=time(ng)*sec2day
 
 #if defined WEAK_CONSTRAINT || defined IOM
-!
-!-----------------------------------------------------------------------
-!  If appropriate, write out fields into output NetCDF files.  Notice
-!  that IO data is written in delayed and serial mode.
-!-----------------------------------------------------------------------
-!
-      CALL tl_output (ng)
-      IF (exit_flag.ne.NoError) RETURN
-!
+!!
+!!-----------------------------------------------------------------------
+!!  If appropriate, write out fields into output NetCDF files.  Notice
+!!  that IO data is written in delayed and serial mode.
+!!-----------------------------------------------------------------------
+!!
+!!      CALL tl_output (ng)
+!!      IF (exit_flag.ne.NoError) RETURN
+!!
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution as impulse forcing to
 !  the nonlinear solution. Notice that, in weak constraint, the forcing
@@ -214,7 +214,7 @@
 !  initial fields.
 !-----------------------------------------------------------------------
 !
-      IF (iic(ng).eq.ntstart) THEN
+      IF (iic(ng).eq.ntstart(ng)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -379,7 +379,7 @@
 !-----------------------------------------------------------------------
 !
       CALL tl_output (ng)
-      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
 #  endif
 !
 !-----------------------------------------------------------------------
@@ -430,7 +430,7 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-#  if !(defined WEAK_CONSTRAINT || defined IOM)
+!!#  if !(defined WEAK_CONSTRAINT || defined IOM)
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice
@@ -439,8 +439,8 @@
 !-----------------------------------------------------------------------
 !
       CALL tl_output (ng)
-      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend+1))) RETURN
-#  endif
+      IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
+!!#  endif
 # endif
 !
 !-----------------------------------------------------------------------

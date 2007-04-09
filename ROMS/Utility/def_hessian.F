@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-#if defined IS4DVAR && defined LANCZOS
+#if defined IS4DVAR
       SUBROUTINE def_hessian (ng)
 !
 !svn $Id$
@@ -284,6 +284,26 @@
 !-----------------------------------------------------------------------
 !  Define time-varying variables.
 !-----------------------------------------------------------------------
+!
+!  Define number of converged Ritz eigenvalues.
+!
+        Vinfo( 1)='nConvRitz'
+        Vinfo( 2)='number of converged Ritz eigenvalues'
+        status=def_var(ncHSSid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+!
+!  Define Ritz eigenvalues.
+!
+        Vinfo( 1)='Ritz'
+        Vinfo( 2)='Ritz eigenvalues'
+        status=def_var(ncHSSid(ng),varid,NF_TYPE,                       &
+     &                 1,recdim,Aval,Vinfo,ncname) 
+!
+!  Define accuracy of Ritz eigenvalues .
+!
+        Vinfo( 1)='Ritz_error'
+        Vinfo( 2)='accuracy of Ritz eigenvalues'
+        status=def_var(ncHSSid(ng),varid,NF_TYPE,                       &
+     &                 1,recdim,Aval,Vinfo,ncname)
 !
 !  Define model time.
 !

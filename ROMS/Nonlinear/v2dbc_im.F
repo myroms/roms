@@ -208,7 +208,7 @@
      &                             zeta(i,Jstr  ,kout)))
           cff2=GRID(ng)%on_v(i,Jstr)*Ce
 !!        cff2=dt2d
-          bry_val=vbar(i,Jstr+1,kout)-                                  &
+          bry_val=vbar(i,Jstr+1,kout)+                                  &
      &            cff2*(bry_pgr+                                        &
      &                  bry_cor+                                        &
      &                  bry_str)
@@ -216,7 +216,9 @@
           bry_val=BOUNDARY(ng)%vbar_south(i)
 #  endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                     &
-     &                        GRID(ng)%h(i,Jstr  )))
+     &                        zeta(i,Jstr-1,know)+                      &
+     &                        GRID(ng)%h(i,Jstr  )+                     &
+     &                        zeta(i,Jstr  ,know)))
           Ce=SQRT(g*cff)
           vbar(i,Jstr,kout)=bry_val-                                    &
      &                      Ce*(0.5_r8*(zeta(i,Jstr-1,know)+            &
@@ -410,7 +412,9 @@
           bry_val=BOUNDARY(ng)%vbar_north(i)
 #  endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                     &
-     &                        GRID(ng)%h(i,Jend+1)))
+     &                        zeta(i,Jend  ,know)+                      &
+     &                        GRID(ng)%h(i,Jend+1)+                     &
+     &                        zeta(i,Jend+1,know)))
           Ce=SQRT(g*cff)
           vbar(i,Jend+1,kout)=bry_val+                                  &
      &                        Ce*(0.5_r8*(zeta(i,Jend  ,know)+          &
@@ -569,7 +573,9 @@
           cff=dt2d*0.5_r8*(GRID(ng)%pm(Istr,j-1)+                       &
      &                     GRID(ng)%pm(Istr,j  ))
           cff1=SQRT(g*0.5_r8*(GRID(ng)%h(Istr,j-1)+                     &
-     &                        GRID(ng)%h(Istr,j  )))
+     &                        zeta(Istr,j-1,know)+                      &
+     &                        GRID(ng)%h(Istr,j  )+                     &
+     &                        zeta(Istr,j  ,know)))
           Cx=cff*cff1
           cff2=1.0_r8/(1.0_r8+Cx)
           vbar(Istr-1,j,kout)=cff2*(vbar(Istr-1,j,know)+                &
@@ -615,7 +621,7 @@
 #   define J_RANGE Jstr,JendR
 #  endif
         DO j=J_RANGE
-          vbar(Istr-1,j,kout)=gamma2*vbar(Istr,j,kout)
+          vbar(Istr-1,j,kout)=gamma2(ng)*vbar(Istr,j,kout)
 #  ifdef MASKING
           vbar(Istr-1,j,kout)=vbar(Istr-1,j,kout)*                      &
      &                        GRID(ng)%vmask(Istr-1,j)
@@ -694,7 +700,9 @@
           cff=dt2d*0.5_r8*(GRID(ng)%pm(Iend,j-1)+                       &
      &                     GRID(ng)%pm(Iend,j  ))
           cff1=SQRT(g*0.5_r8*(GRID(ng)%h(Iend,j-1)+                     &
-     &                        GRID(ng)%h(Iend,j  )))
+     &                        zeta(Iend,j-1,know)+                      &
+     &                        GRID(ng)%h(Iend,j  )+                     &
+     &                        zeta(Iend,j  ,know)))
           Cx=cff*cff1
           cff2=1.0_r8/(1.0_r8+Cx)
           vbar(Iend+1,j,kout)=cff2*(vbar(Iend+1,j,know)+                &
@@ -740,7 +748,7 @@
 #   define J_RANGE Jstr,JendR
 #  endif
         DO j=J_RANGE
-          vbar(Iend+1,j,kout)=gamma2*vbar(Iend,j,kout)
+          vbar(Iend+1,j,kout)=gamma2(ng)*vbar(Iend,j,kout)
 #  ifdef MASKING
           vbar(Iend+1,j,kout)=vbar(Iend+1,j,kout)*                      &
      &                        GRID(ng)%vmask(Iend+1,j)

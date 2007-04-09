@@ -2330,7 +2330,7 @@
       Coptions(is:is+14)=' VERIFICATION,'
 #endif
 #ifdef W4DPSAS
-      IF (Master) WRITE (stdout,20) 'W4DVAR',                           &
+      IF (Master) WRITE (stdout,20) 'W4DPSAS',                          &
      &   'Weak constraint 4D-PSAS data assimilation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' W4DPSAS,'

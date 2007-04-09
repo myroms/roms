@@ -339,17 +339,25 @@
             CALL def_mod (ng)
           END IF
 !
+!  If first pass and preconditioning, open Hessian eigenvectors
+!  NetCDF file and inquire about its content.
+!
+          IF (Lprecond.and.(Nrun.eq.1)) THEN
+            LdefHSS(ng)=.FALSE.
+            CALL def_hessian (ng)
+          END IF
+!
 !  Run nonlinear model. Save nonlinear tracjectory needed by the
 !  adjoint and tangent linear models. Interpolate nonlinear model
 !  to boservation locations (compute and save H x).
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'NL', ntstart, ntend
+            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          NL_LOOP1 : DO my_iic=ntstart,ntend+1
+          NL_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -432,12 +440,12 @@
 !  Jo.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'TL', ntstart, ntend
+              WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
 
-            TL_LOOP : DO my_iic=ntstart,ntend+1
+            TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -482,12 +490,12 @@
 !  the adjoint of the observation misfit (Jo) term.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'AD', ntstart, ntend
+              WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)+dt(ng)
 
-            AD_LOOP : DO my_iic=ntstart,ntend,-1
+            AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
 
               iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -898,12 +906,12 @@
 !  locations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart, ntend
+          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP2 : DO my_iic=ntstart,ntend+1
+        NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D

@@ -42,7 +42,6 @@
 # if defined GRADIENT_CHECK || defined TLM_CHECK
       USE ini_adjust_mod, ONLY : tl_ini_perturb
 # endif
-      USE horz_mix_mod, ONLY : horz_mix
       USE metrics_mod, ONLY : metrics
 # if !(defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET)
       USE rp_set_depth_mod, ONLY : rp_bath
@@ -123,9 +122,9 @@
 # endif
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
-      ntstart=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend=ntimes
-      ntfirst=ntstart
+      ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
+      ntend(ng)=ntimes(ng)
+      ntfirst(ng)=ntstart(ng)
 
       IniRec=nrrec
       Tindex=1
@@ -241,7 +240,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL horz_mix (ng, TILE, iRPM)
+            CALL ana_hmixcoef (ng, TILE, iRPM)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -257,7 +256,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL set_nudgcof (ng, TILE, iRPM)
+            CALL ana_nudgcoef (ng, TILE, iRPM)
           END DO
         END DO
 !$OMP END PARALLEL DO

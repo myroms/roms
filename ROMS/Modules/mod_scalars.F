@@ -324,7 +324,7 @@
 !  is the total of baroclinic timesteps. In 2D configuration, "ntimes"
 !  is the total of barotropic timesteps.
 !
-        integer :: ntimes
+        integer, dimension(Ngrids) :: ntimes
 !
 !  Number of time interval divisions for stochastic optimals.  It must
 !  a multiple of "ntimes".
@@ -371,9 +371,9 @@
 !
 !  First, starting, and ending timestepping parameters
 !
-        integer :: ntfirst = 1                  ! Forward-Euler step
-        integer :: ntstart = 1                  ! Start step
-        integer :: ntend = 0                    ! End step
+        integer, dimension(Ngrids) :: ntfirst   ! Forward-Euler step
+        integer, dimension(Ngrids) :: ntstart   ! Start step
+        integer, dimension(Ngrids) :: ntend     ! End step
 !
 !  Adjoint model or tangent linear model impulse forcing time record
 !  counter and number of records available.
@@ -544,7 +544,7 @@
 !
 !  Slipperiness variable, either 1.0 (free slip) or -1.0 (no slip).
 !
-        real(r8) :: gamma2 = -1.0_r8
+        real(r8), dimension(Ngrids) :: gamma2
 !
 !  Weighting coefficient for the newest (implicit) time step derivatives
 !  in the Crack-Nicolson implicit scheme (usually, lambda=0.5).
@@ -1844,6 +1844,13 @@
 !-----------------------------------------------------------------------
 !
       gorho0=rho0/g
+      DO ng=1,Ngrids
+        ntfirst(ng)=1
+        ntstart(ng)=1
+        ntend(ng)=0
+        gamma2(ng)=-1.0_r8
+      END DO
+      
 #if defined LMD_SKPP || defined LMD_BKPP
 !
 !  Proportionality coefficient parameterizing boundary layer

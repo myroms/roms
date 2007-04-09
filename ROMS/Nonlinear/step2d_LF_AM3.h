@@ -1384,7 +1384,7 @@
         END DO
         DO j=JV_RANGE
 #   ifdef WESTERN_WALL
-          LapV(Istr-1,j)=gamma2*LapV(Istr,j)
+          LapV(Istr-1,j)=gamma2(ng)*LapV(Istr,j)
 #   else
           LapV(Istr-1,j)=0.0_r8
 #   endif
@@ -1400,7 +1400,7 @@
         END DO
         DO j=JV_RANGE
 #   ifdef EASTERN_WALL
-          LapV(Iend+1,j)=gamma2*LapV(Iend,j)
+          LapV(Iend+1,j)=gamma2(ng)*LapV(Iend,j)
 #   else
           LapV(Iend+1,j)=0.0_r8
 #   endif
@@ -1411,7 +1411,7 @@
       IF (SOUTHERN_EDGE) THEN
         DO i=IU_RANGE
 #   ifdef SOUTHERN_WALL
-          LapU(i,Jstr-1)=gamma2*LapU(i,Jstr)
+          LapU(i,Jstr-1)=gamma2(ng)*LapU(i,Jstr)
 #   else
           LapU(i,Jstr-1)=0.0_r8
 #   endif
@@ -1427,7 +1427,7 @@
       IF (NORTHERN_EDGE) THEN
         DO i=IU_RANGE
 #   ifdef NORTHERN_WALL
-          LapU(i,Jend+1)=gamma2*LapU(i,Jend)
+          LapU(i,Jend+1)=gamma2(ng)*LapU(i,Jend)
 #   else
           LapU(i,Jend+1)=0.0_r8
 #   endif
@@ -1614,7 +1614,7 @@
 !  "rhs_ubar" and "rhs_vbar" during all subsequent time steps.
 !
       IF (FIRST_2D_STEP.and.PREDICTOR_2D_STEP(ng)) THEN
-        IF (iic(ng).eq.ntfirst) THEN
+        IF (iic(ng).eq.ntfirst(ng)) THEN
           DO j=Jstr,Jend
             DO i=IstrU,Iend
               rufrc(i,j)=rufrc(i,j)-rhs_ubar(i,j)
@@ -1693,7 +1693,7 @@
 #  endif
             END DO
           END DO
-        ELSE IF (iic(ng).eq.(ntfirst+1)) THEN
+        ELSE IF (iic(ng).eq.(ntfirst(ng)+1)) THEN
           DO j=Jstr,Jend
             DO i=IstrU,Iend
               rufrc(i,j)=rufrc(i,j)-rhs_ubar(i,j)

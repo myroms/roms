@@ -213,12 +213,12 @@
       NEST_LOOP : DO ng=1,Ngrids
 
         IF (Master) THEN
-          WRITE (stdout,10) ntstart, ntend
+          WRITE (stdout,10) ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP : DO my_iic=ntstart,ntend+1
+        NL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D

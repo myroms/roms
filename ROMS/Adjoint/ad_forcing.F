@@ -59,11 +59,7 @@
      &                      OCEAN(ng) % ad_ubar,                        &
      &                      OCEAN(ng) % ad_vbar,                        &
 # endif
-# ifdef SOLVE3D
-     &                      COUPLING(ng) % ad_Zt_avg1)
-# else
      &                      OCEAN(ng) % ad_zeta)
-# endif
 
       RETURN
       END SUBROUTINE ad_forcing
@@ -83,14 +79,11 @@
 # else
      &                            ad_ubar, ad_vbar,                     &
 # endif
-# ifdef SOLVE3D
-     &                            ad_Zt_avg1)
-# else
      &                            ad_zeta)
-# endif
 !***********************************************************************
 !
       USE mod_param
+      USE mod_stepping
 !
 !  Imported variable declarations.
 !
@@ -119,11 +112,7 @@
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
 #  endif
-#  ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
-#  else
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
-#  endif
 # else
 #  ifdef SOLVE3D
       real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
@@ -165,21 +154,12 @@
 !
 !  Adjoint free-surface.
 !
-# ifdef SOLVE3D
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ad_Zt_avg1(i,j)=ad_Zt_avg1(i,j)+f_zeta(i,j)
-          f_zeta(i,j)=0.0_r8
-        END DO
-      END DO
-# else
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           ad_zeta(i,j,Kfrc)=ad_zeta(i,j,Kfrc)+f_zeta(i,j)
           f_zeta(i,j)=0.0_r8
         END DO
       END DO
-# endif
 
 # ifndef SOLVE3D
 !

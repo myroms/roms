@@ -6,8 +6,11 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 **
-** Options for 4DVar Data Assimilation Toy.
+** Options for Shallow Water 2006 Experiment, coarse grid resolution.
 **
+** Application flag:   SW06_COARSE
+** Input script:       ocean_sw05_coarse.in
+**                     s4dvar.in
 */
 
 #undef  AFT_EIGENMODES          /* Adjoint Finite Time Eigenmodes */

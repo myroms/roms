@@ -39,9 +39,6 @@
 !     Amin       Field minimum value (real).                           !
 !     Amax       Field maximum value (real).                           !
 !     A          Field to read in (real).                              !
-#ifdef DISTRIBUTE
-!     gtype      Grid type.                                            !
-#endif
 !     nf_fread2d Error flag (integer).                                 !
 !                                                                      !
 !=======================================================================
@@ -68,12 +65,7 @@
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Vsize(4)
-
-#ifndef DISTRIBUTE
       integer, intent(in) :: gtype
-#else
-      integer, intent(inout) :: gtype
-#endif
 
       real(r8), intent(in)  :: Ascl
       real(r8), intent(out) :: Amin
@@ -106,6 +98,8 @@
 !-----------------------------------------------------------------------
 !  Set starting and ending indices to process.
 !-----------------------------------------------------------------------
+!
+      MyType=gtype
 
 #ifdef DISTRIBUTE
 !
@@ -113,7 +107,7 @@
 !  grid type is only known by the input thread so broadcast its value
 !  to all nodes.
 !
-      CALL mp_bcasti (ng, model, gtype, 1)
+      CALL mp_bcasti (ng, model, MyType, 1)
 #endif
 !
 !  Set first and last grid point according to staggered C-grid
@@ -127,7 +121,6 @@
       Imax=Lm(ng)+1
       Jmin=0
       Jmax=Mm(ng)+1
-      MyType=gtype
       IF (model.eq.iADM) THEN
         Nghost=0
       ELSE  

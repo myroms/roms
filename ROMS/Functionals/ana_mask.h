@@ -178,7 +178,7 @@
         END DO
       END DO
 #else
-      ANA_MASK: no values provided for RMASK.
+      ana_mask.h: no values provided for mask.
 #endif
 !
       DO j=JstrR,JendR

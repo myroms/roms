@@ -8,6 +8,8 @@
 **
 ** Options for High Resolution North Atlantic Application.
 **
+** Application flag:   NATL
+** Input script:       ocean_natl.in
 */
 
 #define UV_ADV

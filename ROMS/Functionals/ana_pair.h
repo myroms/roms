@@ -91,7 +91,7 @@
         END DO
       END DO
 #else
-      ANA_PAIR: no values provided for PAIR.
+      ana_pair.h: no values provided for Pair.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &

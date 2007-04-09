@@ -239,7 +239,7 @@
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 =  1.0d0
+      GAMMA2 == 1.0d0
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their
@@ -404,7 +404,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! Input NetCDF file names, [1:Ngrids].
 
      GRDNAME == ocean_grd.nc
-     ININAME == ocean_ini.nc
+     ININAME == ROMS/External/lake_signell_init.nc
      ITLNAME == ocean_itl.nc
      IRPNAME == ocean_irp.nc
      IADNAME == ocean_iad.nc
@@ -425,7 +425,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 
      NFFILES == 1                          ! number of forcing files
 
-     FRCNAME == ocean_frc.nc               ! forcing file 1, grid 1
+     FRCNAME == ROMS/External/lake_signell_rivers_forc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 

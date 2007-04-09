@@ -93,7 +93,7 @@
           dqdt(i,j)=???
         END DO
       END DO
-      ANA_SST: no values provided for SST and DQDT.
+      ana_sst.h: no values provided for sst and dqdt.
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &

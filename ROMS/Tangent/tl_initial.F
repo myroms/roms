@@ -38,7 +38,6 @@
 # if defined GRADIENT_CHECK || defined TLM_CHECK
       USE ini_adjust_mod, ONLY : tl_ini_perturb
 # endif
-      USE horz_mix_mod, ONLY : horz_mix
       USE metrics_mod, ONLY : metrics
 # if defined W4DPSAS || defined W4DVAR
       USE tl_set_depth_mod, ONLY : tl_bath
@@ -122,9 +121,9 @@
 # endif
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
-      ntstart=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend=ntimes
-      ntfirst=ntstart
+      ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
+      ntend(ng)=ntimes(ng)
+      ntfirst(ng)=ntstart(ng)
 
       IniRec=nrrec
       Tindex=1
@@ -321,7 +320,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL horz_mix (ng, TILE, iTLM)
+            CALL ana_hmixcoef (ng, TILE, iTLM)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -337,7 +336,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL set_nudgcof (ng, TILE, iTLM)
+            CALL ana_nudgcoef (ng, TILE, iTLM)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -638,7 +637,7 @@
 !  constraint but in observation space.
 !-----------------------------------------------------------------------
 !
-      IF (nADJ(ng).lt.ntimes) THEN
+      IF (nADJ(ng).lt.ntimes(ng)) THEN
         FrcRec(ng)=1
         CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
 #  ifdef DISTRIBUTE

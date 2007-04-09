@@ -206,14 +206,14 @@
 !  observation locations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart, ntend
+          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         wrtNLmod(ng)=.TRUE.
         wrtTLmod(ng)=.FALSE.
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP1 : DO my_iic=ntstart,ntend+1
+        NL_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -278,12 +278,12 @@
 !  model and observations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'AD', ntstart, ntend
+          WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)+dt(ng)
 
-        AD_LOOP : DO my_iic=ntstart,ntend,-1
+        AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -374,12 +374,12 @@
 !  Time-step nonlinear model: compute perturbed nonlinear state.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'NL', ntstart, ntend
+              WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
 
-            NL_LOOP2 : DO my_iic=ntstart,ntend+1
+            NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -426,12 +426,12 @@
 !  between model (nonlinear + tangent linear) and observations.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'TL', ntstart, ntend
+              WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
 
-            TL_LOOP : DO my_iic=ntstart,ntend+1
+            TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -474,12 +474,12 @@
           inner=1
           DO i=1,MIN(ig1count,ig2count)
             p=10.0_r8**FLOAT(-inner)
-            IF (MOD(i,1+ntimes/nTLM(ng)).eq.0) inner=inner+1
+            IF (MOD(i,1+ntimes(ng)/nTLM(ng)).eq.0) inner=inner+1
             WRITE (stdout,90) i, p, g1(i), g2(i), (g1(i)-g2(i))/g1(i)
-            IF ((MOD(i,1+ntimes/nTLM(ng)).eq.0).and.                    &
-     &          (MOD(i,Ninner*(1+ntimes/nTLM(ng))).ne.0)) THEN
+            IF ((MOD(i,1+ntimes(ng)/nTLM(ng)).eq.0).and.                &
+     &          (MOD(i,Ninner*(1+ntimes(ng)/nTLM(ng))).ne.0)) THEN
               WRITE (stdout,100)
-            ELSE IF (MOD(i,Ninner*(1+ntimes/nTLM(ng))).eq.0) THEN
+            ELSE IF (MOD(i,Ninner*(1+ntimes(ng)/nTLM(ng))).eq.0) THEN
               inner=1
               WRITE (stdout,110)
             END IF

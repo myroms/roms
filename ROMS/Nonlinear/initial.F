@@ -31,7 +31,6 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
-      USE horz_mix_mod, ONLY : horz_mix
 #ifdef TLM_CHECK
       USE ini_adjust_mod, ONLY : ini_perturb
 #endif
@@ -113,9 +112,9 @@
 #endif
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
-      ntstart=INT((time(ng)-dstart*day2sec)/dt(ng))+1
-      ntend=ntimes
-      ntfirst=ntstart
+      ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
+      ntend(ng)=ntimes(ng)
+      ntfirst(ng)=ntstart(ng)
 
       IniRec=nrrec
       Tindex=1
@@ -294,7 +293,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL horz_mix (ng, TILE, iNLM)
+            CALL ana_hmixcoef (ng, TILE, iNLM)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -310,7 +309,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
-            CALL set_nudgcof (ng, TILE, iNLM)
+            CALL ana_nudgcoef (ng, TILE, iNLM)
           END DO
         END DO
 !$OMP END PARALLEL DO

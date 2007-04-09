@@ -227,12 +227,12 @@
 !  Time-step nonlinear model: Compute misfit cost function.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'NL', ntstart, ntend
+            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          NL_LOOP1 : DO my_iic=ntstart,ntend+1
+          NL_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -296,9 +296,9 @@
 !
 !  Use model-observation misfit as a good approximation of the gradient.
 !
-          ntstr_sav=ntstart
-          ntend_sav=ntend
-          ntend=ntimes
+          ntstr_sav=ntstart(ng)
+          ntend_sav=ntend(ng)
+          ntend(ng)=ntimes(ng)
 #endif
 !
 !  Time-step adjoint model: Compute model state gradient, GRAD(J).
@@ -306,12 +306,12 @@
 !  model and observations.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'AD', ntstart, ntend
+            WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
 
-          AD_LOOP : DO my_iic=ntstart,ntend,-1
+          AD_LOOP : DO my_iic=ntstart(ng),ntend(ng),-1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -326,8 +326,8 @@
 
           END DO AD_LOOP
 #ifdef AVOID_ADJOINT
-          ntstart=ntstr_sav
-          ntend=ntend_sav
+          ntstart(ng)=ntstr_sav
+          ntend(ng)=ntend_sav
 #endif
 !
 !-----------------------------------------------------------------------
@@ -421,12 +421,12 @@
 !  Time-step nonlinear model: Compute change in misfit cost function.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'NL', ntstart, ntend
+            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
 
-          NL_LOOP2 : DO my_iic=ntstart,ntend+1
+          NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -538,12 +538,12 @@
 !  locations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart, ntend
+          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP3 : DO my_iic=ntstart,ntend+1
+        NL_LOOP3 : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D

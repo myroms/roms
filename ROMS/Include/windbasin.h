@@ -8,6 +8,8 @@
 **
 ** Options for Wind-Driven Constant Coriolis Basin Test.
 **
+** Application flag:   WINDBASIN
+** Input script:       ocean_windbasin.in
 */
 
 #undef UV_ADV

@@ -657,11 +657,11 @@
 !
         IF (nRST(ng).eq.nDIA(ng)) THEN
           IF (ndefDIA(ng).gt.0) THEN
-            tDIAindx(ng)=((ntstart-1)-                                  &
-     &                    ndefDIA(ng)*((ntstart-1)/ndefDIA(ng)))/       &
+            tDIAindx(ng)=((ntstart(ng)-1)-                              &
+     &                    ndefDIA(ng)*((ntstart(ng)-1)/ndefDIA(ng)))/   &
      &                   nDIA(ng)
           ELSE
-            tDIAindx(ng)=(ntstart-1)/nDIA(ng)
+            tDIAindx(ng)=(ntstart(ng)-1)/nDIA(ng)
           END IF
         ELSE
           tDIAindx(ng)=tsize

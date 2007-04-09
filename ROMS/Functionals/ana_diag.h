@@ -71,7 +71,7 @@
 !
 !  Open USER file.
 !
-      IF (iic(ng).eq.ntstart) THEN
+      IF (iic(ng).eq.ntstart(ng)) THEN
         OPEN (usrout,file=USRname,form='formatted',status='unknown',    &
      &        err=40)
         GO TO 60

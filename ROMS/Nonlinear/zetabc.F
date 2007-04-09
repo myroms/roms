@@ -170,7 +170,8 @@
 !
         DO j=Jstr,Jend
           cff=dt2d*GRID(ng)%pm(Istr,j)
-          cff1=SQRT(g*GRID(ng)%h(Istr,j))
+          cff1=SQRT(g*(GRID(ng)%h(Istr,j)+                              &
+     &                 zeta(Istr,j,know)))
           Cx=cff*cff1
           cff2=1.0_r8/(1.0_r8+Cx)
           zeta(Istr-1,j,kout)=cff2*(zeta(Istr-1,j,know)+                &
@@ -292,7 +293,8 @@
 !
         DO j=Jstr,Jend
           cff=dt2d*GRID(ng)%pm(Iend,j)
-          cff1=SQRT(g*GRID(ng)%h(Iend,j))
+          cff1=SQRT(g*(GRID(ng)%h(Iend,j)+                              &
+     &                 zeta(Iend,j,know)))
           Cx=cff*cff1
           cff2=1.0_r8/(1.0_r8+Cx)
           zeta(Iend+1,j,kout)=cff2*(zeta(Iend+1,j,know)+                &
@@ -417,7 +419,8 @@
 !
         DO i=Istr,Iend
           cff=dt2d*GRID(ng)%pn(i,Jstr)
-          cff1=SQRT(g*GRID(ng)%h(i,Jstr))
+          cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                              &
+     &                 zeta(i,Jstr,know)))
           Ce=cff*cff1
           cff2=1.0_r8/(1.0_r8+Ce)
           zeta(i,Jstr-1,kout)=cff2*(zeta(i,Jstr-1,know)+                &
@@ -539,7 +542,8 @@
 !
         DO i=Istr,Iend
           cff=dt2d*GRID(ng)%pn(i,Jend)
-          cff1=SQRT(g*GRID(ng)%h(i,Jend))
+          cff1=SQRT(g*(GRID(ng)%h(i,Jend)+                              &
+     &                 zeta(i,Jend,know)))
           Ce=cff*cff1
           cff2=1.0_r8/(1.0_r8+Ce)
           zeta(i,Jend+1,kout)=cff2*(zeta(i,Jend+1,know)+                &
@@ -611,6 +615,76 @@
         zeta(Iend+1,Jend+1,kout)=0.5_r8*(zeta(Iend+1,Jend  ,kout)+      &
      &                                   zeta(Iend  ,Jend+1,kout))
       END IF
+#endif
+#if defined WET_DRY
+!
+!-----------------------------------------------------------------------
+! Ensure that water level on boundary cells is above bed elevation.
+!-----------------------------------------------------------------------
+!
+      cff=Dcrit(ng)-eps
+# ifndef EW_PERIODIC
+      IF (WESTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          IF (zeta(Istr-1,j,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(Istr-1,j))) THEN
+            zeta(Istr-1,j,kout)=cff-GRID(ng)%h(Istr-1,j)
+          END IF
+        END DO
+      END IF
+      IF (EASTERN_EDGE) THEN
+        DO j=Jstr,Jend
+          IF (zeta(Iend+1,j,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(Iend+1,j))) THEN
+            zeta(Iend+1,j,kout)=cff-GRID(ng)%h(Iend+1,j)
+          END IF
+        END DO
+      END IF
+# endif
+# ifndef NS_PERIODIC
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          IF (zeta(i,Jstr-1,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(i,Jstr-1))) THEN
+            zeta(i,Jstr-1,kout)=cff-GRID(ng)%h(i,Jstr-1)
+          END IF
+        END DO
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+          IF (zeta(i,Jend+1,kout).le.                                   &
+     &        (Dcrit(ng)-GRID(ng)%h(i,Jend+1))) THEN
+            zeta(i,Jend+1,kout)=cff-GRID(ng)%h(i,Jend+1)
+          END IF
+        END DO
+      END IF
+# endif
+# if !defined EW_PERIODIC && !defined NS_PERIODIC
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (zeta(Istr-1,Jstr-1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Istr-1,Jstr-1))) THEN
+          zeta(Istr-1,Jstr-1,kout)=cff-GRID(ng)%h(Istr-1,Jstr-1)
+        END IF
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (zeta(Iend+1,Jstr-1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Iend+1,Jstr-1))) THEN
+          zeta(Iend+1,Jstr-1,kout)=cff-GRID(ng)%h(Iend+1,Jstr-1)
+        END IF
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+        IF (zeta(Istr-1,Jend+1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Istr-1,Jend+1))) THEN
+          zeta(Istr-1,Jend+1,kout)=cff-GRID(ng)%h(Istr-1,Jend+1)
+        END IF
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+        IF (zeta(Iend+1,Jend+1,kout).le.                                &
+     &      (Dcrit(ng)-GRID(ng)%h(Iend+1,Jend+1))) THEN
+          zeta(Iend+1,Jend+1,kout)=cff-GRID(ng)%h(Iend+1,Jend+1)
+        END IF
+      END IF
+# endif
 #endif
       RETURN
 

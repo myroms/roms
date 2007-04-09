@@ -72,7 +72,7 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES =  4320
+      NTIMES == 4320
           DT == 5.0d0
      NDTFAST == 20
 
@@ -175,7 +175,7 @@
 ! Constants used in surface turbulent kinetic energy flux computation.
 
   CHARNOK_ALPHA == 1400.0d0         ! Charnok surface roughness
- ZOS_HSIG_ALPHA == 0.5d0            ! roughness from wave amplitude
+ ZOS_HSIG_ALPHA == 1.0d0            ! roughness from wave amplitude
        SZ_ALPHA == 0.25d0           ! roughness from wave dissipation
       CRGBAN_CW == 100.0d0          ! Craig and Banner wave breaking
 
@@ -198,7 +198,7 @@
 
 ! Vertical S-coordinates parameters, [1:Ngrids].
 
-     THETA_S == 3.0d0                      ! 0 < THETA_S < 20
+     THETA_S == 2.0d0                      ! 0 < THETA_S < 20
      THETA_B == 1.0d0                      ! 0 < THETA_B < 1
       TCLINE == 0.0d0                      ! m
 
@@ -239,7 +239,7 @@
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
 
-      GAMMA2 =  1.0d0
+      GAMMA2 == 1.0d0
 
 ! Starting (DstrS) and ending (DendS) day for adjoint sensitivity forcing.
 ! DstrS must be less or equal to DendS. If both values are zero, their

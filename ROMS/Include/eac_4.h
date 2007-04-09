@@ -6,8 +6,10 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 **
-** Options for East Australia Current.
+** Options for East Australia Current, 1/4 degree resolution
 **
+** Application flag:   EAC_4
+** Input script:       ocean_eac_4.in
 */
 
 
