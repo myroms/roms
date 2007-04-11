@@ -290,7 +290,7 @@
 !  Set adjoint initial conditions.
 !
       DO j=Jstr-1,Jend+1
-        DO i=IstrU-1,Iend+1
+        DO i=Istr-1,Iend+1
 !>        tl_Awrk(i,j,Nold)=tl_A(i,j)
 !>
           ad_A(i,j)=ad_A(i,j)+ad_Awrk(i,j,Nold)
@@ -550,7 +550,7 @@
 !  Set adjoint initial conditions.
 !
       DO j=Jstr-1,Jend+1
-        DO i=Istr-1,Iend+1
+        DO i=IstrU-1,Iend+1
 !>        tl_Awrk(i,j,Nold)=tl_A(i,j)
 !>
           ad_A(i,j)=ad_A(i,j)+ad_Awrk(i,j,Nold)

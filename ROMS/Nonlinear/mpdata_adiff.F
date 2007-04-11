@@ -42,11 +42,12 @@
 #ifdef MASKING
      &                              rmask, umask, vmask,                &
 #endif
-     &                              pm, pn, omn, om_u, on_v, z_r,       &
-     &                              t, u, v, w,                         &
-# ifdef NEARSHORE_MELLOR
-     &                              u_stokes, v_stokes,                 &
-# endif
+#ifdef WET_DRY
+     &                              rmask_wet,                          &
+#endif
+     &                              pm, pn, omn, om_u, on_v,            &
+     &                              z_r, oHz,                           &
+     &                              Huon, Hvom, w, t,                   &
      &                              Ta, Ua, Va, Wa)
 !***********************************************************************
 !
@@ -57,7 +58,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr, itrc
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: ILB, IUB, JLB, JUB
       Integer, intent(in) :: nrhs
@@ -68,20 +69,20 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: omn(LBi:,LBj:)
       real(r8), intent(in) :: om_u(LBi:,LBj:)
       real(r8), intent(in) :: on_v(LBi:,LBj:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
-      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
-      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: oHz(ILB:,JLB:,:)
+      real(r8), intent(in) :: Huon(LBi:,LBj:,:)
+      real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
+      real(r8), intent(in) :: t(LBi:,LBj:,:)
       real(r8), intent(in) :: w(LBi:,LBj:,0:)
-#  ifdef NEARSHORE_MELLOR
-      real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
-      real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
-#  endif
 
       real(r8), intent(inout) :: Ta(ILB:,JLB:,:)
 
@@ -94,20 +95,20 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+#  endif
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: oHz(ILB:IUB,JLB:JUB,N(ng))
+      real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: w(LBi:UBi,LBj:UBj,0:N(ng))
-#  ifdef NEARSHORE_MELLOR
-      real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
-#  endif
 
       real(r8), intent(inout) :: Ta(ILB:IUB,JLB:JUB,N(ng))
 
@@ -301,31 +302,33 @@
      &          (Ta(i,j,k)+Ta(i-1,j,k)+eps)
               B=0.03125_r8*                                             &
      &          ((Ta(i  ,j+1,k)-Ta(i  ,j  ,k))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j+1))+                             &
+     &           (pn(i  ,j  )+pn(i  ,j+1))*vmask(i  ,j+1)+              &
      &           (Ta(i  ,j  ,k)-Ta(i  ,j-1,k))*                         &
-     &           (pn(i  ,j-1)+pn(i  ,j  ))+                             &
+     &           (pn(i  ,j-1)+pn(i  ,j  ))*vmask(i  ,j  )+              &
      &           (Ta(i-1,j+1,k)-Ta(i-1,j  ,k))*                         &
-     &           (pn(i-1,j  )+pn(i-1,j+1))+                             &
+     &           (pn(i-1,j  )+pn(i-1,j+1))*vmask(i-1,j+1)+              &
      &           (Ta(i-1,j  ,k)-Ta(i-1,j-1,k))*                         &
-     &           (pn(i-1,j-1)+pn(i-1,j  )))*                            &
+     &           (pn(i-1,j-1)+pn(i-1,j  ))*vmask(i-1,j  ))*             &
      &          (on_v(i  ,j  )+on_v(i  ,j+1)+                           &
      &           on_v(i-1,j  )+on_v(i-1,j+1))/                          &
      &          (Ta(i-1,j,k)+Ta(i,j,k)+eps)
 !
-              Um=0.5_r8*u(i,j,k,nrhs)*dt(ng)*(pm(i-1,j)+pm(i,j))
-              Vm=0.125_r8*dt(ng)*                                       &
-     &           (v(i-1,j  ,k,nrhs)*(pn(i-1,j  )+pn(i-1,j-1))+          &
-     &            v(i-1,j+1,k,nrhs)*(pn(i-1,j  )+pn(i-1,j+1))+          &
-     &            v(i  ,j  ,k,nrhs)*(pn(i  ,j  )+pn(i  ,j-1))+          &
-     &            v(i  ,j+1,k,nrhs)*(pn(i  ,j  )+pn(i  ,j+1)))
-# ifdef NEARSHORE_MELLOR
-              Um=Um+0.5_r8*u_stokes(i,j,k)*dt(ng)*(pm(i-1,j)+pm(i,j))
-              Vm=Vm+0.125_r8*dt(ng)*                                    &
-     &           (v_stokes(i-1,j  ,k)*(pn(i-1,j  )+pn(i-1,j-1))+        &
-     &            v_stokes(i-1,j+1,k)*(pn(i-1,j  )+pn(i-1,j+1))+        &
-     &            v_stokes(i  ,j  ,k)*(pn(i  ,j  )+pn(i  ,j-1))+        &
-     &            v_stokes(i  ,j+1,k)*(pn(i  ,j  )+pn(i  ,j+1)))
-# endif
+              Um=0.125_r8*Huon(i,j,k)*                                  &
+     &           dt(ng)*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))*        &
+     &           (oHz(i-1,j,k)+oHz(i,j,k))
+              Vm=0.03125_r8*dt(ng)*                                     &
+     &           (Hvom(i-1,j  ,k)*(pm(i-1,j)+pm(i-1,j-1))*              &
+     &                            (pn(i-1,j)+pn(i-1,j-1))*              &
+     &                            (oHz(i-1,j,  k)+oHz(i-1,j-1,k))+      &
+     &            Hvom(i-1,j+1,k)*(pm(i-1,j+1)+pm(i-1,j))*              &
+     &                            (pn(i-1,j+1)+pn(i-1,j))*              &
+     &                            (oHz(i-1,j+1,k)+oHz(i-1,j  ,k))+      &
+     &            Hvom(i  ,j  ,k)*(pm(i  ,j)+pm(i  ,j-1))*              &
+     &                            (pn(i  ,j)+pn(i  ,j-1))*              &
+     &                            (oHz(i  ,j  ,k)+oHz(i  ,j-1,k))+      &
+     &            Hvom(i  ,j+1,k)*(pm(i  ,j+1)+pm(i  ,j))*              &
+     &                            (pn(i  ,j+1)+pn(i  ,j))*              &
+     &                            (oHz(i  ,j+1,k)+oHz(i  ,j  ,k)))
 !
               X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
               Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
@@ -394,6 +397,9 @@
      &                  SIGN(1.0_r8,Ua(i,j,k))
 #  ifdef MASKING
               Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
+#  endif
+#  ifdef WET_DRY
+              Ua(i,j,k)=Ua(i,j,k)*rmask_wet(i-1,j)*rmask_wet(i,j)
 #  endif
             END IF
           END DO
@@ -488,33 +494,35 @@
             ELSE
               A=0.03125_r8*                                             &
      &          ((Ta(i+1,j  ,k)-Ta(i  ,j  ,k))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
+     &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j  )+              &
      &           (Ta(i  ,j  ,k)-Ta(i-1,j  ,k))*                         &
-     &           (pm(i-1,j  )+pm(i  ,j  ))+                             &
+     &           (pm(i-1,j  )+pm(i  ,j  ))*umask(i  ,j  )+              &
      &           (Ta(i+1,j-1,k)-Ta(i  ,j-1,k))*                         &
-     &           (pm(i+1,j-1)+pm(i  ,j-1))+                             &
+     &           (pm(i+1,j-1)+pm(i  ,j-1))*umask(i+1,j-1)+              &
      &           (Ta(i  ,j-1,k)-Ta(i-1,j-1,k))*                         &
-     &           (pm(i-1,j-1)+pm(i  ,j-1)))*                            &
+     &           (pm(i-1,j-1)+pm(i  ,j-1))*umask(i  ,j-1))*             &
      &          (om_u(i  ,j  )+om_u(i+1,j  )+                           &
      &           om_u(i  ,j-1)+om_u(i+1,j-1))/                          &
      &          (Ta(i  ,j-1,k)+Ta(i,j,k)+eps)
               B=(Ta(i,j,k)-Ta(i,j-1,k))/                                &
      &          (Ta(i,j,k)+Ta(i,j-1,k)+eps)
 !
-              Um=0.125_r8*dt(ng)*                                       &
-     &           (u(i  ,j-1,k,nrhs)*(pm(i  ,j-1)+pm(i-1,j-1))+          &
-     &            u(i  ,j  ,k,nrhs)*(pm(i  ,j  )+pm(i-1,j  ))+          &
-     &            u(i+1,j-1,k,nrhs)*(pm(i  ,j-1)+pm(i+1,j-1))+          &
-     &            u(i+1,j  ,k,nrhs)*(pm(i  ,j  )+pm(i+1,j  )))
-              Vm=0.5_r8*v(i,j,k,nrhs)*dt(ng)*(pn(i,j-1)+pn(i,j))
-# ifdef NEARSHORE_MELLOR
-              Um=Um+0.125_r8*dt(ng)*                                    &
-     &           (u_stokes(i  ,j-1,k)*(pm(i  ,j-1)+pm(i-1,j-1))+        &
-     &            u_stokes(i  ,j  ,k)*(pm(i  ,j  )+pm(i-1,j  ))+        &
-     &            u_stokes(i+1,j-1,k)*(pm(i  ,j-1)+pm(i+1,j-1))+        &
-     &            u_stokes(i+1,j  ,k)*(pm(i  ,j  )+pm(i+1,j  )))
-              Vm=Vm+0.5_r8*v_stokes(i,j,k)*dt(ng)*(pn(i,j-1)+pn(i,j))
-# endif
+              Um=0.03125_r8*dt(ng)*                                     &
+     &           (Huon(i+1,j  ,k)*(pm(i+1,j)+pm(i,j))*                  &
+     &                            (pn(i+1,j)+pn(i,j))*                  &
+     &                            (oHz(i+1,j  ,k)+oHz(i,j  ,k))+        &
+     &            Huon(i+1,j-1,k)*(pm(i+1,j-1)+pm(i,j-1))*              &
+     &                            (pn(i+1,j-1)+pn(i,j-1))*              &
+     &                            (oHz(i+1,j-1,k)+oHz(i,j-1,k))+        &
+     &            Huon(i  ,j  ,k)*(pm(i-1,j)+pm(i,j))*                  &
+     &                            (pn(i-1,j)+pn(i,j))*                  &
+     &                            (oHz(i-1,j  ,k)+oHz(i,j  ,k))+        &
+     &            Huon(i  ,j-1,k)*(pm(i-1,j-1)+pm(i,j-1))*              &
+     &                            (pn(i-1,j-1)+pn(i,j-1))*              &
+     &                            (oHz(i-1,j-1,k)+oHz(i,j-1,k)))
+              Vm=0.125_r8*Hvom(i,j,k)*                                  &
+     &           dt(ng)*(pn(i,j-1)+pn(i,j))*(pm(i,j-1)+pm(i,j))*        &
+     &           (oHz(i,j-1,k)+oHz(i,j,k))
 !
               X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
               Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
@@ -584,6 +592,9 @@
 #  ifdef MASKING
               Va(i,j,k)=Va(i,j,k)*vmask(i,j)
 #  endif
+#  ifdef WET_DRY
+              Va(i,j,k)=Va(i,j,k)*rmask_wet(i,j-1)*rmask_wet(i,j)
+#  endif
             END IF
           END DO
         END DO
@@ -642,49 +653,54 @@
      &               (Ta(i,j,k+1)+Ta(i,j,k)+eps)
               A=0.0625_r8*                                              &
      &          ((Ta(i+1,j,k+1)-Ta(i  ,j,k+1))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
+     &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                &
      &           (Ta(i  ,j,k+1)-Ta(i-1,j,k+1))*                         &
-     &           (pm(i  ,j  )+pm(i-1,j  ))+                             &
+     &           (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j)+                &
      &           (Ta(i+1,j,k  )-Ta(i  ,j,k  ))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
+     &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                &
      &           (Ta(i  ,j,k  )-Ta(i-1,j,k  ))*                         &
-     &           (pm(i  ,j  )+pm(i-1,j  )))*                            &
+     &           (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j))*               &
      &          (om_u(i+1,j)+om_u(i  ,j))/                              &
      &          (Ta(i,j,k+1)+Ta(i,j,k)+eps)
               B=0.0625_r8*                                              &
      &          ((Ta(i,j+1,k+1)-Ta(i,j  ,k+1))*                         &
-     &           (pn(i  ,j+1)+pn(i  ,j  ))+                             &
+     &           (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                &
      &           (Ta(i,j  ,k+1)-Ta(i,j-1,k+1))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j-1))+                             &
+     &           (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  )+                &
      &           (Ta(i,j+1,k  )-Ta(i,j  ,k  ))*                         &
-     &           (pn(i  ,j+1)+pn(i  ,j  ))+                             &
+     &           (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                &
      &           (Ta(i,j  ,k  )-Ta(i,j-1,k  ))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j-1)))*                            &
+     &           (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  ))*               &
      &          (on_v(i,j+1)+on_v(i,j  ))/                              &
      &          (Ta(i,j,k+1)+Ta(i,j,k)+eps)
 !
-              Um=0.125_r8*dt(ng)*                                       &
-     &           ((u(i  ,j,k  ,nrhs)+u(i  ,j,k+1,nrhs))*                &
-     &            (pm(i  ,j  )+pm(i-1,j  ))+                            &
-     &            (u(i+1,j,k  ,nrhs)+u(i+1,j,k+1,nrhs))*                &
-     &            (pm(i+1,j  )+pm(i  ,j  )))
-              Vm=0.125_r8*dt(ng)*                                       &
-     &           ((v(i,j  ,k  ,nrhs)+v(i,j  ,k+1,nrhs))*                &
-     &            (pn(i  ,j  )+pn(i  ,j-1))+                            &
-     &            (v(i,j+1,k  ,nrhs)+v(i,j+1,k+1,nrhs))*                &
-     &            (pn(i  ,j+1)+pn(i  ,j)))
-# ifdef NEARSHORE_MELLOR
-              Um=Um+0.125_r8*dt(ng)*                                    &
-     &           ((u_stokes(i  ,j,k  )+u_stokes(i  ,j,k+1))*            &
-     &            (pm(i  ,j  )+pm(i-1,j  ))+                            &
-     &            (u_stokes(i+1,j,k  )+u_stokes(i+1,j,k+1))*            &
-     &            (pm(i+1,j  )+pm(i  ,j  )))
-              Vm=Vm+0.125_r8*dt(ng)*                                    &
-     &           ((v_stokes(i,j  ,k  )+v_stokes(i,j  ,k+1))*            &
-     &            (pn(i  ,j  )+pn(i  ,j-1))+                            &
-     &            (v_stokes(i,j+1,k  )+v_stokes(i,j+1,k+1))*            &
-     &            (pn(i  ,j+1)+pn(i  ,j)))
-# endif
+              Um=0.03125_r8*dt(ng)*                                     &
+     &            (Huon(i  ,j,k  )*(pm(i,j)+pm(i-1,j))*                 &
+     &                             (pn(i,j)+pn(i-1,j))*                 &
+     &                             (oHz(i,j,k  )+oHz(i-1,j,k  ))+       &
+     &             Huon(i  ,j,k+1)*(pm(i,j)+pm(i-1,j))*                 &
+     &                             (pn(i,j)+pn(i-1,j))*                 &
+     &                             (oHz(i,j,k+1)+oHz(i-1,j,k+1))+       &
+     &             Huon(i+1,j,k  )*(pm(i,j)+pm(i+1,j))*                 &
+     &                             (pn(i,j)+pn(i+1,j))*                 &
+     &                             (oHz(i,j,k  )+oHz(i+1,j,k  ))+       &
+     &             Huon(i+1,j,k+1)*(pm(i,j)+pm(i+1,j))*                 &
+     &                             (pn(i,j)+pn(i+1,j))*                 &
+     &                             (oHz(i,j,k+1)+oHz(i+1,j,k+1)))
+              Vm=0.03125_r8*dt(ng)*                                     &
+     &            (Hvom(i,j  ,k  )*(pm(i,j)+pm(i,j-1))*                 &
+     &                             (pn(i,j)+pn(i,j-1))*                 &
+     &                             (oHz(i,j,k  )+oHz(i,j-1,k  ))+       &
+     &             Hvom(i,j  ,k+1)*(pm(i,j)+pm(i,j-1))*                 &
+     &                             (pn(i,j)+pn(i,j-1))*                 &
+     &                             (oHz(i,j,k+1)+oHz(i,j-1,k+1))+       &
+     &             Hvom(i,j+1,k  )*(pm(i,j)+pm(i,j+1))*                 &
+     &                             (pn(i,j)+pn(i,j+1))*                 &
+     &                             (oHz(i,j,k  )+oHz(i,j+1,k  ))+       &
+     &             Hvom(i,j+1,k+1)*(pm(i,j)+pm(i,j+1))*                 &
+     &                             (pn(i,j)+pn(i,j+1))*                 &
+     &                             (oHz(i,j,k+1)+oHz(i,j+1,k+1)))
+
               Wm(i,k)=w(i,j,k)*odz(i,j,k)*pm(i,j)*pn(i,j)*dt(ng)
 !
               X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
@@ -756,6 +772,9 @@
 #  ifdef MASKING
               Wa(i,j,k)=Wa(i,j,k)*rmask(i,j)
 #  endif
+#  ifdef WET_DRY
+              Wa(i,j,k)=Wa(i,j,k)*rmask_wet(i,j)
+#  endif
             END IF
           END DO
           Wa(i,j,0)=0.0_r8
@@ -787,7 +806,7 @@
       DO k=1,N(ng)
         DO j=-1+J_RANGE+1
           DO i=-1+I_RANGE+1
-            Tadv(i,j,k)=t(i,j,k,3,itrc)
+            Tadv(i,j,k)=t(i,j,k)
           END DO
         END DO
       END DO
@@ -908,6 +927,9 @@
 # ifdef MASKING
             Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
 # endif
+# ifdef WET_DRY
+            Ua(i,j,k)=Ua(i,j,k)*rmask_wet(i-1,j)*rmask_wet(i,j)
+# endif
           END DO
         END DO
 !
@@ -921,9 +943,6 @@
 #  else
             Ua(Istr,j,k)=Ua(Istr+1,j,k)
 #  endif
-#  ifdef MASKING
-            Ua(Istr,j,k)=Ua(Istr,j,k)*umask(Istr,j)
-#  endif
           END DO
       END IF
       IF (EASTERN_EDGE) THEN
@@ -933,9 +952,6 @@
 #  else
             Ua(Iend+1,j,k)=Ua(Iend,j,k)
 #  endif
-# ifdef MASKING
-            Ua(Iend+1,j,k)=Ua(Iend+1,j,k)*umask(Iend+1,j)
-# endif
           END DO
       END IF
 # endif
@@ -958,6 +974,9 @@
 # ifdef MASKING
             Va(i,j,k)=Va(i,j,k)*vmask(i,j)
 # endif
+# ifdef WET_DRY
+            Va(i,j,k)=Va(i,j,k)*rmask_wet(i,j-1)*rmask_wet(i,j)
+# endif
           END DO
         END DO
 !
@@ -971,9 +990,6 @@
 #  else
             Va(i,Jstr,k)=Va(i,Jstr+1,k)
 #  endif
-# ifdef MASKING
-            Va(i,Jstr,k)=Va(i,Jstr,k)*vmask(i,Jstr)
-# endif
           END DO
       END IF
       IF (NORTHERN_EDGE) THEN
@@ -983,9 +999,6 @@
 #  else
             Va(i,Jend+1,k)=Va(i,Jend,k)
 #  endif
-# ifdef MASKING
-            Va(i,Jend+1,k)=Va(i,Jend+1,k)*vmask(i,Jend+1)
-# endif
           END DO
       END IF
 # endif
@@ -1001,6 +1014,9 @@
      &                   cff*omn(i,j)*(z_r(i,j,k+1)-z_r(i,j,k))
 # ifdef MASKING
               Wa(i,j,k)=Wa(i,j,k)*rmask(i,j)
+# endif
+# ifdef WET_DRY
+              Wa(i,j,k)=Wa(i,j,k)*rmask_wet(i,j)
 # endif
             END DO
           END DO

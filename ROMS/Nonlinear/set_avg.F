@@ -655,7 +655,7 @@
 !
       IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nAVG(ng)).eq.1)).or.                          &
-     &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
+     &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
 !
 !  Initialize 2D fields.
 !
@@ -988,7 +988,7 @@
 !
       IF ((iic(ng).gt.ntsAVG(ng)).and.                                  &
      &    (MOD(iic(ng)-1,nAVG(ng)).eq.0).and.                           &
-     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec.eq.0))) THEN
+     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
         fac=1.0_r8/REAL(nAVG(ng),r8)
         IF (SOUTH_WEST_TEST) THEN
           AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)

@@ -402,43 +402,49 @@
           SporadicImpulse=.FALSE.
           FrequentImpulse=.FALSE.
 !
+!  For the first run of the outer loop, we do not need to update the
+!  run of the NL model that was performed before the outer loop.
+!
+          IF (outer.gt.1) THEN
+!
 !  Initialize always the nonlinear model with the background or
 !  reference state (INIname, record Lbck).
 !
-          tINIindx(ng)=Lbck
-          CALL initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
-!
-!  Run nonlinear model using the nonlinear trajectory as a basic
-!  state.  Compute model solution at observation points, H * X_n.
-!
-          IF (Master) THEN
-            WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
-          END IF
-
-          time(ng)=time(ng)-dt(ng)
-
-          NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
-
-            iic(ng)=my_iic
-#ifdef SOLVE3D
-            CALL main3d (ng)
-#else
-            CALL main2d (ng)
-#endif
+            tINIindx(ng)=Lbck
+            CALL initial (ng)
             IF (exit_flag.ne.NoError) THEN
               IF (Master) THEN
                 WRITE (stdout,10) Rerror(exit_flag), exit_flag
               END IF
               RETURN
             END IF
+!
+!  Run nonlinear model using the nonlinear trajectory as a basic
+!  state.  Compute model solution at observation points, H * X_n.
+!
+            IF (Master) THEN
+              WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
+            END IF
 
-          END DO NL_LOOP2
+            time(ng)=time(ng)-dt(ng)
+
+            NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+              iic(ng)=my_iic
+#ifdef SOLVE3D
+              CALL main3d (ng)
+#else
+              CALL main2d (ng)
+#endif
+              IF (exit_flag.ne.NoError) THEN
+                IF (Master) THEN
+                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
+                END IF
+                RETURN
+              END IF
+
+            END DO NL_LOOP2
+          END IF
           wrtNLmod(ng)=.FALSE.
 !
 !  Set approximation vector PSI to representer coefficients Beta_n.

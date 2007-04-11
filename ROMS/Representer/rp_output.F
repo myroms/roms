@@ -102,7 +102,7 @@
           END IF
         ELSE
           IF ((MOD(iic(ng)-1,nTLM(ng)).eq.0).and.                       &
-     &        ((nrrec.eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
+     &        ((nrrec(ng).eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
             CALL tl_wrt_his (ng)
             IF (exit_flag.ne.NoError) RETURN
           END IF

@@ -112,7 +112,7 @@
       Perfect2D=.FALSE.
       Perfect3D=.FALSE.
 #ifdef PERFECT_RESTART
-      IF ((model.eq.0).and.(nrrec.ne.0)) THEN
+      IF ((model.eq.0).and.(nrrec(ng).ne.0)) THEN
         Perfect2D=.TRUE.
         Perfect3D=.TRUE.
       END IF
@@ -156,7 +156,7 @@
 !  in model time.
 !
         status=nf_inq_varid(ncINPid, TRIM(tvarnam), varid)
-        IF (LastRec) THEN
+        IF (LastRec(ng)) THEN
           Tmax=-1.0_r8
           DO i=1,tsize
             status=nf_get_var1_TYPE(ncINPid,varid,i,INPtime)
@@ -301,7 +301,7 @@
 !
 !  Read in time-stepping indices.
 !
-        IF (InpThread.and.((model.eq.0).and.(nrrec.ne.0))) THEN
+        IF (InpThread.and.((model.eq.0).and.(nrrec(ng).ne.0))) THEN
 #  ifdef SOLVE3D
           status=nf_inq_varid(ncINPid,'nstp',varid)
           status=nf_get_var1_int(ncINPid,varid,InpRec,nstp(ng))

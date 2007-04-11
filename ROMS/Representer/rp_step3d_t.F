@@ -58,13 +58,18 @@
       CALL rp_step3d_t_tile (ng, Istr, Iend, Jstr, Jend,                &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       nrhs(ng), nstp(ng), nnew(ng),              &
-# ifdef TS_PSOURCE
+# if defined TS_PSOURCE || defined Q_PSOURCE
      &                       Nsrc(ng),                                  &
-     &                       SOURCES(ng) % Lsrc,                        &
      &                       SOURCES(ng) % Isrc,                        &
      &                       SOURCES(ng) % Jsrc,                        &
-     &                       SOURCES(ng) % Dsrc,                        &
      &                       SOURCES(ng) % Tsrc,                        &
+# endif
+# ifdef TS_PSOURCE
+     &                       SOURCES(ng) % Lsrc,                        &
+     &                       SOURCES(ng) % Dsrc,                        &
+# endif
+# ifdef Q_PSOURCE
+     &                       SOURCES(ng) % Qsrc,                        &
 # endif
 # ifdef MASKING
      &                       GRID(ng) % rmask,                          &
@@ -72,6 +77,9 @@
      &                       GRID(ng) % vmask,                          &
 # endif
 # ifdef TS_MPDATA
+#  ifdef WET_DRY
+     &                       GRID(ng) % rmask_wet,                      &
+#  endif
      &                       GRID(ng) % omn,                            &
      &                       GRID(ng) % om_u,                           &
      &                       GRID(ng) % om_v,                           &
@@ -124,14 +132,22 @@
       SUBROUTINE rp_step3d_t_tile (ng, Istr, Iend, Jstr, Jend,          &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             nrhs, nstp, nnew,                    &
+# if defined TS_PSOURCE || defined Q_PSOURCE
+     &                             Nsrc, Isrc, Jsrc, Tsrc,              &
+# endif
 # ifdef TS_PSOURCE
-     &                             Nsrc, Lsrc, Isrc, Jsrc, Dsrc,        &
-     &                             Tsrc,                                &
+     &                             Lsrc, Dsrc,                          &
+# endif
+# ifdef Q_PSOURCE
+     &                             Qsrc,                                &
 # endif
 # ifdef MASKING
      &                             rmask, umask, vmask,                 &
 # endif
 # ifdef TS_MPDATA
+#  ifdef WET_DRY
+     &                             rmask_wet,                           &
+#  endif
      &                             omn, om_u, om_v, on_u, on_v,         &
 # endif
      &                             pm, pn,                              &
@@ -183,15 +199,20 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef TS_PSOURCE
-      integer, intent(in) :: Nsrc
-
       logical, intent(in) :: Lsrc(:,:)
-
+#  endif
+#  if defined TS_PSOURCE || defined Q_PSOURCE
+      integer, intent(in) :: Nsrc
       integer, intent(in) :: Isrc(:)
       integer, intent(in) :: Jsrc(:)
 
-      real(r8), intent(in) :: Dsrc(:)
       real(r8), intent(in) :: Tsrc(:,:,:)
+#  endif
+#  ifdef TS_PSOURCE
+      real(r8), intent(in) :: Dsrc(:)
+#  endif
+#  ifdef Q_PSOURCE
+      real(r8), intent(in) :: Qsrc(:,:)
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
@@ -199,6 +220,9 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
 #  ifdef TS_MPDATA
+#   ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+#   endif
       real(r8), intent(in) :: omn(LBi:,LBj:)
       real(r8), intent(in) :: om_u(LBi:,LBj:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
@@ -261,23 +285,30 @@
 # else
 
 #  ifdef TS_PSOURCE
-      integer, intent(in) :: Nsrc
-
       logical, intent(in) :: Lsrc(Msrc,NT(ng))
-
+#  endif
+#  if defined TS_PSOURCE || defined Q_PSOURCE
+      integer, intent(in) :: Nsrc
       integer, intent(in) :: Isrc(Msrc)
       integer, intent(in) :: Jsrc(Msrc)
 
-      real(r8), intent(in) :: Dsrc(Msrc)
       real(r8), intent(in) :: Tsrc(Msrc,N(ng),NT(ng))
 #  endif
-
+#  ifdef TS_PSOURCE
+      real(r8), intent(in) :: Dsrc(Msrc)
+#  endif
+#  ifdef Q_PSOURCE
+      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
+#  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef TS_MPDATA
+#   ifdef WET_DRY
+      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+#   endif
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
@@ -407,14 +438,14 @@
 !
 # ifdef TS_MPDATA
 #  ifdef EW_PERIODIC
-#   define I_RANGE Istr-3,Iend+2
+#   define I_RANGE Istr-2,Iend+2
 #  else
-#   define I_RANGE MAX(Istr-3,1),MIN(Iend+2,Lm(ng))
+#   define I_RANGE MAX(Istr-2,0),MIN(Iend+2,Lm(ng)+1)
 #  endif
 #  ifdef NS_PERIODIC
-#   define J_RANGE Jstr-3,Jend+2
+#   define J_RANGE Jstr-2,Jend+2
 #  else
-#   define J_RANGE MAX(Jstr-3,1),MIN(Jend+2,Mm(ng))
+#   define J_RANGE MAX(Jstr-2,0),MIN(Jend+2,Mm(ng)+1)
 #  endif
 # else
 #  define I_RANGE Istr,Iend
@@ -432,11 +463,33 @@
           END DO
         END DO
       END DO
-#undef I_RANGE
-#undef J_RANGE
+# undef I_RANGE
+# undef J_RANGE
 !
 !  Compute tangent linear horizontal tracer advection fluxes.
 !
+# if defined TS_MPDATA   && \
+    (defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE)
+!
+!  The MPDATA algorithm requires a three-point footprint, so exchange
+!  boundary data on t(:,:,:,3,:) so other processes computed earlier
+!  (horizontal diffusion, biology, or sediment) are accounted.
+!
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+      DO itrc=1,NT(ng)
+        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
+     &                          t(:,:,:,3,itrc))
+      END DO
+#  endif
+#  ifdef DISTRIBUTE
+      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    t(:,:,:,3,:))
+#  endif
+# endif
+
       T_LOOP : DO itrc=1,NT(ng)
         K_LOOP : DO k=1,N(ng)
 
@@ -489,21 +542,19 @@
 #   define J_RANGE MAX(Jstr-2,1),MIN(Jend+2,Mm(ng))
 #  endif
           DO j=J_RANGE
-             DO i=I_RANGE
+            DO i=I_RANGE
               cff1=MAX(Huon(i,j,k),0.0_r8)
               cff2=MIN(Huon(i,j,k),0.0_r8)
               tl_cff1=(0.5_r8+SIGN(0.5_r8, Huon(i,j,k)))*tl_Huon(i,j,k)
               tl_cff2=(0.5_r8+SIGN(0.5_r8,-Huon(i,j,k)))*tl_Huon(i,j,k)
-              FX(i,j)=cff1*t(i-1,j,k,3,itrc)*oHz(i-1,j,k)+              &
-     &                cff2*t(i  ,j,k,3,itrc)*oHz(i  ,j,k)
-              tl_FX(i,j)=tl_cff1*t(i-1,j,k,3,itrc)*oHz(i-1,j,k)+        &
-     &                   cff1*(tl_t(i-1,j,k,3,itrc)*oHz(i-1,j,k)+       &
-     &                         t(i-1,j,k,3,itrc)*tl_oHz(i-1,j,k))+      &
-     &                   tl_cff2*t(i  ,j,k,3,itrc)*oHz(i  ,j,k)+        &
-     &                   cff2*(tl_t(i  ,j,k,3,itrc)*oHz(i  ,j,k)+       &
-     &                         t(i  ,j,k,3,itrc)*tl_oHz(i  ,j,k))-      &
+              FX(i,j)=cff1*t(i-1,j,k,3,itrc)+                           &
+     &                cff2*t(i  ,j,k,3,itrc)
+              tl_FX(i,j)=tl_cff1*t(i-1,j,k,3,itrc)+                     &
+     &                   cff1*tl_t(i-1,j,k,3,itrc)+                     &
+     &                   tl_cff2*t(i  ,j,k,3,itrc)+                     &
+     &                   cff2*tl_t(i  ,j,k,3,itrc)-                     &
 #  ifdef TL_IOMS
-     &                   2.0_r8*FX(i,j)
+     &                   FX(i,j)
 #  endif
             END DO
           END DO
@@ -525,18 +576,15 @@
               cff2=MIN(Hvom(i,j,k),0.0_r8)
               tl_cff1=(0.5_r8+SIGN(0.5_r8, Hvom(i,j,k)))*tl_Hvom(i,j,k)
               tl_cff2=(0.5_r8+SIGN(0.5_r8,-Hvom(i,j,k)))*tl_Hvom(i,j,k)
-              FE(i,j)=cff1*t(i,j-1,k,3,itrc)*oHz(i,j-1,k)+              &
-     &                cff2*t(i,j  ,k,3,itrc)*oHz(i,j  ,k)
-              tl_FE(i,j)=tl_cff1*t(i,j-1,k,3,itrc)*oHz(i,j-1,k)+        &
-     &                   cff1*(tl_t(i,j-1,k,3,itrc)*oHz(i,j-1,k)+       &
-     &                         t(i,j-1,k,3,itrc)*tl_oHz(i,j-1,k))+      &
-     &                   tl_cff2*t(i,j  ,k,3,itrc)*oHz(i,j  ,k)+        &
-     &                   cff2*(tl_t(i,j  ,k,3,itrc)*oHz(i,j  ,k)+       &
-     &                         t(i,j  ,k,3,itrc)*tl_oHz(i,j  ,k))-      &
+              FE(i,j)=cff1*t(i,j-1,k,3,itrc)+                           &
+     &                cff2*t(i,j  ,k,3,itrc)
+              tl_FE(i,j)=tl_cff1*t(i,j-1,k,3,itrc)+                     &
+     &                   cff1*tl_t(i,j-1,k,3,itrc)+                     &
+     &                   tl_cff2*t(i,j  ,k,3,itrc)+                     &
+     &                   cff2*tl_t(i,j  ,k,3,itrc)-                     &
 #  ifdef TL_IOMS
-     &                   2.0_r8*FE(i,j)
+     &                   FE(i,j)
 #  endif
-
             END DO
           END DO
 #  undef I_RANGE
@@ -790,84 +838,6 @@
 !
 !  Apply tracers point sources to the horizontal advection terms.
 !
-#  ifdef TS_MPDATA
-          DO is=1,Nsrc
-            i=Isrc(is)
-            j=Jsrc(is)
-            IF (INT(Dsrc(is)).eq.0) THEN
-              IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
-     &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
-                IF (Lsrc(is,itrc)) THEN
-!>                FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
-!>
-                  tl_FX(i,j)=tl_Huon(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
-                ELSE
-                  IF ((rmask(i  ,j).eq.0.0_r8).and.                     &
-     &                (rmask(i-1,j).eq.1.0_r8)) THEN
-                    FX(i,j)=Huon(i,j,k)*t(i-1,j,k,3,itrc)*oHz(i-1,j,k)
-                    tl_FX(i,j)=tl_Huon(i,j,k)*                          &
-     &                         t(i-1,j,k,3,itrc)*oHz(i-1,j,k)+          &
-     &                         Huon(i,j,k)*                             &
-     &                         (tl_t(i-1,j,k,3,itrc)*oHz(i-1,j,k)+      &
-     &                          t(i-1,j,k,3,itrc)*tl_oHz(i-1,j,k))-     &
-#    ifdef TL_IOMS
-     &                         2.0_r8*FX(i,j)
-#    endif
-
-                  ELSE IF ((rmask(i  ,j).eq.1.0_r8).and.                &
-     &                     (rmask(i-1,j).eq.0.0_r8)) THEN
-                    FX(i,j)=Huon(i,j,k)*t(i  ,j,k,3,itrc)*oHz(i  ,j,k)
-                    tl_FX(i,j)=tl_Huon(i,j,k)*                          &
-     &                         t(i  ,j,k,3,itrc)*oHz(i  ,j,k)+          &
-     &                         Huon(i,j,k)*                             &
-     &                         (tl_t(i  ,j,k,3,itrc)*oHz(i  ,j,k)+      &
-     &                          t(i  ,j,k,3,itrc)*tl_oHz(i  ,j,k))-     &
-#    ifdef TL_IOMS
-     &                         2.0_r8*FX(i,j)
-#    endif
-                  END IF
-#   endif
-                END IF
-              END IF
-            ELSE IF (INT(Dsrc(is)).eq.1) THEN
-              IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
-     &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
-                IF (Lsrc(is,itrc)) THEN
-!>                FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
-!>
-                  tl_FE(i,j)=tl_Hvom(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
-                ELSE
-                  IF ((rmask(i,j  ).eq.0.0_r8).and.                     &
-     &                (rmask(i,j-1).eq.1.0_r8)) THEN
-                    FE(i,j)=Hvom(i,j,k)*t(i,j-1,k,3,itrc)*oHz(i,j-1,k)
-                    tl_FE(i,j)=tl_Hvom(i,j,k)*                          &
-     &                         t(i,j-1,k,3,itrc)*oHz(i,j-1,k)+          &
-     &                         Hvom(i,j,k)*                             &
-     &                         (tl_t(i,j-1,k,3,itrc)*oHz(i,j-1,k)+      &
-     &                          t(i,j-1,k,3,itrc)*tl_oHz(i,j-1,k))-     &
-#    ifdef TL_IOMS
-     &                         2.0_r8*FE(i,j)
-#    endif
-                  ELSE IF ((rmask(i,j  ).eq.1.0_r8).and.                &
-     &                     (rmask(i,j-1).eq.0.0_r8)) THEN
-                    FE(i,j)=Hvom(i,j,k)*t(i,j  ,k,3,itrc)*oHz(i,j  ,k)
-                    tl_FE(i,j)=tl_Hvom(i,j,k)*                          &
-     &                         t(i,j  ,k,3,itrc)*oHz(i,j  ,k)+          &
-     &                         Hvom(i,j,k)*                             &
-     &                         (tl_t(i,j  ,k,3,itrc)*oHz(i,j  ,k)+      &
-     &                          t(i,j  ,k,3,itrc)*tl_oHz(i,j  ,k))-     &
-#    ifdef TL_IOMS
-     &                         2.0_r8*FE(i,j)
-#    endif
-                  END IF
-#   endif
-                END IF
-              END IF
-            END IF
-          END DO
-#  else
           DO is=1,Nsrc
             i=Isrc(is)
             j=Jsrc(is)
@@ -878,26 +848,26 @@
 !>                FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
 !>
                   tl_FX(i,j)=tl_Huon(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
+#  ifdef MASKING
                 ELSE
                   IF ((rmask(i  ,j).eq.0.0_r8).and.                     &
      &                (rmask(i-1,j).eq.1.0_r8)) THEN
                     FX(i,j)=Huon(i,j,k)*t(i-1,j,k,3,itrc)
                     tl_FX(i,j)=tl_Huon(i,j,k)*t(i-1,j,k,3,itrc)+        &
      &                         Huon(i,j,k)*tl_t(i-1,j,k,3,itrc)-        &
-#    ifdef TL_IOMS
+#   ifdef TL_IOMS
      &                         FX(i,j)
-#    endif
+#   endif
                   ELSE IF ((rmask(i  ,j).eq.1.0_r8).and.                &
      &                     (rmask(i-1,j).eq.0.0_r8)) THEN
                     FX(i,j)=Huon(i,j,k)*t(i  ,j,k,3,itrc)
                     tl_FX(i,j)=tl_Huon(i,j,k)*t(i  ,j,k,3,itrc)+        &
      &                         Huon(i,j,k)*tl_t(i  ,j,k,3,itrc)-        &
-#    ifdef TL_IOMS
+#   ifdef TL_IOMS
      &                         FX(i,j)
-#    endif
-                  END IF
 #   endif
+                  END IF
+#  endif
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
@@ -907,32 +877,31 @@
 !>                FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
 !>
                   tl_FE(i,j)=tl_Hvom(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
+#  ifdef MASKING
                 ELSE
                   IF ((rmask(i,j  ).eq.0.0_r8).and.                     &
      &                (rmask(i,j-1).eq.1.0_r8)) THEN
                     FE(i,j)=Hvom(i,j,k)*t(i,j-1,k,3,itrc)
                     tl_FE(i,j)=tl_Hvom(i,j,k)*t(i,j-1,k,3,itrc)+        &
      &                         Hvom(i,j,k)*tl_t(i,j-1,k,3,itrc)-        &
-#    ifdef TL_IOMS
+#   ifdef TL_IOMS
      &                         FE(i,j)
-#    endif
+#   endif
                   ELSE IF ((rmask(i,j  ).eq.1.0_r8).and.                &
      &                     (rmask(i,j-1).eq.0.0_r8)) THEN
 !>                  FE(i,j)=Hvom(i,j,k)*t(i,j  ,k,3,itrc)
 !>
                     tl_FE(i,j)=tl_Hvom(i,j,k)*t(i,j  ,k,3,itrc)+        &
      &                         Hvom(i,j,k)*tl_t(i,j  ,k,3,itrc)-        &
-#    ifdef TL_IOMS
+#   ifdef TL_IOMS
      &                         FE(i,j)
-#    endif
-                  END IF
 #   endif
+                  END IF
+#  endif
                 END IF
               END IF
             END IF
           END DO
-#  endif
 # endif
 !
 !  Time-step horizontal advection term.
@@ -955,28 +924,32 @@
           DO j=J_RANGE
             DO i=I_RANGE
               cff=dt(ng)*pm(i,j)*pn(i,j)
-# ifdef TS_MPDATA
-              cff1=cff*(FX(i+1,j)-FX(i,j)+                               &
+              cff1=cff*(FX(i+1,j)-FX(i,j)+                              &
      &                  FE(i,j+1)-FE(i,j))
-# else
-!>            cff1=cff*(FX(i+1,j)-FX(i,j)+                               &
-!>   &                  FE(i,j+1)-FE(i,j))
-# endif
-              tl_cff1=cff*(tl_FX(i+1,j)-tl_FX(i,j)+                      &
+              tl_cff1=cff*(tl_FX(i+1,j)-tl_FX(i,j)+                     &
      &                     tl_FE(i,j+1)-tl_FE(i,j))
 #  ifdef TS_MPDATA
-              Ta(i,j,k,itrc)=t(i,j,k,3,itrc)-cff1
-              tl_Ta(i,j,k,itrc)=tl_t(i,j,k,3,itrc)-tl_cff1
-#   ifdef DIAGNOSTICS_TS
-!!            DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
+              cff2=Hz(i,j,k)+                                           &
+     &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
+     &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
+     &                  (W(i,j,k)-W(i,j,k-1)))
+              tl_cff2=tl_Hz(i,j,k)+                                     &
+     &                cff*(tl_Huon(i+1,j,k)-tl_Huon(i,j,k)+             &
+     &                     tl_Hvom(i,j+1,k)-tl_Hvom(i,j,k)+             &
+     &                     (tl_W(i,j,k)-tl_W(i,j,k-1)))
+              Ta(i,j,k,itrc)=t(i,j,k,3,itrc)*cff2-cff1
+              tl_Ta(i,j,k,itrc)=tl_t(i,j,k,3,itrc)*cff2+                &
+     &                          t(i,j,k,3,itrc)*tl_cff2-tl_cff1-        &
+#   ifdef TL_IOMS
+     &                          t(i,j,k,3,itrc)*cff2
 #   endif
 #  else
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
 !>
               tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff1
-#   ifdef DIAGNOSTICS_TS
+#  endif
+#  ifdef DIAGNOSTICS_TS
 !!            DiaTwrk(i,j,k,itrc,iThadv)=-cff1
-#   endif
 #  endif
             END DO
           END DO
@@ -1029,21 +1002,21 @@
               FC(i,k)=FC(i,k)-CF(i,k+1)*FC(i,k+1)
             END DO
           END DO
-!            
+!
 !  Now the tangent linear spline code.
-!            
+!
           DO i=Istr,Iend
 #  ifdef NEUMANN
 !>          FC(i,0)=1.5_r8*t(i,j,1,3,itrc)
 !>
             tl_FC(i,0)=1.5_r8*tl_t(i,j,1,3,itrc)
             CF(i,1)=0.5_r8
-#  else      
+#  else
 !>          FC(i,0)=2.0_r8*t(i,j,1,3,itrc)
 !>
             tl_FC(i,0)=2.0_r8*tl_t(i,j,1,3,itrc)
             CF(i,1)=1.0_r8
-#  endif     
+#  endif
           END DO
           DO k=1,N(ng)-1
             DO i=Istr,Iend
@@ -1103,8 +1076,8 @@
               tl_FC(i,k)=tl_FC(i,k)-CF(i,k+1)*tl_FC(i,k+1)
 !>            FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
 !>
-              tl_FC(i,k+1)=tl_W(i,j,k+1)*FC(i,k+1)+                    &
-     &                     W(i,j,k+1)*tl_FC(i,k+1)-                    &
+              tl_FC(i,k+1)=tl_W(i,j,k+1)*FC(i,k+1)+                     &
+     &                     W(i,j,k+1)*tl_FC(i,k+1)-                     &
 #  ifdef TL_IOMS
      &                     W(i,j,k+1)*FC(i,k+1)
 #  endif
@@ -1122,14 +1095,14 @@
 !  Now complete the computation of the flux array FC.
 !
           DO k=N(ng)-1,0,-1
-            DO i=Istr,Iend 
-              FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)     
-            END DO                               
-          END DO                            
+            DO i=Istr,Iend
+              FC(i,k+1)=W(i,j,k+1)*FC(i,k+1)
+            END DO
+          END DO
           DO i=Istr,Iend
             FC(i,N(ng))=0.0_r8
-            FC(i,0)=0.0_r8    
-          END DO              
+            FC(i,0)=0.0_r8
+          END DO
 
 # elif defined TS_A4VADVECTION
 !
@@ -1193,8 +1166,17 @@
             END DO
           END DO
           DO i=Istr,Iend
+#  ifdef SED_MORPH
+            FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
+            tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,3,itrc)+                     &
+     &                 W(i,j,0)*tl_t(i,j,1,3,itrc)-                     &
+#   ifdef TL_IOMS
+     &                 FC(i,0)
+#   endif
+#  else
             FC(i,0)=0.0_r8
             tl_FC(i,0)=0.0_r8
+#  endif
             FC(i,N(ng))=0.0_r8
             tl_FC(i,N(ng))=0.0_r8
           END DO
@@ -1220,8 +1202,17 @@
             END DO
           END DO
           DO i=Istr,Iend
+#  ifdef SED_MORPH
+            FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
+            tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,3,itrc)+                     &
+     &                 W(i,j,0)*tl_t(i,j,1,3,itrc)-                     &
+#   ifdef TL_IOMS
+     &                 FC(i,0)
+#   endif
+#  else
             FC(i,0)=0.0_r8
             tl_FC(i,0)=0.0_r8
+#  endif
             FC(i,N(ng))=0.0_r8
             tl_FC(i,N(ng))=0.0_r8
           END DO
@@ -1235,20 +1226,27 @@
               cff2=MIN(W(i,j,k),0.0_r8)
               tl_cff1=(0.5_r8+SIGN(0.5_r8, W(i,j,k)))*tl_W(i,j,k)
               tl_cff2=(0.5_r8+SIGN(0.5_r8,-W(i,j,k)))*tl_W(i,j,k)
-              FC(i,k)=cff1*t(i,j,k  ,3,itrc)*oHz(i,j,k  )+              &
-     &                cff2*t(i,j,k+1,3,itrc)*oHz(i,j,k+1)
-              tl_FC(i,k)=tl_cff1*t(i,j,k  ,3,itrc)*oHz(i,j,k  )+        &
-     &                   cff1*(tl_t(i,j,k  ,3,itrc)*oHz(i,j,k  )+       &
-     &                         t(i,j,k  ,3,itrc)*tl_oHz(i,j,k  ))+      &
-     &                   tl_cff2*t(i,j,k+1,3,itrc)*oHz(i,j,k+1)+        &
-     &                   cff2*(tl_t(i,j,k+1,3,itrc)*oHz(i,j,k+1)+       &
-     &                         t(i,j,k+1,3,itrc)*tl_oHz(i,j,k+1))-      &
+              FC(i,k)=cff1*t(i,j,k  ,3,itrc)+                           &
+     &                cff2*t(i,j,k+1,3,itrc)
+              tl_FC(i,k)=tl_cff1*t(i,j,k  ,3,itrc)+                     &
+     &                   cff1*tl_t(i,j,k  ,3,itrc)+                     &
+     &                   tl_cff2*t(i,j,k+1,3,itrc)+                     &
+     &                   cff2*tl_t(i,j,k+1,3,itrc)-                     &
 #  ifdef TL_IOMS
-     &                   2.0_r8*FC(i,k)
+     &                   FC(i,k)
 #  endif
             END DO
+#  ifdef SED_MORPH
+            FC(i,0)=W(i,j,0)*t(i,j,1,3,itrc)
+            tl_FC(i,0)=tl_W(i,j,0)*t(i,j,1,3,itrc)+                     &
+     &                 W(i,j,0)*tl_t(i,j,1,3,itrc)-                     &
+#   ifdef TL_IOMS
+     &                 FC(i,0)
+#   endif
+#  else
             FC(i,0)=0.0_r8
             tl_FC(i,0)=0.0_r8
+#  endif
             FC(i,N(ng))=0.0_r8
             tl_FC(i,N(ng))=0.0_r8
           END DO
@@ -1282,8 +1280,24 @@
             END DO
           END DO
           DO i=Istr,Iend
+#  ifdef SED_MORPH
+            FC(i,0)=W(i,j,0)*2.0_r8*                                    &
+     &              (cff2*t(i,j,1,3,itrc)-                              &
+     &               cff3*t(i,j,2,3,itrc))
+            tl_FC(i,0)=2.0_r8*                                          &
+     &                 (tl_W(i,j,0)*                                    &
+     &                  (cff2*t(i,j,1,3,itrc)-                          &
+     &                   cff3*t(i,j,2,3,itrc))+                         &
+     &                  W(i,j,0)*                                       &
+     &                  (cff2*tl_t(i,j,1,3,itrc)-                       &
+     &                   cff3*tl_t(i,j,2,3,itrc)))-                     &
+#   ifdef TL_IOMS
+     &                 FC(i,0)
+#   endif
+#  else
             FC(i,0)=0.0_r8
             tl_FC(i,0)=0.0_r8
+#  endif
             FC(i,1)=W(i,j,1)*                                           &
      &              (cff1*t(i,j,1,3,itrc)+                              &
      &               cff2*t(i,j,2,3,itrc)-                              &
@@ -1328,6 +1342,24 @@
           DO i=I_RANGE
             CF(i,0)=dt(ng)*pm(i,j)*pn(i,j)
           END DO
+# ifdef Q_PSOURCE
+!
+!  Apply mass point sources - Volume influx.
+!
+          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
+     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
+            IF (j.eq.Jsrc(is)) THEN
+              DO k=1,N(ng)-1
+                DO is=1,Nsrc
+                  i=Isrc(is)
+                  FC(i,k)=FC(i,k)+0.5_r8*                               &
+     &                    (Qsrc(is,k  )*Tsrc(is,k  ,itrc)+              &
+     &                     Qsrc(is,k+1)*Tsrc(is,k+1,itrc))
+                END DO
+              END DO
+            END IF
+          END IF
+# endif
           DO k=1,N(ng)
             DO i=I_RANGE
               cff1=CF(i,0)*(FC(i,k)-FC(i,k-1))
@@ -1340,6 +1372,9 @@
      &                          tl_oHz(i,j,k)-                          &
 #  ifdef TL_IOMS
      &                          Ta(i,j,k,itrc)
+#  endif
+#  ifdef DIAGNOSTICS_TS
+              DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
 #  endif
 # else
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
@@ -1384,21 +1419,40 @@
 !-----------------------------------------------------------------------
 !
       DO itrc=1,NT(ng)
-        CALL rp_mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend, itrc,    &
+!>      CALL mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>   &                          LBi, UBi, LBj, UBj,                     &
+!>   &                          ILB, IUB, JLB, JUB,                     &
+!>   &                          nrhs,                                   &
+#  ifdef MASKING
+!>   &                          rmask, umask, vmask,                    &
+#  endif
+#  ifdef WET_DRY
+!>   &                          rmask_wet,                              &
+#  endif
+!>   &                          pm, pn, omn, om_u, on_v,                &
+!>   &                          z_r, oHz,                               &
+!>   &                          Huon, Hvom, W,                          &
+!>   &                          t(:,:,:,3,itrc),                        &
+!>   &                          Ta(:,:,:,itrc),  Ua, Va, Wa)
+!>
+        CALL rp_mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend,          &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ILB, IUB, JLB, JUB,                  &
      &                             nrhs,                                &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
 #  endif
+#  ifdef WET_DRY
+     &                             rmask_wet,                            &
+#  endif
      &                             pm, pn, omn, om_u, on_v,             &
-     &                             Hz, tl_Hz,                           &
-     &                             t, tl_t,                             &
-     &                             u, tl_u,                             &
-     &                             v, tl_v,                             &
+     &                             z_r, tl_z_r,                         &
+     &                             oHz, tl_oHz,                         &
+     &                             Huon, tl_Huon,                       &
+     &                             Hvom, tl_Hvom,                       &
      &                             W, tl_W,                             &
-     &                             Ta(:,:,:,itrc),                      &
-     &                             tl_Ta(:,:,:,itrc),                   &
+     &                             t(:,:,:,3,itrc), tl_t(:,:,:,3,itrc), &
+     &                             Ta(:,:,:,itrc), tl_Ta(:,:,:,itrc),   &
      &                             Ua, tl_Ua,                           &
      &                             Va, tl_Va,                           &
      &                             Wa, tl_Wa)
@@ -1452,96 +1506,25 @@
 #  endif
             END DO
           END DO
-#  ifdef TS_PSOURCE
 !
-!  Apply tracers point sources to the horizontal advection terms.
-!
-          DO is=1,Nsrc
-            i=Isrc(is)
-            j=Jsrc(is)
-            IF (INT(Dsrc(is)).eq.0) THEN
-              IF (((Istr.le.i).and.(i.le.Iend+1)).and.                  &
-     &            ((Jstr.le.j).and.(j.le.Jend))) THEN
-                IF (Lsrc(is,itrc)) THEN
-!>                FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
-!>
-                  tl_FX(i,j)=tl_Huon(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
-                ELSE
-                  IF ((rmask(i  ,j).eq.0.0_r8).and.                     &
-     &                (rmask(i-1,j).eq.1.0_r8)) THEN
-                    FX(i,j)=Huon(i,j,k)*t(i-1,j,k,3,itrc)
-                    tl_FX(i,j)=tl_Huon(i,j,k)*t(i-1,j,k,3,itrc)+        &
-     &                         Huon(i,j,k)*tl_t(i-1,j,k,3,itrc)-        &
-#    ifdef TL_IOMS
-     &                         FX(i,j)
-#    endif
-                  ELSE IF ((rmask(i  ,j).eq.1.0_r8).and.                &
-     &                     (rmask(i-1,j).eq.0.0_r8)) THEN
-                    FX(i,j)=Huon(i,j,k)*t(i  ,j,k,3,itrc)
-                    tl_FX(i,j)=tl_Huon(i,j,k)*t(i  ,j,k,3,itrc)+        &
-     &                         Huon(i,j,k)*tl_t(i  ,j,k,3,itrc)-        &
-#    ifdef TL_IOMS
-     &                         FX(i,j)
-#    endif
-                  END IF
-#   endif
-                END IF
-              END IF
-            ELSE IF (INT(Dsrc(is)).eq.1) THEN
-              IF (((Istr.le.i).and.(i.le.Iend)).and.                    &
-     &            ((Jstr.le.j).and.(j.le.Jend+1))) THEN
-                IF (Lsrc(is,itrc)) THEN
-!>                FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
-!>
-                  tl_FE(i,j)=tl_Hvom(i,j,k)*Tsrc(is,k,itrc)
-#   ifdef MASKING
-                ELSE
-                  IF ((rmask(i,j  ).eq.0.0_r8).and.                     &
-     &                (rmask(i,j-1).eq.1.0_r8)) THEN
-                    FE(i,j)=Hvom(i,j,k)*t(i,j-1,k,3,itrc)
-                    tl_FE(i,j)=tl_Hvom(i,j,k)*t(i,j-1,k,3,itrc)+        &
-     &                         Hvom(i,j,k)*tl_t(i,j-1,k,3,itrc)-        &
-#    ifdef TL_IOMS
-     &                         FE(i,j)
-#    endif
-                  ELSE IF ((rmask(i,j  ).eq.1.0_r8).and.                &
-     &                     (rmask(i,j-1).eq.0.0_r8)) THEN
-                    FE(i,j)=Hvom(i,j,k)*t(i,j  ,k,3,itrc)
-                    tl_FE(i,j)=tl_Hvom(i,j,k)*t(i,j  ,k,3,itrc)+        &
-     &                         Hvom(i,j,k)*tl_t(i,j  ,k,3,itrc)-        &
-#    ifdef TL_IOMS
-     &                         FE(i,j)
-#    endif
-                  END IF
-#   endif
-                END IF
-              END IF
-            END IF
-          END DO
-#  endif
-!
-!  Time-step corrected horizontal advection (Tunits).
+!  Time-step corrected horizontal advection (Tunits m).
 !
           DO j=Jstr,Jend
             DO i=Istr,Iend
-!>            cff1=dt(ng)*(FX(i+1,j)-FX(i,j)+                           &
-!>   &                     FE(i,j+1)-FE(i,j))*                          &
-!>   &             pm(i,j)*pn(i,j)*oHz(i,j,k)
+!>            cff1=dt(ng)*pm(i,j)*pn(i,j)*                              &
+!>   &             (FX(i+1,j)-FX(i,j)+                                  &
+!>   &              FE(i,j+1)-FE(i,j))
 !>
               tl_cff1=dt(ng)*pm(i,j)*pn(i,j)*                           &
-     &                (tl_oHz(i,j,k)*                                   &
-     &                 (FX(i+1,j)-FX(i,j)+                              &
-     &                  FE(i,j+1)-FE(i,j))+                             &
-     &                 oHz(i,j,k)*                                      &
-     &                 (tl_FX(i+1,j)-tl_FX(i,j)+                        &
-     &                  tl_FE(i,j+1)-tl_FE(i,j)))-                      &
-#  ifdef TL_IOMS  
-     &                cff1
-#  endif
-!>            t(i,j,k,nnew,itrc)=Ta(i,j,k,itrc)-cff1
+     &                (tl_FX(i+1,j)-tl_FX(i,j)+                         &
+     &                 tl_FE(i,j+1)-tl_FE(i,j))
+!>            t(i,j,k,nnew,itrc)=Ta(i,j,k,itrc)*Hz(i,j,k)-cff1
 !>
-              tl_t(i,j,k,nnew,itrc)=tl_Ta(i,j,k,itrc)-tl_cff1
+              tl_t(i,j,k,nnew,itrc)=tl_Ta(i,j,k,itrc)*Hz(i,j,k)+        &
+     &                              Ta(i,j,k,itrc)*tl_Hz(i,j,k)-tl_cff1-&
+#  ifdef TL_IOMS
+     &                              Ta(i,j,k,itrc)*Hz(i,j,k)
+#  endif
 #  ifdef DIAGNOSTICS_TS
 !!            DiaTwrk(i,j,k,itrc,iThadv)=DiaTwrk(i,j,k,itrc,iThadv)-    &
 !!   &                                   cff1
@@ -1568,16 +1551,15 @@
 #  ifdef TL_IOMS
      &                   FC(i,j)
 #  endif
-
             END DO
-            DO i=Istr,Iend
-!>            FC(i,0)=0.0_r8
+          END DO
+          DO i=Istr,Iend
+!>          FC(i,0)=0.0_r8
 !>
-              tl_FC(i,0)=0.0_r8
-!>            FC(i,N(ng))=0.0_r8
+            tl_FC(i,0)=0.0_r8
+!>          FC(i,N(ng))=0.0_r8
 !>
-              tl_FC(i,N(ng))=0.0_r8
-            END DO
+            tl_FC(i,N(ng))=0.0_r8
           END DO
 !
 !  Time-step corrected vertical advection (Tunits).
@@ -1590,24 +1572,12 @@
           END DO
           DO k=1,N(ng)
             DO i=Istr,Iend
-              cff1=CF(i,0)*(FC(i,k)-FC(i,k-1))*oHz(i,j,k)
-              tl_cff1=CF(i,0)*((tl_FC(i,k)-tl_FC(i,k-1))*oHz(i,j,k)+    &
-     &                         (FC(i,k)-FC(i,k-1))*tl_oHz(i,j,k))-      &
-#  ifdef TL_IOMS
-     &                cff1
-#  endif
+!>            cff1=CF(i,0)*(FC(i,k)-FC(i,k-1))
+!>
+              tl_cff1=CF(i,0)*(tl_FC(i,k)-tl_FC(i,k-1))
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
 !>
               tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff1
-#  ifndef SPLINES
-!>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)*Hz(i,j,k)
-!>
-              tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)*Hz(i,j,k)+    &
-     &                              t(i,j,k,nnew,itrc)*tl_Hz(i,j,k)-    &
-#   ifdef TL_IOMS
-     &                              t(i,j,k,nnew,itrc)*Hz(i,j,k)
-#   endif
-#  endif
 #  ifdef DIAGNOSTICS_TS
 !!            DiaTwrk(i,j,k,itrc,iTvadv)=DiaTwrk(i,j,k,itrc,iTvadv)-    &
 !!   &                                   cff1
@@ -1632,7 +1602,7 @@
 !  Start pipelined J-loop.
 !
       DO j=Jstr,Jend
-# endif
+# endif /* TS_MPDATA */
 !
 !-----------------------------------------------------------------------
 !  Time-step vertical diffusion term.
@@ -1641,7 +1611,7 @@
         DO itrc=1,NT(ng)
           ltrc=MIN(NAT,itrc)
 
-# if defined SPLINES
+# if defined SPLINES && !defined TS_MPDATA
 !
 !  Use conservative, parabolic spline reconstruction of BASIC STATE
 !  vertical diffusion derivatives.  Solve BASIC STATE tridiagonal

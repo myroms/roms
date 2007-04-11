@@ -116,7 +116,7 @@
       ntend(ng)=ntimes(ng)
       ntfirst(ng)=ntstart(ng)
 
-      IniRec=nrrec
+      IniRec=nrrec(ng)
       Tindex=1
 
       LBi=LBOUND(GRID(ng)%h,DIM=1)
@@ -159,7 +159,7 @@
         CALL mp_bcasti (ng, iNLM, exit_flag, 1)
 # endif
         IF (exit_flag.ne.NoError) RETURN
-        IniRec=nrrec
+        IniRec=nrrec(ng)
         tINIindx(ng)=IniRec
       ELSE
         IniRec=tINIindx(ng)
@@ -361,7 +361,7 @@
 !
 !  Analytical initial conditions for momentum and active tracers.
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -377,7 +377,7 @@
 !
 !  Analytical initial conditions for inert passive tracers.
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -393,7 +393,7 @@
 !
 !  Analytical initial conditions for biology tracers.
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -409,7 +409,7 @@
 !
 !  Analytical initial conditions for sediment tracers.
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -434,7 +434,7 @@
 !
 !  If restart, read in initial conditions restart NetCDF file.
 !
-      IF (nrrec.ne.0) THEN
+      IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, 0, 1, INIname(ng), IniRec, Tindex)
 # ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iNLM, exit_flag, 1)

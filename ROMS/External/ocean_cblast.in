@@ -92,7 +92,7 @@
 
 ! Input/Output parameters.
 
-       NRREC =  0
+       NRREC == 0
    LcycleRST == T
         NRST == 720
         NSTA == 1

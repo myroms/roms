@@ -127,7 +127,7 @@
       ntend(ng)=ntfirst(ng)
       ntfirst(ng)=ntend(ng)
 
-      IniRec=nrrec
+      IniRec=nrrec(ng)
       Tindex=1
 
       LBi=LBOUND(GRID(ng)%h,DIM=1)
@@ -380,7 +380,7 @@
 !
 !  Analytical initial conditions for momentum and active tracers.
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -396,7 +396,7 @@
 !
 !  Analytical initial conditions for inert passive tracers
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -412,7 +412,7 @@
 !
 !  Analytical initial conditions for biology tracers.
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -428,7 +428,7 @@
 !
 !  Analytical initial conditions for sediment tracers.
 !
-      IF (nrrec.eq.0) THEN
+      IF (nrrec(ng).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -449,7 +449,7 @@
 #   endif
       IF (exit_flag.ne.NoError) RETURN
 #  else
-      IF (nrrec.ne.0) THEN
+      IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, iADM, 1, IADname(ng), IniRec, Tindex)
 #   ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iADM, exit_flag, 1)

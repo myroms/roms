@@ -765,7 +765,7 @@
 !  time record. That is, the initialization record is assigned
 !  internally.
 !
-        integer :: nrrec
+        integer, dimension(Ngrids) :: nrrec
 #ifdef FLOATS
 !
 !  Floats restart switch.
@@ -782,7 +782,7 @@
 !  Switch to inialize model with latest time record from initial
 !  (restart/history) NetCDF file.
 !
-        logical :: LastRec = .FALSE.
+        logical, dimension(Ngrids) :: LastRec
 !
 !  Generalized Statbility Theory (GST) parameters.
 !
@@ -794,10 +794,10 @@
 !  only the latest two time records are maintained.  If FALSE, all
 !  field records are saved.
 !
-        logical, dimension(Ngrids) :: LcycleADJ  = .FALSE.
-        logical, dimension(Ngrids) :: LcycleINI  = .FALSE.
-        logical, dimension(Ngrids) :: LcycleRST  = .FALSE.
-        logical, dimension(Ngrids) :: LcycleTLM  = .FALSE.
+        logical, dimension(Ngrids) :: LcycleADJ
+        logical, dimension(Ngrids) :: LcycleINI
+        logical, dimension(Ngrids) :: LcycleRST
+        logical, dimension(Ngrids) :: LcycleTLM
 !
 !-----------------------------------------------------------------------
 !  Adjoint sensitivity parameters.
@@ -1832,8 +1832,13 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
+        LastRec(ng)=.FALSE.
         Lassimilate(ng)=.TRUE.
         Lbiology(ng)=.TRUE.
+        LcycleADJ(ng)=.FALSE.
+        LcycleINI(ng)=.FALSE.
+        LcycleRST(ng)=.FALSE.
+        LcycleTLM(ng)=.FALSE.
         Lfloats(ng)=.TRUE.
         Lsediment(ng)=.TRUE.
         Lstations(ng)=.TRUE.

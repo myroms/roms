@@ -96,7 +96,7 @@
 !
       IF (((iic(ng).gt.ntsDIA(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nDIA(ng)).eq.1)).or.                          &
-     &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
+     &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
 # ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
@@ -189,7 +189,7 @@
 !
       IF ((iic(ng).gt.ntsDIA(ng)).and.                                  &
      &    (MOD(iic(ng)-1,nDIA(ng)).eq.0).and.                           &
-     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec.eq.0))) THEN
+     &    ((iic(ng).ne.ntstart(ng)).or.(nrrec(ng).eq.0))) THEN
         IF (SOUTH_WEST_TEST) THEN
           DIAtime(ng)=DIAtime(ng)+REAL(nDIA(ng),r8)*dt(ng)
         END IF

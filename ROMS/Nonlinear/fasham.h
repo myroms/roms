@@ -295,7 +295,7 @@
 !
       IF (((iic(ng).gt.ntsDIA(ng)).and.                                 &
      &     (MOD(iic(ng),nDIA(ng)).eq.1)).or.                            &
-     &    ((nrrec.gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
+     &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
         DO ivar=1,NDbio2d
           DO j=Jstr,Jend
             DO i=Istr,Iend

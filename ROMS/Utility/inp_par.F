@@ -764,9 +764,13 @@
 # endif
 #endif
           ELSE IF (TRIM(KeyWord).eq.'NRREC') THEN
-            Npts=load_i(Nval, Rval, 1, nrrec)
-            LastRec=.FALSE.
-            IF (nrrec.lt.0) LastRec=.TRUE.
+            Npts=load_i(Nval, Rval, Ngrids, nrrec)
+            DO ng=1,Ngrids
+            IF (nrrec(ng).lt.0) THEN
+              LastRec(ng)=.TRUE.
+            ELSE
+              LastRec(ng)=.FALSE.
+            END IF
           ELSE IF (TRIM(KeyWord).eq.'LcycleRST') THEN
             Npts=load_l(Nval, Cval, Ngrids, LcycleRST)
           ELSE IF (TRIM(KeyWord).eq.'NRST') THEN
@@ -1675,25 +1679,25 @@
 !
         nRST(ng)=ntimes(ng)
 #endif
-        IF ((nrrec.eq.0).and.(nAVG(ng).gt.ntimes(ng))) THEN
+        IF ((nrrec(ng).eq.0).and.(nAVG(ng).gt.ntimes(ng))) THEN
           LdefAVG(ng)=.FALSE.
         END IF
-        IF ((nrrec.eq.0).and.(nDIA(ng).gt.ntimes(ng))) THEN
+        IF ((nrrec(ng).eq.0).and.(nDIA(ng).gt.ntimes(ng))) THEN
           LdefDIA(ng)=.FALSE.
         END IF
-        IF ((nrrec.eq.0).and.(nFLT(ng).gt.ntimes(ng))) THEN
+        IF ((nrrec(ng).eq.0).and.(nFLT(ng).gt.ntimes(ng))) THEN
           LdefFLT(ng)=.FALSE.
         END IF
-        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
+        IF ((nrrec(ng).eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
           LdefHIS(ng)=.FALSE.
         END IF
-        IF ((nrrec.eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
+        IF ((nrrec(ng).eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
           LdefHIS(ng)=.FALSE.
         END IF
-        IF ((nrrec.eq.0).and.(nRST(ng).gt.ntimes(ng))) THEN
+        IF ((nrrec(ng).eq.0).and.(nRST(ng).gt.ntimes(ng))) THEN
           LdefRST(ng)=.FALSE.
         END  IF
-        IF ((nrrec.eq.0).and.(nSTA(ng).gt.ntimes(ng))) THEN
+        IF ((nrrec(ng).eq.0).and.(nSTA(ng).gt.ntimes(ng))) THEN
           LdefSTA(ng)=.FALSE.
         END IF
       END DO
@@ -1788,7 +1792,7 @@
           WRITE (out,120) NCV, 'NCV',                                   &
      &          'Number of Lanczos/Arnoldi eigenvectors to compute.'
 #endif
-          WRITE (out,120) nrrec, 'nrrec',                               &
+          WRITE (out,120) nrrec(ng), 'nrrec',                           &
      &          'Number of restart records to read from disk.'
           WRITE (out,170) LcycleRST(ng), 'LcycleRST',                   &
      &          'Switch to recycle time-records in restart file.'

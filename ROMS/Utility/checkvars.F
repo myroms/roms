@@ -92,7 +92,7 @@
 !  Determine state variables to read from input NetCDF file.
 !
 #ifdef ANA_INITIAL
-      IF (nrrec.ne.0) THEN
+      IF (nrrec(ng).ne.0) THEN
         get_var(idFsur)=.TRUE.
         get_var(idUbar)=.TRUE.
         get_var(idVbar)=.TRUE.
@@ -134,7 +134,7 @@
       END DO
 #   ifdef BEDLOAD
       DO itrc=1,NST
-        IF (nrrec.ne.0) THEN
+        IF (nrrec(ng).ne.0) THEN
           get_var(idUbld(itrc))=.TRUE.
           get_var(idVbld(itrc))=.TRUE.
         END IF
@@ -157,7 +157,7 @@
 !
 !  Determine perfect restart fields to read from input NetCDF file.
 !
-       IF ((model.eq.0).and.(nrrec.ne.0)) THEN
+       IF ((model.eq.0).and.(nrrec(ng).ne.0)) THEN
 # ifdef SOLVE3D
          get_var(idRu3d)=.TRUE.
          get_var(idRv3d)=.TRUE.

@@ -418,7 +418,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL ad_forcing (ng, TILE, kstp(ng), nnew(ng))
+            CALL ad_forcing (ng, TILE, knew(ng), nnew(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO

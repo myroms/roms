@@ -78,8 +78,9 @@
       IF (exit_flag.ne.NoError) RETURN
       ncname=RSTname(ng)
       Ldefine=.FALSE.
-      IF (((nrrec.eq.0).and.(iic(ng).eq.ntstart(ng))).or.               &
-     &    ((nrrec.ne.0).and.(TRIM(ncname).ne.TRIM(INIname(ng))))) THEN
+      IF (((nrrec(ng).eq.0).and.(iic(ng).eq.ntstart(ng))).or.           &
+     &    ((nrrec(ng).ne.0).and.                                        &
+     &     (TRIM(ncname).ne.TRIM(INIname(ng))))) THEN
         Ldefine=.TRUE.
       END IF
 !

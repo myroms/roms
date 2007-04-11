@@ -222,7 +222,7 @@
 !-----------------------------------------------------------------------
 !
       IF ((outer.ge.1).and.(MOD(iic(ng)-1,nHIS(ng)).eq.0).and.          &
-     &    ((nrrec.eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
+     &    ((nrrec(ng).eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
 !
 !  Set perturbation amplitude as a function of the inner loop.
 !
@@ -1145,7 +1145,7 @@
 !-----------------------------------------------------------------------
 !
       IF ((outer.ge.1).and.(MOD(iic(ng)-1,nTLM(ng)).eq.0).and.          &
-     &    ((nrrec.eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
+     &    ((nrrec(ng).eq.0).or.(iic(ng).ne.ntstart(ng)))) THEN
 !
 !  Set perturbation amplitude as a function of the inner loop.
 !
