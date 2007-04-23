@@ -346,7 +346,7 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Sxyl
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Syyl
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Sxyl_psi
-      real(r8), parameter :: kDmax = 100.0_r8
+      real(r8), parameter :: kDmax = 5.0_r8
       real(r8), parameter :: Lwave_min = 1.0_r8
 
 # ifdef SOLVE3D

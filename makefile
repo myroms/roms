@@ -69,7 +69,7 @@ MY_HEADER_DIR ?=
 #  Notice that a set analytical expressions templates can be found in
 #  "User/Functionals".
 
-MY_ANALYTICAL_DIR ?= 
+MY_ANALYTICAL_DIR ?=
 
 #  Set number of ROMS nested and/or composed grid.  Currently, only
 #  one grid is supported.  This option will be available in the near
@@ -135,17 +135,25 @@ MY_ANALYTICAL_DIR ?=
         FORT ?= pgi
 
 #--------------------------------------------------------------------------
-#  Set directory for executable and temporary objects.
+#  Set directory for executable.
 #--------------------------------------------------------------------------
 
       BINDIR := .
- SCRATCH_DIR := Build
-  clean_list += $(SCRATCH_DIR)
 
 #==========================================================================
 #  End of user-defined options. See also the machine-dependent include
 #  file being used above.
 #==========================================================================
+
+#--------------------------------------------------------------------------
+#  Set directory for temporary objects.
+#
+#  DO NOT set SCRATCH_DIR to "./" because a "make clean" will remove
+#  your entire ROMS root directory.
+#--------------------------------------------------------------------------
+
+ SCRATCH_DIR := Build
+  clean_list += $(SCRATCH_DIR)
 
 #--------------------------------------------------------------------------
 #  Set Pattern rules.
@@ -164,6 +172,7 @@ CLEAN := ROMS/Bin/cpp_clean
 
 #--------------------------------------------------------------------------
 #  Make functions for putting the temporary files in $(SCRATCH_DIR)
+#  DO NOT modify this section; spaces and blank lineas are needed.
 #--------------------------------------------------------------------------
 
 # $(call source-dir-to-binary-dir, directory-list)
@@ -260,7 +269,6 @@ CPPFLAGS += -D$(shell echo ${OS} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${CPU} | tr "-" "_" | tr [a-z] [A-Z])
 CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 
-
 CPPFLAGS += -D'ROOT_DIR="$(ROOTDIR)"'
 ifdef ROMS_APPLICATION
   HEADER := $(addsuffix .h,$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
@@ -272,7 +280,8 @@ endif
 
 ifndef MY_ANALYTICAL_DIR
   MY_ANALYTICAL_DIR := ./ROMS/Functionals
-else
+endif
+ifeq (,$(findstring ROMS/Functionals,$(MY_ANALYTICAL_DIR)))
   MY_ANALYTICAL := on
 endif
 CPPFLAGS += -D'ANALYTICAL_DIR="$(MY_ANALYTICAL_DIR)"'

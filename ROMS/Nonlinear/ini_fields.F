@@ -66,7 +66,7 @@
 # endif
 # ifdef SOLVE3D
 #  if defined SEDIMENT || defined BBL_MODEL
-                            OCEAN(ng) % bottom,                         &
+     &                      OCEAN(ng) % bottom,                         &
 #  endif
 #  if defined SEDIMENT
      &                      OCEAN(ng) % bed,                            &
@@ -115,7 +115,7 @@
 # endif
 # ifdef SOLVE3D
 #  if defined SEDIMENT || defined BBL_MODEL
-                                  bottom,                               &
+     &                            bottom,                               &
 #  endif
 #  if defined SEDIMENT
      &                            bed, bed_frac, bed_mass,              &
@@ -292,7 +292,7 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k, kbed
-# ifdef SEDIMENT
+# if defined SEDIMENT || defined BBL_MODEL
       integer :: ised
 # endif
 
@@ -813,6 +813,7 @@
 !  Initialize sediment bed properties.
 !-----------------------------------------------------------------------
 !
+#   ifdef SEDIMENT
       IF (.not.PerfectRST(ng)) THEN
         DO k=1,Nbed
           DO j=JstrR,JendR
@@ -825,6 +826,7 @@
           END DO
         END DO
       END IF
+#   endif
 #   if defined EW_PERIODIC || defined NS_PERIODIC
 #    ifdef SEDIMENT
       DO ised=1,NST
@@ -850,7 +852,11 @@
 #   endif
 #   ifdef DISTRIBUTE
 #    ifdef SEDIMENT
-      CALL mp_exchange4d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange4d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, NST,          &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    bed_frac)
+      CALL mp_exchange4d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
      &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, NST,          &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bed_frac,                                     &

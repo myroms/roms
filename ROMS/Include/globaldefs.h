@@ -603,19 +603,23 @@
 #endif
 
 #if (defined WEST_FSRADIATION  && defined WEST_FSNUDGING)  || \
-     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED
+     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED   || \
+     defined WEST_M2REDUCED
 # define WEST_FSOBC
 #endif
 #if (defined EAST_FSRADIATION  && defined EAST_FSNUDGING)  || \
-     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED
+     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED   || \
+     defined EAST_M2REDUCED
 # define EAST_FSOBC
 #endif
 #if (defined SOUTH_FSRADIATION && defined SOUTH_FSNUDGING) || \
-     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED
+     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED  || \
+     defined SOUTH_M2REDUCED
 # define SOUTH_FSOBC
 #endif
 #if (defined NORTH_FSRADIATION && defined NORTH_FSNUDGING) || \
-     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED
+     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED  || \
+     defined NORTH_M2REDUCED
 # define NORTH_FSOBC
 #endif
 
