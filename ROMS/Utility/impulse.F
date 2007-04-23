@@ -58,7 +58,7 @@
 
       CONTAINS
 
-      SUBROUTINE impulse (ng, model, INPncname)
+      SUBROUTINE impulse (ng, model, outer_impulse, INPncname)
 !
 !=======================================================================
 !                                                                      !
@@ -92,6 +92,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: outer_impulse
+
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: INPncname
@@ -185,7 +187,7 @@
           status=nf_inq_varid(INPncid, TRIM(Vname(1,idFsur)), INPvid)
           gtype=vflag(varid)*r2dvar
         END IF
-        CALL impulse2d (ng, model, gtype, Nrec, Nsave,                  &
+        CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idFsur,ng),    &
      &                  IstrR, IendR, JstrR, JendR,                     &
@@ -206,7 +208,7 @@
           status=nf_inq_varid(INPncid, TRIM(Vname(1,idUbar)), INPvid)
           gtype=vflag(INPvid)*u2dvar
         END IF
-        CALL impulse2d (ng, model, gtype, Nrec, Nsave,                  &
+        CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idUbar,ng),    &
      &                  Istr, IendR, JstrR, JendR,                      &
@@ -225,7 +227,7 @@
           status=nf_inq_varid(INPncid, TRIM(Vname(1,idVbar)), INPvid)
           gtype=vflag(varid)*v2dvar
         END IF
-        CALL impulse2d (ng, model, gtype, Nrec, Nsave,                  &
+        CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idVbar,ng),    &
      &                  IstrR, IendR, Jstr, JendR,                      &
@@ -247,7 +249,7 @@
           status=nf_inq_varid(INPncid, TRIM(Vname(1,idUvel)), INPvid)
           gtype=vflag(varid)*u3dvar
         END IF
-        CALL impulse3d (ng, model, gtype, Nrec, Nsave,                  &
+        CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idUvel,ng),    &
      &                  Istr, IendR, JstrR, JendR,                      &
@@ -267,7 +269,7 @@
           status=nf_inq_varid(INPncid, TRIM(Vname(1,idVvel)), INPvid)
           gtype=vflag(varid)*v3dvar
         END IF
-        CALL impulse3d (ng, model, gtype, Nrec, Nsave,                  &
+        CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
      &                  INPncname, INPncid, INPvid,                     &
      &                  TLFname(ng), ncTLFid(ng), tlfVid(idVvel,ng),    &
      &                  IstrR, IendR, Jstr, JendR,                      &
@@ -288,7 +290,7 @@
      &                          INPvid)
             gtype=vflag(varid)*r3dvar
           END IF
-          CALL impulse3d (ng, model, gtype, Nrec, Nsave,                &
+          CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave, &
      &                    INPncname, INPncid, INPvid,                   &
      &                    TLFname(ng), ncTLFid(ng), tlfTid(i,ng),       &
      &                    IstrR, IendR, JstrR, JendR,                   &
@@ -343,13 +345,14 @@
      &        'at time record = ',i3,/,12x,'into NetCDF file: ',a)
   40  FORMAT (/,' IMPULSE - unable to synchronize impulse NetCDF to ',  &
      &        'disk.')
-  50  FORMAT (6x,'IMPUSE    - wrote convolved adjoint impulses, ',      &
+  50  FORMAT (6x,'IMPULSE   - wrote convolved adjoint impulses, ',      &
      &           'records: 001 to ',i3.3,/,18x,'file: ',a)
       
       RETURN
       END SUBROUTINE impulse
 
-      SUBROUTINE impulse2d (ng, model, gtype, Nrec, Nsave,              &
+      SUBROUTINE impulse2d (ng, model, gtype, outer_impulse,            &
+     &                      Nrec, Nsave,                                &
      &                      INPncname, INPncid, INPvid,                 &
      &                      OUTncname, OUTncid, OUTvid,                 &
      &                      Imin, Imax, Jmin, Jmax,                     &
@@ -376,6 +379,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: outer_impulse
+
       integer, intent(in) :: ng, model, gtype, Nrec, Nsave
       integer, intent(in) :: INPncid, INPvid, OUTncid, OUTvid
       integer, intent(in) :: Imin, Imax, Jmin, Jmax
@@ -420,12 +425,15 @@
       Inxt=2
       Iold=3
       cff=REAL(Nsave,r8)
-      C1=(cff+1.0_r8)*(2.0_r8*cff+1.0_r8)/(6.0_r8*cff)
-      C2=(cff*cff-1.0_r8)/(6.0_r8*cff)
-      C3=(2.0_r8*cff*cff+1.0_r8)/(3.0_r8*cff)
-!!    C1=1.0_r8
-!!    C2=0.0_r8
-!!    C3=1.0_r8
+      IF (outer_impulse) THEN
+        C1=(cff+1.0_r8)*(2.0_r8*cff+1.0_r8)/(6.0_r8*cff)
+        C2=(cff*cff-1.0_r8)/(6.0_r8*cff)
+        C3=(2.0_r8*cff*cff+1.0_r8)/(3.0_r8*cff)
+      ELSE
+        C1=1.0_r8
+        C2=0.0_r8
+        C3=1.0_r8
+      END IF
       scale=1.0_r8
 !
 !  Set Vsize to zero to deactivate interpolation of input data to model
@@ -623,7 +631,8 @@
       END SUBROUTINE impulse2d
 
 # ifdef SOLVE3D
-      SUBROUTINE impulse3d (ng, model, gtype, Nrec, Nsave,              &
+      SUBROUTINE impulse3d (ng, model, gtype, outer_impulse,            &
+     &                      Nrec, Nsave,                                &
      &                      INPncname, INPncid, INPvid,                 &
      &                      OUTncname, OUTncid, OUTvid,                 &
      &                      Imin, Imax, Jmin, Jmax,                     &
@@ -650,6 +659,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: outer_impulse
+
       integer, intent(in) :: ng, model, gtype, Nrec, Nsave
       integer, intent(in) :: INPncid, INPvid, OUTncid, OUTvid
       integer, intent(in) :: Imin, Imax, Jmin, Jmax
@@ -694,12 +705,15 @@
       Inxt=2
       Iold=3
       cff=REAL(Nsave,r8)
-      C1=(cff+1.0_r8)*(2.0_r8*cff+1.0_r8)/(6.0_r8*cff)
-      C2=(cff*cff-1.0_r8)/(6.0_r8*cff)
-      C3=(2.0_r8*cff*cff+1.0_r8)/(3.0_r8*cff)
-!!    C1=1.0_r8
-!!    C2=0.0_r8
-!!    C3=1.0_r8
+      IF (outer_impulse) THEN
+        C1=(cff+1.0_r8)*(2.0_r8*cff+1.0_r8)/(6.0_r8*cff)
+        C2=(cff*cff-1.0_r8)/(6.0_r8*cff)
+        C3=(2.0_r8*cff*cff+1.0_r8)/(3.0_r8*cff)
+      ELSE
+        C1=1.0_r8
+        C2=0.0_r8
+        C3=1.0_r8
+      END IF
       scale=1.0_r8
 !
 !  Set Vsize to zero to deactivate interpolation of input data to model

@@ -510,7 +510,7 @@
 !  Neutral coefficients.
 !
           ZoW(i)=0.0001_r8
-          u10(i)=delW(i)*LOG(10.0_r8/ZoW(i))/LOG(blk_ZW/ZoW(i))
+          u10(i)=delW(i)*LOG(10.0_r8/ZoW(i))/LOG(blk_ZW(ng)/ZoW(i))
           Wstar(i)=0.035_r8*u10(i)
           Zo10(i)=0.011_r8*Wstar(i)*Wstar(i)/g+                         &
      &            0.11_r8*VisAir(i)/Wstar(i)
@@ -518,26 +518,26 @@
           Ch10(i)=0.00115_r8
           Ct10(i)=Ch10(i)/sqrt(Cd10(i))
           ZoT10(i)=10.0_r8/EXP(vonKar/Ct10(i))
-          Cd=(vonKar/LOG(blk_ZW/Zo10(i)))**2
+          Cd=(vonKar/LOG(blk_ZW(ng)/Zo10(i)))**2
 !
 !  Compute Richardson number.
 !
-          Ct(i)=vonKar/LOG(blk_ZT/ZoT10(i))     ! T transfer coefficient
+          Ct(i)=vonKar/LOG(blk_ZT(ng)/ZoT10(i))  ! T transfer coefficient
           CC(i)=vonKar*Ct(i)/Cd
           delTc(i)=0.0_r8
 # ifdef COOL_SKIN
           delTc(i)=blk_dter
 # endif
-          Ribcu(i)=-blk_ZW/(blk_Zabl*0.004_r8*blk_beta**3)
-          Ri(i)=-g*blk_ZW*((delT(i)-delTc(i))+                          &
-     &                     0.61_r8*TairK(i)*delQ(i))/                   &
+          Ribcu(i)=-blk_ZW(ng)/(blk_Zabl*0.004_r8*blk_beta**3)
+          Ri(i)=-g*blk_ZW(ng)*((delT(i)-delTc(i))+                      &
+     &                          0.61_r8*TairK(i)*delQ(i))/              &
      &          (TairK(i)*delW(i)*delW(i))
           IF (Ri(i).lt.0.0_r8) THEN
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+Ri(i)/Ribcu(i))       ! Unstable
           ELSE
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+3.0_r8*Ri(i)/CC(i))   ! Stable
           END IF
-          L10(i)=blk_ZW/Zetu(i)
+          L10(i)=blk_ZW(ng)/Zetu(i)
           IF (Zetu(i).gt.50.0_r8) THEN
             IterMax=1
           ELSE
@@ -546,12 +546,14 @@
 !
 !  First guesses for Monon-Obukhov similarity scales.
 !
-          Wstar(i)=delW(i)*vonKar/(LOG(blk_ZW/Zo10(i))-                 &
-     &                             bulk_psiu(blk_ZW/L10(i),pi))
+          Wstar(i)=delW(i)*vonKar/(LOG(blk_ZW(ng)/Zo10(i))-             &
+     &                             bulk_psiu(blk_ZW(ng)/L10(i),pi))
           Tstar(i)=-(delT(i)-delTc(i))*vonKar/                          &
-     &             (LOG(blk_ZT/ZoT10(i))-bulk_psit(blk_ZT/L10(i),pi))
+     &             (LOG(blk_ZT(ng)/ZoT10(i))-                           &
+     &              bulk_psit(blk_ZT(ng)/L10(i),pi)) 
           Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
-     &             (LOG(blk_ZQ/ZoT10(i))-bulk_psit(blk_ZQ/L10(i),pi))
+     &             (LOG(blk_ZQ(ng)/ZoT10(i))-                           &
+     &              bulk_psit(blk_ZQ(ng)/L10(i),pi))
 !
 !  Modify Charnock for high wind speeds. The 0.125 factor below is for
 !  1.0/(18.0-10.0).
@@ -599,18 +601,18 @@
 !
             ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6)
             ZoT(i)=ZoQ(i)
-            ZoL(i)=vonKar*g*blk_ZW*                                     &
+            ZoL(i)=vonKar*g*blk_ZW(ng)*                                 &
      &             (Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
      &                        0.61_r8*TairK(i)*Qstar(i))/               &
      &             (TairK(i)*Wstar(i)*Wstar(i)*                         &
      &             (1.0_r8+0.61_r8*Q(i))+eps)
-            L(i)=blk_ZW/(ZoL(i)+eps)
+            L(i)=blk_ZW(ng)/(ZoL(i)+eps)
 !
 !  Evaluate stability functions at Z/L.
 !
             Wpsi(i)=bulk_psiu(ZoL(i),pi)
-            Tpsi(i)=bulk_psit(blk_ZT/L(i),pi)
-            Qpsi(i)=bulk_psit(blk_ZQ/L(i),pi)
+            Tpsi(i)=bulk_psit(blk_ZT(ng)/L(i),pi)
+            Qpsi(i)=bulk_psit(blk_ZQ(ng)/L(i),pi)
 # ifdef COOL_SKIN
             Cwet(i)=0.622_r8*Hlv(i,j)*Qsea(i)/                          &
      &              (blk_Rgas*TseaK(i)*TseaK(i))
@@ -620,11 +622,11 @@
 !  Compute wind scaling parameters, Wstar.
 !
             Wstar(i)=MAX(eps,delW(i)*vonKar/                            &
-     &               (LOG(blk_ZW/ZoW(i))-Wpsi(i)))
+     &               (LOG(blk_ZW(ng)/ZoW(i))-Wpsi(i)))
             Tstar(i)=-(delT(i)-delTc(i))*vonKar/                        &
-     &               (LOG(blk_ZT/ZoT(i))-Tpsi(i))
+     &               (LOG(blk_ZT(ng)/ZoT(i))-Tpsi(i))
             Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                        &
-     &               (LOG(blk_ZQ/ZoQ(i))-Qpsi(i))
+     &               (LOG(blk_ZQ(ng)/ZoQ(i))-Qpsi(i))
 !
 !  Compute gustiness in wind speed.
 !

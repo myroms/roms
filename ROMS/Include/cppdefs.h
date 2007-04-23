@@ -234,12 +234,13 @@
 ** OPTIONS for the Large et al. (1994) K-profile parameterization mixing:    **
 ** mixing:                                                                   **
 **                                                                           **
-** LMD_RIMIX           use to add diffusivity due to shear instability       **
+** LMD_BKPP            use if bottom boundary layer KPP mixing               **
 ** LMD_CONVEC          use to add convective mixing due to shear instability **
 ** LMD_DDMIX           use to add double-diffusive mixing                    **
-** LMD_SKPP            use if surface boundary layer KPP mixing              **
-** LMD_BKPP            use if bottom  boundary layer KPP mixing              **
 ** LMD_NONLOCAL        use if nonlocal transport                             **
+** LMD_RIMIX           use to add diffusivity due to shear instability       **
+** LMD_SHAPIRO         use if Shapiro filtering boundary layer depth         **       
+** LMD_SKPP            use if surface boundary layer KPP mixing              **
 **                                                                           **
 ** OPTIONS to activate smoothing of Richardson number, if SPLINES is not     **
 ** activated:                                                                **
@@ -632,16 +633,7 @@
 **                                                                           **
 ** ADRIA02             Adriatic Sea Application                              **
 ** CBLAST              CBLAST application                                    **
-** EAC_4               East Australia Current, 1/4 Resolution                **
-** EAC_8               East Australia Current, 1/8 Resolution                **
-** IAS                 Intra-Americas Sea Application, 20 km Resolution      **
-** IAS_40              Intra-Americas Sea Application, 40 km Resolution      **
-** NATL                High resolution North Atlantic Application            **
-** NENA                North East North America Application                  **
 ** NJ_BIGHT            New Jersey Bight Application                          **
-** SCB                 Southern California Bight                             **
-** SW06_COARSE         Shallow Water 2006 Experiment, Coarse Grid            **
-** SW06_FINE           Shallow Water 2006 Experiment, Fine Grid              **
 **                                                                           **
 *******************************************************************************
 *******************************************************************************
@@ -652,7 +644,7 @@
 **  makefile. For example, to activate the upwelling example (UPWELLING)     **
 **  set:                                                                     **
 **                                                                           **
-**    ROMS_APPLICATION := UPWELLING                                          **
+**    ROMS_APPLICATION ?= UPWELLING                                          **
 **                                                                           **
 **  in the makefile. ROMS will include the associated header file located    **
 **  in the ROMS/Include directory. The application header file name is the   **

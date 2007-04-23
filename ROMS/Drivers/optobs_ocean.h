@@ -212,6 +212,7 @@
 !  Local variable declarations.
 !
       logical :: add
+      logical :: Lweak = .FALSE.
       
       integer :: Nrec, i, my_iic, ng, nvd, thread, subs, tile
 
@@ -362,7 +363,7 @@
 #ifdef BALANCE_OPERATOR
             CALL ad_balance (ng, TILE, Lnew(ng))
 #endif
-            CALL ad_variability (ng, TILE, Lnew(ng))
+            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
             CALL ad_convolution (ng, TILE, Lnew(ng), 2)
           END DO
         END DO
@@ -381,7 +382,7 @@
           DO tile=subs*thread,subs*(thread+1)-1,+1
             CALL load_ADtoTL (ng, TILE, Lnew(ng), Lnew(ng), add)
             CALL tl_convolution (ng, TILE, Lnew(ng), 2)
-            CALL tl_variability (ng, TILE, Lnew(ng))
+            CALL tl_variability (ng, TILE, Lnew(ng), Lweak)
 #ifdef BALANCE_OPERATOR
             CALL tl_balance (ng, TILE, Lnew(ng))
 #endif

@@ -268,7 +268,7 @@
           END DO
 # endif
           IF (Master) WRITE (stdout,60) Csum(region,MyModel,ng)
-  60      FORMAT (/,' All pecentages are with respect to total time =', &
+  60      FORMAT (/,' All percentages are with respect to total time =',&
      &            6x,f12.3)
 #endif
         END IF

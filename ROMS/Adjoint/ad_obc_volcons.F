@@ -121,7 +121,7 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: NSUB, i, j
+      integer :: i, j
 
       real(r8) :: cff, my_area, my_flux
       real(r8) :: adfac, ad_cff, ad_my_area, ad_my_flux
@@ -338,9 +338,12 @@
 !
       USE mod_param
       USE mod_scalars
+      USE mod_parallel
+
 # ifdef DISTRIBUTE
 !
       USE mp_exchange_mod, ONLY : ad_mp_exchange2d
+      USE distribute_mod, ONLY : mp_reduce
 # endif
 !
 !  Imported variable declarations.
@@ -405,9 +408,14 @@
 #  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
+      integer :: NSUB, i, j
 
-      real(r8) :: adfac, adfac1, adfac2
+      real(r8) :: adfac, adfac1, adfac2, adfac3
+      real(r8) :: ad_my_ubar_xs
+# ifdef DISTRIBUTE
+      real(r8) :: buffer
+      character (len=3) :: op_handle
+# endif
 
 # include "set_bounds.h"
 
@@ -425,6 +433,8 @@
 !  conserved.  This is done by applying "ubar_xs" correction to
 !  the velocities.
 !-----------------------------------------------------------------------
+!
+        ad_my_ubar_xs=0.0_r8
 !
 # ifdef DISTRIBUTE
 
@@ -474,7 +484,7 @@
           ad_Drhs(i,Jend+1)=ad_Drhs(i,Jend+1)+adfac1
           ad_Drhs(i,Jend  )=ad_Drhs(i,Jend  )+adfac1
           ad_vbar(i,Jend+1,kinp)=ad_vbar(i,Jend+1,kinp)+adfac2
-          ad_ubar_xs=ad_ubar_xs+adfac2
+          ad_my_ubar_xs=ad_my_ubar_xs+adfac2
           ad_Dvom(i,Jend+1)=0.0_r8
         END DO
       END IF
@@ -500,7 +510,7 @@
           ad_Drhs(i,Jstr-1)=ad_Drhs(i,Jstr-1)+adfac1
           ad_Drhs(i,Jstr  )=ad_Drhs(i,Jstr  )+adfac1
           ad_vbar(i,Jstr,kinp)=ad_vbar(i,Jstr,kinp)+adfac2
-          ad_ubar_xs=ad_ubar_xs-adfac2
+          ad_my_ubar_xs=ad_my_ubar_xs-adfac2
           ad_Dvom(i,Jstr)=0.0_r8
         END DO
       END IF
@@ -526,7 +536,7 @@
           ad_Drhs(Iend  ,j)=ad_Drhs(Iend  ,j)+adfac1
           ad_Drhs(Iend+1,j)=ad_Drhs(Iend+1,j)+adfac1
           ad_ubar(Iend+1,j,kinp)=ad_ubar(Iend+1,j,kinp)+adfac2
-          ad_ubar_xs=ad_ubar_xs+adfac2
+          ad_my_ubar_xs=ad_my_ubar_xs+adfac2
           ad_Duon(Iend+1,j)=0.0_r8
         END DO
       END IF
@@ -552,14 +562,46 @@
           ad_Drhs(Istr-1,j)=ad_Drhs(Istr-1,j)+adfac1
           ad_Drhs(Istr  ,j)=ad_Drhs(Istr  ,j)+adfac1
           ad_ubar(Istr,j,kinp)=ad_ubar(Istr,j,kinp)+adfac2
-          ad_ubar_xs=ad_ubar_xs-adfac2
+          ad_my_ubar_xs=ad_my_ubar_xs-adfac2
           ad_Duon(Istr,j)=0.0_r8
         END DO
       END IF
 # endif
 # undef I_RANGE
 # undef J_RANGE
-
+!
+!-----------------------------------------------------------------------
+!  Perform global summation and compute correction velocity.
+!-----------------------------------------------------------------------
+!
+      IF (SOUTH_WEST_CORNER.and.                                        &
+     &    NORTH_EAST_CORNER) THEN
+        NSUB=1                           ! non-tiled application
+      ELSE
+        NSUB=NtileX(ng)*NtileE(ng)       ! tiled application
+      END IF
+!$OMP CRITICAL (AD_OBC_VOLCONS)
+      IF (tile_count.eq.0) THEN
+        adfac3=0.0_r8
+      END IF
+      adfac3=adfac3+ad_my_ubar_xs
+      tile_count=tile_count+1
+      IF (tile_count.eq.NSUB) THEN
+        tile_count=0
+#  ifdef DISTRIBUTE
+        buffer=adfac3
+        op_handle='SUM'
+        CALL mp_reduce (ng, iADM, 1, buffer, op_handle)
+        adfac3=buffer
+#  endif
+        IF (iif(ng).eq.nfast(ng)+1) THEN
+          ad_ubar_xs=ad_ubar_xs+adfac3
+        ELSE
+          ad_ubar_xs=adfac3
+        ENDIF
+      END IF
+!$OMP END CRITICAL (AD_OBC_VOLCONS)
+!
       RETURN
       END SUBROUTINE ad_set_DUV_bc_tile
 !

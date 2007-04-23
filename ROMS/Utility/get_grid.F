@@ -1198,7 +1198,6 @@
 # endif
         END IF
       END IF
-# ifdef CURVGRID
 !
 !  Read in angle (radians) between XI-axis and EAST at RHO-points.
 !
@@ -1207,9 +1206,9 @@
         status=nf_fread2d(ng, model, ncGRDid(ng), grdangid, 0,          &
      &                    gtype, Vsize, LBi, UBi, LBj, UBj,             &
      &                    Fscl, Fmin, Fmax,                             &
-#  ifdef MASKING
+# ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-#  endif
+# endif
      &                    GRID(ng) % angler(LBi,LBj))
         IF (status.ne.nf_noerr) THEN
           IF (Master) THEN
@@ -1219,19 +1218,18 @@
           ioerror=status
           RETURN
         END IF
-#  if defined EW_PERIODIC || defined NS_PERIODIC
+# if defined EW_PERIODIC || defined NS_PERIODIC
         CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          GRID(ng) % angler)
-#  endif
-#  ifdef DISTRIBUTE
+# endif
+# ifdef DISTRIBUTE
       CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % angler)
-#  endif
-      END IF
 # endif
+      END IF
 !
 ! Close GRID NetCDF file.
 !

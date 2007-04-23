@@ -142,9 +142,13 @@
       USE ad_u3dbc_mod, ONLY : ad_u3dbc_tile
       USE ad_v3dbc_mod, ONLY : ad_v3dbc_tile
 # endif
+# ifndef OBC_M2RADIATION
       USE ad_u2dbc_mod, ONLY : ad_u2dbc_tile
       USE ad_v2dbc_mod, ONLY : ad_v2dbc_tile
+# endif
+# ifndef OBC_FSRADIATION
       USE ad_zetabc_mod, ONLY : ad_zetabc_tile
+# endif
 !
 !  Imported variable declarations.
 !
@@ -343,6 +347,7 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_ubar(:,:,kstp))
 #  endif
+#  ifndef OBC_M2RADIATION
 !>    CALL tl_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    krhs, kstp, krhs,                             &
@@ -387,6 +392,7 @@
      &                    krhs, kstp, kstp,                             &
      &                    ubar, vbar, zeta,                             &
      &                    ad_ubar, ad_vbar, ad_zeta)
+#  endif
 !
 !  Adjoint of 2D momentum initialization.
 !
@@ -480,6 +486,7 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_ubar(:,:,kstp))
 #  endif
+#  ifndef OBC_M2RADIATION
 !>    CALL tl_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    krhs, kstp, knew,                             &
@@ -524,6 +531,7 @@
      &                    krhs, kstp, kstp,                             &
      &                    ubar, vbar, zeta,                             &
      &                    ad_ubar, ad_vbar, ad_zeta)
+#  endif
 !
 !  Compute adjoint 2D velocity component in the ETA-direction.  Here
 !  DC(i,1:N) are the thicknesses of V-boxes, DC(i,0) is total depth of
@@ -1071,7 +1079,8 @@
      &                           ad_zeta(:,:,kstp))
 # endif
 # if !(defined AD_SENSITIVITY || defined SO_SEMI)
-#  ifdef SOLVE3D
+#  ifndef OBC_FSRADIATION
+#   ifdef SOLVE3D
 !>    CALL tl_zetabc_tile (ng, Istr, Iend, Jstr, Jend,                  &
 !>   &                     LBi, UBi, LBj, UBj,                          &
 !>   &                     krhs, kstp, knew,                            &
@@ -1083,7 +1092,7 @@
      &                     krhs, kstp, knew,                            &
      &                     zeta,                                        &
      &                     ad_zeta)
-#  else
+#   else
 !>    CALL tl_zetabc_tile (ng, Istr, Iend, Jstr, Jend,                  &
 !>   &                     LBi, UBi, LBj, UBj,                          &
 !>   &                     krhs, kstp, krhs,                            &
@@ -1095,7 +1104,7 @@
      &                     krhs, kstp, krhs,                            &
      &                     zeta,                                        &
      &                     ad_zeta)
-#  endif
+#   endif
 !>    CALL tl_zetabc_tile (ng, Istr, Iend, Jstr, Jend,                  &
 !>   &                     LBi, UBi, LBj, UBj,                          &
 !>   &                     krhs, kstp, kstp,                            &
@@ -1107,6 +1116,7 @@
      &                     krhs, kstp, kstp,                            &
      &                     zeta,                                        &
      &                     ad_zeta)
+#  endif
 # endif
 !
 !  Adjoint of free-surface initialization.

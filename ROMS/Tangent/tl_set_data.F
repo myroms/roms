@@ -272,14 +272,10 @@
      &    (Iinfo(6,idUair,ng).ne.Mm(ng)+2)) THEN
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            cff1=FORCES(ng)%Uwind(i,j)*                                 &
-     &           COS(GRID(ng)%angler(i,j))+                             &
-     &           FORCES(ng)%Vwind(i,j)*                                 &
-     &           SIN(GRID(ng)%angler(i,j))
-            cff2=FORCES(ng)%Vwind(i,j)*                                 &
-     &           COS(GRID(ng)%angler(i,j))-                             &
-     &           FORCES(ng)%Uwind(i,j)*                                 &
-     &           SIN(GRID(ng)%angler(i,j))
+            cff1=FORCES(ng)%Uwind(i,j)*GRID(ng)%CosAngler(i,j)+         &
+     &           FORCES(ng)%Vwind(i,j)*GRID(ng)%SinAngler(i,j)
+            cff2=FORCES(ng)%Vwind(i,j)*GRID(ng)%CosAngler(i,j)-         &
+     &           FORCES(ng)%Uwind(i,j)*GRID(ng)%SinAngler(i,j)
             FORCES(ng)%Uwind(i,j)=cff1
             FORCES(ng)%Vwind(i,j)=cff2
           END DO
@@ -490,14 +486,10 @@
      &    (Iinfo(6,idUsms,ng).ne.Mm(ng)+2)) THEN
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            cff1=FORCES(ng)%sustr(i,j)*                                 &
-     &           COS(GRID(ng)%angler(i,j))+                             &
-     &           FORCES(ng)%svstr(i,j)*                                 &
-     &           SIN(GRID(ng)%angler(i,j))
-            cff2=FORCES(ng)%svstr(i,j)*                                 &
-     &           COS(GRID(ng)%angler(i,j))-                             &
-     &           FORCES(ng)%sustr(i,j)*                                 &
-     &           SIN(GRID(ng)%angler(i,j))
+            cff1=FORCES(ng)%sustr(i,j)*GRID(ng)%CosAngler(i,j)+         &
+     &           FORCES(ng)%svstr(i,j)*GRID(ng)%SinAngler(i,j)
+            cff2=FORCES(ng)%svstr(i,j)*GRID(ng)%CosAngler(i,j)-         &
+     &           FORCES(ng)%sustr(i,j)*GRID(ng)%SinAngler(i,j)
             FORCES(ng)%sustr(i,j)=cff1
             FORCES(ng)%svstr(i,j)=cff2
           END DO
@@ -551,16 +543,17 @@
      &                            GRID(ng)%angler(i,j)
           END DO
         END DO
+      END IF
 #     if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          FORCES(ng)%Dwave)
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        FORCES(ng)%Dwave)
 #     endif
 #     ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
-     &                      FORCES(ng)%Dwave)
+      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    FORCES(ng)%Dwave)
 #     endif
 #    endif
 #   endif

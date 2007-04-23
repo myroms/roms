@@ -1,20 +1,21 @@
       PROGRAM waves_ocean
 !
+!svn $Id$
+!=======================================================================
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                           Hernan G. Arango   !
 !==================================================== John C. Warner ===
-!  Copyright (c) 2006 ROMS/TOMS                                        !
-!================================================== Hernan G. Arango ===
 !                                                                      !
-!  Master program to couple Atmosphere, waves, ocean models.           !
-!                                                                      !
-!  Atmophere Model:  to be determined.                                 !
+!  Master program to couple waves and ocean models.                    !
 !                                                                      !
 !  Waves Model: SWAN (Simulating WAves Nearshore), Version 40.41AB     !
 !                                                                      !
 !     http://vlm089.citg.tudelft.nl/swan/index.htm                     !
 !                                                                      ! 
-!  Ocean Model: ROMS (Regional Ocean Model System), Version 2.3        !
+!  Ocean Model: ROMS (Regional Ocean Model System)                     !
 !                                                                      !
-!     http://marine.rutgers.edu/roms                                   !
+!     http://www.myroms.org                                            !
 !                                                                      !
 !=======================================================================
 !
@@ -34,7 +35,6 @@
       logical, save :: first
 
       integer :: MyColor, MyCOMM, MyError, MyKey, MySize, MyValue
-!      integer :: peOCN_frst, peOCN_last, peWAV_frst, peWAV_last
 !
 !-----------------------------------------------------------------------
 !  Initialize distributed-memory (MPI) configuration
@@ -74,11 +74,13 @@
         END IF
         STOP
       ELSE
-         WRITE (stdout,20) peOCN_frst, peOCN_last,                      &
-     &                     peWAV_frst, peWAV_last
- 20      FORMAT (/,' Waves-Ocean Models Coupling: ',/,                  &
-     &           /,7x,'Ocean Model MPI nodes: ',i3.3,' - ', i3.3,/,     &
-     &           /,7x,'Waves Model MPI nodes: ',i3.3,' - ', i3.3)
+        IF (MyRank.eq.0) THEN
+          WRITE (stdout,20) peOCN_frst, peOCN_last,                     &
+     &                      peWAV_frst, peWAV_last
+ 20       FORMAT (/,' Waves-Ocean Models Coupling: ',/,                 &
+     &            /,7x,'Ocean Model MPI nodes: ',i3.3,' - ', i3.3,/,    &
+     &            /,7x,'Waves Model MPI nodes: ',i3.3,' - ', i3.3)
+        END IF
       END IF
 !
 !  Split the communicator into SWAN and ROMS subgroups based on color
@@ -109,7 +111,7 @@
 !
       IF (MyColor.eq.WAVid) THEN
         CALL SWINITMPI (MyCOMM)
-        CALL SWMAIN (REAL(TI_WAV_OCN))
+        CALL SWMAIN (REAL(TI_WAV_OCN),Wname)
         CALL SWEXITMPI
       END IF
       IF (MyColor.eq.OCNid) THEN

@@ -105,7 +105,7 @@
       knew(ng)=2
       PREDICTOR_2D_STEP(ng)=.FALSE.
       synchro_flag(ng)=.TRUE.
-      first_time=0
+      first_time(ng)=0
 !
       iic(ng)=0
 # ifdef SOLVE3D

@@ -168,6 +168,20 @@ Vdecay(isUvel) == 100.0d0                          ! 3D U-momentum
 Vdecay(isVvel) == 100.0d0                          ! 3D V-momentum
 Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 
+! In the weak-constraint algorithms, the forcing error covariance matrix
+! is estimated by scaling the background error covariance matrix. These values
+! provide the scaling factors for each state variable.
+
+ Cfscale(isFsur) = 0.3d0                   ! 2D variable at RHO-points
+ Cfscale(isUbar) = 0.3d0                   ! 2D variable at U-points
+ Cfscale(isVbar) = 0.3d0                   ! 2D variable at V-points
+ Cfscale(isUstr) = 0.3d0                   ! surface U-momentum stress
+ Cfscale(isVstr) = 0.3d0                   ! surface V-momentum stress
+ Cfscale(isUvel) = 0.3d0                   ! 3D variable at U-points
+ Cfscale(isVvel) = 0.3d0                   ! 3D variable at V-points
+ Cfscale(isTvar) = 0.3d0  0.3d0            ! NT tracers
+ Cfscale(isTsur) = 0.3d0  0.3d0            ! NT surface tracers flux
+
 ! Polynomial coefficients for Brunt-Vaisala frequency squared (N2) used for
 ! normalization of tracer misfit cost function. The first value in each line
 ! is the polynomial order whereas the second value is the polynomial expansion
@@ -372,6 +386,21 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !                   Hdecay(isUvel)                3D U-momentum
 !                   Hdecay(isVvel)                3D V-momentum
 !                   Hdecay(isTvar)                tracers (1:NT)
+!
+!------------------------------------------------------------------------------
+!  If weak constraint, the model error covariance matrix is estimated by
+!  scaling the background error covariance matrix.
+!------------------------------------------------------------------------------
+!
+!  Cfscale(isFsur)  free-surface scale.
+!  Cfscale(isUbar)  scale for 2D variable at U-points
+!  Cfscale(isVbar)  scale for 2D variable at V-points
+!  Cfscale(isUstr)  surface U-momentum stress scale
+!  Cfscale(isVstr)  surface V-momentum stress scale
+!  Cfscale(isUvel)  scale for 3D variable at U-points
+!  Cfscale(isVvel)  scale for 3D variable at V-points
+!  Cfscale(isTvar)  scale for tracers (1:NT)
+!  Cfscale(isTsur)  surface tracers flux scale (1:NT)
 !
 !------------------------------------------------------------------------------
 ! Parameters for Brunt-Vaisala frequency squared.

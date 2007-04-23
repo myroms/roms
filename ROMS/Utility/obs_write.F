@@ -525,14 +525,16 @@
 #   endif
         END IF
 #  endif
+#  ifdef SOLVE3D
         IF (Load_Zobs(ng)) THEN
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
-#  ifdef WEAK_CONSTRAINT
+#   ifdef WEAK_CONSTRAINT
      &                     Zobs(Mstr:))
-#  else
+#   else
      &                     Zobs) 
-#  endif
+#   endif
         END IF
+#  endif
         CALL mp_collect (ng, model, Ncollect, IniVal,                   &
 #  ifdef WEAK_CONSTRAINT
      &                   ObsScale(Mstr:))

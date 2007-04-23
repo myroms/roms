@@ -232,6 +232,7 @@
 !  Local variable declarations.
 !
       logical :: converged
+      logical :: Lweak = .FALSE.
 
       integer :: AdjRec, Lbck, Lini, Lsav, Rec1, Rec2, Rec3
       integer :: i, my_iic, ng, subs, tile, thread
@@ -562,7 +563,7 @@
 #ifdef BALANCE_OPERATOR
                 CALL ad_balance (ng, TILE, LADJ2)
 #endif
-                CALL ad_variability (ng, TILE, LADJ2)
+                CALL ad_variability (ng, TILE, LADJ2, Lweak)
                 CALL ad_convolution (ng, TILE, LADJ2, 2)
                 IF (inner.eq.Ninner) THEN
                     CALL back_cost (ng, TILE, LTLM1)
@@ -793,7 +794,7 @@
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1,+1
                 CALL tl_convolution (ng, TILE, Lcon, 2)
-                CALL tl_variability (ng, TILE, Lcon)
+                CALL tl_variability (ng, TILE, Lcon, Lweak)
 #ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lcon)
 #endif

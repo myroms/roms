@@ -490,7 +490,7 @@
         DO i=Istr,Iend
           cff=dt2d*GRID(ng)%pn(i,Jstr)
           cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                              &
-     &                 zeta(i,Jstr,know))
+     &                 zeta(i,Jstr,know)))
           Ce=cff*cff1
           cff2=1.0_r8/(1.0_r8+Ce)
 #  ifdef MASKING

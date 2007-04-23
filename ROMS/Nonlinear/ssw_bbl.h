@@ -415,7 +415,7 @@
              zoST(i,j)=0.056_r8*d50*0.68_r8*tstar/                      &
      &                 (1.0_r8+coef_st*tstar)
              IF (zoST(i,j).lt.0.0_r8) THEN
-               IF (Master)
+               IF (Master) THEN
                  PRINT *, ' Warning: zoST<0  tstar, d50, coef_st:'
                  PRINT *, tstar,d50,coef_st
                END IF

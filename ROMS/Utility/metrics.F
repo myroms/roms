@@ -47,6 +47,11 @@
      &                   GRID(ng) % pmask,                              &
      &                   GRID(ng) % rmask,                              &
 #endif
+#ifdef CURVGRID
+     &                   GRID(ng) % angler,                             &
+     &                   GRID(ng) % CosAngler,                          &
+     &                   GRID(ng) % SinAngler,                          &
+#endif
 #ifdef SOLVE3D
 # ifdef ICESHELF
      &                   GRID(ng) % zice,                               &
@@ -89,6 +94,9 @@
      &                         f, h, pm, pn,                            &
 #ifdef MASKING
      &                         pmask, rmask,                            &
+#endif
+#ifdef CURVGRID
+     &                         angler, CosAngler, SinAngler,            &
 #endif
 #ifdef SOLVE3D
 # ifdef ICESHELF
@@ -149,6 +157,9 @@
       real(r8), intent(inout) :: pmask(LBi:,LBj:)
       real(r8), intent(inout) :: rmask(LBi:,LBj:)
 # endif
+# ifdef CURVGRID
+      real(r8), intent(inout) :: angler(LBi:,LBj:)
+# endif
 # ifdef SOLVE3D
 #  ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
@@ -178,6 +189,10 @@
       real(r8), intent(out) :: pmon_r(LBi:,LBj:)
       real(r8), intent(out) :: pmon_u(LBi:,LBj:)
       real(r8), intent(out) :: pmon_v(LBi:,LBj:)
+# ifdef CURVGRID
+      real(r8), intent(out) :: CosAngler(LBi:,LBj:)
+      real(r8), intent(out) :: SinAngler(LBi:,LBj:)
+# endif
 # ifdef SOLVE3D
       real(r8), intent(out) :: Hz(LBi:,LBj:,:)
       real(r8), intent(out) :: z_r(LBi:,LBj:,:)
@@ -192,6 +207,9 @@
 # ifdef MASKING
       real(r8), intent(inout) :: pmask(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: rmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef CURVGRID
+      real(r8), intent(inout) :: angler(LBi:UBi,LBj:UBj)
 # endif
 # ifdef SOLVE3D
 #  ifdef ICESHELF
@@ -222,6 +240,10 @@
       real(r8), intent(out) :: pmon_r(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: pmon_u(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: pmon_v(LBi:UBi,LBj:UBj)
+# ifdef CURVGRID
+      real(r8), intent(out) :: CosAngler(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: SinAngler(LBi:UBi,LBj:UBj)
+# endif
 # ifdef SOLVE3D
       real(r8), intent(out) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: z_r(LBi:UBi,LBj:UBj,N(ng))
@@ -248,7 +270,7 @@
 
       real(r8), parameter :: Large = 1.0E+20_r8
 
-      real(r8) :: cff
+      real(r8) :: cff, cff1, cff2
       real(r8) :: my_DXmax, my_DXmin, my_DYmax, my_DYmin
 #ifdef SOLVE3D
       real(r8) :: my_DZmax, my_DZmin
@@ -447,26 +469,101 @@
 !  Set slipperiness (no-slip) mask at PSI-points.
 !-----------------------------------------------------------------------
 !
-!  The slipperiness mask is Sea=1, Land=0, and boundary=1-gamma2.
-!
-      IF (gamma2(ng).lt.0.0_r8) THEN
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
-            pmask(i,j)=2.0_r8-pmask(i,j)
-          END DO
+! Set no-slip boundary conditions on land-mask boundaries regardless of
+! supplied value of gamma2. 
+! 
+      cff1=1.0_r8       ! computation of off-diagonal nonlinear terms 
+      cff2=2.0_r8
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          IF ((rmask(i-1,j  ).gt.0.5_r8).and.                           &
+     &        (rmask(i  ,j  ).gt.0.5_r8).and.                           &
+     &        (rmask(i-1,j-1).gt.0.5_r8).and.                           &
+     &        (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+            pmask(i,j)=1.0_r8
+          ELSE IF ((rmask(i-1,j  ).lt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+            pmask(i,j)=cff1
+          ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).lt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+            pmask(i,j)=cff1
+          ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).lt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+            pmask(i,j)=cff1
+          ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN 
+            pmask(i,j)=cff1
+          ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).lt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN 
+            pmask(i,j)=cff2
+          ELSE IF ((rmask(i-1,j  ).lt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).lt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN 
+            pmask(i,j)=cff2
+          ELSE IF ((rmask(i-1,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).gt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).lt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).lt.0.5_r8)) THEN 
+            pmask(i,j)=cff2
+          ELSE IF ((rmask(i-1,j  ).lt.0.5_r8).and.                      &
+     &             (rmask(i  ,j  ).lt.0.5_r8).and.                      &
+     &             (rmask(i-1,j-1).gt.0.5_r8).and.                      &
+     &             (rmask(i  ,j-1).gt.0.5_r8)) THEN
+            pmask(i,j)=cff2
+          ELSE 
+            pmask(i,j)=0.0_r8
+          END IF
         END DO
+      END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,             &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          pmask)
+      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        pmask)
 # endif
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NghostPoints, EWperiodic, NSperiodic,       &
-     &                      pmask)
+      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    pmask)
 # endif
-      END IF
+#endif
+#ifdef CURVGRID
+!
+!-----------------------------------------------------------------------
+! Compute cosine and sine of curvilinear rotation angle.
+!-----------------------------------------------------------------------
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CosAngler(i,j)=COS(angler(i,j))
+          SinAngler(i,j)=SIN(angler(i,j))
+        END DO
+      END DO
+# if defined EW_PERIODIC || defined NS_PERIODIC
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        CosAngler)
+      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        SinAngler)
+# endif
+# ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    CosAngler, SinAngler)
+# endif
 #endif
 #if defined VISC_GRID || defined DIFF_GRID
 !

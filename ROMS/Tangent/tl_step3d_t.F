@@ -810,8 +810,13 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
+#  ifdef TS_MPDATA
+              IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
+     &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
+#  else
               IF (((Istr.le.i).and.(i.le.Iend+1)).and.                  &
      &            ((Jstr.le.j).and.(j.le.Jend))) THEN
+#  endif
                 IF (Lsrc(is,itrc)) THEN
 !>                FX(i,j)=Huon(i,j,k)*Tsrc(is,k,itrc)
 !>
@@ -835,8 +840,13 @@
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
+#  ifdef TS_MPDATA
+              IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
+     &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
+#  else
               IF (((Istr.le.i).and.(i.le.Iend)).and.                    &
      &            ((Jstr.le.j).and.(j.le.Jend+1))) THEN
+#  endif
                 IF (Lsrc(is,itrc)) THEN
 !>                FE(i,j)=Hvom(i,j,k)*Tsrc(is,k,itrc)
 !>
@@ -891,7 +901,7 @@
               cff2=Hz(i,j,k)+                                           &
      &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
      &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
-     &                  (W(i,j,k)-W(i,j,k-1)))
+     &                  (W(i,j,k)-W(i,j,k-1)))                 ! Hz_old
               tl_cff2=tl_Hz(i,j,k)+                                     &
      &                cff*(tl_Huon(i+1,j,k)-tl_Huon(i,j,k)+             &
      &                     tl_Hvom(i,j+1,k)-tl_Hvom(i,j,k)+             &
@@ -1255,6 +1265,7 @@
                   FC(i,k)=FC(i,k)+0.5_r8*                               &
      &                    (Qsrc(is,k  )*Tsrc(is,k  ,itrc)+              &
      &                     Qsrc(is,k+1)*Tsrc(is,k+1,itrc))
+                  tl_FC(i,k)=tl_FC(i,k)+0.0_r8
                 END DO
               END DO
             END IF
@@ -1271,7 +1282,7 @@
      &                          (Ta(i,j,k,itrc)-cff1)*                  &
      &                          tl_oHz(i,j,k)
 #  ifdef DIAGNOSTICS_TS
-              DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
+!!            DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
 #  endif
 # else
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff1
@@ -1337,7 +1348,7 @@
      &                             rmask, umask, vmask,                 &
 #  endif
 #  ifdef WET_DRY
-     &                             rmask_wet,                            &
+     &                             rmask_wet,                           &
 #  endif
      &                             pm, pn, omn, om_u, on_v,             &
      &                             z_r, tl_z_r,                         &
@@ -1351,7 +1362,7 @@
      &                             Va, tl_Va,                           &
      &                             Wa, tl_Wa)
 !
-!  Compute anti-difussive corrected advection fluxes.
+!  Compute anti-diffusive corrected advection fluxes.
 !
         DO k=1,N(ng)
           DO j=Jstr,Jend
@@ -1420,7 +1431,7 @@
           END DO
         END DO
 !
-!  Compute anti-difussive corrected vertical advection flux.
+!  Compute anti-diffusive corrected vertical advection flux.
 !
         DO j=Jstr,Jend
           DO k=1,N(ng)-1

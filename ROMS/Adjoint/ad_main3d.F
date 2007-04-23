@@ -418,7 +418,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL ad_forcing (ng, TILE, knew(ng), nnew(ng))
+            CALL ad_forcing (ng, TILE, kstp(ng), nstp(ng))
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -651,25 +651,6 @@
 !
       CALL ad_output (ng)
       IF (exit_flag.ne.NoError) RETURN
-
-# if defined WEAK_CONSTRAINT_OLD || defined IOM_OLD
-!
-!-----------------------------------------------------------------------
-!  If appropriate, add representer coefficients (Beta hat) impulse
-!  forcing to adjoint solution. Read next impulse record, if available.
-!-----------------------------------------------------------------------
-!
-      IF (ProcessObs(ng)) THEN
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL ad_forcing (ng, TILE, knew(ng), nnew(ng))
-          END DO
-        END DO
-!$OMP END PARALLEL DO
-      END IF
-# endif
 
 # if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
 !

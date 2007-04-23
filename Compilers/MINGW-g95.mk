@@ -34,10 +34,12 @@
           LDFLAGS := 
                AR := ar
           ARFLAGS := -r
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := ranlib
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.
@@ -69,3 +71,11 @@ ifdef SWAN_COUPLE
            FFLAGS += -ffixed-form -I/usr/local/mct/include
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
+
+#
+# Set free form format in source files to allow long string for
+# local directory and compilation flags inside the code.
+#
+
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form

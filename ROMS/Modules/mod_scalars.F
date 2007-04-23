@@ -496,7 +496,8 @@
 !
 !  Diagnostic volume averaged variables.
 !
-        integer :: first_time = 0               ! Standard output flag
+        integer, dimension(Ngrids) :: first_time
+
         real(r8) :: avgke = 0.0_r8              ! Kinetic energy
         real(r8) :: avgpe = 0.0_r8              ! Potential energy
         real(r8) :: avgkp = 0.0_r8              ! Total energy
@@ -841,11 +842,15 @@
 !  Maximum number of model state variables to process.
 !
         integer :: MstateVar
-
+!
 !  Logical switches to compute correlation normalization coefficients
 !  for each state variable.
 !
         logical,  allocatable :: Cnorm(:)
+!
+!  Weak constraint scale factor for the forcing error covariance matrix.
+!
+        real(r8),  allocatable :: Cfscale(:,:)
 !
 !  Logical switches to process weak constraint forcing as intermittent
 !  or continuous impulses.
@@ -956,9 +961,9 @@
 !    blk_Cpw       Specific heat capacity for seawater (J/kg/K).
 !    blk_Rgas      Gas constant for dry air (J/kg/K).
 !    blk_Zabl      Height (m) of atmospheric boundary layer.
-!    blk_ZQ        Height (m) of surface air humidity meassurement.
-!    blk_ZT        Height (m) of surface air temperature meassurement.
-!    blk_ZW        Height (m) of surface winds meassurement.
+!    blk_ZQ        Height (m) of surface air humidity measurement.
+!    blk_ZT        Height (m) of surface air temperature measurement.
+!    blk_ZW        Height (m) of surface winds measurement.
 !    blk_beta      Beta parameter evaluated from Fairall low windspeed
 !                    turbulence data.
 !    blk_dter      Temperature change.
@@ -969,13 +974,14 @@
         real(r8) :: blk_Cpw = 4000.0_r8       ! (J/kg/K)
         real(r8) :: blk_Rgas = 287.1_r8       ! (J/kg/K)
         real(r8) :: blk_Zabl = 600.0_r8       ! (m)
-        real(r8) :: blk_ZQ = 10.0_r8          ! (m)
-        real(r8) :: blk_ZT = 10.0_r8          ! (m)
-        real(r8) :: blk_ZW = 10.0_r8          ! (m)
         real(r8) :: blk_beta = 1.2_r8         ! non-dimensional
         real(r8) :: blk_dter = 0.3_r8         ! (K)
         real(r8) :: blk_tcw = 0.6_r8          ! (W/m/K)
         real(r8) :: blk_visw = 0.000001_r8    ! (m2/s)
+
+        real(r8), dimension(Ngrids) :: blk_ZQ     ! (m)
+        real(r8), dimension(Ngrids) :: blk_ZT     ! (m)
+        real(r8), dimension(Ngrids) :: blk_ZW     ! (m)
 #endif
 # if defined SG_BBL || defined SSW_BBL
 !
@@ -1472,7 +1478,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, ic, j, ng
+      integer :: i, ic, j, ng, itrc
 
       real(r8), parameter :: IniVal = 0.0_r8
 
@@ -1583,6 +1589,7 @@
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
       allocate ( Cnorm(MstateVar) )
+      allocate ( Cfscale(MstateVar,Ngrids) )
       allocate ( Hdecay(MstateVar,Ngrids) )
       allocate ( Vdecay(MstateVar,Ngrids) )
 #endif
@@ -1854,6 +1861,18 @@
         ntstart(ng)=1
         ntend(ng)=0
         gamma2(ng)=-1.0_r8
+        first_time(ng)=0
+        DO itrc=1,NAT+NPT
+          tnu2(itrc,ng)=IniVal
+          tnu4(itrc,ng)=IniVal
+        END DO
+        visc2(ng)=IniVal
+        visc4(ng)=IniVal
+#ifdef BULK_FLUX
+        blk_ZQ(ng)=10.0_r8
+        blk_ZT(ng)=10.0_r8
+        blk_ZW(ng)=10.0_r8
+#endif
       END DO
       
 #if defined LMD_SKPP || defined LMD_BKPP

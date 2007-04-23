@@ -13,6 +13,7 @@
 !=======================================================================
 !
         USE mod_param
+        USE mod_strings, ONLY: Nregion
 !
         implicit none
 
@@ -77,9 +78,9 @@
 !
         integer  :: proc(0:1,7,Ngrids)
 
-        real(r8) :: Cstr(0:47,7,Ngrids)
-        real(r8) :: Cend(0:47,7,Ngrids)
-        real(r8) :: Csum(0:47,7,Ngrids)
+        real(r8) :: Cstr(0:Nregion,7,Ngrids)
+        real(r8) :: Cend(0:Nregion,7,Ngrids)
+        real(r8) :: Csum(0:Nregion,7,Ngrids)
 
 #ifdef _OPENMP
         common /process/ proc
@@ -130,9 +131,11 @@
           USE mod_param
           USE mod_iounits
           USE mod_scalars
+          USE mod_strings, ONLY: Nregion
 !
 !  Local variable declarations.
 !
+          integer :: i
 #ifdef DISTRIBUTE
           integer :: MyError
 #endif
@@ -190,9 +193,9 @@
 !-----------------------------------------------------------------------
 !
           proc(0:1,1:7,1:Ngrids)=0
-          Cstr(0:44,1:7,1:Ngrids)=0.0_r8
-          Cend(0:44,1:7,1:Ngrids)=0.0_r8
-          Csum(0:44,1:7,1:Ngrids)=0.0_r8
+          Cstr(0:Nregion,1:7,1:Ngrids)=0.0_r8
+          Cend(0:Nregion,1:7,1:Ngrids)=0.0_r8
+          Csum(0:Nregion,1:7,1:Ngrids)=0.0_r8
 
           RETURN
         END SUBROUTINE initialize_parallel

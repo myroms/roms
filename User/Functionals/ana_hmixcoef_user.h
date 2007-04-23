@@ -237,7 +237,10 @@
 !! by increasing its horizontal mixing coefficients.
 !!            
 
-# if defined MY_APPLICATION
+# if defined SCB
+!
+!  Southern California Bight sponge areas:
+
 #  if defined UV_VIS2
 !
 !  Increase harmonic vicosity linearly (up to a factor of four, fac=4) 
@@ -312,13 +315,81 @@
         END DO
       END DO
 #  endif
-
+# elif defined SW06_COARSE || defined SW06_FINE
+!
+!  Shallow Water Acoustics 2006: Apply sponge layer along west, south,
+!  east boundaries only.
+!
+#  ifdef SW06_COARSE
+      Iwrk=6          ! set the width of the sponge in grid points
+#  else
+      Iwrk=30
+#  endif
+      fac=10.0_r8     ! max factor by which nu2 is increased at boundary
+#  if defined UV_VIS2
+      DO j=JstrR,MIN(Iwrk,JendR) ! South boundary
+        cff=visc2(ng)*                                                  &
+     &      (1.0_r8+REAL(Iwrk-j,r8)/REAL(Iwrk,r8)*(fac-1.0_r8))
+        DO i=IstrR,IendR
+          visc2_r(i,j)=cff
+          visc2_p(i,j)=cff
+        END DO
+      END DO
+      DO i=IstrR,MIN(Iwrk,IendR) ! West boundary
+        DO j=JstrR,JendR
+          cff=MAX(visc2_r(i,j),visc2(ng)*                               &
+     &        (1.0_r8+REAL(Iwrk-i,r8)/REAL(Iwrk,r8)*(fac-1.0_r8)))
+          visc2_r(i,j)=cff
+          visc2_p(i,j)=cff
+        END DO
+      END DO
+      DO i=MAX(IstrR,Lm(ng)+1-Iwrk),IendR ! East boundary
+        DO j=JstrR,JendR
+          cff=MAX(visc2_r(i,j),visc2(ng)*                               &
+     &        (fac-(fac-1.0_r8)*REAL(Lm(ng)+1-i,r8)/REAL(Iwrk,r8)))
+          visc2_r(i,j)=cff
+          visc2_p(i,j)=cff
+        END DO
+      END DO
+#  endif
+#  if defined TS_DIF2
+      DO j=JstrR,MIN(Iwrk,JendR) ! South boundary
+        cff1=tnu2(itemp,ng)*                                            &
+     &       (1.0_r8+REAL(Iwrk-j,r8)/REAL(Iwrk,r8)*(fac-1.0_r8))
+        cff2=tnu2(isalt,ng)*                                            &
+     &       (1.0_r8+REAL(Iwrk-j,r8)/REAL(Iwrk,r8)*(fac-1.0_r8))
+        DO i=IstrR,IendR
+          diff2(i,j,itemp)=cff1
+          diff2(i,j,isalt)=cff2
+        END DO
+      END DO
+      DO i=IstrR,MIN(Iwrk,IendR) ! West boundary
+        DO j=JstrR,JendR
+          cff1=MAX(diff2(i,j,itemp),tnu2(itemp,ng)*                     &
+     &         (1.0_r8+REAL(Iwrk-i,r8)/REAL(Iwrk,r8)*(fac-1.0_r8)))
+          cff2=MAX(diff2(i,j,isalt),tnu2(isalt,ng)*                     &
+     &         (1.0_r8+REAL(Iwrk-i,r8)/REAL(Iwrk,r8)*(fac-1.0_r8)))
+          diff2(i,j,itemp)=cff1
+          diff2(i,j,isalt)=cff2
+        END DO
+      END DO
+      DO i=MAX(IstrR,Lm(ng)+1-Iwrk),IendR ! East boundary
+        DO j=JstrR,JendR
+          cff1=MAX(diff2(i,j,itemp),tnu2(itemp,ng)*                     &
+     &         (fac-(fac-1.0_r8)*REAL(Lm(ng)+1-i,r8)/REAL(Iwrk,r8)))
+          cff2=MAX(diff2(i,j,isalt),tnu2(isalt,ng)*                     &
+     &         (fac-(fac-1.0_r8)*REAL(Lm(ng)+1-i,r8)/REAL(Iwrk,r8)))
+          diff2(i,j,itemp)=cff1
+          diff2(i,j,isalt)=cff2
+        END DO
+      END DO
+#  endif
 # else
 !!
 !!  Specify your application sponge here.
 !!
 # endif
-
+#endif
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
 !
 !-----------------------------------------------------------------------

@@ -73,8 +73,7 @@
      &                    OCEAN(ng) % u,                                &
      &                    OCEAN(ng) % v,                                &
      &                    OCEAN(ng) % pden,                             &
-     &                    FORCES(ng) % srflx,                           &
-     &                    FORCES(ng) % stflx,                           &
+     &                    FORCES(ng) % btflx,                           &
      &                    FORCES(ng) % bustr,                           &
      &                    FORCES(ng) % bvstr,                           &
      &                    MIXING(ng) % alpha,                           &
@@ -99,7 +98,7 @@
 # endif
      &                          f, h, Hz, z_r, z_w,                     &
      &                          u, v, pden,                             &
-     &                          srflx, stflx,  bustr, bvstr,            &
+     &                          btflx,  bustr, bvstr,                   &
      &                          alpha,                                  &
 # ifdef SALINITY
      &                          beta,                                   &
@@ -112,10 +111,11 @@
       USE mod_scalars
 !
       USE bc_2d_mod, ONLY : bc_r2d_tile
-      USE bc_3d_mod, ONLY : bc_w3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+# endif
+# ifdef LMD_SHAPIRO
+      USE shapiro_mod
 # endif
 !
 !  Imported variable declarations.
@@ -136,8 +136,7 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: pden(LBi:,LBj:,:)
-      real(r8), intent(in) :: srflx(LBi:,LBj:)
-      real(r8), intent(in) :: stflx(LBi:,LBj:,:)
+      real(r8), intent(in) :: btflx(LBi:,LBj:,:)
       real(r8), intent(in) :: bustr(LBi:,LBj:)
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
       real(r8), intent(in) :: alpha(LBi:,LBj:)
@@ -162,8 +161,7 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),3)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),3)
       real(r8), intent(in) :: pden(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: srflx(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: stflx(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(in) :: btflx(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: alpha(LBi:UBi,LBj:UBj)
@@ -296,12 +294,11 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
 # ifdef SALINITY
-          Bo(i,j)=g*(alpha(i,j)*(stflx(i,j,itemp)-srflx(i,j))-          &
-     &               beta (i,j)*stflx(i,j,isalt))
+          Bo(i,j)=g*(alpha(i,j)*btflx(i,j,itemp)-                       &
+     &               beta (i,j)*btflx(i,j,isalt))
 # else
-          Bo(i,j)=g*alpha(i,j)*(stflx(i,j,itemp)-srflx(i,j))
+          Bo(i,j)=g*alpha(i,j)*btflx(i,j,itemp)
 # endif
-!!        Bosol(i,j)=g*alpha(i,j)*srflx(i,j)
           Bosol(i,j)=0.0_r8
         END DO
       END DO
@@ -555,6 +552,26 @@
 # endif
         END DO
       END DO
+# ifdef LMD_SHAPIRO
+!
+!  Apply gradient or periodic boundary conditions.
+!
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  hbbl)
+#  ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    hbbl)
+#  endif
+      CALL shapiro2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
+     &                     LBi, UBi, LBj, UBj,                          &
+#  ifdef MASKING
+     &                     rmask,                                       &
+#  endif
+     &                     hbbl)
+# endif
 !
 !  Apply gradient or periodic boundary conditions.
 !
@@ -795,27 +812,6 @@
         END DO
       END DO
 !
-!  Apply boundary conditions.
-!
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  Akv)
-      DO itrc=1,NAT
-        CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    Akt(:,:,:,itrc))
-      END DO
-# ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Akv)
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng), 1, NAT,         &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Akt)
-# endif
-
       RETURN
       END SUBROUTINE lmd_bkpp_tile
 #endif

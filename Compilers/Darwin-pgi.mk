@@ -5,7 +5,7 @@
 #   See License_ROMS.txt                                                :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 #
-# Include file for Intel IFORT (version 8.x) compiler on Linux
+# Include file for PGI (version 8.x) compiler on Darwin
 # -------------------------------------------------------------------------
 #
 # ARPACK_LIBDIR  ARPACK libary directory
@@ -23,12 +23,12 @@
 #
 # First the defaults
 #
-               FC := ifort
+               FC := pgf90
            FFLAGS :=
-              CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional
+              CPP := /usr/bin/cpp-4.0
+         CPPFLAGS := -P -traditional-cpp
                LD := $(FC)
-          LDFLAGS := -Vaxlib
+          LDFLAGS := 
                AR := ar
           ARFLAGS := r
             MKDIR := mkdir -p
@@ -44,26 +44,53 @@
 #
 
        MCT_LIBDIR ?= /usr/local/mct/lib
-    NETCDF_INCDIR ?= /opt/intelsoft/netcdf/include
-    NETCDF_LIBDIR ?= /opt/intelsoft/netcdf/lib
+    NETCDF_INCDIR ?= /usr/local/netcdf-3.6.2-pgi/include
+    NETCDF_LIBDIR ?= /usr/local/netcdf-3.6.2-pgi/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
 ifdef ARPACK
  ifdef MPI
-   PARPACK_LIBDIR ?= /opt/intelsoft/PARPACK
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack
+#  PARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+   PARPACK_LIBDIR ?= $(ROMSHOME)/Lib
+  ifdef MPIF90
+   ifdef DEBUG
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_daggoo
+   else
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_daggoo
+   endif
+  else
+   ifdef DEBUG
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_moby
+   else
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack_moby
+#            LIBS += -L$(PARPACK_LIBDIR) -lparpack
+   endif
+  endif
  endif
-    ARPACK_LIBDIR ?= /opt/intelsoft/PARPACK
-             LIBS += -L$(ARPACK_LIBDIR) -larpack
+#   ARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+    ARPACK_LIBDIR ?= $(ROMSHOME)/Lib
+ ifdef MPIF90
+  ifdef DEBUG
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_daggoo
+  else
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_daggoo
+  endif
+ else
+  ifdef DEBUG
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_moby
+  else
+             LIBS += -L$(ARPACK_LIBDIR) -larpack_moby
+#            LIBS += -L$(ARPACK_LIBDIR) -larpack
+  endif
+ endif
 endif
 
 ifdef MPI
          CPPFLAGS += -DMPI
  ifdef MPIF90
-#              FC := /opt/intelsoft/mpich2/bin/mpif90
-               FC := /opt/intelsoft/mpich2-1.0.5/bin/mpif90
+               FC := /usr/local/openmpi-pgi/bin/mpif90
                LD := $(FC)
  else
              LIBS += -lfmpi-pgi -lmpi-pgi 
@@ -72,23 +99,18 @@ endif
 
 ifdef OpenMP
          CPPFLAGS += -D_OPENMP
-           FFLAGS += -openmp -fpp
 endif
 
 ifdef DEBUG
-           FFLAGS += -g -check bounds
+#          FFLAGS += -g -C -Mchkstk -Mchkfpstk
+           FFLAGS += -g -C
+#          FFLAGS += -g
 else
-           FFLAGS += -ip -O3
- ifeq ($(CPU),i686)
-           FFLAGS += -pc80 -xW
- endif
- ifeq ($(CPU),x86_64)
-           FFLAGS += -xW
- endif
+#           FFLAGS += -u -Bstatic -fastsse -Mipa=fast
 endif
 
 ifdef SWAN_COUPLE
-           FFLAGS += -FI -I/usr/local/mct/include
+           FFLAGS += -Mfixed -I/usr/local/mct/include
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 
@@ -99,5 +121,5 @@ endif
 # local directory and compilation flags inside the code.
 #
 
-$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -free
-$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -free
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree

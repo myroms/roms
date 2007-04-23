@@ -1045,6 +1045,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' LMD_RIMIX,'
 #endif
+#ifdef LMD_SHAPIRO
+      IF (Master) WRITE (stdout,20) 'LMD_SHAPIRO',                      &
+     &   'Shapiro filtering boundary layer depth.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' LMD_SHAPIRO,'
+#endif
 #ifdef LMD_SKPP
       IF (Master) WRITE (stdout,20) 'LMD_SKPP',                         &
      &   'KPP surface boundary layer mixing.'

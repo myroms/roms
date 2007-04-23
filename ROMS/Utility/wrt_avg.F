@@ -450,7 +450,7 @@
 #   ifdef MASKING
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #   endif
-     &                     AVERAGE(ng) % avgSu3RS(LBi,LBj,1))
+     &                     AVERAGE(ng) % avgu3RS(LBi,LBj,1))
         IF (status.ne.nf_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idU3rs)), tAVGindx(ng)

@@ -106,11 +106,6 @@
       USE mod_grid
       USE mod_ocean
       USE mod_stepping
-
-#ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
-#endif
 !
 !  Imported variable declarations.
 !
@@ -265,6 +260,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
+#endif
 !
 !  Imported variable declarations.
 !

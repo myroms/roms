@@ -48,6 +48,7 @@
 !  USRname     USER input/output generic file name.                    !
 !  VSURname    Input surface currents observations file name.          !
 !  VOBSname    Input horizontal currents observations file name.       !
+!  Wname       Wave model stadard input file name.                     !
 !  aparnam     Input assimilation parameters file name.                !
 !  bparnam     Input biology parameters file name.                     !
 !  fposnam     Input initial floats positions file name.               !
@@ -125,6 +126,7 @@
         character (len=80), dimension(Ngrids) :: STDname
 
         character (len=80) :: Iname
+        character (len=80) :: Wname
         character (len=80) :: MyAppCPP
         character (len=80) :: USRname
         character (len=80) :: aparnam

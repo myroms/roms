@@ -70,7 +70,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE ad_variability (ng, tile, Linp)
+      SUBROUTINE ad_variability (ng, tile, Linp, Lweak)
 !***********************************************************************
 !
       USE mod_param
@@ -81,6 +81,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: Lweak
+
       integer, intent(in) :: ng, tile, Linp
 !
 !  Local variable declarations.
@@ -89,7 +91,7 @@
 !
       CALL ad_variability_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          Linp,                                   &
+     &                          Linp, Lweak,                            &
 # ifdef SOLVE3D
      &                          OCEAN(ng) % e_t,                        &
      &                          OCEAN(ng) % e_u,                        &
@@ -127,7 +129,7 @@
 !***********************************************************************
       SUBROUTINE ad_variability_tile (ng, Istr, Iend, Jstr, Jend,       &
      &                                LBi, UBi, LBj, UBj,               &
-     &                                Linp,                             &
+     &                                Linp, Lweak,                      &
 # ifdef SOLVE3D
      &                                t_std, u_std, v_std,              &
 #  ifdef ADJUST_STFLUX
@@ -151,6 +153,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_ncparam
+      USE mod_scalars
 !
 # ifdef DISTRIBUTE
       USE mp_exchange_mod
@@ -158,6 +162,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: Lweak
+
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp
@@ -245,6 +251,7 @@
 # ifdef SOLVE3D
       integer :: k, itrc
 # endif
+      real(r8), dimension(MstateVar) :: fac
 !
 # include "set_bounds.h"
 
@@ -254,11 +261,22 @@
 !  standard deviation.
 !-----------------------------------------------------------------------
 !
+      IF (Lweak) THEN
+        DO i=1,MstateVar
+          fac(i)=SQRT(Cfscale(i,ng))
+        END DO
+      ELSE
+        DO i=1,MstateVar
+          fac(i)=1.0_r8
+        END DO
+      END IF
+!
 !  Adjoint free-surface.
 !
       DO j=JR_RANGE
         DO i=IR_RANGE
-          ad_zeta(i,j,Linp)=ad_zeta(i,j,Linp)*zeta_std(i,j)
+          ad_zeta(i,j,Linp)=ad_zeta(i,j,Linp)*zeta_std(i,j)*            &
+     &                      fac(isFsur)
         END DO
       END DO
 !
@@ -266,12 +284,14 @@
 !
       DO j=JU_RANGE
         DO i=IU_RANGE
-          ad_ubar(i,j,Linp)=ad_ubar(i,j,Linp)*ubar_std(i,j)
+          ad_ubar(i,j,Linp)=ad_ubar(i,j,Linp)*ubar_std(i,j)*            &
+     &                      fac(isUbar)
         END DO
       END DO
       DO j=JV_RANGE
         DO i=IV_RANGE
-          ad_vbar(i,j,Linp)=ad_vbar(i,j,Linp)*vbar_std(i,j)
+          ad_vbar(i,j,Linp)=ad_vbar(i,j,Linp)*vbar_std(i,j)*            &
+     &                      fac(isVbar)
         END DO
       END DO
 # ifdef DISTRIBUTE
@@ -288,12 +308,14 @@
 !
       DO j=JU_RANGE
         DO i=IU_RANGE
-          ad_sustr(i,j)=ad_sustr(i,j)*sustr_std(i,j)
+          ad_sustr(i,j)=ad_sustr(i,j)*sustr_std(i,j)*                   &
+     &                  fac(isUstr)
         END DO
       END DO
       DO j=JV_RANGE
         DO i=IV_RANGE
-          ad_svstr(i,j)=ad_svstr(i,j)*svstr_std(i,j)
+          ad_svstr(i,j)=ad_svstr(i,j)*svstr_std(i,j)*                   &
+     &                  fac(isVstr)
         END DO
       END DO
 #  ifdef DISTRIBUTE
@@ -311,12 +333,14 @@
       DO k=1,N(ng)
         DO j=JU_RANGE
           DO i=IU_RANGE
-            ad_u(i,j,k,Linp)=ad_u(i,j,k,Linp)*u_std(i,j,k)
+            ad_u(i,j,k,Linp)=ad_u(i,j,k,Linp)*u_std(i,j,k)*             &
+     &                       fac(isUvel)
           END DO
         END DO
         DO j=JV_RANGE
           DO i=IV_RANGE
-            ad_v(i,j,k,Linp)=ad_v(i,j,k,Linp)*v_std(i,j,k)
+            ad_v(i,j,k,Linp)=ad_v(i,j,k,Linp)*v_std(i,j,k)*             &
+     &                       fac(isVvel)
           END DO
         END DO
       END DO
@@ -335,7 +359,8 @@
           DO j=JR_RANGE
             DO i=IR_RANGE
               ad_t(i,j,k,Linp,itrc)=ad_t(i,j,k,Linp,itrc)*              &
-     &                              t_std(i,j,k,itrc)
+     &                              t_std(i,j,k,itrc)*                  &
+     &                              fac(isTvar(itrc))
             END DO
           END DO
         END DO
@@ -353,7 +378,9 @@
       DO itrc=1,NT(ng)
         DO j=JR_RANGE
           DO i=IR_RANGE
-              ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)*stflx_std(i,j,itrc)
+              ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)*                    &
+     &                           stflx_std(i,j,itrc)*                   &
+     &                           fac(isTsur(itrc))
           END DO
         END DO
       END DO

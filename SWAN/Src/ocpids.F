@@ -94,7 +94,8 @@
 !                        and command reading must be initialised
 !
       LOGICAL    LREAD, FILEXI
-      CHARACTER  INPFIL *40, OUTFIL *40, INIFIL *(*), TSTFIL *40,
+!jcw  CHARACTER  INPFIL *40, OUTFIL *40, INIFIL *(*), TSTFIL *40,
+      CHARACTER  OUTFIL *40, INIFIL *(*), TSTFIL *40,
      &           PLTOPT *4, TIMSTR *24,
      &           OUTFO *40, TSTFO *40, TXT*120
       INTEGER    PRCTIM(6), INIVER, INIVEF
@@ -128,7 +129,8 @@
         IF (INIVEF.GT.INIVER .OR. INIVEF.LE.0) GOTO 935                   40.00
         READ (11, 120, ERR=930, END=930) INST
         READ (11, *,   ERR=930, END=930) INPUTF
-        READ (11, 120, ERR=930, END=930) INPFIL
+!jcw    READ (11, 120, ERR=930, END=930) INPFIL
+        READ (11, 120, ERR=930, END=930)                                  jcw
         READ (11, *,   ERR=930, END=930) PRINTF
         READ (11, 120, ERR=930, END=930) OUTFIL
         READ (11, *,   ERR=930, END=930) PRTEST
@@ -184,8 +186,7 @@
 !       REFERENCE NUMBERS AND NAMES OF STANDARD FILES
 !
         INPUTF = 3
-!        INPFIL = 'INPUT'                                                jcw
-        INPFIL = 'SWAN/External/INPUT'
+!jcw    INPFIL = 'INPUT'
         PRINTF = 4
         OUTFIL = 'PRINT'
 !       unit ref. numbers for output to screen and to separate

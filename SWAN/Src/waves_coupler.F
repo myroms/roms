@@ -101,10 +101,6 @@
 !
       CALL mpi_comm_rank (WAV_COMM_WORLD, MyRank, MyError)
       CALL mpi_comm_size (WAV_COMM_WORLD, nprocs, MyError)
-
-      IF (MYRANK.EQ.0) THEN
-        WRITE (*,*) ' Swan, init MCTWorld and MyRank = ', MyRank
-      END IF
 !
 ! Initialize MCTworld.
 !

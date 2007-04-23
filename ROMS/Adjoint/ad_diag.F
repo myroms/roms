@@ -263,8 +263,8 @@
           avgke=avgke/volume
           avgpe=avgpe/volume
           avgkp=avgke+avgpe
-          IF (first_time.eq.0) THEN
-            first_time=1
+          IF (first_time(ng).eq.0) THEN
+            first_time(ng)=1
             IF (Master) WRITE (stdout,10) 'STEP', 'time[DAYS]',         &
      &                                    'KINETIC_ENRG', 'POTEN_ENRG', &
      &                                    'TOTAL_ENRG', 'NET_VOLUME',   &

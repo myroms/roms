@@ -142,9 +142,13 @@
       USE rp_u3dbc_mod, ONLY : rp_u3dbc_tile
       USE rp_v3dbc_mod, ONLY : rp_v3dbc_tile
 # endif
+# ifndef OBC_M2RADIATION
       USE rp_u2dbc_mod, ONLY : rp_u2dbc_tile
       USE rp_v2dbc_mod, ONLY : rp_v2dbc_tile
+# endif
+# ifndef OBC_FSRADIATION
       USE rp_zetabc_mod, ONLY : rp_zetabc_tile
+# endif
 !
 !  Imported variable declarations.
 !
@@ -297,6 +301,7 @@
 # endif
         END DO
       END DO
+# ifndef OBC_FSRADIATION
 !
 !  Apply boundary conditions.
 !
@@ -310,7 +315,7 @@
      &                     krhs, kstp, kstp,                            &
      &                     zeta,                                        &
      &                     tl_zeta)
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
 !>    CALL zetabc_tile (ng, Istr, Iend, Jstr, Jend,                     &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  krhs, kstp, knew,                               &
@@ -321,7 +326,7 @@
      &                     krhs, kstp, knew,                            &
      &                     zeta,                                        &
      &                     tl_zeta)
-# else
+#  else
 !>    CALL zetabc_tile (ng, Istr, Iend, Jstr, Jend,                     &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  krhs, kstp, krhs,                               &
@@ -332,6 +337,7 @@
      &                     krhs, kstp, krhs,                            &
      &                     zeta,                                        &
      &                     tl_zeta)
+#  endif
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
@@ -527,6 +533,7 @@
           END DO
         END IF
       END DO
+#  ifndef OBC_M2RADIATION
 !
 !  Apply boundary conditions.
 !
@@ -570,7 +577,7 @@
      &                    krhs, kstp, krhs,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
-
+#  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !>    CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
 !>   &                        LBi, UBi, LBj, UBj,                       &
@@ -955,6 +962,7 @@
           END DO
         END IF   
       END DO
+#  ifndef OBC_M2RADIATION
 !
 !  Apply boundary conditions.
 !
@@ -998,7 +1006,7 @@
      &                    knew, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
-
+#  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !>    CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
 !>   &                        LBi, UBi, LBj, UBj,                       &

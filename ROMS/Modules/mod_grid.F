@@ -23,6 +23,8 @@
 !  Vscope     Adjoint sensitivity spatial scope mask at V-points.      !
 !  angler     Angle (radians) between XI-axis and true EAST at         !
 !               RHO-points.                                            !
+!  CosAngler  Cosine of curvilinear angle, angler.                     !
+!  SinAngler  Sine of curvilinear angle, angler.                       !
 !  bed_thick0 Sum all initial bed layer thicknesses (m)                !
 !  bed_thick  Instantaneous total bed thickness, 2 time levels (m)     !
 !  dmde       ETA-derivative of inverse metric factor pm,              !
@@ -104,6 +106,10 @@
 #endif
 
           real(r8), pointer :: angler(:,:)
+#ifdef CURVGRID
+          real(r8), pointer :: CosAngler(:,:)
+          real(r8), pointer :: SinAngler(:,:)
+#endif
 #if defined CURVGRID && defined UV_ADV
           real(r8), pointer :: dmde(:,:)
           real(r8), pointer :: dndx(:,:)
@@ -251,6 +257,10 @@
 #endif
 
       allocate ( GRID(ng) % angler(LBi:UBi,LBj:UBj) )
+#ifdef CURVGRID
+      allocate ( GRID(ng) % CosAngler(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % SinAngler(LBi:UBi,LBj:UBj) )
+#endif
 #if defined CURVGRID && defined UV_ADV
       allocate ( GRID(ng) % dmde(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % dndx(LBi:UBi,LBj:UBj) )
@@ -445,6 +455,10 @@
             GRID(ng) % IJwaterV(i,j) = 0
 #endif
             GRID(ng) % angler(i,j) = IniVal
+#ifdef CURVGRID
+            GRID(ng) % CosAngler(i,j) = IniVal
+            GRID(ng) % SinAngler(i,j) = IniVal
+#endif
 #if defined CURVGRID && defined UV_ADV
             GRID(ng) % dmde(i,j) = IniVal
             GRID(ng) % dndx(i,j) = IniVal

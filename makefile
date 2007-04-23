@@ -7,7 +7,7 @@
 #                                                                       :::
 #  ROMS/TOMS Framework Master Makefile                                  :::
 #                                                                       :::
-#  This makefile is designed to work only with GNU Make version 3.77 or :::
+#  This makefile is designed to work only with GNU Make version 3.80 or :::
 #  higher. It can be used in any architecture provided that there is a  :::
 #  machine/compiler rules file in the  "Compilers"  subdirectory.  You  :::
 #  may need to modify the rules file to specify the  correct path  for  :::
@@ -33,12 +33,9 @@
 #  Initialize some things.
 #--------------------------------------------------------------------------
 
-  clean_list := core *.o *.oo *.mod *.f90 lib*.a *.bak
+  clean_list := core
   sources    := 
-  path_srcs  := 
   libraries  :=
-
-     objects  = $(subst .F,.o,$(sources))
 
 #==========================================================================
 #  Start of user-defined options. Modify macro variables: on is TRUE while
@@ -60,28 +57,19 @@
 #  the .h extension. For example, the upwelling application includes the
 #  "upwelling.h" header file.  
 
-ROMS_APPLICATION := UPWELLING
+ROMS_APPLICATION ?= UPWELLING
 
-#  If application header files is not located in the "ROMS/Include",
-#  provide alternate directory.
+#  If application header files is not located in "ROMS/Include",
+#  provide an alternate directory.
 
-MY_HEADER_DIR :=
+MY_HEADER_DIR ?=
 
-#  Activate option below to include user analytical expressions from
-#  the provided templates in "User/Functionals" or MY_ANALYTICAL_DIR
-#  directory instead of official distributed expressions in
-#  "ROMS/Functionals". Notice that the user have the choice of 
-#  specifying any other directory for these expressions in macro
-#  MY_ANALYTICAL_DIR.
+#  If your application requires analytical expressions and they are not
+#  located in "ROMS/Functionals", provide an alternate directory.
+#  Notice that a set analytical expressions templates can be found in
+#  "User/Functionals".
 
-MY_ANALYTICAL := 
-
-#  Provide directory path for your own analytical expressions. Notice
-#  that a template is provided in "User/Functionals".
-
-ifdef MY_ANALYTICAL
-  MY_ANALYTICAL_DIR :=
-endif
+MY_ANALYTICAL_DIR ?= 
 
 #  Set number of ROMS nested and/or composed grid.  Currently, only
 #  one grid is supported.  This option will be available in the near
@@ -91,12 +79,12 @@ endif
 
 #  Activate debugging compiler options:
 
-       DEBUG := on
+       DEBUG :=
 
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
 
-         MPI := 
+         MPI :=
       OpenMP :=
 
 #  If distributed-memory, turn on compilation via the script "mpif90".
@@ -115,7 +103,7 @@ endif
 
 #  If applicable, activate 64-bit compilation:
 
-       LARGE :=
+       LARGE := on
 
 #  If applicable, activate Coupling to SWAN wave model.
 
@@ -134,8 +122,7 @@ endif
 #     CYGWIN:                 g95, df, ifort
 #     Darwin:                 f90, xlf
 #     IRIX:                   f90
-#     Darwin:                 f90, xlf
-#     Linux:                  ifc, ifort, pgi, path, g95
+#     Linux:                  ftn, ifc, ifort, pgi, path, g95, gfortran
 #     SunOS:                  f95
 #     UNICOS-mp:              ftn
 #     SunOS/Linux:            ftn (Cray cross-compiler)
@@ -148,10 +135,12 @@ endif
         FORT ?= pgi
 
 #--------------------------------------------------------------------------
-#  Set directory for executable.
+#  Set directory for executable and temporary objects.
 #--------------------------------------------------------------------------
 
       BINDIR := .
+ SCRATCH_DIR := Build
+  clean_list += $(SCRATCH_DIR)
 
 #==========================================================================
 #  End of user-defined options. See also the machine-dependent include
@@ -165,13 +154,57 @@ endif
 %.o: %.F
 
 %.o: %.f90
-	$(FC) -c $(FFLAGS) $<
+	cd $(SCRATCH_DIR); $(FC) -c $(FFLAGS) $(notdir $<)
 
 %.f90: %.F
 	$(CPP) $(CPPFLAGS) $< > $*.f90
 	$(CLEAN) $*.f90
 
 CLEAN := ROMS/Bin/cpp_clean
+
+#--------------------------------------------------------------------------
+#  Make functions for putting the temporary files in $(SCRATCH_DIR)
+#--------------------------------------------------------------------------
+
+# $(call source-dir-to-binary-dir, directory-list)
+source-dir-to-binary-dir = $(addprefix $(SCRATCH_DIR)/, $(notdir $1))
+
+# $(call source-to-object, source-file-list)
+source-to-object = $(call source-dir-to-bindary-dir,   \
+                   $(subst .F,.o,$1))
+
+# $(call make-library, library-name, source-file-list)
+define make-library
+   libraries += $(SCRATCH_DIR)/$1
+   sources   += $2
+
+   $(SCRATCH_DIR)/$1: $(call source-dir-to-binary-dir,    \
+                      $(subst .F,.o,$2))
+	$(AR) $(ARFLAGS) $$@ $$^
+	$(RANLIB) $$@
+endef
+
+# $(call f90-source, source-file-list)
+f90-source = $(call source-dir-to-binary-dir,     \
+                   $(subst .F,.f90,$1))
+
+# $(compile-rules)
+define compile-rules
+  $(foreach f, $(local_src),       \
+    $(call one-compile-rule,$(call source-to-object,$f), \
+    $(call f90-source,$f),$f))
+endef
+
+# $(call one-compile-rule, binary-file, f90-file, source-files)
+define one-compile-rule
+  $1: $2 $3
+	cd $$(SCRATCH_DIR); $$(FC) -c $$(FFLAGS) $(notdir $2)
+
+  $2: $3
+	$$(CPP) $$(CPPFLAGS) $$< > $$@
+	$$(CLEAN) $$@
+
+endef
 
 #--------------------------------------------------------------------------
 #  Set ROMS/TOMS executable file name.
@@ -233,11 +266,14 @@ ifdef ROMS_APPLICATION
   HEADER := $(addsuffix .h,$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
   CPPFLAGS += -D$(ROMS_APPLICATION)
   CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
+  MDEPFLAGS += -DROMS_HEADER="$(HEADER)"
   CPPFLAGS += -DNestedGrids=$(NestedGrids)
 endif
 
-ifndef MY_ANALYTICAL
+ifndef MY_ANALYTICAL_DIR
   MY_ANALYTICAL_DIR := ./ROMS/Functionals
+else
+  MY_ANALYTICAL := on
 endif
 CPPFLAGS += -D'ANALYTICAL_DIR="$(MY_ANALYTICAL_DIR)"'
 
@@ -258,7 +294,7 @@ endif
 
 .PHONY: all
 
-all: $(BIN)
+all: $(SCRATCH_DIR) Compilers/MakeDepend $(BIN)
 
 modules   :=	ROMS/Adjoint \
 		ROMS/Representer \
@@ -297,10 +333,12 @@ includes  +=	Master
 
 vpath %.F $(modules)
 vpath %.h $(includes)
+vpath %.f90 $(SCRATCH_DIR)
+vpath %.o $(SCRATCH_DIR)
 
 include $(addsuffix /Module.mk,$(modules))
 
-MDEPFLAGS += $(patsubst %,-I %,$(includes))
+MDEPFLAGS += $(patsubst %,-I %,$(includes)) --moddir $(SCRATCH_DIR)
 
 CPPFLAGS += $(patsubst %,-I%,$(includes))
 
@@ -309,6 +347,9 @@ ifdef MY_HEADER_DIR
 else
   CPPFLAGS += -D'HEADER_DIR="./ROMS/Include"'
 endif
+
+$(SCRATCH_DIR):
+	$(shell $(TEST) -d $(SCRATCH_DIR) || $(MKDIR) $(SCRATCH_DIR) )
 
 #--------------------------------------------------------------------------
 #  Add profiling.
@@ -328,9 +369,9 @@ endif
 #  Special CPP macros for mod_strings.F
 #--------------------------------------------------------------------------
 
-mod_strings.f90: CPPFLAGS += -DMY_OS="'$(OS)'" -DMY_CPU="'$(CPU)'" \
-                             -DMY_FORT="'$(FORT)'" -DMY_FC="'$(FC)'" \
-                             -DMY_FFLAGS="'$(FFLAGS)'"
+$(SCRATCH_DIR)/mod_strings.f90: CPPFLAGS += -DMY_OS='"$(OS)"' \
+              -DMY_CPU='"$(CPU)"' -DMY_FORT='"$(FORT)"' \
+              -DMY_FC='"$(FC)"' -DMY_FFLAGS='"$(FFLAGS)"'
 
 #--------------------------------------------------------------------------
 #  ROMS/TOMS libraries.
@@ -346,13 +387,17 @@ libraries: $(libraries)
 #  Target to create ROMS/TOMS dependecies.
 #--------------------------------------------------------------------------
 
+Compilers/MakeDepend: makefile
+	mv $(COMPILERS)/MakeDepend $(COMPILERS)/MakeDepend.orig
+	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(COMPILERS)/MakeDepend 
+
 .PHONY: depend
 
 SFMAKEDEPEND := ./ROMS/Bin/sfmakedepend
 
 depend:
 	mv $(COMPILERS)/MakeDepend $(COMPILERS)/MakeDepend.orig
-	$(SFMAKEDEPEND) $(MDEPFLAGS) $(path_srcs) > $(COMPILERS)/MakeDepend 
+	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(COMPILERS)/MakeDepend 
 
 ifneq "$(MAKECMDGOALS)" "clean"
   -include $(COMPILERS)/MakeDepend
@@ -365,7 +410,7 @@ endif
 .PHONY: tarfile
 
 tarfile:
-		tar -cvf roms-3_0.tar *
+		tar --exclude=".svn" -cvf roms-3_0.tar *
 
 .PHONY: zipfile
 
@@ -384,7 +429,7 @@ gzipfile:
 .PHONY: clean
 
 clean:
-	$(RM) $(clean_list)
+	$(RM) -r $(clean_list)
 
 #--------------------------------------------------------------------------
 #  A handy debugging target. This will allow to print the value of any

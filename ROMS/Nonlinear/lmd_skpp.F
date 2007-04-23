@@ -1,5 +1,6 @@
 #include "cppdefs.h"
 #undef LMD_BOUND
+#undef QUADRATIC
 #define SASHA
       MODULE lmd_skpp_mod
 #if defined NONLINEAR && defined LMD_SKPP && defined SOLVE3D
@@ -118,10 +119,11 @@
       USE mod_scalars
 !
       USE bc_2d_mod, ONLY : bc_r2d_tile
-      USE bc_3d_mod, ONLY : bc_w3d_tile
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+# endif
+# ifdef LMD_SHAPIRO
+      USE shapiro_mod
 # endif
 !
 !  Imported variable declarations.
@@ -216,6 +218,9 @@
       real(r8) :: a1, a2, a3, cff, cff1, cff2,cff_up, cff_dn
       real(r8) :: depth, dK_bl, hekman, hmonob, sigma, zbl
       real(r8) :: zetahat, zetapar
+# ifdef QUADRATIC
+      real(r8) :: slope_up, a_co, b_co, c_co, z_up, sqrt_arg
+# endif
 
       real(r8), dimension (PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Bflux
       real(r8), dimension (PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Kv
@@ -526,6 +531,37 @@
           END DO
         END DO
 # else
+#  ifdef QUADRATIC
+!
+! Quadratic interpolation to find hsbl, using a scheme from Bill Large
+! (personal communication).
+!
+        DO k=N(ng),2,-1
+          DO i=Istr,Iend
+            IF ((ksbl(i,j).eq.1).and.(FC(i,k-1).ge.lmd_Ric)) THEN
+              z_up=z_w(i,j,k)
+              IF (k.eq.N(ng)) THEN
+                slope_up=0.0_r8
+              ELSE
+                slope_up=(FC(i,k+1)-FC(i,k))/(z_up-z_w(i,j,k+1))
+              END IF
+              a_co=(FC(i,k-1)-FC(i,k)+slope_up*(z_w(i,j,k-1)-z_up))/    &
+     &             (z_up-z_w(i,j,k-1))**2
+              b_co=slope_up+2.0_r8*a_co*z_up
+              c_co=FC(i,k)+z_up*(a_co*z_up+slope_up)-lmd_Ric
+              sqrt_arg=b_co*b_co-4.0_r8*a_co*c_co
+              IF (((ABS(b_co).gt.eps).and.(ABS(a_co/b_co).le.eps)).or.  &
+     &            (sqrt_arg.le.0.0_r8)) THEN
+                hsbl(i,j)=-z_up+(z_up-z_w(i,j,k-1))*                    &
+     &                          (lmd_Ric-FC(i,k))/(FC(i,k-1)-FC(i,k))
+              ELSE
+                hsbl(i,j)=(-b_co+SQRT(sqrt_arg))/(2.0_r8*a_co)
+              END IF
+              ksbl(i,j)=k
+            END IF
+          END DO
+        END DO
+#  else
         DO k=N(ng),2,-1
           DO i=Istr,Iend
             IF ((ksbl(i,j).eq.1).and.((FC(i,k  ).lt.lmd_Ric).and.       &
@@ -537,6 +573,7 @@
             END IF
           END DO
         END DO
+#  endif
 # endif
       END DO
 !
@@ -579,6 +616,29 @@
 # endif
         END DO
       END DO
+# ifdef LMD_SHAPIRO
+!
+!  Apply gradient or periodic boundary conditions.
+!
+      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  hsbl)
+#  ifdef DISTRIBUTE
+      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    hsbl)
+#  endif
+!
+!  Apply Shapiro filter
+!
+      CALL shapiro2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
+     &                     LBi, UBi, LBj, UBj,                          &
+#  ifdef MASKING
+     &                     rmask,                                       &
+#  endif
+     &                     hsbl)
+# endif
 !
 !  Apply gradient or periodic boundary conditions.
 !
@@ -875,30 +935,7 @@
           END DO
         END DO
       END DO
-# ifndef LMD_BKPP
-!
-!  Apply boundary conditions.
-!
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
-     &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
-     &                  Akv)
-      DO itrc=1,NAT
-        CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    Akt(:,:,:,itrc))
-      END DO
-# ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Akv)
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj, 0, N(ng), 1, NAT,         &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Akt)
-# endif
 
-# endif
       RETURN
       END SUBROUTINE lmd_skpp_tile
 #endif

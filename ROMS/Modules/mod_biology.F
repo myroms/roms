@@ -328,6 +328,12 @@
         real(r8), dimension(Ngrids) :: ad_wDet
 #  endif
         real(r8), dimension(Ngrids) :: wPhy          ! m/day
+#  ifdef TANGENT
+        real(r8), dimension(Ngrids) :: tl_wPhy
+#  endif
+#  ifdef ADJOINT
+        real(r8), dimension(Ngrids) :: ad_wPhy
+#  endif
         real(r8), dimension(Ngrids) :: ZooEED        ! nondimensional
         real(r8), dimension(Ngrids) :: ZooEEN        ! nondimensional
         real(r8), dimension(Ngrids) :: ZooGR         ! 1/day

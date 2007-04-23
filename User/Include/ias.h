@@ -19,7 +19,7 @@
 #undef  FORCING_SV              /* Forcing Singular Vectors */
 #undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
 #undef  IS4DVAR                 /* Incremental, strong constraint 4DVAR */
-#undef  NLM_DRIVER              /* Nonlinear Basic State trajectory */
+#define NLM_DRIVER              /* Nonlinear Basic State trajectory */
 #undef  OPT_PERTURBATION        /* Optimal perturbations */
 #undef  PICARD_TEST             /* Picard Iterations Test */
 #undef  R_SYMMETRY              /* Representer Matrix Symmetry Test */
@@ -87,25 +87,23 @@
 
 #define  OBC_OPEN
 #ifdef  OBC_OPEN
-# define WESTERN_WALL
+# define NORTH_FSCHAPMAN
+# define NORTH_M2FLATHER
+# define NORTH_M3CLAMPED
+# define NORTH_TCLAMPED
+# define NORTH_VOLCONS
 # define SOUTHERN_WALL
 # define EAST_FSCHAPMAN
 # define EAST_M2FLATHER
 # define EAST_M3CLAMPED
 # define EAST_TCLAMPED
-# define NORTH_FSCHAPMAN
-# define NORTH_M2FLATHER
-# define NORTH_M3CLAMPED
-# define NORTH_TCLAMPED
-# define  EAST_VOLCONS
-# undef  WEST_VOLCONS
-# define  NORTH_VOLCONS
-# undef  SOUTH_VOLCONS
-#else
+# define EAST_VOLCONS
 # define WESTERN_WALL
-# define EASTERN_WALL
+#else
 # define NORTHERN_WALL
 # define SOUTHERN_WALL
+# define EASTERN_WALL
+# define WESTERN_WALL
 #endif
 
 #define BULK_FLUXES

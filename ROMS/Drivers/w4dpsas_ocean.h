@@ -201,7 +201,9 @@
 !
 !  Local variable declarations.
 !
-      logical :: add, converged
+      logical :: add, converged, outer_impulse
+      logical :: Lweak
+
       integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2
       integer :: i, lstr, my_iic, ng, rec, status, subs, tile, thread
 
@@ -537,6 +539,7 @@
 !  iTLM instead of iADM in the calling arguments.
 !
             ADrec=Nrec
+            Lweak=.FALSE.
             CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
 !
 !  Load interior solution, read above, into adjoint state arrays. 
@@ -558,7 +561,7 @@
 #ifdef BALANCE_OPERATOR
                 CALL ad_balance (ng, TILE, Lold(ng))
 #endif
-                CALL ad_variability (ng, TILE, Lold(ng))
+                CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lold(ng), 2)
                 CALL initialize_ocean (ng, TILE, iTLM)
               END DO
@@ -580,7 +583,7 @@
               DO tile=subs*thread,subs*(thread+1)-1,+1
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                 CALL tl_convolution (ng, TILE, Lold(ng), 2)
-                CALL tl_variability (ng, TILE, Lold(ng))
+                CALL tl_variability (ng, TILE, Lold(ng), Lweak)
 #ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lold(ng))
 #endif
@@ -599,6 +602,7 @@
 !
             IF (Nrec.gt.1) THEN
               DO rec=1,Nrec
+                Lweak=.TRUE.
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
 !  ghost points, the adjoint solution is read in the tangent linear
@@ -629,7 +633,7 @@
 #ifdef BALANCE_OPERATOR
                     CALL ad_balance (ng, TILE, Lold(ng))
 #endif
-                    CALL ad_variability (ng, TILE, Lold(ng))
+                    CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                     CALL ad_convolution (ng, TILE, Lold(ng), 2)
                     CALL initialize_ocean (ng, TILE, iTLM)
                   END DO
@@ -652,7 +656,7 @@
                   DO tile=subs*thread,subs*(thread+1)-1,+1
                     CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                     CALL tl_convolution (ng, TILE, Lold(ng), 2)
-                    CALL tl_variability (ng, TILE, Lold(ng))
+                    CALL tl_variability (ng, TILE, Lold(ng), Lweak)
 #ifdef BALANCE_OPERATOR
                     CALL tl_balance (ng, TILE, Lold(ng))
 #endif
@@ -685,7 +689,8 @@
               WRITE (stdout,50) outer, inner
             END IF
             tTLFindx(ng)=0
-            CALL impulse (ng, iADM, ADJname(ng))
+            outer_impulse=.FALSE.
+            CALL impulse (ng, iADM, outer_impulse, ADJname(ng))
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Integrate tangent linear model forced by the convolved adjoint
@@ -740,10 +745,12 @@
 
               iic(ng)=my_iic
 !
-!  Set impulse forcing switches.
+!  Set impulse forcing switches.  Notice that at this point, time(ng)
+!  has not been incremented, so for the following check we need to
+!  add dt(ng).
 !
-              LB_time=time(ng)-0.5_r8*dt(ng)
-              UB_time=time(ng)+0.5_r8*dt(ng)
+              LB_time=time(ng)+0.5_r8*dt(ng)
+              UB_time=time(ng)+1.5_r8*dt(ng)
               SporadicImpulse=(LB_time.le.FrcTime(ng)).and.             &
      &                        (FrcTime(ng).lt.UB_time).and.             &
      &                        (NrecFrc(ng).gt.1)
@@ -868,6 +875,7 @@
 !  iTLM instead of iADM in the calling arguments.
 !
           ADrec=Nrec
+          Lweak=.FALSE.
           CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
 !
 !  Load interior solution, read above, into adjoint state arrays. 
@@ -889,7 +897,7 @@
 #ifdef BALANCE_OPERATOR
               CALL ad_balance (ng, TILE, Lold(ng))
 #endif
-              CALL ad_variability (ng, TILE, Lold(ng))
+              CALL ad_variability (ng, TILE, Lold(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lold(ng), 2)
               CALL initialize_ocean (ng, TILE, iTLM)
             END DO
@@ -916,7 +924,7 @@
             DO tile=subs*thread,subs*(thread+1)-1,+1
               CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
               CALL tl_convolution (ng, TILE, Lold(ng), 2)
-              CALL tl_variability (ng, TILE, Lold(ng))
+              CALL tl_variability (ng, TILE, Lold(ng), Lweak)
 #ifdef BALANCE_OPERATOR
               CALL tl_balance (ng, TILE, Lold(ng))
 #endif
@@ -937,6 +945,7 @@
 !
           IF (Nrec.gt.1) THEN
             DO rec=1,Nrec
+              Lweak=.TRUE.
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
 !  ghost points, the adjoint solution is read in the tangent linear
@@ -966,7 +975,7 @@
 #ifdef BALANCE_OPERATOR
                   CALL ad_balance (ng, TILE, Lold(ng))
 #endif
-                  CALL ad_variability (ng, TILE, Lold(ng))
+                  CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
                 END DO
@@ -989,7 +998,7 @@
                 DO tile=subs*thread,subs*(thread+1)-1,+1
                   CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                   CALL tl_convolution (ng, TILE, Lold(ng), 2)
-                  CALL tl_variability (ng, TILE, Lold(ng))
+                  CALL tl_variability (ng, TILE, Lold(ng), Lweak)
 #ifdef BALANCE_OPERATOR
                   CALL tl_balance (ng, TILE, Lold(ng))
 #endif
@@ -1023,7 +1032,8 @@
             WRITE (stdout,50) outer, inner
           END IF
           tTLFindx(ng)=0
-          CALL impulse (ng, iADM, ADJname(ng))
+          outer_impulse=.TRUE.
+          CALL impulse (ng, iADM, outer_impulse, ADJname(ng))
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run nonlinear model and compute a "new estimate" of the state
@@ -1158,9 +1168,9 @@
  20   FORMAT (a,'_',i3.3,'.nc')
  30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 40   FORMAT (/,' Convolving Adjoint Tracjectory: Outer = ',i3.3,       &
+ 40   FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,        &
      &          ' Inner = ',i3.3)
- 50   FORMAT (/,' Converting Convolved Adjoint Tracjectory to',         &
+ 50   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
 
       RETURN

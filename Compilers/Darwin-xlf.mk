@@ -24,18 +24,20 @@
 # First the defaults
 #
                FC := xlf95_r
-           FFLAGS := -qsuffix=f=f90 -qmaxmem=-1 -qextname
+           FFLAGS := -qsuffix=f=f90 -qmaxmem=-1
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -DMAC -traditional
+         CPPFLAGS := -P -traditional
                LD = $(FC)
           LDFLAGS :=
                AR := ar
           ARFLAGS := -r
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := ranlib
 	     PERL := perl
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.

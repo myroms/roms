@@ -800,8 +800,8 @@
           END DO
 #  endif
         END DO
-# endif
       END IF
+# endif
 #endif
 
 #ifdef ADJOINT
@@ -854,8 +854,8 @@
           END DO
 #  endif
         END DO
-# endif
       END IF
+# endif
 #endif
 
 #if defined FORWARD_READ && defined FOWARD_MIXING && defined SOLVE3D && \

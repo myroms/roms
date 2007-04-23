@@ -23,27 +23,35 @@
 #
 # First the defaults
 #
-               FC := pathf90
-           FFLAGS := -fno-second-underscore -I/usr/include
+               FC := pathf95
+           FFLAGS := -march=auto -mcpu=auto -mtune=auto -u
               CPP := /usr/bin/cpp
-         CPPFLAGS := -P -traditional -I/usr/include -DpgiFortran
+         CPPFLAGS := -P -traditional -I/usr/include
                LD := $(FC)
           LDFLAGS := 
                AR := ar
           ARFLAGS := r
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := ranlib
 	     PERL := perl
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.
 #
 
        MCT_LIBDIR ?= /usr/local/mct/lib
-    NETCDF_INCDIR ?= /opt/pathscalesoft/netcdf-3.6.0-p1/include
-    NETCDF_LIBDIR ?= /opt/pathscalesoft/netcdf-3.6.0-p1/lib
+ifdef LARGE
+           FFLAGS += -m64
+    NETCDF_INCDIR ?= /usr/local/include
+    NETCDF_LIBDIR ?= /usr/local/lib64
+else
+    NETCDF_INCDIR ?= /usr/local/include
+    NETCDF_LIBDIR ?= /usr/local/lib
+endif
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
@@ -60,7 +68,7 @@ endif
 ifdef MPI
          CPPFLAGS += -DMPI
  ifdef MPIF90
-               FC := /opt/pathscalesoft/mpich/bin/mpif90
+               FC := mpif90
                LD := $(FC)
  else
              LIBS += -lfmpi-pgi -lmpi-pgi 
@@ -81,3 +89,11 @@ ifdef SWAN_COUPLE
            FFLAGS += -fixedform -I/usr/local/mct/include
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
+
+#
+# Set free form format in source files to allow long string for
+# local directory and compilation flags inside the code.
+#
+
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -freeform
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -freeform

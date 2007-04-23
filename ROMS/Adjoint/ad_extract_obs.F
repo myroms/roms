@@ -154,7 +154,9 @@
         j2=j1+1
         IF ((ObsType(iobs).eq.ifield).and.                              &
      &      ((TimeLB.le.Tobs(iobs)).and.(Tobs(iobs).lt.TimeUB)).and.    &
+     &      ((Istr.le.i1).and.(i1.le.Iend)).and.                        &
      &      ((ILB .le.i1).and.(i1.le.IUB )).and.                        &
+     &      ((Jstr.le.j1).and.(j1.le.Jend)).and.                        &
      &      ((JLB .le.j1).and.(j1.le.JUB ))) THEN
           p2=REAL(i2-i1,r8)*(Xobs(iobs)-REAL(i1,r8))
           q2=REAL(j2-j1,r8)*(Yobs(iobs)-REAL(j1,r8))
@@ -280,7 +282,9 @@
         j2=j1+1
         IF ((ObsType(iobs).eq.ifield).and.                              &
      &      ((TimeLB.le.Tobs(iobs)).and.(Tobs(iobs).lt.TimeUB)).and.    &
+     &      ((Istr.le.i1).and.(i1.le.Iend)).and.                        &
      &      ((ILB .le.i1).and.(i1.le.IUB )).and.                        &
+     &      ((Jstr.le.j1).and.(j1.le.Jend)).and.                        &
      &      ((JLB .le.j1).and.(j1.le.JUB ))) THEN
           p2=REAL(i2-i1,r8)*(Xobs(iobs)-REAL(i1,r8))
           q2=REAL(j2-j1,r8)*(Yobs(iobs)-REAL(j1,r8))

@@ -72,8 +72,8 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES == 172800
-          DT == 900.0d0
+      NTIMES == 480
+          DT == 1800.0d0
      NDTFAST == 50
 
 ! Model iteration loops parameters.
@@ -95,7 +95,7 @@
 
        NRREC == 0
    LcycleRST == T
-        NRST == 720
+        NRST == 480
         NSTA == 1
         NFLT == 40
        NINFO == 1
@@ -103,13 +103,13 @@
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 480
+        NHIS == 48
      NDEFHIS == 17280
       NTSAVG == 1
-        NAVG == 480
+        NAVG == 48
      NDEFAVG == 17280
       NTSDIA == 1
-        NDIA == 480
+        NDIA == 48
      NDEFDIA == 0
 
 ! Output tangent linear and adjoint models parameters.
@@ -186,6 +186,12 @@
          Zob == 0.02d0                     ! m
          Zos == 0.02d0                     ! m
 
+! Height (m) of atmospheric measurements for Bulk fluxes parameterization.
+
+      BLK_ZQ == 10.0d0                     ! air humidity
+      BLK_ZT == 10.0d0                     ! air temperature
+      BLK_ZW == 10.0d0                     ! winds
+
 ! Minimum depth for wetting and drying.
 
        DCRIT == 0.10d0                     ! m
@@ -200,7 +206,7 @@
 
      THETA_S == 5.0d0                      ! 0 < THETA_S < 20
      THETA_B == 0.4d0                      ! 0 < THETA_B < 1
-      TCLINE == 100.0d0                    ! m
+      TCLINE == 200.0d0                    ! m
 
 ! Mean Density and Brunt-Vaisala frequency.
 
@@ -211,9 +217,9 @@
 ! origin for tidal forcing, and model reference time for output
 ! NetCDF units attribute.
 
-      DSTART =  368.25d0                   ! days
+      DSTART =  6239.0d0                   ! days
   TIDE_START =  0.0d0                      ! days
-    TIME_REF =  19920101.0d0               ! yyyymmdd.dd
+    TIME_REF =  19900101.0d0               ! yyyymmdd.dd
 
 ! Nudging/relaxation time scales, inverse scales will be computed
 ! internally, [1:Ngrids].
@@ -231,10 +237,10 @@
 
 ! Linear equation of State parameters:
 
-          R0 == 1027.0d0                   ! kg/m3
-          T0 == 10.0d0                     ! Celsius
+          R0 == 1028.0d0                   ! kg/m3
+          T0 == 5.0d0                      ! Celsius
           S0 == 35.0d0                     ! PSU
-       TCOEF == 1.7d-4                     ! 1/Celsius
+       TCOEF == 1.0d-4                     ! 1/Celsius
        SCOEF == 7.6d-4                     ! 1/PSU
 
 ! Slipperiness parameter: 1.0 (free slip) or -1.0 (no slip)
@@ -251,8 +257,8 @@
 ! Starting and ending vertical levels of the 3D adjoint state variables
 ! whose sensitivity is required.
 
-       KstrS == 1                          ! starting level
-       KendS == 1                          ! ending level
+       KstrS == 30                         ! starting level
+       KendS == 30                         ! ending level
 
 ! Logical switches (TRUE/FALSE) to specify the adjoint state variables
 ! whose sensitivity is required.
@@ -266,7 +272,7 @@ Lstate(isVvel) == F                        ! 3D V-momentum
 ! Logical switches (TRUE/FALSE) to specify the adjoint state tracer
 ! variables whose sensitivity is required (NT values are expected).
 
-Lstate(isTvar) == F F                      ! tracers
+Lstate(isTvar) == T F                      ! tracers
 
 ! Stochastic optimals time decorrelation scale (days) assumed for
 ! red noise processes.
@@ -301,7 +307,7 @@ Hout(idOvel) == T                          ! omega vertical velocity
 Hout(idUbar) == T                          ! 2D U-velocity
 Hout(idVbar) == T                          ! 2D V-velocity
 Hout(idFsur) == T                          ! free-surface
-Hout(idBath) == T                          ! time-dependent bathymetry
+Hout(idBath) == F                          ! time-dependent bathymetry
 
 Hout(idTvar) == T T                        ! temperature and salinity
 
@@ -352,10 +358,10 @@ Hout(idSrad) == F                          ! shortwave radiation flux
 Hout(idevap) == F                          ! evaporation rate
 Hout(idrain) == F                          ! precipitation rate
 
-Hout(idDano) == F                          ! density anomaly
-Hout(idVvis) == F                          ! vertical viscosity
-Hout(idTdif) == F                          ! vertical T-diffusion
-Hout(idSdif) == F                          ! vertical Salinity diffusion
+Hout(idDano) == T                          ! density anomaly
+Hout(idVvis) == T                          ! vertical viscosity
+Hout(idTdif) == T                          ! vertical T-diffusion
+Hout(idSdif) == T                          ! vertical Salinity diffusion
 Hout(idHsbl) == F                          ! depth of surface boundary layer
 Hout(idHbbl) == F                          ! depth of bottom boundary layer
 Hout(idMtke) == F                          ! turbulent kinetic energy
@@ -403,15 +409,15 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 
 ! Input NetCDF file names, [1:Ngrids].
 
-     GRDNAME == Data/ias20_grid.nc
-     ININAME == Data/ias20_init.nc
-     ITLNAME == ias20_itl.nc
-     IRPNAME == ias20_irp.nc
-     IADNAME == ias20_iad.nc
-     CLMNAME == Data/ias20_clim.nc
-     BRYNAME == Data/ias20_bry.nc
-     FWDNAME == ias20_fwd.nc
-     ADSNAME == ias20_ads.nc
+     GRDNAME == Data/ias40_grid.nc
+     ININAME == Data/ias40_init.nc
+     ITLNAME == ias40_itl.nc
+     IRPNAME == ias40_irp.nc
+     IADNAME == ias40_iad.nc
+     CLMNAME == Data/ias40_clim.nc
+     BRYNAME == Data/ias40_bry.nc
+     FWDNAME == ias40_fwd.nc
+     ADSNAME == ias40_ads.nc
 
 ! Input forcing NetCDF file name(s).  The USER has the option to enter
 ! several files names per each nested grid.  For example, the USER may
@@ -425,7 +431,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 
      NFFILES == 1                          ! number of forcing files
 
-     FRCNAME == Data/ias20_forc.nc
+     FRCNAME == Data/ias40_forc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
@@ -900,6 +906,19 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !  Zob         Bottom roughness (m).
 !
 !  Zos         Surface roughness (m).
+!
+!------------------------------------------------------------------------------
+! Height of atmospheric measurements for bulk fluxes parameterization.
+!------------------------------------------------------------------------------
+!
+!  BLK_ZQ      Height (m) of surface air humidity measurement. Usually,
+!                recorded at 10 m.
+!
+!  BLK_ZT      Height (m) of surface air temperature measurement. Usually,
+!                recorded at 2 or 10 m.
+!
+!  BLK_ZW      Height (m) of surface winds measurement. Usually, recorded
+!                at 10 m.
 !
 !------------------------------------------------------------------------------
 ! Wetting and drying parameters.

@@ -101,9 +101,7 @@
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kfrc
-# ifdef SOLVE3D
       integer, intent(in) :: Nfrc
-# endif
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef SOLVE3D

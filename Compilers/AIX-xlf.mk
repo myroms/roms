@@ -31,11 +31,13 @@
           LDFLAGS :=
                AR := ar
           ARFLAGS := -r
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := ranlib
 	     PERL := perl
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.
@@ -79,7 +81,7 @@ ifdef OpenMP
 endif
 
 ifdef DEBUG
-           FFLAGS += -g -qfullpath
+           FFLAGS += -g -qfullpath -qflttrap=enable:zerodivide:invalid
 else
            FFLAGS += -O3 -qstrict
 endif

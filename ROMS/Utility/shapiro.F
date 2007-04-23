@@ -55,7 +55,8 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk1
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk2
 
 #include "set_bounds.h"
 !
@@ -71,15 +72,15 @@
 !  Initialize filter in the Y-direction.
 !
       DO j=Jstr,Jend
-        DO i=Istr,Iend
+        DO i=Istr-1,Iend+1
 #ifdef MASKING
-          Awrk(i,j)=0.25_r8*                                            &
-     &              (A(i,j-1)*Amask(i,j-1)+                             &
-     &               A(i,j+1)*Amask(i,j+1)-                             &
-     &               2.0_r8*A(i,j)*Amask(i,j))*                         &
-     &              Amask(i,j-1)*Amask(i,j+1)*Amask(i,j)
+          Awrk1(i,j)=0.25_r8*                                           &
+     &               (A(i,j-1)*Amask(i,j-1)+                            &
+     &                A(i,j+1)*Amask(i,j+1)-                            &
+     &                2.0_r8*A(i,j)*Amask(i,j))*                        &
+     &               Amask(i,j-1)*Amask(i,j+1)*Amask(i,j)
 #else
-          Awrk(i,j)=0.25_r8*                                            &
+          Awrk1(i,j)=0.25_r8*                                            &
      &             (A(i,j-1)+A(i,j+1)-2.0_r8*A(i,j))
 #endif
         END DO
@@ -88,8 +89,8 @@
 !  Add the changes to the field.
 !
       DO j=Jstr,Jend
-        DO i=Istr,Iend
-          A(i,j)=A(i,j)+Awrk(i,j)
+        DO i=Istr-1,Iend+1
+          Awrk2(i,j)=A(i,j)+Awrk1(i,j)
         END DO
       END DO
 !
@@ -98,14 +99,14 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
 #ifdef MASKING
-          Awrk(i,j)=0.25_r8*                                            &
-     &              (A(i-1,j)*Amask(i-1,j)+                             &
-     &               A(i+1,j)*Amask(i+1,j)-                             &
-     &               2.0_r8*A(i,j)*Amask(i,j))*                         &
-     &              Amask(i-1,j)*Amask(i+1,j)*Amask(i,j)
+          Awrk1(i,j)=0.25_r8*                                           &
+     &               (Awrk2(i-1,j)*Amask(i-1,j)+                        &
+     &                Awrk2(i+1,j)*Amask(i+1,j)-                        &
+     &                2.0_r8*Awrk2(i,j)*Amask(i,j))*                    &
+     &               Amask(i-1,j)*Amask(i+1,j)*Amask(i,j)
 #else
-          Awrk(i,j)=0.25_r8*                                            &
-     &              (A(i-1,j)+A(i+1,j)-2.0_r8*A(i,j))
+          Awrk1(i,j)=0.25_r8*                                            &
+     &               (Awrk2(i-1,j)+Awrk2(i+1,j)-2.0_r8*Awrk2(i,j))
 #endif
         END DO
       END DO
@@ -114,7 +115,7 @@
 !
       DO j=Jstr,Jend
         DO i=Istr,Iend
-          A(i,j)=A(i,j)+Awrk(i,j)
+          A(i,j)=Awrk2(i,j)+Awrk1(i,j)
         END DO
       END DO
 
@@ -156,7 +157,8 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk1
+      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk2
 
 # include "set_bounds.h"
 !
@@ -173,16 +175,16 @@
 !
       DO k=LBk,UBk
         DO j=Jstr,Jend
-          DO i=Istr,Iend
+          DO i=Istr-1,Iend+1
 # ifdef MASKING
-            Awrk(i,j)=0.25_r8*                                          &
-     &                (A(i,j-1,k)*Amask(i,j-1)+                         &
-     &                 A(i,j+1,k)*Amask(i,j+1)-                         &
-     &                 2.0_r8*A(i,j,k)*Amask(i,j))*                     &
-     &                Amask(i,j-1)*Amask(i,j+1)*Amask(i,j)
+            Awrk1(i,j)=0.25_r8*                                         &
+     &                 (A(i,j-1,k)*Amask(i,j-1)+                        &
+     &                  A(i,j+1,k)*Amask(i,j+1)-                        &
+     &                  2.0_r8*A(i,j,k)*Amask(i,j))*                    &
+     &                 Amask(i,j-1)*Amask(i,j+1)*Amask(i,j)
 # else
-            Awrk(i,j)=0.25_r8*                                          &
-     &                (A(i,j-1,k)+A(i,j+1,k)-2.0_r8*A(i,j,k))
+            Awrk1(i,j)=0.25_r8*                                         &
+     &                 (A(i,j-1,k)+A(i,j+1,k)-2.0_r8*A(i,j,k))
 # endif
           END DO
         END DO
@@ -190,8 +192,8 @@
 !  Add the changes to the field.
 !
         DO j=Jstr,Jend
-          DO i=Istr,Iend
-            A(i,j,k)=A(i,j,k)+Awrk(i,j)
+          DO i=Istr-1,Iend+1
+            Awrk2(i,j)=A(i,j,k)+Awrk1(i,j)
           END DO
         END DO
 !
@@ -200,14 +202,14 @@
         DO j=Jstr,Jend
           DO i=Istr,Iend
 # ifdef MASKING
-            Awrk(i,j)=0.25_r8*                                          &
-     &                (A(i-1,j,k)*Amask(i-1,j)+                         &
-     &                 A(i+1,j,k)*Amask(i+1,j)-                         &
-     &                 2.0_r8*A(i,j,k)*Amask(i,j))*                     &
-     &                Amask(i-1,j)*Amask(i+1,j)*Amask(i,j)
+            Awrk1(i,j)=0.25_r8*                                         &
+     &                 (Awrk2(i-1,j)*Amask(i-1,j)+                      &
+     &                  Awrk2(i+1,j)*Amask(i+1,j)-                      &
+     &                  2.0_r8*Awrk2(i,j)*Amask(i,j))*                  &
+     &                 Amask(i-1,j)*Amask(i+1,j)*Amask(i,j)
 # else
-            Awrk(i,j)=0.25_r8*                                          &
-     &                (A(i-1,j,k)+A(i+1,j,k)-2.0_r8*A(i,j,k))
+            Awrk1(i,j)=0.25_r8*                                         &
+     &                 (Awrk2(i-1,j)+Awrk2(i+1,j)-2.0_r8*Awrk2(i,j))
 # endif
           END DO
         END DO
@@ -216,7 +218,7 @@
 !
         DO j=Jstr,Jend
           DO i=Istr,Iend
-            A(i,j,k)=A(i,j,k)+Awrk(i,j)
+            A(i,j,k)=Awrk2(i,j)+Awrk1(i,j)
           END DO
         END DO
       END DO

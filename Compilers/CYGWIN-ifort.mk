@@ -1,4 +1,4 @@
-# svn $Id$
+# svn $Id: CYGWIN-ifort.mk 204 2007-04-21 05:00:33Z arango $
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
@@ -28,21 +28,20 @@
               BIN := $(BIN).exe
 
                FC := ifort
-#          FFLAGS := /align /G7 /MD /iface:cvf
-#          FFLAGS := /align /G7 /MD /assume:underscore /names:lowercase
            FFLAGS := /align /G7 /MD
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DCYGWIN -DCYGWIN_ifort -traditional
                LD := $(FC)
-#         LDFLAGS := /link /nodefaultlib:libcmt  /nodefaultlib:msvcrt /stack:67108864
           LDFLAGS := /link /stack:67108864
                AR := ar
           ARFLAGS := r
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := ranlib
              PERL := perl
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.
@@ -115,4 +114,12 @@ endif
 #
 
 %.o: %.f90
-	$(FC) $(FFLAGS) -c $< /object:$@
+	cd $(SCRATCH_DIR); $(FC) -c $(FFLAGS) $(notdir $<) /object:$(notdir $@)
+
+#
+# Set free form format in source files to allow long string for
+# local directory and compilation flags inside the code.
+#
+
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -free
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -free

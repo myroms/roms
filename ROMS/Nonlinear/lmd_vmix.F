@@ -80,6 +80,7 @@
 # ifdef LMD_BKPP
       CALL lmd_bkpp (ng, tile)
 # endif
+      CALL lmd_finish (ng, tile)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 18)
 # endif
@@ -103,13 +104,6 @@
 !
       USE mod_param
       USE mod_scalars
-!
-# ifndef LMD_SKPP
-      USE bc_3d_mod, ONLY : bc_w3d_tile
-#  ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
-#  endif
-# endif
 !
 !  Imported variable declarations.
 !
@@ -153,18 +147,6 @@
 !
 !  Local variable declarations.
 !
-# ifdef DISTRIBUTE
-#  ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-#  else
-      logical :: EWperiodic=.FALSE.
-#  endif
-#  ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-#  else
-      logical :: NSperiodic=.FALSE.
-#  endif
-# endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
@@ -359,23 +341,11 @@
 !           lmd_iwm=lmd_nuwm
 !           lmd_iws=lmd_nuws
 !
-!  Compute interior convective diffusivity due to static instability
-!  mixing.
-!
-# ifdef LMD_CONVEC
-            cff=MAX(bvf(i,j,k),lmd_bvfcon)
-            cff=MIN(1.0_r8,(lmd_bvfcon-cff)/lmd_bvfcon)
-            nu_sxc=1.0_r8-cff*cff
-            nu_sxc=nu_sxc*nu_sxc*nu_sxc
-# else
-            nu_sxc=0.0_r8
-# endif
-!
 ! Sum contributions due to internal wave breaking, shear instability
 ! and convective diffusivity due to shear instability.
 !
-            Kv(i,j,k)=lmd_iwm+lmd_nu0m*nu_sx+lmd_nu0c*nu_sxc
-            Kt(i,j,k)=lmd_iws+lmd_nu0s*nu_sx+lmd_nu0c*nu_sxc
+            Kv(i,j,k)=lmd_iwm+lmd_nu0m*nu_sx
+            Kt(i,j,k)=lmd_iws+lmd_nu0s*nu_sx
             Ks(i,j,k)=Kt(i,j,k)
           END DO
         END DO
@@ -460,13 +430,147 @@
           DO i=Istr,Iend
             Akv(i,j,k)=Kv(i,j,k)
             Akt(i,j,k,itemp)=Kt(i,j,k)
-#  ifdef SALINITY
+# ifdef SALINITY
             Akt(i,j,k,isalt)=Ks(i,j,k)
-#  endif
+# endif
           END DO
         END DO
       END DO
-# ifndef LMD_SKPP
+
+      RETURN
+      END SUBROUTINE lmd_vmix_tile
+!
+!***********************************************************************
+      SUBROUTINE lmd_finish (ng, tile)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+      USE mod_mixing
+      USE mod_ocean
+      USE mod_stepping
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+      CALL lmd_finish_tile (ng, Istr, Iend, Jstr, Jend,                 &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    nstp(ng),                                     &
+     &                    GRID(ng) % Hz,                                &
+# ifndef SPLINES
+     &                    GRID(ng) % z_r,                               &
+# endif
+     &                    MIXING(ng) % bvf,                             &
+     &                    MIXING(ng) % Akt,                             &
+     &                    MIXING(ng) % Akv)
+      RETURN
+      END SUBROUTINE lmd_finish
+!
+!***********************************************************************
+      SUBROUTINE lmd_finish_tile (ng, Istr, Iend, Jstr, Jend,           &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            nstp,                                 &
+     &                            Hz,                                   &
+# ifndef SPLINES
+     &                            z_r,                                  &
+# endif
+     &                            bvf, Akt, Akv)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+      USE bc_3d_mod, ONLY : bc_w3d_tile
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange3d, mp_exchange4d
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      Integer, intent(in) :: nstp
+!
+# ifdef ASSUMED_SHAPE
+      real(r8), intent(in) :: Hz(LBi:,LBj:,:)
+#  ifndef SPLINES
+      real(r8), intent(in) :: z_r(LBi:,LBj:,:)
+#  endif
+      real(r8), intent(in) :: bvf(LBi:,LBj:,0:)
+
+      real(r8), intent(inout) :: Akt(LBi:,LBj:,0:,:)
+      real(r8), intent(inout) :: Akv(LBi:,LBj:,0:)
+# else
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+#  ifndef SPLINES
+      real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
+#  endif
+      real(r8), intent(in) :: bvf(LBi:UBi,LBj:UBj,0:N(ng))
+
+      real(r8), intent(inout) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
+      real(r8), intent(inout) :: Akv(LBi:UBi,LBj:UBj,0:N(ng))
+# endif
+!
+!  Local variable declarations.
+!
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, itrc, j, k
+
+      real(r8), parameter :: eps = 1.0E-14_r8
+
+      real(r8) :: cff, lmd_iwm, lmd_iws, nu_sx, nu_sxc, shear2
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Compute "interior" viscosities and diffusivities everywhere as
+!  the superposition of three processes: local Richardson number
+!  instability due to resolved vertical shear, internal wave
+!  breaking, and double diffusion.
+!-----------------------------------------------------------------------
+!
+      DO k=1,N(ng)-1
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
+!
+!  Compute interior convective diffusivity due to static instability
+!  mixing.
+!
+# ifdef LMD_CONVEC
+            cff=MAX(bvf(i,j,k),lmd_bvfcon)
+            cff=MIN(1.0_r8,(lmd_bvfcon-cff)/lmd_bvfcon)
+            nu_sxc=1.0_r8-cff*cff
+            nu_sxc=nu_sxc*nu_sxc*nu_sxc
+# else
+            nu_sxc=0.0_r8
+# endif
+!
+! Sum contributions due to internal wave breaking, shear instability
+! and convective diffusivity due to shear instability.
+!
+            Akv(i,j,k)=Akv(i,j,k)+lmd_nu0c*nu_sxc
+            Akt(i,j,k,itemp)=Akt(i,j,k,itemp)+lmd_nu0c*nu_sxc
+            Akt(i,j,k,isalt)=Akt(i,j,k,isalt)+lmd_nu0c*nu_sxc
+          END DO
+        END DO
+      END DO
 !
 !  Apply boundary conditions.
 !
@@ -478,7 +582,7 @@
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    Akt(:,:,:,itrc))
       END DO
-#  ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
       CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
@@ -487,9 +591,8 @@
      &                    LBi, UBi, LBj, UBj, 0, N(ng), 1, NAT,         &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Akt)
-#  endif
 # endif
       RETURN
-      END SUBROUTINE lmd_vmix_tile
+      END SUBROUTINE lmd_finish_tile
 #endif
       END MODULE lmd_vmix_mod

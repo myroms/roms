@@ -185,6 +185,12 @@
          Zob == 0.02d0                     ! m
          Zos == 0.02d0                     ! m
 
+! Height (m) of atmospheric measurements for Bulk fluxes parameterization.
+
+      BLK_ZQ == 10.0d0                     ! air humidity
+      BLK_ZT == 10.0d0                     ! air temperature
+      BLK_ZW == 10.0d0                     ! winds
+
 ! Minimum depth for wetting and drying.
 
        DCRIT == 0.10d0                     ! m
@@ -899,6 +905,19 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  Zob         Bottom roughness (m).
 !
 !  Zos         Surface roughness (m).
+!
+!------------------------------------------------------------------------------
+! Height of atmospheric measurements for bulk fluxes parameterization.
+!------------------------------------------------------------------------------
+!
+!  BLK_ZQ      Height (m) of surface air humidity measurement. Usually,
+!                recorded at 10 m.
+!
+!  BLK_ZT      Height (m) of surface air temperature measurement. Usually,
+!                recorded at 2 or 10 m.
+!
+!  BLK_ZW      Height (m) of surface winds measurement. Usually, recorded
+!                at 10 m.
 !
 !------------------------------------------------------------------------------
 ! Wetting and drying parameters.

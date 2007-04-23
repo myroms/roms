@@ -178,6 +178,7 @@
 !  Local variable declarations.
 !
       logical :: BOUNDED_TL, add
+      logical :: Lweak
 
       integer :: i, j, my_iic, ng, subs, tile, thread
       integer :: ADrec, Lstate, Nrec, rec
@@ -401,6 +402,15 @@
 !
           DO rec=1,Nrec
 !
+!  Set switch to scale model error covariace with background error
+!  covariance factor Cfscale(:).
+!
+          IF (rec.eq.Nrec) THEN
+            Lweak=.FALSE.
+          ELSE
+            Lweak=.TRUE.
+          END IF
+!
 !  Read adjoint solution. Since routine "get_state" loads data into the
 !  ghost points, the adjoint solution is read in the tangent linear
 !  state arrays by using iTLM instead of iADM in the calling arguments.
@@ -426,7 +436,7 @@
 #ifdef BALANCE_OPERATOR
                 CALL ad_balance (ng, TILE, Lold(ng))
 #endif
-                CALL ad_variability (ng, TILE, Lold(ng))
+                CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lold(ng), 2)
                 CALL initialize_ocean (ng, TILE, iTLM)
               END DO
@@ -449,7 +459,7 @@
               DO tile=subs*thread,subs*(thread+1)-1,+1
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                 CALL tl_convolution (ng, TILE, Lold(ng), 2)
-                CALL tl_variability (ng, TILE, Lold(ng))
+                CALL tl_variability (ng, TILE, Lold(ng), Lweak)
 #ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lold(ng))
 #endif

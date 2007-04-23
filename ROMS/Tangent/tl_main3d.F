@@ -130,15 +130,7 @@
       tdays(ng)=time(ng)*sec2day
 
 #if defined WEAK_CONSTRAINT || defined IOM
-!!
-!!-----------------------------------------------------------------------
-!!  If appropriate, write out fields into output NetCDF files.  Notice
-!!  that IO data is written in delayed and serial mode.
-!!-----------------------------------------------------------------------
-!!
-!!      CALL tl_output (ng)
-!!      IF (exit_flag.ne.NoError) RETURN
-!!
+!
 !-----------------------------------------------------------------------
 !  If appropriate, add convolved adjoint solution as impulse forcing to
 !  the nonlinear solution. Notice that, in weak constraint, the forcing
@@ -430,7 +422,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-!!#  if !(defined WEAK_CONSTRAINT || defined IOM)
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice
@@ -440,7 +431,6 @@
 !
       CALL tl_output (ng)
       IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
-!!#  endif
 # endif
 !
 !-----------------------------------------------------------------------

@@ -60,10 +60,9 @@
      &                      OCEAN(ng) % tl_vbar,                        &
 # endif
 # ifdef SOLVE3D
-     &                      COUPLING(ng) % tl_Zt_avg1)
-# else
-     &                      OCEAN(ng) % tl_zeta)
+     &                      COUPLING(ng) % tl_Zt_avg1,                  &
 # endif
+     &                      OCEAN(ng) % tl_zeta)
 
       RETURN
       END SUBROUTINE tl_forcing
@@ -84,10 +83,9 @@
      &                            tl_ubar, tl_vbar,                     &
 # endif
 # ifdef SOLVE3D
-     &                            tl_Zt_avg1)
-# else
-     &                            tl_zeta)
+     &                            tl_Zt_avg1,                           &
 # endif
+     &                            tl_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -100,9 +98,7 @@
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kfrc
-# ifdef SOLVE3D
       integer, intent(in) :: Nfrc
-# endif
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef SOLVE3D
@@ -124,9 +120,8 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
-#  else
-      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 #  endif
+      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 # else
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
@@ -147,9 +142,8 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
-#  else
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #  endif
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 # endif
 !
 !  Local variable declarations.
@@ -172,14 +166,25 @@
      &          t64,'t = ', f12.4,/)
       END IF
 !
-!  Tangent linear free-surface.
+!  Tangent linear free-surface. The two different cases in the
+!  case of SOLVE3D are due to the fact that tl_ini_fields is
+!  also called on the first timestep. tl_forcing MUST be called
+!  before tl_ini_fields.
 !
 # ifdef SOLVE3D
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          tl_Zt_avg1(i,j)=tl_Zt_avg1(i,j)+f_zeta(i,j)
+      IF(iic(ng).eq.ntstart(ng)) THEN
+       DO j=JstrR,JendR
+         DO i=IstrR,IendR
+            tl_zeta(i,j,Kfrc)=tl_zeta(i,j,Kfrc)+f_zeta(i,j)
+         END DO
+       END DO
+      ELSE
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            tl_Zt_avg1(i,j)=tl_Zt_avg1(i,j)+f_zeta(i,j)
+          END DO
         END DO
-      END DO
+      END IF
 # else
       DO j=JstrR,JendR
         DO i=IstrR,IendR

@@ -21,11 +21,7 @@
 
       CONTAINS
 
-# if defined NEARSHORE_MELLOR || defined WET_DRY
-#  include "step2d_LF_AM3s.h"
-# else
-#  include "step2d_LF_AM3.h"
-# endif
+# include "step2d_LF_AM3.h"
 
 #endif
       END MODULE step2d_mod

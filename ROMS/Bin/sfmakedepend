@@ -6,7 +6,7 @@
 #   See License_ROMS.txt                                              #
 ##################################################### Kate Hedstrom ###
 #                                                                     #
-# Fortran 90/77 dependency checker, version 2007a.                    #
+# Fortran 90/77 dependency checker, version 2007b.                    #
 #                                                                     #
 #######################################################################
 
@@ -18,9 +18,9 @@ use Pod::Usage;
 use Getopt::Long;
 use File::Copy;
 
-my ($opt_help, $opt_man, $opt_file, @incdirs, @srcdirs,
+my ($opt_help, $opt_man, $opt_file, @incdirs, @srcdirs, @defines,
     $opt_modext, $opt_case, $compiler, $opt_depend, $drop_circ);
-our ($cpp, $add_ext, $mod_dir, $libdeps, $longpath);
+our ($cpp, $add_ext, $mod_dir, $libdeps, $longpath, $obj_dir, %defines);
 our $obj_ext = 'o';
 our $ext = 'f';
 
@@ -34,7 +34,8 @@ GetOptions("help" => \$opt_help,    "man" => \$opt_man,
 	"case=s" => \$opt_case,     "compiler=s" => \$compiler,
 	"depend=s" => \$opt_depend, "cpp" => \$cpp,
 	"libdeps" => \$libdeps,     "drop" => \$drop_circ,
-	"longpath" => \$longpath,   )
+	"longpath" => \$longpath,   "objdir=s" => \$obj_dir,
+	"D=s@" => \@defines )
   or pod2usage("Try '$0 --help' for more information");
 pod2usage(-verbose => 1) if $opt_help;
 pod2usage(-verbose => 2) if $opt_man;
@@ -50,6 +51,14 @@ if ($opt_file) {
 }
 if ( !(-f $mf) && ($mf ne '-')) {
     system "touch $mf";
+}
+
+if (@defines) {
+    my $foo;
+    foreach $foo (@defines) {
+        my($before, $after) = split /=/, $foo;
+	$defines{$before} = $after;
+    }
 }
 
 # extension used for compiler's private module information
@@ -297,6 +306,14 @@ sub find_includes {
 	    $main::mod_files{$modname} = $parent;
 	    $self->{'modules'}{$modname} = 1;
 	}
+	# C preprocessor style includes of a -DROMS_HEADER sort
+        my $key;
+        foreach $key (keys(%defines)) {
+	    if (/^#\s*include\s*($key)/) {
+	        $included = $defines{$key};
+	        $after = $';
+	    }
+	}
 	if ($included) {
 	    # See if we've already searched this file
 	    if ( $inc_files{$included} ) {
@@ -418,9 +435,11 @@ sub print {
     my $self = shift;
     my $source = $self->{'Source_File'};
     my $compile_string = "\t" . '$(F90) $(F90FLAGS) -c';
+    my($len_sum, $len);
     my($base, $object, $modname, $flag, $target, $ftarget);
 
     $base = main::basename($source, @main::suffixes);
+    $base = $main::obj_dir . '/' . $base if $main::obj_dir;
     $target = $base . "." . $main::obj_ext;
     if ($main::cpp) {
 	$ftarget = $base . "." . $main::ext;
@@ -431,7 +450,7 @@ sub print {
 # print out "include" dependencies
     %flist = ();
     if (%{$self->{'includes'}}) {
-	my $len_sum = length($target) + 1;
+	$len_sum = length($target) + 1;
 	if ($main::add_ext) {
 	    print "$base.$main::add_ext ";
 	    $len_sum += length($base) + length($main::add_ext) + 2;
@@ -459,9 +478,7 @@ sub print {
 # print out "use" dependencies
     if (%{$self->{'uses'}} || %{$self->{'includes'}}) {
 	my @module_files = $self->find_mods();
-#rch	my $len_sum = length($target) + 1;
-#rch	print "$target:";
-        my $len_sum = 0;
+        $len_sum = 0;
 	my $file;
 	foreach $file (@module_files) {
 	    $file = $main::mod_dir . '/' . $file if $main::mod_dir;
@@ -469,7 +486,7 @@ sub print {
  	        $len_sum = length($target) + 1;
  	        print "$target:";
             }
-	    my $len = length($file) + 1;
+	    $len = length($file) + 1;
 	    if (($len_sum + $len > $ll) &&
 		     (length($target) + 1 < $len_sum)) {
 		print "\n$target:";
@@ -479,7 +496,7 @@ sub print {
 	    print " " . $file;
 	}
 	if ($main::need_f) {
-	    my $len = length($ftarget) + 1;
+	    $len = length($ftarget) + 1;
 	    if (($len_sum + $len > $ll) &&
 		     (length($target) + 1 < $len_sum)) {
 		print "\n$target:";
@@ -509,10 +526,10 @@ sfmakedepend - Fortran Dependency Checker
 
 =head1 SYNOPSIS
 
-sfmakedepend [--help] [--man] [--file=file]
-             [-I dir] [--srcdir dir] [--moddir dir]
+sfmakedepend [--help] [--man] [--file=file] [-I dir]
+             [--srcdir dir] [--objdir dir] [--moddir dir]
              [--fext ext] [--objext ext] [--modext ext]
-             [--addext ext] [--case=up|down|asis]
+             [-D TAG=file] [--addext ext] [--case=up|down|asis]
              [--compiler=crayold|cray|sgiold|sgi|nag|ibm|
                                  parasoft|hp|absoft|sun]
              [--depend=mod|obj] [--cpp] [--libdeps] [--drop]
@@ -556,6 +573,12 @@ still searched first.
 Look in alternate directories for the source files, much like VPATH.
 It can be used multiple times to search in more than one directory.
 
+=item I<--objdir dir>
+
+Tells sfmakedepend to prepend objdir to all object references (and
+cpp output files if used). This is required if you use a build
+directory that isn't your current directory.
+
 =item I<--moddir dir>
 
 Tells sfmakedepend to prepend moddir to all module references. This
@@ -580,6 +603,14 @@ Specifies the extension to use for Fortran 90 module files. The default
 extension is "mod" since this seems to be an emerging standard. Let
 me know if other compilers use a different filename for the module
 information (keep that --compiler option up to date).
+
+=item I<--D tag=file>
+
+Tells sfmakedepend to search the source files for lines such as:
+
+   #include MY_CHEESE
+
+Where MY_CHEESE is set with a -DMY_CHEESE="wensleydale.h".
 
 =item I<--addext ext>
 

@@ -1300,8 +1300,8 @@
 #  endif
      &                    OCEAN(ng) % tG(LBi,LBj,1,1,i))
         END DO
-      END IF
 # endif
+      END IF
 #endif
 
 #ifdef PROFILE

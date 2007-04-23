@@ -118,14 +118,14 @@
 
 !     --- stop MPI                                                        40.30
 
-!jcw      CALL SWEXITMPI                                                      40.30
+!jcw      CALL SWEXITMPI                                                  40.30
 !
 !     --- end of MAIN PROGRAM
 !
 !jcw      END
 !***********************************************************************
 !                                                                      *
-      SUBROUTINE SWMAIN(TI_WAV_OCN)                                       40.31 34.01
+      SUBROUTINE SWMAIN(TI_WAV_OCN, WNAME)                                40.31 34.01
 !                                                                      *
 !***********************************************************************
 !
@@ -264,7 +264,8 @@
 !     LOPEN :     indicates whether a file is open                        34.01
 !     MSGSTR:     string to pass message to call MSGERR                   40.41
 !
-      REAL,  intent(in) :: TI_WAV_OCN
+      REAL,  intent(in) :: TI_WAV_OCN                                     jcw
+      CHARACTER*80, intent(in) :: WNAME                                   jcw
       INTEGER   IUNIT                                                     34.01
       INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN                             40.30
       INTEGER   INERR                                                     40.31
@@ -368,6 +369,7 @@
       MAXERR=1                                                            34.01
       ITRACE=0                                                            40.23
       INERR =0                                                            40.31
+      INPFIL = WNAME                                                      jcw
 
       CALL SWTSTA(2)                                                      40.23
       CALL SWINIT (INERR)                                                 40.31 34.01

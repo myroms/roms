@@ -26,16 +26,18 @@
                FC := ftn
            FFLAGS := -e I -e m
               CPP := $(HOME)/bin/cpp
-         CPPFLAGS := -P -DCRAYX1 -DCRAY
+         CPPFLAGS := -P
                LD := $(FC)
           LDFLAGS :=
                AR := ar
           ARFLAGS := -rv
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := touch
 	     PERL := perl
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.
@@ -78,8 +80,5 @@ endif
 
 # Cray specials
 
-lmd_skpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
-lmd_bkpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
-
-lmd_skpp.o: lmd_wscale.f90
-lmd_bkpp.o: lmd_wscale.f90
+$(SCRATCH_DIR)/lmd_skpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
+$(SCRATCH_DIR)/lmd_bkpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90

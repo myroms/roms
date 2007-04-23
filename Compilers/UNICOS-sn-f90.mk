@@ -26,16 +26,18 @@
                FC := f90
            FFLAGS := -e Im
               CPP := /opt/ctl/bin/cpp
-         CPPFLAGS := -P -N -DCRAY
+         CPPFLAGS := -P -N
                LD := $(FC)
           LDFLAGS :=
                AR := ar
           ARFLAGS := -r
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := touch
              PERL := perl
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.

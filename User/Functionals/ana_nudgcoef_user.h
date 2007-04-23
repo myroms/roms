@@ -55,7 +55,7 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iwrk, i, itrc, j
 
-      real(r8) :: cff1, cff2, cff3
+      real(r8) :: cff1, cff2
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
 
@@ -73,15 +73,14 @@
         END DO
       END DO
 
-#if defined MY_APPLICATION
+#if defined NATL
 !
 !  Set tracer nudging coefficients in the southern and northern edges
-!  froma a five days time scale at the boundary point to decrease
+!  from a five days time scale at the boundary point to decrease
 !  linearly to 60 days seven grids points away from the boundary.
 !
       cff1=1.0_r8/(5.0_r8*86400.0_r8)
       cff2=1.0_r8/(60.0_r8*86400.0_r8)
-      cff3=(7.0_r8*cff1-cff2)/6.0_r8
       DO j=JstrR,MIN(8,JendR)
         DO i=IstrR,IendR
           wrk(i,j)=cff2+REAL(8-j,r8)*(cff1-cff2)/7.0_r8
@@ -92,6 +91,65 @@
           wrk(i,j)=cff1+REAL(Mm(ng)-j,r8)*(cff2-cff1)/7.0_r8
         END DO
       END DO
+# ifdef ZCLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
+        END DO
+      END DO
+# endif
+# ifdef TCLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%Tnudgcof(i,j,itemp)=wrk(i,j)
+          CLIMA(ng)%Tnudgcof(i,j,isalt)=wrk(i,j)
+        END DO
+      END DO
+# endif
+#elif defined SCB
+!
+!  Set tracer nudging coefficients in the southern and northern edges
+!  from a five days time scale at the boundary point to decrease
+!  linearly to 60 days six grids points away from the boundary.
+!
+      cff1=1.0_r8/(5.0_r8*86400.0_r8)
+      cff2=1.0_r8/(60.0_r8*86400.0_r8)
+      DO j=JstrR,MIN(6,JendR)
+        DO i=IstrR,IendR
+          wrk(i,j)=cff2+REAL(6-j,r8)*(cff1-cff2)/6.0_r8
+        END DO
+      END DO
+      DO j=MAX(JstrR,Mm(ng)+1-6),JendR
+        DO i=IstrR,IendR
+          wrk(i,j)=cff1+REAL(Mm(ng)+1-j,r8)*(cff2-cff1)/6.0_r8
+        END DO
+      END DO
+      DO i=IstrR,MIN(6,IendR)
+        DO j=MAX(JstrR,i),MIN(Mm(ng)+1-i,JendR)
+          wrk(i,j)=cff2+REAL(6-i,r8)*(cff1-cff2)/6.0_r8
+        END DO
+      END DO
+# ifdef ZCLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%Znudgcof(i,j)=wrk(i,j)
+        END DO
+      END DO
+# endif
+# ifdef M2CLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%M2nudgcof(i,j)=wrk(i,j)
+        END DO
+      END DO
+# endif
+# ifdef M3CLM_NUDGING
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          CLIMA(ng)%M3nudgcof(i,j)=wrk(i,j)
+        END DO
+      END DO
+# endif
 # ifdef TCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR

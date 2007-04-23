@@ -65,10 +65,17 @@
      &                      OCEAN(ng) % rzeta,                          &
 # endif
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
-     &                      OCEAN(ng) %  bed,                           &
+#  if defined SEDIMENT || defined BBL_MODEL
+                            OCEAN(ng) % bottom,                         &
+#  endif
+#  if defined SEDIMENT
+     &                      OCEAN(ng) % bed,                            &
+     &                      OCEAN(ng) % bed_frac,                       &
+     &                      OCEAN(ng) % bed_mass,                       &
+#   ifdef SED_MORPH
      &                      GRID(ng) % bed_thick0,                      &
      &                      GRID(ng) % bed_thick,                       &
+#   endif
 #  endif
      &                      GRID(ng) % Hz,                              &
 #  ifdef ICESHELF
@@ -107,8 +114,14 @@
      &                            rubar, rvbar, rzeta,                  &
 # endif
 # ifdef SOLVE3D
-#  if defined SEDIMENT && defined SED_MORPH
-     &                            bed, bed_thick0, bed_thick,           &
+#  if defined SEDIMENT || defined BBL_MODEL
+                                  bottom,                               &
+#  endif
+#  if defined SEDIMENT
+     &                            bed, bed_frac, bed_mass,              &
+#   ifdef SED_MORPH
+     &                            bed_thick0, bed_thick,                &
+#   endif
 #  endif
      &                            Hz,                                   &
 #  ifdef ICESHELF
@@ -123,7 +136,7 @@
 !
       USE mod_param
       USE mod_scalars
-# if defined SEDIMENT && defined SED_MORPH
+# if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 # endif
 !
@@ -150,9 +163,13 @@
       USE u3dbc_mod, ONLY : u3dbc_tile
       USE v3dbc_mod, ONLY : v3dbc_tile
 # endif
+# ifndef OBC_M2RADIATION
       USE u2dbc_mod, ONLY : u2dbc_tile
       USE v2dbc_mod, ONLY : v2dbc_tile
+# endif
+# ifndef OBC_FSRADIATION
       USE zetabc_mod, ONLY : zetabc_tile
+# endif
 !
 !  Imported variable declarations.
 !
@@ -182,11 +199,16 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
 #  ifdef SOLVE3D
-#   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:,LBj:,:,:)
-#   endif
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:,LBj:)
+#   endif
+#   if defined SEDIMENT || defined BBL_MODEL
+      real(r8), intent(inout) :: bottom(LBi:,LBj:,:)
+#   endif
+#   if defined SEDIMENT
+      real(r8), intent(inout) :: bed(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: bed_frac(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: bed_mass(LBi:,LBj:,:,:,:)
 #   endif
 #  endif
       real(r8), intent(inout) :: h(LBi:,LBj:)
@@ -224,11 +246,16 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
-#   if defined SEDIMENT && defined SED_MORPH
-      real(r8), intent(in) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
-#   endif
 #   ifdef ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
+#   endif
+#   if defined SEDIMENT || defined BBL_MODEL
+      real(r8), intent(inout) :: bottom(LBi:UBi,LBj:UBj,MBOTP)
+#   endif
+#   if defined SEDIMENT
+      real(r8), intent(inout) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
+      real(r8), intent(inout) :: bed_frac(LBi:UBi,LBj:UBj,Nbed,NST)
+      real(r8), intent(inout) :: bed_mass(LBi:UBi,LBj:UBj,Nbed,2,NST)
 #   endif
 #  endif
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
@@ -265,6 +292,9 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k, kbed
+# ifdef SEDIMENT
+      integer :: ised
+# endif
 
       real(r8) :: cff1, cff2
 # ifdef SOLVE3D
@@ -298,6 +328,7 @@
 # endif
           END DO
         END DO
+# ifndef OBC_FSRADIATION
 !
 !  Apply boundary conditions.
 !
@@ -305,16 +336,17 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    krhs, kstp, kstp,                             &
      &                    zeta)
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
         CALL zetabc_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    krhs, kstp, knew,                             &
      &                    zeta)
-# else
+#  else
         CALL zetabc_tile (ng, Istr, Iend, Jstr, Jend,                   &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    krhs, kstp, krhs,                             &
      &                    zeta)
+#  endif
 # endif
       END IF
 
@@ -463,6 +495,7 @@
             END DO
           END IF
         END DO
+#  ifndef OBC_M2RADIATION
 !
 !  Apply boundary conditions.
 !
@@ -482,6 +515,7 @@
      &                   LBi, UBi, LBj, UBj,                            &
      &                   krhs, kstp, krhs,                              &
      &                   ubar, vbar, zeta)
+#  endif
       END IF
 
 #  if defined EW_PERIODIC || defined NS_PERIODIC
@@ -727,6 +761,7 @@
             END DO
           END IF   
         END DO
+#  ifndef OBC_M2RADIATION
 !
 !  Apply boundary conditions.
 !
@@ -746,6 +781,7 @@
      &                   LBi, UBi, LBj, UBj,                            &
      &                   krhs, kstp, knew,                              &
      &                   ubar, vbar, zeta)
+#  endif
       END IF
 
 #  if defined EW_PERIODIC || defined NS_PERIODIC
@@ -770,6 +806,65 @@
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    ubar(:,:,kstp), vbar(:,:,kstp),               &
      &                    ubar(:,:,knew), vbar(:,:,knew))
+#  endif
+#  if defined BBL_MODEL || defined SEDIMENT
+!
+!-----------------------------------------------------------------------
+!  Initialize sediment bed properties.
+!-----------------------------------------------------------------------
+!
+      IF (.not.PerfectRST(ng)) THEN
+        DO k=1,Nbed
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              DO ised=1,NST
+                cff1=bed_mass(i,j,k,1,ised)
+                bed_mass(i,j,k,2,ised)=cff1
+              END DO
+            END DO
+          END DO
+        END DO
+      END IF
+#   if defined EW_PERIODIC || defined NS_PERIODIC
+#    ifdef SEDIMENT
+      DO ised=1,NST
+        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          bed_frac(:,:,:,ised))
+        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          bed_mass(:,:,:,1,ised))
+        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          bed_mass(:,:,:,2,ised))
+      END DO
+      DO ised=1,MBEDP
+        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+     &                          LBi, UBi, LBj, UBj, 1, Nbed,            &
+     &                          bed(:,:,:,ised))
+      END DO
+#    endif
+      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+     &                        LBi, UBi, LBj, UBj, 1, MBOTP,             &
+     &                        bottom)
+#   endif
+#   ifdef DISTRIBUTE
+#    ifdef SEDIMENT
+      CALL mp_exchange4d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, NST,          &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    bed_frac,                                     &
+     &                    bed_mass(:,:,:,1,:),bed_mass(:,:,:,2,:))
+      CALL mp_exchange4d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+     &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, MBEDP,        &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    bed)
+#    endif
+      CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+     &                    LBi, UBi, LBj, UBj, 1, MBOTP,                 &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    bottom)
+#   endif
 #  endif
 # endif
 # if defined PERFECT_RESTART && \

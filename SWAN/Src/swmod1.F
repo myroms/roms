@@ -507,6 +507,7 @@
       INTEGER EXPORT, FUNHI , FUNLO , HIOPEN
       INTEGER IMPORT, INPUTF, ITMOPT, IUNMAX
       INTEGER IUNMIN, PRINTF, PRTEST, SCREEN
+      CHARACTER*40 INPFIL                                                jcw
 
 !     *** test parameters ***
 !

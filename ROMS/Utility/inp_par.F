@@ -426,11 +426,10 @@
       inp=1
       out=stdout
 !
-      IF (Master) CALL my_getarg (1,Cname)
-      DO ng=1,Ngrids
-        CALL mp_bcasts (ng, model, Cname, 80)
-      END DO
-      WRITE(stdout,*) 'ROMS/TOMS MyRank = ', MyRank, Iname
+      CALL my_getarg (1,Cname)
+      IF (MyRank.eq.0) THEN
+        WRITE(stdout,*) 'Coupled Input File name = ', Cname
+      END IF
       OPEN (inp, FILE=TRIM(Cname), FORM='formatted', STATUS='old',      &
      &      ERR=10)
       GO TO 30
@@ -484,6 +483,11 @@
               Iname(i:i)=blank
             END DO
             Iname=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'WAV_name') THEN
+            DO i=1,LEN(Wname)
+              Wname(i:i)=blank
+            END DO
+            Wname=TRIM(ADJUSTL(Cval(Nval)))
           END IF
         END IF
       END DO
@@ -766,11 +770,12 @@
           ELSE IF (TRIM(KeyWord).eq.'NRREC') THEN
             Npts=load_i(Nval, Rval, Ngrids, nrrec)
             DO ng=1,Ngrids
-            IF (nrrec(ng).lt.0) THEN
-              LastRec(ng)=.TRUE.
-            ELSE
-              LastRec(ng)=.FALSE.
-            END IF
+              IF (nrrec(ng).lt.0) THEN
+                LastRec(ng)=.TRUE.
+              ELSE
+                LastRec(ng)=.FALSE.
+              END IF
+            END DO
           ELSE IF (TRIM(KeyWord).eq.'LcycleRST') THEN
             Npts=load_l(Nval, Cval, Ngrids, LcycleRST)
           ELSE IF (TRIM(KeyWord).eq.'NRST') THEN
@@ -901,6 +906,14 @@
             Npts=load_r(Nval, Rval, Ngrids, Zob)
           ELSE IF (TRIM(KeyWord).eq.'Zos') THEN
             Npts=load_r(Nval, Rval, Ngrids, Zos)
+#ifdef BULK_FLUXES
+          ELSE IF (TRIM(KeyWord).eq.'BLK_ZQ') THEN
+            Npts=load_r(Nval, Rval, Ngrids, blk_ZQ)
+          ELSE IF (TRIM(KeyWord).eq.'BLK_ZT') THEN
+            Npts=load_r(Nval, Rval, Ngrids, blk_ZT)
+          ELSE IF (TRIM(KeyWord).eq.'BLK_ZW') THEN
+            Npts=load_r(Nval, Rval, Ngrids, blk_ZW)
+#endif
           ELSE IF (TRIM(KeyWord).eq.'DCRIT') THEN
             Npts=load_r(Nval, Rval, Ngrids, Dcrit)
           ELSE IF (TRIM(KeyWord).eq.'WTYPE') THEN
@@ -1691,9 +1704,6 @@
         IF ((nrrec(ng).eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
           LdefHIS(ng)=.FALSE.
         END IF
-        IF ((nrrec(ng).eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
-          LdefHIS(ng)=.FALSE.
-        END IF
         IF ((nrrec(ng).eq.0).and.(nRST(ng).gt.ntimes(ng))) THEN
           LdefRST(ng)=.FALSE.
         END  IF
@@ -1993,6 +2003,29 @@
 # ifdef GLS_MIXING
           WRITE (out,200) Zos(ng), 'Zos',                               &
      &          'Surface roughness (m).'
+# endif
+# ifdef BULK_FLUXES
+          WRITE (out,200) blk_ZQ(ng), 'blk_ZQ',                         &
+     &          'Height (m) of surface air humidity measurement.'
+          IF (blk_ZQ(ng).le.0.0_r8) THEN
+            WRITE (out,260) 'blk_ZQ.',                                  &
+     &            'It must be greater than zero.'
+            STOP
+          END IF
+          WRITE (out,200) blk_ZT(ng), 'blk_ZT',                         &
+     &          'Height (m) of surface air temperature measurement.'
+          IF (blk_ZT(ng).le.0.0_r8) THEN
+            WRITE (out,260) 'blk_ZT.',                                  &
+     &            'It must be greater than zero.'
+            STOP
+          END IF
+          WRITE (out,200) blk_ZW(ng), 'blk_ZW',                         &
+     &          'Height (m) of surface winds measurement.'
+          IF (blk_ZW(ng).le.0.0_r8) THEN
+            WRITE (out,260) 'blk_ZW.',                                  &
+     &            'It must be greater than zero.'
+            STOP
+          END IF
 # endif
 #endif
 #if defined WET_DRY
@@ -5822,6 +5855,40 @@
               END DO
             END DO
 #  endif
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isFsur)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isFsur,1))
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isUbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isUbar,1))
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isVbar)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isVbar,1))
+#  ifdef ADJUST_WSTRESS
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isUstr)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isUstr,1))
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isVstr)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isVstr,1))
+#  endif
+#  ifdef SOLVE3D
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isUvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isUvel,1))
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isVvel)') THEN
+            Npts=load_r(Nval, Rval, Ngrids, Cfscale(isVvel,1))
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isTvar)') THEN
+            Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
+            DO ng=1,Ngrids
+              DO itrc=1,NT(ng)
+                Cfscale(isTvar(itrc),ng)=Rtracer(itrc,ng)
+              END DO
+            END DO
+#   ifdef ADJUST_STFLUX
+          ELSE IF (TRIM(KeyWord).eq.'Cfscale(isTsur)') THEN
+            Npts=load_r(Nval, Rval, MT*Ngrids, Rtracer)
+            DO ng=1,Ngrids
+              DO itrc=1,NT(ng)
+                Cfscale(isTsur(itrc),ng)=Rtracer(itrc,ng)
+              END DO
+            END DO
+#   endif
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'npN2') THEN
             Npts=load_i(Nval, Rval, 1, npN2)
           ELSE IF (TRIM(KeyWord).eq.'Pcoef_N2') THEN
@@ -5974,7 +6041,7 @@
      &            'Vertical diffusion stability/accuracy factor.'
 #    endif
           WRITE (out,120) Hdecay(isFsur,ng), 'Hdecay(isFsur)',          &
-     &            'Horizontal decorrelation scale (m), free-sruface.'
+     &            'Horizontal decorrelation scale (m), free-surface.'
           WRITE (out,120) Hdecay(isUbar,ng), 'Hdecay(isUbar)',          &
      &            'Horizontal decorrelation scale (m), 2D U-momentum.'
           WRITE (out,120) Hdecay(isVbar,ng), 'Hdecay(isVbar)',          &
@@ -6013,6 +6080,38 @@
           END DO
 #    endif
 #   endif
+          WRITE (out,120) Cfscale(isFsur,ng), 'Cfscale(isFsur)',        &
+     &            'Forcing error scale factor, free-surface.'
+          WRITE (out,120) Cfscale(isUbar,ng), 'Cfscale(isUbar)',        &
+     &            'Forcing error scale factor, 2D U-momentum.'
+          WRITE (out,120) Cfscale(isVbar,ng), 'Cfscale(isVbar)',        &
+     &            'Forcing error scale factor, 2D V-momentum.'
+#    ifdef ADJUST_WSTRESS
+          WRITE (out,120) Cfscale(isUstr,ng), 'Cfscale(isUstr)',        &
+     &            'Forcing error scale factor, surface U-stress.'
+          WRITE (out,120) Cfscale(isVstr,ng), 'Cfscale(isVstr)',        &
+     &            'Forcing error scale factor, surface V-stress.'
+#    endif
+#    ifdef SOLVE3D
+          WRITE (out,120) Cfscale(isUvel,ng), 'Cfscale(isUvel)',        &
+     &            'Forcing error scale factor, 3D U-momentum.'
+          WRITE (out,120) Cfscale(isVvel,ng), 'Cfscale(isVvel)',        &
+     &            'Forcing error scale factor, 3D V-momentum.'
+          DO itrc=1,NT(ng)
+            WRITE (out,130) Cfscale(isTvar(itrc),ng),                   &
+     &              'Cfscale(idTvar)',                                  &
+     &              'Forcing error scale factor, ',                     &
+     &              TRIM(Vname(1,idTvar(itrc)))
+          END DO
+#     ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            WRITE (out,130) Cfscale(isTsur(itrc),ng),                   &
+     &              'Cfscale(idTsur)',                                  &
+     &              'Forcing error scale factor flux of tracer, ',      &
+     &              TRIM(Vname(1,idTsur(itrc)))
+          END DO
+#     endif
+#    endif
 #   if defined SOLVE3D && defined N2NORM_PROFILE
           WRITE (out,80) npN2, 'npN2',                                  &
      &            'Order of polynomial for N2(z) profile.'

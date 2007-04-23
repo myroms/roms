@@ -184,7 +184,13 @@
         RDRG == 3.0d-04                    ! m/s
        RDRG2 == 0.025d0                    ! nondimensional
          Zob == 0.015d0                    ! m
-         Zos == 0.5d0                     ! m
+         Zos == 0.5d0                      ! m
+
+! Height (m) of atmospheric measurements for Bulk fluxes parameterization.
+
+      BLK_ZQ == 10.0d0                     ! air humidity
+      BLK_ZT == 10.0d0                     ! air temperature
+      BLK_ZW == 10.0d0                     ! winds
   
 ! Minimum depth for wetting and drying.
 

@@ -35,7 +35,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend, itrc,   &
+      SUBROUTINE mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend,         &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              ILB, IUB, JLB, JUB,                 &
      &                              nrhs,                               &
@@ -300,6 +300,7 @@
             ELSE
               A=(Ta(i,j,k)-Ta(i-1,j,k))/                                &
      &          (Ta(i,j,k)+Ta(i-1,j,k)+eps)
+# ifdef MASKING
               B=0.03125_r8*                                             &
      &          ((Ta(i  ,j+1,k)-Ta(i  ,j  ,k))*                         &
      &           (pn(i  ,j  )+pn(i  ,j+1))*vmask(i  ,j+1)+              &
@@ -308,8 +309,19 @@
      &           (Ta(i-1,j+1,k)-Ta(i-1,j  ,k))*                         &
      &           (pn(i-1,j  )+pn(i-1,j+1))*vmask(i-1,j+1)+              &
      &           (Ta(i-1,j  ,k)-Ta(i-1,j-1,k))*                         &
-     &           (pn(i-1,j-1)+pn(i-1,j  ))*vmask(i-1,j  ))*             &
-     &          (on_v(i  ,j  )+on_v(i  ,j+1)+                           &
+     &           (pn(i-1,j-1)+pn(i-1,j  ))*vmask(i-1,j  ))
+# else
+              B=0.03125_r8*                                             &
+     &          ((Ta(i  ,j+1,k)-Ta(i  ,j  ,k))*                         &
+     &           (pn(i  ,j  )+pn(i  ,j+1))+                             &
+     &           (Ta(i  ,j  ,k)-Ta(i  ,j-1,k))*                         &
+     &           (pn(i  ,j-1)+pn(i  ,j  ))+                             &
+     &           (Ta(i-1,j+1,k)-Ta(i-1,j  ,k))*                         &
+     &           (pn(i-1,j  )+pn(i-1,j+1))+                             &
+     &           (Ta(i-1,j  ,k)-Ta(i-1,j-1,k))*                         &
+     &           (pn(i-1,j-1)+pn(i-1,j  )))
+# endif
+              B=B*(on_v(i  ,j  )+on_v(i  ,j+1)+                         &
      &           on_v(i-1,j  )+on_v(i-1,j+1))/                          &
      &          (Ta(i-1,j,k)+Ta(i,j,k)+eps)
 !
@@ -492,6 +504,7 @@
      &          (Ta(i,j  ,k).le.0.0_r8)) THEN
               Va(i,j,k)=0.0_r8
             ELSE
+# ifdef MASKING
               A=0.03125_r8*                                             &
      &          ((Ta(i+1,j  ,k)-Ta(i  ,j  ,k))*                         &
      &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j  )+              &
@@ -500,10 +513,22 @@
      &           (Ta(i+1,j-1,k)-Ta(i  ,j-1,k))*                         &
      &           (pm(i+1,j-1)+pm(i  ,j-1))*umask(i+1,j-1)+              &
      &           (Ta(i  ,j-1,k)-Ta(i-1,j-1,k))*                         &
-     &           (pm(i-1,j-1)+pm(i  ,j-1))*umask(i  ,j-1))*             &
-     &          (om_u(i  ,j  )+om_u(i+1,j  )+                           &
-     &           om_u(i  ,j-1)+om_u(i+1,j-1))/                          &
-     &          (Ta(i  ,j-1,k)+Ta(i,j,k)+eps)
+     &           (pm(i-1,j-1)+pm(i  ,j-1))*umask(i  ,j-1))
+# else
+              A=0.03125_r8*                                             &
+     &          ((Ta(i+1,j  ,k)-Ta(i  ,j  ,k))*                         &
+     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
+     &           (Ta(i  ,j  ,k)-Ta(i-1,j  ,k))*                         &
+     &           (pm(i-1,j  )+pm(i  ,j  ))+                             &
+     &           (Ta(i+1,j-1,k)-Ta(i  ,j-1,k))*                         &
+     &           (pm(i+1,j-1)+pm(i  ,j-1))+                             &
+     &           (Ta(i  ,j-1,k)-Ta(i-1,j-1,k))*                         &
+     &           (pm(i-1,j-1)+pm(i  ,j-1)))
+# endif
+              A=A*(om_u(i  ,j  )+om_u(i+1,j  )+                         &
+     &            om_u(i  ,j-1)+om_u(i+1,j-1))/                         &
+     &            (Ta(i  ,j-1,k)+Ta(i,j,k)+eps)
+
               B=(Ta(i,j,k)-Ta(i,j-1,k))/                                &
      &          (Ta(i,j,k)+Ta(i,j-1,k)+eps)
 !
@@ -651,6 +676,7 @@
             ELSE
               C(i,k)=(Ta(i,j,k+1)-Ta(i,j,k))/                           &
      &               (Ta(i,j,k+1)+Ta(i,j,k)+eps)
+# ifdef MASKING
               A=0.0625_r8*                                              &
      &          ((Ta(i+1,j,k+1)-Ta(i  ,j,k+1))*                         &
      &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                &
@@ -659,9 +685,7 @@
      &           (Ta(i+1,j,k  )-Ta(i  ,j,k  ))*                         &
      &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                &
      &           (Ta(i  ,j,k  )-Ta(i-1,j,k  ))*                         &
-     &           (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j))*               &
-     &          (om_u(i+1,j)+om_u(i  ,j))/                              &
-     &          (Ta(i,j,k+1)+Ta(i,j,k)+eps)
+     &           (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j))
               B=0.0625_r8*                                              &
      &          ((Ta(i,j+1,k+1)-Ta(i,j  ,k+1))*                         &
      &           (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                &
@@ -670,9 +694,31 @@
      &           (Ta(i,j+1,k  )-Ta(i,j  ,k  ))*                         &
      &           (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                &
      &           (Ta(i,j  ,k  )-Ta(i,j-1,k  ))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  ))*               &
-     &          (on_v(i,j+1)+on_v(i,j  ))/                              &
-     &          (Ta(i,j,k+1)+Ta(i,j,k)+eps)
+     &           (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  ))
+# else
+              A=0.0625_r8*                                              &
+     &          ((Ta(i+1,j,k+1)-Ta(i  ,j,k+1))*                         &
+     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
+     &           (Ta(i  ,j,k+1)-Ta(i-1,j,k+1))*                         &
+     &           (pm(i  ,j  )+pm(i-1,j  ))+                             &
+     &           (Ta(i+1,j,k  )-Ta(i  ,j,k  ))*                         &
+     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
+     &           (Ta(i  ,j,k  )-Ta(i-1,j,k  ))*                         &
+     &           (pm(i  ,j  )+pm(i-1,j  )))
+              B=0.0625_r8*                                              &
+     &          ((Ta(i,j+1,k+1)-Ta(i,j  ,k+1))*                         &
+     &           (pn(i  ,j+1)+pn(i  ,j  ))+                             &
+     &           (Ta(i,j  ,k+1)-Ta(i,j-1,k+1))*                         &
+     &           (pn(i  ,j  )+pn(i  ,j-1))+                             &
+     &           (Ta(i,j+1,k  )-Ta(i,j  ,k  ))*                         &
+     &           (pn(i  ,j+1)+pn(i  ,j  ))+                             &
+     &           (Ta(i,j  ,k  )-Ta(i,j-1,k  ))*                         &
+     &           (pn(i  ,j  )+pn(i  ,j-1)))
+# endif
+              A=A*(om_u(i+1,j)+om_u(i  ,j))/                            &
+     &            (Ta(i,j,k+1)+Ta(i,j,k)+eps)
+              B=B*(on_v(i,j+1)+on_v(i,j  ))/                            &
+     &            (Ta(i,j,k+1)+Ta(i,j,k)+eps)
 !
               Um=0.03125_r8*dt(ng)*                                     &
      &            (Huon(i  ,j,k  )*(pm(i,j)+pm(i-1,j))*                 &

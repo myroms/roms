@@ -56,7 +56,7 @@
           Mm == 3             ! Number of J-direction INTERIOR RHO-points
            N == 20            ! Number of vertical levels
 
-        Nbed =  1             ! Number of sediment bed layers
+        Nbed =  10            ! Number of sediment bed layers
 
          NAT =  2             ! Number of active tracers (usually, 2)
          NPT =  0             ! Number of inactive passive tracers
@@ -185,6 +185,12 @@
        RDRG2 == 3.0d-03                    ! nondimensional
          Zob == 0.0005d0                   ! m
          Zos == 0.02d0                     ! m
+
+! Height (m) of atmospheric measurements for Bulk fluxes parameterization.
+
+      BLK_ZQ == 10.0d0                     ! air humidity
+      BLK_ZT == 10.0d0                     ! air temperature
+      BLK_ZW == 10.0d0                     ! winds
 
 ! Minimum depth for wetting and drying.
 
@@ -900,6 +906,19 @@ Hout(idBott) == T T T T T T T F T T T F F F T F
 !  Zob         Bottom roughness (m).
 !
 !  Zos         Surface roughness (m).
+!
+!------------------------------------------------------------------------------
+! Height of atmospheric measurements for bulk fluxes parameterization.
+!------------------------------------------------------------------------------
+!
+!  BLK_ZQ      Height (m) of surface air humidity measurement. Usually,
+!                recorded at 10 m.
+!
+!  BLK_ZT      Height (m) of surface air temperature measurement. Usually,
+!                recorded at 2 or 10 m.
+!
+!  BLK_ZW      Height (m) of surface winds measurement. Usually, recorded
+!                at 10 m.
 !
 !------------------------------------------------------------------------------
 ! Wetting and drying parameters.

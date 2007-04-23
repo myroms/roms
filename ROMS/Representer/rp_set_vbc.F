@@ -445,9 +445,8 @@
      &            cff2
 #    endif
           cff3=MAX(Cdb_min,cff2)
-          tl_cff3=(0.5_r8-SIGN(0.5_r8,Cdb_min-cff2))*tl_cff2-           &
+          tl_cff3=(0.5_r8-SIGN(0.5_r8,Cdb_min-cff2))*tl_cff2+           &
 #    ifdef TL_IOMS
-     &            (0.5_r8-SIGN(0.5_r8,Cdb_min-cff2))*cff2+              &
      &            (0.5_r8+SIGN(0.5_r8,Cdb_min-cff2))*Cdb_min
 #    endif
           wrk(i,j)=MIN(Cdb_max,cff3)
@@ -715,9 +714,8 @@
      &            cff2
 #    endif
           cff3=MAX(Cdb_min,cff2)
-          tl_cff3=(0.5_r8-SIGN(0.5_r8,Cdb_min-cff2))*tl_cff2-           &
+          tl_cff3=(0.5_r8-SIGN(0.5_r8,Cdb_min-cff2))*tl_cff2+           &
 #    ifdef TL_IOMS
-     &            (0.5_r8-SIGN(0.5_r8,Cdb_min-cff2))*cff2+              &
      &            (0.5_r8+SIGN(0.5_r8,Cdb_min-cff2))*Cdb_min
 #    endif
           wrk(i,j)=MIN(Cdb_max,cff3)

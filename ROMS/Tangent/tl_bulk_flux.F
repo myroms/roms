@@ -604,7 +604,7 @@
 !
           ZoW(i)=0.0001_r8
           tl_ZoW(i)=0.0_r8
-          u10(i)=delW(i)*LOG(10.0_r8/ZoW(i))/LOG(blk_ZW/ZoW(i))
+          u10(i)=delW(i)*LOG(10.0_r8/ZoW(i))/LOG(blk_ZW(ng)/ZoW(i))
 !
 !  Note tl_delW and tl_ZoW are zero at this point.
 !
@@ -628,18 +628,18 @@
 !>          ZoT10(i)=10.0_r8/EXP(fac)
           ZoT10(i)=10.0_r8/EXP(vonKar/Ct10(i))
           tl_ZoT10(i)=-tl_fac*ZoT10(i)
-          fac=LOG(blk_ZW/Zo10(i))
+          fac=LOG(blk_ZW(ng)/Zo10(i))
           tl_fac=-tl_Zo10(i)/Zo10(i)
 !>          Cd=(vonKar/fac)**2
-          Cd=(vonKar/LOG(blk_ZW/Zo10(i)))**2
+          Cd=(vonKar/LOG(blk_ZW(ng)/Zo10(i)))**2
           tl_Cd=-2.0_r8*tl_fac*Cd/fac
 !
 !  Compute Richardson number.
 !
-          fac=LOG(blk_ZT/ZoT10(i))
+          fac=LOG(blk_ZT(ng)/ZoT10(i))
           tl_fac=-tl_ZoT10(i)/ZoT10(i)
-!>          Ct(i)=vonKar/fac                        ! T transfer coefficient
-          Ct(i)=vonKar/LOG(blk_ZT/ZoT10(i))     ! T transfer coefficient
+!>          Ct(i)=vonKar/fac                      ! T transfer coefficient
+          Ct(i)=vonKar/LOG(blk_ZT(ng)/ZoT10(i))   ! T transfer coefficient
           tl_Ct(i)=-tl_fac*Ct(i)/fac              ! T transfer coefficient
           CC(i)=vonKar*Ct(i)/Cd
           tl_CC(i)=vonKar*tl_Ct(i)/Cd-tl_Cd*CC(i)/Cd
@@ -649,18 +649,19 @@
           delTc(i)=blk_dter
           tl_delTc(i)=0.0_r8
 # endif
-          Ribcu(i)=-blk_ZW/(blk_Zabl*0.004_r8*blk_beta**3)
+          Ribcu(i)=-blk_ZW(ng)/(blk_Zabl*0.004_r8*blk_beta**3)
           fac=1.0/(TairK(i)*delW(i)*delW(i))
 !
 !  Note tl_delW is zero at this point.
 !
-!>          Ri(i)=-fac*g*blk_ZW*((delT(i)-delTc(i))+                    &
-!>     &                     0.61_r8*TairK(i)*delQ(i))
-          Ri(i)=-g*blk_ZW*((delT(i)-delTc(i))+                          &
-     &                     0.61_r8*TairK(i)*delQ(i))/                   &
+!>        Ri(i)=-fac*g*blk_ZW(ng)*((delT(i)-delTc(i))+                &
+!>   &                              0.61_r8*TairK(i)*delQ(i))
+!>
+          Ri(i)=-g*blk_ZW(ng)*((delT(i)-delTc(i))+                      &
+     &                          0.61_r8*TairK(i)*delQ(i))/              &
      &          (TairK(i)*delW(i)*delW(i))
-          tl_Ri(i)=-fac*g*blk_ZW*((tl_delT(i)-tl_delTc(i))+             &
-     &                    0.61_r8*TairK(i)*tl_delQ(i))
+          tl_Ri(i)=-fac*g*blk_ZW(ng)*((tl_delT(i)-tl_delTc(i))+         &
+     &                                 0.61_r8*TairK(i)*tl_delQ(i))
           IF (Ri(i).lt.0.0_r8) THEN
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+Ri(i)/Ribcu(i))       ! Unstable
             tl_Zetu(i)=(tl_CC(i)*Ri(i)+CC(i)*tl_Ri(i))/                 &
@@ -674,8 +675,8 @@
             tl_Zetu(i)=(tl_CC(i)*Ri(i)+CC(i)*tl_Ri(i))/(1.0_r8+fac)     &
      &                -tl_fac*Zetu(i)/(1.0_r8+fac)
           END IF
-          L10(i)=blk_ZW/Zetu(i)
-          tl_L10(i)=-L10(i)*L10(i)*tl_Zetu(i)/blk_ZW
+          L10(i)=blk_ZW(ng)/Zetu(i)
+          tl_L10(i)=-L10(i)*L10(i)*tl_Zetu(i)/blk_ZW(ng)
           IF (Zetu(i).gt.50.0_r8) THEN
             IterMax=1
           ELSE
@@ -685,38 +686,40 @@
 !
 !  First guesses for Monon-Obukhov similarity scales.
 !
-	  fac1=blk_ZW/L10(i)
+	  fac1=blk_ZW(ng)/L10(i)
           tl_fac1=-tl_L10(i)*fac1/L10(i)
-          fac2=LOG(blk_ZW/Zo10(i))
+          fac2=LOG(blk_ZW(ng)/Zo10(i))
           tl_fac2=-tl_Zo10(i)/Zo10(i)
 !>          Wstar(i)=delW(i)*vonKar/(fac2-bulk_psiu(fac1,pi))
 !
 !  Note tl_delW is zero at this point.
 !
-          Wstar(i)=delW(i)*vonKar/(LOG(blk_ZW/Zo10(i))-                 &
-     &                             bulk_psiu(blk_ZW/L10(i),pi))
+          Wstar(i)=delW(i)*vonKar/(LOG(blk_ZW(ng)/Zo10(i))-             &
+     &                             bulk_psiu(blk_ZW(ng)/L10(i),pi))
           tl_Wstar(i)=-(tl_fac2-tl_bulk_psiu(tl_fac1,fac1,pi))*Wstar(i) &
      &                                 /(fac2-bulk_psiu(fac1,pi))
-          fac1=blk_ZT/L10(i)
+          fac1=blk_ZT(ng)/L10(i)
           tl_fac1=-tl_L10(i)*fac1/L10(i)
-          fac2=LOG(blk_ZT/ZoT10(i))
+          fac2=LOG(blk_ZT(ng)/ZoT10(i))
           tl_fac2=-tl_ZoT10(i)/ZoT10(i)
 !>          Tstar(i)=-(delT(i)-delTc(i))*vonKar/                        &
 !>     &             (fac2-bulk_psit(fac1,pi))
           Tstar(i)=-(delT(i)-delTc(i))*vonKar/                          &
-     &             (LOG(blk_ZT/ZoT10(i))-bulk_psit(blk_ZT/L10(i),pi))
+     &             (LOG(blk_ZT(ng)/ZoT10(i))-                           &
+     &              bulk_psit(blk_ZT(ng)/L10(i),pi))
           tl_Tstar(i)=-(tl_delT(i)-tl_delTc(i))*vonKar/                 &
      &             (fac2-bulk_psit(fac1,pi))-                           &
      &             (tl_fac2-tl_bulk_psit(tl_fac1,fac1,pi))*Tstar(i)/    &
      &             (fac2-bulk_psit(fac1,pi))
-          fac1=blk_ZQ/L10(i)
+          fac1=blk_ZQ(ng)/L10(i)
           tl_fac1=-tl_L10(i)*fac1/L10(i)
-          fac2=LOG(blk_ZQ/ZoT10(i))
+          fac2=LOG(blk_ZQ(ng)/ZoT10(i))
           tl_fac2=-tl_ZoT10(i)/ZoT10(i)
 !>          Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                        &
 !>     &             (fac2-bulk_psit(fac1,pi))
           Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                          &
-     &             (LOG(blk_ZQ/ZoT10(i))-bulk_psit(blk_ZQ/L10(i),pi))
+     &             (LOG(blk_ZQ(ng)/ZoT10(i))-                           &
+     &              bulk_psit(blk_ZQ(ng)/L10(i),pi))
           tl_Qstar(i)=-(tl_delQ(i)-tl_delQc(i))*vonKar/                 &
      &             (fac2-bulk_psit(fac1,pi))-                           &
      &             (tl_fac2-tl_bulk_psit(tl_fac1,fac1,pi))*Qstar(i)/    &
@@ -785,12 +788,12 @@
      &          *0.6_r8*5.5e-5_r8*tl_Rr(i)/Rr(i)**1.6
             ZoT(i)=ZoQ(i)
             tl_ZoT(i)=tl_ZoQ(i)
-            ZoL(i)=vonKar*g*blk_ZW*                                     &
+            ZoL(i)=vonKar*g*blk_ZW(ng)*                                 &
      &             (Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
      &                        0.61_r8*TairK(i)*Qstar(i))/               &
      &             (TairK(i)*Wstar(i)*Wstar(i)*                         &
      &             (1.0_r8+0.61_r8*Q(i))+eps)
-            tl_ZoL(i)=vonKar*g*blk_ZW*                                  &
+            tl_ZoL(i)=vonKar*g*blk_ZW(ng)*                              &
      &             (tl_Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                  &
      &                        0.61_r8*TairK(i)*tl_Qstar(i))/            &
      &             (TairK(i)*Wstar(i)*Wstar(i)*                         &
@@ -800,22 +803,22 @@
      &             (TairK(i)*Wstar(i)*Wstar(i)*                         &
      &             (1.0_r8+0.61_r8*Q(i))+eps) 
 
-            L(i)=blk_ZW/(ZoL(i)+eps)
+            L(i)=blk_ZW(ng)/(ZoL(i)+eps)
             tl_L(i)=-tl_ZoL(i)*L(i)/(ZoL(i)+eps)
 !
 !  Evaluate stability functions at Z/L.
 !
             Wpsi(i)=bulk_psiu(ZoL(i),pi)
             tl_Wpsi(i)=tl_bulk_psiu(tl_ZoL(i),ZoL(i),pi)
-            fac=blk_ZT/L(i)
+            fac=blk_ZT(ng)/L(i)
             tl_fac=-tl_L(i)*fac/L(i)
 !>            Tpsi(i)=bulk_psit(fac,pi)
-            Tpsi(i)=bulk_psit(blk_ZT/L(i),pi)
+            Tpsi(i)=bulk_psit(blk_ZT(ng)/L(i),pi)
             tl_Tpsi(i)=tl_bulk_psit(tl_fac,fac,pi)
-            fac=blk_ZQ/L(i)
+            fac=blk_ZQ(ng)/L(i)
             tl_fac=-tl_L(i)*fac/L(i)
 !>            Qpsi(i)=bulk_psit(fac,pi)
-            Qpsi(i)=bulk_psit(blk_ZQ/L(i),pi)
+            Qpsi(i)=bulk_psit(blk_ZQ(ng)/L(i),pi)
             tl_Qpsi(i)=tl_bulk_psit(tl_fac,fac,pi)
 # ifdef COOL_SKIN
             Cwet(i)=0.622_r8*Hlv(i,j)*Qsea(i)/                          &
@@ -831,7 +834,7 @@
 !
 !  Compute wind scaling parameters, Wstar.
 !
-            fac1=blk_ZW/ZoW(i)
+            fac1=blk_ZW(ng)/ZoW(i)
             tl_fac1=-tl_ZoW(i)*fac1/ZoW(i)
             fac2=LOG(fac1)
             tl_fac2=tl_fac1/fac1
@@ -840,25 +843,25 @@
      &             (tl_fac2-tl_Wpsi(i))*fac3/(fac2-Wpsi(i))
 !>            Wstar(i)=MAX(eps,fac3)
             Wstar(i)=MAX(eps,delW(i)*vonKar/                            &
-     &               (LOG(blk_ZW/ZoW(i))-Wpsi(i)))
+     &               (LOG(blk_ZW(ng)/ZoW(i))-Wpsi(i)))
             
             tl_Wstar(i)=(0.5_r8-SIGN(0.5_r8,eps-fac3))*tl_fac3
-            fac1=blk_ZT/ZoT(i)
+            fac1=blk_ZT(ng)/ZoT(i)
             tl_fac1=-tl_ZoT(i)*fac1/ZoT(i)
             fac2=LOG(fac1)
             tl_fac2=tl_fac1/fac1
 !>            Tstar(i)=-(delT(i)-delTc(i))*vonKar/(fac2-Tpsi(i))
             Tstar(i)=-(delT(i)-delTc(i))*vonKar/                        &
-     &               (LOG(blk_ZT/ZoT(i))-Tpsi(i))
+     &               (LOG(blk_ZT(ng)/ZoT(i))-Tpsi(i))
             tl_Tstar(i)=-(tl_delT(i)-tl_delTc(i))*vonKar/(fac2-Tpsi(i))-&
      &           (tl_fac2-tl_Tpsi(i))*Tstar(i)/(fac2-Tpsi(i))
-            fac1=blk_ZQ/ZoQ(i)
+            fac1=blk_ZQ(ng)/ZoQ(i)
             tl_fac1=-tl_ZoQ(i)*fac1/ZoQ(i)
             fac2=LOG(fac1)
             tl_fac2=tl_fac1/fac1
 !>            Qstar(i)=-(delQ(i)-delQc(i))*vonKar/(fac2-Qpsi(i))
             Qstar(i)=-(delQ(i)-delQc(i))*vonKar/                        &
-     &               (LOG(blk_ZQ/ZoQ(i))-Qpsi(i))
+     &               (LOG(blk_ZQ(ng)/ZoQ(i))-Qpsi(i))
             tl_Qstar(i)=-(tl_delQ(i)-tl_delQc(i))*vonKar/(fac2-Qpsi(i))-&
      &                    (tl_fac2-tl_Qpsi(i))*Qstar(i)/(fac2-Qpsi(i))
     

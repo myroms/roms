@@ -68,6 +68,7 @@
 # define ANA_BSFLUX
 # define ANA_SPFLUX
 # define ANA_SRFLUX
+# undef  ANA_VMIX
 
 # define GLS_MIXING
 # if defined GLS_MIXING
@@ -75,8 +76,8 @@
 #  define N2S2_HORAVG
 #  undef CRAIG_BANNER
 #  undef CHARNOK
-#  define ZOS_HSIG
-#  define TKE_WAVEDISS
+#  undef ZOS_HSIG
+#  undef TKE_WAVEDISS
 # endif
 
 #endif

@@ -33,11 +33,13 @@
           LDFLAGS := 
                AR := ar
           ARFLAGS := -r
+            MKDIR := mkdir -p
                RM := rm -f
            RANLIB := ranlib
              PERL := perl
+             TEST := test
 
-        MDEPFLAGS := --cpp --fext=f90 --file=-
+        MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
 # Library locations, can be overridden by environment variables.
@@ -69,4 +71,12 @@ endif
 # Turn off bounds checking for function def_var, as "dimension(*)"
 # declarations confuse Gnu Fortran 95 bounds-checking code.
 
-def_var.o: FFLAGS += -fno-bounds-check
+$(SCRATCH_DIR)/def_var.o: FFLAGS += -fno-bounds-check
+
+#
+# Set free form format in source files to allow long string for
+# local directory and compilation flags inside the code.
+#
+
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form

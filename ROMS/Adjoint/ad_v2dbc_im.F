@@ -248,7 +248,7 @@
           END DO
         END IF
 
-#  elif defined EAST_M2FLATHER || defined WEST_M2REDUCED
+#  elif defined EAST_M2FLATHER || defined EAST_M2REDUCED
 !
 !  Eastern edge, Chapman boundary condition.
 !
@@ -594,7 +594,9 @@
 !
         DO i=Istr,Iend
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                     &
-     &                        GRID(ng)%h(i,Jend+1)))
+     &                        zeta(i,Jend  ,know)+                      &
+     &                        GRID(ng)%h(i,Jend+1)+                     &
+     &                        zeta(i,Jend+1,know)))
           Ce=SQRT(g*cff)
 #   ifdef MASKING
 !>        tl_vbar(i,Jend+1,kout)=tl_vbar(i,Jend+1,kout)*                &

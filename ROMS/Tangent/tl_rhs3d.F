@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This subroutine evaluates tangent linear right-hand-side terms      !
 !  for 3D momentum and tracers equations                               !
@@ -38,6 +38,9 @@
 # endif
       USE mod_forces
       USE mod_grid
+# ifdef NEARSHORE_MELLOR
+      USE mod_mixing
+# endif
 # if defined ASSIMILATION || defined NUDGING
       USE mod_obs
 # endif
@@ -154,6 +157,16 @@
 # ifndef SET_ZETA
      &                    COUPLING(ng) % tl_Zt_avg1,                    &
 # endif
+# ifdef NEARSHORE_MELLOR
+     &                    OCEAN(ng) % u_stokes,                         &
+     &                    OCEAN(ng) % tl_u_stokes,                      &
+     &                    OCEAN(ng) % v_stokes,                         &
+     &                    OCEAN(ng) % tl_v_stokes,                      &
+     &                    OCEAN(ng) % tl_rulag3d,                       &
+     &                    OCEAN(ng) % tl_rvlag3d,                       &
+     &                    MIXING(ng) % tl_rustr3d,                      &
+     &                    MIXING(ng) % tl_rvstr3d,                      &
+# endif
      &                    COUPLING(ng) % tl_rufrc,                      &
      &                    COUPLING(ng) % tl_rvfrc,                      &
 # ifdef DIAGNOSTICS_UV
@@ -211,25 +224,31 @@
      &                          M3nudgcof, uclm, vclm,                  &
 # endif
 # if defined NUDGING_UVsur || defined NUDGING_UV
-!!   &                         EobsUV, Uobs, Vobs,                      &
+!!   &                          EobsUV, Uobs, Vobs,                     &
 # endif
-     &                         u, tl_u,                                 &
-     &                         v, tl_v,                                 &
-     &                         W, tl_W,                                 &
+     &                          u, tl_u,                                &
+     &                          v, tl_v,                                &
+     &                          W, tl_W,                                &
 # ifndef SET_ZETA
-     &                         tl_Zt_avg1,                              &
+     &                          tl_Zt_avg1,                             &
 # endif
-     &                         tl_rufrc,                                &
-     &                         tl_rvfrc,                                &
+# ifdef NEARSHORE_MELLOR
+     &                          u_stokes, tl_u_stokes,                  &
+     &                          v_stokes, tl_v_stokes,                  &
+     &                          tl_rulag3d, tl_rvlag3d,                 &
+     &                          tl_rustr3d, tl_rvstr3d,                 &
+# endif
+     &                          tl_rufrc,                               &
+     &                          tl_rvfrc,                               &
 # ifdef DIAGNOSTICS_UV
-!!   &                         DiaRUfrc, DiaRVfrc,                      &
-!!   &                         DiaRU, DiaRV,                            &
+!!   &                          DiaRUfrc, DiaRVfrc,                     &
+!!   &                          DiaRU, DiaRV,                           &
 # endif
 # ifdef SET_ZETA
-     &                         tl_ru, tl_rv)
+     &                          tl_ru, tl_rv)
 # else
-     &                         tl_ru, tl_rv,                            &
-     &                         tl_zeta)
+     &                          tl_ru, tl_rv,                           &
+     &                          tl_zeta)
 # endif
 !***********************************************************************
 !
@@ -298,6 +317,16 @@
 #  ifndef SET_ZETA
       real(r8), intent(in) :: tl_Zt_avg1(LBi:,LBj:)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: v_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_u_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_v_stokes(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_rulag3d(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_rvlag3d(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_rustr3d(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_rvstr3d(LBi:,LBj:,:)
+#  endif
 #  ifdef DIAGNOSTICS_UV
 !!    real(r8), intent(inout) :: DiaRUfrc(LBi:,LBj:,:,:)
 !!    real(r8), intent(inout) :: DiaRVfrc(LBi:,LBj:,:,:)
@@ -357,6 +386,16 @@
       real(r8), intent(in) :: tl_W(LBi:UBi,LBj:UBj,0:N(ng))
 #  ifndef SET_ZETA
       real(r8), intent(in) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+      real(r8), intent(in) :: u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: v_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_u_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_v_stokes(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_rulag3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_rvlag3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_rustr3d(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: tl_rvstr3d(LBi:UBi,LBj:UBj,N(ng))
 #  endif
 #  ifdef DIAGNOSTICS_UV
 !!    real(r8), intent(inout) :: DiaRUfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
@@ -447,11 +486,23 @@
 !
 #  ifdef DIAGNOSTICS_UV
 !!    DO k=1,N(ng)
-!!      DO j=JstrV-1,Jend
-!!        DO i=IstrU-1,Iend
+!!      DO j=Jstr,Jend
+!!        DO i=Istr,Iend
 !!          DiaRU(i,j,k,M3vvis)=0.0_r8
 !!          DiaRV(i,j,k,M3vvis)=0.0_r8
 !!        END DO
+!!      END DO
+!!    END DO
+!!    DO j=Jstr,Jend
+!!      DO i=IstrU,Iend
+!!        DiaRUfrc(i,j,3,M2sstr)=0.0_r8
+!!        DiaRUfrc(i,j,3,M2bstr)=0.0_r8
+!!      END DO
+!!    END DO
+!!    DO j=JstrV,Jend
+!!      DO i=Istr,Iend
+!!        DiaRVfrc(i,j,3,M2sstr)=0.0_r8
+!!        DiaRVfrc(i,j,3,M2bstr)=0.0_r8
 !!      END DO
 !!    END DO
 #  endif
@@ -472,7 +523,7 @@
       DO j=Jstr,Jend
         DO i=IstrU,Iend
           cff=0.25_r8*(pm(i-1,j)+pm(i,j))*                              &
-     &                (pn(i-1,j)+pn(i,j)))
+     &                (pn(i-1,j)+pn(i,j))
           cff1=1.0_r8/(cff*(wrk(i-1,j)+wrk(i,j)))
           tl_cff1=-cff1*cff1*cff*(tl_wrk(i-1,j)+tl_wrk(i,j))
           Uwrk(i,j)=sustr(i,j)*cff1
@@ -506,6 +557,7 @@
             tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)+tl_cff
 #  ifdef DIAGNOSTICS_UV
 !!          DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)+cff
+!!          DiaRUfrc(i,j,3,M2sstr)=DiaRUfrc(i,j,3,M2sstr)+cff
 #  endif
           END DO
         END DO
@@ -523,6 +575,7 @@
             tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)+tl_cff
 #  ifdef DIAGNOSTICS_UV
 !!          DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)+cff
+!!          DiaRVfrc(i,j,3,M2sstr)=DiaRVfrc(i,j,3,M2sstr)+cff
 #  endif
           END DO
         END DO
@@ -582,6 +635,7 @@
             tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)-tl_cff
 #  ifdef DIAGNOSTICS_UV
 !!          DiaRU(i,j,k,nrhs,M3vvis)=DiaRU(i,j,k,nrhs,M3vvis)-cff
+!!          DiaRUfrc(i,j,3,M2bstr)=DiaRUfrc(i,j,3,M2bstr)-cff
 #  endif
           END DO
         END DO
@@ -599,6 +653,7 @@
             tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)-tl_cff
 #  ifdef DIAGNOSTICS_UV
 !!          DiaRV(i,j,k,nrhs,M3vvis)=DiaRV(i,j,k,nrhs,M3vvis)-cff
+!!          DiaRVfrc(i,j,3,M2bstr)=DiaRVfrc(i,j,3,M2bstr)-cff
 #  endif
           END DO
         END DO
@@ -621,8 +676,16 @@
 #  endif
 #  if (defined CURVGRID && defined UV_ADV)
      &         +0.5_r8*((v(i,j  ,k,nrhs)+                               &
+#   ifdef NEARSHORE_MELLOR
+     &                   v_stokes(i,j  ,k)+                             &
+     &                   v_stokes(i,j+1,k)+                             &
+#   endif
      &                   v(i,j+1,k,nrhs))*dndx(i,j)-                    &
      &                  (u(i  ,j,k,nrhs)+                               &
+#   ifdef NEARSHORE_MELLOR
+     &                   u_stokes(i  ,j,k)+                             &
+     &                   u_stokes(i+1,j,k)+                             &
+#   endif
      &                   u(i+1,j,k,nrhs))*dmde(i,j))                    &
 #  endif
      &         )
@@ -632,8 +695,16 @@
 #  endif
 #  if (defined CURVGRID && defined UV_ADV)
      &            +0.5_r8*((v(i,j  ,k,nrhs)+                            &
+#   ifdef NEARSHORE_MELLOR
+     &                      v_stokes(i,j  ,k)+                          &
+     &                      v_stokes(i,j+1,k)+                          &
+#   endif
      &                      v(i,j+1,k,nrhs))*dndx(i,j)-                 &
      &                     (u(i  ,j,k,nrhs)+                            &
+#   ifdef NEARSHORE_MELLOR
+     &                      u_stokes(i  ,j,k)+                          &
+     &                      u_stokes(i+1,j,k)+                          &
+#   endif
      &                      u(i+1,j,k,nrhs))*dmde(i,j))                 &
 #  endif
      &            )
@@ -641,31 +712,71 @@
             tl_cff=tl_cff+                                              &
      &             0.25_r8*Hz(i,j,k)*                                   &
      &             ((tl_v(i,j  ,k,nrhs)+                                &
+#   ifdef NEARSHORE_MELLOR
+     &               tl_v_stokes(i,j  ,k)+                              &
+     &               tl_v_stokes(i,j+1,k)+                              &
+#   endif
      &               tl_v(i,j+1,k,nrhs))*dndx(i,j)-                     &
      &              (tl_u(i  ,j,k,nrhs)+                                &
+#   ifdef NEARSHORE_MELLOR
+     &               tl_u_stokes(i  ,j,k)+                              &
+     &               tl_u_stokes(i+1,j,k)+                              &
+#   endif
      &               tl_u(i+1,j,k,nrhs))*dmde(i,j))
 #  endif
 !>          UFx(i,j)=cff*(v(i,j  ,k,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+!>   &                    v_stokes(i,j  ,k)+                            &
+!>   &                    v_stokes(i,j+1,k)+                            &
+#   endif
 !>   &                    v(i,j+1,k,nrhs))
 !>
             tl_UFx(i,j)=tl_cff*(v(i,j  ,k,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                          v_stokes(i,j  ,k)+                      &
+     &                          v_stokes(i,j+1,k)+                      &
+#   endif
      &                          v(i,j+1,k,nrhs))+                       &
      &                  cff*(tl_v(i,j  ,k,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                       tl_v_stokes(i,j  ,k)+                      &
+     &                       tl_v_stokes(i,j+1,k)+                      &
+#   endif
      &                       tl_v(i,j+1,k,nrhs))
 !>          VFe(i,j)=cff*(u(i  ,j,k,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+!>   &                    u_stokes(i  ,j,k)+                            &
+!>   &                    u_stokes(i+1,j,k)+                            &
+#   endif
 !>   &                    u(i+1,j,k,nrhs))
 !>
             tl_VFe(i,j)=tl_cff*(u(i  ,j,k,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                          u_stokes(i  ,j,k)+                      &
+     &                          u_stokes(i+1,j,k)+                      &
+#   endif
      &                          u(i+1,j,k,nrhs))+                       &
      &                  cff*(tl_u(i  ,j,k,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                       tl_u_stokes(i  ,j,k)+                      &
+     &                       tl_u_stokes(i+1,j,k)+                      &
+#   endif
      &                       tl_u(i+1,j,k,nrhs))
 #  ifdef DIAGNOSTICS_UV
 #   ifdef UV_COR
 !!          Uwrk(i,j)=0.5_r8*Hz(i,j,k)*fomn(i,j)*                       &
 !!   &                (v(i,j  ,k,nrhs)+                                 &
+#    ifdef NEARSHORE_MELLOR
+!!   &                 v_stokes(i,j  ,k)+                               &
+!!   &                 v_stokes(i,j+1,k)+                               &
+#    endif
 !!   &                 v(i,j+1,k,nrhs))
 !!          Vwrk(i,j)=0.5_r8*Hz(i,j,k)*fomn(i,j)*                       &
 !!   &                (u(i  ,j,k,nrhs)+                                 &
+#    ifdef NEARSHORE_MELLOR
+!!   &                 u_stokes(i  ,j,k)+                               &
+!!   &                 u_stokes(i+1,j,k)+                               &
+#    endif
 !!   &                 u(i+1,j,k,nrhs))
 #   else
 !!          Uwrk(i,j)=0.0_r8
@@ -750,6 +861,7 @@
          END DO
        END DO
 # endif
+
 # if defined NUDGING_UVsur || defined NUDGING_UV
 !!
 !!----------------------------------------------------------------------
@@ -800,16 +912,28 @@
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
 !>          UFx(i,j)=0.25_r8*(u(i  ,j,k,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+!>   &                        u_stokes(i  ,j,k)+                        &
+!>   &                        u_stokes(i+1,j,k)+                        &
+#   endif
 !>   &                        u(i+1,j,k,nrhs))*                         &
 !>   &                       (Huon(i  ,j,k)+                            &
 !>   &                        Huon(i+1,j,k))
 !>
             tl_UFx(i,j)=0.25_r8*                                        &
      &                  ((tl_u(i  ,j,k,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                    tl_u_stokes(i  ,j,k)+                         &
+     &                    tl_u_stokes(i+1,j,k)+                         &
+#   endif
      &                    tl_u(i+1,j,k,nrhs))*                          &
      &                   (Huon(i  ,j,k)+                                &
      &                    Huon(i+1,j,k))+                               &
      &                   (u(i  ,j,k,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                    u_stokes(i  ,j,k)+                            &
+     &                    u_stokes(i+1,j,k)+                            &
+#   endif
      &                    u(i+1,j,k,nrhs))*                             &
      &                   (tl_Huon(i  ,j,k)+                             &
      &                    tl_Huon(i+1,j,k)))
@@ -818,16 +942,28 @@
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
 !>          UFe(i,j)=0.25_r8*(u(i,j-1,k,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+!>   &                        u_stokes(i,j-1,k)+                        &
+!>   &                        u_stokes(i,j  ,k)+                        &
+#   endif
 !>   &                        u(i,j  ,k,nrhs))*                         &
 !>   &                       (Hvom(i-1,j,k)+                            &
 !>   &                        Hvom(i  ,j,k))
 !>
             tl_UFe(i,j)=0.25_r8*                                        &
      &                  ((tl_u(i,j-1,k,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                    tl_u_stokes(i,j-1,k)+                         &
+     &                    tl_u_stokes(i,j  ,k)+                         &
+#   endif
      &                    tl_u(i,j  ,k,nrhs))*                          &
      &                   (Hvom(i-1,j,k)+                                &
      &                    Hvom(i  ,j,k))+                               &
      &                   (u(i,j-1,k,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                    u_stokes(i,j-1,k)+                            &
+     &                    u_stokes(i,j  ,k)+                            &
+#   endif
      &                    u(i,j  ,k,nrhs))*                             &
      &                   (tl_Hvom(i-1,j,k)+                             &
      &                    tl_Hvom(i  ,j,k)))
@@ -836,16 +972,28 @@
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
 !>          VFx(i,j)=0.25_r8*(v(i-1,j,k,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+!>   &                        v_stokes(i-1,j,k)+                        &
+!>   &                        v_stokes(i  ,j,k)+                        &
+#   endif
 !>   &                        v(i  ,j,k,nrhs))*                         &
 !>   &                       (Huon(i,j-1,k)+                            &
 !>                            Huon(i,j  ,k))
 !>
             tl_VFx(i,j)=0.25_r8*                                        &
      &                  ((tl_v(i-1,j,k,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                    tl_v_stokes(i-1,j,k)+                         &
+     &                    tl_v_stokes(i  ,j,k)+                         &
+#   endif
      &                    tl_v(i  ,j,k,nrhs))*                          &
      &                   (Huon(i,j-1,k)+                                &
      &                    Huon(i,j  ,k))+                               &
      &                   (v(i-1,j,k,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                    v_stokes(i-1,j,k)+                            &
+     &                    v_stokes(i  ,j,k)+                            &
+#   endif
      &                    v(i  ,j,k,nrhs))*                             &
      &                   (tl_Huon(i,j-1,k)+                             &
      &                    tl_Huon(i,j  ,k)))
@@ -854,16 +1002,28 @@
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
 !>          VFe(i,j)=0.25_r8*(v(i,j  ,k,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+!>   &                        v_stokes(i,j  ,k)+                        &
+!>   &                        v_stokes(i,j+1,k)+                        &
+#   endif
 !>   &                        v(i,j+1,k,nrhs))*                         &
 !>   &                       (Hvom(i,j  ,k)+                            &
 !>   &                        Hvom(i,j+1,k))
 !>
             tl_VFe(i,j)=0.25_r8*                                        &
      &                  ((tl_v(i,j  ,k,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                    tl_v_stokes(i,j  ,k)+                         &
+     &                    tl_v_stokes(i,j+1,k)+                         &
+#   endif
      &                    tl_v(i,j+1,k,nrhs))*                          &
      &                   (Hvom(i,j  ,k)+                                &
      &                    Hvom(i,j+1,k))+                               &
      &                   (v(i,j  ,k,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                    v_stokes(i,j  ,k)+                            &
+     &                    v_stokes(i,j+1,k)+                            &
+#   endif
      &                    v(i,j+1,k,nrhs))*                             &
      &                   (tl_Hvom(i,j  ,k)+                             &
      &                    tl_Hvom(i,j+1,k)))
@@ -877,9 +1037,17 @@
 #   endif
         DO j=Jstr,Jend
           DO i=IU_RANGE
-            uxx (i,j)=u(i-1,j,k,nrhs)-2.0_r8*u(i,j,k,nrhs)+             &
-     &                u(i+1,j,k,nrhs)
-            tl_uxx (i,j)=tl_u(i-1,j,k,nrhs)-2.0_r8*tl_u(i,j,k,nrhs)+    &
+            uxx(i,j)=u(i-1,j,k,nrhs)-2.0_r8*u(i,j,k,nrhs)+              &
+#   ifdef NEARSHORE_MELLOR
+     &               u_stokes(i-1,j,k)-2.0_r8*u_stokes(i,j,k)+          &
+     &               u_stokes(i+1,j,k)+                                 &
+#   endif
+     &               u(i+1,j,k,nrhs)
+            tl_uxx(i,j)=tl_u(i-1,j,k,nrhs)-2.0_r8*tl_u(i,j,k,nrhs)+     &
+#   ifdef NEARSHORE_MELLOR
+     &                  tl_u_stokes(i-1,j,k)-2.0_r8*tl_u_stokes(i,j,k)+ &
+     &                  tl_u_stokes(i+1,j,k)+                           &
+#   endif
      &                   tl_u(i+1,j,k,nrhs)
             Huxx(i,j)=Huon(i-1,j,k)-2.0_r8*Huon(i,j,k)+Huon(i+1,j,k)
             tl_Huxx(i,j)=tl_Huon(i-1,j,k)-2.0_r8*tl_Huon(i,j,k)+        &
@@ -913,6 +1081,10 @@
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
 !>          UFx(i,j)=0.25_r8*(u(i  ,j,k,nrhs)+                          &
+#    ifdef NEARSHORE_MELLOR
+!>   &                        u_stokes(i  ,j,k)+                        &
+!>   &                        u_stokes(i+1,j,k)+                        &
+#    endif
 !>   &                        u(i+1,j,k,nrhs)-                          &
 !>   &                        cff*(uxx (i  ,j)+                         &
 !>   &                             uxx (i+1,j)))*                       &
@@ -922,6 +1094,10 @@
 !>   &                             Huxx(i+1,j)))
 !>
             tl_UFx(i,j)=0.25_r8*((tl_u(i  ,j,k,nrhs)+                   &
+#    ifdef NEARSHORE_MELLOR
+     &                            tl_u_stokes(i  ,j,k)+                 &
+     &                            tl_u_stokes(i+1,j,k)+                 &
+#    endif
      &                            tl_u(i+1,j,k,nrhs)-                   &
      &                            cff*(tl_uxx (i  ,j)+                  &
      &                                 tl_uxx (i+1,j)))*                &
@@ -930,6 +1106,10 @@
      &                            cff*(Huxx(i  ,j)+                     &
      &                                 Huxx(i+1,j)))+                   &
      &                           (u(i  ,j,k,nrhs)+                      &
+#    ifdef NEARSHORE_MELLOR
+     &                            u_stokes(i  ,j,k)+                    &
+     &                            u_stokes(i+1,j,k)+                    &
+#    endif
      &                            u(i+1,j,k,nrhs)-                      &
      &                            cff*(uxx (i  ,j)+                     &
      &                                 uxx (i+1,j)))*                   &
@@ -946,8 +1126,18 @@
 !
         DO j=Jstr,Jend
           DO i=IstrU-1,Iend
-            cff1=u(i,j,k,nrhs)+u(i+1,j,k,nrhs)
-            tl_cff1=tl_u(i,j,k,nrhs)+tl_u(i+1,j,k,nrhs)
+            cff1=u(i  ,j,k,nrhs)+                                       &
+#    ifdef NEARSHORE_MELLOR
+     &           u_stokes(i  ,j,k)+                                     &
+     &           u_stokes(i+1,j,k)+                                     &
+#    endif
+     &           u(i+1,j,k,nrhs)
+            tl_cff1=tl_u(i  ,j,k,nrhs)+                                 &
+#    ifdef NEARSHORE_MELLOR
+     &              tl_u_stokes(i  ,j,k)+                               &
+     &              tl_u_stokes(i+1,j,k)+                               &
+#    endif
+     &              tl_u(i+1,j,k,nrhs)
             IF (cff1.gt.0.0_r8) THEN
               cff=uxx(i,j)
               tl_cff=tl_uxx(i,j)
@@ -983,8 +1173,16 @@
         DO j=JU_RANGE
           DO i=IstrU,Iend
             uee(i,j)=u(i,j-1,k,nrhs)-2.0_r8*u(i,j,k,nrhs)+              &
+#   ifdef NEARSHORE_MELLOR
+     &               u_stokes(i,j-1,k)-2.0_r8*u_stokes(i,j,k)+          &
+     &               u_stokes(i,j+1,k)+                                 &
+#   endif
      &               u(i,j+1,k,nrhs)
             tl_uee(i,j)=tl_u(i,j-1,k,nrhs)-2.0_r8*tl_u(i,j,k,nrhs)+     &
+#   ifdef NEARSHORE_MELLOR
+     &                  tl_u_stokes(i,j-1,k)-2.0_r8*tl_u_stokes(i,j,k)+ &
+     &                  tl_u_stokes(i,j+1,k)+                           &
+#   endif
      &                  tl_u(i,j+1,k,nrhs)
           END DO
         END DO
@@ -1015,6 +1213,10 @@
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
 !>          UFe(i,j)=0.25_r8*(u(i,j  ,k,nrhs)+                          &
+#    ifdef NEARSHORE_MELLOR
+!>   &                        u_stokes(i,j  ,k)+                        &
+!>   &                        u_stokes(i,j-1,k)+                        &
+#    endif
 !>   &                        u(i,j-1,k,nrhs)-                          &
 !>   &                        cff*(uee (i,j  )+                         &
 !>   &                             uee (i,j-1)))*                       &
@@ -1024,6 +1226,10 @@
 !>   &                             Hvxx(i-1,j)))
 !>
             tl_UFe(i,j)=0.25_r8*((tl_u(i,j  ,k,nrhs)+                   &
+#    ifdef NEARSHORE_MELLOR
+     &                            tl_u_stokes(i,j  ,k)+                 &
+     &                            tl_u_stokes(i,j-1,k)+                 &
+#    endif
      &                            tl_u(i,j-1,k,nrhs)-                   &
      &                            cff*(tl_uee (i,j  )+                  &
      &                                 tl_uee (i,j-1)))*                &
@@ -1032,6 +1238,10 @@
      &                            cff*(Hvxx(i  ,j)+                     &
      &                                 Hvxx(i-1,j)))+                   &
      &                           (u(i,j  ,k,nrhs)+                      &
+#    ifdef NEARSHORE_MELLOR
+     &                            u_stokes(i,j  ,k)+                    &
+     &                            u_stokes(i,j-1,k)+                    &
+#    endif
      &                            u(i,j-1,k,nrhs)-                      &
      &                            cff*(uee (i,j  )+                     &
      &                                 uee (i,j-1)))*                   &
@@ -1044,8 +1254,18 @@
 #   else
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
-            cff1=u(i,j,k,nrhs)+u(i,j-1,k,nrhs)
-            tl_cff1=tl_u(i,j,k,nrhs)+tl_u(i,j-1,k,nrhs)
+            cff1=u(i,j  ,k,nrhs)+                                       &
+#    ifdef NEARSHORE_MELLOR
+     &           u_stokes(i,j  ,k)+                                     &
+     &           u_stokes(i,j-1,k)+                                     &
+#    endif
+     &           u(i,j-1,k,nrhs)
+            tl_cff1=tl_u(i,j,k,nrhs)+                                   &
+#    ifdef NEARSHORE_MELLOR
+     &              tl_u_stokes(i,j  ,k)+                               &
+     &              tl_u_stokes(i,j-1,k)+                               &
+#    endif
+     &              tl_u(i,j-1,k,nrhs)
             cff2=Hvom(i,j,k)+Hvom(i-1,j,k)
             tl_cff2=tl_Hvom(i,j,k)+tl_Hvom(i-1,j,k)
             IF (cff2.gt.0.0_r8) THEN
@@ -1077,8 +1297,16 @@
         DO j=JstrV,Jend
           DO i=IV_RANGE
             vxx(i,j)=v(i-1,j,k,nrhs)-2.0_r8*v(i,j,k,nrhs)+              &
+#   ifdef NEARSHORE_MELLOR
+     &               v_stokes(i-1,j,k)-2.0_r8*v_stokes(i,j,k)+          &
+     &               v_stokes(i+1,j,k)+                                 &
+#   endif
      &               v(i+1,j,k,nrhs)
             tl_vxx(i,j)=tl_v(i-1,j,k,nrhs)-2.0_r8*tl_v(i,j,k,nrhs)+     &
+#   ifdef NEARSHORE_MELLOR
+     &                  tl_v_stokes(i-1,j,k)-2.0_r8*tl_v_stokes(i,j,k)+ &
+     &                  tl_v_stokes(i+1,j,k)+                           &
+#   endif
      &                  tl_v(i+1,j,k,nrhs)
           END DO
         END DO
@@ -1112,6 +1340,10 @@
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
 !>          VFx(i,j)=0.25_r8*(v(i  ,j,k,nrhs)+                          &
+#    ifdef NEARSHORE_MELLOR
+!>   &                        v_stokes(i  ,j,k)+                        &
+!>   &                        v_stokes(i-1,j,k)+                        &
+#    endif
 !>   &                        v(i-1,j,k,nrhs)-                          &
 !>   &                        cff*(vxx (i  ,j)+                         &
 !>   &                             vxx (i-1,j)))*                       &
@@ -1121,6 +1353,10 @@
 !>   &                             Huee(i,j-1)))
 !>
             tl_VFx(i,j)=0.25_r8*((tl_v(i  ,j,k,nrhs)+                   &
+#    ifdef NEARSHORE_MELLOR
+     &                            tl_v_stokes(i  ,j,k)+                 &
+     &                            tl_v_stokes(i-1,j,k)+                 &
+#    endif
      &                            tl_v(i-1,j,k,nrhs)-                   &
      &                            cff*(tl_vxx (i  ,j)+                  &
      &                                 tl_vxx (i-1,j)))*                &
@@ -1129,6 +1365,10 @@
      &                            cff*(Huee(i,j  )+                     &
      &                                 Huee(i,j-1)))+                   &
      &                           (v(i  ,j,k,nrhs)+                      &
+#    ifdef NEARSHORE_MELLOR
+     &                            v_stokes(i  ,j,k)+                    &
+     &                            v_stokes(i-1,j,k)+                    &
+#    endif
      &                            v(i-1,j,k,nrhs)-                      &
      &                            cff*(vxx (i  ,j)+                     &
      &                                 vxx (i-1,j)))*                   &
@@ -1145,8 +1385,18 @@
 !
         DO j=JstrV,Jend
           DO i=Istr,Iend+1
-            cff1=v(i,j,k,nrhs)+v(i-1,j,k,nrhs)
-            tl_cff1=tl_v(i,j,k,nrhs)+tl_v(i-1,j,k,nrhs)
+            cff1=v(i  ,j,k,nrhs)+                                       &
+#    ifdef NEARSHORE_MELLOR
+     &           v_stokes(i  ,j,k)+                                     &
+     &           v_stokes(i-1,j,k)+                                     &
+#    endif
+     &           v(i-1,j,k,nrhs)
+            tl_cff1=tl_v(i  ,j,k,nrhs)+                                 &
+#    ifdef NEARSHORE_MELLOR
+     &              tl_v_stokes(i  ,j,k)+                               &
+     &              tl_v_stokes(i-1,j,k)+                               &
+#    endif
+     &              tl_v(i-1,j,k,nrhs)
             cff2=Huon(i,j,k)+Huon(i,j-1,k)
             tl_cff2=tl_Huon(i,j,k)+tl_Huon(i,j-1,k)
             IF (cff2.gt.0.0_r8) THEN
@@ -1178,8 +1428,16 @@
         DO j=JV_RANGE
           DO i=Istr,Iend
             vee(i,j)=v(i,j-1,k,nrhs)-2.0_r8*v(i,j,k,nrhs)+              &
+#   ifdef NEARSHORE_MELLOR
+     &               v_stokes(i,j-1,k)-2.0_r8*v_stokes(i,j,k)+          &
+     &               v_stokes(i,j+1,k)+                                 &
+#   endif
      &               v(i,j+1,k,nrhs)
             tl_vee(i,j)=tl_v(i,j-1,k,nrhs)-2.0_r8*tl_v(i,j,k,nrhs)+     &
+#   ifdef NEARSHORE_MELLOR
+     &                  tl_v_stokes(i,j-1,k)-2.0_r8*tl_v_stokes(i,j,k)+ &
+     &                  tl_v_stokes(i,j+1,k)+                           &
+#   endif
      &                  tl_v(i,j+1,k,nrhs)
             Hvee(i,j)=Hvom(i,j-1,k)-2.0_r8*Hvom(i,j,k)+Hvom(i,j+1,k)
             tl_Hvee(i,j)=tl_Hvom(i,j-1,k)-2.0_r8*tl_Hvom(i,j,k)+        &
@@ -1210,6 +1468,10 @@
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
 !>          VFe(i,j)=0.25_r8*(v(i,j,k,nrhs)+                            &
+#    ifdef NEARSHORE_MELLOR
+!>   &                        v_stokes(i,j  ,k)+                        &
+!>   &                        v_stokes(i,j+1,k)+                        &
+#    endif
 !>   &                        v(i,j+1,k,nrhs)-                          &
 !>   &                        cff*(vee (i,j  )+                         &
 !>   &                             vee (i,j+1)))*                       &
@@ -1219,6 +1481,10 @@
 !>   &                             Hvee(i,j+1)))
 !>
             tl_VFe(i,j)=0.25_r8*((tl_v(i,j  ,k,nrhs)+                   &
+#    ifdef NEARSHORE_MELLOR
+     &                            tl_v_stokes(i,j  ,k)+                 &
+     &                            tl_v_stokes(i,j+1,k)+                 &
+#    endif
      &                            tl_v(i,j+1,k,nrhs)-                   &
      &                            cff*(tl_vee (i,j  )+                  &
      &                                 tl_vee (i,j+1)))*                &
@@ -1227,6 +1493,10 @@
      &                            cff*(Hvee(i,j  )+                     &
      &                                 Hvee(i,j+1)))+                   &
      &                           (v(i,j  ,k,nrhs)+                      &
+#    ifdef NEARSHORE_MELLOR
+     &                            v_stokes(i,j  ,k)+                    &
+     &                            v_stokes(i,j+1,k)+                    &
+#    endif
      &                            v(i,j+1,k,nrhs)-                      &
      &                            cff*(vee (i,j  )+                     &
      &                                 vee (i,j+1)))*                   &
@@ -1239,8 +1509,18 @@
 #   else
         DO j=JstrV-1,Jend
           DO i=Istr,Iend
-            cff1=v(i,j,k,nrhs)+v(i,j+1,k,nrhs)
-            tl_cff1=tl_v(i,j,k,nrhs)+tl_v(i,j+1,k,nrhs)
+            cff1=v(i,j  ,k,nrhs)+                                       &
+#    ifdef NEARSHORE_MELLOR
+     &           v_stokes(i,j  ,k)+                                     &
+     &           v_stokes(i,j+1,k)+                                     &
+#    endif
+     &           v(i,j+1,k,nrhs)
+            tl_cff1=tl_v(i,j  ,k,nrhs)+                                 &
+#    ifdef NEARSHORE_MELLOR
+     &              tl_v_stokes(i,j  ,k)+                               &
+     &              tl_v_stokes(i,j+1,k)+                               &
+#    endif
+     &              tl_v(i,j+1,k,nrhs)
             IF (cff1.gt.0.0_r8) THEN
               cff=vee(i,j)
               tl_cff=tl_vee(i,j)
@@ -1311,6 +1591,36 @@
           END DO
         END DO
 # endif
+# ifdef NEARSHORE_MELLOR
+!
+!-----------------------------------------------------------------------
+!  Add in radiation stress terms. Convert stresses to m4/s2.
+!-----------------------------------------------------------------------
+!
+        DO j=Jstr,Jend
+          DO i=IstrU,Iend
+!>          ru(i,j,k,nrhs)=ru(i,j,k,nrhs)-                              &
+!>   &                     rustr3d(i,j,k)*om_u(i,j)*on_u(i,j)-          &
+!>   &                     rulag3d(i,j,k)
+!>
+            tl_ru(i,j,k,nrhs)=tl_ru(i,j,k,nrhs)-                        &
+     &                        tl_rustr3d(i,j,k)*om_u(i,j)*on_u(i,j)-    &
+     &                        tl_rulag3d(i,j,k)
+          END DO
+        END DO
+        DO j=JstrV,Jend
+          DO i=Istr,Iend
+!>          rv(i,j,k,nrhs)=rv(i,j,k,nrhs)-                              &
+!>   &                     rvstr3d(i,j,k)*om_v(i,j)*on_v(i,j)-          &
+!>   &                     rvlag3d(i,j,k)
+!>
+            tl_rv(i,j,k,nrhs)=tl_rv(i,j,k,nrhs)-                        &
+     &                        tl_rvstr3d(i,j,k)*om_v(i,j)*on_v(i,j)-    &
+     &                        tl_rvlag3d(i,j,k)
+          END DO
+        END DO
+# endif
+
       END DO K_LOOP
 !
       J_LOOP : DO j=Jstr,Jend
@@ -1343,7 +1653,12 @@
           DO i=IstrU,Iend
             cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
             FC(i,k)=cff*DC(i,k+1)
-            CF(i,k)=cff*(6.0_r8*(u(i,j,k+1,nrhs)-u(i,j,k,nrhs))-        &
+            CF(i,k)=cff*(6.0_r8*(u(i,j,k+1,nrhs)-
+#   ifdef NEARSHORE_MELLOR
+     &                           u_stokes(i,j,k  )+                     &
+     &                           u_stokes(i,j,k+1)-                     &
+#   endif
+     &                           u(i,j,k  ,nrhs))-                      &
      &                   DC(i,k)*CF(i,k-1))
           END DO
         END DO
@@ -1382,6 +1697,10 @@
             cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
             FC(i,k)=cff*DC(i,k+1)
             tl_CF(i,k)=cff*(6.0_r8*(tl_u(i,j,k+1,nrhs)-                 &
+#   ifdef NEARSHORE_MELLOR
+     &                              tl_u_stokes(i,j,k  )+               &
+     &                              tl_u_stokes(i,j,k+1)-               &
+#   endif
      &                              tl_u(i,j,k  ,nrhs))-                &
      &                      (tl_DC(i,k)*CF(i,k-1)+                      &
      &                       2.0_r8*(tl_DC(i,k)+tl_DC(i,k+1))*CF(i,k)+  &
@@ -1409,6 +1728,9 @@
 !>   &               cff2*(W(i+1,j,k)+                                  &
 !>   &                     W(i-2,j,k)))*                                &
 !>   &              (u(i,j,k,nrhs)+                                     &
+#   ifdef NEARSHORE_MELLOR
+!>   &               u_stokes(i,j,k)+                                   &
+#   endif
 !>   &               DC(i,k)*(cff3*CF(i,k  )+                           &
 !>   &                        cff4*CF(i,k-1)))
 !>
@@ -1417,6 +1739,9 @@
      &                  cff2*(tl_W(i+1,j,k)+                            &
      &                        tl_W(i-2,j,k)))*                          &
      &                 (u(i,j,k,nrhs)+                                  &
+#   ifdef NEARSHORE_MELLOR
+     &                  u_stokes(i,j,k)+                                &
+#   endif
      &                  DC(i,k)*(cff3*CF(i,k  )+                        &
      &                           cff4*CF(i,k-1)))+                      &
      &                 (cff1*(W(i  ,j,k)+                               &
@@ -1424,6 +1749,9 @@
      &                  cff2*(W(i+1,j,k)+                               &
      &                        W(i-2,j,k)))*                             &
      &                 (tl_u(i,j,k,nrhs)+                               &
+#   ifdef NEARSHORE_MELLOR
+     &                  tl_u_stokes(i,j,k)+                             &
+#   endif
      &                  DC(i,k)*(cff3*tl_CF(i,k  )+                     &
      &                           cff4*tl_CF(i,k-1))+                    &
      &                  tl_DC(i,k)*(cff3*CF(i,k  )+                     &
@@ -1442,24 +1770,64 @@
         DO k=1,N(ng)-1
           DO i=IstrU,Iend
 !>          FC(i,k)=0.25_r8*(u(i,j,k  ,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+!>   &                       u_stokes(i,j,k  )+                         &
+!>   &                       u_stokes(i,j,k+1)+                         &
+#   endif
 !>   &                       u(i,j,k+1,nrhs))*                          &
 !>   &              (W(i  ,j,k)+                                        &
 !>   &               W(i-1,j,k))
 !>
             tl_FC(i,k)=0.25_r8*((tl_u(i,j,k  ,nrhs)+                    &
+#   ifdef NEARSHORE_MELLOR
+     &                           tl_u_stokes(i,j,k  )+                  &
+     &                           tl_u_stokes(i,j,k+1)+                  &
+#   endif
      &                           tl_u(i,j,k+1,nrhs))*                   &
      &                          (W(i  ,j,k)+                            &
      &                           W(i-1,j,k))+                           &
      &                          (u(i,j,k  ,nrhs)+                       &
+#   ifdef NEARSHORE_MELLOR
+     &                           u_stokes(i,j,k  )+                     &
+     &                           u_stokes(i,j,k+1)+                     &
+#   endif
      &                           u(i,j,k+1,nrhs))*                      &
      &                          (tl_W(i  ,j,k)+                         &
      &                           tl_W(i-1,j,k)))
           END DO
         END DO
         DO i=IstrU,Iend
+#   ifdef SED_MORPH
+#    ifdef NEARSHORE_MELLOR
+!>        FC(i,0)=0.5_r8*(u(i,j,1,nrhs)+u_stokes(i,j,1))*               &
+!>   &            (W(i  ,j,0)+                                          &
+!>   &             W(i-1,j,0))
+!>
+          tl_FC(i,0)=0.5_r8*
+     &               ((tl_u(i,j,1,nrhs)+tl_u_stokes(i,j,1))*            &
+     &                (W(i  ,j,0)+                                      &
+     &                 W(i-1,j,0))+                                     &
+     &                (u(i,j,1,nrhs)+u_stokes(i,j,1))*                  &
+     &                (tl_W(i  ,j,0)+                                   &
+     &                 tl_W(i-1,j,0)))
+#    else
+!>        FC(i,0)=0.5_r8*u(i,j,1,nrhs)*                                 &
+!>   &            (W(i  ,j,0)+                                          &
+!>   &             W(i-1,j,0))
+!>
+          tl_FC(i,0)=0.5_r8*                                            &
+     &               (tl_u(i,j,1,nrhs)*                                 &
+     &                (W(i  ,j,0)+                                      &
+     &                 W(i-1,j,0))+                                     &
+     &                u(i,j,1,nrhs)*                                    &
+     &                (tl_W(i  ,j,0)+                                   &
+     &                 tl_W(i-1,j,0)))
+#    endif
+#   else
 !>        FC(i,0)=0.0_r8
 !>
           tl_FC(i,0)=0.0_r8
+#   endif
 !>        FC(i,N(ng))=0.0_r8
 !>
           tl_FC(i,N(ng))=0.0_r8
@@ -1470,21 +1838,45 @@
         DO k=2,N(ng)-2
           DO i=IstrU,Iend
 !>          FC(i,k)=(cff1*(u(i,j,k  ,nrhs)+                             &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     u_stokes(i,j,k  )+                           &
+!>   &                     u_stokes(i,j,k+1)+                           &
+#   endif
 !>   &                     u(i,j,k+1,nrhs))-                            &
 !>   &               cff2*(u(i,j,k-1,nrhs)+                             &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     u_stokes(i,j,k-1)+                           &
+!>   &                     u_stokes(i,j,k+2)+                           &
+#   endif
 !>   &                     u(i,j,k+2,nrhs)))*                           &
 !>   &              (W(i  ,j,k)+                                        &
 !>   &               W(i-1,j,k))
 !>
             tl_FC(i,k)=(cff1*(tl_u(i,j,k  ,nrhs)+                       &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_u_stokes(i,j,k  )+                     &
+     &                        tl_u_stokes(i,j,k+1)+                     &
+#   endif
      &                        tl_u(i,j,k+1,nrhs))-                      &
      &                  cff2*(tl_u(i,j,k-1,nrhs)+                       &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_u_stokes(i,j,k-1)+                     &
+     &                        tl_u_stokes(i,j,k+2)+                     &
+#   endif
      &                        tl_u(i,j,k+2,nrhs)))*                     &
      &                 (W(i  ,j,k)+                                     &
      &                  W(i-1,j,k))+                                    &
      &                 (cff1*(u(i,j,k  ,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+     &                        u_stokes(i,j,k  )+                        &
+     &                        u_stokes(i,j,k+1)+                        &
+#   endif
      &                        u(i,j,k+1,nrhs))-                         &
      &                  cff2*(u(i,j,k-1,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+     &                        u_stokes(i,j,k-1)+                        &
+     &                        u_stokes(i,j,k+2)+                        &
+#   endif
      &                        u(i,j,k+2,nrhs)))*                        &
      &                 (tl_W(i  ,j,k)+                                  &
      &                  tl_W(i-1,j,k))
@@ -1495,46 +1887,130 @@
 !>
           tl_FC(i,N(ng))=0.0_r8
 !>        FC(i,N(ng)-1)=(cff1*(u(i,j,N(ng)-1,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+!>   &                         u_stokes(i,j,N(ng)-1)+                   &
+!>   &                         u_stokes(i,j,N(ng)  )+                   &
+#   endif
 !>   &                         u(i,j,N(ng)  ,nrhs))-                    &
 !>   &                   cff2*(u(i,j,N(ng)-2,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+!>   &                         u_stokes(i,j,N(ng)-2)+                   &
+!>   &                         u_stokes(i,j,N(ng)  )+                   &
+#   endif
 !>   &                         u(i,j,N(ng)  ,nrhs)))*                   &
 !>   &                  (W(i  ,j,N(ng)-1)+                              &
 !>   &                   W(i-1,j,N(ng)-1))
 !>
           tl_FC(i,N(ng)-1)=(cff1*(tl_u(i,j,N(ng)-1,nrhs)+               &
+#   ifdef NEARSHORE_MELLOR
+     &                            tl_u_stokes(i,j,N(ng)-1)+             &
+     &                            tl_u_stokes(i,j,N(ng)  )+             &
+#   endif
      &                            tl_u(i,j,N(ng)  ,nrhs))-              &
      &                      cff2*(tl_u(i,j,N(ng)-2,nrhs)+               &
+#   ifdef NEARSHORE_MELLOR
+     &                            tl_u_stokes(i,j,N(ng)-2)+             &
+     &                            tl_u_stokes(i,j,N(ng)  )+             &
+#   endif
      &                            tl_u(i,j,N(ng)  ,nrhs)))*             &
      &                     (W(i  ,j,N(ng)-1)+                           &
      &                      W(i-1,j,N(ng)-1))+                          &
      &                     (cff1*(u(i,j,N(ng)-1,nrhs)+                  &
+#   ifdef NEARSHORE_MELLOR
+     &                            u_stokes(i,j,N(ng)-1)+                &
+     &                            u_stokes(i,j,N(ng)  )+                &
+#   endif
      &                            u(i,j,N(ng)  ,nrhs))-                 &
      &                      cff2*(u(i,j,N(ng)-2,nrhs)+                  &
+#   ifdef NEARSHORE_MELLOR
+     &                            u_stokes(i,j,N(ng)-2)+                &
+     &                            u_stokes(i,j,N(ng)  )+                &
+#   endif
      &                            u(i,j,N(ng)  ,nrhs)))*                &
      &                     (tl_W(i  ,j,N(ng)-1)+                        &
      &                      tl_W(i-1,j,N(ng)-1))
 !>        FC(i,1)=(cff1*(u(i,j,1,nrhs)+                                 &
+#   ifdef NEARSHORE_MELLOR
+!>   &                   u_stokes(i,j,1)+                               &
+!>   &                   u_stokes(i,j,2)+                               &
+#   endif
 !>   &                   u(i,j,2,nrhs))-                                &
 !>   &             cff2*(u(i,j,1,nrhs)+                                 &
+#   ifdef NEARSHORE_MELLOR
+!>   &                   u_stokes(i,j,1)+                               &
+!>   &                   u_stokes(i,j,3)+                               &
+#   endif
 !>   &                   u(i,j,3,nrhs)))*                               &
 !>   &            (W(i  ,j,1)+                                          &
 !>   &             W(i-1,j,1))
 !>
           tl_FC(i,1)=(cff1*(tl_u(i,j,1,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                      tl_u_stokes(i,j,1)+                         &
+     &                      tl_u_stokes(i,j,2)+                         &
+#   endif
      &                      tl_u(i,j,2,nrhs))-                          &
      &                cff2*(tl_u(i,j,1,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                      tl_u_stokes(i,j,1)+                         &
+     &                      tl_u_stokes(i,j,3)+                         &
+#   endif
      &                      tl_u(i,j,3,nrhs)))*                         &
      &               (W(i  ,j,1)+                                       &
      &                W(i-1,j,1))+                                      &
      &               (cff1*(u(i,j,1,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                      u_stokes(i,j,1)+                            &
+     &                      u_stokes(i,j,2)+                            &
+#   endif
      &                      u(i,j,2,nrhs))-                             &
      &                cff2*(u(i,j,1,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                      u_stokes(i,j,1)+                            &
+     &                      u_stokes(i,j,3)+                            &
+#   endif
      &                      u(i,j,3,nrhs)))*                            &
      &               (tl_W(i  ,j,1)+                                    &
      &                tl_W(i-1,j,1))
+#   ifdef SED_MORPH
+#    ifdef NEARSHORE_MELLOR
+!>        FC(i,0)=2.0_r8*                                               &
+!>   &            (cff1*(u(i,j,1,nrhs)+u_stokes(i,j,1))-                &
+!>   &             cff2*(u(i,j,2,nrhs)+u_stokes(i,j,2)))*               &
+!>   &            (W(i  ,j,0)+                                          &
+!>   &             W(i-1,j,0))
+!>
+          tl_FC(i,0)=2.0_r8*                                            &
+     &               ((cff1*(tl_u(i,j,1,nrhs)+tl_u_stokes(i,j,1))-      &
+     &                 cff2*(tl_u(i,j,2,nrhs)+tl_u_stokes(i,j,2)))*     &
+     &                (W(i  ,j,0)+                                      &
+     &                 W(i-1,j,0))+                                     &
+     &                (cff1*(u(i,j,1,nrhs)+u_stokes(i,j,1))-            &
+     &                 cff2*(u(i,j,2,nrhs)+u_stokes(i,j,2)))*           &
+     &                (tl_W(i  ,j,0)+                                   &
+     &                 tl_W(i-1,j,0)))
+#    else
+!>        FC(i,0)=2.0_r8*                                               &
+!>   &            (cff1*u(i,j,1,nrhs)-                                  &
+!>   &             cff2*u(i,j,2,nrhs))*                                 &
+!>   &            (W(i  ,j,0)+                                          &
+!>   &             W(i-1,j,0))
+!>
+          tl_FC(i,0)=2.0_r8*                                            &
+     &               ((cff1*tl_u(i,j,1,nrhs)-                           &
+     &                 cff2*tl_u(i,j,2,nrhs))*                          &
+     &                (W(i  ,j,0)+                                      &
+     &                 W(i-1,j,0))+                                     &
+     &                (cff1*u(i,j,1,nrhs)-                              &
+     &                 cff2*u(i,j,2,nrhs))*                             &
+     &                (tl_W(i  ,j,0)+                                   &
+     &                 tl_W(i-1,j,0)))
+#    endif
+#   else
 !>        FC(i,0)=0.0_r8
 !>
           tl_FC(i,0)=0.0_r8
+#   endif
         END DO
 #  else
         cff1=9.0_r8/16.0_r8
@@ -1542,8 +2018,16 @@
         DO k=2,N(ng)-2
           DO i=IstrU,Iend
 !>          FC(i,k)=(cff1*(u(i,j,k  ,nrhs)+                             &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     u_stokes(i,j,k  )+                           &
+!>   &                     u_stokes(i,j,k+1)+                           &
+#   endif
 !>   &                     u(i,j,k+1,nrhs))-                            &
 !>   &               cff2*(u(i,j,k-1,nrhs)+                             &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     u_stokes(i,j,k-1)+                           &
+!>   &                     u_stokes(i,j,k+2)+                           &
+#   endif
 !>   &                     u(i,j,k+2,nrhs)))*                           &
 !>   &              (cff1*(W(i  ,j,k)+                                  &
 !>   &                     W(i-1,j,k))-                                 &
@@ -1551,16 +2035,32 @@
 !>   &                     W(i-2,j,k)))
 !>
             tl_FC(i,k)=(cff1*(tl_u(i,j,k  ,nrhs)+                       &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_u_stokes(i,j,k  )+                     &
+     &                        tl_u_stokes(i,j,k+1)+                     &
+#   endif
      &                        tl_u(i,j,k+1,nrhs))-                      &
      &                  cff2*(tl_u(i,j,k-1,nrhs)+                       &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_u_stokes(i,j,k-1)+                     &
+     &                        tl_u_stokes(i,j,k+2)+                     &
+#   endif
      &                        tl_u(i,j,k+2,nrhs)))*                     &
      &                 (cff1*(W(i  ,j,k)+                               &
      &                        W(i-1,j,k))-                              &
      &                  cff2*(W(i+1,j,k)+                               &
      &                        W(i-2,j,k)))+                             &
      &                 (cff1*(u(i,j,k  ,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+     &                        u_stokes(i,j,k  )+                        &
+     &                        u_stokes(i,j,k+1)+                        &
+#   endif
      &                        u(i,j,k+1,nrhs))-                         &
      &                  cff2*(u(i,j,k-1,nrhs)+                          &
+#   ifdef NEARSHORE_MELLOR
+     &                        u_stokes(i,j,k-1)+                        &
+     &                        u_stokes(i,j,k+2)+                        &
+#   endif
      &                        u(i,j,k+2,nrhs)))*                        &
      &                 (cff1*(tl_W(i  ,j,k)+                            &
      &                        tl_W(i-1,j,k))-                           &
@@ -1573,8 +2073,16 @@
 !>
           tl_FC(i,N(ng))=0.0_r8
 !>        FC(i,N(ng)-1)=(cff1*(u(i,j,N(ng)-1,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+!>   &                         u_stokes(i,j,N(ng)-1)+                   &
+!>   &                         u_stokes(i,j,N(ng)  )+                   &
+#   endif
 !>   &                         u(i,j,N(ng)  ,nrhs))-                    &
 !>   &                   cff2*(u(i,j,N(ng)-2,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+!>   &                         u_stokes(i,j,N(ng)-2)+                   &
+!>   &                         u_stokes(i,j,N(ng)  )+                   &
+#   endif
 !>   &                         u(i,j,N(ng)  ,nrhs)))*                   &
 !>   &                  (cff1*(W(i  ,j,N(ng)-1)+                        &
 !>   &                         W(i-1,j,N(ng)-1))-                       &
@@ -1582,24 +2090,48 @@
 !>   &                         W(i-2,j,N(ng)-1)))
 !>
           tl_FC(i,N(ng)-1)=(cff1*(tl_u(i,j,N(ng)-1,nrhs)+               &
+#   ifdef NEARSHORE_MELLOR
+     &                            tl_u_stokes(i,j,N(ng)-1)+             &
+     &                            tl_u_stokes(i,j,N(ng)  )+             &
+#   endif
      &                            tl_u(i,j,N(ng)  ,nrhs))-              &
      &                      cff2*(tl_u(i,j,N(ng)-2,nrhs)+               &
+#   ifdef NEARSHORE_MELLOR
+     &                            tl_u_stokes(i,j,N(ng)-2)+             &
+     &                            tl_u_stokes(i,j,N(ng)  )+             &
+#   endif
      &                            tl_u(i,j,N(ng)  ,nrhs)))*             &
      &                     (cff1*(W(i  ,j,N(ng)-1)+                     &
      &                            W(i-1,j,N(ng)-1))-                    &
      &                      cff2*(W(i+1,j,N(ng)-1)+                     &
      &                            W(i-2,j,N(ng)-1)))+                   &
      &                     (cff1*(u(i,j,N(ng)-1,nrhs)+                  &
+#   ifdef NEARSHORE_MELLOR
+     &                            u_stokes(i,j,N(ng)-1)+                &
+     &                            u_stokes(i,j,N(ng)  )+                &
+#   endif
      &                            u(i,j,N(ng)  ,nrhs))-                 &
      &                      cff2*(u(i,j,N(ng)-2,nrhs)+                  &
+#   ifdef NEARSHORE_MELLOR
+     &                            u_stokes(i,j,N(ng)-2)+                &
+     &                            u_stokes(i,j,N(ng)  )+                &
+#   endif
      &                            u(i,j,N(ng)  ,nrhs)))*                &
      &                     (cff1*(tl_W(i  ,j,N(ng)-1)+                  &
      &                            tl_W(i-1,j,N(ng)-1))-                 &
      &                      cff2*(tl_W(i+1,j,N(ng)-1)+                  &
      &                            tl_W(i-2,j,N(ng)-1)))
 !>        FC(i,1)=(cff1*(u(i,j,1,nrhs)+                                 &
+#   ifdef NEARSHORE_MELLOR
+!>   &                   u_stokes(i,j,1)+                               &
+!>   &                   u_stokes(i,j,2)+                               &
+#   endif
 !>   &                   u(i,j,2,nrhs))-                                &
 !>   &             cff2*(u(i,j,1,nrhs)+                                 &
+#   ifdef NEARSHORE_MELLOR
+!>   &                   u_stokes(i,j,1)+                               &
+!>   &                   u_stokes(i,j,3)+                               &
+#   endif
 !>   &                   u(i,j,3,nrhs)))*                               &
 !>   &            (cff1*(W(i  ,j,1)+                                    &
 !>   &                   W(i-1,j,1))-                                   &
@@ -1607,24 +2139,88 @@
 !>   &                   W(i-2,j,1)))
 !>
           tl_FC(i,1)=(cff1*(tl_u(i,j,1,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                      tl_u_stokes(i,j,1)+                         &
+     &                      tl_u_stokes(i,j,2)+                         &
+#   endif
      &                      tl_u(i,j,2,nrhs))-                          &
      &                cff2*(tl_u(i,j,1,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+     &                      tl_u_stokes(i,j,1)+                         &
+     &                      tl_u_stokes(i,j,3)+                         &
+#   endif
      &                      tl_u(i,j,3,nrhs)))*                         &
      &               (cff1*(W(i  ,j,1)+                                 &
      &                      W(i-1,j,1))-                                &
      &                cff2*(W(i+1,j,1)+                                 &
      &                      W(i-2,j,1)))+                               &
      &               (cff1*(u(i,j,1,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                      u_stokes(i,j,1)+                            &
+     &                      u_stokes(i,j,2)+                            &
+#   endif
      &                      u(i,j,2,nrhs))-                             &
      &                cff2*(u(i,j,1,nrhs)+                              &
+#   ifdef NEARSHORE_MELLOR
+     &                      u_stokes(i,j,1)+                            &
+     &                      u_stokes(i,j,3)+                            &
+#   endif
      &                      u(i,j,3,nrhs)))*                            &
      &               (cff1*(tl_W(i  ,j,1)+                              &
      &                      tl_W(i-1,j,1))-                             &
      &                cff2*(tl_W(i+1,j,1)+                              &
      &                      tl_W(i-2,j,1)))
+#   ifdef SED_MORPH
+#    ifdef NEARSHORE_MELLOR
+!>        FC(i,0)=2.0_r8*                                               &
+!>   &            (cff1*(u(i,j,1,nrhs)+u_stokes(i,j,1))-                &
+!>   &             cff2*(u(i,j,2,nrhs)+u_stokes(i,j,2)))*               &
+!>   &            (cff1*(W(i  ,j,0)+                                    &
+!>   &                   W(i-1,j,0))-                                   &
+!>   &             cff2*(W(i+1,j,0)+                                    &
+!>   &                   W(i-2,j,0)))
+!>
+          tl_FC(i,0)=2.0_r8*                                            &
+     &               ((cff1*(tl_u(i,j,1,nrhs)+tl_u_stokes(i,j,1))-      &
+     &                 cff2*(tl_u(i,j,2,nrhs)+tl_u_stokes(i,j,2)))*     &
+     &                (cff1*(W(i  ,j,0)+                                &
+     &                       W(i-1,j,0))-                               &
+     &                 cff2*(W(i+1,j,0)+                                &
+     &                       W(i-2,j,0)))+                              &
+     &                (cff1*(u(i,j,1,nrhs)+u_stokes(i,j,1))-            &
+     &                 cff2*(u(i,j,2,nrhs)+u_stokes(i,j,2)))*           &
+     &                (cff1*(tl_W(i  ,j,0)+                             &
+     &                       tl_W(i-1,j,0))-                            &
+     &                 cff2*(tl_W(i+1,j,0)+                             &
+     &                       tl_W(i-2,j,0))))
+#    else
+!>        FC(i,0)=2.0_r8*                                               &
+!>   &            (cff1*u(i,j,1,nrhs)-                                  &
+!>   &             cff2*u(i,j,2,nrhs))*                                 &
+!>   &            (cff1*(W(i  ,j,0)+                                    &
+!>   &                   W(i-1,j,0))-                                   &
+!>   &             cff2*(W(i+1,j,0)+                                    &
+!>   &                   W(i-2,j,0)))
+!>
+          tl_FC(i,0)=2.0_r8*                                            &
+     &               ((cff1*tl_u(i,j,1,nrhs)-                           &
+     &                 cff2*tl_u(i,j,2,nrhs))*                          &
+     &                (cff1*(W(i  ,j,0)+                                &
+     &                       W(i-1,j,0))-                               &
+     &                 cff2*(W(i+1,j,0)+                                &
+     &                       W(i-2,j,0)))+                              &
+     &                (cff1*u(i,j,1,nrhs)-                              &
+     &                 cff2*u(i,j,2,nrhs))*                             &
+     &                (cff1*(tl_W(i  ,j,0)+                             &
+     &                       tl_W(i-1,j,0))-                            &
+     &                 cff2*(tl_W(i+1,j,0)+                             &
+     &                       tl_W(i-2,j,0))))
+#    endif
+#   else
 !>        FC(i,0)=0.0_r8
 !>
           tl_FC(i,0)=0.0_r8
+#   endif
         END DO
 #  endif
         DO k=1,N(ng)
@@ -1664,7 +2260,12 @@
             DO i=Istr,Iend
               cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
               FC(i,k)=cff*DC(i,k+1)
-              CF(i,k)=cff*(6.0_r8*(v(i,j,k+1,nrhs)-v(i,j,k,nrhs))-      &
+              CF(i,k)=cff*(6.0_r8*(v(i,j,k+1,nrhs)-                     &
+#   ifdef NEARSHORE_MELLOR
+     &                             v_stokes(i,j,k  )+                   &
+     &                             v_stokes(i,j,k+1)-                   &
+#   endif
+     &                             v(i,j,k  ,nrhs))-                    &
      &                     DC(i,k)*CF(i,k-1))
             END DO
           END DO
@@ -1703,6 +2304,10 @@
               cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
               FC(i,k)=cff*DC(i,k+1)
               tl_CF(i,k)=cff*(6.0_r8*(tl_v(i,j,k+1,nrhs)-               &
+#   ifdef NEARSHORE_MELLOR
+     &                                tl_v_stokes(i,j,k  )+             &
+     &                                tl_v_stokes(i,j,k+1)-             &
+#   endif
      &                                tl_v(i,j,k  ,nrhs))-              &
      &                        (tl_DC(i,k)*CF(i,k-1)+                    &
      &                         2.0_r8*(tl_DC(i,k  )+                    &
@@ -1731,6 +2336,9 @@
 !>   &                 cff2*(W(i,j+1,k)+                                &
 !>   &                       W(i,j-2,k)))*                              &
 !>   &                (v(i,j,k,nrhs)+                                   &
+#   ifdef NEARSHORE_MELLOR
+!>   &                 v_stokes(i,j,k)+                                 &
+#   endif
 !>   &                 DC(i,k)*(cff3*CF(i,k  )+                         &
 !>   &                          cff4*CF(i,k-1)))
 !>
@@ -1739,6 +2347,9 @@
      &                    cff2*(tl_W(i,j+1,k)+                          &
      &                          tl_W(i,j-2,k)))*                        &
      &                   (v(i,j,k,nrhs)+                                &
+#   ifdef NEARSHORE_MELLOR
+     &                    v_stokes(i,j,k)+                              &
+#   endif
      &                    DC(i,k)*(cff3*CF(i,k  )+                      &
      &                             cff4*CF(i,k-1)))+                    &
      &                   (cff1*(W(i,j  ,k)+                             &
@@ -1746,6 +2357,9 @@
      &                    cff2*(W(i,j+1,k)+                             &
      &                          W(i,j-2,k)))*                           &
      &                   (tl_v(i,j,k,nrhs)+                             &
+#   ifdef NEARSHORE_MELLOR
+     &                    tl_v_stokes(i,j,k)+                           &
+#   endif
      &                    DC(i,k)*(cff3*tl_CF(i,k  )+                   &
      &                             cff4*tl_CF(i,k-1))+                  &
      &                    tl_DC(i,k)*(cff3*CF(i,k  )+                   &
@@ -1767,24 +2381,64 @@
           DO k=1,N(ng)-1
             DO i=Istr,Iend
 !>            FC(i,k)=0.25_r8*(v(i,j,k  ,nrhs)+                         &
+#   ifdef NEARSHORE_MELLOR
+!>   &                         v_stokes(i,j,k  )+                       &
+!>   &                         v_stokes(i,j,k+1)+                       &
+#   endif
 !>   &                         v(i,j,k+1,nrhs))*                        &
 !>   &                (W(i,j  ,k)+                                      &
 !>   &                 W(i,j-1,k))
 !>
               tl_FC(i,k)=0.25_r8*((tl_v(i,j,k  ,nrhs)+                  &
+#   ifdef NEARSHORE_MELLOR
+     &                             tl_v_stokes(i,j,k  )+                &
+     &                             tl_v_stokes(i,j,k+1)+                &
+#   endif
      &                             tl_v(i,j,k+1,nrhs))*                 &
      &                            (W(i,j  ,k)+                          &
      &                             W(i,j-1,k))+                         &
      &                            (v(i,j,k  ,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+     &                             v_stokes(i,j,k  )+                   &
+     &                             v_stokes(i,j,k+1)+                   &
+#   endif
      &                             v(i,j,k+1,nrhs))*                    &
      &                            (tl_W(i,j  ,k)+                       &
      &                             tl_W(i,j-1,k)))
             END DO
           END DO
           DO i=Istr,Iend
+#   ifdef SED_MORPH
+#    ifdef NEARSHORE_MELLOR
+!>          FC(i,0)=0.5_r8*(v(i,j,1,nrhs)+v_stokes(i,j,1))*             &
+!>   &              (W(i,j  ,0)+                                        &
+!>   &               W(i,j-1,0))
+!>
+            tl_FC(i,0)=0.5_r8*                                          &
+     &                 ((tl_v(i,j,1,nrhs)+tl_v_stokes(i,j,1))*          &
+     &                  (W(i,j  ,0)+                                    &
+     &                   W(i,j-1,0))+                                   &
+     &                  (v(i,j,1,nrhs)+v_stokes(i,j,1))*                &
+     &                  (tl_W(i,j  ,0)+                                 &
+     &                   tl_W(i,j-1,0)))
+#    else
+!>          FC(i,0)=0.5_r8*v(i,j,1,nrhs)*                               &
+!>   &              (W(i,j  ,0)+                                        &
+!>   &               W(i,j-1,0))
+!>
+            tl_FC(i,0)=0.5_r8*                                          &
+     &                 (tl_v(i,j,1,nrhs)*                               &
+     &                  (W(i,j  ,0)+                                    &
+     &                   W(i,j-1,0))+                                   &
+     &                  v(i,j,1,nrhs)*                                  &
+     &                  (tl_W(i,j  ,0)+                                 &
+     &                   tl_W(i,j-1,0)))
+#    endif
+#   else
 !>          FC(i,0)=0.0_r8
 !>
             tl_FC(i,0)=0.0_r8
+#   endif
 !>          FC(i,N(ng))=0.0_r8
 !>
             tl_FC(i,N(ng))=0.0_r8
@@ -1798,21 +2452,45 @@
           DO k=2,N(ng)-2
             DO i=Istr,Iend
 !>            FC(i,k)=(cff1*(v(i,j,k  ,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+!>   &                       v_stokes(i,j,k  )+                         &
+!>   &                       v_stokes(i,j,k+1)+                         &
+#   endif
 !>   &                       v(i,j,k+1,nrhs))-                          &
 !>   &                 cff2*(v(i,j,k-1,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+!>   &                       v_stokes(i,j,k-1)+                         &
+!>   &                       v_stokes(i,j,k+2)+                         &
+#   endif
 !>   &                       v(i,j,k+2,nrhs)))*                         &
 !>   &                (W(i,j  ,k)+                                      &
 !>   &                 W(i,j-1,k))
 !>
               tl_FC(i,k)=(cff1*(tl_v(i,j,k  ,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+     &                          tl_v_stokes(i,j,k  )+                   &
+     &                          tl_v_stokes(i,j,k+1)+                   &
+#   endif
      &                          tl_v(i,j,k+1,nrhs))-                    &
      &                    cff2*(tl_v(i,j,k-1,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+     &                          tl_v_stokes(i,j,k-1)+                   &
+     &                          tl_v_stokes(i,j,k+2)+                   &
+#   endif
      &                          tl_v(i,j,k+2,nrhs)))*                   &
      &                   (W(i,j  ,k)+                                   &
      &                    W(i,j-1,k))+                                  &
      &                   (cff1*(v(i,j,k  ,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                          v_stokes(i,j,k  )+                      &
+     &                          v_stokes(i,j,k+1)+                      &
+#   endif
      &                          v(i,j,k+1,nrhs))-                       &
      &                    cff2*(v(i,j,k-1,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                          v_stokes(i,j,k-1)+                      &
+     &                          v_stokes(i,j,k+2)+                      &
+#   endif
      &                          v(i,j,k+2,nrhs)))*                      &
      &                   (tl_W(i,j  ,k)+                                &
      &                    tl_W(i,j-1,k))
@@ -1823,46 +2501,130 @@
 !>
             tl_FC(i,N(ng))=0.0_r8
 !>          FC(i,N(ng)-1)=(cff1*(v(i,j,N(ng)-1,nrhs)+                   &
+#   ifdef NEARSHORE_MELLOR
+!>   &                           v_stokes(i,j,N(ng)-1)+                 &
+!>   &                           v_stokes(i,j,N(ng)  )+                 &
+#   endif
 !>   &                           v(i,j,N(ng)  ,nrhs))-                  &
 !>   &                     cff2*(v(i,j,N(ng)-2,nrhs)+                   &
+#   ifdef NEARSHORE_MELLOR
+!>   &                           v_stokes(i,j,N(ng)-2)+                 &
+!>   &                           v_stokes(i,j,N(ng)  )+                 &
+#   endif
 !>   &                           v(i,j,N(ng)  ,nrhs)))*                 &
 !>   &                    (W(i,j  ,N(ng)-1)+                            &
 !>   &                     W(i,j-1,N(ng)-1))
 !>
             tl_FC(i,N(ng)-1)=(cff1*(tl_v(i,j,N(ng)-1,nrhs)+             &
+#   ifdef NEARSHORE_MELLOR
+     &                              tl_v_stokes(i,j,N(ng)-1)+           &
+     &                              tl_v_stokes(i,j,N(ng)  )+           &
+#   endif
      &                              tl_v(i,j,N(ng)  ,nrhs))-            &
      &                        cff2*(tl_v(i,j,N(ng)-2,nrhs)+             &
+#   ifdef NEARSHORE_MELLOR
+     &                              tl_v_stokes(i,j,N(ng)-2)+           &
+     &                              tl_v_stokes(i,j,N(ng)  )+           &
+#   endif
      &                              tl_v(i,j,N(ng)  ,nrhs)))*           &
      &                       (W(i,j  ,N(ng)-1)+                         &
      &                        W(i,j-1,N(ng)-1))+                        &
      &                       (cff1*(v(i,j,N(ng)-1,nrhs)+                &
+#   ifdef NEARSHORE_MELLOR
+     &                              v_stokes(i,j,N(ng)-1)+              &
+     &                              v_stokes(i,j,N(ng)  )+              &
+#   endif
      &                              v(i,j,N(ng)  ,nrhs))-               &
      &                        cff2*(v(i,j,N(ng)-2,nrhs)+                &
+#   ifdef NEARSHORE_MELLOR
+     &                              v_stokes(i,j,N(ng)-2)+              &
+     &                              v_stokes(i,j,N(ng)  )+              &
+#   endif
      &                              v(i,j,N(ng)  ,nrhs)))*              &
      &                       (tl_W(i,j  ,N(ng)-1)+                      &
      &                        tl_W(i,j-1,N(ng)-1))
 !>          FC(i,1)=(cff1*(v(i,j,1,nrhs)+                               &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     v_stokes(i,j,1)+                             &
+!>   &                     v_stokes(i,j,2)+                             &
+#   endif
 !>   &                     v(i,j,2,nrhs))-                              &
 !>   &               cff2*(v(i,j,1,nrhs)+                               &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     v_stokes(i,j,1)+                             &
+!>   &                     v_stokes(i,j,3)+                             &
+#   endif
 !>   &                     v(i,j,3,nrhs)))*                             &
 !>   &              (W(i,j  ,1)+                                        &
 !>   &               W(i,j-1,1))
 !>
             tl_FC(i,1)=(cff1*(tl_v(i,j,1,nrhs)+                         &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_v_stokes(i,j,1)+                       &
+     &                        tl_v_stokes(i,j,2)+                       &
+#   endif
      &                        tl_v(i,j,2,nrhs))-                        &
      &                  cff2*(tl_v(i,j,1,nrhs)+                         &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_v_stokes(i,j,1)+                       &
+     &                        tl_v_stokes(i,j,3)+                       &
+#   endif
      &                        tl_v(i,j,3,nrhs)))*                       &
      &                 (W(i,j  ,1)+                                     &
      &                  W(i,j-1,1))+                                    &
      &                 (cff1*(v(i,j,1,nrhs)+                            &
+#   ifdef NEARSHORE_MELLOR
+     &                        v_stokes(i,j,1)+                          &
+     &                        v_stokes(i,j,2)+                          &
+#   endif
      &                        v(i,j,2,nrhs))-                           &
      &                  cff2*(v(i,j,1,nrhs)+                            &
+#   ifdef NEARSHORE_MELLOR
+     &                        v_stokes(i,j,1)+                          &
+     &                        v_stokes(i,j,3)+                          &
+#   endif
      &                        v(i,j,3,nrhs)))*                          &
      &                 (tl_W(i,j  ,1)+                                  &
      &                  tl_W(i,j-1,1))
+#   ifdef SED_MORPH
+#    ifdef NEARSHORE_MELLOR
+!>          FC(i,0)=2.0_r8*                                             &
+!>   &              (cff1*(v(i,j,1,nrhs)+v_stokes(i,j,1))-              &
+!>   &               cff2*(v(i,j,2,nrhs)+v_stokes(i,j,2)))*             &
+!>   &              (W(i,j  ,0)+                                        &
+!>   &               W(i,j-1,0))
+!>
+            tl_FC(i,0)=2.0_r8*                                          &
+     &                 ((cff1*(tl_v(i,j,1,nrhs)+tl_v_stokes(i,j,1))-    &
+     &                   cff2*(tl_v(i,j,2,nrhs)+tl_v_stokes(i,j,2)))*   &
+     &                  (W(i,j  ,0)+                                    &
+     &                   W(i,j-1,0))+                                   &
+     &                  (cff1*(v(i,j,1,nrhs)+v_stokes(i,j,1))-          &
+     &                   cff2*(v(i,j,2,nrhs)+v_stokes(i,j,2)))*         &
+     &                  (tl_W(i,j  ,0)+                                 &
+     &                   tl_W(i,j-1,0)))
+#    else
+!>          FC(i,0)=2.0_r8*                                             &
+!>   &              (cff1*v(i,j,1,nrhs)-                                &
+!>   &               cff2*v(i,j,2,nrhs))*                               &
+!>   &              (W(i,j  ,0)+                                        &
+!>   &               W(i,j-1,0))
+!>
+            tl_FC(i,0)=2.0_r8*                                          &
+     &                 ((cff1*tl_v(i,j,1,nrhs)-                         &
+     &                   cff2*tl_v(i,j,2,nrhs))*                        &
+     &                  (W(i,j  ,0)+                                    &
+     &                   W(i,j-1,0))+                                   &
+     &                  (cff1*v(i,j,1,nrhs)-                            &
+     &                   cff2*v(i,j,2,nrhs))*                           &
+     &                  (tl_W(i,j  ,0)+                                 &
+     &                   tl_W(i,j-1,0)))
+#    endif
+#   else
 !>          FC(i,0)=0.0_r8
 !>
             tl_FC(i,0)=0.0_r8
+#   endif
           END DO
 #  else
           cff1=9.0_r8/16.0_r8
@@ -1870,8 +2632,16 @@
           DO k=2,N(ng)-2
             DO i=Istr,Iend
 !>            FC(i,k)=(cff1*(v(i,j,k  ,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+!>   &                       v_stokes(i,j,k  )+                         &
+!>   &                       v_stokes(i,j,k+1)+                         &
+#   endif
 !>   &                       v(i,j,k+1,nrhs))-                          &
 !>   &                 cff2*(v(i,j,k-1,nrhs)+                           &
+#   ifdef NEARSHORE_MELLOR
+!>   &                       v_stokes(i,j,k-1)+                         &
+!>   &                       v_stokes(i,j,k+2)+                         &
+#   endif
 !>   &                       v(i,j,k+2,nrhs)))*                         &
 !>   &                (cff1*(W(i,j  ,k)+                                &
 !>   &                       W(i,j-1,k))-                               &
@@ -1879,16 +2649,32 @@
 !>   &                       W(i,j-2,k)))
 !>
               tl_FC(i,k)=(cff1*(tl_v(i,j,k  ,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+     &                          tl_v_stokes(i,j,k  )+                   &
+     &                          tl_v_stokes(i,j,k+1)+                   &
+#   endif
      &                          tl_v(i,j,k+1,nrhs))-                    &
      &                    cff2*(tl_v(i,j,k-1,nrhs)+                     &
+#   ifdef NEARSHORE_MELLOR
+     &                          tl_v_stokes(i,j,k-1)+                   &
+     &                          tl_v_stokes(i,j,k+2)+                   &
+#   endif
      &                          tl_v(i,j,k+2,nrhs)))*                   &
      &                   (cff1*(W(i,j  ,k)+                             &
      &                          W(i,j-1,k))-                            &
      &                    cff2*(W(i,j+1,k)+                             &
      &                          W(i,j-2,k)))+                           &
      &                   (cff1*(v(i,j,k  ,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                          v_stokes(i,j,k  )+                      &
+     &                          v_stokes(i,j,k+1)+                      &
+#   endif
      &                          v(i,j,k+1,nrhs))-                       &
      &                    cff2*(v(i,j,k-1,nrhs)+                        &
+#   ifdef NEARSHORE_MELLOR
+     &                          v_stokes(i,j,k-1)+                      &
+     &                          v_stokes(i,j,k+2)+                      &
+#   endif
      &                          v(i,j,k+2,nrhs)))*                      &
      &                   (cff1*(tl_W(i,j  ,k)+                          &
      &                          tl_W(i,j-1,k))-                         &
@@ -1901,8 +2687,16 @@
 !>
             tl_FC(i,N(ng))=0.0_r8
 !>          FC(i,N(ng)-1)=(cff1*(v(i,j,N(ng)-1,nrhs)+                   &
+#   ifdef NEARSHORE_MELLOR
+!>   &                           v_stokes(i,j,N(ng)-1)+                 &
+!>   &                           v_stokes(i,j,N(ng)  )+                 &
+#   endif
 !>   &                           v(i,j,N(ng)  ,nrhs))-                  &
 !>   &                     cff2*(v(i,j,N(ng)-2,nrhs)+                   &
+#   ifdef NEARSHORE_MELLOR
+!>   &                           v_stokes(i,j,N(ng)-2)+                 &
+!>   &                           v_stokes(i,j,N(ng)  )+                 &
+#   endif
 !>   &                           v(i,j,N(ng)  ,nrhs)))*                 &
 !>   &                    (cff1*(W(i,j  ,N(ng)-1)+                      &
 !>   &                           W(i,j-1,N(ng)-1))-                     &
@@ -1910,24 +2704,48 @@
 !>   &                           W(i,j-2,N(ng)-1)))
 !>
             tl_FC(i,N(ng)-1)=(cff1*(tl_v(i,j,N(ng)-1,nrhs)+             &
+#   ifdef NEARSHORE_MELLOR
+     &                              tl_v_stokes(i,j,N(ng)-1)+           &
+     &                              tl_v_stokes(i,j,N(ng)  )+           &
+#   endif
      &                              tl_v(i,j,N(ng)  ,nrhs))-            &
      &                        cff2*(tl_v(i,j,N(ng)-2,nrhs)+             &
+#   ifdef NEARSHORE_MELLOR
+     &                              tl_v_stokes(i,j,N(ng)-2)+           &
+     &                              tl_v_stokes(i,j,N(ng)  )+           &
+#   endif
      &                              tl_v(i,j,N(ng)  ,nrhs)))*           &
      &                       (cff1*(W(i,j  ,N(ng)-1)+                   &
      &                              W(i,j-1,N(ng)-1))-                  &
      &                        cff2*(W(i,j+1,N(ng)-1)+                   &
      &                              W(i,j-2,N(ng)-1)))+                 &
      &                       (cff1*(v(i,j,N(ng)-1,nrhs)+                &
+#   ifdef NEARSHORE_MELLOR
+     &                              v_stokes(i,j,N(ng)-1)+              &
+     &                              v_stokes(i,j,N(ng)  )+              &
+#   endif
      &                              v(i,j,N(ng)  ,nrhs))-               &
      &                        cff2*(v(i,j,N(ng)-2,nrhs)+                &
+#   ifdef NEARSHORE_MELLOR
+     &                              v_stokes(i,j,N(ng)-2)+              &
+     &                              v_stokes(i,j,N(ng)  )+              &
+#   endif
      &                              v(i,j,N(ng)  ,nrhs)))*              &
      &                       (cff1*(tl_W(i,j  ,N(ng)-1)+                &
      &                              tl_W(i,j-1,N(ng)-1))-               &
      &                        cff2*(tl_W(i,j+1,N(ng)-1)+                &
      &                              tl_W(i,j-2,N(ng)-1)))
 !>          FC(i,1)=(cff1*(v(i,j,1,nrhs)+                               &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     v_stokes(i,j,1)+                             &
+!>   &                     v_stokes(i,j,2)+                             &
+#   endif
 !>   &                     v(i,j,2,nrhs))-                              &
 !>   &               cff2*(v(i,j,1,nrhs)+                               &
+#   ifdef NEARSHORE_MELLOR
+!>   &                     v_stokes(i,j,1)+                             &
+!>   &                     v_stokes(i,j,3)+                             &
+#   endif
 !>   &                     v(i,j,3,nrhs)))*                             &
 !>   &              (cff1*(W(i,j  ,1)+                                  &
 !>   &                     W(i,j-1,1))-                                 &
@@ -1935,24 +2753,88 @@
 !>   &                     W(i,j-2,1)))
 !>
             tl_FC(i,1)=(cff1*(tl_v(i,j,1,nrhs)+                         &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_v_stokes(i,j,1)+                       &
+     &                        tl_v_stokes(i,j,2)+                       &
+#   endif
      &                        tl_v(i,j,2,nrhs))-                        &
      &                  cff2*(tl_v(i,j,1,nrhs)+                         &
+#   ifdef NEARSHORE_MELLOR
+     &                        tl_v_stokes(i,j,1)+                       &
+     &                        tl_v_stokes(i,j,3)+                       &
+#   endif
      &                        tl_v(i,j,3,nrhs)))*                       &
      &                 (cff1*(W(i,j  ,1)+                               &
      &                        W(i,j-1,1))-                              &
      &                  cff2*(W(i,j+1,1)+                               &
      &                        W(i,j-2,1)))+                             &
      &                 (cff1*(v(i,j,1,nrhs)+                            &
+#   ifdef NEARSHORE_MELLOR
+     &                        v_stokes(i,j,1)+                          &
+     &                        v_stokes(i,j,2)+                          &
+#   endif
      &                        v(i,j,2,nrhs))-                           &
      &                  cff2*(v(i,j,1,nrhs)+                            &
+#   ifdef NEARSHORE_MELLOR
+     &                        v_stokes(i,j,1)+                          &
+     &                        v_stokes(i,j,3)+                          &
+#   endif
      &                        v(i,j,3,nrhs)))*                          &
      &                 (cff1*(tl_W(i,j  ,1)+                            &
      &                        tl_W(i,j-1,1))-                           &
      &                  cff2*(tl_W(i,j+1,1)+                            &
      &                        tl_W(i,j-2,1)))
+#   ifdef SED_MORPH
+#    ifdef NEARSHORE_MELLOR
+!>          FC(i,0)=2.0_r8*                                             &
+!>   &              (cff1*(v(i,j,1,nrhs)+v_stokes(i,j,1))-              &
+!>   &               cff2*(v(i,j,2,nrhs)+v_stokes(i,j,2)))*             &
+!>   &              (cff1*(W(i,j  ,0)+                                  &
+!>   &                     W(i,j-1,0))-                                 &
+!>   &               cff2*(W(i,j+1,0)+                                  &
+!>   &                     W(i,j-2,0)))
+!>
+            tl_FC(i,0)=2.0_r8*                                          &
+     &                 ((cff1*(tl_v(i,j,1,nrhs)+tl_v_stokes(i,j,1))-    &
+     &                   cff2*(tl_v(i,j,2,nrhs)+tl_v_stokes(i,j,2)))*   &
+     &                  (cff1*(W(i,j  ,0)+                              &
+     &                         W(i,j-1,0))-                             &
+     &                   cff2*(W(i,j+1,0)+                              &
+     &                         W(i,j-2,0)))+                            &
+     &                  (cff1*(v(i,j,1,nrhs)+v_stokes(i,j,1))-          &
+     &                   cff2*(v(i,j,2,nrhs)+v_stokes(i,j,2)))*         &
+     &                  (cff1*(tl_W(i,j  ,0)+                           &
+     &                         tl_W(i,j-1,0))-                          &
+     &                   cff2*(tl_W(i,j+1,0)+                           &
+     &                         tl_W(i,j-2,0))))
+#    else
+!>          FC(i,0)=2.0_r8*                                             &
+!>   &              (cff1*v(i,j,1,nrhs)-                                &
+!>   &               cff2*v(i,j,2,nrhs))*                               &
+!>   &              (cff1*(W(i,j  ,0)+                                  &
+!>   &                     W(i,j-1,0))-                                 &
+!>   &               cff2*(W(i,j+1,0)+                                  &
+!>   &                     W(i,j-2,0)))
+!>
+            tl_FC(i,0)=2.0_r8*                                          &
+     &                 ((cff1*tl_v(i,j,1,nrhs)-                         &
+     &                   cff2*tl_v(i,j,2,nrhs))*                        &
+     &                  (cff1*(W(i,j  ,0)+                              &
+     &                         W(i,j-1,0))-                             &
+     &                   cff2*(W(i,j+1,0)+                              &
+     &                         W(i,j-2,0)))+                            &
+     &                  (cff1*v(i,j,1,nrhs)-                            &
+     &                   cff2*v(i,j,2,nrhs))*                           &
+     &                  (cff1*(tl_W(i,j  ,0)+                           &
+     &                         tl_W(i,j-1,0))-                          &
+     &                   cff2*(tl_W(i,j+1,0)+                           &
+     &                         tl_W(i,j-2,0))))
+#    endif
+#   else
 !>          FC(i,0)=0.0_r8
 !>
             tl_FC(i,0)=0.0_r8
+#   endif
           END DO
 #  endif
           DO k=1,N(ng)
@@ -1991,6 +2873,9 @@
 #  ifdef UV_ADV
 !!        DiaRUfrc(i,j,3,M2hadv)=DiaRU(i,j,1,nrhs,M3hadv)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+!!        DiaRUfrc(i,j,3,M2hrad)=DiaRU(i,j,1,nrhs,M3hrad)
+#  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!        DiaRUfrc(i,j,3,M2hvis)=0.0_r8
 #  endif
@@ -2015,6 +2900,10 @@
 !!          DiaRUfrc(i,j,3,M2hadv)=DiaRUfrc(i,j,3,M2hadv)+              &
 !!   &                             DiaRU(i,j,k,nrhs,M3hadv)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+!!          DiaRUfrc(i,j,3,M2hrad)=DiaRUfrc(i,j,3,M2hrad)+              &
+!!   &                             DiaRU(i,j,k,nrhs,M3hrad)
+#  endif
 #  ifdef BODYFORCE
 !!          DiaRUfrc(i,j,3,M2strs)=DiaRUfrc(i,j,3,M2strs)+              &
 !!   &                             DiaRU(i,j,k,nrhs,M3vvis)
@@ -2024,14 +2913,19 @@
         END DO
 # ifndef BODYFORCE
         DO i=IstrU,Iend
-!>        cff=(sustr(i,j)-bustr(i,j))*om_u(i,j)*on_u(i,j)
+          cff=om_u(i,j)*on_u(i,j)
+!>        cff1= sustr(i,j)*cff
 !>
-          tl_cff=(tl_sustr(i,j)-tl_bustr(i,j))*om_u(i,j)*on_u(i,j)
-!>        rufrc(i,j)=rufrc(i,j)+cff
+          tl_cff1= tl_sustr(i,j)*cff
+!>        cff2=-bustr(i,j)*cff
 !>
-          tl_rufrc(i,j)=tl_rufrc(i,j)+tl_cff
+          tl_cff2=-tl_bustr(i,j)*cff
+!>        rufrc(i,j)=rufrc(i,j)+cff1+cff2
+!>
+          tl_rufrc(i,j)=tl_rufrc(i,j)+tl_cff1+tl_cff2
 #  ifdef DIAGNOSTICS_UV
-!!        DiaRUfrc(i,j,3,M2strs)=cff
+!!        DiaRUfrc(i,j,3,M2sstr)=cff1
+!!        DiaRUfrc(i,j,3,M2bstr)=cff2
 #  endif
         END DO
 # endif
@@ -2047,6 +2941,9 @@
 #  endif
 #  ifdef UV_ADV
 !!          DiaRVfrc(i,j,3,M2hadv)=DiaRV(i,j,1,nrhs,M3hadv)
+#  endif
+#  ifdef NEARSHORE_MELLOR
+!!          DiaRVfrc(i,j,3,M2hrad)=DiaRV(i,j,1,nrhs,M3hrad)
 #  endif
 #  if defined UV_VIS2 || defined UV_VIS4
 !!          DiaRVfrc(i,j,3,M2hvis)=0.0_r8
@@ -2072,6 +2969,10 @@
 !!            DiaRVfrc(i,j,3,M2hadv)=DiaRVfrc(i,j,3,M2hadv)+            &
 !!   &                               DiaRV(i,j,k,nrhs,M3hadv)
 #  endif
+#  ifdef NEARSHORE_MELLOR
+!!            DiaRVfrc(i,j,3,M2hrad)=DiaRVfrc(i,j,3,M2hrad)+            &
+!!   &                               DiaRV(i,j,k,nrhs,M3hrad)
+#  endif
 #  ifdef BODYFORCE
 !!            DiaRVfrc(i,j,3,M2strs)=DiaRVfrc(i,j,3,M2strs)+            &
 !!   &                               DiaRV(i,j,k,nrhs,M3vvis)
@@ -2081,14 +2982,19 @@
           END DO
 # ifndef BODYFORCE
           DO i=Istr,Iend
-!>          cff=(svstr(i,j)-bvstr(i,j))*om_v(i,j)*on_v(i,j)
+            cff=om_v(i,j)*on_v(i,j)
+!>          cff1= svstr(i,j)*cff
 !>
-            tl_cff=(tl_svstr(i,j)-tl_bvstr(i,j))*om_v(i,j)*on_v(i,j)
-!>          rvfrc(i,j)=rvfrc(i,j)+cff
+            tl_cff1= tl_svstr(i,j)*cff
+!>          cff2=-bvstr(i,j)*cff
 !>
-            tl_rvfrc(i,j)=tl_rvfrc(i,j)+tl_cff
+            tl_cff2=-tl_bvstr(i,j)*cff
+!>          rvfrc(i,j)=rvfrc(i,j)+cff1+cff2
+!>
+            tl_rvfrc(i,j)=tl_rvfrc(i,j)+tl_cff1+tl_cff2
 #  ifdef DIAGNOSTICS_UV
-!!          DiaRVfrc(i,j,3,M2strs)=cff
+!!          DiaRVfrc(i,j,3,M2sstr)=cff1
+!!          DiaRVfrc(i,j,3,M2bstr)=cff2
 #  endif
           END DO
 # endif
@@ -2108,7 +3014,7 @@
           tl_zeta(i,j,1)=tl_Zt_avg1(i,j)
           tl_zeta(i,j,2)=tl_Zt_avg1(i,j)
         END DO
-      END DO 
+      END DO
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
 !>   &                        LBi, UBi, LBj, UBj,                       &

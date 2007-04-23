@@ -248,7 +248,7 @@
           END DO
         END IF
 
-#  elif defined NORTH_M2FLATHER || defined SOUTH_M2REDUCED
+#  elif defined NORTH_M2FLATHER || defined NORTH_M2REDUCED
 !
 !  Northern edge, Chapman boundary condition.
 !

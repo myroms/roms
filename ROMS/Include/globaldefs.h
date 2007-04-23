@@ -47,7 +47,7 @@
 ** story.
 */
 
-#define DEBUGGING
+#undef DEBUGGING
 
 /*
 ** Turn ON/OFF time profiling.
@@ -72,16 +72,6 @@
 */
 
 #define RHO_SURF
-
-/*
-** Activate bacroclinic pressure gradient response due to the
-** perturbation of free-surface in the presence of stratification
-** and bathymetry.
-*/
-
-#ifdef SOLVE3D
-# undef VAR_RHO_2D
-#endif
 
 /*
 ** Activate criteria for isopycnic diffusion of tracer as maximum
@@ -117,7 +107,7 @@
 #ifdef SOLVE3D
 # define FIRST_2D_STEP iif(ng).eq.1
 #else
-# define FIRST_2D_STEP iic(ng).eq.ntfirst
+# define FIRST_2D_STEP iic(ng).eq.ntfirst(ng)
 #endif
 
 /*
@@ -172,7 +162,19 @@
 #endif
 
 /*
-** Remove OpenMP directives in serial and distributed memory 
+** Set switch for distributed-memory applications to gather and scatter
+** I/O data in 2D slabs. This is necessary on some platforms to conserve
+** memory.
+*/
+
+#if defined DISTRIBUTE
+# if defined UNICOS_SN
+#  define INLINE_2DIO
+# endif
+#endif
+
+/*
+** Remove OpenMP directives in serial and distributed memory
 ** Applications.  This definition will be used in conjunction with
 ** the pearl script "cpp_clean" to remove the full directive.
 */
@@ -333,6 +335,18 @@
 #endif
 
 /*
+** Activate bacroclinic pressure gradient response due to the
+** perturbation of free-surface in the presence of stratification
+** and bathymetry.
+*/
+
+#ifdef SOLVE3D
+# if !(defined ADJOINT && defined TANGENT)
+#   define VAR_RHO_2D
+# endif
+#endif
+
+/*
 ** Set output index for multi-time levels variables.
 */
 
@@ -434,7 +448,7 @@
 **  Check S4DVar normalization switches.
 */
 
-#if !(defined ENERGY1_NORM || defined ENERGY2_NORM ||	\
+#if !(defined ENERGY1_NORM || defined ENERGY2_NORM || \
       defined ENERGY3_NORM)
 # undef N2NORM_PROFILE
 #endif
@@ -548,48 +562,60 @@
 #endif
 
 /*
+** Internal switches to deactivate calling boundary conditions
+** during initialization of 2D state variables. Basically,
+** we need to apply only non-radiation type boundary conditions.
+*/
+
+#if defined WEST_M2RADIATION   || defined WEST_M2FLATHER  || \
+    defined EAST_M2RADIATION   || defined EAST_M2FLATHER  || \
+    defined SOUTH_M2RADIATION  || defined SOUTH_M2FLATHER || \
+    defined NORTH_M2RADIATION  || defined NORTH_M2FLATHER
+# define OBC_M2RADIATION
+#endif
+
+#if defined WEST_FSRADIATION   || defined WEST_FSCHAPMAN  || \
+    defined EAST_FSRADIATION   || defined EAST_FSCHAPMAN  || \
+    defined SOUTH_FSRADIATION  || defined SOUTH_FSCHAPMAN || \
+    defined NORTH_FSRADIATION  || defined NORTH_FSCHAPMAN
+# define OBC_FSRADIATION
+#endif
+
+/*
 ** Activate internal switches requiring open boundary data.
 */
 
 #if (defined WEST_M2RADIATION  && defined WEST_M2NUDGING)  || \
-     defined WEST_M2FLATHER    || defined WEST_M2CLAMPED   || \
-     defined WEST_M2REDUCED
+     defined WEST_M2FLATHER    || defined WEST_M2CLAMPED
 # define WEST_M2OBC
 #endif
 #if (defined EAST_M2RADIATION  && defined EAST_M2NUDGING)  || \
-     defined EAST_M2FLATHER    || defined EAST_M2CLAMPED   || \
-     defined EAST_M2REDUCED
+     defined EAST_M2FLATHER    || defined EAST_M2CLAMPED
 # define EAST_M2OBC
 #endif
 #if (defined SOUTH_M2RADIATION && defined SOUTH_M2NUDGING) || \
-     defined SOUTH_M2FLATHER   || defined SOUTH_M2CLAMPED  || \
-     defined SOUTH_M2REDUCED
+     defined SOUTH_M2FLATHER   || defined SOUTH_M2CLAMPED
 # define SOUTH_M2OBC
 #endif
 #if (defined NORTH_M2RADIATION && defined NORTH_M2NUDGING) || \
-     defined NORTH_M2FLATHER   || defined NORTH_M2CLAMPED  || \
-     defined NORTH_M2REDUCED
+     defined NORTH_M2FLATHER   || defined NORTH_M2CLAMPED
 # define NORTH_M2OBC
 #endif
 
 #if (defined WEST_FSRADIATION  && defined WEST_FSNUDGING)  || \
-     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED   || \
-     defined WEST_M2REDUCED
+     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED
 # define WEST_FSOBC
 #endif
 #if (defined EAST_FSRADIATION  && defined EAST_FSNUDGING)  || \
-     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED   || \
-     defined EAST_M2REDUCED
+     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED
 # define EAST_FSOBC
 #endif
 #if (defined SOUTH_FSRADIATION && defined SOUTH_FSNUDGING) || \
-     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED  || \
-     defined SOUTH_M2REDUCED
+     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED
 # define SOUTH_FSOBC
 #endif
 #if (defined NORTH_FSRADIATION && defined NORTH_FSNUDGING) || \
-     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED  || \
-     defined NORTH_M2REDUCED
+     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED
 # define NORTH_FSOBC
 #endif
 
@@ -678,23 +704,6 @@
 /*
 ** Activate internal switches for volume conservation at open boundary.
 */
-
-#if (!defined WEST_M2OBC   && !defined WEST_M2GRADIENT) && \
-      defined WEST_VOLCONS
-# undef WEST_VOLCONS
-#endif
-#if (!defined EAST_M2OBC   && !defined EAST_M2GRADIENT) && \
-      defined EAST_VOLCONS
-# undef EAST_VOLCONS
-#endif
-#if (!defined NORTH_M2OBC   && !defined NORTH_M2GRADIENT) && \
-      defined NORTH_VOLCONS
-# undef NORTH_VOLCONS
-#endif
-#if (!defined SOUTH_M2OBC   && !defined SOUTH_M2GRADIENT) && \
-      defined SOUTH_VOLCONS
-# undef SOUTH_VOLCONS
-#endif
 
 #if defined WEST_VOLCONS  || defined EAST_VOLCONS  || \
     defined NORTH_VOLCONS || defined SOUTH_VOLCONS
@@ -858,7 +867,7 @@
     ( defined SEDIMENT     && !defined ANA_SPFLUX)   || \
     ( defined SEDIMENT     && !defined ANA_BPFLUX)   || \
     ( defined WAVE_DATA    && (!defined ANA_WWAVE    && \
-			       !defined WAVES_OCEAN))
+     !defined WAVES_OCEAN))
 #  define FRC_FILE
 # endif
 #else

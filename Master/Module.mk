@@ -8,10 +8,9 @@
 local_sub  := Master
 
 local_src  := $(wildcard $(local_sub)/*.F)
-path_srcs  += $(local_src)
-
-local_src  := $(patsubst $(local_sub)/%.F,%.F,$(local_src))
+#local_objs := $(call source-to-object,$(local_src))
 local_objs := $(subst .F,.o,$(local_src))
+local_objs := $(addprefix $(SCRATCH_DIR)/, $(notdir $(local_objs)))
 
 sources    += $(local_src)
 
@@ -22,3 +21,5 @@ else
 $(BIN):	$(libraries) $(local_objs)
 	$(LD) $(FFLAGS) $(LDFLAGS) $(local_objs) -o $@ $(libraries) $(LIBS)
 endif
+
+$(eval $(compile-rules))
