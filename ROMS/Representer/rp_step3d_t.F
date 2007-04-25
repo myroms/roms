@@ -187,7 +187,7 @@
       USE mp_exchange_mod, ONLY : mp_exchange4d
 # endif
 # ifdef TS_MPDATA
-      USE rp_mpdata_adiff_mod
+!!    USE rp_mpdata_adiff_mod
 # endif
       USE rp_t3dbc_mod, ONLY : rp_t3dbc_tile
 !

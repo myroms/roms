@@ -1,4 +1,4 @@
-# svn $Id: CYGWIN-ifort.mk 204 2007-04-21 05:00:33Z arango $
+# svn $Id$
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::

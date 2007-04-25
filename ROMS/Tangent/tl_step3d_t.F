@@ -186,7 +186,7 @@
       USE mp_exchange_mod, ONLY : mp_exchange4d
 # endif
 # ifdef TS_MPDATA
-      USE tl_mpdata_adiff_mod
+!!    USE tl_mpdata_adiff_mod
 # endif
       USE tl_t3dbc_mod, ONLY : tl_t3dbc_tile
 !

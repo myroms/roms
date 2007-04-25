@@ -223,12 +223,6 @@
           Lwave(i,j)=20.0_r8
         END DO
       END DO
-#elif defined VISSER
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          wave_dissip(i,j)=0.001_r8
-        END DO
-      END DO
 #else
       ana_wwave: No values provided for Hwave, Dwave, Pwave, Lwave.
 #endif

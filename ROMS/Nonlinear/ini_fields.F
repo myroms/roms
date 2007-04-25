@@ -859,7 +859,6 @@
       CALL mp_exchange4d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
      &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, NST,          &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    bed_frac,                                     &
      &                    bed_mass(:,:,:,1,:),bed_mass(:,:,:,2,:))
       CALL mp_exchange4d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
      &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, MBEDP,        &

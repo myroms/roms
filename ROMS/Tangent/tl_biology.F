@@ -22,7 +22,7 @@
       CONTAINS
 
 # if defined BIO_FASHAM
-#  include "tl_fasham.h"
+!!#  include "tl_fasham.h"
 # elif defined NPZD_FRANKS
 #  include "tl_npzd_Franks.h"
 # elif defined NPZD_POWELL

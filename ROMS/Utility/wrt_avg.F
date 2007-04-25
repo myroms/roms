@@ -159,7 +159,7 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #  ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
 #  endif
      &                     AVERAGE(ng) % avgSxx2d(LBi,LBj))
         IF (status.ne.nf_noerr) THEN
@@ -181,7 +181,7 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #  ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
 #  endif
      &                     AVERAGE(ng) % avgSxy2d(LBi,LBj))
         IF (status.ne.nf_noerr) THEN
@@ -203,7 +203,7 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #  ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
 #  endif
      &                     AVERAGE(ng) % avgSyy2d(LBi,LBj))
         IF (status.ne.nf_noerr) THEN
@@ -247,9 +247,9 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 #  ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
 #  endif
-     &                     AVERAGE(ng) % avgu2Sd(LBi,LBj))
+     &                     AVERAGE(ng) % avgv2RS(LBi,LBj))
         IF (status.ne.nf_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idV2rs)), tAVGindx(ng)
@@ -360,7 +360,7 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
 #   endif
      &                     AVERAGE(ng) % avgSxx3d(LBi,LBj,1))
         IF (status.ne.nf_noerr) THEN
@@ -382,12 +382,34 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
 #   endif
      &                     AVERAGE(ng) % avgSxy3d(LBi,LBj,1))
         IF (status.ne.nf_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idW3xy)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out 3D radiation stress, Syy-component.
+!
+      IF (Hout(idW3yy,ng)) THEN
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idW3yy,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#   endif
+     &                     AVERAGE(ng) % avgSyy3d(LBi,LBj,1))
+        IF (status.ne.nf_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idW3yy)), tAVGindx(ng)
           END IF
           exit_flag=3
           ioerror=status
@@ -404,7 +426,7 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
 #   endif
      &                     AVERAGE(ng) % avgSzx3d(LBi,LBj,1))
         IF (status.ne.nf_noerr) THEN
@@ -417,7 +439,7 @@
         END IF
       END IF
 !
-!  Write out 3D radiation stress, Sxx-component.
+!  Write out 3D radiation stress, Szy-component.
 !
       IF (Hout(idW3zy,ng)) THEN
         scale=1.0_r8
@@ -426,7 +448,7 @@
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
 #   endif
      &                     AVERAGE(ng) % avgSzy3d(LBi,LBj,1))
         IF (status.ne.nf_noerr) THEN
@@ -439,11 +461,11 @@
         END IF
       END IF
 !
-!  Write out 3D radiation stress in the XI-direction.
+!  Write out 3D radiation stress in the XI-direction, u_Rstress.
 !
       IF (Hout(idU3rs,ng)) THEN
         scale=1.0_r8
-        gtype=gfactor*r3dvar
+        gtype=gfactor*u3dvar
         status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idU3rs,ng),    &
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
@@ -461,16 +483,16 @@
         END IF
       END IF
 !
-!  Write out 3D radiation stress in the ETA-direction.
+!  Write out 3D radiation stress in the ETA-direction, v_Rstress.
 !
       IF (Hout(idV3rs,ng)) THEN
         scale=1.0_r8
-        gtype=gfactor*r3dvar
+        gtype=gfactor*v3dvar
         status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idV3rs,ng),    &
      &                     tAVGindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #   ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
 #   endif
      &                     AVERAGE(ng) % avgv3RS(LBi,LBj,1))
         IF (status.ne.nf_noerr) THEN

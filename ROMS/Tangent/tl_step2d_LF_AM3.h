@@ -2494,8 +2494,8 @@
         END DO
       END DO
 # endif
-# if (!defined SOLVE3D && defined NEARSHORE_MELLOR) || \
-     defined DIAGNOSTICS_UV
+# if defined NEARSHORE_MELLOR && \
+    (!defined SOLVE3D         || defined DIAGNOSTICS_UV)
 !
 !-----------------------------------------------------------------------
 !  Add in radiation stress terms.

@@ -169,7 +169,7 @@
 !  period (s) at RHO-points.
 !-----------------------------------------------------------------------
 !
-#if define MY_APPLICATION
+#if defined MY_APPLICATION
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           Hwave(i,j)=2.0_r8

@@ -111,6 +111,19 @@
 #endif
 
 /*
+** Set number of ghost-points in the halo region.
+*/
+
+#if defined TS_MPDATA || defined UV_VIS4
+# define GHOST_POINTS 3
+# if defined DISTRIBUTE || defined EW_PERIODIC || defined NS_PERIODIC
+#   define THREE_GHOST
+# endif
+#else
+# define GHOST_POINTS 2
+#endif
+
+/*
 ** Define global grid lower and upper bounds in the I- and
 ** J-directions. These values are a function of periodicity.
 ** They are used in both shared- and distributed-memory
@@ -119,13 +132,13 @@
 
 #ifdef EW_PERIODIC
 # ifdef NS_PERIODIC
-#  define LOWER_BOUND_I -2
-#  define UPPER_BOUND_I Im(ng)+2
-#  define LOWER_BOUND_J -2
-#  define UPPER_BOUND_J Jm(ng)+2
+#  define LOWER_BOUND_I -GHOST_POINTS
+#  define UPPER_BOUND_I Im(ng)+GHOST_POINTS
+#  define LOWER_BOUND_J -GHOST_POINTS
+#  define UPPER_BOUND_J Jm(ng)+GHOST_POINTS
 # else
-#  define LOWER_BOUND_I -2
-#  define UPPER_BOUND_I Im(ng)+2
+#  define LOWER_BOUND_I -GHOST_POINTS
+#  define UPPER_BOUND_I Im(ng)+GHOST_POINTS
 #  define LOWER_BOUND_J 0
 #  define UPPER_BOUND_J Jm(ng)+1
 # endif
@@ -133,8 +146,8 @@
 # ifdef NS_PERIODIC
 #  define LOWER_BOUND_I 0
 #  define UPPER_BOUND_I Im(ng)+1
-#  define LOWER_BOUND_J -2
-#  define UPPER_BOUND_J Jm(ng)+2
+#  define LOWER_BOUND_J -GHOST_POINTS
+#  define UPPER_BOUND_J Jm(ng)+GHOST_POINTS
 # else
 #  define LOWER_BOUND_I 0
 #  define UPPER_BOUND_I Im(ng)+1
@@ -147,19 +160,6 @@
 #define GLOBAL_2D_ARRAY XI_DIM,ETA_DIM
 #define PRIVATE_1D_SCRATCH_ARRAY Istr-3:Iend+3
 #define PRIVATE_2D_SCRATCH_ARRAY Istr-3:Iend+3,Jstr-3:Jend+3
-
-/*
-** Set number of ghost-points in the halo region.
-*/
-
-#if defined TS_MPDATA || defined UV_VIS4
-# define GHOST_POINTS 3
-# if defined DISTRIBUTE || defined EW_PERIODIC || defined NS_PERIODIC
-#   define THREE_GHOST
-# endif
-#else
-# define GHOST_POINTS 2
-#endif
 
 /*
 ** Set switch for distributed-memory applications to gather and scatter
@@ -337,11 +337,12 @@
 /*
 ** Activate bacroclinic pressure gradient response due to the
 ** perturbation of free-surface in the presence of stratification
-** and bathymetry.
+** and bathymetry. This option does not pass the sanity check
+** in adjoint and tangent linear applications.
 */
 
 #ifdef SOLVE3D
-# if !(defined ADJOINT && defined TANGENT)
+# if !(defined ADJOINT || defined TANGENT)
 #   define VAR_RHO_2D
 # endif
 #endif

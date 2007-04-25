@@ -95,7 +95,7 @@
 
        NRREC == 0
    LcycleRST == T
-        NRST == 30
+        NRST == 60
         NSTA == 1
         NFLT == 1
        NINFO == 1
@@ -103,22 +103,22 @@
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 30
+        NHIS == 60
      NDEFHIS == 0
       NTSAVG == 1
         NAVG == 720
      NDEFAVG == 0
       NTSDIA == 1
-        NDIA == 30
+        NDIA == 60
      NDEFDIA == 0
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F
-        NTLM == 30
+        NTLM == 60
      NDEFTLM == 0
    LcycleADJ == F
-        NADJ == 30
+        NADJ == 60
      NDEFADJ == 0
 
 ! Output check pointing GST restart parameters.
@@ -410,7 +410,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! Input NetCDF file names, [1:Ngrids].
 
      GRDNAME == ocean_grd.nc
-     ININAME == ROMS/External/lake_signell_init.nc
+     ININAME == Data/ROMS/Initial/lake_signell_init.nc
      ITLNAME == ocean_itl.nc
      IRPNAME == ocean_irp.nc
      IADNAME == ocean_iad.nc
@@ -431,7 +431,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 
      NFFILES == 1                          ! number of forcing files
 
-     FRCNAME == ROMS/External/lake_signell_rivers_forc.nc
+     FRCNAME == Data/ROMS/Forcing/lake_signell_rivers_forc.nc
 
 ! Output NetCDF file names, [1:Ngrids].
 
@@ -450,9 +450,9 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 
      APARNAM =  ROMS/External/s4dvar.in
      SPOSNAM =  ROMS/External/stations.in
-     FPOSNAM =  ROMS/External/floats_lake.in
+     FPOSNAM =  ROMS/External/floats_lake_signell.in
      BPARNAM =  ROMS/External/bioFasham.in
-     SPARNAM =  ROMS/External/sediment_lake.in
+     SPARNAM =  ROMS/External/sediment_lake_signell.in
      USRNAME =  ROMS/External/MyFile.dat
 
 !

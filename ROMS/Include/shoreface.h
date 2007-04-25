@@ -16,8 +16,10 @@
 #define UV_VIS2
 #define MIX_S_UV
 #define DIAGNOSTICS_UV
+#define AVERAGES
+#define AVERAGES_NEARSHORE
+#define AVERAGES_BEDLOAD
 #define WET_DRY
-#undef  LOG_PROFILE
 #define NEARSHORE_MELLOR
 #define OUT_DOUBLE
 #define UV_ADV

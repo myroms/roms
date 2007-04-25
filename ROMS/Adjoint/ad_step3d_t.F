@@ -75,7 +75,7 @@
      &                       GRID(ng) % umask,                          &
      &                       GRID(ng) % vmask,                          &
 # endif
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 #  ifdef WET_DRY
      &                       GRID(ng) % rmask_wet,                      &
 #  endif
@@ -105,7 +105,7 @@
 # endif
      &                       MIXING(ng) % Akt,                          &
      &                       MIXING(ng) % ad_Akt,                       &
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
      &                       OCEAN(ng) % u,                             &
      &                       OCEAN(ng) % ad_u,                          &
      &                       OCEAN(ng) % v,                             &
@@ -143,7 +143,7 @@
 # ifdef MASKING
      &                             rmask, umask, vmask,                 &
 # endif
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 #  ifdef WET_DRY
      &                             rmask_wet,                           &
 #  endif
@@ -161,7 +161,7 @@
 !!   &                             EobsT, Tobs,                         &
 # endif
      &                             Akt, ad_Akt,                         &
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
      &                             u, ad_u,                             &
      &                             v, ad_v,                             &
 # endif
@@ -186,8 +186,8 @@
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : ad_mp_exchange4d
 # endif
-# ifdef TS_MPDATA
-      USE ad_mpdata_adiff_mod
+# ifdef TS_MPDATA_NOT_YET
+!!    USE ad_mpdata_adiff_mod
 # endif
       USE ad_t3dbc_mod, ONLY : ad_t3dbc_tile
 !
@@ -219,7 +219,7 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
 #   ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
 #   endif
@@ -250,7 +250,7 @@
       real(r8), intent(in) :: Akt(LBi:,LBj:,0:,:)
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
 #  endif
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
 #  endif
@@ -268,7 +268,7 @@
 #  else
       real(r8), intent(inout) :: ad_Akt(LBi:,LBj:,0:,:)
 #  endif
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
 #  endif
@@ -305,7 +305,7 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
 #   ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
 #   endif
@@ -331,7 +331,7 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #  endif
@@ -346,7 +346,7 @@
       real(r8), intent(inout) :: ad_Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: ad_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT)
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #  endif
@@ -407,7 +407,7 @@
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_oHz
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
      &                    N(ng),NT(ng)) :: Ta
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
@@ -448,7 +448,7 @@
             ad_oHz(i,j,k)=0.0_r8
           END DO
         END DO 
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
         DO k=1,N(ng)
           DO i=ILB,IUB
             ad_Ua(i,j,k)=0.0_r8
@@ -597,7 +597,7 @@
 !
 !  Compute BASIC STATE inverse thickness.
 !
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 #  ifdef EW_PERIODIC
 #   define I_RANGE Istr-2,Iend+2
 #  else
@@ -1000,7 +1000,7 @@
 # endif
         END DO
       END DO
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint anti-diffusive velocities and correct advected
@@ -1087,7 +1087,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
-#   ifdef TS_MPDATA
+#   ifdef TS_MPDATA_NOT_YET
               IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
      &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
 #   else
@@ -1109,7 +1109,7 @@
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
-#   ifdef TS_MPDATA
+#   ifdef TS_MPDATA_NOT_YET
               IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
      &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
 #   else
@@ -1507,7 +1507,7 @@
 !  Time-step adjoint vertical advection term.
 !-----------------------------------------------------------------------
 !
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 !
 !  Compute BASIC STATE Ta due to horizontal advection only.
 !
@@ -1566,7 +1566,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
-#   ifdef TS_MPDATA
+#   ifdef TS_MPDATA_NOT_YET
               IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
      &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
 #   else
@@ -1588,7 +1588,7 @@
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
-#   ifdef TS_MPDATA
+#   ifdef TS_MPDATA_NOT_YET
               IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
      &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
 #   else
@@ -1647,7 +1647,7 @@
 !  Time-step adjoint vertical advection term. Compute first BASIC
 !  STATE vertical advection flux, FC.
 !
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 #   ifdef EW_PERIODIC
 #    define I_RANGE Istr-2,Iend+2
 #   else
@@ -1771,7 +1771,7 @@
 #  endif
             FC(i,N(ng))=0.0_r8
           END DO
-# elif defined TS_MPDATA
+# elif defined TS_MPDATA_NOT_YET
 !
 !  First_order, BASIC STATE upstream differences vertical advective
 !  flux.
@@ -1839,7 +1839,7 @@
           DO k=1,N(ng)
             DO i=I_RANGE
 !!            cff1=CF(i,0)*(FC(i,k)-FC(i,k-1))    ! not needed HGA
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 #  ifdef DIAGNOSTICS_TS
 !!            DiaTwrk(i,j,k,itrc,iTvadv)=-cff1
 #  endif
@@ -2203,7 +2203,7 @@
               ad_FC(i,k)=0.0_r8
             END DO
           END DO
-# elif defined TS_MPDATA
+# elif defined TS_MPDATA_NOT_YET
 !
 !  First_order, upstream differences vertical advective flux.
 !
@@ -2361,7 +2361,7 @@
 !
 !  Time-step adjoint horizontal advection term.
 !
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 #   ifdef EW_PERIODIC
 #    define I_RANGE Istr-2,Iend+2
 #   else
@@ -2380,7 +2380,7 @@
           DO j=J_RANGE
             DO i=I_RANGE
               cff=dt(ng)*pm(i,j)*pn(i,j)
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
               cff2=Hz(i,j,k)+                                           &
      &             cff*(Huon(i+1,j,k)-Huon(i,j,k)+                      &
      &                  Hvom(i,j+1,k)-Hvom(i,j,k)+                      &
@@ -2439,7 +2439,7 @@
             i=Isrc(is)
             j=Jsrc(is)
             IF (INT(Dsrc(is)).eq.0) THEN
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
               IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
      &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
 #  else
@@ -2478,7 +2478,7 @@
                 END IF
               END IF
             ELSE IF (INT(Dsrc(is)).eq.1) THEN
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
               IF (((Istr-2.le.i).and.(i.le.Iend+2)).and.                &
      &            ((Jstr-2.le.j).and.(j.le.Jend+2))) THEN
 #  else
@@ -2560,7 +2560,7 @@
               ad_FX(i,j)=0.0_r8
             END DO
           END DO
-# elif defined TS_MPDATA
+# elif defined TS_MPDATA_NOT_YET
 !
 !  First-order, upstream differences adjoint horizontal advective
 !  fluxes.
@@ -3047,7 +3047,7 @@
         END DO K_LOOP
       END DO T_LOOP
 
-# if defined TS_MPDATA   && \
+# if defined TS_MPDATA_NOT_YET && \
     (defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE)
 !
 !  The MPDATA algorithm requires a three-point footprint, so exchange
@@ -3080,7 +3080,7 @@
 !
 !  Compute adjoint inverse thickness.
 !
-# ifdef TS_MPDATA
+# ifdef TS_MPDATA_NOT_YET
 #  ifdef EW_PERIODIC
 #   define I_RANGE Istr-3,Iend+2
 #  else

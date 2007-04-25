@@ -2184,6 +2184,18 @@
      &                          TRIM(Vname(1,idW2yy)),                  &
      &                          hisVid(idW2yy,ng))
           END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2rs))) THEN
+            got_var(idU2rs)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idU2rs)),                  &
+     &                          hisVid(idU2rs,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV2rs))) THEN
+            got_var(idV2rs)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idV2rs)),                  &
+     &                          hisVid(idV2rs,ng))
+          END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
             got_var(idU2Sd)=.TRUE.
             status=nf_inq_varid(ncHISid(ng),                            &
@@ -2226,6 +2238,18 @@
             status=nf_inq_varid(ncHISid(ng),                            &
      &                          TRIM(Vname(1,idW3zy)),                  &
      &                          hisVid(idW3zy,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU3rs))) THEN
+            got_var(idU3rs)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idU3rs)),                  &
+     &                          hisVid(idU3rs,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV3rs))) THEN
+            got_var(idV3rs)=.TRUE.
+            status=nf_inq_varid(ncHISid(ng),                            &
+     &                          TRIM(Vname(1,idV3rs)),                  &
+     &                          hisVid(idV3rs,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
             got_var(idU3Sd)=.TRUE.
@@ -2573,6 +2597,16 @@
           exit_flag=3
           RETURN
         END IF
+        IF (.not.got_var(idU2rs).and.Hout(idU2rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU2rs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV2rs).and.Hout(idV2rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV2rs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
         IF (.not.got_var(idU2Sd).and.Hout(idU2Sd,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idU2Sd)), TRIM(ncname)
           exit_flag=3
@@ -2606,6 +2640,16 @@
         END IF
         IF (.not.got_var(idW3zy).and.Hout(idW3zy,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idW3zy)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idU3Sd).and.Hout(idU3rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idU3rs)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idV3rs).and.Hout(idV3rs,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idV3rs)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF

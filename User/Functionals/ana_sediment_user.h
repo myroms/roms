@@ -286,10 +286,6 @@
 #  endif
         END DO
       END DO
-# else
-      ana_sediment_user.h: no values provided for bed, bed_mass, bottom.
-# endif
-
 #endif
       RETURN
       END SUBROUTINE ana_sediment_tile

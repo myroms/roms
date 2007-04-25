@@ -125,7 +125,8 @@
 !jcw      END
 !***********************************************************************
 !                                                                      *
-      SUBROUTINE SWMAIN(TI_WAV_OCN, WNAME)                                40.31 34.01
+!     SUBROUTINE SWMAIN(TI_WAV_OCN, WNAME)                                40.31 34.01
+      SUBROUTINE SWAN_RUN(TI_WAV_OCN, WNAME)                              40.31 34.01
 !                                                                      *
 !***********************************************************************
 !

@@ -31,7 +31,6 @@
 #define SOUTHERN_WALL
 #define EASTERN_WALL
 #define WESTERN_WALL
-#define OUT_DOUBLE
 
 /* define only one of the four following */
 

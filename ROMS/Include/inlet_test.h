@@ -16,12 +16,11 @@
 
 #define UV_VIS2
 #define MIX_S_UV
-#define OUT_DOUBLE
 #undef  ANA_GRID
 #define MASKING
 #define UV_ADV
 #undef  UV_COR
-#define TS_U3HADVECTION
+#define TS_MPDATA
 #define DJ_GRADPS
 #define SOUTHERN_WALL
 #define FSOBC_REDUCED
@@ -58,17 +57,12 @@
 # ifdef GLS_MIXING
 #  define KANTHA_CLAYSON
 #  define N2S2_HORAVG
-#  undef  CRAIG_BANNER
-#  undef  CHARNOK
-#  define ZOS_HSIG
-#  define TKE_WAVEDISS
 # endif
 # define SEDIMENT
 # ifdef SEDIMENT
 #  define SUSPLOAD
 #  undef  BEDLOAD_SOULSBY
 #  undef  BEDLOAD_MPM
-#  undef  SED_DENS
 #  define SED_MORPH
 # endif
 # if defined SEDIMENT || defined SG_BBL || defined MB_BBL || defined SSW_BBL

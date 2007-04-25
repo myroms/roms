@@ -28,7 +28,8 @@
 !
 !****************************************************************
 !
-      SUBROUTINE SWINITMPI(MyComm)
+!     SUBROUTINE SWINITMPI(MyComm)
+      SUBROUTINE SWAN_INITIALIZE(MyComm)
 !
 !****************************************************************
 !
@@ -216,7 +217,8 @@
       END
 !****************************************************************
 !
-      SUBROUTINE SWEXITMPI
+!     SUBROUTINE SWEXITMPI
+      SUBROUTINE SWAN_FINALIZE
 !
 !****************************************************************
 !

@@ -269,10 +269,6 @@
      &                          FORCES(ng) % Ub_swan,                   &
      &                          OCEAN(ng) % ubar,                       &
      &                          OCEAN(ng) % vbar,                       &
-#ifdef NEARSHORE_MELLOR
-     &                          OCEAN(ng) % ubar_stokes,                &
-     &                          OCEAN(ng) % vbar_stokes,                &
-#endif
      &                          OCEAN(ng) % zeta)
 #ifdef PROFILE
       CALL wclock_off (ng, iNLM, 36)
@@ -293,9 +289,6 @@
 #endif
      &                                Wave_dissip, Ub_swan,             &
      &                                ubar, vbar,                       &
-#ifdef NEARSHORE_MELLOR
-     &                                ubar_stokes, vbar_stokes,         &
-#endif
      &                                zeta)
 !***********************************************************************
 !
@@ -336,10 +329,6 @@
 # endif
       real(r8), intent(inout) :: Wave_dissip(LBi:,LBj:)
       real(r8), intent(inout) :: Ub_swan(LBi:,LBj:)
-# ifdef NEARSHORE_MELLOR
-      real(r8), intent(inout) :: ubar_stokes(LBi:,LBj:)
-      real(r8), intent(inout) :: vbar_stokes(LBi:,LBj:)
-# endif
 
 #else
       real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
@@ -358,10 +347,6 @@
 # endif
       real(r8), intent(inout) :: Wave_dissip(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: Ub_swan(LBi:UBi,LBj:UBj)
-# ifdef NEARSHORE_MELLOR
-      real(r8), intent(inout) :: ubar_stokes(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: vbar_stokes(LBi:UBi,LBj:UBj)
-# endif
 #endif
 !
 !  Local variable declarations.
@@ -630,10 +615,6 @@
       DO j=JstrR,JendR
         DO i=Istr,Iend
           ubar_rho(i,j)=0.5_r8*(ubar(i,j,knew)+ubar(i+1,j,knew))
-#ifdef NEARSHORE_MELLOR
-          ubar_rho(i,j)=ubar_rho(i,j)-                                  &
-     &                  0.5_r8*(ubar_stokes(i,j)+ubar_stokes(i+1,j))
-#endif
         END DO
       END DO
       IF (WESTERN_EDGE) THEN
@@ -677,10 +658,6 @@
       DO j=Jstr,Jend
         DO i=IstrR,IendR
           vbar_rho(i,j)=0.5_r8*(vbar(i,j,knew)+vbar(i,j+1,knew))
-#ifdef NEARSHORE_MELLOR
-          vbar_rho(i,j)=vbar_rho(i,j)-                                  &
-     &                  0.5_r8*(vbar_stokes(i,j)+vbar_stokes(i,j+1))
-#endif
         END DO
       END DO
       IF (NORTHERN_EDGE) THEN

@@ -109,11 +109,20 @@
 !  requires more thinking.
 !-----------------------------------------------------------------------
 !
+#ifdef SWAN_COUPLING
       IF (MyColor.eq.WAVid) THEN
-        CALL SWINITMPI (MyCOMM)
-        CALL SWMAIN (REAL(TI_WAV_OCN),Wname)
-        CALL SWEXITMPI
+        CALL SWAN_INITIALIZE (MyCOMM)
+        CALL SWAN_RUN (REAL(TI_WAV_OCN),Wname)
+        CALL SWAN_FINALIZE
       END IF
+#endif
+#ifdef REFDIF_COUPLING
+      IF (MyColor.eq.WAVid) THEN
+        CALL refdif_initialize (MyCOMM)
+        CALL refdif_run (REAL(TI_WAV_OCN),Wname)
+        CALL refdif_finalize
+      END IF
+#endif
       IF (MyColor.eq.OCNid) THEN
         first=.TRUE.
         Nrun=1

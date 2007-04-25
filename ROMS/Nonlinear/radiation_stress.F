@@ -855,8 +855,8 @@
 !
 !  Convert units to m2/s2 for output purposes.
 !
-            cff=0.25_r8*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
-            rustr3d(i,j,k)=rustr3d(i,j,k)*cff
+            cff1=0.25_r8*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))
+            rustr3d(i,j,k)=rustr3d(i,j,k)*cff1
 #  ifdef DIAGNOSTICS_UV
             DiaRU(i,j,k,nrhs,M3vrad)=-cff*om_u(i,j)*on_u(i,j)
 #  endif
@@ -902,8 +902,8 @@
 !
 !  Convert units to m2/s2 for output purposes.
 !
-              cff=0.25_r8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
-              rvstr3d(i,j,k)=rvstr3d(i,j,k)*cff
+              cff1=0.25_r8*(pm(i,j)+pm(i,j-1))*(pn(i,j)+pn(i,j-1))
+              rvstr3d(i,j,k)=rvstr3d(i,j,k)*cff1
 #  ifdef DIAGNOSTICS_UV
               DiaRV(i,j,k,nrhs,M3vrad)=-cff*om_v(i,j)*on_v(i,j)
 #  endif

@@ -47,11 +47,11 @@
 # elif defined FORCING_SV
 #  include "propagator_fsv.h"
 # elif defined STOCHASTIC_OPT
-#  include "propagator_so.h"
+!!#  include "propagator_so.h"
 # elif defined SO_SEMI
 #  include "propagator_so_semi.h"
 # elif defined SO_TRACE
-#  include "propagator_so_trace.h"
+!!#  include "propagator_so_trace.h"
 # endif
 #endif
 

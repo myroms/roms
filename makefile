@@ -28,12 +28,14 @@
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+NEED_VERSION := 3.80 3.81
+$(if $(filter $(MAKE_VERSION),$(NEED_VERSION)),,        \
+ $(error This makefile requires one of GNU make version $(NEED_VERSION).))
 
 #--------------------------------------------------------------------------
 #  Initialize some things.
 #--------------------------------------------------------------------------
 
-  clean_list := core
   sources    := 
   libraries  :=
 
@@ -79,7 +81,7 @@ MY_ANALYTICAL_DIR ?=
 
 #  Activate debugging compiler options:
 
-       DEBUG :=
+       DEBUG := 
 
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
@@ -147,13 +149,17 @@ MY_ANALYTICAL_DIR ?=
 
 #--------------------------------------------------------------------------
 #  Set directory for temporary objects.
-#
-#  DO NOT set SCRATCH_DIR to "./" because a "make clean" will remove
-#  your entire ROMS root directory.
 #--------------------------------------------------------------------------
 
- SCRATCH_DIR := Build
-  clean_list += $(SCRATCH_DIR)
+SCRATCH_DIR := Build
+ clean_list := core $(SCRATCH_DIR)
+
+ifeq "$(strip $(SCRATCH_DIR))" "."
+  clean_list := core *.o *.oo *.mod *.f90 lib*.a *.bak
+endif
+ifeq "$(strip $(SCRATCH_DIR))" "./"
+  clean_list := core *.o *.oo *.mod *.f90 lib*.a *.bak
+endif
 
 #--------------------------------------------------------------------------
 #  Set Pattern rules.
@@ -333,8 +339,8 @@ ifdef MY_HEADER_DIR
 endif
 
 ifdef SWAN_COUPLE
- modules  +=	SWAN/Src
- includes +=	SWAN/Src
+ modules  +=	Waves/SWAN/Src
+ includes +=	Waves/SWAN/Src
 endif
 
 modules   +=	Master
@@ -347,7 +353,7 @@ vpath %.o $(SCRATCH_DIR)
 
 include $(addsuffix /Module.mk,$(modules))
 
-MDEPFLAGS += $(patsubst %,-I %,$(includes)) --moddir $(SCRATCH_DIR)
+MDEPFLAGS += $(patsubst %,-I %,$(includes)) --silent --moddir $(SCRATCH_DIR)
 
 CPPFLAGS += $(patsubst %,-I%,$(includes))
 

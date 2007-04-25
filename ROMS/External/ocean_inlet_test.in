@@ -908,6 +908,19 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !  Zos         Surface roughness (m).
 !
 !------------------------------------------------------------------------------
+! Height of atmospheric measurements for bulk fluxes parameterization.
+!------------------------------------------------------------------------------
+!
+!  BLK_ZQ      Height (m) of surface air humidity measurement. Usually,
+!                recorded at 10 m.
+!
+!  BLK_ZT      Height (m) of surface air temperature measurement. Usually,
+!                recorded at 2 or 10 m.
+!
+!  BLK_ZW      Height (m) of surface winds measurement. Usually, recorded
+!                at 10 m.
+!
+!------------------------------------------------------------------------------
 ! Wetting and drying parameters.
 !------------------------------------------------------------------------------
 !

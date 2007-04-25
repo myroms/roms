@@ -189,10 +189,10 @@ Build/ad_main2d.o: Build/ocean_coupler.o Build/packing.o Build/ad_main2d.f90
 
 Build/ad_main3d.o: cppdefs.h globaldefs.h upwelling.h
 Build/ad_main3d.f90: cppdefs.h globaldefs.h upwelling.h
-Build/ad_main3d.o: Build/ad_biology.o Build/ad_bulk_flux.o Build/ad_diag.o
-Build/ad_main3d.o: Build/ad_forcing.o Build/ad_htobs.o Build/ad_ini_fields.o
-Build/ad_main3d.o: Build/ad_misfit.o Build/ad_omega.o Build/ad_rho_eos.o
-Build/ad_main3d.o: Build/ad_rhs3d.o Build/ad_set_avg.o Build/ad_set_massflux.o
+Build/ad_main3d.o: Build/ad_biology.o Build/ad_diag.o Build/ad_forcing.o
+Build/ad_main3d.o: Build/ad_htobs.o Build/ad_ini_fields.o Build/ad_misfit.o
+Build/ad_main3d.o: Build/ad_omega.o Build/ad_rho_eos.o Build/ad_rhs3d.o
+Build/ad_main3d.o: Build/ad_set_avg.o Build/ad_set_massflux.o
 Build/ad_main3d.o: Build/ad_set_vbc.o Build/ad_step2d.o Build/ad_step3d_t.o
 Build/ad_main3d.o: Build/ad_step3d_uv.o Build/adsen_force.o Build/analytical.o
 Build/ad_main3d.o: Build/bulk_flux.o Build/mod_fourdvar.o Build/mod_iounits.o
@@ -397,8 +397,9 @@ Build/ad_v3dbc_im.o: Build/ad_v3dbc_im.f90
 Build/ad_variability.o: set_bounds.h tile.h cppdefs.h globaldefs.h upwelling.h
 Build/ad_variability.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 Build/ad_variability.f90: upwelling.h
-Build/ad_variability.o: Build/mod_forces.o Build/mod_kinds.o Build/mod_ocean.o
-Build/ad_variability.o: Build/mod_param.o Build/mp_exchange.o
+Build/ad_variability.o: Build/mod_forces.o Build/mod_kinds.o
+Build/ad_variability.o: Build/mod_ncparam.o Build/mod_ocean.o Build/mod_param.o
+Build/ad_variability.o: Build/mod_scalars.o Build/mp_exchange.o
 Build/ad_variability.o: Build/ad_variability.f90
 
 Build/ad_wrt_his.o: cppdefs.h globaldefs.h upwelling.h
@@ -1087,12 +1088,11 @@ Build/rp_main3d.f90: cppdefs.h globaldefs.h upwelling.h
 Build/rp_main3d.o: Build/analytical.o Build/mod_iounits.o Build/mod_parallel.o
 Build/rp_main3d.o: Build/mod_param.o Build/mod_scalars.o Build/mod_stepping.o
 Build/rp_main3d.o: Build/ocean_coupler.o Build/omega.o Build/rp_biology.o
-Build/rp_main3d.o: Build/rp_bulk_flux.o Build/rp_diag.o Build/rp_ini_fields.o
-Build/rp_main3d.o: Build/rp_omega.o Build/rp_rho_eos.o Build/rp_rhs3d.o
-Build/rp_main3d.o: Build/rp_set_massflux.o Build/rp_set_vbc.o
-Build/rp_main3d.o: Build/rp_set_zeta.o Build/rp_step2d.o Build/rp_step3d_t.o
-Build/rp_main3d.o: Build/rp_step3d_uv.o Build/set_depth.o Build/set_massflux.o
-Build/rp_main3d.o: Build/tl_forcing.o Build/rp_main3d.f90
+Build/rp_main3d.o: Build/rp_diag.o Build/rp_ini_fields.o Build/rp_omega.o
+Build/rp_main3d.o: Build/rp_rho_eos.o Build/rp_rhs3d.o Build/rp_set_massflux.o
+Build/rp_main3d.o: Build/rp_set_vbc.o Build/rp_set_zeta.o Build/rp_step2d.o
+Build/rp_main3d.o: Build/rp_step3d_t.o Build/rp_step3d_uv.o Build/set_depth.o
+Build/rp_main3d.o: Build/set_massflux.o Build/tl_forcing.o Build/rp_main3d.f90
 
 Build/rp_obc_volcons.o: set_bounds.h tile.h cppdefs.h globaldefs.h upwelling.h
 Build/rp_obc_volcons.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
@@ -1420,9 +1420,9 @@ Build/tl_main3d.o: Build/analytical.o Build/dotproduct.o Build/mod_iounits.o
 Build/tl_main3d.o: Build/mod_parallel.o Build/mod_param.o Build/mod_scalars.o
 Build/tl_main3d.o: Build/mod_stepping.o Build/ocean_coupler.o Build/omega.o
 Build/tl_main3d.o: Build/set_depth.o Build/set_massflux.o Build/tl_biology.o
-Build/tl_main3d.o: Build/tl_bulk_flux.o Build/tl_diag.o Build/tl_forcing.o
-Build/tl_main3d.o: Build/tl_ini_fields.o Build/tl_omega.o Build/tl_rho_eos.o
-Build/tl_main3d.o: Build/tl_rhs3d.o Build/tl_set_massflux.o Build/tl_set_vbc.o
+Build/tl_main3d.o: Build/tl_diag.o Build/tl_forcing.o Build/tl_ini_fields.o
+Build/tl_main3d.o: Build/tl_omega.o Build/tl_rho_eos.o Build/tl_rhs3d.o
+Build/tl_main3d.o: Build/tl_set_massflux.o Build/tl_set_vbc.o
 Build/tl_main3d.o: Build/tl_set_zeta.o Build/tl_step2d.o Build/tl_step3d_t.o
 Build/tl_main3d.o: Build/tl_step3d_uv.o Build/tl_main3d.f90
 
@@ -1604,8 +1604,9 @@ Build/tl_v3dbc_im.o: Build/tl_v3dbc_im.f90
 Build/tl_variability.o: set_bounds.h tile.h cppdefs.h globaldefs.h upwelling.h
 Build/tl_variability.f90: set_bounds.h tile.h cppdefs.h globaldefs.h
 Build/tl_variability.f90: upwelling.h
-Build/tl_variability.o: Build/mod_forces.o Build/mod_kinds.o Build/mod_ocean.o
-Build/tl_variability.o: Build/mod_param.o Build/mp_exchange.o
+Build/tl_variability.o: Build/mod_forces.o Build/mod_kinds.o
+Build/tl_variability.o: Build/mod_ncparam.o Build/mod_ocean.o Build/mod_param.o
+Build/tl_variability.o: Build/mod_scalars.o Build/mp_exchange.o
 Build/tl_variability.o: Build/tl_variability.f90
 
 Build/tl_wrt_his.o: cppdefs.h globaldefs.h upwelling.h

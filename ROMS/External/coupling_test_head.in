@@ -51,9 +51,9 @@
 
 ! Coupled model standard input file name.
 
-   ATM_name = atmos.in                           ! atmospheric model
-   WAV_name = SWAN/External/INPUT                ! wave model
-   OCN_name = ROMS/External/ocean_test_head.in   ! ocean model
+   ATM_name = atmos.in                             ! atmospheric model
+   WAV_name = Waves/SWAN/External/INPUT_test_head  ! wave model
+   OCN_name = ROMS/External/ocean_test_head.in     ! ocean model
 
 !
 !  GLOSSARY:

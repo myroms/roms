@@ -20,7 +20,8 @@ use File::Copy;
 
 my ($opt_help, $opt_man, $opt_file, @incdirs, @srcdirs, @defines,
     $opt_modext, $opt_case, $compiler, $opt_depend, $drop_circ);
-our ($cpp, $add_ext, $mod_dir, $libdeps, $longpath, $obj_dir, %defines);
+our ($cpp, $add_ext, $mod_dir, $libdeps, $longpath, $obj_dir, %defines,
+    $silent);
 our $obj_ext = 'o';
 our $ext = 'f';
 
@@ -35,7 +36,7 @@ GetOptions("help" => \$opt_help,    "man" => \$opt_man,
 	"depend=s" => \$opt_depend, "cpp" => \$cpp,
 	"libdeps" => \$libdeps,     "drop" => \$drop_circ,
 	"longpath" => \$longpath,   "objdir=s" => \$obj_dir,
-	"D=s@" => \@defines )
+	"D=s@" => \@defines,        "silent" => \$silent )
   or pod2usage("Try '$0 --help' for more information");
 pod2usage(-verbose => 1) if $opt_help;
 pod2usage(-verbose => 2) if $opt_man;
@@ -258,7 +259,7 @@ sub find_includes {
     local($_);
 
     if (-f $file) {
-        open(FILE, $file) || warn "Can't open $file: $!\n";
+        open(FILE, $file) || $silent || warn "Can't open $file: $!\n";
     } else {
 	return;
     }
@@ -329,7 +330,7 @@ sub find_includes {
 		$self->{'includes'}{$included} = 1;
 	    } else {
                 if ($after !~ /bogus/i) {
-		    warn "Can't find file: $included\n";
+		    $silent || warn "Can't find file: $included\n";
 		}
 	    }
 	}
@@ -416,14 +417,14 @@ sub find_mods {
                 my $base = main::basename($file, @main::suffixes);
 		$file = $base . "." . $main::obj_ext;
 		push(@module_files, $file);
-	    } else {
+	    } elsif ( !$silent ) {
 		warn "Don't know where module $modname lives.\n";
 	    }
 	} else {
 	    if ($main::libdeps or defined($main::mod_files{$modname})) {
 		$modname .= "." . $main::mod_ext;
 		push(@module_files, $modname);
-	    } else {
+	    } elsif ( !$silent ) {
 		warn "Couldn't locate source for module $modname\n";
 	    }
 	}
@@ -533,7 +534,7 @@ sfmakedepend [--help] [--man] [--file=file] [-I dir]
              [--compiler=crayold|cray|sgiold|sgi|nag|ibm|
                                  parasoft|hp|absoft|sun]
              [--depend=mod|obj] [--cpp] [--libdeps] [--drop]
-             file ...
+             [--silent] file ...
 
 =head1 DESCRIPTION
 
@@ -662,6 +663,11 @@ information.
 
 Drop module dependencies (my_mod.mod: my_mod.o). This is also done when
 --depend=obj.
+
+=item I<--silent>
+
+The default is to warn about unfound files. This option causes those
+warnings to not be printed.
 
 =item I<[file ...]>
 
