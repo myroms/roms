@@ -732,7 +732,7 @@
           ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-!>              tl_t(i,j,k,nnew,ibio)=(0.5_r8+SIGN(0.5_r8,                &
+!>              tl_t(i,j,k,nnew,ibio)=(0.5_r8+SIGN(0.5_r8,              &
 !>   &            (t(i,j,k,nnew,ibio)+Bio(i,k,ibio)-Bio_bak(i,k,ibio))* &
 !>   &            Hz(i,j,k)))*(tl_t(i,j,k,nnew,ibio)+                   &
 !>   &            (tl_Bio(i,k,ibio)-tl_Bio_bak(i,k,ibio))*Hz(i,j,k)+    &
@@ -748,10 +748,16 @@
               ad_Hz(i,j,k)=ad_Hz(i,j,k)+adfac*                          &
      &                               (Bio(i,k,ibio)-Bio_bak(i,k,ibio))
               ad_t(i,j,k,nnew,ibio)=adfac
-#ifdef TS_MPDATA
-!>            tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)
+#ifdef TS_MPDATA_NOT_YET
+!>            tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)*Hz_inv(i,k)+     &
+!>   &                           t(i,j,k,nnew,ibio)*Hz(i,j,k)*          &
+!>   &                           tl_Hz_inv(i,k)
+!>
               ad_t(i,j,k,nnew,ibio)=ad_t(i,j,k,nnew,ibio)+              &
-     &                                       ad_t(i,j,k,3,ibio)
+     &                              Hz_inv(i,k)*ad_t(i,j,k,3,ibio)
+              ad_Hz_inv(i,k)=ad_Hz_inv(i,k)+                            &
+     &                       t(i,j,k,nnew,ibio)*Hz(i,j,k)*              &
+     &                       ad_t(i,j,k,3,ibio)
               ad_t(i,j,k,3,ibio)=0.0_r8
 #endif
             END DO

@@ -410,7 +410,7 @@
 !    vonKar        von Karman constant.
 !
         real(r8) :: Cp = 3985.0_r8              ! Joules/kg/degC
-        real(r8) :: Csolar = 700.0_r8           ! 1360-1380 W/m2
+        real(r8) :: Csolar = 1353.0_r8          ! 1360-1380 W/m2
         real(r8) :: Eradius = 6371315.0_r8      ! m
         real(r8) :: StefBo = 5.67E-8_r8         ! Watts/m2/K4
         real(r8) :: emmiss = 0.97_r8            ! non_dimensional

@@ -615,10 +615,16 @@
      &                               (Bio(i,k,ibio)-Bio_bak(i,k,ibio))* &
      &                               ad_t(i,j,k,nnew,ibio)
               ad_t(i,j,k,nnew,ibio)=adfac*ad_t(i,j,k,nnew,ibio)
-#ifdef TS_MPDATA
-!>            tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)
+#ifdef TS_MPDATA_NOT_YET
+!>            tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)*Hz_inv(i,k)+     &
+!>   &                           t(i,j,k,nnew,ibio)*Hz(i,j,k)*          &
+!>   &                           tl_Hz_inv(i,k)
+!>
               ad_t(i,j,k,nnew,ibio)=ad_t(i,j,k,nnew,ibio)+              &
-     &                                       ad_t(i,j,k,3,ibio)
+     &                              Hz_inv(i,k)*ad_t(i,j,k,3,ibio)
+              ad_Hz_inv(i,k)=ad_Hz_inv(i,k)+                            &
+     &                       t(i,j,k,nnew,ibio)*Hz(i,j,k)*              &
+     &                       ad_t(i,j,k,3,ibio)
               ad_t(i,j,k,3,ibio)=0.0_r8
 #endif
             END DO

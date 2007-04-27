@@ -88,7 +88,7 @@
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
-      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
 
       real(r8), intent(in) :: tl_Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_z_r(LBi:,LBj:,:)
@@ -101,7 +101,7 @@
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:UBk)
-      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,UBk,3,UBt)
+      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,UBk,3,UBt)
 
       real(r8), intent(in) :: tl_Hz(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: tl_z_r(LBi:UBi,LBj:UBj,UBk)
@@ -115,7 +115,6 @@
 
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iter, i, ibio, isink, itrc, itrmx, j, k, ks
-      integer :: ILB, IUB, JLB, JUB, KLB, KUB
       integer :: Iteradj
 
       integer, dimension(Nsink) :: idsink
@@ -163,13 +162,7 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_qc
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(Bio,DIM=1)
-      IUB=UBOUND(Bio,DIM=1)
-      JLB=LBOUND(Bio,DIM=2)
-      JUB=UBOUND(Bio,DIM=2)
-      KLB=LBOUND(Bio,DIM=3)
-      KUB=UBOUND(Bio,DIM=3)
+
 !
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.
@@ -349,7 +342,7 @@
 !  conversion processes) in sequence of the main food chain.  In all
 !  stages the concentration of the component being consumed is treated
 !  in fully implicit manner, so the algorithm guarantees non-negative
-!  values, no matter how strong s the concentration of active consuming
+!  values, no matter how strong the concentration of active consuming
 !  component (Phytoplankton or Zooplankton).  The overall algorithm,
 !  as well as any stage of it, is formulated in conservative form
 !  (except explicit sinking) in sense that the sum of concentration of
@@ -676,7 +669,7 @@
           END DO 
          END IF
         END DO
-! 
+!
 !  End of compute basic state arrays I.
 !
 !  Nutrient uptake by phytoplankton.
@@ -1038,7 +1031,8 @@
          END IF
         END DO
 !
-!  End compute basic state arrays II.
+!  End of compute basic state arrays II.
+!
 !
 !  Phytoplankton grazing by Zooplankton and mortality to Detritus
 !  (rate: PhyMR).
@@ -1462,7 +1456,7 @@
          END IF
         END DO
 !
-!  End compute basic state arrays III.
+!    End of compute basic state arrays III.
 !
 !-----------------------------------------------------------------------
 !  Vertical sinking terms.

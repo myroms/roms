@@ -627,11 +627,7 @@
 !  is idealy equal to half the number of observations assimilated
 !  (Optimality=1=2*Jmin/Nobs), for a linear system.
 !
-#ifdef LANCZOS
-            IF (Master.and.(inner.eq.Ninner)) THEN        
-#else
             IF (Master) THEN        
-#endif
               IF (Nrun.gt.1) THEN
                 rate=100.0_r8*ABS(FOURDVAR(ng)%CostFun(0)-              &
      &                            FOURDVAR(ng)%CostFunOld(0))/          &
@@ -679,8 +675,6 @@
                 END IF
               END DO
             END IF
-
-#ifndef LANCZOS
 !
 !  Report total cost function gradient norm.
 !
@@ -718,7 +712,6 @@
             DO i=0,NstateVar(ng)
               FOURDVAR(ng)%CostGradOld(i)=FOURDVAR(ng)%CostGrad(i)
             END DO
-#endif
 !
 !  Save total v-space cost function gradient, GRADv{J(Lnew)}, into
 !  ADJname history NetCDF file. Noticed that the lastest adjoint

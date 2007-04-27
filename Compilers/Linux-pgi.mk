@@ -91,7 +91,7 @@ endif
 ifdef MPI
          CPPFLAGS += -DMPI
  ifdef MPIF90
-               FC := /opt/pgisoft/mpich/bin/mpif90
+               FC := mpif90
                LD := $(FC)
  else
              LIBS += -lfmpi-pgi -lmpi-pgi 
@@ -107,7 +107,7 @@ ifdef DEBUG
            FFLAGS += -g -C
 #          FFLAGS += -g
 else
-           FFLAGS += -u -Bstatic -fastsse -Mipa=fast
+           FFLAGS += -u -Bstatic -fastsse -Mipa=fast -tp k8-64
 endif
 
 ifdef SWAN_COUPLE

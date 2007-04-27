@@ -40,21 +40,21 @@
       CALL wclock_on (ng, iNLM, 15)
 #endif
       CALL tl_biology_tile (ng, Istr, Iend, Jstr, Jend,                 &
-     &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-     &                   nnew(ng),                                      &
+     &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      nnew(ng),                                   &
 #ifdef MASKING
-     &                   GRID(ng) % rmask,                              &
+     &                      GRID(ng) % rmask,                           &
 #endif
-     &                   GRID(ng) % Hz,                                 &
-     &                   GRID(ng) % tl_Hz,                              &
-     &                   GRID(ng) % z_r,                                &
-     &                   GRID(ng) % tl_z_r,                             &
-     &                   GRID(ng) % z_w,                                &
-     &                   GRID(ng) % tl_z_w,                             &
-     &                   FORCES(ng) % srflx,                            &
-     &                   FORCES(ng) % tl_srflx,                         &
-     &                   OCEAN(ng) % t,                                 &
-     &                   OCEAN(ng) % tl_t)
+     &                      GRID(ng) % Hz,                              &
+     &                      GRID(ng) % tl_Hz,                           &
+     &                      GRID(ng) % z_r,                             &
+     &                      GRID(ng) % tl_z_r,                          &
+     &                      GRID(ng) % z_w,                             &
+     &                      GRID(ng) % tl_z_w,                          &
+     &                      FORCES(ng) % srflx,                         &
+     &                      FORCES(ng) % tl_srflx,                      &
+     &                      OCEAN(ng) % t,                              &
+     &                      OCEAN(ng) % tl_t)
 
 #ifdef PROFILE
       CALL wclock_off (ng, iNLM, 15)
@@ -64,14 +64,16 @@
 !
 !-----------------------------------------------------------------------
       SUBROUTINE tl_biology_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
-     &                         nnew,                                    &
+     &                            LBi, UBi, LBj, UBj, UBk, UBt,         &
+     &                            nnew,                                 &
 #ifdef MASKING
-     &                         rmask,                                   &
+     &                            rmask,                                &
 #endif
-     &                         Hz, tl_Hz, z_r, tl_z_r, z_w, tl_z_w,     &
-     &                         srflx, tl_srflx,                         &
-     &                         t, tl_t)
+     &                            Hz, tl_Hz,                            &
+     &                            z_r, tl_z_r,                          &
+     &                            z_w, tl_z_w,                          &
+     &                            srflx, tl_srflx,                      &
+     &                            t, tl_t)
 !-----------------------------------------------------------------------
 !
       USE mod_param
@@ -93,7 +95,7 @@
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: srflx(LBi:,LBj:)
-      real(r8), intent(inout) :: t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
 
       real(r8), intent(in) :: tl_Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_z_r(LBi:,LBj:,:)
@@ -108,7 +110,7 @@
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:UBk)
       real(r8), intent(in) :: srflx(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,UBk,3,UBt)
+      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,UBk,3,UBt)
 
       real(r8), intent(in) :: tl_Hz(LBi:UBi,LBj:UBj,UBk)
       real(r8), intent(in) :: tl_z_r(LBi:UBi,LBj:UBj,UBk)
@@ -180,7 +182,6 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_qc
 
 #include "set_bounds.h"
-
 !
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.
@@ -209,22 +210,22 @@
         DO k=1,N(ng)
           DO i=Istr,Iend
             Hz_inv(i,k)=1.0_r8/Hz(i,j,k)
-            tl_Hz_inv(i,k)=-tl_Hz(i,j,k)*Hz_inv(i,k)/Hz(i,j,k)
+            tl_Hz_inv(i,k)=-Hz_inv(i,k)*Hz_inv(i,k)*tl_Hz(i,j,k)
           END DO
         END DO
         DO k=1,N(ng)-1
           DO i=Istr,Iend
             Hz_inv2(i,k)=1.0_r8/(Hz(i,j,k)+Hz(i,j,k+1))
-            tl_Hz_inv2(i,k)=-(tl_Hz(i,j,k)+tl_Hz(i,j,k+1))*Hz_inv2(i,k)/&
-     &                       (Hz(i,j,k)+Hz(i,j,k+1))
+            tl_Hz_inv2(i,k)=-Hz_inv2(i,k)*Hz_inv2(i,k)*                 &
+     &                      (tl_Hz(i,j,k)+tl_Hz(i,j,k+1))
           END DO
         END DO
         DO k=2,N(ng)-1
           DO i=Istr,Iend
             Hz_inv3(i,k)=1.0_r8/(Hz(i,j,k-1)+Hz(i,j,k)+Hz(i,j,k+1))
-            tl_Hz_inv3(i,k)=-(tl_Hz(i,j,k-1)+tl_Hz(i,j,k)               &
-     &               +tl_Hz(i,j,k+1))*Hz_inv3(i,k)/                     &
-     &                       (Hz(i,j,k-1)+Hz(i,j,k)+Hz(i,j,k+1))
+            tl_Hz_inv3(i,k)=-Hz_inv3(i,k)*Hz_inv3(i,k)*                 &
+     &                      (tl_Hz(i,j,k-1)+tl_Hz(i,j,k)+               &
+     &                       tl_Hz(i,j,k+1))
           END DO
         END DO
 !
@@ -1236,7 +1237,6 @@
 !    End of compute basic state arrays II.
 !
 !
-!
 !  Grazing on phytoplankton by zooplankton (ZooGR rate) using the Ivlev
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
@@ -1712,7 +1712,7 @@
          END IF
         END DO
 !
-!    End of compute basic state arrays III.
+!  End of compute basic state arrays III.
 !
 !-----------------------------------------------------------------------
 !  Tangent linear vertical sinking terms.
@@ -1784,7 +1784,7 @@
 !
                 cff=(dltR-dltL)*Hz_inv3(i,k)
                 tl_cff=(tl_dltR-tl_dltL)*Hz_inv3(i,k)+                  &
-     &                  (dltR-dltL)*tl_Hz_inv3(i,k)
+     &                 (dltR-dltL)*tl_Hz_inv3(i,k)
                 dltR=dltR-cff*Hz(i,j,k+1)
                 tl_dltR=tl_dltR-tl_cff*Hz(i,j,k+1)-cff*tl_Hz(i,j,k+1)
                 dltL=dltL+cff*Hz(i,j,k-1)
@@ -1795,19 +1795,21 @@
                 tl_bL(i,k)=tl_qc(i,k)-tl_dltL
                 WR(i,k)=(2.0_r8*dltR-dltL)**2
                 tl_WR(i,k)=2.0_r8*(2.0_r8*dltR-dltL)*                   &
-     &                                     (2.0_r8*tl_dltR-tl_dltL)
+     &                            (2.0_r8*tl_dltR-tl_dltL)
                 WL(i,k)=(dltR-2.0_r8*dltL)**2
                 tl_WL(i,k)=2.0_r8*(dltR-2.0_r8*dltL)*                   &
-     &                                     (tl_dltR-2.0_r8*tl_dltL)                           
+     &                            (tl_dltR-2.0_r8*tl_dltL)
               END DO
             END DO
             cff=1.0E-14_r8
             DO k=2,N(ng)-2
               DO i=Istr,Iend
                 dltL=MAX(cff,WL(i,k  ))
-                tl_dltL=(0.5_r8-SIGN(0.5_r8,cff-WL(i,k  )))*tl_WL(i,k  )
+                tl_dltL=(0.5_r8-SIGN(0.5_r8,cff-WL(i,k  )))*            &
+     &                  tl_WL(i,k  )
                 dltR=MAX(cff,WR(i,k+1))
-                tl_dltR=(0.5_r8-SIGN(0.5_r8,cff-WR(i,k+1)))*tl_WR(i,k+1)
+                tl_dltR=(0.5_r8-SIGN(0.5_r8,cff-WR(i,k+1)))*            &
+     &                  tl_WR(i,k+1)
                 bR1(i,k)=bR(i,k)
                 bL1(i,k+1)=bL(i,k+1)
                 bR(i,k)=(dltR*bR(i,k)+dltL*bL(i,k+1))/(dltR+dltL)
@@ -1939,9 +1941,10 @@
                 ks=ksource(i,k)
                 cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
                 tl_cu=(0.5_r8+SIGN(0.5_r8,                              &
-     &                 (1.0_r8-(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))))* &
-     &                  ((tl_WL(i,k)-tl_z_w(i,j,ks-1))*Hz_inv(i,ks)+    &
-     &                   (WL(i,k)-z_w(i,j,ks-1))*tl_Hz_inv(i,ks))
+     &                             (1.0_r8-(WL(i,k)-z_w(i,j,ks-1))*     &
+     &                        Hz_inv(i,ks))))*                          &
+     &                ((tl_WL(i,k)-tl_z_w(i,j,ks-1))*Hz_inv(i,ks)+      &
+     &                 (WL(i,k)-z_w(i,j,ks-1))*tl_Hz_inv(i,ks))
                 FC(i,k-1)=FC(i,k-1)+                                    &
      &                    Hz(i,j,ks)*cu*                                &
      &                    (bL(i,ks)+                                    &
@@ -1950,34 +1953,32 @@
      &                         (bR(i,ks)+bL(i,ks)-                      &
      &                          2.0_r8*qc(i,ks))))
                 tl_FC(i,k-1)=tl_FC(i,k-1)+                              &
-     &                    (tl_Hz(i,j,ks)*cu+Hz(i,j,ks)*tl_cu)*          &
-     &                    (bL(i,ks)+                                    &
-     &                     cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-              &
-     &                         (1.5_r8-cu)*                             &
-     &                         (bR(i,ks)+bL(i,ks)-                      &
-     &                          2.0_r8*qc(i,ks))))+                     &
-     &                    Hz(i,j,ks)*cu*                                &
-     &                    (tl_bL(i,ks)+                                 &
-     &                     tl_cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-           &
-     &                         (1.5_r8-cu)*                             &
-     &                         (bR(i,ks)+bL(i,ks)-                      &
-     &                          2.0_r8*qc(i,ks)))+                      &
-     &                     cu*(0.5_r8*(tl_bR(i,ks)-tl_bL(i,ks))+        &
-     &                         tl_cu*                                   &
-     &                         (bR(i,ks)+bL(i,ks)-2.0_r8*qc(i,ks))-     &
-     &                         (1.5_r8-cu)*                             &
-     &                         (tl_bR(i,ks)+tl_bL(i,ks)-                &
-     &                          2.0_r8*tl_qc(i,ks)))                    &
-     &                                       )
-
+     &                       (tl_Hz(i,j,ks)*cu+Hz(i,j,ks)*tl_cu)*       &
+     &                       (bL(i,ks)+                                 &
+     &                        cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-           &
+     &                            (1.5_r8-cu)*                          &
+     &                            (bR(i,ks)+bL(i,ks)-                   &
+     &                             2.0_r8*qc(i,ks))))+                  &
+     &                       Hz(i,j,ks)*cu*                             &
+     &                       (tl_bL(i,ks)+                              &
+     &                        tl_cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-        &
+     &                            (1.5_r8-cu)*                          &
+     &                            (bR(i,ks)+bL(i,ks)-                   &
+     &                             2.0_r8*qc(i,ks)))+                   &
+     &                        cu*(0.5_r8*(tl_bR(i,ks)-tl_bL(i,ks))+     &
+     &                            tl_cu*                                &
+     &                            (bR(i,ks)+bL(i,ks)-2.0_r8*qc(i,ks))-  &
+     &                            (1.5_r8-cu)*                          &
+     &                            (tl_bR(i,ks)+tl_bL(i,ks)-             &
+     &                             2.0_r8*tl_qc(i,ks))))
               END DO
             END DO
             DO k=1,N(ng)
               DO i=Istr,Iend
                 Bio(i,k,ibio)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
                 tl_Bio(i,k,ibio)=tl_qc(i,k)+                            &
-     &                          (tl_FC(i,k)-tl_FC(i,k-1))*Hz_inv(i,k)+  &
-     &                          (FC(i,k)-FC(i,k-1))*tl_Hz_inv(i,k)
+     &                           (tl_FC(i,k)-tl_FC(i,k-1))*Hz_inv(i,k)+ &
+     &                           (FC(i,k)-FC(i,k-1))*tl_Hz_inv(i,k)
               END DO
             END DO
 
@@ -1988,24 +1989,40 @@
 !  Update global tracer variables (m Tunits).
 !-----------------------------------------------------------------------
 !
+!   Notice that the temperature in the NLM was multiplied by Hz since
+!   basic state is in Tunits.
+!
         DO itrc=1,NBT
           ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-!> NOTE: The following NL code has been modfied with Hz factor.
-!             t(i,j,k,nnew,ibio)=MAX((t(i,j,k,nnew,ibio)+               &
-!    &                                Bio(i,k,ibio)-Bio_bak(i,k,ibio))* &
-!    &                               Hz(i,j,k),                         &
-!    &                               0.0_r8)
-              tl_t(i,j,k,nnew,ibio)=(0.5_r8+SIGN(0.5_r8,                &
-     &            (t(i,j,k,nnew,ibio)+Bio(i,k,ibio)-Bio_bak(i,k,ibio))* &
-     &            Hz(i,j,k)))*(tl_t(i,j,k,nnew,ibio)+                   &
-     &            (tl_Bio(i,k,ibio)-tl_Bio_bak(i,k,ibio))*Hz(i,j,k)+    &
-     &            (Bio(i,k,ibio)-Bio_bak(i,k,ibio))*tl_Hz(i,j,k))
-
-#ifdef TS_MPDATA
-!             t(i,j,k,3,ibio)=t(i,j,k,nnew,ibio)
-              tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)
+!!            t(i,j,k,nnew,ibio)=MAX(t(i,j,k,nnew,ibio)+                &
+!!   &                               (Bio(i,k,ibio)-Bio_bak(i,k,ibio))* &
+!!   &                               Hz(i,j,k),                         &
+!!   &                               0.0_r8)               original NLM
+!!
+!>            t(i,j,k,nnew,ibio)=MAX((t(i,j,k,nnew,ibio)+               &
+!>   &                                Bio(i,k,ibio)-                    &
+!>   &                                Bio_bak(i,k,ibio))*               &
+!>   &                               Hz(i,j,k),                         &
+!>   &                               0.0_r8)
+!>
+              tl_t(i,j,k,nnew,ibio)=(0.5_r8+                            &
+     &                               SIGN(0.5_r8,(t(i,j,k,nnew,ibio)+   &
+     &                                            Bio(i,k,ibio)-        &
+     &                                            Bio_bak(i,k,ibio))*   &
+     &                                           Hz(i,j,k)))*           &
+     &                              (tl_t(i,j,k,nnew,ibio)+             &
+     &                               (tl_Bio(i,k,ibio)-                 &
+     &                                tl_Bio_bak(i,k,ibio))*Hz(i,j,k)+  &
+     &                               (Bio(i,k,ibio)-                    &
+     &                                Bio_bak(i,k,ibio))*tl_Hz(i,j,k))
+#ifdef TS_MPDATA_NOT_YET
+!>            t(i,j,k,3,ibio)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
+!>
+              tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)*Hz_inv(i,k)+     &
+     &                           t(i,j,k,nnew,ibio)*Hz(i,j,k)*          &
+     &                           tl_Hz_inv(i,k)
 #endif
             END DO
           END DO
