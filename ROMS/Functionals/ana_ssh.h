@@ -14,6 +14,7 @@
 !
       USE mod_param
       USE mod_clima
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -24,6 +25,13 @@
       CALL ana_ssh_tile (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   CLIMA(ng) % ssh)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(28)='ROMS/Functionals/ana_ssh.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_ssh
 !

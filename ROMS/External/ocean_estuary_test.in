@@ -52,8 +52,7 @@
 ! Grid dimension parameters. See notes below in the Glossary for how to set
 ! these parameters correctly.
 
-!         Lm == 200           ! Number of I-direction INTERIOR RHO-points
-          Lm == 50            ! Number of I-direction INTERIOR RHO-points
+          Lm == 50           ! Number of I-direction INTERIOR RHO-points
           Mm == 3             ! Number of J-direction INTERIOR RHO-points
            N == 10            ! Number of vertical levels
 
@@ -73,7 +72,7 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES == 57600
+      NTIMES == 28800
           DT == 30.0d0
      NDTFAST == 20
 
@@ -104,7 +103,7 @@
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 60
+        NHIS == 120
      NDEFHIS == 0
       NTSAVG == 1
         NAVG == 1440
@@ -225,7 +224,7 @@
 ! Nudging/relaxation time scales, inverse scales will be computed
 ! internally, [1:Ngrids].
 
-       TNUDG == 0.08333d0  0.08333d0       ! days
+       TNUDG == 0.125d0                    ! days
        ZNUDG == 0.001d0                    ! days
       M2NUDG == 0.001d0                    ! days
       M3NUDG == 0.001d0                    ! days
@@ -234,7 +233,7 @@
 ! conditions, [1:Ngrids]. If OBCFAC > 1, nudging on inflow is stronger
 ! than on outflow (recommended).
 
-      OBCFAC == 0.0d0                      ! nondimensional
+      OBCFAC == 1.0d0                      ! nondimensional
 
 ! Linear equation of State parameters:
 

@@ -23,7 +23,9 @@
 !
 !  Local variable declarations.
 !
-      integer :: MyError, ng, status
+      logical :: First = .TRUE.
+
+      integer :: MyError, i, ng, status
 !
 !-----------------------------------------------------------------------
 !  Close output NetCDF files. Set file indices to closed state.
@@ -110,6 +112,22 @@
       END DO
 !
 !-----------------------------------------------------------------------
+!  Report analytical header files used.
+!-----------------------------------------------------------------------
+!
+      IF (Master) THEN
+        DO i=1,37
+          IF (LEN_TRIM(ANANAME(i)).gt.0) THEN
+            IF (First) THEN
+              First=.FALSE.
+              WRITE (stdout,30)
+            END IF
+            WRITE (stdout,'(5x,a)') TRIM(ADJUSTL(ANANAME(i)))
+          END IF
+        END DO
+      END IF
+!
+!-----------------------------------------------------------------------
 !  If applicable, report internal exit errors.
 !-----------------------------------------------------------------------
 !
@@ -139,6 +157,7 @@
      &        i2.2,':')
  20   FORMAT (13x,'number of time records written in ',                 &
      &        a,' file = ',i8.8)
+ 30   FORMAT (/,' Analytical header files used:',/)
  40   FORMAT (/,' ROMS/TOMS: DONE... ',a)
  50   FORMAT (/,' MAIN: Abnormal termination: BLOWUP.')
  60   FORMAT (/,' ERROR: Abnormal termination: NetCDF INPUT.',/,        &

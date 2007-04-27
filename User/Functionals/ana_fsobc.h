@@ -14,6 +14,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -23,6 +24,13 @@
 !
       CALL ana_fsobc_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME( 6),'(a,a)') TRIM(Adir), '/ana_fsobc.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_fsobc
 !

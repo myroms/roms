@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_forces
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -31,6 +32,13 @@
      &                      FORCES(ng) % tl_stflx,                      &
 #endif
      &                      FORCES(ng) % stflx)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(31)='ROMS/Functionals/ana_stflux.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_stflux
 !

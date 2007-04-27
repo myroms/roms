@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_forces
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -28,6 +29,13 @@
      &                      FORCES(ng) % tl_btflx,                      &
 #endif
      &                      FORCES(ng) % btflx)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME( 3)='ROMS/Functionals/ana_btflux.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_btflux
 !

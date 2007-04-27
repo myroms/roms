@@ -17,14 +17,12 @@
 #undef  CURVGRID
 #define WET_DRY
 #define NEARSHORE_MELLOR
-#define WAVES_OCEAN
+#define SWAN_COUPLING
 #define MASKING
 #define OUT_DOUBLE
 #define UV_ADV
 #undef  UV_COR
-#define TS_U3HADVECTION
-#define TS_C4VADVECTION
-#undef  TS_MPDATA
+#define TS_MPDATA
 #define DJ_GRADPS
 #undef  SALINITY
 #define SOLVE3D
@@ -79,7 +77,7 @@
 # ifdef SEDIMENT
 #  define SED_MORPH
 #  undef  SED_DENS
-#  undef  SUSPLOAD
+#  define SUSPLOAD
 #  define BEDLOAD_MPM
 #  undef  BEDLOAD_SOULSBY
 #  define AVERAGES_BEDLOAD

@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_sources
       USE mod_stepping
@@ -55,6 +56,13 @@
 # endif
 #endif
      &                       SOURCES(ng) % Qbar)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(20)='ROMS/Functionals/ana_psource.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_psource
 !
@@ -290,8 +298,7 @@
         my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
      &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
       END DO
-!!    fac=-1000.0_r8*10.0_r8*1.0_r8
-      fac=-500.0_r8*10.0_r8*1.0_r8
+      fac=-36.0_r8*10.0_r8*1.0_r8
       DO is=1,Nsrc/2
         i=Isrc(is)
         j=Jsrc(is)
@@ -306,8 +313,7 @@
         my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
      &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
       END DO
-!!    fac=-1000.0_r8*10.0_r8*1.0_r8
-      fac=-500.0_r8*10.0_r8*1.0_r8
+      fac=-36.0_r8*10.0_r8*1.0_r8
       DO is=Nsrc/2+1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)

@@ -16,6 +16,7 @@
       USE mod_param
       USE mod_boundary
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -29,6 +30,13 @@
      &                    LBi, UBi, LBj, UBj, nstp(ng),                 &
      &                    GRID(ng) % z_r,                               &
      &                    OCEAN(ng) % t)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(34)='ROMS/Functionals/ana_tobc.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_tobc
 !

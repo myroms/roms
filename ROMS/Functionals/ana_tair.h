@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_forces
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -25,6 +26,13 @@
       CALL ana_tair_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    FORCES(ng) % Tair)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(32)='ROMS/Functionals/ana_tair.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_tair
 !

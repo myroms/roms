@@ -52,6 +52,12 @@
 !  If appropriate, process tangent linear history NetCDF file.
 !-----------------------------------------------------------------------
 !
+!  Turn off checking for analytical header files.
+!
+      IF (Lanafile) THEN
+        Lanafile=.FALSE.
+      END IF
+!
 !  Create output tangent NetCDF file or prepare existing file to
 !  append new data to it.  Also,  notice that it is possible to
 !  create several files during a single model run.

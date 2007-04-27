@@ -834,20 +834,6 @@
 !  Banner wave breaking surface flux, if appropriate.
 !
         DO i=Istr,Iend
-# if defined CHARNOK
-          Zos_eff(i)=MAX(charnok_alpha(ng)/g*0.5_r8*                    &
-     &                   SQRT((sustr(i,j)+sustr(i+1,j))**2+             &
-     &                        (svstr(i,j)+svstr(i,j+1))**2),            &
-     &                   Zos_min)
-# elif defined ZOS_HSIG
-          Zos_eff(i)=MAX(zos_hsig_alpha(ng)*Hwave(i,j), Zos_min)
-# else
-          Zos_eff(i)=Zos_min
-# endif
-          gls(i,j,N(ng),nnew)=MAX(gls_cmu0(ng)**gls_p(ng)*              &
-     &                            tke(i,j,N(ng),nnew)**gls_m(ng)*       &
-     &                            (L_sft*Zos_eff(i))**gls_n(ng),        &
-     &                            gls_Pmin(ng))
 # if defined CRAIG_BANNER
           tke(i,j,N(ng),nnew)=MAX(cmu_fac4*0.5_r8*                      &
      &                            SQRT((sustr(i,j)+sustr(i+1,j))**2+    &
@@ -868,6 +854,20 @@
      &                        SQRT((bustr(i,j)+bustr(i+1,j))**2+        &
      &                             (bvstr(i,j)+bvstr(i,j+1))**2),       &
      &                        gls_Kmin(ng))
+# if defined CHARNOK
+          Zos_eff(i)=MAX(charnok_alpha(ng)/g*0.5_r8*                    &
+     &                   SQRT((sustr(i,j)+sustr(i+1,j))**2+             &
+     &                        (svstr(i,j)+svstr(i,j+1))**2),            &
+     &                   Zos_min)
+# elif defined ZOS_HSIG
+          Zos_eff(i)=MAX(zos_hsig_alpha(ng)*Hwave(i,j), Zos_min)
+# else
+          Zos_eff(i)=Zos_min
+# endif
+          gls(i,j,N(ng),nnew)=MAX(gls_cmu0(ng)**gls_p(ng)*              &
+     &                            tke(i,j,N(ng),nnew)**gls_m(ng)*       &
+     &                            (L_sft*Zos_eff(i))**gls_n(ng),        &
+     &                            gls_Pmin(ng))
           gls(i,j,0,nnew)=MAX(gls_fac4*tke(i,j,0,nnew)**(gls_m(ng)),    &
      &                        gls_Pmin(ng))
         END DO

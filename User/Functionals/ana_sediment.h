@@ -17,6 +17,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
 !
 ! Imported variable declarations.
@@ -41,6 +42,13 @@
      &                        OCEAN(ng) % bed_mass,                     &
 #endif
      &                        OCEAN(ng) % bottom)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(23),'(a,a)') TRIM(Adir), '/ana_sediment.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_sediment
 !

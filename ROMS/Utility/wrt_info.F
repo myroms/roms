@@ -2766,12 +2766,15 @@
         END IF
 #endif
       END IF
-#ifndef NO_WRITE_GRID
+#ifdef NO_WRITE_GRID
+      IF (ncid.eq.ncSTAid(ng)) THEN
+#else
+      IF (ncid.ne.ncFLTid(ng)) THEN
+#endif
 # if !(defined SED_MORPH && defined SEDIMENT)
 !
 !  Bathymetry.
 !
-      IF (ncid.ne.ncFLTid(ng)) THEN
         scale=1.0_r8
         wrt_info=nf_inq_varid(ncid,'h',varid)
         IF (ncid.eq.ncSTAid(ng)) THEN
@@ -2799,9 +2802,7 @@
           ioerror=wrt_info
           RETURN
         END IF
-      END IF
 # endif
-      IF (ncid.ne.ncFLTid(ng)) THEN
 !
 !  Coriolis parameter.
 !
@@ -3368,7 +3369,6 @@
         END IF
 # endif
       END IF
-#endif
 !
 !-----------------------------------------------------------------------
 !  Synchronize NetCDF file to disk to allow other processes to access

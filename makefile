@@ -81,7 +81,7 @@ MY_ANALYTICAL_DIR ?=
 
 #  Activate debugging compiler options:
 
-       DEBUG := 
+       DEBUG :=
 
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
@@ -321,7 +321,6 @@ modules   :=	ROMS/Adjoint \
 		ROMS/Modules
 
 includes  :=	ROMS/Include \
-		ROMS/Functionals \
 		ROMS/Adjoint \
 		ROMS/Nonlinear \
 		ROMS/Representer \
@@ -333,6 +332,7 @@ includes  :=	ROMS/Include \
 ifdef MY_ANALYTICAL
  includes +=	$(MY_ANALYTICAL_DIR)
 endif
+ includes +=    ROMS/Functionals
 
 ifdef MY_HEADER_DIR
  includes +=	$(MY_HEADER_DIR)

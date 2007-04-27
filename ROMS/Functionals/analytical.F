@@ -81,310 +81,162 @@
       CONTAINS
 
 #if defined ANA_BIOLOGY && defined BIOLOGY
-# if defined MY_ANALYTICAL
-#  include "ana_biology_user.h"
-# else
-#  include "ana_biology.h"
-# endif
+# include <ana_biology.h>
 #endif
 
 #if defined ANA_BMFLUX && defined SEDIMENT && !defined ANA_SEDIMENT
-# if defined MY_ANALYTICAL
-#  include "ana_bmflux_user.h"
-# else
-#  include "ana_bmflux.h"
-# endif
+# include <ana_bmflux.h>
 #endif
 
 #ifdef SOLVE3D
 # if defined ANA_BTFLUX || defined ANA_BSFLUX || defined ANA_BPFLUX
-#  if defined MY_ANALYTICAL
-#   include "ana_btflux_user.h"
-#  else
-#   include "ana_btflux.h"
-#  endif
+#  include <ana_btflux.h>
 # endif
 #endif
 
 #if defined ANA_CLOUD && defined CLOUDS
-# if defined MY_ANALYTICAL
-#  include "ana_cloud_user.h"
-# else
-#  include "ana_cloud.h"
-# endif
+# include <ana_cloud.h>
 #endif
 
 #ifdef ANA_DIAG
-# if defined MY_ANALYTICAL
-#  include "ana_diag_user.h"
-# else
-#  include "ana_diag.h"
-# endif
+# include <ana_diag.h>
 #endif
 
 #ifdef ANA_FSOBC
-# if defined MY_ANALYTICAL
-#  include "ana_fsobc_user.h"
-# else
-#  include "ana_fsobc.h"
-# endif
+# include <ana_fsobc.h>
 #endif
 
 #ifdef ANA_GRID
-# if defined MY_ANALYTICAL
-#  include "ana_grid_user.h"
-# else
-#  include "ana_grid.h"
-# endif
+# include <ana_grid.h>
 #endif
 
 #if defined ANA_HUMIDITY && \
    (defined BULK_FLUXES || defined ECOSIM || \
    (defined ANA_SRFLUX  && defined ALBEDO) )
-# if defined MY_ANALYTICAL
-#  include "ana_humid_user.h"
-# else
-#  include "ana_humid.h"
-# endif
+# include <ana_humid.h>
 #endif
 
 #if defined VISC_GRID || defined DIFF_GRID || defined SPONGE
-# if defined MY_ANALYTICAL
-#  include "ana_hmixcoef_user.h"
-# else
-#  include "ana_hmixcoef.h"
-# endif
+# include <ana_hmixcoef.h>
 #endif
 
 #ifdef ANA_INITIAL
-# if defined MY_ANALYTICAL
-#  include "ana_initial_user.h"
-# else
-#  include "ana_initial.h"
-# endif
+# include <ana_initial.h>
 #endif
 
 #if defined ANA_M2CLIMA && defined M2CLIMATOLOGY
-# if defined MY_ANALYTICAL
-#  include "ana_m2clima_user.h"
-# else
-#  include "ana_m2clima.h"
-# endif
+# include <ana_m2clima.h>
 #endif
 
 #ifdef ANA_M2OBC
-# if defined MY_ANALYTICAL
-#  include "ana_m2obc_user.h"
-# else
-#  include "ana_m2obc.h"
-# endif
+# include <ana_m2obc.h>
 #endif
 
 #if defined ANA_M3CLIMA && defined M3CLIMATOLOGY
-# if defined MY_ANALYTICAL
-#  include "ana_m3clima_user.h"
-# else
-#  include "ana_m3clima.h"
-# endif
+# include <ana_m3clima.h"
 #endif
 
 #ifdef ANA_M3OBC
-# if defined MY_ANALYTICAL
-#  include "ana_m3obc_user.h"
-# else
-#  include "ana_m3obc.h"
-# endif
+# include <ana_m3obc.h>
 #endif
 
 #if defined ANA_GRID && defined MASKING
-# if defined MY_ANALYTICAL
-#  include "ana_mask_user.h"
-# else
-#  include "ana_mask.h"
-# endif
+# include <ana_mask.h>
 #endif
 
 #if defined NUDGING_COFF
-# if defined MY_ANALYTICAL
-#  include "ana_nudgcoef_user.h"
-# else
-#  include "ana_nudgcoef.h"
-# endif
+# include <ana_nudgcoef.h>
 #endif
 
 #if defined ANA_PAIR && (defined BULK_FLUXES || defined ECOSIM || \
                          defined ATM_PRESS)
-# if defined MY_ANALYTICAL
-#  include "ana_pair_user.h"
-# else
-#  include "ana_pair.h"
-# endif
+# include <ana_pair.h>
 #endif
 
 #if defined ANA_PASSIVE && defined T_PASSIVE && defined SOLVE3D
-# if defined MY_ANALYTICAL
-#  include "ana_passive_user.h"
-# else
-#  include "ana_passive.h"
-# endif
+# include <ana_passive.h>
 #endif
 
 #if defined ANA_PERTURB
-# if defined MY_ANALYTICAL
-#  include "ana_perturb_user.h"
-# else
-#  include "ana_perturb.h"
-# endif
+# include <ana_perturb.h>
 #endif
 
 #if (defined TS_PSOURCE || defined UV_PSOURCE || defined Q_PSOURCE) && \
      defined ANA_PSOURCE
-# if defined MY_ANALYTICAL
-#  include "ana_psource_user.h"
-# else
-#  include "ana_psource.h"
-# endif
+# include <ana_psource.h>
 #endif
 
 #if defined ANA_RAIN && defined BULK_FLUXES
-# if defined MY_ANALYTICAL
-#  include "ana_rain_user.h"
-# else
-#  include "ana_rain.h"
-# endif
+# include <ana_rain.h>
 #endif
 
 #if defined ANA_GRID       && \
    (defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI)
-# if defined MY_ANALYTICAL
-#  include "ana_scope_user.h"
-# else
-#  include "ana_scope.h"
-# endif
+# include <ana_scope.h>
 #endif
 
 #if defined ANA_SEDIMENT && (defined SEDIMENT || defined BBL_MODEL)
-# if defined MY_ANALYTICAL
-#  include "ana_sediment_user.h"
-# else
-#  include "ana_sediment.h"
-# endif
+# include <ana_sediment.h>
 #endif
 
 #ifdef ANA_SMFLUX
-# if defined MY_ANALYTICAL
-#  include "ana_smflux_user.h"
-# else
-#  include "ana_smflux.h"
-# endif
+# include <ana_smflux.h>
 #endif
 
 #ifdef ANA_SPINNING
-# if defined MY_ANALYTICAL
-#  include "ana_spinning_user.h"
-# else
-#  include "ana_spinning.h"
-# endif
+# include <ana_spinning.h>
 #endif
 
 #if (defined ANA_SRFLUX && defined SOLVE3D) || defined DIURNAL_SRFLUX 
-# if defined MY_ANALYTICAL
-#  include "ana_srflux_user.h"
-# else
-#  include "ana_srflux.h"
-# endif
+# include <ana_srflux.h>
 #endif
 
 #if defined ECOSIM && defined SOLVE3D
-# if defined MY_ANALYTICAL
-#  include "ana_specir_user.h"
-# else
-#  include "ana_specir.h"
-# endif
+# include <ana_specir.h>
 #endif
 
 #if defined ANA_SSH && defined ZCLIMATOLOGY
-# if defined MY_ANALYTICAL
-#  include "ana_ssh_user.h"
-# else
-#  include "ana_ssh.h"
-# endif
+# include <ana_ssh.h>
 #endif
 
 #if defined SALINITY    && defined ANA_SSS && \
    (defined SCORRECTION || defined SRELAXATION)
-# if defined MY_ANALYTICAL
-#  include "ana_sss_user.h"
-# else
-#  include "ana_sss.h"
-# endif
+# include <ana_sss.h>
 #endif
 
 #if defined ANA_SST && defined QCORRECTION
-# if defined MY_ANALYTICAL
-#  include "ana_sst_user.h"
-# else
-#  include "ana_sst.h"
-# endif
+# include <ana_sst.h>
 #endif
 
 #if defined ANA_STFLUX || defined ANA_SSFLUX || defined ANA_SPFLUX
-# if defined MY_ANALYTICAL
-#  include "ana_stflux_user.h"
-# else
-#  include "ana_stflux.h"
-# endif
+# include <ana_stflux.h>
 #endif
 
 #if defined ANA_TAIR && \
    (defined BULK_FLUXES || defined ECOSIM || \
    (defined ANA_SRFLUX && defined ALBEDO) )
-# if defined MY_ANALYTICAL
-#  include "ana_tair_user.h"
-# else
-#  include "ana_tair.h"
-# endif
+# include <ana_tair.h>
 #endif
 
 #if defined ANA_TCLIMA && defined TCLIMATOLOGY
-# if defined MY_ANALYTICAL
-#  include "ana_tclima_user.h"
-# else
-#  include "ana_tclima.h"
-# endif
+# include <ana_tclima.h>
 #endif
 
 #ifdef ANA_TOBC
-# if defined MY_ANALYTICAL
-#  include "ana_tobc_user.h"
-# else
-#  include "ana_tobc.h"
-# endif
+# include <ana_tobc.h>
 #endif
 
 #ifdef ANA_VMIX
-# if defined MY_ANALYTICAL
-#  include "ana_vmix_user.h"
-# else
-#  include "ana_vmix.h"
-# endif
+# include <ana_vmix.h>
 #endif
 
 #if defined ANA_WINDS && (defined BULK_FLUXES || defined ECOSIM)
-# if defined MY_ANALYTICAL
-#  include "ana_winds_user.h"
-# else
-#  include "ana_winds.h"
-# endif
+# include <ana_winds.h>
 #endif
 
 #if defined ANA_WWAVE
-# if defined MY_ANALYTICAL
-#  include "ana_wwave_user.h"
-# else
-#  include "ana_wwave.h"
-# endif
+# include <ana_wwave.h>
 #endif
 
       END MODULE analytical_mod

@@ -49,9 +49,9 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE extract_sta2d (ng, model, Cgrid, ifield, gtype,        &
-     &                          LBi, UBi, LBj, UBj, Ascl, A,            &
-     &                          Npos, Xpos, Ypos, Apos)
+      SUBROUTINE extract_sta2d (ng, model, Cgrid, ifield, gtype,          &
+     &                        LBi, UBi, LBj, UBj, Ascl, A,              &
+     &                        Npos, Xpos, Ypos, Apos)
 !***********************************************************************
 !
       USE mod_param
@@ -92,7 +92,7 @@
 
       real(r8) :: Xgrd, Xoff, Ygrd, Yoff
       real(r8) :: p1, p2, q1, q2, r1, r2, wsum
-      real(r8) :: w111, w211, w121, w221, w112, w212, w122, w222
+      real(r8) :: w111, w211, w121, w221
 
       real(r8), dimension(Npos) :: bounded
 !
@@ -110,8 +110,8 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Determine if interpolating at RHO-points (as needed in variational
-!  assimilation) or at the native staggered C-grid.
+!  Determine if interpolating at RHO-points or at the native staggered
+!  C-grid.
 !-----------------------------------------------------------------------
 !
       IF (Cgrid) THEN
@@ -146,10 +146,6 @@
             w211=p2*q1
             w121=p1*q2
             w221=p2*q2
-            w112=0.0_r8
-            w212=0.0_r8
-            w122=0.0_r8
-            w222=0.0_r8
 #ifdef MASKING
             w111=w111*GRID(ng)%rmask(i1,j1)
             w211=w211*GRID(ng)%rmask(i2,j1)
@@ -199,10 +195,6 @@
             w211=p2*q1
             w121=p1*q2
             w221=p2*q2
-            w112=0.0_r8
-            w212=0.0_r8
-            w122=0.0_r8
-            w222=0.0_r8
 #ifdef MASKING
             w111=w111*GRID(ng)%umask(i1,j1)
             w211=w211*GRID(ng)%umask(i2,j1)
@@ -252,10 +244,6 @@
             w211=p2*q1
             w121=p1*q2
             w221=p2*q2
-            w112=0.0_r8
-            w212=0.0_r8
-            w122=0.0_r8
-            w222=0.0_r8
 #ifdef MASKING
             w111=w111*GRID(ng)%vmask(i1,j1)
             w211=w211*GRID(ng)%vmask(i2,j1)
@@ -306,9 +294,9 @@
 #ifdef SOLVE3D
 !
 !***********************************************************************
-      SUBROUTINE extract_sta3d (ng, model, Cgrid, ifield, gtype,        &
-     &                          LBi, UBi, LBj, UBj, LBk, UBk, Ascl, A,  &
-     &                          Npos, Xpos, Ypos, Zpos, Apos)
+      SUBROUTINE extract_sta3d (ng, model, Cgrid, ifield, gtype,          &
+     &                        LBi, UBi, LBj, UBj, LBk, UBk, Ascl, A,    &
+     &                        Npos, Xpos, Ypos, Zpos, Apos)
 !***********************************************************************
 !
       USE mod_param
@@ -367,8 +355,8 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Determine if interpolating at RHO-points (as needed in variational
-!  assimilation) or at the native staggered C-grid.
+!  Determine if interpolating at RHO-points or at the native staggered
+!  C-grid.
 !-----------------------------------------------------------------------
 !
       IF (Cgrid) THEN
@@ -493,7 +481,7 @@
 !
       ELSE IF (gtype.eq.u3dvar) THEN
         DO np=1,Npos
-          Xgrd=Xpos(np)-Xoff
+          Xgrd=Xpos(np)+Xoff
           Ygrd=Ypos(np)
           Zgrd=Zpos(np)
           i1=INT(Xgrd)
@@ -608,7 +596,7 @@
       ELSE IF (gtype.eq.v3dvar) THEN
         DO np=1,Npos
           Xgrd=Xpos(np)
-          Ygrd=Ypos(np)-Yoff
+          Ygrd=Ypos(np)+Yoff
           Zgrd=Zpos(np)
           i1=INT(Xgrd)
           i2=i1+1

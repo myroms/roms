@@ -71,7 +71,7 @@
 # define ANA_MASK
 #endif
 #define ANA_GRID
-#undef ANA_INITIAL
+#define ANA_INITIAL
 #define ANA_SMFLUX
 #define ANA_STFLUX
 #define ANA_SSFLUX

@@ -16,6 +16,7 @@
       USE mod_param
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -33,6 +34,13 @@
      &                      FORCES(ng) % Tair,                          &
 #endif
      &                      FORCES(ng) % srflx)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(27)='ROMS/Functionals/ana_srflux.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_srflux
 !

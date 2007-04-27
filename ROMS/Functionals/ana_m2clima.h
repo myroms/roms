@@ -14,6 +14,7 @@
 !
       USE mod_param
       USE mod_clima
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -25,6 +26,13 @@
      &                       LBi, UBi, LBj, UBj,                        &
      &                       CLIMA(ng) % ubarclm,                       &
      &                       CLIMA(ng) % vbarclm)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(11)='ROMS/Functionals/ana_m2clima.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_m2clima
 !

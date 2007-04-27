@@ -12,6 +12,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
 !
 !  Imported variable declarations.
 !
@@ -22,6 +23,12 @@
 #include "tile.h"
 !
       CALL ana_nudgcoef_tile (ng, model, Istr, Iend, Jstr, Jend)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(16),'(a,a)') TRIM(Adir), '/ana_nudgcoef.h'
+      END IF
 
       RETURN
       END SUBROUTINE ana_nudgcoef

@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_forces
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -25,6 +26,13 @@
       CALL ana_btflux_tile (ng, model, Istr, Iend, Jstr, Jend, itrc,    &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng) % btflx)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME( 3),'(a,a)') TRIM(Adir), '/ana_btflux.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_btflux
 !

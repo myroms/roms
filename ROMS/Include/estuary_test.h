@@ -14,9 +14,8 @@
 */
 
 #define UV_ADV
-#define UV_QDRAG
-#undef  TS_U3HADVECTION
-#define TS_MPDATA
+#define UV_LOGDRAG
+#define TS_U3HADVECTION
 #define SALINITY
 #define SOLVE3D
 #define SPLINES
@@ -26,17 +25,17 @@
 #endif
 #define AVERAGES
 #define AVERAGES_AKV
-#define AVERAGES_AKT
 #define AVERAGES_AKS
-#define OUT_DOUBLE
 #define NORTHERN_WALL
 #define SOUTHERN_WALL
 #define EAST_FSGRADIENT
 #define EAST_M2CLAMPED
 #define EAST_M3GRADIENT
 #define EAST_TCLAMPED
-#define WEST_FSCLAMPED
-#define WEST_M2REDUCED
+#define WEST_FSCHAPMAN
+#define WEST_M2CLAMPED
+#undef  WEST_M2REDUCED
+#undef  FSOBC_REDUCED
 #define WEST_M3GRADIENT
 #define WEST_TRADIATION
 #define WEST_TNUDGING

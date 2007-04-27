@@ -495,6 +495,12 @@
         character (len=80 ) :: Hfile
         character (len=80)  :: Adir
 !
+!  Analyical header file logical and names.
+!
+        logical :: Lanafile
+
+        character (len=200), dimension(37) :: ANANAME
+!
 !  SVN revision and repository root URL.
 !
         character (len=40 ) :: svn_Rev
@@ -751,6 +757,15 @@
           idefDIA(ng)=-1
           idefHIS(ng)=-1
           idefTLM(ng)=-1
+        END DO
+!
+!  Analytical files switch and names
+!
+        Lanafile=.TRUE.
+        DO i=1,37
+          DO j=1,200
+            ANANAME(i)(j:j)=' '
+          END DO
         END DO
 !
 !  Set IDs for state some state variables. 

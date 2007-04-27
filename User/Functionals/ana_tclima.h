@@ -14,6 +14,7 @@
 !
       USE mod_param
       USE mod_clima
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -24,6 +25,13 @@
       CALL ana_tclima_tile (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      CLIMA(ng) % tclm)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(33),'(a,a)') TRIM(Adir), '/ana_tclima.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_tclima
 !

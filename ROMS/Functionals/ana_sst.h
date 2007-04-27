@@ -21,6 +21,7 @@
 !
       USE mod_param
       USE mod_forces
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -32,6 +33,13 @@
      &                   LBi, UBi, LBj, UBj,                            &
      &                   FORCES(ng) % sst,                              &
      &                   FORCES(ng) % dqdt)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(30)='ROMS/Functionals/ana_sst.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_sst
 !

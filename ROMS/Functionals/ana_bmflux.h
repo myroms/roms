@@ -14,6 +14,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_ocean
       USE mod_grid
 !
@@ -26,6 +27,13 @@
      &                      GRID(ng) % xr,                              &
      &                      GRID(ng) % yr,                              &
      &                      OCEAN(ng) % bottom)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME( 2)='ROMS/Functionals/ana_bmflux.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_bmflux
 !

@@ -73,7 +73,7 @@
 ! Time-Stepping parameters.
 
       NTIMES == 1000
-          DT == 30.0d0
+          DT == 1.0d0
      NDTFAST == 20
 
 ! Model iteration loops parameters.
@@ -346,9 +346,9 @@ Hout(idV3rs) == T                          ! 3D V-radiation stress
 Hout(idU3Sd) == T                          ! 3D U-Stokes velocity
 Hout(idV3Sd) == T                          ! 3D V-Stokes velocity
 
-Hout(idWamp) == T                          ! wave height
-Hout(idWlen) == T                          ! wave length
-Hout(idWdir) == T                          ! wave direction
+Hout(idWamp) == F                          ! wave height
+Hout(idWlen) == F                          ! wave length
+Hout(idWdir) == F                          ! wave direction
 
 Hout(idTsur) == F F                        ! surface net heat and salt flux
 Hout(idLhea) == F                          ! latent heat flux

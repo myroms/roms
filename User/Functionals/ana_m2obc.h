@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -36,6 +37,13 @@
      &                     GRID(ng) % umask,                            &
 #endif
      &                     OCEAN(ng) % zeta)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(12),'(a,a)') TRIM(Adir), '/ana_m2obc.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_m2obc
 !

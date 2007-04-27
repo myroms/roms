@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_sources
       USE mod_stepping
@@ -55,6 +56,13 @@
 # endif
 #endif
      &                       SOURCES(ng) % Qbar)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(20),'(a,a)') TRIM(Adir), '/ana_psource.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_psource
 !

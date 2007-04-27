@@ -14,6 +14,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -27,6 +28,13 @@
      &                    GRID(ng) % rmask,                             &
      &                    GRID(ng) % umask,                             &
      &                    GRID(ng) % vmask)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(15)='ROMS/Functionals/ana_mask.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_mask
 !

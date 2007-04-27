@@ -15,6 +15,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_ocean
 !
 ! Imported variable declarations.
@@ -29,6 +30,13 @@
      &                    OCEAN(ng) % vbar,                             &
      &                    OCEAN(ng) % u,                                &
      &                    OCEAN(ng) % v)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME( 5),'(a,a)') TRIM(Adir), '/ana_diag.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_diag
 !

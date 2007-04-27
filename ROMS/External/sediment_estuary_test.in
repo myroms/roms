@@ -64,7 +64,7 @@
 
 ! Median sediment grain diameter (mm).
 
-    MUD_SD50 == 0.01d0  0.005d0
+    MUD_SD50 == 0.15d0  0.005d0
 
 ! Sediment concentration (kg/m3).
 

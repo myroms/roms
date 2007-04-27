@@ -16,6 +16,7 @@
       USE mod_param
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -34,6 +35,13 @@
 #endif
      &                     FORCES(ng) % Uwind,                          &
      &                     FORCES(ng) % Vwind)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(36)='ROMS/Functionals/ana_winds.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_winds
 !

@@ -23,6 +23,7 @@
       USE mod_param
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -42,6 +43,13 @@
      &                      FORCES(ng) % Vwind,                         &
      &                      FORCES(ng) % SpecIr,                        &
      &                      FORCES(ng) % avcos)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(25),'(a,a)') TRIM(Adir), '/ana_specir.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_specir
 !

@@ -586,10 +586,12 @@
 !  Use wave info if we have it, two different options.
 !
 # ifdef COARE_OOST
-            ZoW(i)=(25._r8/pi)*WaveLength(i)*(Wstar(i)/Cwave(i))**4.5+  &
+            ZoW(i)=(25._r8/pi)*WaveLength(i)*                           &
+     &             (Wstar(i)/Cwave(i))**4.5_r8+                         &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
 # elif defined COARE_TAYLOR_YELLAND
-            ZoW(i)=1200._r8*Hwave(i,j)*(Hwave(i,j)/WaveLength(i))**4.5+ &
+            ZoW(i)=1200._r8*Hwave(i,j)*                                 &
+     &             (Hwave(i,j)/WaveLength(i))**4.5_r8+                  &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
 # else
             ZoW(i)=charn(i)*Wstar(i)*Wstar(i)/g+                        &
@@ -599,7 +601,7 @@
 !
 !  Compute Monin-Obukhov stability parameter, Z/L.
 !
-            ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6)
+            ZoQ(i)=MIN(1.15e-4_r8,5.5e-5_r8/Rr(i)**0.6_r8)
             ZoT(i)=ZoQ(i)
             ZoL(i)=vonKar*g*blk_ZW(ng)*                                 &
      &             (Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
@@ -647,7 +649,7 @@
 !  Cool skin correction constants. Clam: part of Saunders constant
 !  lambda; Cwet: slope of saturation vapor.
 !
-            Clam=16.0_r8*g*blk_Cpw*(rhoSea(i)*blk_visw)**3/             &
+            Clam=16.0_r8*g*blk_Cpw*(rhoSea(i)*blk_visw)**3.0_r8/        &
      &           (blk_tcw*blk_tcw*rhoAir(i)*rhoAir(i))
 !
 !  Set initial guesses for cool-skin layer thickness (Hcool).
@@ -673,7 +675,8 @@
 !
             IF ((Qcool.gt.0.0_r8).and.(Qbouy.gt.0.0_r8)) THEN
               lambd=6.0_r8/                                             &
-     &              (1.0_r8+(Clam*Qbouy/(Wstar(i)+eps)**4)**0.75_r8)**r3
+     &              (1.0_r8+                                            &
+     &               (Clam*Qbouy/(Wstar(i)+eps)**4.0_r8)**0.75_r8)**r3
               Hcool=lambd*blk_visw/(SQRT(rhoAir(i)/rhoSea(i))*          &
      &                              Wstar(i)+eps)
               delTc(i)=Qcool*Hcool/blk_tcw
@@ -691,59 +694,59 @@
 !
         DO i=MIN(Istr-1,IstrR),IendR
 !
-!  Compute transfer coefficients for momentun (Cd).
+!  Compute transfer coefficients for momentum (Cd).
 !
           Wspeed=SQRT(Wmag(i)*Wmag(i)+Wgus(i)*Wgus(i))
           Cd=Wstar(i)*Wstar(i)/(Wspeed*Wspeed+eps)
 !
 !  Compute turbulent sensible heat flux (W/m2), Hs.
 !
-            Hs=-blk_Cpa*rhoAir(i)*Wstar(i)*Tstar(i)
+          Hs=-blk_Cpa*rhoAir(i)*Wstar(i)*Tstar(i)
 !
 !  Compute sensible heat flux (W/m2) due to rainfall (kg/m2/s), Hsr.
 !
-            diffw=2.11E-5_r8*(TairK(i)/273.16_r8)**1.94_r8
-            diffh=0.02411_r8*(1.0_r8+TairC(i)*                          &
-     &                        (3.309E-3_r8-1.44E-6_r8*TairC(i)))/       &
-     &            (rhoAir(i)*blk_Cpa)
-            cff=Qair(i)*Hlv(i,j)/(blk_Rgas*TairK(i)*TairK(i))
-            wet_bulb=1.0_r8/(1.0_r8+0.622_r8*(cff*Hlv(i,j)*diffw)/      &
-     &                                       (blk_Cpa*diffh))
-            Hsr=rain(i,j)*wet_bulb*blk_Cpw*                             &
-     &          ((TseaC(i)-TairC(i))+(Qsea(i)-Q(i))*Hlv(i,j)/blk_Cpa)
-            SHeat(i,j)=(Hs+Hsr)
+          diffw=2.11E-5_r8*(TairK(i)/273.16_r8)**1.94_r8
+          diffh=0.02411_r8*(1.0_r8+TairC(i)*                            &
+     &                      (3.309E-3_r8-1.44E-6_r8*TairC(i)))/         &
+     &          (rhoAir(i)*blk_Cpa)
+          cff=Qair(i)*Hlv(i,j)/(blk_Rgas*TairK(i)*TairK(i))
+          wet_bulb=1.0_r8/(1.0_r8+0.622_r8*(cff*Hlv(i,j)*diffw)/        &
+     &                                     (blk_Cpa*diffh))
+          Hsr=rain(i,j)*wet_bulb*blk_Cpw*                               &
+     &        ((TseaC(i)-TairC(i))+(Qsea(i)-Q(i))*Hlv(i,j)/blk_Cpa)
+          SHeat(i,j)=(Hs+Hsr)
 # ifdef MASKING
-            SHeat(i,j)=SHeat(i,j)*rmask(i,j)
+          SHeat(i,j)=SHeat(i,j)*rmask(i,j)
 # endif
 !
 !  Compute turbulent latent heat flux (W/m2), Hl.
 !
-            Hl=-Hlv(i,j)*rhoAir(i)*Wstar(i)*Qstar(i)
+          Hl=-Hlv(i,j)*rhoAir(i)*Wstar(i)*Qstar(i)
 !
 !  Compute Webb correction (Webb effect) to latent heat flux, Hlw.
 !
-            upvel=-1.61_r8*Wstar(i)*Qstar(i)-                         &
-     &            (1.0_r8+1.61_r8*Q(i))*Wstar(i)*Tstar(i)/TairK(i)
-            Hlw=rhoAir(i)*Hlv(i,j)*upvel*Q(i)
-            LHeat(i,j)=(Hl+Hlw)
+          upvel=-1.61_r8*Wstar(i)*Qstar(i)-                             &
+     &          (1.0_r8+1.61_r8*Q(i))*Wstar(i)*Tstar(i)/TairK(i)
+          Hlw=rhoAir(i)*Hlv(i,j)*upvel*Q(i)
+          LHeat(i,j)=(Hl+Hlw)
 # ifdef MASKING
-            LHeat(i,j)=LHeat(i,j)*rmask(i,j)
+          LHeat(i,j)=LHeat(i,j)*rmask(i,j)
 # endif
 !
 !  Compute momentum flux (N/m2) due to rainfall (kg/m2/s).
 !
-            Taur=0.85_r8*rain(i,j)*Wmag(i)
+          Taur=0.85_r8*rain(i,j)*Wmag(i)
 !
 !  Compute wind stress components (N/m2), Tau.
 !
-            cff=rhoAir(i)*Cd*Wspeed
-            Taux(i,j)=(cff*Uwind(i,j)+Taur*SIGN(1.0_r8,Uwind(i,j)))
+          cff=rhoAir(i)*Cd*Wspeed
+          Taux(i,j)=(cff*Uwind(i,j)+Taur*SIGN(1.0_r8,Uwind(i,j)))
 # ifdef MASKING
-            Taux(i,j)=Taux(i,j)*rmask(i,j)
+          Taux(i,j)=Taux(i,j)*rmask(i,j)
 # endif
-            Tauy(i,j)=(cff*Vwind(i,j)+Taur*SIGN(1.0_r8,Vwind(i,j)))
+          Tauy(i,j)=(cff*Vwind(i,j)+Taur*SIGN(1.0_r8,Vwind(i,j)))
 # ifdef MASKING
-            Tauy(i,j)=Tauy(i,j)*rmask(i,j)
+          Tauy(i,j)=Tauy(i,j)*rmask(i,j)
 # endif
         END DO
       END DO
@@ -932,7 +935,7 @@
       ELSE
         cff=MIN(50.0_r8,0.35_r8*ZoL)
         bulk_psiu=-((1.0_r8+ZoL)+0.6667_r8*(ZoL-14.28_r8)/              &
-     &            EXP(cff)+8.525)
+     &            EXP(cff)+8.525_r8)
       END IF
       RETURN
       END FUNCTION bulk_psiu

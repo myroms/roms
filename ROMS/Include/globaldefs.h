@@ -260,6 +260,7 @@
 #  define DNRM2 dnrm2
 # endif
 # define DAXPY daxpy
+# define DSTEQR dsteqr
 #else
 # define nf_get_att_TYPE nf_get_att_real
 # define nf_put_att_TYPE nf_put_att_real
@@ -281,6 +282,7 @@
 #  define DNRM2 snrm2
 # endif
 #  define DAXPY saxpy
+#  define DSTEQR ssteqr
 #endif
 
 /*

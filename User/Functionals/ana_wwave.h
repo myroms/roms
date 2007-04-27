@@ -16,6 +16,7 @@
       USE mod_param
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -48,6 +49,13 @@
 #endif
      &                     GRID(ng) % angler,                           &
      &                     GRID(ng) % h)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(37),'(a,a)') TRIM(Adir), '/ana_wwave.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_wwave
 !

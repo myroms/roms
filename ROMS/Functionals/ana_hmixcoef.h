@@ -21,6 +21,7 @@
       USE mod_param
       USE mod_grid
       USE mod_mixing
+      USE mod_ncparam
       USE mod_scalars
 !
 !  Imported variable declarations.
@@ -52,6 +53,13 @@
      &                        GRID(ng) % grdscl,                        &
      &                        GRID(ng) % xr,                            &
      &                        GRID(ng) % yr)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME( 8)='ROMS/Functionals/ana_hmixcoef.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_hmixcoef
 !

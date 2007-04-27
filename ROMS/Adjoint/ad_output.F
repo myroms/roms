@@ -48,6 +48,12 @@
 !  If appropriate, process adjoint history NetCDF file.
 !-----------------------------------------------------------------------
 !
+!  Turn off checking for analytical header files.
+!
+      IF (Lanafile) THEN
+        Lanafile=.FALSE.
+      END IF
+!
 !  Create output adjoint NetCDF file or prepare existing file to
 !  append new data to it.  Also,  notice that it is possible to
 !  create several files during a single model run.

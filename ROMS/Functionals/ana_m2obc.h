@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -36,6 +37,13 @@
      &                     GRID(ng) % umask,                            &
 #endif
      &                     OCEAN(ng) % zeta)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(12)='ROMS/Functionals/ana_m2obc.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_m2obc
 !
@@ -104,7 +112,26 @@
 !-----------------------------------------------------------------------
 !
 #if defined ESTUARY_TEST
+        cff1=0.40_r8                                          ! west end
         cff2=0.08_r8
+        riv_flow=cff2*300.0_r8*5.0_r8
+        tid_flow=cff1*300.0_r8*10.0_r8
+        IF (WESTERN_EDGE) THEN
+          my_area=0.0_r8
+          my_flux=0.0_r8
+          DO j=Jstr,Jend
+            cff=0.5_r8*(zeta(Istr  ,j,knew)+h(Istr  ,j)+                &
+     &                  zeta(Istr-1,j,knew)+h(Istr-1,j))/pn(Istr,j)
+            my_area=my_area+cff
+          END DO
+          my_flux=-tid_flow*SIN(2.0_r8*pi*time(ng)/                     &
+     &            (12.0_r8*3600.0_r8))-riv_flow
+          DO j=Jstr,Jend
+            BOUNDARY(ng)%ubar_west(j)=my_flux/my_area
+            BOUNDARY(ng)%vbar_west(j)=0.0_r8
+          END DO
+        END IF
+        cff2=0.08_r8                                          ! east end
         riv_flow=cff2*300.0_r8*5.0_r8
         IF (EASTERN_EDGE) THEN
           my_area=0.0_r8

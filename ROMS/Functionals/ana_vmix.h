@@ -16,6 +16,7 @@
       USE mod_param
       USE mod_grid
       USE mod_mixing
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -34,6 +35,13 @@
      &                    OCEAN(ng) % zeta,                             &
      &                    MIXING(ng) % Akv,                             &
      &                    MIXING(ng) % Akt)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(35)='ROMS/Functionals/ana_vmix.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_vmix
 !

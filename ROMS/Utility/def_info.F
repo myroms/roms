@@ -72,8 +72,8 @@
 !
       integer, parameter :: Natt = 24
 
-      integer :: brydim, i, j, srdim, stadim, status, swdim
-      integer :: trcdim, usrdim, varid
+      integer :: brydim, i, ie, is, j, lstr, varid
+      integer :: srdim, stadim, status, swdim, trcdim, usrdim
 #ifdef FOUR_DVAR
       integer :: statedim
 #endif
@@ -93,6 +93,7 @@
       character (len=11) :: frcatt
       character (len=50) :: tiling
       character (len=80) :: Vinfo(Natt)
+      character (len=1024) :: ana_file
 !
 !-----------------------------------------------------------------------
 !  Set dimension variables.
@@ -325,6 +326,28 @@
      &                       LEN_TRIM(sposnam),sposnam)
 #endif
 !
+!  Analytical header files used.
+!
+      DO i=1,1024
+        ana_file(i:i)=' '
+      END DO
+      is=1
+      DO i=1,37
+        lstr=LEN_TRIM(ANANAME(i))
+        IF (lstr.gt.0) THEN
+          ie=is+lstr-1
+          ana_file(is:ie)=TRIM(ANANAME(i))
+          is=ie+1
+          ana_file(is:is)=','
+          is=is+2
+        END IF
+      END DO
+      lstr=LEN_TRIM(ana_file)-1
+      IF (lstr.gt.0) THEN
+        status=nf_put_att_text(ncid,nf_global,'ana_file',               &
+     &                         lstr,ana_file)
+      END IF
+!
 !  SVN repository information.
 !
       status=nf_put_att_text(ncid,nf_global,'svn_url',                  &
@@ -348,10 +371,6 @@
 #ifdef ROMS_HEADER
       status=nf_put_att_text(ncid,nf_global,'header_file',              &
      &                       LEN_TRIM(Hfile),Hfile)
-#endif
-#ifdef ANALYTICAL_DIR
-      status=nf_put_att_text(ncid,nf_global,'analytical_dir',           &
-     &                       LEN_TRIM(Adir),Adir)
 #endif
 
 #ifndef DEBUGGING
@@ -1910,12 +1929,15 @@
      &                 ncname)
       END IF
 #endif
-#ifndef NO_WRITE_GRID
+#ifdef NO_WRITE_GRID
+      IF (ncid.eq.ncSTAid(ng)) THEN
+#else
+      IF (ncid.ne.ncFLTid(ng)) THEN
+#endif
 # if !(defined SED_MORPH && defined SEDIMENT)
 !
 !  Bathymetry.
 !
-      IF (ncid.ne.ncFLTid(ng)) THEN
         Vinfo( 1)='h'
         Vinfo( 2)='bathymetry at RHO-points'
         Vinfo( 3)='meter'
@@ -1929,9 +1951,7 @@
           status=def_var(ncid,varid,NF_TYPE,2,t2dgrd,Aval,Vinfo,        &
      &                   ncname)
         END IF
-      END IF
 # endif
-      IF (ncid.ne.ncFLTid(ng)) THEN
 !
 !  Coriolis Parameter.
 !
@@ -2229,7 +2249,6 @@
         END IF
 # endif
       END IF
-#endif
       def_info=status
       RETURN
       end function def_info

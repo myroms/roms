@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_boundary
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -24,6 +25,13 @@
 !
       CALL ana_m3obc_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(14),'(a,a)') TRIM(Adir), '/ana_m3obc.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_m3obc
 !

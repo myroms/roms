@@ -36,6 +36,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -65,6 +66,13 @@
      &                       OCEAN(ng) % tl_ubar,                       &
      &                       OCEAN(ng) % tl_vbar,                       &
      &                       OCEAN(ng) % tl_zeta)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(19),'(a,a)') TRIM(Adir), '/ana_perturb.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_perturb
 !

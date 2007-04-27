@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -43,6 +44,12 @@
      &                       OCEAN(ng) % ubar,                          &
      &                       OCEAN(ng) % vbar,                          &
      &                       OCEAN(ng) % zeta)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(10),'(a,a)') TRIM(Adir), '/ana_initial.h'
+      END IF
 
       RETURN
       END SUBROUTINE ana_initial

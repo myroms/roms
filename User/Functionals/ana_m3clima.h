@@ -14,6 +14,7 @@
 !
       USE mod_param
       USE mod_clima
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -25,6 +26,13 @@
      &                       LBi, UBi, LBj, UBj,                        &
      &                       CLIMA(ng) % uclm,                          &
      &                       CLIMA(ng) % vclm)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(13),'(a,a)') TRIM(Adir), '/ana_m3clima.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_m3clima
 !

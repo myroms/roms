@@ -16,6 +16,7 @@
       USE mod_param
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -39,6 +40,13 @@
 #endif
      &                      FORCES(ng) % sustr,                         &
      &                      FORCES(ng) % svstr)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(24),'(a,a)') TRIM(Adir), '/ana_smflux.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_smflux
 !

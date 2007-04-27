@@ -14,6 +14,7 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_ncparam
       USE mod_ocean
 !
 ! Imported variable declarations.
@@ -25,6 +26,13 @@
       CALL ana_biology_tile (ng, model, Istr, Iend, Jstr, Jend,         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng) % t)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME( 1),'(a,a)') TRIM(Adir), '/ana_biology.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_biology
 !

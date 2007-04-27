@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -74,6 +75,12 @@
      &                            OCEAN(ng) % ad_vbar,                  &
      &                            OCEAN(ng) % ad_zeta)
 #endif
+      END IF
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME(10)='ROMS/Functionals/ana_initial.h'
       END IF
 
       RETURN

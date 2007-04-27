@@ -15,6 +15,7 @@
 !
       USE mod_param
       USE mod_forces
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -25,6 +26,13 @@
       CALL ana_rain_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    FORCES(ng) % rain)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        WRITE (ANANAME(21),'(a,a)') TRIM(Adir), '/ana_rain.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_rain
 !

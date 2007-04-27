@@ -36,6 +36,7 @@
 !
       USE mod_param
       USE mod_grid
+      USE mod_ncparam
 !
 ! Imported variable declarations.
 !
@@ -76,6 +77,13 @@
      &                    GRID(ng) % pm,                                &
      &                    GRID(ng) % f,                                 &
      &                    GRID(ng) % h)
+!
+! Set analytical header file name used.
+!
+      IF (Lanafile) THEN
+        ANANAME( 7)='ROMS/Functionals/ana_grid.h'
+      END IF
+
       RETURN
       END SUBROUTINE ana_grid
 !
