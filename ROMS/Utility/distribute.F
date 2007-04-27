@@ -249,6 +249,86 @@
       RETURN
       END SUBROUTINE mp_bcastf_v
 
+      SUBROUTINE mp_bcastf_m (ng, model, A, Isize, Jsize)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts a floating-point matrix variable to all     !
+!  processors in the group. It is called by all the members in the     !
+!  group.                                                              !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          Variable to broadcast.                                !
+!     Isize      Number of columns to broadcast.                       !
+!     Jsize      Number of rows to broadcast.                          !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted variable.                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Isize, Jsize
+
+      real(r8), intent(inout) :: A(Isize,Jsize)
+!
+!  Local variable declarations
+!
+      integer :: Asize, Lstr, MyError, Serror
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 42)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+# ifdef MPI
+      Asize=Isize*Jsize
+      CALL mpi_bcast (A, Asize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,     &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTF_V - error during ',a,' call, Node = ',    &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 42)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_bcastf_m
+
       SUBROUTINE mp_bcasti_s (ng, model, A, Asize)
 !
 !***********************************************************************

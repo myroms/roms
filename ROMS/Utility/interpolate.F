@@ -750,12 +750,12 @@
 !
 !  Use Law of Cosines to get cell parallelogram "shear" angle.
 !
-            diag2=(Xgrd(Imin+1,Jmin)-Xgrd(Imin,Jmin+1))**2+             &
-     &            (Ygrd(Imin+1,Jmin)-Ygrd(Imin,Jmin+1))**2
-            aa2=(Xgrd(Imin,Jmin)-Xgrd(Imin+1,Jmin))**2+                 &
-     &          (Ygrd(Imin,Jmin)-Ygrd(Imin+1,Jmin))**2
-            bb2=(Xgrd(Imin,Jmin)-Xgrd(Imin,Jmin+1))**2+                 &
-     &          (Ygrd(Imin,Jmin)-Ygrd(Imin,Jmin+1))**2
+            diag2=((Xgrd(Imin+1,Jmin)-Xgrd(Imin,Jmin+1))*xfac)**2+      &
+     &            ((Ygrd(Imin+1,Jmin)-Ygrd(Imin,Jmin+1))*yfac)**2
+            aa2=((Xgrd(Imin,Jmin)-Xgrd(Imin+1,Jmin))*xfac)**2+          &
+     &          ((Ygrd(Imin,Jmin)-Ygrd(Imin+1,Jmin))*yfac)**2
+            bb2=((Xgrd(Imin,Jmin)-Xgrd(Imin,Jmin+1))*xfac)**2+          &
+     &          ((Ygrd(Imin,Jmin)-Ygrd(Imin,Jmin+1))*yfac)**2
             phi=ASIN((diag2-aa2-bb2)/(2.0_r8*SQRT(aa2*bb2)))
 !
 !  Transform float position into curvilinear coordinates. Assume the
@@ -772,8 +772,8 @@
 !
 !  Scale with cell side lengths to translate into cell indices.
 !
-            dx=MIN(MAX(0.0_r8,dx/SQRT(aa2)/xfac),1.0_r8)
-            dy=MIN(MAX(0.0_r8,dy/SQRT(bb2)/yfac),1.0_r8)
+            dx=MIN(MAX(0.0_r8,dx/SQRT(aa2)),1.0_r8)
+            dy=MIN(MAX(0.0_r8,dy/SQRT(bb2)),1.0_r8)
             Ipos(mp,np)=REAL(Imin,r8)+dx
             Jpos(mp,np)=REAL(Jmin,r8)+dy
           END IF

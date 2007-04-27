@@ -60,27 +60,26 @@
 !  ObsVar       Global observation variance for each state variable.   !
 !  Optimality   normalized, optimal cost function minimum.             !
 !  Ritz         Ritz eigenvalues to compute approximated Hessian.      !
+!  RitzMaxErr   Ritz values maximum error limit.                       !
 !  TLmodVal     Tangent linear model values at observation locations.  !
 !  Vdecay       Covariance vertical decorrelation scale (m).           !
 !  Tobs         Observations time (days).                              !
 !  Xobs         Observations X-locations (grid coordinates).           !
 !  Yobs         Observations Y-locations (grid coordinates).           !
 !  Zobs         Observations Z-locations (grid coordinates).           !
+!  cg_Gnorm     Initial gradient vector normalization factor.          !
+!  cg_Greduc    Reduction in the gradient norm; excess cost function.  !
+!  cg_QG        Lanczos vector normalization factor.                   !
+!  cg_Ritz      Eigenvalues of the Lanczos recurrence term Q(k)T(k).   !
+!  cg_RitzErr   Eigenvalues relative error.                            !
+!  cg_Tmatrix   Lanczos recurrence symmetric, tridiagonal matrix.      !
 !  cg_alpha     Conjugate gradient coefficient.                        !
 !  cg_beta      Conjugate gradient coefficient.                        !
 !  cg_delta     Lanczos algorithm coefficient.                         !
 !  cg_gamma     Lanczos algorithm coefficient.                         !
 !  cg_tau       Conjugate gradient coefficient.                        !
-# if defined WEAK_CONSTRAINT || defined IOM
-!  zdelta       Weak constraint conjugate gradient vector.             !
-!                 new descent direction                                !
-!  zbeta        Weak constraint conjugate gradient vector.             !
-!                 normalized previous and current descent gradients    !
-!  zcglwk       Weak constraint Lanczos matrix                         !
-!  zgrad0       Initial gradient vector                                !
-!  zqg0                                                                !
-!  zgnorm                                                              !
-# endif
+!  cg_zu        Lanczos tridiagonal matrix, upper diagonal elements.   !
+!  cg_zv        Eigenvectors of Lanczos recurrence term Q(k)T(k).      !
 !  haveADmod    Logical switch indicating that there is representer    !
 !                 coefficients available to process in MODname file.   !
 !  haveNLmod    Logical switch indicating that there is nonlinear      !
@@ -297,6 +296,67 @@
         real(r8), dimension(Ngrids) :: KhMax
         real(r8), dimension(Ngrids) :: KvMin
         real(r8), dimension(Ngrids) :: KvMax
+
+# if defined IS4DVAR
+!
+!-----------------------------------------------------------------------
+!  Conjugate gradient parameters.
+!-----------------------------------------------------------------------
+!
+!  Conjugate gradient coefficients.
+!
+        real(r8), allocatable :: cg_alpha(:,:)
+        real(r8), allocatable :: cg_beta(:,:)
+        real(r8), allocatable :: cg_tau(:,:)
+!
+!  Number of converged Ritz eigenvalues.
+!
+        integer :: nConvRitz
+!
+!  Ritz values maximum error limit.
+!
+        real(r8) :: RitzMaxErr
+!
+!  Converged Ritz eigenvalues used to approximate Hessian matrix during
+!  preconditioning.
+!
+        real(r8), allocatable :: Ritz(:)
+
+#  if defined LANCZOS
+!
+!  Lanczos algorithm coefficients.
+!
+        real(r8), allocatable :: cg_delta(:,:)
+        real(r8), allocatable :: cg_gamma(:,:)
+!
+!  Initial gradient vector normalization factor.
+!  
+        real(r8), allocatable :: cg_Gnorm(:)
+!
+!  Reduction in the gradient norm; excess cost function.
+!
+        real(r8), allocatable :: cg_Greduc(:,:)
+!
+!  Lanczos vector normalization factor.
+!  
+        real(r8), allocatable :: cg_QG(:,:)
+!
+!  Lanczos recurrence symmetric, tridiagonal matrix, T(k).
+! 
+        real(r8), allocatable :: cg_Tmatrix(:,:)
+        real(r8), allocatable :: cg_zu(:,:)
+!
+!  Eigenvalues of the Lanczos recurrence term Q(k)T(k)
+!  algorithm and their relative error (accuaracy).
+!
+        real(r8), allocatable :: cg_Ritz(:,:)
+        real(r8), allocatable :: cg_RitzErr(:,:)
+!
+!  Orthogonal eigenvectors of Lanczos recurrence term Q(k)T(k).
+!
+        real(r8), allocatable :: cg_zv(:,:)
+#  endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  Descent algorithm parameters.
@@ -368,12 +428,6 @@
 !  innacurate eigenvectors are usefull for pre-condtioning purposes.
 !
         real(r8) :: HevecErr
-!
-!  Number of converged Ritz eigenvalues computed by the Lanzos
-!  algorithm.
-!
-        integer :: nConvRitz
-        real(r8), allocatable :: Ritz(:)
 !
 !  Brunt-Vaisala expansion polynomial used for cost function
 !  normalization.
@@ -663,8 +717,6 @@
       TLmodVal = IniVal
 #  endif
 
-      allocate ( Ritz(Nouter*(Ninner+1)) )
-
 #  if defined WEAK_CONSTRAINT || defined IOM
 !
 !  Allocate and initialize weak constraint conjugate gradient vectors.
@@ -707,6 +759,61 @@
       allocate ( NVsteps(5+MT) )
       allocate ( DTsizeH(5+MT) )
       allocate ( DTsizeV(5+MT) )
+
+# ifdef IS4DVAR
+!
+!  Allocate conjugate gradient variables.
+!
+      allocate ( cg_alpha(0:Ninner,Nouter) )
+      cg_alpha = IniVal
+
+#  ifdef LANCZOS
+      allocate ( cg_beta(Ninner+1,Nouter) )
+      cg_beta = IniVal
+#  else
+      allocate ( cg_beta(0:Ninner,Nouter) )
+      cg_beta = IniVal
+#  endif
+
+      allocate ( cg_tau(0:Ninner,Nouter) )
+      cg_tau = IniVal
+
+      allocate ( Ritz(Ninner+1) )
+      Ritz = IniVal
+
+#  ifdef LANCZOS
+      allocate ( cg_delta(Ninner,Nouter) )
+      cg_delta = IniVal
+
+      allocate ( cg_gamma(Ninner,Nouter) )
+      cg_gamma = IniVal
+
+      allocate ( cg_Gnorm(Nouter) )
+      cg_Gnorm = IniVal
+
+      allocate ( cg_Greduc(Ninner,Nouter) )
+      cg_Greduc = IniVal
+
+      allocate ( cg_QG(Ninner+1,Nouter) )
+      cg_QG = IniVal
+
+      allocate ( cg_Tmatrix(Ninner,3) )
+      cg_Tmatrix = IniVal
+
+      allocate ( cg_Ritz(Ninner,Nouter) )
+      cg_Ritz = IniVal
+
+      allocate ( cg_RitzErr(Ninner,Nouter) )
+      cg_RitzErr = IniVal
+
+      allocate ( cg_zu(Ninner,Nouter) )
+      cg_zu = IniVal
+
+      allocate ( cg_zv(Ninner,Ninner) )
+      cg_zv = IniVal
+
+#  endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  Initialize various variables.

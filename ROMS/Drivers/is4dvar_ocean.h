@@ -608,11 +608,11 @@
 !     CostGrad = SQRT ( transpose{GRADv(J)} * GRADv(J) )
 !
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
-!$OMP&            SHARED(inner,numthreads)
+!$OMP&            SHARED(inner,outer,numthreads)
             DO thread=0,numthreads-1
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
-                CALL cgradient (ng, TILE, iTLM, inner)
+                CALL cgradient (ng, TILE, iTLM, inner, outer)
                 CALL cost_norm (ng, TILE, Lnew(ng))
               END DO
             END DO
@@ -627,7 +627,11 @@
 !  is idealy equal to half the number of observations assimilated
 !  (Optimality=1=2*Jmin/Nobs), for a linear system.
 !
+#ifdef LANCZOS
+            IF (Master.and.(inner.eq.Ninner)) THEN        
+#else
             IF (Master) THEN        
+#endif
               IF (Nrun.gt.1) THEN
                 rate=100.0_r8*ABS(FOURDVAR(ng)%CostFun(0)-              &
      &                            FOURDVAR(ng)%CostFunOld(0))/          &
@@ -675,6 +679,8 @@
                 END IF
               END DO
             END IF
+
+#ifndef LANCZOS
 !
 !  Report total cost function gradient norm.
 !
@@ -712,6 +718,7 @@
             DO i=0,NstateVar(ng)
               FOURDVAR(ng)%CostGradOld(i)=FOURDVAR(ng)%CostGrad(i)
             END DO
+#endif
 !
 !  Save total v-space cost function gradient, GRADv{J(Lnew)}, into
 !  ADJname history NetCDF file. Noticed that the lastest adjoint

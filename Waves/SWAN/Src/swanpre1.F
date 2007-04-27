@@ -1102,43 +1102,73 @@
         IF (KEYWIS ('BOT')) THEN
           IGRD = 1
           PSNAME = 'BOTTGRID'
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE IF (KEYWIS ('CUR')) THEN
           IGRD = 2
           IGR2 = 3                                                        10.26
           PSNAME = 'VXGRID  '
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
+          IGR1  = 2                                                       jcw
+          IGR2  = 3                                                       jcw
+          ICUR   = 1                                                      jcw
+          IF (JVX2.EQ.0) THEN                                             jcw
+            MCMVAR = MCMVAR + 2                                           jcw
+            JVX2   = MCMVAR - 1                                           jcw
+            JVY2   = MCMVAR                                               jcw
+          ENDIF                                                           jcw
+          IF (.NOT.ALLOCATED(UXB)) ALLOCATE(UXB(MXG(IGR1),MYG(IGR1)))     jcw
+          IF (.NOT.ALLOCATED(UYB)) ALLOCATE(UYB(MXG(IGR2),MYG(IGR2)))     jcw
         ELSE IF (KEYWIS ('VX')) THEN
           IGRD = 2
           PSNAME = 'VXGRID  '
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE IF (KEYWIS ('VY')) THEN
           IGRD = 3
           PSNAME = 'VYGRID  '
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE IF (KEYWIS ('FR')) THEN
           IGRD = 4
           PSNAME = 'FRICGRID'
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE IF (KEYWIS ('WI')) THEN
           IGRD = 5
           IGR2 = 6                                                        10.26
           PSNAME = 'WXGRID  '
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE IF (KEYWIS ('WX')) THEN
           IGRD = 5
           PSNAME = 'WXGRID  '
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE IF (KEYWIS ('WY')) THEN
           IGRD = 6
           PSNAME = 'WYGRID  '
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE IF (KEYWIS ('WLEV')) THEN                                    20.38
           IGRD = 7
           PSNAME = 'WLEVGRID'
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
+          IGR1   = 7                                                      jcw
+          VARWLV = .TRUE.                                                 jcw
+          IF (JWLV2.LE.1) THEN                                            jcw
+            MCMVAR = MCMVAR + 2                                           jcw
+            JWLV2  = MCMVAR - 1                                           jcw
+            JWLV3  = MCMVAR                                               jcw
+          ENDIF                                                           jcw
+          IF (.NOT.ALLOCATED(WLEVL))                                    &
+     &             ALLOCATE(WLEVL(MXG(IGR1),MYG(IGR1)))                   jcw
 !       note: 8 and 9 are for coordinates                                 40.03
         ELSE IF (KEYWIS ('ASTD')) THEN                                    40.03
 !         air-sea temperature difference                                  40.03
           IGRD = 10
           PSNAME = 'ASTDGRID'
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ELSE
           IGRD = 1
           PSNAME = 'BOTTGRID'
+          CALL SINPGR (IGRD, IGR2, PSNAME)                                jcw
         ENDIF
 !
-        CALL SINPGR (IGRD, IGR2, PSNAME)                                  40.31
+!jcw    CALL SINPGR (IGRD, IGR2, PSNAME)                                  40.31
         IF (STPNOW()) RETURN                                              34.01
         GOTO 100
       ENDIF
@@ -1156,7 +1186,7 @@
 !   ============================================================================
 !
       IF (KEYWIS ('READ')) THEN
-        CALL SREDEP ( LWINDR, LWINDM, LOGCOM )                            40.31 40.02
+      CALL SREDEP ( LWINDR, LWINDM, LOGCOM )                             40.31 40.02
         IF (STPNOW()) RETURN                                              34.01
 !       --- call CGINIT once as soon as both coordinates and bottom       40.31
 !           have been read and AC2 is not allocated                       40.31
@@ -1182,7 +1212,7 @@
           ENDIF
         ENDIF
         GOTO 100
-      ENDIF
+      END IF
 !
 !     ------------------------------------------------------------------
 !
@@ -2930,76 +2960,77 @@
 !
 !   ============================================================================
 !
-      CALL INKEYW ('REQ',' ')
-      IGR2 = 0
-      IF (KEYWIS ('BOT')) THEN
-        IGR1   = 1
-        LOGCOM(3) =.TRUE.                                                 30.21
-        IF (JDP2.EQ.0) THEN
-          MCMVAR = MCMVAR + 1                                             20.39
-          JDP2   = MCMVAR
-        ENDIF
-      ELSE IF (KEYWIS ('CUR')) THEN
-        IGR1  = 2
-        IGR2  = 3
-        ICUR   = 1
-        IF (JVX2.EQ.0) THEN
-          MCMVAR = MCMVAR + 2                                             20.39
-          JVX2   = MCMVAR - 1
-          JVY2   = MCMVAR
-        ENDIF
-      ELSE IF (KEYWIS ('FR')) THEN
-        IGR1   = 4
-        VARFR  = .TRUE.
-        MCMVAR = MCMVAR + 2                                               40.00
-        JFRC2  = MCMVAR - 1                                               40.00
-        JFRC3  = MCMVAR                                                   40.00
-      ELSE IF (KEYWIS ('WI')) THEN
-        LWINDR = 2                                                        30.10
-        IWIND  = LWINDM                                                   30.10
-        IGR1   = 5
-        IGR2   = 6
-        VARWI  = .TRUE.
-        IF (JWX2.LE.1) THEN                                               40.00
-          MCMVAR = MCMVAR + 2                                             20.39
-          JWX2   = MCMVAR - 1
-          JWY2   = MCMVAR
-        ENDIF
-        IF (JWX3.LE.1) THEN                                               40.00
-          MCMVAR = MCMVAR + 2                                             40.00
-          JWX3   = MCMVAR - 1                                             40.00
-          JWY3   = MCMVAR                                                 40.00
-        ENDIF                                                             40.00
-      ELSE IF (KEYWIS ('WL')) THEN                                        20.38
-        IGR1   = 7
-        VARWLV = .TRUE.                                                   20.38
-        IF (JWLV2.LE.1) THEN                                              40.00
-          MCMVAR = MCMVAR + 2                                             40.00
-          JWLV2  = MCMVAR - 1                                             40.00
-          JWLV3  = MCMVAR                                                 40.00
-        ENDIF                                                             40.00
-      ELSE IF (KEYWIS ('COOR')) THEN                                      30.21
-        IGR1   = 8                                                        30.21
-        IGR2   = 9                                                        30.21
-        LOGCOM(4) = .TRUE.                                                30.21
+        IGR2 = 0
+        CALL INKEYW ('REQ',' ')
+        IF (KEYWIS ('BOT')) THEN
+          IGR1   = 1
+          LOGCOM(3) =.TRUE.                                                 30.21
+          IF (JDP2.EQ.0) THEN
+            MCMVAR = MCMVAR + 1                                             20.39
+            JDP2   = MCMVAR
+          ENDIF
+!        ELSE IF (KEYWIS ('CUR')) THEN
+!          IGR1  = 2
+!          IGR2  = 3
+!          ICUR   = 1
+!          IF (JVX2.EQ.0) THEN
+!            MCMVAR = MCMVAR + 2                                             20.39
+!            JVX2   = MCMVAR - 1
+!            JVY2   = MCMVAR
+!          ENDIF
+        ELSE IF (KEYWIS ('FR')) THEN
+          IGR1   = 4
+          VARFR  = .TRUE.
+          MCMVAR = MCMVAR + 2                                               40.00
+          JFRC2  = MCMVAR - 1                                               40.00
+          JFRC3  = MCMVAR                                                   40.00
+        ELSE IF (KEYWIS ('WI')) THEN
+          LWINDR = 2                                                        30.10
+          IWIND  = LWINDM                                                   30.10
+          IGR1   = 5
+          IGR2   = 6
+          VARWI  = .TRUE.
+          IF (JWX2.LE.1) THEN                                               40.00
+            MCMVAR = MCMVAR + 2                                             20.39
+            JWX2   = MCMVAR - 1
+            JWY2   = MCMVAR
+          ENDIF
+          IF (JWX3.LE.1) THEN                                               40.00
+            MCMVAR = MCMVAR + 2                                             40.00
+            JWX3   = MCMVAR - 1                                             40.00
+            JWY3   = MCMVAR                                                 40.00
+          ENDIF                                                             40.00
+!        ELSE IF (KEYWIS ('WL')) THEN                                        20.38
+!          IGR1   = 7
+!          VARWLV = .TRUE.                                                   20.38
+!          IF (JWLV2.LE.1) THEN                                              40.00
+!            MCMVAR = MCMVAR + 2                                             40.00
+!            JWLV2  = MCMVAR - 1                                             40.00
+!            JWLV3  = MCMVAR                                                 40.00
+!          ENDIF                                                             40.00
+        ELSE IF (KEYWIS ('COOR')) THEN                                      30.21
+          IGR1   = 8                                                        30.21
+          IGR2   = 9                                                        30.21
+          LOGCOM(4) = .TRUE.                                                30.21
 !       *** Next lines because there is no information for READ COORD  ***
 !       *** command INPGRID was not used to read coordinates           ***
-        MXG(IGR1) = MXC
-        MYG(IGR1) = MYC
-        MXG(IGR2) = MXC
-        MYG(IGR2) = MYC
-      ELSE IF (KEYWIS ('ASTD')) THEN                                      40.03
-!       air-sea temperature difference
-        IGR1   = 10
-        VARAST = .TRUE.                                                   40.03
-        IF (JASTD2.LE.1) THEN                                             40.03
-          MCMVAR = MCMVAR + 2                                             40.03
-          JASTD2 = MCMVAR - 1                                             40.03
-          JASTD3 = MCMVAR                                                 40.03
-        ENDIF                                                             40.03
-      ELSE
-        CALL  WRNKEY
-      ENDIF
+          MXG(IGR1) = MXC
+          MYG(IGR1) = MYC
+          MXG(IGR2) = MXC
+          MYG(IGR2) = MYC
+        ELSE IF (KEYWIS ('ASTD')) THEN                                      40.03
+!         air-sea temperature difference
+          IGR1   = 10
+          VARAST = .TRUE.                                                   40.03
+          IF (JASTD2.LE.1) THEN                                             40.03
+            MCMVAR = MCMVAR + 2                                             40.03
+            JASTD2 = MCMVAR - 1                                             40.03
+            JASTD3 = MCMVAR                                                 40.03
+          ENDIF                                                             40.03
+        ELSE
+          CALL  WRNKEY
+        ENDIF
+!      ENDIF
 !
 !     read multiplication factor
 !
@@ -3012,15 +3043,14 @@
       ELSE
         VECTOR = .FALSE.
       ENDIF
-!
-      CALL REPARM (IFLNDF(IGR1), IFLNDS(IGR1), IFLIDL(IGR1),              40.00
-     &             IFLIFM(IGR1), IFLFRM(IGR1), IFLNHF(IGR1), LOGT,        40.00
-     &             IFLNHD(IGR1), VECTOR, NHEDC)                           40.00
+      CALL REPARM (IFLNDF(IGR1), IFLNDS(IGR1), IFLIDL(IGR1),            40.00
+     &             IFLIFM(IGR1), IFLFRM(IGR1), IFLNHF(IGR1), LOGT,      40.00
+     &             IFLNHD(IGR1), VECTOR, NHEDC)                         40.00
       IF (STPNOW()) RETURN                                                34.01
 !
       IF (ITEST.GE.60) WRITE (PRTEST, 35) IGR1, IFLNDF(IGR1),
-     &    IFLNDS(IGR1), IFLIDL(IGR1), IFLIFM(IGR1), IFLFRM(IGR1),         40.00
-     &    IFLNHF(IGR1), LOGT, IFLNHD(IGR1), VECTOR, NHEDC
+     &  IFLNDS(IGR1), IFLIDL(IGR1), IFLIFM(IGR1), IFLFRM(IGR1),         40.00
+     &  IFLNHF(IGR1), LOGT, IFLNHD(IGR1), VECTOR, NHEDC
   35  FORMAT (' Reading parameters: ', 5I4, A, /, 12X,I5,L2,I5,L2,I5)     40.00
 !
       IFLNHD(IGR1) = IFLNHD(IGR1) + NHEDC
@@ -3071,7 +3101,6 @@
       END IF                                                              40.31
       DEALLOCATE(TARR)                                                    40.31
       IF (IGR2.GT.0) THEN
-
         IF (.NOT.ALLOCATED(TARR)) THEN                                    40.41
            ALLOCATE( TARR(MXG(IGR2)*MYG(IGR2)) )                          40.41
            TARR = 0.                                                      40.41
@@ -3092,6 +3121,7 @@
         END IF                                                            40.31
         DEALLOCATE(TARR)                                                  40.31
       ENDIF
+
 !     set time of reading
       IF (IFLDYN(IGR1) .EQ. 1) THEN
         IF (NSTATM.EQ.0) CALL MSGERR (2,                                  40.00

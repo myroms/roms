@@ -409,8 +409,7 @@ Hout(idBott) == T T T T T T T F T T T F F F T F
 
 ! Input NetCDF file names, [1:Ngrids].
 
-!    GRDNAME == Data/ROMS/Grid/test_head_curv_grd.nc
-     GRDNAME == Data/ROMS/GRid/test_head_cartesian_grid.nc
+     GRDNAME == Data/ROMS/Grid/test_head_curv_grd.nc
      ININAME == Data/ROMS/Initial/test_head_ini.nc
      ITLNAME == ocean_itl.nc
      IRPNAME == ocean_irp.nc

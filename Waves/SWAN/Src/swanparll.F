@@ -28,8 +28,7 @@
 !
 !****************************************************************
 !
-!     SUBROUTINE SWINITMPI(MyComm)
-      SUBROUTINE SWAN_INITIALIZE(MyComm)
+      SUBROUTINE SWINITMPI(MyComm)
 !
 !****************************************************************
 !
@@ -210,15 +209,11 @@
       SWMIN  = MPI_MIN
       SWSUM  = MPI_SUM
 
-!jcw
-!          CALL INITIALIZE_COUPLING(INODE)
-
       RETURN
       END
 !****************************************************************
 !
-!     SUBROUTINE SWEXITMPI
-      SUBROUTINE SWAN_FINALIZE
+      SUBROUTINE SWEXITMPI
 !
 !****************************************************************
 !

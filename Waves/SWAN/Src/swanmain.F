@@ -101,18 +101,18 @@
 !     SWINITMPI                                                           40.30
 !     SWMAIN
 !
-!jcw      LOGICAL STPNOW                                                      40.30 34.01
+!jcw      LOGICAL STPNOW                                                  40.30 34.01
 !
 ! 13. Source Code
 !
 !     --- initialize the MPI execution environment                        40.30
 
-!jcw      CALL SWINITMPI                                                      40.30
-!jcw      IF (STPNOW()) GOTO 999                                              40.30
+!jcw      CALL SWINITMPI                                                  40.30
+!jcw      IF (STPNOW()) GOTO 999                                          40.30
 
 !     --- start SWAN run
 
-!jcw      CALL SWMAIN                                                         40.31 34.01
+!jcw      CALL SWMAIN                                                     40.31 34.01
 
 !jcw999   CONTINUE
 
@@ -125,8 +125,7 @@
 !jcw      END
 !***********************************************************************
 !                                                                      *
-!     SUBROUTINE SWMAIN(TI_WAV_OCN, WNAME)                                40.31 34.01
-      SUBROUTINE SWAN_RUN(TI_WAV_OCN, WNAME)                              40.31 34.01
+      SUBROUTINE SWAN_INITIALIZE(MyComm, WNAME)
 !                                                                      *
 !***********************************************************************
 !
@@ -140,9 +139,8 @@
       USE OUTP_DATA                                                       40.51
       USE M_GENARR                                                        40.31
       USE M_PARALL                                                        40.31
-!jcw
-      USE WAVES_COUPLER_MOD, ONLY: INITIALIZE_OCEAN_COUPLING
-      USE WAVES_COUPLER_MOD, ONLY: OCEAN_COUPLING
+      USE M_PARALL2                                                       jcw
+      USE WAVES_COUPLER_MOD, ONLY: INITIALIZE_OCEAN_COUPLING              jcw
 !
       IMPLICIT NONE
 !
@@ -250,8 +248,6 @@
 !
 !     AC1   :     Contains action density at previous time step           40.31
 !     BGRIDP:     data concerning boundary grid points                    40.31
-!     BLKND :     array giving node number per subdomain                  40.41
-!     BLKNDC:     auxiliary array for collecting the array BLKND          40.41
 !     BSPECS:     array containing boundary spectra                       40.31
 !     CHARS :     array to pass character info to MSGERR                  40.41
 !     COMPDA:     array containing various data depending on grid         40.31
@@ -265,8 +261,8 @@
 !     LOPEN :     indicates whether a file is open                        34.01
 !     MSGSTR:     string to pass message to call MSGERR                   40.41
 !
-      REAL,  intent(in) :: TI_WAV_OCN                                     jcw
       CHARACTER*80, intent(in) :: WNAME                                   jcw
+      integer, intent(in) :: MyCOMM                                       jcw
       INTEGER   IUNIT                                                     34.01
       INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN                             40.30
       INTEGER   INERR                                                     40.31
@@ -276,16 +272,6 @@
       CHARACTER*20 NUMSTR, CHARS(1)                                       40.41
       CHARACTER*80 MSGSTR                                                 40.41
       LOGICAL   LOPEN                                                     34.01
-
-!jcw
-      INTEGER  numsteps 
-
-      INTEGER, ALLOCATABLE :: CROSS(:,:)                                  40.31
-      INTEGER, ALLOCATABLE :: BGRIDP(:)                                   40.31
-      REAL   , ALLOCATABLE :: BSPECS(:,:,:,:)                             40.31
-      REAL   , ALLOCATABLE :: AC1(:,:,:), COMPDA(:,:)                     40.31
-!
-      REAL, ALLOCATABLE    :: BLKND(:), BLKNDC(:), OURQT(:)               40.51 40.41
 !
 !  7. Common blocks used
 !
@@ -357,20 +343,19 @@
 !
 ! 13. Source text
 !
-!     --- initialize various data
+!     initialize MPI
+      CALL SWINITMPI(MyComm)                                              40.30
+      INPFIL = WNAME                                                      jcw
 
+!     --- initialize various data
       DCUMTM(:,1:2) = 0.D0                                                 40.23
       NCUMTM(:)     = 0                                                   40.23
       CALL SWTSTA(1)                                                      40.23
-
-!jcw
-      numsteps = -1
 
       LEVERR=0                                                            40.23
       MAXERR=1                                                            34.01
       ITRACE=0                                                            40.23
       INERR =0                                                            40.31
-      INPFIL = WNAME                                                      jcw
 
       CALL SWTSTA(2)                                                      40.23
       CALL SWINIT (INERR)                                                 40.31 34.01
@@ -379,10 +364,6 @@
       IF (STPNOW()) RETURN                                                34.01
 !
       COMPUT = '    '
-
-!     --- repeat
-
-      DO
 
 !       --- read and process user commands
 
@@ -479,7 +460,8 @@
  6011     FORMAT(' ** To ignore this error, change [maxerr] with the',    30.72
      &           ' SET command')                                          30.72
 
-        ELSE
+!        ELSE
+        ENDIF
 !
           IF (ITEST.GE.40) THEN                                           40.00
             IF (NSTATC.EQ.1) THEN                                         33.08
@@ -507,7 +489,6 @@
 !             --- reset ICOND to prevent second computation of
 !                 initial condition
               ICOND = 0                                                   40.00
-
             ENDIF
           ELSE
             IT0 = 1
@@ -515,13 +496,251 @@
 
 !         --- synchronize nodes                                           40.30
 
+          IT=0                                                            jcw
+            IF ( IT.EQ.IT0 .AND. .NOT.ALLOCATED(OURQT) ) THEN             40.51 40.31
+               ALLOCATE (OURQT(MAX_OUTP_REQ))                             40.51 40.30
+               OURQT = -9999.                                             40.51 40.30
+            ENDIF                                                         40.00
+
 ! jcw Call to initialize MCT coupling
           CALL INITIALIZE_OCEAN_COUPLING
+! exchange initial conditions with ocean model.
+            CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,         40.31
+     &                    KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,         40.51 40.31
+     &                    0, 0)
+            CALL SWTSTO(1)                                                40.30
+ 900  CONTINUE
 
+      RETURN                                                              30.82
+      END subroutine SWAN_INITIALIZE
+
+!***********************************************************************
+!                                                                      *
+      SUBROUTINE SWAN_RUN(TI_WAV_OCN)                                     40.31 34.01
+!                                                                      *
+!***********************************************************************
+!
+      USE TIMECOMM                                                        40.41
+      USE OCPCOMM2                                                        40.41
+      USE OCPCOMM4                                                        40.41
+      USE SWCOMM1                                                         40.41
+      USE SWCOMM2                                                         40.41
+      USE SWCOMM3                                                         40.41
+      USE SWCOMM4                                                         40.41
+      USE OUTP_DATA                                                       40.51
+      USE M_GENARR                                                        40.31
+      USE M_PARALL                                                        40.31
+      USE M_PARALL2                                                       jcw
+!
+      IMPLICIT NONE
+!
+!
+!   --|-----------------------------------------------------------|--
+!     | Delft University of Technology                            |
+!     | Faculty of Civil Engineering                              |
+!     | Environmental Fluid Mechanics Section                     |
+!     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
+!     |                                                           |
+!     | Programmers: R.C. Ris, N. Booij,                          |
+!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
+!     |              M. Zijlema, E.E. Kriezi,                     |
+!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!   --|-----------------------------------------------------------|--
+!
+!
+!     SWAN (Simulating WAves Nearshore); a third generation wave model
+!     Copyright (C) 2004-2005  Delft University of Technology
+!
+!     This program is free software; you can redistribute it and/or
+!     modify it under the terms of the GNU General Public License as
+!     published by the Free Software Foundation; either version 2 of
+!     the License, or (at your option) any later version.
+!
+!     This program is distributed in the hope that it will be useful,
+!     but WITHOUT ANY WARRANTY; without even the implied warranty of
+!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!     GNU General Public License for more details.
+!
+!     A copy of the GNU General Public License is available at
+!     http://www.gnu.org/copyleft/gpl.html#SEC3
+!     or by writing to the Free Software Foundation, Inc.,
+!     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+!
+!
+!  0. Authors
+!
+!     30.60: Nico Booij
+!     30.72: IJsbrand Haagsma
+!     30.74: IJsbrand Haagsma (Include version)
+!     30.82: IJsbrand Haagsma
+!     30.90: IJsbrand Haagsma (Equivalence verion)
+!     32.01: Roeland Ris & Cor van der Schelde
+!     32.02: Roeland Ris & Cor van der Schelde (1D-version)
+!     34.01: IJsbrand Haagsma
+!     40.00, 40.13: Nico Booij
+!     34.01: Jeroen Adema
+!     33.08: W. Erick Rogers
+!     40.22: John Cazes and Tim Campbell
+!     40.23: Marcel Zijlema
+!     40.30: Marcel Zijlema
+!     40.31: Marcel Zijlema
+!     40.41: Marcel Zijlema
+!     40.51: Marcel Zijlema
+!
+!  1. Updates
+!
+!            10 FEB   Subroutine SWMAIN introduced
+!     30.60, Aug. 97: argument list of ERRCHK changed
+!     30.72, Sept 97: INTEGER*4 replaced by INTEGER
+!     30.72, Nov. 97: declaration of ITERMX removed because it is a common
+!                     variable, which is declared in the INCLUDE file
+!     30.72, Nov. 97: PWTAIL(3) is made dependent on PWTAIL(1), also in the
+!                     initialisation
+!     30.74, Nov. 97: Prepared for version with INCLUDE statements
+!     32.01, Jan. 98: Nautical convention included (project h3268)
+!     32.01, Jan. 98: Comparison of computed and prescribed significant
+!                     wave height (project h3268)
+!     32.02, Jan. 98: Introduction of 1D-version
+!     30.72, Mar. 98: Added instruction to change [maxerr] in case of a
+!                     terminating warning
+!     40.00, Nov. 97: time step loop reorganized,
+!                     argument list in call SNEXTI changed
+!                     declaration of ITERMX removed
+!                     argument added in call SWOUTP
+!     30.82, Sep. 98: Added check on error level each time step to prevent
+!                     continuation of computation
+!     30.90, Oct. 98: Introduced EQUIVALENCE POOL-arrays
+!     34.01, Feb. 99: Changed STOP statement in a jump to end of subroutine
+!     34.01, Feb. 99: Close all files at end of this subroutine
+!     34.01, Feb. 99: Introducing STPNOW
+!     33.08, July 98: S&L scheme-related changes
+!     40.13, July 01: coefficient PTRIAD(4) added
+!                     make file 'norm_end' if program ends normally
+!     40.22, Oct. 01: call SWCOMP changed in view of parallellization
+!     40.23, Aug. 02: Print of CPU times added
+!     40.30, Mar. 03: introduction distributed-memory approach using MPI
+!     40.31, Dec. 03: removing POOL mechanism and reconsidering this
+!                     subroutine
+!     40.41, Oct. 04: common blocks replaced by modules, include files removed
+!     40.51, Feb. 05: re-design output process in parallel mode
+!
+!  2. Purpose
+!
+!     SWMAIN subroutine, calling SWINIT, SWREAD, SWCOMP and SWOUTP
+!
+!  3. Method
+!
+!     ---
+!
+!  4. Argument variables
+!
+!  6. Local variables
+!
+!     AC1   :     Contains action density at previous time step           40.31
+!     BGRIDP:     data concerning boundary grid points                    40.31
+!     BSPECS:     array containing boundary spectra                       40.31
+!     CHARS :     array to pass character info to MSGERR                  40.41
+!     COMPDA:     array containing various data depending on grid         40.31
+!     CROSS :     integer array indicating obstacle crossing              40.30
+!                 (0=no, 1=yes)                                           40.30
+!     ILEN  :     length of array                                         40.30
+!     INERR :     number of the initialisation error                      40.31
+!     IUNIT :     counter for file unit numbers                           34.01
+!     LOPEN :     indicates whether a file is open                        34.01
+!     MSGSTR:     string to pass message to call MSGERR                   40.41
+!
+      REAL,  intent(in) :: TI_WAV_OCN                                     jcw
+      INTEGER   IUNIT                                                     34.01
+      INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN                             40.30
+      INTEGER   INERR                                                     40.31
+      INTEGER   IERR                                                      40.31 40.00
+      INTEGER   ISTAT, IF1, IL1                                           40.41
+      CHARACTER PTYPE, PNAME *8, COMPUT *4, DTTIWR*18                     40.00
+      CHARACTER*20 NUMSTR, CHARS(1)                                       40.41
+      CHARACTER*80 MSGSTR                                                 40.41
+      LOGICAL   LOPEN                                                     34.01
+      INTEGER  numsteps                                                   jcw
+!
+!  7. Common blocks used
+!
+!
+!  8. Subroutines used
+!
+!     SWINIT
+!     SWREAD
+!     FOR
+!     SWPREP
+!     ERRCHK
+!     SWRBC
+!     SWINCO
+!     SWCOLOUT                                                            40.30
+!     SWGATHER                                                            40.30
+!     SWSYNC                                                              40.30
+!     SWCOLLECT        Collects geographical field array from all nodes   40.41
+!     SNEXTI
+!     SWCOMP
+!     HSOBND: Generates warning if comp. and prescr. Hs differ more than  32.01
+!             a fraction HSRERR at the up-wave boundary                   32.01
+!     SWOUTP
+!     SWPRTI                                                              40.23
+!     SWTSTA                                                              40.23
+!     SWTSTO                                                              40.23
+!     MSGERR : Handles error messeges according to severity               40.41
+!     NUMSTR : Converts integer/real to string                            40.41
+!     TXPBLA : Removes leading and trailing blanks in string              40.41
+!
+      LOGICAL STPNOW                                                      34.01
+!
+!  9. Subroutines calling
+!
+!     MAIN program SWAN
+!
+! 10. Error Messages
+!
+!     ---
+!
+! 11. Remarks
+!
+!     The description of the structure of this subroutine is very
+!     short as most of the source code can easily be understood with
+!     the aid of the command descriptions in the user manual and the
+!     purpose of the subroutines from the system documentation.
+!
+! 12. Structure
+!
+!     ----------------------------------------------------------------
+!     Call SWINIT to initialize various common data
+!     Repeat                                                              40.00
+!         Call SWREAD to read and process user commands
+!         If last command was STOP
+!         Then exit from repeat
+!         -------------------------------------------------------------
+!         Call SWPREP to check input and prepare computation
+!         If nonstationary computation is to be made                      40.00
+!         Then start time step loop at IT=0 and                           40.00
+!         Call SWINCO to calculate initial wave spectra                   40.00
+!         -------------------------------------------------------------
+!         For requested number of time steps do                           40.00
+!             Call SNEXTI to update boundary conditions and input fields  40.00
+!             If IT>0                                                     40.00
+!             Then Call SWCOMP to calculate the wave field                40.00
+!             ---------------------------------------------------------
+!             Call SWOUTP to postprocess the results and create output
+!             Update time
+!     ----------------------------------------------------------------
+!
+! 13. Source text
+          numsteps=0                                                      jcw
           CALL SWSYNC                                                     40.30
           IF (STPNOW()) RETURN                                            40.30
 
 !         --- loop over time steps                                        40.00
+
+          IF (NSTATC.EQ.1) THEN                                           40.00
+            IT0 = 0                                                       40.00
+          ELSE
+            IT0 = 1
+          ENDIF
 
           DO 500 IT = IT0, MTC                                            40.00
 !
@@ -532,6 +751,8 @@
      &               'of error level:',I3)                                30.82
               EXIT                                                        40.30
             ENDIF                                                         30.82
+ 6011     FORMAT(' ** To ignore this error, change [maxerr] with the',    30.72
+     &           ' SET command')                                          30.72
 
 !           --- synchronize nodes
 
@@ -540,16 +761,13 @@
 !
 !           --- update boundary conditions and input fields
 !
-            IF ( IT.EQ.IT0 .AND. .NOT.ALLOCATED(OURQT) ) THEN             40.51 40.31
-               ALLOCATE (OURQT(MAX_OUTP_REQ))                             40.51 40.30
-               OURQT = -9999.                                             40.51 40.30
-            ENDIF                                                         40.00
-
             CALL SWTSTA(7)                                                40.23
+
             CALL SNEXTI ( BSPECS, BGRIDP, COMPDA, AC1   , AC2   ,         40.31
      &                    SPCSIG, SPCDIR, XCGRID, YCGRID, KGRPNT,         40.31
      &                    XYTST , DEPTH , WLEVL , FRIC  , UXB   ,         40.31
      &                    UYB   , WXI   , WYI   )                         40.31
+
             CALL SWTSTO(7)                                                40.23
             IF (STPNOW()) RETURN                                          34.01
 !
@@ -557,6 +775,7 @@
 
             CALL SWSYNC                                                   40.30
             IF (STPNOW()) RETURN                                          40.30
+
             IF (COMPUT.NE.'NOCO' .AND. IT.GT.0) THEN                      40.00
 
               SAVITE = ITEST                                              30.21
@@ -599,11 +818,14 @@
 
             CALL SWTSTA(9)                                                40.30
 
-!jcw call coupler inside output computations
-            numsteps = numsteps + 1
-            CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,         40.31
-     &                    KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,         40.51 40.31
-     &                    numsteps, TI_WAV_OCN)
+!jcw call coupler during output computations
+
+            IF (IT.gt.0) THEN
+              numsteps = numsteps + 1                                     jcw
+              CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,       40.31
+     &                      KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,       40.51 40.31
+     &                      numsteps, TI_WAV_OCN)
+            END IF
             CALL SWTSTO(9)                                                40.30
             IF (STPNOW()) RETURN                                          40.30
 !
@@ -620,17 +842,38 @@
             ENDIF                                                         40.00
 
  500      CONTINUE
-
-          IF (LEVERR.GT.MAXERR) GOTO 900                                  40.30
-
-        END IF
-
-      END DO
 !
- 900  CONTINUE
+      RETURN                                                              30.82
+      END subroutine SWAN_RUN
+
+!***********************************************************************
+!                                                                      *
+      SUBROUTINE SWAN_FINALIZE
+!                                                                      *
+!***********************************************************************
 !
-      CALL SWTSTO(1)                                                      40.23
+      USE TIMECOMM                                                        40.41
+      USE OCPCOMM2                                                        40.41
+      USE OCPCOMM4                                                        40.41
+      USE SWCOMM1                                                         40.41
+      USE SWCOMM2                                                         40.41
+      USE SWCOMM3                                                         40.41
+      USE SWCOMM4                                                         40.41
+      USE OUTP_DATA                                                       40.51
+      USE M_GENARR                                                        40.31
+      USE M_PARALL                                                        40.31
+      USE M_PARALL2                                                       jcw
+
+!  6. Local variables
 !
+!     BLKND :     array giving node number per subdomain                  40.41
+!     BLKNDC:     auxiliary array for collecting the array BLKND          40.41
+      LOGICAL STPNOW                                                      34.01
+      LOGICAL LOPEN                                                       34.01
+      REAL, ALLOCATABLE    :: BLKND(:), BLKNDC(:)
+
+      CALL SWEXITMPI                                                      40.30
+
       DO IUNIT=1,HIOPEN                                                   34.01
         INQUIRE(UNIT=IUNIT,OPENED=LOPEN)                                  34.01
         IF (LOPEN.AND.IUNIT.NE.PRINTF) CLOSE(IUNIT)                       40.30
@@ -640,7 +883,7 @@
 !         output requests in case of parallel computation                 40.30
 
       CALL SWSYNC                                                         40.30
-      CALL SWTSTA(9)                                                      40.30
+      CALL SWTSTA(10)                                                     40.30
       IF ( PARLL ) THEN                                                   40.30
          ALLOCATE (BLKND(MXC*MYC))                                        40.51 40.41
          BLKND = REAL(INODE)                                              40.41
@@ -652,7 +895,7 @@
             DEALLOCATE(BLKNDC)                                            40.41 40.30
          END IF                                                           40.30
       END IF                                                              40.30
-      CALL SWTSTO(9)                                                      40.30
+      CALL SWTSTO(10)                                                     40.30
 !
       CALL SWPRTI                                                         40.23
 !
@@ -671,8 +914,8 @@
       CALL SWCLME                                                         40.31
 !
       RETURN                                                              30.82
-!     end of subroutine SWMAIN
-      END
+      END subroutine SWAN_FINALIZE
+
 !***********************************************************************
 !                                                                      *
       SUBROUTINE SWINIT (INERR)                                           40.31 34.01

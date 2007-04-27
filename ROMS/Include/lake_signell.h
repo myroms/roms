@@ -65,7 +65,7 @@
 # undef  SED_MORPH
 #endif
 #if defined SEDIMENT || defined SG_BBL || defined MB_BBL || defined SSW_BBL
-# undef ANA_SEDIMENT
+# define ANA_SEDIMENT
 #endif
 #ifdef MASKING
 # define ANA_MASK

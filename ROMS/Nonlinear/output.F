@@ -67,9 +67,17 @@
 !
       IF (LdefHIS(ng)) THEN
         IF (ndefHIS(ng).gt.0) THEN
-          IF (idefHIS(ng).lt.0) idefHIS(ng)=ntstart(ng)-1
+          IF (idefHIS(ng).lt.0) THEN
+            idefHIS(ng)=((ntstart(ng)-1)/ndefHIS(ng))*ndefHIS(ng)
+            IF (idefHIS(ng).lt.iic(ng)-1) THEN
+              idefHIS(ng)=idefHIS(ng)+ndefHIS(ng)
+            END IF
+          END IF
           IF ((iic(ng)-1).eq.idefHIS(ng)) THEN
             idefHIS(ng)=idefHIS(ng)+ndefHIS(ng)
+            IF (nHIS(ng).ne.ndefHIS(ng).and.iic(ng).eq.ntstart(ng)) THEN
+              idefHIS(ng)=idefHIS(ng)+nHIS(ng)
+            END IF
             NrecHIS(ng)=0
             ifile=(iic(ng)-1)/ndefHIS(ng)+1
             IF (Master) THEN
@@ -87,7 +95,6 @@
             CALL def_his (ng, ldef)
             IF (exit_flag.ne.NoError) RETURN
             LwrtHIS(ng)=.TRUE.
-!!          LdefHIS(ng)=.FALSE.
           END IF
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
@@ -106,7 +113,9 @@
         IF (LwrtPER(ng)) THEN
           IF ((iic(ng).gt.ntstart(ng)).and.                                 &
      &        (MOD(iic(ng)-1,nHIS(ng)).eq.0)) THEN
-            CALL wrt_his (ng)
+            IF (nrrec(ng).eq.0.or.iic(ng).ne.ntstart(ng)) THEN
+              CALL wrt_his (ng)
+            END IF
             IF (exit_flag.ne.NoError) RETURN
           END IF
         ELSE
@@ -129,10 +138,17 @@
 !
       IF (LdefAVG(ng)) THEN
         IF (ndefAVG(ng).gt.0) THEN
-          IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart(ng)-1
-!!        IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart(ng)+nAVG(ng)-1
+          IF (idefAVG(ng).lt.0) THEN
+            idefAVG(ng)=((ntstart(ng)-1)/ndefAVG(ng))*ndefAVG(ng)
+            IF (idefAVG(ng).lt.iic(ng)-1) THEN
+             idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)
+            END IF
+          END IF
           IF ((iic(ng)-1).eq.idefAVG(ng)) THEN
-            idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)+1
+            idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)
+            IF (nAVG(ng).ne.ndefAVG(ng).and.iic(ng).eq.ntstart(ng)) THEN
+              idefAVG(ng)=idefAVG(ng)+nAVG(ng)
+            END IF
             ifile=(iic(ng)-1)/ndefAVG(ng)+1
 !!          ifile=(iic(ng)-nAVG(ng)-1)/ndefAVG(ng)+1
             IF (Master) THEN
@@ -141,7 +157,7 @@
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncAVGid(ng).ne.-1) status=nf_close(ncAVGid(ng))
-            IF ((iic(ng).eq.ntstart(ng)+nAVG(ng)).and.                      &
+            IF ((iic(ng).eq.ntstart(ng)+nAVG(ng)).and.                  &
      &           (MOD(iic(ng)-nAVG(ng)-1,ndefAVG(ng)).ne.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -184,10 +200,17 @@
 !
       IF (LdefDIA(ng)) THEN
         IF (ndefDIA(ng).gt.0) THEN
-          IF (idefDIA(ng).lt.0) idefDIA(ng)=ntstart(ng)-1
-!!        IF (idefDIA(ng).lt.0) idefDIA(ng)=ntstart(ng)+nDIA(ng)-1
+          IF (idefDIA(ng).lt.0) THEN
+            idefDIA(ng)=((ntstart(ng)-1)/ndefDIA(ng))*ndefDIA(ng)
+            IF (idefDIA(ng).lt.iic(ng)-1) THEN
+              idefDIA(ng)=idefDIA(ng)+ndefDIA(ng)
+            END IF
+          END IF
           IF ((iic(ng)-1).eq.idefDIA(ng)) THEN
-            idefDIA(ng)=idefDIA(ng)+ndefDIA(ng)+1
+            idefDIA(ng)=idefDIA(ng)+ndefDIA(ng)
+            IF (nDIA(ng).ne.ndefDIA(ng).and.iic(ng).eq.ntstart(ng)) THEN
+              idefDIA(ng)=idefDIA(ng)+nDIA(ng)
+            END IF
             ifile=(iic(ng)-1)/ndefDIA(ng)+1
 !!          ifile=(iic(ng)-nDIA(ng)-1)/ndefDIA(ng)+1
             IF (Master) THEN

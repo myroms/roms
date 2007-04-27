@@ -312,7 +312,7 @@
         NUMTRANSFER=4
         CALL MCT_Recv (FromOceanAV, RoutSWAN, MyError)
         IF (MYRANK.EQ.0) THEN
-          WRITE (*,*) '== SWAN recvd ocean fields and Myerror??= ',     &
+          WRITE (*,*) '== SWAN recvd ocean fields and Myerror= ',       &
      &                MyError
         END IF
         IF (MyError.ne.0) THEN

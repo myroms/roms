@@ -35,6 +35,9 @@
       integer, parameter :: Natt = 24
 
       integer :: iterDim, datumDim, recordDim, stateDim
+# ifdef IS4DVAR
+      integer :: MinnerDim, NinnerDim, NouterDim, threeDim
+# endif
       integer :: i, j, nvd, recdim, status, varid
       integer :: CostDim(2), Vsize(4), vardim(2)
 
@@ -98,6 +101,18 @@
         status=nf_def_dim(ncMODid(ng),'datum'    ,Ndatum(ng),           &
      &                    datumDim)
 # ifdef FOUR_DVAR
+#  ifdef IS4DVAR
+        status=nf_def_dim(ncMODid(ng),'Ninner'   ,Ninner,               &
+     &                    NinnerDim)
+        status=nf_def_dim(ncMODid(ng),'Minner'   ,Ninner+1,             &
+     &                    MinnerDim)
+        status=nf_def_dim(ncMODid(ng),'Nouter'   ,Nouter,               &
+     &                    NouterDim)
+#   ifdef LANCZOS
+        status=nf_def_dim(ncMODid(ng),'three '   ,3,                    &
+     &                    threeDim)
+#   endif
+#  endif
         status=nf_def_dim(ncMODid(ng),'iteration',nf_unlimited,         &
      &                    iterDim)
 !
@@ -170,6 +185,135 @@
         status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
      &                 Vinfo,ncname)
 
+# if defined IS4DVAR
+#  ifdef LANCZOS
+!
+!  Converged Ritz eigenvalues.
+!
+        Vinfo( 1)='nConvRitz'
+        Vinfo( 2)='Number of converged Ritz eigenvalues'
+        status=def_var(ncMODid(ng),varid,nf_int,0,0,Aval,               &
+     &                 Vinfo,ncname)
+
+        Vinfo( 1)='Ritz'
+        Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 1,Ninnerdim,Aval,Vinfo,ncname)
+#  endif
+!
+!  Define conjugate gradient norms.
+!
+#  ifndef LANCZOS
+        Vinfo( 1)='cg_alpha'
+        Vinfo( 2)='conjugate gradient alpha coefficient'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+#  endif
+        Vinfo( 1)='cg_beta'
+        Vinfo( 2)='conjugate gradient alpha coefficient'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+
+        Vinfo( 1)='cg_tau'
+        Vinfo( 2)='conjugate gradient tau coefficient'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+
+#  ifdef LANCZOS
+!
+!  Define Lanczos algorithm coefficients.
+!
+        Vinfo( 1)='cg_delta'
+        Vinfo( 2)='Lanczos algorithm delta coefficient'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+
+        Vinfo( 1)='cg_gamma'
+        Vinfo( 2)='Lanczos algorithm gamma coefficient'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+!
+!  Initial gradient vector normalization factor.
+!
+        Vinfo( 1)='cg_Gnorm'
+        Vinfo( 2)='initial gradient normalization factor'
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 1,NouterDim,Aval,Vinfo,ncname)
+!
+!  Lanczos vector normalization factor.
+!
+        Vinfo( 1)='cg_QG'
+        Vinfo( 2)='Lanczos vector normalization factor'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+!
+!  Reduction in the gradient norm.
+!
+        Vinfo( 1)='cg_Greduc'
+        Vinfo( 2)='reduction in the gradient norm'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+!
+!  Lanczos recurrence tridiagonal matrix.
+!
+        Vinfo( 1)='cg_Tmatrix'
+        Vinfo( 2)='Lanczos recurrence tridiagonal matrix'
+        vardim(1)=NinnerDim
+        vardim(2)=threeDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+!
+!  Lanczos tridiagonal matrix, upper diagonal elements.
+!
+        Vinfo( 1)='cg_zu'
+        Vinfo( 2)='tridiagonal matrix, upper diagonal elements'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+!
+!  Eigenvalues of Lanczos recurrence relationship.
+!
+        Vinfo( 1)='cg_Ritz'
+        Vinfo( 2)='Lanczos recurrence eigenvalues'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+!
+!  Eigenvalues relative error.
+!
+        Vinfo( 1)='cg_RitzErr'
+        Vinfo( 2)='Ritz eigenvalues relative error'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+!
+!  Eigenvectors of Lanczos recurrence relationship.
+!
+        Vinfo( 1)='cg_zv'
+        Vinfo( 2)='Lanczos recurrence eigenvectors'
+        vardim(1)=NinnerDim
+        vardim(2)=NinnerDim
+        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
+     &                 2,vardim,Aval,Vinfo,ncname)
+#  endif
+# endif
 # if defined WEAK_CONSTRAINT || defined IOM
 !
 !  Define conjugate gradient norms

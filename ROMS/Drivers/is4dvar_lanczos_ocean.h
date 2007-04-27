@@ -611,17 +611,14 @@
 !  Skip the call to cgradient on the last inner loop since it
 !  is meaningless.
 !
-! AMM
-           IF (inner.ne.Ninner) THEN
-            DO thread=0,numthreads-1
-              subs=NtileX(ng)*NtileE(ng)/numthreads
-              DO tile=subs*thread,subs*(thread+1)-1
-                CALL cgradient (ng, TILE, iTLM, inner)
-!                CALL cost_norm (ng, TILE, Lnew(ng))
+            IF (inner.ne.Ninner) THEN
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1
+                  CALL cgradient (ng, TILE, iTLM, inner, outer)
+                END DO
               END DO
-            END DO
-! AMM
-           END IF
+            END IF
 !
 !$OMP END PARALLEL DO
 !

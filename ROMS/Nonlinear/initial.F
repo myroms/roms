@@ -46,6 +46,9 @@
    (defined MASKING && (defined READ_WATER || defined WRITE_WATER ))
       USE wpoints_mod, ONLY : wpoints
 #endif
+#ifdef WAVES_OCEAN
+      USE ocean_coupler_mod, ONLY : waves_coupling
+#endif
 !
       implicit none
 !
@@ -568,6 +571,22 @@
 !
       CALL grid_coords (ng, iNLM)
 #endif
+
+# ifdef WAVES_OCEAN
+!
+!-----------------------------------------------------------------------
+!  Read in initial forcing from coupled wave model.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL waves_coupling (ng, TILE)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
 
 #ifdef PROFILE
 !

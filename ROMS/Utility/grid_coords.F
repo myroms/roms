@@ -66,9 +66,9 @@
       IF (Jtile.eq.0) Jstr=0
 # else
       Istr=0
-      Iend=Lm(ng)+1
+      Iend=Lm(ng)
       Jstr=0
-      Jend=Mm(ng)+1
+      Jend=Mm(ng)
 # endif
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -145,6 +145,10 @@
           IF (zfloat.le.0.0_r8) THEN
             i=INT(FLT(ng)%Tinfo(ixgrd,l))
             j=INT(FLT(ng)%Tinfo(iygrd,l))
+            IF (zfloat.lt.GRID(ng)%z_w(i,j,0)) THEN
+	      zfloat=GRID(ng)%z_w(i,j,0)+5.0_r8
+              FLT(ng)%Fz0(l)=zfloat
+            END IF
             FLT(ng)%Tinfo(izgrd,l)=REAL(N(ng),r8)
             DO k=N(ng),1,-1
               IF ((GRID(ng)%z_w(i,j,k)-zfloat)*                         &

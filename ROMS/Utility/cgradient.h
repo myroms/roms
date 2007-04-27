@@ -93,7 +93,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE cgradient (ng, tile, model, Iter)
+      SUBROUTINE cgradient (ng, tile, model, innLoop, outLoop)
 !***********************************************************************
 !
       USE mod_param
@@ -109,7 +109,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, model, Iter
+      integer, intent(in) :: ng, tile, model, innLoop, outLoop
 !
 !  Local variable declarations.
 !
@@ -120,7 +120,8 @@
 #endif
       CALL cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     Lold(ng), Lnew(ng), Iter,                    &
+     &                     Lold(ng), Lnew(ng),                          &
+     &                     innLoop, outLoop,                            &
 #ifdef MASKING
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
@@ -199,7 +200,8 @@
 !***********************************************************************
       SUBROUTINE cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           Lold, Lnew, Iter,                      &
+     &                           Lold, Lnew,                            &
+     &                           innLoop, outLoop,                      &
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
 #endif
@@ -270,7 +272,8 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew, Iter
+      integer, intent(in) :: Lold, Lnew
+      integer, intent(in) :: innLoop, outLoop
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -423,8 +426,6 @@
 
       real(r8) :: norm
 
-      real(r8), save :: alphaK, betaK, tauK
-
       real(r8), dimension(0:NstateVar(ng)) :: Adjust
       real(r8), dimension(0:NstateVar(ng)) :: dot_old, dot_new
       real(r8), dimension(0:NstateVar(ng)) :: old_dot, new_dot
@@ -433,9 +434,9 @@
 !  Initialize trial step size.
 !-----------------------------------------------------------------------
 !
-      IF (Iter.eq.0) THEN
-        tauK=CGstepI              ! initial value
-        alphaK=tauK
+      IF (innLoop.eq.0) THEN
+        cg_tau(innLoop,outLoop)=CGstepI
+        cg_alpha(innLoop,outLoop)=cg_tau(innLoop,outLoop)
         DO i=0,NstateVar(ng)
           dot_old(i)=0.0_r8
           dot_new(i)=0.0_r8
@@ -452,7 +453,7 @@
 !  If preconditioning, read in number of converged eigenvectors and their
 !  associated eigenvalues.
 !
-      IF (Lprecond.and.((Iter.eq.0).and.(outer.eq.1))) THEN
+      IF (Lprecond.and.((innLoop.eq.0).and.(outLoop.eq.1))) THEN
         IF (InpThread) THEN
           status=nf_inq_varid(ncHSSid(ng),'nConvRitz',varid)
           status=nf_get_var1_int(ncHSSid(ng), varid, 1, nConvRitz)
@@ -483,7 +484,7 @@
 !  Compute conjugate gradient optimum step size, alpha(k).
 !-----------------------------------------------------------------------
 !
-      IF (Iter.gt.0) THEN
+      IF (innLoop.gt.0) THEN
         CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot_old(0:),                 &
@@ -534,24 +535,25 @@
 !
 !  Compute new optimal step size.
 !
-        tauK=alphaK
-        alphaK=tauK*dot_old(0)/(dot_old(0)-dot_new(0))
+        cg_tau(innLoop,outLoop)=cg_alpha(innLoop-1,outLoop)
+        cg_alpha(innLoop,outLoop)=cg_tau(innLoop,outLoop)*              &
+     &                            dot_old(0)/(dot_old(0)-dot_new(0))
       END IF
 !
 !  Adjust the cost function for the previous inner-loop iteration.
 !  This is based on a first-order Taylor expansion of the cost function.
-!  Let vhat=v+tauK*d. During each inner-loop the tangent linear
+!  Let vhat=v+tau*d. During each inner-loop the tangent linear
 !  model provides J(vhat). What we require is J(v). Using a 1st-order
-!  Taylor expansion we have: J(vhat)=J(v)+tauK*<d,grad> where grad is
+!  Taylor expansion we have: J(vhat)=J(v)+tau*<d,grad> where grad is
 !  the cost function gradient computed during the last inner-loop
 !  immediately prior to the orthogonalization. Rearranging this
-!  equation we have: J(v)=J(vhat)-tauK*<d,grad>. In the code
+!  equation we have: J(v)=J(vhat)-tau*<d,grad>. In the code
 !  J(vhat)=CostFun(:) and <d,grad>=CostFunDot(:). Remember though
 !  that J(v) is the cost function associated with v from the previous
 !  inner-loop.
 !
       DO i=0,NstateVar(ng)
-        Adjust(i)=tauK*FOURDVAR(ng)%CostGradDot(i)
+        Adjust(i)=cg_tau(innLoop,outLoop)*FOURDVAR(ng)%CostGradDot(i)
         FOURDVAR(ng)%CostFun(i)=FOURDVAR(ng)%CostFun(i)-Adjust(i)
       END DO
 !
@@ -653,7 +655,9 @@
 !
       CALL ad_new_state (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj,                            &
-     &                   Lold, Lnew, alphaK, tauK,                      &
+     &                   Lold, Lnew,                                    &
+     &                   cg_alpha(innLoop,outLoop),                     &
+     &                   cg_tau(innLoop,outLoop),                       &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
 #endif
@@ -676,11 +680,12 @@
 !  G(0) to G(k). Use TLM state arrays at time index Lwrk=2, to load
 !  each of the previous gradients.
 !
-      IF (Iter.gt.0) THEN
+      IF (innLoop.gt.0) THEN
         Lwrk=2
         CALL orthogonalize (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      Lold, Lnew, Lwrk, Iter,                     &
+     &                      Lold, Lnew, Lwrk,                           &
+     &                      innLoop, outLoop,                           &
      &                      nConvRitz, Ritz,                            &
 # ifdef MASKING
      &                      rmask, umask, vmask,                        &
@@ -734,12 +739,13 @@
 !    X(k+1) = X(k) + alpha(k) * d(k)
 !    Lout     Linp                      index
 !
-      IF (Iter.gt.0) THEN
+      IF (innLoop.gt.0) THEN
         Linp=1
         Lout=1
         CALL tl_new_state (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     Linp, Lout, alphaK,                          &
+     &                     Linp, Lout,                                  &
+     &                     cg_alpha(innLoop,outLoop),                   &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
 #endif
@@ -772,7 +778,7 @@
 !  TLM increments computed here are the ones that are needed update
 !  the NLM model initial conditions.
 !
-!!      IF (Iter.eq.Ninner) RETURN
+!!      IF (innLoop.eq.Ninner) RETURN
       END IF
 !
 !-----------------------------------------------------------------------
@@ -812,7 +818,7 @@
 !
 !  If preconditioning, compute new dot product, <G(k+1), H^-1 * G(k+1)>.
 !
-      IF (Iter.gt.0) THEN
+      IF (innLoop.gt.0) THEN
         IF (Lprecond) THEN
           CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -867,9 +873,9 @@
 !
 !  Compute conjugate direction coefficient, beta(k+1).
 !
-        betaK=new_dot(0)/old_dot(0)
+        cg_beta(innLoop,outLoop)=new_dot(0)/old_dot(0)
       ELSE
-        betaK=0.0_r8
+        cg_beta(innLoop,outLoop)=0.0_r8
       END IF
 !
 !  If preconditioning, compute new conjugate direction, d(k+1).  Notice
@@ -878,7 +884,8 @@
       IF (Lprecond) THEN
         CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      Lold, Lwrk, betaK,                          &
+     &                      Lold, Lwrk,                                 &
+     &                      cg_beta(innLoop,outLoop),                   &
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
@@ -912,7 +919,8 @@
       ELSE
         CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      Lold, Lnew, betaK,                          &
+     &                      Lold, Lnew,                                 &
+     &                      cg_beta(innLoop,outLoop),                   &
 #ifdef MASKING
      &                      rmask, umask, vmask,                        &
 #endif
@@ -983,7 +991,8 @@
       Lout=2
       CALL tl_new_state (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj,                            &
-     &                   Linp, Lout, alphaK,                            &
+     &                   Linp, Lout,                                    &
+     &                   cg_alpha(innLoop,outLoop),                     &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
 #endif
@@ -1013,18 +1022,28 @@
      &                   tl_zeta)
 !
 !-----------------------------------------------------------------------
-!  Report descent algorithm parameters.
+!  Write out conjugate gradient information into NetCDF file.
 !-----------------------------------------------------------------------
 !
+      CALL cg_write (ng, innLoop, outLoop)
+!
+!  Report  algorithm parameters.
+!
       IF (Master) THEN
-        WRITE (stdout,30) outer,inner,tauK,alphaK,betaK,                &
-     &                    outer,MAX(0,inner-1),Adjust(0),               &
-     &                    outer,inner,                                  &
-     &                    'dot product',inner,inner,dot_old(0),'alpha', &
-     &                    'dot product',inner,inner,dot_new(0),'alpha', &
-     &                    'dot product',inner,inner,old_dot(0),'beta',  &
-     &                    'dot product',inner+1,inner+1,new_dot(0),     &
-     &                    'beta'
+        WRITE (stdout,30) outLoop, innLoop,                             &
+     &                    cg_tau(innLoop,outLoop),                      &
+     &                    cg_alpha(innLoop,outLoop),                    &
+     &                    cg_beta(innLoop,outLoop),                     &
+     &                    outLoop, MAX(0,innLoop-1), Adjust(0),         &
+     &                    outLoop, innLoop,                             &
+     &                    'dot product', innLoop, innLoop,              &
+     &                    dot_old(0), 'alpha',                          &
+     &                    'dot product', innLoop, innLoop,              &
+     &                    dot_new(0), 'alpha',                          &
+     &                    'dot product', innLoop, innLoop,              &
+     &                    old_dot(0), 'beta',                           &
+     &                    'dot product', innLoop+1, innLoop+1,          &
+     &                     new_dot(0), 'beta'
  30     FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                           &
      &          'tau = ',1p,e14.7,                                      &
      &          ', alpha = ',1p,e14.7,                                  &
@@ -1535,7 +1554,8 @@
 !***********************************************************************
       SUBROUTINE orthogonalize (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          Lold, Lnew, Lwrk, Iter,                 &
+     &                          Lold, Lnew, Lwrk,                       &
+     &                          innLoop, outLoop,                       &
      &                          nConvRitz, Ritz,                        &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
@@ -1589,7 +1609,8 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew, Lwrk, Iter
+      integer, intent(in) :: Lold, Lnew, Lwrk
+      integer, intent(in) :: innLoop, outLoop
       integer, intent(in) :: nConvRitz
 !
       real(r8), intent(in) :: Ritz(:)
@@ -1719,7 +1740,7 @@
       real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
-      real(r8), dimension(Iter) :: DotProd, dot_new, dot_old
+      real(r8), dimension(0:Ninner) :: DotProd, dot_new, dot_old
 
       character (len=80) :: ncname
 
@@ -1735,7 +1756,7 @@
 !  read are orthogonal to each other. The reversed order of the loop
 !  is important for the Lanczos vector calculations.
 !
-      DO rec=Iter,1,-1
+      DO rec=innLoop,1,-1
 !
 !  Determine adjoint file to process.
 !
@@ -1802,7 +1823,7 @@
           Lscale=-1
           CALL precond (ng, model, Istr, Iend, Jstr, Jend,              &
      &                  LBi, UBi, LBj, UBj,                             &
-     &                  NstateVar(ng), L2, Lwrk, Lscale,                 &
+     &                  NstateVar(ng), L2, Lwrk, Lscale,                &
      &                  nConvRitz, Ritz,                                &
 #ifdef MASKING
      &                  rmask, umask, vmask,                            &
@@ -1977,7 +1998,7 @@
 !  Test orthogonal properties of the new gradient.
 !-----------------------------------------------------------------------
 !
-      DO rec=Iter,1,-1
+      DO rec=innLoop,1,-1
 !
 !  Determine adjoint file to process.
 !
@@ -2043,12 +2064,12 @@
 !
       IF (Master) THEN
         WRITE (stdout,20) outer, inner
-        DO rec=Iter,1,-1
+        DO rec=innLoop,1,-1
           WRITE (stdout,30) DotProd(rec), rec-1
         END DO
         WRITE (stdout,*) ' '
-        DO rec=Iter,1,-1
-          WRITE (stdout,40) Iter, rec-1, dot_new(rec),                  &
+        DO rec=innLoop,1,-1
+          WRITE (stdout,40) innLoop, rec-1, dot_new(rec),               &
      &                      rec-1, rec-1, dot_old(rec)
         END DO
  20     FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                           &
@@ -2200,7 +2221,7 @@
 !-----------------------------------------------------------------------
 !  Compute new conjugate descent direction, d(k+1). Notice that the old
 !  descent direction is overwritten. Also the initial value is just
-!  d(0)=-G(0) since betaK=0 when Iter=0.
+!  d(0)=-G(0) since betaK=0 when inner=0.
 !-----------------------------------------------------------------------
 !
 !  Free-surface.
@@ -2964,3 +2985,175 @@
 
       RETURN
       END SUBROUTINE read_state
+
+      SUBROUTINE cg_write (ng, innLoop, outLoop)
+!
+!=======================================================================
+!                                                                      !
+!  This routine writes conjugate gradient vectors into 4DVAR NetCDF    !
+!  for restart purposes.                                               !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      Use mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: ng, innLoop, outLoop
+!
+!  Local variable declarations.
+!
+      logical, save :: First = .TRUE.
+
+      integer :: i, status
+      integer :: start(2), total(2)
+      integer, save :: varid(7)
+!
+!-----------------------------------------------------------------------
+!  Write out conjugate gradient vectors.
+!-----------------------------------------------------------------------
+!
+      IF (OutThread) THEN
+        IF (First) THEN
+          First=.FALSE.
+          DO i=1,7
+            varid(i)=0
+          END DO
+        END IF
+!
+!  Write out outer and inner iteration.
+!
+        IF (varid(1).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'outer',varid(1))
+        END IF        
+        status=nf_put_var1_int(ncMODid(ng),varid(1),1,outer)
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'outer', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+
+        IF (varid(2).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'inner',varid(2))
+        END IF
+        status=nf_put_var1_int(ncMODid(ng),varid(2),1,inner)
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'inner', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+!  Write out number of converged Ritz eigenvalues.
+!
+        IF ((innLoop.eq.0).and.(outloop.eq.1)) THEN
+          IF (varid(3).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'nConvRitz',varid(3))
+          END IF
+          status=nf_put_var1_int(ncMODid(ng),varid(3),1,nConvRitz)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'nConvRitz', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Write out converged Ritz eigenvalues.
+!
+        IF ((innLoop.eq.0).and.(outloop.eq.1)) THEN
+          IF (varid(4).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'Ritz',varid(4))
+          END IF
+          start(1)=1
+          total(1)=nConvRitz
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(4), start,         &
+     &                            total, Ritz)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'Ritz', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Write out conjugate gradient norms.
+!
+        IF (varid(5).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'cg_alpha',varid(5))
+        END IF
+        start(1)=1
+        total(1)=Ninner+1
+        start(2)=1
+        total(2)=Nouter
+        status=nf_put_vara_TYPE(ncMODid(ng), varid(5), start,           &
+     &                          total, cg_alpha(0,1))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'cg_alpha', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+        IF (varid(6).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'cg_beta',varid(6))
+        END IF
+        start(1)=1
+        total(1)=Ninner+1
+        start(2)=1
+        total(2)=Nouter
+        status=nf_put_vara_TYPE(ncMODid(ng), varid(6), start,           &
+     &                          total, cg_beta(0,1))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'cg_beta', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+        IF (varid(7).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'cg_tau',varid(7))
+        END IF
+        start(1)=1
+        total(1)=Ninner+1
+        start(2)=1
+        total(2)=Nouter
+        status=nf_put_vara_TYPE(ncMODid(ng), varid(7), start, total,    &
+     &                          cg_tau(0,1))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'cg_tau', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Synchronize observations NetCDF file to disk.
+!-----------------------------------------------------------------------
+!
+      IF (OutThread) THEN
+        status=nf_sync(ncMODid(ng))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,20)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+
+  10  FORMAT (/,' CG_WRITE - error while writing variable: ',a,/,       &
+     &        12x,'into NetCDF file: ',a)
+  20  FORMAT (/,' CG_WRITE - unable to synchronize 4DVAR',              &
+     &        1x,'NetCDF file to disk.')
+
+      END SUBROUTINE cg_write

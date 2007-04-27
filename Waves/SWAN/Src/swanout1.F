@@ -621,14 +621,12 @@
         IF ( PARLL.AND.OURQT.EQ.-9999.) OURQT = OUTR(1)                   40.51 40.30
         IF (ITEST.GE.60) WRITE (PRTEST, *) ' output times ', TNEXT,
      &        OUTR(2), DT, TFINC, TIMCO
-
 !jcw : determine if we are just coupling
         cplout = .FALSE.                                                    jcw
         userout = .FALSE.                                                   jcw
         nWAV_steps=MAX(1,INT(TI_WAV_OCN/DT))                                jcw
-        IF ((numsteps.gt.0).and.(MOD(numsteps, nWAV_steps).eq.0)) THEN      jcw
+        IF ((numsteps.ge.0).and.(MOD(numsteps, nWAV_steps).eq.0)) THEN      jcw
           cplout = .TRUE.
-          OUTR(1) = TIMCO                                                   jcw
           LOGACT = .TRUE.                                                   jcw
         ENDIF
         IF (ABS(DIF).LT.0.5*DT .AND. OUTR(2).LT.0.) THEN                  40.00

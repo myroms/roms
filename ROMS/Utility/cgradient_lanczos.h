@@ -90,7 +90,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE cgradient (ng, tile, model, Iter)
+      SUBROUTINE cgradient (ng, tile, model, innLoop, outLoop)
 !***********************************************************************
 !
       USE mod_param
@@ -106,7 +106,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, model, Iter
+      integer, intent(in) :: ng, tile, model, innLoop, outLoop
 !
 !  Local variable declarations.
 !
@@ -117,7 +117,8 @@
 #endif
       CALL cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     Lold(ng), Lnew(ng), Iter,                    &
+     &                     Lold(ng), Lnew(ng),                          &
+     &                     innLoop, outLoop,                            &
 #ifdef MASKING
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
@@ -180,7 +181,8 @@
 !***********************************************************************
       SUBROUTINE cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,     &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           Lold, Lnew, Iter,                      &
+     &                           Lold, Lnew,                            &
+     &                           innLoop, outLoop,                      &
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
 #endif
@@ -227,12 +229,18 @@
       USE mod_fourdvar
       USE mod_iounits
       USE mod_scalars
+
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcastf_m, mp_bcasti
+#endif
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew, Iter
+      integer, intent(in) :: Lold, Lnew
+      integer, intent(in) :: innLoop, outLoop
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -346,40 +354,24 @@
 !
 !  Local variable declarations.
 !
-      integer :: Linp, Lout, Lwrk, Lwrk1, i
+      integer :: Linp, Lout, Lwrk, Lwrk1, i, ic
+      integer :: info, ingood, itheta1
 
-      integer, parameter :: kmaxit = 500
-
-      real(r8) :: norm, preduc
-
-      real(r8), save :: alphaK, tauK, zbet, zgnorm, ztheta1
+      real(r8) :: norm, zbeta, ztheta1
 
       real(r8), dimension(0:NstateVar(ng)) :: Adjust
       real(r8), dimension(0:NstateVar(ng)) :: dot_old, dot_new
       real(r8), dimension(0:NstateVar(ng)) :: old_dot, new_dot
-      real(r8), save :: zwork(kmaxit,3)
-      real(r8), save :: zdelta(kmaxit)
-      real(r8), save :: zbeta(kmaxit+1)
-      real(r8), save :: zqg(kmaxit+1)
-      real(r8), save :: zu(kmaxit)
-      real(r8), save :: zgam(kmaxit)
+      real(r8), dimension(2*Ninner-2) :: work
 
-      integer :: info, ingood, itheta1
-
-      real(r8), save :: zeps, zbndlm, pbndlm
-      real(r8), save :: zritz(kmaxit)
-      real(r8), save :: zbnds(kmaxit)
-      real(r8), save :: ztheta(kmaxit)
-      real(r8), save :: zv(kmaxit,kmaxit)
-      real(r8), save :: zsstwrk(1:2*(kmaxit-1))
+      character (len=13) :: string
 !
 !-----------------------------------------------------------------------
 !  Initialize trial step size.
 !-----------------------------------------------------------------------
 !
-      tauK=CGstepI            
-      alphaK=tauK
-      IF (Iter.eq.0) THEN
+      cg_tau(innLoop,outLoop)=CGstepI            
+      IF (innLoop.eq.0) THEN
         ingood=0                  ! number of good eigenpairs
         DO i=0,NstateVar(ng)
           dot_old(i)=0.0_r8
@@ -390,18 +382,18 @@
         END DO
       END IF
       WRITE (stdout,10)
- 10   FORMAT (/,' <<<< Descent Algorithm >>>>')
+ 10   FORMAT (/,' <<<< Descent Algorithm >>>>',/)
 !
 !  Estimate the Hessian and save the starting vector in ad_*(Lold).
 !
-      IF (Iter.gt.0) THEN
+      IF (innLoop.gt.0) THEN
         Lwrk=2
         Linp=1
         Lout=2
         CALL hessian (ng, model, Istr, Iend, Jstr, Jend,                &
      &                LBi, UBi, LBj, UBj,                               &
-     &                Linp, Lout, Lwrk, Iter,                           &
-     &                tauK, zdelta, zgnorm,                             &
+     &                Linp, Lout, Lwrk,                                 &
+     &                innLoop, outLoop,                                 &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
 #endif
@@ -432,10 +424,9 @@
 !
 !  Check for positive Hessian, J''.
 !
-        PRINT *, 'ZDELTA = ',Iter, zdelta(Iter)
-        IF (zdelta(Iter).le.0.0_r8) THEN
-          PRINT *,'ZDELTA not positive'
-          PRINT *, 'ZDELTA = ',Iter, zdelta(Iter)
+        IF (cg_delta(innLoop,outLoop).le.0.0_r8) THEN
+          PRINT *,'CG_DELTA not positive'
+          PRINT *, 'CG_DELTA = ', innLoop, cg_delta(innLoop,outLoop)
           STOP
         END IF
       END IF
@@ -447,8 +438,8 @@
       Lwrk=2
       CALL lanczos (ng, model, Istr, Iend, Jstr, Jend,                  &
      &              LBi, UBi, LBj, UBj,                                 &
-     &              Linp, Lout, Lwrk, Iter,                             &
-     &              zdelta, zbeta, zqg, zgnorm,                         &
+     &              Linp, Lout, Lwrk,                                   &
+     &              innLoop, outLoop,                                   &
 #ifdef MASKING
      &              rmask, umask, vmask,                                &
 #endif
@@ -476,12 +467,6 @@
      &              ad_ubar, ad_vbar,                                   &
 #endif
      &              ad_zeta)
-!
-!  Report initial gradient norm.
-!
-      IF (Iter.eq.0) THEN
-        PRINT *, 'ZGNORM = ', zgnorm
-      END IF
 !
 !  Compute new direction, d(k+1).
 !
@@ -521,26 +506,28 @@
 !  tridiagonal system.
 !-----------------------------------------------------------------------
 !
-      IF (Iter.gt.1) THEN
-        zbet=zdelta(1)
-        zu(1)=-zqg(1)/zbet
+      IF (innLoop.gt.1) THEN
 !
 !  Decomposition and forward substitution.
 !
-        DO i=2,Iter
-          zgam(i)=zbeta(i)/zbet
-          zbet=zdelta(i)-zbeta(i)*zgam(i)
-          zu(i)=(-zqg(i)-zbeta(i)*zu(i-1))/zbet
+        zbeta=cg_delta(1,outLoop)
+        cg_zu(1,outLoop)=-cg_QG(1,outLoop)/zbeta
+        DO i=2,innLoop
+          cg_gamma(i,outLoop)=cg_beta(i,outLoop)/zbeta
+          zbeta=cg_delta(i,outLoop)-                                    &
+     &          cg_beta(i,outLoop)*cg_gamma(i,outLoop)
+          cg_zu(i,outLoop)=(-cg_QG(i,outLoop)-                          &
+     &                      cg_beta(i,outLoop)*cg_zu(i-1,outLoop))/zbeta
         END DO
-        zwork(Iter,3)=zu(Iter)
 !
 !  Back substitution.
 !
-        DO i=Iter-1,1,-1
-          zu(i)=zu(i)-zgam(i+1)*zu(i+1)
-          zwork(i,3)=zu(i)
+        cg_Tmatrix(innLoop,3)=cg_zu(innLoop,outLoop)
+        DO i=innLoop-1,1,-1
+          cg_zu(i,outLoop)=cg_zu(i,outLoop)-                            &
+     &                     cg_gamma(i+1,outLoop)*cg_zu(i+1,outLoop)
+          cg_Tmatrix(i,3)=cg_zu(i,outLoop)
         END DO
-        PRINT *,'zwork=',(zwork(i,3),i=1,Iter)
 !
 !  Compute gradient norm using ad*(:,:,1) and tl_*(:,:,2) as temporary
 !  storage.
@@ -550,8 +537,8 @@
         Lwrk=2
         CALL new_gradient (ng, model, Istr, Iend, Jstr, Jend,           &
      &                     LBi, UBi, LBj, UBj,                          &
-     &                     Linp, Lout, Lwrk, Iter,                      &
-     &                     zgnorm, zbeta, zwork, zqg, preduc,           &
+     &                     Linp, Lout, Lwrk,                            &
+     &                     innLoop, outLoop,                            &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
 #endif
@@ -579,10 +566,6 @@
      &                     ad_ubar, ad_vbar,                            &
 #endif
      &                     ad_zeta)
-!
-!  Report achieved reduction in gradient norm
-!
-        PRINT *,'Iter=',Iter,' preduc=',preduc
       END IF
 !
 !-----------------------------------------------------------------------
@@ -591,20 +574,22 @@
 !  of the Hessian.
 !-----------------------------------------------------------------------
 !
-      IF (LhessianEV.and.(Iter.gt.0)) THEN
-        DO i=1,Iter
-          zritz(i)=zdelta(i)
+      IF (LhessianEV.and.(innLoop.gt.0)) THEN
+        DO i=1,innLoop
+          cg_Ritz(i,outLoop)=cg_delta(i,outLoop)
         END DO
-        DO i=1,Iter-1
-          zwork(i,1)=zbeta(i+1)
+        DO i=1,innLoop-1
+          cg_Tmatrix(i,1)=cg_beta(i+1,outLoop)
         END DO
 !
 !  Use the LAPACK routine DSTEQR to compute the eigenvectors and
 !  eigenvalues of the tridiagonal matrix. If applicable, the 
-!  eigenpairs is computed by master thread only.
+!  eigenpairs is computed by master thread only. Notice that on
+!  exit, the matrix cg_Tmatrix is destroyed.
 !
         IF (Master) THEN
-          CALL DSTEQR ('I',Iter,zritz,zwork,zv,kmaxit,zsstwrk,info)
+          CALL DSTEQR ('I', innLoop, cg_Ritz(1,outLoop), cg_Tmatrix,    &
+     &                 cg_zv, Ninner, work, info)
         END IF
 #ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, info, 1)
@@ -614,24 +599,22 @@
           STOP
         END IF
 #ifdef DISTRIBUTE
-        CALL mp_bcastf (ng, iTLM, zritz, 500)
-        CALL mp_bcastf (ng, ITLM, zv, 500*500)
+        CALL mp_bcastf (ng, iTLM, cg_Ritz(:,outLoop), Ninner)
+        CALL mp_bcastf_m (ng, ITLM, cg_zv, Ninner, Ninner)
 #endif
-        PRINT *,'ritz values=',(zritz(i),i=1,Iter)
 !
 !  Estimate the Ritz value error bounds.
 !
-        zbndlm=GradErr*zritz(Iter)
-        DO i=1,Iter
-          zbnds(i)=ABS(zbeta(Iter+1)*zv(Iter,i))
+        DO i=1,innLoop
+          cg_RitzErr(i,outLoop)=ABS(cg_beta(innLoop+1,outLoop)*         &
+     &                              cg_zv(innLoop,i))
         END DO
-        PRINT *,'ritz error bounds =',(zbnds(i),i=1,Iter)
 !
 !  Check for exploding or negative Ritz values.
 !
-        DO i=1,Iter
-          IF (zritz(i).lt.0.0_r8) THEN
-            PRINT *,'negative ritz value found'
+        DO i=1,innLoop
+          IF (cg_Ritz(i,outLoop).lt.0.0_r8) THEN
+            PRINT *,'negative Ritz value found'
             STOP
           END IF
         END DO
@@ -639,10 +622,10 @@
 !  Count the converged eigenvectors.
 !
         ingood=0
-        DO i=1,Iter
-          IF (zbnds(i).le.zbndlm) THEN
+        RitzMaxErr=GradErr*cg_Ritz(innLoop,outLoop)
+        DO i=1,innLoop
+          IF (cg_RitzErr(i,outLoop).le.RitzMaxErr) THEN
             ingood=ingood+1
-            PRINT *,'Converged eigenvalue ',zritz(i)
           END IF
         END DO
 !
@@ -650,9 +633,9 @@
 !  eigenvector for explosion test.
 !
         IF (ingood.gt.0) THEN
-          DO i=Iter,1,-1
-            IF (zbnds(i).le.zbndlm) THEN
-              ztheta1=zritz(i)
+          DO i=innLoop,1,-1
+            IF (cg_RitzErr(i,outLoop).le.RitzMaxErr) THEN
+              ztheta1=cg_Ritz(i,outLoop)
               itheta1=i
               EXIT
             END IF
@@ -661,10 +644,11 @@
 !
 !  Calculate the converged eigenvectors of the Hessian.
 !
-        IF (Iter.eq.Ninner-1) THEN
-          zbndlm=HevecErr
-          DO i=1,Iter
-            zbnds(i)=zbnds(i)/zritz(i)
+        IF (innLoop.eq.Ninner-1) THEN
+          RitzMaxErr=HevecErr
+          DO i=1,innLoop
+            cg_RitzErr(i,outLoop)=cg_RitzErr(i,outLoop)/                &
+     &                            cg_Ritz(i,outLoop)
           END DO
 
           Lwrk=2
@@ -672,8 +656,8 @@
           Lout=2
           CALL hessian_evecs (ng, model, Istr, Iend, Jstr, Jend,        &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        Linp, Lout, Lwrk, Iter,                   &
-     &                        zbndlm, zritz, ztheta, zbnds, zv,         &
+     &                        Linp, Lout, Lwrk,                         &
+     &                        innLoop, outLoop,                         &
 # ifdef MASKING
      &                        rmask, umask, vmask,                      &
 # endif
@@ -702,10 +686,9 @@
 # endif
      &                        ad_zeta)
 
-          IF (ingood.eq.0) THEN
-            PRINT *,' No converged Hesssian eigenvectors founds'
+          IF (nConvRitz.eq.0) THEN
+            PRINT *,' No converged Hesssian eigenvectors found.'
           END IF
-          PRINT *,'number of converged eigenvectors found=',ingood
         END IF
       END IF
 !
@@ -722,7 +705,9 @@
       Lout=2
       CALL tl_new_state (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
-     &                   Linp, Lout, tauK, Iter, zu,                    &
+     &                   Linp, Lout,                                    &
+     &                   innLoop, outLoop,                              &
+     &                   cg_tau(innLoop,outLoop),                       &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
 #endif
@@ -764,29 +749,51 @@
      &                   ad_zeta)
 !
 !-----------------------------------------------------------------------
-!  Report descent algorithm parameters.
+!  Write out conjugate gradient information into NetCDF file.
 !-----------------------------------------------------------------------
 !
+      CALL cg_write (ng, innLoop, outLoop)
+!
+!  Report algorithm parameters.
+!
       IF (Master) THEN
-        WRITE (stdout,20) outer,inner,tauK,alphaK,zbet,                 &
-     &                    outer,MAX(0,inner-1),Adjust(0),               &
-     &                    outer,inner,                                  &
-     &                    'dot product',inner,inner,dot_old(0),'alpha', &
-     &                    'dot product',inner,inner,dot_new(0),'alpha', &
-     &                    'dot product',inner,inner,old_dot(0),'beta',  &
-     &                    'dot product',inner+1,inner+1,new_dot(0),     &
-     &                    'beta'
- 20     FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                           &
-     &          'tau = ',1p,e14.7,                                      &
-     &          ', alpha = ',1p,e14.7,                                  &
-     &          ', Beta = ',1p,e14.7,                                   &
-     &          /,1x,'(',i3.3,',',i3.3,'): ',                           &
-     &          'Total COST Function Adjustment = ',1p,e19.12,          &
-     &          /,1x,'(',i3.3,',',i3.3,'): ',                           &
-     &          a,' <d(',i3.3,'),G(',i3.3,')> = ',1p,e19.12,3x,a,/,12x, &
-     &          a,' <d(',i3.3,'),g(',i3.3,')> = ',1p,e19.12,3x,a,/,12x, &
-     &          a,' <G(',i3.3,'),G(',i3.3,')> = ',1p,e19.12,3x,a,/,12x, &
-     &          a,' <G(',i3.3,'),G(',i3.3,')> = ',1p,e19.12,3x,a,/)
+        IF (inner.eq.0) THEN
+          WRITE (stdout,20) outLoop, innLoop,                           &
+     &                      cg_Gnorm(outLoop)
+ 20       FORMAT (1x,'(',i3.3,',',i3.3,'): ',                           &
+     &            'Gnorm  = ',1p,e14.7)
+        END IF
+        WRITE (stdout,30) outLoop, innLoop,                             &
+     &                    cg_Greduc(innLoop,outLoop),                   &
+     &                    outLoop, innLoop,                             &
+     &                    cg_delta(innLoop,outLoop)
+ 30     FORMAT (1x,'(',i3.3,',',i3.3,'): ',                             &
+     &          'Greduc = ',1p,e14.7,/,                                 &
+     &          1x,'(',i3.3,',',i3.3,'): ',                             &
+     &          'delta  = ',1p,e14.7)
+        IF (innLoop.gt.0) THEN
+          WRITE (stdout,40) RitzMaxErr
+ 40       FORMAT (/,'Ritz Eigenvalues and relative accuracy: ',         &
+     &             'RitzMaxErr = ',1p,e14.7,/)
+          ic=0
+          DO i=1,innLoop
+            IF (cg_RitzErr(i,outLoop).le.RitzMaxErr) THEN
+              string='converged'
+              ic=ic+1
+              WRITE (stdout,50) i, cg_Ritz(i,outLoop),                  &
+     &                          cg_RitzErr(i,outLoop),                  &
+     &                          TRIM(ADJUSTL(string)), ic
+ 50           FORMAT(5x,i3.3,2x,1p,e14.7,2x,1p,e14.7,2x,a,2x,           &
+     &               '(Good='i3.3,')')
+            ELSE
+              string='not converged'
+              WRITE (stdout,60) i, cg_Ritz(i,outLoop),                  &
+     &                          cg_RitzErr(i,outLoop),                  &
+     &                          TRIM(ADJUSTL(string))
+ 60           FORMAT(5x,i3.3,2x,1p,e14.7,2x,1p,e14.7,2x,a)
+            END IF
+          END DO
+        END IF
       END IF
 
       RETURN 
@@ -796,7 +803,9 @@
 !***********************************************************************
       SUBROUTINE tl_new_state (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         Linp, Lout, alphaK, Iter, zu,            &
+     &                         Linp, Lout,                              &
+     &                         innLoop, outLoop,                        &
+     &                         alphaK,                                  &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
 #endif
@@ -839,19 +848,19 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_fourdvar
       USE mod_ncparam
       USE mod_scalars
       USE mod_iounits
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
-      integer, intent(in) :: model, Iter
+      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
+      integer, intent(in) :: innLoop, outLoop
 
       real(r8), intent(in) :: alphaK
-      real(r8), intent(in) :: zu(:)
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -981,7 +990,7 @@
 !  Compute new starting tangent linear state vector, X(k+1).
 !-----------------------------------------------------------------------
 !
-      IF (Iter.ne.Ninner-1) THEN
+      IF (innLoop.ne.Ninner-1) THEN
 !
 !  Free-surface.
 !
@@ -1127,7 +1136,7 @@
 !  Read in each previous gradient state solutions, g(0) to g(k), and
 !  compute its associated dot angaint current g(k+1).
 !
-        DO rec=1,Iter
+        DO rec=1,innLoop
 !
 !  Determine adjoint file to process.
 !
@@ -1167,7 +1176,7 @@
 !    ad_var(Linp) = fac1 * ad_var(Linp) + fac2 * tl_var(Lout)
 !     
           fac1=1.0_r8
-          fac2=zu(rec)
+          fac2=cg_zu(rec,outLoop)
 
           CALL state_addition (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj,                      &
@@ -1815,8 +1824,8 @@
 !***********************************************************************
       SUBROUTINE hessian (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Lold, Lnew, Lwrk, Iter,                       &
-     &                    tauK, zdelta, zgnorm,                         &
+     &                    Lold, Lnew, Lwrk,                             &
+     &                    innLoop, outLoop,                             &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
@@ -1856,11 +1865,8 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew, Lwrk, Iter
-
-      real(r8), intent(in) :: tauK
-      real(r8), intent(in) :: zgnorm
-      real(r8), intent(inout) :: zdelta(1:500)
+      integer, intent(in) :: Lold, Lnew, Lwrk
+      integer, intent(in) :: innLoop, outLoop
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -1964,7 +1970,7 @@
 !  state arrays (index Lold) contain the background cost function
 !  gradient.
 !
-      fac=1.0_r8/tauK
+      fac=1.0_r8/cg_tau(innLoop,outLoop)
 !
 !  Free-surface.
 !
@@ -1972,7 +1978,8 @@
         DO i=IstrR,IendR
           ad_zeta(i,j,Lnew)=fac*(ad_zeta(i,j,Lnew)+                     &
      &                           tl_zeta(i,j,Lold)-                     &
-     &                           ad_zeta(i,j,Lold)*zgnorm)
+     &                           ad_zeta(i,j,Lold)*                     &
+     &                           cg_Gnorm(outLoop))
 #ifdef MASKING
           ad_zeta(i,j,Lnew)=ad_zeta(i,j,Lnew)*rmask(i,j)
 #endif
@@ -1986,7 +1993,8 @@
         DO i=Istr,IendR
           ad_ubar(i,j,Lnew)=fac*(ad_ubar(i,j,Lnew)+                     &
      &                           tl_ubar(i,j,Lold)-                     &
-     &                           ad_ubar(i,j,Lold)*zgnorm)
+     &                           ad_ubar(i,j,Lold)*                     &
+     &                           cg_Gnorm(outLoop))
 # ifdef MASKING
           ad_ubar(i,j,Lnew)=ad_ubar(i,j,Lnew)*umask(i,j)
 # endif
@@ -1996,7 +2004,8 @@
         DO i=IstrR,IendR
           ad_vbar(i,j,Lnew)=fac*(ad_vbar(i,j,Lnew)+                     &
      &                           tl_vbar(i,j,Lold)-                     &
-     &                           ad_vbar(i,j,Lold)*zgnorm)
+     &                           ad_vbar(i,j,Lold)*                     &
+     &                           cg_Gnorm(outLoop))
 # ifdef MASKING
           ad_vbar(i,j,Lnew)=ad_vbar(i,j,Lnew)*vmask(i,j)
 # endif
@@ -2011,7 +2020,8 @@
         DO i=Istr,IendR
           ad_ustr(i,j,Lnew)=fac*(ad_ustr(i,j,Lnew)+                     &
      &                           tl_ustr(i,j,Lold)-                     &
-     &                           ad_ustr(i,j,Lold)*zgnorm)
+     &                           ad_ustr(i,j,Lold)*                     &
+     &                           cg_Gnorm(outLoop))
 # ifdef MASKING
           ad_ustr(i,j,Lnew)=ad_ustr(i,j,Lnew)*umask(i,j)
 # endif
@@ -2021,7 +2031,8 @@
         DO i=IstrR,IendR
           ad_vstr(i,j,Lnew)=fac*(ad_vstr(i,j,Lnew)+                     &
      &                           tl_vstr(i,j,Lold)-                     &
-     &                           ad_vstr(i,j,Lold)*zgnorm)
+     &                           ad_vstr(i,j,Lold)*                     &
+     &                           cg_Gnorm(outLoop))
 # ifdef MASKING
           ad_vstr(i,j)=ad_vstr(i,j)*vmask(i,j)
 # endif
@@ -2037,7 +2048,8 @@
           DO i=Istr,IendR
             ad_u(i,j,k,Lnew)=fac*(ad_u(i,j,k,Lnew)+                     &
      &                            tl_u(i,j,k,Lold)-                     &
-     &                            ad_u(i,j,k,Lold)*zgnorm)
+     &                            ad_u(i,j,k,Lold)*                     &
+     &                            cg_Gnorm(outLoop))
 # ifdef MASKING
             ad_u(i,j,k,Lnew)=ad_u(i,j,k,Lnew)*umask(i,j)
 # endif
@@ -2047,7 +2059,8 @@
           DO i=IstrR,IendR
             ad_v(i,j,k,Lnew)=fac*(ad_v(i,j,k,Lnew)+                     &
      &                            tl_v(i,j,k,Lold)-                     &
-     &                            ad_v(i,j,k,Lold)*zgnorm)
+     &                            ad_v(i,j,k,Lold)*                     &
+     &                            cg_Gnorm(outLoop))
 # ifdef MASKING
             ad_v(i,j,k,Lnew)=ad_v(i,j,k,Lnew)*vmask(i,j)
 # endif
@@ -2063,7 +2076,8 @@
             DO i=IstrR,IendR
               ad_t(i,j,k,Lnew,itrc)=fac*(ad_t(i,j,k,Lnew,itrc)+         &
      &                                   tl_t(i,j,k,Lold,itrc)-         &
-     &                                   ad_t(i,j,k,Lold,itrc)*zgnorm)
+     &                                   ad_t(i,j,k,Lold,itrc)*         &
+     &                                   cg_Gnorm(outLoop))
 # ifdef MASKING
               ad_t(i,j,k,Lnew,itrc)=ad_t(i,j,k,Lnew,itrc)*rmask(i,j)
 # endif
@@ -2082,7 +2096,7 @@
               ad_tflux(i,j,Lnew,itrc)=fac*(ad_tflux(i,j,Lnew,itrc)+     &
      &                                     tl_tflux(i,j,Lold,itrc)-     &
      &                                     ad_tflux(i,j,Lold,itrc)*     &
-     &                                     zgnorm)
+     &                                     cg_Gnorm(outLoop))
 #  ifdef MASKING
               ad_tflux(i,j,Lnew,itrc)=ad_tflux(i,j,Lnew,itrc)*rmask(i,j)
 #  endif
@@ -2102,7 +2116,7 @@
 !
       IF (ndefADJ(ng).gt.0) THEN
         lstr=LEN_TRIM(ADJbase(ng))
-        WRITE (ncname,10) ADJbase(ng)(1:lstr-3), Iter
+        WRITE (ncname,10) ADJbase(ng)(1:lstr-3), innLoop
  10     FORMAT (a,'_',i3.3,'.nc')
       ELSE
         ncname=ADJname(ng)
@@ -2113,7 +2127,7 @@
 !
       CALL read_state (ng, model, Istr, Iend, Jstr, Jend,               &
      &                 LBi, UBi, LBj, UBj,                              &
-     &                 Lwrk, Iter,                                      &
+     &                 Lwrk, innLoop,                                   &
      &                 ndefADJ(ng), ncADJid(ng), ncname,                &
 #ifdef MASKING
      &                 rmask, umask, vmask,                             &
@@ -2157,7 +2171,7 @@
 #endif
      &                    ad_zeta(:,:,Lnew), tl_zeta(:,:,Lwrk))
 
-      zdelta(Iter)=dot(0)
+      cg_delta(innLoop,outLoop)=dot(0)
 
       RETURN
       END SUBROUTINE hessian
@@ -2165,8 +2179,8 @@
 !***********************************************************************
       SUBROUTINE lanczos (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    Lold, Lnew, Lwrk, Iter,                       &
-     &                    zdelta, zbeta, zqg, zgnorm,                   &
+     &                    Lold, Lnew, Lwrk,                             &
+     &                    innLoop, outLoop,                             &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
@@ -2207,12 +2221,8 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew, Lwrk, Iter
-!
-      real(r8), intent(in) :: zdelta(1:500)
-      real(r8), intent(inout) :: zgnorm
-      real(r8), intent(inout) :: zbeta(1:501)
-      real(r8), intent(inout) :: zqg(1:501)
+      integer, intent(in) :: Lold, Lnew, Lwrk
+      integer, intent(in) :: innLoop, outLoop
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -2302,7 +2312,7 @@
       real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
-      real(r8), dimension(Iter) :: DotProd, dot_new, dot_old
+      real(r8), dimension(0:Ninner) :: DotProd, dot_new, dot_old
 
       character (len=80) :: ncname
 
@@ -2320,14 +2330,14 @@
 !  At this point, the previous orthonormal Lanczos vector is still in
 !  tangent linear state arrays (index Lwrk).
 !
-      IF (Iter.gt.0) THEN
+      IF (innLoop.gt.0) THEN
 !
 !  Compute new Lanczos vector:
 !
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
 !     
         fac1=1.0_r8
-        fac2=-zdelta(Iter)
+        fac2=-cg_delta(innLoop,outLoop)
 
         CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -2355,23 +2365,23 @@
 !
 !  Substract previous orthonormal Lanczos vector.
 !
-      IF (Iter.gt.1) THEN
+      IF (innLoop.gt.1) THEN
 !
 !  Determine adjoint file to process.
 !
         IF (ndefADJ(ng).gt.0) THEN
           lstr=LEN_TRIM(ADJbase(ng))
-          WRITE (ncname,10) ADJbase(ng)(1:lstr-3), Iter-1
+          WRITE (ncname,10) ADJbase(ng)(1:lstr-3), innLoop-1
  10       FORMAT (a,'_',i3.3,'.nc')
         ELSE
           ncname=ADJname(ng)
         END IF
 !
-!  Read in the previous (Iter-1) orthonormal Lanczos vector.
+!  Read in the previous (innLoop-1) orthonormal Lanczos vector.
 !
         CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
      &                   LBi, UBi, LBj, UBj,                            &
-     &                   Lwrk, Iter-1,                                  &
+     &                   Lwrk, innLoop-1,                               &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 #ifdef MASKING
      &                   rmask, umask, vmask,                           &
@@ -2394,7 +2404,7 @@
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
 !     
         fac1=1.0_r8
-        fac2=-zbeta(Iter)
+        fac2=-cg_beta(innLoop,outLoop)
 
         CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -2430,7 +2440,7 @@
 !  read are orthogonal to each other. The reversed order of the loop
 !  is important for the Lanczos vector calculations.
 !
-      DO rec=Iter,1,-1
+      DO rec=innLoop,1,-1
 !
 !  Determine adjoint file to process.
 !
@@ -2554,10 +2564,10 @@
 !
 !  Compute normalization factor.
 !
-      IF (Iter.eq.0) THEN
-        zgnorm=SQRT(dot(0))
+      IF (innLoop.eq.0) THEN
+        cg_Gnorm(outLoop)=SQRT(dot(0))
       ELSE
-        zbeta(Iter+1)=SQRT(dot(0))
+        cg_beta(innLoop+1,outLoop)=SQRT(dot(0))
       END IF
 !
 !  Normalize gradient: ad_var(Lnew) = fac * ad_var(Lnew)
@@ -2587,7 +2597,7 @@
 !  Compute dot product of new Lanczos vector with gradient.
 !-----------------------------------------------------------------------
 !
-      IF (Iter.eq.0) THEN
+      IF (innLoop.eq.0) THEN
         CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
@@ -2638,7 +2648,7 @@
 !  Need to multiply dot(0) by zgnorm because the gradient (index Lold)
 !  has been normalized.
 !
-      zqg(Iter+1)=zgnorm*dot(0)
+      cg_QG(innLoop+1,outLoop)=cg_Gnorm(outLoop)*dot(0)
 
 #ifdef TEST_ORTHOGONALIZATION
 !
@@ -2646,7 +2656,7 @@
 !  Test orthogonal properties of the new gradient.
 !-----------------------------------------------------------------------
 !
-      DO rec=Iter,1,-1
+      DO rec=innLoop,1,-1
 !
 !  Determine adjoint file to process.
 !
@@ -2711,13 +2721,13 @@
 !  end of the orthogonalization dot_new(rec) << dot_old(rec).
 !
       IF (Master) THEN
-        WRITE (stdout,20) outer, inner
-        DO rec=Iter,1,-1
+        WRITE (stdout,20) outLoop, innLoop
+        DO rec=innLoop,1,-1
           WRITE (stdout,30) DotProd(rec), rec-1
         END DO
         WRITE (stdout,*) ' '
-        DO rec=Iter,1,-1
-          WRITE (stdout,40) Iter, rec-1, dot_new(rec),                  &
+        DO rec=innLoop,1,-1
+          WRITE (stdout,40) innLoop, rec-1, dot_new(rec),               &
      &                      rec-1, rec-1, dot_old(rec)
         END DO
  20     FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                           &
@@ -2736,8 +2746,8 @@
 !***********************************************************************
       SUBROUTINE new_gradient (ng, model, Istr, Iend, Jstr, Jend,       &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         Lold, Lnew, Lwrk,  Iter,                 &
-     &                         zgnorm, zbeta, zwork, zqg, preduc,       &
+     &                         Lold, Lnew, Lwrk,                        &
+     &                         innLoop, outLoop,                        &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
 #endif
@@ -2779,14 +2789,8 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew, Lwrk, Iter
-!
-      real(r8), intent(in) :: zgnorm
-      real(r8), intent(in) :: zbeta(1:501)
-      real(r8), intent(in) :: zqg(1:501)
-      real(r8), intent(in) :: zwork(1:500,3)
-!
-      real(r8), intent(out) :: preduc
+      integer, intent(in) :: Lold, Lnew, Lwrk
+      integer, intent(in) :: innLoop, outLoop
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -2876,7 +2880,7 @@
       real(r8) :: fac1, fac2
 
       real(r8), dimension(0:NstateVar(ng)) :: dot
-      real(r8), dimension(Iter) :: DotProd, dot_new, dot_old
+      real(r8), dimension(0:Ninner) :: DotProd, dot_new, dot_old
 
       character (len=80) :: ncname
 
@@ -2886,13 +2890,13 @@
 !  Computes the gradient of the cost function at the new point.
 !-----------------------------------------------------------------------
 !
-!  Need to multiply the gradient (index Lold) by zgnorm because it has
+!  Need to multiply the gradient (index Lold) by cg_Gnorm because it has
 !  been normalized:
 !
 !    ad_var(Lold) = fac1 * ad_var(Lold) + fac2 * ad_var(Lnew)
 !     
-      fac1=zgnorm
-      fac2=zbeta(Iter+1)*zwork(Iter,3)
+      fac1=cg_Gnorm(outLoop)
+      fac2=cg_beta(innLoop+1,outLoop)*cg_Tmatrix(innLoop,3)
 
       CALL state_addition (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -2919,7 +2923,7 @@
 !
 !  Adjust gradient against all previous gradients
 !
-      DO rec=1,Iter
+      DO rec=1,innLoop
 !
 !  Determine adjoint file to process.
 !
@@ -2955,14 +2959,14 @@
 #endif
      &                   tl_zeta)
 !
-!  In this expression for FAC2, the term ZQG gives the contribution
-!  to the gradient of Jo, and the term ZWORK gives the contribution
+!  In this expression for FAC2, the term cg_QG gives the contribution
+!  to the gradient of Jo, and the term cg_Tmatrix gives the contribution
 !  of Jb:
 !
 !    ad_var(Lold) = fac1 * ad_var(Lold) + fac2 * tl_var(Lwrk)
 !     
         fac1=1.0_r8
-        fac2=-(zwork(rec,3)+zqg(rec))
+        fac2=-(cg_Tmatrix(rec,3)+cg_QG(rec,outLoop))
 
         CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
      &                       LBi, UBi, LBj, UBj,                        &
@@ -3012,7 +3016,7 @@
 #endif
      &                    ad_zeta(:,:,Lold), ad_zeta(:,:,Lold))
 
-      preduc=SQRT(dot(0))/zgnorm
+      cg_Greduc(innLoop,outLoop)=SQRT(dot(0))/cg_Gnorm(outLoop)
 
       RETURN
       END SUBROUTINE new_gradient
@@ -3020,8 +3024,8 @@
 !***********************************************************************
       SUBROUTINE hessian_evecs (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          Lold, Lnew, Lwrk, Iter,                 &
-     &                          zbndlm, zritz, ztheta, zbnds, zv,       &
+     &                          Lold, Lnew, Lwrk,                       &
+     &                          innLoop, outLoop,                       &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
 #endif
@@ -3063,13 +3067,8 @@
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lold, Lnew, Lwrk, Iter
-!
-      real(r8), intent(inout) :: ztheta(1:500)
-      real(r8), intent(in) :: zv(1:500,1:500)
-      real(r8), intent(in) :: zritz(1:500)
-      real(r8), intent(in) :: zbnds(1:500)
-      real(r8), intent(in) :: zbndlm
+      integer, intent(in) :: Lold, Lnew, Lwrk
+      integer, intent(in) :: innLoop, outLoop
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -3152,15 +3151,16 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j, lstr, rec, kngood, nvec, status, varid
+      integer :: i, ingood, j, lstr, rec, nvec, status, varid
 #ifdef SOLVE3D
       integer :: itrc, k
 #endif
       real(r8) :: fac, fac1, fac2
 
-      real(r8), dimension(500) :: RitzErr
+      real(r8), dimension(Ninner) :: RitzErr
+
       real(r8), dimension(0:NstateVar(ng)) :: dot
-      real(r8), dimension(Iter) :: DotProd, dot_new, dot_old
+      real(r8), dimension(0:Ninner) :: DotProd, dot_new, dot_old
 
       character (len=80) :: ncname
 
@@ -3172,20 +3172,21 @@
 !
 !  Count and collect the converged eigenvalues.
 !
-      kngood=0
-      DO i=Iter,1,-1
-        IF (zbnds(i).le.zbndlm) THEN
-          kngood=kngood+1
-          ztheta(kngood)=zritz(i)
-          RitzErr(kngood)=zbnds(i)
+      ingood=0
+      DO i=innLoop,1,-1
+        IF (cg_RitzErr(i,outLoop).le.RitzMaxErr) THEN
+          ingood=ingood+1
+          Ritz(ingood)=cg_Ritz(i,outLoop)
+          RitzErr(ingood)=cg_RitzErr(i,outLoop)
         END IF
       END DO
+      nConvRitz=ingood
 !
 !  Write out number of converged eigenvalues.
 !      
       IF (OutThread) THEN
         status=nf_inq_varid(ncHSSid(ng),'nConvRitz',varid)
-        status=nf_put_var1_int(ncHSSid(ng),varid,1,kngood)
+        status=nf_put_var1_int(ncHSSid(ng),varid,1,nConvRitz)
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,10) 'nConvRitz', TRIM(HSSname(ng))
           exit_flag=3
@@ -3201,8 +3202,8 @@
 !  temporary storage.
 !-----------------------------------------------------------------------
 !
-      COLUMNS : DO nvec=Iter,1,-1
-        BOUNDED : IF (zbnds(nvec).le.zbndlm) THEN
+      COLUMNS : DO nvec=innLoop,1,-1
+        BOUNDED : IF (cg_RitzErr(nvec,outLoop).le.RitzMaxErr) THEN
 !
 !  Initialize adjoint state arrays: ad_var(Lold) = fac
 !
@@ -3229,7 +3230,7 @@
 !
 !  Compute Hessian eigenvectors.
 !
-          ROWS : DO rec=1,Iter
+          ROWS : DO rec=1,innLoop
 !
 !  Determine adjoint file to process.
 !
@@ -3268,7 +3269,7 @@
 !    ad_var(Lold) = fac1 * ad_var(Lold) + fac2 * tl_var(Lwrk)
 !     
             fac1=1.0_r8
-            fac2=zv(rec,nvec)
+            fac2=cg_zv(rec,nvec)
 
             CALL state_addition (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
@@ -3314,7 +3315,7 @@
 !  storage because at this point we are done with the inner loops and do
 !  not need the Lanczos vector stored in it.
 !
-      DO nvec=kngood,1,-1
+      DO nvec=ingood,1,-1
 !
 !  Read in just computed Hessian eigenvectors into adjoint state array
 !  index Lold.
@@ -3501,7 +3502,7 @@
 !
       IF (OutThread) THEN
         status=nf_inq_varid(ncHSSid(ng),'Ritz',varid)
-        status=nf_put_var1_TYPE(ncHSSid(ng),varid,nvec,ztheta(nvec))
+        status=nf_put_var1_TYPE(ncHSSid(ng),varid,nvec,Ritz(nvec))
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,10) 'Ritz', TRIM(HSSname(ng))
           exit_flag=3
@@ -3535,3 +3536,357 @@
 
       RETURN
       END SUBROUTINE hessian_evecs
+
+      SUBROUTINE cg_write (ng, innLoop, outLoop)
+!
+!=======================================================================
+!                                                                      !
+!  This routine writes conjugate gradient vectors into 4DVAR NetCDF    !
+!  for restart purposes.                                               !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      Use mod_iounits
+      USE mod_ncparam
+      USE mod_netcdf
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: ng, innLoop, outLoop
+!
+!  Local variable declarations.
+!
+      logical, save :: First = .TRUE.
+
+      integer :: i, status
+      integer :: start(2), total(2)
+      integer, save :: varid(16)
+!
+!-----------------------------------------------------------------------
+!  Write out conjugate gradient vectors.
+!-----------------------------------------------------------------------
+!
+      IF (OutThread) THEN
+        IF (First) THEN
+          First=.FALSE.
+          DO i=1,16
+            varid(i)=0
+          END DO
+        END IF
+!
+!  Write out outer and inner iteration.
+!
+        IF (varid(1).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'outer',varid(1))
+        END IF        
+        status=nf_put_var1_int(ncMODid(ng),varid(1),1,outer)
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'outer', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+
+        IF (varid(2).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'inner',varid(2))
+        END IF
+        status=nf_put_var1_int(ncMODid(ng),varid(2),1,inner)
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'inner', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+!  Write out number of converged Ritz eigenvalues.
+!
+        IF (innLoop.eq.(Ninner-1)) THEN
+          IF (varid(3).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'nConvRitz',varid(3))
+          END IF
+          status=nf_put_var1_int(ncMODid(ng),varid(3),1,nConvRitz)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'nConvRitz', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Write out converged Ritz eigenvalues.
+!
+        IF (innLoop.eq.(Ninner-1)) THEN
+          IF (varid(4).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'Ritz',varid(4))
+          END IF
+          start(1)=1
+          total(1)=nConvRitz
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(4), start,         &
+     &                            total, Ritz)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'Ritz', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Write out conjugate gradient norms.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(5).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_beta',varid(5))
+          END IF
+          start(1)=1
+          total(1)=Ninner+1
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(5), start,         &
+     &                            total, cg_beta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_beta', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+        IF (varid(6).eq.0) THEN
+          status=nf_inq_varid(ncMODid(ng),'cg_tau',varid(6))
+        END IF
+        start(1)=1
+        total(1)=Ninner+1
+        start(2)=1
+        total(2)=Nouter
+        status=nf_put_vara_TYPE(ncMODid(ng), varid(6), start, total,    &
+     &                          cg_tau(0,1))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,10) 'cg_tau', TRIM(MODname(ng))
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+!
+!  Write out Lanczos algorithm coefficients.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(7).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_delta',varid(7))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(7), start,         &
+     &                            total, cg_delta)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_delta', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(8).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_gamma',varid(8))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(8), start,         &
+     &                            total, cg_gamma)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_gamma', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Initial gradient normalization factor.
+!
+        IF (innLoop.eq.0) THEN
+          IF (varid(9).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_Gnorm',varid(9))
+          END IF
+          start(1)=1
+          total(1)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(9), start,         &
+     &                            total, cg_Gnorm)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_Gnorm', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Lanczos vector normalization factor.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(10).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_QG',varid(10))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(10), start,        &
+     &                            total, cg_QG)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_QG', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Reduction in the gradient norm.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(11).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_Greduc',varid(11))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(11), start,        &
+     &                            total, cg_Greduc)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_Greduc', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Lanczos recurrence tridiagonal matrix.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(12).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_Tmatrix',varid(12))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=3
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(12), start,        &
+     &                            total, cg_Tmatrix)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_Tmatrix', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Lanczos tridiagonal matrix, upper diagonal elements.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(13).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_zu',varid(13))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(13), start,        &
+     &                            total, cg_zu)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_zu', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Eigenvalues of Lanczos recurrence relationship.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(14).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_Ritz',varid(14))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(14), start,        &
+     &                            total, cg_Ritz)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_Ritz', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Eigenvalues relative error.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(15).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_RitzErr',varid(15))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(15), start,        &
+     &                            total, cg_RitzErr)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_RitzErr', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+!
+!  Eigenvectors of Lanczos recurrence relationship.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(16).eq.0) THEN
+            status=nf_inq_varid(ncMODid(ng),'cg_zv',varid(16))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Ninner
+          status=nf_put_vara_TYPE(ncMODid(ng), varid(16), start,        &
+     &                            total, cg_zv)
+          IF (status.ne.nf_noerr) THEN
+            WRITE (stdout,10) 'cg_zv', TRIM(MODname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+        END IF
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Synchronize observations NetCDF file to disk.
+!-----------------------------------------------------------------------
+!
+      IF (OutThread) THEN
+        status=nf_sync(ncMODid(ng))
+        IF (status.ne.nf_noerr) THEN
+          WRITE (stdout,20)
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+
+  10  FORMAT (/,' CG_WRITE - error while writing variable: ',a,/,       &
+     &        12x,'into NetCDF file: ',a)
+  20  FORMAT (/,' CG_WRITE - unable to synchronize 4DVAR',              &
+     &        1x,'NetCDF file to disk.')
+
+      END SUBROUTINE cg_write

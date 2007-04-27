@@ -56,7 +56,7 @@
           Mm == 20            ! Number of J-direction INTERIOR RHO-points
            N == 8             ! Number of vertical levels
 
-        Nbed =  5             ! Number of sediment bed layers
+        Nbed =  1             ! Number of sediment bed layers
 
          NAT =  2             ! Number of active tracers (usually, 2)
          NPT =  0             ! Number of inactive passive tracers

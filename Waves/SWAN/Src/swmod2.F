@@ -938,11 +938,10 @@
       INTEGER, SAVE, ALLOCATABLE :: KGRPGL(:,:), KGRBGL(:)
       REAL   , SAVE, ALLOCATABLE :: XGRDGL(:,:), YGRDGL(:,:)
 
-      INTEGER WAV_COMM_WORLD
+      INTEGER WAV_COMM_WORLD                                              jcw
       INTEGER :: ncomps = 2         ! we are using 2 components: ROMS + SWAN
       INTEGER :: WavId = 2
       INTEGER :: OcnId = 1
-!      INTEGER :: nWAV_steps
 
 !
 !  8. Subroutines and functions used
@@ -968,6 +967,74 @@
 ! 13. Source text
 !
       END MODULE M_PARALL
+
+      MODULE M_PARALL2
+!
+!
+!   --|-----------------------------------------------------------|--
+!     | Delft University of Technology                            |
+!     | Faculty of Civil Engineering and Geosciences              |
+!     | Environmental Fluid Mechanics Section                     |
+!     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
+!     |                                                           |
+!     | Programmer: M. Zijlema                                    |
+!   --|-----------------------------------------------------------|--
+!
+!
+!     SWAN (Simulating WAves Nearshore); a third generation wave model
+!     Copyright (C) 2004-2005  Delft University of Technology
+!
+!     This program is free software; you can redistribute it and/or
+!     modify it under the terms of the GNU General Public License as
+!     published by the Free Software Foundation; either version 2 of
+!     the License, or (at your option) any later version.
+!
+!     This program is distributed in the hope that it will be useful,
+!     but WITHOUT ANY WARRANTY; without even the implied warranty of
+!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!     GNU General Public License for more details.
+!
+!     A copy of the GNU General Public License is available at
+!     http://www.gnu.org/copyleft/gpl.html#SEC3
+!     or by writing to the Free Software Foundation, Inc.,
+!     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+!
+!
+!  0. Authors
+!
+!     40.41: jcw
+!
+!  1. Updates
+!
+!  2. Purpose
+!
+!     Contains data with respect to parallel process
+!     based on distributed-memory apprach using MPI
+!
+!  3. Method
+!
+!     ---
+!
+!  4. Modules used
+!
+!     ---
+!
+      IMPLICIT NONE
+!
+!  5. Argument variables
+!
+!     ---
+!
+!  6. Parameter variables
+!
+!
+      INTEGER, SAVE, ALLOCATABLE :: CROSS(:,:)                                jcw
+      INTEGER, SAVE, ALLOCATABLE :: BGRIDP(:)                                 jcw
+      REAL, SAVE,    ALLOCATABLE :: BSPECS(:,:,:,:)                           jcw
+      REAL, SAVE,    ALLOCATABLE :: AC1(:,:,:), COMPDA(:,:)                   jcw
+      REAL, SAVE,    ALLOCATABLE    :: OURQT(:)                               jcw
+
+      END MODULE M_PARALL2
 
       MODULE M_DIFFR
 !
