@@ -136,8 +136,8 @@
         END DO
       END IF
 #else
-      ana_m2obc_user.h: No values provided for BOUNDARY(ng)%ubar_xxxx
-                                               BOUNDARY(ng)%vbar_xxxx
+      ana_m2obc.h: No values provided for BOUNDARY(ng)%ubar_xxxx
+                                          BOUNDARY(ng)%vbar_xxxx
 #endif
 
       RETURN

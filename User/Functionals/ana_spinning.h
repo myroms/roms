@@ -107,8 +107,8 @@
         END DO
       END DO
 #else
-      ana_spinning_user: No values provided for Coriolis + Centripetal
-                         accelerations.
+      ana_spinningr: No values provided for Coriolis + Centripetal
+                     accelerations.
 #endif
 
       RETURN

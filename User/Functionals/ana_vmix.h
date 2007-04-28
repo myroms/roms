@@ -116,7 +116,7 @@
         END DO
       END DO
 #else
-      ana_vmix_user.h: no values provided for AKV.
+      ana_vmix.h: no values provided for AKV.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC
@@ -144,7 +144,7 @@
         END DO
       END DO
 #else
-      ana_vmix_user.h: no values provided for AKT.
+      ana_vmix.h: no values provided for AKT.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

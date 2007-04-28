@@ -93,7 +93,7 @@
         END DO
       END DO
 #else
-      ana_pair_user.h: No values provided for Pair.      
+      ana_pair.h: No values provided for Pair.      
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

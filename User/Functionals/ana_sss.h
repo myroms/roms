@@ -92,7 +92,7 @@
         END DO
       END DO
 #else
-      ana_sst_user.h: no values provided for sss.
+      ana_sst.h: no values provided for sss.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

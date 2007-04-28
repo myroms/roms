@@ -99,7 +99,7 @@
         END DO
       END DO
 #else
-      ana_humidity_user.h: no values provided for Hair.
+      ana_humidity.h: no values provided for Hair.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

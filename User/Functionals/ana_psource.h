@@ -184,8 +184,8 @@
         Isrc=???
         Jsrc=???
 #else
-        ana_psource_user.h: No values provided for Lsrc, Nsrc, Dsrc,
-                                                   Isrc, Jsrc.
+        ana_psource.h: No values provided for Lsrc, Nsrc, Dsrc,
+                                              Isrc, Jsrc.
 #endif
       END IF
 #if defined UV_PSOURCE || defined Q_PSOURCE
@@ -201,7 +201,7 @@
           END DO
         END DO
 #  else
-        ana_psource_user.h: No values provided for Qshape.
+        ana_psource.h: No values provided for Qshape.
 #  endif
 # endif
 !
@@ -214,7 +214,7 @@
         Qbar(is)=???
       END DO
 # else
-      ana_psource_user.h: No values provided for Qbar.
+      ana_psource.h: No values provided for Qbar.
 # endif
 
 # ifdef SOLVE3D
@@ -242,7 +242,7 @@
         END DO
       END DO
 # else
-      ana_psource_user.h: No values provided for Tsrc.
+      ana_psource.h: No values provided for Tsrc.
 # endif
 #endif
 

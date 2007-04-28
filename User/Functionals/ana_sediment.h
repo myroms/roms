@@ -152,8 +152,8 @@
         END DO
       END DO
 # else
-      ana_sediment_user.h: no values provided for bottom(:,:,isd50) and
-                                                  bottom(:,:,idens).
+      ana_sediment.h: no values provided for bottom(:,:,isd50) and
+                                             bottom(:,:,idens).
 # endif
 
 # if defined MB_BBL || defined SSW_BBL
@@ -170,7 +170,7 @@
         END DO
       END DO
 #  else
-      ana_sediment_user.h: no values provided for bottom(:,:,itauc).
+      ana_sediment.h: no values provided for bottom(:,:,itauc).
 #  endif
 # endif
 
@@ -188,7 +188,7 @@
         END DO
       END DO
 #  else
-      ana_sediment_user.h: no values provided for bottom(:,:,iwsed).
+      ana_sediment.h: no values provided for bottom(:,:,iwsed).
 #  endif
 # endif
 
@@ -239,7 +239,7 @@
         END DO
       END DO
 # else
-      ana_sediment_user.h: no values provided for bed, bed_mass, bottom.
+      ana_sediment.h: no values provided for bed, bed_mass, bottom.
 # endif
 !
 !-----------------------------------------------------------------------

@@ -106,7 +106,7 @@
         END DO
       END DO
 #else
-      ana_mask_user.h: No values provided for mask.
+      ana_mask.h: No values provided for mask.
 #endif
 !
       DO j=JstrR,JendR

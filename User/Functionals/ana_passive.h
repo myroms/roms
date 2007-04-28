@@ -80,7 +80,7 @@
         END DO
       END DO
 #else
-      ana_passive_user.h: No values provided for passive tracers.
+      ana_passive.h: No values provided for passive tracers.
 #endif
 
       RETURN

@@ -101,7 +101,7 @@
         END DO
       END DO
 #else
-      ana_m3clima_user.h: No values provided for uclm and vclm.
+      ana_m3clima.h: No values provided for uclm and vclm.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

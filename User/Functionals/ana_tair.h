@@ -92,7 +92,7 @@
         END DO
       END DO
 #else
-      ana_tair_user.h: no values provided for Tair.
+      ana_tair.h: no values provided for Tair.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

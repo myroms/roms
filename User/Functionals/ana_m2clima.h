@@ -99,7 +99,7 @@
         END DO
       END DO
 #else
-      ana_m2clima_user.h: No values provided for ubarclm and vbarclm.
+      ana_m2clima.h: No values provided for ubarclm and vbarclm.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

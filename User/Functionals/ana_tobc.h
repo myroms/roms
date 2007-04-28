@@ -114,7 +114,7 @@
         END DO
       END IF
 #else
-      ana_tobc_user.h: No values provided for BOUNDARY(ng)%t_xxxx.
+      ana_tobc.h: No values provided for BOUNDARY(ng)%t_xxxx.
 #endif
 
       RETURN

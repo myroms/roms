@@ -187,8 +187,8 @@
         END DO
       END DO
 #else
-      ana_wwave_user.h: no values provided for HWAVE, DWAVE, PWAVE,
-                                               LWAVE.
+      ana_wwave.h: no values provided for HWAVE, DWAVE, PWAVE,
+                                          LWAVE.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

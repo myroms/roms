@@ -121,7 +121,7 @@
         END DO
       END DO
 #else
-      ana_scope_user.h: No values provided for scope.
+      ana_scope.h: No values provided for scope.
 #endif
 !
       DO j=JstrR,JendR

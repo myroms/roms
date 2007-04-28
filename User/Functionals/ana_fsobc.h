@@ -82,7 +82,7 @@
         END DO
       END IF
 #else
-      ana_fsobc_user.h: No values provided for BOUNDARY(ng)%zeta_xxxx.
+      ana_fsobc.h: No values provided for BOUNDARY(ng)%zeta_xxxx.
 #endif
 
       RETURN

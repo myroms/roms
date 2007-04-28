@@ -32,6 +32,7 @@
      &                      FORCES(ng) % cloud,                         &
      &                      FORCES(ng) % Hair,                          &
      &                      FORCES(ng) % Tair,                          &
+     &                      FORCES(ng) % Pair,                          &
 #endif
      &                      FORCES(ng) % srflx)
 !
@@ -49,7 +50,7 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            lonr, latr,                           &
 #ifdef ALBEDO 
-     &                            cloud, Hair, Tair,                    &
+     &                            cloud, Hair, Tair, Pair,              &
 #endif
      &                            srflx)
 !***********************************************************************
@@ -76,6 +77,7 @@
       real(r8), intent(in) :: cloud(LBi:,LBj:)
       real(r8), intent(in) :: Hair(LBi:,LBj:)
       real(r8), intent(in) :: Tair(LBi:,LBj:)
+      real(r8), intent(in) :: Pair(LBi:,LBj:)
 # endif
       real(r8), intent(out) :: srflx(LBi:,LBj:)
 #else
@@ -85,6 +87,7 @@
       real(r8), intent(in) :: cloud(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Hair(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Tair(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Pair(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(out) :: srflx(LBi:UBi,LBj:UBj)
 #endif
@@ -175,6 +178,11 @@
             cff=(0.7859_r8+0.03477_r8*Tair(i,j))/                       &
      &          (1.0_r8+0.00412_r8*Tair(i,j))
             e_sat=10.0_r8**cff
+!!
+!! If relative humidity in kg/kg.
+!!
+!!          vap_p=Pair(i,j)*Hair(i,j)/(0.62197_r8+0.378_r8*Hair(i,j))
+!!
             vap_p=e_sat*Hair(i,j)
             srflx(i,j)=Rsolar*zenith*zenith*                            &
      &                 (1.0_r8-0.6_r8*cloud(i,j)**3)/                   &
@@ -194,9 +202,9 @@
 !  Normalization factor = INTEGRAL{ABS(a+b*COS(t)) dt} from 0 to 2*pi 
 !                       = (a*ARCCOS(-a/b)+SQRT(b**2-a**2))/pi
 !  
-          IF (ABS(cff1).gt.ABS(cff2)) THEN
+          IF ((ABS(cff1)+1.E-8_r8).gt.ABS(cff2)) THEN
             IF (cff1*cff2.gt.0.0_r8) THEN
-              cff=cff1*2.0_r8*pi                       ! All day case
+              cff=cff1                                 ! All day case
               srflx(i,j)=MAX(0.0_r8,                                    &
      &                       srflx(i,j)/cff*                            &
      &                       (cff1+cff2*COS(Hangle-lonr(i,j)*deg2rad)))

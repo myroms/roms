@@ -92,7 +92,7 @@
         END DO
       END DO
 #else
-      ana_rain_user.h: No values provided for rain.
+      ana_rain.h: No values provided for rain.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

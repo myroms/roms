@@ -96,7 +96,7 @@
         END DO
       END DO
 #else
-      ana_tclima_user.h: No values provided for tclm.
+      ana_tclima.h: No values provided for tclm.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

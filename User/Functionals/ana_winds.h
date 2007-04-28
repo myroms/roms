@@ -124,7 +124,7 @@
         END DO
       END DO
 #else
-      ana_winds_user.h: no values provided for Uwind and Vwind.
+      ana_winds.h: no values provided for Uwind and Vwind.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

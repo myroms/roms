@@ -103,7 +103,7 @@
         END DO
       END DO
 #else
-      ana_sst_user.h: no values provided for sst and dqdt.
+      ana_sst.h: no values provided for sst and dqdt.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

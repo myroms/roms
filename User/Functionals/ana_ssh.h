@@ -91,7 +91,7 @@
         END DO
       END DO
 #else
-      ana_ssh_user.h: No value provided for ssh.
+      ana_ssh.h: No value provided for ssh.
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC

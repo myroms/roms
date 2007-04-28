@@ -444,7 +444,11 @@
         END DO
       END DO
 #else
-      ana_grid_user.h: No value provided for H.
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+          h(i,j)=depth
+        END DO
+      END DO
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
@@ -511,7 +515,7 @@
         END DO
       END DO
 # else
-      anal_grid_user.h: No value provided for zice.
+      ana_grid.h: No value provided for zice.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
