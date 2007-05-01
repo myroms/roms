@@ -77,17 +77,17 @@ MY_ANALYTICAL_DIR ?=
 #  one grid is supported.  This option will be available in the near
 #  future.
 
- NestedGrids := 1
+ NestedGrids ?= 1
 
 #  Activate debugging compiler options:
 
-       DEBUG :=
+       DEBUG ?=
 
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
 
-         MPI :=
-      OpenMP :=
+         MPI ?=
+      OpenMP ?=
 
 #  If distributed-memory, turn on compilation via the script "mpif90".
 #  This is needed in some Linux operating systems. In some systems with
@@ -97,19 +97,19 @@ MY_ANALYTICAL_DIR ?=
 #  In this, case the user need to select the desired compiler below and
 #  turn on both MPI and MPIF90 macros.
 
-      MPIF90 :=
+      MPIF90 ?=
 
 #  If applicable, compile with the ARPACK library (GST analysis):
 
-      ARPACK :=
+      ARPACK ?=
 
 #  If applicable, activate 64-bit compilation:
 
-       LARGE := on
+       LARGE ?= on
 
 #  If applicable, activate Coupling to SWAN wave model.
 
-      SWAN_COUPLE := 
+ SWAN_COUPLE ?= 
 
 #--------------------------------------------------------------------------
 #  We are going to include a file with all the settings that depend on
@@ -140,7 +140,7 @@ MY_ANALYTICAL_DIR ?=
 #  Set directory for executable.
 #--------------------------------------------------------------------------
 
-      BINDIR := .
+      BINDIR ?= .
 
 #==========================================================================
 #  End of user-defined options. See also the machine-dependent include
@@ -151,7 +151,7 @@ MY_ANALYTICAL_DIR ?=
 #  Set directory for temporary objects.
 #--------------------------------------------------------------------------
 
-SCRATCH_DIR := Build
+SCRATCH_DIR ?= Build
  clean_list := core $(SCRATCH_DIR)
 
 ifeq "$(strip $(SCRATCH_DIR))" "."

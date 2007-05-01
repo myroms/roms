@@ -29,7 +29,7 @@
 !!                      linear model.                                  ! 
 !!  op_ocean.h        ROMS/TOMS optimal perturbations.                 !
 !!  optobs_ocean.h    ROMS/TOMS optimal observations.                  !
-!!  represeter.h      ROMS/TOMS representer matrix symmetry driver.    !
+!!  symmetry.h        ROMS/TOMS representer matrix symmetry driver.    !
 !!  s4dvar_ocean.h    ROMS/TOMS strong constraint 4DVAR assimilation.  !
 !!  so_semi_ocean.h   ROMS/TOMS stochastic optimals, semi-norm.        !
 !!  is4dvar_*.h       ROMS/TOMS Strong constraint, incremental 4DVAR   !

@@ -1150,7 +1150,7 @@
           DO i=IstrU,Iend
             cff=1.0_r8/(2.0_r8*DC(i,k+1)+DC(i,k)*(2.0_r8-FC(i,k-1)))
             FC(i,k)=cff*DC(i,k+1)
-            CF(i,k)=cff*(6.0_r8*(u(i,j,k+1,nrhs)-
+            CF(i,k)=cff*(6.0_r8*(u(i,j,k+1,nrhs)-                       &
 #   ifdef NEARSHORE_MELLOR
      &                           u_stokes(i,j,k  )+                     &
      &                           u_stokes(i,j,k+1)-                     &
