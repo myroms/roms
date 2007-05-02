@@ -52,12 +52,12 @@
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
-ifdef ARPACK
+ifdef USE_ARPACK
     ARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
-ifdef DEBUG
+ifdef USE_DEBUG
            FFLAGS += -g -fbounds-check
 else
            FFLAGS += -O3 -ffast-math

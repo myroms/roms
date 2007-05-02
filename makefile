@@ -12,14 +12,14 @@
 #  machine/compiler rules file in the  "Compilers"  subdirectory.  You  :::
 #  may need to modify the rules file to specify the  correct path  for  :::
 #  the NetCDF and ARPACK libraries. The ARPACK library is only used in  :::
-#  the Generalized Stability Theory analysis.                           :::
+#  the Generalized Stability Theory analysis and Laczos algorithm.      :::
 #                                                                       :::
 #  If appropriate,  the USER needs to modify the  macro definitions in  :::
 #  in user-defined section below.  To activate an option set the macro  :::
 #  to "on". For example, if you want to compile with debugging options  :::
 #  set:                                                                 :::
 #                                                                       :::
-#      DEBUG := on                                                      :::
+#      USE_DEBUG := on                                                  :::
 #                                                                       :::
 #  Otherwise, leave macro definition blank.                             :::
 #                                                                       :::
@@ -40,8 +40,8 @@ $(if $(filter $(MAKE_VERSION),$(NEED_VERSION)),,        \
   libraries  :=
 
 #==========================================================================
-#  Start of user-defined options. Modify macro variables: on is TRUE while
-#  blank is FALSE.
+#  Start of user-defined options. In some macro definitions below: "on" or
+#  any other string means TRUE while blank (or spaces) is FALSE.
 #==========================================================================
 #
 #  The CPP option defining a particular application is specified below.
@@ -81,13 +81,13 @@ MY_ANALYTICAL_DIR ?=
 
 #  Activate debugging compiler options:
 
-       DEBUG ?=
+   USE_DEBUG ?=
 
 #  If parallel applications, use at most one of these definitions
 #  (leave both definitions blank in serial applications):
 
-         MPI ?=
-      OpenMP ?=
+     USE_MPI ?=
+  USE_OpenMP ?=
 
 #  If distributed-memory, turn on compilation via the script "mpif90".
 #  This is needed in some Linux operating systems. In some systems with
@@ -95,17 +95,17 @@ MY_ANALYTICAL_DIR ?=
 #  scripts. This macro is also convient when there are several fortran
 #  compiliers (ifort, pgf90, pathf90) in the system that use mpif90.
 #  In this, case the user need to select the desired compiler below and
-#  turn on both MPI and MPIF90 macros.
+#  turn on both USE_MPI and USE_MPIF90 macros.
 
-      MPIF90 ?=
+  USE_MPIF90 ?=
 
 #  If applicable, compile with the ARPACK library (GST analysis):
 
-      ARPACK ?=
+  USE_ARPACK ?=
 
 #  If applicable, activate 64-bit compilation:
 
-       LARGE ?= on
+   USE_LARGE ?= on
 
 #  If applicable, activate Coupling to SWAN wave model.
 
@@ -226,13 +226,13 @@ endef
 #--------------------------------------------------------------------------
 
 BIN := $(BINDIR)/oceanS
-ifdef DEBUG
+ifdef USE_DEBUG
   BIN := $(BINDIR)/oceanG
 else
- ifdef MPI
+ ifdef USE_MPI
    BIN := $(BINDIR)/oceanM
  endif
- ifdef OpenMP
+ ifdef USE_OpenMP
    BIN := $(BINDIR)/oceanO
  endif
 endif

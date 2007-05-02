@@ -50,8 +50,8 @@
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
-ifdef ARPACK
- ifdef MPI
+ifdef USE_ARPACK
+ ifdef USE_MPI
    PARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(PARPACK_LIBDIR) -lparpack
  endif
@@ -59,9 +59,9 @@ ifdef ARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
-ifdef MPI
+ifdef USE_MPI
          CPPFLAGS += -DMPI
- ifdef MPIF90
+ ifdef USE_MPIF90
                FC := mpif90
                LD := $(FC)
  else
@@ -72,12 +72,12 @@ ifdef MPI
  endif
 endif
 
-ifdef OpenMP
+ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
 	   FFLAGS += -omp
 endif
 
-ifdef DEBUG
+ifdef USE_DEBUG
            FFLAGS += -g
 else
            FFLAGS += -fast

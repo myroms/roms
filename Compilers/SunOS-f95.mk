@@ -43,7 +43,7 @@
 # Library locations, can be overridden by environment variables.
 #
 
-ifdef LARGE
+ifdef USE_LARGE
            FFLAGS += -xarch=v9
        MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /usr/local/include
@@ -56,8 +56,8 @@ endif
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
-ifdef ARPACK
- ifdef MPI
+ifdef USE_ARPACK
+ ifdef USE_MPI
    PARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(PARPACK_LIBDIR) -lparpack
  endif
@@ -65,19 +65,19 @@ ifdef ARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
-ifdef MPI
+ifdef USE_MPI
          CPPFLAGS += -DMPI
                FC := tmf90
                LD := $(FC)
              LIBS += -lmpi
 endif
 
-ifdef OpenMP
+ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
            FFLAGS += -openmp
 endif
 
-ifdef DEBUG
+ifdef USE_DEBUG
            FFLAGS += -g -C
 else
            FFLAGS += -fast

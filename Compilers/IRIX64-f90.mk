@@ -43,7 +43,7 @@
 # Library locations, can be overridden by environment variables.
 #
 
-ifdef LARGE
+ifdef USE_LARGE
            FFLAGS += -64
        MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= $(HOME)/netcdf/include
@@ -57,8 +57,8 @@ endif
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
-ifdef ARPACK
- ifdef MPI
+ifdef USE_ARPACK
+ ifdef USE_MPI
    PARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(PARPACK_LIBDIR) -lparpack
  endif
@@ -66,19 +66,19 @@ ifdef ARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
-ifdef MPI
+ifdef USE_MPI
          CPPFLAGS += -DMPI
            FFLAGS += -LANG:recursive=on
           LDFLAGS += -mp -mp_schedtype=simple
              LIBS += -lmpi
 endif
 
-ifdef OpenMP
+ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
            FFLAGS += -mp -MP:open_mp=ON
 endif
 
-ifdef DEBUG
+ifdef USE_DEBUG
            FFLAGS += -g -C
 else
            FFLAGS += -O3 -OPT:Olimit=4038

@@ -43,7 +43,7 @@
 # Library locations, can be overridden by environment variables.
 #
 
-ifdef LARGE
+ifdef USE_LARGE
            FFLAGS += -q64
           ARFLAGS += -X 64
           LDFLAGS += -bmaxdata:0x200000000
@@ -60,8 +60,8 @@ endif
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
-ifdef ARPACK
- ifdef MPI
+ifdef USE_ARPACK
+ ifdef USE_MPI
    PARPACK_LIBDIR ?= /usr/local/lib
              LIBS += -L$(PARPACK_LIBDIR) -lparpack
  endif
@@ -69,18 +69,18 @@ ifdef ARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
-ifdef MPI
+ifdef USE_MPI
          CPPFLAGS += -DMPI
                FC := mpxlf95_r
                LD := $(FC)
 endif
 
-ifdef OpenMP
+ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
            FFLAGS += -qsmp=omp
 endif
 
-ifdef DEBUG
+ifdef USE_DEBUG
            FFLAGS += -g -qfullpath -qflttrap=enable:zerodivide:invalid
 else
            FFLAGS += -O3 -qstrict

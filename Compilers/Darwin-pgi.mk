@@ -50,18 +50,18 @@
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 
-ifdef ARPACK
- ifdef MPI
+ifdef USE_ARPACK
+ ifdef USE_MPI
 #  PARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
    PARPACK_LIBDIR ?= $(ROMSHOME)/Lib
-  ifdef MPIF90
-   ifdef DEBUG
+  ifdef USE_MPIF90
+   ifdef USE_DEBUG
              LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_daggoo
    else
              LIBS += -L$(PARPACK_LIBDIR) -lparpack_daggoo
    endif
   else
-   ifdef DEBUG
+   ifdef USE_DEBUG
              LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_moby
    else
              LIBS += -L$(PARPACK_LIBDIR) -lparpack_moby
@@ -71,14 +71,14 @@ ifdef ARPACK
  endif
 #   ARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
     ARPACK_LIBDIR ?= $(ROMSHOME)/Lib
- ifdef MPIF90
-  ifdef DEBUG
+ ifdef USE_MPIF90
+  ifdef USE_DEBUG
              LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_daggoo
   else
              LIBS += -L$(ARPACK_LIBDIR) -larpack_daggoo
   endif
  else
-  ifdef DEBUG
+  ifdef USE_DEBUG
              LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_moby
   else
              LIBS += -L$(ARPACK_LIBDIR) -larpack_moby
@@ -87,9 +87,9 @@ ifdef ARPACK
  endif
 endif
 
-ifdef MPI
+ifdef USE_MPI
          CPPFLAGS += -DMPI
- ifdef MPIF90
+ ifdef USE_MPIF90
                FC := /usr/local/openmpi-pgi/bin/mpif90
                LD := $(FC)
  else
@@ -97,11 +97,11 @@ ifdef MPI
  endif
 endif
 
-ifdef OpenMP
+ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
 endif
 
-ifdef DEBUG
+ifdef USE_DEBUG
 #          FFLAGS += -g -C -Mchkstk -Mchkfpstk
            FFLAGS += -g -C
 #          FFLAGS += -g

@@ -56,8 +56,8 @@
          CPPFLAGS += -I$(NETCDF_INCDIR)
        NETCDF_LIB := $(NETCDF_LIBDIR)/netcdfs.lib
 
-ifdef ARPACK
- ifdef MPI
+ifdef USE_ARPACK
+ ifdef USE_MPI
    PARPACK_LIBDIR ?= /usr/local/arpack-win32/lib
        ARPACK_LIB := $(PARPACK_LIBDIR)/parpack.lib
  endif
@@ -65,7 +65,7 @@ ifdef ARPACK
        ARPACK_LIB := $(ARPACK_LIBDIR)/arpack.lib
 endif
 
-ifdef MPI
+ifdef USE_MPI
        MPI_INCDIR ?= c:\\work\\models\\MPICH2\\include
        MPI_LIBDIR ?= c:\\work\\models\\MPICH2\\lib
        LIBS_WIN32 += $(MPI_LIBDIR)\\fmpich2s.lib 
@@ -86,7 +86,7 @@ endif
 # Compiler flags
 #
 
-ifdef DEBUG
+ifdef USE_DEBUG
            FFLAGS += /debug:full /traceback /nopdbfile
 else
            FFLAGS += /fast
@@ -100,7 +100,7 @@ endif
 
          BIN_WIN32 = "$$(cygpath --windows $(BIN))"
         LIBS_WIN32 = "$$(cygpath --windows $(NETCDF_LIB))"
-ifdef ARPACK
+ifdef USE_ARPACK
         LIBS_WIN32 += "$$(cygpath --windows $(ARPACK_LIB))"
 endif
 

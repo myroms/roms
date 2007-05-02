@@ -57,7 +57,7 @@
          CPPFLAGS += -I$(NETCDF_INCDIR)
        NETCDF_LIB := $(NETCDF_LIBDIR)/libnetcdf.a
 
-ifdef ARPACK
+ifdef USE_ARPACK
     ARPACK_LIBDIR ?= /arpack-win32/lib
        ARPACK_LIB := $(ARPACK_LIBDIR)/arpack.lib
 endif
@@ -66,18 +66,18 @@ endif
 # Compiler flags
 #
 
-ifdef OpenMP
+ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
            FFLAGS += /Qopenmp /Qopenmp_report1
 endif
 
-ifdef DEBUG
+ifdef USE_DEBUG
            FFLAGS += /debug:full /traceback /Od /Zi
 else
            FFLAGS += /Ox
 endif
 
-ifdef MPI
+ifdef USE_MPI
        MPI_INCDIR ?= c:\\work\\models\\MPICH2\\include
        MPI_LIBDIR ?= c:\\work\\models\\MPICH2\\lib
        LIBS_WIN32 += "$(MPI_LIBDIR)\fmpich2.lib "
@@ -103,7 +103,7 @@ endif
          BIN_WIN32 = "$$(cygpath --windows $(BIN))"
         LIBS_WIN32 += "$$(cygpath --windows $(NETCDF_LIB))"
         LIBS_WIN32 += "c:\cygwin\lib\gcc\i686-pc-mingw32\3.4.4\libgcc.a"
-ifdef ARPACK
+ifdef USE_ARPACK
         LIBS_WIN32 += "$$(cygpath --windows $(ARPACK_LIB))"
 endif
 
