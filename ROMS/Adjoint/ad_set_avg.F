@@ -50,7 +50,7 @@
       CALL ad_set_avg_tile (ng, Istr, Iend, Jstr, Jend,                 &
      &                      LBi, UBi, LBj, UBj,                         &
 # ifdef SOLVE3D
-     &                      nstp(ng),                                   &     
+     &                      nstp(ng),                                   &
      &                      GRID(ng) % pm,                              &
      &                      GRID(ng) % pn,                              &
      &                      OCEAN(ng) % ad_u,                           &

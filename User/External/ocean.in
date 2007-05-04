@@ -40,7 +40,7 @@
 
        TITLE = Wind-Driven Upwelling/Downwelling over a Periodic Channel
 
-! C-preprocessing Flag, default configuration.
+! C-preprocessing Flag.
 
     MyAppCPP = UPWELLING
 

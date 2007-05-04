@@ -632,7 +632,6 @@
 ** Selected Realistic Applications:                                          **
 **                                                                           **
 ** ADRIA02             Adriatic Sea Application                              **
-** CBLAST              CBLAST application                                    **
 ** NJ_BIGHT            New Jersey Bight Application                          **
 **                                                                           **
 *******************************************************************************

@@ -6,32 +6,56 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 **
-** Options for Coupled Boundary Layer Air-Sea Transfer Application.
+** Options for Coupled Boundary Layers and Air-Sea Transfer Application.
 **
 ** Application flag:   CBLAST
 ** Input script:       ocean_cblast.in
 */
 
+/* Basic physics options */
 #define	UV_ADV
 #define	UV_COR
-#define UV_QDRAG
 #undef	UV_VIS2
 #undef	MIX_S_UV
-#define UV_SADVECTION
-#define DJ_GRADPS
-#define TS_U3HADVECTION
-#define TS_SVADVECTION
 #define SOLVE3D
 #define	SALINITY
 #define	NONLIN_EOS
+
+/* Basic numerics options */
+#define UV_SADVECTION
+#define TS_U3HADVECTION
+#define TS_SVADVECTION
+#define DJ_GRADPS
+#define SPLINES
 #define CURVGRID
+#define MASKING
+
+/* Outputs */
 #define	AVERAGES
+#define AVERAGES_QUADRATIC
+#define AVERAGES_FLUXES
+#define DIAGNOSTICS_UV
+#define DIAGNOSTICS_TS
 #define STATIONS
 #undef  FLOATS
-#define MASKING
-#define SPLINES
+
+/* Surface and bottom boundary conditions */
+#define BULK_FLUXES
 #define SOLAR_SOURCE
+#define LONGWAVE_OUT /* input is lwrad downward - model computes upward */
+#define ANA_RAIN
+#define UV_QDRAG
+#define ANA_SSFLUX
+#define ANA_BSFLUX
+#define ANA_BTFLUX
+
+/* Vertical subgridscale turbuelnce closure */
 #undef  LMD_MIXING
+#define MY25_MIXING
+#ifdef MY25_MIXING
+# define N2S2_HORAVG
+# define KANTHA_CLAYSON
+#endif
 #ifdef  LMD_MIXING
 # define LMD_RIMIX
 # define LMD_CONVEC
@@ -39,56 +63,22 @@
 # define LMD_BKPP
 # define ANA_CLOUD
 #endif
-#define MY25_MIXING
-#ifdef MY25_MIXING
-# define N2S2_HORAVG
-# define KANTHA_CLAYSON
-#endif
-#undef	SG_BBL
-#ifdef SG_BBL
-# define SG_CALC_ZNOT
-# define ANA_SEDIMENT
-# define ANA_WWAVE
-#endif
-#define  BULK_FLUXES
-#ifdef BULK_FLUXES
-# define LONGWAVE
-# define ANA_CLOUD
-# define ANA_RAIN
-#endif
+
+/* Open boundary conditions */
 #define RADIATION_2D
-#undef  SPONGE
-#undef  EAST_VOLCONS
-#undef  WEST_VOLCONS
-#undef  SOUTH_VOLCONS
-#undef  NORTH_VOLCONS
 #define RAMP_TIDES
 #define	SSH_TIDES
-#ifdef SSH_TIDES
 # define ADD_FSOBC
 # define EAST_FSCHAPMAN
 # define WEST_FSCHAPMAN
 # define SOUTH_FSCHAPMAN
 # define NORTH_FSCHAPMAN
-#else
-# define EAST_FSGRADIENT
-# define WEST_FSGRADIENT
-# define SOUTH_FSGRADIENT
-# define NORTH_FSGRADIENT
-#endif
 #define	UV_TIDES
-#ifdef UV_TIDES
 # define ADD_M2OBC
 # define EAST_M2FLATHER
 # define WEST_M2FLATHER
 # define SOUTH_M2FLATHER
 # define NORTH_M2FLATHER
-#else
-# define EAST_M2RADIATION
-# define WEST_M2RADIATION
-# define SOUTH_M2RADIATION
-# define NORTH_M2RADIATION
-#endif
 #define EAST_M3RADIATION
 #define EAST_M3NUDGING
 #define EAST_TRADIATION
@@ -105,9 +95,3 @@
 #define NORTH_M3NUDGING
 #define NORTH_TRADIATION
 #define NORTH_TNUDGING
-#define ANA_BSFLUX
-#define ANA_BTFLUX
-#define ANA_SSFLUX
-#undef  ANA_STFLUX
-#undef  ANA_SMFLUX
-#undef  ANA_SRFLUX

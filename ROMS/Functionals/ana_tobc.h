@@ -103,55 +103,6 @@
           END DO
         END DO
       END IF
-#elif defined CBLAST
-      IF (EASTERN_EDGE) THEN
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            BOUNDARY(ng)%t_east(j,k,itemp)=4.0_r8+                      &
-     &                                     6.0_r8*EXP(z_r(Iend+1,j,k)*  &
-     &                                                0.025_r8)
-            BOUNDARY(ng)%t_east(j,k,isalt)=33.5_r8-                     &
-     &                                     1.5_r8*EXP(z_r(Iend+1,j,k)*  &
-     &                                                0.01_r8)
-          END DO
-        END DO
-      END IF
-      IF (WESTERN_EDGE) THEN
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            BOUNDARY(ng)%t_west(j,k,itemp)=4.0_r8+                      &
-     &                                     6.0_r8*EXP(z_r(Istr-1,j,k)*  &
-     &                                                0.025_r8)
-            BOUNDARY(ng)%t_west(j,k,isalt)=33.5_r8-                     &
-     &                                     1.5_r8*EXP(z_r(Istr-1,j,k)*  &
-     &                                                0.01_r8)
-          END DO
-        END DO
-      END IF
-      IF (SOUTHERN_EDGE) THEN
-        DO k=1,N(ng)
-          DO i=IstrR,IendR
-            BOUNDARY(ng)%t_south(i,k,itemp)=4.0_r8+                     &
-     &                                      6.0_r8*EXP(z_r(i,Jstr-1,k)* &
-     &                                                 0.025_r8)
-            BOUNDARY(ng)%t_south(i,k,isalt)=33.5_r8-                    &
-     &                                      1.5_r8*EXP(z_r(i,Jstr-1,k)* &
-     &                                                 0.01_r8)
-          END DO
-        END DO
-      END IF
-      IF (NORTHERN_EDGE) THEN
-        DO k=1,N(ng)
-          DO i=IstrR,IendR
-            BOUNDARY(ng)%t_north(i,k,itemp)=4.0_r8+                     &
-     &                                      6.0_r8*EXP(z_r(i,Jend+1,k)* &
-     &                                                 0.025_r8)
-            BOUNDARY(ng)%t_north(i,k,isalt)=33.5_r8-                    &
-     &                                      1.5_r8*EXP(z_r(i,Jend+1,k)* &
-     &                                                 0.01_r8)
-          END DO
-        END DO
-      END IF
 #elif defined NJ_BIGHT
       IF (EASTERN_EDGE) THEN
         DO k=1,N(ng)

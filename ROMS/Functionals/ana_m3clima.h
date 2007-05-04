@@ -87,7 +87,7 @@
 !  Set 3D momentum climatology.
 !-----------------------------------------------------------------------
 !
-#ifdef CBLAST
+#if defined MY_APPLICATION
       DO k=1,N
         DO j=JstrR,JendR
           DO i=Istr,IendR

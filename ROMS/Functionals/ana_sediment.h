@@ -145,7 +145,7 @@
 !  sediment grain diameter (m) and density (kg/m3).
 !-----------------------------------------------------------------------
 !
-# if defined BL_TEST || defined NJ_BIGHT || defined CBLAST
+# if defined BL_TEST || defined NJ_BIGHT
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           bottom(i,j,isd50)=0.0005_r8

@@ -138,13 +138,6 @@
           Vwind(i,j)=v_wind
         END DO
       END DO
-#elif defined CBLAST
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          Uwind(i,j)=0.0_r8
-          Vwind(i,j)=0.0_r8
-        END DO
-      END DO
 #else
       ana_winds.h: No values provided for Uwind and Vwind.
 #endif

@@ -420,15 +420,6 @@
           END DO
         END DO
       END DO
-# elif defined CBLAST
-      DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            t(i,j,k,1,itemp)=4.0_r8+6.0_r8*EXP(z_r(i,j,k)/40.0_r8)
-            t(i,j,k,1,isalt)=33.5_r8-1.5_r8*EXP(z_r(i,j,k)/100.0_r8)
-          END DO
-        END DO
-      END DO
 # elif defined CHANNEL_NECK
       DO k=1,N(ng)
         DO j=JstrR,JendR

@@ -496,7 +496,7 @@
         DO i=Istr,Iend
           cff=dt2d*GRID(ng)%pn(i,Jstr)
           cff1=SQRT(g*(GRID(ng)%h(i,Jstr)+                              &
-     &                 zeta(i,Jstr,know))
+     &                 zeta(i,Jstr,know)))
           tl_cff1=0.5_r8*g*(GRID(ng)%tl_h(i,Jstr)+                      &
      &                      tl_zeta(i,Jstr,know))/cff1+                 &
 #   ifdef TL_IOMS

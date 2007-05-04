@@ -176,13 +176,13 @@
 # endif
 # ifdef AVERAGES_QUADRATIC
 #  ifdef SOLVE3D
-     &                   AVERAGE(ng) % avgHuon                          &
-     &                   AVERAGE(ng) % avgHvom                          &
+     &                   AVERAGE(ng) % avgHuon,                         &
+     &                   AVERAGE(ng) % avgHvom,                         &
      &                   AVERAGE(ng) % avgUU,                           &
      &                   AVERAGE(ng) % avgUV,                           &
      &                   AVERAGE(ng) % avgVV,                           &
-     &                   AVERAGE(ng) % avgHuonT                         &
-     &                   AVERAGE(ng) % avgHvomT                         &
+     &                   AVERAGE(ng) % avgHuonT,                        &
+     &                   AVERAGE(ng) % avgHvomT,                        &
      &                   AVERAGE(ng) % avgUT,                           &
      &                   AVERAGE(ng) % avgVT,                           &
      &                   AVERAGE(ng) % avgTT,                           &
@@ -950,7 +950,7 @@
      &                              (t(i,j-1,k,Nout,itrc)+              &
      &                               t(i,j  ,k,Nout,itrc))
                   avgHvomT(i,j,k,itrc)=avgVT(i,j,k,itrc)+               &
-     &                                 0.5_r8*Hvom(i,j,k,Nout)*         &
+     &                                 0.5_r8*Hvom(i,j,k)*              &
      &                                 (t(i,j-1,k,Nout,itrc)+           &
      &                                  t(i,j  ,k,Nout,itrc))
                 END DO
