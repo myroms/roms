@@ -281,13 +281,10 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Tidal parameters.
+!  Maximum number of tidal constituents to process.
 !-----------------------------------------------------------------------
 !
-!  Number of tidal constituents to process.
-!
-!!      integer, parameter :: MTC = 7
-        integer, parameter :: MTC = 20
+        integer :: MTC
 
 #ifdef DIAGNOSTICS
 !

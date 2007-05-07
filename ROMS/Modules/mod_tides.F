@@ -68,16 +68,45 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+
+# ifdef DISTRIBUTE
 !
-!  Local variable declarations.
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
+!
+! Inported variable declarations.
 !
       integer, intent(in) :: ng, LBi, UBi, LBj, UBj
 !
+!  Local variable declarations.
+!
+      integer :: Nrec, nvd, Vsize(4)
+
+      character (len=80) :: ncfile
+!
 !-----------------------------------------------------------------------
-!  Initialize module variables.
+!  Allocate module variables.
 !-----------------------------------------------------------------------
 !
       IF (ng.eq.1) allocate ( TIDES(Ngrids) )
+!
+!  Inquire about the maximum number of tidal components.
+!
+      IF (ng.eq.1) THEN
+        IF (InpThread) THEN
+          CALL opencdf (ng, nFfiles(ng), FRCname(1,ng), ncfile, N(ng),  &
+     &                  idTper, Nrec, nvd, Vsize)
+          MTC=Vsize(1)
+        END IF
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, MTC, 1)
+# endif
+      END IF
+!
+!  Allocate tidal forcing variables.
 !
       allocate ( TIDES(ng) % Tperiod(MTC)  )
 
