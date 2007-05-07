@@ -17,16 +17,16 @@
 !    ng        Nested grid number.                                     !
 !    nfiles    Number of input NetCDF files.                           !
 !    fname     Input NetCDF file name(s).                              !
-!    ncname    NetCDF file name containing requested variable.         !
 !    nvlev     Number of vertical levels to check for consistency.     !
 !    ifield    Index of field to inquire for the size of its time      !
 !                dimension, if any.                                    !
 !                                                                      !
 !  Output:                                                             !
 !                                                                      !
-!     nrec     Number of time records available in requested variable. !
-!     nvd      Number of dimension in requested variable.              !
-!     Vsize    Size of each dimension in requested variable.           !
+!    ncname    NetCDF file name containing requested variable.         !
+!    nrec      Number of time records available in requested variable. !
+!    nvd       Number of dimension in requested variable.              !
+!    Vsize     Size of each dimension in requested variable.           !
 !                                                                      !
 !                                                                      !
 !=======================================================================

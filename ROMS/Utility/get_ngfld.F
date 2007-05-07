@@ -362,6 +362,7 @@
           END IF
           IF ((Tid.ge.0).and.(Tid.ne.Vid)) THEN
 #ifdef DISTRIBUTE
+            CALL mp_bcasti (ng, model, exit_flag, 1)
             CALL mp_bcastf (ng, model, Tval, 1)
 #endif
             Vtime(Tindex,ifield,ng)=Tval*Tscale
@@ -397,6 +398,7 @@
               END IF
             END IF
 #ifdef DISTRIBUTE
+            CALL mp_bcasti (ng, model, exit_flag, 1)
             CALL mp_bcastf (ng, model, A, npts)
 #endif
             Fmin=A(1)*Fscale(ifield,ng)

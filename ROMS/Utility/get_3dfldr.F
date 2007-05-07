@@ -350,6 +350,7 @@
             END IF
           END IF
 # ifdef DISTRIBUTE
+          CALL mp_bcasti (ng, model, exit_flag, 1)
           CALL mp_bcastf (ng, model, Tval, 1)
 # endif
           Vtime(Tindex,ifield,ng)=Tval*Tscale
@@ -390,6 +391,7 @@
                 status=nf_get_var1_TYPE(ncid, Vid, Trec, Fval)
               END IF
 # ifdef DISTRIBUTE
+              CALL mp_bcasti (ng, model, status, 1)
               CALL mp_bcastf (ng, model, Fval, 1)
 # endif
               Fpoint(Tindex,ifield,ng)=Fval*Fscale(ifield,ng)
