@@ -86,7 +86,7 @@ endif
              LIBS += -lnsl
 
 ifdef SWAN_COUPLE
-           FFLAGS += -fixed -I/usr/local/mct/include
+           FFLAGS += -I/usr/local/mct/include
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 

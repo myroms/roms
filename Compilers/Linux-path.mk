@@ -86,7 +86,7 @@ else
 endif
 
 ifdef SWAN_COUPLE
-           FFLAGS += -fixedform -I/usr/local/mct/include
+           FFLAGS += -I/usr/local/mct/include
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 
@@ -125,4 +125,3 @@ $(SCRATCH_DIR)/swmod2.o: FFLAGS += -fixedform
 $(SCRATCH_DIR)/swmod3.o: FFLAGS += -fixedform
 
 endif
-

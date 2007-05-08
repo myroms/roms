@@ -90,7 +90,7 @@ ifdef SWAN_COUPLE
       MPEU_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mpeu
          CPPFLAGS += -traditional-cpp
            FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
-           FFLAGS += /fixed /noextend_source -assume:byterecl
+           FFLAGS += /noextend_source -assume:byterecl
        LIBS_WIN32 += "$(MCT_LIBDIR)\libmct.a" "$(MPEU_LIBDIR)\libmpeu.a"
 endif
 

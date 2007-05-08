@@ -74,6 +74,42 @@ else
 endif
 
 ifdef SWAN_COUPLE
-           FFLAGS += -ffixed -I/usr/local/mct/include
+           FFLAGS += -I/usr/local/mct/include
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
+endif
+
+#
+# Set free form format in source files to allow long string for
+# local directory and compilation flags inside the code.
+#
+
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree
+
+#
+# Supress free format in SWAN source files since there are comments
+# beyond column 72.
+#
+
+ifdef SWAN_COUPLE
+
+$(SCRATCH_DIR)/ocpcre.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/ocpids.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/ocpmix.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swancom1.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swancom2.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swancom3.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swancom4.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swancom5.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swanmain.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swanout1.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swanout2.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swanparll.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swanpre1.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swanpre2.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swanser.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swmod1.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swmod2.o: FFLAGS += -ffixed
+$(SCRATCH_DIR)/swmod3.o: FFLAGS += -ffixed
+
 endif

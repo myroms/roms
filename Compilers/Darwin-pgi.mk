@@ -110,7 +110,7 @@ else
 endif
 
 ifdef SWAN_COUPLE
-           FFLAGS += -Mfixed -I/usr/local/mct/include
+           FFLAGS += -I/usr/local/mct/include
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 

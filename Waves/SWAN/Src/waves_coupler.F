@@ -60,10 +60,10 @@
 !  Declarations.
 !
       TYPE(GlobalSegMap) :: GSMapSWAN         ! GloabalSegMap variables
- 
+
       TYPE(AttrVect) :: ToOceanAV             ! AttrVect variables
       TYPE(AttrVect) :: FromOceanAV
- 
+
       type(Router) :: RoutSWAN                ! Router variables
 
       CONTAINS
@@ -78,14 +78,14 @@
 !                                                                      !
 !=======================================================================
 !
-      USE OCPCOMM4                                                        40.41
-      USE SWCOMM3                                                         40.41
-      USE M_GENARR                                                        40.31
-      USE M_PARALL                                                        40.31
+      USE OCPCOMM4
+      USE SWCOMM3
+      USE M_GENARR
+      USE M_PARALL
 !
       include 'mpif.h'
 !
-!  Local variable declarations.  
+!  Local variable declarations.
 !
       integer :: MyColor, MyCOMM, MyError, MyRank, MyKey, MyValue
       integer :: npoints, gsmsize, nprocs, localsize
@@ -132,18 +132,18 @@
             start(j)=MXF+(j-1)*MXCGL
           ELSE
             start(j)=MXF+(j-1)*MXCGL+IHALOX
-          ENDIF
+          END IF
         ELSE
           IF (MyRank.eq.0) THEN
             start(j)=MYF+(j-1)*MXCGL
           ELSE
             start(j)=(MYF+IHALOY-1)*MXCGL+1+(j-1)*MXCGL
-          ENDIF
-        ENDIF
+          END IF
+        END IF
       END DO
 !
       gsmsize=Isize*Jsize
-!  
+!
       CALL GlobalSegMap_init(GSMapSWAN,start,length,0,                  &
      &                       WAV_COMM_WORLD,WavId)
 !
@@ -199,12 +199,12 @@
 !                                                                      !
 !=======================================================================
 !
-      USE SWCOMM3                                                         40.41
-      USE SWCOMM4                                                         40.41
-      USE OUTP_DATA                                                       40.13
-      USE M_PARALL                                                        40.51
+      USE SWCOMM3
+      USE SWCOMM4
+      USE OUTP_DATA
+      USE M_PARALL
       USE M_GENARR
-      USE SWCOMM1                                                         40.41
+      USE SWCOMM1
 !
       implicit none
 !
@@ -299,7 +299,7 @@
         CALL MCT_SEND (ToOceanAV,RoutSWAN,MyError)
         IF (MYRANK.EQ.0) THEN
           WRITE (*,*) '== SWAN sent wave fields and Myerror= ',MyError
-        ENDIF
+        END IF
         IF (MyError.ne.0) THEN
           WRITE (*,*) 'coupling send fail swancplr, MyStatus= ', MyError
           CALL finalize_ocean_coupling ("Coupling failed swancplr")
@@ -334,7 +334,7 @@
               Istr=1
             ELSE
               Istr=IHALOX+1
-            ENDIF
+            END IF
             Isize=MXC-IHALOX*IBLKAD(1)
             Iend=Istr+Isize-1
             Jstr=1
@@ -345,7 +345,7 @@
               Jstr=1
             ELSE
               Jstr=IHALOY+1
-            ENDIF
+            END IF
             Jsize=MYC-IHALOY*IBLKAD(1)
             Jend=Jstr+Jsize-1
             Istr=1
@@ -430,7 +430,7 @@
             GSENDB=0.0
             GRECVT=0.0
             GRECVB=0.0
-          ENDIF
+          END IF
           TAGT=1
           TAGB=2
           TAGR=3
@@ -472,7 +472,7 @@
                     GSENDL(IP)=TEMPMCT(INDXG,NUMSENT)
                   END DO
                 END DO
-              ENDIF
+              END IF
               OFFSET=OFFSET+HALOSIZE
             END DO
           END DO
@@ -524,7 +524,7 @@
               CALL mpi_wait (RREQUEST,status(1,3),MyError)
             ELSE IF (WHICHWAY.EQ.4) THEN
               CALL mpi_wait (LREQUEST,status(1,4),MyError)
-            ENDIF
+            END IF
           END DO
 !
           DO INB=1,NNEIGH
@@ -578,14 +578,14 @@
                 END DO
                 OFFSET=OFFSET+HALOSIZE
               END DO
-            ENDIF
+            END IF
           END DO
           IF (MXCGL.GT.MYCGL) THEN
             deallocate (GRECVR,GRECVL,GSENDR,GSENDL)
           ELSE
             deallocate (GRECVT,GRECVB,GSENDT,GSENDB)
           END IF
-        ENDIF 
+        END IF
 !
 ! Finally insert the full (MXC*MYC) TEMPMCT array into the SWAN
 ! array for DEPTH and computational array COMPDA. Only insert
@@ -615,7 +615,7 @@
           COMPDA(INDX,JWLV1)=COMPDA(INDX,JWLV2)
           COMPDA(INDX,JVX1) =COMPDA(INDX,JVX2)
           COMPDA(INDX,JVY1) =COMPDA(INDX,JVY2)
-        ENDDO
+        END DO
 !
 ! Insert water level, velx, and vely into SWAN arrays.
 !

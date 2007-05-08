@@ -79,7 +79,7 @@ ifdef SWAN_COUPLE
        LIBS_WIN32 += $(MCT_LIBDIR)\\libmct.a $(MPEU_LIBDIR)\\libmpeu.a
          CPPFLAGS += -traditional-cpp
            FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
-           FFLAGS += /fixed /noextend_source -assume:byterecl
+           FFLAGS += /noextend_source -assume:byterecl
 endif
 
 #
@@ -111,8 +111,8 @@ endif
 # local directory and compilation flags inside the code.
 #
 
-$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -freeform
-$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -freeform
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += /free
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += /free
 
 #
 # Supress free format in SWAN source files since there are comments
@@ -121,24 +121,24 @@ $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -freeform
 
 ifdef SWAN_COUPLE
 
-$(SCRATCH_DIR)/ocpcre.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/ocpids.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/ocpmix.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swancom1.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swancom2.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swancom3.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swancom4.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swancom5.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swanmain.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swanout1.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swanout2.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swanparll.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swanpre1.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swanpre2.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swanser.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swmod1.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swmod2.o: FFLAGS += -fixedform
-$(SCRATCH_DIR)/swmod3.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/ocpcre.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/ocpids.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/ocpmix.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swancom1.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swancom2.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swancom3.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swancom4.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swancom5.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swanmain.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swanout1.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swanout2.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swanparll.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swanpre1.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swanpre2.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swanser.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swmod1.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swmod2.o: FFLAGS += /fixed
+$(SCRATCH_DIR)/swmod3.o: FFLAGS += /fixed
 
 endif
 
