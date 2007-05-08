@@ -128,14 +128,14 @@
 #  endif
 # else
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: f_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(in) :: f_u(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: f_v(LBi:UBi,LBj:UBj,N(ng))
 #  else
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: f_ubar(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: f_vbar(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: f_zeta(LBi:UBi,LBj:UBj)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: u(LBi:UBi,LBj:UBj,N(ng),2)

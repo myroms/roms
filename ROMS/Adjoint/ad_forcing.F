@@ -109,14 +109,14 @@
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
 # else
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
-      real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: f_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: f_u(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: f_v(LBi:UBi,LBj:UBj,N(ng))
 #  else
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: f_ubar(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: f_vbar(LBi:UBi,LBj:UBj)
 #  endif
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: f_zeta(LBi:UBi,LBj:UBj)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -125,11 +125,7 @@
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 #  endif
-#  ifdef SOLVE3D
-      real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
-#  else
       real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
-#  endif
 # endif
 !
 !  Local variable declarations.
