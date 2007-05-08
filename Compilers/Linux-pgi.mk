@@ -124,3 +124,31 @@ endif
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree
+
+#
+# Supress free format in SWAN source files since there are comments
+# beyond column 72.
+#
+
+ifdef SWAN_COUPLE
+
+$(SCRATCH_DIR)/ocpcre.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/ocpids.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/ocpmix.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swancom1.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swancom2.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swancom3.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swancom4.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swancom5.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swanmain.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swanout1.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swanout2.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swanparll.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swanpre1.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swanpre2.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swanser.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swmod1.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swmod2.o: FFLAGS += -Mnofree
+$(SCRATCH_DIR)/swmod3.o: FFLAGS += -Mnofree
+
+endif

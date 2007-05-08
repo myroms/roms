@@ -93,3 +93,31 @@ $(SCRATCH_DIR)/def_var.o: FFLAGS += -fno-bounds-check
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form
+
+#
+# Supress free format in SWAN source files since there are comments
+# beyond column 72.
+#
+
+ifdef SWAN_COUPLE
+
+$(SCRATCH_DIR)/ocpcre.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/ocpids.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/ocpmix.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swancom1.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swancom2.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swancom3.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swancom4.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swancom5.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swanmain.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swanout1.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swanout2.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swanparll.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swanpre1.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swanpre2.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swanser.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swmod1.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swmod2.o: FFLAGS += -ffixed-form
+$(SCRATCH_DIR)/swmod3.o: FFLAGS += -ffixed-form
+
+endif

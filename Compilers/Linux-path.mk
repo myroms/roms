@@ -97,3 +97,32 @@ endif
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -freeform
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -freeform
+
+#
+# Supress free format in SWAN source files since there are comments
+# beyond column 72.
+#
+
+ifdef SWAN_COUPLE
+
+$(SCRATCH_DIR)/ocpcre.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/ocpids.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/ocpmix.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swancom1.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swancom2.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swancom3.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swancom4.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swancom5.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swanmain.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swanout1.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swanout2.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swanparll.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swanpre1.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swanpre2.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swanser.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swmod1.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swmod2.o: FFLAGS += -fixedform
+$(SCRATCH_DIR)/swmod3.o: FFLAGS += -fixedform
+
+endif
+
