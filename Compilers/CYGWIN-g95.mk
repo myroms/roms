@@ -27,7 +27,7 @@
               BIN := $(BIN).exe
 
                FC := g95
-           FFLAGS := -fno-second-underscore -ftrace=full
+           FFLAGS := -fno-second-underscore
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
                LD := $(FC)
@@ -63,7 +63,7 @@ ifdef USE_ARPACK
 endif
 
 ifdef USE_DEBUG
-           FFLAGS += -g -fbounds-check
+           FFLAGS += -g -fbounds-check -ftrace=full
 else
            FFLAGS += -O3 -ffast-math
 endif

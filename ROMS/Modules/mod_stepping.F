@@ -31,7 +31,6 @@
 !  nrhs                                                                !
 !  nstp                                                                !
 !  NTC       Number of tidal components to consider.                   !
-!  Nsrc      Number of point Sources/Sinks.                            !
 !                                                                      !
 !=======================================================================
 !
@@ -59,9 +58,6 @@
 
 #if defined SSH_TIDES || defined UV_TIDES
         integer, dimension(Ngrids) :: NTC
-#endif
-#if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
-        integer, dimension(Ngrids) :: Nsrc
 #endif
         integer, dimension(Ngrids) :: Lnew = (/ (1, ig=1,Ngrids) /)
         integer, dimension(Ngrids) :: Lold = (/ (1, ig=1,Ngrids) /)

@@ -38,7 +38,6 @@
 !  Nfloats    Number of floats tracjectories.                          !
 !  Nstation   Number of output stations.                               !
 !  MTC        Maximum number of tidal components.                      !
-!  Msrc       Maximum number of point Sources/Sinks.                   !
 !  NSV        Number of model state variables.                         !
 !                                                                      !
 !  Tracer parameters:                                                  !
@@ -258,16 +257,6 @@
 !  Total number of float variables to process and output.
 !
         integer, dimension(Ngrids) :: NFV
-#endif
-#if defined UV_PSOURCE || defined TS_PSOURCE || defined Q_PSOURCE
-!
-!-----------------------------------------------------------------------
-!  Point-sources parameters.
-!-----------------------------------------------------------------------
-!
-!  Maximum number of point-sources.
-!
-        integer, parameter :: Msrc = 200
 #endif
 #ifdef STATIONS
 !

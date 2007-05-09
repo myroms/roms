@@ -24,7 +24,7 @@
 # First the defaults
 #
                FC := g95
-           FFLAGS := -fno-second-underscore -ftrace=full
+           FFLAGS := -fno-second-underscore
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
                LD := $(FC)

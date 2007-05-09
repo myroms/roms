@@ -309,11 +309,11 @@
 
 #  ifdef TS_PSOURCE
       integer, intent(in) :: Nsrc
-      logical, intent(in) :: Lsrc(Msrc,NT(ng))
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Tsrc(Msrc,N(ng),NT(ng))
+      logical, intent(in) :: Lsrc(Nsrc,NT(ng))
+      integer, intent(in) :: Isrc(Nsrc)
+      integer, intent(in) :: Jsrc(Nsrc)
+      real(r8), intent(in) :: Dsrc(Nsrc)
+      real(r8), intent(in) :: Tsrc(Nsrc,N(ng),NT(ng))
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)

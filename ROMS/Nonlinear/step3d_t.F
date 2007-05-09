@@ -255,20 +255,20 @@
 # else
 
 #  ifdef TS_PSOURCE
-      logical, intent(in) :: Lsrc(Msrc,NT(ng))
+      logical, intent(in) :: Lsrc(Nsrc,NT(ng))
 #  endif
 #  if defined TS_PSOURCE || defined Q_PSOURCE
       integer, intent(in) :: Nsrc
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
+      integer, intent(in) :: Isrc(Nsrc)
+      integer, intent(in) :: Jsrc(Nsrc)
 
-      real(r8), intent(in) :: Tsrc(Msrc,N(ng),NT(ng))
+      real(r8), intent(in) :: Tsrc(Nsrc,N(ng),NT(ng))
 #  endif
 #  ifdef TS_PSOURCE
-      real(r8), intent(in) :: Dsrc(Msrc)
+      real(r8), intent(in) :: Dsrc(Nsrc)
 #  endif
 #  ifdef Q_PSOURCE
-      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
+      real(r8), intent(in) :: Qsrc(Nsrc,N(ng))
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)

@@ -84,8 +84,8 @@ $(SCRATCH_DIR)/def_var.o: FFLAGS += -fno-bounds-check
 # local directory and compilation flags inside the code.
 #
 
-$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -free
-$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -free
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form
 
 #
 # Supress free format in SWAN source files since there are comments

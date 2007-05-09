@@ -9,6 +9,10 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
+# ifdef ANA_PSOURCE
+!  Msrc       Maximum number of analytical point Sources/Sinks.        !
+# endif
+!  Nsrc       Number of point Sources/Sinks.                           !
 !  Dsrc       Direction of point Sources/Sinks:                        !
 !               Dsrc(:) = 0,  Along XI-direction.                      !
 !               Dsrc(:) > 0,  Along ETA-direction.                     !
@@ -47,8 +51,14 @@
 !=======================================================================
 !
         USE mod_kinds
+        USE mod_param
 
         implicit none
+
+        integer, dimension(Ngrids) :: Nsrc
+# ifdef ANA_PSOURCE
+        integer, parameter :: Msrc = 200
+# endif
 
         TYPE T_SOURCES
 
@@ -88,6 +98,15 @@
 !=======================================================================
 !
       USE mod_param
+# ifndef ANA_PSOURCE
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+#  ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+#  endif
+# endif
 !
 !  Imported variable declarations.
 !
@@ -95,51 +114,79 @@
 !
 !  Local variable declarations.
 ! 
+# ifndef ANA_PSOURCE
+      integer :: Nrec, nvd, Vsize(4)
+# endif
       integer :: is, itrc, k
 
       real(r8), parameter :: IniVal = 0.0_r8
+# ifndef ANA_PSOURCE
+      character (len=80) :: ncfile
+# endif
 !
 !-----------------------------------------------------------------------
 !  Allocate module variables.
 !-----------------------------------------------------------------------
 !
       IF (ng.eq.1) allocate ( SOURCES(Ngrids) )
+
+# if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
+                              defined TS_PSOURCE || defined Q_PSOURCE)
 !
-      allocate ( SOURCES(ng) % Isrc(Msrc) )
+!  Inquire about the number of point sources.
+!
+      IF (InpThread) THEN
+        CALL opencdf (ng, nFfiles(ng), FRCname(1,ng), ncfile, N(ng),    &
+     &                idRxpo, Nrec, nvd, Vsize)
+        Nsrc(ng)=Vsize(1)
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, Nsrc(ng), 1)
+#  endif
+      END IF
+# else
+!
+!  Set number of point sources to maximum number of analytical sources.
+!
+      Nsrc(ng)=Msrc
+# endif
+!
+!  Allocate point Sources/Sinks variables.
+!
+      allocate ( SOURCES(ng) % Isrc(Nsrc(ng)) )
 
-      allocate ( SOURCES(ng) % Jsrc(Msrc) )
+      allocate ( SOURCES(ng) % Jsrc(Nsrc(ng)) )
 
-      allocate ( SOURCES(ng) % Lsrc(Msrc,NT(ng)) )
+      allocate ( SOURCES(ng) % Lsrc(Nsrc(ng),NT(ng)) )
 
       allocate ( SOURCES(ng) % Ltracer(NT(ng)) )
 
-      allocate ( SOURCES(ng) % Dsrc(Msrc) )
+      allocate ( SOURCES(ng) % Dsrc(Nsrc(ng)) )
 
-      allocate ( SOURCES(ng) % Fsrc(Msrc) )
+      allocate ( SOURCES(ng) % Fsrc(Nsrc(ng)) )
 
-      allocate ( SOURCES(ng) % Qbar(Msrc) )
+      allocate ( SOURCES(ng) % Qbar(Nsrc(ng)) )
 
-      allocate ( SOURCES(ng) % Qshape(Msrc,N(ng)) )
+      allocate ( SOURCES(ng) % Qshape(Nsrc(ng),N(ng)) )
 
-      allocate ( SOURCES(ng) % Qsrc(Msrc,N(ng)) )
+      allocate ( SOURCES(ng) % Qsrc(Nsrc(ng),N(ng)) )
 
-      allocate ( SOURCES(ng) % Tsrc(Msrc,N(ng),NT(ng)) )
+      allocate ( SOURCES(ng) % Tsrc(Nsrc(ng),N(ng),NT(ng)) )
 
-      allocate ( SOURCES(ng) % Xsrc(Msrc) )
+      allocate ( SOURCES(ng) % Xsrc(Nsrc(ng)) )
 
-      allocate ( SOURCES(ng) % Ysrc(Msrc) )
+      allocate ( SOURCES(ng) % Ysrc(Nsrc(ng)) )
 
 # ifndef ANA_PSOURCE
-      allocate ( SOURCES(ng) % QbarG(Msrc,2) )
+      allocate ( SOURCES(ng) % QbarG(Nsrc(ng),2) )
 
-      allocate ( SOURCES(ng) % TsrcG(Msrc,N(ng),2,NT(ng)) )
+      allocate ( SOURCES(ng) % TsrcG(Nsrc(ng),N(ng),2,NT(ng)) )
 # endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
 !-----------------------------------------------------------------------
 !
-      DO is=1,Msrc
+      DO is=1,Nsrc(ng)
         SOURCES(ng) % Isrc(is) = 0
         SOURCES(ng) % Jsrc(is) = 0
         SOURCES(ng) % Dsrc(is) = IniVal
@@ -153,18 +200,18 @@
 # endif
       END DO
       DO k=1,N(ng)
-        DO is=1,Msrc
+        DO is=1,Nsrc(ng)
           SOURCES(ng) % Qshape(is,k) = IniVal
           SOURCES(ng) % Qsrc(is,k) = IniVal
         END DO
       END DO 
       DO itrc=1,NT(ng)
         SOURCES(ng) % Ltracer(itrc) = .FALSE.
-        DO is=1,Msrc
+        DO is=1,Nsrc(ng)
           SOURCES(ng) % Lsrc(is,itrc) = .FALSE.
         END DO
         DO k=1,N(ng)
-          DO is=1,Msrc
+          DO is=1,Nsrc(ng)
             SOURCES(ng) % Tsrc(is,k,itrc) = IniVal
 # ifndef ANA_PSOURCE
             SOURCES(ng) % TsrcG(is,k,1,itrc) = IniVal

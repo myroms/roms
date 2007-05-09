@@ -428,11 +428,11 @@
 
 #  if defined UV_PSOURCE || defined Q_PSOURCE
       integer, intent(in) :: Nsrc
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
+      integer, intent(in) :: Isrc(Nsrc)
+      integer, intent(in) :: Jsrc(Nsrc)
 
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Qbar(Msrc)
+      real(r8), intent(in) :: Dsrc(Nsrc)
+      real(r8), intent(in) :: Qbar(Nsrc)
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: pmask(LBi:UBi,LBj:UBj)

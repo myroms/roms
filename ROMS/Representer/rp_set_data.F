@@ -719,7 +719,7 @@
         CALL ana_psource (ng, tile, iRPM)
 #  else
 #   if defined UV_PSOURCE || defined Q_PSOURCE
-        CALL set_ngfld (ng, iRPM, idRtra, 1, Msrc, 1,                   &
+        CALL set_ngfld (ng, iRPM, idRtra, 1, Nsrc(ng), 1,               &
      &                  1, Nsrc(ng), 1,                                 &
      &                  SOURCES(ng) % QbarG,                            &
      &                  SOURCES(ng) % Qbar,                             &
@@ -736,7 +736,7 @@
 #   if defined TS_PSOURCE && defined SOLVE3D
         DO itrc=1,NT(ng)
           IF (SOURCES(ng)%Ltracer(itrc)) THEN
-            CALL set_ngfld (ng, iRPM, idRtrc(itrc), 1, Msrc, N(ng),     &
+            CALL set_ngfld (ng, iRPM, idRtrc(itrc), 1, Nsrc(ng), N(ng), &
      &                      1, Nsrc(ng), N(ng),                         &
      &                      SOURCES(ng) % TsrcG(1,1,1,itrc),            &
      &                      SOURCES(ng) % Tsrc(1,1,itrc),               &

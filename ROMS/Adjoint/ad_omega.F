@@ -144,10 +144,10 @@
       real(r8), intent(out) :: W(LBi:,LBj:,0:)
 # else
 #  ifdef Q_PSOURCE
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
+      integer, intent(in) :: Isrc(Nsrc)
+      integer, intent(in) :: Jsrc(Nsrc)
+      real(r8), intent(in) :: Dsrc(Nsrc)
+      real(r8), intent(in) :: Qsrc(Nsrc,N(ng))
 #  endif
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))

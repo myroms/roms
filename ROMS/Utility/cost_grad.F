@@ -133,14 +133,14 @@
 #  endif
       real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #  else
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
 #  endif
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
 # endif
 !
 !  Local variable declarations.

@@ -196,24 +196,24 @@
       IF (iic(ng).eq.0) THEN
         CALL get_ngfldr (ng, iADM, idRxpo, ncFRCid(idRxpo,ng),          &
      &                   nFfiles(ng), FRCname(1,ng), update(1),         &
-     &                   1, Msrc, 1, 1, 1, Nsrc(ng), 1,                 &
+     &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
      &                   SOURCES(ng) % Xsrc(1))
         CALL get_ngfldr (ng, iADM, idRepo, ncFRCid(idRepo,ng),          &
      &                   nFfiles(ng), FRCname(1,ng), update(1),         &
-     &                   1, Msrc, 1, 1, 1, Nsrc(ng), 1,                 &
+     &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
      &                   SOURCES(ng) % Ysrc(1))
         CALL get_ngfldr (ng, iADM, idRdir, ncFRCid(idRdir,ng),          &
      &                   nFfiles(ng), FRCname(1,ng), update(1),         &
-     &                   1, Msrc, 1, 1, 1, Nsrc(ng), 1,                 &
+     &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
      &                   SOURCES(ng) % Dsrc(1))
         CALL get_ngfldr (ng, iADM, idRvsh, ncFRCid(idRvsh,ng),          &
      &                   nFfiles(ng), FRCname(1,ng), update(1),         &
-     &                   1, Msrc, N(ng), 1, 1, Nsrc(ng), N(ng),         &
+     &                   1, Nsrc(ng), N(ng), 1, 1, Nsrc(ng), N(ng),     &
      &                   SOURCES(ng) % Qshape(1,1))
 #  ifdef TS_PSOURCE
         CALL get_ngfldr (ng, iADM, idRflg, ncFRCid(idRflg,ng),          &
      &                   nFfiles(ng), FRCname(1,ng), update(1),         &
-     &                   1, Msrc, 1, 1, 1, Nsrc(ng), 1,                 &
+     &                   1, Nsrc(ng), 1, 1, 1, Nsrc(ng), 1,             &
      &                   SOURCES(ng) % Fsrc(1))
         IF (update(1)) THEN
           DO i=1,NT(ng)
@@ -269,7 +269,7 @@
 !
       CALL get_ngfldr (ng, iADM, idRtra, ncFRCid(idRtra,ng),            &
      &                 nFfiles(ng), FRCname(1,ng), update(1),           &
-     &                 1, Msrc, 1, 2, 1, Nsrc(ng), 1,                   &
+     &                 1, Nsrc(ng), 1, 2, 1, Nsrc(ng), 1,               &
      &                 SOURCES(ng) % QbarG(1,1))
 #  endif
 #  if defined TS_PSOURCE && defined SOLVE3D
@@ -280,7 +280,7 @@
         IF (SOURCES(ng)%Ltracer(i)) THEN
           CALL get_ngfldr (ng, iADM, idRtrc(i), ncFRCid(idRtrc(i),ng),  &
      &                     nFfiles(ng), FRCname(1,ng), update(1),       &
-     &                     1, Msrc, N(ng), 2, 1, Nsrc(ng), N(ng),       &
+     &                     1, Nsrc(ng), N(ng), 2, 1, Nsrc(ng), N(ng),   &
      &                     SOURCES(ng) % TsrcG(1,1,1,i))
         END IF
       END DO

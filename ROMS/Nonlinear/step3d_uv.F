@@ -211,10 +211,10 @@
 # else
 #  ifdef UV_PSOURCE
       integer, intent(in) :: Nsrc
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
+      integer, intent(in) :: Isrc(Nsrc)
+      integer, intent(in) :: Jsrc(Nsrc)
+      real(r8), intent(in) :: Dsrc(Nsrc)
+      real(r8), intent(in) :: Qsrc(Nsrc,N(ng))
 #  endif
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)

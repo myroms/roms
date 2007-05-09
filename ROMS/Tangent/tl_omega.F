@@ -146,10 +146,10 @@
       real(r8), intent(out) :: tl_W(LBi:,LBj:,0:)
 # else
 #  ifdef Q_PSOURCE
-      integer, intent(in) :: Isrc(Msrc)
-      integer, intent(in) :: Jsrc(Msrc)
-      real(r8), intent(in) :: Dsrc(Msrc)
-      real(r8), intent(in) :: Qsrc(Msrc,N(ng))
+      integer, intent(in) :: Isrc(Nsrc)
+      integer, intent(in) :: Jsrc(Nsrc)
+      real(r8), intent(in) :: Dsrc(Nsrc)
+      real(r8), intent(in) :: Qsrc(Nsrc,N(ng))
 #  endif
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)

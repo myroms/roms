@@ -21,7 +21,7 @@
 #endif
       USE mod_boundary, ONLY : allocate_boundary, initialize_boundary
 #if defined CLIMATOLOGY      || defined AD_SENSITIVITY || \
-    defined OPT_OBSERVATIONS ||defined SO_SEMI
+    defined OPT_OBSERVATIONS || defined SO_SEMI
       USE mod_clima, ONLY : allocate_clima, initialize_clima
 #endif
 #ifdef SOLVE3D

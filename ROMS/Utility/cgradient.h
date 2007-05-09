@@ -686,7 +686,6 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Lold, Lnew, Lwrk,                           &
      &                      innLoop, outLoop,                           &
-     &                      nConvRitz, Ritz,                            &
 # ifdef MASKING
      &                      rmask, umask, vmask,                        &
 # endif
@@ -1556,7 +1555,6 @@
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Lold, Lnew, Lwrk,                       &
      &                          innLoop, outLoop,                       &
-     &                          nConvRitz, Ritz,                        &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
 #endif
@@ -1611,9 +1609,6 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
-      integer, intent(in) :: nConvRitz
-!
-      real(r8), intent(in) :: Ritz(:)
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
