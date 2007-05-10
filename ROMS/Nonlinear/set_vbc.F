@@ -169,14 +169,18 @@
       real(r8), intent(inout) :: btflx(LBi:,LBj:,:)
 #  else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
+#   if !(defined BBL_MODEL || defined ICESHELF)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
+#   endif
 #   if defined ICESHELF
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+#   if !(defined BBL_MODEL || defined ICESHELF)
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
+#   endif
 #   ifdef QCORRECTION
       real(r8), intent(in) :: dqdt(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: sst(LBi:UBi,LBj:UBj)

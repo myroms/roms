@@ -426,7 +426,11 @@
       inp=1
       out=stdout
 !
-      CALL my_getarg (1,Cname)
+!!    CALL my_getarg (1,Cname)
+      IF (MyRank.eq.0) CALL my_getarg (1,Cname)
+      DO ng=1,Ngrids
+        CALL mp_bcasts (ng, model, Cname, LEN(Cname))
+      END DO
       IF (MyRank.eq.0) THEN
         WRITE(stdout,*) 'Coupled Input File name = ', Cname
       END IF
@@ -434,7 +438,7 @@
      &      ERR=10)
       GO TO 30
  10   WRITE (stdout,20)
-      WRITE(stdout,*) 'MyRank = ', MyRank, Iname
+      WRITE(stdout,*) 'MyRank = ', MyRank, Cname
       STOP
  20   FORMAT (/,' INP_PAR - Unable to open coupling input script.',     &
      &        /,11x,'In distributed-memory applications, the input',    &

@@ -51,8 +51,10 @@
 # the NETCDF and ARPACK library locations.
 #
 
-   NETCDF_INCDIR ?= /netcdf-win32/include
-   NETCDF_LIBDIR ?= /netcdf-win32/lib
+       MCT_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mct
+      MPEU_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mpeu
+    NETCDF_INCDIR ?= /netcdf-win32/include
+    NETCDF_LIBDIR ?= /netcdf-win32/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
        NETCDF_LIB := $(NETCDF_LIBDIR)/libnetcdf.a
@@ -86,8 +88,6 @@ ifdef USE_MPI
 endif
 
 ifdef SWAN_COUPLE
-       MCT_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mct
-      MPEU_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mpeu
          CPPFLAGS += -traditional-cpp
            FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
            FFLAGS += /noextend_source -assume:byterecl

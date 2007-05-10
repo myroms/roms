@@ -226,13 +226,18 @@
         status=nf_noerr
         IF (InpThread) THEN
           status=nf_get_vara_TYPE(ncid, ncvarid, start, total, wrk)
-          IF (status.ne.nf_noerr) RETURN
-          DO i=1,Npts
-            wrk(i)=Ascl*wrk(i)
-            Amin=MIN(Amin,wrk(i))
-            Amax=MAX(Amax,wrk(i))
-          END DO
+          IF (status.eq.nf_noerr) THEN
+            DO i=1,Npts
+              wrk(i)=Ascl*wrk(i)
+              Amin=MIN(Amin,wrk(i))
+              Amax=MAX(Amax,wrk(i))
+            END DO
+          END IF
         END IF          
+#ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, model, status, 1)
+#endif
+        IF (status.ne.nf_noerr) RETURN
 !
 !-----------------------------------------------------------------------
 !  Unpack read field.
@@ -278,14 +283,6 @@
         END DO
 # endif
       END IF
-#endif
-#ifdef DISTRIBUTE
-!
-!-----------------------------------------------------------------------
-!  Broadcast IO error flag to all nodes.
-!-----------------------------------------------------------------------
-!
-      CALL mp_bcasti (ng, model, status, 1)
 #endif
 #if defined DISTRIBUTE && defined DEBUG
 !

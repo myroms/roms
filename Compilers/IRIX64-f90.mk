@@ -45,11 +45,13 @@
 
 ifdef USE_LARGE
            FFLAGS += -64
+       MCT_INCDIR ?= /usr/local/mct/include
        MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= $(HOME)/netcdf/include
     NETCDF_LIBDIR ?= $(HOME)/netcdf/lib64
 else
            FFLAGS += -n32
+       MCT_INCDIR ?= /usr/local/mct/include
        MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /usr/local/include
     NETCDF_LIBDIR ?= /usr/local/lib
@@ -85,7 +87,7 @@ else
 endif
 
 ifdef SWAN_COUPLE
-           FFLAGS += -I/usr/local/mct/include
+           FFLAGS += -I$(MCT_INCDIR)
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 

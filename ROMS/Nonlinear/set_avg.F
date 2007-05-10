@@ -548,11 +548,16 @@
 #  endif
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
 #   ifdef AVERAGES_NEARSHORE
       real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: rustr2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: rvstr2d(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Sxx_bar(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Sxy_bar(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: Syy_bar(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: avgu3d(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: avgv3d(LBi:UBi,LBj:UBj,N(ng))

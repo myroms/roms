@@ -236,6 +236,10 @@
 !  Set phytoplankton species to consider (see above classification):
 !
         integer, parameter, dimension(Nphy) :: PHY = (/ 1, 2, 4, 5 /)
+!
+!  Number of biological tracer type variables is set at run time
+!
+        integer :: NBT
 # endif
 #else
         integer, parameter :: NBT = 0

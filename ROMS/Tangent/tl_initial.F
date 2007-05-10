@@ -623,6 +623,9 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 !
+# ifdef TIMELESS_DATA
+      CALL tl_get_once (ng)
+# endif
       CALL tl_get_data (ng)
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iTLM, exit_flag, 1)

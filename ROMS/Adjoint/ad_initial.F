@@ -534,6 +534,9 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 !
+# ifdef TIMELESS_DATA
+      CALL ad_get_once (ng)
+# endif
       CALL ad_get_data (ng)
 #  ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iADM, exit_flag, 1)

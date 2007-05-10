@@ -491,6 +491,9 @@
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
 !
+# ifdef TIMELESS_DATA
+      CALL rp_get_once (ng)
+# endif
       CALL rp_get_data (ng)
       IF (exit_flag.ne.NoError) RETURN
 

@@ -43,7 +43,10 @@
 # Library locations, can be overridden by environment variables.
 #
 
-       MCT_LIBDIR ?= /usr/local/mct/lib
+#      MCT_INCDIR ?= /usr/local/mct/include
+#      MCT_LIBDIR ?= /usr/local/mct/lib
+       MCT_INCDIR ?= $(ROMSHOME)/Lib/MCT/include
+       MCT_LIBDIR ?= $(ROMSHOME)/Lib/MCT/lib
     NETCDF_INCDIR ?= /opt/pgisoft/netcdf/include
     NETCDF_LIBDIR ?= /opt/pgisoft/netcdf/lib
 
@@ -111,7 +114,7 @@ else
 endif
 
 ifdef SWAN_COUPLE
-           FFLAGS += -I/usr/local/mct/include
+           FFLAGS += -I$(MCT_INCDIR)
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
 

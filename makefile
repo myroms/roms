@@ -309,7 +309,7 @@ endif
 
 .PHONY: all
 
-all: $(SCRATCH_DIR) Compilers/MakeDepend $(BIN)
+all: $(SCRATCH_DIR) $(SCRATCH_DIR)/MakeDepend $(BIN)
 
 modules   :=	ROMS/Adjoint \
 		ROMS/Representer \
@@ -402,20 +402,19 @@ libraries: $(libraries)
 #  Target to create ROMS/TOMS dependecies.
 #--------------------------------------------------------------------------
 
-Compilers/MakeDepend: makefile
-	mv $(COMPILERS)/MakeDepend $(COMPILERS)/MakeDepend.orig
-	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(COMPILERS)/MakeDepend 
+$(SCRATCH_DIR)/MakeDepend: makefile
+	$(shell $(TEST) -d $(SCRATCH_DIR) || $(MKDIR) $(SCRATCH_DIR) )
+	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend 
 
 .PHONY: depend
 
 SFMAKEDEPEND := ./ROMS/Bin/sfmakedepend
 
-depend:
-	mv $(COMPILERS)/MakeDepend $(COMPILERS)/MakeDepend.orig
-	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(COMPILERS)/MakeDepend 
+depend:	$(SCRATCH_DIR)
+	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend 
 
 ifneq "$(MAKECMDGOALS)" "clean"
-  -include $(COMPILERS)/MakeDepend
+  -include $(SCRATCH_DIR)/MakeDepend
 endif
 
 #--------------------------------------------------------------------------
