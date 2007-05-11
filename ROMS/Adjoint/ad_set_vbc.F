@@ -316,7 +316,7 @@
 #  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
+#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
       integer :: ILB, IUB, JLB, JUB
 #  endif
       integer :: i, j, itrc
@@ -324,14 +324,14 @@
       real(r8) :: cff1, cff2, cff3
       real(r8) :: ad_cff1, ad_cff2, ad_cff3, adfac, adfac1, adfac2
 
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
+#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_wrk
 #  endif
 
 #  include "set_bounds.h"
 
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
+#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
 !
       ILB=LBOUND(ad_wrk,DIM=1)
       IUB=UBOUND(ad_wrk,DIM=1)
@@ -346,7 +346,7 @@
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
 
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
+#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
       DO j=JLB,JUB
         DO i=ILB,IUB
           ad_wrk(i,j)=0.0_r8

@@ -54,7 +54,7 @@
      &                      nrhs(ng),                                   &
      &                      GRID(ng) % Hz,                              &
      &                      GRID(ng) % tl_Hz,                           &
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
      &                      GRID(ng) % z_r,                             &
      &                      GRID(ng) % z_w,                             &
      &                      GRID(ng) % tl_z_r,                          &
@@ -65,7 +65,7 @@
 #  endif
      &                      OCEAN(ng) % t,                              &
      &                      OCEAN(ng) % tl_t,                           &
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
      &                      OCEAN(ng) % u,                              &
      &                      OCEAN(ng) % v,                              &
      &                      OCEAN(ng) % tl_u,                           &
@@ -110,7 +110,7 @@
      &                            LBi, UBi, LBj, UBj,                   &
      &                            nrhs,                                 &
      &                            Hz, tl_Hz,                            &
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
      &                            z_r, z_w,                             &
      &                            tl_z_r, tl_z_w,                       &
 #  endif
@@ -118,7 +118,7 @@
      &                            zice,                                 &
 #  endif
      &                            t, tl_t,                              &
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
      &                            u, v,                                 &
      &                            tl_u, tl_v,                           &
 #  endif
@@ -165,7 +165,7 @@
 #  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_Hz(LBi:,LBj:,:)
-#   if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#   if !defined BBL_MODEL_NOT_YET || defined ICESHELF
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: tl_z_r(LBi:,LBj:,:)
@@ -176,7 +176,7 @@
 #   endif
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
-#   if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#   if !defined BBL_MODEL_NOT_YET || defined ICESHELF
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
@@ -213,7 +213,7 @@
 #  else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
-#   if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#   if !defined BBL_MODEL_NOT_YET || defined ICESHELF
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: tl_z_r(LBi:UBi,LBj:UBj,N(ng))
@@ -224,7 +224,7 @@
 #   endif
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-#   if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#   if !defined BBL_MODEL_NOT_YET || defined ICESHELF
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -277,12 +277,12 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, itrc
 
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF)
+#  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
       real(r8) :: cff1, cff2, cff3
       real(r8) :: tl_cff1, tl_cff2, tl_cff3
 #  endif
 
-#  if !(defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
+#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_wrk
 #  endif

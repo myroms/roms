@@ -48,7 +48,7 @@
      &                   LBi, UBi, LBj, UBj,                            &
      &                   nrhs(ng),                                      &
      &                   GRID(ng) % Hz,                                 &
-#  if !(defined BBL_MODEL || defined ICESHELF)
+#  if !defined BBL_MODEL || defined ICESHELF
      &                   GRID(ng) % z_r,                                &
      &                   GRID(ng) % z_w,                                &
 #  endif
@@ -56,7 +56,7 @@
      &                   GRID(ng) % zice,                               &
 #  endif
      &                   OCEAN(ng) % t,                                 &
-#  if !(defined BBL_MODEL || defined ICESHELF)
+#  if !defined BBL_MODEL || defined ICESHELF
      &                   OCEAN(ng) % u,                                 &
      &                   OCEAN(ng) % v,                                 &
 #  endif
@@ -91,14 +91,14 @@
      &                         LBi, UBi, LBj, UBj,                      &
      &                         nrhs,                                    &
      &                         Hz,                                      &
-#  if !(defined BBL_MODEL || defined ICESHELF)
+#  if !defined BBL_MODEL || defined ICESHELF
      &                         z_r, z_w,                                &
 #  endif
 #  if defined ICESHELF
      &                         zice,                                    &
 #  endif
      &                         t,                                       &
-#  if !(defined BBL_MODEL || defined ICESHELF)
+#  if !defined BBL_MODEL || defined ICESHELF
      &                         u, v,                                    &
 #  endif
 #  ifdef QCORRECTION
@@ -135,7 +135,7 @@
 !
 #  ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: Hz(LBi:,LBj:,:)
-#   if !(defined BBL_MODEL || defined ICESHELF)
+#   if !defined BBL_MODEL || defined ICESHELF
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
       real(r8), intent(in) :: z_w(LBi:,LBj:,0:)
 #   endif
@@ -143,7 +143,7 @@
       real(r8), intent(in) :: zice(LBi:,LBj:)
 #   endif
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
-#   if !(defined BBL_MODEL || defined ICESHELF)
+#   if !defined BBL_MODEL || defined ICESHELF
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
 #   endif
@@ -169,7 +169,7 @@
       real(r8), intent(inout) :: btflx(LBi:,LBj:,:)
 #  else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
-#   if !(defined BBL_MODEL || defined ICESHELF)
+#   if !defined BBL_MODEL || defined ICESHELF
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
@@ -177,7 +177,7 @@
       real(r8), intent(in) :: zice(LBi:UBi,LBj:UBj)
 #   endif
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-#   if !(defined BBL_MODEL || defined ICESHELF)
+#   if !defined BBL_MODEL || defined ICESHELF
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
 #   endif
@@ -221,11 +221,11 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, itrc
 
-#  if !(defined BBL_MODEL || defined ICESHELF)
+#  if !defined BBL_MODEL || defined ICESHELF
       real(r8) :: cff1, cff2
 #  endif
 
-#  if !(defined BBL_MODEL || defined ICESHELF) && defined UV_LOGDRAG
+#  if (!defined BBL_MODEL || defined ICESHELF) && defined UV_LOGDRAG
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
 #  endif
 

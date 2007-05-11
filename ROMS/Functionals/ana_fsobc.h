@@ -132,7 +132,7 @@
         fac=TANH((tdays(ng)-dstart)/1.0_r8)
         omega=2.0_r8*pi*time(ng)/(12.42_r8*3600.0_r8)  !  M2 Tide period
         val=0.53_r8+(0.53_r8-0.48_r8)/REAL(Iend+1,r8)
-        phase=(277.0_r8+(277.0_r8-240.0_r8)/REAL(Iend+1),r8)*deg2rad
+        phase=(277.0_r8+(277.0_r8-240.0_r8)/REAL(Iend+1,r8))*deg2rad
         DO j=JstrR,JendR
           BOUNDARY(ng)%zeta_west(j)=fac*val*COS(omega-phase)
         END DO
