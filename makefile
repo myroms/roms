@@ -279,7 +279,12 @@ CPPFLAGS += -D'ROOT_DIR="$(ROOTDIR)"'
 ifdef ROMS_APPLICATION
   HEADER := $(addsuffix .h,$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
   CPPFLAGS += -D$(ROMS_APPLICATION)
+  CPPFLAGS += -D'HEADER="$(HEADER)"'
+ ifdef MY_HEADER_DIR
+  CPPFLAGS += -D'ROMS_HEADER="$(MY_HEADER_DIR)/$(HEADER)"'
+ else
   CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
+ endif
   MDEPFLAGS += -DROMS_HEADER="$(HEADER)"
   CPPFLAGS += -DNestedGrids=$(NestedGrids)
 endif
