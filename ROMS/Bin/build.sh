@@ -27,9 +27,14 @@
 #                                                                       :::
 # For example, you can use the -j flag to compile in parallel:          :::
 #                                                                       :::
-#    ./build.sh -j                                                      :::
+#    ./build.sh -j       (compile using all available CPUs)             :::
 # or                                                                    :::
-#    ./build.sh -j4                                                     :::
+#    ./build.sh -j4      (compile using 4 CPUs)                         :::
+# or                                                                    :::
+#    ./build.sh          (serial)                                       :::
+#                                                                       :::
+# Notice that sometimes the parallel compilation fail to find MPI       :::
+# include file "mpif.h".                                                :::
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -85,7 +90,7 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
  setenv SCRATCH_DIR         ${MY_PROJECT_DIR}/Forward/Build
 
 # Go to the users source directory to compile. The options set above will
-# pick up the application-specific cdoe from the appropriate place.
+# pick up the application-specific code from the appropriate place.
 
  cd ${MY_ROMS_SRC}
 

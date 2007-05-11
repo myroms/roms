@@ -856,7 +856,7 @@
         Hdir=HEADER_DIR
 #endif
 #ifdef ROMS_HEADER
-        Hfile=ROMS_HEADER
+        Hfile=HEADER
 #endif
 #ifdef ANALYTICAL_DIR
         Adir=ANALYTICAL_DIR
