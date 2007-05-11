@@ -286,7 +286,7 @@
      &                          FORCES(ng)%UWind)
         CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          FORCES(ng)%UWind)
+     &                          FORCES(ng)%VWind)
 #     endif
 #     ifdef DISTRIBUTE
         CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,        &
