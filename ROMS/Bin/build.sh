@@ -5,7 +5,7 @@
 # Copyright (c) 2002-2007 The ROMS/TOMS Group                           :::
 #   Licensed under a MIT/X style license                                :::
 #   See License_ROMS.txt                                                :::
-#::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+#::::::::::::::::::::::::::::::::::::::::::::::::::::: Hernan G. Arango :::
 #                                                                       :::
 # ROMS/TOMS Compiling Script                                            :::
 #                                                                       :::
@@ -23,13 +23,13 @@
 #    user need not maintain separate makefiles, or frequently edit      :::
 #    the makefile, to run separate applications).                       :::
 #                                                                       :::
-# The only pitfall (so far) to this approach is that if the makefile    :::
-# never changes, GNU "make" does not necessarily know to update the     :::
-# dependencies that are written by the "make depend" command into       :::
-# Compilers/MakeDepend. To guard against this a "make depend" step      :::
-# is forced in the script below. Even if the MakeDepend file changes,   :::
-# "make" will only recompile a file if it determines an object is out   :::
-# of date, so there overhead in re-evaluating the dependencies small.   :::
+# An argument to make maybe passed when executing this script.          :::
+#                                                                       :::
+# For example, you can use the -j flag to compile in parallel:          :::
+#                                                                       :::
+#    ./build.sh -j                                                      :::
+# or                                                                    :::
+#    ./build.sh -j4                                                     :::
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
@@ -82,22 +82,21 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 # Put the f90 files in a project specific Build directory to avoid conflict
 # with other projects. 
 
- setenv SCRATCH_DIR         ${MY_PROJECT_DIR}/Build
+ setenv SCRATCH_DIR         ${MY_PROJECT_DIR}/Forward/Build
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific cdoe from the appropriate place.
 
  cd ${MY_ROMS_SRC}
 
-# Force re-evaluting the make dependencies. 
-#
-# WARNING: Be aware that if you compile two different applications at once
-# models at once you might have an inconsistent MakeDepend file).
+# Remove build directory. 
 
  make clean
- make depend
 
 # Compile (the binary will go to BINDIR set above).  
-# (-j option distributes compilation to multiple processors)
 
- make
+if ( ($#argv) == 0 ) then
+  make
+else
+  make $argv[1]
+endif
