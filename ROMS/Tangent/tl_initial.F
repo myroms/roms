@@ -624,7 +624,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef TIMELESS_DATA
-      CALL tl_get_once (ng)
+      CALL tl_get_idata (ng)
 # endif
       CALL tl_get_data (ng)
 # ifdef DISTRIBUTE

@@ -949,7 +949,8 @@
 # endif
         gls_fluxb(i)=dt(ng)*gls_fac2*(0.5_r8*(tke(i,j,0,nnew)+          &
      &               tke(i,j,1,nnew)))**(gls_m(ng))*                    &
-     &               (0.5_r8*Hz(i,j,1))**(gls_n(ng)-1.0_r8)*            &
+     &               (0.5_r8*Hz(i,j,1)+Zob_min)**                       &
+     &               (gls_n(ng)-1.0_r8)*                                &
      &               0.5_r8*(Akp(i,j,0)+Akp(i,j,1))
 !
           cff=1.0_r8/BCP(i,N(ng)-1)

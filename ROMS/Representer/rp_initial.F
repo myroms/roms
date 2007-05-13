@@ -492,7 +492,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef TIMELESS_DATA
-      CALL rp_get_once (ng)
+      CALL rp_get_idata (ng)
 # endif
       CALL rp_get_data (ng)
       IF (exit_flag.ne.NoError) RETURN

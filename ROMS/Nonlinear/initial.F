@@ -523,7 +523,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef TIMELESS_DATA
-      CALL get_once (ng)
+      CALL get_idata (ng)
 # endif
       CALL get_data (ng)
 # ifdef DISTRIBUTE

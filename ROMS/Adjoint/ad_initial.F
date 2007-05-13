@@ -535,7 +535,7 @@
 !-----------------------------------------------------------------------
 !
 # ifdef TIMELESS_DATA
-      CALL ad_get_once (ng)
+      CALL ad_get_idata (ng)
 # endif
       CALL ad_get_data (ng)
 #  ifdef DISTRIBUTE
