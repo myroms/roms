@@ -2709,7 +2709,7 @@
 #  ifdef ADJUST_STFLUX
       real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
-      real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),2,NT(ng))
+      real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s_v(LBi:UBi,LBj:UBj,N(ng),2)
 # else
