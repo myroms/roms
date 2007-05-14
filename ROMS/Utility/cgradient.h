@@ -473,7 +473,7 @@
             ioerror=status
             RETURN
           END IF
-        END IF        
+        END IF
 #ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iADM, nConvRitz, 1)
         CALL mp_bcastf (ng, iADM, Ritz, nConvRitz)
@@ -1056,7 +1056,7 @@
      &          a,' <G(',i3.3,'),G(',i3.3,')> = ',1p,e19.12,3x,a,/)
       END IF
 
-      RETURN 
+      RETURN
       END SUBROUTINE cgradient_tile
 
 !
@@ -1291,7 +1291,7 @@
               tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
 # endif
             END DO
-          END DO          
+          END DO
         END DO
       END DO
 
@@ -1307,7 +1307,7 @@
 #  ifdef MASKING
             tl_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Lout,itrc)*rmask(i,j)
 #  endif
-          END DO          
+          END DO
         END DO
       END DO
 # endif
@@ -1830,7 +1830,7 @@
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
      &                  nl_tflux, nl_tflux, tl_tflux,                   &
-# endif 
+# endif
      &                  nl_t, nl_t, tl_t,                               &
      &                  nl_u, nl_u, tl_u,                               &
      &                  nl_v, nl_v, tl_v,                               &
@@ -2005,7 +2005,7 @@
         END IF
 !
 !  Read in each previous gradient state solutions, G(0) to G(k), and
-!  compute its associated dot angaint orthogonalized G(k+1). Again, 
+!  compute its associated dot angaint orthogonalized G(k+1). Again,
 !  each gradient solution is loaded into TANGENT LINEAR STATE ARRAYS
 !  at index Lwrk.
 !
@@ -2123,7 +2123,7 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lwrk, Lnew
 
-      real(r8), intent(in) :: betaK      
+      real(r8), intent(in) :: betaK
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -2537,7 +2537,7 @@
 #endif
      &                 tl_zeta, ad_zeta)
 !
-!  Read the converged Hessian eigenvectors into NLM state array, 
+!  Read the converged Hessian eigenvectors into NLM state array,
 !  index L1.
 !
       DO nvec=1,nConvRitz
@@ -2594,7 +2594,7 @@
 !      -1= Inverse Hessian
 !       2= Hessian square root
 !      -2= Inverse Hessian square root
-!      
+!
 !    tl_var(Lwrk) = fac1 * tl_var(Lwrk) + fac2 * nl_var(L1)
 !
         fac1=1.0_r8
@@ -2603,9 +2603,9 @@
           fac2=(Ritz(nvec)-1.0_r8)*Dotprod(0)
         ELSE IF (Lscale.eq.-1) THEN
           fac2=(1.0_r8/Ritz(nvec)-1.0_r8)*Dotprod(0)
-        ELSE IF (Lscale.eq.1) THEN
+        ELSE IF (Lscale.eq.2) THEN
           fac2=(SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
-        ELSE IF (Lscale.eq.-1) THEN
+        ELSE IF (Lscale.eq.-2) THEN
           fac2=(1.0_r8/SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
         END IF
 
@@ -2709,7 +2709,7 @@
 #  ifdef ADJUST_STFLUX
       real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
-      real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
+      real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),2,NT(ng))
       real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s_v(LBi:UBi,LBj:UBj,N(ng),2)
 # else
@@ -2754,32 +2754,34 @@
             exit_flag=2
             ioerror=status
             RETURN
-          END IF            
+          END IF
         END IF
       ELSE
         ncid=ncfileid
       END IF
+      IF (InpThread) THEN
 #ifndef SOLVE3D
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
 #endif
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
 #ifdef ADJUST_WSTRESS
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
 #endif
 #ifdef SOLVE3D
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
-      DO itrc=1,NT(ng)
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),          &
-     &                      vid(idTvar(itrc)))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
+        DO itrc=1,NT(ng)
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),        &
+     &                        vid(idTvar(itrc)))
 # ifdef ADJUST_STFLUX
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),          &
-     &                      vid(idTsur(itrc)))
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),        &
+     &                        vid(idTsur(itrc)))
 # endif
-      END DO
+        END DO
 #endif
+      END IF
       DO i=1,4
         Vsize(i)=0
       END DO
@@ -3028,7 +3030,7 @@
 !
         IF (varid(1).eq.0) THEN
           status=nf_inq_varid(ncMODid(ng),'outer',varid(1))
-        END IF        
+        END IF
         status=nf_put_var1_int(ncMODid(ng),varid(1),1,outer)
         IF (status.ne.nf_noerr) THEN
           WRITE (stdout,10) 'outer', TRIM(MODname(ng))

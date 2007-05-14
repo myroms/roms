@@ -62,14 +62,14 @@ $(if $(filter $(MAKE_VERSION),$(NEED_VERSION)),,        \
 ROMS_APPLICATION ?= UPWELLING
 
 #  If application header files is not located in "ROMS/Include",
-#  provide an alternate directory FULL path.
+#  provide an alternate directory FULL PATH.
 
 MY_HEADER_DIR ?=
 
 #  If your application requires analytical expressions and they are not
-#  located in "ROMS/Functionals", provide an alternate directory FULL
-#  path. Notice that a set analytical expressions templates can be found
-#  in "User/Functionals".
+#  located in "ROMS/Functionals", provide an alternate directory.
+#  Notice that a set analytical expressions templates can be found in
+#  "User/Functionals".
 
 MY_ANALYTICAL_DIR ?=
 

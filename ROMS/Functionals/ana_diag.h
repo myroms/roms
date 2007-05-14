@@ -26,10 +26,12 @@
 !
       CALL ana_diag_tile (ng, model, Istr, Iend, Jstr, Jend,            &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    OCEAN(ng) % ubar,                             &
-     &                    OCEAN(ng) % vbar,                             &
+#ifdef SOLVE3D
      &                    OCEAN(ng) % u,                                &
-     &                    OCEAN(ng) % v)
+     &                    OCEAN(ng) % v,                                &
+#endif
+     &                    OCEAN(ng) % ubar,                             &
+     &                    OCEAN(ng) % vbar)
 !
 ! Set analytical header file name used.
 !
@@ -43,7 +45,10 @@
 !***********************************************************************
       SUBROUTINE ana_diag_tile (ng, model, Istr, Iend, Jstr, Jend,      &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          ubar, vbar, u, v)
+#ifdef SOLVE3D
+     &                          u, v,                                   &
+#endif
+     &                          ubar, vbar)
 !***********************************************************************
 !
       USE mod_param
@@ -59,15 +64,19 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
-      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
+# ifdef SOLVE3D
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
+# endif
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
 #else
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
+# ifdef SOLVE3D
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
+# endif
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
 #endif
 !
 !  Local variable declarations.

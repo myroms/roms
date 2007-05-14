@@ -1,5 +1,6 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 #
+# svn $Id$
 #######################################################################
 # Copyright (c) 2002-2007 The ROMS/TOMS Group                         #
 #   Licensed under a MIT/X style license                              #

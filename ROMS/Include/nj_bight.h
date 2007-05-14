@@ -90,6 +90,7 @@
 
 #undef SG_BBL
 #ifdef SG_BBL
+# define SG_CALC_UB
 # define SG_CALC_ZNOT
 # define ANA_SEDIMENT
 # define ANA_WWAVE

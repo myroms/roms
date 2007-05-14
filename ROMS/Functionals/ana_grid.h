@@ -255,7 +255,7 @@
       depth=47.5_r8
       f0=9.25E-04_r8
       beta=0.0_r8
-#elif defined CANYON_A || defined CANYON_B
+#elif defined CANYON
       Xsize=128.0E+03_r8
       Esize=96.0E+03_r8
       depth=4000.0_r8
@@ -415,7 +415,7 @@
 !  Determine I- and J-ranges for computing grid data.  This ranges
 !  are special in periodic boundary conditons since periodicity cannot
 !  be imposed in the grid coordinates.
-! 
+!
       IF (WESTERN_EDGE) THEN
         Imin=Istr-1
       ELSE
@@ -487,7 +487,7 @@
           xu(i,j)=xp(i,j)
           yu(i,j)=yr(i,j)
           xv(i,j)=xr(i,j)
-          yv(i,j)=yp(i,j)         
+          yv(i,j)=yp(i,j)
         END DO
       END DO
 #else
@@ -528,7 +528,7 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, .FALSE., .FALSE.,               &
      &                    yp, yr, yu, yv)
-# endif   
+# endif
 #endif
 !
 !-----------------------------------------------------------------------
@@ -742,7 +742,7 @@
         DO i=IstrR,IendR
           h(i,j)=5.0_r8+(Xsize-xr(i,j))/Xsize*5.0_r8
         END DO
-      END DO 
+      END DO
 #elif defined LAB_CANYON
       DO j=JstrR,JendR
         DO i=IstrR,IendR
@@ -840,7 +840,7 @@
         DO i=IstrR,IendR
           h(i,j)=10.0_r8+0.4040_r8*REAL(i,r8)/REAL(Lm(ng)+1,r8)
         END DO
-      END DO 
+      END DO
 #elif defined UPWELLING
       DO j=JstrR,JendR
         IF (j.le.Mm(ng)/2) THEN

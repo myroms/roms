@@ -187,7 +187,7 @@
         DO i=IstrR,IendR
           Hwave(i,j)=0.5_r8
           Dwave(i,j)=wdir
-          Pwave(i,j)=8.0_r8
+          Pwave_bot(i,j)=8.0_r8
         END DO
       END DO
 #elif defined LAKE_SIGNELL
@@ -219,7 +219,7 @@
         DO i=IstrR,IendR
           Hwave(i,j)=0.12_r8
           Dwave(i,j)=wdir-angler(i,j)
-          Pwave(i,j)=10.0_r8
+          Pwave_bot(i,j)=10.0_r8
         END DO
       END DO
 #elif defined SED_TOY
