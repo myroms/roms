@@ -139,10 +139,10 @@
         CALL opencdf (ng, nFfiles(ng), FRCname(1,ng), ncfile, N(ng),    &
      &                idRxpo, Nrec, nvd, Vsize)
         Nsrc(ng)=Vsize(1)
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, Nsrc(ng), 1)
-#  endif
       END IF
+#  ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, Nsrc(ng), 1)
+#  endif
 # else
 !
 !  Set number of point sources to maximum number of analytical sources.
