@@ -36,7 +36,7 @@
       USE mod_forces
       USE mod_kinds
 !
-      include 'wrf_io_flags.h'
+#include "wrf_io_flags.h"
 !
 !  Imported variable definitions.
 !
@@ -48,7 +48,6 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: MyStatus, RealType
 
-      integer :: ng = 1             ! Assume coupling the top-level nest
       integer :: DomainDesc = 0
 
       integer :: DomainStr(2), DomainEnd(2)
@@ -280,7 +279,7 @@
 !
       implicit none
 !
-      include 'wrf_io_flags.h'
+#include "wrf_io_flags.h"
 !
 !  Imported variable declarations.
 !
@@ -562,6 +561,3 @@
 
       STOP
       END SUBROUTINE finalize_atmos_coupling
-#endif
-
-      END MODULE atm_coupler_mod

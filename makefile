@@ -464,5 +464,3 @@ clean:
 
 print-%:
 	@echo $* = $($*)
-
-# DO NOT DELETE

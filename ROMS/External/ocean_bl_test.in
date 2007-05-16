@@ -72,8 +72,8 @@
 
 ! Time-Stepping parameters.
 
-      NTIMES == 1440
-          DT == 300.0d0
+      NTIMES == 2880
+          DT == 150.0d0
      NDTFAST == 30
 
 ! Model iteration loops parameters.
@@ -95,7 +95,7 @@
 
        NRREC == 0
    LcycleRST == T
-        NRST == 144
+        NRST == 288
         NSTA == 1
         NFLT == 1
        NINFO == 1
@@ -103,22 +103,22 @@
 ! Output history, average, diagnostic files parameters.
 
      LDEFOUT == T
-        NHIS == 144
+        NHIS == 288
      NDEFHIS == 0
       NTSAVG == 1
-        NAVG == 144
+        NAVG == 288
      NDEFAVG == 0
       NTSDIA == 1
-        NDIA == 144
+        NDIA == 288
      NDEFDIA == 0
 
 ! Output tangent linear and adjoint models parameters.
 
    LcycleTLM == F
-        NTLM == 144
+        NTLM == 288
      NDEFTLM == 0
    LcycleADJ == F
-        NADJ == 144
+        NADJ == 288
      NDEFADJ == 0
 
 ! Output check pointing GST restart parameters.
@@ -449,7 +449,7 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 ! Input ASCII parameter filenames.
 
      APARNAM =  ROMS/External/s4dvar.in
-     SPOSNAM =  ROMS/External/stations.in
+     SPOSNAM =  ROMS/External/stations_bl_test.in
      FPOSNAM =  ROMS/External/floats.in
      BPARNAM =  ROMS/External/bioFasham.in
      SPARNAM =  ROMS/External/sediment.in

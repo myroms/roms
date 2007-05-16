@@ -15,7 +15,6 @@
 #define UV_ADV
 #define UV_SADVECTION
 #define UV_COR
-#define UV_QDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS
@@ -73,6 +72,8 @@
 # define SG_CALC_ZNOT
 # define ANA_SEDIMENT
 # define ANA_WWAVE
+#else
+# define UV_QDRAG
 #endif
 #define ANA_GRID
 #define ANA_INITIAL
