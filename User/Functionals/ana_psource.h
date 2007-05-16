@@ -91,6 +91,9 @@
 #ifdef SEDIMENT
       USE mod_sediment
 #endif
+#ifndef ASSUMED_SHAPE
+      USE mod_sources, ONLY : Msrc
+#endif
 !
 !  Imported variable declarations.
 !
@@ -129,10 +132,10 @@
 #  endif
 # endif
 #else
-      logical, intent(out) :: Lsrc(Nsrc,NT(ng))
+      logical, intent(out) :: Lsrc(Msrc,NT(ng))
 
-      integer, intent(out) :: Isrc(Nsrc)
-      integer, intent(out) :: Jsrc(Nsrc)
+      integer, intent(out) :: Isrc(Msrc)
+      integer, intent(out) :: Jsrc(Msrc)
 
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
@@ -146,15 +149,15 @@
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
 
-      real(r8), intent(out) :: Dsrc(Nsrc)
-      real(r8), intent(out) :: Qbar(Nsrc)
+      real(r8), intent(out) :: Dsrc(Msrc)
+      real(r8), intent(out) :: Qbar(Msrc)
 # ifdef SOLVE3D
 #  if defined UV_PSOURCE || defined Q_PSOURCE
-      real(r8), intent(out) :: Qshape(Nsrc,N(ng))
-      real(r8), intent(out) :: Qsrc(Nsrc,N(ng))
+      real(r8), intent(out) :: Qshape(Msrc,N(ng))
+      real(r8), intent(out) :: Qsrc(Msrc,N(ng))
 #  endif
 #  ifdef TS_PSOURCE
-      real(r8), intent(out) :: Tsrc(Nsrc,N(ng),NT(ng))
+      real(r8), intent(out) :: Tsrc(Msrc,N(ng),NT(ng))
 #  endif
 # endif
 #endif
