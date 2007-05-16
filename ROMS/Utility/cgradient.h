@@ -262,11 +262,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-#ifdef DISTRIBUTE
 !
+#ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
 #endif
+      USE state_dotprod_mod, ONLY : state_dotprod
 !
 !  Imported variable declarations.
 !
@@ -1603,6 +1603,9 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE state_addition_mod, ONLY : state_addition
+      USE state_dotprod_mod, ONLY : state_dotprod
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
@@ -2366,12 +2369,13 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_iounits
-#ifdef DISTRIBUTE
 !
+#ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_reduce
 #endif
-!
-      implicit none
+      USE state_addition_mod, ONLY : state_addition
+      USE state_copy_mod, ONLY : state_copy
+      USE state_dotprod_mod, ONLY : state_dotprod
 !
 !  Imported variable declarations.
 !

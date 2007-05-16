@@ -23,20 +23,58 @@
 #    user need not maintain separate makefiles, or frequently edit      :::
 #    the makefile, to run separate applications).                       :::
 #                                                                       :::
-# An argument to make maybe passed when executing this script.          :::
+# Usage:                                                                :::
 #                                                                       :::
-# For example, you can use the -j flag to compile in parallel:          :::
+#    ./build.sh [options]                                               :::
 #                                                                       :::
-#    ./build.sh -j       (compile using all available CPUs)             :::
-# or                                                                    :::
-#    ./build.sh -j4      (compile using 4 CPUs)                         :::
-# or                                                                    :::
-#    ./build.sh          (serial)                                       :::
+# Options:                                                              :::
+#                                                                       :::
+#    -j [N]      Compile in parallel using N CPUs                       :::
+#                  omit argument for all available CPUs                 :::
+#    -noclean    Do not clean already compiled objects                  :::
 #                                                                       :::
 # Notice that sometimes the parallel compilation fail to find MPI       :::
 # include file "mpif.h".                                                :::
 #                                                                       :::
 #::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+set parallel = 0
+set clean = 1
+
+while ( ($#argv) > 0 )
+  switch ($1)
+    case "-noclean"
+      shift
+      set clean = 0
+    breaksw
+
+    case "-j"
+      shift
+      set parallel = 1
+      if (`echo $1 | grep -P '^\d+$'` != "" ) then
+        set NCPUS = "-j $1"
+        echo "$NCPUS"
+        shift
+      else
+        set NCPUS = "-j"
+      endif
+    breaksw
+
+    case "-*":
+      echo ""
+      echo "$0 : Unknonw option [ $1 ]"
+      echo ""
+      echo "Available Options:"
+      echo ""
+      echo "-j [N]      Compile in parallel using N CPUs"
+      echo "              omit argument for all avaliable CPUs"
+      echo "-noclean    Do not clean already compiled objects"
+      echo ""
+      exit 1
+    breaksw
+
+  endsw
+end
 
 # Set the CPP option defining the particular application. This will
 # determine the name of the ".h" header file with the application 
@@ -96,12 +134,14 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 
 # Remove build directory. 
 
- make clean
+if ( $clean == 1 ) then
+  make clean
+endif
 
 # Compile (the binary will go to BINDIR set above).  
 
-if ( ($#argv) == 0 ) then
-  make
+if ( $parallel == 1 ) then
+  make $NCPUS
 else
-  make $argv[1]
+  make
 endif

@@ -1,20 +1,5 @@
 #include "cppdefs.h"
-
-      SUBROUTINE state_initialize (ng, Istr, Iend, Jstr, Jend,          &
-     &                             LBi, UBi, LBj, UBj,                  &
-     &                             Lout, fac,                           &
-#ifdef ADJUST_WSTRESS
-     &                             s_sustr, s_svstr,                    &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                             s_stflx,                             &
-# endif
-     &                             s_t, s_u, s_v,                       &
-#else
-     &                             s_ubar, s_vbar,                      &
-#endif
-     &                             s_zeta)
+      MODULE state_initialize_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -31,9 +16,34 @@
 !                                                                      !
 !-----------------------------------------------------------------------
 !
-      USE mod_param
-!
       implicit none
+
+      PUBLIC  :: state_initialize
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE state_initialize (ng, Istr, Iend, Jstr, Jend,          &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             Lout, fac,                           &
+#ifdef MASKING
+     &                             rmask, umask, vmask,                 &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                             s_sustr, s_svstr,                    &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                             s_stflx,                             &
+# endif
+     &                             s_t, s_u, s_v,                       &
+#else
+     &                             s_ubar, s_vbar,                      &
+#endif
+     &                             s_zeta)
+!***********************************************************************
+!
+      USE mod_param
 !
 !  Imported variable declarations.
 !
@@ -43,22 +53,53 @@
 !
       real(r8), intent(in) :: fac
 !
-#ifdef ADJUST_WSTRESS
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s_sustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s_svstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s_stflux(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: s_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: s_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: s_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: s_zeta(LBi:,LBj:,:)
+
+#else
+
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s_sustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: s_svstr(LBi:UBi,LBj:UBj,2)
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s_stflux(LBi:UBi,LBj:UBj,2,NT(ng))
 # endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s_stflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s_v(LBi:UBi,LBj:UBj,N(ng),2)
-#else
+# else
       real(r8), intent(inout) :: s_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: s_vbar(LBi:UBi,LBj:UBj,3)
-#endif
+# endif
       real(r8), intent(inout) :: s_zeta(LBi:UBi,LBj:UBj,3)
+#endif
 !
 !  Local variable declarations.
 !
@@ -161,3 +202,5 @@
 
       RETURN
       END SUBROUTINE state_initialize
+
+      END MODULE state_initialize_mod

@@ -1,27 +1,5 @@
 #include "cppdefs.h"
-
-      SUBROUTINE state_dotprod (ng, model, Istr, Iend, Jstr, Jend,      &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          NstateVars, DotProd,                    &
-#ifdef MASKING
-     &                          rmask, umask, vmask,                    &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                          s1_sustr, s2_sustr,                     &
-     &                          s1_svstr, s2_svstr,                     &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                          s1_stflx, s2_stflx,                     &
-# endif
-     &                          s1_t, s2_t,                             &
-     &                          s1_u, s2_u,                             &
-     &                          s1_v, s2_v,                             &
-#else
-     &                          s1_ubar, s2_ubar,                       &
-     &                          s1_vbar, s2_vbar,                       &
-#endif
-     &                          s1_zeta, s2_zeta)
+      MODULE state_dotprod_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -56,6 +34,37 @@
 !                                                                      !
 !-----------------------------------------------------------------------
 !
+      implicit none
+
+      PUBLIC  :: state_dotprod
+
+      CONTAINS
+!
+!***********************************************************************
+      SUBROUTINE state_dotprod (ng, model, Istr, Iend, Jstr, Jend,      &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NstateVars, DotProd,                    &
+#ifdef MASKING
+     &                          rmask, umask, vmask,                    &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                          s1_sustr, s2_sustr,                     &
+     &                          s1_svstr, s2_svstr,                     &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                          s1_stflx, s2_stflx,                     &
+# endif
+     &                          s1_t, s2_t,                             &
+     &                          s1_u, s2_u,                             &
+     &                          s1_v, s2_v,                             &
+#else
+     &                          s1_ubar, s2_ubar,                       &
+     &                          s1_vbar, s2_vbar,                       &
+#endif
+     &                          s1_zeta, s2_zeta)
+!***********************************************************************
+!
       USE mod_param
       USE mod_parallel
       USE mod_ncparam
@@ -64,44 +73,77 @@
       USE distribute_mod, ONLY : mp_reduce
 #endif
 !
-      implicit none
-!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: NstateVars
 !
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: s1_sustr(LBi:,LBj:)
+      real(r8), intent(in) :: s2_sustr(LBi:,LBj:)
+      real(r8), intent(in) :: s1_svstr(LBi:,LBj:)
+      real(r8), intent(in) :: s2_svstr(LBi:,LBj:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: s1_stflx(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_stflx(LBi:,LBj:,:)
+#  endif
+      real(r8), intent(in) :: s1_t(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s2_t(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s1_u(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_u(LBi:,LBj:,:)
+      real(r8), intent(in) :: s1_v(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_v(LBi:,LBj:,:)
+# else
+      real(r8), intent(in) :: s1_ubar(LBi:,LBj:)
+      real(r8), intent(in) :: s2_ubar(LBi:,LBj:)
+      real(r8), intent(in) :: s1_vbar(LBi:,LBj:)
+      real(r8), intent(in) :: s2_vbar(LBi:,LBj:)
+# endif
+      real(r8), intent(in) :: s1_zeta(LBi:,LBj:)
+      real(r8), intent(in) :: s2_zeta(LBi:,LBj:)
+
+#else
+
+# ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-#endif
-#ifdef ADJUST_WSTRESS
+# endif
+# ifdef ADJUST_WSTRESS
       real(r8), intent(in) :: s1_sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s1_svstr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_svstr(LBi:UBi,LBj:UBj)
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
       real(r8), intent(in) :: s1_stflx(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(in) :: s2_stflx(LBi:UBi,LBj:UBj,NT(ng))
-# endif
+#  endif
       real(r8), intent(in) :: s1_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: s2_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: s1_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: s2_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: s1_v(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: s2_v(LBi:UBi,LBj:UBj,N(ng))
-#else
+# else
       real(r8), intent(in) :: s1_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_ubar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s1_vbar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_vbar(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(in) :: s1_zeta(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: s2_zeta(LBi:UBi,LBj:UBj)
+#endif
 !
       real(r8), intent(out), dimension(0:NstateVars) :: DotProd
 !
@@ -292,3 +334,5 @@
 
       RETURN
       END SUBROUTINE state_dotprod
+
+      END MODULE state_dotprod_mod

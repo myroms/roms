@@ -381,7 +381,7 @@
           FOURDVAR(ng)%CostGradDot(i)=0.0_r8
         END DO
       END IF
-      WRITE (stdout,10)
+      IF (Master) WRITE (stdout,10)
  10   FORMAT (/,' <<<< Descent Algorithm >>>>',/)
 !
 !  Estimate the Hessian and save the starting vector in ad_*(Lold).
@@ -650,7 +650,7 @@
             cg_RitzErr(i,outLoop)=cg_RitzErr(i,outLoop)/                &
      &                            cg_Ritz(i,outLoop)
           END DO
-
+          PRINT *, 'Entering hessian_evecs', MyRank
           Lwrk=2
           Linp=1
           Lout=2
@@ -686,7 +686,9 @@
 # endif
      &                        ad_zeta)
 
-          IF (nConvRitz.eq.0) THEN
+          PRINT *, 'Exiting hessian_evecs', MyRank
+
+          IF (Master.and.(nConvRitz.eq.0)) THEN
             PRINT *,' No converged Hesssian eigenvectors found.'
           END IF
         END IF
@@ -763,15 +765,15 @@
  20       FORMAT (1x,'(',i3.3,',',i3.3,'): ',                           &
      &            'Gnorm  = ',1p,e14.7)
         END IF
-        WRITE (stdout,30) outLoop, innLoop,                             &
-     &                    cg_Greduc(innLoop,outLoop),                   &
-     &                    outLoop, innLoop,                             &
-     &                    cg_delta(innLoop,outLoop)
- 30     FORMAT (1x,'(',i3.3,',',i3.3,'): ',                             &
-     &          'Greduc = ',1p,e14.7,/,                                 &
-     &          1x,'(',i3.3,',',i3.3,'): ',                             &
-     &          'delta  = ',1p,e14.7)
         IF (innLoop.gt.0) THEN
+          WRITE (stdout,30) outLoop, innLoop,                           &
+     &                      cg_Greduc(innLoop,outLoop),                 &
+     &                      outLoop, innLoop,                           &
+     &                      cg_delta(innLoop,outLoop)
+ 30       FORMAT (1x,'(',i3.3,',',i3.3,'): ',                           &
+     &            'Greduc = ',1p,e14.7,/,                               &
+     &            1x,'(',i3.3,',',i3.3,'): ',                           &
+     &            'delta  = ',1p,e14.7)
           WRITE (stdout,40) RitzMaxErr
  40       FORMAT (/,'Ritz Eigenvalues and relative accuracy: ',         &
      &             'RitzMaxErr = ',1p,e14.7,/)
@@ -852,6 +854,10 @@
       USE mod_ncparam
       USE mod_scalars
       USE mod_iounits
+!
+      USE state_addition_mod, ONLY : state_addition
+      USE state_copy_mod, ONLY : state_copy
+      USE state_initialize_mod, ONLY : state_initialize
 !
 !  Imported variable declarations.
 !
@@ -1134,7 +1140,7 @@
      &                         ad_zeta)
 !
 !  Read in each previous gradient state solutions, g(0) to g(k), and
-!  compute its associated dot angaint current g(k+1).
+!  compute its associated dot against current g(k+1).
 !
         DO rec=1,innLoop
 !
@@ -1350,30 +1356,35 @@
             RETURN
           END IF            
         END IF
+#ifdef DISTRIBUTE
+
+#endif
       ELSE
         ncid=ncfileid
       END IF
+      IF (InpThread) THEN
 #ifndef SOLVE3D
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
 #endif
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
 #ifdef ADJUST_WSTRESS
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
 #endif
 #ifdef SOLVE3D
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
-      status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
-      DO itrc=1,NT(ng)
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),          &
-     &                      vid(idTvar(itrc)))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
+        status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
+        DO itrc=1,NT(ng)
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),        &
+     &                        vid(idTvar(itrc)))
 # ifdef ADJUST_STFLUX
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),          &
-     &                      vid(idTsur(itrc)))
+          status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),        &
+     &                        vid(idTsur(itrc)))
 # endif
-      END DO
+        END DO
 #endif
+      END IF
       DO i=1,4
         Vsize(i)=0
       END DO
@@ -1861,6 +1872,8 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE state_dotprod_mod, ONLY : state_dotprod
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
@@ -2216,6 +2229,10 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
+!
+      USE state_addition_mod, ONLY : state_addition
+      USE state_dotprod_mod, ONLY : state_dotprod
+      USE state_scale_mod, ONLY : state_scale
 !
 !  Imported variable declarations.
 !
@@ -2785,6 +2802,9 @@
       USE mod_ncparam
       USE mod_scalars
 !
+      USE state_addition_mod, ONLY : state_addition
+      USE state_dotprod_mod, ONLY : state_dotprod
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
@@ -3062,6 +3082,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+!
+      USE state_addition_mod, ONLY : state_addition
+      USE state_dotprod_mod, ONLY : state_dotprod
+      USE state_initialize_mod, ONLY : state_initialize
+      USE state_scale_mod, ONLY : state_scale
 !
 !  Imported variable declarations.
 !

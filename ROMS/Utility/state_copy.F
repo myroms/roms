@@ -1,5 +1,26 @@
 #include "cppdefs.h"
+      MODULE state_copy_mod
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  This routine makes a copies of the model state as follows:          !
+!                                                                      !
+!      s1_var(...,Lout) = s2_var(...,Linp)                             !
+!                                                                      !
+!-----------------------------------------------------------------------
+!
+      implicit none
 
+      PUBLIC  :: state_copy
+
+      CONTAINS
+!
+!***********************************************************************
       SUBROUTINE state_copy (ng, Istr, Iend, Jstr, Jend,                &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Linp, Lout,                                &
@@ -19,23 +40,9 @@
      &                       s1_vbar, s2_vbar,                          &
 #endif
      &                       s1_zeta, s2_zeta)
-!
-!svn $Id$
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!=======================================================================
-!                                                                      !
-!  This routine makes a copies of the model state as follows:          !
-!                                                                      !
-!      s1_var(...,Lout) = s2_var(...,Linp)                             !
-!                                                                      !
-!-----------------------------------------------------------------------
+!***********************************************************************
 !
       USE mod_param
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -43,38 +50,75 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 !
-#ifdef ADJUST_WSTRESS
+#ifdef ASSUMED_SHAPE
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s2_sustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s2_svstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s2_stflx(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: s2_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: s2_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s2_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: s2_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s2_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: s2_zeta(LBi:,LBj:,:)
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s1_sustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s1_svstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s1_stflx(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: s1_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: s1_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s1_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: s1_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s1_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: s1_zeta(LBi:,LBj:,:)
+
+#else
+
+# ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s2_sustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: s2_svstr(LBi:UBi,LBj:UBj,2)
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s2_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
 # endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s2_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: s2_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s2_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s2_v(LBi:UBi,LBj:UBj,N(ng),2)
-#else
+# else
       real(r8), intent(inout) :: s2_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: s2_vbar(LBi:UBi,LBj:UBj,3)
-#endif
+# endif
       real(r8), intent(inout) :: s2_zeta(LBi:UBi,LBj:UBj,3)
-#ifdef ADJUST_WSTRESS
+# ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s1_sustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: s1_svstr(LBi:UBi,LBj:UBj,2)
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s1_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
 # endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s1_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: s1_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s1_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s1_v(LBi:UBi,LBj:UBj,N(ng),2)
-#else
+# else
       real(r8), intent(inout) :: s1_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: s1_vbar(LBi:UBi,LBj:UBj,3)
-#endif
+# endif
       real(r8), intent(inout) :: s1_zeta(LBi:UBi,LBj:UBj,3)
+#endif
 !
 !  Local variable declarations.
 !
@@ -179,3 +223,5 @@
 
       RETURN
       END SUBROUTINE state_copy
+
+      END MODULE state_copy_mod

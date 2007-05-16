@@ -1,5 +1,29 @@
 #include "cppdefs.h"
+      MODULE state_addition_mod
+!
+!svn $Id$
+!================================================== Hernan G. Arango ===
+!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!    Licensed under a MIT/X style license                              !
+!    See License_ROMS.txt                                              !
+!=======================================================================
+!                                                                      !
+!  This routine computes the following model state addition:           !
+!                                                                      !
+!      s1_var(...,Lout) = fac1 * s1_var(...,Linp1) +                   !
+!                         fac2 * s2_var(...,Linp2)                     !
+!                                                                      !
+!  where alpha and beta are scalars.                                   !
+!                                                                      !
+!-----------------------------------------------------------------------
+!
+      implicit none
 
+      PUBLIC  :: state_addition
+
+      CONTAINS
+!
+!***********************************************************************
       SUBROUTINE state_addition (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Linp1, Linp2, Lout,                    &
@@ -23,26 +47,9 @@
      &                           s1_vbar, s2_vbar,                      &
 #endif
      &                           s1_zeta, s2_zeta)
-!
-!svn $Id$
-!================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!=======================================================================
-!                                                                      !
-!  This routine computes the following model state addition:           !
-!                                                                      !
-!      s1_var(...,Lout) = fac1 * s1_var(...,Linp1) +                   !
-!                         fac2 * s2_var(...,Linp2)                     !
-!                                                                      !
-!  where alpha and beta are scalars.                                   !
-!                                                                      !
-!-----------------------------------------------------------------------
+!***********************************************************************
 !
       USE mod_param
-!
-      implicit none
 !
 !  Imported variable declarations.
 !
@@ -52,44 +59,87 @@
 !
       real(r8), intent(in) :: fac1, fac2
 !
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s2_sustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s2_svstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s2_stflx(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: s2_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: s2_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s2_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: s2_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s2_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: s2_zeta(LBi:,LBj:,:)
+
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: s1_sustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s1_svstr(LBi:,LBj:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s1_stflx(LBi:,LBj:,:,:)
+#  endif
+      real(r8), intent(inout) :: s1_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: s1_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s1_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: s1_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s1_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: s1_zeta(LBi:,LBj:,:)
+
+#else
+
+# ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
-#endif
-#ifdef ADJUST_WSTRESS
+# endif
+# ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s2_sustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: s2_svstr(LBi:UBi,LBj:UBj,2)
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s2_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
 # endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s2_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: s2_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s2_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s2_v(LBi:UBi,LBj:UBj,N(ng),2)
-#else
+# else
       real(r8), intent(inout) :: s2_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: s2_vbar(LBi:UBi,LBj:UBj,3)
-#endif
+# endif
       real(r8), intent(inout) :: s2_zeta(LBi:UBi,LBj:UBj,3)
 
-#ifdef ADJUST_WSTRESS
+# ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s1_sustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: s1_svstr(LBi:UBi,LBj:UBj,2)
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s1_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
 # endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: s1_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
       real(r8), intent(inout) :: s1_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s1_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: s1_v(LBi:UBi,LBj:UBj,N(ng),2)
-#else
+# else
       real(r8), intent(inout) :: s1_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: s1_vbar(LBi:UBi,LBj:UBj,3)
-#endif
+# endif
       real(r8), intent(inout) :: s1_zeta(LBi:UBi,LBj:UBj,3)
+#endif
 !
 !  Local variable declarations.
 !
@@ -230,3 +280,5 @@
 
       RETURN
       END SUBROUTINE state_addition
+
+      END MODULE state_addition_mod
