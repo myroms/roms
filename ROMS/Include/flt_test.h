@@ -25,7 +25,7 @@
 #define ANA_GRID
 #define ANA_INITIAL
 #define ANA_SMFLUX
-#define SOLVE3D
+
 #ifdef SOLVE3D
 # define DJ_GRADPS
 # define TS_A4HADVECTION

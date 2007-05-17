@@ -100,6 +100,19 @@ setenv MY_PROJECT_DIR       ${MY_ROOT_DIR}/Projects/cblast
 
 setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 
+# Set tunable CPP options.
+#
+# Sometimes it is desirable to activate one or more CPP options to run
+# different variants of the same application without modifying its header
+# file. If this is the case, specify each options here using the -D syntax.
+# Notice also that you need to use shell's quoting syntax to enclose the
+# definition.  Both single or double quotes works. For example, to write
+# time-averaged fields set:
+#
+#    setenv MY_CPP_FLAGS "-DAVERAGES"
+
+#setenv MY_CPP_FLAGS "-D"
+
 # Other user defined environmental variables. See the ROMS makefile for
 # details on other options the user might want to set here. 
 

@@ -52,21 +52,21 @@
 !
 #ifdef ASSUMED_SHAPE
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s2_sustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: s2_svstr(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_sustr(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_svstr(LBi:,LBj:,:)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s2_stflx(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s2_stflx(LBi:,LBj:,:,:)
 #  endif
-      real(r8), intent(inout) :: s2_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(inout) :: s2_u(LBi:,LBj:,:,:)
-      real(r8), intent(inout) :: s2_v(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s2_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: s2_u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s2_v(LBi:,LBj:,:,:)
 # else
-      real(r8), intent(inout) :: s2_ubar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: s2_vbar(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_vbar(LBi:,LBj:,:)
 # endif
-      real(r8), intent(inout) :: s2_zeta(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_zeta(LBi:,LBj:,:)
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s1_sustr(LBi:,LBj:,:)
       real(r8), intent(inout) :: s1_svstr(LBi:,LBj:,:)
@@ -87,21 +87,21 @@
 #else
 
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s2_sustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: s2_svstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: s2_sustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: s2_svstr(LBi:UBi,LBj:UBj,2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s2_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(in) :: s2_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
-      real(r8), intent(inout) :: s2_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: s2_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(inout) :: s2_v(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: s2_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(in) :: s2_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: s2_v(LBi:UBi,LBj:UBj,N(ng),2)
 # else
-      real(r8), intent(inout) :: s2_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: s2_vbar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: s2_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: s2_vbar(LBi:UBi,LBj:UBj,3)
 # endif
-      real(r8), intent(inout) :: s2_zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: s2_zeta(LBi:UBi,LBj:UBj,3)
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: s1_sustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(inout) :: s1_svstr(LBi:UBi,LBj:UBj,2)

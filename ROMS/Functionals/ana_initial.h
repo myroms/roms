@@ -402,15 +402,7 @@
           END DO
         END DO
       END DO
-# elif defined CANYON_A
-      DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            t(i,j,k,1,itemp)=T0(ng)
-          END DO
-        END DO
-      END DO
-# elif defined CANYON_B
+# elif defined CANYON
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR

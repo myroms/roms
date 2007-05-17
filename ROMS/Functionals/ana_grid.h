@@ -729,7 +729,7 @@
      &           8.0_r8*EXP(-val1*val1)
         END DO
       END DO
-#elif defined CANYON_A || defined CANYON_B
+#elif defined CANYON
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           val1=32000.0_r8-16000.0_r8*(SIN(pi*xr(i,j)/Xsize))**24

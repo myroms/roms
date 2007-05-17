@@ -163,7 +163,7 @@
 # endif
         END DO
       END DO
-#elif defined CANYON_A || defined CANYON_B
+#elif defined CANYON
       DO j=JstrR,JendR
         DO i=Istr,IendR
           sustr(i,j)=5.0E-05_r8*SIN(2.0_r8*pi*tdays(ng)/10.0_r8)*       &

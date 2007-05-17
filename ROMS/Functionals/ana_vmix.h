@@ -107,7 +107,7 @@
 !  Set vertical viscosity coefficient (m2/s).
 !-----------------------------------------------------------------------
 !
-#if defined CANYON_B
+#if defined CANYON
       DO k=1,N(ng)-1
         DO j=JstrR,JendR
           DO i=IstrR,IendR
@@ -225,7 +225,7 @@
 !  Set vertical diffusion coefficient (m2/s).
 !-----------------------------------------------------------------------
 !
-#if defined CANYON_B
+#if defined CANYON
       DO k=1,N(ng)-1
         DO j=JstrR,JendR
           DO i=IstrR,IendR

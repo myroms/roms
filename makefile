@@ -49,7 +49,7 @@ $(if $(filter $(MAKE_VERSION),$(NEED_VERSION)),,        \
 #  and realistic applications CPP flags. For example, to activate the
 #  upwelling test case (UPWELLING) set:
 #
-#    ROMS_APPLICATION := UPWELLING
+#    ROMS_APPLICATION ?= UPWELLING
 #
 #  Notice that this makefile will include the associated application header
 #  file, which is located either in the "ROMS/Include" or MY_HEADER_DIR
@@ -72,6 +72,17 @@ MY_HEADER_DIR ?=
 #  "User/Functionals".
 
 MY_ANALYTICAL_DIR ?=
+
+#  Sometimes it is desirable to activate one or more CPP options to
+#  run different variants of the same application without modifying
+#  its header file. If this is the case, specify such options here
+#  using the -D syntax.  For example, to write time-averaged fields
+#  set:
+#
+#    MY_CPP_FLAGS ?= -DAVERAGES
+#
+
+MY_CPP_FLAGS ?=
 
 #  Set number of ROMS nested and/or composed grid.  Currently, only
 #  one grid is supported.  This option will be available in the near
@@ -171,7 +182,7 @@ endif
 	cd $(SCRATCH_DIR); $(FC) -c $(FFLAGS) $(notdir $<)
 
 %.f90: %.F
-	$(CPP) $(CPPFLAGS) $< > $*.f90
+	$(CPP) $(CPPFLAGS) $(MY_CPP_FLAGS) $< > $*.f90
 	$(CLEAN) $*.f90
 
 CLEAN := ROMS/Bin/cpp_clean
@@ -216,7 +227,7 @@ define one-compile-rule
 	cd $$(SCRATCH_DIR); $$(FC) -c $$(FFLAGS) $(notdir $2)
 
   $2: $3
-	$$(CPP) $$(CPPFLAGS) $$< > $$@
+	$$(CPP) $$(CPPFLAGS) $$(MY_CPP_FLAGS) $$< > $$@
 	$$(CLEAN) $$@
 
 endef
@@ -307,6 +318,10 @@ else
   SVNREV := $(shell grep Revision ./ROMS/Version | sed 's/.* \([0-9]*\) .*/\1/')
   CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
 endif  
+
+ifdef MY_CPPP_FLAGS
+  CPPFLAGS += $(MY_CPP_FLAGS)
+endif
 
 #--------------------------------------------------------------------------
 #  Build target directories.

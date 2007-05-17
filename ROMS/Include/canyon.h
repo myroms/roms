@@ -8,13 +8,11 @@
 **
 ** Options for an Idealized Canyon.
 **
-** Application flag:   CANNYON
-** Input script:       ocean_cannyon2d.in, ocean_cannyon3d.in
+** Application flag:   CANYON
+** Input script:       ocean_canyon2d.in, ocean_canyon3d.in
 */
 
-#undef SOLVE3D
-
-#ifndef SOLVE3D                   /* Cannyon A, 2D set-up */
+#ifndef SOLVE3D                   /* 2D set-up */
 # define UV_ADV
 # define UV_QDRAG
 # define UV_VIS2
@@ -25,7 +23,7 @@
 # define ANA_GRID
 # define ANA_INITIAL
 # define ANA_SMFLUX
-#else                             /* Cannyon B, 3D set-up */
+#else                             /* 3D set-up */
 # define UV_ADV
 # define UV_COR
 # define UV_QDRAG
