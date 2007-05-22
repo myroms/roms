@@ -5721,6 +5721,11 @@
             Npts=load_l(Nval, Cval, 1, LhessianEV)
           ELSE IF (TRIM(KeyWord).eq.'Lprecond') THEN
             Npts=load_l(Nval, Cval, 1, Lprecond)
+#  if defined WEAK_CONSTRAINT
+            IF ( LhessianEV.and.Lprecond ) THEN
+              LhessianEV=.FALSE.
+            END IF
+#  endif
           ELSE IF (TRIM(KeyWord).eq.'tl_M2diff') THEN
             Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
           ELSE IF (TRIM(KeyWord).eq.'tl_M3diff') THEN

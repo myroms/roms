@@ -256,7 +256,7 @@
 !  computation and needs to be computed once for a particular
 !  application grid.
 !
-        IF (LdefNRM(ng)) THEN
+        IF (LwrtNRM(ng)) THEN
           CALL def_norm (ng)
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,numthreads)

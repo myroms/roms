@@ -3340,7 +3340,7 @@
 !  storage because at this point we are done with the inner loops and do
 !  not need the Lanczos vector stored in it.
 !
-      DO nvec=ingood,1,-1
+      DO nvec=1,ingood
 !
 !  Read in just computed Hessian eigenvectors into adjoint state array
 !  index Lold.

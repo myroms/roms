@@ -607,12 +607,9 @@
 ** LAB_CANYON          Lab Canyon, Polar Coordinates Example                 **
 ** LAKE_SIGNELL        Lake Signell Sediment Test Case                       **
 ** LMD_TEST            Test for LMD and KPP                                  **
-** MUD_TOY             Sediment Mud Test Case                                **
 ** OVERFLOW            Graviational/Overflow Example                         **
-** RIP_CURRENT         Rip Current Test Case                                 **
 ** RIVERPLUME1         River Plume Example 1                                 **
 ** RIVERPLUME2         River plume Example 2 (Hyatt and Signell)             **
-** SANDWAVE            Sand Wave Test Case                                   **
 ** SEAMOUNT            Seamount Example                                      **
 ** SED_TEST1           Suspended Sediment Test in a Channel                  **
 ** SED_TOY             One-dimension (vertical) Sediment Toy                 **
@@ -620,7 +617,6 @@
 ** SOLITON             Equatorial Rossby Wave Example                        **
 ** TEST_CHAN           Sediment Test Channel Case                            **
 ** TEST_HEAD           Sediment Test Headland Case                           **
-** TRENCH              Migrating Trench Sediment Test Case                   **
 ** UPWELLING           Upwelling Example (default)                           **
 ** WEDDELL             Idealized Weddell Sea Shelf Application               **
 ** WINDBASIN           Linear Wind-driven Constant Coriolis Basin            **

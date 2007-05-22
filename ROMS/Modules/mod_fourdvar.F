@@ -122,6 +122,7 @@
         real(r8), allocatable :: zdelta(:)
         real(r8), allocatable :: zbeta(:)
         real(r8), allocatable :: zcglwk(:,:)
+        real(r8), allocatable :: vcglev(:,:)
         real(r8), allocatable :: zgrad0(:)
         real(r8), allocatable :: zqg0(:)
         real(r8) :: zgnorm = 0.0_r8
@@ -480,6 +481,7 @@
 !  Local variable declarations.
 !
       integer :: ng
+      integer :: Nrec, Nritz, nvd, Vsize(4)
 
 # ifdef OBSERVATIONS
       integer :: i, ndims, ngatts, recdim, status, varid
@@ -488,7 +490,10 @@
       real(r8), parameter :: IniVal = 0.0_r8
 
       character (len=20) :: dimnam
-      character (len=80) :: fname
+# endif
+      character (len=80) :: ncfile
+
+# ifdef OBSERVATIONS
 !
 !-----------------------------------------------------------------------
 !  Inquire observations NetCDF and determine the maxumum dimension of
@@ -730,6 +735,9 @@
       allocate ( zcglwk(Mobs,Ninner+1) )
       zcglwk = IniVal
 
+      allocate ( vcglev(Mobs,Ninner) )
+      vcglev = IniVal
+
       allocate ( zgrad0(Mobs) )
       zgrad0 = IniVal
 
@@ -751,6 +759,27 @@
         NstateVar(ng)=3
 #  endif
       END DO
+# endif
+!
+!  Determine the number of Hessian eigenpairs available for
+!  preconditioning.
+!
+# if defined IS4DVAR && !defined LANCZOS
+      IF (Lprecond) THEN
+        Nritz=0
+        DO ng=1,Ngrids
+          IF (InpThread) THEN
+            CALL opencdf (ng, 1, HSSname(ng), ncfile, N(ng), idtime,    &
+     &                    Nrec, nvd, Vsize)
+            Nritz=MAX(Nritz,Vsize(1))
+          END IF
+        END DO
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (1, iNLM, Nritz, 1)
+#  endif
+      END IF
+# else
+      Nritz=Ninner+1
 # endif
 !
 !  Allocate convolution parameters.
@@ -778,7 +807,7 @@
       allocate ( cg_tau(0:Ninner,Nouter) )
       cg_tau = IniVal
 
-      allocate ( Ritz(Ninner+1) )
+      allocate ( Ritz(Nritz) )
       Ritz = IniVal
 
 #  ifdef LANCZOS
