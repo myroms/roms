@@ -148,9 +148,7 @@
 !
 !  Inquire number of threads in parallel region.
 !
-!$OMP PARALLEL SHARED(numthreads)
           numthreads=my_numthreads()
-!$OMP END PARALLEL
           Master=.TRUE.
           InpThread=.TRUE.
           OutThread=.TRUE.

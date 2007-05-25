@@ -478,6 +478,10 @@
         CALL mp_bcasti (ng, iADM, nConvRitz, 1)
         CALL mp_bcastf (ng, iADM, Ritz, nConvRitz)
 #endif
+!
+!  Reset number of eigenpairs to use to specified value.
+!
+        nConvRitz=NritzEV
       END IF
 !
 !-----------------------------------------------------------------------

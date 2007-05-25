@@ -43,52 +43,21 @@
 # Library locations, can be overridden by environment variables.
 #
 
-#      MCT_INCDIR ?= /usr/local/mct/include
-#      MCT_LIBDIR ?= /usr/local/mct/lib
-       MCT_INCDIR ?= $(ROMSHOME)/Lib/MCT/include
-       MCT_LIBDIR ?= $(ROMSHOME)/Lib/MCT/lib
+       MCT_INCDIR ?= /usr/local/mct/include
+       MCT_LIBDIR ?= /usr/local/mct/lib
     NETCDF_INCDIR ?= /opt/pgisoft/netcdf/include
     NETCDF_LIBDIR ?= /opt/pgisoft/netcdf/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
-#            LIBS := -L$(NETCDF_LIBDIR) -lnetcdf -lgmalloc
 
 ifdef USE_ARPACK
  ifdef USE_MPI
-#  PARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
-   PARPACK_LIBDIR ?= $(ROMSHOME)/Lib
-  ifdef USE_MPIF90
-   ifdef USE_DEBUG
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_daggoo
-   else
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_daggoo
-   endif
-  else
-   ifdef USE_DEBUG
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_moby
-   else
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_moby
-#            LIBS += -L$(PARPACK_LIBDIR) -lparpack
-   endif
-  endif
+   PARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
  endif
-#   ARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
-    ARPACK_LIBDIR ?= $(ROMSHOME)/Lib
- ifdef USE_MPIF90
-  ifdef USE_DEBUG
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_daggoo
-  else
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_daggoo
-  endif
- else
-  ifdef USE_DEBUG
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_moby
-  else
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_moby
-#            LIBS += -L$(ARPACK_LIBDIR) -larpack
-  endif
- endif
+    ARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+             LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
 ifdef USE_MPI

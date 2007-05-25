@@ -89,6 +89,11 @@
  
       Lprecond = F 
 
+! If preconditioning, specify number of eigenpairs to use.  If zero,
+! use all available vectors.
+
+       NritzEV = 0
+
 ! If weak constraint 4DVar, set diffusive relaxation coefficients (m2/s)
 ! used to relax representer tangent linear solution to privious Picard
 ! iteration linearized trajectory.
@@ -295,6 +300,9 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !  Lprecond       Switch (T/F) to pre-conditioning with Hessian eigenpairs
 !                 computed by the Lanczos algorithm and saved in HSSname
 !                 NetCDF file.
+!
+!  NritzEV        If preconditioning, specify number of eigenpairs to use.
+!                   If zero, use all available vectors.
 !
 !------------------------------------------------------------------------------
 ! Diffusive relaxation coefficients.

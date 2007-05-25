@@ -44,6 +44,7 @@
 !                 eigenvectors.                                        !
 !  nConvRitz    Number of converged Ritz eigenvalues.                  !
 !  NLmodVal     Nonlinear model values at observation locations.       !
+!  NritzEV      If preconditioning, number of eigenpairs to use.       !
 !  NHsteps      Full number of horizontal diffusion steps for spatial  !
 !                 convolutions.                                        !
 !  NVsteps      Full number of vertical diffusion steps for spatial    !
@@ -313,6 +314,10 @@
 !  Number of converged Ritz eigenvalues.
 !
         integer :: nConvRitz
+!
+!  If preconditioning, number of Ritz eigenpairs to used.
+!
+        integer :: NritzEV
 !
 !  Ritz values maximum error limit.
 !
@@ -780,6 +785,13 @@
       END IF
 # else
       Nritz=Ninner+1
+# endif
+# ifndef LACNZOS
+      IF (Lprecond) THEN
+        IF (NritzEV.eq.0) THEN
+          NritzEV=Nritz
+        END IF
+      END IF
 # endif
 !
 !  Allocate convolution parameters.

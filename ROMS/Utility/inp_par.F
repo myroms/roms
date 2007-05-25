@@ -5726,6 +5726,8 @@
               LhessianEV=.FALSE.
             END IF
 #  endif
+          ELSE IF (TRIM(KeyWord).eq.'NritzEV') THEN
+            Npts=load_i(Nval, Rval, 1, NritzEV)
           ELSE IF (TRIM(KeyWord).eq.'tl_M2diff') THEN
             Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
           ELSE IF (TRIM(KeyWord).eq.'tl_M3diff') THEN
@@ -5988,6 +5990,12 @@
 #   endif
           WRITE (out,70) Lprecond, 'Lprecond',                          &
      &           'Switch to preconditioning with Hessian eigenpairs.'
+#   ifndef LANCZOS
+          IF (Lprecond.and.(NritzEV.gt.0)) THEN
+            WRITE (out,80) NritzEV, 'NritzEV',                          &
+     &           'Number of preconditioning eigenpairs to use.'
+          END IF
+#   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
           WRITE (out,70) LdefNRM(ng), 'LdefNRM',                        &
      &            'Switch to create a normalization NetCDF file.'

@@ -1249,7 +1249,7 @@
   1.0d0
 
 'ubar_Rstress'                                     ! Output
-  'vertically-integrated u-radiatiation stress'
+  'vertically-integrated u-radiation stress'
   'newton meter-2'                                 ! [N/m2]
   'ubar_Rstress, scalar, series'
   'ocean_time'
