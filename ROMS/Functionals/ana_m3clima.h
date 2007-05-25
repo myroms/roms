@@ -87,20 +87,6 @@
 !  Set 3D momentum climatology.
 !-----------------------------------------------------------------------
 !
-#if defined MY_APPLICATION
-      DO k=1,N
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            uclm(i,j,k)=0.0_r8
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            vclm(i,j,k)=0.0_r8
-          END DO
-        END DO
-      END DO
-#else
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
@@ -113,7 +99,6 @@
           END DO
         END DO
       END DO
-#endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &

@@ -710,8 +710,6 @@
 !  Initial conditions for tangent linear 2D momentum (s/m) components.
 !-----------------------------------------------------------------------
 !
-# if defined MY_APPLICATION
-# else
       DO j=JstrR,JendR
         DO i=Istr,IendR
           tl_ubar(i,j,kstp)=0.0_r8
@@ -722,28 +720,22 @@
           tl_vbar(i,j,kstp)=0.0_r8
         END DO
       END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Initial conditions for tangent linear free-surface (1/m).
 !-----------------------------------------------------------------------
 !
-# if defined MY_APPLICATION
-# else
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           tl_zeta(i,j,kstp)=0.0_r8
         END DO
       END DO
-# endif
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Initial conditions for tangent linear 3D momentum components (s/m).
 !-----------------------------------------------------------------------
 !
-#  if defined MY_APPLICATION
-#  else
       DO k=1,N(ng)
        DO j=JstrR,JendR
          DO i=Istr,IendR
@@ -756,14 +748,11 @@
           END DO
         END DO
       END DO
-#  endif
 !
 !-----------------------------------------------------------------------
 !  Initial conditions for tangent linear active tracers (1/Tunits).
 !-----------------------------------------------------------------------
 !
-#  if defined MY_APLICATION
-#  else
       DO itrc=1,NAT
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -773,7 +762,6 @@
           END DO
         END DO
       END DO
-#  endif
 # endif
       RETURN
       END SUBROUTINE ana_TLMinitial_tile
@@ -835,8 +823,6 @@
 !  Initial conditions for adjoint 2D momentum (s/m) components.
 !-----------------------------------------------------------------------
 !
-# if defined MY_APPLICATION
-# else
       DO j=JstrR,JendR
         DO i=Istr,IendR
           ad_ubar(i,j,knew)=0.0_r8
@@ -847,28 +833,22 @@
           ad_vbar(i,j,knew)=0.0_r8
         END DO
       END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Initial conditions for adjoint free-surface (1/m).
 !-----------------------------------------------------------------------
 !
-# if defined MY_APPLICATION
-# else
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           ad_zeta(i,j,knew)=0.0_r8
         END DO
       END DO
-# endif
 # ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Initial conditions for adjoint 3D momentum components (s/m).
 !-----------------------------------------------------------------------
 !
-#  if defined MY_APPLICATION
-#  else
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
@@ -881,14 +861,11 @@
           END DO
         END DO
       END DO
-#  endif
 !
 !-----------------------------------------------------------------------
 !  Initial conditions for adjoint active tracers (1/Tunits).
 !-----------------------------------------------------------------------
 !
-#  if defined MY_APLICATION
-#  else
       DO itrc=1,NAT
         DO k=1,N(ng)
           DO j=JstrR,JendR
@@ -898,7 +875,6 @@
           END DO
         END DO
       END DO
-#  endif
 # endif
       RETURN
       END SUBROUTINE ana_ADMinitial_tile
