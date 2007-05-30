@@ -72,7 +72,7 @@ ifdef USE_OpenMP
 endif
 
 ifdef USE_DEBUG
-           FFLAGS += -g -fbounds-check -Wall -Wno-unused-variable -Wno-unused-labels
+           FFLAGS += -g -fbounds-check
 else
            FFLAGS += -O3 -ffast-math
 endif

@@ -58,8 +58,13 @@ ifdef USE_ARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
+ifdef USE_OpenMP
+         CPPFLAGS += -D_OPENMP
+           FFLAGS += -fopenmp
+endif
+
 ifdef USE_DEBUG
-           FFLAGS += -g -fbounds-check
+           FFLAGS += -g -fbounds-check -Wall -Wno-unused-variable -Wno-unused-label
 else
            FFLAGS += -O3 -ffast-math
 endif
