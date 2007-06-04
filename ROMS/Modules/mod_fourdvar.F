@@ -315,10 +315,6 @@
 !
         integer :: nConvRitz
 !
-!  If preconditioning, number of Ritz eigenpairs to used.
-!
-        integer :: NritzEV
-!
 !  Ritz values maximum error limit.
 !
         real(r8) :: RitzMaxErr
@@ -391,6 +387,10 @@
 !  Pass number into the descent algorithm within the same iteration.
 !
         integer :: Ipass = 0
+!
+!  If preconditioning, number of Ritz eigenpairs to use.
+!
+        integer :: NritzEV
 !
 !  Conjugate gradient alogorithm step size.
 !
@@ -765,11 +765,12 @@
 #  endif
       END DO
 # endif
+# ifdef IS4DVAR
 !
 !  Determine the number of Hessian eigenpairs available for
 !  preconditioning.
 !
-# if defined IS4DVAR && !defined LANCZOS
+#  if !defined LANCZOS
       IF (Lprecond) THEN
         Nritz=0
         DO ng=1,Ngrids
@@ -779,19 +780,23 @@
             Nritz=MAX(Nritz,Vsize(1))
           END IF
         END DO
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
         CALL mp_bcasti (1, iNLM, Nritz, 1)
-#  endif
+#   endif
       END IF
-# else
+#  else
       Nritz=Ninner+1
-# endif
-# ifndef LACNZOS
+#  endif
+#  ifndef LACNZOS
+!
+!  Set number of eigenpairs to use to available quantity.
+!
       IF (Lprecond) THEN
         IF (NritzEV.eq.0) THEN
           NritzEV=Nritz
         END IF
       END IF
+#  endif
 # endif
 !
 !  Allocate convolution parameters.

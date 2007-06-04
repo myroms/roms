@@ -21,7 +21,6 @@
 #define TS_U3HADVECTION
 #define TS_C4VADVECTION
 #undef  TS_MPDATA
-#undef  WJ_GRADP
 #define DJ_GRADPS
 #define TS_DIF2
 #undef  TS_DIF4
@@ -44,18 +43,12 @@
 #define ANA_BTFLUX
 #define ANA_BSFLUX
 
-#define ANA_VMIX
-#undef  GLS_MIXING
-#undef  MY25_MIXING
 #if defined GLS_MIXING || defined MY25_MIXING
 # define KANTHA_CLAYSON
-# undef  CANUTO_A
 # define N2S2_HORAVG
+#else
+# define ANA_VMIX
 #endif
-
-#undef  BIO_FASHAM
-#define NPZD_POWELL
-#undef  ECOSIM
 
 #if defined BIO_FASHAM || defined ECOSIM || defined NPZD_POWELL
 # define ANA_BIOLOGY
@@ -71,7 +64,6 @@
 # define DIAGNOSTICS_BIO
 #endif
 
-#define  PERFECT_RESTART
 #ifdef PERFECT_RESTART
 # undef  AVERAGES
 # undef  DIAGNOSTICS_BIO

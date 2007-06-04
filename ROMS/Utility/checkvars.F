@@ -123,6 +123,11 @@
       END DO
 # endif
 # ifdef SEDIMENT
+#  ifdef SED_MORPH
+      IF (nrrec(ng).ne.0) THEN
+        get_var(idbath)=.TRUE.
+      END IF
+#  endif
 #  ifndef ANA_SEDIMENT
       DO itrc=1,NST
         get_var(idTvar(idsed(itrc)))=.TRUE.

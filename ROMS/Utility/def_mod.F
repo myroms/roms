@@ -186,7 +186,6 @@
      &                 Vinfo,ncname)
 
 # if defined IS4DVAR
-#  ifdef LANCZOS
 !
 !  Converged Ritz eigenvalues.
 !
@@ -199,7 +198,6 @@
         Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
         status=def_var(ncMODid(ng),varid,NF_FRST,                       &
      &                 1,Ninnerdim,Aval,Vinfo,ncname)
-#  endif
 !
 !  Define conjugate gradient norms.
 !
