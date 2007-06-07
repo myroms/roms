@@ -68,8 +68,8 @@
       IF (exit_flag.ne.NoError) RETURN
       ncname=INIname(ng)
       IF (LdefINI(ng).and.OutThread) THEN
-        status=nf_create(TRIM(ncname),nf_clobber,ncINIid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_create(TRIM(ncname),nf90_clobber,ncINIid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -87,72 +87,72 @@
 !-----------------------------------------------------------------------
 !
       IF (LdefINI(ng).and.OutThread) THEN
-        status=nf_def_dim(ncINIid(ng),'xi_rho'  ,Lm(ng)+2,              &
-     &                    DimIDs( 1))
-        status=nf_def_dim(ncINIid(ng),'xi_u'    ,Lm(ng)+1,              &
-     &                    DimIDs( 2))
-        status=nf_def_dim(ncINIid(ng),'xi_v'    ,Lm(ng)+2,              &
-     &                    DimIDs( 3))
-        status=nf_def_dim(ncINIid(ng),'xi_psi'  ,Lm(ng)+1,              &
-     &                    DimIDs( 4))
-        status=nf_def_dim(ncINIid(ng),'eta_rho' ,Mm(ng)+2,              &
-     &                    DimIDs( 5))
-        status=nf_def_dim(ncINIid(ng),'eta_u'   ,Mm(ng)+2,              &
-     &                    DimIDs( 6))
-        status=nf_def_dim(ncINIid(ng),'eta_v'   ,Mm(ng)+1,              &
-     &                    DimIDs( 7))
-        status=nf_def_dim(ncINIid(ng),'eta_psi' ,Mm(ng)+1,              &
-     &                    DimIDs( 8))
+        status=nf90_def_dim(ncINIid(ng),'xi_rho'  ,Lm(ng)+2,            &
+     &                      DimIDs( 1))
+        status=nf90_def_dim(ncINIid(ng),'xi_u'    ,Lm(ng)+1,            &
+     &                      DimIDs( 2))
+        status=nf90_def_dim(ncINIid(ng),'xi_v'    ,Lm(ng)+2,            &
+     &                      DimIDs( 3))
+        status=nf90_def_dim(ncINIid(ng),'xi_psi'  ,Lm(ng)+1,            &
+     &                      DimIDs( 4))
+        status=nf90_def_dim(ncINIid(ng),'eta_rho' ,Mm(ng)+2,            &
+     &                      DimIDs( 5))
+        status=nf90_def_dim(ncINIid(ng),'eta_u'   ,Mm(ng)+2,            &
+     &                      DimIDs( 6))
+        status=nf90_def_dim(ncINIid(ng),'eta_v'   ,Mm(ng)+1,            &
+     &                      DimIDs( 7))
+        status=nf90_def_dim(ncINIid(ng),'eta_psi' ,Mm(ng)+1,            &
+     &                      DimIDs( 8))
 # if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncINIid(ng),'xy_rho'  ,Nxyr(ng),              &
-     &                    DimIDs(17))
-        status=nf_def_dim(ncINIid(ng),'xy_u'    ,Nxyu(ng),              &
-     &                    DimIDs(18))
-        status=nf_def_dim(ncINIid(ng),'xy_v'    ,Nxyv(ng),              &
-     &                    DimIDs(19))
+        status=nf90_def_dim(ncINIid(ng),'xy_rho'  ,Nxyr(ng),            &
+     &                      DimIDs(17))
+        status=nf90_def_dim(ncINIid(ng),'xy_u'    ,Nxyu(ng),            &
+     &                      DimIDs(18))
+        status=nf90_def_dim(ncINIid(ng),'xy_v'    ,Nxyv(ng),            &
+     &                      DimIDs(19))
 # endif
 # ifdef SOLVE3D
 #  if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncINIid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),        &
-     &                    DimIDs(20))
-        status=nf_def_dim(ncINIid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),        &
-     &                    DimIDs(21))
-        status=nf_def_dim(ncINIid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),        &
-     &                    DimIDs(22))
-        status=nf_def_dim(ncINIid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),    &
-     &                    DimIDs(23))
+        status=nf90_def_dim(ncINIid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),      &
+     &                      DimIDs(20))
+        status=nf90_def_dim(ncINIid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),      &
+     &                      DimIDs(21))
+        status=nf90_def_dim(ncINIid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),      &
+     &                      DimIDs(22))
+        status=nf90_def_dim(ncINIid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),  &
+     &                      DimIDs(23))
 #  endif
-        status=nf_def_dim(ncINIid(ng),'s_rho'   ,N(ng),                 &
-     &                    DimIDs( 9))
-        status=nf_def_dim(ncINIid(ng),'s_w'     ,N(ng)+1,               &
-     &                    DimIDs(10))
-        status=nf_def_dim(ncINIid(ng),'tracer'  ,NT(ng),                &
-     &                    DimIDs(11))
+        status=nf90_def_dim(ncINIid(ng),'s_rho'   ,N(ng),               &
+     &                      DimIDs( 9))
+        status=nf90_def_dim(ncINIid(ng),'s_w'     ,N(ng)+1,             &
+     &                      DimIDs(10))
+        status=nf90_def_dim(ncINIid(ng),'tracer'  ,NT(ng),              &
+     &                      DimIDs(11))
 #  ifdef SEDIMENT
-        status=nf_def_dim(ncINIid(ng),'Nbed'    ,Nbed,                  &
-     &                    DimIDs(16))
+        status=nf90_def_dim(ncINIid(ng),'Nbed'    ,Nbed,                &
+     &                      DimIDs(16))
 #   if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncINIid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
-     &                    DimIDs(24))
+        status=nf90_def_dim(ncINIid(ng),'xybed'   ,Nxyr(ng)*Nbed,       &
+     &                      DimIDs(24))
 #   endif
 #  endif
 #  ifdef ECOSIM
-        status=nf_def_dim(ncINIid(ng),'Nphy'    ,Nphy,                  &
-     &                    DimIDs(25))
-        status=nf_def_dim(ncINIid(ng),'Nbac'    ,Nbac,                  &
-     &                    DimIDs(26))
-        status=nf_def_dim(ncINIid(ng),'Ndom'    ,Ndom,                  &
-     &                    DimIDs(27))
-        status=nf_def_dim(ncINIid(ng),'Nfec'    ,Nfec,                  &
-     &                    DimIDs(28))
+        status=nf90_def_dim(ncINIid(ng),'Nphy'    ,Nphy,                &
+     &                      DimIDs(25))
+        status=nf90_def_dim(ncINIid(ng),'Nbac'    ,Nbac,                &
+     &                      DimIDs(26))
+        status=nf90_def_dim(ncINIid(ng),'Ndom'    ,Ndom,                &
+     &                      DimIDs(27))
+        status=nf90_def_dim(ncINIid(ng),'Nfec'    ,Nfec,                &
+     &                      DimIDs(28))
 #  endif
 # endif
-        status=nf_def_dim(ncINIid(ng),'boundary',4,                     &
-     &                    DimIDs(14))
-        status=nf_def_dim(ncINIid(ng),'Nstate  ',NstateVar(ng),         &
-     &                    DimIDs(29))
-        status=nf_def_dim(ncINIid(ng),TRIM(ADJUSTL(Vname(5,idtime))),   &
-     &                    nf_unlimited,DimIDs(12))
+        status=nf90_def_dim(ncINIid(ng),'boundary',4,                   &
+     &                      DimIDs(14))
+        status=nf90_def_dim(ncINIid(ng),'Nstate  ',NstateVar(ng),       &
+     &                      DimIDs(29))
+        status=nf90_def_dim(ncINIid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
+     &                      nf90_unlimited,DimIDs(12))
         recdim=DimIDs(12)
 !
 !  Set number of dimensions for output variables.
@@ -447,7 +447,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf_enddef(ncINIid(ng))
+        status=nf90_enddef(ncINIid(ng))
       END IF
 !
 !-----------------------------------------------------------------------
@@ -477,8 +477,8 @@
 !
 !  Open initialization file for read/write.
 !
-        status=nf_open(TRIM(ncname),nf_write,ncINIid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(ncname),nf90_write,ncINIid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,40) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -497,59 +497,59 @@
         DO i=1,nvars
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idtime)),      &
-     &                          iniVid(idtime,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idtime)),    &
+     &                            iniVid(idtime,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idFsur)),      &
-     &                          iniVid(idFsur,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idFsur)),    &
+     &                            iniVid(idFsur,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbar))) THEN
             got_var(idUbar)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idUbar)),      &
-     &                          iniVid(idUbar,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idUbar)),    &
+     &                            iniVid(idUbar,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbar))) THEN
             got_var(idVbar)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idVbar)),      &
-     &                          iniVid(idVbar,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idVbar)),    &
+     &                            iniVid(idVbar,ng))
           END IF
 # ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idUvel)),      &
-     &                          iniVid(idUvel,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idUvel)),    &
+     &                            iniVid(idUvel,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idVvel)),      &
-     &                          iniVid(idVvel,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idVvel)),    &
+     &                            iniVid(idVvel,ng))
           END IF
           DO itrc=1,NT(ng)
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
              got_var(idTvar(itrc))=.TRUE.
-             status=nf_inq_varid(ncINIid(ng),                           &
-     &                           TRIM(Vname(1,idTvar(itrc))),           &
-     &                           iniTid(itrc,ng))
+             status=nf90_inq_varid(ncINIid(ng),                         &
+     &                             TRIM(Vname(1,idTvar(itrc))),         &
+     &                             iniTid(itrc,ng))
             END IF
           END DO
 #  if defined BVF_MIXING || defined LMD_MIXING || \
       defined GLS_MIXING || defined MY25_MIXING
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idVvis)),      &
-     &                          iniVid(idVvis,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idVvis)),    &
+     &                            iniVid(idVvis,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTdif))) THEN
             got_var(idTdif)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idTdif)),      &
-     &                          iniVid(idTdif,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idTdif)),    &
+     &                            iniVid(idTdif,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSdif))) THEN
             got_var(idSdif)=.TRUE.
-            status=nf_inq_varid(ncINIid(ng),TRIM(Vname(1,idSdif)),      &
-     &                          iniVid(idSdif,ng))
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idSdif)),    &
+     &                            iniVid(idSdif,ng))
           END IF
 #  endif
 # endif

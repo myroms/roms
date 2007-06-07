@@ -570,30 +570,30 @@
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
           IF (Nrun.eq.1) THEN
-            status=nf_put_vara_TYPE(ncMODid(ng),modVid(idNLmi,ng),      &
+            status=nf90_put_var(ncMODid(ng), modVid(idNLmi,ng),         &
 #  ifdef S4DVAR
-     &                              start,total,NLmodVal(Mstr,1))
+     &                          NLmodVal(Mstr:,:), start, total)
 #  else
-     &                              start,total,NLmodVal(Mstr))
+     &                          NLmodVal(Mstr:), start, total)
 #  endif
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idMOMi)), TRIM(MODname(ng))
               exit_flag=3
               ioerror=status
               RETURN
             END IF
-            status=nf_put_vara_TYPE(ncMODid(ng),modVid(idMOMi,ng),      &
-     &                              start,total,misfit(Mstr))
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_put_var(ncMODid(ng),modVid(idMOMi,ng),          &
+     &                          misfit(Mstr:), start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idMOMi)), TRIM(MODname(ng))
               exit_flag=3
               ioerror=status
               RETURN
             END IF
           ELSE
-            status=nf_put_vara_TYPE(ncMODid(ng),modVid(idMOMf,ng),      &
-     &                              start,total,misfit(Mstr))
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_put_var(ncMODid(ng),modVid(idMOMf,ng),          &
+     &                          misfit(Mstr:), start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idMOMf)), TRIM(MODname(ng))
               exit_flag=3
               ioerror=status
@@ -612,17 +612,17 @@
 !
         IF (OutThread.and.                                              &
      &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-          status=nf_inq_varid(ncMODid(ng),'outer',varid)
-          status=nf_put_var1_int(ncMODid(ng),varid,1,outer)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncMODid(ng), 'outer', varid)
+          status=nf90_put_var(ncMODid(ng), varid, outer)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'outer', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
             RETURN
           END IF
-          status=nf_inq_varid(ncMODid(ng),'inner',varid)
-          status=nf_put_var1_int(ncMODid(ng),varid,1,inner)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncMODid(ng), 'inner', varid)
+          status=nf90_put_var(ncMODid(ng), varid, inner)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'inner', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -637,9 +637,9 @@
      &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
-          status=nf_put_vara_TYPE(ncMODid(ng),modVid(idObsS,ng),        &
-     &                            start,total,ObsScale(Mstr))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), modVid(idObsS,ng),           &
+     &                        ObsScale(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idObsS)), TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -656,15 +656,15 @@
           total(1)=Nobs(ng)
           start(2)=Ipass
           total(2)=1
-          status=nf_put_vara_TYPE(ncMODid(ng),modVid(idNLmo,ng),        &
-     &                            start,total,NLmodVal(1,Ipass))
+          status=nf90_put_var(ncMODid(ng), modVid(idNLmo,ng),           &
+     &                        NLmodVal(:,Ipass), start, total)
 # else
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
-          status=nf_put_vara_TYPE(ncMODid(ng),modVid(idNLmo,ng),        &
-     &                            start,total,NLmodVal(Mstr))
+          status=nf90_put_var(ncMODid(ng), modVid(idNLmo,ng),           &
+     &                        NLmodVal(Mstr:), start, total)
 # endif
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idNLmo)), TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -687,15 +687,15 @@
           total(1)=Nobs(ng)
           start(2)=Ipass
           total(2)=1
-          status=nf_put_vara_TYPE(ncMODid(ng),modVid(idTLmo,ng),        &
-     &                            start,total,TLmodVal(1,Ipass))
+          status=nf90_put_var(ncMODid(ng),modVid(idTLmo,ng),            &
+     &                        TLmodVal(:,Ipass), start, total)
 #  else
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
-          status=nf_put_vara_TYPE(ncMODid(ng),modVid(idTLmo,ng),        &
-     &                            start,total,TLmodVal(Mstr))
+          status=nf90_put_var(ncMODid(ng), modVid(idTLmo,ng),           &
+     &                        TLmodVal(Mstr:), start, total)
 #  endif
-          IF (status.ne.nf_noerr) then
+          IF (status.ne.nf90_noerr) then
             WRITE (stdout,10) TRIM(Vname(1,idTLmo)), TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -725,9 +725,9 @@
           DO iobs=Mstr,Mend
             Zobs(iobs)=Zobs(iobs)*ObsScale(iobs)
           END DO
-          status=nf_put_vara_TYPE(ncOBSid(ng),obsVid(idObsZ,ng),        &
-     &                            start,total,Zobs(Mstr))
-          IF (status.ne.nf_noerr) then
+          status=nf90_put_var(ncOBSid(ng), obsVid(idObsZ,ng),           &
+     &                        Zobs(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) then
             WRITE (stdout,10) TRIM(Vname(1,idObsZ)), TRIM(OBSname(ng))
             exit_flag=3
             ioerror=status
@@ -753,8 +753,8 @@
 !
         IF (OutThread) THEN
           IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
-            status=nf_sync(ncMODid(ng))
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_sync(ncMODid(ng))
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,20)
               exit_flag=3
               ioerror=status

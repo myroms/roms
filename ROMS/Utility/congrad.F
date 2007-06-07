@@ -379,18 +379,18 @@
 !
 !  Write out outer and inner iteration.
 !
-        status=nf_inq_varid(ncMODid(ng),'outer',varid)
-        status=nf_put_var1_int(ncMODid(ng),varid,1,outer)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'outer', varid)
+        status=nf90_put_var(ncMODid(ng), varid, outer)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'outer', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'inner',varid)
-        status=nf_put_var1_int(ncMODid(ng),varid,1,inner)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'inner', varid)
+        status=nf90_put_var(ncMODid(ng), varid, inner)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'inner', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
@@ -401,9 +401,9 @@
 !
         start(1)=1
         total(1)=Ndatum(ng)
-        status=nf_put_vara_TYPE(ncMODid(ng), modVid(idRepC,ng),         &
-     &                          start, total, ADmodVal)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncMODid(ng), modVid(idRepC,ng),             &
+     &                      ADmodVal, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idRepC)), TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
@@ -412,63 +412,8 @@
 !
 !  Write out conjugate gradient vectors.
 !
-
-! HERNAN -- Here we need to write out zdelta, zbeta, and zcglwk
-!         start(1)=1
-!         total(1)=Ndatum(ng)
-!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_P,ng),         &
-!      &                          start, total, cg_p)
-!         IF (status.ne.nf_noerr) THEN
-!           WRITE (stdout,10) TRIM(Vname(1,idCG_P)), TRIM(MODname(ng))
-!           exit_flag=3
-!           ioerror=status
-!           RETURN
-!         END IF
-! 
-!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_R,ng),         &
-!      &                        start, total, cg_r)
-!         IF (status.ne.nf_noerr) THEN
-!           WRITE (stdout,10) TRIM(Vname(1,idCG_R)), TRIM(MODname(ng))
-!           exit_flag=3
-!           ioerror=status
-!           RETURN
-!         END IF
-! 
-!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_S,ng),         &
-!      &                          start, total, cg_s)
-!         IF (status.ne.nf_noerr) THEN
-!           WRITE (stdout,10) TRIM(Vname(1,idCG_S)), TRIM(MODname(ng))
-!           exit_flag=3
-!           ioerror=status
-!           RETURN
-!         END IF
-! 
-!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_V,ng),         &
-!      &                          start, total, cg_v)
-!         IF (status.ne.nf_noerr) THEN
-!           WRITE (stdout,10) TRIM(Vname(1,idCG_V)), TRIM(MODname(ng))
-!           exit_flag=3
-!           ioerror=status
-!           RETURN
-!         END IF
-! 
-!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_X,ng),         &
-!      &                          start, total, cg_x)
-!         IF (status.ne.nf_noerr) THEN
-!           WRITE (stdout,10) TRIM(Vname(1,idCG_X)), TRIM(MODname(ng))
-!           exit_flag=3
-!           ioerror=status
-!           RETURN
-!         END IF
-! 
-!         status=nf_put_vara_TYPE(ncMODid(ng), modVid(idCG_Z,ng),         &
-!      &                          start, total, cg_z)
-!         IF (status.ne.nf_noerr) THEN
-!           WRITE (stdout,10) TRIM(Vname(1,idCG_Z)), TRIM(MODname(ng))
-!           exit_flag=3
-!           ioerror=status
-!           RETURN
-!         END IF
+!  HERNAN -- Here we need to write out zdelta, zbeta, and zcglwk
+!
        END IF
 !
 !-----------------------------------------------------------------------
@@ -476,8 +421,8 @@
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
-        status=nf_sync(ncMODid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncMODid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status

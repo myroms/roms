@@ -188,6 +188,7 @@
 
       integer :: NconvRitz, i, iter, ng, status, varid
       integer :: thread, subs, tile
+      integer :: start(4), total(4)
 
 #ifdef DISTRIBUTE
       real(r8), external :: pdnorm2
@@ -496,16 +497,21 @@
 !  NetCDF file.
 !
                   IF (OutThread) THEN
-                    status=nf_inq_varid(ncHISid(ng),'Ritz_rvalue',varid)
-                    status=nf_put_var1_TYPE(ncHISid(ng),varid,          &
-     &                                      i,RvalueR(i))
-                    status=nf_inq_varid(ncHISid(ng),'Ritz_norm',varid)
-                    status=nf_put_var1_TYPE(ncHISid(ng),varid,          &
-     &                                      i,norm(i))
+                    start(1)=i
+                    total(1)=1
+                    status=nf90_inq_varid(ncHISid(ng), 'Ritz_rvalue',   &
+     &                                    varid)
+                    status=nf90_put_var(ncHISid(ng), varid, RvalueR(i:),&
+     &                                  start, total)
+                    status=nf90_inq_varid(ncHISid(ng), 'Ritz_norm',     &
+     &                                    varid)
+                    status=nf90_put_var(ncHISid(ng), varid, norm(i:),   &
+     &                                  start, total)
                     IF (i.eq.1) THEN
-                      status=nf_inq_varid(ncHISid(ng),'SO_trace',varid)
-                      status=nf_put_var1_TYPE(ncHISid(ng),varid,1,      &
-     &                                        TRnorm(ng))
+                      status=nf90_inq_varid(ncHISid(ng), 'SO_trace',    &
+     &                                      varid)
+                      status=nf90_put_var(ncHISid(ng), varid,           &
+     &                                    TRnorm(ng))
                     END IF
                   END IF
                 END DO

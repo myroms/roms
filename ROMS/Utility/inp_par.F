@@ -553,7 +553,7 @@
       logical, allocatable :: Ltracer(:,:)
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
-      logical, allocatable :: Ladsen(:,:)
+      logical, allocatable :: Ladsen(:)
 #endif
 
       real(r8), allocatable :: Rtracer(:,:)
@@ -632,7 +632,7 @@
 #ifdef SOLVE3D
           ELSE IF (TRIM(KeyWord).eq.'NAT') THEN
             Npts=load_i(Nval, Rval, 1, NAT)
-            IF ((0.gt.NAT).and.(NAT.le.2)) THEN
+            IF ((NAT.lt.0).or.(NAT.gt.2)) THEN
               WRITE (out,290) 'NAT = ', NAT,                            &
      &                        'make sure that NAT is either 1 or 2.'
               STOP
@@ -704,7 +704,7 @@
 #if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
     defined SO_SEMI
             IF (.not.allocated(Ladsen)) THEN
-              allocate (Ladsen(MT,Ngrids))
+              allocate (Ladsen(MT*Ngrids))
             END IF
 #endif
             IF (.not.allocated(Ltracer)) THEN

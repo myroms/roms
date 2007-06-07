@@ -17,25 +17,24 @@
 !=======================================================================
 !
         USE mod_kinds
+        USE netcdf
 
         implicit none
 
-#include "netcdf.inc"
-
 #ifdef OUT_DOUBLE
-        integer, parameter :: NF_FOUT = nf_double
+        integer, parameter :: NF_FOUT = nf90_double
 #else
-        integer, parameter :: NF_FOUT = nf_real
+        integer, parameter :: NF_FOUT = nf90_real
 #endif
 #ifdef RST_SINGLE
-        integer, parameter :: NF_FRST = nf_real
+        integer, parameter :: NF_FRST = nf90_real
 #else
-        integer, parameter :: NF_FRST = nf_double
+        integer, parameter :: NF_FRST = nf90_double
 #endif
 #ifdef DOUBLE_PRECISION
-        integer, parameter :: NF_TYPE = nf_double
+        integer, parameter :: NF_TYPE = nf90_double
 #else
-        integer, parameter :: NF_TYPE = nf_real
+        integer, parameter :: NF_TYPE = nf90_real
 #endif
 
       END MODULE mod_netcdf

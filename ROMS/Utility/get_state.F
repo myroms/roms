@@ -68,8 +68,8 @@
 
       integer :: LBi, UBi, LBj, UBj
       integer :: InpRec, gtype, i, itrc, lstr, lend
-      integer :: Nrec, ncINPid, nvatts, status, varid, vartype
-      integer :: Vsize(4)
+      integer :: Nrec, ncINPid, nvatts, nvdim, status, varid, vartype
+      integer :: Vsize(4), start(4), total(4), vdimids(5)
 
       integer :: nf_fread2d
       integer :: nf_fread3d
@@ -79,7 +79,8 @@
 
       real(r8), parameter :: Fscl = 1.0_r8
 
-      real(r8) :: INPtime, Fmax, Fmin, Tmax, time_scale
+      real(r8) :: Fmax, Fmin, Tmax, time_scale
+      real(r8) :: INPtime(1)
 
       character (len=6 ) :: string
       character (len=15) :: attnam, tvarnam
@@ -143,8 +144,8 @@
 !  Open input NetCDF file.
 !
       IF (InpThread) THEN
-        status=nf_open(TRIM(ncname), nf_nowrite, ncINPid)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(ncname), nf90_nowrite, ncINPid)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) string, TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -155,23 +156,25 @@
 !  initialization record, find time record index to read and read
 !  in model time.
 !
-        status=nf_inq_varid(ncINPid, TRIM(tvarnam), varid)
+        status=nf90_inq_varid(ncINPid, TRIM(tvarnam), varid)
         IF (LastRec(ng)) THEN
           Tmax=-1.0_r8
           DO i=1,tsize
-            status=nf_get_var1_TYPE(ncINPid,varid,i,INPtime)
-            IF (status.ne.nf_noerr) THEN
+            start(1)=i
+            total(1)=1
+            status=nf90_get_var(ncINPid, varid, INPtime, start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,30) string, TRIM(tvarnam), i, TRIM(ncname)
               exit_flag=2
               ioerror=status
               RETURN
             END IF
-            IF (INPtime.gt.Tmax) THEN
-              Tmax=INPtime
+            IF (INPtime(1).gt.Tmax) THEN
+              Tmax=INPtime(1)
               IniRec=i
             END IF
           END DO
-          INPtime=Tmax
+          INPtime(1)=Tmax
           InpRec=IniRec
         ELSE
           IF ((IniRec.ne.0).and.(IniRec.gt.tsize)) THEN
@@ -184,8 +187,10 @@
           ELSE
             InpRec=1
           END IF
-          status=nf_get_var1_TYPE(ncINPid, varid, InpRec, INPtime)
-          IF (status.ne.nf_noerr) THEN
+          start(1)=InpRec
+          total(1)=1
+          status=nf90_get_var(ncINPid, varid, INPtime, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, TRIM(tvarnam), InpRec,            &
      &                        TRIM(ncname)
             exit_flag=2
@@ -197,16 +202,16 @@
 !  Inquire time units. Set local time scale.
 !
         time_scale=0.0_r8
-        status=nf_inq_var(ncINPid, varid, tvarnam, vartype, nvdims,     &
-     &                    vdims(1,varid), nvatts)
-        IF (status.eq.nf_noerr) THEN
+        status=nf90_inquire_variable(ncINPid, varid, tvarnam, vartype,  &
+     &                               nvdim, vdimids, nvatts)
+        IF (status.eq.nf90_noerr) THEN
           DO i=1,nvatts
-            status=nf_inq_attname(ncINPid, varid, i, attnam)
-            IF (status.eq.nf_noerr) THEN
+            status=nf90_inq_attname(ncINPid, varid, i, attnam)
+            IF (status.eq.nf90_noerr) THEN
               IF (TRIM(attnam).eq.'units') THEN
-                status=nf_get_att_text(ncINPid, varid, TRIM(attnam),    &
-     &                                 tunits)
-                IF (status.eq.nf_noerr) THEN
+                status=nf90_get_att(ncINPid, varid, TRIM(attnam),       &
+     &                              tunits)
+                IF (status.eq.nf90_noerr) THEN
                   IF (tunits(1:3).eq.'day') THEN
                     time_scale=day2sec
                   ELSE IF (tunits(1:6).eq.'second') THEN
@@ -230,7 +235,7 @@
           exit_flag=2
           RETURN
         END IF
-        INPtime=INPtime*time_scale
+        INPtime(1)=INPtime(1)*time_scale
       END IF
 !
 !  Set starting time index and time clock in days.
@@ -241,10 +246,10 @@
       IF ((model.eq.0).or.(model.eq.iNLM).or.                           &
      &    (model.eq.iTLM).or.(model.eq.iRPM)) THEN
         IF (((model.eq.iTLM).or.(model.eq.iRPM)).and.                   &
-     &      (INPtime.ne.(dstart*day2sec))) THEN
-          INPtime=dstart*day2sec
+     &      (INPtime(1).ne.(dstart*day2sec))) THEN
+          INPtime(1)=dstart*day2sec
         END IF
-        time(ng)=INPtime
+        time(ng)=INPtime(1)
         tdays(ng)=time(ng)*sec2day
         ntstart(ng)=NINT((time(ng)-dstart*day2sec)/dt(ng))+1
         IF (ntstart(ng).lt.1) ntstart(ng)=1
@@ -255,7 +260,7 @@
         END IF
       ELSE IF (model.eq.iADM) THEN
         IF (msg.ne.1) THEN
-          time(ng)=INPtime
+          time(ng)=INPtime(1)
           tdays(ng)=time(ng)*sec2day
         END IF
         ntstart(ng)=ntimes(ng)+1
@@ -279,11 +284,11 @@
         IF (InpThread) THEN
           IF (ERend.gt.ERstr) THEN
             WRITE (stdout,80) string, TRIM(Mstate(msg)),                &
-     &                        INPtime*sec2day, Nrun,                    &
+     &                        INPtime(1)*sec2day, Nrun,                 &
      &                        ncname(lstr:lend), InpRec, Tindex
           ELSE
             WRITE (stdout,90) string, TRIM(Mstate(msg)),                &
-     &                        INPtime*sec2day,                          &
+     &                        INPtime(1)*sec2day,                       &
      &                        ncname(lstr:lend), InpRec, Tindex
           END IF
         END IF
@@ -302,55 +307,57 @@
 !  Read in time-stepping indices.
 !
         IF (InpThread.and.((model.eq.0).and.(nrrec(ng).ne.0))) THEN
+          start(1)=InpRec
+          total(1)=1
 #  ifdef SOLVE3D
-          status=nf_inq_varid(ncINPid,'nstp',varid)
-          status=nf_get_var1_int(ncINPid,varid,InpRec,nstp(ng))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncINPid, 'nstp', varid)
+          status=nf90_get_var(ncINPid, varid, nstp(ng:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, 'nstp', InpRec, TRIM(ncname)
             exit_flag=2
             ioerror=status
             RETURN
           END IF
 !
-          status=nf_inq_varid(ncINPid,'nrhs',varid)
-          status=nf_get_var1_int(ncINPid,varid,InpRec,nrhs(ng))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncINPid, 'nrhs', varid)
+          status=nf90_get_var(ncINPid, varid, nrhs(ng:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, 'nrhs', InpRec, TRIM(ncname)
             exit_flag=2
             ioerror=status
             RETURN
           END IF
 !
-          status=nf_inq_varid(ncINPid,'nnew',varid)
-          status=nf_get_var1_int(ncINPid,varid,InpRec,nnew(ng))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncINPid, 'nnew', varid)
+          status=nf90_get_var(ncINPid, varid, nnew(ng:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, 'nnew', InpRec, TRIM(ncname)
             exit_flag=2
             ioerror=status
             RETURN
           END IF
 # endif
-          status=nf_inq_varid(ncINPid,'kstp',varid)
-          status=nf_get_var1_int(ncINPid,varid,InpRec,kstp(ng))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncINPid, 'kstp', varid)
+          status=nf90_get_var(ncINPid, varid, kstp(ng:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, 'kstp', InpRec, TRIM(ncname)
             exit_flag=2
             ioerror=status
             RETURN
           END IF
 !
-          status=nf_inq_varid(ncINPid,'krhs',varid)
-          status=nf_get_var1_int(ncINPid,varid,InpRec,krhs(ng))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncINPid,'krhs',varid)
+          status=nf90_get_var(ncINPid, varid, krhs(ng:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, 'krhs', InpRec, TRIM(ncname)
             exit_flag=2
             ioerror=status
             RETURN
           END IF
 !
-          status=nf_inq_varid(ncINPid,'knew',varid)
-          status=nf_get_var1_int(ncINPid,varid,InpRec,knew(ng))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncINPid, 'knew', varid)
+          status=nf90_get_var(ncINPid, varid, knew(ng:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, 'knew', InpRec, TRIM(ncname)
             exit_flag=2
             ioerror=status
@@ -364,7 +371,7 @@
 !
         IF (get_var(idbath)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idbath)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idbath)), varid)
             gtype=vflag(varid)*r2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -374,7 +381,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #  endif
      &                      GRID(ng) % h(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idbath)), InpRec,  &
      &                          TRIM(ncname)
@@ -394,7 +401,7 @@
 !
         IF (get_var(idFsur)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
             IF (Perfect2d) THEN
               gtype=vflag(varid)*r3dvar
             ELSE
@@ -418,7 +425,7 @@
 # endif
      &                        OCEAN(ng) % zeta(LBi,LBj,Tindex))
           END IF
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idFsur)), InpRec,  &
      &                          TRIM(ncname)
@@ -437,7 +444,7 @@
 !
         IF (get_var(idRzet).and.Perfect2D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRzet)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRzet)), varid)
             gtype=vflag(varid)*r3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -447,7 +454,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % rzeta(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idRzet)), InpRec,  &
      &                          TRIM(ncname)
@@ -466,7 +473,7 @@
 !
         IF (get_var(idUbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
             IF (Perfect2D) THEN
               gtype=vflag(varid)*u3dvar
             ELSE
@@ -490,7 +497,7 @@
 # endif
      &                        OCEAN(ng) % ubar(LBi,LBj,Tindex))
           END IF
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -509,7 +516,7 @@
 !
         IF (get_var(idRu2d).and.Perfect2D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRu2d)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRu2d)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -519,7 +526,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % rubar(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idRu2d)), InpRec,  &
      &                          TRIM(ncname)
@@ -538,7 +545,7 @@
 !
         IF (get_var(idVbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
             IF (Perfect2D) THEN
               gtype=vflag(varid)*v3dvar
             ELSE
@@ -562,7 +569,7 @@
 # endif
      &                        OCEAN(ng) % vbar(LBi,LBj,Tindex))
           END IF
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -581,7 +588,7 @@
 !
         IF (get_var(idRv2d).and.Perfect2D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRv2d)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRv2d)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -591,7 +598,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % rvbar(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idRv2d)), InpRec,  &
      &                          TRIM(ncname)
@@ -611,7 +618,7 @@
 !
         IF (get_var(idUvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           IF (Perfect3D) THEN
@@ -631,7 +638,7 @@
 #  endif
      &                        OCEAN(ng) % u(LBi,LBj,1,Tindex))
           END IF
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -650,7 +657,7 @@
 !
         IF (get_var(idRu3d).and.Perfect3D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRu3d)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRu3d)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           status=nf_fread4d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -660,7 +667,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % ru(LBi,LBj,0,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idRu3d)), InpRec,  &
      &                          TRIM(ncname)
@@ -679,7 +686,7 @@
 !
         IF (get_var(idVvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           IF (Perfect3D) THEN
@@ -699,7 +706,7 @@
 #  endif
      &                        OCEAN(ng) % v(LBi,LBj,1,Tindex))
           END IF
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -718,7 +725,7 @@
 !
         IF (get_var(idRv3d).and.Perfect3D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idRv3d)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRv3d)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           status=nf_fread4d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -728,7 +735,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % rv(LBi,LBj,0,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idRv3d)), InpRec,  &
      &                          TRIM(ncname)
@@ -748,8 +755,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTvar(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTvar(itrc))), varid)
               gtype=vflag(varid)*r3dvar
             END IF
             IF (Perfect3D) THEN
@@ -771,7 +778,7 @@
 #  endif
      &                          OCEAN(ng) % t(LBi,LBj,1,Tindex,itrc))
             END IF
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTvar(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -794,7 +801,7 @@
 !
         IF (have_var(idVvis)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVvis)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvis)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -804,7 +811,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #   endif
      &                      MIXING(ng) % AKv(LBi,LBj,0))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVvis)), InpRec,  &
      &                          TRIM(ncname)
@@ -823,7 +830,7 @@
 !
         IF (have_var(idTdif)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTdif)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idTdif)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -833,7 +840,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #   endif
      &                      MIXING(ng) % AKt(LBi,LBj,0,itemp))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idTdif)), InpRec,  &
      &                          TRIM(ncname)
@@ -852,7 +859,7 @@
 !
         IF (have_var(idSdif)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idSdif)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSdif)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -862,7 +869,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #   endif
      &                      MIXING(ng) % AKt(LBi,LBj,0,isalt))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idSdif)), InpRec,  &
      &                          TRIM(ncname)
@@ -883,7 +890,7 @@
 !
         IF (get_var(idMtke).and.Perfect3D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idMtke)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idMtke)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread4d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -893,7 +900,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #   endif
      &                      MIXING(ng) % tke(LBi,LBj,0,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idMtke)), InpRec,  &
      &                          TRIM(ncname)
@@ -912,7 +919,7 @@
 !
         IF (get_var(idMtls).and.Perfect3D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idMtls)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idMtls)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread4d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -922,7 +929,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #   endif
      &                      MIXING(ng) % gls(LBi,LBj,0,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idMtls)), InpRec,  &
      &                          TRIM(ncname)
@@ -941,7 +948,7 @@
 !
         IF (get_var(idVmLS).and.Perfect3D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVmLS)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVmLS)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -951,7 +958,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #   endif
      &                      MIXING(ng) % Lscale(LBi,LBj,0))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVmLS)), InpRec,  &
      &                          TRIM(ncname)
@@ -970,7 +977,7 @@
 !
         IF (get_var(idVmKK).and.Perfect3D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVmKK)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVmKK)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -980,7 +987,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #   endif
      &                      MIXING(ng) % Akk(LBi,LBj,0))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVmKK)), InpRec,  &
      &                          TRIM(ncname)
@@ -1000,7 +1007,7 @@
 !
         IF (get_var(idVmKP).and.Perfect3D) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVmKP)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVmKP)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1010,7 +1017,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #    endif
      &                      MIXING(ng) % Akp(LBi,LBj,0))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVmKP)), InpRec,  &
      &                          TRIM(ncname)
@@ -1034,8 +1041,8 @@
         DO i=1,NST
           IF (get_var(idfrac(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1045,7 +1052,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % bed_frac(LBi,LBj,1,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idfrac(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1064,8 +1071,8 @@
 !
           IF (get_var(idBmas(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1075,7 +1082,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % bed_mass(LBi,LBj,1,Tindex,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idBmas(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1096,8 +1103,8 @@
         DO i=1,MBEDP
           IF (get_var(idSbed(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1107,7 +1114,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % bed(LBi,LBj,1,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idSbed(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1130,8 +1137,8 @@
         DO i=1,NST
           IF (get_var(idUbld(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),  &
+     &                              varid)
               gtype=vflag(varid)*u2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1141,7 +1148,7 @@
      &                        GRID(ng) % umask(LBi,LBj),                &
 #    endif
      &                        OCEAN(ng) % bedldu(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idUbld(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1158,8 +1165,8 @@
 !
           IF (get_var(idVbld(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),  &
+     &                              varid)
               gtype=vflag(varid)*v2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1169,7 +1176,7 @@
      &                        GRID(ng) % vmask(LBi,LBj),                &
 #    endif
      &                        OCEAN(ng) % bedldv(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idVbld(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1194,8 +1201,8 @@
         DO i=1,MBOTP
           IF (get_var(idBott(i)).and.have_var(idBott(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),  &
+     &                              varid)
               gtype=vflag(varid)*r2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1205,7 +1212,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % bottom(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idBott(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1237,7 +1244,7 @@
 !
         IF (get_var(idFsur)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
             gtype=vflag(varid)*r2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1247,7 +1254,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % tl_zeta(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idFsur)), InpRec,  &
      &                          TRIM(ncname)
@@ -1267,7 +1274,7 @@
 !
         IF (get_var(idUbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1277,7 +1284,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % tl_ubar(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -1298,7 +1305,7 @@
 !
         IF (get_var(idUsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1308,7 +1315,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      FORCES(ng) % tl_ustr(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -1327,7 +1334,7 @@
 !
         IF (get_var(idVsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1337,7 +1344,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      FORCES(ng) % tl_vstr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -1358,7 +1365,7 @@
 !
         IF (get_var(idVbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1368,7 +1375,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % tl_vbar(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -1389,7 +1396,7 @@
 !
         IF (get_var(idUvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1399,7 +1406,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % tl_u(LBi,LBj,1,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -1419,7 +1426,7 @@
 !
         IF (get_var(idVvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1429,7 +1436,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % tl_v(LBi,LBj,1,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -1449,8 +1456,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTvar(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTvar(itrc))), varid)
               gtype=vflag(varid)*r3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1460,7 +1467,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #  endif
      &                        OCEAN(ng) % tl_t(LBi,LBj,1,Tindex,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTvar(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -1484,8 +1491,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTsur(itrc))), varid)
               gtype=vflag(varid)*r2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1495,7 +1502,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        FORCES(ng)% tl_tflux(LBi,LBj,Tindex,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -1520,8 +1527,8 @@
         DO i=1,NST
           IF (get_var(idfrac(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1531,7 +1538,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % tl_bed_frac(LBi,LBj,1,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idfrac(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1551,8 +1558,8 @@
 !
           IF (get_var(idBmas(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1562,7 +1569,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng)%tl_bed_mass(LBi,LBj,1,Tindex,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idBmas(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1583,8 +1590,8 @@
         DO i=1,MBEDP
           IF (get_var(idSbed(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1594,7 +1601,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % tl_bed(LBi,LBj,1,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idSbed(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1617,8 +1624,8 @@
         DO i=1,NST
           IF (get_var(idUbld(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),  &
+     &                              varid)
               gtype=vflag(varid)*u2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1628,7 +1635,7 @@
      &                        GRID(ng) % umask(LBi,LBj),                &
 #    endif
      &                        OCEAN(ng) % tl_bedldu(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idUbld(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1645,8 +1652,8 @@
 !
           IF (get_var(idVbld(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),  &
+     &                              varid)
               gtype=vflag(varid)*v2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1656,7 +1663,7 @@
      &                        GRID(ng) % vmask(LBi,LBj),                &
 #    endif
      &                        OCEAN(ng) % tl_bedldv(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idVbld(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1681,8 +1688,8 @@
         DO i=1,MBOTP
           IF (get_var(idBott(i)).and.have_var(idBott(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),  &
+     &                              varid)
               gtype=vflag(varid)*r2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1692,7 +1699,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % tl_bottom(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idBott(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -1724,7 +1731,7 @@
 !
         IF (get_var(idFsur)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
             gtype=vflag(varid)*r2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1734,7 +1741,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % ad_zeta(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idFsur)), InpRec,  &
      &                          TRIM(ncname)
@@ -1753,7 +1760,7 @@
 !
         IF (get_var(idUbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1763,7 +1770,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % ad_ubar(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -1782,7 +1789,7 @@
 !
         IF (get_var(idVbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1792,7 +1799,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % ad_vbar(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -1813,7 +1820,7 @@
 !
         IF (get_var(idUsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1823,7 +1830,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      FORCES(ng) % ad_ustr(LBi,LBj,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -1842,7 +1849,7 @@
 !
         IF (get_var(idVsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1852,7 +1859,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      FORCES(ng) % ad_vstr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -1873,7 +1880,7 @@
 !
         IF (get_var(idUvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1883,7 +1890,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % ad_u(LBi,LBj,1,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -1902,7 +1909,7 @@
 !
         IF (get_var(idVvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -1912,7 +1919,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % ad_v(LBi,LBj,1,Tindex))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -1932,8 +1939,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTvar(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTvar(itrc))), varid)
               gtype=vflag(varid)*r3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1943,7 +1950,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #  endif
      &                        OCEAN(ng) % ad_t(LBi,LBj,1,Tindex,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTvar(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -1967,8 +1974,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTsur(itrc))), varid)
               gtype=vflag(varid)*r2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -1978,7 +1985,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        FORCES(ng)% ad_tflux(LBi,LBj,Tindex,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -2004,8 +2011,8 @@
         DO i=1,NST
           IF (get_var(idfrac(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2015,7 +2022,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % ad_bed_frac(LBi,LBj,1,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idfrac(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -2034,8 +2041,8 @@
 !
           IF (get_var(idBmas(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),  &
+     &                              varid)
               gtype=vflag(varid)*b3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2045,7 +2052,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng)%ad_bed_mass(LBi,LBj,1,Tindex,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idBmas(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -2066,7 +2073,7 @@
         DO i=1,MBEDP
           IF (get_var(idSbed(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),    &
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),  &
      &                            varid)
               gtype=vflag(varid)*b3dvar
             END IF
@@ -2077,7 +2084,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % ad_bed(LBi,LBj,1,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idSbed(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -2100,8 +2107,8 @@
         DO i=1,NST
           IF (get_var(idUbld(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),  &
+     &                              varid)
               gtype=vflag(varid)*u2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2111,7 +2118,7 @@
      &                        GRID(ng) % umask(LBi,LBj),                &
 #    endif
      &                        OCEAN(ng) % ad_bedldu(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idUbld(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -2128,8 +2135,8 @@
 !
           IF (get_var(idVbld(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),  &
+     &                              varid)
               gtype=vflag(varid)*v2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2139,7 +2146,7 @@
      &                        GRID(ng) % vmask(LBi,LBj),                &
 #    endif
      &                        OCEAN(ng) % ad_bedldv(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idVbld(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -2164,8 +2171,8 @@
         DO i=1,MBOTP
           IF (get_var(idBott(i)).and.have_var(idBott(i))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),    &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),  &
+     &                              varid)
               gtype=vflag(varid)*r2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2175,7 +2182,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % ad_bottom(LBi,LBj,i))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idBott(i))),     &
      &                            InpRec, TRIM(ncname)
@@ -2207,7 +2214,7 @@
 !
         IF (get_var(idFsur)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
             gtype=vflag(varid)*r2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2217,7 +2224,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % b_zeta(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idFsur)), InpRec,  &
      &                          TRIM(ncname)
@@ -2236,7 +2243,7 @@
 !
         IF (get_var(idUbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2246,7 +2253,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % b_ubar(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -2265,7 +2272,7 @@
 !
         IF (get_var(idVbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2275,7 +2282,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % b_vbar(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -2295,7 +2302,7 @@
 !
         IF (get_var(idUsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2305,7 +2312,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % b_sustr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -2324,7 +2331,7 @@
 !
         IF (get_var(idVsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2334,7 +2341,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % b_svstr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -2355,7 +2362,7 @@
 !
         IF (get_var(idUvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2365,7 +2372,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % b_u(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -2384,7 +2391,7 @@
 !
         IF (get_var(idVvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2394,7 +2401,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % b_v(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -2414,8 +2421,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTvar(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTvar(itrc))), varid)
               gtype=vflag(varid)*r3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2425,7 +2432,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #  endif
      &                        OCEAN(ng) % b_t(LBi,LBj,1,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTvar(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -2448,8 +2455,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTsur(itrc))), varid)
               gtype=vflag(varid)*r2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2459,7 +2466,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % b_stflx(LBi,LBj,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -2492,7 +2499,7 @@
 !
         IF (get_var(idFsur)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
             gtype=vflag(varid)*r2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2502,7 +2509,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % e_zeta(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idFsur)), InpRec,  &
      &                          TRIM(ncname)
@@ -2521,7 +2528,7 @@
 !
         IF (get_var(idUbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2531,7 +2538,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % e_ubar(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -2550,7 +2557,7 @@
 !
         IF (get_var(idVbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2560,7 +2567,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % e_vbar(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -2580,7 +2587,7 @@
 !
         IF (get_var(idUsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2590,7 +2597,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % e_sustr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -2609,7 +2616,7 @@
 !
         IF (get_var(idVsms)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2619,7 +2626,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % e_svstr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
      &                          TRIM(ncname)
@@ -2640,7 +2647,7 @@
 !
         IF (get_var(idUvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2650,7 +2657,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % e_u(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -2669,7 +2676,7 @@
 !
         IF (get_var(idVvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2679,7 +2686,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % e_v(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -2699,8 +2706,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTvar(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTvar(itrc))), varid)
               gtype=vflag(varid)*r3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2710,7 +2717,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #  endif
      &                        OCEAN(ng) % e_t(LBi,LBj,1,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTvar(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -2733,8 +2740,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTsur(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTsur(itrc))), varid)
               gtype=vflag(varid)*r2dvar
             END IF
             status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -2744,7 +2751,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
      &                        OCEAN(ng) % e_stflx(LBi,LBj,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -2767,7 +2774,7 @@
 !
         IF (have_var(idKhor)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idKhor)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idKhor)), varid)
             gtype=vflag(varid)*r2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2777,7 +2784,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      MIXING(ng) % Kh(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idKhor)), InpRec,  &
      &                          TRIM(ncname)
@@ -2799,7 +2806,7 @@
 !
         IF (have_var(idKver)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idKver)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idKver)), varid)
             gtype=vflag(varid)*w3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2809,7 +2816,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 #  endif
      &                      MIXING(ng) % Kv(LBi,LBj,0))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idKver)), InpRec,  &
      &                          TRIM(ncname)
@@ -2843,9 +2850,11 @@
 !  Read in next impulse forcing time to process.
 !
         IF (InpThread) THEN
-          status=nf_inq_varid(ncINPid, TRIM(tvarnam), varid)
-          status=nf_get_var1_TYPE(ncINPid, varid, InpRec, FrcTime(ng))
-          IF (status.ne.nf_noerr) THEN
+          start(1)=InpRec
+          total(1)=1
+          status=nf90_inq_varid(ncINPid, TRIM(tvarnam), varid)
+          status=nf90_get_var(ncINPid, varid, FrcTime(ng), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, TRIM(tvarnam), InpRec,            &
      &                        TRIM(ncname)
             exit_flag=2
@@ -2861,7 +2870,7 @@
 !
         IF (get_var(idFsur)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
             gtype=vflag(varid)*r2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2871,7 +2880,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % f_zeta(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idFsur)), InpRec,  &
      &                          TRIM(ncname)
@@ -2890,7 +2899,7 @@
 !
         IF (get_var(idUbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
             gtype=vflag(varid)*u2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2900,7 +2909,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % f_ubar(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -2919,7 +2928,7 @@
 !
         IF (get_var(idVbar)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
             gtype=vflag(varid)*v2dvar
           END IF
           status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2929,7 +2938,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      OCEAN(ng) % f_vbar(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVbar)), InpRec,  &
      &                          TRIM(ncname)
@@ -2949,7 +2958,7 @@
 !
         IF (get_var(idUvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
             gtype=vflag(varid)*u3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2959,7 +2968,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % f_u(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -2978,7 +2987,7 @@
 !
         IF (get_var(idVvel)) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
+            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
             gtype=vflag(varid)*v3dvar
           END IF
           status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
@@ -2988,7 +2997,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
      &                      OCEAN(ng) % f_v(LBi,LBj,1))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVvel)), InpRec,  &
      &                          TRIM(ncname)
@@ -3008,8 +3017,8 @@
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
             IF (InpThread) THEN
-              status=nf_inq_varid(ncINPid, TRIM(Vname(1,idTvar(itrc))), &
-     &                            varid)
+              status=nf90_inq_varid(ncINPid,                            &
+     &                              TRIM(Vname(1,idTvar(itrc))), varid)
               gtype=vflag(varid)*r3dvar
             END IF
             status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
@@ -3019,7 +3028,7 @@
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #  endif
      &                        OCEAN(ng) % f_t(LBi,LBj,1,itrc))
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTvar(itrc))),  &
      &                            InpRec, TRIM(ncname)
@@ -3043,7 +3052,7 @@
 !  Close input NetCDF file.
 !-----------------------------------------------------------------------
 !
-      status=nf_close(ncINPid)
+      status=nf90_close(ncINPid)
 !
   20  FORMAT (/,a,'GET_STATE - unable to open input NetCDF file: ',a)
   30  FORMAT (/,a,'GET_STATE - error while reading variable: ',a,2x,    &

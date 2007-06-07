@@ -90,8 +90,8 @@
 !
       IF (exit_flag.ne.NoError) RETURN
       IF (ldef.and.OutThread) THEN
-        status=nf_create(TRIM(ncname),nf_clobber,ncFLTid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_create(TRIM(ncname), nf90_clobber, ncFLTid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,30) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -110,37 +110,37 @@
 !
       IF (ldef.and.OutThread) THEN
 # ifdef SOLVE3D
-        status=nf_def_dim(ncFLTid(ng),'s_rho'   ,N(ng),                 &
-     &                    DimIDs( 9))
-        status=nf_def_dim(ncFLTid(ng),'s_w'     ,N(ng)+1,               &
-     &                    DimIDs(10))
-        status=nf_def_dim(ncFLTid(ng),'tracer'  ,NT(ng),                &
-     &                    DimIDs(11))
+        status=nf90_def_dim(ncFLTid(ng),'s_rho'   ,N(ng),               &
+     &                      DimIDs( 9))
+        status=nf90_def_dim(ncFLTid(ng),'s_w'     ,N(ng)+1,             &
+     &                      DimIDs(10))
+        status=nf90_def_dim(ncFLTid(ng),'tracer'  ,NT(ng),              &
+     &                      DimIDs(11))
 #  ifdef SEDIMENT
-        status=nf_def_dim(ncFLTid(ng),'Nbed'    ,Nbed,                  &
-     &                    DimIDs(16))
+        status=nf90_def_dim(ncFLTid(ng),'Nbed'    ,Nbed,                &
+     &                      DimIDs(16))
 #  endif
 #  ifdef ECOSIM
-        status=nf_def_dim(ncFLTid(ng),'Nphy'    ,Nphy,                  &
-     &                    DimIDs(25))
-        status=nf_def_dim(ncFLTid(ng),'Nbac'    ,Nbac,                  &
-     &                    DimIDs(26))
-        status=nf_def_dim(ncFLTid(ng),'Ndom'    ,Ndom,                  &
-     &                    DimIDs(27))
-        status=nf_def_dim(ncFLTid(ng),'Nfec'    ,Nfec,                  &
-     &                    DimIDs(28))
+        status=nf90_def_dim(ncFLTid(ng),'Nphy'    ,Nphy,                &
+     &                      DimIDs(25))
+        status=nf90_def_dim(ncFLTid(ng),'Nbac'    ,Nbac,                &
+     &                      DimIDs(26))
+        status=nf90_def_dim(ncFLTid(ng),'Ndom'    ,Ndom,                &
+     &                      DimIDs(27))
+        status=nf90_def_dim(ncFLTid(ng),'Nfec'    ,Nfec,                &
+     &                      DimIDs(28))
 #  endif
 # endif
-        status=nf_def_dim(ncFLTid(ng),'drifter' ,Nfloats(ng),           &
-     &                    DimIDs(15))
-        status=nf_def_dim(ncFLTid(ng),'boundary',4,                     &
-     &                    DimIDs(14))
+        status=nf90_def_dim(ncFLTid(ng),'drifter' ,Nfloats(ng),         &
+     &                      DimIDs(15))
+        status=nf90_def_dim(ncFLTid(ng),'boundary',4,                   &
+     &                      DimIDs(14))
 # ifdef FOUR_DVAR
-        status=nf_def_dim(ncFLTid(ng),'Nstate  ',NstateVar(ng),         &
-     &                    DimIDs(29))
+        status=nf90_def_dim(ncFLTid(ng),'Nstate  ',NstateVar(ng),       &
+     &                      DimIDs(29))
 # endif
-        status=nf_def_dim(ncFLTid(ng),TRIM(ADJUSTL(Vname(5,idtime))),   &
-     &                    nf_unlimited,DimIDs(12))
+        status=nf90_def_dim(ncFLTid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
+     &                      nf90_unlimited,DimIDs(12))
         recdim=DimIDs(12)
         fltdim=DimIDs(15)
 !
@@ -348,7 +348,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf_enddef(ncFLTid(ng))
+        status=nf90_enddef(ncFLTid(ng))
       END IF
 !
 !-----------------------------------------------------------------------
@@ -376,8 +376,8 @@
 !
 !  Open floats file for read/write.
 !
-        status=nf_open(TRIM(ncname),nf_write,ncFLTid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(ncname),nf90_write,ncFLTid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,50) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -392,15 +392,16 @@
 !
 !  Inquire size of the "drifter" dimension.
 !
-        status=nf_inq_dimid(ncFLTid(ng),'drifter',fltdim)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_dimid(ncFLTid(ng),'drifter',fltdim)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,60) 'drifter', TRIM(ncname)
           exit_flag=3
           ioerror=status
           RETURN
         END IF
-        status=nf_inq_dim(ncFLTid(ng),fltdim,dimnam,Nfloats(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inquire_dimension(ncFLTid(ng),fltdim,dimnam,        &
+     &                                Nfloats(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,70) 'drifter', TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -413,58 +414,58 @@
         DO i=1,nvars
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
-            status=nf_inq_varid(ncFLTid(ng),TRIM(Vname(1,idtime)),      &
-     &                          fltVid(idtime,ng))
+            status=nf90_inq_varid(ncFLTid(ng),TRIM(Vname(1,idtime)),    &
+     &                            fltVid(idtime,ng))
           END IF
           IF (TRIM(varnam(i)).eq.'Xgrid') THEN
             got_var(idXgrd)=.TRUE.
-            status=nf_inq_varid(ncFLTid(ng),'Xgrid',fltVid(idXgrd,ng))
+            status=nf90_inq_varid(ncFLTid(ng),'Xgrid',fltVid(idXgrd,ng))
           END IF
           IF (TRIM(varnam(i)).eq.'Ygrid') THEN
             got_var(idYgrd)=.TRUE.
-            status=nf_inq_varid(ncFLTid(ng),'Ygrid',fltVid(idYgrd,ng))
+            status=nf90_inq_varid(ncFLTid(ng),'Ygrid',fltVid(idYgrd,ng))
           END IF
 # ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.'Zgrid') THEN
             got_var(idZgrd)=.TRUE.
-            status=nf_inq_varid(ncFLTid(ng),'Zgrid',fltVid(idZgrd,ng))
+            status=nf90_inq_varid(ncFLTid(ng),'Zgrid',fltVid(idZgrd,ng))
           END IF
 # endif
           IF (spherical) THEN
             IF (TRIM(varnam(i)).eq.'lon') THEN
               got_var(idglon)=.TRUE.
-              status=nf_inq_varid(ncFLTid(ng),'lon',fltVid(idglon,ng))
+              status=nf90_inq_varid(ncFLTid(ng),'lon',fltVid(idglon,ng))
             END IF
             IF (TRIM(varnam(i)).eq.'lat') THEN
               got_var(idglat)=.TRUE.
-              status=nf_inq_varid(ncFLTid(ng),'lat',fltVid(idglat,ng))
+              status=nf90_inq_varid(ncFLTid(ng),'lat',fltVid(idglat,ng))
             END IF
           ELSE
             IF (TRIM(varnam(i)).eq.'x') THEN
               got_var(idglon)=.TRUE.
-              status=nf_inq_varid(ncFLTid(ng),'x',fltVid(idglon,ng))
+              status=nf90_inq_varid(ncFLTid(ng),'x',fltVid(idglon,ng))
             END IF
             IF (TRIM(varnam(i)).eq.'y') THEN
               got_var(idglat)=.TRUE.
-              status=nf_inq_varid(ncFLTid(ng),'y',fltVid(idglat,ng))
+              status=nf90_inq_varid(ncFLTid(ng),'y',fltVid(idglat,ng))
             END IF
           END IF
 # ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.'depth') THEN
             got_var(iddpth)=.TRUE.
-            status=nf_inq_varid(ncFLTid(ng),'depth',fltVid(iddpth,ng))
+            status=nf90_inq_varid(ncFLTid(ng),'depth',fltVid(iddpth,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idDano))) THEN
             got_var(idDano)=.TRUE.
-            status=nf_inq_varid(ncFLTid(ng),TRIM(Vname(1,idDano)),      &
-     &                          fltVid(idDano,ng))
+            status=nf90_inq_varid(ncFLTid(ng),TRIM(Vname(1,idDano)),    &
+     &                            fltVid(idDano,ng))
           END IF
           DO itrc=1,NT(ng)
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
              got_var(idTvar(itrc))=.TRUE.
-             status=nf_inq_varid(ncFLTid(ng),                           &
-     &                           TRIM(Vname(1,idTvar(itrc))),           &
-     &                           fltTid(itrc,ng))
+             status=nf90_inq_varid(ncFLTid(ng),                         &
+     &                             TRIM(Vname(1,idTvar(itrc))),         &
+     &                             fltTid(itrc,ng))
             END IF
           END DO
 # endif
@@ -552,9 +553,9 @@
         total(1)=Nfloats(ng)
         start(2)=tFLTindx(ng)
         total(2)=1
-        status=nf_get_vara_TYPE(ncFLTid(ng),fltVid(idXgrd,ng),          &
-     &                          start,total,Tinp)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncFLTid(ng),fltVid(idXgrd,ng),              &
+     &                      Tinp,start,total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,90) 'Xgrid', tFLTindx(ng), TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -572,9 +573,9 @@
             END DO
           END IF
         END DO
-        status=nf_get_vara_TYPE(ncFLTid(ng),fltVid(idYgrd,ng),          &
-     &                          start,total,Tinp)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncFLTid(ng),fltVid(idYgrd,ng),              &
+     &                      Tinp,start,total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,90) 'Ygrid', tFLTindx(ng), TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -593,9 +594,9 @@
           END IF
         END DO
 # ifdef SOLVE3D
-        status=nf_get_vara_TYPE(ncFLTid(ng),fltVid(idZgrd,ng),          &
-     &                          start,total,Tinp)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncFLTid(ng),fltVid(idZgrd,ng),              &
+     &                      Tinp,start,total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,90) 'Zgrid', tFLTindx(ng), TRIM(ncname)
           exit_flag=3
           ioerror=status

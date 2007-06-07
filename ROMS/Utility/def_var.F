@@ -94,8 +94,14 @@
 !  Define variable.
 !
       IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
-        def_var=nf_def_var(ncid,TRIM(Vinfo(1)),Vtype,nVdim,Vdim,Vid)
-        IF (def_var.ne.nf_noerr) THEN
+        IF ((nVdim.eq.1).and.(Vdim(1).eq.0)) THEN
+          def_var=nf90_def_var(ncid, TRIM(Vinfo(1)), Vtype,             &
+     &                         varid = Vid)
+        ELSE
+          def_var=nf90_def_var(ncid, TRIM(Vinfo(1)), Vtype,             &
+     &                         Vdim(1:nVdim), Vid)
+        END IF
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -107,9 +113,9 @@
 !
       latt=LEN_TRIM(Vinfo(2))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'long_name',                   &
-     &                          latt,TRIM(Vinfo(2)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'long_name',                    &
+     &                       Vinfo(2)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'long_name', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -122,9 +128,9 @@
 !
       latt=LEN_TRIM(Vinfo(19))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'size_class',                  &
-     &                          latt,TRIM(Vinfo(19)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'size_class',                   &
+     &                       Vinfo(19)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'size_class', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -138,9 +144,9 @@
       latt=LEN_TRIM(Vinfo(3))
       IF (latt.gt.0) THEN
         IF (TRIM(Vinfo(3)).ne.'nondimensional') THEN
-          def_var=nf_put_att_text(ncid,Vid,'units',                     &
-     &                            latt,TRIM(Vinfo(3)))
-          IF (def_var.ne.nf_noerr) THEN
+          def_var=nf90_put_att(ncid, Vid, 'units',                      &
+     &                         Vinfo(3)(1:latt))
+          IF (def_var.ne.nf90_noerr) THEN
             WRITE (stdout,20) 'units', TRIM(Vinfo(1)), TRIM(ncname)
             exit_flag=3
             ioerror=def_var
@@ -154,9 +160,9 @@
 !
       latt=LEN_TRIM(Vinfo(4))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'calendar',                    &
-     &                          latt,TRIM(Vinfo(4)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'calendar',                     &
+     &                       Vinfo(4)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'calendar', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -169,14 +175,14 @@
 !
       latt=LEN_TRIM(Vinfo(5))
       IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf_int) THEN
-          def_var=nf_put_att_int(ncid,Vid,TRIM(Vinfo(5)),               &
-     &                           Vtype,1,INT(Aval(2)))
+        IF (Vtype.eq.nf90_int) THEN
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),               &
+     &                         INT(Aval(2)))
         ELSE
-          def_var=nf_put_att_TYPE(ncid,Vid,TRIM(Vinfo(5)),              &
-     &                            Vtype,1,Aval(2))
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),               &
+     &                         Aval(2))
         END IF
-        IF (def_var.ne.nf_noerr) THEN
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(Vinfo(5)), TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -190,14 +196,14 @@
 !
       latt=LEN_TRIM(Vinfo(6))
       IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf_int) THEN
-          def_var=nf_put_att_int(ncid,Vid,TRIM(Vinfo(6)),               &
-     &                           Vtype,1,INT(Aval(3)))
+        IF (Vtype.eq.nf90_int) THEN
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),               &
+     &                         INT(Aval(3)))
         ELSE
-          def_var=nf_put_att_TYPE(ncid,Vid,TRIM(Vinfo(6)),              &
-     &                            Vtype,1,Aval(3))
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),               &
+     &                         Aval(3))
         END IF
-        IF (def_var.ne.nf_noerr) THEN
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(Vinfo(6)), TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -211,9 +217,9 @@
 !
       latt=LEN_TRIM(Vinfo(7))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'option_T',                    &
-     &                          latt,TRIM(Vinfo(7)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'option_T',                     &
+     &                       Vinfo(7)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'option_T', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -226,9 +232,9 @@
 !
       latt=LEN_TRIM(Vinfo(8))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'option_F',                    &
-     &                          latt,TRIM(Vinfo(8)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'option_F',                     &
+     &                       Vinfo(8)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'option_F', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -241,9 +247,9 @@
 !
       latt=LEN_TRIM(Vinfo(9))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'option_0',                    &
-     &                          latt,TRIM(Vinfo(9)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'option_0',                     &
+     &                       Vinfo(9)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'option_0', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -256,9 +262,9 @@
 !
       latt=LEN_TRIM(Vinfo(10))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'option_1',                    &
-     &                          latt,TRIM(Vinfo(10)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'option_1',                     &
+     &                       Vinfo(10)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'option_1', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -271,9 +277,9 @@
 !
       latt=LEN_TRIM(Vinfo(11))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'negative_value',              &
-     &                          latt,TRIM(Vinfo(11)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'negative_value',               &
+     &                       Vinfo(11)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'negative_value', TRIM(Vinfo(1)),           &
      &                      TRIM(ncname)
           exit_flag=3
@@ -287,9 +293,9 @@
 !
       latt=LEN_TRIM(Vinfo(12))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'positive_value',              &
-     &                          latt,TRIM(Vinfo(12)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'positive_value',               &
+     &                       Vinfo(12)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'positive_value', TRIM(Vinfo(1)),           &
      &                      TRIM(ncname)
           exit_flag=3
@@ -303,9 +309,9 @@
 !
       latt=LEN_TRIM(Vinfo(13))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'cycle',                       &
-     &                          latt,TRIM(Vinfo(13)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'cycle',                        &
+     &                       Vinfo(13)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'cycle', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -318,9 +324,9 @@
 !
       latt=LEN_TRIM(Vinfo(15))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'positions',                   &
-     &                          latt,TRIM(Vinfo(15)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'positions',                    &
+     &                       Vinfo(15)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'positions', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -333,9 +339,9 @@
 !
       latt=LEN_TRIM(Vinfo(16))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'time',                        &
-     &                          latt,TRIM(Vinfo(16)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'time',                         &
+     &                       Vinfo(16)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'time', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -348,14 +354,14 @@
 !
       latt=LEN_TRIM(Vinfo(17))
       IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf_int) THEN
-          def_var=nf_put_att_int(ncid,Vid,TRIM(Vinfo(17)),              &
-     &                           Vtype,1,INT(Aval(4)))
+        IF (Vtype.eq.nf90_int) THEN
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),              &
+     &                         INT(Aval(4)))
         ELSE
-          def_var=nf_put_att_TYPE(ncid,Vid,TRIM(Vinfo(17)),             &
-     &                            Vtype,1,Aval(4))
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),              &
+     &                         Aval(4))
         END IF
-        IF (def_var.ne.nf_noerr) THEN
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(Vinfo(17)), TRIM(Vinfo(1)),            &
      &                      TRIM(ncname)
           exit_flag=3
@@ -370,14 +376,14 @@
 !
       latt=LEN_TRIM(Vinfo(18))
       IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf_int) THEN
-          def_var=nf_put_att_int(ncid,Vid,TRIM(Vinfo(18)),              &
-     &                           Vtype,1,INT(Aval(1)))
+        IF (Vtype.eq.nf90_int) THEN
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),              &
+     &                         INT(Aval(1)))
         ELSE
-          def_var=nf_put_att_TYPE(ncid,Vid,TRIM(Vinfo(18)),             &
-     &                            Vtype,1,Aval(1))
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),              &
+     &                         Aval(1))
         END IF
-        IF (def_var.ne.nf_noerr) THEN
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(Vinfo(18)), TRIM(Vinfo(1)),            &
      &                      TRIM(ncname)
           exit_flag=3
@@ -392,14 +398,14 @@
 !
       latt=LEN_TRIM(Vinfo(24))
       IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf_int) THEN
-          def_var=nf_put_att_int(ncid,Vid,TRIM(Vinfo(24)),              &
-     &                           Vtype,1,INT(Aval(6)))
+        IF (Vtype.eq.nf90_int) THEN
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),              &
+     &                         INT(Aval(6)))
         ELSE
-          def_var=nf_put_att_TYPE(ncid,Vid,TRIM(Vinfo(24)),             &
-     &                            Vtype,1,Aval(6))
+          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),              &
+     &                         Aval(6))
         END IF
-        IF (def_var.ne.nf_noerr) THEN
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(Vinfo(24)), TRIM(Vinfo(1)),            &
      &                      TRIM(ncname)
           exit_flag=3
@@ -414,9 +420,9 @@
 !
       latt=LEN_TRIM(Vinfo(20))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'water_points',                &
-     &                          latt,TRIM(Vinfo(20)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'water_points',                 &
+     &                       Vinfo(20)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'water_points', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -429,9 +435,9 @@
 !
       latt=LEN_TRIM(Vinfo(21))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'standard_name',               &
-     &                          latt,TRIM(Vinfo(21)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'standard_name',                &
+     &                       Vinfo(21)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'standard_name', TRIM(Vinfo(1)),            &
      &                      TRIM(ncname)
           exit_flag=3
@@ -479,9 +485,9 @@
           END IF
         END IF
         latt=LEN_TRIM(text)
-        def_var=nf_put_att_text(ncid,Vid,TRIM(Vinfo(22)),               &
-     &                          latt,TRIM(text))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(22)),                &
+     &                       text(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'coordinates', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var
@@ -495,9 +501,9 @@
 !
       latt=LEN_TRIM(Vinfo(23))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'formula_terms',               &
-     &                          latt,TRIM(Vinfo(23)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'formula_terms',                &
+     &                       Vinfo(23)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'formula_terms', TRIM(Vinfo(1)),            &
      &                      TRIM(ncname)
           exit_flag=3
@@ -511,9 +517,9 @@
 !
       latt=LEN_TRIM(Vinfo(14))
       IF (latt.gt.0) THEN
-        def_var=nf_put_att_text(ncid,Vid,'field',                       &
-     &                          latt,TRIM(Vinfo(14)))
-        IF (def_var.ne.nf_noerr) THEN
+        def_var=nf90_put_att(ncid, Vid, 'field',                        &
+     &                       Vinfo(14)(1:latt))
+        IF (def_var.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'field', TRIM(Vinfo(1)), TRIM(ncname)
           exit_flag=3
           ioerror=def_var

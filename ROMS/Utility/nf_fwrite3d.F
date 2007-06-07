@@ -144,7 +144,7 @@
 !  Write output buffer into NetCDF file.
 !-----------------------------------------------------------------------
 !
-        nf_fwrite3d=nf_noerr
+        nf_fwrite3d=nf90_noerr
         IF (OutThread) THEN
           IF (gtype.gt.0) THEN
             start(1)=1
@@ -168,7 +168,7 @@
             total(2)=1
 # endif
           END IF
-          status=nf_put_vara_TYPE(ncid, ncvarid, start, total, Aout)
+          status=nf90_put_var(ncid, ncvarid, Aout, start, total)
           nf_fwrite3d=status
         END IF
 # ifdef INLINE_2DIO
@@ -213,7 +213,7 @@
 !  Write output buffer into NetCDF file.
 !-----------------------------------------------------------------------
 !
-      nf_fwrite3d=nf_noerr
+      nf_fwrite3d=nf90_noerr
       IF (OutThread) THEN
         IF (gtype.gt.0) THEN
           start(1)=1
@@ -232,7 +232,7 @@
           total(2)=1
 # endif
         END IF
-        status=nf_put_vara_TYPE(ncid, ncvarid, start, total, Aout)
+        status=nf90_put_var(ncid, ncvarid, Aout, start, total)
       END IF
 #endif
 #ifdef DISTRIBUTE

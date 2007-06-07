@@ -62,9 +62,9 @@
 !
       logical, intent(out) :: update
 
-      integer, intent(in) :: ng, model, ifield, ncid, nfiles
+      integer, intent(in) :: ng, model, ifield, nfiles
       integer, intent(in) :: LBi, UBi, UBj, UBk, Istr, Jrec
-      integer, intent(inout) :: Iend
+      integer, intent(inout) :: ncid, Iend
 
       character (len=*), intent(in) :: fname(nfiles)
 
@@ -81,7 +81,8 @@
       integer :: start(3), total(3), Vsize(4)
 
       real(r8) :: Aval, Clength, Fmax, Fmin, Tdelta, Tend
-      real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr, Tval, scale
+      real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr, scale
+      real(r8) :: Tval(1)
 
       real(r8), dimension((UBi-LBi+1)*UBj) :: A
 
@@ -175,8 +176,8 @@
           CALL openids (nFfiles(ng), FRCname(1,ng), FRCids(1,ng),       &
      &                  ncfile, ncid)
           IF (ncid.eq.-1) THEN
-            status=nf_open(TRIM(ncfile), nf_nowrite, ncid)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_open(TRIM(ncfile), nf90_nowrite, ncid)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,20) TRIM(ncfile)
               exit_flag=2
               ioerror=status
@@ -192,16 +193,17 @@
 !  available.
 !
           IF (got_var) THEN
-            status=nf_inq_var(ncid, Vid, varnam(Vid), vartype,          &
-     &                        nvdims(Vid), vdims(1,Vid), nvatts)
-            IF (status.eq.nf_noerr) THEN
+            status=nf90_inquire_variable(ncid, Vid, varnam(ifield),     &
+     &                                   vartype, nvdims(ifield),       &
+     &                                   vdims(:,ifield), nvatts)
+            IF (status.eq.nf90_noerr) THEN
               DO i=1,nvatts
-                status=nf_inq_attname(ncid, Vid, i, attnam)
-                IF (status.eq.nf_noerr) THEN
+                status=nf90_inq_attname(ncid, Vid, i, attnam)
+                IF (status.eq.nf90_noerr) THEN
                   IF (TRIM(attnam).eq.'scale_factor') THEN
-                    status=nf_get_att_TYPE(ncid, Vid, TRIM(attnam),     &
-     &                                     scale)
-                    IF (status.eq.nf_noerr) THEN
+                    status=nf90_get_att(ncid, Vid, TRIM(attnam),        &
+     &                                  scale)
+                    IF (status.eq.nf90_noerr) THEN
                       Fscale(ifield,ng)=Fscale(ifield,ng)*scale
                     ELSE
                       WRITE (stdout,30) TRIM(attnam)
@@ -213,7 +215,7 @@
                     Vtype=Iinfo(1,ifield,ng)
                   END IF
                 ELSE
-                  WRITE (stdout,40) TRIM(varnam(Vid))
+                  WRITE (stdout,40) TRIM(varnam(ifield))
                   exit_flag=2
                   RETURN
                 END IF
@@ -274,8 +276,10 @@
           ELSE
             Tmono=Tend
             Trec=Trec+1
-            status=nf_get_var1_TYPE(ncid,Tid,Trec-1,Tval)
-            IF (Tval*Tscale.lt.Tend) THEN
+            start(1)=Trec-1
+            total(1)=1
+            status=nf90_get_var(ncid, Tid, Tval, start, total)
+            IF (Tval(1)*Tscale.lt.Tend) THEN
               Trec=Trec+1
             END IF
           END IF
@@ -353,8 +357,10 @@
 !  Read in time coordinate.
 !
           IF (InpThread.and.((Tid.ge.0).and.(Tid.ne.Vid))) THEN
-            status=nf_get_var1_TYPE(ncid, Tid, Trec, Tval)
-            IF (InpThread.and.(status.ne.nf_noerr)) THEN
+            start(1)=Trec
+            total(1)=1
+            status=nf90_get_var(ncid, Tid, Tval, start, total)
+            IF (InpThread.and.(status.ne.nf90_noerr)) THEN
               WRITE (stdout,40) TRIM(Tname(ifield)), Trec
               exit_flag=2
               ioerror=status
@@ -366,7 +372,7 @@
             CALL mp_bcasti (ng, model, exit_flag, 1)
             CALL mp_bcastf (ng, model, Tval, 1)
 # endif
-            Vtime(Tindex,ifield,ng)=Tval*Tscale
+            Vtime(Tindex,ifield,ng)=Tval(1)*Tscale
           END IF
 !
 !  Read in non-grided data.
@@ -390,8 +396,8 @@
               npts=total(1)*total(2)
             END IF
             IF (InpThread) THEN
-              status=nf_get_vara_TYPE(ncid, Vid, start, total, A)
-              IF (status.ne.nf_noerr) THEN
+              status=nf90_get_var(ncid, Vid, A, start, total)
+              IF (status.ne.nf90_noerr) THEN
                 WRITE (stdout,40) TRIM(Vname(1,ifield)), Trec
                 exit_flag=2
                 ioerror=status
@@ -422,7 +428,7 @@
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
                 lend=LEN_TRIM(ncfile)
-                WRITE (stdout,60) TRIM(Vname(2,ifield)), Tval*Tscale,   &
+                WRITE (stdout,60) TRIM(Vname(2,ifield)), Tval(1)*Tscale,&
      &                            ncfile(lstr:lend), Trec, Tindex,      &
      &                            Tmin, Tmax, Fmin, Fmax
               END IF

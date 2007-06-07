@@ -80,8 +80,8 @@
 !
       ncname=MODname(ng)
       IF (LdefMOD(ng).and.OutThread) THEN
-        status=nf_create(TRIM(ncname),nf_clobber,ncMODid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_create(TRIM(ncname),nf90_clobber,ncMODid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,30) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -94,27 +94,27 @@
 !-----------------------------------------------------------------------
 !
       IF (LdefMOD(ng).and.OutThread) THEN
-        status=nf_def_dim(ncMODid(ng),'record',2,                       &
-     &                    recordDim)
-        status=nf_def_dim(ncMODid(ng),'state_var',NstateVar(ng)+1,      &
-     &                    stateDim)
-        status=nf_def_dim(ncMODid(ng),'datum'    ,Ndatum(ng),           &
-     &                    datumDim)
+        status=nf90_def_dim(ncMODid(ng),'record',2,                     &
+     &                      recordDim)
+        status=nf90_def_dim(ncMODid(ng),'state_var',NstateVar(ng)+1,    &
+     &                      stateDim)
+        status=nf90_def_dim(ncMODid(ng),'datum'    ,Ndatum(ng),         &
+     &                      datumDim)
 # ifdef FOUR_DVAR
 #  ifdef IS4DVAR
-        status=nf_def_dim(ncMODid(ng),'Ninner'   ,Ninner,               &
-     &                    NinnerDim)
-        status=nf_def_dim(ncMODid(ng),'Minner'   ,Ninner+1,             &
-     &                    MinnerDim)
-        status=nf_def_dim(ncMODid(ng),'Nouter'   ,Nouter,               &
-     &                    NouterDim)
+        status=nf90_def_dim(ncMODid(ng),'Ninner'   ,Ninner,             &
+     &                      NinnerDim)
+        status=nf90_def_dim(ncMODid(ng),'Minner'   ,Ninner+1,           &
+     &                      MinnerDim)
+        status=nf90_def_dim(ncMODid(ng),'Nouter'   ,Nouter,             &
+     &                      NouterDim)
 #   ifdef LANCZOS
-        status=nf_def_dim(ncMODid(ng),'three '   ,3,                    &
-     &                    threeDim)
+        status=nf90_def_dim(ncMODid(ng),'three '   ,3,                  &
+     &                      threeDim)
 #   endif
 #  endif
-        status=nf_def_dim(ncMODid(ng),'iteration',nf_unlimited,         &
-     &                    iterDim)
+        status=nf90_def_dim(ncMODid(ng),'iteration',nf90_unlimited,     &
+     &                      iterDim)
 !
         CostDim(1)=stateDim
         CostDim(2)=iterDim
@@ -131,58 +131,60 @@
 !
         Vinfo( 1)='outer'
         Vinfo( 2)='outer loop counter'
-        status=def_var(ncMODid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='inner'
         Vinfo( 2)='inner loop counter'
-        status=def_var(ncMODid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 # endif
 !
 !  Define model-observations comparison statistics.
 !
         Vinfo( 1)='Nobs'
         Vinfo( 2)='Number of usable observations'
-        status=def_var(ncMODid(ng),varid,nf_int,1,stateDim,Aval,        &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,nf90_int,1,stateDim,           &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='obs_mean'
         Vinfo( 2)='observations mean'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,            &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='obs_std'
         Vinfo( 2)='observations standard deviation'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,            &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='model_mean'
         Vinfo( 2)='model mean'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,            &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='model_std'
         Vinfo( 2)='model standard deviation'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,            &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='model_bias'
         Vinfo( 2)='model bias'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,            &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='SDE'
         Vinfo( 2)='model-observations standard deviation error'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,            &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='CC'
         Vinfo( 2)='model-observations cross-correlation'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,            &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='MSE'
         Vinfo( 2)='model-observations mean squared error'
-        status=def_var(ncMODid(ng),varid,nf_FRST,1,stateDim,Aval,       &
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,Aval,       &
      &                 Vinfo,ncname)
 
 # if defined IS4DVAR
@@ -191,13 +193,13 @@
 !
         Vinfo( 1)='nConvRitz'
         Vinfo( 2)='Number of converged Ritz eigenvalues'
-        status=def_var(ncMODid(ng),varid,nf_int,0,0,Aval,               &
-     &                 Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='Ritz'
         Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 1,Ninnerdim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,Ninnerdim,           &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define conjugate gradient norms.
 !
@@ -206,22 +208,22 @@
         Vinfo( 2)='conjugate gradient alpha coefficient'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 #  endif
         Vinfo( 1)='cg_beta'
         Vinfo( 2)='conjugate gradient alpha coefficient'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='cg_tau'
         Vinfo( 2)='conjugate gradient tau coefficient'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 
 #  ifdef LANCZOS
 !
@@ -231,22 +233,22 @@
         Vinfo( 2)='Lanczos algorithm delta coefficient'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='cg_gamma'
         Vinfo( 2)='Lanczos algorithm gamma coefficient'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 !
 !  Initial gradient vector normalization factor.
 !
         Vinfo( 1)='cg_Gnorm'
         Vinfo( 2)='initial gradient normalization factor'
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 1,NouterDim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,NouterDim,           &
+     &                 Aval,Vinfo,ncname)
 !
 !  Lanczos vector normalization factor.
 !
@@ -254,8 +256,8 @@
         Vinfo( 2)='Lanczos vector normalization factor'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 !
 !  Reduction in the gradient norm.
 !
@@ -263,8 +265,8 @@
         Vinfo( 2)='reduction in the gradient norm'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 !
 !  Lanczos recurrence tridiagonal matrix.
 !
@@ -272,8 +274,8 @@
         Vinfo( 2)='Lanczos recurrence tridiagonal matrix'
         vardim(1)=NinnerDim
         vardim(2)=threeDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 !
 !  Lanczos tridiagonal matrix, upper diagonal elements.
 !
@@ -281,8 +283,8 @@
         Vinfo( 2)='tridiagonal matrix, upper diagonal elements'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 !
 !  Eigenvalues of Lanczos recurrence relationship.
 !
@@ -290,8 +292,8 @@
         Vinfo( 2)='Lanczos recurrence eigenvalues'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 !
 !  Eigenvalues relative error.
 !
@@ -299,8 +301,8 @@
         Vinfo( 2)='Ritz eigenvalues relative error'
         vardim(1)=NinnerDim
         vardim(2)=NouterDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 !
 !  Eigenvectors of Lanczos recurrence relationship.
 !
@@ -308,8 +310,8 @@
         Vinfo( 2)='Lanczos recurrence eigenvectors'
         vardim(1)=NinnerDim
         vardim(2)=NinnerDim
-        status=def_var(ncMODid(ng),varid,NF_FRST,                       &
-     &                 2,vardim,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
+     &                 Aval,Vinfo,ncname)
 #  endif
 # endif
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -318,15 +320,18 @@
 !
         Vinfo( 1)='cg_gamma'
         Vinfo( 2)='conjugate gradient gamma norm'
-        status=def_var(ncMODid(ng),varid,NF_FRST,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,0,                   &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='cg_sigma'
         Vinfo( 2)='conjugate gradient sigma norm'
-        status=def_var(ncMODid(ng),varid,NF_FRST,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,0,                   &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='cg_rnorm'
         Vinfo( 2)='conjugate gradient right-hand-side norm'
-        status=def_var(ncMODid(ng),varid,NF_FRST,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncMODid(ng),varid,NF_FRST,1,0,                   &
+     &                 Aval,Vinfo,ncname)
 # endif
 !
 !  Observations screening/normalization scale.
@@ -454,7 +459,7 @@
         Vinfo( 2)='cost function gradient norm'
         Vinfo(17)='missing_value'
         Aval(1)=0.0_r8
-        status=def_var(ncMODid(ng),varid,nf_double,                     &
+        status=def_var(ncMODid(ng),varid,nf90_double,                   &
      &                 2,CostDim,Aval,Vinfo,ncname)
 # endif
 # if defined IS4DVAR || defined IS4DVAR_OLD || defined S4DVAR
@@ -465,7 +470,7 @@
         Vinfo( 2)='model minus observation misfit cost function'
         Vinfo(17)='missing_value'
         Aval(1)=0.0_r8
-        status=def_var(ncMODid(ng),varid,nf_double,                     &
+        status=def_var(ncMODid(ng),varid,nf90_double,                   &
      &                 2,CostDim,Aval,Vinfo,ncname)
 # endif
 # ifdef BACKGROUND
@@ -476,7 +481,7 @@
         Vinfo( 2)='model minus background misfit cost function'
         Vinfo(17)='missing_value'
         Aval(1)=0.0_r8
-        status=def_var(ncMODid(ng),varid,nf_double,                     &
+        status=def_var(ncMODid(ng),varid,nf90_double,                   &
      &                 2,CostDim,Aval,Vinfo,ncname)
 # endif
 # if defined IS4DVAR || defined IS4DVAR_OLD
@@ -486,7 +491,7 @@
 !
         Vinfo( 1)='Jmin'
         Vinfo( 2)='normalized, optimal cost function minimum'
-        status=def_var(ncMODid(ng),varid,nf_double,                     &
+        status=def_var(ncMODid(ng),varid,nf90_double,                   &
      &                 1,iterDim,Aval,Vinfo,ncname)
 # endif
 !
@@ -494,7 +499,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf_enddef(ncMODid(ng))
+        status=nf90_enddef(ncMODid(ng))
       END IF
 !
 !=======================================================================

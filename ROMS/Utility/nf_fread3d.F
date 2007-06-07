@@ -223,10 +223,10 @@
         Kmin=LBk
         Kmax=UBk
 #endif
-        status=nf_noerr
+        status=nf90_noerr
         IF (InpThread) THEN
-          status=nf_get_vara_TYPE(ncid, ncvarid, start, total, wrk)
-          IF (status.eq.nf_noerr) THEN
+          status=nf90_get_var(ncid, ncvarid, wrk, start, total)
+          IF (status.eq.nf90_noerr) THEN
             DO i=1,Npts
               wrk(i)=Ascl*wrk(i)
               Amin=MIN(Amin,wrk(i))
@@ -237,7 +237,7 @@
 #ifdef DISTRIBUTE
         CALL mp_bcasti (ng, model, status, 1)
 #endif
-        IF (status.ne.nf_noerr) RETURN
+        IF (status.ne.nf90_noerr) RETURN
 !
 !-----------------------------------------------------------------------
 !  Unpack read field.
@@ -290,7 +290,7 @@
 !  If debugging, write distributed data into formatted files.
 !-----------------------------------------------------------------------
 !
-      status=nf_inq_varname(ncid, ncvarid, Aname)
+      status=nf90_inquire_variable(ncid, ncvarid, Aname)
       CALL mp_dump (ng, MyRank, MyType, LBi, UBi, LBj, UBj, LBk, UBk,   &
      &              A, Aname)
 #endif

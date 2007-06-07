@@ -109,8 +109,9 @@
       integer :: INPncid, INPvid
       integer :: Nrec, Nsave, gtype, status, varid
       integer :: i
+      integer :: start(4), total(4)
 
-      real(r8) :: inp_time
+      real(r8) :: inp_time(1)
 
       character (len=6 ) :: string
       character (len=15) :: tvarnam
@@ -154,8 +155,8 @@
 !  Open input NetCDF file.
 !
       IF (InpThread) THEN
-        status=nf_open(TRIM(INPncname), nf_nowrite, INPncid)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(INPncname), nf90_nowrite, INPncid)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) string, TRIM(INPncname)
           exit_flag=2
           ioerror=status
@@ -167,9 +168,11 @@
 !  snapshots.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(INPncid, 'nADJ', varid)
-        status=nf_get_var1_int(INPncid, varid, ng, Nsave)       
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(INPncid, 'nADJ', varid)
+        start(1)=ng
+        total(1)=1
+        status=nf90_get_var(INPncid, varid, Nsave, start, total)       
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'nADJ', TRIM(INPncname)
           exit_flag=2
           ioerror=status
@@ -184,7 +187,7 @@
 !
       IF (get_var(idFsur)) THEN
         IF (InpThread) THEN
-          status=nf_inq_varid(INPncid, TRIM(Vname(1,idFsur)), INPvid)
+          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idFsur)), INPvid)
           gtype=vflag(varid)*r2dvar
         END IF
         CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
@@ -205,7 +208,7 @@
 !
       IF (get_var(idUbar)) THEN
         IF (InpThread) THEN
-          status=nf_inq_varid(INPncid, TRIM(Vname(1,idUbar)), INPvid)
+          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idUbar)), INPvid)
           gtype=vflag(INPvid)*u2dvar
         END IF
         CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
@@ -224,7 +227,7 @@
 !
       IF (get_var(idVbar)) THEN
         IF (InpThread) THEN
-          status=nf_inq_varid(INPncid, TRIM(Vname(1,idVbar)), INPvid)
+          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idVbar)), INPvid)
           gtype=vflag(varid)*v2dvar
         END IF
         CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
@@ -246,7 +249,7 @@
 !
       IF (get_var(idUvel)) THEN
         IF (InpThread) THEN
-          status=nf_inq_varid(INPncid, TRIM(Vname(1,idUvel)), INPvid)
+          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idUvel)), INPvid)
           gtype=vflag(varid)*u3dvar
         END IF
         CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
@@ -266,7 +269,7 @@
 !
       IF (get_var(idVvel)) THEN
         IF (InpThread) THEN
-          status=nf_inq_varid(INPncid, TRIM(Vname(1,idVvel)), INPvid)
+          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idVvel)), INPvid)
           gtype=vflag(varid)*v3dvar
         END IF
         CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
@@ -286,8 +289,8 @@
       DO i=1,NT(ng)
         IF (get_var(idTvar(i))) THEN
           IF (InpThread) THEN
-            status=nf_inq_varid(INPncid, TRIM(Vname(1,idTvar(i))),      &
-     &                          INPvid)
+            status=nf90_inq_varid(INPncid, TRIM(Vname(1,idTvar(i))),    &
+     &                            INPvid)
             gtype=vflag(varid)*r3dvar
           END IF
           CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave, &
@@ -307,12 +310,16 @@
 !  Write out time in backward order.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(INPncid, TRIM(Vname(1,idtime)), INPvid)
+        status=nf90_inq_varid(INPncid, TRIM(Vname(1,idtime)), INPvid)
         DO i=1,Nrec        
-          status=nf_get_var1_TYPE(INPncid,INPvid,i,inp_time)
-          status=nf_put_var1_TYPE(ncTLFid(ng),tlfVid(idtime,ng),        &
-     &                            Nrec-i+1,inp_time)
-          IF (status.ne.nf_noerr) THEN
+          start(1)=i
+          total(1)=1
+          status=nf90_get_var(INPncid,INPvid, inp_time, start, total)
+          start(1)=Nrec-i+1
+          total(1)=1
+          status=nf90_put_var(ncTLFid(ng), tlfVid(idtime,ng),           &
+     &                        inp_time, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) TRIM(Vname(1,idtime)), Nrec-i+1,          &
      &                        TRIM(TLFname(ng))
             exit_flag=3
@@ -328,8 +335,8 @@
 !-----------------------------------------------------------------------
 !
       IF (InpThread) THEN
-        status=nf_sync(ncTLFid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncTLFid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,40)
           exit_flag=3
           ioerror=status
@@ -462,9 +469,9 @@
      &                  mask(LBi,LBj),                                  &
 # endif
      &                  ad_A(LBi,LBj,Inow))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf_inq_varname(INPncid, INPvid, ncvname)
+          status=nf90_inquire_variable(INPncid, INPvid, ncvname)
           WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
         END IF
         exit_flag=2
@@ -482,9 +489,9 @@
      &                    mask(LBi,LBj),                                &
 # endif
      &                    ad_A(LBi,LBj,Inxt))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(INPncid, INPvid, ncvname)
+            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -513,9 +520,9 @@
      &                   mask(LBi,LBj),                                 &
 # endif
      &                   Awrk(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf_inq_varname(OUTncid, OUTvid, ncvname)
+          status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
           WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
         END IF
         exit_flag=3
@@ -542,9 +549,9 @@
      &                    mask(LBi,LBj),                                &
 # endif
      &                    ad_A(LBi,LBj,Inxt))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(INPncid, INPvid, ncvname)
+            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -572,9 +579,9 @@
      &                     mask(LBi,LBj),                               &
 # endif
      &                     Awrk(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(OUTncid, OUTvid, ncvname)
+            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
             WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3
@@ -611,9 +618,9 @@
      &                     mask(LBi,LBj),                               &
 # endif
      &                     Awrk(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(OUTncid, OUTvid, ncvname)
+            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
               WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3
@@ -742,9 +749,9 @@
      &                  mask(LBi,LBj),                                  &
 #  endif
      &                  ad_A(LBi,LBj,LBk,Inow))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf_inq_varname(INPncid, INPvid, ncvname)
+          status=nf90_inquire_variable(INPncid, INPvid, ncvname)
           WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
         END IF
         exit_flag=2
@@ -762,9 +769,9 @@
      &                    mask(LBi,LBj),                                &
 #  endif
      &                    ad_A(LBi,LBj,LBk,Inxt))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(INPncid, INPvid, ncvname)
+            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec+1, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -795,9 +802,9 @@
      &                   mask(LBi,LBj),                                 &
 #  endif
      &                   Awrk(LBi,LBj,LBk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf_inq_varname(OUTncid, OUTvid, ncvname)
+          status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
           WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
         END IF
         exit_flag=3
@@ -824,9 +831,9 @@
      &                    mask(LBi,LBj),                                &
 #  endif
      &                    ad_A(LBi,LBj,LBk,Inxt))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(INPncid, INPvid, ncvname)
+            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec+1, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -856,9 +863,9 @@
      &                     mask(LBi,LBj),                               &
 #  endif
      &                     Awrk(LBi,LBj,LBk))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(OUTncid, OUTvid, ncvname)
+            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
             WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3
@@ -896,9 +903,9 @@
      &                     mask(LBi,LBj),                               &
 #  endif
      &                     Awrk(LBi,LBj,LBk))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf_inq_varname(OUTncid, OUTvid, ncvname)
+            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
             WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3

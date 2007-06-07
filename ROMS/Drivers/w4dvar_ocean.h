@@ -777,7 +777,7 @@
 !
 !  Close tangent linear NetCDF file.
 !
-          status=nf_close(ncTLMid(ng))
+          status=nf90_close(ncTLMid(ng))
           ncTLMid(ng)=-1
 !
 !-----------------------------------------------------------------------
@@ -1094,7 +1094,7 @@
 !
 !  Close current forward NetCDF file.
 !
-          status=nf_close(ncFWDid(ng))
+          status=nf90_close(ncFWDid(ng))
           ncFWDid(ng)=-1
 
         END DO OUTER_LOOP

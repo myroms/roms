@@ -130,7 +130,7 @@
 !  Write output buffer into NetCDF file.
 !-----------------------------------------------------------------------
 !
-        nf_fwrite4d=nf_noerr
+        nf_fwrite4d=nf90_noerr
         IF (OutThread) THEN
           IF (gtype.gt.0) THEN
             start(1)=1
@@ -151,7 +151,7 @@
             total(2)=1
 # endif
           END IF
-          status=nf_put_vara_TYPE(ncid, ncvarid, start, total, Aout)
+          status=nf90_put_var(ncid, ncvarid, Aout, start, total)
           nf_fwrite4d=status
         END IF
       END DO
@@ -197,7 +197,7 @@
 !  Write output buffer into NetCDF file.
 !-----------------------------------------------------------------------
 !
-        nf_fwrite4d=nf_noerr
+        nf_fwrite4d=nf90_noerr
         IF (OutThread) THEN
           IF (gtype.gt.0) THEN
             start(1)=1
@@ -218,7 +218,7 @@
             total(2)=1
 # endif
           END IF
-          status=nf_put_vara_TYPE(ncid, ncvarid, start, total, Aout)
+          status=nf90_put_var(ncid, ncvarid, Aout, start, total)
         END IF
       END DO
 #endif

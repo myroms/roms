@@ -360,8 +360,8 @@
 !  Open grid NetCDF file for reading.
 !
       IF (ncGRDid(ng).eq.-1) THEN
-        status=nf_open(TRIM(ncname), nf_nowrite, ncGRDid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(ncname), nf90_nowrite, ncGRDid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -375,15 +375,15 @@
 !
 !  Read in basin lengths.
 !
-      status=nf_get_var1_TYPE(ncGRDid(ng), grdxlid, 1, xl(ng))
-      IF (status.ne.nf_noerr) THEN
+      status=nf90_get_var(ncGRDid(ng), grdxlid, xl(ng))
+      IF (status.ne.nf90_noerr) THEN
         WRITE (stdout,30) 'xl', TRIM(ncname)
         exit_flag=2
         ioerror=status
         RETURN
       END IF
-      status=nf_get_var1_TYPE(ncGRDid(ng), grdelid, 1, el(ng))
-      IF (status.ne.nf_noerr) THEN
+      status=nf90_get_var(ncGRDid(ng), grdelid, el(ng))
+      IF (status.ne.nf90_noerr) THEN
         WRITE (stdout,30) 'el', TRIM(ncname)
         exit_flag=2
         ioerror=status
@@ -392,8 +392,8 @@
 !
 !  Read in logical switch for spherical grid configuration.
 !
-      status=nf_get_var1_text(ncGRDid(ng), grdsphid, 1, char1)
-      IF (status.ne.nf_noerr) THEN
+      status=nf90_get_var(ncGRDid(ng), grdsphid, char1)
+      IF (status.ne.nf90_noerr) THEN
         WRITE (stdout,30) 'spherical', TRIM(ncname)
         exit_flag=2
         ioerror=status
@@ -432,7 +432,7 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % rmask(LBi,LBj),                      &
      &                  GRID(ng) % rmask(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'mask_rho', TRIM(ncname)
         END IF
@@ -447,7 +447,7 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % umask(LBi,LBj),                      &
      &                  GRID(ng) % umask(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'mask_u', TRIM(ncname)
         END IF
@@ -462,7 +462,7 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % vmask(LBi,LBj),                      &
      &                  GRID(ng) % vmask(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'mask_v', TRIM(ncname)
         END IF
@@ -477,7 +477,7 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % pmask(LBi,LBj),                      &
      &                  GRID(ng) % pmask(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'mask_psi', TRIM(ncname)
         END IF
@@ -523,7 +523,7 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % Rscope(LBi,LBj),                     &
      &                  GRID(ng) % Rscope(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'scope_rho', TRIM(ncname)
         END IF
@@ -538,7 +538,7 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % Uscope(LBi,LBj),                     &
      &                  GRID(ng) % Uscope(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'scope_u', TRIM(ncname)
         END IF
@@ -553,7 +553,7 @@
      &                  Fscl, Fmin, Fmax,                               &
      &                  GRID(ng) % Vscope(LBi,LBj),                     &
      &                  GRID(ng) % Vscope(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'scope_v', TRIM(ncname)
         END IF
@@ -594,7 +594,7 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  GRID(ng) % h(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'h', TRIM(ncname)
         END IF
@@ -625,7 +625,7 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 #  endif
      &                  GRID(ng) % zice(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'zice', TRIM(ncname)
         END IF
@@ -656,7 +656,7 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  GRID(ng) % f(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'f', TRIM(ncname)
         END IF
@@ -688,7 +688,7 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  GRID(ng) % pm(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'pm', TRIM(ncname)
         END IF
@@ -705,7 +705,7 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  GRID(ng) % pn(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'pn', TRIM(ncname)
         END IF
@@ -741,7 +741,7 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  GRID(ng) % dmde(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'dmde', TRIM(ncname)
         END IF
@@ -758,7 +758,7 @@
      &                  GRID(ng) % rmask(LBi,LBj),                      &
 # endif
      &                  GRID(ng) % dndx(LBi,LBj))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,30) 'dndx', TRIM(ncname)
         END IF
@@ -794,7 +794,7 @@
      &                    GRID(ng) % pmask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % xp(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'x_p', TRIM(ncname)
           END IF
@@ -818,7 +818,7 @@
      &                    GRID(ng) % pmask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % yp(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'y_p', TRIM(ncname)
           END IF
@@ -845,7 +845,7 @@
      &                    GRID(ng) % rmask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % xr(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'x_rho', TRIM(ncname)
           END IF
@@ -869,7 +869,7 @@
      &                    GRID(ng) % rmask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % yr(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'y_rho', TRIM(ncname)
           END IF
@@ -896,7 +896,7 @@
      &                    GRID(ng) % umask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % xu(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'x_u', TRIM(ncname)
           END IF
@@ -920,7 +920,7 @@
      &                    GRID(ng) % umask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % yu(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'y_u', TRIM(ncname)
           END IF
@@ -947,7 +947,7 @@
      &                    GRID(ng) % vmask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % xv(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'x_v', TRIM(ncname)
           END IF
@@ -971,7 +971,7 @@
      &                    GRID(ng) % vmask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % yv(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'y_v', TRIM(ncname)
           END IF
@@ -999,7 +999,7 @@
      &                      GRID(ng) % pmask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % lonp(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lon_psi', TRIM(ncname)
             END IF
@@ -1023,7 +1023,7 @@
      &                      GRID(ng) % pmask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % latp(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lat_psi', TRIM(ncname)
             END IF
@@ -1052,7 +1052,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % lonr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lon_rho', TRIM(ncname)
             END IF
@@ -1076,7 +1076,7 @@
      &                      GRID(ng) % rmask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % latr(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lat_rho', TRIM(ncname)
             END IF
@@ -1105,7 +1105,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % lonu(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lon_u', TRIM(ncname)
             END IF
@@ -1129,7 +1129,7 @@
      &                      GRID(ng) % umask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % latu(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lat_u', TRIM(ncname)
             END IF
@@ -1158,7 +1158,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % lonv(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lon_v', TRIM(ncname)
             END IF
@@ -1182,7 +1182,7 @@
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 # endif
      &                      GRID(ng) % latv(LBi,LBj))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) 'lat_v', TRIM(ncname)
             END IF
@@ -1210,7 +1210,7 @@
      &                    GRID(ng) % rmask(LBi,LBj),                    &
 # endif
      &                    GRID(ng) % angler(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,30) 'angle', TRIM(ncname)
           END IF
@@ -1233,7 +1233,7 @@
 !
 ! Close GRID NetCDF file.
 !
-      status=nf_close(ncGRDid(ng))
+      status=nf90_close(ncGRDid(ng))
       ncGRDid(ng)=-1
 !
   10  FORMAT (/,' GET_GRID - unable to find grid variable: ',a,         &

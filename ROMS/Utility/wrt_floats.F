@@ -48,23 +48,24 @@
       tFLTindx(ng)=tFLTindx(ng)+1
       NrecFLT(ng)=NrecFLT(ng)+1
 !
-      start(1)=1
-      total(1)=Nfloats(ng)
-      start(2)=tFLTindx(ng)
-      total(2)=1
-!
 !  Write out model time (s).
 !
       IF (Master) THEN
-        status=nf_put_var1_TYPE(ncFLTid(ng), fltVid(idtime,ng),         &
-     &                          tFLTindx(ng), time(ng))
-        IF (status.ne.nf_noerr) THEN
+        start(1)=tFLTindx(ng)
+        total(1)=1
+        status=nf90_put_var(ncFLTid(ng), fltVid(idtime,ng),             &
+     &                      time(ng:), start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idtime)), tFLTindx(ng)
           exit_flag=3
           ioerror=status
           RETURN
         END IF
       END IF
+      start(1)=1
+      total(1)=Nfloats(ng)
+      start(2)=tFLTindx(ng)
+      total(2)=1
 !
 !  Write out floats X-grid locations.
 !
@@ -76,9 +77,9 @@
             Tout(l)=spval
           END IF
         END DO
-        status=nf_put_vara_TYPE(ncFLTid(ng), fltVid(idXgrd,ng),         &
-     &                          start, total, Tout)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncFLTid(ng), fltVid(idXgrd,ng),             &
+     &                      Tout, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'Xgrid', tFLTindx(ng)
           exit_flag=3
           ioerror=status
@@ -96,9 +97,9 @@
             Tout(l)=spval
           END IF
         END DO
-        status=nf_put_vara_TYPE(ncFLTid(ng), fltVid(idYgrd,ng),         &
-     &                          start, total, Tout)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncFLTid(ng), fltVid(idYgrd,ng),             &
+     &                      Tout, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'Ygrid', tFLTindx(ng)
           exit_flag=3
           ioerror=status
@@ -117,9 +118,9 @@
             Tout(l)=spval
           END IF
         END DO
-        status=nf_put_vara_TYPE(ncFLTid(ng), fltVid(idZgrd,ng),         &
-     &                          start, total, Tout)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncFLTid(ng), fltVid(idZgrd,ng),             &
+     &                      Tout, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'Zgrid', tFLTindx(ng)
           exit_flag=3
           ioerror=status
@@ -134,9 +135,9 @@
         DO l=1,Nfloats(ng)
           Tout(l)=FLT(ng)%track(iflon,nf(ng),l)
         END DO
-        status=nf_put_vara_TYPE(ncFLTid(ng), fltVid(idglon,ng),         &
-     &                          start, total, Tout)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncFLTid(ng), fltVid(idglon,ng),             &
+     &                      Tout, start, total)
+        IF (status.ne.nf90_noerr) THEN
           IF (spherical) THEN
             WRITE (stdout,10) 'lon', tFLTindx(ng)
           ELSE
@@ -149,9 +150,9 @@
         DO l=1,Nfloats(ng)
           Tout(l)=FLT(ng)%track(iflat,nf(ng),l)
         END DO
-        status=nf_put_vara_TYPE(ncFLTid(ng), fltVid(idglat,ng),         &
-     &                          start, total, Tout)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncFLTid(ng), fltVid(idglat,ng),             &
+     &                      Tout, start, total)
+        IF (status.ne.nf90_noerr) THEN
           IF (spherical) THEN
             WRITE (stdout,10) 'lat', tFLTindx(ng)
           ELSE
@@ -174,9 +175,9 @@
             Tout(l)=spval
           END IF
         END DO
-        status=nf_put_vara_TYPE(ncFLTid(ng), fltVid(iddpth,ng),         &
-     &                          start, total, Tout)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncFLTid(ng), fltVid(iddpth,ng),             &
+     &                      Tout, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'depth', tFLTindx(ng)
           exit_flag=3
           ioerror=status
@@ -194,9 +195,9 @@
             Tout(l)=spval
           END IF
         END DO
-        status=nf_put_vara_TYPE(ncFLTid(ng), fltVid(idDano,ng),         &
-     &                          start, total, Tout)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncFLTid(ng), fltVid(idDano,ng),             &
+     &                      Tout, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idDano)), tFLTindx(ng)
           exit_flag=3
           ioerror=status
@@ -215,9 +216,9 @@
               Tout(l)=spval
             END IF
           END DO
-          status=nf_put_vara_TYPE(ncFLTid(ng), fltTid(itrc,ng),         &
-     &                            start, total, Tout)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncFLTid(ng), fltTid(itrc,ng),             &
+     &                        Tout, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))), tFLTindx(ng)
             exit_flag=3
             ioerror=status
@@ -232,8 +233,8 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        status=nf_sync(ncFLTid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncFLTid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status

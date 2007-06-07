@@ -66,8 +66,8 @@
 !=======================================================================
 !
       IF (.not.LrstGST.and.OutThread) THEN
-        status=nf_create(TRIM(ncname),nf_clobber,ncGSTid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_create(TRIM(ncname),nf90_clobber,ncGSTid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,30) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -80,38 +80,38 @@
 !-----------------------------------------------------------------------
 !
       IF (.not.LrstGST.and.OutThread) THEN
-        status=nf_def_dim(ncGSTid(ng), 'Mstate', Mstate(ng),            &
-     &                    Mstatedim)
-        status=nf_def_dim(ncGSTid(ng), 'NCV'   , NCV,                   &
-     &                    NCVdim)
-        status=nf_def_dim(ncGSTid(ng), 'LworkD', 3*Nstate(ng),          &
-     &                    SworkDdim)
-        status=nf_def_dim(ncGSTid(ng), 'LworkL', LworkL,                &
-     &                    SworkLdim)
+        status=nf90_def_dim(ncGSTid(ng), 'Mstate', Mstate(ng),          &
+     &                      Mstatedim)
+        status=nf90_def_dim(ncGSTid(ng), 'NCV'   , NCV,                 &
+     &                      NCVdim)
+        status=nf90_def_dim(ncGSTid(ng), 'LworkD', 3*Nstate(ng),        &
+     &                      SworkDdim)
+        status=nf90_def_dim(ncGSTid(ng), 'LworkL', LworkL,              &
+     &                      SworkLdim)
 # ifdef DISTRIBUTE
-        status=nf_def_dim(ncGSTid(ng), 'Nnodes', numnodes,              &
-     &                    Nnodesdim)
+        status=nf90_def_dim(ncGSTid(ng), 'Nnodes', numnodes,            &
+     &                      Nnodesdim)
 # endif
-        status=nf_def_dim(ncGSTid(ng), 'iparam', SIZE(iparam),          &
-     &                    iparamdim)
-        status=nf_def_dim(ncGSTid(ng), 'ipntr' , SIZE(ipntr),           &
-     &                    ipntrdim)
-        status=nf_def_dim(ncGSTid(ng), 'iaupd' , SIZE(iaupd),           &
-     &                    iaupddim)
-        status=nf_def_dim(ncGSTid(ng), 'laitr' , SIZE(laitr),           &
-     &                    laitrdim)
-        status=nf_def_dim(ncGSTid(ng), 'iaitr' , SIZE(iaitr),           &
-     &                    iaitrdim)
-        status=nf_def_dim(ncGSTid(ng), 'raitr' , SIZE(raitr),           &
-     &                    raitrdim)
-        status=nf_def_dim(ncGSTid(ng), 'laup2' , SIZE(laup2),           &
-     &                    laup2dim)
-        status=nf_def_dim(ncGSTid(ng), 'iaup2' , SIZE(iaup2),           &
-     &                    iaup2dim)
-        status=nf_def_dim(ncGSTid(ng), 'raup2' , SIZE(raup2),           &
-     &                    raup2dim)
-        status=nf_def_dim(ncGSTid(ng), 'char2'   ,2,                    &
-     &                    char2dim)
+        status=nf90_def_dim(ncGSTid(ng), 'iparam', SIZE(iparam),        &
+     &                      iparamdim)
+        status=nf90_def_dim(ncGSTid(ng), 'ipntr' , SIZE(ipntr),         &
+     &                      ipntrdim)
+        status=nf90_def_dim(ncGSTid(ng), 'iaupd' , SIZE(iaupd),         &
+     &                      iaupddim)
+        status=nf90_def_dim(ncGSTid(ng), 'laitr' , SIZE(laitr),         &
+     &                      laitrdim)
+        status=nf90_def_dim(ncGSTid(ng), 'iaitr' , SIZE(iaitr),         &
+     &                      iaitrdim)
+        status=nf90_def_dim(ncGSTid(ng), 'raitr' , SIZE(raitr),         &
+     &                      raitrdim)
+        status=nf90_def_dim(ncGSTid(ng), 'laup2' , SIZE(laup2),         &
+     &                      laup2dim)
+        status=nf90_def_dim(ncGSTid(ng), 'iaup2' , SIZE(iaup2),         &
+     &                      iaup2dim)
+        status=nf90_def_dim(ncGSTid(ng), 'raup2' , SIZE(raup2),         &
+     &                      raup2dim)
+        status=nf90_def_dim(ncGSTid(ng), 'char2'   ,2,                  &
+     &                      char2dim)
 !
 !-----------------------------------------------------------------------
 !  Define global attributes.
@@ -139,19 +139,22 @@
 !
         Vinfo( 1)='NEV'
         Vinfo( 2)='number of eigenvalues to compute'
-        status=def_var(ncGSTid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define number of Lanczos vectors to compute.
 !
         Vinfo( 1)='NCV'
         Vinfo( 2)='number of Lanczos vectors to compute'
-        status=def_var(ncGSTid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define size of eigenvalue problem.
 !
         Vinfo( 1)='Mstate'
         Vinfo( 2)='total size of eigenvalue problem'
-        status=def_var(ncGSTid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 
 # ifdef DISTRIBUTE
 !
@@ -159,99 +162,106 @@
 !
         Vinfo( 1)='Nnodes'
         Vinfo( 2)='number of distribute-memory nodes'
-        status=def_var(ncGSTid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 # endif
 !
 !  Define iteration number.
 !
         Vinfo( 1)='iter'
         Vinfo( 2)='iteration number'
-        status=def_var(ncGSTid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define reverse communications flag.
 !
         Vinfo( 1)='ido'
         Vinfo( 2)='reverse communications flag'
-        status=def_var(ncGSTid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define information and error flag.
 !
         Vinfo( 1)='info'
         Vinfo( 2)='information and error flag'
-        status=def_var(ncGSTid(ng),varid,nf_int,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,0,                  &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define eigenvalue problem type.
 !
         Vinfo( 1)='bmat'
         Vinfo( 2)='eigenvalue problem type'
-        status=def_var(ncGSTid(ng),varid,nf_char,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_char,1,0,                 &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define Ritz eigenvalues to compute.
 !
         Vinfo( 1)='which'
         Vinfo( 2)='Ritz eigenvalues to compute'
-        status=def_var(ncGSTid(ng),varid,nf_char,1,char2dim,            &
+        status=def_var(ncGSTid(ng),varid,nf90_char,1,char2dim,          &
      &                 Aval,Vinfo,ncname)
 !
 !  Define form of basis function.
 !
         Vinfo( 1)='howmany'
         Vinfo( 2)='form of basis function'
-        status=def_var(ncGSTid(ng),varid,nf_char,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,nf90_char,1,0,                 &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define relative accuracy of computed Ritz values.
 !
         Vinfo( 1)='Ritz_tol'
         Vinfo( 2)='relative accuracy of computed Ritz values'
-        status=def_var(ncGSTid(ng),varid,NF_FRST,0,0,Aval,Vinfo,ncname)
+        status=def_var(ncGSTid(ng),varid,NF_FRST,1,0,                   &
+     &                 Aval,Vinfo,ncname)
 !
 !  Define eigenproblem parameters.
 !
         Vinfo( 1)='iparam'
         Vinfo( 2)='eigenproblem parameters'
-        status=def_var(ncGSTid(ng),varid,nf_int,1,iparamdim,            &
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,iparamdim,          &
      &                 Aval,Vinfo,ncname)
 !
 !  Define pointers to mark starting location in work arrays.
 !
         Vinfo( 1)='ipntr'
         Vinfo( 2)='pointers to mark starting location in work arrays'
-        status=def_var(ncGSTid(ng),varid,nf_int,1,ipntrdim,             &
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,ipntrdim,           &
      &                 Aval,Vinfo,ncname)
 !
 !  Define ARPACK internal integer parameters to _aupd routines.
 !
         Vinfo( 1)='iaupd'
         Vinfo( 2)='ARPACK internal integer parameters to _aupd routines'
-        status=def_var(ncGSTid(ng),varid,nf_int,1,iaupddim,             &
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,iaupddim,           &
      &                 Aval,Vinfo,ncname)
 !
 !  Define ARPACK internal integer parameters to _aitr routines.
 !
         Vinfo( 1)='iaitr'
         Vinfo( 2)='ARPACK internal integer parameters to _aitr routines'
-        status=def_var(ncGSTid(ng),varid,nf_int,1,iaitrdim,             &
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,iaitrdim,           &
      &                 Aval,Vinfo,ncname)
 !
 !  Define ARPACK internal integer parameters to _aup2 routines.
 !
         Vinfo( 1)='iaup2'
         Vinfo( 2)='ARPACK internal integer parameters to _aup2 routines'
-        status=def_var(ncGSTid(ng),varid,nf_int,1,iaup2dim,             &
+        status=def_var(ncGSTid(ng),varid,nf90_int,1,iaup2dim,           &
      &                 Aval,Vinfo,ncname)
 !
 !  Define ARPACK internal logical parameters to _aitr routines.
 !
         Vinfo( 1)='laitr'
         Vinfo( 2)='ARPACK internal logical parameters to _aitr routines'
-        status=def_var(ncGSTid(ng),varid,nf_char,1,laitrdim,            &
+        status=def_var(ncGSTid(ng),varid,nf90_char,1,laitrdim,          &
      &                 Aval,Vinfo,ncname)
 !
 !  Define ARPACK internal logical parameters to _aup2 routines.
 !
         Vinfo( 1)='laup2'
         Vinfo( 2)='ARPACK internal logical parameters to _aup2 routines'
-        status=def_var(ncGSTid(ng),varid,nf_char,1,laup2dim,            &
+        status=def_var(ncGSTid(ng),varid,nf90_char,1,laup2dim,          &
      &                 Aval,Vinfo,ncname)
 !
 !  Define ARPACK internal real parameters to _aitr routines.
@@ -316,7 +326,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf_enddef(ncGSTid(ng))
+        status=nf90_enddef(ncGSTid(ng))
       END IF
 
   10  FORMAT (/,6x,'DEF_GST   - creating checkpointing file: ', a)

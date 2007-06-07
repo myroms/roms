@@ -1348,8 +1348,8 @@
 !
       IF (ndef.gt.0) THEN
         IF (InpThread) THEN
-          status=nf_open(TRIM(ncname), nf_nowrite, ncid)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(ncname)
             exit_flag=2
             ioerror=status
@@ -1364,23 +1364,23 @@
       END IF
       IF (InpThread) THEN
 #ifndef SOLVE3D
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
+        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUbar)), vid(idUbar))
+        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVbar)), vid(idVbar))
 #endif
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
+        status=nf90_inq_varid(ncid, TRIM(Vname(1,idFsur)), vid(idFsur))
 #ifdef ADJUST_WSTRESS
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
+        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUsms)), vid(idUsms))
+        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVsms)), vid(idVsms))
 #endif
 #ifdef SOLVE3D
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
-        status=nf_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
+        status=nf90_inq_varid(ncid, TRIM(Vname(1,idUvel)), vid(idUvel))
+        status=nf90_inq_varid(ncid, TRIM(Vname(1,idVvel)), vid(idVvel))
         DO itrc=1,NT(ng)
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),        &
-     &                        vid(idTvar(itrc)))
+          status=nf90_inq_varid(ncid, TRIM(Vname(1,idTvar(itrc))),      &
+     &                          vid(idTvar(itrc)))
 # ifdef ADJUST_STFLUX
-          status=nf_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),        &
-     &                        vid(idTsur(itrc)))
+          status=nf90_inq_varid(ncid, TRIM(Vname(1,idTsur(itrc))),      &
+     &                          vid(idTsur(itrc)))
 # endif
         END DO
 #endif
@@ -1400,7 +1400,7 @@
      &                  rmask(LBi,LBj),                                 &
 #endif
      &                  s_zeta(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idFsur)), rec, TRIM(ncname)
         END IF
@@ -1421,7 +1421,7 @@
      &                  umask(LBi,LBj),                                 &
 # endif
      &                  s_ubar(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUbar)), rec, TRIM(ncname)
         END IF
@@ -1438,7 +1438,7 @@
      &                  vmask(LBi,LBj),                                 &
 # endif
      &                  s_vbar(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVbar)), rec, TRIM(ncname)
         END IF
@@ -1460,7 +1460,7 @@
      &                  umask(LBi,LBj),                                 &
 # endif
      &                  s_ustr(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUsms)), rec, TRIM(ncname)
         END IF
@@ -1477,7 +1477,7 @@
      &                  vmask(LBi,LBj),                                 &
 # endif
      &                  s_vstr(LBi,LBj,Lwrk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVsms)), rec, TRIM(ncname)
         END IF
@@ -1499,7 +1499,7 @@
      &                  umask(LBi,LBj),                                 &
 # endif
      &                  s_u(LBi,LBj,1,Lwrk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUvel)), rec, TRIM(ncname)
         END IF
@@ -1516,7 +1516,7 @@
      &                  vmask(LBi,LBj),                                 &
 # endif
      &                  s_v(LBi,LBj,1,Lwrk))
-      IF (status.ne.nf_noerr) THEN
+      IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVvel)), rec, TRIM(ncname)
         END IF
@@ -1536,7 +1536,7 @@
      &                    rmask(LBi,LBj),                               &
 # endif
      &                    s_t(LBi,LBj,1,Lwrk,itrc))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))), rec,         &
      &                        TRIM(ncname)
@@ -1560,7 +1560,7 @@
      &                    rmask(LBi,LBj),                               &
 #  endif
      &                    s_tflux(LBi,LBj,Lwrk,itrc))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,         &
      &                        TRIM(ncname)
@@ -1576,7 +1576,7 @@
 !  If multiple files, close current file.
 !
       IF (ndef.gt.0) THEN
-        status=nf_close(ncid)
+        status=nf90_close(ncid)
       END IF
 !
  10   FORMAT (' READ_STATE - unable to open NetCDF file: ',a)
@@ -3180,6 +3180,8 @@
 #ifdef SOLVE3D
       integer :: itrc, k
 #endif
+      integer :: start(4), total(4)
+
       real(r8) :: fac, fac1, fac2
 
       real(r8), dimension(Ninner) :: RitzErr
@@ -3210,9 +3212,9 @@
 !  Write out number of converged eigenvalues.
 !      
       IF (OutThread) THEN
-        status=nf_inq_varid(ncHSSid(ng),'nConvRitz',varid)
-        status=nf_put_var1_int(ncHSSid(ng),varid,1,nConvRitz)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncHSSid(ng), 'nConvRitz', varid)
+        status=nf90_put_var(ncHSSid(ng), varid, nConvRitz)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'nConvRitz', TRIM(HSSname(ng))
           exit_flag=3
           ioerror=status
@@ -3526,17 +3528,19 @@
 !  Write out converged Ritz eigenvalues and is associated accuracy.
 !
       IF (OutThread) THEN
-        status=nf_inq_varid(ncHSSid(ng),'Ritz',varid)
-        status=nf_put_var1_TYPE(ncHSSid(ng),varid,nvec,Ritz(nvec))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncHSSid(ng),'Ritz',varid)
+        start(1)=nvec
+        total(1)=1
+        status=nf90_put_var(ncHSSid(ng), varid, Ritz, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'Ritz', TRIM(HSSname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
-        status=nf_inq_varid(ncHSSid(ng),'Ritz_error',varid)
-        status=nf_put_var1_TYPE(ncHSSid(ng),varid,nvec,RitzErr(nvec))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncHSSid(ng),'Ritz_error',varid)
+        status=nf90_put_var(ncHSSid(ng), varid, RitzErr, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'Ritz_error', TRIM(HSSname(ng))
           exit_flag=3
           ioerror=status
@@ -3608,10 +3612,10 @@
 !  Write out outer and inner iteration.
 !
         IF (varid(1).eq.0) THEN
-          status=nf_inq_varid(ncMODid(ng),'outer',varid(1))
+          status=nf90_inq_varid(ncMODid(ng), 'outer', varid(1))
         END IF        
-        status=nf_put_var1_int(ncMODid(ng),varid(1),1,outer)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncMODid(ng), varid(1), outer)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'outer', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
@@ -3619,10 +3623,10 @@
         END IF
 
         IF (varid(2).eq.0) THEN
-          status=nf_inq_varid(ncMODid(ng),'inner',varid(2))
+          status=nf90_inq_varid(ncMODid(ng), 'inner', varid(2))
         END IF
-        status=nf_put_var1_int(ncMODid(ng),varid(2),1,inner)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncMODid(ng), varid(2), inner)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'inner', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
@@ -3633,10 +3637,10 @@
 !
         IF (innLoop.eq.(Ninner-1)) THEN
           IF (varid(3).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'nConvRitz',varid(3))
+            status=nf90_inq_varid(ncMODid(ng), 'nConvRitz', varid(3))
           END IF
-          status=nf_put_var1_int(ncMODid(ng),varid(3),1,nConvRitz)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(3), nConvRitz)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'nConvRitz', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3648,13 +3652,12 @@
 !
         IF (innLoop.eq.(Ninner-1)) THEN
           IF (varid(4).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'Ritz',varid(4))
+            status=nf90_inq_varid(ncMODid(ng), 'Ritz', varid(4))
           END IF
           start(1)=1
           total(1)=nConvRitz
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(4), start,         &
-     &                            total, Ritz)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(4), Ritz, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'Ritz', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3666,15 +3669,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(5).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_beta',varid(5))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_beta', varid(5))
           END IF
           start(1)=1
           total(1)=Ninner+1
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(5), start,         &
-     &                            total, cg_beta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(5), cg_beta,           &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_beta', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3683,15 +3686,15 @@
         END IF
 !
         IF (varid(6).eq.0) THEN
-          status=nf_inq_varid(ncMODid(ng),'cg_tau',varid(6))
+          status=nf90_inq_varid(ncMODid(ng), 'cg_tau', varid(6))
         END IF
         start(1)=1
         total(1)=Ninner+1
         start(2)=1
         total(2)=Nouter
-        status=nf_put_vara_TYPE(ncMODid(ng), varid(6), start, total,    &
-     &                          cg_tau(0,1))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncMODid(ng), varid(6), cg_tau(0:,:),        &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'cg_tau', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
@@ -3702,15 +3705,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(7).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_delta',varid(7))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_delta', varid(7))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(7), start,         &
-     &                            total, cg_delta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(7), cg_delta,          &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_delta', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3720,15 +3723,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(8).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_gamma',varid(8))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_gamma', varid(8))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(8), start,         &
-     &                            total, cg_gamma)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(8), cg_gamma,          &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_gamma', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3740,13 +3743,13 @@
 !
         IF (innLoop.eq.0) THEN
           IF (varid(9).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_Gnorm',varid(9))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_Gnorm', varid(9))
           END IF
           start(1)=1
           total(1)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(9), start,         &
-     &                            total, cg_Gnorm)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(9), cg_Gnorm,          &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_Gnorm', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3758,15 +3761,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(10).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_QG',varid(10))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_QG', varid(10))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(10), start,        &
-     &                            total, cg_QG)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(10), cg_QG,            &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_QG', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3778,15 +3781,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(11).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_Greduc',varid(11))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_Greduc', varid(11))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(11), start,        &
-     &                            total, cg_Greduc)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(11), cg_Greduc,        &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_Greduc', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3798,15 +3801,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(12).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_Tmatrix',varid(12))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_Tmatrix', varid(12))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=3
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(12), start,        &
-     &                            total, cg_Tmatrix)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(12), cg_Tmatrix,       &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_Tmatrix', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3818,15 +3821,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(13).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_zu',varid(13))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_zu', varid(13))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(13), start,        &
-     &                            total, cg_zu)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(13), cg_zu,            &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_zu', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3838,15 +3841,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(14).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_Ritz',varid(14))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_Ritz', varid(14))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(14), start,        &
-     &                            total, cg_Ritz)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(14), cg_Ritz,          &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_Ritz', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3858,15 +3861,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(15).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_RitzErr',varid(15))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_RitzErr', varid(15))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Nouter
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(15), start,        &
-     &                            total, cg_RitzErr)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(15), cg_RitzErr,       &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_RitzErr', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3878,15 +3881,15 @@
 !
         IF (innLoop.gt.0) THEN
           IF (varid(16).eq.0) THEN
-            status=nf_inq_varid(ncMODid(ng),'cg_zv',varid(16))
+            status=nf90_inq_varid(ncMODid(ng), 'cg_zv', varid(16))
           END IF
           start(1)=1
           total(1)=Ninner
           start(2)=1
           total(2)=Ninner
-          status=nf_put_vara_TYPE(ncMODid(ng), varid(16), start,        &
-     &                            total, cg_zv)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid(16), cg_zv,            &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'cg_zv', TRIM(MODname(ng))
             exit_flag=3
             ioerror=status
@@ -3900,8 +3903,8 @@
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
-        status=nf_sync(ncMODid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncMODid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status

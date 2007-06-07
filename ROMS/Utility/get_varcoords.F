@@ -58,7 +58,8 @@
 
       integer, dimension(2) :: start, total
 
-      real(r8), dimension(Ny) :: wrk
+      real(r8), dimension(Nx) :: Xwrk
+      real(r8), dimension(Ny) :: Ywrk
 
       character (len=20) :: name, Xname, Yname
       character (len=40) :: text
@@ -70,16 +71,17 @@
 !  Get names of variable coordinates.
 !
       IF (InpThread) THEN
-        status=nf_inq_att(ncid, ncvarid, 'coordinates', atype, alen)
-        IF (status.eq.nf_noerr) THEN
-          status=nf_get_att_text(ncid, ncvarid, 'coordinates',          &
-     &                           text(1:alen))
-          IF (status.eq.nf_noerr) THEN
+        status=nf90_inquire_attribute(ncid, ncvarid, 'coordinates',     &
+     &                                atype, alen)
+        IF (status.eq.nf90_noerr) THEN
+          status=nf90_get_att(ncid, ncvarid, 'coordinates',             &
+     &                        text(1:alen))
+          IF (status.eq.nf90_noerr) THEN
             blank=INDEX(text(1:alen),' ')
             Xname=text(1:blank-1)
             Yname=text(blank+1:alen)
           ELSE
-            status=nf_inq_varname (ncid, ncvarid, name)
+            status=nf90_inquire_variable(ncid, ncvarid, name)
             WRITE (stdout,10) 'coordinates', TRIM(name)
             exit_flag=4
             ioerror=status
@@ -95,14 +97,14 @@
 !
 !  Read in X-coordinates.
 !
-        status=nf_inq_varid(ncid, TRIM(Xname), varid)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncid, TRIM(Xname), varid)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,30) TRIM(Xname)
           exit_flag=4
           ioerror=status
         END IF
-        status=nf_inq_varndims(ncid, varid, ndims)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inquire_variable(ncid, varid, ndims = ndims)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,40) TRIM(Xname)
           exit_flag=4
           ioerror=status
@@ -110,14 +112,15 @@
         IF (ndims.eq.1) THEN
           start(1)=1
           total(1)=Nx
+          status=nf90_get_var(ncid, varid, Xwrk, start, total)
         ELSE
           start(1)=1
           total(1)=Nx
           start(2)=1
           total(2)=Ny
+          status=nf90_get_var(ncid, varid, X, start, total)
         END IF        
-        status=nf_get_vara_TYPE(ncid, varid, start, total, X(1,1))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,50) TRIM(Xname)
           exit_flag=4
           ioerror=status
@@ -127,7 +130,7 @@
           jc=0
           DO j=1,Ny
             DO i=1,Nx
-              X(i,j)=X(i,1)
+              X(i,j)=Xwrk(i)
             END DO
           END DO
         ELSE
@@ -141,14 +144,14 @@
 !
 !  Read in Y-coordinates.
 !
-        status=nf_inq_varid(ncid, TRIM(Yname), varid)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncid, TRIM(Yname), varid)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,30) TRIM(Yname)
           exit_flag=4
           ioerror=status
         END IF
-        status=nf_inq_varndims(ncid, varid, ndims)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inquire_variable(ncid, varid, ndims = ndims)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,40) TRIM(Yname)
           exit_flag=4
           ioerror=status
@@ -156,15 +159,15 @@
         IF (ndims.eq.1) THEN
           start(1)=1
           total(1)=Ny
-          status=nf_get_vara_TYPE(ncid, varid, start, total, wrk)
+          status=nf90_get_var(ncid, varid, Ywrk, start, total)
         ELSE
           start(1)=1
           total(1)=Nx
           start(2)=1
           total(2)=Ny
-          status=nf_get_vara_TYPE(ncid, varid, start, total, Y)
+          status=nf90_get_var(ncid, varid, Y, start, total)
         END IF        
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,50) TRIM(Yname)
           exit_flag=4
           ioerror=status
@@ -174,7 +177,7 @@
           ic=0
           DO j=1,Ny
             DO i=1,Nx
-              Y(i,j)=wrk(j)
+              Y(i,j)=Ywrk(j)
             END DO
           END DO
         ELSE

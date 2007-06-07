@@ -232,8 +232,8 @@
 !
 !  Close current nonlinear model history file.
 !
-        status=nf_close(ncHISid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_close(ncHISid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,30) TRIM(HISname(ng))
           exit_flag=3
           ioerror=status
@@ -450,8 +450,8 @@
 !
 !  Close current tangent linear model history file.
 !
-            status=nf_close(ncTLMid(ng))
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_close(ncTLMid(ng))
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,30) TRIM(TLMname(ng))
               exit_flag=3
               ioerror=status

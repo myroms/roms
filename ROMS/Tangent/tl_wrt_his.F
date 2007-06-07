@@ -49,11 +49,14 @@
 # ifdef SOLVE3D
       integer :: i, itrc, j, k, tile
 # endif
+      integer :: start(4), total(4)
+
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
       integer :: nf_fwrite3d
 # endif
       real(r8) :: scale
+      real(r8) :: Tval(1)
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -91,14 +94,15 @@
 !
       IF (OutThread) THEN
         IF (LwrtPER(ng)) THEN
-          status=nf_put_var1_TYPE(ncTLMid(ng),tlmVid(idtime,ng),        &
-     &                            tTLMindx(ng),                         &
-     &                            REAL(Nrun,r8)*day2sec)
+          Tval(1)=REAL(Nrun,r8)*day2sec
         ELSE
-          status=nf_put_var1_TYPE(ncTLMid(ng),tlmVid(idtime,ng),        &
-     &                            tTLMindx(ng),time)
+          Tval(1)=time(ng)
         END IF
-        IF (status.ne.nf_noerr) THEN
+        start(1)=tTLMindx(ng)
+        total(1)=1
+        status=nf90_put_var(ncTLMid(ng), tlmVid(idtime,ng),             &
+     &                      Tval, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idtime)), tTLMindx(ng)
           exit_flag=3
           ioerror=status
@@ -118,7 +122,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 # endif
      &                     OCEAN(ng) % tl_zeta(LBi,LBj,KOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idFsur)), tTLMindx(ng)
           END IF
@@ -134,7 +138,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #  endif
      &                     OCEAN(ng) % tl_rzeta(LBi,LBj,KOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idRzet)), tTLMindx(ng)
           END IF
@@ -157,7 +161,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 # endif
      &                     OCEAN(ng) % tl_ubar(LBi,LBj,KOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbar)), tTLMindx(ng)
           END IF
@@ -174,7 +178,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #   endif
      &                     OCEAN(ng) % tl_rubar(LBi,LBj,KOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idRu2d)), tTLMindx(ng)
           END IF
@@ -192,7 +196,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #    endif
      &                     COUPLING(ng) % tl_rufrc(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idRuct)), tTLMindx(ng)
           END IF
@@ -208,7 +212,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #   endif
      &                     COUPLING(ng) % tl_DU_avg1(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUfx1)), tTLMindx(ng)
           END IF
@@ -223,7 +227,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #   endif
      &                     COUPLING(ng) % tl_DU_avg2(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUfx2)), tTLMindx(ng)
           END IF
@@ -247,7 +251,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 # endif
      &                     OCEAN(ng) % tl_vbar(LBi,LBj,KOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbar)), tTLMindx(ng)
           END IF
@@ -264,7 +268,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #   endif
      &                     OCEAN(ng) % tl_rvbar(LBi,LBj,KOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idRv2d)), tTLMindx(ng)
           END IF
@@ -282,7 +286,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #    endif
      &                     COUPLING(ng) % tl_rvfrc(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idRvct)), tTLMindx(ng)
           END IF
@@ -298,7 +302,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #   endif
      &                     COUPLING(ng) % tl_DV_avg1(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVfx1)), tTLMindx(ng)
           END IF
@@ -313,7 +317,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #   endif
      &                     COUPLING(ng) % tl_DV_avg2(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVfx2)), tTLMindx(ng)
           END IF
@@ -338,7 +342,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #  endif
      &                     OCEAN(ng) % tl_u(LBi,LBj,1,NOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUvel)), tTLMindx(ng)
           END IF
@@ -354,7 +358,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #   endif
      &                     OCEAN(ng) % tl_ru(LBi,LBj,1,NOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idRu3d)), tTLMindx(ng)
           END IF
@@ -377,7 +381,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #  endif
      &                     OCEAN(ng) % tl_v(LBi,LBj,1,NOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvel)), tTLMindx(ng)
           END IF
@@ -393,7 +397,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #   endif
      &                     OCEAN(ng) % tl_rv(LBi,LBj,1,NOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idRv3d)), tTLMindx(ng)
           END IF
@@ -417,7 +421,7 @@
      &                       GRID(ng) % rmask(LBi,LBj),                 &
 #  endif
      &                       OCEAN(ng) % tl_t(LBi,LBj,1,NOUT,itrc))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),            &
      &                          tTLMindx(ng)
@@ -441,7 +445,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #  endif
      &                     OCEAN(ng) % tl_rho(LBi,LBj,1))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idDano)), tTLMindx(ng)
           END IF
@@ -467,7 +471,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #   endif
      &                     MIXING(ng) % Akv(LBi,LBj,0))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvis)), tTLMindx(ng)
           END IF
@@ -489,7 +493,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #   endif
      &                     MIXING(ng) % Akt(LBi,LBj,0,itemp))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTdif)), tTLMindx(ng)
           END IF
@@ -512,7 +516,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #    endif
      &                     MIXING(ng) % Akt(LBi,LBj,0,isalt))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSdif)), tTLMindx(ng)
           END IF
@@ -536,7 +540,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #    endif
      &                     MIXING(ng) % tl_tke(LBi,LBj,0,NOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idMtke)), tTLMindx(ng)
           END IF
@@ -554,7 +558,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #    endif
      &                     MIXING(ng) % tl_Akk(LBi,LBj,0))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVmKK)), tTLMindx(ng)
           END IF
@@ -576,7 +580,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #    endif
      &                     MIXING(ng) % tl_gls(LBi,LBj,0,NOUT))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idMtls)), tTLMindx(ng)
           END IF
@@ -594,7 +598,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #    endif
      &                     MIXING(ng) % tl_Lscale(LBi,LBj,0))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVmLS)), tTLMindx(ng)
           END IF
@@ -612,7 +616,7 @@
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #     endif
      &                     MIXING(ng) % tl_Akp(LBi,LBj,0))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVmKP)), tTLMindx(ng)
           END IF
@@ -640,7 +644,7 @@
      &                       GRID(ng) % rmask(LBi,LBj),                 &
 #   endif
      &                       FORCES(ng) % tl_stflx(LBi,LBj,itrc))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
      &                          tTLMindx(ng)
@@ -668,7 +672,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #  endif
      &                     FORCES(ng) % tl_sustr(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUsms)), tTLMindx(ng)
           END IF
@@ -691,7 +695,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #  endif
      &                     FORCES(ng) % tl_svstr(LBi,LBj))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVsms)), tTLMindx(ng)
           END IF
@@ -708,8 +712,8 @@
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
-        status=nf_sync(ncTLMid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncTLMid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status

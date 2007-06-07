@@ -136,9 +136,9 @@
 !  Write out model time (s).
 !
       IF (Master) THEN
-        status=nf_put_var1_TYPE(ncSTAid(ng), staVid(idtime,ng),         &
-     &                          tSTAindx(ng), time(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_put_var(ncSTAid(ng), staVid(idtime,ng),             &
+     &                      time(ng:), start(3:), total(3:))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idtime)), tSTAindx(ng)
           exit_flag=3
           ioerror=status
@@ -155,9 +155,9 @@
      &                      scale, OCEAN(ng)%zeta(:,:,KOUT),            &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idFsur,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idFsur,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idFsur)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -175,9 +175,9 @@
      &                      scale, OCEAN(ng)%ubar(:,:,KOUT),            &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbar,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUbar,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbar)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -195,9 +195,9 @@
      &                      scale, OCEAN(ng)%vbar(:,:,KOUT),            &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbar,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVbar,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbar)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -216,9 +216,9 @@
      &                      scale, OCEAN(ng)%u(:,:,:,NOUT),             &
      &                      NposR, XposR, YposR, ZposR, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUvel,ng),       &
-     &                            start, total, rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUvel,ng),           &
+     &                        rsta, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUvel)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -236,9 +236,9 @@
      &                      scale, OCEAN(ng)%v(:,:,:,NOUT),             &
      &                      NposR, XposR, YposR, ZposR, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVvel,ng),       &
-     &                            start, total, rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVvel,ng),           &
+     &                        rsta, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvel)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -256,9 +256,9 @@
      &                      scale, OCEAN(ng)%wvel,                      &
      &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idWvel,ng),       &
-     &                            start, total+(/1,0,0/), rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idWvel,ng),           &
+     &                        rsta, start, total+(/1,0,0/))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idWvel)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -276,9 +276,9 @@
      &                      scale, OCEAN(ng)%W,                         &
      &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idOvel,ng),       &
-     &                            start, total+(/1,0,0/), rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idOvel,ng),           &
+     &                        rsta, start, total+(/1,0,0/))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idOvel)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -298,9 +298,9 @@
      &                        scale, OCEAN(ng)%t(:,:,:,NOUT,i),         &
      &                        NposR, XposR, YposR, ZposR, rsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncSTAid(ng), staTid(i,ng),          &
-     &                              start, total, rsta)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_put_var(ncSTAid(ng), staTid(i,ng),              &
+     &                          rsta, start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTvar(i))), tSTAindx(ng)
               exit_flag=3
               ioerror=status
@@ -319,9 +319,9 @@
      &                      scale, OCEAN(ng)%rho,                       &
      &                      NposR, XposR, YposR, ZposR, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idDano,ng),       &
-     &                            start, total, rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idDano,ng),           &
+     &                        rsta, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idDano)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -340,9 +340,9 @@
      &                      scale, MIXING(ng)%hsbl,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idHsbl,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idHsbl,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idHsbl)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -362,9 +362,9 @@
      &                      scale, MIXING(ng)%hbbl,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idHbbl,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idHbbl,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idHbbl)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -383,9 +383,9 @@
      &                      scale, MIXING(ng)%Akv,                      &
      &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVvis,ng),       &
-     &                            start, total+(/1,0,0/), rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVvis,ng),           &
+     &                        rsta, start, total+(/1,0,0/))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvis)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -403,9 +403,9 @@
      &                      scale, MIXING(ng)%Akt(:,:,:,itemp),         &
      &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idTdif,ng),       &
-     &                            start, total+(/1,0,0/), rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idTdif,ng),           &
+     &                        rsta, start, total+(/1,0,0/))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTdif)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -424,9 +424,9 @@
      &                      scale, MIXING(ng)%Akt(:,:,:,isalt),         &
      &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idSdif,ng),       &
-     &                            start, total+(/1,0,0/), rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idSdif,ng),           &
+     &                        rsta, start, total+(/1,0,0/))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSdif)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -446,9 +446,9 @@
      &                      scale, MIXING(ng)%tke(:,:,:,NOUT),          &
      &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idMtke,ng),       &
-     &                            start, total+(/1,0,0/), rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idMtke,ng),           &
+     &                        rsta, start, total+(/1,0,0/))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idMtke)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -466,9 +466,9 @@
      &                      scale, MIXING(ng)%gls(:,:,:,NOUT),          &
      &                      NposW, XposW, YposW, ZposW, rsta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idMtls,ng),       &
-     &                            start, total+(/1,0,0/), rsta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idMtls,ng),           &
+     &                        rsta, start, total+(/1,0,0/))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idMtls)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -488,9 +488,9 @@
      &                      scale, FORCES(ng)%stflx(:,:,itemp),         &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(ifield,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(ifield,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -509,9 +509,9 @@
      &                      scale, FORCES(ng)%stflx(:,:,isalt),         &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(ifield,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(ifield,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -530,9 +530,9 @@
      &                      scale, FORCES(ng)%lhflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idLhea,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idLhea,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idLhea)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -550,9 +550,9 @@
      &                      scale, FORCES(ng)%shflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idShea,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idShea,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idShea)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -570,9 +570,9 @@
      &                      scale, FORCES(ng)%lrflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idLrad,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idLrad,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idLrad)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -591,9 +591,9 @@
      &                      scale, FORCES(ng)%evap,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idevap,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idevap,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idevap)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -611,9 +611,9 @@
      &                      scale, FORCES(ng)%rain,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idrain,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idrain,ng),       &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idrain)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -634,9 +634,9 @@
      &                      scale, FORCES(ng)%srflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idSrad,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idSrad,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSrad)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -656,9 +656,9 @@
      &                      scale, FORCES(ng)%sustr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUsms,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUsms,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUsms)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -676,9 +676,9 @@
      &                      scale, FORCES(ng)%svstr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVsms,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVsms,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVsms)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -696,9 +696,9 @@
      &                      scale, FORCES(ng)%bustr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbms,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUbms,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbms)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -716,9 +716,9 @@
      &                      scale, FORCES(ng)%bvstr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbms,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVbms,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbms)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -738,9 +738,9 @@
      &                      scale, BBL(ng)%bustrc,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbrs,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUbrs,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbrs)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -758,9 +758,9 @@
      &                      scale, BBL(ng)%bvstrc,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbrs,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVbrs,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbrs)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -778,9 +778,9 @@
      &                      scale, BBL(ng)%bustrw,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbws,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUbws,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbws)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -798,9 +798,9 @@
      &                      scale, BBL(ng)%bvstrw,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbws,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVbws,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbws)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -818,9 +818,9 @@
      &                      scale, BBL(ng)%bustrcwmax,                  &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbcs,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUbcs,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbcs)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -838,9 +838,9 @@
      &                      scale, BBL(ng)%bvstrcwmax,                  &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbcs,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVbcs,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbcs)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -858,9 +858,9 @@
      &                      scale, BBL(ng)%Ubot,                        &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbot,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUbot,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbot)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -878,9 +878,9 @@
      &                      scale, BBL(ng)%Vbot,                        &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbot,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVbot,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbot)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -898,9 +898,9 @@
      &                      scale, BBL(ng)%Ur,                          &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idUbur,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idUbur,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbur)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -918,9 +918,9 @@
      &                      scale, BBL(ng)%Vr,                          &
      &                      Nstation(ng), Xpos, Ypos, psta)
         IF (Master) THEN
-          status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idVbvr,ng),       &
-     &                            start(2), total(2), psta)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_put_var(ncSTAid(ng), staVid(idVbvr,ng),           &
+     &                        psta, start(2:), total(2:))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVbvr)), tSTAindx(ng)
             exit_flag=3
             ioerror=status
@@ -942,9 +942,9 @@
      &                        scale, OCEAN(ng)%bed_frac(:,:,:,i),       &
      &                        NposB, XposB, YposB, ZposB, bsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idfrac(i),ng),  &
-     &                              start, total, bsta)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_put_var(ncSTAid(ng), staVid(idfrac(i),ng),      &
+     &                          bsta, start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), tSTAindx(ng)
               exit_flag=3
               ioerror=status
@@ -963,9 +963,9 @@
      &                        OCEAN(ng)%bed_mass(:,:,:,NOUT,i),         &
      &                        NposB, XposB, YposB, ZposB, bsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idBmas(i),ng),  &
-     &                              start, total, bsta)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_put_var(ncSTAid(ng), staVid(idBmas(i),ng),      &
+     &                          bsta, start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), tSTAindx(ng)
               exit_flag=3
               ioerror=status
@@ -985,9 +985,9 @@
      &                        scale, OCEAN(ng)%bed(:,:,:,i),            &
      &                        NposB, XposB, YposB, ZposB, bsta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idSbed(i),ng),  &
-     &                              start, total, bsta)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_put_var(ncSTAid(ng), staVid(idSbed(i),ng),      &
+     &                          bsta, start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), tSTAindx(ng)
               exit_flag=3
               ioerror=status
@@ -1009,9 +1009,9 @@
      &                        scale, OCEAN(ng)%bottom(:,:,i),           &
      &                        Nstation(ng), Xpos, Ypos, psta)
           IF (Master) THEN
-            status=nf_put_vara_TYPE(ncSTAid(ng), staVid(idBott(i),ng),  &
-     &                              start(2), total(2), psta)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_put_var(ncSTAid(ng), staVid(idBott(i),ng),      &
+     &                          bsta, start(2:), total(2:))
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idBott(i))), tSTAindx(ng)
               exit_flag=3
               ioerror=status
@@ -1028,8 +1028,8 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        status=nf_sync(ncSTAid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncSTAid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status

@@ -1529,7 +1529,7 @@
 !  Read requested NetCDF file and scatter it to all nodes.
 !-----------------------------------------------------------------------
 !
-      mp_ncread=nf_noerr
+      mp_ncread=nf90_noerr
       IF ((LB2.eq.0).and.(UB2.eq.0)) THEN
         IsNodeDim=.TRUE.
       ELSE
@@ -1601,8 +1601,8 @@
             start(2)=Asize(3,rank)
             total(2)=Asize(4,rank)-Asize(3,rank)+1
           END IF
-          mp_ncread=nf_inq_varid(ncid, TRIM(ncvar), varid)
-          mp_ncread=nf_get_vara_TYPE(ncid, varid, start, total, Asend)
+          mp_ncread=nf90_inq_varid(ncid, TRIM(ncvar), varid)
+          mp_ncread=nf90_get_var(ncid, varid,  Asend, start, total)
 !
 !  Send buffer to all nodes, except itself.
 !
@@ -1736,7 +1736,7 @@
 !  Collect and write data into requested NetCDF file.
 !-----------------------------------------------------------------------
 !
-      mp_ncwrite=nf_noerr
+      mp_ncwrite=nf90_noerr
       IF ((LB2.eq.0).and.(UB2.eq.0)) THEN
         IsNodeDim=.TRUE.
       ELSE
@@ -1791,9 +1791,8 @@
             Arecv(np)=A(i,j)
           END DO
         END DO
-        mp_ncwrite=nf_inq_varid(ncid, TRIM(ncvar), varid)
-        mp_ncwrite=nf_put_vara_TYPE(ncid, varid, start, total,          &
-     &                              Arecv)
+        mp_ncwrite=nf90_inq_varid(ncid, TRIM(ncvar), varid)
+        mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
 !
 !  If master node, loop over other nodes and receive the data.
 !
@@ -1825,8 +1824,7 @@
           DO i=1,np
             Arecv(i)=Arecv(i)*Ascale
           END DO
-          mp_ncwrite=nf_put_vara_TYPE(ncid, varid, start,               &
-     &                                total, Arecv)
+          mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
         END DO
 !
 !  Otherwise, send data to master node.

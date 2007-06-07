@@ -486,7 +486,8 @@
 !  Local variable declarations.
 !
       integer :: ng
-      integer :: Nrec, Nritz, nvd, Vsize(4)
+      integer :: Nrec, Nritz, nvd
+      integer :: Vsize(4), start(4), total(4)
 
 # ifdef OBSERVATIONS
       integer :: i, ndims, ngatts, recdim, status, varid
@@ -510,8 +511,8 @@
 !
 !  Open observation NetCDF.
 !
-          status=nf_open (TRIM(OBSname(ng)),nf_nowrite,ncOBSid(ng))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_open(TRIM(OBSname(ng)), nf90_nowrite, ncOBSid(ng))
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(OBSname(ng))
             exit_flag=4
             ioerror=status
@@ -523,11 +524,12 @@
 !
           Ndatum(ng)=0
           Nsurvey(ng)=0
-          status=nf_inq(ncOBSid(ng),ndims,nvars,ngatts,recdim)
-          IF (status.eq.nf_noerr) THEN
+          status=nf90_inquire(ncOBSid(ng), ndims, nvars, ngatts, recdim)
+          IF (status.eq.nf90_noerr) THEN
             DO i=1,ndims
               dimid=i
-              status=nf_inq_dim(ncOBSid(ng),dimid,dimnam,dimsiz)
+              status=nf90_inquire_dimension(ncOBSid(ng), dimid, dimnam, &
+     &                                      dimsiz)
               IF (TRIM(dimnam).eq.'datum') then
                 Ndatum(ng)=dimsiz
               ELSE IF (TRIM(dimnam).eq.'survey') THEN
@@ -623,16 +625,19 @@
 !  Read in number of observations available per survey.
 !
         IF (InpThread) THEN
-          status=nf_inq_varid(ncOBSid(ng),TRIM(Vname(1,idNobs)),varid)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncOBSid(ng), TRIM(Vname(1,idNobs)),     &
+     &                          varid)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,40) TRIM(Vname(1,idNobs)), TRIM(OBSname(ng))
             exit_flag=2
             ioerror=status
             RETURN
           END IF
-          status=nf_get_vara_int(ncOBSid(ng), varid, 1, Nsurvey(ng),    &
-     &                           FOURDVAR(ng)%NobsSurvey)
-          IF (status.ne.nf_noerr) THEN
+          start(1)=1
+          total(1)=Nsurvey(ng)
+          status=nf90_get_var(ncOBSid(ng), varid,                       &
+     &                        FOURDVAR(ng)%NobsSurvey, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,50) TRIM(Vname(1,idNobs)), TRIM(OBSname(ng))
             exit_flag=2
             ioerror=status
@@ -646,16 +651,19 @@
 !  Read in the time of each observation survey.
 !
         IF (InpThread) THEN
-          status=nf_inq_varid(ncOBSid(ng),TRIM(Vname(1,idOday)),varid)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncOBSid(ng), TRIM(Vname(1,idOday)),     &
+     &                          varid)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,40) TRIM(Vname(1,idOday)), TRIM(OBSname(ng))
             exit_flag=2
             ioerror=status
             RETURN
           END IF
-          status=nf_get_vara_TYPE(ncOBSid(ng), varid, 1, Nsurvey(ng),   &
-     &                            FOURDVAR(ng)%SurveyTime)
-          IF (status.ne.nf_noerr) THEN
+          start(1)=1
+          total(1)=Nsurvey(ng)
+          status=nf90_get_var(ncOBSid(ng), varid,                       &
+     &                        FOURDVAR(ng)%SurveyTime, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,50) TRIM(Vname(1,idOday)), TRIM(OBSname(ng))
             exit_flag=2
             ioerror=status
@@ -770,9 +778,9 @@
 !  Determine the number of Hessian eigenpairs available for
 !  preconditioning.
 !
+      Nritz=Ninner+1
 #  if !defined LANCZOS
       IF (Lprecond) THEN
-        Nritz=0
         DO ng=1,Ngrids
           IF (InpThread) THEN
             CALL opencdf (ng, 1, HSSname(ng), ncfile, N(ng), idtime,    &
@@ -784,8 +792,6 @@
         CALL mp_bcasti (1, iNLM, Nritz, 1)
 #   endif
       END IF
-#  else
-      Nritz=Ninner+1
 #  endif
 #  ifndef LACNZOS
 !
@@ -884,17 +890,19 @@
 !  Read in observations global variance.
 !
         IF (InpThread) THEN
-          status=nf_inq_varid(ncOBSid(ng),TRIM(Vname(1,idOvar)),varid)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_inq_varid(ncOBSid(ng), TRIM(Vname(1,idOvar)),     &
+     &                          varid)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,40) TRIM(Vname(1,idOvar)), TRIM(OBSname(ng))
             exit_flag=2
             ioerror=status
             RETURN
           END IF
-          status=nf_get_vara_TYPE(ncOBSid(ng), varid, 1,                &
-     &                            NstateVar(ng),                        &
-     &                            FOURDVAR(ng)%ObsVar)
-          IF (status.ne.nf_noerr) THEN
+          start(1)=1
+          total(1)=Nsurvey(ng)
+          status=nf90_get_var(ncOBSid(ng), varid,                       &
+     &                        FOURDVAR(ng)%ObsVar, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,50) TRIM(Vname(1,idOvar)), TRIM(OBSname(ng))
             exit_flag=2
             ioerror=status
@@ -908,7 +916,7 @@
 !  Close observation NetCDF file.
 !
         IF (InpThread) THEN
-          status=nf_close (ncOBSid(ng))
+          status=nf90_close (ncOBSid(ng))
           ncOBSid(ng)=-1
         END IF
 # endif

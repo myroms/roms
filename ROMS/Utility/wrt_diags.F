@@ -33,6 +33,7 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gfactor, gtype, ifield, itrc, ivar, status
+      integer :: start(4), total(4)
 
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
@@ -68,9 +69,11 @@
 !  Write out averaged time.
 !
       IF (OutThread) THEN
-        status=nf_put_var1_TYPE(ncDIAid(ng), diaVid(idtime,ng),         &
-     &                          tDIAindx(ng), DIAtime(ng))
-        IF (status.ne.nf_noerr) THEN
+        start(1)=tDIAindx(ng)
+        total(1)=1
+        status=nf90_put_var(ncDIAid(ng), diaVid(idtime,ng),             &
+     &                      DIAtime(ng:), start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idtime)), tDIAindx(ng)
           exit_flag=3
           ioerror=status
@@ -93,7 +96,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #  endif
      &                     DIAGS(ng) % DiaU2d(LBi,LBj,ivar))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), tDIAindx(ng)
           END IF
@@ -112,7 +115,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #  endif
      &                     DIAGS(ng) % DiaV2d(LBi,LBj,ivar))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), tDIAindx(ng)
           END IF
@@ -136,7 +139,7 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 #   endif
      &                     DIAGS(ng) % DiaU3d(LBi,LBj,1,ivar))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), tDIAindx(ng)
           END IF
@@ -155,7 +158,7 @@
      &                     GRID(ng) % vmask(LBi,LBj),                   &
 #   endif
      &                     DIAGS(ng) % DiaV3d(LBi,LBj,1,ivar))
-        IF (status.ne.nf_noerr) THEN
+        IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,ifield)), tDIAindx(ng)
           END IF
@@ -183,7 +186,7 @@
      &                       GRID(ng) % rmask(LBi,LBj),                 &
 #  endif
      &                       DIAGS(ng) % DiaTrc(LBi,LBj,1,itrc,ivar))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), tDIAindx(ng)
             END IF
@@ -211,7 +214,7 @@
      &                       GRID(ng) % rmask(LBi,LBj),                 &
 #  endif
      &                       DIAGS(ng) % DiaBio2d(LBi,LBj,ivar))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), tDIAindx(ng)
             END IF
@@ -236,7 +239,7 @@
      &                       GRID(ng) % rmask(LBi,LBj),                 &
 #  endif
      &                       DIAGS(ng) % DiaBio3d(LBi,LBj,1,ivar))
-          IF (status.ne.nf_noerr) THEN
+          IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,10) TRIM(Vname(1,ifield)), tDIAindx(ng)
             END IF
@@ -252,8 +255,8 @@
 !  to access data immediately after it is written.
 !
       IF (OutThread) THEN
-        status=nf_sync(ncDIAid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncDIAid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status

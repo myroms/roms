@@ -177,6 +177,7 @@
       logical :: ITERATE, Lcomplex, LwrtGST
 
       integer :: NconvRitz, i, iter, ng, status, varid
+      integer :: start(4), total(4)
 
 #ifdef DISTRIBUTE
       real(r8), external :: dlapy2, pdnorm2
@@ -483,15 +484,20 @@
 !  NetCDF file(s).
 !
                   IF (OutThread.and.LwrtTLM(ng)) THEN
-                    status=nf_inq_varid(ncTLMid(ng),'Ritz_rvalue',varid)
-                    status=nf_put_var1_TYPE(ncTLMid(ng),varid,          &
-     &                                      i, RvalueR(i))
-                    status=nf_inq_varid(ncTLMid(ng),'Ritz_ivalue',varid)
-                    status=nf_put_var1_TYPE(ncTLMid(ng),varid,          &
-     &                                      i, RvalueI(i))
-                    status=nf_inq_varid(ncTLMid(ng),'Ritz_norm',varid)
-                    status=nf_put_var1_TYPE(ncTLMid(ng),varid,          &
-     &                                      i, norm(i))
+                    start(1)=i
+                    total(1)=1
+                    status=nf90_inq_varid(ncTLMid(ng), 'Ritz_rvalue',   &
+     &                                    varid)
+                    status=nf90_put_var(ncTLMid(ng), varid, RvalueR(i:),&
+     &                                  start, total)
+                    status=nf90_inq_varid(ncTLMid(ng), 'Ritz_ivalue',   &
+     &                                    varid)
+                    status=nf90_put_var(ncTLMid(ng), varid, RvalueI(i:),&
+     &                                  start, total)
+                    status=nf90_inq_varid(ncTLMid(ng), 'Ritz_norm',     &
+     &                                    varid)
+                    status=nf90_put_var(ncTLMid(ng), varid, norm(i:),   &
+     &                                  start, total)
                   END IF
                 END DO
               END IF

@@ -64,9 +64,10 @@
 !
       logical, intent(out) :: update
 
-      integer, intent(in) :: ng, model, ifield, ncid, nfiles
+      integer, intent(in) :: ng, model, ifield, nfiles
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Iout, Irec
+      integer, intent(inout) :: ncid
 
       character (len=*), intent(in) :: fname(nfiles)
 
@@ -82,12 +83,13 @@
       integer :: Tid, Tindex, Trec, Vid, Vtype
       integer :: i, lend, lfvar, lstr, ltvar, lvar, nrec, nvatts
       integer :: nvd, status, vartype
-      integer :: Vsize(4)
+      integer :: Vsize(4), start(4), total(4)
 
       integer :: nf_fread3d
 
-      real(r8) :: Clength, Fmax, Fmin, Fval, Tdelta, Tend
-      real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr, Tval, scale
+      real(r8) :: Clength, Fmax, Fmin, Tdelta, Tend
+      real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr, scale
+      real(r8) :: Fval(1), Tval(1)
 
       character (len=45) :: attnam
       character (len=80) :: ncfile
@@ -167,8 +169,8 @@
           CALL openids (nFfiles(ng), FRCname(1,ng), FRCids(1,ng),       &
      &                  ncfile, ncid)
           IF (ncid.eq.-1) THEN
-            status=nf_open(TRIM(ncfile), nf_nowrite, ncid)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_open(TRIM(ncfile), nf90_nowrite, ncid)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,20) TRIM(ncfile)
               exit_flag=2
               ioerror=status
@@ -184,16 +186,17 @@
 !  available.
 !
           IF (got_var) THEN
-            status=nf_inq_var(ncid, Vid, varnam(Vid), vartype,          &
-     &                        nvdims(Vid), vdims(1,Vid), nvatts)
-            IF (status.eq.nf_noerr) THEN
+            status=nf90_inquire_variable(ncid, Vid, varnam(ifield),     &
+     &                                   vartype, nvdims(ifield),       &
+     &                                   vdims(:,ifield), nvatts)
+            IF (status.eq.nf90_noerr) THEN
               DO i=1,nvatts
-                status=nf_inq_attname(ncid, Vid, i, attnam)
-                IF (status.eq.nf_noerr) THEN
+                status=nf90_inq_attname(ncid, Vid, i, attnam)
+                IF (status.eq.nf90_noerr) THEN
                   IF (TRIM(attnam).eq.'scale_factor') THEN
-                    status=nf_get_att_TYPE(ncid, Vid, TRIM(attnam),     &
-     &                                     scale)
-                    IF (status.eq.nf_noerr) THEN
+                    status=nf90_get_att(ncid, Vid, TRIM(attnam),        &
+     &                                  scale)
+                    IF (status.eq.nf90_noerr) THEN
                       Fscale(ifield,ng)=Fscale(ifield,ng)*scale
                     ELSE
                       WRITE (stdout,30) TRIM(attnam)
@@ -205,7 +208,7 @@
                     Vtype=Iinfo(1,ifield,ng)
                   END IF
                 ELSE
-                  WRITE (stdout,40) TRIM(varnam(Vid))
+                  WRITE (stdout,40) TRIM(varnam(ifield))
                   exit_flag=2
                   RETURN
                 END IF
@@ -342,8 +345,10 @@
 !  Read in time coordinate and scale it to day units.
 !
           IF (InpThread.and.(Tid.ge.0)) THEN
-            status=nf_get_var1_TYPE(ncid, Tid, Trec, Tval)
-            IF (status.ne.nf_noerr) THEN
+            start(1)=Trec
+            total(1)=1
+            status=nf90_get_var(ncid, Tid, Tval, start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,60) TRIM(Tname(ifield)), Trec
               exit_flag=2
               ioerror=status
@@ -354,7 +359,7 @@
           CALL mp_bcasti (ng, model, exit_flag, 1)
           CALL mp_bcastf (ng, model, Tval, 1)
 # endif
-          Vtime(Tindex,ifield,ng)=Tval*Tscale
+          Vtime(Tindex,ifield,ng)=Tval(1)*Tscale
 !
 !  Read in 3D-grided or point data.
 !
@@ -389,17 +394,19 @@
               END IF
             ELSE
               IF (InpThread) THEN
-                status=nf_get_var1_TYPE(ncid, Vid, Trec, Fval)
+                start(1)=Trec
+                total(1)=1
+                status=nf90_get_var(ncid, Vid, Fval, start, total)
               END IF
 # ifdef DISTRIBUTE
               CALL mp_bcasti (ng, model, status, 1)
               CALL mp_bcastf (ng, model, Fval, 1)
 # endif
-              Fpoint(Tindex,ifield,ng)=Fval*Fscale(ifield,ng)
-              Fmin=Fval
-              Fmax=Fval
+              Fpoint(Tindex,ifield,ng)=Fval(1)*Fscale(ifield,ng)
+              Fmin=Fval(1)
+              Fmax=Fval(1)
             END IF
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,60) TRIM(Vname(1,ifield)), Trec
               END IF
@@ -415,7 +422,7 @@
                 lend=LEN_TRIM(ncfile)
                 lvar=MIN(43,LEN_TRIM(Vname(2,ifield)))
                 WRITE (stdout,80) Vname(2,ifield)(1:lvar),              &
-     &                            Tval*Tscale, ncfile(lstr:lend),       &
+     &                            Tval(1)*Tscale, ncfile(lstr:lend),    &
      &                            Trec, Tindex, Tmin, Tmax, Fmin, Fmax
               END IF
             END IF

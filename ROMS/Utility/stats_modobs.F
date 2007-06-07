@@ -81,9 +81,9 @@
 !
 !  Read in observation type identifier.
 !
-        status=nf_get_vara_int(ncOBSid(ng), obsVid(idOtyp,ng),          &
-     &                         start, total, obs_type)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncOBSid(ng), obsVid(idOtyp,ng),             &
+     &                      obs_type, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idOtyp)), TRIM(OBSname(ng))
           exit_flag=2
           ioerror=status
@@ -92,9 +92,9 @@
 !
 !  Read in observation values.
 !
-        status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idOval,ng),         &
-     &                          start, total, obs_value)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncOBSid(ng), obsVid(idOval,ng),             &
+     &                      obs_value, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idOval)), TRIM(OBSname(ng))
           exit_flag=2
           ioerror=status
@@ -103,9 +103,9 @@
 !
 !  Read in observation screening flag.
 !
-        status=nf_get_vara_TYPE(ncMODid(ng), modVid(idObsS,ng),         &
-     &                          start, total, obs_scale)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncMODid(ng), modVid(idObsS,ng),             &
+     &                      obs_scale, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idObsS)), TRIM(MODname(ng))
           exit_flag=2
           ioerror=status
@@ -119,18 +119,18 @@
         total(2)=1
 # endif
 # if defined W4DVAR || defined IOMS
-        status=nf_get_vara_TYPE(ncMODid(ng), modVid(idTLmo,ng),         &
-     &                          start, total, mod_value)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncMODid(ng), modVid(idTLmo,ng),             &
+     &                      mod_value, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idTLmo)), TRIM(MODname(ng))
           exit_flag=2
           ioerror=status
           RETURN
         END IF
 # else
-        status=nf_get_vara_TYPE(ncMODid(ng), modVid(idNLmo,ng),         &
-     &                          start, total, mod_value)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_get_var(ncMODid(ng), modVid(idNLmo,ng),             &
+     &                      mod_value, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(Vname(1,idNLmo)), TRIM(MODname(ng))
           exit_flag=2
           ioerror=status
@@ -220,90 +220,90 @@
         start(1)=1
         total(1)=NstateVar(ng)+1
 
-        status=nf_inq_varid(ncMODid(ng),'Nobs',varid)
-        status=nf_put_vara_int(ncMODid(ng),varid,start,total,           &
-     &                         Ncount(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'Nobs', varid)
+        status=nf90_put_var(ncMODid(ng), varid, Ncount(0:),             &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'Nobs', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'obs_mean',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          obs_mean(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'obs_mean', varid)
+        status=nf90_put_var(ncMODid(ng), varid, obs_mean(0:),           &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'obs_mean', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'obs_std',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          obs_std(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'obs_std', varid)
+        status=nf90_put_var(ncMODid(ng), varid, obs_std(0:),            &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'obs_std', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'model_mean',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          mod_mean(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'model_mean', varid)
+        status=nf90_put_var(ncMODid(ng), varid, mod_mean(0:),           &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'model_mean', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'model_std',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          mod_std(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'model_std', varid)
+        status=nf90_put_var(ncMODid(ng), varid, mod_std(0:),            &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'model_std', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'model_bias',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          MB(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'model_bias', varid)
+        status=nf90_put_var(ncMODid(ng), varid, MB(0:),                 &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'model_bias', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'SDE',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          SDE(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'SDE', varid)
+        status=nf90_put_var(ncMODid(ng), varid, SDE(0:),                &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'SDE', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'CC',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          CC(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'CC', varid)
+        status=nf90_put_var(ncMODid(ng), varid, CC(0:),                 &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'CC', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
           RETURN
         END IF
 
-        status=nf_inq_varid(ncMODid(ng),'MSE',varid)
-        status=nf_put_vara_TYPE(ncMODid(ng),varid,start,total,          &
-     &                          MSE(0))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncMODid(ng), 'MSE', varid)
+        status=nf90_put_var(ncMODid(ng), varid, MSE(0:),                &
+     &                      start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'MSE', TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
@@ -312,8 +312,8 @@
 !
 !  Synchronize NetCDF file to disk.
 !
-        status=nf_sync(ncMODid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_sync(ncMODid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,30)
           exit_flag=3
           ioerror=status

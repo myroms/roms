@@ -70,7 +70,7 @@
               WRITE (ADJname(ng),10) ADJbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncADJid(ng).ne.-1) status=nf_close(ncADJid(ng))
+            IF (ncADJid(ng).ne.-1) status=nf90_close(ncADJid(ng))
             IF ((iic(ng).eq.ntstart(ng)).and.                           &
      &          (MOD(iic(ng)-1,ndefADJ(ng)).gt.0)) THEN
               ldef=ldefout(ng)
@@ -137,7 +137,7 @@
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncAVGid(ng).ne.-1) status=nf_close(ncAVGid(ng))
+            IF (ncAVGid(ng).ne.-1) status=nf90_close(ncAVGid(ng))
             IF ((iic(ng).eq.ntstart(ng)).and.                           &
      &          (MOD(iic(ng)-1,ndefAVG(ng)).gt.0)) THEN
               ldef=ldefout(ng)

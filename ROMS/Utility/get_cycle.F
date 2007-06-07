@@ -57,9 +57,10 @@
 !
       integer :: i, nvatts, nvdims, status, vartype
 
-      integer, dimension(5) :: vdims
+      integer, dimension(5) :: start, total, vdims
 
-      real(r8) :: mday, tnext, tstart
+      real(r8) :: mday, tstart
+      real(r8) :: Tval(1)
 
       character (len=15) :: attnam, varnam
       character (len=40) :: tunits
@@ -82,26 +83,26 @@
 !  day units.  Check if more than one time record is available.
 !
       IF (ntime.ge.1) THEN
-        status=nf_inq_var(ncid,tfldid,varnam,vartype,nvdims,vdims,      &
-     &                    nvatts)
-        IF (status.eq.nf_noerr) THEN
+        status=nf90_inquire_variable(ncid, tfldid, varnam, vartype,       &
+     &                               nvdims, vdims, nvatts)
+        IF (status.eq.nf90_noerr) THEN
           DO i=1,nvatts
-            status=nf_inq_attname(ncid,tfldid,i,attnam)
-            IF (status.eq.nf_noerr) THEN
+            status=nf90_inq_attname(ncid, tfldid, i, attnam)
+            IF (status.eq.nf90_noerr) THEN
               IF (TRIM(attnam).eq.'cycle_length') THEN
                 cycle=.TRUE.
-                status=nf_get_att_TYPE(ncid,tfldid,TRIM(attnam),        &
-     &                                 clength)
-                IF (status.ne.nf_noerr) THEN
+                status=nf90_get_att(ncid, tfldid, TRIM(attnam),           &
+     &                              clength)
+                IF (status.ne.nf90_noerr) THEN
                   WRITE (stdout,10) TRIM(attnam)
                   exit_flag=2
                   ioerror=status
                   RETURN
                 END IF
               ELSE IF (TRIM(attnam).eq.'units') THEN
-                status=nf_get_att_text(ncid,tfldid,TRIM(attnam),        &
-     &                                 tunits)
-                IF (status.eq.nf_noerr) THEN
+                status=nf90_get_att(ncid, tfldid, TRIM(attnam),           &
+     &                              tunits)
+                IF (status.eq.nf90_noerr) THEN
                   IF (tunits(1:6).eq.'second') THEN
                     Tscale=sec2day
                   END IF
@@ -127,15 +128,21 @@
 !  Read in minimum (Tmin) and maximum (Tmax) times available for input
 !  field.
 !
-      status=nf_get_var1_TYPE(ncid,tfldid,1,Tmin)
-      IF (status.ne.nf_noerr) THEN
+      start(1)=1
+      total(1)=1
+      status=nf90_get_var(ncid, tfldid, Tval, start, total)
+      Tmin=Tval(1)
+      IF (status.ne.nf90_noerr) THEN
         WRITE (stdout,40) TRIM(varnam)
         exit_flag=2
         ioerror=status
         RETURN
       END IF
-      status=nf_get_var1_TYPE(ncid,tfldid,ntime,Tmax)
-      IF (status.ne.nf_noerr) THEN
+      start(1)=ntime
+      total(1)=1
+      status=nf90_get_var(ncid, tfldid, Tval, start, total)
+      Tmax=Tval(1)
+      IF (status.ne.nf90_noerr) THEN
         WRITE (stdout,40) TRIM(varnam)
         exit_flag=2
         ioerror=status
@@ -157,20 +164,22 @@
       ELSE
         tstart=Tmin
         DO i=2,ntime
-          status=nf_get_var1_TYPE(ncid,tfldid,i,tnext)
-          IF (status.ne.nf_noerr) THEN
+          start(1)=i
+          total(1)=1
+          status=nf90_get_var(ncid, tfldid, Tval, start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,40) TRIM(varnam)
             exit_flag=2
             ioerror=status
             RETURN
           END IF
-          tnext=tnext*Tscale
-          IF ((tstart.le.mday).and.(mday.lt.tnext)) THEN
+          Tval(1)=Tval(1)*Tscale
+          IF ((tstart.le.mday).and.(mday.lt.Tval(1))) THEN
             Tindex=i-1
             Tstr=tstart
             GO TO 50
           END IF
-          tstart=tnext
+          tstart=Tval(1)
         END DO
   50    CONTINUE
       END IF
@@ -180,9 +189,11 @@
       IF (cycle.and.(Tindex.eq.ntime)) THEN
         Tend=Tmin
       ELSE
-        i=MIN(ntime,Tindex+1)
-        status=nf_get_var1_TYPE(ncid,tfldid,i,Tend)
-        IF (status.ne.nf_noerr) THEN
+        start(1)=MIN(ntime,Tindex+1)
+        total(1)=1
+        status=nf90_get_var(ncid, tfldid, Tval, start, total)
+        Tend=Tval(1)
+        IF (status.ne.nf90_noerr) THEN
           write(stdout,40) TRIM(varnam)
           exit_flag=2
           ioerror=status

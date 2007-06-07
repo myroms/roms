@@ -59,8 +59,8 @@
 !
       ncname=GSTname(ng)
       IF (InpThread.and.(ncGSTid(ng).eq.-1)) THEN
-        status=nf_open(TRIM(ncname), nf_write, ncGSTid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(ncname), nf90_write, ncGSTid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -71,9 +71,9 @@
 !  Read in number of eigenvalues to compute.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'NEV', varid)
-        status=nf_get_var1_int(ncGSTid(ng), varid, 1, ivar)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'NEV', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, ivar)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'NEV', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -89,9 +89,9 @@
 !  Read in number of Lanczos vectors to compute.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'NCV', varid)
-        status=nf_get_var1_int(ncGSTid(ng), varid, 1, ivar)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'NCV', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, ivar)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'NCV', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -107,9 +107,9 @@
 !  Read in size of the eigenvalue problem.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'Mstate', varid)
-        status=nf_get_var1_int(ncGSTid(ng), varid, 1, ivar)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'Mstate', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, ivar)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'Mstate', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -127,9 +127,9 @@
 !  Read in number of Lanczos vectors to compute.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'Nnodes', varid)
-        status=nf_get_var1_int(ncGSTid(ng), varid, 1, ivar)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'Nnodes', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, ivar)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'Nnodes', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -146,9 +146,9 @@
 !  Read in iteration number.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'iter', varid)
-        status=nf_get_var1_int(ncGSTid(ng), varid, 1, Nrun)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'iter', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, Nrun)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'iter', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -162,9 +162,9 @@
 !  Read in reverse communications flag.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'ido', varid)
-        status=nf_get_var1_int(ncGSTid(ng), varid, 1, ido)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'ido', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, ido)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'ido', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -178,9 +178,9 @@
 !  Read in information and error flag.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'info', varid)
-        status=nf_get_var1_int(ncGSTid(ng), varid, 1, info)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'info', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, info)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'info', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -194,9 +194,9 @@
 !  Read in eigenvalue problem type.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'bmat', varid)
-        status=nf_get_var1_text(ncGSTid(ng), varid, 1, char1)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'bmat', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, char1)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'bmat', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -212,9 +212,11 @@
 !  Read in Ritz eigenvalues to compute.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'which', varid)
-        status=nf_get_vara_text(ncGSTid(ng), varid, 1, 2, char2)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'which', varid)
+        start(1)=1
+        total(1)=2
+        status=nf90_get_var(ncGSTid(ng), varid, char2, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'which', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -230,9 +232,9 @@
 !  Read in form of basis function.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'howmany', varid)
-        status=nf_get_var1_text(ncGSTid(ng), varid, 1, char1)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'howmany', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, char1)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'howmany', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -248,9 +250,9 @@
 !  Read in relative accuracy of computed Ritz values.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'Ritz_tol', varid)
-        status=nf_get_var1_TYPE(ncGSTid(ng), varid, 1, rval)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'Ritz_tol', varid)
+        status=nf90_get_var(ncGSTid(ng), varid, rval)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'Ritz_tol', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -268,10 +270,11 @@
 !  Read in eigenproblem parameters.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'iparam', varid)
-        status=nf_get_vara_int(ncGSTid(ng), varid, 1, SIZE(iparam),     &
-     &                         iparam)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'iparam', varid)
+        start(1)=1
+        total(1)=SIZE(iparam)
+        status=nf90_get_var(ncGSTid(ng), varid, iparam, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'iparam', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -285,10 +288,11 @@
 !  Read in pointers to mark starting location in work arrays.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'ipntr', varid)
-        status=nf_get_vara_int(ncGSTid(ng), varid, 1, SIZE(ipntr),      &
-     &                         ipntr)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'ipntr', varid)
+        start(1)=1
+        total(1)=SIZE(ipntr)
+        status=nf90_get_var(ncGSTid(ng), varid, ipntr, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'ipntr', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -302,10 +306,11 @@
 !  Read in ARPACK internal integer parameters to _aupd routines.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'iaupd', varid)
-        status=nf_get_vara_int(ncGSTid(ng), varid, 1, SIZE(iaupd),      &
-     &                         iaupd)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'iaupd', varid)
+        start(1)=1
+        total(1)=SIZE(iaupd)
+        status=nf90_get_var(ncGSTid(ng), varid, iaupd, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'iaupd', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -319,10 +324,11 @@
 !  Read in ARPACK internal integer parameters to _aitr routines.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'iaitr', varid)
-        status=nf_get_vara_int(ncGSTid(ng), varid, 1, SIZE(iaitr),      &
-     &                         iaitr)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'iaitr', varid)
+        start(1)=1
+        total(1)=SIZE(iaitr)
+        status=nf90_get_var(ncGSTid(ng), varid, iaitr, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'iaitr', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -336,10 +342,11 @@
 !  Read in ARPACK internal integer parameters to _aup2 routines.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'iaup2', varid)
-        status=nf_get_vara_int(ncGSTid(ng), varid, 1, SIZE(iaup2),      &
-     &                         iaup2)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'iaup2', varid)
+        start(1)=1
+        total(1)=SIZE(iaup2)
+        status=nf90_get_var(ncGSTid(ng), varid, iaup2, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'iaup2', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -353,10 +360,11 @@
 !  Read in ARPACK internal logical parameters to _aup2 routines.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'laitr', varid)
-        status=nf_get_vara_text(ncGSTid(ng), varid, 1, SIZE(laitr),     &
-     &                          lchar)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'laitr', varid)
+        start(1)=1
+        total(1)=SIZE(laitr)
+        status=nf90_get_var(ncGSTid(ng), varid, lchar, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'laitr', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -377,10 +385,11 @@
 !  Read in ARPACK internal logical parameters to _aup2 routines.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'laup2', varid)
-        status=nf_get_vara_text(ncGSTid(ng), varid, 1, SIZE(laup2),     &
-     &                          lchar)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'laup2', varid)
+        start(1)=1
+        total(1)=SIZE(laup2)
+        status=nf90_get_var(ncGSTid(ng), varid, lchar, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'laup2', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -402,10 +411,11 @@
 !  Read in ARPACK internal real parameters to _aup2 routines.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'raitr', varid)
-        status=nf_get_vara_TYPE(ncGSTid(ng), varid, 1, SIZE(raitr),     &
-     &                          raitr)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'raitr', varid)
+        start(1)=1
+        total(1)=SIZE(raitr)
+        status=nf90_get_var(ncGSTid(ng), varid, raitr, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'raitr', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -419,10 +429,11 @@
 !  Read in ARPACK internal real parameters to _aup2 routines.
 !
       IF (InpThread) THEN
-        status=nf_inq_varid(ncGSTid(ng), 'raup2', varid)
-        status=nf_get_vara_TYPE(ncGSTid(ng), varid, 1, SIZE(raup2),     &
-     &                          raup2)
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_inq_varid(ncGSTid(ng), 'raup2', varid)
+        start(1)=1
+        total(1)=SIZE(raup2)
+        status=nf90_get_var(ncGSTid(ng), varid, raup2, start, total)
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'raup2', TRIM(ncname)
           exit_flag=2
           ioerror=status
@@ -449,11 +460,11 @@
       total(1)=Nend(ng)-Nstr(ng)+1
       start(2)=1
       total(2)=NCV
-      status=nf_inq_varid(ncGSTid(ng), 'Bvec', varid)
-      status=nf_get_vara_TYPE(ncGSTid(ng), varid, start, total,         &
-     &                        Bvec(Nstr(ng):,1))
+      status=nf90_inq_varid(ncGSTid(ng), 'Bvec', varid)
+      status=nf90_get_var(ncGSTid(ng), varid, Bvec(Nstr(ng):,1),        &
+     &                    start, total)
 # endif
-      IF (InpThread.and.(status.ne.nf_noerr)) THEN
+      IF (InpThread.and.(status.ne.nf90_noerr)) THEN
         WRITE (stdout,60) 'Bvec', TRIM(ncname)
         exit_flag=2
         ioerror=status
@@ -470,11 +481,11 @@
 # else
       start(1)=Nstr(ng)
       total(1)=Nend(ng)-Nstr(ng)+1
-      status=nf_inq_varid(ncGSTid(ng), 'resid', varid)
-      status=nf_get_vara_TYPE(ncGSTid(ng), varid, start, total,         &
-     &                        resid(Nstr(ng):))
+      status=nf90_inq_varid(ncGSTid(ng), 'resid', varid)
+      status=nf90_get_var(ncGSTid(ng), varid, resid(Nstr(ng):),         &
+     &                    start, total)
 # endif
-      IF (InpThread.and.(status.ne.nf_noerr)) THEN
+      IF (InpThread.and.(status.ne.nf90_noerr)) THEN
         WRITE (stdout,60) 'resid', TRIM(ncname)
         exit_flag=2
         ioerror=status
@@ -494,11 +505,11 @@
 # else
       start(1)=1
       total(1)=3*Nstate(ng)
-      status=nf_inq_varid(ncGSTid(ng), 'SworkD', varid)
-      status=nf_get_vara_TYPE(ncGSTid(ng), varid, start, total,         &
-     &                        SworkD)
+      status=nf90_inq_varid(ncGSTid(ng), 'SworkD', varid)
+      status=nf90_get_var(ncGSTid(ng), varid, SworkD,                   &
+     &                    start, total)
 # endif
-      IF (InpThread.and.(status.ne.nf_noerr)) THEN
+      IF (InpThread.and.(status.ne.nf90_noerr)) THEN
         WRITE (stdout,60) 'SworkD', TRIM(ncname)
         exit_flag=2
         ioerror=status
@@ -518,11 +529,11 @@
 # else
       start(1)=1
       total(1)=LworkL
-      status=nf_inq_varid(ncGSTid(ng), 'SworkL', varid)
-      status=nf_put_vara_TYPE(ncGSTid(ng), varid, start, total,         &
-     &                        SworkL)
+      status=nf90_inq_varid(ncGSTid(ng), 'SworkL', varid)
+      status=nf90_put_var(ncGSTid(ng), varid, SworkL,                   &
+     &                    start, total)
 # endif
-      IF (InpThread.and.(status.ne.nf_noerr)) THEN
+      IF (InpThread.and.(status.ne.nf90_noerr)) THEN
         WRITE (stdout,20) 'SworkL', TRIM(ncname)
         exit_flag=2
         ioerror=status

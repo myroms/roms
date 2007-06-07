@@ -469,7 +469,7 @@
 !  If multiple TLM history NetCDF files, close current NetCDF file.
 !
             IF (ncTLMid(ng).ne.-1) THEN
-              status=nf_close(ncTLMid(ng))
+              status=nf90_close(ncTLMid(ng))
               ncTLMid(ng)=-1
             END IF
 #endif

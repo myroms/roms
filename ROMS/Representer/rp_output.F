@@ -74,7 +74,7 @@
               WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncTLMid(ng).ne.-1) status=nf_close(ncTLMid(ng))
+            IF (ncTLMid(ng).ne.-1) status=nf90_close(ncTLMid(ng))
             IF ((iic(ng).eq.ntstart(ng)).and.                               &
      &          (MOD(iic(ng)-1,ndefTLM(ng)).gt.0)) THEN
               ldef=ldefout(ng)

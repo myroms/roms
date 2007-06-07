@@ -33,40 +33,40 @@
 !
       DO ng=1,Ngrids
         IF (ncRSTid(ng).ne.-1) THEN
-          status=nf_close(ncRSTid(ng))
+          status=nf90_close(ncRSTid(ng))
           ncRSTid(ng)=-1
         END IF
         IF (ncHISid(ng).ne.-1) THEN
-          status=nf_close(ncHISid(ng))
+          status=nf90_close(ncHISid(ng))
           ncHISid(ng)=-1
         END IF
 #ifdef ADJOINT
         IF (ncADJid(ng).ne.-1) THEN
-          status=nf_close(ncADJid(ng))
+          status=nf90_close(ncADJid(ng))
           ncADJid(ng)=-1
         END IF
 #endif
 #ifdef TANGENT
         IF (ncTLMid(ng).ne.-1) THEN
-          status=nf_close(ncTLMid(ng))
+          status=nf90_close(ncTLMid(ng))
           ncTLMid(ng)=-1
         END IF
 #endif
 #ifdef AVERAGES
         IF (ncAVGid(ng).ne.-1) THEN
-          status=nf_close(ncAVGid(ng))
+          status=nf90_close(ncAVGid(ng))
           ncAVGid=-1
         END IF
 #endif
 #ifdef FLOATS
         IF (ncFLTid(ng).ne.-1) THEN
-          status=nf_close(ncFLTid(ng))
+          status=nf90_close(ncFLTid(ng))
           ncFLTid(ng)=-1
         END IF
 #endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
         IF (ncFWDid(ng).ne.-1) THEN
-          status=nf_close(ncFWDid(ng))
+          status=nf90_close(ncFWDid(ng))
           ncFWDid(ng)=-1
         END IF
 #endif
@@ -140,11 +140,11 @@
       ELSE IF (exit_flag.eq.1) THEN
         IF (Master) WRITE (stdout,50)
       ELSE IF (exit_flag.eq.2) THEN
-        IF (Master) WRITE (stdout,60) nf_strerror(ioerror)
+        IF (Master) WRITE (stdout,60) nf90_strerror(ioerror)
       ELSE IF (exit_flag.eq.3) THEN
-        IF (Master) WRITE (stdout,70) nf_strerror(ioerror)
+        IF (Master) WRITE (stdout,70) nf90_strerror(ioerror)
       ELSE IF (exit_flag.eq.4) THEN
-        IF (Master) WRITE (stdout,80) nf_strerror(ioerror)
+        IF (Master) WRITE (stdout,80) nf90_strerror(ioerror)
       ELSE IF (exit_flag.eq.5) THEN
         IF (Master) WRITE (stdout,90)
       ELSE IF (exit_flag.eq.6) THEN

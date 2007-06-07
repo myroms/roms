@@ -101,9 +101,9 @@
 !  Read in observation type identifier.
 !
         IF (InpThread) THEN
-          status=nf_get_vara_int(ncOBSid(ng), obsVid(idOtyp,ng),        &
-     &                           start, total, ObsType(Mstr))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_get_var(ncOBSid(ng), obsVid(idOtyp,ng),           &
+     &                        ObsType(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idOtyp)), ObsSurvey(ng),     &
      &                        TRIM(OBSname(ng))
             exit_flag=2
@@ -118,9 +118,9 @@
 !  Read in observation time (days).
 !
         IF (InpThread) THEN
-          status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idObsT,ng),       &
-     &                            start, total, Tobs(Mstr))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_get_var(ncOBSid(ng), obsVid(idObsT,ng),           &
+     &                        Tobs(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idObsT)), ObsSurvey(ng),     &
      &                        TRIM(OBSname(ng))
             exit_flag=2
@@ -135,9 +135,9 @@
 !  Read in observation X-location (grid units).
 !
         IF (InpThread) THEN
-          status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idObsX,ng),       &
-     &                            start, total, Xobs(Mstr))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_get_var(ncOBSid(ng), obsVid(idObsX,ng),           &
+     &                        Xobs(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idObsX)), ObsSurvey(ng),     &
      &                        TRIM(OBSname(ng))
             exit_flag=2
@@ -152,9 +152,9 @@
 !  Read in observation Y-location (grid units).
 !
         IF (InpThread) THEN
-          status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idObsY,ng),       &
-     &                            start, total, Yobs(Mstr))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_get_var(ncOBSid(ng), obsVid(idObsY,ng),           &
+     &                        Yobs(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idObsY)), ObsSurvey(ng),     &
      &                        TRIM(OBSname(ng))
             exit_flag=2
@@ -176,9 +176,9 @@
 !
         IF (InpThread) THEN
           IF (wrote_Zobs(ng)) THEN
-            status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idObsZ,ng),     &
-     &                              start, total, Zobs(Mstr))
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_get_var(ncOBSid(ng), obsVid(idObsZ,ng),         &
+     &                          Zobs(Mstr:), start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idObsZ)), ObsSurvey(ng),   &
      &                          TRIM(OBSname(ng))
               exit_flag=2
@@ -186,9 +186,9 @@
               RETURN
             END IF
           ELSE
-            status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idObsD,ng),     &
-     &                              start, total, Zobs(Mstr))
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_get_var(ncOBSid(ng), obsVid(idObsD,ng),         &
+     &                          Zobs(Mstr:), start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idObsD)), ObsSurvey(ng),   &
      &                          TRIM(OBSname(ng))
               exit_flag=2
@@ -219,9 +219,9 @@
 !  Read in observation values.
 !
         IF (InpThread) THEN
-          status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idOval,ng),       &
-     &                            start, total, ObsVal(Mstr))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_get_var(ncOBSid(ng), obsVid(idOval,ng),           &
+     &                        ObsVal(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idOval)), ObsSurvey(ng),     &
      &                        TRIM(OBSname(ng))
             exit_flag=2
@@ -241,9 +241,9 @@
 # endif
 !
         IF (InpThread) THEN
-          status=nf_get_vara_TYPE(ncOBSid(ng), obsVid(idOerr,ng),       &
-     &                            start, total, ObsErr(Mstr))
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_get_var(ncOBSid(ng), obsVid(idOerr,ng),           &
+     &                        ObsErr(Mstr:), start, total)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idOerr)), ObsSurvey(ng),     &
      &                        TRIM(OBSname(ng))
             exit_flag=2
@@ -269,15 +269,15 @@
             total(1)=Nobs(ng)
             start(2)=Ipass
             total(2)=1
-            status=nf_get_vara_TYPE(ncMODid(ng), modVid(idNLmo,ng),     &
-     &                              start, total, NLmodVal(1,Ipass))
+            status=nf90_get_var(ncMODid(ng), modVid(idNLmo,ng),         &
+     &                          NLmodVal(:,Ipass), start, total)
 # else
             start(1)=NstrObs(ng)
             total(1)=Nobs(ng)
-            status=nf_get_vara_TYPE(ncMODid(ng), modVid(idNLmo,ng),     &
-     &                              start, total, NLmodVal(Mstr))
+            status=nf90_get_var(ncMODid(ng), modVid(idNLmo,ng),         &
+     &                          NLmodVal(Mstr:), start, total)
 # endif
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idNLmo)), ObsSurvey(ng),   &
      &                          TRIM(MODname(ng))
               exit_flag=2
@@ -310,15 +310,15 @@
             total(1)=Nobs(ng)
             start(2)=Ipass
             total(2)=1
-            status=nf_get_vara_TYPE(ncMODid(ng), modVid(idTLmo,ng),     &
-     &                              start, total, TLmodVal(1,Ipass))
+            status=nf90_get_var(ncMODid(ng), modVid(idTLmo,ng),         &
+     &                          TLmodVal(:,Ipass), start, total)
 #  else
             start(1)=NstrObs(ng)
             total(1)=Nobs(ng)
-            status=nf_get_vara_TYPE(ncMODid(ng), modVid(idTLmo,ng),     &
-     &                              start, total, TLmodVal(Mstr))
+            status=nf90_get_var(ncMODid(ng), modVid(idTLmo,ng),         &
+     &                          TLmodVal(Mstr:), start, total)
 #  endif
-            IF (status.ne.nf_noerr) THEN
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTLmo)), ObsSurvey(ng),   &
      &                          TRIM(MODname(ng))
               exit_flag=2
@@ -362,9 +362,9 @@
           IF (InpThread) THEN
             start(1)=1
             total(1)=Ndatum(ng)
-            status=nf_get_vara_TYPE(ncMODid(ng), modVid(idRepC,ng),     &
-     &                              start, total, ADmodVal)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_get_var(ncMODid(ng), modVid(idRepC,ng),         &
+     &                          ADmodVal, start, total)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idRepC)), ObsSurvey(ng),   &
      &                          TRIM(MODname(ng))
               exit_flag=2

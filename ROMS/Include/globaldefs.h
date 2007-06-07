@@ -240,12 +240,6 @@
 #endif
 
 #ifdef DOUBLE_PRECISION
-# define nf_get_att_TYPE nf_get_att_double
-# define nf_put_att_TYPE nf_put_att_double
-# define nf_get_var1_TYPE nf_get_var1_double
-# define nf_put_var1_TYPE nf_put_var1_double
-# define nf_get_vara_TYPE nf_get_vara_double
-# define nf_put_vara_TYPE nf_put_vara_double
 # ifdef DISTRIBUTE
 #  define PDNAUPD pdnaupd
 #  define PDNEUPD pdneupd
@@ -262,12 +256,6 @@
 # define DAXPY daxpy
 # define DSTEQR dsteqr
 #else
-# define nf_get_att_TYPE nf_get_att_real
-# define nf_put_att_TYPE nf_put_att_real
-# define nf_get_var1_TYPE nf_get_var1_real
-# define nf_put_var1_TYPE nf_put_var1_real
-# define nf_get_vara_TYPE nf_get_vara_real
-# define nf_put_vara_TYPE nf_put_vara_real
 # ifdef DISTRIBUTE
 #  define PDNAUPD psnaupd
 #  define PDNEUPD psneupd
@@ -972,4 +960,29 @@
 
 #if !(defined ADJOINT || defined TANGENT || defined TL_IOMS)
 # define SET_ZETA
+#endif
+
+/*
+** Check if any analytical expression is defined.
+*/
+
+#if defined ANA_BIOLOGY    || defined ANA_BPFLUX     || \
+    defined ANA_BSFLUX     || defined ANA_BTFLUX     || \
+    defined ANA_CLOUD      || defined ANA_DIAG       || \
+    defined ANA_FSOBC      || defined ANA_GRID       || \
+    defined ANA_HUMIDITY   || defined ANA_INITIAL    || \
+    defined ANA_M2CLIMA    || defined ANA_M2OBC      || \
+    defined ANA_M3CLIMA    || defined ANA_M3OBC      || \
+    defined ANA_MASK       || defined ANA_PAIR       || \
+    defined ANA_PASSIVE    || defined ANA_PERTURB    || \
+    defined ANA_PSOURCE    || defined ANA_RAIN       || \
+    defined ANA_SEDIMENT   || defined ANA_SMFLUX     || \
+    defined ANA_SPFLUX     || defined ANA_SPINNING   || \
+    defined ANA_SRFLUX     || defined ANA_SSFLUX     || \
+    defined ANA_SSH        || defined ANA_SSS        || \
+    defined ANA_SST        || defined ANA_STFLUX     || \
+    defined ANA_TAIR       || defined ANA_TCLIMA     || \
+    defined ANA_TOBC       || defined ANA_VMIX       || \
+    defined ANA_WINDS      || defined ANA_WWAVE
+# define ANALYTICAL
 #endif

@@ -183,8 +183,8 @@
 !
 !  Open observations NetCDF file.
 !
-        status=nf_open(TRIM(OBSname(ng)), nf_write, ncOBSid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(OBSname(ng)), nf90_write, ncOBSid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(OBSname(ng))
           exit_flag=2
           ioerror=status
@@ -198,8 +198,8 @@
 !  4DVAR output fields.
 !
       IF (ncMODid(ng).eq.-1) THEN
-        status=nf_open(TRIM(MODname(ng)), nf_write, ncMODid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(MODname(ng)), nf90_write, ncMODid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) TRIM(MODname(ng))
           exit_flag=2
           ioerror=status

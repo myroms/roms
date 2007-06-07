@@ -74,8 +74,8 @@
       DO ifile=1,nfiles
         IF (SearchVar) THEN
           ncname=fname(ifile)
-          status=nf_open (TRIM(ncname),nf_nowrite,ncid)
-          IF (status.ne.nf_noerr) THEN
+          status=nf90_open(TRIM(ncname), nf90_nowrite, ncid)
+          IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(ncname)
             exit_flag=4
             ioerror=status
@@ -86,10 +86,11 @@
 !  Inquire and get global "type" attribute.
 !-----------------------------------------------------------------------
 !
-          status=nf_inq_att (ncid,nf_global,'type',attype,ltype)
-          IF (status.eq.nf_noerr) THEN
-            status=nf_get_att_text (ncid,nf_global,'type',type)
-            IF (status.ne.nf_noerr) THEN
+          status=nf90_inquire_attribute(ncid, nf90_global, 'type',      &
+     &                                  attype, ltype)
+          IF (status.eq.nf90_noerr) THEN
+            status=nf90_get_att(ncid, nf90_global, 'type', type)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,20) 'type (global)', TRIM(ncname)
               exit_flag=4
               ioerror=status
@@ -104,8 +105,8 @@
 !-----------------------------------------------------------------------
 !
           recdim=-1
-          status=nf_inq(ncid,ndims,nvars,ngatts,recdim)
-          IF (status.eq.nf_noerr) THEN
+          status=nf90_inquire(ncid, ndims, nvars, ngatts, recdim)
+          IF (status.eq.nf90_noerr) THEN
             IF (nvars.gt.MV) THEN
               WRITE (stdout,40) MV, nvars
               exit_flag=4
@@ -123,8 +124,8 @@
             END IF
             DO i=1,ndims
               dimid=i
-              status=nf_inq_dim(ncid,dimid,dimnam,dimsiz)
-              IF (status.ne.nf_noerr) THEN
+              status=nf90_inquire_dimension(ncid, dimid, dimnam, dimsiz)
+              IF (status.ne.nf90_noerr) THEN
                 WRITE (stdout,50) dimid, TRIM(ncname)
                 exit_flag=4
                 ioerror=status
@@ -183,9 +184,10 @@
             DO i=1,nvars
               varid=i
               vflag(i)=1
-              status=nf_inq_var(ncid,varid,varnam(i),vartype,nvdims(i), &
-     &                          vdims(1,i),nvatts)
-              IF (status.ne.nf_noerr) THEN
+              status=nf90_inquire_variable(ncid, varid, varnam(i),      &
+     &                                     vartype, nvdims(i),          &
+     &                                     vdims(:,i), nvatts)
+              IF (status.ne.nf90_noerr) THEN
                 WRITE (stdout,70) varid, TRIM(ncname)
                 exit_flag=4
                 ioerror=status
@@ -196,9 +198,10 @@
                 SearchVar=.FALSE.
                 nvd=nvdims(i)
                 DO j=1,nvd
-                  status=nf_inq_dim (ncid,vdims(j,i),dimnam,dimsiz)
+                  status=nf90_inquire_dimension(ncid, vdims(j,i),       &
+     &                                          dimnam, dimsiz)
                   Vsize(j)=dimsiz
-                  IF (status.ne.nf_noerr) THEN
+                  IF (status.ne.nf90_noerr) THEN
                     WRITE (stdout,110) TRIM(Tname(ifield))
                     exit_flag=4
                     ioerror=status
@@ -206,23 +209,24 @@
                   END IF
                 END DO
                 DO j=1,nvatts
-                  status=nf_inq_attname(ncid,varid,j,attnam)
-                  IF (status.eq.nf_noerr) THEN
+                  status=nf90_inq_attname (ncid, varid, j, attnam)
+                  IF (status.eq.nf90_noerr) THEN
                     IF (TRIM(attnam).eq.'water_points'.and.             &
      &                  (nvdims(i).gt.0)) THEN
                       vflag(i)=-1
                     ELSE IF (TRIM(attnam).eq.'time') THEN
-                      status=nf_inq_attlen(ncid,varid,TRIM(attnam),     &
-     &                                     ltvar)
-                      IF (status.ne.nf_noerr) THEN
+                      status=nf90_inquire_attribute(ncid, varid,        &
+     &                                              TRIM(attnam),       &
+     &                                              len = ltvar)
+                      IF (status.ne.nf90_noerr) THEN
                         WRITE (stdout,80) TRIM(attnam)
                         exit_flag=4
                         ioerror=status
                         RETURN
                       END IF
-                      status=nf_get_att_text(ncid,varid,TRIM(attnam),   &
-     &                                       text(1:ltvar))
-                      IF (status.ne.nf_noerr) THEN
+                      status=nf90_get_att(ncid, varid, TRIM(attnam),    &
+     &                                    text(1:ltvar))
+                      IF (status.ne.nf90_noerr) THEN
                         WRITE (stdout,90) TRIM(attnam)
                         exit_flag=4
                         ioerror=status
@@ -244,9 +248,10 @@
               IF ((ifield.gt.0).and.(nrec.eq.0).and.(ltvar.gt.0)) THEN
                 DO i=1,nvars
                   varid=i
-                  status=nf_inq_var (ncid,varid,varnam(i),vartype,      &
-     &                               nvdims(i),vdims(1,i),nvatts)
-                  IF (status.ne.nf_noerr) THEN
+                  status=nf90_inquire_variable (ncid, varid, varnam(i), &
+     &                                          vartype, nvdims(i),     &
+     &                                          vdims(:,i), nvatts)
+                  IF (status.ne.nf90_noerr) THEN
                     WRITE (stdout,70) varid, TRIM(ncname)
                     exit_flag=4
                     ioerror=status
@@ -254,8 +259,9 @@
                   END IF
                   IF (TRIM(varnam(i)).eq.TRIM(Tname(ifield))) THEN
                     DO j=1,nvdims(i)
-                      status=nf_inq_dim (ncid,vdims(j,i),dimnam,dimsiz)
-                      IF (status.ne.nf_noerr) THEN
+                      status=nf90_inquire_dimension(ncid, vdims(j,i),   &
+     &                                              dimnam, dimsiz)
+                      IF (status.ne.nf90_noerr) THEN
                         WRITE (stdout,110) TRIM(Tname(ifield))
                         exit_flag=4
                         ioerror=status
@@ -281,8 +287,8 @@
 !
           tsize=0
           IF (recdim.gt.0) THEN
-            status=nf_inq_dim (ncid,recdim,dimnam,tsize)
-            IF (status.ne.nf_noerr) THEN
+            status=nf90_inquire_dimension(ncid, recdim, dimnam, tsize)
+            IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,130) 'time', TRIM(ncname)
               exit_flag=4
               ioerror=status
@@ -300,7 +306,7 @@
 !  Close input NetCDF file.
 !-----------------------------------------------------------------------
 !
-          status=nf_close (ncid)
+          status=nf90_close(ncid)
 !
 !-----------------------------------------------------------------------
 !  If appropriate, scan next NetCDF file.

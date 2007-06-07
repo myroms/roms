@@ -85,8 +85,8 @@
       END IF
 !
       IF (Ldefine.and.OutThread) THEN
-        status=nf_create(TRIM(ncname),nf_clobber,ncRSTid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_create(TRIM(ncname),nf90_clobber,ncRSTid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,10) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -104,80 +104,80 @@
 !-----------------------------------------------------------------------
 !
       IF (Ldefine.and.OutThread) THEN
-        status=nf_def_dim(ncRSTid(ng),'xi_rho'  ,Lm(ng)+2,              &
-     &                    DimIDs( 1))
-        status=nf_def_dim(ncRSTid(ng),'xi_u'    ,Lm(ng)+1,              &
-     &                    DimIDs( 2))
-        status=nf_def_dim(ncRSTid(ng),'xi_v'    ,Lm(ng)+2,              &
-     &                    DimIDs( 3))
-        status=nf_def_dim(ncRSTid(ng),'xi_psi'  ,Lm(ng)+1,              &
-     &                    DimIDs( 4))
-        status=nf_def_dim(ncRSTid(ng),'eta_rho' ,Mm(ng)+2,              &
-     &                    DimIDs( 5))
-        status=nf_def_dim(ncRSTid(ng),'eta_u'   ,Mm(ng)+2,              &
-     &                    DimIDs( 6))
-        status=nf_def_dim(ncRSTid(ng),'eta_v'   ,Mm(ng)+1,              &
-     &                    DimIDs( 7))
-        status=nf_def_dim(ncRSTid(ng),'eta_psi' ,Mm(ng)+1,              &
-     &                    DimIDs( 8))
+        status=nf90_def_dim(ncRSTid(ng),'xi_rho'  ,Lm(ng)+2,            &
+     &                      DimIDs( 1))
+        status=nf90_def_dim(ncRSTid(ng),'xi_u'    ,Lm(ng)+1,            &
+     &                      DimIDs( 2))
+        status=nf90_def_dim(ncRSTid(ng),'xi_v'    ,Lm(ng)+2,            &
+     &                      DimIDs( 3))
+        status=nf90_def_dim(ncRSTid(ng),'xi_psi'  ,Lm(ng)+1,            &
+     &                      DimIDs( 4))
+        status=nf90_def_dim(ncRSTid(ng),'eta_rho' ,Mm(ng)+2,            &
+     &                      DimIDs( 5))
+        status=nf90_def_dim(ncRSTid(ng),'eta_u'   ,Mm(ng)+2,            &
+     &                      DimIDs( 6))
+        status=nf90_def_dim(ncRSTid(ng),'eta_v'   ,Mm(ng)+1,            &
+     &                      DimIDs( 7))
+        status=nf90_def_dim(ncRSTid(ng),'eta_psi' ,Mm(ng)+1,            &
+     &                      DimIDs( 8))
 #if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncRSTid(ng),'xy_rho'  ,Nxyr(ng),              &
-     &                    DimIDs(17))
-        status=nf_def_dim(ncRSTid(ng),'xy_u'    ,Nxyu(ng),              &
-     &                    DimIDs(18))
-        status=nf_def_dim(ncRSTid(ng),'xy_v'    ,Nxyv(ng),              &
-     &                    DimIDs(19))
+        status=nf90_def_dim(ncRSTid(ng),'xy_rho'  ,Nxyr(ng),            &
+     &                      DimIDs(17))
+        status=nf90_def_dim(ncRSTid(ng),'xy_u'    ,Nxyu(ng),            &
+     &                      DimIDs(18))
+        status=nf90_def_dim(ncRSTid(ng),'xy_v'    ,Nxyv(ng),            &
+     &                      DimIDs(19))
 #endif
 #ifdef SOLVE3D
 # if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncRSTid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),        &
-     &                    DimIDs(20))
-        status=nf_def_dim(ncRSTid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),        &
-     &                    DimIDs(21))
-        status=nf_def_dim(ncRSTid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),        &
-     &                    DimIDs(22))
-        status=nf_def_dim(ncRSTid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),    &
-     &                    DimIDs(23))
+        status=nf90_def_dim(ncRSTid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),      &
+     &                      DimIDs(20))
+        status=nf90_def_dim(ncRSTid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),      &
+     &                      DimIDs(21))
+        status=nf90_def_dim(ncRSTid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),      &
+     &                      DimIDs(22))
+        status=nf90_def_dim(ncRSTid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),  &
+     &                      DimIDs(23))
 # endif
-        status=nf_def_dim(ncRSTid(ng),'s_rho'   ,N(ng),                 &
-     &                    DimIDs( 9))
-        status=nf_def_dim(ncRSTid(ng),'s_w'     ,N(ng)+1,               &
-     &                    DimIDs(10))
-        status=nf_def_dim(ncRSTid(ng),'tracer'  ,NT(ng),                &
-     &                    DimIDs(11))
+        status=nf90_def_dim(ncRSTid(ng),'s_rho'   ,N(ng),               &
+     &                      DimIDs( 9))
+        status=nf90_def_dim(ncRSTid(ng),'s_w'     ,N(ng)+1,             &
+     &                      DimIDs(10))
+        status=nf90_def_dim(ncRSTid(ng),'tracer'  ,NT(ng),              &
+     &                      DimIDs(11))
 # ifdef SEDIMENT
-        status=nf_def_dim(ncRSTid(ng),'Nbed'    ,Nbed,                  &
-     &                    DimIDs(16))
+        status=nf90_def_dim(ncRSTid(ng),'Nbed'    ,Nbed,                &
+     &                      DimIDs(16))
 #  if defined WRITE_WATER && defined MASKING
-        status=nf_def_dim(ncRSTid(ng),'xybed'   ,Nxyr(ng)*Nbed,         &
-     &                    DimIDs(24))
+        status=nf90_def_dim(ncRSTid(ng),'xybed'   ,Nxyr(ng)*Nbed,       &
+     &                      DimIDs(24))
 #  endif
 # endif
 # ifdef ECOSIM
-        status=nf_def_dim(ncRSTid(ng),'Nphy'    ,Nphy,                  &
-     &                    DimIDs(25))
-        status=nf_def_dim(ncRSTid(ng),'Nbac'    ,Nbac,                  &
-     &                    DimIDs(26))
-        status=nf_def_dim(ncRSTid(ng),'Ndom'    ,Ndom,                  &
-     &                    DimIDs(27))
-        status=nf_def_dim(ncRSTid(ng),'Nfec'    ,Nfec,                  &
-     &                    DimIDs(28))
+        status=nf90_def_dim(ncRSTid(ng),'Nphy'    ,Nphy,                &
+     &                      DimIDs(25))
+        status=nf90_def_dim(ncRSTid(ng),'Nbac'    ,Nbac,                &
+     &                      DimIDs(26))
+        status=nf90_def_dim(ncRSTid(ng),'Ndom'    ,Ndom,                &
+     &                      DimIDs(27))
+        status=nf90_def_dim(ncRSTid(ng),'Nfec'    ,Nfec,                &
+     &                      DimIDs(28))
 # endif
 #endif
-        status=nf_def_dim(ncRSTid(ng),'boundary',4,                     &
-     &                    DimIDs(14))
+        status=nf90_def_dim(ncRSTid(ng),'boundary',4,                   &
+     &                      DimIDs(14))
 #ifdef FOUR_DVAR
-        status=nf_def_dim(ncRSTid(ng),'Nstate  ',NstateVar(ng),         &
-     &                    DimIDs(29))
+        status=nf90_def_dim(ncRSTid(ng),'Nstate  ',NstateVar(ng),       &
+     &                      DimIDs(29))
 #endif
 #ifdef PERFECT_RESTART
-        status=nf_def_dim(ncRSTid(ng),'two     ',2            ,         &
-     &                    DimIDs(30))
-        status=nf_def_dim(ncRSTid(ng),'three   ',3            ,         &
-     &                    DimIDs(31))
+        status=nf90_def_dim(ncRSTid(ng),'two     ',2            ,       &
+     &                      DimIDs(30))
+        status=nf90_def_dim(ncRSTid(ng),'three   ',3            ,       &
+     &                      DimIDs(31))
 #endif
-        status=nf_def_dim(ncRSTid(ng),TRIM(ADJUSTL(Vname(5,idtime))),   &
-     &                    nf_unlimited,DimIDs(12))
+        status=nf90_def_dim(ncRSTid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
+     &                      nf90_unlimited,DimIDs(12))
         recdim=DimIDs(12)
 !
 !  Set number of dimensions for output variables.
@@ -448,33 +448,33 @@
 # ifdef SOLVE3D
         Vinfo( 1)='nstp'
         Vinfo( 2)='3D equations time level index, nstp'
-        status=def_var(ncRSTid(ng),varid,nf_int,1,recdim,Aval,Vinfo,    &
-     &                 ncname)
+        status=def_var(ncRSTid(ng),varid,nf90_int,1,recdim,             &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='nrhs'
         Vinfo( 2)='3D equations time level index, nrhs'
-        status=def_var(ncRSTid(ng),varid,nf_int,1,recdim,Aval,Vinfo,    &
-     &                 ncname)
+        status=def_var(ncRSTid(ng),varid,nf90_int,1,recdim,             &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='nnew'
         Vinfo( 2)='3D equations time level index, nnew'
-        status=def_var(ncRSTid(ng),varid,nf_int,1,recdim,Aval,Vinfo,    &
-     &                 ncname)
+        status=def_var(ncRSTid(ng),varid,nf90_int,1,recdim,             &
+     &                 Aval,Vinfo,ncname)
 # endif
         Vinfo( 1)='kstp'
         Vinfo( 2)='3D equations time level index, kstp'
-        status=def_var(ncRSTid(ng),varid,nf_int,1,recdim,Aval,Vinfo,    &
-     &                 ncname)
+        status=def_var(ncRSTid(ng),varid,nf90_int,1,recdim,             &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='krhs'
         Vinfo( 2)='3D equations time level index, krhs'
-        status=def_var(ncRSTid(ng),varid,nf_int,1,recdim,Aval,Vinfo,    &
-     &                 ncname)
+        status=def_var(ncRSTid(ng),varid,nf90_int,1,recdim,             &
+     &                 Aval,Vinfo,ncname)
 
         Vinfo( 1)='knew'
         Vinfo( 2)='3D equations time level index, knew'
-        status=def_var(ncRSTid(ng),varid,nf_int,1,recdim,Aval,Vinfo,    &
-     &                 ncname)
+        status=def_var(ncRSTid(ng),varid,nf90_int,1,recdim,             &
+     &                 Aval,Vinfo,ncname)
 #endif
 !
 !  Define model time.
@@ -1106,7 +1106,7 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf_enddef(ncRSTid(ng))
+        status=nf90_enddef(ncRSTid(ng))
       END IF
 !
 !-----------------------------------------------------------------------
@@ -1134,8 +1134,8 @@
 !
 !  Open restart file for read/write.
 !
-        status=nf_open(TRIM(ncname),nf_write,ncRSTid(ng))
-        IF (status.ne.nf_noerr) THEN
+        status=nf90_open(TRIM(ncname),nf90_write,ncRSTid(ng))
+        IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,40) TRIM(ncname)
           exit_flag=3
           ioerror=status
@@ -1154,146 +1154,146 @@
         DO i=1,nvars
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idtime)),      &
-     &                          rstVid(idtime,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idtime)),    &
+     &                            rstVid(idtime,ng))
           END IF
 #if defined SEDIMENT && defined SED_MORPH
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idbath))) THEN
             got_var(idbath)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idbath)),      &
-     &                          rstVid(idbath,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idbath)),    &
+     &                            rstVid(idbath,ng))
           END IF
 #endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idFsur)),      &
-     &                          rstVid(idFsur,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idFsur)),    &
+     &                            rstVid(idFsur,ng))
           END IF
 #ifdef PERFECT_RESTART
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRzet))) THEN
             got_var(idRzet)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRzet)),      &
-     &                          rstVid(idRzet,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRzet)),    &
+     &                            rstVid(idRzet,ng))
           END IF
 #endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbar))) THEN
             got_var(idUbar)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idUbar)),      &
-     &                          rstVid(idUbar,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idUbar)),    &
+     &                            rstVid(idUbar,ng))
           END IF
 #ifdef PERFECT_RESTART
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRu2d))) THEN
             got_var(idRu2d)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRu2d)),      &
-     &                          rstVid(idRu2d,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRu2d)),    &
+     &                            rstVid(idRu2d,ng))
           END IF
 #endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbar))) THEN
             got_var(idVbar)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVbar)),      &
-     &                          rstVid(idVbar,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVbar)),    &
+     &                            rstVid(idVbar,ng))
           END IF
 #ifdef PERFECT_RESTART
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRv2d))) THEN
             got_var(idRv2d)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRv2d)),      &
-     &                          rstVid(idRv2d,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRv2d)),    &
+     &                            rstVid(idRv2d,ng))
           END IF
 #endif
 #ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idUvel)),      &
-     &                          rstVid(idUvel,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idUvel)),    &
+     &                            rstVid(idUvel,ng))
           END IF
 # ifdef PERFECT_RESTART
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRu3d))) THEN
             got_var(idRu3d)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRu3d)),      &
-     &                          rstVid(idRu3d,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRu3d)),    &
+     &                            rstVid(idRu3d,ng))
           END IF
 # endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVvel)),      &
-     &                          rstVid(idVvel,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVvel)),    &
+     &                            rstVid(idVvel,ng))
           END IF
 # ifdef PERFECT_RESTART
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRv3d))) THEN
             got_var(idRv3d)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRv3d)),      &
-     &                          rstVid(idRv3d,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idRv3d)),    &
+     &                            rstVid(idRv3d,ng))
           END IF
 # endif
           DO itrc=1,NT(ng)
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
              got_var(idTvar(itrc))=.TRUE.
-             status=nf_inq_varid(ncRSTid(ng),                           &
-     &                           TRIM(Vname(1,idTvar(itrc))),           &
-     &                           rstTid(itrc,ng))
+             status=nf90_inq_varid(ncRSTid(ng),                         &
+     &                             TRIM(Vname(1,idTvar(itrc))),         &
+     &                             rstTid(itrc,ng))
             END IF
           END DO
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idDano))) THEN
             got_var(idDano)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idDano)),      &
-     &                          rstVid(idDano,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idDano)),    &
+     &                            rstVid(idDano,ng))
           END IF
 # ifdef LMD_SKPP
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idHsbl))) THEN
             got_var(idHsbl)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idHsbl)),      &
-     &                          rstVid(idHsbl,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idHsbl)),    &
+     &                            rstVid(idHsbl,ng))
           END IF
 # endif
 # ifdef LMD_BKPP
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idHbbl))) THEN
             got_var(idHbbl)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idHbbl)),      &
-     &                          rstVid(idHbbl,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idHbbl)),    &
+     &                            rstVid(idHbbl,ng))
           END IF
 # endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVvis)),      &
-     &                          rstVid(idVvis,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVvis)),    &
+     &                            rstVid(idVvis,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTdif))) THEN
             got_var(idTdif)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idTdif)),      &
-     &                          rstVid(idTdif,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idTdif)),    &
+     &                            rstVid(idTdif,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSdif))) THEN
             got_var(idSdif)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idSdif)),      &
-     &                          rstVid(idSdif,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idSdif)),    &
+     &                            rstVid(idSdif,ng))
           END IF
 # if defined PERFECT_RESTART && \
      (defined GLS_MIXING     || defined MY25_MIXING)
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idMtke))) THEN
             got_var(idMtke)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idMtke)),      &
-     &                          rstVid(idMtke,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idMtke)),    &
+     &                            rstVid(idMtke,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idMtls))) THEN
             got_var(idMtls)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idMtls)),      &
-     &                          rstVid(idMtls,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idMtls)),    &
+     &                            rstVid(idMtls,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVmLS))) THEN
             got_var(idVmLS)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVmLS)),      &
-     &                          rstVid(idVmLS,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVmLS)),    &
+     &                            rstVid(idVmLS,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVmKK))) THEN
             got_var(idVmKK)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVmKK)),      &
-     &                          rstVid(idVmKK,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVmKK)),    &
+     &                            rstVid(idVmKK,ng))
           END IF
 #  ifdef GLS_MIXING
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVmKP))) THEN
             got_var(idVmKP)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVmKP)),      &
-     &                          rstVid(idVmKP,ng))
+            status=nf90_inq_varid(ncRSTid(ng),TRIM(Vname(1,idVmKP)),    &
+     &                            rstVid(idVmKP,ng))
           END IF
 #  endif
 # endif
@@ -1302,36 +1302,36 @@
 #  ifdef BEDLOAD
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbld(itrc)))) THEN
               got_var(idUbld(itrc))=.true.
-              status=nf_inq_varid(ncRSTid(ng),                          &
-     &                            TRIM(Vname(1,idUbld(itrc))),          &
-     &                            rstVid(idUbld(itrc),ng))
+              status=nf90_inq_varid(ncRSTid(ng),                        &
+     &                              TRIM(Vname(1,idUbld(itrc))),        &
+     &                              rstVid(idUbld(itrc),ng))
             END IF
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbld(itrc)))) THEN
               got_var(idVbld(itrc))=.true.
-              status=nf_inq_varid(ncRSTid(ng),                          &
-     &                            TRIM(Vname(1,idVbld(itrc))),          &
-     &                            rstVid(idVbld(itrc),ng))
+              status=nf90_inq_varid(ncRSTid(ng),                        &
+     &                              TRIM(Vname(1,idVbld(itrc))),        &
+     &                              rstVid(idVbld(itrc),ng))
             END IF
 #  endif
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idfrac(itrc)))) THEN
               got_var(idfrac(itrc))=.TRUE.
-              status=nf_inq_varid(ncRSTid(ng),                          &
-     &                            TRIM(Vname(1,idfrac(itrc))),          &
-     &                            rstVid(idfrac(itrc),ng))
+              status=nf90_inq_varid(ncRSTid(ng),                        &
+     &                              TRIM(Vname(1,idfrac(itrc))),        &
+     &                              rstVid(idfrac(itrc),ng))
             END IF
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBmas(itrc)))) THEN
               got_var(idBmas(itrc))=.TRUE.
-              status=nf_inq_varid(ncRSTid(ng),                          &
-     &                            TRIM(Vname(1,idBmas(itrc))),          &
-     &                            rstVid(idBmas(itrc),ng))
+              status=nf90_inq_varid(ncRSTid(ng),                        &
+     &                              TRIM(Vname(1,idBmas(itrc))),        &
+     &                              rstVid(idBmas(itrc),ng))
             END IF
           END DO
           DO itrc=1,MBEDP
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSbed(itrc)))) THEN
               got_var(idSbed(itrc))=.TRUE.
-              status=nf_inq_varid(ncRSTid(ng),                          &
-     &                            TRIM(Vname(1,idSbed(itrc))),          &
-     &                            rstVid(idSbed(itrc),ng))
+              status=nf90_inq_varid(ncRSTid(ng),                        &
+     &                              TRIM(Vname(1,idSbed(itrc))),        &
+     &                              rstVid(idSbed(itrc),ng))
             END IF
           END DO
 # endif
@@ -1339,9 +1339,9 @@
           DO itrc=1,6
             IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idBott(itrc)))) THEN
               got_var(idBott(itrc))=.TRUE.
-              status=nf_inq_varid(ncRSTid(ng),                          &
-     &                            TRIM(Vname(1,idBott(itrc))),          &
-     &                            rstVid(idBott(itrc),ng))
+              status=nf90_inq_varid(ncRSTid(ng),                        &
+     &                              TRIM(Vname(1,idBott(itrc))),        &
+     &                              rstVid(idBott(itrc),ng))
             END IF
           END DO
 # endif
@@ -1349,36 +1349,36 @@
 #if defined WET_DRY
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idWmsk))) THEN
             got_var(idWmsk)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),                            &
-     &                          TRIM(Vname(1,idWmsk)),                  &
-     &                          rstVid(idWmsk,ng))
+            status=nf90_inq_varid(ncRSTid(ng),                          &
+     &                            TRIM(Vname(1,idWmsk)),                &
+     &                            rstVid(idWmsk,ng))
             END IF
 #endif
 #if defined NEARSHORE_MELLOR
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU2Sd))) THEN
             got_var(idU2Sd)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),                            &
-     &                          TRIM(Vname(1,idU2Sd)),                  &
-     &                          rstVid(idU2Sd,ng))
+            status=nf90_inq_varid(ncRSTid(ng),                          &
+     &                            TRIM(Vname(1,idU2Sd)),                &
+     &                            rstVid(idU2Sd,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV2Sd))) THEN
             got_var(idV2Sd)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),                            &
-     &                          TRIM(Vname(1,idV2Sd)),                  &
-     &                          rstVid(idV2Sd,ng))
+            status=nf90_inq_varid(ncRSTid(ng),                          &
+     &                            TRIM(Vname(1,idV2Sd)),                &
+     &                            rstVid(idV2Sd,ng))
           END IF
 # ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idU3Sd))) THEN
             got_var(idU3Sd)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),                            &
-     &                          TRIM(Vname(1,idU3Sd)),                  &
-     &                          rstVid(idU3Sd,ng))
+            status=nf90_inq_varid(ncRSTid(ng),                          &
+     &                            TRIM(Vname(1,idU3Sd)),                &
+     &                            rstVid(idU3Sd,ng))
           END IF
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idV3Sd))) THEN
             got_var(idV3Sd)=.TRUE.
-            status=nf_inq_varid(ncRSTid(ng),                            &
-     &                          TRIM(Vname(1,idV3Sd)),                  &
-     &                          rstVid(idV3Sd,ng))
+            status=nf90_inq_varid(ncRSTid(ng),                          &
+     &                            TRIM(Vname(1,idV3Sd)),                &
+     &                            rstVid(idV3Sd,ng))
           END IF
 # endif
 #endif

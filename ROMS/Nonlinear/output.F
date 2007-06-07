@@ -85,7 +85,7 @@
               WRITE (HISname(ng),10) HISbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncHISid(ng).ne.-1) status=nf_close(ncHISid(ng))
+            IF (ncHISid(ng).ne.-1) status=nf90_close(ncHISid(ng))
             IF ((iic(ng).eq.ntstart(ng)).and.                               &
      &          (MOD(iic(ng)-1,ndefHIS(ng)).gt.0)) THEN
               ldef=ldefout(ng)
@@ -156,7 +156,7 @@
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncAVGid(ng).ne.-1) status=nf_close(ncAVGid(ng))
+            IF (ncAVGid(ng).ne.-1) status=nf90_close(ncAVGid(ng))
             IF ((iic(ng).eq.ntstart(ng)+nAVG(ng)).and.                  &
      &           (MOD(iic(ng)-nAVG(ng)-1,ndefAVG(ng)).ne.0)) THEN
               ldef=ldefout(ng)
@@ -218,7 +218,7 @@
               WRITE (DIAname(ng),30) DIAbase(ng)(1:lstr-3),ifile
   30          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncDIAid(ng).ne.-1) status=nf_close(ncDIAid(ng))
+            IF (ncDIAid(ng).ne.-1) status=nf90_close(ncDIAid(ng))
             IF ((iic(ng).eq.ntstart(ng)+nDIA(ng)).and.                      &
      &           (MOD(iic(ng)-nDIA(ng)-1,ndefDIA(ng)).ne.0)) THEN
               ldef=ldefout(ng)

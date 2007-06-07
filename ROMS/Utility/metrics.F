@@ -621,15 +621,15 @@
 !
 !  Compute grid spacing range.
 !
-      my_DXmin= 1.0E+20_r8
-      my_DXmax=-1.0E+20_r8
-      my_DYmin= 1.0E+20_r8
-      my_DYmax=-1.0E+20_r8
+      my_DXmin= Large
+      my_DXmax=-Large
+      my_DYmin= Large
+      my_DYmax=-Large
 #ifdef SOLVE3D
-      my_DZmin= 1.0E+20_r8
-      my_DZmax=-1.0E+20_r8
+      my_DZmin= Large
+      my_DZmax=-Large
 #endif
-      my_grdmax=-1.0E+20_r8
+      my_grdmax=-Large
       DO j=JstrR,JendR
         DO i=IstrR,IendR
 #if defined VISC_GRID || defined DIFF_GRID
@@ -665,7 +665,6 @@
       my_Cu_min= Large
       my_Cu_max=-Large
       my_Cu_Cor=-Large
-      my_grdmax=-Large
 
       DO j=JstrR,JendR
         DO i=IstrR,IendR
