@@ -63,7 +63,9 @@
       USE mod_sources
 # endif
 !
+# ifdef ANALYTICAL
       USE analytical_mod
+# endif
 # if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_2d_mod
 # endif

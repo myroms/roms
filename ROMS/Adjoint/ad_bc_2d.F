@@ -61,7 +61,7 @@
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  Set periodic boundary conditons.
+!  Set adjoint periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
       CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
@@ -116,7 +116,7 @@
 # ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  North-South gradient boundary conditions.
+!  Adjoint North-South gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE) THEN
@@ -140,7 +140,7 @@
 # ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  East-West gradient boundary conditions.
+!  Adjoint East-West gradient boundary conditions.
 !-----------------------------------------------------------------------
 !
       IF (WESTERN_EDGE) THEN
@@ -172,6 +172,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_grid
+      USE mod_scalars
 
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
@@ -201,7 +203,7 @@
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  Set periodic boundary conditons.
+!  Set adjoint periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
       CALL ad_exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,            &
@@ -256,47 +258,101 @@
 # ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  North-South gradient boundary conditions.
+!  Adjoint North-South boundary conditions: Closed (free-slip/no-slip)
+!  or gradient.
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE) THEN
+#  ifdef SOUTHERN_WALL
+#   ifdef EW_PERIODIC
+#    define I_RANGE IstrU,Iend
+#   else
+#    define I_RANGE Istr,IendR
+#   endif
+        DO i=I_RANGE
+#   ifdef MASKING
+!>        tl_A(i,Jstr-1)=tl_A(i,Jstr-1)*GRID(ng)%umask(i,Jstr-1)
+!>
+          ad_A(i,Jstr-1)=ad_A(i,Jstr-1)*GRID(ng)%umask(i,Jstr-1)
+#   endif
+!>        tl_A(i,Jstr-1)=gamma2(ng)*tl_A(i,Jstr)
+!>
+          ad_A(i,Jstr)=ad_A(i,Jstr)+gamma2(ng)*ad_A(i,Jstr-1)
+          ad_A(i,Jstr-1)=0.0_r8
+        END DO
+#   undef I_RANGE
+#  else
         DO i=IstrU,Iend
 !>        tl_A(i,Jstr-1)=tl_A(i,Jstr)
 !>
           ad_A(i,Jstr  )=ad_A(i,Jstr)+ad_A(i,Jstr-1)
           ad_A(i,Jstr-1)=0.0_r8
         END DO
+#  endif
       END IF
+
       IF (NORTHERN_EDGE) THEN
+#  ifdef NORTHERN_WALL
+#   ifdef EW_PERIODIC
+#    define I_RANGE IstrU,Iend
+#   else
+#    define I_RANGE Istr,IendR
+#   endif
+        DO i=I_RANGE
+#   ifdef MASKING
+!>        tl_A(i,Jend+1)=tl_A(i,Jend+1)*GRID(ng)%umask(i,Jend+1)
+!>
+          ad_A(i,Jend+1)=ad_A(i,Jend+1)*GRID(ng)%umask(i,Jend+1)
+#   endif
+!>        tl_A(i,Jend+1)=gamma2(ng)*tl_A(i,Jend)
+!>
+          ad_A(i,Jend)=ad_A(i,Jend)+gamma2(ng)*ad_A(i,Jend+1)
+          ad_A(i,Jend+1)=0.0_r8
+        END DO
+#   undef I_RANGE
+#  else
         DO i=IstrU,Iend
 !>        tl_A(i,Jend+1)=tl_A(i,Jend)
 !>
           ad_A(i,Jend  )=ad_A(i,Jend)+ad_A(i,Jend+1)
           ad_A(i,Jend+1)=0.0_r8
         END DO
+#  endif
       END IF
 # endif
 
 # ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  East-West gradient boundary conditions.
+!  Adjoint East-West boundary conditions: Closed or gradient.
 !-----------------------------------------------------------------------
 !
       IF (WESTERN_EDGE) THEN
         DO j=Jstr,Jend
+#  ifdef WESTERN_WALL
+!>        tl_A(Istr,j)=0.0_r8
+!>
+          ad_A(Istr,j)=0.0_r8
+#  else
 !>        tl_A(Istr,j)=tl_A(Istr+1,j)
 !>
           ad_A(Istr+1,j)=ad_A(Istr+1,j)+ad_A(Istr,j)
           ad_A(Istr  ,j)=0.0_r8
+#  endif
         END DO
       END IF
       IF (EASTERN_EDGE) THEN
         DO j=Jstr,Jend
+#  ifdef EASTERN_WALL
+!>        A(Iend+1,j)=0.0_r8
+!>
+          ad_A(Iend+1,j)=0.0_r8
+#  else
 !>        tl_A(Iend+1,j)=tl_A(Iend,j)
 !>
           ad_A(Iend  ,j)=ad_A(Iend,j)+ad_A(Iend+1,j)
           ad_A(Iend+1,j)=0.0_r8
+#  endif
         END DO
       END IF
 # endif
@@ -312,6 +368,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_grid
+      USE mod_scalars
 
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
@@ -341,7 +399,7 @@
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  Set periodic boundary conditons.
+!  Set adjoint periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
       CALL ad_exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,            &
@@ -396,23 +454,35 @@
 # ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  North-South periodic boundary conditions.
+!  Adjoint North-South boundary conditions: Closed or Gradient.
 !-----------------------------------------------------------------------
 !
       IF (SOUTHERN_EDGE) THEN
         DO i=Istr,Iend
+#  ifdef SOUTHERN_WALL
+!>        tl_A(i,Jstr)=0.0_r8
+!>
+          ad_A(i,Jstr)=0.0_r8
+#  else
 !>        tl_A(i,Jstr)=tl_A(i,Jstr+1)
 !>
           ad_A(i,Jstr+1)=ad_A(i,Jstr+1)+ad_A(i,Jstr)
-          ad_A(i,Jstr  )=0.0_r8
+          ad_A(i,Jstr)=0.0_r8
+#  endif
         END DO
       END IF
       IF (NORTHERN_EDGE) THEN
         DO i=Istr,Iend
+#  ifdef NORTHERN_WALL
+!>        tl_A(i,Jend+1)=0.0_r8
+!>
+          ad_A(i,Jend+1)=0.0_r8
+#  else
 !>        tl_A(i,Jend+1)=tl_A(i,Jend)
 !>
-          ad_A(i,Jend  )=ad_A(i,Jend)+ad_A(i,Jend+1)
+          ad_A(i,Jend)=ad_A(i,Jend)+ad_A(i,Jend+1)
           ad_A(i,Jend+1)=0.0_r8
+#  endif
         END DO
       END IF
 # endif
@@ -420,24 +490,65 @@
 # ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  East-West gradient boundary conditions.
+!  Adjoint East-West boundary conditions.
 !-----------------------------------------------------------------------
 !
       IF (WESTERN_EDGE) THEN
+#  ifdef WESTERN_WALL
+#   ifdef NS_PERIODIC
+#    define J_RANGE JstrV,Jend
+#   else
+#    define J_RANGE Jstr,JendR
+#   endif
+        DO j=J_RANGE
+#   ifdef MASKING
+!>        tl_A(Istr-1,j)=tl_A(Istr-1,j)*GRID(ng)%vmask(Istr-1,j)
+!>
+          ad_A(Istr-1,j)=ad_A(Istr-1,j)*GRID(ng)%vmask(Istr-1,j)
+#   endif
+!>        tl_A(Istr-1,j)=gamma2(ng)*tl_A(Istr,j)
+!>
+          ad_A(Istr  ,j)=ad_A(Istr,j)+gamma2(ng)*ad_A(Istr-1,j)
+          ad_A(Istr-1,j)=0.0_r8
+        END DO
+#   undef J_RANGE
+#  else
         DO j=JstrV,Jend
 !>        tl_A(Istr-1,j)=tl_A(Istr,j)
 !>
           ad_A(Istr  ,j)=ad_A(Istr,j)+ad_A(Istr-1,j)
           ad_A(Istr-1,j)=0.0_r8
         END DO
+#  endif
       END IF
+
       IF (EASTERN_EDGE) THEN
+#  ifdef EASTERN_WALL
+#   ifdef NS_PERIODIC
+#    define J_RANGE JstrV,Jend
+#   else
+#    define J_RANGE Jstr,JendR
+#   endif
+        DO j=J_RANGE
+#   ifdef MASKING
+!>        tl_A(Iend+1,j)=tl_A(Iend+1,j)*GRID(ng)%vmask(Iend+1,j)
+!>
+          ad_A(Iend+1,j)=ad_A(Iend+1,j)*GRID(ng)%vmask(Iend+1,j)
+#   endif
+!>        tl_A(Iend+1,j)=gamma2(ng)*tl_A(Iend,j)
+!>
+          ad_A(Iend  ,j)=ad_A(Iend,j)+ad_A(Iend+1,j)
+          ad_A(Iend+1,j)=0.0_r8
+        END DO
+#   undef J_RANGE
+#  else
         DO j=JstrV,Jend
 !>        tl_A(Iend+1,j)=tl_A(Iend,j)
 !>
           ad_A(Iend  ,j)=ad_A(Iend,j)+ad_A(Iend+1,j)
           ad_A(Iend+1,j)=0.0_r8
         END DO
+#  endif
       END IF
 # endif
 

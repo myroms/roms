@@ -594,8 +594,7 @@
 ** BENCHMARK           Benchmark Tests (small, Medium, big grids)            **
 ** BIO_TOY             One-dimension (vertical) Biology Toy                  **
 ** BL_TEST             Boundary Layers Test                                  **
-** CANYON_A            Canyon_A Example                                      **
-** CANYON_B            Canyon_B Example                                      **
+** CANYON              Costal form stress Canyon Test                        **
 ** CHANNEL_NECK        Channel with a Constriction                           **
 ** COUPLING_TEST       Two-way Atmosphere-Ocean Coupling Test                **
 ** DOUBLE_GYRE         Idealized Double-gyre Example                         **

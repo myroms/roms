@@ -107,6 +107,8 @@
 # ifdef AVERAGES_FLUXES
      &                   FORCES(ng) % sustr,                            &
      &                   FORCES(ng) % svstr,                            &
+     &                   FORCES(ng) % bustr,                            &
+     &                   FORCES(ng) % bvstr,                            &
 # endif
      &                   OCEAN(ng) % ubar,                              &
      &                   OCEAN(ng) % vbar,                              &
@@ -173,6 +175,8 @@
 # ifdef AVERAGES_FLUXES
      &                   AVERAGE(ng) % avgsus,                          &
      &                   AVERAGE(ng) % avgsvs,                          &
+     &                   AVERAGE(ng) % avgbus,                          &
+     &                   AVERAGE(ng) % avgbvs,                          &
 # endif
 # ifdef AVERAGES_QUADRATIC
 #  ifdef SOLVE3D
@@ -253,7 +257,7 @@
 #  endif
 # endif
 # ifdef AVERAGES_FLUXES
-     &                         sustr, svstr,                            &
+     &                         sustr, svstr, bustr, bvstr,              &
 # endif
      &                         ubar, vbar,                              &
      &                         zeta,                                    &
@@ -301,7 +305,7 @@
 #  endif
 # endif
 # ifdef AVERAGES_FLUXES
-     &                         avgsus, avgsvs,                          &
+     &                         avgsus, avgsvs, avgbus, avgbvs,          &
 # endif
 # ifdef AVERAGES_QUADRATIC
 #  ifdef SOLVE3D
@@ -391,6 +395,8 @@
 #  ifdef AVERAGES_FLUXES
       real(r8), intent(in) :: sustr(LBi:,LBj:)
       real(r8), intent(in) :: svstr(LBi:,LBj:)
+      real(r8), intent(in) :: bustr(LBi:,LBj:)
+      real(r8), intent(in) :: bvstr(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
@@ -457,6 +463,8 @@
 #  ifdef AVERAGES_FLUXES
       real(r8), intent(inout) :: avgsus(LBi:,LBj:)
       real(r8), intent(inout) :: avgsvs(LBi:,LBj:)
+      real(r8), intent(inout) :: avgbus(LBi:,LBj:)
+      real(r8), intent(inout) :: avgbvs(LBi:,LBj:)
 #  endif
 #  ifdef AVERAGES_QUADRATIC
 #   ifdef SOLVE3D
@@ -545,6 +553,8 @@
 #  ifdef AVERAGES_FLUXES
       real(r8), intent(in) :: sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: svstr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
@@ -611,6 +621,8 @@
 #  ifdef AVERAGES_FLUXES
       real(r8), intent(inout) :: avgsus(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: avgsvs(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgbus(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgbvs(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef AVERAGES_QUADRATIC
 #   ifdef SOLVE3D
@@ -710,6 +722,8 @@
 # ifdef AVERAGES_FLUXES
             avgsus(i,j)=sustr(i,j)
             avgsvs(i,j)=svstr(i,j)
+            avgbus(i,j)=bustr(i,j)
+            avgbvs(i,j)=bvstr(i,j)
 # endif
           END DO
         END DO
@@ -872,6 +886,8 @@
 # ifdef AVERAGES_FLUXES
             avgsus(i,j)=avgsus(i,j)+sustr(i,j)
             avgsvs(i,j)=avgsvs(i,j)+svstr(i,j)
+            avgbus(i,j)=avgbus(i,j)+bustr(i,j)
+            avgbvs(i,j)=avgbvs(i,j)+bvstr(i,j)
 # endif
           END DO
         END DO
@@ -1047,6 +1063,8 @@
 # ifdef AVERAGES_FLUXES
             avgsus(i,j)=fac*avgsus(i,j)
             avgsvs(i,j)=fac*avgsvs(i,j)
+            avgbus(i,j)=fac*avgbus(i,j)
+            avgbvs(i,j)=fac*avgbvs(i,j)
 # endif
           END DO
         END DO

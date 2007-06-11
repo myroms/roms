@@ -28,6 +28,8 @@
 !  avgHuonT   Tracer u-transport, Hz*u*t/pn (Tunits m3/s).             !
 !  avgHvom    V-momentum flux, Hz*v/pm (m3/s).                         !
 !  avgHvomT   Tracer v-transport, Hz*v*t/pn (Tunits m3/s).             !
+!  avgbus     Bottom u-momentum stress (N/m2).                         !
+!  avgbvs     Bottom v-momentum stress (N/m2).                         !
 !  avghbbl    Depth of oceanic bottom boundary layer (m).              !
 !  avghsbl    Depth of oceanic surface boundary layer (m).             !
 !  avgrho     Density anomaly (kg/m3).                                 !
@@ -171,6 +173,8 @@
 # ifdef AVERAGES_FLUXES
           real(r8), pointer :: avgsus(:,:)
           real(r8), pointer :: avgsvs(:,:)
+          real(r8), pointer :: avgbus(:,:)
+          real(r8), pointer :: avgbvs(:,:)
 # endif
 # if defined SEDIMENT && defined BEDLOAD
           real(r8), pointer :: avgbedldu(:,:,:)
@@ -287,6 +291,8 @@
 # ifdef AVERAGES_FLUXES
       allocate ( AVERAGE(ng) % avgsus(LBi:UBi,LBj:UBj) )
       allocate ( AVERAGE(ng) % avgsvs(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgbus(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgbvs(LBi:UBi,LBj:UBj) )
 # endif
 
 # if defined SEDIMENT && defined BEDLOAD
@@ -387,6 +393,8 @@
 # ifdef AVERAGES_FLUXES
           AVERAGE(ng) % avgsus(i,j) = IniVal
           AVERAGE(ng) % avgsvs(i,j) = IniVal
+          AVERAGE(ng) % avgbus(i,j) = IniVal
+          AVERAGE(ng) % avgbvs(i,j) = IniVal
 # endif
 # ifdef SOLVE3D
 #  ifdef AVERAGES_FLUXES

@@ -27,7 +27,9 @@
       USE mod_scalars
       USE mod_stepping
 !
+# ifdef ANALYTICAL
       USE analytical_mod
+# endif
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif

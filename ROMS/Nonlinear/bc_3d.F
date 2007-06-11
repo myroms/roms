@@ -154,6 +154,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_grid
+      USE mod_scalars
 
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
@@ -181,20 +183,28 @@
 # ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  East-West gradient boundary conditions.
+!  East-West boundary conditions: Closed or gradient.
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
+#  ifdef EASTERN_WALL
+            A(Iend+1,j,k)=0.0_r8
+#  else
             A(Iend+1,j,k)=A(Iend,j,k)
+#  endif
           END DO
         END DO
       END IF
       IF (WESTERN_EDGE) THEN
         DO k=LBk,UBk
           DO j=Jstr,Jend
+#  ifdef WESTERN_WALL
+            A(Istr,j,k)=0.0_r8
+#  else
             A(Istr,j,k)=A(Istr+1,j,k)
+#  endif
           END DO
         END DO
       END IF
@@ -203,22 +213,58 @@
 # ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  North-South gradient boundary conditions.
+!  North-South boundary conditions: Closed (free-slip/no-slip) or
+!  gradient.
 !-----------------------------------------------------------------------
 !
       IF (NORTHERN_EDGE) THEN
+#  ifdef NORTHERN_WALL
+#   ifdef EW_PERIODIC
+#    define I_RANGE IstrU,Iend
+#   else
+#    define I_RANGE Istr,IendR
+#   endif
+        DO k=LBk,UBk
+          DO i=I_RANGE
+            A(i,Jend+1,k)=gamma2(ng)*A(i,Jend,k)
+#   ifdef MASKING
+            A(i,Jend+1,k)=A(i,Jend+1,k)*GRID(ng)%umask(i,Jend+1)
+#   endif
+          END DO
+        END DO
+#   undef I_RANGE
+#  else
         DO k=LBk,UBk
           DO i=IstrU,Iend
             A(i,Jend+1,k)=A(i,Jend,k)
           END DO
         END DO
+#  endif
       END IF
+
       IF (SOUTHERN_EDGE) THEN
+#  ifdef SOUTHERN_WALL
+#   ifdef EW_PERIODIC
+#    define I_RANGE IstrU,Iend
+#   else
+#    define I_RANGE Istr,IendR
+#   endif
+        DO k=LBk,UBk
+          DO i=I_RANGE
+            A(i,Jstr-1,k)=gamma2(ng)*A(i,Jstr,k)
+#   ifdef MASKING
+            A(i,Jstr-1,k)=A(i,Jstr-1,k)*GRID(ng)%umask(i,Jstr-1)
+#   endif
+          END DO
+        END DO
+#   undef I_RANGE
+#  else
         DO k=LBk,UBk
           DO i=IstrU,Iend
             A(i,Jstr-1,k)=A(i,Jstr,k)
           END DO
         END DO
+#  endif
       END IF
 # endif
 
@@ -276,6 +322,8 @@
 !***********************************************************************
 !
       USE mod_param
+      USE mod_grid
+      USE mod_scalars
 
 # if defined EW_PERIODIC || defined NS_PERIODIC
 !
@@ -303,42 +351,86 @@
 # ifndef EW_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  East-West gradient boundary conditions.
+!  East-West boundary conditions: Closed (free-slip/no-slip) or
+!  gradient.
 !-----------------------------------------------------------------------
 !
       IF (EASTERN_EDGE) THEN
+#  ifdef EASTERN_WALL
+#   ifdef NS_PERIODIC
+#    define J_RANGE JstrV,Jend
+#   else
+#    define J_RANGE Jstr,JendR
+#   endif
+        DO k=LBk,UBk
+          DO j=J_RANGE
+            A(Iend+1,j,k)=gamma2(ng)*A(Iend,j,k)
+#   ifdef MASKING
+            A(Iend+1,j,k)=A(Iend+1,j,k)*GRID(ng)%vmask(Iend+1,j)
+#   endif
+          END DO
+        END DO
+#   undef J_RANGE
+#  else
         DO k=LBk,UBk
           DO j=JstrV,Jend
             A(Iend+1,j,k)=A(Iend,j,k)
           END DO
         END DO
+#  endif
       END IF
+
       IF (WESTERN_EDGE) THEN
+#  ifdef WESTERN_WALL
+#   ifdef NS_PERIODIC
+#    define J_RANGE JstrV,Jend
+#   else
+#    define J_RANGE Jstr,JendR
+#   endif
+        DO k=LBk,UBk
+          DO j=J_RANGE
+            A(Istr-1,j,k)=gamma2(ng)*A(Istr,j,k)
+#   ifdef MASKING
+            A(Istr-1,j,k)=A(Istr-1,j,k)*GRID(ng)%vmask(Istr-1,j)
+#   endif
+          END DO
+        END DO
+#   undef J_RANGE
+#  else
         DO k=LBk,UBk
           DO j=JstrV,Jend
             A(Istr-1,j,k)=A(Istr,j,k)
           END DO
         END DO
+#  endif
       END IF
 # endif
 
 # ifndef NS_PERIODIC
 !
 !-----------------------------------------------------------------------
-!  North-South periodic boundary conditions.
+!  North-South boundary conditions: Closed or gradient.
 !-----------------------------------------------------------------------
 !
       IF (NORTHERN_EDGE) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
+#  ifdef NORTHERN_WALL
+            A(i,Jend+1,k)=0.0_r8
+#  else
             A(i,Jend+1,k)=A(i,Jend,k)
+#  endif
           END DO
         END DO
       END IF
       IF (SOUTHERN_EDGE) THEN
         DO k=LBk,UBk
           DO i=Istr,Iend
+#  ifdef SOUTHERN_WALL
+            A(i,Jstr,k)=0.0_r8
+#  else
             A(i,Jstr,k)=A(i,Jstr+1,k)
+#  endif
           END DO
         END DO
       END IF

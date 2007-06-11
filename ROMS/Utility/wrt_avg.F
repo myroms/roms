@@ -1297,6 +1297,66 @@
           RETURN
         END IF
       END IF
+!
+!  Write out bottom u-momentun stress.
+!
+      IF (Hout(idUbms,ng)) THEN
+#  ifdef ADJOINT
+#   if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+        scale=1.0_r8/rho0
+#   else
+        scale=1.0_r8
+#   endif
+#  else
+        scale=rho0
+#  endif
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idUbms,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgbus(LBi,LBj))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idUbms)), tAVGindx(ng)
+          END IF                    
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
+!
+!  Write out bottom v-momentun stress.
+!
+      IF (Hout(idVbms,ng)) THEN
+#  ifdef ADJOINT
+#   if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+        scale=1.0_r8/rho0
+#   else
+        scale=1.0_r8
+#   endif
+#  else
+        scale=rho0
+#  endif
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idVbms,ng),    &
+     &                     tAVGindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+#  endif
+     &                     AVERAGE(ng) % avgbvs(LBi,LBj))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idVbms)), tAVGindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END IF
 # endif
 # if defined SEDIMENT && defined BEDLOAD
 !

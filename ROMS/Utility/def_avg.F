@@ -1006,6 +1006,40 @@
           status=def_var(ncAVGid(ng),avgVid(idVsms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
+!
+!  Define bottom u-momentum stress.
+!
+        IF (Hout(idUbms,ng)) THEN
+          Vinfo( 1)=Vname(1,idUbms)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idUbms))
+          Vinfo( 3)=Vname(3,idUbms)
+          Vinfo(14)=Vname(4,idUbms)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_u'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUbms,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idUbms,ng),NF_FOUT,         &
+     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+        END IF
+!
+!  Define bottom v-momentum stress.
+!
+        IF (Hout(idVbms,ng)) THEN
+          Vinfo( 1)=Vname(1,idVbms)
+          WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idVbms))
+          Vinfo( 3)=Vname(3,idVbms)
+          Vinfo(14)=Vname(4,idVbms)
+          Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_v'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVbms,ng),r8)
+          status=def_var(ncAVGid(ng),avgVid(idVbms,ng),NF_FOUT,         &
+     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+        END IF
 # endif
 # if defined SEDIMENT && defined BEDLOAD
         DO i=1,NST
@@ -1599,6 +1633,16 @@
             status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVsms)),    &
      &                            avgVid(idVsms,ng))
           END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbms))) THEN
+            got_var(idUbms)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUbms)),    &
+     &                            avgVid(idUbms,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbms))) THEN
+            got_var(idVbms)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVbms)),    &
+     &                            avgVid(idVbms,ng))
+          END IF
 # endif
 # if defined SEDIMENT && defined BEDLOAD
           DO itrc=1,NST
@@ -1922,6 +1966,16 @@
         END IF
         IF (.not.got_var(idVsms).and.Hout(idVsms,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idVsms)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUbms).and.Hout(idUbms,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idUbms)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVbms).and.Hout(idVbms,ng)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idVbms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF

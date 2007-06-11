@@ -48,8 +48,8 @@
 
        MCT_INCDIR ?= /usr/local/mct/include
        MCT_LIBDIR ?= /usr/local/mct/lib
-    NETCDF_INCDIR ?= /usr/include
-    NETCDF_LIBDIR ?= /usr/local/lib
+    NETCDF_INCDIR ?= /opt/g95soft/netcdf/include
+    NETCDF_LIBDIR ?= /usr/g95soft/netcdf/lib
 
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf

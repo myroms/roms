@@ -424,8 +424,8 @@ libraries: $(libraries)
 
 $(SCRATCH_DIR)/MakeDepend: makefile
 	$(shell $(TEST) -d $(SCRATCH_DIR) || $(MKDIR) $(SCRATCH_DIR) )
-	cp -f $(NETCDF_INCDIR)/netcdf.mod $(SCRATCH_DIR)
-	cp -f $(NETCDF_INCDIR)/typesizes.mod $(SCRATCH_DIR)
+	-cp -f $(NETCDF_INCDIR)/netcdf.mod $(SCRATCH_DIR)
+	-cp -f $(NETCDF_INCDIR)/typesizes.mod $(SCRATCH_DIR)
 	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend 
 
 .PHONY: depend
