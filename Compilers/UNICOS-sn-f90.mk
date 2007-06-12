@@ -40,6 +40,14 @@
         MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
+# Names of module files for netCDF f90 interface: override the lower-case
+# file names specified in makefile
+#
+
+   NETCDF_MODFILE := NETCDF.mod
+TYPESIZES_MODFILE := TYPESIZES.mod
+
+#
 # Library locations, can be overridden by environment variables.
 #
 

@@ -249,6 +249,14 @@ else
 endif
 
 #--------------------------------------------------------------------------
+#  Set name of module files for netCDF F90 interface. On some platforms
+#  these will need to be overridden in the machine-dependent include file.
+#--------------------------------------------------------------------------
+
+   NETCDF_MODFILE := netcdf.mod
+TYPESIZES_MODFILE := typesizes.mod
+
+#--------------------------------------------------------------------------
 #  "uname -s" should return the OS or kernel name and "uname -m" should
 #  return the CPU or hardware name. In practice the results can be pretty
 #  flaky. Run the results through sed to convert "/" and " " to "-",
@@ -422,17 +430,23 @@ libraries: $(libraries)
 #  Target to create ROMS/TOMS dependecies.
 #--------------------------------------------------------------------------
 
-$(SCRATCH_DIR)/MakeDepend: makefile
-	$(shell $(TEST) -d $(SCRATCH_DIR) || $(MKDIR) $(SCRATCH_DIR) )
-	-cp -f $(NETCDF_INCDIR)/netcdf.mod $(SCRATCH_DIR)
-	-cp -f $(NETCDF_INCDIR)/typesizes.mod $(SCRATCH_DIR)
+$(SCRATCH_DIR)/$(NETCDF_MODFILE): | $(SCRATCH_DIR)
+	cp -f $(NETCDF_INCDIR)/$(NETCDF_MODFILE) $(SCRATCH_DIR)
+
+$(SCRATCH_DIR)/$(TYPESIZES_MODFILE): | $(SCRATCH_DIR)
+	cp -f $(NETCDF_INCDIR)/$(TYPESIZES_MODFILE) $(SCRATCH_DIR)
+
+$(SCRATCH_DIR)/MakeDepend: makefile \
+                           $(SCRATCH_DIR)/$(NETCDF_MODFILE) \
+                           $(SCRATCH_DIR)/$(TYPESIZES_MODFILE) \
+                           | $(SCRATCH_DIR)
 	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend 
 
 .PHONY: depend
 
 SFMAKEDEPEND := ./ROMS/Bin/sfmakedepend
 
-depend:	$(SCRATCH_DIR)
+depend: $(SCRATCH_DIR)
 	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend 
 
 ifneq "$(MAKECMDGOALS)" "clean"
