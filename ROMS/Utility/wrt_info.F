@@ -1152,7 +1152,7 @@
         END IF
 
         wrt_info=nf90_inq_varid(ncid, 'KendS', varid)
-        wrt_info=nf90_put_var1_int(ncid, varid, KendS(ng))
+        wrt_info=nf90_put_var(ncid, varid, KendS(ng))
         IF (wrt_info.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'KendS', TRIM(ncname)
           exit_flag=3

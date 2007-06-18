@@ -109,7 +109,7 @@
       integer :: INPncid, INPvid
       integer :: Nrec, Nsave, gtype, status, varid
       integer :: i
-      integer :: start(4), total(4)
+      integer :: save(1), start(4), total(4)
 
       real(r8) :: inp_time(1)
 
@@ -171,7 +171,8 @@
         status=nf90_inq_varid(INPncid, 'nADJ', varid)
         start(1)=ng
         total(1)=1
-        status=nf90_get_var(INPncid, varid, Nsave, start, total)       
+        status=nf90_get_var(INPncid, varid, save, start, total)       
+        Nsave=save(1)
         IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20) 'nADJ', TRIM(INPncname)
           exit_flag=2

@@ -2853,7 +2853,8 @@
           start(1)=InpRec
           total(1)=1
           status=nf90_inq_varid(ncINPid, TRIM(tvarnam), varid)
-          status=nf90_get_var(ncINPid, varid, FrcTime(ng), start, total)
+          status=nf90_get_var(ncINPid, varid, FrcTime(ng:),             &
+     &                        start, total)
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) string, TRIM(tvarnam), InpRec,            &
      &                        TRIM(ncname)

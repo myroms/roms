@@ -270,7 +270,7 @@ OS := $(patsubst sn%,UNICOS-sn,$(OS))
 
 CPU := $(shell uname -m | sed 's/[\/ ]/-/g')
 
-SVNREV := $(shell svnversion -n .)
+SVNREV ?= $(shell svnversion -n .)
 
 ROOTDIR := $(shell pwd)
 
