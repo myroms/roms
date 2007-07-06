@@ -110,17 +110,9 @@ MY_CPP_FLAGS ?=
 
   USE_MPIF90 ?=
 
-#  If applicable, compile with the ARPACK library (GST analysis):
-
-  USE_ARPACK ?=
-
 #  If applicable, activate 64-bit compilation:
 
    USE_LARGE ?= on
-
-#  If applicable, activate Coupling to SWAN wave model.
-
- SWAN_COUPLE ?= 
 
 #--------------------------------------------------------------------------
 #  We are going to include a file with all the settings that depend on
@@ -163,13 +155,15 @@ MY_CPP_FLAGS ?=
 #--------------------------------------------------------------------------
 
 SCRATCH_DIR ?= Build
- clean_list := core $(SCRATCH_DIR)
+ clean_list := core *.ipo $(SCRATCH_DIR)
 
 ifeq "$(strip $(SCRATCH_DIR))" "."
   clean_list := core *.o *.oo *.mod *.f90 lib*.a *.bak
+  clean_list += $(CURDIR)/*.ipo
 endif
 ifeq "$(strip $(SCRATCH_DIR))" "./"
-  clean_list := core *.o *.oo *.mod *.f90 lib*.a *.bak
+  clean_list := core *.o *.oo *.ipo *.mod *.f90 lib*.a *.bak
+  clean_list += $(CURDIR)/*.ipo
 endif
 
 #--------------------------------------------------------------------------
@@ -327,9 +321,24 @@ else
   CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
 endif  
 
-ifdef MY_CPPP_FLAGS
+ifdef MY_CPP_FLAGS
   CPPFLAGS += $(MY_CPP_FLAGS)
 endif
+
+#--------------------------------------------------------------------------
+#  Internal macro definitions used to select the code to compile and
+#  additional libraries to link. It uses the CPP activated in the
+#  header file ROMS/Include/cppdefs.h to determine macro definitions.
+#--------------------------------------------------------------------------
+
+MAKE_MACROS := Compilers/make_macros.mk
+
+MACRO_FLAGS := $(CPPFLAGS) $(MY_CPP_FLAGS)
+
+MACROS := $(shell $(CPP) $(MACRO_FLAGS) Compilers/make_macros.h > \
+		$(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
+
+include $(MAKE_MACROS)
 
 #--------------------------------------------------------------------------
 #  Build target directories.
@@ -337,22 +346,35 @@ endif
 
 .PHONY: all
 
-all: $(SCRATCH_DIR) $(SCRATCH_DIR)/MakeDepend $(BIN)
+all: $(SCRATCH_DIR) $(SCRATCH_DIR)/MakeDepend $(BIN) rm_macros
 
-modules   :=	ROMS/Adjoint \
-		ROMS/Representer \
-		ROMS/Tangent \
-		ROMS/Nonlinear \
+ modules  :=
+ifdef USE_ADJOINT
+ modules  +=	ROMS/Adjoint
+endif
+ifdef USE_REPRESENTER
+ modules  +=	ROMS/Representer
+endif
+ifdef USE_TANGENT
+ modules  +=	ROMS/Tangent
+endif
+ modules  +=	ROMS/Nonlinear \
 		ROMS/Functionals \
 		ROMS/SeaIce \
 		ROMS/Utility \
 		ROMS/Modules
 
-includes  :=	ROMS/Include \
-		ROMS/Adjoint \
-		ROMS/Nonlinear \
-		ROMS/Representer \
-		ROMS/Tangent \
+ includes :=	ROMS/Include
+ifdef USE_ADJOINT
+ includes +=	ROMS/Adjoint
+endif
+ifdef USE_REPRESENTER
+ includes +=	ROMS/Representer
+endif
+ifdef USE_TANGENT
+ includes +=	ROMS/Tangent
+endif
+ includes +=	ROMS/Nonlinear \
 		ROMS/SeaIce \
 		ROMS/Utility \
 		ROMS/Drivers
@@ -366,13 +388,13 @@ ifdef MY_HEADER_DIR
  includes +=	$(MY_HEADER_DIR)
 endif
 
-ifdef SWAN_COUPLE
+ifdef USE_SWAN
  modules  +=	Waves/SWAN/Src
  includes +=	Waves/SWAN/Src
 endif
 
-modules   +=	Master
-includes  +=	Master
+ modules  +=	Master
+ includes +=	Master
 
 vpath %.F $(modules)
 vpath %.h $(includes)
@@ -440,7 +462,8 @@ $(SCRATCH_DIR)/MakeDepend: makefile \
                            $(SCRATCH_DIR)/$(NETCDF_MODFILE) \
                            $(SCRATCH_DIR)/$(TYPESIZES_MODFILE) \
                            | $(SCRATCH_DIR)
-	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend 
+	$(SFMAKEDEPEND) $(MDEPFLAGS) $(sources) > $(SCRATCH_DIR)/MakeDepend
+	cp -p $(CURDIR)/$(MAKE_MACROS) $(SCRATCH_DIR)
 
 .PHONY: depend
 
@@ -480,6 +503,11 @@ gzipfile:
 
 clean:
 	$(RM) -r $(clean_list)
+
+.PHONY: rm_macros
+
+rm_macros:
+	$(RM) -r $(CURDIR)/$(MAKE_MACROS)
 
 #--------------------------------------------------------------------------
 #  A handy debugging target. This will allow to print the value of any

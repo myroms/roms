@@ -43,8 +43,10 @@
 # Library locations, can be overridden by environment variables.
 #
 
+ifdef USE_MCT
        MCT_INCDIR ?= /opt/pgisoft/mct/include
        MCT_LIBDIR ?= /opt/pgidoft/mct/lib
+endif
     NETCDF_INCDIR ?= /opt/pgisoft/netcdf/include
     NETCDF_LIBDIR ?= /opt/pgisoft/netcdf/lib
 
@@ -66,7 +68,7 @@ ifdef USE_MPI
                FC := mpif90
                LD := $(FC)
  else
-             LIBS += -lfmpi-pgi -lmpi-pgi 
+             LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
  endif
 endif
 
@@ -82,7 +84,7 @@ else
            FFLAGS += -Bstatic -fastsse -Mipa=fast -tp k8-64
 endif
 
-ifdef SWAN_COUPLE
+ifdef USE_MCT
            FFLAGS += -I$(MCT_INCDIR)
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
@@ -102,7 +104,7 @@ $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree
 # beyond column 72.
 #
 
-ifdef SWAN_COUPLE
+ifdef USE_SWAN
 
 $(SCRATCH_DIR)/ocpcre.o: FFLAGS += -Mnofree
 $(SCRATCH_DIR)/ocpids.o: FFLAGS += -Mnofree

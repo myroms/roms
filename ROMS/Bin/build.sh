@@ -121,7 +121,6 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
  setenv FORT                pgi
 
 #setenv USE_DEBUG           on
-#setenv USE_ARPACK          on
  setenv USE_LARGE           on
 
 # The rest of this script sets the path to the users header file and

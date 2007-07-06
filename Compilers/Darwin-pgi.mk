@@ -43,8 +43,10 @@
 # Library locations, can be overridden by environment variables.
 #
 
+ifdef USE_MCT
        MCT_INCDIR ?= /usr/local/mct/include
        MCT_LIBDIR ?= /usr/local/mct/lib
+endif
     NETCDF_INCDIR ?= /usr/local/netcdf-3.6.2-pgi/include
     NETCDF_LIBDIR ?= /usr/local/netcdf-3.6.2-pgi/lib
 
@@ -53,39 +55,11 @@
 
 ifdef USE_ARPACK
  ifdef USE_MPI
-#  PARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
-   PARPACK_LIBDIR ?= $(ROMSHOME)/Lib
-  ifdef USE_MPIF90
-   ifdef USE_DEBUG
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_daggoo
-   else
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_daggoo
-   endif
-  else
-   ifdef USE_DEBUG
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_dbg_moby
-   else
-             LIBS += -L$(PARPACK_LIBDIR) -lparpack_moby
-#            LIBS += -L$(PARPACK_LIBDIR) -lparpack
-   endif
-  endif
+   PARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+             LIBS += -L$(PARPACK_LIBDIR) -lparpack
  endif
-#   ARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
-    ARPACK_LIBDIR ?= $(ROMSHOME)/Lib
- ifdef USE_MPIF90
-  ifdef USE_DEBUG
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_daggoo
-  else
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_daggoo
-  endif
- else
-  ifdef USE_DEBUG
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_dbg_moby
-  else
-             LIBS += -L$(ARPACK_LIBDIR) -larpack_moby
-#            LIBS += -L$(ARPACK_LIBDIR) -larpack
-  endif
- endif
+    ARPACK_LIBDIR ?= /opt/pgisoft/PARPACK
+             LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
 ifdef USE_MPI
@@ -94,7 +68,7 @@ ifdef USE_MPI
                FC := /usr/local/openmpi-pgi/bin/mpif90
                LD := $(FC)
  else
-             LIBS += -lfmpi-pgi -lmpi-pgi 
+             LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
  endif
 endif
 
@@ -110,7 +84,7 @@ else
 #           FFLAGS += -u -Bstatic -fastsse -Mipa=fast
 endif
 
-ifdef SWAN_COUPLE
+ifdef USE_MCT
            FFLAGS += -I$(MCT_INCDIR)
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
@@ -130,7 +104,7 @@ $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree
 # beyond column 72.
 #
 
-ifdef SWAN_COUPLE
+ifdef USE_SWAN
 
 $(SCRATCH_DIR)/ocpcre.o: FFLAGS += -Mnofree
 $(SCRATCH_DIR)/ocpids.o: FFLAGS += -Mnofree

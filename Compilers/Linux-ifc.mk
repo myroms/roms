@@ -43,8 +43,10 @@
 # Library locations, can be overridden by environment variables.
 #
 
+ifdef USE_MCT
        MCT_INCDIR ?= /usr/local/mct/include
        MCT_LIBDIR ?= /usr/local/mct/lib
+endif
     NETCDF_INCDIR ?= /opt/intelsoft/netcdf/include
     NETCDF_LIBDIR ?= /opt/intelsoft/netcdf/lib
 
@@ -87,7 +89,7 @@ else
  endif
 endif
 
-ifdef SWAN_COUPLE
+ifdef USE_MCT
            FFLAGS += -I$(MCT_INCDIR)
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
@@ -107,7 +109,7 @@ $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -free
 # beyond column 72.
 #
 
-ifdef SWAN_COUPLE
+ifdef USE_SWAN
 
 $(SCRATCH_DIR)/ocpcre.o: FFLAGS += -nofree
 $(SCRATCH_DIR)/ocpids.o: FFLAGS += -nofree

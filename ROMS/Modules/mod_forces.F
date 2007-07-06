@@ -332,6 +332,9 @@
 #  ifdef ADJUST_STFLUX
           real(r8), pointer :: tl_tflux(:,:,:,:)
 #  endif
+#  ifdef SHORTWAVE
+          real(r8), pointer :: tl_srflx(:,:)
+#  endif
 #  ifdef BULK_FLUXES
           real(r8), pointer :: tl_lhflx(:,:)
           real(r8), pointer :: tl_lrflx(:,:)
@@ -600,6 +603,9 @@
       allocate ( FORCES(ng) % tl_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
 #  ifdef ADJUST_STFLUX
       allocate ( FORCES(ng) % tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng)) )
+#  endif
+#  ifdef SHORTWAVE
+      allocate ( FORCES(ng) % tl_srflx(LBi:UBi,LBj:UBj) )
 #  endif
 #  ifdef BULK_FLUXES
       allocate ( FORCES(ng) % tl_lhflx(LBi:UBi,LBj:UBj) )
@@ -915,6 +921,11 @@
             FORCES(ng) % tl_bvstr(i,j) = IniVal
           END DO
 # ifdef SOLVE3D
+#  ifdef SHORTWAVE
+          DO i=Imin,Imax
+            FORCES(ng) % tl_srflx(i,j) = IniVal
+          END DO
+#  endif
 #  ifdef BULK_FLUXES
           DO i=Imin,Imax
             FORCES(ng) % tl_lhflx(i,j) = IniVal
@@ -923,7 +934,7 @@
 #   ifdef EMINUSP
             FORCES(ng) % tl_evap(i,j) = IniVal
 #   endif
-        END DO
+          END DO
 #  endif
           DO itrc=1,NT(ng)
             DO i=Imin,Imax

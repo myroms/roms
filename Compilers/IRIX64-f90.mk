@@ -45,14 +45,18 @@
 
 ifdef USE_LARGE
            FFLAGS += -64
+ ifdef USE_MCT
        MCT_INCDIR ?= /usr/local/mct/include
        MCT_LIBDIR ?= /usr/local/mct/lib
+ endif
     NETCDF_INCDIR ?= $(HOME)/netcdf/include
     NETCDF_LIBDIR ?= $(HOME)/netcdf/lib64
 else
            FFLAGS += -n32
+ ifdef USE_MCT
        MCT_INCDIR ?= /usr/local/mct/include
        MCT_LIBDIR ?= /usr/local/mct/lib
+ endif
     NETCDF_INCDIR ?= /usr/local/include
     NETCDF_LIBDIR ?= /usr/local/lib
 endif
@@ -86,7 +90,7 @@ else
            FFLAGS += -O3 -OPT:Olimit=4038
 endif
 
-ifdef SWAN_COUPLE
+ifdef USE_MCT
            FFLAGS += -I$(MCT_INCDIR)
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
 endif
@@ -104,7 +108,7 @@ $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -freeform
 # beyond column 72.
 #
 
-ifdef SWAN_COUPLE
+ifdef USE_SWAN
 
 $(SCRATCH_DIR)/ocpcre.o: FFLAGS += -fixedform
 $(SCRATCH_DIR)/ocpids.o: FFLAGS += -fixedform

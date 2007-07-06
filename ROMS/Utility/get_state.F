@@ -279,19 +279,19 @@
 !
 !  Report information.
 !
-        lstr=SCAN(ncname,'/',BACK=.TRUE.)+1
-        lend=LEN_TRIM(ncname)
-        IF (InpThread) THEN
-          IF (ERend.gt.ERstr) THEN
-            WRITE (stdout,80) string, TRIM(Mstate(msg)),                &
-     &                        INPtime(1)*sec2day, Nrun,                 &
-     &                        ncname(lstr:lend), InpRec, Tindex
-          ELSE
-            WRITE (stdout,90) string, TRIM(Mstate(msg)),                &
-     &                        INPtime(1)*sec2day,                       &
-     &                        ncname(lstr:lend), InpRec, Tindex
-          END IF
+      lstr=SCAN(ncname,'/',BACK=.TRUE.)+1
+      lend=LEN_TRIM(ncname)
+      IF (InpThread) THEN
+        IF (ERend.gt.ERstr) THEN
+          WRITE (stdout,80) string, TRIM(Mstate(msg)),                  &
+     &                      INPtime(1)*sec2day, Nrun,                   &
+     &                      ncname(lstr:lend), InpRec, Tindex
+        ELSE
+          WRITE (stdout,90) string, TRIM(Mstate(msg)),                  &
+     &                      INPtime(1)*sec2day,                         &
+     &                      ncname(lstr:lend), InpRec, Tindex
         END IF
+      END IF
 
 #ifdef NONLINEAR
 !

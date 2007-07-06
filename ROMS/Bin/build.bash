@@ -121,7 +121,6 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
  export              FORT=ifort
 
 #export         USE_DEBUG=on
-#export        USE_ARPACK=on
  export         USE_LARGE=on
 
 # The rest of this script sets the path to the users header file and
