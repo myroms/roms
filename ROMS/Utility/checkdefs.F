@@ -1580,6 +1580,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' QCORRECTION,'
 #endif
+#if defined Q_PSOURCE
+      IF (Master) WRITE (stdout,20) 'Q_PSOURCE',                        &
+     &   'Mass point sources, volume influx.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+12)=' Q_PSOURCE,'
+#endif
 #if defined GLS_MIXING || defined MY25_MIXING
 # if defined K_C2ADVECTION
       IF (Master) WRITE (stdout,20) 'K_C2ADVECTION',                    &

@@ -1851,7 +1851,7 @@
               ad_t(i,j,k,3,itrc)=0.0_r8
             END DO
           END DO
-#   ifdef TS_PSOURCE
+#   if defined TS_PSOURCE && !defined Q_PSOURCE
 !
 !  Apply tracers point sources to the horizontal advection terms.
 !

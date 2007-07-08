@@ -27,6 +27,7 @@
 ** UV_LDRAG            use to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG            use to turn ON or OFF quadratic bottom friction       **
 ** UV_PSOURCE          use to turn ON or OFF point Sources/Sinks             **
+** Q_PSOURCE           use to turn ON or OFF mass point Sources              **
 **                                                                           **
 ** OPTIONS associated with tracers equations:                                **
 **                                                                           **

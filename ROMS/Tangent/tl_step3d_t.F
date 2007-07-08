@@ -802,7 +802,7 @@
             END DO
           END DO
 # endif
-# ifdef TS_PSOURCE
+# if defined TS_PSOURCE && !defined Q_PSOURCE
 !
 !  Apply tracers point sources to the horizontal advection terms.
 !
@@ -1256,20 +1256,20 @@
 !
 !  Apply mass point sources - Volume influx.
 !
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
-            IF (j.eq.Jsrc(is)) THEN
-              DO k=1,N(ng)-1
-                DO is=1,Nsrc
-                  i=Isrc(is)
+          DO is=1,Nsrc
+            i=Isrc(is)
+            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
+     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              IF (j.eq.Jsrc(is)) THEN
+                DO k=1,N(ng)
                   FC(i,k)=FC(i,k)+0.5_r8*                               &
      &                    (Qsrc(is,k  )*Tsrc(is,k  ,itrc)+              &
      &                     Qsrc(is,k+1)*Tsrc(is,k+1,itrc))
                   tl_FC(i,k)=tl_FC(i,k)+0.0_r8
                 END DO
-              END DO
+              END IF
             END IF
-          END IF
+          END DO
 # endif
           DO k=1,N(ng)
             DO i=I_RANGE

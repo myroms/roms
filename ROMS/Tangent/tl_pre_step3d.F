@@ -691,7 +691,7 @@
           END DO
 #   endif
 
-#   ifdef TS_PSOURCE
+#   if defined TS_PSOURCE && !defined Q_PSOURCE
 !
 !  Apply tracers point sources to the horizontal advection terms.
 !

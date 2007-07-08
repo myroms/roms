@@ -1557,7 +1557,7 @@
           END DO
 #  undef I_RANGE
 #  undef J_RANGE
-#  ifdef TS_PSOURCE
+#  if defined TS_PSOURCE && !defined Q_PSOURCE
 !
 !  Apply tracers point sources to the BASIC STATE horizontal advection
 !  terms.
@@ -1896,18 +1896,18 @@
 !
 !  Apply mass point sources - Volume influx.
 !
-          IF (((IstrR.le.i).and.(i.le.IendR)).and.                      &
-     &        ((JstrR.le.j).and.(j.le.JendR))) THEN
-            IF (j.eq.Jsrc(is)) THEN
-              DO k=1,N(ng)-1
-                DO is=1,Nsrc
-                  i=Isrc(is)
+          DO is=1,Nsrc
+            i=Isrc(is)
+            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
+     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              IF (j.eq.Jsrc(is)) THEN
+                DO k=1,N(ng)
 !>                tl_FC(i,k)=tl_FC(i,k)+0.0_r8
 !>
                 END DO
-              END DO
+              END IF
             END IF
-          END IF
+          END DO
 # endif
 
 # ifdef TS_SVADVECTION
@@ -2430,7 +2430,7 @@
 # undef I_RANGE
 # undef J_RANGE
 
-# ifdef TS_PSOURCE
+# if defined TS_PSOURCE && !defined Q_PSOURCE
 !
 !  Apply adjoint tracers point sources to the horizontal advection
 !  terms.
