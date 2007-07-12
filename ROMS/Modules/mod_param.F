@@ -240,6 +240,11 @@
 !  Number of biological tracer type variables is set at run time
 !
         integer :: NBT
+# elif defined NEMURO
+!
+!  Number of tracers for the Nemuro lower trophic level ecosystem model.
+!
+        integer, parameter :: NBT = 11
 # endif
 #else
         integer, parameter :: NBT = 0

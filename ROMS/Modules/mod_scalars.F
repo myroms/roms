@@ -159,6 +159,20 @@
      &               'low urobilin phycoeurythin carotenoids ',         &
      &               'high urobilin phycoeurythin carotenoids' /)
 #endif
+#ifdef NEMURO
+        integer, pointer :: idbio(:)  ! Biological tracers
+        integer :: iLphy              ! Large Phytoplankton biomass
+        integer :: iSphy              ! Small Phytoplankton biomass
+        integer :: iLzoo              ! Large Zooplankton biomass
+        integer :: iSzoo              ! Small Zooplankton biomass
+        integer :: iPzoo              ! Predator Zooplankton biomass
+        integer :: iNO3_              ! Nitrate concentration
+        integer :: iNH4_              ! Ammonium concentration
+        integer :: iPON_              ! Particulate Organic Nitrogen
+        integer :: iDON_              ! Dissolved Organic Nitrogen
+        integer :: iSiOH              ! Silicate concentration
+        integer :: iopal              ! Particulate organic silica
+#endif
 #ifdef DIAGNOSTICS
 !
 !-----------------------------------------------------------------------
@@ -1675,7 +1689,29 @@
       iDe2N=ic+13
       iDe2C=ic+14
       ic=ic+14
+#elif defined NEMURO
+!
+!  Set Nemuro ecosystem tracer indices.
+!
+      DO i=1,NBT
+        idbio(i)=ic+i
+      END DO
+      iSphy=ic+1
+      iLphy=ic+2
+      iSzoo=ic+3
+      iLzoo=ic+4
+      iPzoo=ic+5
+      iNO3_=ic+6
+      iNH4_=ic+7
+      iPON_=ic+8
+      iDON_=ic+9
+      iSiOH=ic+10
+      iopal=ic+11
+      ic=ic+11
 #elif defined NPZD_FRANKS || defined NPZD_POWELL
+!
+!  Set NPZD biological tracer indices.
+!
       DO i=1,NBT
         idbio(i)=ic+i
       END DO

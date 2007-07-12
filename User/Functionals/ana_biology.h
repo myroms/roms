@@ -62,7 +62,7 @@
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, is, itrc, j, k
 
-#ifdef BIO_FASHAM
+#if defined BIO_FASHAM || defined NEMURO
       real(r8) :: SiO4, cff1, cff2, temp
 #elif defined ECOSIM
       real(r8) :: cff1, cff2, cff3, cff4, cff5, cff6, cff7, cff8, cff9
@@ -110,6 +110,44 @@
             t(i,j,k,1,iLDeC)=0.002_r8
             t(i,j,k,1,iSDeC)=0.06_r8
 #endif
+          END DO
+        END DO
+      END DO
+
+#elif defined NEMURO
+!
+!-----------------------------------------------------------------------
+!  Nemuro lower trophic level ecosystem model.
+!-----------------------------------------------------------------------
+!
+      DO k=1,N(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            temp=t(i,j,k,1,itemp)
+            IF (temp.lt.8.0_r8) THEN
+              SiO4=30.0_r8
+            ELSE IF ((temp.ge.8.0_r8).and.(temp.le.11.0_r8)) THEN
+              SiO4=30.0_r8-((temp-8.0_r8)*cff1)
+            ELSE IF ((temp.gt.11.0_r8).and.(temp.le.13.0_r8)) THEN
+              SiO4=10.0_r8-((temp-11.0_r8)*4.0_r8)
+            ELSE IF ((temp.gt.13.0_r8).and.(temp.le.16.0_r8)) THEN
+              SiO4=2.0_r8-((temp-13.0_r8)*cff2)
+            ELSE IF (temp.gt.16.0_r8) THEN
+              SiO4=0.0_r8
+            END IF
+            t(i,j,k,1,iNO3_)=1.67_r8+0.5873_r8*SiO4+                    &
+     &                               0.0144_r8*SiO4**2+                 &
+     &                               0.0003099_r8*SiO4**3
+            t(i,j,k,1,iSphy)=0.06_r8
+            t(i,j,k,1,iLphy)=0.06_r8
+            t(i,j,k,1,iSzoo)=0.05_r8
+            t(i,j,k,1,iLzoo)=0.05_r8
+            t(i,j,k,1,iPzoo)=0.05_r8
+            t(i,j,k,1,iNH4_)=0.1_r8
+            t(i,j,k,1,iPON_)=0.001_r8
+            t(i,j,k,1,iDON_)=0.001_r8
+            t(i,j,k,1,iSiOH)=SiO4
+            t(i,j,k,1,iopal)=0.001_r8
           END DO
         END DO
       END DO

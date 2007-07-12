@@ -23,6 +23,8 @@
 
 # if defined BIO_FASHAM
 !!#  include "ad_fasham.h"
+# elif defined NEMURO
+!!#  include "ad_nemuro.h"
 # elif defined NPZD_FRANKS
 #  include "ad_npzd_Franks.h"
 # elif defined NPZD_POWELL

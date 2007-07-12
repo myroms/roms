@@ -748,7 +748,8 @@
 */
 
 #if defined BIO_FASHAM  || defined ECOSIM      || \
-    defined NPZD_FRANKS || defined NPZD_POWELL
+    defined NEMURO      || defined NPZD_FRANKS || \
+    defined NPZD_POWELL
 # define BIOLOGY
 #endif
 

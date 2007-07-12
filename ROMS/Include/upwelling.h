@@ -50,7 +50,8 @@
 # define ANA_VMIX
 #endif
 
-#if defined BIO_FASHAM || defined ECOSIM || defined NPZD_POWELL
+#if defined BIO_FASHAM  || defined ECOSIM || \
+    defined NPZD_POWELL || defined NEMURO
 # define ANA_BIOLOGY
 # define ANA_SPFLUX
 # define ANA_BPFLUX

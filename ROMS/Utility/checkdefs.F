@@ -476,7 +476,7 @@
       Coptions(is:is+12)=' BIO_FASHAM,'
       ibiology=ibiology+1
 #endif
-#if defined BIO_SEDIMENT && defined BIO_FASHAM
+#if defined BIO_SEDIMENT && (defined BIO_FASHAM || defined NEMURO)
       IF (Master) WRITE (stdout,20) 'BIO_SEDIMENT',                     &
      &   'Restore fallen particulate material to the nutrient pool.'
       is=LEN_TRIM(Coptions)+1
@@ -945,6 +945,12 @@
       Coptions(is:is+16)=' GRADIENT_CHECK,'
       idriver=idriver+1
 #endif
+#ifdef HOLLING_GRAZING && defined NEMURO
+      IF (Master) WRITE (stdout,20) 'HOLLING_GRAZING',                  &
+     &   'Holling-type s-shaped grazing algorithm, Implicit.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' HOLLING_GRAZING,'
+#endif
 #ifdef ICESHELF
       IF (Master) WRITE (stdout,20) 'ICESHELF',                         &
      &   'Include Ice Shelf Cavities.'
@@ -995,6 +1001,12 @@
      &   'Processing 3D IO level by level to reduce memory needs.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' INLINE_2DIO,'
+#endif
+#ifdef IVLEV_EXPLICIT && defined NEMURO
+      IF (Master) WRITE (stdout,20) 'IVLEV_EXPLICIT',                   &
+     &   'Ivlev Grazing algorithm, Explicit.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' IVLEV_EXPLICIT,'
 #endif
 #if defined KANTHA_CLAYSON && (defined GLS_MIXING || defined MY25_MIXING)
       IF (Master) WRITE (stdout,20) 'KANTHA_CLAYSON',                   &
@@ -1220,6 +1232,13 @@
      &   'Nonlinear Model.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' NONLINEAR,'
+#endif
+#ifdef NEMURO
+      IF (Master) WRITE (stdout,20) 'NEMURO',                           &
+     &   'Nemuro Lower Trophic Level Ecosystem Model.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+8)=' NEMURO,'
+      ibiology=ibiology+1
 #endif
 #ifdef SOLVE3D
 # if defined NONLIN_EOS
@@ -2756,6 +2775,17 @@
         WRITE (stdout,110)
  110    FORMAT (/,' CHECKDEFS - cannot run the adjoint model in',       &
      &            ' shared-memory mode')
+        exit_flag=5
+      END IF
+#endif
+#if defined NEMURO && defined HOLLING_GRAZING && IVLEV_EXPLICIT
+!
+!  Stop if using more than one grazing algorithm.
+!
+      IF (Master) THEN
+        WRITE (stdout,120)
+ 120    FORMAT (/,' CHECKDEFS - More than one grazing algorithm',       &
+     &            ' selected for Nemuro model')
         exit_flag=5
       END IF
 #endif

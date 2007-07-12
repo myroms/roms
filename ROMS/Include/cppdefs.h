@@ -548,6 +548,13 @@
 **                                                                           **
 ** ECOSIM              use if bio-optical EcoSim model                       **
 **                                                                           **
+** Nemuro lower trophic level ecosystem model OPTIONS:                       **
+**                                                                           **
+** NEMURO              use if Nemuro ecosystem model.                        **
+** BIO_SEDIMENT        use to restore fallen material to the nutrient pool   **
+** HOLLING_GRAZING     use Holling-type s-shaped curve grazing (implicit)    **
+** IVLEV_EXPLICIT      use Ivlev explicit grazing algorithm                  **
+**                                                                           **
 ** Sediment transport model OPTIONS:                                         **
 **                                                                           **
 ** SEDIMENT            use to activate sediment transport model              **
