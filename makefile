@@ -114,6 +114,11 @@ MY_CPP_FLAGS ?=
 
    USE_LARGE ?= on
 
+#  If applicable, link with NetCDF-4 library. Notice that the NetCDF-4
+#  library needs both the HDF5 and MPI libraries.
+
+ USE_NETCDF4 ?=
+
 #--------------------------------------------------------------------------
 #  We are going to include a file with all the settings that depend on
 #  the system and the compiler. We are going to build up the name of the

@@ -50,15 +50,20 @@
 # the NETCDF and ARPACK library locations.
 #
 
-ifdef USE_MCT
-       MCT_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mct
-      MPEU_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mpeu
-endif
+ifdef USE_NETCDF4
+    NETCDF_INCDIR ?= /usr/local/netcdf4/include
+    NETCDF_LIBDIR ?= /usr/local/netcdf4/lib
+      HDF5_LIBDIR ?= /usr/local/hdf5/lib
+else
     NETCDF_INCDIR ?= /usr/local/netcdf-win32/include
     NETCDF_LIBDIR ?= /usr/local/netcdf-win32/lib
-
+endif
          CPPFLAGS += -I$(NETCDF_INCDIR)
        NETCDF_LIB := $(NETCDF_LIBDIR)/netcdfs.lib
+ifdef USE_NETCDF4
+       NETCDF_LIB += -L$(HDF5_LIBDIR) -lhdf5_hl -lhdf5 -lz
+endif
+
 
 ifdef USE_ARPACK
  ifdef USE_MPI
@@ -78,10 +83,20 @@ ifdef USE_MPI
 endif
 
 ifdef USE_MCT
+       MCT_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mct
+      MPEU_LIBDIR ?= c:\\work\\models\\MCT_v2.2\\mpeu
        LIBS_WIN32 += $(MCT_LIBDIR)\\libmct.a $(MPEU_LIBDIR)\\libmpeu.a
          CPPFLAGS += -traditional-cpp
            FFLAGS += -I$(MCT_LIBDIR) -I$(MPEU_LIBDIR) 
            FFLAGS += /noextend_source -assume:byterecl
+endif
+
+ifdef USE_ESMF
+      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
+      ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
+                     include $(ESMF_MK_DIR)/esmf.mk
+           FFLAGS += $(ESMF_F90COMPILEPATHS)
+       LIBS_WIN32 += $(ESMF_F90LINKPATHS) -lesmf -lC
 endif
 
 #

@@ -46,15 +46,19 @@
 # Library locations, can be overridden by environment variables.
 #
 
-ifdef USE_MCT
-       MCT_INCDIR ?= /usr/local/mct/include
-       MCT_LIBDIR ?= /usr/local/mct/lib
-endif
-    NETCDF_INCDIR ?= /opt/g95soft/netcdf/include
+ifdef USE_NETCDF4
+    NETCDF_INCDIR ?= /usr/g95soft/netcdf4/include
+    NETCDF_LIBDIR ?= /usr/g95soft/netcdf4/lib
+      HDF5_LIBDIR ?= /usr/g95soft/hdf5/lib
+else
+    NETCDF_INCDIR ?= /usr/g95soft/netcdf/include
     NETCDF_LIBDIR ?= /usr/g95soft/netcdf/lib
-
+endif
          CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
+ifdef USE_NETCDF4
+             LIBS += -L$(HDF5_LIBDIR) -lhdf5_hl -lhdf5 -lz
+endif
 
 ifdef USE_ARPACK
  ifdef USE_MPI
@@ -72,8 +76,18 @@ else
 endif
 
 ifdef USE_MCT
+       MCT_INCDIR ?= /usr/local/mct/include
+       MCT_LIBDIR ?= /usr/local/mct/lib
            FFLAGS += -I$(MCT_INCDIR)
              LIBS += -L$(MCT_LIBDIR) -lmct -lmpeu
+endif
+
+ifdef USE_ESMF
+      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
+      ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
+                     include $(ESMF_MK_DIR)/esmf.mk
+           FFLAGS += $(ESMF_F90COMPILEPATHS)
+             LIBS += $(ESMF_F90LINKPATHS) -lesmf -lC
 endif
 
 #

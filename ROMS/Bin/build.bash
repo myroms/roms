@@ -122,6 +122,7 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 
 #export         USE_DEBUG=on
  export         USE_LARGE=on
+#export       USE_NETCDF4=on
 
 # The rest of this script sets the path to the users header file and
 # analytical source files, if any. See the templates in User/Functionals.

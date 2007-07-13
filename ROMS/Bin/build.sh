@@ -122,6 +122,7 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 
 #setenv USE_DEBUG           on
  setenv USE_LARGE           on
+#setenv USE_NETCDF4         on
 
 # The rest of this script sets the path to the users header file and
 # analytical source files, if any. See the templates in User/Functionals.
