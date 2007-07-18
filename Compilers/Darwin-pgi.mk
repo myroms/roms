@@ -51,7 +51,6 @@ else
     NETCDF_INCDIR ?= /usr/local/netcdf-3.6.2-pgi/include
     NETCDF_LIBDIR ?= /usr/local/netcdf-3.6.2-pgi/lib
 endif
-         CPPFLAGS += -I$(NETCDF_INCDIR)
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
 ifdef USE_NETCDF4
              LIBS += -L$(HDF5_LIBDIR) -lhdf5_hl -lhdf5 -lz
@@ -80,6 +79,11 @@ ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
 endif
 
+# According to the PGI manual, the -u -Bstatic flags initializes
+# the symbol table with -Bstatic, which is undefined for the linker.
+# An undefined symbol triggers loading of the first member of an
+# archive library.
+
 ifdef USE_DEBUG
 #          FFLAGS += -g -C -Mchkstk -Mchkfpstk
            FFLAGS += -g -C
@@ -104,6 +108,15 @@ ifdef USE_ESMF
 endif
 
        clean_list += ifc* work.pc*
+
+#
+# Perform floating-point operations in strict conformance with the
+# IEEE standard. This may slow down computations because some
+# optimizations are disabled.  However, we noticed a speed-up.
+# The user may want to uncomment this option to allow similar,
+# if not identical solutions between different of the PGI compiler.
+
+#          FFLAGS += -Kieee
 
 #
 # Set free form format in source files to allow long string for

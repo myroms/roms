@@ -785,7 +785,7 @@
           IF (InpThread) THEN
             CALL opencdf (ng, 1, HSSname(ng), ncfile, N(ng), idtime,    &
      &                    Nrec, nvd, Vsize)
-            Nritz=MAX(Nritz,Vsize(1))
+            Nritz=Vsize(1)
           END IF
         END DO
 #   ifdef DISTRIBUTE

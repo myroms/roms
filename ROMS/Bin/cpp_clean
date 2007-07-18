@@ -18,7 +18,13 @@
 #
 
 my $file = $ARGV[0];
-my $tmp = "tmp.$$";
+my $slash = rindex($file,"/");
+if($slash lt 0) {
+   $root = ".";
+}else {
+   $root = substr($file,0,$slash);
+}
+my $tmp = "$root/tmp.$$";
 open(FILE, "$file");
 open(TMP, ">$tmp") || die "Can't open tmp file";
 

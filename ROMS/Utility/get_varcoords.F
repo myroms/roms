@@ -183,7 +183,7 @@
         ELSE
           ic=1
           DO i=2,Nx
-            IF (Y(i,j).eq.Y(1,1)) THEN
+            IF (Y(i,1).eq.Y(1,1)) THEN
               ic=ic+1
             END IF
           END DO

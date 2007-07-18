@@ -661,8 +661,8 @@
 !
 !  Compute latent heat of vaporization (J/kg) at sea surface, Hlv.
 !
-      DO j=MIN(Jstr-1,JstrR),JendR
-        DO i=MIN(Istr-1,IstrR),IendR
+      DO j=Jstr-1,JendR
+        DO i=Istr-1,IendR
           TseaC(i)=t(i,j,N(ng),nrhs,itemp)
           Hlv(i,j)=(2.501_r8-0.00237_r8*TseaC(i))*1.0E+6_r8
         END DO
@@ -732,11 +732,11 @@
 !=======================================================================
 !
       Hscale=rho0*Cp
-      DO j=MIN(Jstr-1,JstrR),JendR
+      DO j=Jstr-1,JendR
 !
 !  Compute Basic State quantities. required
 !
-        DO i=MIN(Istr-1,IstrR),IendR
+        DO i=Istr-1,IendR
 !
 !  Input bulk parameterization fields.
 !
@@ -955,7 +955,7 @@
 !  iterations.
 !
         DO Iter=1,IterMax
-          DO i=MIN(Istr-1,IstrR),IendR
+          DO i=Istr-1,IendR
 # ifdef BBL_MODEL_NOT_YET
 !
 !  Use wave info if we have it, two different options.
@@ -1067,7 +1067,7 @@
 !  Compute Adjoint of Atmosphere/Ocean fluxes.
 !-----------------------------------------------------------------------
 !
-        DO i=MIN(Istr-1,IstrR),IendR
+        DO i=Istr-1,IendR
 !
 !  Compute transfer coefficients for momentun (Cd).
 !
@@ -1255,7 +1255,7 @@
 !    Recompute appropriate basic state variables again prior to
 !    each adjoint iteration.
 !
-        DO i=MIN(Istr-1,IstrR),IendR
+        DO i=Istr-1,IendR
 !
 !  Input bulk parameterization fields.
 !
@@ -1472,7 +1472,7 @@
 !  Iterate here to obtain the appropriate basic state variables.
 !
         DO IterA=1,Iter-1
-          DO i=MIN(Istr-1,IstrR),IendR
+          DO i=Istr-1,IendR
 # ifdef BBL_MODEL_NOT_YET
 !
 !  Use wave info if we have it, two different options.
@@ -1579,7 +1579,7 @@
         END DO
 !
 
-          DO i=MIN(Istr-1,IstrR),IendR
+          DO i=Istr-1,IendR
 !
 !   Now complete the computation of the appropriate basic state quantities
 !   for this iteration.
@@ -2067,7 +2067,7 @@
 !   End of Adjoint Iteration Loop
 !
 
-        DO i=MIN(Istr-1,IstrR),IendR
+        DO i=Istr-1,IendR
 !
 !  Input bulk parameterization fields.
 !

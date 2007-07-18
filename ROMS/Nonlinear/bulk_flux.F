@@ -357,8 +357,8 @@
 !
       Hscale=rho0*Cp
       twopi_inv=0.5_r8/pi
-      DO j=MIN(Jstr-1,JstrR),JendR
-        DO i=MIN(Istr-1,IstrR),IendR
+      DO j=Jstr-1,JendR
+        DO i=Istr-1,IendR
 !
 !  Input bulk parameterization fields.
 !
@@ -581,7 +581,7 @@
 !  iterations.
 !
         DO Iter=1,IterMax
-          DO i=MIN(Istr-1,IstrR),IendR
+          DO i=Istr-1,IendR
 !
 !  Use wave info if we have it, two different options.
 !
@@ -692,7 +692,7 @@
 !  Compute Atmosphere/Ocean fluxes.
 !-----------------------------------------------------------------------
 !
-        DO i=MIN(Istr-1,IstrR),IendR
+        DO i=Istr-1,IendR
 !
 !  Compute transfer coefficients for momentum (Cd).
 !

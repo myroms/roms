@@ -58,7 +58,6 @@ else
     NETCDF_INCDIR ?= /usr/local/netcdf-win32/include
     NETCDF_LIBDIR ?= /usr/local/netcdf-win32/lib
 endif
-         CPPFLAGS += -I$(NETCDF_INCDIR)
        NETCDF_LIB := $(NETCDF_LIBDIR)/netcdfs.lib
 ifdef USE_NETCDF4
        NETCDF_LIB += -L$(HDF5_LIBDIR) -lhdf5_hl -lhdf5 -lz
