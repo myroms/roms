@@ -187,6 +187,54 @@ endif
 CLEAN := ROMS/Bin/cpp_clean
 
 #--------------------------------------------------------------------------
+#  Set C-preprocessing flags associated with ROMS application. They are
+#  used in "ROMS/Include/cppdefs.h" to include the appropriate application
+#  header file.
+#--------------------------------------------------------------------------
+
+ifdef ROMS_APPLICATION
+        HEADER := $(addsuffix .h, \
+			$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
+ ROMS_CPPFLAGS := -D$(ROMS_APPLICATION)
+ ROMS_CPPFLAGS += -D'HEADER="$(HEADER)"'
+ ifdef MY_HEADER_DIR
+  ROMS_CPPFLAGS += -D'ROMS_HEADER="$(MY_HEADER_DIR)/$(HEADER)"'
+ else
+  ROMS_CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
+ endif
+ ifdef MY_CPP_FLAGS
+  ROMS_CPPFLAGS += $(MY_CPP_FLAGS)
+ endif
+endif
+
+#--------------------------------------------------------------------------
+#  Internal macro definitions used to select the code to compile and
+#  additional libraries to link. It uses the CPP activated in the
+#  header file ROMS/Include/cppdefs.h to determine macro definitions.
+#--------------------------------------------------------------------------
+
+MAKE_MACROS := Compilers/make_macros.mk
+
+ifneq "$(MAKECMDGOALS)" "clean"
+ MACROS := $(shell $(CPP) $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
+		$(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
+
+ GET_MACROS := $(wildcard $(SCRATCH_DIR)/make_macros.*)
+
+ ifdef GET_MACROS
+  include $(SCRATCH_DIR)/make_macros.mk
+  $(if ,, $(warning INCLUDING FILE $(SCRATCH_DIR)/make_macros.mk \
+                    WHICH CONTAINS APPLICATION-DEPENDENT MAKE DEFINITIONS))
+ else
+  include $(MAKE_MACROS)
+  $(if ,, $(warning INCLUDING FILE $(MAKE_MACROS) \
+                   WHICH CONTAINS APPLICATION-DEPENDENT MAKE DEFINITIONS))
+ endif
+endif
+
+clean_list += $(MAKE_MACROS)
+
+#--------------------------------------------------------------------------
 #  Make functions for putting the temporary files in $(SCRATCH_DIR)
 #  DO NOT modify this section; spaces and blank lineas are needed.
 #--------------------------------------------------------------------------
@@ -285,8 +333,7 @@ endif
 
 #--------------------------------------------------------------------------
 #  Pass the platform variables to the preprocessor as macros. Convert to
-#  valid, upper-case identifiers. If applicable, attach ROMS application
-#  CPP option.
+#  valid, upper-case identifiers. Attach ROMS application  CPP options.
 #--------------------------------------------------------------------------
 
 CPPFLAGS += -D$(shell echo ${OS} | tr "-" "_" | tr [a-z] [A-Z])
@@ -295,16 +342,9 @@ CPPFLAGS += -D$(shell echo ${FORT} | tr "-" "_" | tr [a-z] [A-Z])
 
 CPPFLAGS += -D'ROOT_DIR="$(ROOTDIR)"'
 ifdef ROMS_APPLICATION
-  HEADER := $(addsuffix .h,$(shell echo ${ROMS_APPLICATION} | tr [A-Z] [a-z]))
-  CPPFLAGS += -D$(ROMS_APPLICATION)
-  CPPFLAGS += -D'HEADER="$(HEADER)"'
- ifdef MY_HEADER_DIR
-  CPPFLAGS += -D'ROMS_HEADER="$(MY_HEADER_DIR)/$(HEADER)"'
- else
-  CPPFLAGS += -D'ROMS_HEADER="$(HEADER)"'
- endif
+  CPPFLAGS  += $(ROMS_CPPFLAGS)
+  CPPFLAGS  += -DNestedGrids=$(NestedGrids)
   MDEPFLAGS += -DROMS_HEADER="$(HEADER)"
-  CPPFLAGS += -DNestedGrids=$(NestedGrids)
 endif
 
 ifndef MY_ANALYTICAL_DIR
@@ -325,25 +365,6 @@ else
   SVNREV := $(shell grep Revision ./ROMS/Version | sed 's/.* \([0-9]*\) .*/\1/')
   CPPFLAGS += -D'SVN_REV="$(SVNREV)"'
 endif  
-
-ifdef MY_CPP_FLAGS
-  CPPFLAGS += $(MY_CPP_FLAGS)
-endif
-
-#--------------------------------------------------------------------------
-#  Internal macro definitions used to select the code to compile and
-#  additional libraries to link. It uses the CPP activated in the
-#  header file ROMS/Include/cppdefs.h to determine macro definitions.
-#--------------------------------------------------------------------------
-
-MAKE_MACROS := Compilers/make_macros.mk
-
-MACRO_FLAGS := $(CPPFLAGS) $(MY_CPP_FLAGS)
-
-MACROS := $(shell $(CPP) $(MACRO_FLAGS) Compilers/make_macros.h > \
-		$(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
-
-include $(MAKE_MACROS)
 
 #--------------------------------------------------------------------------
 #  Build target directories.

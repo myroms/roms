@@ -53,7 +53,6 @@ while ( ($#argv) > 0 )
       set parallel = 1
       if (`echo $1 | grep -P '^\d+$'` != "" ) then
         set NCPUS = "-j $1"
-        echo "$NCPUS"
         shift
       else
         set NCPUS = "-j"

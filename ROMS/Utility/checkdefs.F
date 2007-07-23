@@ -945,7 +945,7 @@
       Coptions(is:is+16)=' GRADIENT_CHECK,'
       idriver=idriver+1
 #endif
-#ifdef HOLLING_GRAZING && defined NEMURO
+#if defined HOLLING_GRAZING && defined NEMURO
       IF (Master) WRITE (stdout,20) 'HOLLING_GRAZING',                  &
      &   'Holling-type s-shaped grazing algorithm, Implicit.'
       is=LEN_TRIM(Coptions)+1
@@ -1002,7 +1002,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' INLINE_2DIO,'
 #endif
-#ifdef IVLEV_EXPLICIT && defined NEMURO
+#if defined IVLEV_EXPLICIT && defined NEMURO
       IF (Master) WRITE (stdout,20) 'IVLEV_EXPLICIT',                   &
      &   'Ivlev Grazing algorithm, Explicit.'
       is=LEN_TRIM(Coptions)+1

@@ -298,9 +298,6 @@
 #   define RPM_RELAXATION
 #   undef  CONVOLVE
 #  endif
-#  ifdef IS4DVAR
-#   undef LANCZOS
-#  endif
 #  ifdef IS4DVAR_OLD
 #   undef  MULTIPLE_TLM
 #  endif
