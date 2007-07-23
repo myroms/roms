@@ -159,7 +159,8 @@
 !
           real(r8), pointer :: sustr(:,:)
           real(r8), pointer :: svstr(:,:)
-#if !defined ANA_SMFLUX && !defined BULK_FLUXES
+#if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
+     defined ADJUST_WSTRESS
           real(r8), pointer :: sustrG(:,:,:)
           real(r8), pointer :: svstrG(:,:,:)
 #endif
@@ -284,7 +285,8 @@
 # endif
 
           real(r8), pointer :: stflx(:,:,:)
-# if !defined ANA_STFLUX || !defined ANA_SSFLUX
+# if !defined ANA_STFLUX    || !defined ANA_SSFLUX || \
+      defined ADJUST_STFLUX
           real(r8), pointer :: stflxG(:,:,:,:)
 # endif
           real(r8), pointer :: btflx(:,:,:)
@@ -380,6 +382,35 @@
 # endif
 #endif
 
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Working arrays to store adjoint impulse forcing, background error
+!  covariance, background-error standard deviations, or descent
+!  conjugate vectors (directions).
+!
+# if defined FOUR_DVAR || defined IMPULSE
+#  ifdef ADJUST_WSTRESS
+          real(r8), pointer :: b_sustr(:,:)
+          real(r8), pointer :: b_svstr(:,:)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+          real(r8), pointer :: b_stflx(:,:,:)
+#  endif
+#  ifdef FOUR_DVAR
+#   ifdef ADJUST_WSTRESS
+          real(r8), pointer :: d_sustr(:,:)
+          real(r8), pointer :: d_svstr(:,:)
+          real(r8), pointer :: e_sustr(:,:)
+          real(r8), pointer :: e_svstr(:,:)
+#   endif
+#   if defined ADJUST_STFLUX && defined SOLVE3D
+          real(r8), pointer :: d_stflx(:,:,:)
+          real(r8), pointer :: e_stflx(:,:,:)
+#   endif
+#  endif
+# endif
+#endif
+
         END TYPE T_FORCES
 
         TYPE (T_FORCES), allocatable :: FORCES(:)
@@ -412,7 +443,8 @@
       allocate ( FORCES(ng) % sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % svstr(LBi:UBi,LBj:UBj) )
 
-#if !defined ANA_SMFLUX && !defined BULK_FLUXES
+#if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
+     defined ADJUST_WSTRESS
       allocate ( FORCES(ng) % sustrG(LBi:UBi,LBj:UBj,2) )
       allocate ( FORCES(ng) % svstrG(LBi:UBi,LBj:UBj,2) )
 #endif
@@ -551,7 +583,8 @@
 
       allocate ( FORCES(ng) % stflx(LBi:UBi,LBj:UBj,NT(ng)) )
 
-# if !defined ANA_STFLUX || !defined ANA_SSFLUX
+# if !defined ANA_STFLUX    || !defined ANA_SSFLUX || \
+      defined ADJUST_STFLUX
       allocate ( FORCES(ng) % stflxG(LBi:UBi,LBj:UBj,2,NT(ng)) )
 # endif
 
@@ -652,6 +685,35 @@
 # endif
 #endif
 
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Working arrays to store adjoint impulse forcing, background error
+!  covariance, background-error standard deviations, or descent
+!  conjugate vectors (directions).
+!
+# if defined FOUR_DVAR || defined IMPULSE
+#  ifdef ADJUST_WSTRESS
+      allocate ( FORCES(ng) % b_sustr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % b_svstr(LBi:UBi,LBj:UBj) )
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      allocate ( FORCES(ng) % b_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+#  endif
+# endif
+# ifdef FOUR_DVAR
+#  ifdef ADJUST_WSTRESS
+      allocate ( FORCES(ng) % d_sustr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % d_svstr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % e_sustr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % e_svstr(LBi:UBi,LBj:UBj) )
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      allocate ( FORCES(ng) % d_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      allocate ( FORCES(ng) % e_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+#  endif
+# endif
+#endif
+
       RETURN
       END SUBROUTINE allocate_forces
 
@@ -726,7 +788,8 @@
           DO i=Imin,Imax
             FORCES(ng) % sustr(i,j) = IniVal
             FORCES(ng) % svstr(i,j) = IniVal
-#if !defined ANA_SMFLUX && !defined BULK_FLUXES
+#if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
+     defined ADJUST_WSTRESS
             FORCES(ng) % sustrG(i,j,1) = IniVal
             FORCES(ng) % sustrG(i,j,2) = IniVal
             FORCES(ng) % svstrG(i,j,1) = IniVal
@@ -881,7 +944,8 @@
             DO itrc=1,NT(ng)
               FORCES(ng) % stflx(i,j,itrc) = IniVal
               FORCES(ng) % btflx(i,j,itrc) = IniVal
-# if !defined ANA_STFLUX || !defined ANA_SSFLUX
+# if !defined ANA_STFLUX    || !defined ANA_SSFLUX || \
+      defined ADJUST_STFLUX
               FORCES(ng) % stflxG(i,j,1,itrc) = IniVal
               FORCES(ng) % stflxG(i,j,2,itrc) = IniVal
 # endif
@@ -1000,6 +1064,45 @@
 # endif
         END DO
       END IF
+#endif
+
+#if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+!
+!  Working arrays to store adjoint impulse forcing, background error
+!  covariance, background-error standard deviations, or descent
+!  conjugate vectors (directions).
+!
+# if defined FOUR_DVAR || defined IMPULSE
+      IF (model.eq.0) THEN
+#  ifdef ADJUST_WSTRESS
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
+            FORCES(ng) % b_sustr(i,j) = IniVal
+            FORCES(ng) % b_svstr(i,j) = IniVal
+#   ifdef FOUR_DVAR
+            FORCES(ng) % d_sustr(i,j) = IniVal
+            FORCES(ng) % d_svstr(i,j) = IniVal
+            FORCES(ng) % e_sustr(i,j) = IniVal
+            FORCES(ng) % e_svstr(i,j) = IniVal
+#   endif
+          END DO
+        END DO
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+        DO itrc=1,NT(ng)
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
+              FORCES(ng) % b_stflx(i,j,itrc) = IniVal
+#   ifdef FOUR_DVAR
+              FORCES(ng) % d_stflx(i,j,itrc) = IniVal
+              FORCES(ng) % e_stflx(i,j,itrc) = IniVal
+#   endif
+            END DO
+          END DO
+        END DO
+#  endif
+      END IF
+# endif
 #endif
 
       RETURN

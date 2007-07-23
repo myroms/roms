@@ -82,6 +82,9 @@
 !
       USE mod_param
       USE mod_grid
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+      USE mod_forces
+# endif
       USE mod_fourdvar
       USE mod_mixing
       USE mod_ocean
@@ -141,12 +144,12 @@
      &                           OCEAN(ng) % b_u,                       &
      &                           OCEAN(ng) % b_v,                       &
 #  ifdef ADJUST_STFLUX
-     &                           OCEAN(ng) % b_stflx,                   &
+     &                           FORCES(ng) % b_stflx,                  &
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-     &                           OCEAN(ng) % b_sustr,                   &
-     &                           OCEAN(ng) % b_svstr,                   &
+     &                           FORCES(ng) % b_sustr,                  &
+     &                           FORCES(ng) % b_svstr,                  &
 # endif
      &                           OCEAN(ng) % b_zeta,                    &
      &                           OCEAN(ng) % b_ubar,                    &
@@ -198,12 +201,12 @@
      &                           OCEAN(ng) % b_u,                       &
      &                           OCEAN(ng) % b_v,                       &
 #  ifdef ADJUST_STFLUX
-     &                           OCEAN(ng) % b_stflx,                   &
+     &                           FORCES(ng) % b_stflx,                   &
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-     &                           OCEAN(ng) % b_sustr,                   &
-     &                           OCEAN(ng) % b_svstr,                   &
+     &                           FORCES(ng) % b_sustr,                  &
+     &                           FORCES(ng) % b_svstr,                  &
 # endif
      &                           OCEAN(ng) % b_zeta,                    &
      &                           OCEAN(ng) % b_ubar,                    &
@@ -801,7 +804,7 @@
 #  endif
         IF (Master) THEN
           WRITE (stdout,30)                                             &
-     &          '2D normalization factors at SUS-points'
+     &          '2D normalization factors at SUS-stress points'
           CALL my_flush (stdout)
         END IF
         DO j=JU_RANGE
@@ -1410,8 +1413,7 @@
           IF (Cnorm(is)) Lsame=.TRUE.
         END DO
         IF (Lsame) THEN
-          WRITE (stdout,30)
-     &       '2D normalization factors at STF-points'
+          WRITE (stdout,30) '2D normalization factors at STF-points'
           CALL my_flush (stdout)
         END IF
       END IF
@@ -1428,7 +1430,7 @@
       Jmax=Mm(ng)
       DO itrc=2,NT(ng)
         IF (Hdecay(isTsur(itrc  ),ng).ne.                               &
-     &      Hdecay(isTsur(itrc-1),ng))
+     &      Hdecay(isTsur(itrc-1),ng)) THEN
           Ldiffer=.TRUE.
         END IF
       END DO
@@ -1489,7 +1491,7 @@
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
-                CALL tl_conv_r3d_tile (ng, iTLM,                        &
+                CALL tl_conv_r2d_tile (ng, iTLM,                        &
      &                                 Istr, Iend, Jstr, Jend,          &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 NghostPoints,                    &
@@ -2580,7 +2582,7 @@
 !
       DO j=JR_RANGE
         DO i=IR_RANGE
-          Hscale(i,j,k)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
+          Hscale(i,j)=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
         END DO
       END DO
       DO itrc=1,UBt

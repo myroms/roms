@@ -53,7 +53,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                          s1_stflx, s2_stflx,                     &
+     &                          s1_tflux, s2_tflux,                     &
 # endif
      &                          s1_t, s2_t,                             &
      &                          s1_u, s2_u,                             &
@@ -93,8 +93,8 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: s1_stflx(LBi:,LBj:,:)
-      real(r8), intent(in) :: s2_stflx(LBi:,LBj:,:)
+      real(r8), intent(in) :: s1_tflux(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_tflux(LBi:,LBj:,:)
 #  endif
       real(r8), intent(in) :: s1_t(LBi:,LBj:,:,:)
       real(r8), intent(in) :: s2_t(LBi:,LBj:,:,:)
@@ -126,8 +126,8 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: s1_stflx(LBi:UBi,LBj:UBj,NT(ng))
-      real(r8), intent(in) :: s2_stflx(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(in) :: s1_tflux(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(in) :: s2_tflux(LBi:UBi,LBj:UBj,NT(ng))
 #  endif
       real(r8), intent(in) :: s1_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: s2_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
@@ -220,7 +220,7 @@
           cff=cff*umask(i,j)
 # endif
           my_DotProd(0)=my_DotProd(0)+cff
-          my_DotProd(isUsms)=my_DotProd(isUsms)+cff
+          my_DotProd(isUstr)=my_DotProd(isUstr)+cff
         END DO
       END DO
       DO j=Jstr,JendR
@@ -230,7 +230,7 @@
           cff=cff*vmask(i,j)
 # endif
           my_DotProd(0)=my_DotProd(0)+cff
-          my_DotProd(isVsms)=my_DotProd(isVsms)+cff
+          my_DotProd(isVstr)=my_DotProd(isVstr)+cff
         END DO
       END DO
 #endif
@@ -288,7 +288,7 @@
       DO itrc=1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            cff=s1_stflx(i,j,itrc)*s2_stflx(i,j,itrc)
+            cff=s1_tflux(i,j,itrc)*s2_tflux(i,j,itrc)
 #  ifdef MASKING
             cff=cff*rmask(i,j)
 #  endif

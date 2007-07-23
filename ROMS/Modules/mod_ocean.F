@@ -211,17 +211,10 @@
           real(r8), pointer :: b_ubar(:,:)
           real(r8), pointer :: b_vbar(:,:)
           real(r8), pointer :: b_zeta(:,:)
-# ifdef ADJUST_WSTRESS
-          real(r8), pointer :: b_sustr(:,:)
-          real(r8), pointer :: b_svstr(:,:)
-# endif
 # ifdef SOLVE3D
           real(r8), pointer :: b_t(:,:,:,:)
           real(r8), pointer :: b_u(:,:,:)
           real(r8), pointer :: b_v(:,:,:)
-#  ifdef ADJUST_STFLUX
-          real(r8), pointer :: b_stflx(:,:,:)
-#  endif
 # endif
 # ifdef FOUR_DVAR
           real(r8), pointer :: d_ubar(:,:)
@@ -235,17 +228,10 @@
           real(r8), pointer :: e_ubar(:,:)
           real(r8), pointer :: e_vbar(:,:)
           real(r8), pointer :: e_zeta(:,:)
-#  ifdef ADJUST_WSTRESS
-          real(r8), pointer :: e_sustr(:,:)
-          real(r8), pointer :: e_svstr(:,:)
-#  endif
 #  ifdef SOLVE3D
           real(r8), pointer :: e_t(:,:,:,:)
           real(r8), pointer :: e_u(:,:,:)
           real(r8), pointer :: e_v(:,:,:)
-#   ifdef ADJUST_STFLUX
-          real(r8), pointer :: e_stflx(:,:,:)
-#   endif
 #  endif
 # endif
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -463,18 +449,11 @@
       allocate ( OCEAN(ng) % b_ubar(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % b_vbar(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % b_zeta(LBi:UBi,LBj:UBj) )
-# ifdef ADJUST_WSTRESS
-      allocate ( OCEAN(ng) % b_sustr(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % b_svstr(LBi:UBi,LBj:UBj) )
-# endif
 
 # ifdef SOLVE3D
       allocate ( OCEAN(ng) % b_t(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       allocate ( OCEAN(ng) % b_u(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( OCEAN(ng) % b_v(LBi:UBi,LBj:UBj,N(ng)) )
-#  ifdef ADJUST_STFLUX
-      allocate ( OCEAN(ng) % b_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
-#  endif
 # endif
 
 # ifdef FOUR_DVAR
@@ -491,18 +470,11 @@
       allocate ( OCEAN(ng) % e_ubar(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % e_vbar(LBi:UBi,LBj:UBj) )
       allocate ( OCEAN(ng) % e_zeta(LBi:UBi,LBj:UBj) )
-#  ifdef ADJUST_WSTRESS
-      allocate ( OCEAN(ng) % e_sustr(LBi:UBi,LBj:UBj) )
-      allocate ( OCEAN(ng) % e_svstr(LBi:UBi,LBj:UBj) )
-#  endif
 
 #  ifdef SOLVE3D
       allocate ( OCEAN(ng) % e_t(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       allocate ( OCEAN(ng) % e_u(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( OCEAN(ng) % e_v(LBi:UBi,LBj:UBj,N(ng)) )
-#   ifdef ADJUST_STFLUX
-      allocate ( OCEAN(ng) % e_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
-#   endif
 #  endif
 
 #  if defined WEAK_CONSTRAINT || defined IOM
@@ -881,10 +853,6 @@
             OCEAN(ng) % b_ubar(i,j) = IniVal
             OCEAN(ng) % b_vbar(i,j) = IniVal
             OCEAN(ng) % b_zeta(i,j) = IniVal
-# ifdef ADJUST_WSTRESS
-            OCEAN(ng) % b_sustr(i,j) = IniVal
-            OCEAN(ng) % b_svstr(i,j) = IniVal
-# endif
 # ifdef FOUR_DVAR
             OCEAN(ng) % d_ubar(i,j) = IniVal
             OCEAN(ng) % d_vbar(i,j) = IniVal
@@ -893,10 +861,6 @@
             OCEAN(ng) % e_ubar(i,j) = IniVal
             OCEAN(ng) % e_vbar(i,j) = IniVal
             OCEAN(ng) % e_zeta(i,j) = IniVal
-#  ifdef ADJUST_WSTRESS
-            OCEAN(ng) % e_sustr(i,j) = IniVal
-            OCEAN(ng) % e_svstr(i,j) = IniVal
-#  endif
 #  if defined WEAK_CONSTRAINT || defined IOM
             OCEAN(ng) % f_ubar(i,j) = IniVal
             OCEAN(ng) % f_vbar(i,j) = IniVal
@@ -936,12 +900,6 @@
 #  endif
               END DO
             END DO
-#  if defined FOURD_VAR && defined ADJUST_STFLUX
-            DO i=Imin,Imax
-              OCEAN(ng) % b_stflx(i,j,itrc) = IniVal
-              OCEAN(ng) % e_stflx(i,j,itrc) = IniVal
-            END DO
-#  endif
           END DO
 # endif
         END DO

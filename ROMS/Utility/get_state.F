@@ -1343,7 +1343,7 @@
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
-     &                      FORCES(ng) % tl_vstr(LBi,LBj))
+     &                      FORCES(ng) % tl_vstr(LBi,LBj,Tindex))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
@@ -1858,7 +1858,7 @@
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
-     &                      FORCES(ng) % ad_vstr(LBi,LBj))
+     &                      FORCES(ng) % ad_vstr(LBi,LBj,Tindex))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
@@ -2311,7 +2311,7 @@
 #  ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
-     &                      OCEAN(ng) % b_sustr(LBi,LBj))
+     &                      FORCES(ng) % b_sustr(LBi,LBj))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
@@ -2340,7 +2340,7 @@
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
-     &                      OCEAN(ng) % b_svstr(LBi,LBj))
+     &                      FORCES(ng) % b_svstr(LBi,LBj))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
@@ -2465,7 +2465,7 @@
 #   ifdef MASKING
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
-     &                        OCEAN(ng) % b_stflx(LBi,LBj,itrc))
+     &                        FORCES(ng) % b_stflx(LBi,LBj,itrc))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
@@ -2596,7 +2596,7 @@
 #  ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
-     &                      OCEAN(ng) % e_sustr(LBi,LBj))
+     &                      FORCES(ng) % e_sustr(LBi,LBj))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
@@ -2625,7 +2625,7 @@
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
-     &                      OCEAN(ng) % e_svstr(LBi,LBj))
+     &                      FORCES(ng) % e_svstr(LBi,LBj))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
@@ -2750,7 +2750,7 @@
 #   ifdef MASKING
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
-     &                        OCEAN(ng) % e_stflx(LBi,LBj,itrc))
+     &                        FORCES(ng) % e_stflx(LBi,LBj,itrc))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &

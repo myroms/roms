@@ -34,7 +34,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                             s_stflx,                             &
+     &                             s_tflux,                             &
 # endif
      &                             s_t, s_u, s_v,                       &
 #else
@@ -65,7 +65,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s_stflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: s_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: s_u(LBi:,LBj:,:,:)
@@ -89,7 +89,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s_stflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
       real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -193,7 +193,7 @@
       DO itrc=1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            s_stflx(i,j,Lout,itrc)=fac
+            s_tflux(i,j,Lout,itrc)=fac
           END DO
         END DO
       END DO

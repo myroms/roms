@@ -133,7 +133,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                     FORCES(ng) % tflux,                          &
+     &                     FORCES(ng) % stflxG,                         &
 # endif
      &                     OCEAN(ng) % t,                               &
      &                     OCEAN(ng) % u,                               &
@@ -144,12 +144,12 @@
 #endif
      &                     OCEAN(ng) % zeta,                            &
 #ifdef ADJUST_WSTRESS
-     &                     OCEAN(ng) % d_sustr,                         &
-     &                     OCEAN(ng) % d_svstr,                         &
+     &                     FORCES(ng) % d_sustr,                        &
+     &                     FORCES(ng) % d_svstr,                        &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                     OCEAN(ng) % d_stflx,                         &
+     &                     FORCES(ng) % d_stflx,                        &
 # endif
      &                     OCEAN(ng) % d_t,                             &
      &                     OCEAN(ng) % d_u,                             &
@@ -504,7 +504,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      d_stflx, ad_tflux(:,:,:,Lold,:),            &
+     &                      d_stflx, ad_tflux(:,:,Lold,:),              &
 # endif
      &                      d_t, ad_t(:,:,:,Lold,:),                    &
      &                      d_u, ad_u(:,:,:,Lold),                      &
@@ -583,12 +583,12 @@
      &                rmask, umask, vmask,                              &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                ad_ustr, ustr, tl_ustr,                           &
-     &                ad_vstr, vstr, tl_vstr,                           &
+     &                ad_ustr, nl_ustr, tl_ustr,                        &
+     &                ad_vstr, nl_vstr, tl_vstr,                        &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                ad_tflux, nl_tflux, tl_tflx,                      &
+     &                ad_tflux, nl_tflux, tl_tflux,                     &
 # endif
      &                ad_t, nl_t, tl_t,                                 &
      &                ad_u, nl_u, tl_u,                                 &
@@ -696,6 +696,9 @@
 # ifdef MASKING
      &                      rmask, umask, vmask,                        &
 # endif
+# ifdef ADJUST_WSTRESS
+     &                      nl_ustr, nl_vstr,                           &
+# endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
      &                      nl_tflux,                                   &
@@ -717,9 +720,6 @@
      &                      tl_ubar, tl_vbar,                           &
 # endif
      &                      tl_zeta,                                    &
-# ifdef ADJUST_WSTRESS
-     &                      ustr, vstr,                                 &
-# endif
 # ifdef ADJUST_WSTRESS
      &                      ad_ustr, ad_vstr,                           &
 # endif
@@ -810,7 +810,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                ad_tflux, tflux, tflux                            &
+     &                ad_tflux, nl_tflux, nl_tflux,                     &
 # endif
      &                ad_t, nl_t, nl_t,                                 &
      &                ad_u, nl_u, nl_u,                                 &
@@ -972,7 +972,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                    d_stflx, ad_tflux(:,:,:,Lold,:),              &
+     &                    d_stflx, ad_tflux(:,:,Lold,:),                &
 # endif
      &                    d_t, ad_t(:,:,:,Lold,:),                      &
      &                    d_u, ad_u(:,:,:,Lold),                        &
@@ -1253,7 +1253,7 @@
       DO j=Jstr,JendR
         DO i=IstrR,IendR
           tl_vstr(i,j,Lout)=tl_vstr(i,j,Linp)+                          &
-     &                      alphaK*d_vbar(i,j)
+     &                      alphaK*d_svstr(i,j)
 # ifdef MASKING
           tl_vstr(i,j,Lout)=tl_vstr(i,j,Lout)*vmask(i,j)
 # endif
@@ -1980,7 +1980,8 @@
      &                         rmask, umask, vmask,                     &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                         ad_ustr, tl_vstr,                        &
+     &                         ad_ustr, tl_ustr,                        &
+     &                         ad_vstr, tl_vstr,                        &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
@@ -2713,8 +2714,8 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s_ubar(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: s_vbar(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: s_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: s_vstr(LBi:UBi,LBj:UBj,2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX

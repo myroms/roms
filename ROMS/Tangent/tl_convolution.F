@@ -161,12 +161,12 @@
      &                          OCEAN(ng) % b_u,                        &
      &                          OCEAN(ng) % b_v,                        &
 #  ifdef ADJUST_STFLUX
-     &                          OCEAN(ng) % b_stflx,                    &
+     &                          FORCES(ng) % b_stflx,                   &
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-     &                          OCEAN(ng) % b_sustr,                    &
-     &                          OCEAN(ng) % b_svstr,                    &
+     &                          FORCES(ng) % b_sustr,                   &
+     &                          FORCES(ng) % b_svstr,                   &
 # endif
      &                          OCEAN(ng) % b_zeta,                     &
      &                          OCEAN(ng) % b_ubar,                     &
