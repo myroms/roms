@@ -245,9 +245,9 @@
 !  Read in biological model input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (100, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
+      OPEN (15, FILE=TRIM(bparnam), FORM='formatted', STATUS='old')
 
-      CALL read_BioPar (model, 100, out, Lwrite)
+      CALL read_BioPar (model, 15, out, Lwrite)
 #endif
 #ifdef SEDIMENT
 !
@@ -255,9 +255,9 @@
 !  Read in sediment model input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (200, FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
+      OPEN (25, FILE=TRIM(sparnam), FORM='formatted', STATUS='old')
 
-      CALL read_SedPar (model, 200, out, Lwrite)
+      CALL read_SedPar (model, 25, out, Lwrite)
 #endif
 #if defined ASSIMILATION || defined FOUR_DVAR || defined NUDGING || \
     defined VERIFICATION
@@ -266,9 +266,9 @@
 !  Read in input assimilation parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (300, FILE=TRIM(aparnam), FORM='formatted', STATUS='old')
+      OPEN (35, FILE=TRIM(aparnam), FORM='formatted', STATUS='old')
 
-      CALL read_AssPar (model, 300, out, Lwrite)
+      CALL read_AssPar (model, 35, out, Lwrite)
 #endif
 #ifdef FLOATS
 !
@@ -276,9 +276,9 @@
 !  Read in floats input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (400, FILE=TRIM(fposnam), FORM='formatted', STATUS='old')
+      OPEN (45, FILE=TRIM(fposnam), FORM='formatted', STATUS='old')
 
-      CALL read_FloatsPar (model, 400, out, Lwrite)
+      CALL read_FloatsPar (model, 45, out, Lwrite)
 #endif
 #ifdef STATIONS
 !
@@ -286,9 +286,9 @@
 !  Read in stations input parameters.
 !-----------------------------------------------------------------------
 !
-      OPEN (500, FILE=TRIM(sposnam), FORM='formatted', STATUS='old')
+      OPEN (55, FILE=TRIM(sposnam), FORM='formatted', STATUS='old')
 
-      CALL read_StaPar (model, 500, out, Lwrite)
+      CALL read_StaPar (model, 55, out, Lwrite)
 #endif
 !
 !-----------------------------------------------------------------------
