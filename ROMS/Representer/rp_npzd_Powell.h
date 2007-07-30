@@ -521,8 +521,8 @@
 !  Phytoplankton photosynthetic growth and nitrate uptake (Vm_NO3 rate).
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
-!  initial slope of the P-I curve and K_NO3 is the inverse half
-!  saturation of phytoplankton nitrate uptake.  
+!  initial slope of the P-I curve and K_NO3 is the half saturation of
+!  phytoplankton nitrate uptake.  
 !
 #ifdef SPITZ
           cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
@@ -860,8 +860,8 @@
 !  Phytoplankton photosynthetic growth and nitrate uptake (Vm_NO3 rate).
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
-!  initial slope of the P-I curve and K_NO3 is the inverse half
-!  saturation of phytoplankton nitrate uptake.  
+!  initial slope of the P-I curve and K_NO3 is the half saturation of
+!  phytoplankton nitrate uptake.  
 !
 #ifdef SPITZ
           cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
@@ -1020,8 +1020,8 @@
 !  Phytoplankton photosynthetic growth and nitrate uptake (Vm_NO3 rate).
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
-!  initial slope of the P-I curve and K_NO3 is the inverse half
-!  saturation of phytoplankton nitrate uptake.  
+!  initial slope of the P-I curve and K_NO3 is the half saturation of
+!  phytoplankton nitrate uptake.  
 !
 #ifdef SPITZ
           cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
@@ -1517,8 +1517,8 @@
 !  Phytoplankton photosynthetic growth and nitrate uptake (Vm_NO3 rate).
 !  The Michaelis-Menten curve is used to describe the change in uptake
 !  rate as a function of nitrate concentration. Here, PhyIS is the
-!  initial slope of the P-I curve and K_NO3 is the inverse half
-!  saturation of phytoplankton nitrate uptake.  
+!  initial slope of the P-I curve and K_NO3 is the half saturation of
+!  phytoplankton nitrate uptake.  
 !
 #ifdef SPITZ
           cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)

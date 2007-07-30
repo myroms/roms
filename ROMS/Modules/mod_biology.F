@@ -514,8 +514,8 @@
 !  BioIni    Initial concentration for analytical initial (uniform)    !
 !              conditions.                                             !
 !  DetRR     Detritus remineraliztion rate, [1/day].                   !
-!  K_NO3     Inverse half-saturation for phytoplankton nitrate uptake  !
-!              [1/(millimole_N m-3)].                                  !
+!  K_NO3     Half-saturation for phytoplankton nitrate uptake          !
+!              [millimole_N m-3].                                      !
 !  Ivlev     Ivlev constant for zooplankton grazing parameterization,  !
 !              [nondimensional].                                       !
 !  PARfrac   Fraction of shortwave radiation that is available for     !
@@ -550,7 +550,7 @@
         real(r8), dimension(Ngrids) :: AttPhy        ! m2/mmole
         real(r8), dimension(Ngrids) :: AttSW         ! 1/m
         real(r8), dimension(Ngrids) :: DetRR         ! 1/day
-        real(r8), dimension(Ngrids) :: K_NO3         ! 1/(mmol/m3)
+        real(r8), dimension(Ngrids) :: K_NO3         ! mmol/m3
         real(r8), dimension(Ngrids) :: Ivlev         ! nondimensional
         real(r8), dimension(Ngrids) :: PARfrac       ! nondimensional
         real(r8), dimension(Ngrids) :: PhyIS         ! m2/W
