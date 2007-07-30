@@ -206,7 +206,10 @@
 #ifdef DISTRIBUTE
         CALL mp_bcasti (ng, model, status, 1)
 #endif
-        IF (status.ne.nf90_noerr) RETURN
+        IF (status.ne.nf90_noerr) THEN
+          nf_fread4d=status
+          RETURN
+        END IF
 !
 !-----------------------------------------------------------------------
 !  Unpack read field.
