@@ -624,18 +624,18 @@
 # endif
 
 # if defined CELERITY_READ || defined CELERITY_WRITE
-      allocate ( BOUNDARY(ng) % t_west_C2(ETA_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_west_Ce(ETA_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_west_Cx(ETA_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_east_C2(ETA_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_east_Ce(ETA_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_east_Cx(ETA_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_south_C2(XI_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_south_Ce(XI_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_south_Cx(XI_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_north_C2(XI_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_north_Ce(XI_DIM,N(ng)) )
-      allocate ( BOUNDARY(ng) % t_north_Cx(XI_DIM,N(ng)) )
+      allocate ( BOUNDARY(ng) % t_west_C2(ETA_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_west_Ce(ETA_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_west_Cx(ETA_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_east_C2(ETA_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_east_Ce(ETA_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_east_Cx(ETA_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_south_C2(XI_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_south_Ce(XI_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_south_Cx(XI_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_north_C2(XI_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_north_Ce(XI_DIM,N(ng),NT(ng)) )
+      allocate ( BOUNDARY(ng) % t_north_Cx(XI_DIM,N(ng),NT(ng)) )
 # endif
 #endif
 
