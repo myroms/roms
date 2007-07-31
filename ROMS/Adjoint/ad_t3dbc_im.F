@@ -183,7 +183,7 @@
               Cx=0.0_r8
 #   endif
               Ce=BOUNDARY(ng)%t_north_Ce(i,k,itrc)
-              cff=BOUNDARY(ng)%t_north_C(i,k,itrc)
+              cff=BOUNDARY(ng)%t_north_C2(i,k,itrc)
 #   ifdef MASKING
 !>            tl_t(i,Jend+1,k,nout,itrc)=tl_t(i,Jend+1,k,nout,itrc)*    &
 !>   &                                   GRID(ng)%rmask(i,Jend+1)
@@ -306,7 +306,7 @@
               Cx=0.0_r8
 #   endif
               Ce=BOUNDARY(ng)%t_south_Ce(i,k,itrc)
-              cff=BOUNDARY(ng)%t_south_C(i,k,itrc)
+              cff=BOUNDARY(ng)%t_south_C2(i,k,itrc)
 #   ifdef MASKING
 !>            tl_t(i,Jstr-1,k,nout,itrc)=tl_t(i,Jstr-1,k,nout,itrc)*    &
 !>   &                                   GRID(ng)%rmask(i,Jstr-1)
@@ -432,7 +432,7 @@
 #   else
               Ce=0.0_r8
 #   endif
-              cff=BOUNDARY(ng)%t_east_C(j,k,itrc)
+              cff=BOUNDARY(ng)%t_east_C2(j,k,itrc)
 #   ifdef MASKING
 !>            tl_t(Iend+1,j,k,nout,itrc)=tl_t(Iend+1,j,k,nout,itrc)*    &
 !>   &                                   GRID(ng)%rmask(Iend+1,j)
@@ -555,7 +555,7 @@
 #   else
               Ce=0.0_r8
 #   endif
-              cff=BOUNDARY(ng)%t_west_C(j,k,itrc)
+              cff=BOUNDARY(ng)%t_west_C2(j,k,itrc)
 #   ifdef MASKING
 !>            tl_t(Istr-1,j,k,nout,itrc)=tl_t(Istr-1,j,k,nout,itrc)*    &
 !>   &                                   GRID(ng)%rmask(Istr-1,j)

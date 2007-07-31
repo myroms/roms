@@ -118,7 +118,7 @@
 #   else
               Ce=0.0_r8
 #   endif
-              cff=BOUNDARY(ng)%t_west_C(j,k,itrc)
+              cff=BOUNDARY(ng)%t_west_C2(j,k,itrc)
 !>            t(Istr-1,j,k,nout,itrc)=(cff*t(Istr-1,j,k,nstp,itrc)+     &
 !>   &                                 Cx *t(Istr  ,j,k,nout,itrc)-     &
 !>   &                                 MAX(Ce,0.0_r8)*                  &
@@ -246,7 +246,7 @@
 #   else
               Ce=0.0_r8
 #   endif
-              cff=BOUNDARY(ng)%t_east_C(j,k,itrc)
+              cff=BOUNDARY(ng)%t_east_C2(j,k,itrc)
 !>            t(Iend+1,j,k,nout,itrc)=(cff*t(Iend+1,j,k,nstp,itrc)+     &
 !>   &                                 Cx *t(Iend  ,j,k,nout,itrc)-     &
 !>   &                                 MAX(Ce,0.0_r8)*                  &
@@ -377,7 +377,7 @@
               Cx=0.0_r8
 #   endif
               Ce=BOUNDARY(ng)%t_south_Ce(i,k,itrc)
-              cff=BOUNDARY(ng)%t_south_C(i,k,itrc)
+              cff=BOUNDARY(ng)%t_south_C2(i,k,itrc)
 !>            t(i,Jstr-1,k,nout,itrc)=(cff*t(i,Jstr-1,k,nstp,itrc)+     &
 !>   &                                 Ce *t(i,Jstr  ,k,nout,itrc )-    &
 !>   &                                 MAX(Cx,0.0_r8)*                  &
@@ -505,7 +505,7 @@
               Cx=0.0_r8
 #   endif
               Ce=BOUNDARY(ng)%t_north_Ce(i,k,itrc)
-              cff=BOUNDARY(ng)%t_north_C(i,k,itrc)
+              cff=BOUNDARY(ng)%t_north_C2(i,k,itrc)
 !>            t(i,Jend+1,k,nout,itrc)=(cff*t(i,Jend+1,k,nstp,itrc)+     &
 !>   &                                 Ce *t(i,Jend  ,k,nout,itrc)-     &
 !>   &                                 MAX(Cx,0.0_r8)*                  &
