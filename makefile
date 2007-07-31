@@ -216,7 +216,7 @@ endif
 MAKE_MACROS := Compilers/make_macros.mk
 
 ifneq "$(MAKECMDGOALS)" "clean"
- MACROS := $(shell $(CPP) $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
+ MACROS := $(shell cpp -P $(ROMS_CPPFLAGS) Compilers/make_macros.h > \
 		$(MAKE_MACROS); $(CLEAN) $(MAKE_MACROS))
 
  GET_MACROS := $(wildcard $(SCRATCH_DIR)/make_macros.*)
@@ -420,7 +420,7 @@ ifdef USE_SWAN
 endif
 
  modules  +=	Master
- includes +=	Master
+ includes +=	Master Compilers
 
 vpath %.F $(modules)
 vpath %.h $(includes)
