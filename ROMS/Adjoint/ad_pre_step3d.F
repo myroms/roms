@@ -488,7 +488,7 @@
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,3,:))
-#   ifdef TS_MPDATA
+#   ifdef TS_MPDATA_NOT_YET
 !>    CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
@@ -1042,7 +1042,7 @@
 !!            DiaTwrk(i,j,k,itrc,iTvdif)=cff2
 !!            DiaTwrk(i,j,k,itrc,iTrate)=cff1
 #  endif
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
               cff4=1.0_r8/Hz(i,j,k)
 !>            tl_t(i,j,k,3,itrc)=tl_t(i,j,k,nnew,itrc)*cff4+            &
 !>   &                           t(i,j,k,nnew,itrc)*tl_cff4
@@ -1054,7 +1054,7 @@
               ad_t(i,j,k,3,itrc)=0.0_r8
 !>            tl_cff4=-cff4*cff4*tl_Hz(i,j,k)
 !>
-              tl_Hz(i,j,k)=tl_Hz(i,j,k)-cff4*cff4*ad_cff4
+              ad_Hz(i,j,k)=ad_Hz(i,j,k)-cff4*cff4*ad_cff4
               ad_cff4=0.0_r8
 #  endif
 !>            tl_t(i,j,k,nnew,itrc)=tl_cff1+tl_cff2
@@ -1167,7 +1167,7 @@
         END DO
       END DO
 
-#  ifndef TS_MPDATA
+#  ifndef TS_MPDATA_NOT_YET
 !
 !------------------------------------------------------------------------
 !  Time-step adjoint vertical advection of tracers.  Impose artificial
@@ -2320,7 +2320,7 @@
 #   endif
         END DO K_LOOP
       END DO T_LOOP1
-#  endif /* !TS_MPDATA */
+#  endif /* !TS_MPDATA_NOT_YET */
 
 #  ifdef SOLAR_SOURCE
 !
