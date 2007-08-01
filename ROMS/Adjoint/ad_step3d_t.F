@@ -629,7 +629,7 @@
         DO itrc=1,NT(ng)
           ltrc=MIN(NAT,itrc)
 
-# if defined SPLINES && !defined TS_MPDATA
+# if defined SPLINES && !defined TS_MPDATA_NOT_YET
 !
 !  Use conservative, parabolic spline reconstruction of BASIC STATE
 !  vertical diffusion derivatives.  Solve BASIC STATE tridiagonal
@@ -1501,7 +1501,7 @@
      &                             Va, ad_Va,                           &
      &                             Wa, ad_Wa)
       END DO
-# endif /* TS_MPDATA */
+# endif /* TS_MPDATA_NOT_YET */
 !
 !-----------------------------------------------------------------------
 !  Time-step adjoint vertical advection term.
@@ -3058,7 +3058,7 @@
 !>    CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    t(:,:,:,3,:))
+!>   &                    tl_t(:,:,:,3,:))
 !>
       CALL ad_mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,       &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
@@ -3069,11 +3069,11 @@
       DO itrc=1,NT(ng)
 !>      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
-!>   &                          t(:,:,:,3,itrc))
+!>   &                          tl_t(:,:,:,3,itrc))
 !>
         CALL ad_exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,          &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
-     &                             t(:,:,:,3,itrc))
+     &                             ad_t(:,:,:,3,itrc))
       END DO
 #  endif
 # endif
