@@ -2164,7 +2164,7 @@
      &                                 Bio_bak(i,k,ibio))*Hz(i,j,k)     &
 #  endif
      &                               )
-#ifdef TS_MPDATA
+#ifdef TS_MPDATA_NOT_YET
 !>            t(i,j,k,3,ibio)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
 !>
               tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)*Hz_inv(i,k)+     &

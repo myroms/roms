@@ -348,7 +348,7 @@
 !>            t(i,j,k,nnew,itrc)=t(i,j,k,nnew,itrc)-cff
 !>
               tl_t(i,j,k,nnew,itrc)=tl_t(i,j,k,nnew,itrc)-tl_cff
-#ifdef TS_MPDATA
+#ifdef TS_MPDATA_NOT_YET
               cff1=1.0_r8/Hz(i,j,k)
               tl_cff1=-cff1*cff1*tl_Hz(i,j,k)+                          &
 # ifdef TL_IOMS

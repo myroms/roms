@@ -420,7 +420,7 @@
         END DO
       END DO
 #  endif
-#  ifndef TS_MPDATA
+#  ifndef TS_MPDATA_NOT_YET
 !
 !-----------------------------------------------------------------------
 !  Compute intermediate tracer at n+1/2 time-step, t(i,j,k,3,itrc).
@@ -1092,7 +1092,7 @@
           END DO
         END DO T_LOOP2
       END DO J_LOOP1
-#  endif /* !TS_MPDATA */
+#  endif /* !TS_MPDATA_NOT_YET */
 !
 !-----------------------------------------------------------------------
 !  Start computation of tracers at n+1 time-step, t(i,j,k,nnew,itrc).
@@ -1177,7 +1177,7 @@
 !>            t(i,j,k,nnew,itrc)=cff1+cff2
 !>
               tl_t(i,j,k,nnew,itrc)=tl_cff1+tl_cff2
-#  ifdef TS_MPDATA
+#  ifdef TS_MPDATA_NOT_YET
               cff4=1.0_r8/Hz(i,j,k)
               tl_cff4=-cff4*cff4*tl_Hz(i,j,k)
 !>            t(i,j,k,3,itrc)=t(i,j,k,nnew,itrc)*cff4
@@ -1619,7 +1619,7 @@
 #  endif
       END DO
 #  ifdef DISTRIBUTE
-#   ifdef TS_MPDATA
+#   ifdef TS_MPDATA_NOT_YET
 !>    CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
