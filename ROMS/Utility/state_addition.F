@@ -37,7 +37,7 @@
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                           s1_stflx, s2_stflx,                    &
+     &                           s1_tflux, s2_tflux,                    &
 # endif
      &                           s1_t, s2_t,                            &
      &                           s1_u, s2_u,                            &
@@ -71,7 +71,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s2_stflx(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s2_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: s2_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: s2_u(LBi:,LBj:,:,:)
@@ -88,7 +88,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s1_stflx(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s1_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: s1_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: s1_u(LBi:,LBj:,:,:)
@@ -112,7 +112,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s2_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: s2_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
       real(r8), intent(inout) :: s2_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s2_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -129,7 +129,7 @@
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s1_stflx(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: s1_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #  endif
       real(r8), intent(inout) :: s1_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s1_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -193,7 +193,7 @@
       END DO
 #endif
 
-#ifdef ADJUST_STRESS
+#ifdef ADJUST_WSTRESS
 !
 !  Surface momentum stress.
 !
@@ -267,10 +267,10 @@
       DO itrc=1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            s1_stflx(i,j,Lout,itrc)=fac1*s1_stflx(i,j,Linp1,itrc)+      &
-     &                              fac2*s2_stflx(i,j,Linp2,itrc)
+            s1_tflux(i,j,Lout,itrc)=fac1*s1_tflux(i,j,Linp1,itrc)+      &
+     &                              fac2*s2_tflux(i,j,Linp2,itrc)
 #  ifdef MASKING
-            s1_stflx(i,j,Lout,itrc)=s1_t(i,j,Lout,itrc)*rmask(i,j)
+            s1_tflux(i,j,Lout,itrc)=s1_t(i,j,Lout,itrc)*rmask(i,j)
 #  endif
           END DO
         END DO
