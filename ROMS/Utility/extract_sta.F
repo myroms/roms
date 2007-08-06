@@ -49,9 +49,9 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE extract_sta2d (ng, model, Cgrid, ifield, gtype,          &
-     &                        LBi, UBi, LBj, UBj, Ascl, A,              &
-     &                        Npos, Xpos, Ypos, Apos)
+      SUBROUTINE extract_sta2d (ng, model, Cgrid, ifield, gtype,        &
+     &                          LBi, UBi, LBj, UBj, Ascl, A,            &
+     &                          Npos, Xpos, Ypos, Apos)
 !***********************************************************************
 !
       USE mod_param
@@ -85,8 +85,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: Itile, Jtile, Istr, Iend, Jstr, Jend
-      integer :: i1, i2, j1, j2, np, tile
+      integer :: Istr, Iend, Jstr, Jend
+      integer :: i1, i2, j1, j2, np
 
       real(r8), parameter :: Aspv = 0.0_r8
 
@@ -101,7 +101,10 @@
 !-----------------------------------------------------------------------
 !    
 #ifdef DISTRIBUTE
-      CALL get_tile (ng, TILE, Itile, Jtile, Istr, Iend, Jstr, Jend)
+      Istr=BOUNDS(ng)%Istr(MyRank)
+      Iend=BOUNDS(ng)%Iend(MyRank)
+      Jstr=BOUNDS(ng)%Jstr(MyRank)
+      Jend=BOUNDS(ng)%Jend(MyRank)
 #else
       Istr=1
       Iend=Lm(ng)
@@ -294,9 +297,9 @@
 #ifdef SOLVE3D
 !
 !***********************************************************************
-      SUBROUTINE extract_sta3d (ng, model, Cgrid, ifield, gtype,          &
-     &                        LBi, UBi, LBj, UBj, LBk, UBk, Ascl, A,    &
-     &                        Npos, Xpos, Ypos, Zpos, Apos)
+      SUBROUTINE extract_sta3d (ng, model, Cgrid, ifield, gtype,        &
+     &                          LBi, UBi, LBj, UBj, LBk, UBk, Ascl, A,  &
+     &                          Npos, Xpos, Ypos, Zpos, Apos)
 !***********************************************************************
 !
       USE mod_param
@@ -330,8 +333,8 @@
 !
 !  Local variable declarations.
 !
-      integer :: Itile, Jtile, Istr, Iend, Jstr, Jend
-      integer :: i1, i2, j1, j2, k, k1, k2, np, tile
+      integer :: Istr, Iend, Jstr, Jend
+      integer :: i1, i2, j1, j2, k, k1, k2, np
 
       real(r8), parameter :: Aspv = 0.0_r8
 
@@ -346,7 +349,10 @@
 !-----------------------------------------------------------------------
 !    
 # ifdef DISTRIBUTE
-      CALL get_tile (ng, TILE, Itile, Jtile, Istr, Iend, Jstr, Jend)
+      Istr=BOUNDS(ng)%Istr(MyRank)
+      Iend=BOUNDS(ng)%Iend(MyRank)
+      Jstr=BOUNDS(ng)%Jstr(MyRank)
+      Jend=BOUNDS(ng)%Jend(MyRank)
 # else
       Istr=1
       Iend=Lm(ng)

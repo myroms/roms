@@ -91,7 +91,6 @@
 #  else
       logical :: NSperiodic=.FALSE.
 #  endif
-      integer :: Itile, Jtile
 # endif
       integer :: Istr, Iend, Jstr, Jend
       integer :: grdangid, grdelid, grdfid, grddmid, grddnid
@@ -414,7 +413,10 @@
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
 # ifdef DISTRIBUTE
-      CALL get_tile (ng, MyRank, Itile, Jtile, Istr, Iend, Jstr, Jend)
+      Istr=BOUNDS(ng)%Istr(MyRank)
+      Iend=BOUNDS(ng)%Iend(MyRank)
+      Jstr=BOUNDS(ng)%Jstr(MyRank)
+      Jend=BOUNDS(ng)%Jend(MyRank)
 # else
       Istr=1
       Iend=Lm(ng)

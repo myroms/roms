@@ -34,9 +34,10 @@
 !
       logical :: Lwrite
 
-      integer :: Itile, Istr, Iend, Jtile, Jstr, Jend, tile
+      integer :: Itile, Jtile, Nghost, Ntiles, tile
+      integer :: Istr, Iend, Jstr, Jend
 #ifdef DISTRIBUTE
-      integer :: MaxHaloLenI, MaxHaloLenJ, Nghost
+      integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
       integer :: inp, out, itrc, ng, npts, sequence
 
@@ -126,6 +127,60 @@
       CALL read_PhyPar (model, inp, out, Lwrite)
 !
 !-----------------------------------------------------------------------
+!  Set lower and upper bounds indices per domain partition for all
+!  nested grids.
+!-----------------------------------------------------------------------
+!
+!  Allocate structure.
+!
+      IF (.not.allocated(BOUNDS)) THEN
+        allocate ( BOUNDS(Ngrids) )
+        DO ng=1,Ngrids
+          Ntiles=NtileI(ng)*NtileJ(ng)-1
+          allocate ( BOUNDS(ng) % tile (0:Ntiles) )
+          allocate ( BOUNDS(ng) % LBi  (0:Ntiles) )
+          allocate ( BOUNDS(ng) % UBi  (0:Ntiles) )
+          allocate ( BOUNDS(ng) % LBj  (0:Ntiles) )
+          allocate ( BOUNDS(ng) % UBj  (0:Ntiles) )
+          allocate ( BOUNDS(ng) % Iend (0:Ntiles) )
+          allocate ( BOUNDS(ng) % Istr (0:Ntiles) )
+          allocate ( BOUNDS(ng) % Jstr (0:Ntiles) )
+          allocate ( BOUNDS(ng) % Jend (0:Ntiles) )
+          allocate ( BOUNDS(ng) % IstrR(0:Ntiles) )
+          allocate ( BOUNDS(ng) % IstrU(0:Ntiles) )
+          allocate ( BOUNDS(ng) % IendR(0:Ntiles) )
+          allocate ( BOUNDS(ng) % JstrR(0:Ntiles) )
+          allocate ( BOUNDS(ng) % JstrV(0:Ntiles) )
+          allocate ( BOUNDS(ng) % JendR(0:Ntiles) )
+        END DO
+      END IF
+!
+!  Set bounds.
+!
+      Nghost=GHOST_POINTS
+      DO ng=1,Ngrids
+        DO tile=0,NtileI(ng)*NtileJ(ng)-1
+          BOUNDS(ng) % tile(tile) = tile
+          CALL get_tile (ng, tile, Itile, Jtile,                        &
+     &                   BOUNDS(ng) % Istr(tile),                       &
+     &                   BOUNDS(ng) % Iend(tile),                       &
+     &                   BOUNDS(ng) % Jstr(tile),                       &
+     &                   BOUNDS(ng) % Jend(tile),                       &
+     &                   BOUNDS(ng) % IstrR(tile),                      &
+     &                   BOUNDS(ng) % IstrU(tile),                      &
+     &                   BOUNDS(ng) % IendR(tile),                      &
+     &                   BOUNDS(ng) % JstrR(tile),                      &
+     &                   BOUNDS(ng) % JstrV(tile),                      &
+     &                   BOUNDS(ng) % JendR(tile))
+          CALL get_bounds (ng, tile, 0, Nghost, Itile, Jtile,           &
+     &                     BOUNDS(ng) % LBi(tile),                      &
+     &                     BOUNDS(ng) % UBi(tile),                      &
+     &                     BOUNDS(ng) % LBj(tile),                      &
+     &                     BOUNDS(ng) % UBj(tile))
+        END DO
+      END DO
+!
+!-----------------------------------------------------------------------
 !  Check tile partition starting and ending (I,J) indices for illegal
 !  domain decomposition parameters NtileI and NtileJ in standard input
 !  file.
@@ -148,8 +203,10 @@
           END IF
 #endif
           DO tile=0,NtileI(ng)*NtileJ(ng)-1
-            CALL get_tile (ng, tile, Itile, Jtile,                      &
-     &                     Istr, Iend, Jstr, Jend)
+            Istr=BOUNDS(ng)%Istr(tile)
+            Iend=BOUNDS(ng)%Iend(tile)
+            Jstr=BOUNDS(ng)%Jstr(tile)
+            Jend=BOUNDS(ng)%Jend(tile)
 #ifdef SOLVE3D
             npts=(Iend-Istr+1)*(Jend-Jstr+1)*N(ng)
 #else

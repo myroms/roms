@@ -195,7 +195,7 @@
 #ifdef SANITY_CHECK
       logical :: BOUNDED_AD, BOUNDED_TL, SAME_VAR
 # ifdef DISTRIBUTE
-      integer :: Istr, Iend, Itile, Jstr, Jend, Jtile
+      integer :: Istr, Iend, Jstr, Jend
 # endif
       integer :: IperAD, JperAD, KperAD, ivarAD
       integer :: IperTL, JperTL, KperTL, ivarTL
@@ -308,8 +308,10 @@
 !  Get check value for tangent linear state variable.
 !
 # ifdef DISTRIBUTE
-          CALL get_tile (ng, MyRank, Itile, Jtile,                      &
-     &                   Istr, Iend, Jstr, Jend)
+          Istr=BOUNDS(ng)%Istr(MyRank)
+          Iend=BOUNDS(ng)%Iend(MyRank)
+          Jstr=BOUNDS(ng)%Jstr(MyRank)
+          Jend=BOUNDS(ng)%Jend(MyRank)
           BOUNDED_TL=((Istr.le.IperTL).and.(IperTL.le.Iend)).and.       &
      &               ((Jstr.le.JperTL).and.(JperTL.le.Jend))
           BOUNDED_AD=((Istr.le.IperAD).and.(IperAD.le.Iend)).and.       &
@@ -440,8 +442,10 @@
 !  Get check value for adjoint state variable.
 !
 # ifdef DISTRIBUTE
-          CALL get_tile (ng, TILE, Itile, Jtile,                        &
-     &                   Istr, Iend, Jstr, Jend)
+          Istr=BOUNDS(ng)%Istr(MyRank)
+          Iend=BOUNDS(ng)%Iend(MyRank)
+          Jstr=BOUNDS(ng)%Jstr(MyRank)
+          Jend=BOUNDS(ng)%Jend(MyRank)
           BOUNDED_AD=((Istr.le.IperAD).and.(IperAD.le.Iend)).and.       &
      &               ((Jstr.le.JperAD).and.(JperAD.le.Jend))
           BOUNDED_TL=((Istr.le.IperTL).and.(IperTL.le.Iend)).and.       &

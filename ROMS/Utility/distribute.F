@@ -1346,7 +1346,7 @@
       integer :: LB, Lstr, MyError, Serror
       integer :: i, np, rank, request
 
-      integer :: bounds(2)
+      integer :: my_bounds(2)
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(2,0:NtileI(ng)*NtileJ(ng)-1) :: Abounds
 
@@ -1367,9 +1367,9 @@
 !
 !  Collect data lower and upper bound dimensions.
 !
-      bounds(1)=Nstr
-      bounds(2)=Nend
-      CALL mpi_allgather (bounds, 2, MPI_INTEGER, Abounds, 2,           &
+      my_bounds(1)=Nstr
+      my_bounds(2)=Nend
+      CALL mpi_allgather (my_bounds, 2, MPI_INTEGER, Abounds, 2,        &
      &                    MPI_INTEGER, OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
@@ -1505,7 +1505,7 @@
 
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
-      integer :: bounds(4), start(2), total(2)
+      integer :: my_bounds(4), start(2), total(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
@@ -1538,12 +1538,12 @@
 !
 !  Collect data lower and upper bounds dimensions.
 !
-      bounds(1)=LB1
-      bounds(2)=UB1
-      bounds(3)=LB2
-      bounds(4)=UB2
-      CALL mpi_gather (bounds, 4, MPI_INTEGER, Asize, 4, MPI_INTEGER,   &
-     &                 MyMaster, OCN_COMM_WORLD, MyError)
+      my_bounds(1)=LB1
+      my_bounds(2)=UB1
+      my_bounds(3)=LB2
+      my_bounds(4)=UB2
+      CALL mpi_gather (my_bounds, 4, MPI_INTEGER, Asize, 4,             &
+     &                 MPI_INTEGER, MyMaster, OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
@@ -1712,7 +1712,7 @@
 
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
-      integer :: bounds(4), start(2), total(2)
+      integer :: my_bounds(4), start(2), total(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
@@ -1745,12 +1745,12 @@
 !
 !  Collect data lower and upper bounds dimensions.
 !
-      bounds(1)=LB1
-      bounds(2)=UB1
-      bounds(3)=LB2
-      bounds(4)=UB2
-      CALL mpi_gather (bounds, 4, MPI_INTEGER, Asize, 4, MPI_INTEGER,   &
-     &                 MyMaster, OCN_COMM_WORLD, MyError)
+      my_bounds(1)=LB1
+      my_bounds(2)=UB1
+      my_bounds(3)=LB2
+      my_bounds(4)=UB2
+      CALL mpi_gather (my_bounds, 4, MPI_INTEGER, Asize, 4,             &
+     &                 MPI_INTEGER, MyMaster, OCN_COMM_WORLD, MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
@@ -2664,12 +2664,10 @@
 
       logical, save :: first = .TRUE.
 
+      integer :: Istr, Iend, Jstr, Jend
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Imin, Imax, Ioff, Jmin, Jmax, Joff
       integer :: unit
-
-# include "tile.h"
-# include "set_bounds.h"
 !
 !------------------------------------------------------------------------
 !  Write out requested field.
@@ -2686,6 +2684,18 @@
       END IF
 !
 !  Write out field including ghost-points.
+!
+      Istr=BOUNDS(ng)%Istr(tile)
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+      IstrR=BOUNDS(ng)%IstrR(tile)
+      IstrU=BOUNDS(ng)%IstrU(tile)
+      IendR=BOUNDS(ng)%IendR(tile)
+      JstrR=BOUNDS(ng)%JstrR(tile)
+      JstrV=BOUNDS(ng)%JstrV(tile)
+      JendR=BOUNDS(ng)%JendR(tile)
 !
       Imin=0
       Imax=Lm(ng)+1

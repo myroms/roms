@@ -80,6 +80,34 @@
         implicit none
 !
 !-----------------------------------------------------------------------
+!  Lower and upper bounds indices per domain partition for all grids.
+!-----------------------------------------------------------------------
+!
+        TYPE T_BOUNDS
+          integer, pointer :: tile(:)  ! tile partition
+
+          integer, pointer :: LBi(:)   ! lower bound I-dimension
+          integer, pointer :: UBi(:)   ! upper bound I-dimension
+          integer, pointer :: LBj(:)   ! lower bound J-dimension
+          integer, pointer :: UBj(:)   ! upper bound J-dimension
+
+          integer, pointer :: Istr(:)  ! starting tile I-direction
+          integer, pointer :: Iend(:)  ! ending   tile I-direction
+          integer, pointer :: Jstr(:)  ! starting tile J-direction
+          integer, pointer :: Jend(:)  ! ending   tile J-direction
+
+          integer, pointer :: IstrR(:) ! starting tile I-direction (RHO)
+          integer, pointer :: IstrU(:) ! starting tile I-direction (U)
+          integer, pointer :: IendR(:) ! ending   tile I-direction (RHO)
+
+          integer, pointer :: JstrR(:) ! starting tile J-direction (RHO)
+          integer, pointer :: JstrV(:) ! starting tile J-direction (V)
+          integer, pointer :: JendR(:) ! ending   tile J-direction (RHO)
+        END TYPE T_BOUNDS
+
+        TYPE (T_BOUNDS), allocatable :: BOUNDS(:)
+!
+!-----------------------------------------------------------------------
 !  Model grid(s) parameters.
 !-----------------------------------------------------------------------
 !

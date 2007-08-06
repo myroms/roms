@@ -49,6 +49,7 @@
 !  Local variable declarations.
 !
       integer :: Iend, Istr, Jend, Jstr
+      integer :: IstrR, IstrU, IendR, JstrR, JstrV, JendR
       integer :: Imin, Imax, Jmin, Jmax
       integer :: MyType
 !
@@ -82,7 +83,9 @@
 !  Set physical, overlaping (Nghost>0) or non-overlaping (Nghost=0) 
 !  grid bounds according to tile rank.
 !
-      CALL get_tile (ng, tile, Itile, Jtile, Istr, Iend, Jstr, Jend)
+      CALL get_tile (ng, tile, Itile, Jtile, Istr, Iend, Jstr, Jend,    &
+     &               IstrR, IstrU, IendR, JstrR, JstrV, JendR)
+
 !
       IF (Itile.eq.0) THEN
         LBi=Imin
@@ -122,7 +125,9 @@
       END SUBROUTINE get_bounds
 
       SUBROUTINE get_tile (ng, tile, Itile, Jtile,                      &
-     &                     Istr, Iend, Jstr, Jend)
+     &                     Istr, Iend, Jstr, Jend,                      &
+     &                     IstrR, IstrU, IendR,                         &
+     &                     JstrR, JstrV, JendR)
 !
 !=======================================================================
 !                                                                      !
@@ -143,6 +148,14 @@
 !     Jstr       Starting tile index in the J-direction.               !
 !     Jend       Ending   tile index in the J-direction.               !
 !                                                                      !
+!     IstrR      Starting tile index in the I-direction (RHO-points).  !
+!     IstrU      Starting tile index in the I-direction (U-points).    !
+!     IendR      Ending   tile index in the I-direction (RHO_points).  !
+!                                                                      !
+!     JstrR      Starting tile index in the J-direction (RHO-points).  !
+!     JstrV      Starting tile index in the J-direction (V-points).    !
+!     JendR      Ending   tile index in the J-direction (RHO_points).  !
+!                                                                      !
 !======================================================================!
 !
       USE mod_param
@@ -152,7 +165,10 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
-      integer, intent(out) :: Itile, Jtile, Iend, Istr, Jend, Jstr
+      integer, intent(out) :: Itile, Jtile
+      integer, intent(out) :: Iend, Istr, Jend, Jstr
+      integer, intent(out) :: IstrR, IstrU, IendR
+      integer, intent(out) :: JstrR, JstrV, JendR
 !
 !  Local variable declarations.
 !
@@ -182,6 +198,8 @@
       Jend=Jstr+ChunkSizeJ-1
       Jstr=MAX(Jstr,1)
       Jend=MIN(Jend,Mm(ng))
+
+#include "set_bounds.h"
 
       RETURN
       END SUBROUTINE get_tile

@@ -185,7 +185,7 @@
       integer :: IperAD, JperAD, KperAD, ivarAD
       integer :: IoutTL, JoutTL, KoutTL, ivarTL
 #ifdef DISTRIBUTE
-      integer :: Istr, Iend, Itile, Jstr, Jend, Jtile
+      integer :: Istr, Iend, Jstr, Jend
 #endif
       integer, allocatable :: StateVar(:)
 
@@ -539,8 +539,10 @@
 !  Extract solution at requested points.
 !
 #ifdef DISTRIBUTE
-          CALL get_tile (ng, MyRank, Itile, Jtile,                      &
-     &                   Istr, Iend, Jstr, Jend)
+          Istr=BOUNDS(ng)%Istr(MyRank)
+          Iend=BOUNDS(ng)%Iend(MyRank)
+          Jstr=BOUNDS(ng)%Jstr(MyRank)
+          Jend=BOUNDS(ng)%Jend(MyRank)
           BOUNDED_TL=((Istr.le.IoutTL).and.(IoutTL.le.Iend)).and.       &
      &               ((Jstr.le.JoutTL).and.(JoutTL.le.Jend))
 #else

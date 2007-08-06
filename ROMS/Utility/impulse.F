@@ -103,7 +103,7 @@
       logical, dimension(NV) :: get_var
       logical, dimension(NV) :: have_var
 
-      integer :: Istr, Iend, Itile, Jstr, Jend, Jtile
+      integer :: Istr, Iend, Jstr, Jend
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: LBi, UBi, LBj, UBj
       integer :: INPncid, INPvid
@@ -120,18 +120,21 @@
 !  Get physical non-overlapping horizontal tile bounds.
 !-----------------------------------------------------------------------
 !
+      LBi=LBOUND(GRID(ng)%h,DIM=1)
+      UBi=UBOUND(GRID(ng)%h,DIM=1)
+      LBj=LBOUND(GRID(ng)%h,DIM=2)
+      UBj=UBOUND(GRID(ng)%h,DIM=2)
 # ifdef DISTRIBUTE
-      CALL get_tile (ng, TILE, Itile, Jtile, Istr, Iend, Jstr, Jend)
+      Istr=BOUNDS(ng)%Istr(MyRank)
+      Iend=BOUNDS(ng)%Iend(MyRank)
+      Jstr=BOUNDS(ng)%Jstr(MyRank)
+      Jend=BOUNDS(ng)%Jend(MyRank)
 # else
       Istr=1
       Iend=Lm(ng)
       Jstr=1
       Jend=Mm(ng)
 # endif
-      LBi=LBOUND(GRID(ng)%h,DIM=1)
-      UBi=UBOUND(GRID(ng)%h,DIM=1)
-      LBj=LBOUND(GRID(ng)%h,DIM=2)
-      UBj=UBOUND(GRID(ng)%h,DIM=2)
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------

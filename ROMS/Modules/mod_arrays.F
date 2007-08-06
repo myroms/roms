@@ -55,9 +55,9 @@
 !
 !  Local variable declarations.
 !
-      integer :: ng, gtype
+      integer :: ng
       integer :: LBi, UBi, LBj, UBj
-      integer :: Itile, Jtile, tile, subs, thread
+      integer :: tile, subs, thread
 
       integer, parameter :: model = 0
 !
@@ -66,11 +66,12 @@
 !-----------------------------------------------------------------------
 !
       IF (allocate_vars) then
-        tile=-1
-        gtype=0
+        tile=0
         DO ng=1,Ngrids
-          CALL get_bounds (ng, TILE, gtype, NghostPoints,               &
-     &                     Itile, Jtile, LBi, UBi, LBj, UBj)
+          LBi=BOUNDS(ng)%LBi(TILE)
+          UBi=BOUNDS(ng)%UBi(TILE)
+          LBj=BOUNDS(ng)%LBj(TILE)
+          UBj=BOUNDS(ng)%UBj(TILE)
 #ifdef AVERAGES
           CALL allocate_average (ng, LBi, UBi, LBj, UBj)
 #endif

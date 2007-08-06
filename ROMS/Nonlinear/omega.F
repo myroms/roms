@@ -277,17 +277,17 @@
 !
 !  Local variable declarations.
 !
-      integer :: Itile, Jtile, Istr, Iend, Jstr, Jend
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: IstrR, IendR, JstrR, JendR
       integer :: i, j, k
 !
 !-----------------------------------------------------------------------
 !  Get physical non-overlaping horizontal tile bounds.
 !-----------------------------------------------------------------------
 !
-      CALL get_tile (ng, tile, Itile, Jtile, Istr, Iend, Jstr, Jend)
-
-#include "set_bounds.h"
+      IstrR=BOUNDS(ng)%IstrR(tile)
+      IendR=BOUNDS(ng)%IendR(tile)
+      JstrR=BOUNDS(ng)%JstrR(tile)
+      JendR=BOUNDS(ng)%JendR(tile)
 !
 !-----------------------------------------------------------------------
 !  Scale omega vertical velocity to m/s.

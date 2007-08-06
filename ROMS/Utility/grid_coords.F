@@ -35,7 +35,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Itile, Jtile, Istr, Iend, Jstr, Jend
+      integer :: IstrR, Iend, JstrR, Jend
       integer :: LBi, UBi, LBj, UBj
       integer :: i, j, k, l, mc
 
@@ -61,14 +61,15 @@
 !-----------------------------------------------------------------------
 !
 # ifdef DISTRIBUTE
-      CALL get_tile (ng, MyRank, Itile, Jtile, Istr, Iend, Jstr, Jend)
-      IF (Itile.eq.0) Istr=0
-      IF (Jtile.eq.0) Jstr=0
+      IstrR=BOUNDS(ng)%IstrR(MyRank)
+      Iend =BOUNDS(ng)%Iend (MyRank)
+      JstrR=BOUNDS(ng)%JstrR(MyRank)
+      Jend =BOUNDS(ng)%Jend (MyRank)
 # else
-      Istr=0
-      Iend=Lm(ng)
-      Jstr=0
-      Jend=Mm(ng)
+      IstrR=0
+      Iend =Lm(ng)
+      JstrR=0
+      Jend =Mm(ng)
 # endif
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -86,7 +87,7 @@
         mc=FLT(ng)%Findex(0)
         IF (FLT(ng)%Findex(0).gt.0) THEN
           CALL hindices (ng, LBi, UBi, LBj, UBj,                        &
-     &                   Istr, Iend+1, Jstr, Jend+1,                    &
+     &                   IstrR, Iend+1, JstrR, Jend+1,                  &
      &                   GRID(ng)%angler,                               &
      &                   GRID(ng)%lonr,                                 &
      &                   GRID(ng)%latr,                                 &
@@ -116,8 +117,8 @@
       DO l=1,Nfloats(ng)
         i=INT(FLT(ng)%Tinfo(ixgrd,l))
         j=INT(FLT(ng)%Tinfo(iygrd,l))
-        IF (((Istr.le.i).and.(i.le.Iend)).and.                          &
-     &      ((Jstr.le.j).and.(j.le.Jend))) THEN
+        IF (((IstrR.le.i).and.(i.le.Iend)).and.                         &
+     &      ((JstrR.le.j).and.(j.le.Jend))) THEN
           MyThread(l)=.TRUE.
         ELSE
           MyThread(l)=.FALSE.
@@ -193,7 +194,7 @@
         END DO
         IF (mc.gt.0) THEN
           CALL hindices (ng, LBi, UBi, LBj, UBj,                        &
-     &                   Istr, Iend+1, Jstr, Jend+1,                    &
+     &                   IstrR, Iend+1, JstrR, Jend+1,                  &
      &                   GRID(ng)%angler,                               &
      &                   GRID(ng)%lonr,                                 &
      &                   GRID(ng)%latr,                                 &

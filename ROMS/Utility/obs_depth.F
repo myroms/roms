@@ -36,7 +36,6 @@
 
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Istr, Iend, Jstr, Jend
-      integer :: Itile, Jtile
       integer :: Mstr, Mend, i, iobs, itrc, j
 
       real(r8) :: IniVal = 0.0_r8
@@ -45,9 +44,18 @@
 !  Get physical no-overlapping horizontal indices.
 !-----------------------------------------------------------------------
 !
-     CALL get_tile (ng, TILE, Itile, Jtile, Istr, Iend, Jstr, Jend)
+      Istr=BOUNDS(ng)%Istr(MyRank)
+      Iend=BOUNDS(ng)%Iend(MyRank)
+      Jstr=BOUNDS(ng)%Jstr(MyRank)
+      Jend=BOUNDS(ng)%Jend(MyRank)
 
-# include "set_bounds.h"
+      IstrR=BOUNDS(ng)%IstrR(MyRank)
+      IstrU=BOUNDS(ng)%IstrU(MyRank)
+      IendR=BOUNDS(ng)%IendR(MyRank)
+
+      JstrR=BOUNDS(ng)%JstrR(MyRank)
+      JstrV=BOUNDS(ng)%JstrV(MyRank)
+      JendR=BOUNDS(ng)%JendR(MyRank)
 !
 !-----------------------------------------------------------------------
 !  If distributed-memory and Zobs < 0, zero-out Zobs values in all

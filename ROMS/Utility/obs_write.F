@@ -48,7 +48,7 @@
       integer :: LBi, UBi, LBj, UBj
       integer :: Istr, Iend, Jstr, Jend
 # ifdef DISTRIBUTE
-      integer :: Itile, Jtile, Ncollect
+      integer :: Ncollect
 # endif
       integer :: Mstr, Mend, ObsSum, ObsVoid
       integer :: i, ie, is, iobs, itrc, iweight, status, varid
@@ -79,7 +79,10 @@
 !  Get physical non-overlapping horizontal tile bounds.
 !
 # ifdef DISTRIBUTE
-        CALL get_tile (ng, TILE, Itile, Jtile, Istr, Iend, Jstr, Jend)
+        Istr=BOUNDS(ng)%Istr(MyRank)
+        Iend=BOUNDS(ng)%Iend(MyRank)
+        Jstr=BOUNDS(ng)%Jstr(MyRank)
+        Jend=BOUNDS(ng)%Jend(MyRank)
 # else
         Istr=1
         Iend=Lm(ng)
