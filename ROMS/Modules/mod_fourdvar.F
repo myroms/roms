@@ -899,7 +899,7 @@
             RETURN
           END IF
           start(1)=1
-          total(1)=Nsurvey(ng)
+          total(1)=NstateVar(ng)
           status=nf90_get_var(ncOBSid(ng), varid,                       &
      &                        FOURDVAR(ng)%ObsVar, start, total)
           IF (status.ne.nf90_noerr) THEN
