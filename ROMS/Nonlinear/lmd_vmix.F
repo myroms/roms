@@ -292,7 +292,7 @@
 !
 !  Smooth gradient Richardson number vertically at the interior points.
 !
-      DO k=N-2,2,-1
+      DO k=N(ng)-2,2,-1
         DO j=Jstr,Jend
           DO i=Istr,Iend
             Rig(i,j,k)=0.25_r8*Rig(i,j,k-1)+                            &

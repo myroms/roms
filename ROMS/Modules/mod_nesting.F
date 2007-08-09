@@ -576,5 +576,5 @@
       END SUBROUTINE allocate_nesting4d
 # endif
 
-#endif NESTING
+#endif
       END MODULE mod_nesting
