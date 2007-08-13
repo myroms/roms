@@ -331,6 +331,12 @@ ifneq "$(MAKECMDGOALS)" "clean"
   include $(COMPILERS)/$(OS)-$(strip $(FORT)).mk
 endif
 
+ifdef USE_MPI
+ ifdef USE_OpenMP
+  $(error You cannot activate USE_MPI and USE_OpenMP at the same time!)
+ endif
+endif
+
 #--------------------------------------------------------------------------
 #  Pass the platform variables to the preprocessor as macros. Convert to
 #  valid, upper-case identifiers. Attach ROMS application  CPP options.

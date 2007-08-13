@@ -119,6 +119,8 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
  setenv USE_MPIF90          on
  setenv FORT                pgi
 
+#setenv USE_OpenMP          on
+
 #setenv USE_DEBUG           on
  setenv USE_LARGE           on
 #setenv USE_NETCDF4         on
@@ -143,6 +145,13 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 # pick up the application-specific code from the appropriate place.
 
  cd ${MY_ROMS_SRC}
+
+# Stop if activating both MPI and OpenMP at the same time.
+
+if ( ${?USE_MPI} & ${?USE_OpenMP} ) then
+  echo "You cannot activate USE_MPI and USE_OpenMP at the same time!"
+  exit 1
+endif
 
 # Remove build directory. 
 

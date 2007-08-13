@@ -402,8 +402,8 @@
 # endif
       real(r8), intent(inout) :: nl_zeta(LBi:UBi,LBj:UBj,3)
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: nl_tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: nl_tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX

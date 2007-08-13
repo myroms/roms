@@ -120,6 +120,8 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
  export        USE_MPIF90=on
  export              FORT=ifort
 
+#export        USE_OpenMP=on
+
 #export         USE_DEBUG=on
  export         USE_LARGE=on
 #export       USE_NETCDF4=on
