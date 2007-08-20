@@ -238,14 +238,14 @@
      &               IJspv, rectangular)
 
       IF (iflag.eq.linear) THEN
-        CALL linterp2d (ng, 1, Nx, 1, Nx,                               &
+        CALL linterp2d (ng, 1, Nx, 1, Ny,                               &
      &                  Xinp, Yinp, Ainp,                               &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Istr, Iend, Jstr, Jend,                         &
      &                  Iout, Jout, Xout, Yout,                         &
      &                  Aout, my_min, my_max)
       ELSE IF (iflag.eq.cubic) THEN
-        CALL cinterp2d (ng, 1, Nx, 1, Nx,                               &
+        CALL cinterp2d (ng, 1, Nx, 1, Ny,                               &
      &                  Xinp, Yinp, Ainp,                               &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Istr, Iend, Jstr, Jend,                         &
