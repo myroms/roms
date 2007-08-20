@@ -380,13 +380,13 @@
         END IF
 #ifdef ADJUST_WSTRESS
         IF ((model.eq.5).or.(model.eq.6)) THEN
-          IF (.not.have_var(idUstr).and.get_var(idUsms)) THEN
+          IF (.not.have_var(idUsms).and.get_var(idUsms)) THEN
             WRITE (stdout,10) string, TRIM(Vname(1,idUsms)),            &
      &                        TRIM(ncname)
             exit_flag=2
             RETURN
           END IF
-          IF (.not.have_var(idUstr).and.get_var(idVsms)) THEN
+          IF (.not.have_var(idUsms).and.get_var(idVsms)) THEN
             WRITE (stdout,10) string, TRIM(Vname(1,idVsms)),            &
      &                        TRIM(ncname)
             exit_flag=2

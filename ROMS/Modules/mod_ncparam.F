@@ -3010,6 +3010,15 @@
           idSvar(isTvar(i))=idTvar(i)
         END DO
 #endif   
+#ifdef ADJUST_WSTRESS
+        idSvar(isUstr)=idUsms
+        idSvar(isVstr)=idVsms
+#endif
+#ifdef ADJUST_STFLUX
+        DO i=1,MT
+          idSvar(isTsur(i))=idTsur(i)
+        END DO
+#endif
 !
   50    FORMAT (/,' MOD_NCPARAM - Unable to open variable information', &
      &          ' file: ',/,15x,a,/,15x,'Default file is located in',   &

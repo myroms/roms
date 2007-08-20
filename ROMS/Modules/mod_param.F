@@ -535,6 +535,12 @@
 # endif
 #endif
           NSV(ng)=NT(ng)+5
+#ifdef ADJUST_WSTRESS
+          NSV(ng)=NSV(ng)+2
+#endif
+#ifdef ADJUST_STFLUX
+          NSV(ng)=NSV(ng)+NT(ng)
+#endif
         END DO
 !
 !  Set maximum number of tracer between all nested grids.

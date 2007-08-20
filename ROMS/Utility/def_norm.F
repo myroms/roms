@@ -382,7 +382,7 @@
 !
         DO itrc=1,NT(ng)
           Vinfo( 1)=Vname(1,idTsur(itrc))
-          WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
+          WRITE (Vinfo( 2),20) TRIM(Vname(2,idTsur(itrc)))
           Vinfo( 3)='nondimensional'
           Vinfo(14)=Vname(4,idTsur(itrc))
           Vinfo(16)=Vname(1,idtime)
@@ -396,7 +396,7 @@
 !  Define surface U-momentum stress.
 !
         Vinfo( 1)=Vname(1,idUsms)
-        WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
+        WRITE (Vinfo( 2),20) TRIM(Vname(2,idUsms))
         Vinfo( 3)='nondimensional'
         Vinfo(14)=Vname(4,idUsms)
         Vinfo(16)=Vname(1,idtime)
@@ -409,7 +409,7 @@
 !  Define surface V-momentum stress.
 !
         Vinfo( 1)=Vname(1,idVsms)
-        WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
+        WRITE (Vinfo( 2),20) TRIM(Vname(2,idVsms))
         Vinfo( 2)=Vname(2,idVsms)
         Vinfo( 3)='nondimensional'
         Vinfo(14)=Vname(4,idVsms)

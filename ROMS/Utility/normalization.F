@@ -2071,7 +2071,7 @@
 !
 !  2D norm at U-stress points.
 !
-      IF (Cnorm(isUbar)) THEN
+      IF (Cnorm(isUstr)) THEN
         IF (Master) THEN
           WRITE (stdout,30) '2D normalization factors at SUS-points'
           CALL my_flush (stdout)
@@ -2142,12 +2142,12 @@
 #  ifdef MASKING
      &                   umask,                                         &
 #  endif
-     &                   HnormU)
+     &                   HnormSUS)
       END IF
 !
 !  2D norm at V-stress points.
 !
-      IF (Cnorm(isVbar)) THEN
+      IF (Cnorm(isVstr)) THEN
         IF (Master) THEN
           WRITE (stdout,30) '2D normalization factors at SVS-points'
           CALL my_flush (stdout)

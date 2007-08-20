@@ -30,6 +30,9 @@
 !***********************************************************************
 !
       USE mod_param
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+# endif
       USE mod_ocean
 !
 !  Imported variable declarations.
@@ -43,7 +46,14 @@
       CALL cost_norm_tile (ng, Istr, Iend, Jstr, Jend,                  &  
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Linp,                                        &
+# ifdef ADJUST_WSTRESS
+     &                     FORCES(ng) % ad_ustr,                        &
+     &                     FORCES(ng) % ad_vstr,                        &
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+     &                     FORCES(ng) % ad_tflux,                       &
+#  endif
      &                     OCEAN(ng) % ad_t,                            &
      &                     OCEAN(ng) % ad_u,                            &
      &                     OCEAN(ng) % ad_v,                            &
@@ -59,7 +69,13 @@
       SUBROUTINE cost_norm_tile (ng, Istr, Iend, Jstr, Jend,            &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Linp,                                  &
+# ifdef ADJUST_WSTRESS
+     &                           ad_ustr, ad_vstr,                      &
+# endif
 # ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+     &                           ad_tflux,                              &
+#  endif
      &                           ad_t,                                  &
      &                           ad_u,                                  &
      &                           ad_v,                                  &
@@ -88,7 +104,14 @@
       integer, intent(in) :: Linp
 !
 # ifdef ASSUMED_SHAPE
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:)
+#  endif
 #  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: ad_tflux(LBi:,LBj:,:,:)
+#   endif
       real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
@@ -98,7 +121,14 @@
 #  endif
       real(r8), intent(in) :: ad_zeta(LBi:,LBj:,:)
 # else
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+#  endif
 #  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#   endif
       real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
@@ -145,6 +175,26 @@
         END DO
       END DO
 
+# ifdef ADJUST_WSTRESS
+!
+!  Surface momentum stress gradient norm.
+!
+
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          cff=ad_ustr(i,j,Linp)*ad_ustr(i,j,Linp)
+          my_CostGrad(0)=my_CostGrad(0)+cff
+          my_CostGrad(isUstr)=my_CostGrad(isUstr)+cff
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+          cff=ad_vstr(i,j,Linp)*ad_vstr(i,j,Linp)
+          my_CostGrad(0)=my_CostGrad(0)+cff
+          my_CostGrad(isVstr)=my_CostGrad(isVstr)+cff
+        END DO
+      END DO
+# endif
 # if !defined SOLVE3D
 !
 !  2D momentum gradient norm.
@@ -197,6 +247,20 @@
           END DO
         END DO
       END DO
+#  ifdef ADJUST_STFLUX
+!
+!  Surface tracers flux gradient norm.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+            cff=ad_tflux(i,j,Linp,itrc)*ad_tflux(i,j,Linp,itrc)
+            my_CostGrad(0)=my_CostGrad(0)+cff
+            my_CostGrad(isTsur(itrc))=my_CostGrad(isTsur(itrc))+cff
+          END DO
+        END DO
+      END DO
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------
