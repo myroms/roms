@@ -81,22 +81,22 @@
 
 ! Phytoplankton half satuation constant for Nitrate [millimole_N/m3].
   
-       KNO3S == 1.0d-3                     ! small biomass
-       KNO3L == 3.00d-3                    ! large biomass
+       KNO3S == 1.0d0                      ! small biomass
+       KNO3L == 3.0d0                      ! large biomass
 
 ! Phytoplankton half satuation constant for Ammonium [millimole_N/m3].
 
-       KNH4S == 0.1d-3                     ! small biomass
-       KNH4L == 0.30d-3                    ! large biomass
+       KNH4S == 0.1d0                      ! small biomass
+       KNH4L == 0.3d0                      ! large biomass
 
 ! Phytoplankton half satuation constant for Silicate [millimole_Si/m3].
 
-        KSiL == 6.00d-3                    ! large biomass
+        KSiL == 6.0d0                      ! large biomass
 
 ! Phytoplankton Ammonium inhibition coefficient [m3/millimole_N].
 
-      PusaiS == 1.5d3                      ! small biomass
-      PusaiL == 1.5d3                      ! large biomass
+      PusaiS == 1.5d0                      ! small biomass
+      PusaiL == 1.5d0                      ! large biomass
 
 ! Phytoplankton temperature coefficient for photosynthetic rate [1/Celsius].
 
@@ -121,8 +121,8 @@
 
 ! Phytoplankton mortality rate at 0 Celsius [m3/millimole_N 1/day].
 
-      MorPS0 == 58.5d0                     ! small biomass
-      MorPL0 == 29.0d0                     ! large biomass
+      MorPS0 == 58.5d-3                    ! small biomass
+      MorPL0 == 29.0d-3                    ! large biomass
 
 ! Phytoplankton temperature coefficient for mortality [1/Celsius].
 
@@ -147,9 +147,9 @@
 
 ! Zooplankton Ivlev constant [m3/millimole_N].
 
-        LamS == 1.4d3                      ! small biomass
-        LamL == 1.4d3                      ! large biomass
-        LamP == 1.4d3                      ! predator biomass
+        LamS == 1.4d0                      ! small biomass
+        LamL == 1.4d0                      ! large biomass
+        LamP == 1.4d0                      ! predator biomass
 
 ! Zooplankton half-saturation coefficient for ingestion used only
 ! when the Holling-type grazing formulation is activated [millimole_N/m3].
@@ -164,24 +164,24 @@
 
 ! Zooplankton threshold value for grazing [millimole_N/m3].
 
-   PS2ZSstar == 4.3d-5                     ! small Zoo on small Phy
-   PS2ZLstar == 4.0d-5                     ! large Zoo on small Phy
-   PL2ZLstar == 4.0d-5                     ! large Zoo on large Phy
-   ZS2ZLstar == 4.0d-5                     ! large Zoo on small Zoo
-   PL2ZPstar == 4.0d-5                     ! predator Zoo on large Phy
-   ZS2ZPstar == 4.0d-5                     ! predator Zoo on small Zoo
-   ZL2ZPstar == 4.0d-5                     ! predator Zoo on large Zoo
+   PS2ZSstar == 4.3d-2                     ! small Zoo on small Phy
+   PS2ZLstar == 4.0d-2                     ! large Zoo on small Phy
+   PL2ZLstar == 4.0d-2                     ! large Zoo on large Phy
+   ZS2ZLstar == 4.0d-2                     ! large Zoo on small Zoo
+   PL2ZPstar == 4.0d-2                     ! predator Zoo on large Phy
+   ZS2ZPstar == 4.0d-2                     ! predator Zoo on small Zoo
+   ZL2ZPstar == 4.0d-2                     ! predator Zoo on large Zoo
 
 ! Zooplankton grazing inhibition coefficient [m3/millimole_N].
 
-     PusaiPL == 4.605d3                    ! predator Zoo on large Phy    
-     PusaiZS == 3.010d3                    ! predator Zoo on small Zoo    
+     PusaiPL == 4.605d0                    ! predator Zoo on large Phy    
+     PusaiZS == 3.010d0                    ! predator Zoo on small Zoo    
 
 ! Zooplankton mortality rate at 0 Celsius [m3/millimole_N 1/day].
 
-      MorZS0 == 58.5d0                     ! small biomass
-      MorZL0 == 58.5d0                     ! large biomass
-      MorZP0 == 58.5d0                     ! predator biomass
+      MorZS0 == 58.5d-3                    ! small biomass
+      MorZL0 == 58.5d-3                    ! large biomass
+      MorZP0 == 58.5d-3                    ! predator biomass
 
 ! Zooplankton temperature coefficient for mortality [1/Celsius].
 
