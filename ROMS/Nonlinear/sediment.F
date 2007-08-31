@@ -874,9 +874,11 @@
           DO ised=1,NST
             cff3=cff3+bed_mass(i,j,1,nnew,ised)
           END DO
+          IF (cff3.eq.0.0_r8) THEN
+            cff3=eps
+          END IF
           DO ised=1,NST
-            bed_frac(i,j,1,ised)=bed_mass(i,j,1,nnew,ised)/             &
-     &                           MAX(cff3,eps)
+            bed_frac(i,j,1,ised)=bed_mass(i,j,1,nnew,ised)/cff3
           END DO
 !
           cff1=1.0_r8
@@ -890,7 +892,7 @@
             cff4=cff4*Srho(ised,ng)**bed_frac(i,j,1,ised)
           END DO
           bottom(i,j,itauc)=cff1
-          bottom(i,j,isd50)=cff2
+          bottom(i,j,isd50)=MIN(cff2,Zob(ng))
           bottom(i,j,iwsed)=cff3
           bottom(i,j,idens)=MAX(cff4,1050.0_r8)
         END DO
@@ -963,9 +965,11 @@
               DO ised=1,NST
                 cff3=cff3+bed_mass(i,j,1,ised)
               END DO
+              IF (cff3.eq.0.0_r8) THEN
+                cff3=eps
+              END IF
               DO ised=1,NST
-                bed_frac(i,j,1,ised)=bed_mass(i,j,1,ised)/              &
-     &                               MAX(cff3,eps)
+                bed_frac(i,j,1,ised)=bed_mass(i,j,1,ised)/cff3
               END DO
 !
 !  Update bed thickness of top layer.
@@ -1328,10 +1332,12 @@
             DO ised=1,NST
               cff3=cff3+bed_mass(i,j,k,nnew,ised)
             END DO
+            IF (cff3.eq.0.0_r8) THEN
+              cff3=eps
+            END IF
             bed(i,j,k,ithck)=0.0_r8
             DO ised=1,NST
-              bed_frac(i,j,k,ised)=bed_mass(i,j,k,nnew,ised)/           &
-     &                             MAX(cff3,eps)
+              bed_frac(i,j,k,ised)=bed_mass(i,j,k,nnew,ised)/cff3
               bed(i,j,k,ithck)=MAX(bed(i,j,k,ithck)+                    &
      &                         bed_mass(i,j,k,nnew,ised)/               &
      &                         (Srho(ised,ng)*                          &
@@ -1413,9 +1419,11 @@
               DO ised=1,NST
                 cff3=cff3+bed_mass(i,j,1,nnew,ised)
               END DO
+              IF (cff3.eq.0.0_r8) THEN
+                cff3=eps
+              END IF
               DO ised=1,NST
-                bed_frac(i,j,1,ised)=bed_mass(i,j,1,nnew,ised)/         &
-     &                               MAX(cff3,eps)
+                bed_frac(i,j,1,ised)=bed_mass(i,j,1,nnew,ised)/cff3
               END DO
 !
 !  Upate bed thickness of top layer.
@@ -1467,7 +1475,7 @@
             cff4=cff4*Srho(ised,ng)**bed_frac(i,j,1,ised)
           END DO
           bottom(i,j,itauc)=cff1
-          bottom(i,j,isd50)=cff2
+          bottom(i,j,isd50)=MIN(cff2,Zob(ng))
           bottom(i,j,iwsed)=cff3
           bottom(i,j,idens)=MAX(cff4,1050.0_r8)
         END DO
