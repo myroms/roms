@@ -717,12 +717,17 @@
         logical, dimension(Ngrids) :: LwrtTLM    ! Write tangent file
         logical, dimension(Ngrids) :: LwrtTLF    ! Write impulse file
 !
-!  Switch to write adjoint out 2D state arrays instead of IO solution
+!  Switch to write out adjoint 2D state arrays instead of IO solution
 !  arrays and adjoint ocean time. This is used in 4DVAR for IO
 !  maniputations.
 !
         logical, dimension(Ngrids) :: LwrtState2d
         logical, dimension(Ngrids) :: LwrtTime
+!
+!  Switch to write out adjoint surface forcing fields adjusted by the
+!  4DVAR algorithms.
+!
+        logical, dimension(Ngrids) :: Ladjusted
 !
 !  Switch used to create new output NetCDF files. If TRUE, new output
 !  files are created. If FALSE, data is appended to an existing output
@@ -1935,6 +1940,8 @@
       DO ng=1,Ngrids
 
         PerfectRST(ng)=.FALSE.
+
+        Ladjusted(ng)=.FALSE.
 
         LdefADJ(ng)=.FALSE.
         LdefAVG(ng)=.TRUE.

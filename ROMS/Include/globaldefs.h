@@ -39,17 +39,6 @@
 #endif
 
 /*
-** Turn ON/OFF debugging switch. It avoids writing current date and
-** CPP options to NetCDF file headers. This is used to compare serial
-** and parallel solutions where the UNIX command "diff" is used between
-** NetCDF files.  It will only tell us that the binary files are
-** different or not.  Finding the parallel bug is complete different
-** story.
-*/
-
-#undef DEBUGGING
-
-/*
 ** Turn ON/OFF time profiling.
 */
 

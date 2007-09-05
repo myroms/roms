@@ -79,7 +79,7 @@
 ** Determine if the ARPACK library is needed.
 */
 
-#if defined PROPAGATOR || \
+#if defined PROPAGATOR || defined W4DPSAS || \
    (defined IS4DVAR    && defined LANCZOS)
   USE_ARPACK := on
 #else

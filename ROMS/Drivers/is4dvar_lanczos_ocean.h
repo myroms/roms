@@ -692,8 +692,14 @@
 #endif
               tADJindx(ng)=tADJindx(ng)-1
               LwrtState2d(ng)=.TRUE.
+#if defined ADJUSTED_STFLUX || defined ADJUSTED_WSTRESS
+              Ladjusted(ng)=.TRUE.
+#endif
               CALL ad_wrt_his (ng)
               LwrtState2d(ng)=.FALSE.
+#if defined ADJUSTED_STFLUX || defined ADJUSTED_WSTRESS
+              Ladjusted(ng)=.FALSE.
+#endif
 !
 !  Write out previous v-space TLM initial conditions, currently in time
 !  index LTM1, into record 2 of ITLname NetCDF file.

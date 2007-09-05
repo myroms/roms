@@ -1042,7 +1042,7 @@
 #   endif
 #   ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,      &
-     &                        LBi, UBi, LBj, UBj,                       &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        OBS(ng)%EobsT(:,:,:,itemp),               &
      &                        OBS(ng)%Tobs(:,:,:,itemp))

@@ -88,15 +88,15 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lbck,                                        &
 # ifdef ADJUST_WSTRESS
-     &                     FORCES(ng) % tl_sustr,                       &
-     &                     FORCES(ng) % tl_svstr,                       &
+     &                     FORCES(ng) % tl_ustr,                        &
+     &                     FORCES(ng) % tl_vstr,                        &
 # endif
 # ifdef SOLVE3D
      &                     OCEAN(ng) % tl_t,                            &
      &                     OCEAN(ng) % tl_u,                            &
      &                     OCEAN(ng) % tl_v,                            &
 #  ifdef ADJUST_STFLUX
-     &                     FORCES(ng) % tl_stflx,                       &
+     &                     FORCES(ng) % tl_tflux,                       &
 #  endif
 # else
      &                     OCEAN(ng) % tl_ubar,                         &
@@ -111,14 +111,14 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lbck,                                  &
 # ifdef ADJUST_WSTRESS
-     &                           tl_sustr, tl_svstr,                    &
+     &                           tl_ustr, tl_vstr,                      &
 # endif
 # ifdef SOLVE3D
      &                           tl_t,                                  &
      &                           tl_u,                                  &
      &                           tl_v,                                  &
 #  ifdef ADJUST_STFLUX
-     &                           tl_stflx,                              &
+     &                           tl_tflux,                              &
 #  endif
 # else
      &                           tl_ubar,                               &
@@ -146,15 +146,15 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: tl_sustr(LBi:,LBj:)
-      real(r8), intent(in) :: tl_svstr(LBi:,LBj:)
+      real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tl_stflx(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_tflux(LBi:,LBj:,:,:)
 #   endif
 #  else
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
@@ -163,15 +163,15 @@
       real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
 # else
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: tl_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: tl_svstr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,2)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tl_stflx(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #   endif
 #  else
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
@@ -278,7 +278,7 @@
       DO itrc=1,NT(ng)
         DO j=JstrR,JendR
           DO i=IstrR,IendR
-            cff=0.5_r8*tl_stflx(i,j,itrc)*tl_stflx(i,j,itrc)
+            cff=0.5_r8*tl_tflux(i,j,Lbck,itrc)*tl_tflux(i,j,Lbck,itrc)
             my_BackCost(0)=my_BackCost(0)+cff
             my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+cff
           END DO
@@ -292,14 +292,14 @@
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR
-          cff=0.5_r8*tl_sustr(i,j)*tl_sustr(i,j)
+          cff=0.5_r8*tl_ustr(i,j,Lbck)*tl_ustr(i,j,Lbck)
           my_BackCost(0)=my_BackCost(0)+cff
           my_BackCost(isUstr)=my_BackCost(isUstr)+cff
         END DO
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
-          cff=0.5_r8*tl_svstr(i,j)*tl_svstr(i,j)
+          cff=0.5_r8*tl_vstr(i,j,Lbck)*tl_vstr(i,j,Lbck)
           my_BackCost(0)=my_BackCost(0)+cff
           my_BackCost(isVstr)=my_BackCost(isVstr)+cff
         END DO

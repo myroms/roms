@@ -333,6 +333,38 @@
         Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
         status=def_var(ncINIid(ng),iniVid(idVbar,ng),NF_FOUT,           &
      &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+# ifdef ADJUST_WSTRESS
+!
+!  Define surface U-momentum stress.
+!
+        Vinfo( 1)=Vname(1,idUsms)
+        Vinfo( 2)=Vname(2,idUsms)
+        Vinfo( 3)=Vname(3,idUsms)
+        Vinfo(14)=Vname(4,idUsms)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
+        status=def_var(ncINIid(ng),iniVid(idUsms,ng),NF_FOUT,           &
+     &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
+!
+!  Define surface V-momentum stress.
+!
+        Vinfo( 1)=Vname(1,idVsms)
+        Vinfo( 2)=Vname(2,idVsms)
+        Vinfo( 3)=Vname(3,idVsms)
+        Vinfo(14)=Vname(4,idVsms)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
+        status=def_var(ncINIid(ng),iniVid(idVsms,ng),NF_FOUT,           &
+     &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+# endif
 # ifdef SOLVE3D
 !
 !  Define 3D momentum component in the XI-direction.
@@ -388,9 +420,24 @@
           status=def_var(ncINIid(ng),iniTid(itrc,ng),NF_FOUT,           &
      &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
         END DO
-
-# if defined BVF_MIXING || defined LMD_MIXING || \
-     defined GLS_MIXING || defined MY25_MIXING
+#  ifdef ADJUST_STFLUX
+!
+!  Define surface tracer flux.
+!
+        DO itrc=1,NT(ng)
+          Vinfo( 1)=Vname(1,idTsur(itrc))
+          Vinfo( 2)=Vname(2,idTsur(itrc))
+          Vinfo( 3)=Vname(3,idTsur(itrc))
+          Vinfo(14)=Vname(4,idTsur(itrc))
+          Vinfo(16)=Vname(1,idtime)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+          status=def_var(ncINIid(ng),iniVid(idTsur(itrc),ng),           &
+     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END DO
+#  endif
+#  if defined BVF_MIXING || defined LMD_MIXING || \
+      defined GLS_MIXING || defined MY25_MIXING
 !
 !  Define vertical viscosity coefficient.
 !
@@ -399,9 +446,9 @@
         Vinfo( 3)=Vname(3,idVvis)
         Vinfo(14)=Vname(4,idVvis)
         Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
-#  endif
+#   endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVvis,ng),r8)
         status=def_var(ncINIid(ng),iniVid(idVvis,ng),NF_FRST,           &
@@ -414,14 +461,14 @@
         Vinfo( 3)=Vname(3,idTdif)
         Vinfo(14)=Vname(4,idTdif)
         Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
+#   if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
-#  endif
+#   endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idTdif,ng),r8)
         status=def_var(ncINIid(ng),iniVid(idTdif,ng),NF_FRST,           &
      &                 nvd4,w3dgrd,Aval,Vinfo,ncname)
-#  ifdef SALINITY
+#   ifdef SALINITY
 !
 !  Define vertical diffusion coefficient for salinity.
 !
@@ -430,17 +477,15 @@
         Vinfo( 3)=Vname(3,idSdif)
         Vinfo(14)=Vname(4,idSdif)
         Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
+#    if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
-#   endif
+#    endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idSdif,ng),r8)
         status=def_var(ncINIid(ng),iniVid(idSdif,ng),NF_FRST,           &
      &                 nvd4,w3dgrd,Aval,Vinfo,ncname)
+#   endif
 #  endif
-# endif
-
-
 # endif
 !
 !-----------------------------------------------------------------------
@@ -515,6 +560,18 @@
             status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idVbar)),    &
      &                            iniVid(idVbar,ng))
           END IF
+# ifdef ADJUST_WSTRESS
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUsms))) THEN
+            got_var(idUsms)=.TRUE.
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idUsms)),    &
+     &                            iniVid(idUsms,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVsms))) THEN
+            got_var(idVsms)=.TRUE.
+            status=nf90_inq_varid(ncINIid(ng),TRIM(Vname(1,idVsms)),    &
+     &                            iniVid(idVsms,ng))
+          END IF
+# endif
 # ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
@@ -534,6 +591,16 @@
      &                             iniTid(itrc,ng))
             END IF
           END DO
+#  ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+             got_var(idTsur(itrc))=.TRUE.
+             status=nf90_inq_varid(ncINIid(ng),                         &
+     &                             TRIM(Vname(1,idTsur(itrc))),         &
+     &                             iniTid(itrc,ng))
+            END IF
+          END DO
+#  endif
 #  if defined BVF_MIXING || defined LMD_MIXING || \
       defined GLS_MIXING || defined MY25_MIXING
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
@@ -578,6 +645,18 @@
           exit_flag=3
           RETURN
         END IF
+# ifdef ADJUST_WSTRESS
+        IF (.not.got_var(idUsms)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idUsms)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVsms)) THEN
+          WRITE (stdout,40) TRIM(Vname(1,idVsms)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
           WRITE (stdout,40) TRIM(Vname(1,idUvel)), TRIM(ncname)
@@ -596,6 +675,15 @@
             RETURN
           END IF
         END DO
+#  ifdef ADJUST_STFLUX
+        DO itrc=1,NT(ng)
+          IF (.not.got_var(idTsur(itrc))) THEN
+            WRITE (stdout,40) TRIM(Vname(1,idTsur(itrc))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
+#  endif
 # endif
 !
 !  Set unlimited time record dimension to the appropriate value.

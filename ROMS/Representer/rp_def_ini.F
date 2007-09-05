@@ -320,6 +320,38 @@
         Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
         status=def_var(ncIRPid(ng),irpVid(idVbar,ng),NF_FOUT,           &
      &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+# ifdef ADJUST_WSTRESS
+!
+!  Define surface U-momentum stress.
+!
+        Vinfo( 1)=Vname(1,idUsms)
+        Vinfo( 2)=Vname(2,idUsms)
+        Vinfo( 3)=Vname(3,idUsms)
+        Vinfo(14)=Vname(4,idUsms)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
+        status=def_var(ncIRPid(ng),irpVid(idUsms,ng),NF_FOUT,           &
+     &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
+!
+!  Define surface V-momentum stress.
+!
+        Vinfo( 1)=Vname(1,idVsms)
+        Vinfo( 2)=Vname(2,idVsms)
+        Vinfo( 3)=Vname(3,idVsms)
+        Vinfo(14)=Vname(4,idVsms)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
+        status=def_var(ncIRPid(ng),irpVid(idVsms,ng),NF_FOUT,           &
+     &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+# endif
 # ifdef SOLVE3D
 !
 !  Define 3D momentum component in the XI-direction.
@@ -375,7 +407,22 @@
           status=def_var(ncIRPid(ng),irpTid(itrc,ng),NF_FOUT,           &
      &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
         END DO
-
+#  ifdef ADJUST_STFLUX
+!
+!  Define surface tracer flux.
+!
+        DO itrc=1,NT(ng)
+          Vinfo( 1)=Vname(1,idTsur(itrc))
+          Vinfo( 2)=Vname(2,idTsur(itrc))
+          Vinfo( 3)=Vname(3,idTsur(itrc))
+          Vinfo(14)=Vname(4,idTsur(itrc))
+          Vinfo(16)=Vname(1,idtime)
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+          status=def_var(ncIRPid(ng),irpVid(idTsur(itrc),ng),           &
+     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
+        END DO
+#  endif
 # endif
 !
 !-----------------------------------------------------------------------
@@ -495,6 +542,18 @@
           exit_flag=3
           RETURN
         END IF
+# ifdef ADJUST_WSTRESS
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUsms))) THEN
+            got_var(idUsms)=.TRUE.
+            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idUsms)),    &
+     &                            irpVid(idUsms,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVsms))) THEN
+            got_var(idVsms)=.TRUE.
+            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idVsms)),    &
+     &                            irpVid(idVsms,ng))
+          END IF
+# endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
           WRITE (stdout,40) TRIM(Vname(1,idUvel)), TRIM(ncname)
@@ -513,6 +572,16 @@
             RETURN
           END IF
         END DO
+#  ifdef ADJUST_STFLUX
+          DO itrc=1,NT(ng)
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+             got_var(idTsur(itrc))=.TRUE.
+             status=nf90_inq_varid(ncIRPid(ng),                         &
+     &                             TRIM(Vname(1,idTsur(itrc))),         &
+     &                             irpTid(itrc,ng))
+            END IF
+          END DO
+#  endif
 # endif
       END IF
 !

@@ -390,27 +390,26 @@
 # ifdef SOLVE3D
       allocate ( MIXING(ng) % tl_Akv(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( MIXING(ng) % tl_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT) )
-# endif
 
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
       allocate ( MIXING(ng) % tl_alpha(LBi:UBi,LBj:UBj) )
       allocate ( MIXING(ng) % tl_beta(LBi:UBi,LBj:UBj) )
-# endif
+#  endif
 
-# ifdef BV_FREQUENCY
+#  ifdef BV_FREQUENCY
       allocate ( MIXING(ng) % tl_bvf(LBi:UBi,LBj:UBj,0:N(ng)) )
-# endif
+#  endif
 
-# if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
+#  if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
       allocate ( MIXING(ng) % tl_tke(LBi:UBi,LBj:UBj,0:N(ng),3) )
       allocate ( MIXING(ng) % tl_gls(LBi:UBi,LBj:UBj,0:N(ng),3) )
       allocate ( MIXING(ng) % tl_Lscale(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( MIXING(ng) % tl_Akk(LBi:UBi,LBj:UBj,0:N(ng)) )
+#  endif
 #  ifdef GLS_MIXING_NOT_YET
       allocate ( MIXING(ng) % tl_Akp(LBi:UBi,LBj:UBj,0:N(ng)) )
 #  endif
 # endif
-
 #endif
 
 #ifdef ADJOINT
@@ -420,27 +419,26 @@
 # ifdef SOLVE3D
       allocate ( MIXING(ng) % ad_Akv(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( MIXING(ng) % ad_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT) )
-# endif
 
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
       allocate ( MIXING(ng) % ad_alpha(LBi:UBi,LBj:UBj) )
       allocate ( MIXING(ng) % ad_beta(LBi:UBi,LBj:UBj) )
-# endif
+#  endif
 
-# ifdef BV_FREQUENCY
+#  ifdef BV_FREQUENCY
       allocate ( MIXING(ng) % ad_bvf(LBi:UBi,LBj:UBj,0:N(ng)) )
-# endif
+#  endif
 
-# if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
+#  if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
       allocate ( MIXING(ng) % ad_tke(LBi:UBi,LBj:UBj,0:N(ng),3) )
       allocate ( MIXING(ng) % ad_gls(LBi:UBi,LBj:UBj,0:N(ng),3) )
       allocate ( MIXING(ng) % ad_Lscale(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( MIXING(ng) % ad_Akk(LBi:UBi,LBj:UBj,0:N(ng)) )
+#  endif
 #  ifdef GLS_MIXING_NOT_YET
       allocate ( MIXING(ng) % ad_Akp(LBi:UBi,LBj:UBj,0:N(ng)) )
 #  endif
 # endif
-
 #endif
 
 #if defined FORWARD_READ && \

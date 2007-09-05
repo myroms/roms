@@ -1,3 +1,4 @@
+
 #include "cppdefs.h"
 #ifdef TANGENT
       SUBROUTINE tl_set_data (ng, tile)
@@ -1045,7 +1046,7 @@
 #   endif
 #   ifdef DISTRIBUTE
           CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,      &
-     &                        LBi, UBi, LBj, UBj,                       &
+     &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        OBS(ng)%EobsT(:,:,:,itemp),               &
      &                        OBS(ng)%Tobs(:,:,:,itemp))

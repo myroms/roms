@@ -591,6 +591,14 @@
 **                                                                           **
 ** INLINE_2DIO         use if processing 3D IO level by level                **
 **                                                                           **
+** OPTION to avoid writing current date and CPP options to NetCDF file       **
+** headers. This is used to compare serial and parallel solutions where      **
+** the UNIX command "diff" is used between NetCDF files. It will only        **
+** tell us that the binary files are different or not. Finding the           **
+** parallel bug is complete different story.                                 **
+**                                                                           **
+** DEBUGGING           use to activate parallel debugging switch             **
+**                                                                           **
 *******************************************************************************
 *******************************************************************************
 *******************************************************************************

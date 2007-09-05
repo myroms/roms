@@ -688,8 +688,14 @@
 #endif
               tADJindx(ng)=tADJindx(ng)-1
               LwrtState2d(ng)=.TRUE.
+#if defined ADJUSTED_STFLUX || defined ADJUSTED_WSTRESS
+              Ladjusted(ng)=.TRUE.
+#endif
               CALL ad_wrt_his (ng)
               LwrtState2d(ng)=.FALSE.
+#if defined ADJUSTED_STFLUX || defined ADJUSTED_WSTRESS
+              Ladjusted(ng)=.FALSE.
+#endif
 !
 !  Estimate new increment vector, deltaV(Lnew), using a CONJUGATE
 !  GRADIENT algorithm with first guess step size (CGstepF).

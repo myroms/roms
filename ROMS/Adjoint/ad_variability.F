@@ -112,12 +112,12 @@
      &                          OCEAN(ng) % ad_u,                       &
      &                          OCEAN(ng) % ad_v,                       &
 #  ifdef ADJUST_STFLUX
-     &                          FORCES(ng) % ad_stflx,                  &
+     &                          FORCES(ng) % ad_tflux,                  &
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-     &                          FORCES(ng) % ad_sustr,                  &
-     &                          FORCES(ng) % ad_svstr,                  &
+     &                          FORCES(ng) % ad_ustr,                   &
+     &                          FORCES(ng) % ad_vstr,                   &
 # endif
      &                          OCEAN(ng) % ad_ubar,                    &
      &                          OCEAN(ng) % ad_vbar,                    &
@@ -143,11 +143,11 @@
 # ifdef SOLVE3D
      &                                ad_t, ad_u, ad_v,                 &
 #  ifdef ADJUST_STFLUX
-     &                                ad_stflx,                         &
+     &                                ad_tfulx,                         &
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-     &                                ad_sustr, ad_svstr,               &
+     &                                ad_ustr, ad_vstr,                 &
 # endif
      &                                ad_ubar, ad_vbar, ad_zeta)
 !***********************************************************************
@@ -189,12 +189,12 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_sustr(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_svstr(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -217,15 +217,15 @@
       real(r8), intent(in) :: zeta_std(LBi:UBi,LBj:UBj)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,2,N(ng))
-      real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,2,N(ng))
+      real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: ad_svstr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -308,22 +308,22 @@
 !
       DO j=JU_RANGE
         DO i=IU_RANGE
-          ad_sustr(i,j)=ad_sustr(i,j)*sustr_std(i,j)*                   &
-     &                  fac(isUstr)
+          ad_ustr(i,j,Linp)=ad_ustr(i,j,Linp)*sustr_std(i,j)*           &
+     &                      fac(isUstr)
         END DO
       END DO
       DO j=JV_RANGE
         DO i=IV_RANGE
-          ad_svstr(i,j)=ad_svstr(i,j)*svstr_std(i,j)*                   &
-     &                  fac(isVstr)
+          ad_vstr(i,j,Linp)=ad_vstr(i,j,Linp)*svstr_std(i,j)*           &
+     &                      fac(isVstr)
         END DO
       END DO
 #  ifdef DISTRIBUTE
       CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_sustr,                                  &
-     &                       ad_svstr)
+     &                       ad_ustr(:,:,Linp),                         &
+     &                       ad_vstr(:,:,Linp))
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -378,9 +378,9 @@
       DO itrc=1,NT(ng)
         DO j=JR_RANGE
           DO i=IR_RANGE
-              ad_stflx(i,j,itrc)=ad_stflx(i,j,itrc)*                    &
-     &                           stflx_std(i,j,itrc)*                   &
-     &                           fac(isTsur(itrc))
+              ad_tflux(i,j,Linp,itrc)=ad_tflux(i,j,Linp,itrc)*          &
+     &                                stflx_std(i,j,itrc)*              &
+     &                                fac(isTsur(itrc))
           END DO
         END DO
       END DO
@@ -388,7 +388,7 @@
       CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
      &                       LBi, UBi, LBj, UBj, 1, NT(ng),             &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_stflx)
+     &                       ad_tflux(:,:,Linp,:))
 #   endif
 #  endif
 # endif

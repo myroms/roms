@@ -185,7 +185,8 @@
 !
 !  Determine aditional 4Dvar state varaibles to adjust.
 !
-       IF ((model.eq.5).or.(model.eq.6)) THEN
+       IF ((model.eq.iADM).or.(model.eq.iTLM).or.                       &
+     &     (model.eq.5).or.(model.eq.6)) THEN
 # ifdef ADJUST_STFLUX
          DO itrc=1,NT(ng)
            get_var(idTsur(itrc))=.TRUE.
@@ -386,7 +387,7 @@
             exit_flag=2
             RETURN
           END IF
-          IF (.not.have_var(idUsms).and.get_var(idVsms)) THEN
+          IF (.not.have_var(idVsms).and.get_var(idVsms)) THEN
             WRITE (stdout,10) string, TRIM(Vname(1,idVsms)),            &
      &                        TRIM(ncname)
             exit_flag=2

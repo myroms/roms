@@ -22,6 +22,9 @@
 !
       USE mod_param
       USE mod_parallel
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+      USE mod_forces
+# endif
       USE mod_fourdvar
       USE mod_grid
       USE mod_iounits
@@ -150,6 +153,50 @@
         ioerror=status
         RETURN
       END IF
+# ifdef ADJUST_WSTRESS
+!
+!  Write out surface U-momentum stress.
+!
+      scale=1.0_r8
+!!    scale=rho0
+      gtype=gfactor*u2dvar
+      status=nf_fwrite2d(ng, iRPM, ncIRPid(ng), irpVid(idUsms,ng),      &
+     &                   OutRec, gtype,                                 &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % tl_ustr(LBi,LBj,Tindex))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUsms)), OutRec
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Write out surface V-momentum stress.
+!
+      scale=1.0_r8
+!!    scale=rho0
+      gtype=gfactor*v2dvar
+      status=nf_fwrite2d(ng, iRPM, ncIRPid(ng), irpVid(idVsms,ng),      &
+     &                   OutRec, gtype,                                 &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % tl_vstr(LBi,LBj,Tindex))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVsms)), OutRec
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Write out 3D momentum component (m/s) in the XI-direction.
@@ -213,6 +260,33 @@
           RETURN
         END IF
       END DO
+#  ifdef ADJUSTE_STFLUX
+!
+!  Write out surface tracer flux.
+!
+      DO itrc=1,NT(ng)
+        scale=1.0_r8
+!!      scale=rho0*Cp
+        gtype=gfactor*r2dvar
+        status=nf_fwrite2d(ng, iRPM, ncIRPid(ng),                       &
+     &                     irpVid(idTsur(itrc),ng),                     &
+     &                     OutRec, gtype,                               &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#   endif
+     &                     FORCES(ng) % tl_tflux(LBi,LBj,Tindex,itrc))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),              &
+     &                        OutRec
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+   endif
 # endif
 !
 !-----------------------------------------------------------------------
