@@ -406,10 +406,6 @@
 #  endif
 # endif
           END DO
-          AK(i,N(ng))=0.5_r8*(Akv(i-1,j,N(ng))+                         &
-     &                        Akv(i  ,j,N(ng)))
-          tl_AK(i,N(ng))=0.5_r8*(tl_Akv(i-1,j,N(ng))+                   &
-     &                           tl_Akv(i  ,j,N(ng)))
         END DO
 !
 !  Time step right-hand-side terms.
@@ -964,10 +960,6 @@
 #  endif
 # endif
             END DO
-            AK(i,N(ng))=0.5_r8*(Akv(i,j-1,N(ng))+                       &
-     &                          Akv(i,j  ,N(ng)))
-            tl_AK(i,N(ng))=0.5_r8*(tl_Akv(i,j-1,N(ng))+                 &
-     &                             tl_Akv(i,j  ,N(ng)))
           END DO
 !
 !  Time step right-hand-side terms.

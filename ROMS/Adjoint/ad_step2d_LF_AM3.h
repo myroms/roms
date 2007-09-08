@@ -4652,16 +4652,6 @@
 !  If adjoint predictor step, load right-side-term into shared array.
 !
         IF (PREDICTOR_2D_STEP(ng)) THEN
-# ifdef EW_PERIODIC
-#  define I_RANGE MAX(IstrR,0),Iend
-# else
-#  define I_RANGE Istr,Iend
-# endif
-# ifdef NS_PERIODIC
-#  define J_RANGE MAX(JstrR,0),Jend
-# else
-#  define J_RANGE Jstr,Jend
-# endif
 # ifdef DISTRIBUTE
 !>        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,      &
 !>   &                        LBi, UBi, LBj, UBj,                       &
@@ -4682,16 +4672,14 @@
      &                               LBi, UBi, LBj, UBj,                &
      &                               ad_rzeta(:,:,krhs))
 # endif
-          DO j=J_RANGE
-            DO i=I_RANGE
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
 !>            tl_rzeta(i,j,krhs)=tl_rhs_zeta(i,j)
 !>
               ad_rhs_zeta(i,j)=ad_rhs_zeta(i,j)+ad_rzeta(i,j,krhs)
               ad_rzeta(i,j,krhs)=0.0
             END DO
           END DO
-# undef I_RANGE
-# undef J_RANGE
         END IF
 
 # ifndef SOLVE3D

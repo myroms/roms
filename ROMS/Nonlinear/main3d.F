@@ -301,6 +301,7 @@
           CALL wvelocity (ng, TILE, nstp(ng))
         END DO
       END DO
+!$OMP END PARALLEL DO
 
 # ifdef SET_ZETA
 !

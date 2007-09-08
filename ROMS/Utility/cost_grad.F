@@ -170,11 +170,11 @@
       real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,2)
       real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,2)
 #  endif
-#  ifdef SOLVE3D
+#  ifdef SOLVE3D 
 #   ifdef ADJUST_STFLUX
       real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
 #   endif
-      real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+     real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #  else
@@ -182,7 +182,14 @@
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
 #  endif
       real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+#  endif
 #  ifdef SOLVE3D
+#   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#   endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)

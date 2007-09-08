@@ -534,14 +534,16 @@
      &                       GRID(ng) % vmask(LBi,LBj),                 &
 # endif
      &                       FORCES(ng) % ad_svstr(LBi,LBj))
+# ifdef ADJUST_WSTRESS
         ELSE
           status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVsms,ng),  &
      &                       tADJindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                       GRID(ng) % vmask(LBi,LBj),                 &
-# endif
+#  endif
      &                       FORCES(ng) % ad_vstr(LBi,LBj,kout))
+# endif
         END IF
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN

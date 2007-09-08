@@ -889,18 +889,8 @@
 !  If predictor step, load right-side-term into shared array.
 !
       IF (PREDICTOR_2D_STEP(ng)) THEN
-# ifdef EW_PERIODIC
-#  define I_RANGE MAX(IstrR,0),Iend
-# else
-#  define I_RANGE Istr,Iend
-# endif
-# ifdef NS_PERIODIC
-#  define J_RANGE MAX(JstrR,0),Jend
-# else
-#  define J_RANGE Jstr,Jend
-# endif
-        DO j=J_RANGE
-          DO i=I_RANGE
+        DO j=Jstr,Jend
+          DO i=Istr,Iend
             rzeta(i,j,krhs)=rhs_zeta(i,j)
           END DO
         END DO
@@ -915,8 +905,6 @@
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      rzeta(:,:,krhs))
 # endif
-# undef I_RANGE
-# undef J_RANGE
       END IF
 
 # ifdef Q_PSOURCE

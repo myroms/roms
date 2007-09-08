@@ -133,7 +133,6 @@
       real(r8) :: MorPL, MorPS
       real(r8) :: ResPL, ResPS
       real(r8) :: RnewL, RnewS
-      real(r8) :: ZS2PS, ZL2PS, ZL2PL, ZL2ZS, ZP2PL, ZP2ZS, ZP2ZL
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7
       real(r8) :: fac, fac1, fac2, fac3, fac4, fac5, fac6
       real(r8) :: cffL, cffR, cu, dltL, dltR
@@ -685,9 +684,12 @@
 !  Zooplankton egestion to Particulate Organic Nitrogen (PON) and
 !  Particulate Organic Silica (opal).
 !
-              EgeZS=(1.0_r8-AlphaZS(ng))*GraPS2ZS
-              EgeZL=(1.0_r8-AlphaZL(ng))*(GraPS2ZL+GraPL2ZL+GraZS2ZL)
-              EgeZP=(1.0_r8-AlphaZP(ng))*(GraPL2ZP+GraZS2ZP+GraZL2ZP)
+              EgeZS=(1.0_r8-AlphaZS(ng))*                               &
+     &              GraPS2ZS
+              EgeZL=(1.0_r8-AlphaZL(ng))*                               &
+     &              (GraPS2ZL+GraPL2ZL+GraZS2ZL)
+              EgeZP=(1.0_r8-AlphaZP(ng))*                               &
+     &              (GraPL2ZP+GraZS2ZP+GraZL2ZP)
               Bio(i,k,iSzoo)=Bio(i,k,iSzoo)-EgeZS
               Bio(i,k,iLzoo)=Bio(i,k,iLzoo)-EgeZL
               Bio(i,k,iPzoo)=Bio(i,k,iPzoo)-EgeZP
@@ -696,9 +698,12 @@
 !
 !  Zooplankton excretion to NH4.
 !
-              ExcZS=(AlphaZS(ng)-BetaZS(ng))*ZS2PS
-              ExcZL=(AlphaZL(ng)-BetaZL(ng))*(ZL2PS+ZL2PL+ZL2ZS)
-              ExcZP=(AlphaZP(ng)-BetaZP(ng))*(ZP2PL+ZP2ZS+ZP2ZL)
+              ExcZS=(AlphaZS(ng)-BetaZS(ng))*                           &
+     &              GraPS2ZS
+              ExcZL=(AlphaZL(ng)-BetaZL(ng))*                           &
+     &              (GraPS2ZL+GraPL2ZL+GraZS2ZL)
+              ExcZP=(AlphaZP(ng)-BetaZP(ng))*                           &
+     &              (GraPL2ZP+GraZS2ZP+GraZL2ZP)
               Bio(i,k,iSzoo)=Bio(i,k,iSzoo)-ExcZS
               Bio(i,k,iLzoo)=Bio(i,k,iLzoo)-ExcZL
               Bio(i,k,iPzoo)=Bio(i,k,iPzoo)-ExcZP

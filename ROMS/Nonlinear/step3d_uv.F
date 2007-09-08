@@ -314,8 +314,6 @@
             oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
           END DO
-          AK(i,N(ng))=0.5_r8*(Akv(i-1,j,N(ng))+                         &
-     &                        Akv(i  ,j,N(ng)))
         END DO
 !
 !  Time step right-hand-side terms.
@@ -643,8 +641,6 @@
               oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
             END DO
-            AK(i,N(ng))=0.5_r8*(Akv(i,j-1,N(ng))+                       &
-     &                          Akv(i,j  ,N(ng)))
           END DO
 !
 !  Time step right-hand-side terms.

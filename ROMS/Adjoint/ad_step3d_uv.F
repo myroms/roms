@@ -1361,8 +1361,6 @@
               oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
             END DO
-            AK(i,N(ng))=0.5_r8*(Akv(i,j-1,N(ng))+                       &
-     &                          Akv(i,j  ,N(ng)))
           END DO
 !
 !  Couple and update new adjoint solution.
@@ -1977,13 +1975,6 @@
             END DO
           END DO
           DO i=Istr,Iend
-!>          tl_AK(i,N(ng))=0.5_r8*(tl_Akv(i,j-1,N(ng))+                 &
-!>   &                             tl_Akv(i,j  ,N(ng)))
-!>
-            adfac=0.5_r8*ad_AK(i,N(ng))
-            ad_Akv(i,j-1,N(ng))=ad_Akv(i,j-1,N(ng))+adfac
-            ad_Akv(i,j  ,N(ng))=ad_Akv(i,j  ,N(ng))+adfac
-            ad_AK(i,N(ng))=0.0_r8
             DO k=1,N(ng)
 # ifdef SPLINES
               oHz(i,k)=1.0_r8/Hzk(i,k)
@@ -2035,8 +2026,6 @@
             oHz(i,k)=1.0_r8/Hzk(i,k)
 # endif
           END DO
-          AK(i,N(ng))=0.5_r8*(Akv(i-1,j,N(ng))+                         &
-     &                        Akv(i  ,j,N(ng)))
         END DO
 !
 !  Couple and update new adjoint solution.
@@ -2668,13 +2657,6 @@
           END DO
         END DO
         DO i=IstrU,Iend
-!>        tl_AK(i,N(ng))=0.5_r8*(tl_Akv(i-1,j,N(ng))+                   &
-!>   &                           tl_Akv(i  ,j,N(ng)))
-!>
-          adfac=0.5_r8*ad_AK(i,N(ng))
-          ad_Akv(i-1,j,N(ng))=ad_Akv(i-1,j,N(ng))+adfac
-          ad_Akv(i  ,j,N(ng))=ad_Akv(i  ,j,N(ng))+adfac
-          ad_AK(i,N(ng))=0.0_r8
           DO k=1,N(ng)
 # if defined SPLINES || defined DIAGNOSTICS_UV
             oHz(i,k)=1.0_r8/Hzk(i,k)
