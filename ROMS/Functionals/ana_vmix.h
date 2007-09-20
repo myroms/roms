@@ -39,7 +39,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(35)='ROMS/Functionals/ana_vmix.h'
+        ANANAME(35)=__FILE__
       END IF
 
       RETURN

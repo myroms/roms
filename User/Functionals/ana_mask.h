@@ -32,7 +32,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(15),'(a,a)') TRIM(Adir), '/ana_mask.h'
+        ANANAME(15)=__FILE__
       END IF
 
       RETURN

@@ -57,7 +57,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME( 8)='ROMS/Functionals/ana_hmixcoef.h'
+        ANANAME( 8)=__FILE__
       END IF
 
       RETURN

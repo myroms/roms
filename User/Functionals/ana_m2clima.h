@@ -30,7 +30,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(11),'(a,a)') TRIM(Adir), '/ana_m2clima.h'
+        ANANAME(11)=__FILE__
       END IF
 
       RETURN

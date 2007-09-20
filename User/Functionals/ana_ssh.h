@@ -29,7 +29,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(28),'(a,a)') TRIM(Adir), '/ana_ssh.h'
+        ANANAME(28)=__FILE__
       END IF
 
       RETURN

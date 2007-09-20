@@ -60,7 +60,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(20),'(a,a)') TRIM(Adir), '/ana_psource.h'
+        ANANAME(20)=__FILE__
       END IF
 
       RETURN

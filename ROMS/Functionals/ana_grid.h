@@ -81,7 +81,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME( 7)='ROMS/Functionals/ana_grid.h'
+        ANANAME( 7)=__FILE__
       END IF
 
       RETURN

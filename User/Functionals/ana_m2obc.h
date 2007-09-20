@@ -41,7 +41,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(12),'(a,a)') TRIM(Adir), '/ana_m2obc.h'
+        ANANAME(12)=__FILE__
       END IF
 
       RETURN

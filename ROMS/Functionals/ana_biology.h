@@ -30,7 +30,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME( 1)='ROMS/Functionals/ana_biology.h'
+        ANANAME( 1)=__FILE__
       END IF
 
       RETURN

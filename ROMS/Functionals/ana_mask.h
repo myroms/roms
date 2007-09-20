@@ -32,7 +32,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(15)='ROMS/Functionals/ana_mask.h'
+        ANANAME(15)=__FILE__
       END IF
 
       RETURN

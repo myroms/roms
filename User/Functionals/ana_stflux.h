@@ -36,7 +36,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(31),'(a,a)') TRIM(Adir), '/ana_stflux.h'
+        ANANAME(31)=__FILE__
       END IF
 
       RETURN

@@ -106,6 +106,7 @@ $(SCRATCH_DIR)/lmd_bkpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -free-form
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -free-form
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -free-form
 
 #
 # Supress free format in SWAN source files since there are comments

@@ -81,7 +81,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME( 7),'(a,a)') TRIM(Adir), '/ana_grid.h'
+        ANANAME( 7)=__FILE__
       END IF
 
       RETURN

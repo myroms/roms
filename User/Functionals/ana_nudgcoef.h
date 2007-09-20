@@ -27,7 +27,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(16),'(a,a)') TRIM(Adir), '/ana_nudgcoef.h'
+        ANANAME(16)=__FILE__
       END IF
 
       RETURN

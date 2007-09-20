@@ -29,7 +29,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(28)='ROMS/Functionals/ana_ssh.h'
+        ANANAME(28)=__FILE__
       END IF
 
       RETURN

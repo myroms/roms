@@ -109,6 +109,7 @@ endif
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -f free
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -f free
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -f free
 
 #
 # Supress free format in SWAN files since there are comments

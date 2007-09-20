@@ -40,7 +40,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(26)='ROMS/Functionals/ana_spinning.h'
+        ANANAME(26)=__FILE__
       END IF
 
       RETURN

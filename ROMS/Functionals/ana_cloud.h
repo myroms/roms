@@ -29,7 +29,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME( 4)='ROMS/Functionals/ana_cloud.h'
+        ANANAME( 4)=__FILE__
       END IF
 
       RETURN

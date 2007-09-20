@@ -30,7 +30,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(11)='ROMS/Functionals/ana_m2clima.h'
+        ANANAME(11)=__FILE__
       END IF
 
       RETURN

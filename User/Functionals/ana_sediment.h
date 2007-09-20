@@ -46,7 +46,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(23),'(a,a)') TRIM(Adir), '/ana_sediment.h'
+        ANANAME(23)=__FILE__
       END IF
 
       RETURN

@@ -30,7 +30,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(17),'(a,a)') TRIM(Adir), '/ana_pair.h'
+        ANANAME(17)=__FILE__
       END IF
 
       RETURN

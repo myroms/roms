@@ -40,7 +40,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(26),'(a,a)') TRIM(Adir), '/ana_spinning.h'
+        ANANAME(26)=__FILE__
       END IF
 
       RETURN

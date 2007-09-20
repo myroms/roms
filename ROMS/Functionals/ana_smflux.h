@@ -44,7 +44,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(24)='ROMS/Functionals/ana_smflux.h'
+        ANANAME(24)=__FILE__
       END IF
 
       RETURN

@@ -80,7 +80,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(10)='ROMS/Functionals/ana_initial.h'
+        ANANAME(10)=__FILE__
       END IF
 
       RETURN

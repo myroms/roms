@@ -39,7 +39,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(35),'(a,a)') TRIM(Adir), '/ana_vmix.h'
+        ANANAME(35)=__FILE__
       END IF
 
       RETURN

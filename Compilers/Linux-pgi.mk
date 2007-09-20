@@ -71,7 +71,8 @@ ifdef USE_MPI
                FC := mpif90
                LD := $(FC)
  else
-             LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
+#            LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
+             LIBS += -lfmpi-pgi -lmpi-pgi
  endif
 endif
 
@@ -82,14 +83,17 @@ endif
 # According to the PGI manual, the -u -Bstatic flags initializes
 # the symbol table with -Bstatic, which is undefined for the linker.
 # An undefined symbol triggers loading of the first member of an
-# archive library.
+# archive library. The -u flag fails with version 7.x of the compiler
+# because it expects an argument.
 
 ifdef USE_DEBUG
 #          FFLAGS += -g -C -Mchkstk -Mchkfpstk
            FFLAGS += -g -C
 #          FFLAGS += -g
 else
-           FFLAGS += -u -Bstatic -fastsse -Mipa=fast -tp k8-64
+#          FFLAGS += -O3 -tp k8-64
+#          FFLAGS += -Bstatic -fastsse -Mipa=fast -tp k8-64
+           FFLAGS += -fastsse -Mipa=fast -tp k8-64
 endif
 
 ifdef USE_MCT
@@ -100,9 +104,8 @@ ifdef USE_MCT
 endif
 
 ifdef USE_ESMF
-#     ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
-#     ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
-      ESMF_MK_DIR ?= /opt/pgisoft/esmf/lib/libO/Linux.pgi.64.mpich.default
+      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
+      ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
                      include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) -lesmf -lC
@@ -126,6 +129,7 @@ endif
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -Mfree
 
 #
 # Supress free format in SWAN source files since there are comments

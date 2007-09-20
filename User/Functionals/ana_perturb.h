@@ -70,7 +70,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        WRITE (ANANAME(19),'(a,a)') TRIM(Adir), '/ana_perturb.h'
+        ANANAME(19)=__FILE__
       END IF
 
       RETURN

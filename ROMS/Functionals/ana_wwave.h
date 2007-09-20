@@ -53,7 +53,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(37)='ROMS/Functionals/ana_wwave.h'
+        ANANAME(37)=__FILE__
       END IF
 
       RETURN

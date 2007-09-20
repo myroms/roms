@@ -29,7 +29,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(14)='ROMS/Functionals/ana_m3obc.h'
+        ANANAME(14)=__FILE__
       END IF
 
       RETURN

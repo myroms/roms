@@ -161,7 +161,6 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qc
 
 #include "set_bounds.h"
-
 !
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.

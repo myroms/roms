@@ -46,7 +46,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(23)='ROMS/Functionals/ana_sediment.h'
+        ANANAME(23)=__FILE__
       END IF
 
       RETURN

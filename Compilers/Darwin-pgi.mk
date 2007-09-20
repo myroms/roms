@@ -71,7 +71,8 @@ ifdef USE_MPI
                FC := /usr/local/openmpi-pgi/bin/mpif90
                LD := $(FC)
  else
-             LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
+#            LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
+             LIBS += -lfmpi-pgi -lmpi-pgi
  endif
 endif
 
@@ -82,14 +83,15 @@ endif
 # According to the PGI manual, the -u -Bstatic flags initializes
 # the symbol table with -Bstatic, which is undefined for the linker.
 # An undefined symbol triggers loading of the first member of an
-# archive library.
+# archive library. The -u flag fails with version 7.x of the compiler
+# because it expects an argument.
 
 ifdef USE_DEBUG
 #          FFLAGS += -g -C -Mchkstk -Mchkfpstk
            FFLAGS += -g -C
 #          FFLAGS += -g
 else
-           FFLAGS += -u -Bstatic -fastsse -Mipa=fast
+           FFLAGS += -fastsse -Mipa=fast
 endif
 
 ifdef USE_MCT
@@ -125,6 +127,7 @@ endif
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -Mfree
 
 #
 # Supress free format in SWAN source files since there are comments

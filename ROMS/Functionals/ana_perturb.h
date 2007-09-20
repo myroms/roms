@@ -70,7 +70,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME(19)='ROMS/Functionals/ana_perturb.h'
+        ANANAME(19)=__FILE__
       END IF
 
       RETURN

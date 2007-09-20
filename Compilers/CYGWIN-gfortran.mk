@@ -101,6 +101,7 @@ $(SCRATCH_DIR)/def_var.o: FFLAGS += -fno-bounds-check
 
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form -ffree-line-length-none
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form -ffree-line-length-none
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form -ffree-line-length-none
 
 #
 # Supress free format in SWAN source files since there are comments

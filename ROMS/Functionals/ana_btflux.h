@@ -33,7 +33,7 @@
 ! Set analytical header file name used.
 !
       IF (Lanafile) THEN
-        ANANAME( 3)='ROMS/Functionals/ana_btflux.h'
+        ANANAME( 3)=__FILE__
       END IF
 
       RETURN
