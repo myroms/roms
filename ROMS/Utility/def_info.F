@@ -1870,8 +1870,13 @@
       Vinfo( 6)='valid_max'
       Vinfo(14)='s_rho, scalar'
       Vinfo(21)='ocean_s_coordinate'
+#if defined SEDIMENT && defined SED_MORPH
+      Vinfo(23)=                                                        &
+     &'s: s_rho eta: zeta depth: bath a: theta_s b: theta_b depth_c: hc'
+#else
       Vinfo(23)=                                                        &
      &   's: s_rho eta: zeta depth: h a: theta_s b: theta_b depth_c: hc'
+#endif
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
       status=def_var(ncid,varid,NF_TYPE,1,srdim,Aval,Vinfo,ncname)
@@ -1884,8 +1889,13 @@
       Vinfo( 6)='valid_max'
       Vinfo(14)='s_w, scalar'
       Vinfo(21)='ocean_s_coordinate'
+#if defined SEDIMENT && defined SED_MORPH
       Vinfo(23)=                                                        &
-     &   's: s_w eta: zeta depth: h a: theta_s b: theta_b depth_c: hc'
+     &  's: s_w eta: zeta depth: bath a: theta_s b: theta_b depth_c: hc'
+#else
+      Vinfo(23)=                                                        &
+     &     's: s_w eta: zeta depth: h a: theta_s b: theta_b depth_c: hc'
+#endif
       Aval(2)=-1.0_r8
       Aval(3)=0.0_r8
       status=def_var(ncid,varid,NF_TYPE,1,swdim,Aval,Vinfo,ncname)
