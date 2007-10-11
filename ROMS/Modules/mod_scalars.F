@@ -1896,7 +1896,7 @@
 !  Initialize several scalar variables.
 !-----------------------------------------------------------------------
 !
-      gorho0=rho0/g
+      gorho0=g/rho0
       DO ng=1,Ngrids
         ntfirst(ng)=1
         ntstart(ng)=1
