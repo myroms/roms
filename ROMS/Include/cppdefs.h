@@ -12,9 +12,10 @@
 **                                                                           **
 ** OPTIONS associated with momentum equations:                               **
 **                                                                           **
-**   The default horizontal and vertical advection is 4th-order centered.    **
-**   Use the splines vertical advection option is shallow, high vertical     **
-**   resolution applications.                                                **
+**   The default horizontal advection is 3rd-order upstream bias and the     **
+**   default vertical advection is 4th-order centered. Use the splines       **
+**   vertical advection option is shallow, high vertical resolution          **
+**   applications.                                                           **
 **                                                                           **
 ** UV_ADV              use to turn ON or OFF advection terms                 **
 ** UV_COR              use to turn ON or OFF Coriolis term                   **
@@ -31,9 +32,10 @@
 **                                                                           **
 ** OPTIONS associated with tracers equations:                                **
 **                                                                           **
-**   The default horizontal and vertical advection is 4th-order centered.    **
-**   Use the splines vertical advection option is shallow, high vertical     **
-**   resolution applications.                                                **
+**   The default horizontal advection is 3rd-order upstream bias and the     **
+**   default vertical advection is 4th-order centered. Use the splines       **
+**   vertical advection option is shallow, high vertical resolution          **
+**   applications.                                                           **
 **                                                                           **
 ** TS_A4HADVECTION     use if 4th-order Akima horizontal advection           **
 ** TS_C2HADVECTION     use if 2nd-order centered horizontal advection        **
