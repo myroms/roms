@@ -872,8 +872,6 @@
       LOGICAL LOPEN                                                       34.01
       REAL, ALLOCATABLE    :: BLKND(:), BLKNDC(:)
 
-      CALL SWEXITMPI                                                      40.30
-
       DO IUNIT=1,HIOPEN                                                   34.01
         INQUIRE(UNIT=IUNIT,OPENED=LOPEN)                                  34.01
         IF (LOPEN.AND.IUNIT.NE.PRINTF) CLOSE(IUNIT)                       40.30
@@ -913,6 +911,7 @@
       IF (ALLOCATED(BLKND )) DEALLOCATE(BLKND )                           40.41
       CALL SWCLME                                                         40.31
 !
+      CALL SWEXITMPI                                                      40.30
       RETURN                                                              30.82
       END subroutine SWAN_FINALIZE
 
