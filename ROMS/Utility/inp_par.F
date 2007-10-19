@@ -5403,6 +5403,7 @@
       logical, dimension(NCS,Ngrids) :: Lmud
       logical, dimension(NNS,Ngrids) :: Lsand
 
+      real(r8), dimension(Ngrids) :: Rbed
       real(r8), dimension(NCS,Ngrids) :: Rmud
       real(r8), dimension(NNS,Ngrids) :: Rsand
  
@@ -5423,14 +5424,14 @@
           IF (TRIM(KeyWord).eq.'Lsediment') THEN 
             Npts=load_l(Nval, Cval, Ngrids, Lsediment)
           ELSE IF (TRIM(KeyWord).eq.'NEWLAYER_THICK') THEN 
-            Npts=load_r(Nval, Rval, Ngrids, Rmud)
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
             DO ng=1,Ngrids
-              newlayer_thick(ng)=Rmud(1,ng)
+              newlayer_thick(ng)=Rbed(ng)
             END DO
           ELSE IF (TRIM(KeyWord).eq.'BEDLOAD_COEFF') THEN 
-            Npts=load_r(Nval, Rval, Ngrids, Rmud)
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
             DO ng=1,Ngrids
-              bedload_coeff(ng)=Rmud(1,ng)
+              bedload_coeff(ng)=Rbed(ng)
             END DO
           ELSE IF (TRIM(KeyWord).eq.'MUD_SD50') THEN 
             IF (.not.allocated(Sd50)) allocate (Sd50(NST,Ngrids))
