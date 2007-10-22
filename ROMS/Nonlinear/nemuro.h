@@ -134,7 +134,7 @@
       real(r8) :: ResPL, ResPS
       real(r8) :: RnewL, RnewS
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6, cff7
-      real(r8) :: fac, fac1, fac2, fac3, fac4, fac5, fac6
+      real(r8) :: fac, fac1, fac2, fac3, fac4, fac5, fac6, fac7
       real(r8) :: cffL, cffR, cu, dltL, dltR
 
       real(r8), dimension(Nsink) :: Wbio
@@ -362,7 +362,7 @@
 !  proportional to biomass. Use ratio of NO3 uptake to total update
 !  (NO3 + NH4) to compute respiration contributions.
 !
-              RnewS=GppNPS/GppPS
+              RnewS=GppNPS/MAX(MinVal,GppPS)
               cff4=dtdays*ResPS0(ng)*EXP(KResPS(ng)*Bio(i,k,itemp))
               Bio(i,k,iSphy)=Bio(i,k,iSphy)/(1.0_r8+cff4)
               ResPS=Bio(i,k,iSphy)*cff4
@@ -386,11 +386,14 @@
 !  uptake rate as a function of nutrient concentration.
 !
           cff=dtdays*VmaxL(ng)
-          fac=1.0/RSiN(ng)
+          fac1=1.0/RSiN(ng)
+          fac2=dtdays*ResPL0(ng)
           DO k=1,N(ng)
             DO i=Istr,Iend
 !
-!  Large Phytoplankton gross primary productivity, GppPL.
+!  Large Phytoplankton gross primary productivity, GppPL. Notice that
+!  the primary productivity is limited by previous time-step silicate
+!  concentration.
 !
               cff1=cff*EXP(KGppL(ng)*Bio(i,k,itemp))*LightL(i,k)*       &
      &             Bio(i,k,iLphy)
@@ -399,18 +402,16 @@
               cff3=1.0_r8/(KNH4L(ng)+Bio(i,k,iNH4_))
               cff4=cff2*Bio(i,k,iNO3_)
               cff5=cff3*Bio(i,k,iNH4_)
-              RnewL=cff4/(cff4+cff5)
-              cff6=fac*Bio(i,k,iSiOH)/(KSiL(ng)+Bio(i,k,iSiOH))
-              cff4=cff6*RnewL
-              cff5=cff6*(1.0_r8-RnewL)
-              cff6=cff1*MIN(cff2,cff4)      ! Silicate limitation on N03
-              cff7=cff1*MIN(cff3,cff5)      ! Silicate limitation on NH4
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff6)
-              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)/(1.0_r8+cff7)
-              GppNPL=Bio(i,k,iNO3_)*cff6
-              GppAPL=Bio(i,k,iNH4_)*cff7
+              cff6=fac1*Bio(i,k,iSiOH)/(KSiL(ng)+Bio(i,k,iSiOH))
+              cff7=cff6/MAX(MinVal,cff4+cff5)
+              cff4=cff1*cff2*MIN(1.0_r8,cff7)     ! Si limitation on N03
+              cff5=cff1*cff3*MIN(1.0_r8,cff7)     ! Si limitation on NH4
+              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff4)
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)/(1.0_r8+cff5)
+              GppNPL=Bio(i,k,iNO3_)*cff4
+              GppAPL=Bio(i,k,iNH4_)*cff5
               GppPL=GppNPL+GppAPL
-              Bio(i,k,iLphy)=Bio(i,k,iSphy)+GppPL
+              Bio(i,k,iLphy)=Bio(i,k,iLphy)+GppPL
               Bio(i,k,iSiOH)=Bio(i,k,iSiOH)-GppPL*RSiN(ng)
 !
 !  Large Phytoplankton respiration rate, ResPL, assumed to be
@@ -418,10 +419,10 @@
 !  (NO3 + NH4) to compute respiration contributions. Use Si:N ratio to
 !  compute SiOH4 contribution.
 !
-              RnewL=GppNPL/GppPL
-              cff5=dtdays*ResPL0(ng)*EXP(KResPL(ng)*Bio(i,k,itemp))
-              Bio(i,k,iLphy)=Bio(i,k,iLphy)/(1.0_r8+cff5)
-              ResPL=Bio(i,k,iLphy)*cff5
+              RnewL=GppNPL/MAX(MinVal,GppPL)
+              cff7=fac2*EXP(KResPL(ng)*Bio(i,k,itemp))
+              Bio(i,k,iLphy)=Bio(i,k,iLphy)/(1.0_r8+cff7)
+              ResPL=Bio(i,k,iLphy)*cff7
               Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+ResPL*RnewL
               Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+ResPL*(1.0_r8-RnewL)
               Bio(i,k,iSiOH)=Bio(i,k,iSiOH)+ResPL*RSiN(ng)
@@ -516,8 +517,9 @@
           fac2=dtdays*GRmaxLps(ng)
           fac3=dtdays*GRmaxLpl(ng)
           fac4=dtdays*GRmaxLzs(ng)
-          fac5=dtdays*GRmaxPzs(ng)
-          fac6=dtdays*GRmaxPzl(ng)
+          fac5=dtdays*GRmaxPpl(ng)
+          fac6=dtdays*GRmaxPzs(ng)
+          fac7=dtdays*GRmaxPzl(ng)
           DO k=1,N(ng)
             DO i=Istr,Iend
 !
@@ -530,7 +532,7 @@
 !  Small Zooplankton grazing on Small Phytoplankton, GraPS2ZS.
 !
 #if defined IVLEV_EXPLICIT
-              cff4=1.0_r8-EXP(LamS(ng)*(PS2ZSstar(ng)-Bio(i,k,iSphy))
+              cff4=1.0_r8-EXP(LamS(ng)*(PS2ZSstar(ng)-Bio(i,k,iSphy)))
               GraPS2ZS=fac1*cff1*MAX(0.0_r8,cff4)*Bio(i,k,iSzoo)
               Bio(i,k,iSphy)=Bio(i,k,iSphy)-GraPS2ZS
               Bio(i,k,iSzoo)=Bio(i,k,iSzoo)+GraPS2ZS
@@ -551,7 +553,7 @@
 !  Large Zooplankton grazing on Small Phytoplankton, GraPS2ZL.
 !
 #if defined IVLEV_EXPLICIT
-              cff4=1.0_r8-EXP(LamL(ng)*(PS2ZLstar(ng)-Bio(i,k,iSphy))
+              cff4=1.0_r8-EXP(LamL(ng)*(PS2ZLstar(ng)-Bio(i,k,iSphy)))
               GraPS2ZL=fac2*cff2*MAX(0.0_r8,cff4)*Bio(i,k,iLzoo)
               Bio(i,k,iSphy)=Bio(i,k,iSphy)-GraPS2ZL
               Bio(i,k,iLzoo)=Bio(i,k,iLzoo)+GraPS2ZL
@@ -606,7 +608,7 @@
               cff5=1.0_r8/(fac4*cff4)
               cff=(1.0_r8+Bio(i,k,iSphy)*cff5)*cff2*Bio(i,k,iLzoo)
 # endif
-              Bio(i,k,iSzoo)=Bio(i,k,iSzoo)*(1.0_r8+cff)
+              Bio(i,k,iSzoo)=Bio(i,k,iSzoo)/(1.0_r8+cff)
               GraZS2ZL=cff*Bio(i,k,iSzoo)
               Bio(i,k,iLzoo)=Bio(i,k,iLzoo)+GraZS2ZL
 #endif
@@ -616,18 +618,18 @@
 #if defined IVLEV_EXPLICIT
               cff4=1.0_r8-EXP(LamP(ng)*(PL2ZPstar(ng)-Bio(i,k,iLphy)))
               cff5=EXP(-PusaiPL(ng)*(Bio(i,k,iLzoo)+Bio(i,k,iSzoo)))
-              GraPL2ZP=fac3*cff3*cff5*MAX(0.0_r8,cff4)*Bio(i,k,iPzoo)
+              GraPL2ZP=fac5*cff3*cff5*MAX(0.0_r8,cff4)*Bio(i,k,iPzoo)
               Bio(i,k,iLphy)=Bio(i,k,iLphy)-GraPL2ZP
               Bio(i,k,iPzoo)=Bio(i,k,iPzoo)+GraPL2ZP
 #else
 # ifdef HOLLING_GRAZING
               cff4=1.0_r8/(KPL2ZP(ng)+Bio(i,k,iLphy)*Bio(i,k,iLphy))
               cff5=EXP(-PusaiPL(ng)*(Bio(i,k,iLzoo)+Bio(i,k,iSzoo)))
-              cff=fac3*cff3*cff4*cff5*Bio(i,k,iPzoo)*Bio(i,k,iLphy)
+              cff=fac5*cff3*cff4*cff5*Bio(i,k,iPzoo)*Bio(i,k,iLphy)
 # elif defined IVLEV_IMPLICIT
               cff4=1.0_r8-EXP(LamP(ng)*(PL2ZPstar(ng)-Bio(i,k,iLphy)))
               cff5=EXP(-PusaiPL(ng)*(Bio(i,k,iLzoo)+Bio(i,k,iSzoo)))
-              cff6=1.0_r8/(fac3*cff4)
+              cff6=1.0_r8/(fac5*cff4)
               cff=(1.0_r8+Bio(i,k,iLphy)*cff6)*cff3*cff5*Bio(i,k,iPzoo)
 # endif
               Bio(i,k,iLphy)=Bio(i,k,iLphy)/(1.0_r8+cff)
@@ -640,18 +642,18 @@
 #if defined IVLEV_EXPLICIT
               cff4=1.0_r8-EXP(LamP(ng)*(ZS2ZPstar(ng)-Bio(i,k,iSzoo)))
               cff5=EXP(-PusaiZS(ng)*Bio(i,k,iLzoo))
-              GraZS2ZP=fac5*cff3*cff5*MAX(0.0_r8,cff4)*Bio(i,k,iPzoo)
+              GraZS2ZP=fac6*cff3*cff5*MAX(0.0_r8,cff4)*Bio(i,k,iPzoo)
               Bio(i,k,iSzoo)=Bio(i,k,iSzoo)-GraZS2ZP
               Bio(i,k,iPzoo)=Bio(i,k,iPzoo)+GraZS2ZP
 #else
 # ifdef HOLLING_GRAZING
               cff4=1.0_r8/(KZS2ZP(ng)+Bio(i,k,iSzoo)*Bio(i,k,iSzoo))
               cff5=EXP(-PusaiZS(ng)*Bio(i,k,iLzoo))
-              cff=fac5*cff3**cff4*cff5*Bio(i,k,iPzoo)*Bio(i,k,iSzoo)
+              cff=fac6*cff3**cff4*cff5*Bio(i,k,iPzoo)*Bio(i,k,iSzoo)
 # elif defined IVLEV_IMPLICIT
               cff4=1.0_r8-EXP(LamP(ng)*(ZS2ZPstar(ng)-Bio(i,k,iSzoo)))
               cff5=EXP(-PusaiZS(ng)*Bio(i,k,iLzoo))
-              cff6=1.0_r8/(fac5*cff4)
+              cff6=1.0_r8/(fac6*cff4)
               cff=(1.0_r8+Bio(i,k,iSzoo)*cff6)*cff3*cff5*Bio(i,k,iPzoo)
 # endif
               Bio(i,k,iSzoo)=Bio(i,k,iSzoo)/(1.0_r8+cff)
@@ -663,16 +665,16 @@
 !
 #if defined IVLEV_EXPLICIT
               cff4=1.0_r8-EXP(LamP(ng)*(ZL2ZPstar(ng)-Bio(i,k,iLzoo)))
-              GraZL2ZP=fac6*cff3*MAX(0.0_r8,cff4)*Bio(i,k,iPzoo)
+              GraZL2ZP=fac7*cff3*MAX(0.0_r8,cff4)*Bio(i,k,iPzoo)
               Bio(i,k,iLzoo)=Bio(i,k,iLzoo)-GraZL2ZP
               Bio(i,k,iPzoo)=Bio(i,k,iPzoo)+GraZL2ZP
 #else
 # ifdef HOLLING_GRAZING
               cff4=1.0_r8/(KZL2ZP(ng)+Bio(i,k,iLzoo)*Bio(i,k,iLzoo))
-              cff=fac6*cff3*cff4*Bio(i,k,iPzoo)*Bio(i,k,iLzoo)
+              cff=fac7*cff3*cff4*Bio(i,k,iPzoo)*Bio(i,k,iLzoo)
 # elif defined IVLEV_IMPLICIT
               cff4=1.0_r8-EXP(LamP(ng)*(ZL2ZPstar(ng)-Bio(i,k,iLzoo)))
-              cff5=1.0_r8/(fac6*cff4)
+              cff5=1.0_r8/(fac7*cff4)
               cff=(1.0_r8+Bio(i,k,iLzoo)*cff5)*cff3*Bio(i,k,iPzoo)
 # endif
               Bio(i,k,iLzoo)=Bio(i,k,iLzoo)/(1.0_r8+cff)
@@ -740,6 +742,7 @@
           fac2=dtdays*VP2N0(ng)
           fac3=dtdays*VP2D0(ng)
           fac4=dtdays*VD2N0(ng)
+          fac5=dtdays*VO2S0(ng)
           DO k=1,N(ng)
             DO i=Istr,Iend
 !
@@ -971,12 +974,12 @@
 !       Lagrangian algorithm. What is the correct nutrient path from
 !       the benthos to the water column?  NH4 to NO3?
 !       
-            IF (indx.eq.iPON_) THEN
+            IF (ibio.eq.iPON_) THEN
               DO i=Istr,Iend
                 cff1=FC(i,0)*Hz_inv(i,1)
                 Bio(i,1,iNO3_)=Bio(i,1,iNO3_)+cff1
               END DO
-            ELSE IF (indx.eq.iopal) THEN
+            ELSE IF (ibio.eq.iopal) THEN
               DO i=Istr,Iend
                 cff1=FC(i,0)*Hz_inv(i,1)
                 Bio(i,1,iSiOH)=Bio(i,1,iSiOH)+cff1
