@@ -65,7 +65,7 @@ BioIni(iSDet) == 0.04d0                          ! detritus
 
         K_NO3 == 0.1d0                           ! k_n
 
-! Phytoplankton saturation coefficient, [nondimensional], {0.4d0}.
+! Phytoplankton saturation coefficient, [millimole_N m-3], {0.4d0}.
 
         K_Phy == 0.4d0                           ! k_p
 
@@ -159,7 +159,7 @@ BioIni(iSDet) == 0.04d0                          ! detritus
 !  K_NO3     Inverse half-saturation for phytoplankton nitrate uptake
 !              [1/(millimole_N m-3)].
 !
-!  K_Phy     Phytoplankton saturation coefficient, [nondimensional].
+!  K_Phy     Phytoplankton saturation coefficient, [millimole m-3].
 !
 !  Vm_NO3    Nitrate uptake rate, [1/day].
 !

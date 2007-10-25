@@ -29,8 +29,8 @@
 !              [m3/(mmol_N)].                                          !
 !   K_NO3    Inverse half-saturation for Phytoplankton NO3 uptake      !
 !              [m3/(mmol_N)].                                          !
-!   K_Phy    Zooplankton half-saturation constant for ingestion        !
-!              [1/day].                                                !
+!   K_Phy    Zooplankton half-saturation, squared constant for         !
+!              ingestion [mmol_N/m3]^2.                                !
 !   LDeRR    Large Detrital re-mineralization rate [1/day].            !
 !   NitriR   Nitrification rate: oxidation of NH4 to NO3 [1/day].      !
 !   PARfrac  Fraction of shortwave radiation that is available for     !
@@ -72,7 +72,7 @@
         integer, dimension(Ngrids) :: BioIter
 
         real(r8), dimension(Ngrids) :: AttSW         ! 1/m
-        real(r8), dimension(Ngrids) :: AttChl        ! 1(mg_Chl m2)
+        real(r8), dimension(Ngrids) :: AttChl        ! 1/(mg_Chl m2)
         real(r8), dimension(Ngrids) :: Chl2C_m       ! mg_Chl/mg_C
         real(r8), dimension(Ngrids) :: ChlMin        ! mg_Chl/m3
         real(r8), dimension(Ngrids) :: CoagR         ! 1/day
@@ -80,7 +80,7 @@
         real(r8), dimension(Ngrids) :: I_thNH4       ! Watts/m2
         real(r8), dimension(Ngrids) :: K_NH4         ! m3/mmol_N
         real(r8), dimension(Ngrids) :: K_NO3         ! m3/mmol_N
-        real(r8), dimension(Ngrids) :: K_Phy         ! 1/day
+        real(r8), dimension(Ngrids) :: K_Phy         ! (mmol_N/m3)^2
         real(r8), dimension(Ngrids) :: LDeRRN        ! 1/day
         real(r8), dimension(Ngrids) :: LDeRRC        ! 1/day
         real(r8), dimension(Ngrids) :: NitriR        ! 1/day
@@ -283,13 +283,13 @@
 !  KP2N        Temperature coefficient for PON to NH4 decomposition,   !
 !                [1/Celsius].                                          !
 !  KPL2ZL      Large Zooplankton half-saturation coefficient for       !
-!                ingestion on Large Phytoplankton [millimole_N/m3].    !
+!                ingestion on Large Phytoplankton [millimole_N/m3]^2.  !
 !  KPL2ZP      Predator Zooplankton half-saturation coefficient for    !
-!                ingestion on Large Phytoplankton [millimole_N/m3].    !
+!                ingestion on Large Phytoplankton [millimole_N/m3]^2.  !
 !  KPS2ZL      Larg Zooplankton half-saturation coefficient for        !
-!                ingestion on Small Phytoplankton [millimole_N/m3].    !
+!                ingestion on Small Phytoplankton [millimole_N/m3]^2.  !
 !  KPS2ZS      Small Zooplankton half-saturation coefficient for       !
-!                ingestion on Small Phytoplankton [millimole_N/m3].    !
+!                ingestion on Small Phytoplankton [millimole_N/m3]^2.  !
 !  KResPL      Large Phytoplankton temperature coefficient for         !
 !                respiration, [1/Celsius].                             !
 !  KResPS      Small Phytoplankton temperature coefficient for         !
@@ -297,11 +297,11 @@
 !  KSiL        Large Phytoplankton half satuation constant for SiOH4,  !
 !                [millimole_Si/m3].                                    !
 !  KZL2ZP      Predator Zooplankton half-saturation coefficient for    !
-!                ingestion on Large Zooplankton [millimole_N/m3].      !
+!                ingestion on Large Zooplankton [millimole_N/m3]^2.    !
 !  KZS2ZL      Large Zooplankton half-saturation coefficient for       !
-!                ingestion on Small Phytoplankton [millimole_N/m3].    !
+!                ingestion on Small Phytoplankton [millimole_N/m3]^2.  !
 !  KZS2ZP      Predator Zooplankton half-saturation coefficient for    !
-!                ingestion on Small Zooplankton [millimole_N/m3].      !
+!                ingestion on Small Zooplankton [millimole_N/m3]^2.    !
 !  LamL        Large Zooplankton Ivlev constant, [m3/millimole_N].     !
 !  LamP        Predator Zooplankton Ivlev constant, [m3/millimole_N].  !
 !  LamS        Small Zooplankton Ivlev constant, [m3/millimole_N].     !
@@ -462,7 +462,7 @@
 !  K_ext     Light extinction coefficient, [1/m].                      !
 !  K_NO3     Inverse half-saturation for phytoplankton nitrate uptake  !
 !              [1/(millimole_N m-3)].                                  !
-!  K_Phy     Phytoplankton saturation coefficient, [nondimensional].   !
+!  K_Phy     Phytoplankton saturation coefficient, [millimole_N m-3].  !
 !  PhyMR     Phytoplankton senescence/mortality rate, [1/day].         !
 !  Vm_NO3    Nitrate uptake rate, [1/day].                             !
 !  wDet      Detrital sinking rate, [m/day].                           !
@@ -486,7 +486,7 @@
         real(r8), dimension(Ngrids) :: DetRR         ! 1/day
         real(r8), dimension(Ngrids) :: K_ext         ! 1/m
         real(r8), dimension(Ngrids) :: K_NO3         ! 1/(mmol/m3)
-        real(r8), dimension(Ngrids) :: K_Phy         ! nondimensional
+        real(r8), dimension(Ngrids) :: K_Phy         ! mmol/m3
         real(r8), dimension(Ngrids) :: PhyMR         ! 1/day
         real(r8), dimension(Ngrids) :: Vm_NO3        ! 1/day
         real(r8), dimension(Ngrids) :: wDet          ! m/day

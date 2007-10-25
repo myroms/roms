@@ -1112,7 +1112,7 @@
             qR(i,N(ng))=2.0_r8*qc(i,N(ng))-qL(i,N(ng))
 #  elif defined NEUMANN
             qL(i,N(ng))=qR(i,N(ng)-1)
-            qR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*qL(i,N(ng))
+            qR(i,N(ng))=1.5_r8*qc(i,N(ng))-0.5_r8*qL(i,N(ng))
 #  else
             qR(i,N(ng))=qc(i,N(ng))         ! default strictly monotonic
             qL(i,N(ng))=qc(i,N(ng))         ! conditions

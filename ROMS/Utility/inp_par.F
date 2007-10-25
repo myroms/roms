@@ -3098,7 +3098,7 @@
      &            'uptake (1/(mmol_N m-3)).'
             WRITE (out,110) K_Phy(ng), 'K_Phy',                         &
      &            'Zooplankton half-saturation constant for ingestion', &
-     &            '(day-1).'
+     &            '(mmol_N m-3)^2.'
             WRITE (out,100) Chl2C_m(ng), 'Chl2C_m',                     &
      &            'Maximum chlorophyll to carbon ratio (mg_Chl/mg_C).'
             WRITE (out,100) ChlMin(ng), 'ChlMin',                       &
@@ -3929,22 +3929,22 @@
 #  ifdef HOLLING_GRAZING
             WRITE (out,110) KPS2ZS(ng), 'KPS2ZS',                       &
      &            'Half-saturation constant for small zooplankton',     &
-     &            'grazing on small phytoplankton (millimole_N/m3).'
+     &            'grazing on small phytoplankton (millimole_N/m3)^2.'
             WRITE (out,110) KPS2ZL(ng), 'KPS2ZL',                       &
      &            'Half-saturation constant for large zooplankton',     &
-     &            'grazing on small phytoplankton (millimole_N/m3).'
+     &            'grazing on small phytoplankton (millimole_N/m3)^2.'
             WRITE (out,110) KPL2ZL(ng), 'KPL2ZL',                       &
      &            'Half-saturation constant for large zooplankton',     &
-     &            'grazing on large phytoplankton (millimole_N/m3).'
+     &            'grazing on large phytoplankton (millimole_N/m3)^2.'
             WRITE (out,110) KPL2ZP(ng), 'KPL2ZP',                       &
      &            'Half-saturation constant for predator zooplankton',  &
-     &            'grazing on large phytoplankton (millimole_N/m3).'
+     &            'grazing on large phytoplankton (millimole_N/m3)^2.'
             WRITE (out,110) KZS2ZP(ng), 'KZS2ZP',                       &
      &            'Half-saturation constant for predator zooplankton',  &
-     &            'grazing on small zooplankton (millimole_N/m3).'
+     &            'grazing on small zooplankton (millimole_N/m3)^2.'
             WRITE (out,110) KZL2ZP(ng), 'KZL2ZP',                       &
      &            'Half-saturation constant for predator zooplankton',  &
-     &            'grazing on large zooplankton (millimole_N/m3).'
+     &            'grazing on large zooplankton (millimole_N/m3)^2.'
 #  else
             WRITE (out,110) PS2ZSstar(ng), 'PS2ZSstar',                 &
      &            'Small zooplankton threshold for grazing on small',   &
@@ -4116,7 +4116,7 @@
 # elif defined NPZD_FRANKS
 !
 !-----------------------------------------------------------------------
-!  Read in Fasham biological model parameters.
+!  Read in NPZD biological model parameters.
 !-----------------------------------------------------------------------
 !
 #  ifdef ANA_BIOLOGY
@@ -4242,7 +4242,7 @@
      &            'uptake (1/(mmol m-3)).'
             WRITE (out,110) K_Phy(ng), 'K_Phy',                         &
      &            'Phytoplankton saturation coefficient',               &
-     &            '(nondimensional).'
+     &            '(mmol/m3)^2.'
             WRITE (out,100) Vm_NO3(ng), 'Vm_NO3',                       &
      &            'Nitrate upatake rate (day-1).'
             WRITE (out,100) PhyMR(ng), 'PhyMR',                         &
@@ -4335,7 +4335,7 @@
 # elif defined NPZD_POWELL
 !
 !-----------------------------------------------------------------------
-!  Read in Fasham biological model parameters.
+!  Read in NPZD biological model parameters.
 !-----------------------------------------------------------------------
 !
 #  ifdef ANA_BIOLOGY

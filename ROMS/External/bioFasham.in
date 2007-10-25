@@ -87,7 +87,8 @@
 
        K_NH4 == 2.0d0
 
-! Zooplankton half-saturation constant for ingestion [1/day], {1.0d0}.
+! Zooplankton half-saturation constant (squared) for ingestion
+! [millimole_N m-3]^2, {1.0d0}.
 
        K_Phy == 2.0d0
 
@@ -261,7 +262,8 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !  K_NH4     Inverse half-saturation for phytoplankton NH4 uptake
 !              [1/(millimole_N m-3)].
 !
-!  K_Phy     Zooplankton half-saturation constant for ingestion [1/day].
+!  K_Phy     Zooplankton half-saturation, squared constant for ingestion
+!              [millimole_N m-3]^2.
 !
 !  Chl2C_m   Maximum chlorophyll to carbon ratio [mg_Chl/mg_C].
 !

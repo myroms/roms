@@ -151,16 +151,17 @@
         LamL == 1.4d0                      ! large biomass
         LamP == 1.4d0                      ! predator biomass
 
-! Zooplankton half-saturation coefficient for ingestion used only
-! when the Holling-type grazing formulation is activated [millimole_N/m3].
+! Zooplankton half-saturation coefficient (squared) for ingestion used
+! only when the Holling-type grazing formulation is activated
+! [millimole_N/m3]^2.
 
-      KPS2ZS == 0.4d0                      ! small Zoo on small Phy
-      KPS2ZL == 0.4d0                      ! large Zoo on small Phy
-      KPL2ZL == 0.4d0                      ! large Zoo on large Phy
-      KZS2ZL == 0.4d0                      ! large Zoo on small Zoo
-      KPL2ZP == 0.4d0                      ! predator Zoo on large Phy
-      KZS2ZP == 0.4d0                      ! predator Zoo on small Zoo
-      KZL2ZP == 0.4d0                      ! predator Zoo on large Zoo
+      KPS2ZS == 0.16d0                     ! small Zoo on small Phy
+      KPS2ZL == 0.16d0                     ! large Zoo on small Phy
+      KPL2ZL == 0.16d0                     ! large Zoo on large Phy
+      KZS2ZL == 0.16d0                     ! large Zoo on small Zoo
+      KPL2ZP == 0.16d0                     ! predator Zoo on large Phy
+      KZS2ZP == 0.16d0                     ! predator Zoo on small Zoo
+      KZL2ZP == 0.16d0                     ! predator Zoo on large Zoo
 
 ! Zooplankton threshold value for grazing [millimole_N/m3].
 
@@ -401,26 +402,26 @@ Hout(idTvar) == 11*T
 !
 !  LamP        Predator Zooplankton Ivlev constant, [m3/millimole_N].
 !
-!  KPS2ZS      Small Zooplankton half-saturation coefficient for
-!                ingestion on Small Phytoplankton [millimole_N/m3].
+!  KPS2ZS      Small Zooplankton half-saturation, squared coefficient for
+!                ingestion on Small Phytoplankton [millimole_N/m3]^2.
 !
-!  KPS2ZL      Larg Zooplankton half-saturation coefficient for
-!                ingestion on Small Phytoplankton [millimole_N/m3].
+!  KPS2ZL      Large Zooplankton half-saturation, squared coefficient for
+!                ingestion on Small Phytoplankton [millimole_N/m3]^2.
 !
-!  KPL2ZL      Large Zooplankton half-saturation coefficient for
-!                ingestion on Large Phytoplankton [millimole_N/m3].
+!  KPL2ZL      Large Zooplankton half-saturation, squared coefficient for
+!                ingestion on Large Phytoplankton [millimole_N/m3]^2.
 !
-!  KZS2ZL      Large Zooplankton half-saturation coefficient for
-!                ingestion on Small Phytoplankton [millimole_N/m3].
+!  KZS2ZL      Large Zooplankton half-saturation, squared coefficient for
+!                ingestion on Small Phytoplankton [millimole_N/m3]^2.
 !
-!  KPL2ZP      Predator Zooplankton half-saturation coefficient for
-!                ingestion on Large Phytoplankton [millimole_N/m3].
+!  KPL2ZP      Predator Zooplankton half-saturation, sqaured coefficient for
+!                ingestion on Large Phytoplankton [millimole_N/m3]^2.
 !
-!  KZS2ZP      Predator Zooplankton half-saturation coefficient for
-!                ingestion on Small Zooplankton [millimole_N/m3].
+!  KZS2ZP      Predator Zooplankton half-saturation, squared coefficient for
+!                ingestion on Small Zooplankton [millimole_N/m3]^2.
 !
-!  KZL2ZP      Predator Zooplankton half-saturation coefficient for
-!                ingestion on Large Zooplankton [millimole_N/m3].
+!  KZL2ZP      Predator Zooplankton half-saturation, squared coefficient for
+!                ingestion on Large Zooplankton [millimole_N/m3]^2.
 !
 !  PS2ZSstar   Small Zooplankton threshold value for grazing on
 !                Small Phytoplankton, [millimole_N/m3].

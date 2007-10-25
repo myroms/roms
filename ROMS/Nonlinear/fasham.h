@@ -1012,7 +1012,7 @@
               bR(i,N(ng))=2.0_r8*qc(i,N(ng))-bL(i,N(ng))
 #elif defined NEUMANN
               bL(i,N(ng))=bR(i,N(ng)-1)
-              bR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
+              bR(i,N(ng))=1.5_r8*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
 #else
               bR(i,N(ng))=qc(i,N(ng))       ! default strictly monotonic
               bL(i,N(ng))=qc(i,N(ng))       ! conditions
