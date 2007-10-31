@@ -1166,7 +1166,7 @@
 !
 !!      INTEGER      IENT, IERR, IF, IL, IOPTR
       INTEGER      IENT, IERR, IF, IL
-      REAL IOPTR                                                         jcw
+      REAL IOPTR(ILEN)                                                   jcw
       CHARACTER*20 INTSTR, CHARS
       CHARACTER*80 MSGSTR
 !
