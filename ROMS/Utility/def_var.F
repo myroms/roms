@@ -14,7 +14,7 @@
 !                                                                      !
 !     ncid     NetCDF file ID (integer).                               !
 !     Vtype    NetCDF variable type (integer).                         !
-!     mVdim    Number of variable dimensions (integer; 0=scalar).      !
+!     nVdim    Number of variable dimensions (integer; 0=scalar).      !
 !     Vdim     Dimensions IDs for this variable (integer vector).      !
 !     Aval     Attribute values (real vector):                         !
 !                Aval(1)   =>  Add offset value.                       !
@@ -85,7 +85,7 @@
 
       integer :: def_var
 
-      character (len=40) text
+      character (len=60) text
 !
 !-----------------------------------------------------------------------
 !  Define requested variable and its attributes.
@@ -452,39 +452,55 @@
       latt=LEN_TRIM(Vinfo(22))
       IF (latt.gt.0) THEN
         IF (spherical) THEN
-          IF ((INT(Aval(5)).eq.r2dvar).or.                              &
-     &        (INT(Aval(5)).eq.b3dvar).or.                              &
-     &        (INT(Aval(5)).eq.r3dvar).or.                              &
-     &        (INT(Aval(5)).eq.w3dvar)) THEN
-            text='lat_rho lon_rho'
-          ELSE IF ((INT(Aval(5)).eq.u2dvar).or.                         &
-     &             (INT(Aval(5)).eq.u3dvar)) THEN
-            text='lat_u lon_u'
-          ELSE IF ((INT(Aval(5)).eq.v2dvar).or.                         &
-     &             (INT(Aval(5)).eq.v3dvar)) THEN
-            text='lat_v lon_v'
-          ELSE IF ((INT(Aval(5)).eq.p2dvar).or.                         &
-     &             (INT(Aval(5)).eq.p3dvar)) THEN
-            text='lat_psi lon_psi'
+          IF (INT(Aval(5)).eq.r2dvar) THEN
+            text='lon_rho lat_rho ocean_time'
+          ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
+            text='lon_rho lat_rho s_rho'
+          ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
+            text='lon_rho lat_rho s_w'
+          ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
+            text='lon_rho lat_rho'
+          ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
+            text='lon_u lat_u'
+          ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
+            text='lon_u lat_u s_rho'
+          ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
+            text='lon_v lat_v'
+          ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
+            text='lon_v lat_v s_rho'
+          ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
+            text='lon_psi lat_psi'
+          ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
+            text='lon_psi lat_psi s_rho'
           END IF
         ELSE
-          IF ((INT(Aval(5)).eq.r2dvar).or.                              &
-     &        (INT(Aval(5)).eq.b3dvar).or.                              &
-     &        (INT(Aval(5)).eq.r3dvar).or.                              &
-     &        (INT(Aval(5)).eq.w3dvar)) THEN
+          IF (INT(Aval(5)).eq.r2dvar) THEN
             text='x_rho y_rho'
-          ELSE IF ((INT(Aval(5)).eq.u2dvar).or.                         &
-     &             (INT(Aval(5)).eq.u3dvar)) THEN
+          ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
+            text='x_rho y_rho s_rho'
+          ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
+            text='x_rho y_rho s_w'
+          ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
+            text='x_rho y_rho'
+          ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
             text='x_u y_u'
-          ELSE IF ((INT(Aval(5)).eq.v2dvar).or.                         &
-     &             (INT(Aval(5)).eq.v3dvar)) THEN
+          ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
+            text='x_u y_u s_rho'
+          ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
             text='x_v y_v'
-          ELSE IF ((INT(Aval(5)).eq.p2dvar).or.                         &
-     &             (INT(Aval(5)).eq.p3dvar)) THEN
+          ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
+            text='x_v y_v s_rho'
+          ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
             text='x_psi y_psi'
+          ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
+            text='x_psi y_psi s_rho'
           END IF
         END IF
         latt=LEN_TRIM(text)
+        IF (nVdim.gt.2) THEN
+          text=text(1:latt)//' ocean_time'
+          latt=LEN_TRIM(text)
+        END IF
         def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(22)),                &
      &                       text(1:latt))
         IF (def_var.ne.nf90_noerr) THEN

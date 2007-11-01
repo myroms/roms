@@ -314,10 +314,10 @@
           Vinfo( 3)='seconds since 1968-05-23 00:00:00 GMT'
           Vinfo( 4)='gregorian'
         ELSE IF (INT(time_ref).eq.-1) THEN
-          Vinfo( 3)='seconds since 0000-01-01 00:00:00'
+          Vinfo( 3)='seconds since 0001-01-01 00:00:00'
           Vinfo( 4)='360_day'
         ELSE IF (INT(time_ref).eq.0) THEN
-          Vinfo( 3)='seconds since 0000-01-01 00:00:00'
+          Vinfo( 3)='seconds since 0001-01-01 00:00:00'
           Vinfo( 4)='365.25_day'
         ELSE IF (time_ref.gt.0.0_r8) THEN
           WRITE (Vinfo( 3),'(a,1x,a)') 'seconds since', TRIM(r_text)
