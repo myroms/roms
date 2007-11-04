@@ -260,7 +260,7 @@
           RETURN
         END IF
       END DO
-#  ifdef ADJUSTE_STFLUX
+#  ifdef ADJUST_STFLUX
 !
 !  Write out surface tracer flux.
 !
