@@ -334,7 +334,7 @@
 !
       status=nf90_put_att(ncid,nf90_global,'svn_url',                   &
      &                    TRIM(svn_url))
-#ifdef SVN_REV
+#if !defined DEBUGGING && defined SVN_REV
       status=nf90_put_att(ncid,nf90_global,'svn_rev',                   &
      &                    TRIM(svn_rev))
 #endif
@@ -342,19 +342,20 @@
 !  Local root directory, cpp header directory and file, and analytical
 !  directory
 !
-#ifdef ROOT_DIR
+#ifndef DEBUGGING
+# ifdef ROOT_DIR
       status=nf90_put_att(ncid,nf90_global,'code_dir',                  &
      &                    TRIM(Rdir))
-#endif
-#ifdef HEADER_DIR
+# endif
+# ifdef HEADER_DIR
       status=nf90_put_att(ncid,nf90_global,'header_dir',                &
      &                    TRIM(Hdir))
-#endif
-#ifdef ROMS_HEADER
+# endif
+# ifdef ROMS_HEADER
       status=nf90_put_att(ncid,nf90_global,'header_file',               &
      &                    TRIM(Hfile))
+# endif
 #endif
-
 #ifndef DEBUGGING
 !
 !  Attributes describing platform and compiler
