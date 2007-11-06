@@ -143,7 +143,7 @@
 # ifdef SOLVE3D
      &                                ad_t, ad_u, ad_v,                 &
 #  ifdef ADJUST_STFLUX
-     &                                ad_tfulx,                         &
+     &                                ad_tflux,                         &
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS

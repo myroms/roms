@@ -1167,29 +1167,6 @@
           END DO
         END IF
       END DO
-# ifdef SOLVE
-      DO k=1,N(ng)
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ad_u_sol(i,j,k)=ad_u(i,j,k,nstp)
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            ad_v_sol(i,j,k)=ad_v(i,j,k,nstp)
-          END DO
-        END DO
-      END DO
-      DO itrc=1,NT(ng)
-        DO k=1,N(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              ad_t_sol(i,j,k,itrc)=ad_t(i,j,k,nstp,itrc)
-            END DO
-          END DO
-        END DO
-      END DO
-# endif
 
       RETURN
       END SUBROUTINE ad_ini_fields_tile
