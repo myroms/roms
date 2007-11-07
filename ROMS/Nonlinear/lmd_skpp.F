@@ -583,6 +583,9 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
           zgrid(i,j)=z_w(i,j,N(ng))-hsbl(i,j)
+# ifdef MASKING
+          zgrid(i,j)=zgrid(i,j)*rmask(i,j)
+# endif
         END DO
       END DO
       CALL lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, -1.0_r8,        &
@@ -672,6 +675,9 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
           zgrid(i,j)=z_w(i,j,N(ng))-hsbl(i,j)
+# ifdef MASKING
+          zgrid(i,j)=zgrid(i,j)*rmask(i,j)
+# endif
         END DO
       END DO
       CALL lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, -1.0_r8,        &
