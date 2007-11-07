@@ -73,6 +73,7 @@
      &                    OCEAN(ng) % u,                                &
      &                    OCEAN(ng) % v,                                &
      &                    OCEAN(ng) % pden,                             &
+     &                    FORCES(ng) % srflx,                           &
      &                    FORCES(ng) % btflx,                           &
      &                    FORCES(ng) % bustr,                           &
      &                    FORCES(ng) % bvstr,                           &
@@ -98,7 +99,7 @@
 # endif
      &                          f, h, Hz, z_r, z_w,                     &
      &                          u, v, pden,                             &
-     &                          btflx,  bustr, bvstr,                   &
+     &                          srflx, btflx,  bustr, bvstr,            &
      &                          alpha,                                  &
 # ifdef SALINITY
      &                          beta,                                   &
@@ -136,6 +137,7 @@
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: pden(LBi:,LBj:,:)
+      real(r8), intent(in) :: srflx(LBi:,LBj:)
       real(r8), intent(in) :: btflx(LBi:,LBj:,:)
       real(r8), intent(in) :: bustr(LBi:,LBj:)
       real(r8), intent(in) :: bvstr(LBi:,LBj:)
@@ -161,6 +163,7 @@
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),3)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),3)
       real(r8), intent(in) :: pden(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: srflx(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: btflx(LBi:UBi,LBj:UBj,NT(ng))
       real(r8), intent(in) :: bustr(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: bvstr(LBi:UBi,LBj:UBj)
@@ -299,7 +302,7 @@
 # else
           Bo(i,j)=g*alpha(i,j)*btflx(i,j,itemp)
 # endif
-          Bosol(i,j)=0.0_r8
+          Bosol(i,j)=g*alpha(i,j)*srflx(i,j)
         END DO
       END DO
 !
@@ -565,12 +568,25 @@
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    hbbl)
 #  endif
+!
+!  Shapiro filter on boundary layer thickness
+!
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          bl_dpth(i,j)=hbbl(i,j)-z_w(i,j,0)
+        END DO
+      END DO
       CALL shapiro2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
      &                     LBi, UBi, LBj, UBj,                          &
 #  ifdef MASKING
      &                     rmask,                                       &
 #  endif
-     &                     hbbl)
+     &                     bl_dpth)
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+          hbbl(i,j)=bl_dpth(i,j)+z_w(i,j,0)
+        END DO
+      END DO
 # endif
 !
 !  Apply gradient or periodic boundary conditions.
