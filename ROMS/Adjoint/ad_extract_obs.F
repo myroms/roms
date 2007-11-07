@@ -18,15 +18,16 @@
 !  On Input:                                                           !
 !                                                                      !
 !     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     Istr       Starting tile index in the I-direction.               !
-!     Iend       Ending   tile index in the I-direction.               !
-!     Jstr       Starting tile index in the J-direction.               !
-!     Jend       Ending   tile index in the J-direction.               !
+!     Imin       Starting tile index in the I-direction.               !
+!     Imax       Ending   tile index in the I-direction.               !
+!     Jmin       Starting tile index in the J-direction.               !
+!     Jmax       Ending   tile index in the J-direction.               !
 !     LBi        I-dimension Lower bound.                              !
 !     UBi        I-dimension Upper bound.                              !
 !     LBj        J-dimension Lower bound.                              !
 !     UBj        J-dimension Upper bound.                              !
+!     LBk        K-dimension Lower bound.                              !
+!     UBk        K-dimension Upper bound.                              !
 !     ILB        Tile lower bound I-coordinate to consider.            !
 !     IUB        Tile upper bound I-coordinate to consider.            !
 !     JLB        Tile lower bound J-coordinate to consider.            !
@@ -42,8 +43,6 @@
 !     Xobs       Observations X-locations (grid coordinates).          !
 !     Yobs       Observations Y-locations (grid coordinates).          !
 !     Zobs       Observations Z-locations (grid coordinates or meters).!
-!     LBk        Model K-dimension Lower bound.                        !
-!     UBk        Model K-dimension Upper bound.                        !
 !     ad_Aobs    Adjoint forcing term at observations locations.       ! 
 !     Adepth     Depths (meter; negative).                             !
 !     Amask      Land-sea masking.                                     !
@@ -83,7 +82,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE ad_extract_obs2d (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ad_extract_obs2d (ng, Imin, Imax, Jmin, Jmax,          &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ILB, IUB, JLB, JUB,                  &
      &                             ifield, Mobs, NobsSTR, NobsEND,      &
@@ -99,7 +98,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Istr, Iend, Jstr, Jend
+      integer, intent(in) :: ng, Imin, Imax, Jmin, Jmax
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: ILB, IUB, JLB, JUB
       integer, intent(in) :: ifield, Mobs, NobsSTR, NobsEND
@@ -154,9 +153,9 @@
         j2=j1+1
         IF ((ObsType(iobs).eq.ifield).and.                              &
      &      ((TimeLB.le.Tobs(iobs)).and.(Tobs(iobs).lt.TimeUB)).and.    &
-     &      ((Istr.le.i1).and.(i1.le.Iend)).and.                        &
+     &      ((Imin.le.i1).and.(i1.le.Imax)).and.                        &
      &      ((ILB .le.i1).and.(i1.le.IUB )).and.                        &
-     &      ((Jstr.le.j1).and.(j1.le.Jend)).and.                        &
+     &      ((Jmin.le.j1).and.(j1.le.Jmax)).and.                        &
      &      ((JLB .le.j1).and.(j1.le.JUB ))) THEN
           p2=REAL(i2-i1,r8)*(Xobs(iobs)-REAL(i1,r8))
           q2=REAL(j2-j1,r8)*(Yobs(iobs)-REAL(j1,r8))
@@ -193,7 +192,11 @@
           ad_A(i1,j2)=ad_A(i1,j2)+Hmat(4)*ad_Aobs(iobs)
           ad_Aobs(iobs)=0.0_r8
 # ifndef S4DVAR
+#  ifdef MASKING
+          IF (wsum.gt.0.0_r8) ObsScale(iobs)=1.0_r8
+#  else
           ObsScale(iobs)=1.0_r8
+#  endif
 # endif
         END IF
       END DO
@@ -204,7 +207,7 @@
 # ifdef SOLVE3D
 !
 !***********************************************************************
-      SUBROUTINE ad_extract_obs3d (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ad_extract_obs3d (ng, Imin, Imax, Jmin, Jmax,          &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
      &                             ILB, IUB, JLB, JUB,                  &
      &                             ifield, Mobs, NobsSTR, NobsEND,      &
@@ -222,7 +225,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Istr, Iend, Jstr, Jend
+      integer, intent(in) :: ng, Imin, Imax, Jmin, Jmax
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: ILB, IUB, JLB, JUB
       integer, intent(in) :: ifield, Mobs, NobsSTR, NobsEND
@@ -282,9 +285,9 @@
         j2=j1+1
         IF ((ObsType(iobs).eq.ifield).and.                              &
      &      ((TimeLB.le.Tobs(iobs)).and.(Tobs(iobs).lt.TimeUB)).and.    &
-     &      ((Istr.le.i1).and.(i1.le.Iend)).and.                        &
+     &      ((Imin.le.i1).and.(i1.le.Imax)).and.                        &
      &      ((ILB .le.i1).and.(i1.le.IUB )).and.                        &
-     &      ((Jstr.le.j1).and.(j1.le.Jend)).and.                        &
+     &      ((Jmin.le.j1).and.(j1.le.Jmax)).and.                        &
      &      ((JLB .le.j1).and.(j1.le.JUB ))) THEN
           p2=REAL(i2-i1,r8)*(Xobs(iobs)-REAL(i1,r8))
           q2=REAL(j2-j1,r8)*(Yobs(iobs)-REAL(j1,r8))
@@ -309,11 +312,9 @@
               r2=0.0_r8
               Zobs(iobs)=REAL(k1,r8)           ! overwrite
             ELSE IF (Zbot.ge.Zobs(iobs)) THEN
-              k1=1                             ! If deeper, assign
-              k2=k1                            ! observation to bottom
-              r1=1.0_r8                        ! level
+              r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8
-              Zobs(iobs)=REAL(k1,r8)           ! overwrite
+              ObsScale(iobs)=0.0_r8
             ELSE                    
               DO k=N(ng),2,-1                  ! Otherwise, interpolate
                 Ztop=Adepth(i1,j1,k  )         ! to fractional level
@@ -329,55 +330,61 @@
               Zobs(iobs)=REAL(k1,r8)+r2        ! overwrite
             END IF
           END IF
-          Hmat(1)=w11*r1
-          Hmat(2)=w21*r1
-          Hmat(3)=w22*r1
-          Hmat(4)=w12*r1
-          Hmat(5)=w11*r2
-          Hmat(6)=w21*r2
-          Hmat(7)=w22*r2
-          Hmat(8)=w12*r2
+          IF ((r1+r2).gt.0.0_r8) THEN
+            Hmat(1)=w11*r1
+            Hmat(2)=w21*r1
+            Hmat(3)=w22*r1
+            Hmat(4)=w12*r1
+            Hmat(5)=w11*r2
+            Hmat(6)=w21*r2
+            Hmat(7)=w22*r2
+            Hmat(8)=w12*r2
 #  ifdef MASKING
-          Hmat(1)=Hmat(1)*Amask(i1,j1)
-          Hmat(2)=Hmat(2)*Amask(i2,j1)
-          Hmat(3)=Hmat(3)*Amask(i2,j2)
-          Hmat(4)=Hmat(4)*Amask(i1,j2)
-          Hmat(5)=Hmat(5)*Amask(i1,j1)
-          Hmat(6)=Hmat(6)*Amask(i2,j1)
-          Hmat(7)=Hmat(7)*Amask(i2,j2)
-          Hmat(8)=Hmat(8)*Amask(i1,j2)
-          wsum=0.0_r8
-          DO ic=1,8
-            wsum=wsum+Hmat(ic)
-          END DO
-          IF (wsum.gt.0.0_r8) THEN
-            wsum=1.0_r8/wsum
+            Hmat(1)=Hmat(1)*Amask(i1,j1)
+            Hmat(2)=Hmat(2)*Amask(i2,j1)
+            Hmat(3)=Hmat(3)*Amask(i2,j2)
+            Hmat(4)=Hmat(4)*Amask(i1,j2)
+            Hmat(5)=Hmat(5)*Amask(i1,j1)
+            Hmat(6)=Hmat(6)*Amask(i2,j1)
+            Hmat(7)=Hmat(7)*Amask(i2,j2)
+            Hmat(8)=Hmat(8)*Amask(i1,j2)
+            wsum=0.0_r8
             DO ic=1,8
-              Hmat(ic)=Hmat(ic)*wsum
+              wsum=wsum+Hmat(ic)
             END DO
-          END IF          
+            IF (wsum.gt.0.0_r8) THEN
+              wsum=1.0_r8/wsum
+              DO ic=1,8
+                Hmat(ic)=Hmat(ic)*wsum
+              END DO
+            END IF          
 #  endif
-!>        Aobs(iobs)=Hmat(1)*A(i1,j1,k1)+                               &
-!>   &               Hmat(2)*A(i2,j1,k1)+                               &
-!>   &               Hmat(3)*A(i2,j2,k1)+                               &
-!>   &               Hmat(4)*A(i1,j2,k1)+                               &
-!>   &               Hmat(5)*A(i1,j1,k2)+                               &
-!>   &               Hmat(6)*A(i2,j1,k2)+                               &
-!>   &               Hmat(7)*A(i2,j2,k2)+                               &
-!>   &               Hmat(8)*A(i1,j2,k2)
+!>          Aobs(iobs)=Hmat(1)*A(i1,j1,k1)+                             &
+!>   &                 Hmat(2)*A(i2,j1,k1)+                             &
+!>   &                 Hmat(3)*A(i2,j2,k1)+                             &
+!>   &                 Hmat(4)*A(i1,j2,k1)+                             &
+!>   &                 Hmat(5)*A(i1,j1,k2)+                             &
+!>   &                 Hmat(6)*A(i2,j1,k2)+                             &
+!>   &                 Hmat(7)*A(i2,j2,k2)+                             &
+!>   &                 Hmat(8)*A(i1,j2,k2)
 !>
-          ad_A(i1,j1,k1)=ad_A(i1,j1,k1)+Hmat(1)*ad_Aobs(iobs)
-          ad_A(i2,j1,k1)=ad_A(i2,j1,k1)+Hmat(2)*ad_Aobs(iobs)
-          ad_A(i2,j2,k1)=ad_A(i2,j2,k1)+Hmat(3)*ad_Aobs(iobs)
-          ad_A(i1,j2,k1)=ad_A(i1,j2,k1)+Hmat(4)*ad_Aobs(iobs)
-          ad_A(i1,j1,k2)=ad_A(i1,j1,k2)+Hmat(5)*ad_Aobs(iobs)
-          ad_A(i2,j1,k2)=ad_A(i2,j1,k2)+Hmat(6)*ad_Aobs(iobs)
-          ad_A(i2,j2,k2)=ad_A(i2,j2,k2)+Hmat(7)*ad_Aobs(iobs)
-          ad_A(i1,j2,k2)=ad_A(i1,j2,k2)+Hmat(8)*ad_Aobs(iobs)
-          ad_Aobs(iobs)=0.0_r8
+            ad_A(i1,j1,k1)=ad_A(i1,j1,k1)+Hmat(1)*ad_Aobs(iobs)
+            ad_A(i2,j1,k1)=ad_A(i2,j1,k1)+Hmat(2)*ad_Aobs(iobs)
+            ad_A(i2,j2,k1)=ad_A(i2,j2,k1)+Hmat(3)*ad_Aobs(iobs)
+            ad_A(i1,j2,k1)=ad_A(i1,j2,k1)+Hmat(4)*ad_Aobs(iobs)
+            ad_A(i1,j1,k2)=ad_A(i1,j1,k2)+Hmat(5)*ad_Aobs(iobs)
+            ad_A(i2,j1,k2)=ad_A(i2,j1,k2)+Hmat(6)*ad_Aobs(iobs)
+            ad_A(i2,j2,k2)=ad_A(i2,j2,k2)+Hmat(7)*ad_Aobs(iobs)
+            ad_A(i1,j2,k2)=ad_A(i1,j2,k2)+Hmat(8)*ad_Aobs(iobs)
+            ad_Aobs(iobs)=0.0_r8
 #  ifndef S4DVAR
-          ObsScale(iobs)=1.0_r8
+#   ifdef MASKING
+            IF (wsum.gt.0.0_r8) ObsScale(iobs)=1.0_r8
+#   else
+            ObsScale(iobs)=1.0_r8
+#   endif
 #  endif
+          END IF
         END IF
       END DO
 

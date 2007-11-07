@@ -197,7 +197,7 @@
 !  Free-surface.
 !
         IF (FOURDVAR(ng)%ObsCount(isFsur).gt.0) THEN
-          CALL ad_extract_obs2d (ng, model, Istr, Iend, Jstr, Jend,     &
+          CALL ad_extract_obs2d (ng, IstrR, IendR, JstrR, JendR,        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           rILB(ng), rIUB(ng),                    &
      &                           rJLB(ng), rJUB(ng),                    &
@@ -216,7 +216,7 @@
 !  2D u-momentum component.
 !
         IF (FOURDVAR(ng)%ObsCount(isUbar).gt.0) THEN
-          CALL ad_extract_obs2d (ng, model, Istr, Iend, Jstr, Jend,     &
+          CALL ad_extract_obs2d (ng, Istr, IendR, JstrR, JendR,         &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           uILB(ng), uIUB(ng),                    &
      &                           uJLB(ng), uJUB(ng),                    &
@@ -235,7 +235,7 @@
 !  2D v-momentum component.
 !
         IF (FOURDVAR(ng)%ObsCount(isVbar).gt.0) THEN
-          CALL ad_extract_obs2d (ng, model, Istr, Iend, Jstr, Jend,     &
+          CALL ad_extract_obs2d (ng, IstrR, IendR, Jstr, JendR,         &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           vILB(ng), vIUB(ng),                    &
      &                           vJLB(ng), vJUB(ng),                    &
@@ -269,7 +269,7 @@
               END DO
             END DO
           END IF
-          CALL ad_extract_obs3d (ng, model, Istr, Iend, Jstr, Jend,     &
+          CALL ad_extract_obs3d (ng, Istr, IendR, JstrR, JendR,         &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           uILB(ng), uIUB(ng),                    &
      &                           uJLB(ng), uJUB(ng),                    &
@@ -303,7 +303,7 @@
               END DO
             END DO
           END IF
-          CALL ad_extract_obs3d (ng, model, Istr, Iend, Jstr, Jend,     &
+          CALL ad_extract_obs3d (ng, IstrR, IendR, Jstr, JendR,         &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           vILB(ng), vIUB(ng),                    &
      &                           vJLB(ng), vJUB(ng),                    &
@@ -324,7 +324,7 @@
 !
         DO itrc=1,NT(ng)
           IF (FOURDVAR(ng)%ObsCount(isTvar(itrc)).gt.0) THEN
-            CALL ad_extract_obs3d (ng, model, Istr, Iend, Jstr, Jend,   &
+            CALL ad_extract_obs3d (ng, IstrR, IendR, JstrR, JendR,      &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             rILB(ng), rIUB(ng),                  &
      &                             rJLB(ng), rJUB(ng),                  &
