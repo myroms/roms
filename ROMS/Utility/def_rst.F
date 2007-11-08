@@ -197,6 +197,8 @@
 #if defined WRITE_WATER && defined MASKING
         t2dgrd(1)=DimIDs(17)
         t2dgrd(2)=DimIDs(12)
+        sr2dgrd(1)=DimIDs(17)
+        sr2dgrd(2)=DimIDs(12)
 # ifdef SOLVE3D
         t3dgrd(1)=DimIDs(20)
         t3dgrd(2)=DimIDs(12)
@@ -204,6 +206,9 @@
 #else
         t2dgrd(1)=DimIDs( 1)
         t2dgrd(2)=DimIDs( 5)
+        sr2dgrd(1)=DimIDs( 1)
+        sr2dgrd(2)=DimIDs( 5)
+        sr2dgrd(3)=DimIDs(12)
 # ifdef PERFECT_RESTART
         t2dgrd(3)=DimIDs(31)
         t2dgrd(4)=DimIDs(12)
@@ -376,8 +381,6 @@
 !  Define dimension vector for sediment, radiation stress variables.
 !
 # if defined WRITE_WATER && defined MASKING
-        sr2dgrd(1)=DimIDs(17)
-        sr2dgrd(2)=DimIDs(12)
         su2dgrd(1)=DimIDs(18)
         su2dgrd(2)=DimIDs(12)
         sv2dgrd(1)=DimIDs(19)
@@ -390,9 +393,6 @@
         sv3dgrd(1)=DimIDs(22)
         sv3dgrd(2)=DimIDs(12)
 # else
-        sr2dgrd(1)=DimIDs( 1)
-        sr2dgrd(2)=DimIDs( 5)
-        sr2dgrd(3)=DimIDs(12)
         su2dgrd(1)=DimIDs( 2)
         su2dgrd(2)=DimIDs( 6)
         su2dgrd(3)=DimIDs(12)
