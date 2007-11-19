@@ -489,13 +489,13 @@
         CALL mp_bcasts (ng, model, Cname, LEN(Cname))
       END DO
       IF (MyRank.eq.0) THEN
-        WRITE(stdout,*) 'Coupled Input File name = ', Cname
+        WRITE(stdout,*) 'Coupled Input File name = ', TRIM(Cname)
       END IF
       OPEN (inp, FILE=TRIM(Cname), FORM='formatted', STATUS='old',      &
      &      ERR=10)
       GO TO 30
  10   WRITE (stdout,20)
-      WRITE(stdout,*) 'MyRank = ', MyRank, Cname
+      WRITE(stdout,*) 'MyRank = ', MyRank, TRIM(Cname)
       STOP
  20   FORMAT (/,' INP_PAR - Unable to open coupling input script.',     &
      &        /,11x,'In distributed-memory applications, the input',    &
@@ -1752,6 +1752,16 @@
 !  the next assimilation cycle.
 !
         nRST(ng)=ntimes(ng)
+#endif
+#if defined FOUR_DVAR
+!
+!  If variational data assimilation, disallow creation of multiple
+!  output history files.  Otherwise, the forward basic state will
+!  not processed correctly.
+!
+        ndefHIS(ng)=0
+        ndefTLM(ng)=0
+        ndefADJ(ng)=0
 #endif
         IF ((nrrec(ng).eq.0).and.(nAVG(ng).gt.ntimes(ng))) THEN
           LdefAVG(ng)=.FALSE.

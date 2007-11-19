@@ -64,13 +64,21 @@
 !
       IF (LdefTLM(ng)) THEN
         IF (ndefTLM(ng).gt.0) THEN
-          IF (idefTLM(ng).lt.0) idefTLM(ng)=ntstart(ng)-1
+          IF (idefTLM(ng).lt.0) THEN
+            idefTLM(ng)=((ntstart(ng)-1)/ndefTLM(ng))*ndefTLM(ng)
+            IF (idefTLM(ng).lt.iic(ng)-1) THEN
+              idefTLM(ng)=idefTLM(ng)+ndefTLM(ng)
+            END IF
+          END IF
           IF ((iic(ng)-1).eq.idefTLM(ng)) THEN
             idefTLM(ng)=idefTLM(ng)+ndefTLM(ng)
+            IF (nTLM(ng).ne.ndefTLM(ng).and.iic(ng).eq.ntstart(ng)) THEN
+              idefTLM(ng)=idefTLM(ng)+nTLM(ng)
+            END IF
             NrecTLM(ng)=0
             ifile=(iic(ng)-1)/ndefTLM(ng)+1
             IF (Master) THEN
-              lstr=len_trim(TLMbase(ng))
+              lstr=LEN_TRIM(TLMbase(ng))
               WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF

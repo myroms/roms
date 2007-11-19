@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine manages tangent linear model output. It creates output !
 !  NetCDF files and writes out data into NetCDF files.  If  requested, !
@@ -57,16 +57,24 @@
       IF (Lanafile) THEN
         Lanafile=.FALSE.
       END IF
-!    
+!
 !  Create output tangent NetCDF file or prepare existing file to
 !  append new data to it.  Also,  notice that it is possible to
 !  create several files during a single model run.
 !
       IF (LdefTLM(ng)) THEN
         IF (ndefTLM(ng).gt.0) THEN
-          IF (idefTLM(ng).lt.0) idefTLM(ng)=ntstart(ng)-1
+          IF (idefTLM(ng).lt.0) THEN
+            idefTLM(ng)=((ntstart(ng)-1)/ndefTLM(ng))*ndefTLM(ng)
+            IF (idefTLM(ng).lt.iic(ng)-1) THEN
+              idefTLM(ng)=idefTLM(ng)+ndefTLM(ng)
+            END IF
+          END IF
           IF ((iic(ng)-1).eq.idefTLM(ng)) THEN
             idefTLM(ng)=idefTLM(ng)+ndefTLM(ng)
+            IF (nTLM(ng).ne.ndefTLM(ng).and.iic(ng).eq.ntstart(ng)) THEN
+              idefTLM(ng)=idefTLM(ng)+nTLM(ng)
+            END IF
             NrecTLM(ng)=0
             ifile=(iic(ng)-1)/ndefTLM(ng)+1
             IF (Master) THEN

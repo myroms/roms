@@ -140,8 +140,14 @@
         IF (ndefAVG(ng).gt.0) THEN
           IF (idefAVG(ng).lt.0) THEN
             idefAVG(ng)=((ntstart(ng)-1)/ndefAVG(ng))*ndefAVG(ng)
-            IF (idefAVG(ng).lt.iic(ng)-1) THEN
-             idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)
+            IF (ndefAVG(ng).eq.nAVG(ng)) THEN      ! one file per record
+              IF (idefAVG(ng).le.0) THEN
+                idefAVG(ng)=ndefAVG(ng)
+              ELSE
+                idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)      ! restart logic
+              END IF
+            ELSE IF (idefAVG(ng).lt.iic(ng)-1) THEN
+              idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)
             END IF
           END IF
           IF ((iic(ng)-1).eq.idefAVG(ng)) THEN
@@ -149,8 +155,11 @@
             IF (nAVG(ng).ne.ndefAVG(ng).and.iic(ng).eq.ntstart(ng)) THEN
               idefAVG(ng)=idefAVG(ng)+nAVG(ng)
             END IF
-            ifile=(iic(ng)-1)/ndefAVG(ng)+1
-!!          ifile=(iic(ng)-nAVG(ng)-1)/ndefAVG(ng)+1
+            IF (ndefAVG(ng).eq.nAVG(ng)) THEN
+              ifile=(iic(ng)-1)/ndefAVG(ng)
+            ELSE
+              ifile=(iic(ng)-1)/ndefAVG(ng)+1
+            END IF
             IF (Master) THEN
               lstr=LEN_TRIM(AVGbase(ng))
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
@@ -202,7 +211,13 @@
         IF (ndefDIA(ng).gt.0) THEN
           IF (idefDIA(ng).lt.0) THEN
             idefDIA(ng)=((ntstart(ng)-1)/ndefDIA(ng))*ndefDIA(ng)
-            IF (idefDIA(ng).lt.iic(ng)-1) THEN
+            IF (ndefDIA(ng).eq.nDIA(ng)) THEN      ! one file per record
+              IF (idefDIA(ng).le.0)) THEN
+                idefDIA(ng)=ndefDIA(ng)
+              ELSE
+                idefDIA(ng)=idefDIA(ng)+ndefDIA(ng)      ! restart logic
+              END IF
+            ELSE IF (idefDIA(ng).lt.iic(ng)-1) THEN
               idefDIA(ng)=idefDIA(ng)+ndefDIA(ng)
             END IF
           END IF
@@ -211,8 +226,11 @@
             IF (nDIA(ng).ne.ndefDIA(ng).and.iic(ng).eq.ntstart(ng)) THEN
               idefDIA(ng)=idefDIA(ng)+nDIA(ng)
             END IF
-            ifile=(iic(ng)-1)/ndefDIA(ng)+1
-!!          ifile=(iic(ng)-nDIA(ng)-1)/ndefDIA(ng)+1
+            IF (ndefDIA(ng).eq.nDIA(ng)) THEN
+              ifile=(iic(ng)-1)/ndefDIA(ng)
+            ELSE
+              ifile=(iic(ng)-1)/ndefDIA(ng)+1
+            END IF
             IF (Master) THEN
               lstr=LEN_TRIM(DIAbase(ng))
               WRITE (DIAname(ng),30) DIAbase(ng)(1:lstr-3),ifile
