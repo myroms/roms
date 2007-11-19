@@ -212,7 +212,7 @@
           IF (idefDIA(ng).lt.0) THEN
             idefDIA(ng)=((ntstart(ng)-1)/ndefDIA(ng))*ndefDIA(ng)
             IF (ndefDIA(ng).eq.nDIA(ng)) THEN      ! one file per record
-              IF (idefDIA(ng).le.0)) THEN
+              IF (idefDIA(ng).le.0) THEN
                 idefDIA(ng)=ndefDIA(ng)
               ELSE
                 idefDIA(ng)=idefDIA(ng)+ndefDIA(ng)      ! restart logic
