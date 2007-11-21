@@ -768,8 +768,14 @@
       DO ng=1,Ngrids
 #  ifdef SOLVE3D
         NstateVar(ng)=5+NT(ng)
+#   ifdef ADJUST_STFLUX
+        NstateVar(ng)=NstateVar(ng)+NT(ng)
+#   endif
 #  else
         NstateVar(ng)=3
+#  endif
+#  ifdef ADJUST_WSTRESS
+        NstateVar(ng)=NstateVar(ng)+2
 #  endif
       END DO
 # endif

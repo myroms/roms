@@ -401,6 +401,9 @@
     defined TLM_CHECK        || defined OPT_OBSERVATIONS
 # define FOUR_DVAR
 #endif
+#if !defined WEAK_CONSTRAINT && defined FOUR_DVAR
+# define CONVOLVE
+#endif
 #if defined IS4DVAR || defined IS4DVAR_OLD
 # define BACKGROUND
 #endif

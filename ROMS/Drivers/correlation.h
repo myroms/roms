@@ -314,7 +314,13 @@
         LwrtADJ(ng)=.TRUE.
         LwrtState2d(ng)=.TRUE.
         CALL ad_def_his (ng, LdefADJ(ng))
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Ladjusted(ng)=.TRUE.
+#endif
         CALL ad_wrt_his (ng)    
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Ladjusted(ng)=.FALSE.
+#endif
 
       END DO NEST_LOOP
 

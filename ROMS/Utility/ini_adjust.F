@@ -785,6 +785,9 @@
       USE mod_param
       USE mod_grid
       USE mod_ocean
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -810,6 +813,13 @@
      &                       OCEAN(ng) % ad_t,                          &
      &                       OCEAN(ng) % ad_u,                          &
      &                       OCEAN(ng) % ad_v,                          &
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % ad_tflux,                     &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                       FORCES(ng) % ad_ustr,                      &
+     &                       FORCES(ng) % ad_vstr,                      &
 #  endif
      &                       OCEAN(ng) % ad_ubar,                       &
      &                       OCEAN(ng) % ad_vbar,                       &
@@ -818,6 +828,13 @@
      &                       OCEAN(ng) % tl_t,                          &
      &                       OCEAN(ng) % tl_u,                          &
      &                       OCEAN(ng) % tl_v,                          &
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % tl_tflux,                     &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                       FORCES(ng) % tl_ustr,                      &
+     &                       FORCES(ng) % tl_vstr,                      &
 #  endif
      &                       OCEAN(ng) % tl_ubar,                       &
      &                       OCEAN(ng) % tl_vbar,                       &
@@ -837,10 +854,22 @@
 #  endif
 #  ifdef SOLVE3D
      &                             ad_t, ad_u, ad_v,                    &
+#   ifdef ADJUST_STFLUX
+     &                             ad_tflux,                            &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                             ad_ustr, ad_vstr,                    &
 #  endif
      &                             ad_ubar, ad_vbar, ad_zeta,           &
 #  ifdef SOLVE3D
      &                             tl_t, tl_u, tl_v,                    &
+#   ifdef ADJUST_STFLUX
+     &                             tl_tflux,                            &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                             tl_ustr, tl_vstr,                    &
 #  endif
      &                             tl_ubar, tl_vbar, tl_zeta)
 !***********************************************************************
@@ -864,6 +893,13 @@
       real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
 #   endif
       real(r8), intent(in) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: ad_vbar(LBi:,LBj:,:)
@@ -872,6 +908,13 @@
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
 #   endif
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
@@ -886,6 +929,13 @@
       real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
 #   endif
       real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -894,6 +944,13 @@
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
 #   endif
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -948,6 +1005,9 @@
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)+ad_vbar(i,j,Linp)
+#  ifdef MASKING
+            tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
+#  endif
           END DO
         END DO
       ELSE
@@ -962,7 +1022,40 @@
           END DO
         END DO
       END IF
-
+#  ifdef ADJUST_WSTRESS
+!
+!  surface momentum stress.
+!    
+      IF (add) THEN
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            tl_ustr(i,j,Lout)=tl_ustr(i,j,Lout)+ad_ustr(i,j,Linp)
+#   ifdef MASKING
+            tl_ustr(i,j,Lout)=tl_ustr(i,j,Lout)*umask(i,j)
+#   endif
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            tl_vstr(i,j,Lout)=tl_vstr(i,j,Lout)+ad_vstr(i,j,Linp)
+#   ifdef MASKING
+            tl_vstr(i,j,Lout)=tl_vstr(i,j,Lout)*vmask(i,j)
+#   endif
+          END DO
+        END DO
+      ELSE
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            tl_ustr(i,j,Lout)=ad_ustr(i,j,Linp)
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            tl_vstr(i,j,Lout)=ad_vstr(i,j,Linp)
+          END DO
+        END DO
+      END IF
+#  endif
 #  ifdef SOLVE3D
 !
 !  3D momentum.
@@ -1028,6 +1121,33 @@
           END DO
         END DO
       END IF
+#   ifdef ADJUST_STFLUX
+!
+!  surface tracer flux.
+!
+      IF (add) THEN
+        DO itrc=1,NT(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                tl_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Lout,itrc)+        &
+     &                                  ad_tflux(i,j,Linp,itrc)
+#    ifdef MASKING
+                tl_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Lout,itrc)*        &
+     &                                  rmask(i,j)
+#    endif
+              END DO
+            END DO
+        END DO
+      ELSE
+        DO itrc=1,NT(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                tl_tflux(i,j,Lout,itrc)=ad_tflux(i,j,Linp,itrc)
+              END DO
+            END DO
+        END DO
+      END IF
+#   endif
 #  endif
       RETURN
       END SUBROUTINE load_ADtoTL_tile
@@ -1052,6 +1172,9 @@
       USE mod_param
       USE mod_grid
       USE mod_ocean
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -1077,6 +1200,13 @@
      &                       OCEAN(ng) % tl_t,                          &
      &                       OCEAN(ng) % tl_u,                          &
      &                       OCEAN(ng) % tl_v,                          &
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % tl_tflux,                     &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                       FORCES(ng) % tl_ustr,                      &
+     &                       FORCES(ng) % tl_vstr,                      &
 #  endif
      &                       OCEAN(ng) % tl_ubar,                       &
      &                       OCEAN(ng) % tl_vbar,                       &
@@ -1085,6 +1215,13 @@
      &                       OCEAN(ng) % ad_t,                          &
      &                       OCEAN(ng) % ad_u,                          &
      &                       OCEAN(ng) % ad_v,                          &
+#   ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % ad_tflux,                     &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                       FORCES(ng) % ad_ustr,                      &
+     &                       FORCES(ng) % ad_vstr,                      &
 #  endif
      &                       OCEAN(ng) % ad_ubar,                       &
      &                       OCEAN(ng) % ad_vbar,                       &
@@ -1104,10 +1241,22 @@
 #  endif
 #  ifdef SOLVE3D
      &                             tl_t, tl_u, tl_v,                    &
+#   ifdef ADJUST_STFLUX
+     &                             tl_tflux,                            &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                             tl_ustr, tl_vstr,                    &
 #  endif
      &                             tl_ubar, tl_vbar, tl_zeta,           &
 #  ifdef SOLVE3D
      &                             ad_t, ad_u, ad_v,                    &
+#   ifdef ADJUST_STFLUX
+     &                             ad_tflux,                            &
+#   endif
+#  endif
+#  ifdef ADJUST_WSTRESS
+     &                             ad_ustr, ad_vstr,                    &
 #  endif
      &                             ad_ubar, ad_vbar, ad_zeta)
 !***********************************************************************
@@ -1131,6 +1280,13 @@
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
 #   endif
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
@@ -1139,6 +1295,13 @@
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
 #   endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -1153,6 +1316,13 @@
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
 #   endif
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -1161,6 +1331,13 @@
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
+#    ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#    endif
+#   endif
+#   ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
 #   endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -1232,7 +1409,40 @@
           END DO
         END DO
       END IF
-
+#  ifdef ADJUST_WSTRESS
+!
+!  surface momentum stress.
+!    
+      IF (add) THEN
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            ad_ustr(i,j,Lout)=ad_ustr(i,j,Lout)+tl_ustr(i,j,Linp)
+#   ifdef MASKING
+            ad_ustr(i,j,Lout)=ad_ustr(i,j,Lout)*umask(i,j)
+#   endif
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            ad_vstr(i,j,Lout)=ad_vstr(i,j,Lout)+tl_vstr(i,j,Linp)
+#   ifdef MASKING
+            ad_vstr(i,j,Lout)=ad_vstr(i,j,Lout)*vmask(i,j)
+#   endif
+          END DO
+        END DO
+      ELSE
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            ad_ustr(i,j,Lout)=tl_ustr(i,j,Linp)
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            ad_vstr(i,j,Lout)=tl_vstr(i,j,Linp)
+          END DO
+        END DO
+      END IF
+#  endif
 #  ifdef SOLVE3D
 !
 !  3D momentum.
@@ -1298,6 +1508,33 @@
           END DO
         END DO
       END IF
+#   ifdef ADJUST_STFLUX
+!
+!  surface tracer flux.
+!
+      IF (add) THEN
+        DO itrc=1,NT(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                ad_tflux(i,j,Lout,itrc)=ad_tflux(i,j,Lout,itrc)+        &
+     &                                  tl_tflux(i,j,Linp,itrc)
+#    ifdef MASKING
+                ad_tflux(i,j,Lout,itrc)=ad_tflux(i,j,Lout,itrc)*        &
+     &                                  rmask(i,j)
+#    endif
+              END DO
+            END DO
+        END DO
+      ELSE
+        DO itrc=1,NT(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                ad_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Linp,itrc)
+              END DO
+            END DO
+        END DO
+      END IF
+#   endif
 #  endif
       RETURN
       END SUBROUTINE load_TLtoAD_tile

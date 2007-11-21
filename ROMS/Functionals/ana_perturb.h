@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine perturbs initial conditions for momentum and tracers   !
@@ -38,6 +37,9 @@
       USE mod_param
       USE mod_ncparam
       USE mod_ocean
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+#endif
       USE mod_stepping
 !
 ! Imported variable declarations.
@@ -54,6 +56,13 @@
      &                       OCEAN(ng) % ad_u,                          &
      &                       OCEAN(ng) % ad_v,                          &
      &                       OCEAN(ng) % ad_t,                          &
+# ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % ad_tflux,                     &
+# endif
+#endif
+#ifdef ADJUST_WSTRESS
+     &                       FORCES(ng) % ad_ustr,                      &
+     &                       FORCES(ng) % ad_vstr,                      &
 #endif
      &                       OCEAN(ng) % ad_ubar,                       &
      &                       OCEAN(ng) % ad_vbar,                       &
@@ -62,6 +71,13 @@
      &                       OCEAN(ng) % tl_u,                          &
      &                       OCEAN(ng) % tl_v,                          &
      &                       OCEAN(ng) % tl_t,                          &
+# ifdef ADJUST_STFLUX
+     &                       FORCES(ng) % tl_tflux,                     &
+# endif
+#endif
+#ifdef ADJUST_WSTRESS
+     &                       FORCES(ng) % tl_ustr,                      &
+     &                       FORCES(ng) % tl_vstr,                      &
 #endif
      &                       OCEAN(ng) % tl_ubar,                       &
      &                       OCEAN(ng) % tl_vbar,                       &
@@ -83,10 +99,22 @@
 #ifdef SOLVE3D
      &                             nstp, nrhs, nnew,                    &
      &                             ad_u, ad_v, ad_t,                    &
+# ifdef ADJUST_STFLUX
+     &                             ad_tflux,                            &
+# endif
+#endif
+#ifdef ADJUST_WSTRESS
+     &                             ad_ustr, ad_vstr,                    &
 #endif
      &                             ad_ubar, ad_vbar, ad_zeta,           &
 #ifdef SOLVE3D
      &                             tl_u, tl_v, tl_t,                    &
+# ifdef ADJUST_STFLUX
+     &                             tl_tflux,                            &
+# endif
+#endif
+#ifdef ADJUST_WSTRESS
+     &                             tl_ustr, tl_vstr,                    &
 #endif
      &                             tl_ubar, tl_vbar, tl_zeta)
 !***********************************************************************
@@ -111,6 +139,13 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -119,6 +154,13 @@
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
 # endif
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
@@ -128,6 +170,13 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_t(LBi:UBI,LBj:UBj,N(ng),2,NT(ng))
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
 # endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -136,6 +185,13 @@
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
 # endif
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -176,6 +232,14 @@
           ELSE IF (ivarTL.eq.isFsur) THEN
             WRITE (stdout,10) 'tl_zeta perturbed at (i,j) = ',          &
      &                        IperTL, JperTL
+#ifdef ADJUST_WSTRESS
+          ELSE IF (ivarTL.eq.isUstr) THEN
+            WRITE (stdout,10) 'tl_ustr perturbed at (i,j) = ',          &
+     &                        IperTL, JperTL
+          ELSE IF (ivarTL.eq.isVstr) THEN
+            WRITE (stdout,10) 'tl_vstr perturbed at (i,j) = ',          &
+     &                        IperTL, JperTL
+#endif
 #ifdef SOLVE3D
           ELSE IF (ivarTL.eq.isUvel) THEN
             WRITE (stdout,20) 'tl_u perturbed at (i,j,k) = ',           &
@@ -188,9 +252,14 @@
 #ifdef SOLVE3D
           DO itrc=1,NT(ng)
             IF (ivarTL.eq.isTvar(itrc)) THEN
-              WRITE (stdout,30) 'ad_t perturbed at (i,j,k,itrc) = ',   &
+              WRITE (stdout,30) 'tl_t perturbed at (i,j,k,itrc) = ',    &
      &                          IperTL, JperTL, KperTL, itrc
-            END IF
+# ifdef ADJUST_STFLUX
+            ELSE IF (ivarTL.eq.isTsur(itrc)) THEN
+              WRITE (stdout,20) 'tl_tflux perturbed at (i,j,itrc) = ',  &
+     &                          IperTL, JperTL, itrc
+# endif
+           END IF
           END DO
 #endif
         END IF
@@ -204,6 +273,14 @@
           ELSE IF (ivarAD.eq.isFsur) THEN
             WRITE (stdout,40) 'ad_zeta perturbed at (i,j) = ',          &
      &                        IperAD, JperAD
+#ifdef ADJUST_WSTRESS
+          ELSE IF (ivarAD.eq.isUstr) THEN
+            WRITE (stdout,40) 'ad_ustr perturbed at (i,j) = ',          &
+     &                        IperAD, JperAD
+          ELSE IF (ivarAD.eq.isVstr) THEN
+            WRITE (stdout,40) 'ad_vstr perturbed at (i,j) = ',          &
+     &                        IperAD, JperAD
+#endif
 #ifdef SOLVE3D
           ELSE IF (ivarAD.eq.isUvel) THEN
             WRITE (stdout,50) 'ad_u perturbed at (i,j,k) = ',           &
@@ -218,6 +295,11 @@
             IF (ivarAD.eq.isTvar(itrc)) THEN
               WRITE (stdout,60) 'ad_t perturbed at (i,j,k,itrc) = ',    &
      &                          IperAD, JperAD, KperAD, itrc
+# ifdef ADJUST_STFLUX
+            ELSE IF (ivarAD.eq.isTsur(itrc)) THEN
+              WRITE (stdout,50) 'ad_tflux perturbed at (i,j,itrc) = ',  &
+     &                          IperAD, JperAD, itrc
+# endif
             END IF
           END DO
 #endif
@@ -273,6 +355,58 @@
           END DO
         END DO
       END IF
+#ifdef ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Peturb initial conditions for surface momentum stress (UNIT ????).
+!-----------------------------------------------------------------------
+!
+      IF (TLmodel) THEN
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            IF ((ivarTL.eq.isUstr).and.                                 &
+     &          (i.eq.IperTL).and.(j.eq.JperTL)) THEN
+              tl_ustr(i,j,kstp)=1.0_r8
+            ELSE
+              tl_ustr(i,j,kstp)=0.0_r8
+            END IF
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            IF ((ivarTL.eq.isVstr).and.                                 &
+     &          (i.eq.IperTL).and.(j.eq.JperTL)) THEN
+              tl_vstr(i,j,kstp)=1.0_r8
+            ELSE
+              tl_vstr(i,j,kstp)=0.0_r8
+            END IF
+          END DO
+        END DO
+      END IF
+!
+      IF (ADmodel) THEN
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            IF ((ivarAD.eq.isUstr).and.                                 &
+     &          (i.eq.IperAD).and.(j.eq.JperAD)) THEN
+              ad_ustr(i,j,knew)=1.0_r8
+            ELSE
+              ad_ustr(i,j,knew)=0.0_r8
+            END IF
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            IF ((ivarAD.eq.isVstr).and.                                 &
+     &          (i.eq.IperAD).and.(j.eq.JperAD)) THEN
+              ad_vstr(i,j,knew)=1.0_r8
+            ELSE
+              ad_vstr(i,j,knew)=0.0_r8
+            END IF
+          END DO
+        END DO
+      END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  Perturb initial conditions for free-surface (m).
@@ -403,6 +537,42 @@
           END DO
         END DO
       END IF
+# ifdef ADJUST_STFLUX
+!
+!-----------------------------------------------------------------------
+!  Perturb initial conditions for surface tracer flux.
+!-----------------------------------------------------------------------
+!
+      IF (TLmodel) THEN
+        DO itrc=1,NT(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                IF ((ivarTL.eq.isTsur(itrc)).and.                       &
+     &              (i.eq.IperTL).and.(j.eq.JperTL) THEN
+                  tl_tflux(i,j,nstp,itrc)=1.0_r8
+                ELSE
+                  tl_tflux(i,j,nstp,itrc)=0.0_r8
+                END IF
+              END DO
+            END DO
+        END DO
+      END IF
+!
+      IF (ADmodel) THEN
+        DO itrc=1,NT(ng)
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+                IF ((ivarAD.eq.isTsur(itrc)).and.                       &
+     &              (i.eq.IperAD).and.(j.eq.JperAD) THEN
+                  ad_tflux(i,j,nstp,itrc)=1.0_r8
+                ELSE
+                  ad_tflux(i,j,nstp,itrc)=0.0_r8
+                END IF
+              END DO
+            END DO
+        END DO
+      END IF
+# endif
 #endif
 !
  10   FORMAT (/,' ANA_PERTURB - Tangent ', a, 2i4,/)

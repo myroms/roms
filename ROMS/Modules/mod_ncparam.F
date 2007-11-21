@@ -784,13 +784,17 @@
           ic=ic+1
           isTvar(i)=ic
         END DO
+# ifdef ADJUST_WSTRESS
         isUstr=ic+1
         isVstr=ic+2
         ic=ic+2
+# endif
+# ifdef ADJUST_STFLUX
         DO i=1,MT
           ic=ic+1
           isTsur(i)=ic
         END DO
+# endif
 #endif
 #if defined BIO_FASHAM && defined DIAGNOSTICS_BIO
 !

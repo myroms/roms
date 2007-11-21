@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE normalization_mod
 
-#ifdef FOUR_DVAR
+#if defined FOUR_DVAR && defined CONVOLVE
 # ifdef EW_PERIODIC
 #  define IR_RANGE Istr-1,Iend+1
 #  define IU_RANGE Istr,Iend
