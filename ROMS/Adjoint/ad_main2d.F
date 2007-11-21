@@ -130,10 +130,6 @@
       END DO
 !$OMP END PARALLEL DO
       IF (exit_flag.ne.NoError) RETURN
-!
-!  Avoid time-stepping if additional delayed IO time-step.
-!
-      IF (iic(ng).ne.ntstart(ng)) THEN
 
 # if defined FOUR_DVAR && defined OBSERVATIONS
 !
@@ -142,31 +138,33 @@
 !  locations.  Then, compute adjoint misfit forcing terms.
 !-----------------------------------------------------------------------
 !
-        HalfDT=0.5_r8*dt(ng)
-        IF (((iic(ng).eq.ntstart(ng)-1).and.                            &
-     &       (ObsTime(ng)-HalfDT.eq.time(ng)+HalfDT)).or.               &
-     &      (((time(ng)-HalfDT).le.(ObsTime(ng)-HalfDT)).and.           &
-     &       ((ObsTime(ng)-HalfDT).lt.(time(ng)+HalfDT)))) THEN
-          ProcessObs(ng)=.TRUE.
-          CALL obs_read (ng, iADM, backward)
-          IF (exit_flag.ne.NoError) RETURN
-        ELSE
-          ProcessObs(ng)=.FALSE.
-        END IF
+      HalfDT=0.5_r8*dt(ng)
+      IF (((time(ng)-HalfDT).le.ObsTime(ng)).and.                       &
+     &    (ObsTime(ng).lt.(time(ng)+HalfDT))) THEN
+        ProcessObs(ng)=.TRUE.
+        CALL obs_read (ng, iADM, backward)
+        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        ProcessObs(ng)=.FALSE.
+      END IF
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
 #  if defined WEAK_CONSTRAINT || defined IOM
-            CALL ad_htobs (ng, TILE, iADM)
+          CALL ad_htobs (ng, TILE, iADM)
 #  else
-            CALL ad_misfit (ng, TILE, iADM)
+          CALL ad_misfit (ng, TILE, iADM)
 #  endif
-          END DO
         END DO
+      END DO
 !$OMP END PARALLEL DO
 # endif
+!
+!  Avoid time-stepping if additional delayed IO time-step.
+!
+      IF (iic(ng).ne.ntstart(ng)) THEN
 
 # ifdef FLOATS_NOT_YET
 !
