@@ -96,7 +96,7 @@
 !-----------------------------------------------------------------------
 !
       ad_Ce=0.0_r8
-      ad_Ce=0.0_r8
+      ad_Cx=0.0_r8
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
 
@@ -298,7 +298,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%zeta_north_Ce(i)
-            cff=BOUNDARY(ng)%zeta_north_C(i)
+            cff=BOUNDARY(ng)%zeta_north_C2(i)
 #   ifdef MASKING
 !>          tl_zeta(i,Jend+1,kout)=tl_zeta(i,Jend+1,kout)*              &
 !>   &                             GRID(ng)%rmask(i,Jend+1)
@@ -453,7 +453,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%zeta_south_Ce(i)
-            cff=BOUNDARY(ng)%zeta_south_C(i)
+            cff=BOUNDARY(ng)%zeta_south_C2(i)
 #   ifdef MASKING
 !>          tl_zeta(i,Jstr-1,kout)=tl_zeta(i,Jstr-1,kout)*              &
 !>   &                             GRID(ng)%rmask(i,Jstr-1)
@@ -611,7 +611,7 @@
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNDARY(ng)%zeta_east_C(j)
+            cff=BOUNDARY(ng)%zeta_east_C2(j)
 #   ifdef MASKING
 !>           tl_zeta(Iend+1,j,kout)=tl_zeta(Iend+1,j,kout)*             &
 !>   &                              GRID(ng)%rmask(Iend+1
@@ -766,7 +766,7 @@
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNDARY(ng)%zeta_west_C(j)
+            cff=BOUNDARY(ng)%zeta_west_C2(j)
 #   ifdef MASKING
 !>          tl_zeta(Istr-1,j,kout)=tl_zeta(Istr-1,j,kout)*              &
 !>   &                             GRID(ng)%rmask(Istr-1,j)

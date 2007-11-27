@@ -149,9 +149,9 @@
           Ce=0.0_r8
 #  endif
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%ubar_west_Cx(j,k)=Cx
-          BOUNDARY(ng)%ubar_west_Ce(j,k)=Ce
-          BOUNDARY(ng)%ubar_west_C2(j,k)=cff
+          BOUNDARY(ng)%ubar_west_Cx(j)=Cx
+          BOUNDARY(ng)%ubar_west_Ce(j)=Ce
+          BOUNDARY(ng)%ubar_west_C2(j)=cff
 #  endif
           ubar(Istr,j,kout)=(cff*ubar(Istr  ,j,know)+                   &
      &                       Cx *ubar(Istr+1,j,kout)-                   &
@@ -345,9 +345,9 @@
           Ce=0.0_r8
 #  endif
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%ubar_east_Cx(j,k)=Cx
-          BOUNDARY(ng)%ubar_east_Ce(j,k)=Ce
-          BOUNDARY(ng)%ubar_east_C2(j,k)=cff
+          BOUNDARY(ng)%ubar_east_Cx(j)=Cx
+          BOUNDARY(ng)%ubar_east_Ce(j)=Ce
+          BOUNDARY(ng)%ubar_east_C2(j)=cff
 #  endif
           ubar(Iend+1,j,kout)=(cff*ubar(Iend+1,j,know)+                 &
      &                         Cx *ubar(Iend  ,j,kout)-                 &
@@ -543,9 +543,9 @@
 #  endif
           Ce=dUdt*dUde
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%ubar_south_Cx(i,k)=Cx
-          BOUNDARY(ng)%ubar_south_Ce(i,k)=Ce
-          BOUNDARY(ng)%ubar_south_C2(i,k)=cff
+          BOUNDARY(ng)%ubar_south_Cx(i)=Cx
+          BOUNDARY(ng)%ubar_south_Ce(i)=Ce
+          BOUNDARY(ng)%ubar_south_C2(i)=cff
 #  endif
           ubar(i,Jstr-1,kout)=(cff*ubar(i,Jstr-1,know)+                 &
      &                         Ce *ubar(i,Jstr  ,kout)-                 &
@@ -670,9 +670,9 @@
 #  endif
           Ce=dUdt*dUde
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%ubar_north_Cx(i,k)=Cx
-          BOUNDARY(ng)%ubar_north_Ce(i,k)=Ce
-          BOUNDARY(ng)%ubar_north_C2(i,k)=cff
+          BOUNDARY(ng)%ubar_north_Cx(i)=Cx
+          BOUNDARY(ng)%ubar_north_Ce(i)=Ce
+          BOUNDARY(ng)%ubar_north_C2(i)=cff
 #  endif
           ubar(i,Jend+1,kout)=(cff*ubar(i,Jend+1,know)+                 &
      &                         Ce *ubar(i,Jend  ,kout)-                 &

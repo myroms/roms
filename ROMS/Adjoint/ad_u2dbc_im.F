@@ -208,7 +208,7 @@
             IF (BOUNDARY(ng)%ubar_north_Ce(i).eq.0.0_r8) THEN
               tau=M2obc_in(ng,inorth)
             ELSE
-               tau=M2obc_out(ng,inorth)
+              tau=M2obc_out(ng,inorth)
             END IF
             tau=tau*dt2d
 #   endif
@@ -218,7 +218,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%ubar_north_Ce(i)
-            cff=BOUNDARY(ng)%ubar_north_C(i)
+            cff=BOUNDARY(ng)%ubar_north_C2(i)
 #   ifdef MASKING
 !>          tl_ubar(i,Jend+1,kout)=tl_ubar(i,Jend+1,kout)*              &
 !>   &                             GRID(ng)%umask(i,Jend+1)
@@ -386,7 +386,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%ubar_south_Ce(i)
-            cff=BOUNDARY(ng)%ubar_south_C(i)
+            cff=BOUNDARY(ng)%ubar_south_C2(i)
 #   ifdef MASKING
 !>          tl_ubar(i,Jstr-1,kout)=tl_ubar(i,Jstr-1,kout)*              &
 !>   &                             GRID(ng)%umask(i,Jstr-1)
@@ -544,20 +544,20 @@
 !
           DO j=Jstr,Jend
 #   ifdef EAST_M2NUDGING
-            IF (BOUNRDARY(ng)%ubar_east_Cx(j).eq.0.0_r8) THEN
+            IF (BOUNDARY(ng)%ubar_east_Cx(j).eq.0.0_r8) THEN
               tau=M2obc_in(ng,ieast)
             ELSE
               tau=M2obc_out(ng,ieast)
             END IF
             tau=tau*dt2d
 #   endif
-            Cx=BOUNRDARY(ng)%ubar_east_Cx(j)
+            Cx=BOUNDARY(ng)%ubar_east_Cx(j)
 #   ifdef RADIATION_2D
-            Ce=BOUNRDARY(ng)%ubar_east_Ce(j)
+            Ce=BOUNDARY(ng)%ubar_east_Ce(j)
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNRDARY(ng)%ubar_east_C(j)
+            cff=BOUNDARY(ng)%ubar_east_C2(j)
 #   ifdef MASKING
 !>          tl_ubar(Iend+1,j,kout)=tl_ubar(Iend+1,j,kout)*              &
 !>   &                             GRID(ng)%umask(Iend+1,j)
@@ -920,7 +920,7 @@
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNDARY(ng)%ubar_west_C(j)
+            cff=BOUNDARY(ng)%ubar_west_C2(j)
 #   ifdef MASKING
 !>          tl_ubar(Istr,j,kout)=tl_ubar(Istr,j,kout)*                  &
 !>   &                           GRID(ng)%umask(Istr,j)

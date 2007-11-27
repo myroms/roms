@@ -150,9 +150,9 @@
 #  endif
           Ce=dVdt*dVde
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%vbar_south_Cx(i,k)=Cx
-          BOUNDARY(ng)%vbar_south_Ce(i,k)=Ce
-          BOUNDARY(ng)%vbar_south_C2(i,k)=cff
+          BOUNDARY(ng)%vbar_south_Cx(i)=Cx
+          BOUNDARY(ng)%vbar_south_Ce(i)=Ce
+          BOUNDARY(ng)%vbar_south_C2(i)=cff
 #  endif
           vbar(i,Jstr,kout)=(cff*vbar(i,Jstr  ,know)+                   &
      &                       Ce *vbar(i,Jstr+1,kout)-                   &
@@ -346,9 +346,9 @@
 #  endif
           Ce=dVdt*dVde
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%vbar_north_Cx(i,k)=Cx
-          BOUNDARY(ng)%vbar_north_Ce(i,k)=Ce
-          BOUNDARY(ng)%vbar_north_C2(i,k)=cff
+          BOUNDARY(ng)%vbar_north_Cx(i)=Cx
+          BOUNDARY(ng)%vbar_north_Ce(i)=Ce
+          BOUNDARY(ng)%vbar_north_C2(i)=cff
 #  endif
           vbar(i,Jend+1,kout)=(cff*vbar(i,Jend+1,know)+                 &
      &                         Ce *vbar(i,Jend  ,kout)-                 &
@@ -545,9 +545,9 @@
           Ce=0.0_r8
 #  endif
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%vbar_west_Cx(j,k)=Cx
-          BOUNDARY(ng)%vbar_west_Ce(j,k)=Ce
-          BOUNDARY(ng)%vbar_west_C2(j,k)=cff
+          BOUNDARY(ng)%vbar_west_Cx(j)=Cx
+          BOUNDARY(ng)%vbar_west_Ce(j)=Ce
+          BOUNDARY(ng)%vbar_west_C2(j)=cff
 #  endif
           vbar(Istr-1,j,kout)=(cff*vbar(Istr-1,j,know)+                 &
      &                         Cx *vbar(Istr  ,j,kout)-                 &
@@ -672,9 +672,9 @@
           Ce=0.0_r8
 #  endif
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%vbar_east_Cx(j,k)=Cx
-          BOUNDARY(ng)%vbar_east_Ce(j,k)=Ce
-          BOUNDARY(ng)%vbar_east_C2(j,k)=cff
+          BOUNDARY(ng)%vbar_east_Cx(j)=Cx
+          BOUNDARY(ng)%vbar_east_Ce(j)=Ce
+          BOUNDARY(ng)%vbar_east_C2(j)=cff
 #  endif
           vbar(Iend+1,j,kout)=(cff*vbar(Iend+1,j,know)+                 &
      &                         Cx *vbar(Iend  ,j,kout)-                 &

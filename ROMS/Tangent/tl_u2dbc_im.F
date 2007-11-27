@@ -157,7 +157,7 @@
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNDARY(ng)%ubar_west_C(j)
+            cff=BOUNDARY(ng)%ubar_west_C2(j)
 !>          ubar(Istr,j,kout)=(cff*ubar(Istr  ,j,know)+                 &
 !>   &                         Cx *ubar(Istr+1,j,kout)-                 &
 !>   &                         MAX(Ce,0.0_r8)*grad(Istr,j  )-           &
@@ -436,20 +436,20 @@
           END DO
           DO j=Jstr,Jend
 #   ifdef EAST_M2NUDGING
-            IF (BOUNRDARY(ng)%ubar_east_Cx(j).eq.0.0_r8) THEN
+            IF (BOUNDARY(ng)%ubar_east_Cx(j).eq.0.0_r8) THEN
               tau=M2obc_in(ng,ieast)
             ELSE
               tau=M2obc_out(ng,ieast)
             END IF
             tau=tau*dt2d
 #   endif
-            Cx=BOUNRDARY(ng)%ubar_east_Cx(j)
+            Cx=BOUNDARY(ng)%ubar_east_Cx(j)
 #   ifdef RADIATION_2D
-            Ce=BOUNRDARY(ng)%ubar_east_Ce(j)
+            Ce=BOUNDARY(ng)%ubar_east_Ce(j)
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNRDARY(ng)%ubar_east_C(j)
+            cff=BOUNDARY(ng)%ubar_east_C2(j)
 !>          ubar(Iend+1,j,kout)=(cff*ubar(Iend+1,j,know)+               &
 !>   &                           Cx *ubar(Iend  ,j,kout)-               &
 !>   &                           MAX(Ce,0.0_r8)*grad(Iend+1,j  )-       &
@@ -743,7 +743,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%ubar_south_Ce(i)
-            cff=BOUNDARY(ng)%ubar_south_C(i)
+            cff=BOUNDARY(ng)%ubar_south_C2(i)
 !>          ubar(i,Jstr-1,kout)=(cff*ubar(i,Jstr-1,know)+               &
 !>   &                           Ce *ubar(i,Jstr  ,kout)-               &
 !>   &                           MAX(Cx,0.0_r8)*grad(i-1,Jstr-1)-       &
@@ -899,7 +899,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%ubar_north_Ce(i)
-            cff=BOUNDARY(ng)%ubar_north_C(i)
+            cff=BOUNDARY(ng)%ubar_north_C2(i)
 !>          ubar(i,Jend+1,kout)=(cff*ubar(i,Jend+1,know)+               &
 !>   &                           Ce *ubar(i,Jend  ,kout)-               &
 !>   &                           MAX(Cx,0.0_r8)*grad(i-1,Jend+1)-       &

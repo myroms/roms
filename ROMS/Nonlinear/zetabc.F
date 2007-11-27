@@ -144,9 +144,9 @@
           Ce=0.0_r8
 #  endif
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%zeta_west_Cx(j,k)=Cx
-          BOUNDARY(ng)%zeta_west_Ce(j,k)=Ce
-          BOUNDARY(ng)%zeta_west_C2(j,k)=cff
+          BOUNDARY(ng)%zeta_west_Cx(j)=Cx
+          BOUNDARY(ng)%zeta_west_Ce(j)=Ce
+          BOUNDARY(ng)%zeta_west_C2(j)=cff
 #  endif
           zeta(Istr-1,j,kout)=(cff*zeta(Istr-1,j,know)+                 &
      &                         Cx *zeta(Istr  ,j,kout)-                 &
@@ -267,9 +267,9 @@
           Ce=0.0_r8
 #  endif
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%zeta_east_Cx(j,k)=Cx
-          BOUNDARY(ng)%zeta_east_Ce(j,k)=Ce
-          BOUNDARY(ng)%zeta_east_C2(j,k)=cff
+          BOUNDARY(ng)%zeta_east_Cx(j)=Cx
+          BOUNDARY(ng)%zeta_east_Ce(j)=Ce
+          BOUNDARY(ng)%zeta_east_C2(j)=cff
 #  endif
           zeta(Iend+1,j,kout)=(cff*zeta(Iend+1,j,know)+                 &
      &                         Cx *zeta(Iend  ,j,kout)-                 &
@@ -393,9 +393,9 @@
 #  endif
           Ce=dZdt*dZde
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%zeta_south_Cx(i,k)=Cx
-          BOUNDARY(ng)%zeta_south_Ce(i,k)=Ce
-          BOUNDARY(ng)%zeta_south_C2(i,k)=cff
+          BOUNDARY(ng)%zeta_south_Cx(i)=Cx
+          BOUNDARY(ng)%zeta_south_Ce(i)=Ce
+          BOUNDARY(ng)%zeta_south_C2(i)=cff
 #  endif
           zeta(i,Jstr-1,kout)=(cff*zeta(i,Jstr-1,know)+                 &
      &                         Ce *zeta(i,Jstr  ,kout)-                 &
@@ -516,9 +516,9 @@
 #  endif
           Ce=dZdt*dZde
 #  if defined CELERITY_WRITE && defined FORWARD_WRITE
-          BOUNDARY(ng)%zeta_north_Cx(i,k)=Cx
-          BOUNDARY(ng)%zeta_north_Ce(i,k)=Ce
-          BOUNDARY(ng)%zeta_north_C2(i,k)=cff
+          BOUNDARY(ng)%zeta_north_Cx(i)=Cx
+          BOUNDARY(ng)%zeta_north_Ce(i)=Ce
+          BOUNDARY(ng)%zeta_north_C2(i)=cff
 #  endif
           zeta(i,Jend+1,kout)=(cff*zeta(i,Jend+1,know)+                 &
      &                         Ce *zeta(i,Jend  ,kout)-                 &

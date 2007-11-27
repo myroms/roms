@@ -119,7 +119,7 @@
               Cx=0.0_r8
 #   endif
               Ce=BOUNDARY(ng)%v_south_Ce(i,k)
-              cff=BOUNDARY(ng)%v_south_C(i,k)
+              cff=BOUNDARY(ng)%v_south_C2(i,k)
 !>            v(i,Jstr,k,nout)=(cff*v(i,Jstr  ,k,nstp)+                 &
 !>   &                          Ce *v(i,Jstr+1,k,nout)-                 &
 !>   &                          MAX(Cx,0.0_r8)*grad(i  ,Jstr)-          &
@@ -239,7 +239,7 @@
               Cx=0.0_r8
 #   endif
               Ce=BOUNDARY(ng)%v_south_Ce(i,k)
-              cff=BOUNDARY(ng)%v_south_C(i,k)
+              cff=BOUNDARY(ng)%v_south_C2(i,k)
 !>            v(i,Jend+1,k,nout)=(cff*v(i,Jend+1,k,nstp)+               &
 !>   &                            Ce *v(i,Jend  ,k,nout)-               &
 !>   &                            MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-      &
@@ -361,7 +361,7 @@
 #   else
               Ce=0.0_r8
 #   endif
-              cff=BOUNDARY(ng)%v_west_C(j,k)
+              cff=BOUNDARY(ng)%v_west_C2(j,k)
 !>            v(Istr-1,j,k,nout)=(cff*v(Istr-1,j,k,nstp)+               &
 !>   &                            Cx *v(Istr  ,j,k,nout)-               &
 !>   &                            MAX(Ce,0.0_r8)*grad(Istr-1,j-1)-      &
@@ -495,7 +495,7 @@
 #   else
               Ce=0.0_r8
 #   endif
-              cff=BOUNDARY(ng)%v_east_C(j,k)
+              cff=BOUNDARY(ng)%v_east_C2(j,k)
 !>            v(Iend+1,j,k,nout)=(cff*v(Iend+1,j,k,nstp)+               &
 !>   &                            Cx *v(Iend  ,j,k,nout)-               &
 !>   &                            MAX(Ce,0.0_r8)*grad(Iend+1,j-1)-      &

@@ -205,20 +205,20 @@
 !
           DO j=JstrV,Jend
 #   ifdef EAST_M2NUDGING
-            IF (BOUNRDARY(ng)%vbar_east_Cx(j).eq.0.0_r8) THEN
+            IF (BOUNDARY(ng)%vbar_east_Cx(j).eq.0.0_r8) THEN
               tau=M2obc_in(ng,ieast)
             ELSE
               tau=M2obc_out(ng,ieast)
             END IF
             tau=tau*dt2d
 #   endif
-            Cx=BOUNRDARY(ng)%vbar_east_Cx(j)
+            Cx=BOUNDARY(ng)%vbar_east_Cx(j)
 #   ifdef RADIATION_2D
-            Ce=BOUNRDARY(ng)%vbar_east_Ce(j)
+            Ce=BOUNDARY(ng)%vbar_east_Ce(j)
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNRDARY(ng)%vbar_east_C(j)
+            cff=BOUNDARY(ng)%vbar_east_C2(j)
 #   ifdef MASKING
 !>          tl_vbar(Iend+1,j,kout)=tl_vbar(Iend+1,j,kout)*              &
 !>   &                             GRID(ng)%vmask(Iend+1,j)
@@ -386,7 +386,7 @@
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNDARY(ng)%vbar_west_C(j)
+            cff=BOUNDARY(ng)%vbar_west_C2(j)
 #   ifdef MASKING
 !>           tl_vbar(Istr-1,j,kout)=tl_vbar(Istr-1,j,kout)*             &
 !>   &                              GRID(ng)%vmask(Istr-1,j)
@@ -558,7 +558,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%vbar_north_Ce(i)
-            cff=BOUNDARY(ng)%vbar_north_C(i)
+            cff=BOUNDARY(ng)%vbar_north_C2(i)
 #   ifdef MASKING
 !>          tl_vbar(i,Jend+1,kout)=tl_vbar(i,Jend+1,kout)*              &
 !>   &                             GRID(ng)%vmask(i,Jend+1)
@@ -932,7 +932,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%vbar_south_Ce(i)
-            cff=BOUNDARY(ng)%vbar_south_C(i)
+            cff=BOUNDARY(ng)%vbar_south_C2(i)
 #   ifdef MASKING
 !>          tl_vbar(i,Jstr,kout)=tl_vbar(i,Jstr,kout)*                  &
 !>   &                           GRID(ng)%vmask(i,Jstr)

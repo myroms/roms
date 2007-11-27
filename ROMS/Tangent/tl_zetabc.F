@@ -139,7 +139,7 @@
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNDARY(ng)%zeta_west_C(j)
+            cff=BOUNDARY(ng)%zeta_west_C2(j)
 !>          zeta(Istr-1,j,kout)=(cff*zeta(Istr-1,j,know)+               &
 !>   &                           Cx *zeta(Istr  ,j,kout)-               &
 !>   &                           MAX(Ce,0.0_r8)*grad(Istr-1,j  )-       &
@@ -283,7 +283,7 @@
 #   else
             Ce=0.0_r8
 #   endif
-            cff=BOUNDARY(ng)%zeta_east_C(j)
+            cff=BOUNDARY(ng)%zeta_east_C2(j)
 !>          zeta(Iend+1,j,kout)=(cff*zeta(Iend+1,j,know)+               &
 !>   &                           Cx *zeta(Iend  ,j,kout)-               &
 !>   &                           MAX(Ce,0.0_r8)*grad(Iend+1,j  )-       &
@@ -430,7 +430,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%zeta_south_Ce(i)
-            cff=BOUNDARY(ng)%zeta_south_C(i)
+            cff=BOUNDARY(ng)%zeta_south_C2(i)
 !>          zeta(i,Jstr-1,kout)=(cff*zeta(i,Jstr-1,know)+               &
 !>   &                           Ce *zeta(i,Jstr  ,kout)-               &
 !>   &                           MAX(Cx,0.0_r8)*grad(i  ,Jstr)-         &
@@ -573,7 +573,7 @@
             Cx=0.0_r8
 #   endif
             Ce=BOUNDARY(ng)%zeta_north_Ce(i)
-            cff=BOUNDARY(ng)%zeta_north_C(i)
+            cff=BOUNDARY(ng)%zeta_north_C2(i)
 !>          zeta(i,Jend+1,kout)=(cff*zeta(i,Jend+1,know)+               &
 !>   &                           Ce *zeta(i,Jend  ,kout)-               &
 !>   &                           MAX(Cx,0.0_r8)*grad(i  ,Jend+1)-       &
