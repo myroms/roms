@@ -2000,6 +2000,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' SPLINES,'
 #endif
+#if defined SPLINES_VCONV && defined FOUR_DVAR && defined VCONVOLUTION
+      IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &
+     &   'Implicit, Parabolic Splines Vertical Convolution Algorithm.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' IMPLICIT_VCONV,'
+#endif
 #ifdef SPHERICAL
       IF (Master) WRITE (stdout,20) 'SPHERICAL',                        &
      &   'Spherical grid configuration.'
@@ -2788,6 +2794,19 @@
      &            ' selected for Nemuro model')
         exit_flag=5
       END IF
+#endif
+#if defined FOUR_DVAR && defined VCONVOLUTION
+# if defined IMPLICIT_VCONV && defined SPLINES_VCONV
+!
+!  Stop if using more than vertical convolution algorithm.
+!
+      IF (Master) THEN
+        WRITE (stdout,130)
+ 130    FORMAT (/,' CHECKDEFS - More than one vertical convolution',    &
+     &            ' algorithm selected ')
+        exit_flag=5
+      END IF
+# endif
 #endif
 
       RETURN

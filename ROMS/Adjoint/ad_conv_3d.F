@@ -144,7 +144,7 @@
       integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
-      real(r8) :: adfac, cff
+      real(r8) :: adfac, cff, cff1
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: ad_Awrk
 
@@ -152,19 +152,23 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
 # ifdef VCONVOLUTION
+#  ifndef SPLINES_VCONV
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
-#  ifndef IMPLICIT_VCONV
+#  endif
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
 #  endif
-#  ifdef IMPLICIT_VCONV
+#  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+#   ifdef SPLINES_VCONV
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+#   endif
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
 #  else
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FS
 #  endif
 # endif
-
 # include "set_bounds.h"
 !
       ILB=LBOUND(ad_FE,DIM=1)
@@ -200,16 +204,18 @@
         DO i=Istr-1,Iend+1
           Hfac(i,j)=DTsizeH*pm(i,j)*pn(i,j)
 # ifdef VCONVOLUTION
+#  ifndef SPLINES_VCONV
           FC(i,j,N(ng))=0.0_r8
           DO k=1,N(ng)-1
-#  ifdef IMPLICIT_VCONV
+#   ifdef IMPLICIT_VCONV
             FC(i,j,k)=-DTsizeV*Kv(i,j,k)/(z_r(i,j,k+1)-z_r(i,j,k))
-#  else
+#   else
             FC(i,j,k)=DTsizeV*Kv(i,j,k)/(z_r(i,j,k+1)-z_r(i,j,k))
-#  endif
+#   endif
           END DO
           FC(i,j,0)=0.0_r8
-#  ifndef IMPLICIT_VCONV
+#  endif
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
           DO k=1,N(ng)
             oHz(i,j,k)=1.0_r8/Hz(i,j,k)
           END DO
@@ -255,6 +261,109 @@
 
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
+#   ifdef SPLINES_VCONV
+!
+!-----------------------------------------------------------------------
+!  Integrate adjoint vertical diffusion equation implicitly using
+!  parabolic splines.
+!-----------------------------------------------------------------------
+!
+      DO step=1,NVsteps
+!
+!  Update integration indices.
+!
+        Nsav=Nnew
+        Nnew=Nold
+        Nold=Nsav
+
+        DO j=Jstr,Jend
+!
+!  Use conservative, parabolic spline reconstruction of vertical
+!  diffusion derivatives.  Then, time step vertical diffusion term
+!  implicitly.
+!
+!  Compute basic state time-invariant coefficients.
+!
+          cff1=1.0_r8/6.0_r8
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              FC(i,k)=cff1*Hz(i,j,k  )-                                 &
+     &                DTsizeV*Kv(i,j,k-1)*oHz(i,j,k  )
+              CF(i,k)=cff1*Hz(i,j,k+1)-                                 &
+     &                DTsizeV*Kv(i,j,k+1)*oHz(i,j,k+1)
+            END DO
+          END DO
+          DO i=Istr,Iend
+            CF(i,0)=0.0_r8
+          END DO
+!
+          cff1=1.0_r8/3.0_r8
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              BC(i,k)=cff1*(Hz(i,j,k)+Hz(i,j,k+1))+                     &
+     &                DTsizeV*Kv(i,j,k)*(oHz(i,j,k)+oHz(i,j,k+1))
+              cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+              CF(i,k)=cff*CF(i,k)
+            END DO
+          END DO
+!
+!  Adjoint backward substitution.
+!
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+!>            tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nold)+                  &
+!>   &                            DTsizeV*oHz(i,j,k)*                   &
+!>   &                            (tl_DC(i,k)-tl_DC(i,k-1))
+!>
+              adfac=DTsizeV*oHz(i,j,k)*ad_Awrk(i,j,k,Nnew)
+              ad_DC(i,k-1)=ad_DC(i,k-1)-adfac
+              ad_DC(i,k  )=ad_DC(i,k  )+adfac
+              ad_Awrk(i,j,k,Nold)=ad_Awrk(i,j,k,Nold)+                  &
+     &                            ad_Awrk(i,j,k,Nnew)
+              ad_Awrk(i,j,k,Nnew)=0.0_r8
+!>            tl_DC(i,k)=tl_DC(i,k)*Kv(i,j,k)
+!>
+              ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
+            END DO
+          END DO
+          DO k=N(ng)-1,1,-1
+            DO i=Istr,Iend
+!>            tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
+!>
+              ad_DC(i,k+1)=ad_DC(i,k+1)-CF(i,k)*ad_DC(i,k)
+            END DO
+          END DO
+          DO i=Istr,Iend
+!>          tl_DC(i,N(ng))=0.0_r8
+!>
+            ad_DC(i,N(ng))=0.0_r8
+          END DO
+!
+!  Adjoint LU decomposition and forward substitution.
+!
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+!>            tl_DC(i,k)=cff*(tl_Awrk(i,j,k+1,Nold)-                    &
+!>   &                        tl_Awrk(i,j,k  ,Nold)-                    &
+!>   &                        FC(i,k)*tl_DC(i,k-1))
+!>
+              adfac=cff*ad_DC(i,k)
+              ad_Awrk(i,j,k  ,Nold)=ad_Awrk(i,j,k  ,Nold)-adfac
+              ad_Awrk(i,j,k+1,Nold)=ad_Awrk(i,j,k+1,Nold)+adfac
+              ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*adfac
+              ad_DC(i,k)=0.0_r8
+            END DO
+          END DO
+!
+          DO i=Istr,Iend
+!>          tl_DC(i,0)=0.0_r8
+!>
+            ad_DC(i,0)=0.0_r8
+          END DO
+        END DO
+      END DO
+#   else
 !
 !-----------------------------------------------------------------------
 !  Integrate adjoint vertical diffusion equation implicitly.
@@ -294,11 +403,11 @@
 !>
           DO k=1,N(ng)-1
             DO i=Istr,Iend
-#   ifdef MASKING
+#    ifdef MASKING
 !>            tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nnew)*rmask(i,j)
 !>
               ad_Awrk(i,j,k,Nnew)=ad_Awrk(i,j,k,Nnew)*rmask(i,j)
-#   endif
+#    endif
 !>            tl_Awrk(i,j,k,Nnew)=tl_DC(i,k)
 !>
               ad_DC(i,k)=ad_DC(i,k)+                                    &
@@ -310,11 +419,11 @@
             END DO
           END DO
           DO i=Istr,Iend
-#   ifdef MASKING
+#    ifdef MASKING
 !>          tl_Awrk(i,j,N(ng),Nnew)=tl_Awrk(i,j,N(ng),Nnew)*rmask(i,j)
 !>
             ad_Awrk(i,j,N(ng),Nnew)=ad_Awrk(i,j,N(ng),Nnew)*rmask(i,j)
-#   endif
+#    endif
 !>          tl_Awrk(i,j,N(ng),Nnew)=tl_DC(i,N(ng))
 !>
             ad_DC(i,N(ng))=ad_DC(i,N(ng))+                              &
@@ -364,6 +473,7 @@
           END DO
         END DO
       END DO
+#   endif
 #  else
 !
 !-----------------------------------------------------------------------
@@ -638,7 +748,7 @@
       integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
-      real(r8) :: adfac, cff
+      real(r8) :: adfac, cff, cff1
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: ad_Awrk
 
@@ -646,19 +756,24 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
 # ifdef VCONVOLUTION
+#  ifndef SPLINES_VCONV
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
-#  ifndef IMPLICIT_VCONV
+#  endif
+#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
 #  endif
-#  ifdef IMPLICIT_VCONV
+#  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+#   ifdef SPLINES_VCONV
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
+#   endif
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
 #  else
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FS
 #  endif
 # endif
-
 # include "set_bounds.h"
 !
       ILB=LBOUND(ad_FE,DIM=1)
@@ -695,20 +810,22 @@
         DO i=IstrU-1,Iend+1
           Hfac(i,j)=cff*(pm(i-1,j)+pm(i,j))*(pn(i-1,j)+pn(i,j))
 # ifdef VCONVOLUTION
+#  ifndef SPLINES_VCONV
           FC(i,j,N(ng))=0.0_r8
           DO k=1,N(ng)-1
-#  ifdef IMPLICIT_VCONV
+#   ifdef IMPLICIT_VCONV
             FC(i,j,k)=-DTsizeV*(Kv(i-1,j,k)+Kv(i,j,k))/                 &
      &                 (z_r(i-1,j,k+1)+z_r(i,j,k+1)-                    &
      &                  z_r(i-1,j,k  )-z_r(i,j,k  ))
-#  else
+#   else
             FC(i,j,k)=DTsizeV*(Kv(i-1,j,k)+Kv(i,j,k))/                  &
      &                (z_r(i-1,j,k+1)+z_r(i,j,k+1)-                     &
      &                 z_r(i-1,j,k  )-z_r(i,j,k  ))
-#  endif
+#   endif
           END DO
           FC(i,j,0)=0.0_r8
-#  ifndef IMPLICIT_VCONV
+#  endif
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
           DO k=1,N(ng)
             oHz(i,j,k)=2.0_r8/(Hz(i-1,j,k)+Hz(i,j,k))
           END DO
@@ -754,6 +871,111 @@
 
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
+#   ifdef SPLINES_VCONV
+!
+!-----------------------------------------------------------------------
+!  Integrate adjoint vertical diffusion equation implicitly using
+!  parabolic splines.
+!-----------------------------------------------------------------------
+!
+      DO step=1,NVsteps
+!
+!  Update integration indices.
+!
+        Nsav=Nnew
+        Nnew=Nold
+        Nold=Nsav
+!
+!  Use conservative, parabolic spline reconstruction of vertical
+!  diffusion derivatives.  Then, time step vertical diffusion term
+!  implicitly.
+!
+!  Compute basic state time-invariant coefficients.
+!
+        DO j=Jstr,Jend
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+              Hzk(i,k)=0.5_r8*(Hz(i-1,j,k)+                             &
+     &                         Hz(i  ,j,k))
+            END DO
+          END DO
+          cff1=1.0_r8/6.0_r8
+          DO k=1,N(ng)-1
+            DO i=IstrU,Iend
+              FC(i,k)=cff1*Hzk(i,k  )-DTsizeV*Kv(i,j,k-1)*oHz(i,j,k  )
+              CF(i,k)=cff1*Hzk(i,k+1)-DTsizeV*Kv(i,j,k+1)*oHz(i,j,k+1)
+            END DO
+          END DO
+          DO i=IstrU,Iend
+            CF(i,0)=0.0_r8
+          END DO
+!
+          cff1=1.0_r8/3.0_r8
+          DO k=1,N(ng)-1
+            DO i=IstrU,Iend
+              BC(i,k)=cff1*(Hzk(i,k)+Hzk(i,k+1))+                       &
+     &                DTsizeV*Kv(i,j,k)*(oHz(i,j,k)+oHz(i,j,k+1))
+              cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+              CF(i,k)=cff*CF(i,k)
+            END DO
+          END DO
+!
+!  Adjoint backward substitution.
+!
+          DO k=1,N(ng)
+            DO i=IstrU,Iend
+!>            tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nold)+                  &
+!>   &                            DTsizeV*oHz(i,j,k)*                   &
+!>   &                            (tl_DC(i,k)-tl_DC(i,k-1))
+!>
+              adfac=DTsizeV*oHz(i,j,k)*ad_Awrk(i,j,k,Nnew)
+              ad_DC(i,k-1)=ad_DC(i,k-1)-adfac
+              ad_DC(i,k  )=ad_DC(i,k  )+adfac
+              ad_Awrk(i,j,k,Nold)=ad_Awrk(i,j,k,Nold)+                  &
+     &                            ad_Awrk(i,j,k,Nnew)
+              ad_Awrk(i,j,k,Nnew)=0.0_r8
+!>            tl_DC(i,k)=tl_DC(i,k)*Kv(i,j,k)
+!>
+              ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
+            END DO
+          END DO
+          DO k=N(ng)-1,1,-1
+            DO i=IstrU,Iend
+!>            tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
+!>
+              ad_DC(i,k+1)=ad_DC(i,k+1)-CF(i,k)*ad_DC(i,k)
+            END DO
+          END DO
+          DO i=IstrU,Iend
+!>          tl_DC(i,N(ng))=0.0_r8
+!>
+            ad_DC(i,N(ng))=0.0_r8
+          END DO
+!
+!  Adjoint LU decomposition and forward substitution.
+!
+          DO k=1,N(ng)-1
+            DO i=IstrU,Iend
+              cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+!>            tl_DC(i,k)=cff*(tl_Awrk(i,j,k+1,Nold)-                    &
+!>   &                        tl_Awrk(i,j,k  ,Nold)-                    &
+!>   &                        FC(i,k)*tl_DC(i,k-1))
+!>
+              adfac=cff*ad_DC(i,k)
+              ad_Awrk(i,j,k  ,Nold)=ad_Awrk(i,j,k  ,Nold)-adfac
+              ad_Awrk(i,j,k+1,Nold)=ad_Awrk(i,j,k+1,Nold)+adfac
+              ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*adfac
+              ad_DC(i,k)=0.0_r8
+            END DO
+          END DO
+          DO i=IstrU,Iend
+!>          tl_DC(i,0)=0.0_r8
+!>
+            ad_DC(i,0)=0.0_r8
+          END DO
+        END DO
+      END DO
+#   else
 !
 !-----------------------------------------------------------------------
 !  Integerate adjoint vertical diffusion equation implicitly.
@@ -766,11 +988,10 @@
         Nsav=Nnew
         Nnew=Nold
         Nold=Nsav
-
-        DO j=Jstr,Jend
 !
 !  Compute diagonal matrix coefficients BC.
 !
+        DO j=Jstr,Jend
           DO k=1,N(ng)
             DO i=IstrU,Iend
               BC(i,k)=0.5*(Hz(i-1,j,k)+Hz(i,j,k))-                      &
@@ -794,11 +1015,11 @@
 !>
           DO k=1,N(ng)-1
             DO i=IstrU,Iend
-#   ifdef MASKING
+#    ifdef MASKING
 !>            tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nnew)*umask(i,j)
 !>
               ad_Awrk(i,j,k,Nnew)=ad_Awrk(i,j,k,Nnew)*umask(i,j)
-#   endif
+#    endif
 !>            tl_Awrk(i,j,k,Nnew)=tl_DC(i,k)
 !>
               ad_DC(i,k)=ad_DC(i,k)+                                    &
@@ -810,11 +1031,11 @@
             END DO
           END DO
           DO i=IstrU,Iend
-#   ifdef MASKING
+#    ifdef MASKING
 !>          tl_Awrk(i,j,N(ng),Nnew)=tl_Awrk(i,j,N(ng),Nnew)*umask(i,j)
 !>
             ad_Awrk(i,j,N(ng),Nnew)=ad_Awrk(i,j,N(ng),Nnew)*umask(i,j)
-#   endif
+#    endif
 !>          tl_Awrk(i,j,N(ng),Nnew)=tl_DC(i,N(ng))
 !>
             ad_DC(i,N(ng))=ad_DC(i,N(ng))+                              &
@@ -864,6 +1085,7 @@
           END DO
         END DO
       END DO
+#   endif
 #  else
 !
 !-----------------------------------------------------------------------
@@ -877,12 +1099,11 @@
         Nsav=Nnew
         Nnew=Nold
         Nold=Nsav
-
-        DO j=Jstr,Jend
 !
 !  Time-step adjoint vertical diffusive term. Notice that "oHz" is
 !  assumed to be time invariant.
 !
+        DO j=Jstr,Jend
           DO k=1,N(ng)
             DO i=IstrU,Iend
 !>            tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nold)+                  &
@@ -1136,7 +1357,7 @@
       integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
-      real(r8) :: adfac, cff
+      real(r8) :: adfac, cff, cff1
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: ad_Awrk
 
@@ -1144,13 +1365,19 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
 # ifdef VCONVOLUTION
+#  ifndef SPLINES_VCONV
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
-#  ifndef IMPLICIT_VCONV
+#  endif
+#  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
 #  endif
-#  ifdef IMPLICIT_VCONV
+#  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+#   ifdef SPLINES_VCONV
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
+#   endif
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
 #  else
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FS
@@ -1193,20 +1420,22 @@
         DO i=Istr-1,Iend+1
           Hfac(i,j)=cff*(pm(i,j-1)+pm(i,j))*(pn(i,j-1)+pn(i,j))
 # ifdef VCONVOLUTION
+#  ifndef SPLINES_VCONV
           FC(i,j,N(ng))=0.0_r8
           DO k=1,N(ng)-1
-#  ifdef IMPLICIT_VCONV
+#   ifdef IMPLICIT_VCONV
             FC(i,j,k)=-DTsizeV*(Kv(i,j-1,k)+Kv(i,j,k))/                 &
      &                 (z_r(i,j-1,k+1)+z_r(i,j,k+1)-                    &
      &                  z_r(i,j-1,k  )-z_r(i,j,k  ))
-#  else
+#   else
             FC(i,j,k)=DTsizeV*(Kv(i,j-1,k)+Kv(i,j,k))/                  &
      &                (z_r(i,j-1,k+1)+z_r(i,j,k+1)-                     &
      &                 z_r(i,j-1,k  )-z_r(i,j,k  ))
-#  endif
+#   endif
           END DO
           FC(i,j,0)=0.0_r8
-#  ifndef IMPLICIT_VCONV
+#  endif
+#  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
           DO k=1,N(ng)
             oHz(i,j,k)=2.0_r8/(Hz(i,j-1,k)+Hz(i,j,k))
           END DO
@@ -1252,6 +1481,110 @@
 
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
+#   ifdef SPLINES_VCONV
+!
+!-----------------------------------------------------------------------
+!  Integrate adjoint vertical diffusion equation implicitly using
+!  parabolic splines.
+!-----------------------------------------------------------------------
+!
+      DO step=1,NVsteps
+!
+!  Update integration indices.
+!
+        Nsav=Nnew
+        Nnew=Nold
+        Nold=Nsav
+!
+!  Use conservative, parabolic spline reconstruction of vertical
+!  diffusion derivatives.  Then, time step vertical diffusion term
+!  implicitly.
+!
+!  Compute basic state time-invariant coefficients.
+!
+        DO j=JstrV,Jend
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+              Hzk(i,k)=0.5_r8*(Hz(i,j-1,k)+                             &
+     &                         Hz(i,j  ,k))
+            END DO
+          END DO
+          cff1=1.0_r8/6.0_r8
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              FC(i,k)=cff1*Hzk(i,k  )-DTsizeV*Kv(i,j,k-1)*oHz(i,j,k  )
+              CF(i,k)=cff1*Hzk(i,k+1)-DTsizeV*Kv(i,j,k+1)*oHz(i,j,k+1)
+            END DO
+          END DO
+          DO i=Istr,Iend
+            CF(i,0)=0.0_r8
+          END DO
+!
+          cff1=1.0_r8/3.0_r8
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              BC(i,k)=cff1*(Hzk(i,k)+Hzk(i,k+1))+                       &
+     &                DTsizeV*Kv(i,j,k)*(oHz(i,j,k)+oHz(i,j,k+1))
+              cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+              CF(i,k)=cff*CF(i,k)
+            END DO
+          END DO
+!
+!  Adjoint backward substitution.
+!
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+!>            tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nold)+                  &
+!>   &                            DTsizeV*oHz(i,j,k)*                   &
+!>   &                            (tl_DC(i,k)-tl_DC(i,k-1))
+!>
+              adfac=DTsizeV*oHz(i,j,k)*ad_Awrk(i,j,k,Nnew)
+              ad_DC(i,k-1)=ad_DC(i,k-1)-adfac
+              ad_DC(i,k  )=ad_DC(i,k  )+adfac
+              ad_Awrk(i,j,k,Nold)=ad_Awrk(i,j,k,Nold)+                  &
+     &                            ad_Awrk(i,j,k,Nnew)
+              ad_Awrk(i,j,k,Nnew)=0.0_r8
+!>            tl_DC(i,k)=tl_DC(i,k)*Kv(i,j,k)
+!>
+              ad_DC(i,k)=ad_DC(i,k)*Kv(i,j,k)
+            END DO
+          END DO
+          DO k=N(ng)-1,1,-1
+            DO i=Istr,Iend
+!>            tl_DC(i,k)=tl_DC(i,k)-CF(i,k)*tl_DC(i,k+1)
+!>
+              ad_DC(i,k+1)=ad_DC(i,k+1)-CF(i,k)*ad_DC(i,k)
+            END DO
+          END DO
+          DO i=Istr,Iend
+!>          tl_DC(i,N(ng))=0.0_r8
+!>
+            ad_DC(i,N(ng))=0.0_r8
+          END DO
+!
+!  Adjoint LU decomposition and forward substitution.
+!
+          DO k=1,N(ng)-1
+            DO i=Istr,Iend
+              cff=1.0_r8/(BC(i,k)-FC(i,k)*CF(i,k-1))
+!>            tl_DC(i,k)=cff*(tl_Awrk(i,j,k+1,Nold)-                    &
+!>   &                        tl_Awrk(i,j,k  ,Nold)-                    &
+!>   &                        FC(i,k)*tl_DC(i,k-1))
+              adfac=cff*ad_DC(i,k)
+              ad_Awrk(i,j,k  ,Nold)=ad_Awrk(i,j,k  ,Nold)-adfac
+              ad_Awrk(i,j,k+1,Nold)=ad_Awrk(i,j,k+1,Nold)+adfac
+              ad_DC(i,k-1)=ad_DC(i,k-1)-FC(i,k)*adfac
+              ad_DC(i,k)=0.0_r8
+            END DO
+          END DO
+          DO i=Istr,Iend
+!>          tl_DC(i,0)=0.0_r8
+!>
+            ad_DC(i,0)=0.0_r8
+          END DO
+        END DO
+      END DO
+#   else
 !
 !-----------------------------------------------------------------------
 !  Integerate adjoint vertical diffusion adjoint implicitly.
@@ -1264,11 +1597,10 @@
         Nsav=Nnew
         Nnew=Nold
         Nold=Nsav
-
-        DO j=JstrV,Jend
 !
 !  Compute diagonal matrix coefficients BC.
 !
+        DO j=JstrV,Jend
           DO k=1,N(ng)
             DO i=Istr,Iend
               BC(i,k)=0.5_r8*(Hz(i,j-1,k)+Hz(i,j,k))-                   &
@@ -1292,11 +1624,11 @@
 !>
           DO k=1,N(ng)-1
             DO i=Istr,Iend
-#   ifdef MASKING
+#    ifdef MASKING
 !>            tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nnew)*vmask(i,j)
 !>
               ad_Awrk(i,j,k,Nnew)=ad_Awrk(i,j,k,Nnew)*vmask(i,j)
-#   endif
+#    endif
 !>            tl_Awrk(i,j,k,Nnew)=tl_DC(i,k)
 !>
               ad_DC(i,k)=ad_DC(i,k)+                                    &
@@ -1308,11 +1640,11 @@
             END DO
           END DO
           DO i=Istr,Iend
-#   ifdef MASKING
+#    ifdef MASKING
 !>          tl_Awrk(i,j,N(ng),Nnew)=tl_Awrk(i,j,N(ng),Nnew)*vmask(i,j)
 !>
             ad_Awrk(i,j,N(ng),Nnew)=ad_Awrk(i,j,N(ng),Nnew)*vmask(i,j)
-#   endif
+#    endif
 !>          tl_Awrk(i,j,N(ng),Nnew)=tl_DC(i,N(ng))
 !>
             ad_DC(i,N(ng))=ad_DC(i,N(ng))+                              &
@@ -1362,6 +1694,7 @@
           END DO
         END DO
       END DO
+#   endif
 #  else
 !
 !-----------------------------------------------------------------------
@@ -1375,12 +1708,11 @@
         Nsav=Nnew
         Nnew=Nold
         Nold=Nsav
-
-        DO j=JstrV,Jend
 !
 !  Time-step vertical diffusive term. Notice that "oHz" is assumed to
 !  be time invariant.
 !
+        DO j=JstrV,Jend
           DO k=1,N(ng)
             DO i=Istr,Iend
 !>             tl_Awrk(i,j,k,Nnew)=tl_Awrk(i,j,k,Nold)+                 &

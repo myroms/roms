@@ -521,6 +521,7 @@
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **
 ** RPM_RELAXATION      use if Picard iterations, Diffusive Relaxation of RPM **
 ** SO_SEMI_WHITE       use to activate white/red noise processes             **
+** SPLINES_VCONV       use to activate implicit splines vertical convolution **
 ** VCONVOLUTION        use to add vertical correlation to 3D convolution     **
 ** VERIFICATION        use if writing out solution at observation locations  **
 **                                                                           **
