@@ -2004,7 +2004,7 @@
       IF (Master) WRITE (stdout,20) 'IMPLICIT_VCONV',                   &
      &   'Implicit, Parabolic Splines Vertical Convolution Algorithm.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' IMPLICIT_VCONV,'
+      Coptions(is:is+16)=' SPLINES_VCONV,'
 #endif
 #ifdef SPHERICAL
       IF (Master) WRITE (stdout,20) 'SPHERICAL',                        &

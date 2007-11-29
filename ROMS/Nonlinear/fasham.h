@@ -691,7 +691,7 @@
               Bio(i,k,iZoop)=Bio(i,k,iZoop)-N_Flux_Zmetabo
               Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+N_Flux_Zmetabo
 #ifdef OXYGEN
-              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)+                            &
+              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-                            &
      &                       rOxNH4*(N_Flux_Zmetabo+N_Flux_Zexcret)
 #endif
 #ifdef CARBON
