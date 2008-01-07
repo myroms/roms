@@ -1285,7 +1285,7 @@
 !>   &                0.5_r8*(tl_z_w(i-1,j,k)-tl_z_w(i-1,j,k-1)+        &
 !>   &                        tl_z_w(i  ,j,k)-tl_z_w(i  ,j,k-1))
 !>
-              adfac=-cff1*cff1*on_u(i,j)*ad_cff1
+              adfac=-0.5_r8*cff1*cff1*on_u(i,j)*ad_cff1
               ad_z_w(i-1,j,k-1)=ad_z_w(i-1,j,k-1)-adfac
               ad_z_w(i  ,j,k-1)=ad_z_w(i  ,j,k-1)-adfac
               ad_z_w(i-1,j,k  )=ad_z_w(i-1,j,k  )+adfac
@@ -1305,7 +1305,7 @@
 !>   &                0.5_r8*(tl_z_w(i,j-1,k)-tl_z_w(i,j-1,k-1)+        &
 !>   &                        tl_z_w(i,j  ,k)-tl_z_w(i,j  ,k-1))
 !>
-              adfac=-cff1*cff1*om_v(i,j)*ad_cff1
+              adfac=-0.5_r8*cff1*cff1*om_v(i,j)*ad_cff1
               ad_z_w(i,j-1,k-1)=ad_z_w(i,j-1,k-1)-adfac
               ad_z_w(i,j  ,k-1)=ad_z_w(i,j  ,k-1)-adfac
               ad_z_w(i,j-1,k  )=ad_z_w(i,j-1,k  )+adfac

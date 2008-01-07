@@ -2451,6 +2451,7 @@
 !>
                   ad_Huon(i,j,k)=ad_Huon(i,j,k)+                        &
      &                           Tsrc(is,k,itrc)*ad_FX(i,j)
+                  ad_FX(i,j)=0.0_r8
 #  ifdef MASKING
                 ELSE
                   IF ((rmask(i  ,j).eq.0.0_r8).and.                     &
@@ -2490,6 +2491,7 @@
 !>
                   ad_Hvom(i,j,k)=ad_Hvom(i,j,k)+                        &
      &                           Tsrc(is,k,itrc)*ad_FE(i,j)
+                  ad_FE(i,j)=0.0_r8
 #  ifdef MASKING
                 ELSE
                   IF ((rmask(i,j  ).eq.0.0_r8).and.                     &
