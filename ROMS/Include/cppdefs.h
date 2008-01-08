@@ -3,7 +3,7 @@
 **
 ** svn $Id$
 ********************************************************** Hernan G. Arango ***
-** Copyright (c) 2002-2007 The ROMS/TOMS Group                               **
+** Copyright (c) 2002-2008 The ROMS/TOMS Group                               **
 **   Licensed under a MIT/X style license                                    **
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
@@ -123,6 +123,7 @@
 ** AVERAGES_AKV        use if writing out time-averaged AKv                  **
 ** AVERAGES_AKT        use if writing out time-averaged AKt                  **
 ** AVERAGES_AKS        use if writing out time-averaged AKs                  **
+** AVERAGES_DETIDE     use if writing out time-averaged detided fields       **
 ** AVERAGES_FLUXES     use if writing out time-averaged fluxes               **
 ** AVERAGES_NEARSHORE  use if writing out time-averaged nearshore stresses   **
 ** AVERAGES_QUADRATIC  use if writing out quadratic terms                    **

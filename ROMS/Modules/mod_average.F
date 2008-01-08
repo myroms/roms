@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -58,7 +58,7 @@
 !  avgv3d     3D velocity component (m/s) in the ETA-direction.        !
 !  avgw3d     S-coordinate [omega*Hz/mn] vertical velocity (m3/s).     !
 !  avgwvel    3D "true" vertical velocity (m/s).                       !
-!
+!                                                                      !
 # ifdef AVERAGES_NEARSHORE
 !  Time-averaged radiation stresses.                                   !
 !                                                                      !
@@ -79,6 +79,7 @@
 !  avgSyy3d   3D radiation stress, yy-component.                       !
 !  avgSzx3d   3D radiation stress, zx-component.                       !
 !  avgSzy3d   3D radiation stress, zy-component.                       !
+!                                                                      !
 # endif
 !=======================================================================
 !
@@ -299,7 +300,6 @@
       allocate ( AVERAGE(ng) % avgbedldu(LBi:UBi,LBj:UBj,NST) )
       allocate ( AVERAGE(ng) % avgbedldv(LBi:UBi,LBj:UBj,NST) )
 # endif
-
 
       RETURN
       END SUBROUTINE allocate_average

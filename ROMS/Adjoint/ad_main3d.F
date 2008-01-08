@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -573,13 +573,14 @@
 !-----------------------------------------------------------------------
 !  Compute adjoint density related fields and horizontal mass fluxes
 !  (Hz*u/n and Hz*v/m). If applicable, compute and report diagnostics
-!  and accumulate time-averaged adjoint fields.
+!  and accumulate time-averaged adjoint fields which needs a
+!  irreversible loop in shared-memory jobs.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
+        DO tile=subs*thread,subs*(thread+1)-1,+1     ! irreversible loop
 # ifndef TS_FIXED
           CALL ad_rho_eos (ng, TILE)
 # endif

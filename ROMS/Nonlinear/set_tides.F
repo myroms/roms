@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group        Robert Hetland   !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group        Robert Hetland   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -65,6 +65,10 @@
      &                     TIDES(ng) % UV_Tmajor,                       &
      &                     TIDES(ng) % UV_Tminor,                       &
 # endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                     TIDES(ng) % SinOmega,                        &
+     &                     TIDES(ng) % CosOmega,                        &
+# endif
 # ifdef ZCLIMATOLOGY
      &                     CLIMA(ng) % ssh,                             &
 # endif
@@ -105,6 +109,9 @@
 # ifdef UV_TIDES
      &                           UV_Tangle, UV_Tphase,                  &
      &                           UV_Tmajor, UV_Tminor,                  &
+# endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                           SinOmega, CosOmega,                    &
 # endif
 # ifdef ZCLIMATOLOGY
      &                           ssh,                                   &
@@ -157,6 +164,10 @@
       real(r8), intent(in) :: UV_Tminor(LBi:,LBj:,:)
       real(r8), intent(in) :: UV_Tphase(LBi:,LBj:,:)
 #  endif
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      real(r8), intent(inout) :: SinOmega(:)
+      real(r8), intent(inout) :: CosOmega(:)
+#  endif
 #  ifdef ZCLIMATOLOGY
       real(r8), intent(inout) :: ssh(LBi:,LBj:)
 #  endif
@@ -193,6 +204,10 @@
       real(r8), intent(in) :: UV_Tmajor(LBi:UBi,LBj:UBj,MTC)
       real(r8), intent(in) :: UV_Tminor(LBi:UBi,LBj:UBj,MTC)
       real(r8), intent(in) :: UV_Tphase(LBi:UBi,LBj:UBj,MTC)
+#  endif
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      real(r8), intent(inout) :: SinOmega(MTC)
+      real(r8), intent(inout) :: CosOmega(MTC)
 #  endif
 #  ifdef ZCLIMATOLOGY
       real(r8), intent(inout) :: ssh(LBi:UBi,LBj:UBj)
@@ -265,6 +280,24 @@
       ramp=TANH((tdays(ng)-dstart)/1.0_r8)
 # else
       ramp=1.0_r8
+# endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!-----------------------------------------------------------------------
+!  Compute harmonic used to detide output fields.
+!-----------------------------------------------------------------------
+!
+      cff=2.0_r8*pi*(time(ng)-tide_start*day2sec)
+      DO itide=1,NTC
+        IF (Tperiod(itide).gt.0.0_r8) THEN
+          omega=cff/Tperiod(itide)
+          SinOmega(itide)=SIN(omega)
+          CosOmega(itide)=COS(omega)
+        ELSE
+          SinOmega(itide)=0.0_r8
+          CosOmega(itide)=0.0_r8
+        END IF
+      END DO
 # endif
 # ifdef SSH_TIDES
 !

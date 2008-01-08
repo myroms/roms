@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -145,11 +145,15 @@
         integer  :: idCG_V        ! conjugate gradient v-vector
         integer  :: idCG_X        ! conjugate gradient x-vector
         integer  :: idCG_Z        ! conjugate gradient z-vector
+        integer  :: idCosW        ! COS(omega(k)*t)
+        integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
         integer  :: idDano        ! density anomaly
         integer  :: idDiff(2)     ! temperature and salinity diffusion
         integer  :: iddQdT        ! heat flux sensitivity to SST
         integer  :: idevap        ! evaporation rate
         integer  :: idFsur        ! free-surface
+        integer  :: idFsuD        ! detided free-surface
+        integer  :: idFsuH        ! free-surface tide harmonics
         integer  :: idGhat(2)     ! KPP nonlocal transport
         integer  :: idHbbl        ! depth of bottom boundary layer
         integer  :: idHice        ! depth of ice cover
@@ -199,6 +203,8 @@
         integer  :: idRzet        ! RHS of free-surface
         integer  :: idrain        ! rainfall rate
         integer  :: idSdif        ! vertical S-diffusion coefficient
+        integer  :: idSinW        ! SIN(omega(k)*t)
+        integer  :: idSin2        ! SIN(omega(k)*t)*SIN(omega(l)*t)
         integer  :: idSrad        ! net shortwave radiation flux
         integer  :: idSSHc        ! SSH climatology
         integer  :: idSSHe        ! SSH error variance
@@ -208,6 +214,7 @@
         integer  :: idSSTe        ! SST error variance
         integer  :: idSSTo        ! SST observations
         integer  :: idShea        ! net sensible heat flux
+        integer  :: idSWCW        ! SIN(omega(k)*t)*COS(omega(l)*t)
         integer  :: idsfwf        ! surface freswater flux
         integer  :: idTLmo        ! TLM at observation locations
         integer  :: idTair        ! surface air temperature
@@ -221,6 +228,7 @@
         integer  :: idTvph        ! tidal current phase
         integer  :: idTzam        ! tidal elevation amplitude
         integer  :: idTzph        ! tidal elevation phase
+        integer  :: idu2dA        ! accumulated 2D U-velocity
         integer  :: idU2rs        ! 2D total U-radiation stress
         integer  :: idU3rs        ! 3D total U-radiation stress
         integer  :: idU2Sd        ! 2D U-Stokes drift velocity
@@ -247,6 +255,10 @@
         integer  :: idUVer        ! 3D velocity error variance
         integer  :: idUVse        ! surface velocity error variance
         integer  :: idUvel        ! 3D U-velocity
+        integer  :: idu2dD        ! detided 2D U-velocity
+        integer  :: idu2dH        ! 2D U-velocity tide harmonics
+        integer  :: idu3dD        ! detided 3D U-velocity
+        integer  :: idu3dH        ! 3D U-velocity tide harmonics
         integer  :: idV2rs        ! 2D total V-radiation stress
         integer  :: idV3rs        ! 3D total V-radiation stress
         integer  :: idV2Sd        ! 2D U-Stokes drift velocity
@@ -275,6 +287,10 @@
         integer  :: idVsur        ! surface V-velocity observations
         integer  :: idVvel        ! 3D V-velocity
         integer  :: idVvis        ! vertical viscosity coefficient
+        integer  :: idv2dD        ! detided 2D U-velocity
+        integer  :: idv2dH        ! 2D U-velocity tide harmonics
+        integer  :: idv3dD        ! detided 3D U-velocity
+        integer  :: idv3dH        ! 3D U-velocity tide harmonics
         integer  :: idW2xx        ! 2D radiation stress, Sxx-component
         integer  :: idW2xy        ! 2D radiation stress, Sxy-component
         integer  :: idW2yy        ! 2D radiation stress, Syy-component
@@ -393,6 +409,7 @@
         integer  :: ncSSHid(Ngrids)     ! SSH observations
         integer  :: ncSSTid(Ngrids)     ! SST observations
         integer  :: ncSTAid(Ngrids)     ! output stations
+        integer  :: ncTIDEid(Ngrids)    ! input/output tide forcing
         integer  :: ncTLFid(Ngrids)     ! input/output TLM/RPM impulses
         integer  :: ncTLMid(Ngrids)     ! input/output tangent linear
         integer  :: ncTOBSid(Ngrids)    ! tracer observations
@@ -437,6 +454,7 @@
         integer  :: obsVid(NV,Ngrids)    ! observations variables IDs
         integer  :: rstVid(NV,Ngrids)    ! restart variables IDs
         integer  :: staVid(NV,Ngrids)    ! stations variables IDs
+        integer  :: tideVid(NV,Ngrids)   ! tide variables IDs
         integer  :: tlfVid(NV,Ngrids)    ! TLM impulse variables IDs
         integer  :: tlmVid(NV,Ngrids)    ! tangent variables IDs
 
@@ -732,6 +750,7 @@
           ncSSHid(ng)=-1
           ncSSTid(ng)=-1
           ncSTAid(ng)=-1
+          ncTIDEid(ng)=-1
           ncTLFid(ng)=-1
           ncTLMid(ng)=-1
           ncTOBSid(ng)=-1
@@ -1321,6 +1340,40 @@
                 idTobs(isalt)=varid
               CASE ('idTerr(isalt)')
                 idTerr(isalt)=varid
+#ifdef AVERAGES_DETIDE
+              CASE ('idCosW')
+                idCosW=varid
+              CASE ('idCos2')
+                idCos2=varid
+              CASE ('idSinW')
+                idSinW=varid
+              CASE ('idSin2')
+                idSin2=varid
+              CASE ('idSWCW')
+                idSWCW=varid
+              CASE ('idFsuD')
+                idFsuD=varid
+              CASE ('idFsuH')
+                idFsuH=varid
+              CASE ('idu2dD')
+                idu2dD=varid
+              CASE ('idu2dH')
+                idu2dH=varid
+              CASE ('idv2dD')
+                idv2dD=varid
+              CASE ('idv2dH')
+                idv2dH=varid
+# ifdef SOLVE3D
+              CASE ('idu3dD')
+                idu3dD=varid
+              CASE ('idu3dH')
+                idu3dH=varid
+              CASE ('idv3dD')
+                idv3dD=varid
+              CASE ('idv3dH')
+                idv3dH=varid
+# endif
+#endif
 #ifdef AVERAGES_QUADRATIC
               CASE ('idU2av')
                 idU2av=varid

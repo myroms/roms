@@ -5,7 +5,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -497,7 +497,6 @@
 
       character (len=20) :: dimnam
 # endif
-      character (len=80) :: ncfile
 
 # ifdef OBSERVATIONS
 !

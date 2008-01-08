@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -117,7 +117,7 @@
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile), SHARED(ng,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
+        DO tile=subs*thread,subs*(thread+1)-1,+1     ! irreversible loop
           CALL ad_set_data (ng, TILE)
 # ifdef AVERAGES
           CALL ad_set_avg (ng, TILE)

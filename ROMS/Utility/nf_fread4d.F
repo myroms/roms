@@ -88,7 +88,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, k, ic, fourth, Npts, NWpts, status, wtype
-      integer :: Imin, Imax, Jmin, Jmax
+      integer :: Imin, Imax, Jmin, Jmax, Loff
       integer :: Ilen, Jlen, Klen, IJlen, MyType, Nghost
 
       integer, dimension(5) :: start, total
@@ -136,6 +136,11 @@
       IF ((ABS(MyType).eq.p3dvar).or.(ABS(MyType).eq.v3dvar)) THEN
         Jmin=1
       END IF
+      IF (LBt.eq.0) THEN
+        Loff=1
+      ELSE
+        Loff=0
+      END IF
       Ilen=Imax-Imin+1
       Jlen=Jmax-Jmin+1
       Klen=UBk-LBk+1
@@ -179,14 +184,14 @@
           total(2)=Jlen
           start(3)=1
           total(3)=Klen
-          start(4)=fourth
+          start(4)=fourth+Loff
           total(4)=1
           start(5)=tindex
           total(5)=1
           Npts=IJlen*Klen
 #if defined READ_WATER && defined MASKING
         ELSE
-          start(1)=1+(fourth-1)*Npts
+          start(1)=1+(fourth+Loff-1)*Npts
           total(1)=Npts
           start(2)=1
           total(2)=tindex

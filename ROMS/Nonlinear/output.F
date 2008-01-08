@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -194,6 +194,10 @@
      &      (MOD(iic(ng)-1,nAVG(ng)).eq.0)) THEN
           CALL wrt_avg (ng)
           IF (exit_flag.ne.NoError) RETURN
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+          CALL wrt_tides (ng)
+          IF (exit_flag.ne.NoError) RETURN
+# endif
         END IF
       END IF
 # endif

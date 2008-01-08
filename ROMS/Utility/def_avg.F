@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -63,9 +63,9 @@
       real(r8) :: Aval(6)
 
 # ifdef ADJOINT
-      character (len=16) :: Prefix
+      character (len=21) :: Prefix
 # else
-      character (len= 8) :: Prefix
+      character (len=13) :: Prefix
 # endif
       character (len=80) :: Vinfo(Natt)
       character (len=80) :: fname, ncname
@@ -298,9 +298,9 @@
 !  Set long name prefix string.
 !
 # ifdef ADJOINT
-        Prefix='averaged adjoint'
+        Prefix='time-averaged adjoint'
 # else
-        Prefix='averaged'
+        Prefix='time-averaged'
 # endif
 !
 !-----------------------------------------------------------------------
@@ -351,6 +351,24 @@
           status=def_var(ncAVGid(ng),avgVid(idFsur,ng),NF_FOUT,         &
      &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Define detided free-surface.
+!
+        Vinfo( 1)=Vname(1,idFsuD)
+        WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idFsuD))
+        Vinfo( 3)=Vname(3,idFsuD)
+        Vinfo(14)=Vname(4,idFsuD)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_rho'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idFsuD,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idFsuD,ng),NF_FOUT,           &
+     &                 nvd3,t2dgrd,Aval,Vinfo,ncname)
+# endif
 !
 !  Define 2D momentum in the XI-direction.
 !
@@ -368,6 +386,24 @@
           status=def_var(ncAVGid(ng),avgVid(idUbar,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Define detided 2D momentum in the XI-direction.
+!
+        Vinfo( 1)=Vname(1,idu2dD)
+        WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idu2dD))
+        Vinfo( 3)=Vname(3,idu2dD)
+        Vinfo(14)=Vname(4,idu2dD)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idu2dD,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idu2dD,ng),NF_FOUT,           &
+     &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
+# endif
 !
 !  Define 2D momentum in the ETA-direction.
 !
@@ -385,6 +421,24 @@
           status=def_var(ncAVGid(ng),avgVid(idVbar,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Define detided 2D momentum in the ETA-direction.
+!
+        Vinfo( 1)=Vname(1,idv2dD)
+        WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idv2dD))
+        Vinfo( 3)=Vname(3,idv2dD)
+        Vinfo(14)=Vname(4,idv2dD)
+        Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idv2dD,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idv2dD,ng),NF_FOUT,           &
+     &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+# endif
 # ifdef SOLVE3D
 !
 !  Define 3D momentum component in the XI-direction.
@@ -403,6 +457,24 @@
           status=def_var(ncAVGid(ng),avgVid(idUvel,ng),NF_FOUT,         &
      &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
         END IF
+
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Define detided 3D momentum component in the XI-direction.
+!
+        Vinfo( 1)=Vname(1,idu3dD)
+        WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idu3dD))
+        Vinfo( 3)=Vname(3,idu3dD)
+        Vinfo(14)=Vname(4,idu3dD)
+        Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#   endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idu3dD,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idu3dD,ng),NF_FOUT,           &
+     &                 nvd4,u3dgrd,Aval,Vinfo,ncname)
+#  endif
 !
 !  Define 3D momentum component in the ETA-direction.
 !
@@ -420,6 +492,24 @@
           status=def_var(ncAVGid(ng),avgVid(idVvel,ng),NF_FOUT,         &
      &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
         END IF
+
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Define detided 3D momentum component in the ETA-direction.
+!
+        Vinfo( 1)=Vname(1,idv3dD)
+        WRITE (Vinfo( 2),'(a,1x,a)') Prefix, TRIM(Vname(2,idv3dD))
+        Vinfo( 3)=Vname(3,idv3dD)
+        Vinfo(14)=Vname(4,idv3dD)
+        Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#   endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idv3dD,ng),r8)
+        status=def_var(ncAVGid(ng),avgVid(idv3dD,ng),NF_FOUT,           &
+     &                 nvd4,v3dgrd,Aval,Vinfo,ncname)
+#  endif
 !
 !  Define S-coordinate vertical "omega" momentum component.
 !
@@ -1425,6 +1515,23 @@
             status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVbar)),    &
      &                            avgVid(idVbar,ng))
           END IF
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsuD))) THEN
+            got_var(idFsuD)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idFsuD)),    &
+     &                            avgVid(idFsuD,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idu2dD))) THEN
+            got_var(idu2dD)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idu2dD)),    &
+     &                            avgVid(idu2dD,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idv2dD))) THEN
+            got_var(idv2dD)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idv2dD)),    &
+     &                            avgVid(idv2dD,ng))
+          END IF
+# endif
 # ifdef SOLVE3D
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
@@ -1436,6 +1543,18 @@
             status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVvel)),    &
      &                            avgVid(idVvel,ng))
           END IF
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idu3dD))) THEN
+            got_var(idu3dD)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idu3dD)),    &
+     &                            avgVid(idu3dD,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idv3dD))) THEN
+            got_var(idv3dD)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idv3dD)),    &
+     &                            avgVid(idv3dD,ng))
+          END IF
+#  endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idOvel))) THEN
             got_var(idOvel)=.TRUE.
             status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idOvel)),    &
@@ -1768,6 +1887,23 @@
           exit_flag=3
           RETURN
         END IF
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+        IF (.not.got_var(idFsuD)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idFsuD)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idu2dD)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idu2dD)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idv2dD)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idv2dD)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+# endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Hout(idUvel,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idUvel)), TRIM(ncname)
@@ -1779,6 +1915,18 @@
           exit_flag=3
           RETURN
         END IF
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+        IF (.not.got_var(idu3dD)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idu3dD)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idv3dD)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idv3dD)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
         IF (.not.got_var(idOvel).and.Hout(idOvel,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idOvel)), TRIM(ncname)
           exit_flag=3

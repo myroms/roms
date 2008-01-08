@@ -8,7 +8,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -1446,7 +1446,7 @@
       RETURN
       END SUBROUTINE mp_gather_state
 
-      FUNCTION mp_ncread (ng, model, ncid, ncvar, ncfile, ncrec,        &
+      FUNCTION mp_ncread (ng, model, ncid, ncvar, ncname, ncrec,        &
      &                    LB1, UB1, LB2, UB2, Ascale, A)
 !
 !***********************************************************************
@@ -1462,7 +1462,7 @@
 !     model      Calling model identifier.                             !
 !     ncid       NetCDF file ID.                                       !
 !     ncvar      NetCDF variable name.                                 !
-!     ncfile     NetCDF file name.                                     !
+!     ncname     NetCDF file name.                                     !
 !     ncrec      NetCDF record index to write. If negative, it assumes !
 !                  that the variable is recordless.                    !
 !     LB1        First-dimension Lower bound.                          !
@@ -1497,7 +1497,7 @@
       real(r8), intent(out) :: A(LB1:UB1,LB2:UB2)
 
       character (len=*), intent(in) :: ncvar
-      character (len=*), intent(in) :: ncfile
+      character (len=*), intent(in) :: ncname
 !
 !  Local variable declarations.
 !
@@ -1653,7 +1653,7 @@
       RETURN
       END FUNCTION mp_ncread
 
-      FUNCTION mp_ncwrite (ng, model, ncid, ncvar, ncfile, ncrec,       &
+      FUNCTION mp_ncwrite (ng, model, ncid, ncvar, ncname, ncrec,       &
      &                     LB1, UB1, LB2, UB2, Ascale, A)
 !
 !***********************************************************************
@@ -1669,7 +1669,7 @@
 !     model      Calling model identifier.                             !
 !     ncid       NetCDF file ID.                                       !
 !     ncvar      NetCDF variable name.                                 !
-!     ncfile     NetCDF file name.                                     !
+!     ncname     NetCDF file name.                                     !
 !     ncrec      NetCDF record index to write. If negative, it assumes !
 !                  that the variable is recordless.                    !
 !     LB1        First-dimension Lower bound.                          !
@@ -1704,7 +1704,7 @@
       real(r8), intent(in) :: A(LB1:UB1,LB2:UB2)
 
       character (len=*), intent(in) :: ncvar
-      character (len=*), intent(in) :: ncfile
+      character (len=*), intent(in) :: ncname
 !
 !  Local variable declarations.
 !

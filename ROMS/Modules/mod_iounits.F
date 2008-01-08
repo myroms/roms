@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -41,6 +41,7 @@
 !  RSTname     Output restart file name.                               !
 !  SSHname     Input SSH observations file name.                       !
 !  SSTname     Input SST observations file name.                       !
+!  TIDEname    Input tide forcing file name.                           !
 !  TLFname     Input/output tangent linear impulse forcing file name.  !
 !  TLMbase     Output tangent linear base file name.                   !
 !  TLMname     Output tangent linear file name.                        !
@@ -53,6 +54,7 @@
 !  bparnam     Input biology parameters file name.                     !
 !  fposnam     Input initial floats positions file name.               !
 !  ioerror     IO error flag.                                          !
+!  ncfile      Current NetCDF file name being processed.               !
 !  nFfiles     Number of forcing files.                                !
 !  sparnam     Input sediment transport parameters file name.          !
 !  sposnam     Input station positions file name.                      !
@@ -115,6 +117,7 @@
         character (len=80), dimension(Ngrids) :: REPname
         character (len=80), dimension(Ngrids) :: SSHname
         character (len=80), dimension(Ngrids) :: SSTname
+        character (len=80), dimension(Ngrids) :: TIDEname
         character (len=80), dimension(Ngrids) :: TLFname
         character (len=80), dimension(Ngrids) :: TLMbase
         character (len=80), dimension(Ngrids) :: TLMname
@@ -132,6 +135,7 @@
         character (len=80) :: aparnam
         character (len=80) :: bparnam
         character (len=80) :: fposnam
+        character (len=80) :: ncfile
         character (len=80) :: sparnam
         character (len=80) :: sposnam
         character (len=80) :: varname

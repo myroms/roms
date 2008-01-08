@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -431,6 +431,12 @@
      &   'Writing out time-averaged bed load.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' AVERAGES_BEDLOAD,'
+# endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      IF (Master) WRITE (stdout,20) 'AVERAGES_DETIDE',                  &
+     &   'Writing out time-averaged detided fields.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' AVERAGES_DETIDE,'
 # endif
 # ifdef AVERAGES_FLUXES
       IF (Master) WRITE (stdout,20) 'AVERAGES_FLUXES',                  &

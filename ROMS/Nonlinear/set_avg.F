@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -36,6 +36,9 @@
 # endif
       USE mod_ocean
       USE mod_stepping
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      USE mod_tides
+# endif
 !
 !  Imported variable declarations.
 !
@@ -50,6 +53,9 @@
 # endif
       CALL set_avg_tile (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj,                            &
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                   NTC(ng),                                       &
+# endif
      &                   KOUT,                                          &
 # ifdef SOLVE3D
      &                   NOUT,                                          &
@@ -122,7 +128,26 @@
      &                   MIXING(ng) % Sxy_bar,                          &
      &                   MIXING(ng) % Syy_bar,                          &
 # endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                   TIDES(ng) % CosOmega, TIDES(ng) % SinOmega,    &
+     &                   TIDES(ng) % CosW_avg, TIDES(ng) % CosW_sum,    &
+     &                   TIDES(ng) % SinW_avg, TIDES(ng) % SinW_sum,    &
+     &                   TIDES(ng) % CosWCosW, TIDES(ng) % SinWSinW,    &
+     &                   TIDES(ng) % SinWCosW,                          &
+     &                   TIDES(ng) % ubar_tide,                         &
+     &                   TIDES(ng) % ubar_detided,                      &
+     &                   TIDES(ng) % vbar_tide,                         &
+     &                   TIDES(ng) % vbar_detided,                      &
+     &                   TIDES(ng) % zeta_tide,                         &
+     &                   TIDES(ng) % zeta_detided,                      &
+# endif
 # ifdef SOLVE3D
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                   TIDES(ng) % u_tide,                            &
+     &                   TIDES(ng) % u_detided,                         &
+     &                   TIDES(ng) % v_tide,                            &
+     &                   TIDES(ng) % v_detided,                         &
+#  endif
      &                   AVERAGE(ng) % avgu3d,                          &
      &                   AVERAGE(ng) % avgv3d,                          &
      &                   AVERAGE(ng) % avgw3d,                          &
@@ -217,6 +242,9 @@
 !***********************************************************************
       SUBROUTINE set_avg_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj,                      &
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                         NTC,                                     &
+# endif
      &                         Kout,                                    &
 # ifdef SOLVE3D
      &                         Nout,                                    &
@@ -261,12 +289,25 @@
 # endif
      &                         ubar, vbar,                              &
      &                         zeta,                                    &
-#  ifdef AVERAGES_NEARSHORE
+# ifdef AVERAGES_NEARSHORE
      &                         ubar_stokes, vbar_stokes,                &
      &                         rustr2d, rvstr2d,                        &
      &                         Sxx_bar, Sxy_bar, Syy_bar,               &
-#  endif
+# endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                         CosOmega, SinOmega,                      &
+     &                         CosW_avg, CosW_sum,                      &
+     &                         SinW_avg, SinW_sum,                      &
+     &                         CosWCosW, SinWSinW, SinWCosW,            &
+     &                         ubar_tide, ubar_detided,                 &
+     &                         vbar_tide, vbar_detided,                 &
+     &                         zeta_tide, zeta_detided,                 &
+# endif
 # ifdef SOLVE3D
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+     &                         u_tide, u_detided,                       &
+     &                         v_tide, v_detided,                       &
+#  endif
      &                         avgu3d, avgv3d,                          &
      &                         avgw3d, avgwvel,                         &
      &                         avgt, avgrho,                            &
@@ -337,6 +378,9 @@
       integer, intent(in) :: Kout
 # ifdef SOLVE3D
       integer, intent(in) :: Nout
+# endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      integer, intent(in) :: NTC
 # endif
 !
 # ifdef ASSUMED_SHAPE
@@ -410,7 +454,30 @@
       real(r8), intent(in) :: Sxy_bar(LBi:,LBj:)
       real(r8), intent(in) :: Syy_bar(LBi:,LBj:)
 #  endif
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      real(r8), intent(in) :: CosOmega(:)
+      real(r8), intent(in) :: SinOmega(:)
+      real(r8), intent(inout) :: CosW_avg(:)
+      real(r8), intent(inout) :: CosW_sum(:)
+      real(r8), intent(inout) :: SinW_avg(:)
+      real(r8), intent(inout) :: SinW_sum(:)
+      real(r8), intent(inout) :: CosWCosW(:,:)
+      real(r8), intent(inout) :: SinWSinW(:,:)
+      real(r8), intent(inout) :: SinWCosW(:,:)
+      real(r8), intent(inout) :: ubar_tide(LBi:,LBj:,0:)
+      real(r8), intent(inout) :: ubar_detided(LBi:,LBj:)
+      real(r8), intent(inout) :: vbar_tide(LBi:,LBj:,0:)
+      real(r8), intent(inout) :: vbar_detided(LBi:,LBj:)
+      real(r8), intent(inout) :: zeta_tide(LBi:,LBj:,0:)
+      real(r8), intent(inout) :: zeta_detided(LBi:,LBj:)
+#  endif
 #  ifdef SOLVE3D
+#   if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      real(r8), intent(inout) :: u_tide(LBi:,LBj:,:,0:)
+      real(r8), intent(inout) :: u_detided(LBi:,LBj:,:)
+      real(r8), intent(inout) :: v_tide(LBi:,LBj:,:,0:)
+      real(r8), intent(inout) :: v_detided(LBi:,LBj:,:)
+#   endif
       real(r8), intent(inout) :: avgu3d(LBi:,LBj:,:)
       real(r8), intent(inout) :: avgv3d(LBi:,LBj:,:)
       real(r8), intent(inout) :: avgw3d(LBi:,LBj:,0:)
@@ -559,7 +626,7 @@
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
-#   ifdef AVERAGES_NEARSHORE
+#  ifdef AVERAGES_NEARSHORE
       real(r8), intent(in) :: ubar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vbar_stokes(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: rustr2d(LBi:UBi,LBj:UBj)
@@ -567,8 +634,31 @@
       real(r8), intent(in) :: Sxx_bar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Sxy_bar(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Syy_bar(LBi:UBi,LBj:UBj)
-#   endif
+#  endif
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      real(r8), intent(in) :: CosOmega(NTC)
+      real(r8), intent(in) :: SinOmega(NTC)
+      real(r8), intent(inout) :: CosW_avg(NTC)
+      real(r8), intent(inout) :: CosW_sum(NTC)
+      real(r8), intent(inout) :: SinW_avg(NTC)
+      real(r8), intent(inout) :: SinW_sum(NTC)
+      real(r8), intent(inout) :: CosWCosW(NTC,NTC)
+      real(r8), intent(inout) :: SinWSinW(NTC,NTC)
+      real(r8), intent(inout) :: SinWCosW(NTC,NTC)
+      real(r8), intent(inout) :: ubar_tide(LBi:UBi,LBj:UBj,0:2*NTC)
+      real(r8), intent(inout) :: ubar_detided(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: vbar_tide(LBi:UBi,LBj:UBj,0:2*NTC)
+      real(r8), intent(inout) :: vbar_detided(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: zeta_tide(LBi:UBi,LBj:UBj,0:2*NTC)
+      real(r8), intent(inout) :: zeta_detided(LBi:UBi,LBj:UBj)
+#  endif
 #  ifdef SOLVE3D
+#   if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      real(r8), intent(inout) :: u_tide(LBi:UBi,LBj:UBj,N(ng),0:2*NTC)
+      real(r8), intent(inout) :: u_detided(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: v_tide(LBi:UBi,LBj:UBj,N(ng),0:2*NTC)
+      real(r8), intent(inout) :: v_detided(LBi:UBi,LBj:UBj,N(ng))
+#   endif
       real(r8), intent(inout) :: avgu3d(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: avgv3d(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: avgw3d(LBi:UBi,LBj:UBj,0:N(ng))
@@ -659,8 +749,27 @@
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      integer :: mk, nk
+      integer, dimension(2*NTC+1) :: indx
+# endif
 
-      real(r8) :: fac
+      real(r8) :: fac, fac1
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      real(r8) :: d, ubar_sum, vbar_sum, zeta_sum
+#  ifdef SOLVE3D
+      real(r8) :: u_sum, v_sum
+#  endif
+      real(r8), dimension(0:2*NTC) :: Ak_zeta
+      real(r8), dimension(0:2*NTC) :: Ak_ubar
+      real(r8), dimension(0:2*NTC) :: Ak_vbar
+#  ifdef SOLVE3D
+      real(r8), dimension(0:2*NTC) :: Ak_u
+      real(r8), dimension(0:2*NTC) :: Ak_v
+#  endif
+      real(r8), dimension(0:2*NTC) :: tide_harmonics
+      real(r8), dimension(0:2*NTC,0:2*NTC) :: C, Y
+# endif
 
 # include "set_bounds.h"
 !
@@ -673,11 +782,49 @@
       IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nAVG(ng)).eq.1)).or.                          &
      &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Compute least-squares coefficients to detide time-averaged fields.
+!  Notice that the coefficients are always accumulated and not
+!  re-initialized.  This allows better tidal fit as the simulation
+!  progresses.
+!
+        IF (SOUTH_WEST_TEST) THEN
+          Hcount(ng)=Hcount(ng)+1
+          DO nk=1,NTC
+            SinW_avg(nk)=SinOmega(nk)
+            CosW_avg(nk)=CosOmega(nk)
+            SinW_sum(nk)=SinW_sum(nk)+SinOmega(nk)
+            CosW_sum(nk)=CosW_sum(nk)+CosOmega(nk)
+            DO mk=1,NTC
+              SinWSinW(mk,nk)=SinWSinW(mk,nk)+SinOmega(mk)*SinOmega(nk)
+              CosWCosW(mk,nk)=CosWCosW(mk,nk)+CosOmega(mk)*CosOmega(nk)
+              SinWCosW(mk,nk)=SinWCosW(mk,nk)+SinOmega(mk)*CosOmega(nk)
+            END DO
+          END DO
+          tide_harmonics(0)=1.0_r8
+          DO nk=1,NTC
+            tide_harmonics(nk    )=SinOmega(nk)
+            tide_harmonics(nk+NTC)=CosOmega(nk)
+          END DO
+        END IF
+# endif
 !
 !  Initialize 2D fields.
 !
         DO j=JstrR,JendR
           DO i=IstrR,IendR
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+            DO nk=0,2*NTC
+              zeta_tide(i,j,nk)=zeta_tide(i,j,nk)+                      &
+     &                          zeta(i,j,Kout)*tide_harmonics(nk)
+              ubar_tide(i,j,nk)=ubar_tide(i,j,nk)+                      &
+     &                          ubar(i,j,Kout)*tide_harmonics(nk)
+              vbar_tide(i,j,nk)=vbar_tide(i,j,nk)+                      &
+     &                          vbar(i,j,Kout)*tide_harmonics(nk)
+            END DO
+# endif
             avgzeta(i,j)=zeta(i,j,Kout)
             avgu2d (i,j)=ubar(i,j,Kout)
             avgv2d (i,j)=vbar(i,j,Kout)
@@ -735,6 +882,14 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+              DO nk=0,2*NTC
+                u_tide(i,j,k,nk)=u_tide(i,j,k,nk)+                      &
+     &                           u(i,j,k,Nout)*tide_harmonics(nk)
+                v_tide(i,j,k,nk)=v_tide(i,j,k,nk)+                      &
+     &                           v(i,j,k,Nout)*tide_harmonics(nk)
+              END DO
+#  endif
               avgu3d(i,j,k)=u(i,j,k,Nout)
               avgv3d(i,j,k)=v(i,j,k,Nout)
               avgrho(i,j,k)=rho(i,j,k)
@@ -837,11 +992,47 @@
 !-----------------------------------------------------------------------
 !
       ELSE IF (iic(ng).gt.ntsAVG(ng)) THEN
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Accumukate Detide least-squares coefficients. They only vary in time
+!  since omega (as computed in set_tides) used model time coordinate.
+!
+        IF (SOUTH_WEST_TEST) THEN
+          Hcount(ng)=Hcount(ng)+1
+          DO nk=1,NTC
+            SinW_avg(nk)=SinW_avg(nk)+SinOmega(nk)
+            CosW_avg(nk)=CosW_avg(nk)+CosOmega(nk)
+            SinW_sum(nk)=SinW_sum(nk)+SinOmega(nk)
+            CosW_sum(nk)=CosW_sum(nk)+CosOmega(nk)
+            DO mk=1,NTC
+              SinWSinW(mk,nk)=SinWSinW(mk,nk)+SinOmega(mk)*SinOmega(nk)
+              CosWCosW(mk,nk)=CosWCosW(mk,nk)+CosOmega(mk)*CosOmega(nk)
+              SinWCosW(mk,nk)=SinWCosW(mk,nk)+SinOmega(mk)*CosOmega(nk)
+            END DO
+          END DO
+          tide_harmonics(0)=1.0_r8
+          DO nk=1,NTC
+            tide_harmonics(nk    )=SinOmega(nk)
+            tide_harmonics(nk+NTC)=CosOmega(nk)
+          END DO
+        END IF
+# endif
 !
 !  Accumulate 2D fields.
 !
         DO j=JstrR,JendR
           DO i=IstrR,IendR
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+            DO nk=0,2*NTC
+              zeta_tide(i,j,nk)=zeta_tide(i,j,nk)+                      &
+     &                          zeta(i,j,Kout)*tide_harmonics(nk)
+              ubar_tide(i,j,nk)=ubar_tide(i,j,nk)+                      &
+     &                          ubar(i,j,Kout)*tide_harmonics(nk)
+              vbar_tide(i,j,nk)=vbar_tide(i,j,nk)+                      &
+     &                          vbar(i,j,Kout)*tide_harmonics(nk)
+            END DO
+# endif
             avgzeta(i,j)=avgzeta(i,j)+zeta(i,j,Kout)
             avgu2d (i,j)=avgu2d (i,j)+ubar(i,j,Kout)
             avgv2d (i,j)=avgv2d (i,j)+vbar(i,j,Kout)
@@ -899,6 +1090,14 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+              DO nk=0,2*NTC
+                u_tide(i,j,k,nk)=u_tide(i,j,k,nk)+                      &
+     &                           u(i,j,k,Nout)*tide_harmonics(nk)
+                v_tide(i,j,k,nk)=v_tide(i,j,k,nk)+                      &
+     &                           v(i,j,k,Nout)*tide_harmonics(nk)
+              END DO
+#  endif
               avgu3d(i,j,k)=avgu3d(i,j,k)+u(i,j,k,Nout)
               avgv3d(i,j,k)=avgv3d(i,j,k)+v(i,j,k,Nout)
               avgrho(i,j,k)=avgrho(i,j,k)+rho(i,j,k)
@@ -1014,14 +1213,122 @@
         IF (SOUTH_WEST_TEST) THEN
           AVGtime(ng)=AVGtime(ng)+REAL(nAVG(ng),r8)*dt(ng)
         END IF
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Compute detide least-squares coefficients.  Build coefficient squared
+!  matrix C(0:2*NTC,0:2*NTC) to invert. It is 2*NTC because we are
+!  solving for real components Ak and Bk. The zero rows and column is
+!  for the coefficients associated with the time mean.
+!
+!        F(t) = Fmean + SUM [ Ak sin(omega(k)*t) ]
+!                     + SUM [ Bk cos(omega(k)*t) ]   for k=1:NTC
+!
+!  In the code below, all the arrays are collapsed into a single
+!  dimension index such that:
+!
+!            k=0               mean term
+!            k=1:NTC           sine terms
+!            k=NTC+1:2*NTC     cosine terms
+!
+        IF (SOUTH_WEST_TEST) THEN
+          C(0,0)=1.0_r8                     ! time-averaged coefficient
+          fac1=1.0_r8/REAL(Hcount(ng),r8)   ! global summation factor
+          DO nk=1,NTC
+            C(0,nk    )=fac1*SinW_sum(nk)
+            C(0,nk+NTC)=fac1*CosW_sum(nk)
+            C(nk,0    )=C(0,nk)             ! symmetric
+            C(nk+NTC,0)=C(0,nk+NTC)         ! symmetric
+            DO mk=1,NTC
+              C(mk,nk)=fac1*SinWSinW(mk,nk)
+              C(mk,nk+NTC)=fac1*SinWCosW(mk,nk)
+              C(mk+NTC,nk)=fac1*SinWCosW(nk,mk)
+              C(mk+NTC,nk+NTC)=fac1*CosWCosW(mk,nk)
+            END DO
+          END DO
+          DO nk=0,2*NTC
+            DO mk=0,2*NTC
+              C(nk,mk)=C(mk,nk)
+            END DO
+          END DO
+!
+!  Invert least-squares coefficient matrix by LU decomposition.
+!
+          DO mk=0,2*NTC
+            DO nk=0,2*NTC
+              Y(mk,nk)=0.0_r8
+            END DO
+            Y(mk,mk)=1.0_r8                ! identity matrix
+          END DO
+          CALL ludcmp (C(0,0), 2*NTC+1, 2*NTC+1, indx, d)
+!
+!  Find inverse by columns. The matrix Y will now contain the inverse
+!  of the least-squares coefficient matrix C, which will have been
+!  destroyed.
+!
+          DO nk=0,2*NTC
+            CALL lubksb (C(0,0), 2*NTC+1, 2*NTC+1, indx, Y(0,nk))
+          END DO
+!
+!  Compute time-averaged harmonics for current field average window.
+!
+          tide_harmonics(0)=1.0_r8
+          DO nk=1,NTC
+            tide_harmonics(nk    )=fac*SinW_avg(nk)
+            tide_harmonics(nk+NTC)=fac*cosW_avg(nk)
+          END DO
+!
+!  Scale inverse by the global summation factor.
+!
+          DO nk=0,2*NTC
+            DO mk=0,2*NTC
+              Y(nk,mk)=fac1*Y(nk,mk)
+            END DO
+          END DO
+        END IF
+# endif
 !
 !  Process 2D fields.
 !
         DO j=JstrR,JendR
           DO i=IstrR,IendR
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+            zeta_sum=0.0_r8
+            ubar_sum=0.0_r8
+            vbar_sum=0.0_r8
+            DO nk=0,2*NTC
+              Ak_zeta(nk)=0.0_r8
+              Ak_ubar(nk)=0.0_r8
+              Ak_vbar(nk)=0.0_r8
+              DO mk=0,2*NTC
+!!              Ak_zeta(nk)=Ak_zeta(nk)+Y(nk,mk)*zeta_tide(i,j,mk)
+!!              Ak_ubar(nk)=Ak_ubar(nk)+Y(nk,mk)*ubar_tide(i,j,mk)
+!!              Ak_vbar(nk)=Ak_vbar(nk)+Y(nk,mk)*vbar_tide(i,j,mk)
+                Ak_zeta(nk)=Ak_zeta(nk)+Y(mk,nk)*zeta_tide(i,j,mk)
+                Ak_ubar(nk)=Ak_ubar(nk)+Y(mk,nk)*ubar_tide(i,j,mk)
+                Ak_vbar(nk)=Ak_vbar(nk)+Y(mk,nk)*vbar_tide(i,j,mk)
+              END DO
+              zeta_sum=zeta_sum+Ak_zeta(nk)*tide_harmonics(nk)
+              ubar_sum=ubar_sum+Ak_ubar(nk)*tide_harmonics(nk)
+              vbar_sum=vbar_sum+Ak_vbar(nk)*tide_harmonics(nk)
+            END DO
             avgzeta(i,j)=fac*avgzeta(i,j)
             avgu2d (i,j)=fac*avgu2d (i,j)
             avgv2d (i,j)=fac*avgv2d (i,j)
+            IF (.TRUE.) THEN 
+              zeta_detided(i,j)=avgzeta(i,j)-zeta_sum
+              ubar_detided(i,j)=avgu2d (i,j)-ubar_sum
+              vbar_detided(i,j)=avgv2d (i,j)-vbar_sum
+            ELSE
+              zeta_detided(i,j)=avgzeta(i,j)
+              ubar_detided(i,j)=avgu2d (i,j)
+              vbar_detided(i,j)=avgv2d (i,j)
+            END IF
+# else
+            avgzeta(i,j)=fac*avgzeta(i,j)
+            avgu2d (i,j)=fac*avgu2d (i,j)
+            avgv2d (i,j)=fac*avgv2d (i,j)
+# endif
 # ifdef AVERAGES_NEARSHORE
             avgu2Sd(i,j)=fac*avgu2Sd(i,j)
             avgv2Sd(i,j)=fac*avgv2Sd(i,j)
@@ -1076,8 +1383,34 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+              u_sum=0.0_r8
+              v_sum=0.0_r8
+              DO nk=0,2*NTC
+                Ak_u(nk)=0.0_r8
+                Ak_v(nk)=0.0_r8
+                DO mk=0,2*NTC
+!!                Ak_u(nk)=Ak_u(nk)+Y(nk,mk)*u_tide(i,j,k,mk)
+!!                Ak_v(nk)=Ak_v(nk)+Y(nk,mk)*v_tide(i,j,k,mk)
+                  Ak_u(nk)=Ak_u(nk)+Y(mk,nk)*u_tide(i,j,k,mk)
+                  Ak_v(nk)=Ak_v(nk)+Y(mk,nk)*v_tide(i,j,k,mk)
+                END DO
+                u_sum=u_sum+Ak_u(nk)*tide_harmonics(nk)
+                v_sum=v_sum+Ak_v(nk)*tide_harmonics(nk)
+              END DO
               avgu3d(i,j,k)=fac*avgu3d(i,j,k)
               avgv3d(i,j,k)=fac*avgv3d(i,j,k)
+              IF (.TRUE.) THEN
+                u_detided(i,j,k)=avgu3d(i,j,k)-u_sum
+                v_detided(i,j,k)=avgv3d(i,j,k)-v_sum
+              ELSE
+                u_detided(i,j,k)=avgu3d(i,j,k)
+                v_detided(i,j,k)=avgv3d(i,j,k)
+              END IF
+#  else
+              avgu3d(i,j,k)=fac*avgu3d(i,j,k)
+              avgv3d(i,j,k)=fac*avgv3d(i,j,k)
+#  endif
               avgrho(i,j,k)=fac*avgrho(i,j,k)
 #  ifdef AVERAGES_NEARSHORE
               avgu3Sd(i,j,k)=fac*avgu3Sd(i,j,k)

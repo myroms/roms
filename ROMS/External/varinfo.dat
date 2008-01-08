@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !========================================================= Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                                !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                                !
 !    Licensed under a MIT/X style license                                     !
 !    See License_ROMS.txt                                                     !
 !==============================================================================
@@ -176,6 +176,147 @@
   'ocean_time'
   'idTvar(isalt)'
   'r3dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Detided variables
+!------------------------------------------------------------------------------
+!
+
+'CosW'                                             ! Input/Output
+  'time-accumulated COS(omega(k)*t)'
+  'radians'                                        ! [radians]
+  'CosW, scalar'
+  'tide_period'
+  'idCosW'
+  'nulvar'
+  1.0d0
+
+'SinW'                                             ! Input/Output
+  'time-accumulated SIN(omega(k)*t)'
+  'radians'                                        ! [radians]
+  'SinW, scalar'
+  'tide_period'
+  'idSinW'
+  'nulvar'
+  1.0d0
+
+'CosWCosW'                                         ! Input/Output
+  'time-accumulated COS(omega(k)*t)*COS(omega(l)*t) matrix'
+  'radians'                                        ! [radians]
+  'CosWCosW, scalar'
+  'tide_period'
+  'idCos2'
+  'nulvar'
+  1.0d0
+
+'SinWSinW'                                         ! Input/Output
+  'time-accumulated SIN(omega(k)*t)*SIN(omega(l)*t) matrix'
+  'radians'                                        ! [radians]
+  'SinWSinW, scalar'
+  'tide_period'
+  'idSin2'
+  'nulvar'
+  1.0d0
+
+'SinWCosW'                                         ! Input/Output
+  'time-accumulated SIN(omega(k)*t)*COS(omega(l)*t) matrix'
+  'radians'                                        ! [radians]
+  'SinWCosW, scalar'
+  'tide_period'
+  'idSWCW'
+  'nulvar'
+  1.0d0
+
+'zeta_tide'                                        ! Input/Output
+  'time-accumulated free-surface tide harmonics'
+  'meter'                                          ! [m]
+  'zeta_tide, scalar'
+  'ocean_time'
+  'idFsuH'
+  'r2dvar'
+  1.0d0
+
+'zeta_detided'                                     ! Output
+  'detided free-surface'
+  'meter'                                          ! [m]
+  'zeta_detided, scalar, series'
+  'ocean_time'
+  'idFsuD'
+  'r2dvar'
+  1.0d0
+
+'ubar_tide'                                        ! Input/Ouput
+  'time-accumulated 2D u-momentum tide harmonics'
+  'meter second-1'                                 ! [m/s]
+  'ubar_tide, scalar'
+  'ocean_time'
+  'idu2dH'
+  'u2dvar'
+  1.0d0
+
+'ubar_detided'                                     ! Ouput
+  'detided 2D u-momentum'
+  'meter second-1'                                 ! [m/s]
+  'ubar_detided, scalar, series'
+  'ocean_time'
+  'idu2dD'
+  'u2dvar'
+  1.0d0
+
+'vbar_tide'                                        ! Input/Output
+  'time-accumulated 2D v-momentum tide harmonics'
+  'meter second-1'                                 ! [m/s]
+  'vbar_tide, scalar'
+  'ocean_time'
+  'idv2dH'
+  'v2dvar'
+  1.0d0
+
+'vbar_detided'                                     ! Output
+  'detided 2D v-momentum'
+  'meter second-1'                                 ! [m/s]
+  'vbar_detided, scalar, series'
+  'ocean_time'
+  'idv2dD'
+  'v2dvar'
+  1.0d0
+
+'u_tide'                                           ! Input/Output
+  'time-accumulated 3D u-momentum tide harmonics'
+  'meter second-1'                                 ! [m/s]
+  'u_tide, scalar'
+  'ocean_time'
+  'idu3dH'
+  'u3dvar'
+  1.0d0
+
+'u_detided'                                        ! Output
+  'detided 3D u-momentum'
+  'meter second-1'                                 ! [m/s]
+  'u_detided, scalar, series'
+  'ocean_time'
+  'idu3dD'
+  'u3dvar'
+  1.0d0
+
+'v_tide'                                           ! Input/Output
+  'time-accumulated 3D v-momentum tide harmonics'
+  'meter second-1'                                 ! [m/s]
+  'v_tide, scalar'
+  'ocean_time'
+  'idv3dH'
+  'v3dvar'
+  1.0d0
+
+'v_detided'                                        ! Output
+  'detided 3D v-momentum'
+  'meter second-1'                                 ! [m/s]
+  'v_detided, scalar, series'
+  'ocean_time'
+  'idv3dD'
+  'v3dvar'
   1.0d0
 
 !
@@ -3239,7 +3380,7 @@
   'millimole_nitrogen meter-3'                     ! [millimole/m3]
   'Pzoo_east, scalar, series'
   'Pzoo_time'
-  'idTbry(ieast,iSzoo)'
+  'idTbry(ieast,iPzoo)'
   'nulvar'
   1.0d0
 

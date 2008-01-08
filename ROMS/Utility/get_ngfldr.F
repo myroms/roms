@@ -7,7 +7,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -23,7 +23,7 @@
 !     ifield     Field ID.                                             !
 !     ncid       NetCDF file ID.                                       !
 !     nfiles     Number of input NetCDF files.                         !
-!     ncfile     NetCDF file name(s).                                  !
+!     fname      NetCDF file name(s).                                  !
 !     LBi        "Fout" 1st dimension lower-bound value.               !
 !     UBi        "Fout" 1st dimension upper-bound value.               !
 !     UBj        "Fout" 2nd dimension upper-bound value, if any.       !
@@ -87,7 +87,6 @@
       real(r8), dimension((UBi-LBi+1)*UBj) :: A
 
       character (len=45) :: attnam
-      character (len=80) :: ncfile
 !
 !-----------------------------------------------------------------------
 !  On first call, inquire about the contents of input NetCDF file.

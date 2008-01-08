@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -135,14 +135,15 @@
 !
 !-----------------------------------------------------------------------
 !  Compute and report diagnostics. If appropriate, accumulate time-
-!  averaged output data.
+!  averaged output data which needs a irreversible loop in shared-memory
+!  jobs.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
 !$OMP&            SHARED(ng,Lnew,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
+        DO tile=subs*thread,subs*(thread+1)-1,+1     ! irreversible loop
 # ifdef AVERAGES
 !!        CALL rp_set_avg (ng, TILE)
 # endif

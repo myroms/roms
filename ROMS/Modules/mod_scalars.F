@@ -3,7 +3,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -704,6 +704,7 @@
         logical, dimension(Ngrids) :: LdefNRM    ! Norm file
         logical, dimension(Ngrids) :: LdefRST    ! Restart file
         logical, dimension(Ngrids) :: LdefSTA    ! Stations file
+        logical, dimension(Ngrids) :: LdefTIDE   ! tide forcing file
         logical, dimension(Ngrids) :: LdefTLM    ! Tangent linear file
         logical, dimension(Ngrids) :: LdefTLF    ! TLM/RPM impulse file
 
@@ -818,6 +819,14 @@
         logical, dimension(Ngrids) :: LcycleINI
         logical, dimension(Ngrids) :: LcycleRST
         logical, dimension(Ngrids) :: LcycleTLM
+
+#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Counter storing the number of accumulated harmonic records used
+!  for detiding.
+!
+        integer, dimension(Ngrids) :: Hcount
+#endif
 !
 !-----------------------------------------------------------------------
 !  Adjoint sensitivity parameters.
@@ -1902,6 +1911,9 @@
         ntstart(ng)=1
         ntend(ng)=0
         gamma2(ng)=-1.0_r8
+#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+        Hcount(ng)=0
+#endif
         first_time(ng)=0
         DO itrc=1,NAT+NPT
           tnu2(itrc,ng)=IniVal
@@ -1955,7 +1967,9 @@
         LdefRST(ng)=.TRUE.
         LdefSTA(ng)=.TRUE.
         LdefTLM(ng)=.FALSE.
-
+#if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+        LdefTIDE(ng)=.TRUE.
+#endif
         LwrtADJ(ng)=.FALSE.
         LwrtAVG(ng)=.FALSE.
         LwrtDIA(ng)=.FALSE.

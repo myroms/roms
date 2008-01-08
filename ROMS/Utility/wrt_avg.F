@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -26,6 +26,10 @@
 # if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
 # endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+      USE mod_tides
+# endif
+
 !
       implicit none
 !
@@ -106,6 +110,29 @@
           RETURN
         END IF
       END IF
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Write out detided free-surface (m).
+!
+      scale=1.0_r8
+      gtype=gfactor*r2dvar
+      status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idFsuD,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % rmask(LBi,LBj),                     &
+#  endif
+     &                   TIDES(ng) % zeta_detided(LBi,LBj))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idFsuD)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
 !
@@ -129,6 +156,29 @@
           RETURN
         END IF
       END IF
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Write out detided 2D momentum component (m/s) in the XI-direction.
+!
+      scale=1.0_r8
+      gtype=gfactor*u2dvar
+      status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idu2dD,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   TIDES(ng) % ubar_detided(LBi,LBj))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idu2dD)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
 !
 !  Write out 2D momentum component (m/s) in the ETA-direction.
 !
@@ -151,6 +201,29 @@
           RETURN
         END IF
       END IF
+
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Write out detided 2D momentum component (m/s) in the ETA-direction.
+!
+      scale=1.0_r8
+      gtype=gfactor*v2dvar
+      status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idv2dD,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   TIDES(ng) % vbar_detided(LBi,LBj))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idv2dD)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
 # ifdef AVERAGES_NEARSHORE
 !
 !  Write out 2D radiation stress, Sxx-component.
@@ -330,6 +403,29 @@
           RETURN
         END IF
       END IF
+
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Write out detided 3D momentum component (m/s) in the XI-direction.
+!
+      scale=1.0_r8
+      gtype=gfactor*u3dvar
+      status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idu3dD,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#   ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#   endif
+     &                   TIDES(ng) % u_detided(LBi,LBj,1))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idu3dD)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+#  endif
 !
 !  Write out 3D momentum component (m/s) in the ETA-direction.
 !
@@ -352,6 +448,29 @@
           RETURN
         END IF
       END IF
+
+#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+!
+!  Write out detided 3D momentum component (m/s) in the ETA-direction.
+!
+      scale=1.0_r8
+      gtype=gfactor*v3dvar
+      status=nf_fwrite3d(ng, iNLM, ncAVGid(ng), avgVid(idv3dD,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
+#   ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#   endif
+     &                   TIDES(ng) % v_detided(LBi,LBj,1))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idv3dD)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+#  endif
 #  ifdef AVERAGES_NEARSHORE
 !
 !  Write out 3D radiation stress, Sxx-component.

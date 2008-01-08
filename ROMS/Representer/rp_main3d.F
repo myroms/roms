@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -329,14 +329,15 @@
 !
 !-----------------------------------------------------------------------
 !  Set free-surface to it time-averaged value.  If applicable,
-!  accumulate time-averaged output data.
+!  accumulate time-averaged output data wich needs a irreversible
+!  loop in shared-memory jobs.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
 !$OMP&         SHARED(ng,Lnew,numthreads)
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
+        DO tile=subs*thread,subs*(thread+1)-1,+1     ! irreversible loop
           CALL set_zeta (ng, TILE)
 #  if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 !!        CALL rp_set_diags (ng, TILE)
