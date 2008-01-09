@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -391,15 +391,19 @@
 # if defined LONGWAVE
 !
 !  Use Berliand (1952) formula to calculate net longwave radiation.
+!  The equation for saturation vapor pressure is from Gill (Atmosphere-
+!  Ocean Dynamics, pp 606). Here the coefficient in the cloud term
+!  is assumed constant, but it is a function of latitude varying from
+!  1.0 at poles to 0.5 at the equator).
 !
           cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
      &        (1.0_r8+0.00412_r8*TairC(i))
-          e_sat=10.0_r8**cff
-          vap_p=e_sat*RH
+          e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
+          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar) 
           cff2=TairK(i)*TairK(i)*TairK(i)
           cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
-     &              (cff1*(0.39_r8-0.5_r8*SQRT(0.01_r8*vap_p))*         &
+     &              (cff1*(0.39_r8-0.05_r8*SQRT(vap_p))*                &
      &                    (1.0_r8-0.6823_r8*cloud(i,j)*cloud(i,j))+     &
      &               cff2*4.0_r8*(TseaK(i)-TairK(i)))
 
@@ -469,7 +473,7 @@
 !  Compute water saturation vapor pressure (mb), using Teten formula.
 !
           cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
-     &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
+     &        EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !
 !  Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
 !
@@ -577,20 +581,19 @@
 # endif
         END DO
 !
-!  Iterate until convergence. It usually converges within four
-!  iterations.
+!  Iterate until convergence. It usually converges within 4 iterations.
+# if defined COARE_OOST || defined COARE_TAYLOR_YELLAND
+!  Use wave info if we have it, two different options.
+# endif
 !
         DO Iter=1,IterMax
           DO i=Istr-1,IendR
-!
-!  Use wave info if we have it, two different options.
-!
 # ifdef COARE_OOST
-            ZoW(i)=(25._r8/pi)*WaveLength(i)*                           &
+            ZoW(i)=(25.0_r8/pi)*WaveLength(i)*                          &
      &             (Wstar(i)/Cwave(i))**4.5_r8+                         &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
 # elif defined COARE_TAYLOR_YELLAND
-            ZoW(i)=1200._r8*Hwave(i,j)*                                 &
+            ZoW(i)=1200.0_r8*Hwave(i,j)*                                &
      &             (Hwave(i,j)/WaveLength(i))**4.5_r8+                  &
      &             0.11_r8*VisAir(i)/(Wstar(i)+eps)
 # else
@@ -607,7 +610,7 @@
      &             (Tstar(i)*(1.0_r8+0.61_r8*Q(i))+                     &
      &                        0.61_r8*TairK(i)*Qstar(i))/               &
      &             (TairK(i)*Wstar(i)*Wstar(i)*                         &
-     &             (1.0_r8+0.61_r8*Q(i))+eps)
+     &              (1.0_r8+0.61_r8*Q(i))+eps)
             L(i)=blk_ZW(ng)/(ZoL(i)+eps)
 !
 !  Evaluate stability functions at Z/L.

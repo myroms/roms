@@ -2,10 +2,9 @@
 !
 !! svn $Id$
 !!======================================================================
-!! Copyright (c) 2002-2007 The ROMS/TOMS Group                         !
+!! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets kinematic surface solar shortwave radiation    !
@@ -134,6 +133,13 @@
 !  must be undefined. If you want a strictly analytical diurnal cycle
 !  enter it explicitly at the end of this subroutine or use the "albedo"
 !  option.
+!
+!  For a review of shortwave radiation formulations check:
+!
+!    Niemela, S., P. Raisanen, and H. Savijarvi, 2001: Comparison of
+!      surface radiative flux parameterizations, Part II, Shortwave
+!      radiation, Atmos. Res., 58, 141-154.
+!
 !-----------------------------------------------------------------------
 !
 !  Assume time is in modified Julian day.  Get hour and year day.
@@ -165,20 +171,23 @@
 # if defined ALBEDO
 !
 !  Estimate variation in optical thickness of the atmosphere over
-!  the course of a day under cloudless skies. To obtain net incoming 
-!  shortwave radiation multiply by (1.0-0.6*c**3), where c is the 
-!  fractional cloud cover.
+!  the course of a day under cloudless skies (Zillman, 1972). To
+!  obtain net incoming shortwave radiation multiply by (1.0-0.6*c**3),
+!  where c is the fractional cloud cover.
+!
+!  The equation for saturation vapor pressure is from Gill (Atmosphere-
+!  Ocean Dynamics, pp 606).
 !
           srflx(i,j)=0.0_r8
           zenith=cff1+cff2*COS(Hangle-lonr(i,j)*deg2rad/15.0_r8)
           IF (zenith.gt.0.0_r8) THEN
             cff=(0.7859_r8+0.03477_r8*Tair(i,j))/                       &
      &          (1.0_r8+0.00412_r8*Tair(i,j))
-            e_sat=10.0_r8**cff
-            vap_p=e_sat*Hair(i,j)
+            e_sat=10.0_r8**cff    ! saturation vapor pressure (hPa=mbar)
+            vap_p=e_sat*Hair(i,j) ! water vapor pressure (hPa=mbar) 
             srflx(i,j)=Rsolar*zenith*zenith*                            &
      &                 (1.0_r8-0.6_r8*cloud(i,j)**3)/                   &
-     &                 ((zenith+2.7_r8)*vap_p*1.0E-5_r8+                &
+     &                 ((zenith+2.7_r8)*vap_p*1.0E-3_r8+                &
      &                  1.085_r8*zenith+0.1_r8)
           END IF
 # elif defined DIURNAL_SRFLUX

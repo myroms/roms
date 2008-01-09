@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !=======================================================================
@@ -769,15 +769,19 @@
 # if defined LONGWAVE
 !
 !  Use Berliand (1952) formula to calculate net longwave radiation.
+!  The equation for saturation vapor pressure is from Gill (Atmosphere-
+!  Ocean Dynamics, pp 606). Here the coefficient in the cloud term
+!  is assumed constant, but it is a function of latitude varying from
+!  1.0 at poles to 0.5 at the equator).
 !
           cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
      &        (1.0_r8+0.00412_r8*TairC(i))
-          e_sat=10.0_r8**cff
-          vap_p=e_sat*RH
+          e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
+          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
           cff2=TairK(i)*TairK(i)*TairK(i)
           cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
-     &              (cff1*(0.39_r8-0.5_r8*SQRT(0.01_r8*vap_p))*         &
+     &              (cff1*(0.39_r8-0.05_r8*SQRT(vap_p))*                &
      &                    (1.0_r8-0.6823_r8*cloud(i,j)*cloud(i,j))+     &
      &               cff2*4.0_r8*(TseaK(i)-TairK(i)))
 
@@ -1288,15 +1292,19 @@
 # if defined LONGWAVE
 !
 !  Use Berliand (1952) formula to calculate net longwave radiation.
+!  The equation for saturation vapor pressure is from Gill (Atmosphere-
+!  Ocean Dynamics, pp 606). Here the coefficient in the cloud term
+!  is assumed constant, but it is a function of latitude varying from
+!  1.0 at poles to 0.5 at the equator).
 !
           cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
      &        (1.0_r8+0.00412_r8*TairC(i))
-          e_sat=10.0_r8**cff
-          vap_p=e_sat*RH
+          e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
+          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
           cff2=TairK(i)*TairK(i)*TairK(i)
           cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
-     &              (cff1*(0.39_r8-0.5_r8*SQRT(0.01_r8*vap_p))*         &
+     &              (cff1*(0.39_r8-0.05_r8*SQRT(vap_p))*                &
      &                    (1.0_r8-0.6823_r8*cloud(i,j)*cloud(i,j))+     &
      &               cff2*4.0_r8*(TseaK(i)-TairK(i)))
 
@@ -2100,15 +2108,19 @@
 # if defined LONGWAVE
 !
 !  Use Berliand (1952) formula to calculate net longwave radiation.
+!  The equation for saturation vapor pressure is from Gill (Atmosphere-
+!  Ocean Dynamics, pp 606). Here the coefficient in the cloud term
+!  is assumed constant, but it is a function of latitude varying from
+!  1.0 at poles to 0.5 at the equator).
 !
           cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
      &        (1.0_r8+0.00412_r8*TairC(i))
-          e_sat=10.0_r8**cff
-          vap_p=e_sat*RH
+          e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
+          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
           cff2=TairK(i)*TairK(i)*TairK(i)
           cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
-     &              (cff1*(0.39_r8-0.5_r8*SQRT(0.01_r8*vap_p))*         &
+     &              (cff1*(0.39_r8-0.05_r8*SQRT(vap_p))*                &
      &                    (1.0_r8-0.6823_r8*cloud(i,j)*cloud(i,j))+     &
      &               cff2*4.0_r8*(TseaK(i)-TairK(i)))
 
@@ -2511,65 +2523,69 @@
 !
 !  Adjoint latent heat of vaporization (J/kg) at sea surface, Hlv.
 !
-
 !>        tl_Hlv(i,j)=-0.00237_r8*tl_TseaC(i)*1.0E+6_r8
+!>
           ad_TseaC(i)=ad_TseaC(i)-0.00237_r8*1.0E+6_r8*ad_Hlv(i,j)
           ad_Hlv(i,j)=0.0_r8
-
 !
 !  Adjoint Qsea (kg/kg) from vapor pressure.
 !
           cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
-     &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
+     &        EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
           cff=cff*0.98_r8
 !>        tl_Qsea(i)=tl_fac*(1.0_r8+0.378_r8*cff/((PairM-0.378_r8*cff)))
-
+!>
           ad_fac=ad_Qsea(i)*(1.0_r8+0.378_r8*cff/((PairM-0.378_r8*cff)))
           ad_Qsea(i)=0.0_r8
-
 !>        tl_fac=0.62197_r8*(tl_cff/(PairM-0.378_r8*cff))
+!>
           ad_cff=ad_cff+0.62197_r8*ad_fac/(PairM-0.378_r8*cff)
           ad_fac=0.0_r8
-
 !
-!  Adjoint Vapor Pressure reduced for salinity (Kraus & Businger, 1994, pp 42).
+!  Adjoint Vapor Pressure reduced for salinity
+!  (Kraus & Businger, 1994, pp 42).
 !
 !>        tl_cff=tl_cff*0.98_r8
+!>
           ad_cff=ad_cff*0.98_r8
-
 !
 !  Adjoint water saturation vapor pressure (mb), using Teten formula.
 !
           fac=17.502_r8*TseaC(i)/(240.97_r8+TseaC(i))
           cff=(1.0007_r8+3.46E-6_r8*PairM)*6.1121_r8*                   &
-     &            EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
-
+     &        EXP(17.502_r8*TseaC(i)/(240.97_r8+TseaC(i)))
 !>        tl_cff=tl_fac*cff
+!>
           ad_fac=ad_cff*cff
           ad_cff=0.0_r8
-
 !>        tl_fac=17.502_r8*tl_TseaC(i)/(240.97_r8+TseaC(i))-            &
 !>   &           tl_TseaC(i)*fac/(240.97_r8+TseaC(i))
-          ad_TseaC(i)=ad_TseaC(i)+17.502_r8*ad_fac/(240.97_r8+TseaC(i))-&
-     &           fac*ad_fac/(240.97_r8+TseaC(i))
+!>
+          ad_TseaC(i)=ad_TseaC(i)+                                      &
+     &                17.502_r8*ad_fac/(240.97_r8+TseaC(i))-            &
+     &                fac*ad_fac/(240.97_r8+TseaC(i))
           ad_fac=0.0_r8
-
 !
 !-----------------------------------------------------------------------
 !  Adjoint net longwave radiation (W/m2), LRad.
 !-----------------------------------------------------------------------
 !
-
 # ifdef MASKING
 !>        tl_LRad(i,j)=tl_LRad(i,j)*rmask(i,j)
+!>
           ad_LRad(i,j)=ad_LRad(i,j)*rmask(i,j)
 # endif
 # if defined LONGWAVE
 !
 !  Use Berliand (1952) formula to calculate net longwave radiation.
+!  The equation for saturation vapor pressure is from Gill (Atmosphere-
+!  Ocean Dynamics, pp 606). Here the coefficient in the cloud term
+!  is assumed constant, but it is a function of latitude varying from
+!  1.0 at poles to 0.5 at the Equator).
 !
           cff2=TairK(i)*TairK(i)*TairK(i)
 !>        tl_LRad(i,j)=-emmiss*StefBo*cff2*4.0_r8*tl_TseaK(i)
+!>
           ad_TseaK(i)=ad_TseaK(i)-emmiss*StefBo*cff2*4.0_r8*ad_LRad(i,j)
           ad_LRad(i,j)=0.0_r8
 
@@ -2578,56 +2594,66 @@
 !  Treat input longwave data as downwelling radiation only and add
 !  outgoing IR from model sea surface temperature.
 !
-!>        tl_LRad(i,j)=tl_lrflx(i,j)*Hscale                             &
-!>   &                 -4.0_r8*emmiss*StefBo*tl_TseaK(i)*               &
-!>   &                             TseaK(i)*TseaK(i)*TseaK(i)
+!>        tl_LRad(i,j)=tl_lrflx(i,j)*Hscale-                            &
+!>   &                 4.0_r8*emmiss*StefBo*                            &
+!>   &                 tl_TseaK(i)*TseaK(i)*TseaK(i)*TseaK(i)
+!>
           ad_lrflx(i,j)=ad_lrflx(i,j)+ad_LRad(i,j)*Hscale
-          ad_TseaK(i)=ad_TseaK(i)-4.0_r8*emmiss*StefBo*ad_LRad(i,j)*    &
-     &                             TseaK(i)*TseaK(i)*TseaK(i)
+          ad_TseaK(i)=ad_TseaK(i)-                                      &
+     &                4.0_r8*emmiss*StefBo*ad_LRad(i,j)*                &
+     &                TseaK(i)*TseaK(i)*TseaK(i)
           ad_LRad(i,j)=0.0_r8
 # else
 !>        tl_LRad(i,j)=tl_lrflx(i,j)*Hscale
+!>
           ad_lrflx(i,j)=ad_lrflx(i,j)+ad_LRad(i,j)*Hscale
           ad_LRad(i,j)=0.0_r8
 # endif
-
+!
+!  Initialize.
+!
 !>        tl_delTc(i)=0.0_r8
-!>        tl_delQc(i)=0.0_r8
-!>        tl_LHeat(i,j)=tl_lhflx(i,j)*Hscale
-!>        tl_SHeat(i,j)=tl_shflx(i,j)*Hscale
-!>        tl_Taux(i,j)=0.0_r8
-!>        tl_Tauy(i,j)=0.0_r8
-
-          ad_delTc(i)=0.0_r8
+!>
           ad_delQc(i)=0.0_r8
+
+!>        tl_delQc(i)=0.0_r8
+!>
+          ad_delTc(i)=0.0_r8
+!>        tl_LHeat(i,j)=tl_lhflx(i,j)*Hscale
+!>
           ad_lhflx(i,j)=ad_lhflx(i,j)+ad_LHeat(i,j)*Hscale
           ad_LHeat(i,j)=0.0_r8
+!>        tl_SHeat(i,j)=tl_shflx(i,j)*Hscale
+!>
           ad_shflx(i,j)=ad_shflx(i,j)+ad_SHeat(i,j)*Hscale
           ad_SHeat(i,j)=0.0_r8
+!>        tl_Taux(i,j)=0.0_r8
+!>
           ad_Taux(i,j)=0.0_r8
+!>        tl_Tauy(i,j)=0.0_r8
+!>
           ad_Tauy(i,j)=0.0_r8
-
 !>        tl_Scff(i)=tl_beta(i,j)
+!>
           ad_beta(i,j)=ad_beta(i,j)+ad_Scff(i)
           ad_Scff(i)=0.0_r8
-
 !>        tl_Tcff(i)=tl_alpha(i,j)
+!>
           ad_alpha(i,j)=ad_alpha(i,j)+ad_Tcff(i)
           ad_Tcff(i)=0.0_r8
-
 !>        tl_rhoSea(i)=tl_rho(i,j,N(ng))
+!>
           ad_rho(i,j,N(ng))=ad_rho(i,j,N(ng))+ad_rhoSea(i)
           ad_rhoSea(i)=0.0_r8
-
 !>        tl_TseaK(i)=tl_TseaC(i)
+!>
           ad_TseaC(i)=ad_TseaC(i)+ad_TseaK(i)
           ad_TseaK(i)=0.0_r8
-
 !>        tl_TseaC(i)=tl_t(i,j,N(ng),nrhs,itemp)
+!>
           ad_t(i,j,N(ng),nrhs,itemp)=ad_t(i,j,N(ng),nrhs,itemp)+        &
-     &                     ad_TseaC(i)
+     &                               ad_TseaC(i)
           ad_TseaC(i)=0.0_r8
-
         END DO
       END DO
       RETURN

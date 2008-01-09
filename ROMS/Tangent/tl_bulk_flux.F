@@ -4,7 +4,7 @@
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
-!  Copyright (c) 2002-2007 The ROMS/TOMS Group       Andrew M. Moore   !
+!  Copyright (c) 2002-2008 The ROMS/TOMS Group       Andrew M. Moore   !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
 !======================================================================= 
@@ -462,15 +462,19 @@
 # if defined LONGWAVE
 !
 !  Use Berliand (1952) formula to calculate net longwave radiation.
+!  The equation for saturation vapor pressure is from Gill (Atmosphere-
+!  Ocean Dynamics, pp 606). Here the coefficient in the cloud term
+!  is assumed constant, but it is a function of latitude varying from
+!  1.0 at poles to 0.5 at the Equator).
 !
           cff=(0.7859_r8+0.03477_r8*TairC(i))/                          &
      &        (1.0_r8+0.00412_r8*TairC(i))
-          e_sat=10.0_r8**cff
-          vap_p=e_sat*RH
+          e_sat=10.0_r8**cff   ! saturation vapor pressure (hPa or mbar)
+          vap_p=e_sat*RH       ! water vapor pressure (hPa or mbar)
           cff2=TairK(i)*TairK(i)*TairK(i)
           cff1=cff2*TairK(i)
           LRad(i,j)=-emmiss*StefBo*                                     &
-     &              (cff1*(0.39_r8-0.5_r8*SQRT(0.01_r8*vap_p))*         &
+     &              (cff1*(0.39_r8-0.05_r8*SQRT(vap_p))*                &
      &                    (1.0_r8-0.6823_r8*cloud(i,j)*cloud(i,j))+     &
      &               cff2*4.0_r8*(TseaK(i)-TairK(i)))
           tl_LRad(i,j)=-emmiss*StefBo*cff2*4.0_r8*tl_TseaK(i)
@@ -482,10 +486,9 @@
 !
           LRad(i,j)=lrflx(i,j)*Hscale-                                  &
      &              emmiss*StefBo*TseaK(i)*TseaK(i)*TseaK(i)*TseaK(i)
-          tl_LRad(i,j)=tl_lrflx(i,j)*Hscale                             &
-     &                 -4.0_r8*emmiss*StefBo*tl_TseaK(i)*               &
-     &                             TseaK(i)*TseaK(i)*TseaK(i)
- 
+          tl_LRad(i,j)=tl_lrflx(i,j)*Hscale-                            &
+     &                 4.0_r8*emmiss*StefBo*                            &
+     &                 tl_TseaK(i)*TseaK(i)*TseaK(i)*TseaK(i)
 # else
           LRad(i,j)=lrflx(i,j)*Hscale
           tl_LRad(i,j)=tl_lrflx(i,j)*Hscale
