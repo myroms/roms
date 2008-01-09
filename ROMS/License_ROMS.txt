@@ -1,7 +1,7 @@
 /*
 ** svn $Id$
 **********************************************************************
-** Copyright (c) 2002-2007 The ROMS/TOMS Group                      **
+** Copyright (c) 2002-2008 The ROMS/TOMS Group                      **
 **********************************************************************
 **                                                                  **
 ** This Software is open-source and licensed under the following    **
