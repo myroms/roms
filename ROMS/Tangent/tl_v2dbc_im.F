@@ -195,32 +195,32 @@
         DO i=Istr,Iend
 #   if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
 #    ifdef FSOBC_REDUCED
-          bry_pgr=-g*(zeta(i,Jstr,kout)-                                &
+          bry_pgr=-g*(zeta(i,Jstr,know)-                                &
      &                BOUNDARY(ng)%zeta_south(i))*                      &
      &            0.5_r8*GRID(ng)%pn(i,Jstr)
-          tl_bry_pgr=-g*tl_zeta(i,Jstr,kout)*                           &
+          tl_bry_pgr=-g*tl_zeta(i,Jstr,know)*                           &
      &               0.5_r8*GRID(ng)%pn(i,Jstr)
 #    else
-          bry_pgr=-g*(zeta(i,Jstr  ,kout)-                              &
-     &                zeta(i,Jstr-1,kout))*                             &
+          bry_pgr=-g*(zeta(i,Jstr  ,know)-                              &
+     &                zeta(i,Jstr-1,know))*                             &
      &            0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                        &
      &                    GRID(ng)%pn(i,Jstr  ))
-          tl_bry_pgr=-g*(tl_zeta(i,Jstr  ,kout)-                        &
-     &                   tl_zeta(i,Jstr-1,kout))*                       &
+          tl_bry_pgr=-g*(tl_zeta(i,Jstr  ,know)-                        &
+     &                   tl_zeta(i,Jstr-1,know))*                       &
      &               0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                     &
      &                       GRID(ng)%pn(i,Jstr  ))
 #    endif
 #    ifdef UV_COR
-          bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,kout)+                     &
-     &                       ubar(i+1,Jstr-1,kout)+                     &
-     &                       ubar(i  ,Jstr  ,kout)+                     &
-     &                       ubar(i+1,Jstr  ,kout))*                    &
+          bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,know)+                     &
+     &                       ubar(i+1,Jstr-1,know)+                     &
+     &                       ubar(i  ,Jstr  ,know)+                     &
+     &                       ubar(i+1,Jstr  ,know))*                    &
      &                      (GRID(ng)%f(i,Jstr-1)+                      &
      &                       GRID(ng)%f(i,Jstr  ))
-          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jstr-1,kout)+               &
-     &                          tl_ubar(i+1,Jstr-1,kout)+               &
-     &                          tl_ubar(i  ,Jstr  ,kout)+               &
-     &                          tl_ubar(i+1,Jstr  ,kout))*              &
+          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jstr-1,know)+               &
+     &                          tl_ubar(i+1,Jstr-1,know)+               &
+     &                          tl_ubar(i  ,Jstr  ,know)+               &
+     &                          tl_ubar(i+1,Jstr  ,know))*              &
      &                         (GRID(ng)%f(i,Jstr-1)+                   &
      &                          GRID(ng)%f(i,Jstr  ))
 #    else
@@ -228,13 +228,13 @@
           tl_bry_cor=0.0_r8
 #    endif
           cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                    &
-     &                         zeta(i,Jstr-1,kout)+                     &
+     &                         zeta(i,Jstr-1,know)+                     &
      &                         GRID(ng)%h(i,Jstr  )+                    &
-     &                         zeta(i,Jstr  ,kout)))
+     &                         zeta(i,Jstr  ,know)))
           tl_cff1=-cff1*cff1*(0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+          &
-     &                                tl_zeta(i,Jstr-1,kout)+           &
+     &                                tl_zeta(i,Jstr-1,know)+           &
      &                                GRID(ng)%tl_h(i,Jstr  )+          &
-     &                                tl_zeta(i,Jstr  ,kout)))
+     &                                tl_zeta(i,Jstr  ,know)))
           bry_str=cff1*(FORCES(ng)%svstr(i,Jstr)-                       &
      &                  FORCES(ng)%bvstr(i,Jstr))
           tl_bry_str=tl_cff1*(FORCES(ng)%svstr(i,Jstr)-                 &
@@ -242,21 +242,21 @@
      &               cff1*(FORCES(ng)%tl_svstr(i,Jstr)-                 &
      &                     FORCES(ng)%tl_bvstr(i,Jstr))
           Ce=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(i,Jstr-1)+                &
-     &                             zeta(i,Jstr-1,kout)+                 &
+     &                             zeta(i,Jstr-1,know)+                 &
      &                             GRID(ng)%h(i,Jstr  )+                &
-     &                             zeta(i,Jstr  ,kout)))
+     &                             zeta(i,Jstr  ,know)))
           tl_Ce=-Ce*Ce*Ce*0.25_r8*g*(GRID(ng)%tl_h(i,Jstr-1)+           &
-     &                               tl_zeta(i,Jstr-1,kout)+            &
+     &                               tl_zeta(i,Jstr-1,know)+            &
      &                               GRID(ng)%tl_h(i,Jstr  )+           &
-     &                               tl_zeta(i,Jstr  ,kout))
+     &                               tl_zeta(i,Jstr  ,know))
           cff2=GRID(ng)%on_v(i,Jstr)*Ce
           tl_cff2=GRID(ng)%on_v(i,Jstr)*tl_Ce
-!>        bry_val=vbar(i,Jstr+1,kout)+                                  &
+!>        bry_val=vbar(i,Jstr+1,know)+                                  &
 !>   &            cff2*(bry_pgr+                                        &
 !>   &                  bry_cor+                                        &
 !>   &                  bry_str)
 !>
-          tl_bry_val=tl_vbar(i,Jstr+1,kout)+                            &
+          tl_bry_val=tl_vbar(i,Jstr+1,know)+                            &
      &               tl_cff2*(bry_pgr+                                  &
      &                        bry_cor+                                  &
      &                        bry_str)+                                 &
@@ -335,35 +335,35 @@
 !
         DO i=Istr,Iend
 #  ifdef FSOBC_REDUCED
-!>        bry_pgr=-g*(zeta(i,Jstr,kout)-                                &
+!>        bry_pgr=-g*(zeta(i,Jstr,know)-                                &
 !>   &                BOUNDARY(ng)%zeta_south(i))*                      &
 !>   &            0.5_r8*GRID(ng)%pn(i,Jstr)
 !>
-          tl_bry_pgr=-g*tl_zeta(i,Jstr,kout)*                           &
+          tl_bry_pgr=-g*tl_zeta(i,Jstr,know)*                           &
      &               0.5_r8*GRID(ng)%pn(i,Jstr)
 #  else
-!>        bry_pgr=-g*(zeta(i,Jstr,kout)-                                &
-!>   &                zeta(i,Jstr-1,kout))*                             &
+!>        bry_pgr=-g*(zeta(i,Jstr,know)-                                &
+!>   &                zeta(i,Jstr-1,know))*                             &
 !>   &            0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                        &
 !>   &                    GRID(ng)%pn(i,Jstr  ))
 !>
-          tl_bry_pgr=-g*(tl_zeta(i,Jstr  ,kout)-                        &
-     &                   tl_zeta(i,Jstr-1,kout))*                       &
+          tl_bry_pgr=-g*(tl_zeta(i,Jstr  ,know)-                        &
+     &                   tl_zeta(i,Jstr-1,know))*                       &
      &               0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                     &
      &                       GRID(ng)%pn(i,Jstr  ))
 #  endif
 #  ifdef UV_COR
-!>        bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,kout)+                     &
-!>   &                       ubar(i+1,Jstr-1,kout)+                     &
-!>   &                       ubar(i  ,Jstr  ,kout)+                     &
-!>   &                       ubar(i+1,Jstr  ,kout))*                    &
+!>        bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,know)+                     &
+!>   &                       ubar(i+1,Jstr-1,know)+                     &
+!>   &                       ubar(i  ,Jstr  ,know)+                     &
+!>   &                       ubar(i+1,Jstr  ,know))*                    &
 !>   &                      (GRID(ng)%f(i,Jstr-1)+                      &
 !>   &                       GRID(ng)%f(i,Jstr  ))
 !>
-          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jstr-1,kout)+               &
-     &                          tl_ubar(i+1,Jstr-1,kout)+               &
-     &                          tl_ubar(i  ,Jstr  ,kout)+               &
-     &                          tl_ubar(i+1,Jstr  ,kout))*              &
+          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jstr-1,know)+               &
+     &                          tl_ubar(i+1,Jstr-1,know)+               &
+     &                          tl_ubar(i  ,Jstr  ,know)+               &
+     &                          tl_ubar(i+1,Jstr  ,know))*              &
      &                         (GRID(ng)%f(i,Jstr-1)+                   &
      &                          GRID(ng)%f(i,Jstr  ))
 #  else
@@ -372,13 +372,13 @@
           tl_bry_cor=0.0_r8
 #  endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                     &
-     &                        zeta(i,Jstr-1,kout)+                      &
+     &                        zeta(i,Jstr-1,know)+                      &
      &                        GRID(ng)%h(i,Jstr  )+                     &
-     &                        zeta(i,Jstr  ,kout)))
+     &                        zeta(i,Jstr  ,know)))
           tl_cff=-cff*cff*0.5_r8*(GRID(ng)%tl_h(i,Jstr-1)+              &
-     &                            tl_zeta(i,Jstr-1,kout)+               &
+     &                            tl_zeta(i,Jstr-1,know)+               &
      &                            GRID(ng)%tl_h(i,Jstr  )+              &
-     &                            tl_zeta(i,Jstr  ,kout))
+     &                            tl_zeta(i,Jstr  ,know))
 !>        bry_str=cff*(FORCES(ng)%svstr(i,Jstr)-                        &
 !>   &                 FORCES(ng)%bvstr(i,Jstr))
 !>
@@ -488,31 +488,31 @@
 #   if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
 #    ifdef FSOBC_REDUCED
           bry_pgr=-g*(BOUNDARY(ng)%zeta_north(i)-                       &
-     &                zeta(i,Jend,kout))*                               &
+     &                zeta(i,Jend,know))*                               &
      &            0.5_r8*GRID(ng)%pn(i,Jend)
-          tl_bry_pgr=g*tl_zeta(i,Jend,kout)*                            &
+          tl_bry_pgr=g*tl_zeta(i,Jend,know)*                            &
      &               0.5_r8*GRID(ng)%pn(i,Jend)
 #    else
-          bry_pgr=-g*(zeta(i,Jend+1,kout)-                              &
-     &                zeta(i,Jend  ,kout))*                             &
+          bry_pgr=-g*(zeta(i,Jend+1,know)-                              &
+     &                zeta(i,Jend  ,know))*                             &
      &            0.5_r8*(GRID(ng)%pn(i,Jend  )+                        &
      &                    GRID(ng)%pn(i,Jend+1))
-          tl_bry_pgr=-g*(tl_zeta(i,Jend+1,kout)-                        &
-     &                   tl_zeta(i,Jend  ,kout))*                       &
+          tl_bry_pgr=-g*(tl_zeta(i,Jend+1,know)-                        &
+     &                   tl_zeta(i,Jend  ,know))*                       &
      &               0.5_r8*(GRID(ng)%pn(i,Jend  )+                     &
      &                       GRID(ng)%pn(i,Jend+1))
 #    endif
 #    ifdef UV_COR
-          bry_cor=-0.125_r8*(ubar(i  ,Jend  ,kout)+                     &
-     &                       ubar(i+1,Jend  ,kout)+                     &
-     &                       ubar(i  ,Jend+1,kout)+                     &
-     &                       ubar(i+1,Jend+1,kout))*                    &
+          bry_cor=-0.125_r8*(ubar(i  ,Jend  ,know)+                     &
+     &                       ubar(i+1,Jend  ,know)+                     &
+     &                       ubar(i  ,Jend+1,know)+                     &
+     &                       ubar(i+1,Jend+1,know))*                    &
      &                      (GRID(ng)%f(i,Jend  )+                      &
      &                       GRID(ng)%f(i,Jend+1))
-          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jend  ,kout)+               &
-     &                          tl_ubar(i+1,Jend  ,kout)+               &
-     &                          tl_ubar(i  ,Jend+1,kout)+               &
-     &                          tl_ubar(i+1,Jend+1,kout))*              &
+          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jend  ,know)+               &
+     &                          tl_ubar(i+1,Jend  ,know)+               &
+     &                          tl_ubar(i  ,Jend+1,know)+               &
+     &                          tl_ubar(i+1,Jend+1,know))*              &
      &                         (GRID(ng)%f(i,Jend  )+                   &
      &                          GRID(ng)%f(i,Jend+1))
 #    else
@@ -520,13 +520,13 @@
           tl_bry_cor=0.0_r8
 #    endif
           cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                    &
-     &                         zeta(i,Jend  ,kout)+                     &
+     &                         zeta(i,Jend  ,know)+                     &
      &                         GRID(ng)%h(i,Jend+1)+                    &
-     &                         zeta(i,Jend+1,kout)))
+     &                         zeta(i,Jend+1,know)))
           tl_cff1=-cff1*cff1*0.5_r8*(GRID(ng)%tl_h(i,Jend  )+           &
-     &                               tl_zeta(i,Jend  ,kout)+            &
+     &                               tl_zeta(i,Jend  ,know)+            &
      &                               GRID(ng)%tl_h(i,Jend+1)+           &
-     &                               tl_zeta(i,Jend+1,kout))
+     &                               tl_zeta(i,Jend+1,know))
           bry_str=cff1*(FORCES(ng)%svstr(i,Jend+1)-                     &
      &                  FORCES(ng)%bvstr(i,Jend+1))
           tl_bry_str=tl_cff1*(FORCES(ng)%svstr(i,Jend+1)-               &
@@ -534,21 +534,21 @@
      &               cff1*(FORCES(ng)%tl_svstr(i,Jend+1)-               &
      &                     FORCES(ng)%tl_bvstr(i,Jend+1))
           Ce=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(i,Jend+1)+                &
-     &                             zeta(i,Jend+1,kout)+                 &
+     &                             zeta(i,Jend+1,know)+                 &
      &                             GRID(ng)%h(i,Jend  )+                &
-     &                             zeta(i,Jend  ,kout)))
+     &                             zeta(i,Jend  ,know)))
           tl_Ce=-Ce*Ce*Ce*0.25_r8*g*(GRID(ng)%tl_h(i,Jend+1)+           &
-     &                               tl_zeta(i,Jend+1,kout)+            &
+     &                               tl_zeta(i,Jend+1,know)+            &
      &                               GRID(ng)%tl_h(i,Jend  )+           &
-     &                               tl_zeta(i,Jend  ,kout))
+     &                               tl_zeta(i,Jend  ,know))
           cff2=GRID(ng)%on_v(i,Jend+1)*Ce
           tl_cff2=GRID(ng)%on_v(i,Jend+1)*tl_Ce
-!>        bry_val=vbar(i,Jend,kout)+                                    &
+!>        bry_val=vbar(i,Jend,know)+                                    &
 !>   &            cff2*(bry_pgr+                                        &
 !>   &                  bry_cor+                                        &
 !>   &                  bry_str)
 !>
-          tl_bry_val=tl_vbar(i,Jend,kout)+                              &
+          tl_bry_val=tl_vbar(i,Jend,know)+                              &
      &               tl_cff2*(bry_pgr+                                  &
      &                        bry_cor+                                  &
      &                        bry_str)+                                 &
@@ -628,34 +628,34 @@
         DO i=Istr,Iend
 #  ifdef FSOBC_REDUCED
 !>        bry_pgr=-g*(BOUNDARY(ng)%zeta_north(i)-                       &
-!>   &                zeta(i,Jend,kout))*                               &
+!>   &                zeta(i,Jend,know))*                               &
 !>   &            0.5_r8*GRID(ng)%pn(i,Jend)
 !>
-          tl_bry_pgr=g*zeta(i,Jend,kout))*                              &
+          tl_bry_pgr=g*zeta(i,Jend,know))*                              &
      &               0.5_r8*GRID(ng)%pn(i,Jend)
 #  else
-!>        bry_pgr=-g*(zeta(i,Jend+1,kout)-                              &
-!>   &                zeta(i,Jend  ,kout))*                             &
+!>        bry_pgr=-g*(zeta(i,Jend+1,know)-                              &
+!>   &                zeta(i,Jend  ,know))*                             &
 !>   &            0.5_r8*(GRID(ng)%pn(i,Jend  )+                        &
 !>   &                    GRID(ng)%pn(i,Jend+1))
 !>
-          tl_bry_pgr=-g*(tl_zeta(i,Jend+1,kout)-                        &
-     &                   tl_zeta(i,Jend  ,kout))*                       &
+          tl_bry_pgr=-g*(tl_zeta(i,Jend+1,know)-                        &
+     &                   tl_zeta(i,Jend  ,know))*                       &
      &               0.5_r8*(GRID(ng)%pn(i,Jend  )+                     &
      &                       GRID(ng)%pn(i,Jend+1))
 #  endif
 #  ifdef UV_COR
-!>        bry_cor=-0.125_r8*(ubar(i  ,Jend  ,kout)+                     &
-!>   &                       ubar(i+1,Jend  ,kout)+                     &
-!>   &                       ubar(i  ,Jend+1,kout)+                     &
-!>   &                       ubar(i+1,Jend+1,kout))*                    &
+!>        bry_cor=-0.125_r8*(ubar(i  ,Jend  ,know)+                     &
+!>   &                       ubar(i+1,Jend  ,know)+                     &
+!>   &                       ubar(i  ,Jend+1,know)+                     &
+!>   &                       ubar(i+1,Jend+1,know))*                    &
 !>   &                      (GRID(ng)%f(i,Jend  )+                      &
 !>   &                       GRID(ng)%f(i,Jend+1))
 !>
-          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jend  ,kout)+               &
-     &                          tl_ubar(i+1,Jend  ,kout)+               &
-     &                          tl_ubar(i  ,Jend+1,kout)+               &
-     &                          tl_ubar(i+1,Jend+1,kout))*              &
+          tl_bry_cor=-0.125_r8*(tl_ubar(i  ,Jend  ,know)+               &
+     &                          tl_ubar(i+1,Jend  ,know)+               &
+     &                          tl_ubar(i  ,Jend+1,know)+               &
+     &                          tl_ubar(i+1,Jend+1,know))*              &
      &                         (GRID(ng)%f(i,Jend  )+                   &
      &                          GRID(ng)%f(i,Jend+1))
 #  else
@@ -664,13 +664,13 @@
           tl_bry_cor=0.0_r8
 #  endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                     &
-     &                        zeta(i,Jend  ,kout)+                      &
+     &                        zeta(i,Jend  ,know)+                      &
      &                        GRID(ng)%h(i,Jend+1)+                     &
-     &                        zeta(i,Jend+1,kout)))
+     &                        zeta(i,Jend+1,know)))
           tl_cff=-cff*cff*0.5_r8*(GRID(ng)%tl_h(i,Jend  )+              &
-     &                            tl_zeta(i,Jend  ,kout)+               &
+     &                            tl_zeta(i,Jend  ,know)+               &
      &                            GRID(ng)%tl_h(i,Jend+1)+              &
-     &                            tl_zeta(i,Jend+1,kout))
+     &                            tl_zeta(i,Jend+1,know))
 !>        bry_str=cff*(FORCES(ng)%svstr(i,Jend+1)-                      &
 !>   &                 FORCES(ng)%bvstr(i,Jend+1))
 !>

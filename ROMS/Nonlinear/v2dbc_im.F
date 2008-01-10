@@ -177,38 +177,38 @@
         DO i=Istr,Iend
 #  if defined SSH_TIDES && !defined UV_TIDES
 #   ifdef FSOBC_REDUCED
-          bry_pgr=-g*(zeta(i,Jstr,kout)-                                &
+          bry_pgr=-g*(zeta(i,Jstr,know)-                                &
      &                BOUNDARY(ng)%zeta_south(i))*                      &
      &            0.5_r8*GRID(ng)%pn(i,Jstr)
 #   else
-          bry_pgr=-g*(zeta(i,Jstr  ,kout)-                              &
-     &                zeta(i,Jstr-1,kout))*                             &
+          bry_pgr=-g*(zeta(i,Jstr  ,know)-                              &
+     &                zeta(i,Jstr-1,know))*                             &
      &            0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                        &
      &                    GRID(ng)%pn(i,Jstr  ))
 #   endif
 #   ifdef UV_COR
-          bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,kout)+                     &
-     &                       ubar(i+1,Jstr-1,kout)+                     &
-     &                       ubar(i  ,Jstr  ,kout)+                     &
-     &                       ubar(i+1,Jstr  ,kout))*                    &
+          bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,know)+                     &
+     &                       ubar(i+1,Jstr-1,know)+                     &
+     &                       ubar(i  ,Jstr  ,know)+                     &
+     &                       ubar(i+1,Jstr  ,know))*                    &
      &                      (GRID(ng)%f(i,Jstr-1)+                      &
      &                       GRID(ng)%f(i,Jstr  ))
 #   else
           bry_cor=0.0_r8
 #   endif
           cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                    &
-     &                         zeta(i,Jstr-1,kout)+                     &
+     &                         zeta(i,Jstr-1,know)+                     &
      &                         GRID(ng)%h(i,Jstr  )+                    &
-     &                         zeta(i,Jstr  ,kout)))
+     &                         zeta(i,Jstr  ,know)))
           bry_str=cff1*(FORCES(ng)%svstr(i,Jstr)-                       &
      &                  FORCES(ng)%bvstr(i,Jstr))
           Ce=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(i,Jstr-1)+                &
-     &                             zeta(i,Jstr-1,kout)+                 &
+     &                             zeta(i,Jstr-1,know)+                 &
      &                             GRID(ng)%h(i,Jstr  )+                &
-     &                             zeta(i,Jstr  ,kout)))
+     &                             zeta(i,Jstr  ,know)))
           cff2=GRID(ng)%on_v(i,Jstr)*Ce
 !!        cff2=dt2d
-          bry_val=vbar(i,Jstr+1,kout)+                                  &
+          bry_val=vbar(i,Jstr+1,know)+                                  &
      &            cff2*(bry_pgr+                                        &
      &                  bry_cor+                                        &
      &                  bry_str)
@@ -260,29 +260,29 @@
 !
         DO i=Istr,Iend
 #  ifdef FSOBC_REDUCED
-          bry_pgr=-g*(zeta(i,Jstr,kout)-                                &
+          bry_pgr=-g*(zeta(i,Jstr,know)-                                &
      &                BOUNDARY(ng)%zeta_south(i))*                      &
      &            0.5_r8*GRID(ng)%pn(i,Jstr)
 #  else
-          bry_pgr=-g*(zeta(i,Jstr  ,kout)-                              &
-     &                zeta(i,Jstr-1,kout))*                             &
+          bry_pgr=-g*(zeta(i,Jstr  ,know)-                              &
+     &                zeta(i,Jstr-1,know))*                             &
      &            0.5_r8*(GRID(ng)%pn(i,Jstr-1)+                        &
      &                    GRID(ng)%pn(i,Jstr  ))
 #  endif
 #  ifdef UV_COR
-          bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,kout)+                     &
-     &                       ubar(i+1,Jstr-1,kout)+                     &
-     &                       ubar(i  ,Jstr  ,kout)+                     &
-     &                       ubar(i+1,Jstr  ,kout))*                    &
+          bry_cor=-0.125_r8*(ubar(i  ,Jstr-1,know)+                     &
+     &                       ubar(i+1,Jstr-1,know)+                     &
+     &                       ubar(i  ,Jstr  ,know)+                     &
+     &                       ubar(i+1,Jstr  ,know))*                    &
      &                      (GRID(ng)%f(i,Jstr-1)+                      &
      &                       GRID(ng)%f(i,Jstr  ))
 #  else
           bry_cor=0.0_r8
 #  endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jstr-1)+                     &
-     &                        zeta(i,Jstr-1,kout)+                      &
+     &                        zeta(i,Jstr-1,know)+                      &
      &                        GRID(ng)%h(i,Jstr  )+                     &
-     &                        zeta(i,Jstr  ,kout)))
+     &                        zeta(i,Jstr  ,know)))
           bry_str=cff*(FORCES(ng)%svstr(i,Jstr)-                        &
      &                 FORCES(ng)%bvstr(i,Jstr))
           vbar(i,Jstr,kout)=vbar(i,Jstr,know)+                          &
@@ -374,37 +374,37 @@
 #  if defined SSH_TIDES && !defined UV_TIDES
 #   ifdef FSOBC_REDUCED
           bry_pgr=-g*(BOUNDARY(ng)%zeta_north(i)-                       &
-     &                zeta(i,Jend,kout))*                               &
+     &                zeta(i,Jend,know))*                               &
      &            0.5_r8*GRID(ng)%pn(i,Jend)
 #   else
-          bry_pgr=-g*(zeta(i,Jend+1,kout)-                              &
-     &                zeta(i,Jend  ,kout))*                             &
+          bry_pgr=-g*(zeta(i,Jend+1,know)-                              &
+     &                zeta(i,Jend  ,know))*                             &
      &            0.5_r8*(GRID(ng)%pn(i,Jend  )+                        &
      &                    GRID(ng)%pn(i,Jend+1))
 #   endif
 #   ifdef UV_COR
-          bry_cor=-0.125_r8*(ubar(i  ,Jend  ,kout)+                     &
-     &                       ubar(i+1,Jend  ,kout)+                     &
-     &                       ubar(i  ,Jend+1,kout)+                     &
-     &                       ubar(i+1,Jend+1,kout))*                    &
+          bry_cor=-0.125_r8*(ubar(i  ,Jend  ,know)+                     &
+     &                       ubar(i+1,Jend  ,know)+                     &
+     &                       ubar(i  ,Jend+1,know)+                     &
+     &                       ubar(i+1,Jend+1,know))*                    &
      &                      (GRID(ng)%f(i,Jend  )+                      &
      &                       GRID(ng)%f(i,Jend+1))
 #   else
           bry_cor=0.0_r8
 #   endif
           cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                    &
-     &                         zeta(i,Jend  ,kout)+                     &
+     &                         zeta(i,Jend  ,know)+                     &
      &                         GRID(ng)%h(i,Jend+1)+                    &
-     &                         zeta(i,Jend+1,kout)))
+     &                         zeta(i,Jend+1,know)))
           bry_str=cff1*(FORCES(ng)%svstr(i,Jend+1)-                     &
      &                  FORCES(ng)%bvstr(i,Jend+1))
           Ce=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(i,Jend+1)+                &
-     &                             zeta(i,Jend+1,kout)+                 &
+     &                             zeta(i,Jend+1,know)+                 &
      &                             GRID(ng)%h(i,Jend  )+                &
-     &                             zeta(i,Jend  ,kout)))
+     &                             zeta(i,Jend  ,know)))
           cff2=GRID(ng)%on_v(i,Jend+1)*Ce
 !!        cff2=dt2d
-          bry_val=vbar(i,Jend,kout)+                                    &
+          bry_val=vbar(i,Jend,know)+                                    &
      &            cff2*(bry_pgr+                                        &
      &                  bry_cor+                                        &
      &                  bry_str)
@@ -457,28 +457,28 @@
         DO i=Istr,Iend
 #  ifdef FSOBC_REDUCED
           bry_pgr=-g*(BOUNDARY(ng)%zeta_north(i)-                       &
-     &                zeta(i,Jend,kout))*                               &
+     &                zeta(i,Jend,know))*                               &
      &            0.5_r8*GRID(ng)%pn(i,Jend)
 #  else
-          bry_pgr=-g*(zeta(i,Jend+1,kout)-                              &
-     &                zeta(i,Jend  ,kout))*                             &
+          bry_pgr=-g*(zeta(i,Jend+1,know)-                              &
+     &                zeta(i,Jend  ,know))*                             &
      &            0.5_r8*(GRID(ng)%pn(i,Jend  )+                        &
      &                    GRID(ng)%pn(i,Jend+1))
 #  endif
 #  ifdef UV_COR
-          bry_cor=-0.125_r8*(ubar(i  ,Jend  ,kout)+                     &
-     &                       ubar(i+1,Jend  ,kout)+                     &
-     &                       ubar(i  ,Jend+1,kout)+                     &
-     &                       ubar(i+1,Jend+1,kout))*                    &
+          bry_cor=-0.125_r8*(ubar(i  ,Jend  ,know)+                     &
+     &                       ubar(i+1,Jend  ,know)+                     &
+     &                       ubar(i  ,Jend+1,know)+                     &
+     &                       ubar(i+1,Jend+1,know))*                    &
      &                      (GRID(ng)%f(i,Jend  )+                      &
      &                       GRID(ng)%f(i,Jend+1))
 #  else
           bry_cor=0.0_r8
 #  endif
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(i,Jend  )+                     &
-     &                        zeta(i,Jend  ,kout)+                      &
+     &                        zeta(i,Jend  ,know)+                      &
      &                        GRID(ng)%h(i,Jend+1)+                     &
-     &                        zeta(i,Jend+1,kout)))
+     &                        zeta(i,Jend+1,know)))
           bry_str=cff*(FORCES(ng)%svstr(i,Jend+1)-                      &
      &                 FORCES(ng)%bvstr(i,Jend+1))
           vbar(i,Jend+1,kout)=vbar(i,Jend+1,know)+                      &

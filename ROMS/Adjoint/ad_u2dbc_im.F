@@ -638,36 +638,36 @@
 #   if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
 #    ifdef FSOBC_REDUCED
           bry_pgr=-g*(BOUNDARY(ng)%zeta_east(j)-                        &
-     &                zeta(Iend,j,kout))*                               &
+     &                zeta(Iend,j,know))*                               &
      &            0.5_r8*GRID(ng)%pm(Iend,j)
 #    else
-          bry_pgr=-g*(zeta(Iend+1,j,kout)-                              &
-     &                zeta(Iend  ,j,kout))*                             &
+          bry_pgr=-g*(zeta(Iend+1,j,know)-                              &
+     &                zeta(Iend  ,j,know))*                             &
      &            0.5_r8*(GRID(ng)%pm(Iend  ,j)+                        &
      &                    GRID(ng)%pm(Iend+1,j))
 #    endif
 #    ifdef UV_COR
-          bry_cor=0.125_r8*(vbar(Iend  ,j  ,kout)+                      &
-     &                      vbar(Iend  ,j+1,kout)+                      &
-     &                      vbar(Iend+1,j  ,kout)+                      &
-     &                      vbar(Iend+1,j+1,kout))*                     &
+          bry_cor=0.125_r8*(vbar(Iend  ,j  ,know)+                      &
+     &                      vbar(Iend  ,j+1,know)+                      &
+     &                      vbar(Iend+1,j  ,know)+                      &
+     &                      vbar(Iend+1,j+1,know))*                     &
      &                     (GRID(ng)%f(Iend  ,j)+                       &
      &                      GRID(ng)%f(Iend+1,j))
 #    else
           bry_cor=0.0_r8
 #    endif
           cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                    &
-     &                         zeta(Iend  ,j,kout)+                     &
+     &                         zeta(Iend  ,j,know)+                     &
      &                         GRID(ng)%h(Iend+1,j)+                    &
-     &                         zeta(Iend+1,j,kout)))
+     &                         zeta(Iend+1,j,know)))
           bry_str=cff1*(FORCES(ng)%sustr(Iend+1,j)-                     &
      &                  FORCES(ng)%bustr(Iend+1,j))
           Cx=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(Iend+1,j)+                &
-     &                             zeta(Iend+1,j,kout)+                 &
+     &                             zeta(Iend+1,j,know)+                 &
      &                             GRID(ng)%h(Iend  ,j)+                &
-     &                             zeta(Iend  ,j,kout)))
+     &                             zeta(Iend  ,j,know)))
           cff2=GRID(ng)%om_u(Iend+1,j)*Cx
-!>        tl_bry_val=tl_ubar(Iend,j,kout)+                              &
+!>        tl_bry_val=tl_ubar(Iend,j,know)+                              &
 !>   &               tl_cff2*(bry_pgr+                                  &
 !>   &                        bry_cor+                                  &
 !>   &                        bry_str)+                                 &
@@ -682,20 +682,20 @@
           ad_cff2=ad_cff2+(bry_pgr+                                     &
      &                     bry_cor+                                     &
      &                     bry_str)*ad_bry_val
-          ad_ubar(Iend,j,kout)=ad_ubar(Iend,j,kout)+ad_bry_val
+          ad_ubar(Iend,j,know)=ad_ubar(Iend,j,know)+ad_bry_val
           ad_bry_val=0.0_r8
 !>        tl_cff2=GRID(ng)%om_u(Iend+1,j)*tl_Cx
 !>
           ad_Cx=ad_Cx+GRID(ng)%om_u(Iend+1,j)*ad_cff2
           ad_cff2=0.0_r8
 !>        tl_Cx=-Cx*Cx*Cx*0.25_r8*g*(GRID(ng)%tl_h(Iend+1,j)+           &
-!>   &                               tl_zeta(Iend+1,j,kout)+            &
+!>   &                               tl_zeta(Iend+1,j,know)+            &
 !>   &                               GRID(ng)%tl_h(Iend  ,j)+           &
-!>   &                               tl_zeta(Iend  ,j,kout))
+!>   &                               tl_zeta(Iend  ,j,know))
 !>
           adfac=-Cx*Cx*Cx*0.25_r8*g*ad_Cx
-          ad_zeta(Iend  ,j,kout)=ad_zeta(Iend  ,j,kout)+adfac
-          ad_zeta(Iend+1,j,kout)=ad_zeta(Iend+1,j,kout)+adfac
+          ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)+adfac
+          ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+adfac
           GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%ad_h(Iend  ,j)+adfac
           GRID(ng)%ad_h(Iend+1,j)=GRID(ng)%ad_h(Iend+1,j)+adfac
           ad_Cx=0.0_r8
@@ -713,30 +713,30 @@
      &                     FORCES(ng)%bustr(Iend+1,j))*ad_bry_str
           ad_bry_str=0.0_r8
 !>        tl_cff1=-cff1*cff1*0.5_r8*(GRID(ng)%tl_h(Iend  ,j)+           &
-!>   &                               tl_zeta(Iend  ,j,kout)+            &
+!>   &                               tl_zeta(Iend  ,j,know)+            &
 !>   &                               GRID(ng)%tl_h(Iend+1,j)+           &
-!>   &                               tl_zeta(Iend+1,j,kout))
+!>   &                               tl_zeta(Iend+1,j,know))
 !>
           adfac=-cff1*cff1*0.5_r8*ad_cff1
-          ad_zeta(Iend  ,j,kout)=ad_zeta(Iend  ,j,kout)+adfac
-          ad_zeta(Iend+1,j,kout)=ad_zeta(Iend+1,j,kout)+adfac
+          ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)+adfac
+          ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+adfac
           GRID(ng)%ad_h(Iend  ,j)=GRID(ng)%ad_h(Iend  ,j)+adfac
           GRID(ng)%ad_h(Iend+1,j)=GRID(ng)%ad_h(Iend+1,j)+adfac
           ad_cff1=0.0_r8
 #    ifdef UV_COR
-!>        tl_bry_cor=0.125_r8*(tl_vbar(Iend  ,j  ,kout)+                &
-!>   &                         tl_vbar(Iend  ,j+1,kout)+                &
-!>   &                         tl_vbar(Iend+1,j  ,kout)+                &
-!>   &                         tl_vbar(Iend+1,j+1,kout))*               &
+!>        tl_bry_cor=0.125_r8*(tl_vbar(Iend  ,j  ,know)+                &
+!>   &                         tl_vbar(Iend  ,j+1,know)+                &
+!>   &                         tl_vbar(Iend+1,j  ,know)+                &
+!>   &                         tl_vbar(Iend+1,j+1,know))*               &
 !>   &                        (GRID(ng)%f(Iend  ,j)+                    &
 !>   &                         GRID(ng)%f(Iend+1,j))
 !>
           adfac=0.125_r8*(GRID(ng)%f(Iend  ,j)+                         &
      &                    GRID(ng)%f(Iend+1,j))*ad_bry_cor
-          ad_vbar(Iend  ,j  ,kout)=ad_vbar(Iend  ,j  ,kout)+adfac
-          ad_vbar(Iend+1,j  ,kout)=ad_vbar(Iend+1,j  ,kout)+adfac
-          ad_vbar(Iend  ,j+1,kout)=ad_vbar(Iend  ,j+1,kout)+adfac
-          ad_vbar(Iend+1,j+1,kout)=ad_vbar(Iend+1,j+1,kout)+adfac
+          ad_vbar(Iend  ,j  ,know)=ad_vbar(Iend  ,j  ,know)+adfac
+          ad_vbar(Iend+1,j  ,know)=ad_vbar(Iend+1,j  ,know)+adfac
+          ad_vbar(Iend  ,j+1,know)=ad_vbar(Iend  ,j+1,know)+adfac
+          ad_vbar(Iend+1,j+1,know)=ad_vbar(Iend+1,j+1,know)+adfac
           ad_bry_cor=0.0_r8
 #    else
 !>        tl_bry_cor=0.0_r8
@@ -744,23 +744,23 @@
           ad_bry_cor=0.0_r8
 #    endif
 #    ifdef FSOBC_REDUCED
-!>        tl_bry_pgr=g*tl_zeta(Iend,j,kout)*                            &
+!>        tl_bry_pgr=g*tl_zeta(Iend,j,know)*                            &
 !>   &               0.5_r8*GRID(ng)%pm(Iend,j)
 !>
-          ad_zeta(Iend,j,kout)=ad_zeta(Iend,j,kout)+                    &
+          ad_zeta(Iend,j,know)=ad_zeta(Iend,j,know)+                    &
      &                         g*0.5_r8*GRID(ng)%pm(Iend,j)*            &
      &                         ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #    else
-!>        tl_bry_pgr=-g*(tl_zeta(Iend+1,j,kout)-                        &
-!>   &                   tl_zeta(Iend  ,j,kout))*                       &
+!>        tl_bry_pgr=-g*(tl_zeta(Iend+1,j,know)-                        &
+!>   &                   tl_zeta(Iend  ,j,know))*                       &
 !>   &               0.5_r8*(GRID(ng)%pm(Iend  ,j)+                     &
 !>   &                       GRID(ng)%pm(Iend+1,j))
 !>
           adfac=-g*0.5_r8*(GRID(ng)%pm(Iend  ,j)+                       &
      &                     GRID(ng)%pm(Iend+1,j))*ad_bry_pgr
-          ad_zeta(Iend  ,j,kout)=ad_zeta(Iend  ,j,kout)-adfac
-          ad_zeta(Iend+1,j,kout)=ad_zeta(Iend+1,j,kout)+adfac
+          ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)-adfac
+          ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+adfac
           ad_bry_pgr=0.0_r8
 #    endif
 #   else
@@ -805,9 +805,9 @@
 !
         DO j=Jstr,Jend
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                     &
-     &                        zeta(Iend  ,j,kout)+                      &
+     &                        zeta(Iend  ,j,know)+                      &
      &                        GRID(ng)%h(Iend+1,j)+                     &
-     &                        zeta(Iend+1,j,kout)))
+     &                        zeta(Iend+1,j,know)))
 #   ifdef MASKING
 !>        tl_ubar(Iend+1,j,kout)=tl_ubar(Iend+1,j,kout)*                &
 !>   &                           GRID(ng)%umask(Iend+1,j)
@@ -841,19 +841,19 @@
      &                   FORCES(ng)%bustr(Iend+1,j))*ad_bry_str
           ad_bry_str=0.0_r8
 #  ifdef UV_COR
-!>        tl_bry_cor=0.125_r8*(tl_vbar(Iend,  j  ,kout)+                &
-!>   &                         tl_vbar(Iend  ,j+1,kout)+                &
-!>   &                         tl_vbar(Iend+1,j  ,kout)+                &
-!>   &                         tl_vbar(Iend+1,j+1,kout))*               &
+!>        tl_bry_cor=0.125_r8*(tl_vbar(Iend,  j  ,know)+                &
+!>   &                         tl_vbar(Iend  ,j+1,know)+                &
+!>   &                         tl_vbar(Iend+1,j  ,know)+                &
+!>   &                         tl_vbar(Iend+1,j+1,know))*               &
 !>   &                        (GRID(ng)%f(Iend  ,j)+                    &
 !>   &                         GRID(ng)%f(Iend+1,j))
 !>
           adfac=0.125_r8*(GRID(ng)%f(Iend,j)+                           &
      &                    GRID(ng)%f(Iend+1,j))*ad_bry_cor
-          ad_vbar(Iend,  j  ,kout)=ad_vbar(Iend  ,j  ,kout)+adfac
-          ad_vbar(Iend+1,j  ,kout)=ad_vbar(Iend+1,j  ,kout)+adfac
-          ad_vbar(Iend  ,j+1,kout)=ad_vbar(Iend  ,j+1,kout)+adfac
-          ad_vbar(Iend+1,j+1,kout)=ad_vbar(Iend+1,j+1,kout)+adfac
+          ad_vbar(Iend,  j  ,know)=ad_vbar(Iend  ,j  ,know)+adfac
+          ad_vbar(Iend+1,j  ,know)=ad_vbar(Iend+1,j  ,know)+adfac
+          ad_vbar(Iend  ,j+1,know)=ad_vbar(Iend  ,j+1,know)+adfac
+          ad_vbar(Iend+1,j+1,know)=ad_vbar(Iend+1,j+1,know)+adfac
           ad_bry_cor=0.0_r8
 #  else
 !>        tl_bry_cor=0.0_r8
@@ -861,22 +861,22 @@
           ad_bry_cor=0.0_r8
 #  endif
 #  ifdef FSOBC_REDUCED
-!>        tl_bry_pgr=g*tl_zeta(Iend,j,kout)*                            &
+!>        tl_bry_pgr=g*tl_zeta(Iend,j,know)*                            &
 !>   &               0.5_r8*GRID(ng)%pm(Iend,j)
 !>
-          ad_zeta(Iend,j,kout)=ad_zeta(Iend,j,kout)+                    &
+          ad_zeta(Iend,j,know)=ad_zeta(Iend,j,know)+                    &
      &                         g*0.5_r8*GRID(ng)%pm(Iend,j)*ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #  else
-!>        tl_bry_pgr=-g*(tl_zeta(Iend+1,j,kout)-                        &
-!>   &                   tl_zeta(Iend  ,j,kout))*                       &
+!>        tl_bry_pgr=-g*(tl_zeta(Iend+1,j,know)-                        &
+!>   &                   tl_zeta(Iend  ,j,know))*                       &
 !>   &               0.5_r8*(GRID(ng)%pm(Iend  ,j)+                     &
 !>   &                       GRID(ng)%pm(Iend+1,j))
 !>
           adfac=-g*0.5_r8*(GRID(ng)%pm(Iend  ,j)+                       &
      &                     GRID(ng)%pm(Iend+1,j))*ad_bry_pgr
-          ad_zeta(Iend  ,j,kout)=ad_zeta(Iend  ,j,kout)-adfac
-          ad_zeta(Iend+1,j,kout)=ad_zeta(Iend+1,j,kout)+adfac
+          ad_zeta(Iend  ,j,know)=ad_zeta(Iend  ,j,know)-adfac
+          ad_zeta(Iend+1,j,know)=ad_zeta(Iend+1,j,know)+adfac
           ad_bry_pgr=0.0_r8
 #  endif
         END DO
@@ -1000,37 +1000,37 @@
           ad_cff=0.0_r8
 #   if defined SSH_TIDES_NOT_YET && !defined UV_TIDES_NOT_YET
 #    ifdef FSOBC_REDUCED
-          bry_pgr=-g*(zeta(Istr,j,kout)-                                &
+          bry_pgr=-g*(zeta(Istr,j,know)-                                &
      &                BOUNDARY(ng)%zeta_west(j))*                       &
      &            0.5_r8*GRID(ng)%pm(Istr,j)
 #    else
-          bry_pgr=-g*(zeta(Istr  ,j,kout)-                              &
-     &                zeta(Istr-1,j,kout))*                             &
+          bry_pgr=-g*(zeta(Istr  ,j,know)-                              &
+     &                zeta(Istr-1,j,know))*                             &
      &            0.5_r8*(GRID(ng)%pm(Istr-1,j)+                        &
      &                    GRID(ng)%pm(Istr,j))
 #    endif
 #    ifdef UV_COR
-          bry_cor=0.125_r8*(vbar(Istr-1,j  ,kout)+                      &
-     &                      vbar(Istr-1,j+1,kout)+                      &
-     &                      vbar(Istr  ,j  ,kout)+                      &
-     &                      vbar(Istr  ,j+1,kout))*                     &
+          bry_cor=0.125_r8*(vbar(Istr-1,j  ,know)+                      &
+     &                      vbar(Istr-1,j+1,know)+                      &
+     &                      vbar(Istr  ,j  ,know)+                      &
+     &                      vbar(Istr  ,j+1,know))*                     &
      &                     (GRID(ng)%f(Istr-1,j)+                       &
      &                      GRID(ng)%f(Istr,j))
 #    else
           bry_cor=0.0_r8
 #    endif
           cff1=1.0_r8/(0.5_r8*(GRID(ng)%h(Istr-1,j)+                    &
-     &                         zeta(Istr-1,j,kout)+                     &
+     &                         zeta(Istr-1,j,know)+                     &
      &                         GRID(ng)%h(Istr  ,j)+                    &
-     &                         zeta(Istr  ,j,kout)))
+     &                         zeta(Istr  ,j,know)))
           bry_str=cff1*(FORCES(ng)%sustr(Istr,j)-                       &
      &                  FORCES(ng)%bustr(Istr,j))
           Cx=1.0_r8/SQRT(g*0.5_r8*(GRID(ng)%h(Istr-1,j)+                &
-     &                             zeta(Istr-1,j,kout)+                 &
+     &                             zeta(Istr-1,j,know)+                 &
      &                             GRID(ng)%h(Istr  ,j)+                &
-     &                             zeta(Istr  ,j,kout)))
+     &                             zeta(Istr  ,j,know)))
           cff2=GRID(ng)%om_u(Istr,j)*Cx
-!>        tl_bry_val=tl_ubar(Istr+1,j,kout)+                            &
+!>        tl_bry_val=tl_ubar(Istr+1,j,know)+                            &
 !>   &               tl_cff2*(bry_pgr+                                  &
 !>   &                        bry_cor+                                  &
 !>   &                        bry_str)+                                 &
@@ -1045,20 +1045,20 @@
           ad_cff2=ad_cff2+(bry_pgr+                                     &
      &                     bry_cor+                                     &
      &                     bry_str)*ad_bry_val
-          ad_ubar(Istr+1,j,kout)=ad_ubar(Istr+1,j,kout)+ad_bry_val
+          ad_ubar(Istr+1,j,know)=ad_ubar(Istr+1,j,know)+ad_bry_val
           ad_bry_val=0.0_r8
 !>        tl_cff2=GRID(ng)%om_u(Istr,j)*tl_Cx
 !>
           ad_Cx=ad_Cx+GRID(ng)%om_u(Istr,j)*ad_cff2
           ad_cff2=0.0_r8
 !>        tl_Cx=-Cx*Cx*Cx*0.25_r8*g*(GRID(ng)%tl_h(Istr-1,j)+           &
-!>   &                               tl_zeta(Istr-1,j,kout)+            &
+!>   &                               tl_zeta(Istr-1,j,know)+            &
 !>   &                               GRID(ng)%tl_h(Istr  ,j)+           &
-!>   &                               tl_zeta(Istr  ,j,kout))
+!>   &                               tl_zeta(Istr  ,j,know))
 !>
           adfac=-Cx*Cx*Cx*0.25_r8*g*ad_Cx
-          ad_zeta(Istr-1,j,kout)=ad_zeta(Istr-1,j,kout)+adfac
-          ad_zeta(Istr  ,j,kout)=ad_zeta(Istr  ,j,kout)+adfac
+          ad_zeta(Istr-1,j,know)=ad_zeta(Istr-1,j,know)+adfac
+          ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)+adfac
           GRID(ng)%ad_h(Istr-1,j)=GRID(ng)%ad_h(Istr-1,j)+adfac
           GRID(ng)%ad_h(Istr  ,j)=GRID(ng)%ad_h(Istr  ,j)+adfac
           ad_Cx=0.0_r8
@@ -1074,30 +1074,30 @@
      &                     FORCES(ng)%bustr(Istr,j))*ad_bry_str
           ad_bry_str=0.0_r8
 !>        tl_cff1=-cff1*cff1*0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+           &
-!>   &                               tl_zeta(Istr-1,j,kout)+            &
+!>   &                               tl_zeta(Istr-1,j,know)+            &
 !>   &                               GRID(ng)%tl_h(Istr  ,j)+           &
-!>   &                               tl_zeta(Istr  ,j,kout))
+!>   &                               tl_zeta(Istr  ,j,know))
 !>
           adfac=-cff1*cff1*0.5_r8*ad_cff1
-          ad_zeta(Istr-1,j,kout)=ad_zeta(Istr-1,j,kout)+adfac
-          ad_zeta(Istr  ,j,kout)=ad_zeta(Istr  ,j,kout)+adfac
+          ad_zeta(Istr-1,j,know)=ad_zeta(Istr-1,j,know)+adfac
+          ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)+adfac
           GRID(ng)%ad_h(Istr-1,j)=GRID(ng)%ad_h(Istr-1,j)+adfac
           GRID(ng)%ad_h(Istr  ,j)=GRID(ng)%ad_h(Istr  ,j)+adfac
           ad_cff1=0.0_r8         
 #    ifdef UV_COR
-!>        tl_bry_cor=0.125_r8*(tl_vbar(Istr-1,j  ,kout)+                &
-!>   &                         tl_vbar(Istr-1,j+1,kout)+                &
-!>   &                         tl_vbar(Istr  ,j  ,kout)+                &
-!>   &                         tl_vbar(Istr  ,j+1,kout))*               &
+!>        tl_bry_cor=0.125_r8*(tl_vbar(Istr-1,j  ,know)+                &
+!>   &                         tl_vbar(Istr-1,j+1,know)+                &
+!>   &                         tl_vbar(Istr  ,j  ,know)+                &
+!>   &                         tl_vbar(Istr  ,j+1,know))*               &
 !>   &                        (GRID(ng)%f(Istr-1,j)+                    &
 !>   &                         GRID(ng)%f(Istr  ,j))
 !>
           adfac=0.125_r8*(GRID(ng)%f(Istr-1,j)+                         &
      &                    GRID(ng)%f(Istr  ,j))*ad_bry_cor
-          ad_vbar(Istr-1,j  ,kout)=ad_vbar(Istr-1,j  ,kout)+adfac
-          ad_vbar(Istr  ,j  ,kout)=ad_vbar(Istr  ,j  ,kout)+adfac
-          ad_vbar(Istr-1,j+1,kout)=ad_vbar(Istr-1,j+1,kout)+adfac
-          ad_vbar(Istr  ,j+1,kout)=ad_vbar(Istr  ,j+1,kout)+adfac
+          ad_vbar(Istr-1,j  ,know)=ad_vbar(Istr-1,j  ,know)+adfac
+          ad_vbar(Istr  ,j  ,know)=ad_vbar(Istr  ,j  ,know)+adfac
+          ad_vbar(Istr-1,j+1,know)=ad_vbar(Istr-1,j+1,know)+adfac
+          ad_vbar(Istr  ,j+1,know)=ad_vbar(Istr  ,j+1,know)+adfac
           ad_bry_cor=0.0_r8
 #    else
 !>        tl_bry_cor=0.0_r8
@@ -1105,22 +1105,22 @@
           ad_bry_cor=0.0_r8
 #    endif
 #    ifdef FSOBC_REDUCED
-!>        tl_bry_pgr=-g*tl_zeta(Istr,j,kout)*                           &
+!>        tl_bry_pgr=-g*tl_zeta(Istr,j,know)*                           &
 !>   &               0.5_r8*GRID(ng)%pm(Istr,j)
 !>
-          ad_zeta(Istr,j,kout)=ad_zeta(Istr,j,kout)-                    &
+          ad_zeta(Istr,j,know)=ad_zeta(Istr,j,know)-                    &
      &                         g*0.5_r8*GRID(ng)%pm(Istr,j)*ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #    else
-!>        tl_bry_pgr=-g*(tl_zeta(Istr  ,j,kout)-                        &
-!>   &                   tl_zeta(Istr-1,j,kout))*                       &
+!>        tl_bry_pgr=-g*(tl_zeta(Istr  ,j,know)-                        &
+!>   &                   tl_zeta(Istr-1,j,know))*                       &
 !>   &               0.5_r8*(GRID(ng)%pm(Istr-1,j)+                     &
 !>   &                       GRID(ng)%pm(Istr  ,j))
 !>
           adfac=-g*0.5_r8*(GRID(ng)%pm(Istr-1,j)+                       &
      &                     GRID(ng)%pm(Istr  ,j))*ad_bry_pgr
-          ad_zeta(Istr-1,j,kout)=ad_zeta(Istr-1,j,kout)-adfac
-          ad_zeta(Istr  ,j,kout)=ad_zeta(Istr  ,j,kout)+adfac
+          ad_zeta(Istr-1,j,know)=ad_zeta(Istr-1,j,know)-adfac
+          ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)+adfac
           ad_bry_pgr=0.0_r8
 #    endif
 #   else
@@ -1165,9 +1165,9 @@
 !
         DO j=Jstr,Jend
           cff=1.0_r8/(0.5_r8*(GRID(ng)%h(Iend  ,j)+                     &
-     &                        zeta(Iend  ,j,kout)+                      &
+     &                        zeta(Iend  ,j,know)+                      &
      &                        GRID(ng)%h(Iend+1,j)+                     &
-     &                        zeta(Iend+1,j,kout)))
+     &                        zeta(Iend+1,j,know)))
 #   ifdef MASKING
 !>        tl_ubar(Istr,j,kout)=tl_ubar(Istr,j,kout)*                    &
 !>   &                         GRID(ng)%umask(Istr,j)
@@ -1201,30 +1201,30 @@
      &                   FORCES(ng)%bustr(Istr,j))*ad_bry_str
           ad_bry_str=0.0_r8
 !>        tl_cff=-cff*cff*0.5_r8*(GRID(ng)%tl_h(Istr-1,j)+              &
-!>   &                            tl_zeta(Istr-1,j,kout)+               &
+!>   &                            tl_zeta(Istr-1,j,know)+               &
 !>   &                            GRID(ng)%tl_h(Istr  ,j)+              &
-!>   &                            tl_zeta(Istr  ,j,kout))
+!>   &                            tl_zeta(Istr  ,j,know))
 !>
           adfac=-cff*cff*0.5_r8*ad_cff
-          ad_zeta(Istr-1,j,kout)=ad_zeta(Istr-1,j,kout)+adfac
-          ad_zeta(Istr  ,j,kout)=ad_zeta(Istr  ,j,kout)+adfac
+          ad_zeta(Istr-1,j,know)=ad_zeta(Istr-1,j,know)+adfac
+          ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)+adfac
           GRID(ng)%ad_h(Istr-1,j)=GRID(ng)%ad_h(Istr-1,j)+adfac
           GRID(ng)%ad_h(Istr  ,j)=GRID(ng)%ad_h(Istr  ,j)+adfac
           ad_cff=0.0_r8
 #  ifdef UV_COR
-!>        tl_bry_cor=0.125_r8*(tl_vbar(Istr-1,j  ,kout)+                &
-!>   &                         tl_vbar(Istr-1,j+1,kout)+                &
-!>   &                         tl_vbar(Istr  ,j  ,kout)+                &
-!>   &                         tl_vbar(Istr  ,j+1,kout))*               &
+!>        tl_bry_cor=0.125_r8*(tl_vbar(Istr-1,j  ,know)+                &
+!>   &                         tl_vbar(Istr-1,j+1,know)+                &
+!>   &                         tl_vbar(Istr  ,j  ,know)+                &
+!>   &                         tl_vbar(Istr  ,j+1,know))*               &
 !>   &                        (GRID(ng)%f(Istr-1,j)+                    &
 !>   &                         GRID(ng)%f(Istr  ,j))
 !>
           adfac=0.125_r8*(GRID(ng)%f(Istr-1,j)+                         &
      &                    GRID(ng)%f(Istr  ,j))*ad_bry_cor
-          ad_vbar(Istr-1,j  ,kout)=ad_vbar(Istr-1,j  ,kout)+adfac
-          ad_vbar(Istr  ,j  ,kout)=ad_vbar(Istr  ,j  ,kout)+adfac
-          ad_vbar(Istr-1,j+1,kout)=ad_vbar(Istr-1,j+1,kout)+adfac
-          ad_vbar(Istr  ,j+1,kout)=ad_vbar(Istr  ,j+1,kout)+adfac
+          ad_vbar(Istr-1,j  ,know)=ad_vbar(Istr-1,j  ,know)+adfac
+          ad_vbar(Istr  ,j  ,know)=ad_vbar(Istr  ,j  ,know)+adfac
+          ad_vbar(Istr-1,j+1,know)=ad_vbar(Istr-1,j+1,know)+adfac
+          ad_vbar(Istr  ,j+1,know)=ad_vbar(Istr  ,j+1,know)+adfac
           ad_bry_cor=0.0_r8
 #  else
 !>        tl_bry_cor=0.0_r8
@@ -1232,22 +1232,22 @@
           ad_bry_cor=0.0_r8
 #  endif
 #  ifdef FSOBC_REDUCED
-!>        tl_bry_pgr=-g*(zeta(Istr,j,kout)*                             &
+!>        tl_bry_pgr=-g*(zeta(Istr,j,know)*                             &
 !>   &               0.5_r8*GRID(ng)%pm(Istr,j)
 !>
-          ad_zeta(Istr,j,kout)=ad_zeta(Istr,j,kout)-                    &
+          ad_zeta(Istr,j,know)=ad_zeta(Istr,j,know)-                    &
      &                         g*0.5_r8*GRID(ng)%pm(Istr,j)*ad_bry_pgr
           ad_bry_pgr=0.0_r8
 #  else
-!>        tl_bry_pgr=-g*(tl_zeta(Istr  ,j,kout)-                        &
-!>   &                   tl_zeta(Istr-1,j,kout))*                       &
+!>        tl_bry_pgr=-g*(tl_zeta(Istr  ,j,know)-                        &
+!>   &                   tl_zeta(Istr-1,j,know))*                       &
 !>   &               0.5_r8*(GRID(ng)%pm(Istr-1,j)+                     &
 !>   &                       GRID(ng)%pm(Istr  ,j))
 !>
           adfac=-g*0.5_r8*(GRID(ng)%pm(Istr-1,j)+                       &
      &                     GRID(ng)%pm(Istr  ,j))*ad_bry_pgr
-          ad_zeta(Istr-1,j,kout)=ad_zeta(Istr-1,j,kout)-adfac
-          ad_zeta(Istr  ,j,kout)=ad_zeta(Istr  ,j,kout)+adfac
+          ad_zeta(Istr-1,j,know)=ad_zeta(Istr-1,j,know)-adfac
+          ad_zeta(Istr  ,j,know)=ad_zeta(Istr  ,j,know)+adfac
           ad_bry_pgr=0.0_r8
 #  endif
         END DO
