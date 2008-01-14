@@ -59,9 +59,6 @@
       real(r8), parameter :: IniVal = 0.0_r8
 
       real(r8) :: misfit(Mobs)
-# ifdef SOLVE3D
-      real(r8), allocatable :: z_vel(:,:,:)
-# endif
 
       character (len=50) :: string
 !
@@ -293,20 +290,14 @@
 !
         IF (wrtNLmod(ng).and.                                           &
      &      (FOURDVAR(ng)%ObsCount(isUvel).gt.0)) THEN
-          IF (Load_Zobs(ng)) THEN
-            IF (.not.allocated(z_vel)) THEN
-              allocate (z_vel(LBi:UBi,LBj:UBj,1:N(ng)))
-              z_vel=0.0_r8
-            END IF
-            DO k=1,N(ng)
-              DO j=Jstr-1,Jend+1
-                DO i=IstrU-1,Iend+1
-                  z_vel(i,j,k)=0.5_r8*(GRID(ng)%z_r(i-1,j,k)+           &
-     &                                 GRID(ng)%z_r(i  ,j,k))
-                END DO
+          DO k=1,N(ng)
+            DO j=Jstr-1,Jend+1
+              DO i=IstrU-1,Iend+1
+                GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i-1,j,k)+      &
+     &                                      GRID(ng)%z_r(i  ,j,k))
               END DO
             END DO
-          END IF
+          END DO
           CALL extract_obs3d (ng, Istr, IendR, JstrR, JendR,            &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        uILB(ng), uIUB(ng),                       &
@@ -317,7 +308,7 @@
      &                        ObsType,  ObsScale,                       &
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%u(:,:,:,NOUT),                  &
-     &                        z_vel,                                    &
+     &                        GRID(ng)%z_v,                             &
 #  ifdef MASKING
      &                        GRID(ng)%umask,                           &
 #  endif
@@ -330,20 +321,14 @@
 #  ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isUvel).gt.0)) THEN
-          IF (Load_Zobs(ng)) THEN
-            IF (.not.allocated(z_vel)) THEN
-              allocate (z_vel(LBi:UBi,LBj:UBj,1:N(ng)))
-              z_vel=0.0_r8
-            END IF
-            DO k=1,N(ng)
-              DO j=Jstr-1,Jend+1
-                DO i=IstrU-1,Iend+1
-                  z_vel(i,j,k)=0.5_r8*(GRID(ng)%z_r(i-1,j,k)+           &
-     &                                 GRID(ng)%z_r(i  ,j,k))
-                END DO
+          DO k=1,N(ng)
+            DO j=Jstr-1,Jend+1
+              DO i=IstrU-1,Iend+1
+                GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i-1,j,k)+      &
+     &                                      GRID(ng)%z_r(i  ,j,k))
               END DO
             END DO
-          END IF
+          END DO
           CALL extract_obs3d (ng, Istr, IendR, JstrR, JendR,            &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        uILB(ng), uIUB(ng),                       &
@@ -354,7 +339,7 @@
      &                        ObsType, ObsScale,                        & 
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%tl_u(:,:,:,NOUT),               &
-     &                        z_vel,                                    &
+     &                        GRID(ng)%z_v,                             &
 #   ifdef MASKING
      &                        GRID(ng)%umask,                           &
 #   endif
@@ -370,20 +355,14 @@
 !
         IF (wrtNLmod(ng).and.                                           &
      &      (FOURDVAR(ng)%ObsCount(isVvel).gt.0)) THEN
-          IF (Load_Zobs(ng)) THEN
-            IF (.not.allocated(z_vel)) THEN
-              allocate (z_vel(LBi:UBi,LBj:UBj,1:N(ng)))
-              z_vel=0.0_r8
-            END IF
-            DO k=1,N(ng)
-              DO j=JstrV-1,Jend+1
-                DO i=Istr-1,Iend+1
-                  z_vel(i,j,k)=0.5_r8*(GRID(ng)%z_r(i,j-1,k)+           &
-     &                                 GRID(ng)%z_r(i,j  ,k))
-                END DO
+          DO k=1,N(ng)
+            DO j=JstrV-1,Jend+1
+              DO i=Istr-1,Iend+1
+                GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i,j-1,k)+      &
+     &                                      GRID(ng)%z_r(i,j  ,k))
               END DO
             END DO
-          END IF
+          END DO
           CALL extract_obs3d (ng, IstrR, IendR, Jstr, JendR,            &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        vILB(ng), vIUB(ng),                       &
@@ -394,7 +373,7 @@
      &                        ObsType, ObsScale,                        &
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%v(:,:,:,NOUT),                  &
-     &                        z_vel,                                    &
+     &                        GRID(ng)%z_v,                             &
 #  ifdef MASKING
      &                        GRID(ng)%vmask,                           &
 #  endif
@@ -407,20 +386,14 @@
 #  ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isVvel).gt.0)) THEN
-          IF (Load_Zobs(ng)) THEN
-            IF (.not.allocated(z_vel)) THEN
-              allocate (z_vel(LBi:UBi,LBj:UBj,1:N(ng)))
-              z_vel=0.0_r8
-            END IF
-            DO k=1,N(ng)
-              DO j=JstrV-1,Jend+1
-                DO i=Istr-1,Iend+1
-                  z_vel(i,j,k)=0.5_r8*(GRID(ng)%z_r(i,j-1,k)+           &
-     &                                 GRID(ng)%z_r(i,j  ,k))
-                END DO
+          DO k=1,N(ng)
+            DO j=JstrV-1,Jend+1
+              DO i=Istr-1,Iend+1
+                GRID(ng)%z_v(i,j,k)=0.5_r8*(GRID(ng)%z_r(i,j-1,k)+      &
+     &                                      GRID(ng)%z_r(i,j  ,k))
               END DO
             END DO
-          END IF
+          END DO
           CALL extract_obs3d (ng, IstrR, IendR, Jstr, JendR,            &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        vILB(ng), vIUB(ng),                       &

@@ -163,6 +163,9 @@
           real(r8), pointer :: Huon(:,:,:)
           real(r8), pointer :: Hvom(:,:,:)
           real(r8), pointer :: z_r(:,:,:)
+# if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+          real(r8), pointer :: z_v(:,:,:)
+# endif
           real(r8), pointer :: z_w(:,:,:)
 # ifdef ICESHELF
           real(r8), pointer :: IcePress(:,:)
@@ -316,6 +319,9 @@
       allocate ( GRID(ng) % Huon(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( GRID(ng) % Hvom(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( GRID(ng) % z_r(LBi:UBi,LBj:UBj,N(ng)) )
+# if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+      allocate ( GRID(ng) % z_v(LBi:UBi,LBj:UBj,N(ng)) )
+# endif
       allocate ( GRID(ng) % z_w(LBi:UBi,LBj:UBj,0:N(ng)) )
 
 # ifdef ICESHELF
@@ -549,6 +555,9 @@
               GRID(ng) % Huon(i,j,k) = IniVal
               GRID(ng) % Hvom(i,j,k) = IniVal
               GRID(ng) % z_r(i,j,k) = IniVal
+# if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
+              GRID(ng) % z_v(i,j,k) = IniVal
+# endif
             END DO
           END DO
           DO k=0,N(ng)

@@ -47,6 +47,7 @@
 # endif
 # ifdef SOLVE3D
      &                    GRID(ng) % z_r,                               &
+     &                    GRID(ng) % z_v,                               &
      &                    OCEAN(ng) % f_u,                              &
      &                    OCEAN(ng) % f_v,                              &
      &                    OCEAN(ng) % f_t,                              &
@@ -64,7 +65,7 @@
      &                          rmask, umask, vmask,                    &
 # endif
 # ifdef SOLVE3D
-     &                          z_r,                                    &
+     &                          z_r, z_v,                               &
      &                          f_u, f_v, f_t,                          &
 # endif
      &                          f_ubar, f_vbar, f_zeta)
@@ -98,6 +99,7 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
+      real(r8), intent(inout) :: z_v(LBi:,LBj:,:)
       real(r8), intent(inout) :: f_u(LBi:,LBj:,:)
       real(r8), intent(inout) :: f_v(LBi:,LBj:,:)
       real(r8), intent(inout) :: f_t(LBi:,LBj:,:,:)
@@ -113,6 +115,7 @@
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(inout) :: z_v(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: f_u(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: f_v(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: f_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
@@ -133,8 +136,6 @@
 
 # ifdef SOLVE3D
       integer :: itrc, k
-
-      real(r8), allocatable :: z_vel(:,:,:)
 # endif
       real(r8), parameter :: IniVal = 0.0_r8
 
@@ -239,20 +240,14 @@
           END DO
         END DO
         IF (FOURDVAR(ng)%ObsCount(isUvel).gt.0) THEN
-          IF (Load_Zobs(ng)) THEN
-            IF (.not.allocated(z_vel)) THEN
-              allocate (z_vel(LBi:UBi,LBj:UBj,1:N(ng)))
-              z_vel=0.0_r8
-            END IF
-            DO k=1,N(ng)
-              DO j=Jstr-1,Jend+1
-                DO i=IstrU-1,Iend+1
-                  z_vel(i,j,k)=0.5_r8*(z_r(i-1,j,k)+                    &
-     &                                 z_r(i  ,j,k))
-                END DO
+          DO k=1,N(ng)
+            DO j=Jstr-1,Jend+1
+              DO i=IstrU-1,Iend+1
+                z_v(i,j,k)=0.5_r8*(z_r(i-1,j,k)+                        &
+     &                             z_r(i  ,j,k))
               END DO
             END DO
-          END IF
+          END DO
           CALL ad_extract_obs3d (ng, Istr, IendR, JstrR, JendR,         &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           uILB(ng), uIUB(ng),                    &
@@ -262,7 +257,7 @@
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs, Zobs,                &
-     &                           f_u, z_vel,                            &
+     &                           f_u, z_v,                              &
 #  ifdef MASKING
      &                           umask,                                 &
 #  endif
@@ -279,20 +274,14 @@
           END DO
         END DO
         IF (FOURDVAR(ng)%ObsCount(isVvel).gt.0) THEN
-          IF (Load_Zobs(ng)) THEN
-            IF (.not.allocated(z_vel)) THEN
-              allocate (z_vel(LBi:UBi,LBj:UBj,1:N(ng)))
-              z_vel=0.0_r8
-            END IF
-            DO k=1,N(ng)
-              DO j=JstrV-1,Jend+1
-                DO i=Istr-1,Iend+1
-                  z_vel(i,j,k)=0.5_r8*(z_r(i,j-1,k)+                    &
-     &                                 z_r(i,j  ,k))
-                END DO
+          DO k=1,N(ng)
+            DO j=JstrV-1,Jend+1
+              DO i=Istr-1,Iend+1
+                z_v(i,j,k)=0.5_r8*(z_r(i,j-1,k)+                        &
+     &                             z_r(i,j  ,k))
               END DO
             END DO
-          END IF
+          END DO
           CALL ad_extract_obs3d (ng, IstrR, IendR, Jstr, JendR,         &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           vILB(ng), vIUB(ng),                    &
@@ -302,7 +291,7 @@
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs, Zobs,                &
-     &                           f_v, z_vel,                            &
+     &                           f_v, z_v,                              &
 #  ifdef MASKING
      &                           vmask,                                 &
 #  endif

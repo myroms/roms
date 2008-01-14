@@ -39,7 +39,7 @@
 ** Process representers tangent linear model.
 */
 
-#ifdef TLM_IOMS
+#ifdef TL_IOMS
   USE_REPRESENTER := on
 #else
   USE_REPRESENTER :=
