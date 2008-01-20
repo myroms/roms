@@ -436,6 +436,11 @@
           Vinfo( 3)='nondimensional'
           Vinfo(14)=Vname(4,idTsur(itrc))
           Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(r2dvar,r8)
           status=def_var(ncHSSid(ng),hssVid(idTsur(itrc),ng),           &
      &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
         END DO
@@ -453,6 +458,8 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(u2dvar,r8)
         status=def_var(ncHSSid(ng),hssVid(idUsms,ng),NF_FOUT,           &
      &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
 !
@@ -467,6 +474,8 @@
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(v2dvar,r8)
         status=def_var(ncHSSid(ng),hssVid(idVsms,ng),NF_FOUT,           &
      &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
 # endif

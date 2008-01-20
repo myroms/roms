@@ -853,7 +853,7 @@
         END DO
 # if defined SOLVE3D && defined VCONVOLUTION
         WRITE (stdout,'(1x)')
-        DO is=4,NstateVar(ng)
+        DO is=4,5+NT(ng)
           WRITE (stdout,60) NVsteps(is), DTsizeV(is),                   &
      &                      TRIM(Vname(1,idSvar(is)))
   60      FORMAT (' Vertical   convolution, NVsteps, DTsizeV = ',       &

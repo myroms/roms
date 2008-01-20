@@ -548,7 +548,7 @@
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 IF ((ivarTL.eq.isTsur(itrc)).and.                       &
-     &              (i.eq.IperTL).and.(j.eq.JperTL) THEN
+     &              (i.eq.IperTL).and.(j.eq.JperTL)) THEN
                   tl_tflux(i,j,nstp,itrc)=1.0_r8
                 ELSE
                   tl_tflux(i,j,nstp,itrc)=0.0_r8
@@ -563,7 +563,7 @@
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 IF ((ivarAD.eq.isTsur(itrc)).and.                       &
-     &              (i.eq.IperAD).and.(j.eq.JperAD) THEN
+     &              (i.eq.IperAD).and.(j.eq.JperAD)) THEN
                   ad_tflux(i,j,nstp,itrc)=1.0_r8
                 ELSE
                   ad_tflux(i,j,nstp,itrc)=0.0_r8

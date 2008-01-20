@@ -812,10 +812,10 @@
 !
 !  Allocate convolution parameters.
 !
-      allocate ( NHsteps(5+MT) )
-      allocate ( NVsteps(5+MT) )
-      allocate ( DTsizeH(5+MT) )
-      allocate ( DTsizeV(5+MT) )
+      allocate ( NHsteps(MstateVar) )
+      allocate ( NVsteps(MstateVar) )
+      allocate ( DTsizeH(MstateVar) )
+      allocate ( DTsizeV(MstateVar) )
 
 # ifdef IS4DVAR
 !

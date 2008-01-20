@@ -1026,7 +1026,7 @@
      &                               stflx(i,j,isalt)*                  &
      &                               ad_stflx(i,j,isalt)
 #    if !(defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-          defined SO_SEMI)
+          defined SO_SEMI        || defined ADJUST_STFLUX)
           ad_stflx(i,j,isalt)=0.0_r8
 #    endif
 #   elif defined SRELAXATION
@@ -1042,7 +1042,7 @@
           ad_t(i,j,N(ng),nrhs,isalt)=ad_t(i,j,N(ng),nrhs,isalt)+        &
      &                               Hz(i,j,N(ng))*adfac
 #    if !(defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-          defined SO_SEMI)
+          defined SO_SEMI        || defined ADJUST_STFLUX)
           ad_stflx(i,j,isalt)=0.0_r8
 #    endif
 #   else
@@ -1053,7 +1053,7 @@
      &                               stflx(i,j,isalt)*                  &
      &                               ad_stflx(i,j,isalt)
 #    if !(defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-          defined SO_SEMI)
+          defined SO_SEMI        || defined ADJUST_STFLUX)
           ad_stflx(i,j,isalt)=0.0_r8
 #    endif
 #   endif

@@ -753,11 +753,16 @@
 !
         DO itrc=1,NT(ng)
           IF (Hout(idTsur(itrc),ng)) THEN
-            Vinfo( 1)=Vname(1,idTsur(itemp))
+            Vinfo( 1)=Vname(1,idTsur(itrc))
             WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
-            Vinfo( 3)=Vname(3,idTsur(itemp))
-            Vinfo(14)=Vname(4,idTsur(itemp))
+            Vinfo( 3)=Vname(3,idTsur(itrc))
+            Vinfo(14)=Vname(4,idTsur(itrc))
             Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#   endif
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
             status=def_var(ncTLMid(ng),tlmVid(idTsur(itrc),ng),         &
      &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
           END IF
@@ -777,6 +782,8 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
           status=def_var(ncTLMid(ng),tlmVid(idUsms,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -793,6 +800,8 @@
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
           status=def_var(ncTLMid(ng),tlmVid(idVsms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF

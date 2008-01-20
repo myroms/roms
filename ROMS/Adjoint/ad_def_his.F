@@ -541,6 +541,11 @@
           Vinfo(12)='downward flux, heating'
           Vinfo(14)=Vname(4,idTsur(itemp))
           Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
           status=def_var(ncADJid(ng),adjVid(idTsur(itemp),ng),          &
      &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -554,8 +559,13 @@
           Vinfo( 3)=Vname(3,idTsur(isalt))
           Vinfo(11)='upward flux, cooling'
           Vinfo(12)='downward flux, heating'
-          Vinfo(14)=Vname(4,idTsur(itemp))
+          Vinfo(14)=Vname(4,idTsur(isalt))
           Vinfo(16)=Vname(1,idtime)
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
           status=def_var(ncADJid(ng),adjVid(idTsur(isalt),ng),          &
      &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -572,6 +582,8 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 # endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
           status=def_var(ncADJid(ng),adjVid(idUsms,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -588,6 +600,8 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 # endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
           status=def_var(ncADJid(ng),adjVid(idVsms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -603,6 +617,8 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 # endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idUbms,ng),r8)
           status=def_var(ncADJid(ng),adjVid(idUbms,ng),NF_FOUT,         &
      &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
         END IF
@@ -618,6 +634,8 @@
 # if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 # endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idVbms,ng),r8)
           status=def_var(ncADJid(ng),adjVid(idVbms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF

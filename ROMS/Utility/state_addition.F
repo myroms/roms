@@ -270,7 +270,7 @@
             s1_tflux(i,j,Lout,itrc)=fac1*s1_tflux(i,j,Linp1,itrc)+      &
      &                              fac2*s2_tflux(i,j,Linp2,itrc)
 #  ifdef MASKING
-            s1_tflux(i,j,Lout,itrc)=s1_t(i,j,Lout,itrc)*rmask(i,j)
+            s1_tflux(i,j,Lout,itrc)=s1_tflux(i,j,Lout,itrc)*rmask(i,j)
 #  endif
           END DO
         END DO

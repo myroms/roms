@@ -417,6 +417,9 @@
           Vinfo( 3)=Vname(3,idTsur(itrc))
           Vinfo(14)=Vname(4,idTsur(itrc))
           Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
           status=def_var(ncITLid(ng),itlVid(idTsur(itrc),ng),           &
@@ -534,7 +537,7 @@
              got_var(idTsur(itrc))=.TRUE.
              status=nf90_inq_varid(ncITLid(ng),                         &
      &                             TRIM(Vname(1,idTsur(itrc))),         &
-     &                             itlTid(itrc,ng))
+     &                             itlVid(idTsur(itrc),ng))
             END IF
           END DO
 #  endif
