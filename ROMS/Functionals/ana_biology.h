@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets initial conditions for biological tracer fields   !
@@ -109,6 +108,9 @@
             t(i,j,k,1,iTAlk)=2350.0_r8
             t(i,j,k,1,iLDeC)=0.002_r8
             t(i,j,k,1,iSDeC)=0.06_r8
+#endif
+#ifdef OXYGEN
+            t(i,j,k,1,iOxyg)=10.0_r8/0.02241_r8
 #endif
           END DO
         END DO

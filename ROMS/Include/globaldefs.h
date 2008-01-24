@@ -976,6 +976,8 @@
     defined ANA_SST        || defined ANA_STFLUX     || \
     defined ANA_TAIR       || defined ANA_TCLIMA     || \
     defined ANA_TOBC       || defined ANA_VMIX       || \
-    defined ANA_WINDS      || defined ANA_WWAVE
+    defined ANA_WINDS      || defined ANA_WWAVE      || \
+    defined DIFF_GRID      || defined NUDGING_COFF   || \
+    defined SPONGE         || defined VISC_GRID
 # define ANALYTICAL
 #endif
