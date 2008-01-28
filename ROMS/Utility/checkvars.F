@@ -117,10 +117,18 @@
 # endif
 #endif
 #ifdef SOLVE3D
-# if defined T_PASSIVE && !defined ANA_PASSIVE
+# if defined T_PASSIVE
+#  if defined ANA_PASSIVE
+      IF (nrrec(ng).ne.0) THEN
+        DO itrc=1,NPT
+          get_var(idTvar(inert(itrc)))=.TRUE.
+        END DO
+      END IF
+#  else
       DO itrc=1,NPT
         get_var(idTvar(inert(itrc)))=.TRUE.
       END DO
+#  endif
 # endif
 # ifdef SEDIMENT
 #  ifdef SED_MORPH
