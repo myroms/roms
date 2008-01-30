@@ -453,7 +453,7 @@
       IF (latt.gt.0) THEN
         IF (spherical) THEN
           IF (INT(Aval(5)).eq.r2dvar) THEN
-            text='lon_rho lat_rho ocean_time'
+            text='lon_rho lat_rho'
           ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
             text='lon_rho lat_rho s_rho'
           ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
