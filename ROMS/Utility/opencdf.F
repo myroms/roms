@@ -134,35 +134,49 @@
               IF ((TRIM(dimnam).eq.'xi_rho').or.                        &
      &            (TRIM(dimnam).eq.'xi_v')) THEN
                 IF ((dimsiz.ne.Lm(ng)+2).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Lm(ng)+2
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Lm(ng)+2,     &
+     &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
               ELSE IF ((TRIM(dimnam).eq.'xi_u').or.                     &
      &                 (TRIM(dimnam).eq.'xi_psi')) THEN
                 IF ((dimsiz.ne.Lm(ng)+1).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Lm(ng)+1
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Lm(ng)+1,     &
+     &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
               ELSE IF ((TRIM(dimnam).eq.'eta_rho').or.                  &
      &                 (TRIM(dimnam).eq.'eta_u')) THEN
                 IF ((dimsiz.ne.Mm(ng)+2).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Mm(ng)+2
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Mm(ng)+2,     &
+     &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
               ELSE IF ((TRIM(dimnam).eq.'eta_v').or.                    &
      &                 (TRIM(dimnam).eq.'eta_psi')) THEN
                 IF ((dimsiz.ne.Mm(ng)+1).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Mm(ng)+1
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Mm(ng)+1,     &
+     &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
 #ifdef SOLVE3D
               ELSE IF (TRIM(dimnam).eq.'s_rho') THEN
                 IF ((dimsiz.ne.nvlev).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, nvlev
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz, nvlev,        &
+     &                              TRIM(ncname)
+                  exit_flag=4
+                  RETURN
+                END IF
+#endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+              ELSE IF (TRIM(dimnam).eq.'Nadjust') THEN
+                IF ((dimsiz.ne.Nfrec(ng).and.ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Nfrec(ng),    &
+     &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
@@ -325,7 +339,7 @@
   50  FORMAT (/,' OPENCDF - error while reading dimension ID: ',i3,2x,  &
      &          ' in input NetCDF file: ',a)
   60  FORMAT (/,' OPENCDF - inconsistent size of dimension: ',a,2x,     &
-     &       2i5)
+     &       2i5,/,11x,'in input NetCDF file: ',a)
   70  FORMAT (/,' OPENCDF - error while inquiring information for ',    &
      &          ' variable ID: ',i3,2x,' in input NetCDF file: ',a)
   80  FORMAT (/,' OPENCDF - error while inquiring length of',           &

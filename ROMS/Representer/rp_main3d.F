@@ -24,6 +24,9 @@
 # ifdef ANA_VMIX
       USE analytical_mod, ONLY : ana_vmix
 # endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE frc_adjust_mod, ONLY : load_TLforcing
+# endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif
@@ -325,11 +328,27 @@
       END DO
 !$OMP END PARALLEL DO
 
+# ifdef ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Load surface forcing to storage arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL load_TLforcing (ng, TILE, Lfout(ng))
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
+
 # ifdef SET_ZETA
 !
 !-----------------------------------------------------------------------
 !  Set free-surface to it time-averaged value.  If applicable,
-!  accumulate time-averaged output data wich needs a irreversible
+!  accumulate time-averaged output data which needs a irreversible
 !  loop in shared-memory jobs.
 !-----------------------------------------------------------------------
 !

@@ -875,6 +875,9 @@
 !***********************************************************************
 !
       USE mod_param
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -894,12 +897,12 @@
       real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 #   endif
       real(r8), intent(in) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: ad_vbar(LBi:,LBj:,:)
@@ -909,12 +912,12 @@
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
 #   endif
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
@@ -930,12 +933,13 @@
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #   endif
       real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -945,12 +949,13 @@
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #   endif
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -960,9 +965,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
+      integer :: i, j, k
 #  ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 #  endif
 
 #  include "set_bounds.h"
@@ -1027,31 +1032,37 @@
 !  surface momentum stress.
 !    
       IF (add) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            tl_ustr(i,j,Lout)=tl_ustr(i,j,Lout)+ad_ustr(i,j,Linp)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              tl_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Lout)+                  &
+     &                            ad_ustr(i,j,k,Linp)
 #   ifdef MASKING
-            tl_ustr(i,j,Lout)=tl_ustr(i,j,Lout)*umask(i,j)
+              tl_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Lout)*umask(i,j)
 #   endif
+            END DO
           END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            tl_vstr(i,j,Lout)=tl_vstr(i,j,Lout)+ad_vstr(i,j,Linp)
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              tl_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Lout)+                  &
+     &                            ad_vstr(i,j,k,Linp)
 #   ifdef MASKING
-            tl_vstr(i,j,Lout)=tl_vstr(i,j,Lout)*vmask(i,j)
+              tl_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Lout)*vmask(i,j)
 #   endif
+            END DO
           END DO
         END DO
       ELSE
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            tl_ustr(i,j,Lout)=ad_ustr(i,j,Linp)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              tl_ustr(i,j,k,Lout)=ad_ustr(i,j,k,Linp)
+            END DO
           END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            tl_vstr(i,j,Lout)=ad_vstr(i,j,Linp)
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              tl_vstr(i,j,k,Lout)=ad_vstr(i,j,k,Linp)
+            END DO
           END DO
         END DO
       END IF
@@ -1127,24 +1138,28 @@
 !
       IF (add) THEN
         DO itrc=1,NT(ng)
+          DO k=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                tl_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Lout,itrc)+        &
-     &                                  ad_tflux(i,j,Linp,itrc)
+                tl_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Lout,itrc)+    &
+     &                                    ad_tflux(i,j,k,Linp,itrc)
 #    ifdef MASKING
-                tl_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Lout,itrc)*        &
-     &                                  rmask(i,j)
+                tl_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Lout,itrc)*    &
+     &                                    rmask(i,j)
 #    endif
               END DO
             END DO
+          END DO
         END DO
       ELSE
         DO itrc=1,NT(ng)
+          DO k=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                tl_tflux(i,j,Lout,itrc)=ad_tflux(i,j,Linp,itrc)
+                tl_tflux(i,j,k,Lout,itrc)=ad_tflux(i,j,k,Linp,itrc)
               END DO
             END DO
+          END DO
         END DO
       END IF
 #   endif
@@ -1262,6 +1277,9 @@
 !***********************************************************************
 !
       USE mod_param
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+#  endif
 !
 !  Imported variable declarations.
 !
@@ -1281,12 +1299,12 @@
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
 #   endif
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
@@ -1296,12 +1314,12 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 #   endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -1317,12 +1335,13 @@
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #   endif
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -1332,12 +1351,13 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #    ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #    endif
 #   endif
 #   ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #   endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -1347,9 +1367,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
+      integer :: i, j, k
 #  ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 #  endif
 
 #  include "set_bounds.h"
@@ -1414,31 +1434,37 @@
 !  surface momentum stress.
 !    
       IF (add) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ad_ustr(i,j,Lout)=ad_ustr(i,j,Lout)+tl_ustr(i,j,Linp)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              ad_ustr(i,j,k,Lout)=ad_ustr(i,j,k,Lout)+                  &
+     &                            tl_ustr(i,j,k,Linp)
 #   ifdef MASKING
-            ad_ustr(i,j,Lout)=ad_ustr(i,j,Lout)*umask(i,j)
+              ad_ustr(i,j,k,Lout)=ad_ustr(i,j,k,Lout)*umask(i,j)
 #   endif
+            END DO
           END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            ad_vstr(i,j,Lout)=ad_vstr(i,j,Lout)+tl_vstr(i,j,Linp)
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              ad_vstr(i,j,k,Lout)=ad_vstr(i,j,k,Lout)+                  &
+     &                            tl_vstr(i,j,k,Linp)
 #   ifdef MASKING
-            ad_vstr(i,j,Lout)=ad_vstr(i,j,Lout)*vmask(i,j)
+              ad_vstr(i,j,k,Lout)=ad_vstr(i,j,k,Lout)*vmask(i,j)
 #   endif
+            END DO
           END DO
         END DO
       ELSE
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ad_ustr(i,j,Lout)=tl_ustr(i,j,Linp)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              ad_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Linp)
+            END DO
           END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            ad_vstr(i,j,Lout)=tl_vstr(i,j,Linp)
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              ad_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Linp)
+            END DO
           END DO
         END DO
       END IF
@@ -1514,24 +1540,28 @@
 !
       IF (add) THEN
         DO itrc=1,NT(ng)
+          DO k=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                ad_tflux(i,j,Lout,itrc)=ad_tflux(i,j,Lout,itrc)+        &
-     &                                  tl_tflux(i,j,Linp,itrc)
+                ad_tflux(i,j,k,Lout,itrc)=ad_tflux(i,j,k,Lout,itrc)+    &
+     &                                    tl_tflux(i,j,k,Linp,itrc)
 #    ifdef MASKING
-                ad_tflux(i,j,Lout,itrc)=ad_tflux(i,j,Lout,itrc)*        &
-     &                                  rmask(i,j)
+                ad_tflux(i,j,k,Lout,itrc)=ad_tflux(i,j,k,Lout,itrc)*    &
+     &                                    rmask(i,j)
 #    endif
               END DO
             END DO
+          END DO
         END DO
       ELSE
         DO itrc=1,NT(ng)
+          DO k=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
-                ad_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Linp,itrc)
+                ad_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Linp,itrc)
               END DO
             END DO
+          END DO
         END DO
       END IF
 #   endif

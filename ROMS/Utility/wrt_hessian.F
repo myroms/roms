@@ -218,19 +218,21 @@
       END DO
 #  ifdef ADJUST_STFLUX
 !
-!  Write out surface tracer fluxes.
+!  Write out surface net tracers fluxes. Notice that fluxes have their
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
 !
       DO itrc=1,NT(ng)
         scale=1.0_r8
-        gtype=gfactor*r2dvar
-        status=nf_fwrite2d(ng, iADM, ncHSSid(ng),                       &
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iADM, ncHSSid(ng),                       &
      &                     hssVid(idTsur(itrc),ng),                     &
      &                     tHSSindx(ng), gtype,                         &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
+     &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
 #   ifdef MASKING
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 #   endif
-     &                     FORCES(ng) % ad_stflx(LBi,LBj,itrc))
+     &                     FORCES(ng) % ad_tflux(LBi,LBj,1,nout,itrc))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),              &
@@ -245,17 +247,19 @@
 # endif
 # ifdef ADJUST_WSTRESS
 !
-!  Write out surface U-momentum stress.
+!  Write out surface U-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
 !
       scale=1.0_r8
-      gtype=gfactor*u2dvar
-      status=nf_fwrite2d(ng, iADM, ncHSSid(ng), hssVid(idUsms,ng),      &
+      gtype=gfactor*u3dvar
+      status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssVid(idUsms,ng),      &
      &                   tHSSindx(ng), gtype,                           &
-     &                   LBi, UBi, LBj, UBj, scale,                     &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
      &                   GRID(ng) % umask(LBi,LBj),                     &
 #  endif
-     &                   FORCES(ng) % ad_sustr(LBi,LBj))
+     &                   FORCES(ng) % ad_ustr(LBi,LBj,1,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUsms)), tHSSindx(ng)
@@ -268,14 +272,14 @@
 !  Write out surface V-momentum stress.
 !
       scale=1.0_r8
-      gtype=gfactor*v2dvar
-      status=nf_fwrite2d(ng, iADM, ncHSSid(ng), hssVid(idVsms,ng),      &
+      gtype=gfactor*v3dvar
+      status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssVid(idVsms,ng),      &
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
      &                   GRID(ng) % vmask(LBi,LBj),                     &
 #  endif
-     &                   FORCES(ng) % ad_svstr(LBi,LBj))
+     &                   FORCES(ng) % ad_vstr(LBi,LBj,1,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVsms)), tHSSindx(ng)

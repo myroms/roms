@@ -105,12 +105,12 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:)
-      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:)
+      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:,:)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: ad_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_tflux(LBi:,LBj:,:,:,:)
 #   endif
       real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
@@ -122,12 +122,13 @@
       real(r8), intent(in) :: ad_zeta(LBi:,LBj:,:)
 # else
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
 #   endif
       real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -142,9 +143,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: NSUB, i, j
+      integer :: NSUB, i, j, k
 # ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 # endif
 
       real(r8), dimension(0:NstateVar(ng)) :: my_CostGrad
@@ -179,19 +180,20 @@
 !
 !  Surface momentum stress gradient norm.
 !
-
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          cff=ad_ustr(i,j,Linp)*ad_ustr(i,j,Linp)
-          my_CostGrad(0)=my_CostGrad(0)+cff
-          my_CostGrad(isUstr)=my_CostGrad(isUstr)+cff
+      DO k=1,Nfrec(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            cff=ad_ustr(i,j,k,Linp)*ad_ustr(i,j,k,Linp)
+            my_CostGrad(0)=my_CostGrad(0)+cff
+            my_CostGrad(isUstr)=my_CostGrad(isUstr)+cff
+          END DO
         END DO
-      END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          cff=ad_vstr(i,j,Linp)*ad_vstr(i,j,Linp)
-          my_CostGrad(0)=my_CostGrad(0)+cff
-          my_CostGrad(isVstr)=my_CostGrad(isVstr)+cff
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            cff=ad_vstr(i,j,k,Linp)*ad_vstr(i,j,k,Linp)
+            my_CostGrad(0)=my_CostGrad(0)+cff
+            my_CostGrad(isVstr)=my_CostGrad(isVstr)+cff
+          END DO
         END DO
       END DO
 # endif
@@ -252,11 +254,13 @@
 !  Surface tracers flux gradient norm.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            cff=ad_tflux(i,j,Linp,itrc)*ad_tflux(i,j,Linp,itrc)
-            my_CostGrad(0)=my_CostGrad(0)+cff
-            my_CostGrad(isTsur(itrc))=my_CostGrad(isTsur(itrc))+cff
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              cff=ad_tflux(i,j,k,Linp,itrc)*ad_tflux(i,j,k,Linp,itrc)
+              my_CostGrad(0)=my_CostGrad(0)+cff
+              my_CostGrad(isTsur(itrc))=my_CostGrad(isTsur(itrc))+cff
+            END DO
           END DO
         END DO
       END DO

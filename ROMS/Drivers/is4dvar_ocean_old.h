@@ -250,6 +250,9 @@
 !
 !  Initialize relevant parameters.
 !
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Lfout(ng)=1         ! forcing index for output history files
+#endif
         Lold(ng)=1          ! old minimization time index
         Lnew(ng)=2          ! new minimization time index
         Lini=1              ! NLM initial conditions record in INIname
@@ -688,14 +691,8 @@
 #endif
               tADJindx(ng)=tADJindx(ng)-1
               LwrtState2d(ng)=.TRUE.
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-              Ladjusted(ng)=.TRUE.
-#endif
               CALL ad_wrt_his (ng)
               LwrtState2d(ng)=.FALSE.
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-              Ladjusted(ng)=.FALSE.
-#endif
 !
 !  Estimate new increment vector, deltaV(Lnew), using a CONJUGATE
 !  GRADIENT algorithm with first guess step size (CGstepF).
@@ -1001,6 +998,13 @@
 #endif
           IF (exit_flag.ne.NoError) RETURN
 
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Set index containing the surface forcing increments used the run
+!  the nonlinear model in the outer loop.
+!
+          Lfinp(ng)=Lold(ng)
+#endif
         END DO OUTER_LOOP
 !
 !-----------------------------------------------------------------------

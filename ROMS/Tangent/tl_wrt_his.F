@@ -109,6 +109,81 @@
           RETURN
         END IF
       END IF
+
+# ifdef ADJUST_WSTRESS
+!
+!  Write out surface U-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+!!    scale=rho0
+      scale=1.0_r8
+      gtype=gfactor*u3dvar
+      status=nf_fwrite3d(ng, iTLM, ncTLMid(ng), tlmVid(idUsms,ng),      &
+     &                   tTLMindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % tl_ustr(LBi,LBj,1,Lfout(ng)))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUsms)), Lfout(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Write out surface V-momentum stress.
+!
+!!    scale=rho0
+      scale=1.0_r8
+      gtype=gfactor*v3dvar
+      status=nf_fwrite3d(ng, iTLM, ncTLMid(ng), tlmVid(idVsms,ng),      &
+     &                   tTLMindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % tl_vstr(LBi,LBj,1,Lfout(ng)))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVsms)), Lfout(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Write out surface net tracers fluxes. Notice that fluxes have their
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+      DO itrc=1,NT(ng)
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iTLM, ncTLMid(ng),                       &
+     &                     tlmVid(idTsur(itrc),ng),                     &
+     &                     tTLMindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#  endif
+     &                     FORCES(ng) % tl_tflux(LBi,LBj,1,             &
+     &                                           Lfout(ng),itrc))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))), Lfout(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+# endif
 !
 !  Write out free-surface (m)
 !
@@ -628,82 +703,6 @@
       END IF
 #   endif
 #  endif
-#  ifdef ADJUST_STFLUX
-!
-!  Write out surface net heat flux.
-!
-      DO itrc=1,NT(ng)
-        IF (Hout(idTsur(itrc),ng)) THEN
-          scale=1.0_r8
-          gtype=gfactor*r2dvar
-          status=nf_fwrite2d(ng, iTLM, ncTLMid(ng),                     &
-     &                       tlmVid(idTsur(itrc),ng),                   &
-     &                       tTLMindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#   ifdef MASKING
-     &                       GRID(ng) % rmask(LBi,LBj),                 &
-#   endif
-     &                       FORCES(ng) % tl_stflx(LBi,LBj,itrc))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
-     &                          tTLMindx(ng)
-            END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END DO
-#  endif
-# endif
-# ifdef ADJUST_WSTRESS
-!
-!  Write out surface U-momentum stress.
-!
-      IF (Hout(idUsms,ng)) THEN
-!!      scale=rho0
-        scale=1.0_r8
-        gtype=gfactor*u2dvar
-        status=nf_fwrite2d(ng, iTLM, ncTLMid(ng), tlmVid(idUsms,ng),    &
-     &                     tTLMindx(ng), gtype,                         &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % umask(LBi,LBj),                   &
-#  endif
-     &                     FORCES(ng) % tl_sustr(LBi,LBj))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUsms)), tTLMindx(ng)
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-!
-!  Write out surface V-momentum stress.
-!
-      IF (Hout(idVsms,ng)) THEN
-!!      scale=rho0
-        scale=1.0_r8
-        gtype=gfactor*v2dvar
-        status=nf_fwrite2d(ng, iTLM, ncTLMid(ng), tlmVid(idVsms,ng),    &
-     &                     tTLMindx(ng), gtype,                         &
-     &                     LBi, UBi, LBj, UBj, scale,                   &
-#  ifdef MASKING
-     &                     GRID(ng) % vmask(LBi,LBj),                   &
-#  endif
-     &                     FORCES(ng) % tl_svstr(LBi,LBj))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVsms)), tTLMindx(ng)
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
 # endif
 !
 !-----------------------------------------------------------------------

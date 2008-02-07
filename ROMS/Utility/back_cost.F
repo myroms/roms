@@ -146,15 +146,15 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:)
-      real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:,:)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tl_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: tl_tflux(LBi:,LBj:,:,:,:)
 #   endif
 #  else
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
@@ -163,15 +163,16 @@
       real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
 # else
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
 #   endif
 #  else
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
@@ -183,9 +184,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: NSUB, i, j
+      integer :: NSUB, i, j, k
 # ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 # endif
 
       real(r8), dimension(0:NstateVar(ng)) :: my_BackCost
@@ -276,11 +277,14 @@
 !  Surface tracers flux contribution.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            cff=0.5_r8*tl_tflux(i,j,Lbck,itrc)*tl_tflux(i,j,Lbck,itrc)
-            my_BackCost(0)=my_BackCost(0)+cff
-            my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+cff
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              cff=0.5_r8*tl_tflux(i,j,k,Lbck,itrc)*                     &
+     &                   tl_tflux(i,j,k,Lbck,itrc)
+              my_BackCost(0)=my_BackCost(0)+cff
+              my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+cff
+            END DO
           END DO
         END DO
       END DO
@@ -290,18 +294,20 @@
 !
 !  Surface momentum stress contribution.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          cff=0.5_r8*tl_ustr(i,j,Lbck)*tl_ustr(i,j,Lbck)
-          my_BackCost(0)=my_BackCost(0)+cff
-          my_BackCost(isUstr)=my_BackCost(isUstr)+cff
+      DO k=1,Nfrec(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            cff=0.5_r8*tl_ustr(i,j,k,Lbck)*tl_ustr(i,j,k,Lbck)
+            my_BackCost(0)=my_BackCost(0)+cff
+            my_BackCost(isUstr)=my_BackCost(isUstr)+cff
+          END DO
         END DO
-      END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          cff=0.5_r8*tl_vstr(i,j,Lbck)*tl_vstr(i,j,Lbck)
-          my_BackCost(0)=my_BackCost(0)+cff
-          my_BackCost(isVstr)=my_BackCost(isVstr)+cff
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            cff=0.5_r8*tl_vstr(i,j,k,Lbck)*tl_vstr(i,j,k,Lbck)
+            my_BackCost(0)=my_BackCost(0)+cff
+            my_BackCost(isVstr)=my_BackCost(isVstr)+cff
+          END DO
         END DO
       END DO
 # endif

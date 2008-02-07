@@ -171,6 +171,13 @@
       ELSE
       END IF
       IniRec=tIRPindx(ng)
+
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Initialize surface forcing counter for storage arrays.
+!
+      SFcount(ng)=0
+#  endif
 !
 !  Reset representer model history time record counters. These
 !  counters are reset in every iteration pass but the NetCDF is

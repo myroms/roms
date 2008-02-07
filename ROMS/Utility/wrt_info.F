@@ -212,7 +212,7 @@
 
         IF (ndefADJ(ng).gt.0) THEN
           wrt_info=nf90_inq_varid(ncid, 'ndefADJ', varid)
-          wrt_info=nf90_put_var(ncid, varid, ndefHIS(ng))
+          wrt_info=nf90_put_var(ncid, varid, ndefADJ(ng))
           IF (wrt_info.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'ndefADJ', TRIM(ncname)
             exit_flag=3
@@ -224,7 +224,7 @@
 
 #ifdef TANGENT
         wrt_info=nf90_inq_varid(ncid, 'nTLM', varid)
-        wrt_info=nf90_put_var(ncid, varid, nADJ(ng))
+        wrt_info=nf90_put_var(ncid, varid, nTLM(ng))
         IF (wrt_info.ne.nf90_noerr) THEN
           WRITE (stdout,10) 'nTLM', TRIM(ncname)
           exit_flag=3
@@ -232,15 +232,26 @@
           RETURN
         END IF
 
-        IF (ndefADJ(ng).gt.0) THEN
+        IF (ndefTLM(ng).gt.0) THEN
           wrt_info=nf90_inq_varid(ncid, 'ndefTLM', varid)
-          wrt_info=nf90_put_var(ncid, varid, ndefHIS(ng))
+          wrt_info=nf90_put_var(ncid, varid, ndefTLM(ng))
           IF (wrt_info.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'ndefTLM', TRIM(ncname)
             exit_flag=3
             ioerror=wrt_info
             RETURN
           END IF
+        END IF
+#endif
+
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        wrt_info=nf90_inq_varid(ncid, 'nSFF', varid)
+        wrt_info=nf90_put_var(ncid, varid, nSFF(ng))
+        IF (wrt_info.ne.nf90_noerr) THEN
+          WRITE (stdout,10) 'nSFF', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
         END IF
 #endif
 

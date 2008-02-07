@@ -159,10 +159,13 @@
 !
           real(r8), pointer :: sustr(:,:)
           real(r8), pointer :: svstr(:,:)
-#if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
-     defined ADJUST_WSTRESS
+#if !defined ANA_SMFLUX && !defined BULK_FLUXES
           real(r8), pointer :: sustrG(:,:,:)
           real(r8), pointer :: svstrG(:,:,:)
+#endif
+#ifdef ADJUST_WSTRESS
+          real(r8), pointer :: ustr(:,:,:,:)
+          real(r8), pointer :: vstr(:,:,:,:)
 #endif
           real(r8), pointer :: bustr(:,:)
           real(r8), pointer :: bvstr(:,:)
@@ -285,9 +288,11 @@
 # endif
 
           real(r8), pointer :: stflx(:,:,:)
-# if !defined ANA_STFLUX    || !defined ANA_SSFLUX || \
-      defined ADJUST_STFLUX
+# if !defined ANA_STFLUX || !defined ANA_SSFLUX
           real(r8), pointer :: stflxG(:,:,:,:)
+# endif
+# ifdef ADJUST_STFLUX
+          real(r8), pointer :: tflux(:,:,:,:,:)
 # endif
           real(r8), pointer :: btflx(:,:,:)
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX
@@ -323,8 +328,8 @@
           real(r8), pointer :: tl_sustr(:,:)
           real(r8), pointer :: tl_svstr(:,:)
 # ifdef ADJUST_WSTRESS
-          real(r8), pointer :: tl_ustr(:,:,:)
-          real(r8), pointer :: tl_vstr(:,:,:)
+          real(r8), pointer :: tl_ustr(:,:,:,:)
+          real(r8), pointer :: tl_vstr(:,:,:,:)
 # endif
           real(r8), pointer :: tl_bustr(:,:)
           real(r8), pointer :: tl_bvstr(:,:)
@@ -332,7 +337,7 @@
           real(r8), pointer :: tl_stflx(:,:,:)
           real(r8), pointer :: tl_btflx(:,:,:)
 #  ifdef ADJUST_STFLUX
-          real(r8), pointer :: tl_tflux(:,:,:,:)
+          real(r8), pointer :: tl_tflux(:,:,:,:,:)
 #  endif
 #  ifdef SHORTWAVE
           real(r8), pointer :: tl_srflx(:,:)
@@ -355,8 +360,8 @@
           real(r8), pointer :: ad_sustr(:,:)
           real(r8), pointer :: ad_svstr(:,:)
 # ifdef ADJUST_WSTRESS
-          real(r8), pointer :: ad_ustr(:,:,:)
-          real(r8), pointer :: ad_vstr(:,:,:)
+          real(r8), pointer :: ad_ustr(:,:,:,:)
+          real(r8), pointer :: ad_vstr(:,:,:,:)
 # endif
           real(r8), pointer :: ad_bustr(:,:)
           real(r8), pointer :: ad_bvstr(:,:)
@@ -366,7 +371,7 @@
           real(r8), pointer :: ad_stflx(:,:,:)
           real(r8), pointer :: ad_btflx(:,:,:)
 #  ifdef ADJUST_STFLUX
-          real(r8), pointer :: ad_tflux(:,:,:,:)
+          real(r8), pointer :: ad_tflux(:,:,:,:,:)
 #  endif
 #  ifdef SHORTWAVE
           real(r8), pointer :: ad_srflx(:,:)
@@ -398,13 +403,13 @@
 #  endif
 #  ifdef FOUR_DVAR
 #   ifdef ADJUST_WSTRESS
-          real(r8), pointer :: d_sustr(:,:)
-          real(r8), pointer :: d_svstr(:,:)
+          real(r8), pointer :: d_sustr(:,:,:)
+          real(r8), pointer :: d_svstr(:,:,:)
           real(r8), pointer :: e_sustr(:,:)
           real(r8), pointer :: e_svstr(:,:)
 #   endif
 #   if defined ADJUST_STFLUX && defined SOLVE3D
-          real(r8), pointer :: d_stflx(:,:,:)
+          real(r8), pointer :: d_stflx(:,:,:,:)
           real(r8), pointer :: e_stflx(:,:,:)
 #   endif
 #  endif
@@ -427,6 +432,9 @@
 !=======================================================================
 !
       USE mod_param
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+#endif
 !
 !  Local variable declarations.
 !
@@ -443,12 +451,14 @@
       allocate ( FORCES(ng) % sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % svstr(LBi:UBi,LBj:UBj) )
 
-#if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
-     defined ADJUST_WSTRESS
+#if !defined ANA_SMFLUX && !defined BULK_FLUXES
       allocate ( FORCES(ng) % sustrG(LBi:UBi,LBj:UBj,2) )
       allocate ( FORCES(ng) % svstrG(LBi:UBi,LBj:UBj,2) )
 #endif
-
+#ifdef ADJUST_WSTRESS
+      allocate ( FORCES(ng) % ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2) )
+      allocate ( FORCES(ng) % vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2) )
+#endif
       allocate ( FORCES(ng) % bustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % bvstr(LBi:UBi,LBj:UBj) )
 
@@ -583,11 +593,13 @@
 
       allocate ( FORCES(ng) % stflx(LBi:UBi,LBj:UBj,NT(ng)) )
 
-# if !defined ANA_STFLUX    || !defined ANA_SSFLUX || \
-      defined ADJUST_STFLUX
+# if !defined ANA_STFLUX || !defined ANA_SSFLUX
       allocate ( FORCES(ng) % stflxG(LBi:UBi,LBj:UBj,2,NT(ng)) )
 # endif
-
+# ifdef ADJUST_STFLUX
+      allocate ( FORCES(ng) % tflux(LBi:UBi,LBj:UBj,nfrec(ng),          &
+     &                              2,NT(ng)) )
+# endif
       allocate ( FORCES(ng) % btflx(LBi:UBi,LBj:UBj,NT(ng)) )
 
 # if !defined ANA_BTFLUX || !defined ANA_BSFLUX
@@ -626,8 +638,8 @@
       allocate ( FORCES(ng) % tl_sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % tl_svstr(LBi:UBi,LBj:UBj) )
 # ifdef ADJUST_WSTRESS
-      allocate ( FORCES(ng) % tl_ustr(LBi:UBi,LBj:UBj,2) )
-      allocate ( FORCES(ng) % tl_vstr(LBi:UBi,LBj:UBj,2) )
+      allocate ( FORCES(ng) % tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2) )
+      allocate ( FORCES(ng) % tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2) )
 # endif
       allocate ( FORCES(ng) % tl_bustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % tl_bvstr(LBi:UBi,LBj:UBj) )
@@ -635,7 +647,8 @@
       allocate ( FORCES(ng) % tl_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
       allocate ( FORCES(ng) % tl_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
 #  ifdef ADJUST_STFLUX
-      allocate ( FORCES(ng) % tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng)) )
+      allocate ( FORCES(ng) % tl_tflux(LBi:UBi,LBj:UBj,Nfrec(ng),       &
+     &                                 2,NT(ng)) )
 #  endif
 #  ifdef SHORTWAVE
       allocate ( FORCES(ng) % tl_srflx(LBi:UBi,LBj:UBj) )
@@ -658,8 +671,8 @@
       allocate ( FORCES(ng) % ad_sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % ad_svstr(LBi:UBi,LBj:UBj) )
 # ifdef ADJUST_WSTRESS
-      allocate ( FORCES(ng) % ad_ustr(LBi:UBi,LBj:UBj,2) )
-      allocate ( FORCES(ng) % ad_vstr(LBi:UBi,LBj:UBj,2) )
+      allocate ( FORCES(ng) % ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2) )
+      allocate ( FORCES(ng) % ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2) )
 # endif
       allocate ( FORCES(ng) % ad_bustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % ad_bvstr(LBi:UBi,LBj:UBj) )
@@ -669,7 +682,8 @@
       allocate ( FORCES(ng) % ad_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
       allocate ( FORCES(ng) % ad_btflx(LBi:UBi,LBj:UBj,NT(ng)) )
 #  ifdef ADJUST_STFLUX
-      allocate ( FORCES(ng) % ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng)) )
+      allocate ( FORCES(ng) % ad_tflux(LBi:UBi,LBj:UBj,Nfrec(ng),       &
+     &                                 2,NT(ng)) )
 #  endif
 #  ifdef SHORTWAVE
       allocate ( FORCES(ng) % ad_srflx(LBi:UBi,LBj:UBj) )
@@ -702,13 +716,14 @@
 # endif
 # ifdef FOUR_DVAR
 #  ifdef ADJUST_WSTRESS
-      allocate ( FORCES(ng) % d_sustr(LBi:UBi,LBj:UBj) )
-      allocate ( FORCES(ng) % d_svstr(LBi:UBi,LBj:UBj) )
+      allocate ( FORCES(ng) % d_sustr(LBi:UBi,LBj:UBj,Nfrec(ng)) )
+      allocate ( FORCES(ng) % d_svstr(LBi:UBi,LBj:UBj,Nfrec(ng)) )
       allocate ( FORCES(ng) % e_sustr(LBi:UBi,LBj:UBj) )
       allocate ( FORCES(ng) % e_svstr(LBi:UBi,LBj:UBj) )
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
-      allocate ( FORCES(ng) % d_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
+      allocate ( FORCES(ng) % d_stflx(LBi:UBi,LBj:UBj,                  &
+     &                                Nfrec(ng),NT(ng)) )
       allocate ( FORCES(ng) % e_stflx(LBi:UBi,LBj:UBj,NT(ng)) )
 #  endif
 # endif
@@ -730,6 +745,9 @@
 !=======================================================================
 !
       USE mod_param
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+#endif
 !
 !  Imported variable declarations.
 !
@@ -738,7 +756,7 @@
 !  Local variable declarations.
 !
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: i, j
+      integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc
 #endif
@@ -786,10 +804,17 @@
       IF ((model.eq.0).or.(model.eq.iNLM)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
+#ifdef ADJUST_WSTRESS
+            DO k=1,Nfrec(ng)
+              FORCES(ng) % ustr(i,j,k,1) = IniVal
+              FORCES(ng) % ustr(i,j,k,2) = IniVal
+              FORCES(ng) % vstr(i,j,k,1) = IniVal
+              FORCES(ng) % vstr(i,j,k,2) = IniVal
+            END DO
+#endif
             FORCES(ng) % sustr(i,j) = IniVal
             FORCES(ng) % svstr(i,j) = IniVal
-#if !defined ANA_SMFLUX     && !defined BULK_FLUXES || \
-     defined ADJUST_WSTRESS
+#if !defined ANA_SMFLUX && !defined BULK_FLUXES
             FORCES(ng) % sustrG(i,j,1) = IniVal
             FORCES(ng) % sustrG(i,j,2) = IniVal
             FORCES(ng) % svstrG(i,j,1) = IniVal
@@ -942,10 +967,15 @@
 #  endif
 # endif
             DO itrc=1,NT(ng)
+# ifdef ADJUST_STFLUX
+              DO k=1,Nfrec(ng)
+                FORCES(ng) % tflux(i,j,k,1,itrc) = IniVal
+                FORCES(ng) % tflux(i,j,k,2,itrc) = IniVal
+              END DO
+# endif
               FORCES(ng) % stflx(i,j,itrc) = IniVal
               FORCES(ng) % btflx(i,j,itrc) = IniVal
-# if !defined ANA_STFLUX    || !defined ANA_SSFLUX || \
-      defined ADJUST_STFLUX
+# if !defined ANA_STFLUX || !defined ANA_SSFLUX
               FORCES(ng) % stflxG(i,j,1,itrc) = IniVal
               FORCES(ng) % stflxG(i,j,2,itrc) = IniVal
 # endif
@@ -954,7 +984,6 @@
               FORCES(ng) % btflxG(i,j,2,itrc) = IniVal
 # endif
             END DO
-
 # ifdef ECOSIM
             DO itrc=1,NBands
               FORCES(ng) % SpecIr(i,j,itrc) = IniVal
@@ -973,14 +1002,16 @@
       IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
+# ifdef ADJUST_WSTRESS
+            DO k=1,Nfrec(ng)
+              FORCES(ng) % tl_ustr(i,j,k,1) = IniVal
+              FORCES(ng) % tl_ustr(i,j,k,2) = IniVal
+              FORCES(ng) % tl_vstr(i,j,k,1) = IniVal
+              FORCES(ng) % tl_vstr(i,j,k,2) = IniVal
+            END DO
+# endif
             FORCES(ng) % tl_sustr(i,j) = IniVal
             FORCES(ng) % tl_svstr(i,j) = IniVal
-# ifdef ADJUST_WSTRESS
-            FORCES(ng) % tl_ustr(i,j,1) = IniVal
-            FORCES(ng) % tl_ustr(i,j,2) = IniVal
-            FORCES(ng) % tl_vstr(i,j,1) = IniVal
-            FORCES(ng) % tl_vstr(i,j,1) = IniVal
-# endif
             FORCES(ng) % tl_bustr(i,j) = IniVal
             FORCES(ng) % tl_bvstr(i,j) = IniVal
           END DO
@@ -1002,12 +1033,14 @@
 #  endif
           DO itrc=1,NT(ng)
             DO i=Imin,Imax
+#  ifdef ADJUST_STFLUX
+              DO k=1,Nfrec(ng)
+                FORCES(ng) % tl_tflux(i,j,k,1,itrc) = IniVal
+                FORCES(ng) % tl_tflux(i,j,k,2,itrc) = IniVal
+              END DO
+#  endif
               FORCES(ng) % tl_stflx(i,j,itrc) = IniVal
               FORCES(ng) % tl_btflx(i,j,itrc) = IniVal
-#  ifdef ADJUST_STFLUX
-              FORCES(ng) % tl_tflux(i,j,1,itrc) = IniVal
-              FORCES(ng) % tl_tflux(i,j,2,itrc) = IniVal
-#  endif
             END DO
           END DO
 # endif
@@ -1022,14 +1055,16 @@
       IF ((model.eq.0).or.(model.eq.iADM)) THEN
         DO j=Jmin,Jmax
           DO i=Imin,Imax
+# ifdef ADJUST_WSTRESS
+            DO k=1,Nfrec(ng)
+              FORCES(ng) % ad_ustr(i,j,k,1) = IniVal
+              FORCES(ng) % ad_ustr(i,j,k,2) = IniVal
+              FORCES(ng) % ad_vstr(i,j,k,1) = IniVal
+              FORCES(ng) % ad_vstr(i,j,k,2) = IniVal
+            END DO
+# endif
             FORCES(ng) % ad_sustr(i,j) = IniVal
             FORCES(ng) % ad_svstr(i,j) = IniVal
-# ifdef ADJUST_WSTRESS
-            FORCES(ng) % ad_ustr(i,j,1) = IniVal
-            FORCES(ng) % ad_ustr(i,j,2) = IniVal
-            FORCES(ng) % ad_vstr(i,j,1) = IniVal
-            FORCES(ng) % ad_vstr(i,j,1) = IniVal
-# endif
             FORCES(ng) % ad_bustr(i,j) = IniVal
             FORCES(ng) % ad_bvstr(i,j) = IniVal
             FORCES(ng) % ad_bustr_sol(i,j) = IniVal
@@ -1053,12 +1088,14 @@
 #  endif
           DO itrc=1,NT(ng)
             DO i=Imin,Imax
+#  ifdef ADJUST_STFLUX
+              DO k=1,Nfrec(ng)
+                FORCES(ng) % ad_tflux(i,j,k,1,itrc) = IniVal
+                FORCES(ng) % ad_tflux(i,j,k,2,itrc) = IniVal
+              END DO
+#  endif
               FORCES(ng) % ad_stflx(i,j,itrc) = IniVal
               FORCES(ng) % ad_btflx(i,j,itrc) = IniVal
-#  ifdef ADJUST_STFLUX
-              FORCES(ng) % ad_tflux(i,j,1,itrc) = IniVal
-              FORCES(ng) % ad_tflux(i,j,2,itrc) = IniVal
-#  endif
             END DO
           END DO
 # endif
@@ -1080,10 +1117,12 @@
             FORCES(ng) % b_sustr(i,j) = IniVal
             FORCES(ng) % b_svstr(i,j) = IniVal
 #   ifdef FOUR_DVAR
-            FORCES(ng) % d_sustr(i,j) = IniVal
-            FORCES(ng) % d_svstr(i,j) = IniVal
             FORCES(ng) % e_sustr(i,j) = IniVal
             FORCES(ng) % e_svstr(i,j) = IniVal
+            DO k=1,Nfrec(ng)
+              FORCES(ng) % d_sustr(i,j,k) = IniVal
+              FORCES(ng) % d_svstr(i,j,k) = IniVal
+            END DO
 #   endif
           END DO
         END DO
@@ -1094,8 +1133,10 @@
             DO i=Imin,Imax
               FORCES(ng) % b_stflx(i,j,itrc) = IniVal
 #   ifdef FOUR_DVAR
-              FORCES(ng) % d_stflx(i,j,itrc) = IniVal
               FORCES(ng) % e_stflx(i,j,itrc) = IniVal
+              DO k=1,Nfrec(ng)
+                FORCES(ng) % d_stflx(i,j,k,itrc) = IniVal
+              END DO
 #   endif
             END DO
           END DO

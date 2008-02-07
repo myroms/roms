@@ -46,7 +46,9 @@
 
       integer :: i, j, itrc, nrec, nvd, nvd3, nvd4, varid
       integer :: recdim, status
-
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      integer :: frecdim
+#endif
       integer :: DimIDs(29), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
@@ -57,6 +59,12 @@
       integer :: b3dgrd(4)
 # endif
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+# ifdef ADJUST_STFLUX
+      integer :: t3dfrc(3)
+# endif
+#endif
+#ifdef ADJUST_WSTRESS
+      integer :: u3dfrc(3), v3dfrc(3)
 #endif
 
       real(r8) :: Aval(6)
@@ -171,6 +179,10 @@
         status=nf90_def_dim(ncHISid(ng),'Nstate'  ,NstateVar(ng),       &
      &                      DimIDs(29))
 #endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        status=nf90_def_dim(ncHISid(ng),'Nadjust ',Nfrec(ng),           &
+     &                      frecdim)
+#endif
         status=nf90_def_dim(ncHISid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
      &                      nf90_unlimited,DimIDs(12))
         recdim=DimIDs(12)
@@ -204,6 +216,11 @@
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
 # endif
+# ifdef ADJUST_STFLUX
+        t3dfrc(1)=DimIDs( 1)
+        t3dfrc(2)=DimIDs( 5)
+        t3dfrc(3)=frecdim
+# endif
 #endif
 !
 !  Define dimension vectors for staggered u-momemtum type variables.
@@ -225,6 +242,11 @@
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
 # endif
+# ifdef ADJUST_WSTRESS
+        u3dfrc(1)=DimIDs( 2)
+        u3dfrc(2)=DimIDs( 6)
+        u3dfrc(3)=frecdim
+# endif
 #endif
 !
 !  Define dimension vectors for staggered v-momemtum type variables.
@@ -245,6 +267,11 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+# endif
+# ifdef ADJUST_WSTRESS
+        v3dfrc(1)=DimIDs( 3)
+        v3dfrc(2)=DimIDs( 7)
+        v3dfrc(3)=frecdim
 # endif
 #endif
 #ifdef SOLVE3D
@@ -336,6 +363,62 @@
         Vinfo( 2)='Ritz eigenvectors Euclidean norm'
         status=def_var(ncHISid(ng),varid,NF_TYPE,                       &
      &                 1,recdim,Aval,Vinfo,ncname)
+#endif
+#ifdef ADJUST_WSTRESS
+!
+!  Define surface U-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+        Vinfo( 1)=Vname(1,idUsms)
+        Vinfo( 2)=Vname(2,idUsms)
+        Vinfo( 3)=Vname(3,idUsms)
+# if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+# endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
+        status=def_var(ncHISid(ng),hisVid(idUsms,ng),NF_FOUT,           &
+     &                 nvd3,u3dfrc,Aval,Vinfo,ncname)
+!
+!  Define surface V-momentum stress.
+!
+        Vinfo( 1)=Vname(1,idVsms)
+        Vinfo( 2)=Vname(2,idVsms)
+        Vinfo( 3)=Vname(3,idVsms)
+# if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+# endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
+        status=def_var(ncHISid(ng),hisVid(idVsms,ng),NF_FOUT,           &
+     &                 nvd3,v3dfrc,Aval,Vinfo,ncname)
+#endif
+#if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Define surface net heat flux. Notice that different tracer fluxes
+!  are written at their own fixed time-dimension (of size Nfrec) to
+!  allow 4DVAR adjustments at other times in addition to initial time.
+!
+        DO itrc=1,NT(ng)
+          Vinfo( 1)=Vname(1,idTsur(itrc))
+          Vinfo( 2)=Vname(2,idTsur(itrc))
+          Vinfo( 3)=Vname(3,idTsur(itrc))
+          IF (itrc.eq.itemp) THEN
+            Vinfo(11)='upward flux, cooling'
+            Vinfo(12)='downward flux, heating'
+          ELSE IF (itrc.eq.isalt) THEN
+            Vinfo(11)='upward flux, freshening (net precipitation)'
+            Vinfo(12)='downward flux, salting (net evaporation)'
+          END IF
+# if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+# endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+          status=def_var(ncHISid(ng),hisVid(idTsur(itrc),ng),           &
+     &                   NF_FOUT,nvd3,t3dfrc,Aval,Vinfo,ncname)
+        END DO
 #endif
 #if defined SEDIMENT && defined SED_MORPH
 !
@@ -684,9 +767,9 @@
           Vinfo( 3)=Vname(3,idHsbl)
           Vinfo(14)=Vname(4,idHsbl)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-# endif
+#  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idHsbl,ng),r8)
           status=def_var(ncHISid(ng),hisVid(idHsbl,ng),NF_FOUT,         &
@@ -703,9 +786,9 @@
           Vinfo( 3)=Vname(3,idHbbl)
           Vinfo(14)=Vname(4,idHbbl)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
-# endif
+#  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idHbbl,ng),r8)
           status=def_var(ncHISid(ng),hisVid(idHbbl,ng),NF_FOUT,         &
@@ -864,38 +947,31 @@
 #  endif
         END IF
 # endif
+# ifndef ADJUST_STFLUX
 !
-!  Define surface net heat flux.
+!  Define surface active tracer fluxes.
 !
-        IF (Hout(idTsur(itemp),ng)) THEN
-          Vinfo( 1)=Vname(1,idTsur(itemp))
-          Vinfo( 2)=Vname(2,idTsur(itemp))
-          Vinfo( 3)=Vname(3,idTsur(itemp))
-          Vinfo(11)='upward flux, cooling'
-          Vinfo(12)='downward flux, heating'
-          Vinfo(14)=Vname(4,idTsur(itemp))
-          Vinfo(16)=Vname(1,idtime)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
-          status=def_var(ncHISid(ng),hisVid(idTsur(itemp),ng),          &
-     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
-!
-!  Define surface net salt flux.
-!
-        IF (Hout(idTsur(isalt),ng)) THEN
-          Vinfo( 1)=Vname(1,idTsur(isalt))
-          Vinfo( 2)=Vname(2,idTsur(isalt))
-          Vinfo( 3)=Vname(3,idTsur(isalt))
-          Vinfo(11)='upward flux, freshening (net precipitation)'
-          Vinfo(12)='downward flux, salting (net evaporation)'
-          Vinfo(14)=Vname(4,idTsur(isalt))
-          Vinfo(16)=Vname(1,idtime)
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idTsur(isalt),ng),r8)
-          status=def_var(ncHISid(ng),hisVid(idTsur(isalt),ng),          &
-     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
+        DO itrc=1,NAT
+          IF (Hout(idTsur(itrc),ng)) THEN
+            Vinfo( 1)=Vname(1,idTsur(itrc))
+            Vinfo( 2)=Vname(2,idTsur(itrc))
+            Vinfo( 3)=Vname(3,idTsur(itrc))
+            IF (itrc.eq.itemp) THEN
+              Vinfo(11)='upward flux, cooling'
+              Vinfo(12)='downward flux, heating'
+            ELSE IF (itrc.eq.isalt) THEN
+              Vinfo(11)='upward flux, freshening (net precipitation)'
+              Vinfo(12)='downward flux, salting (net evaporation)'
+            END IF
+            Vinfo(14)=Vname(4,idTsur(itrc))
+            Vinfo(16)=Vname(1,idtime)
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+            status=def_var(ncHISid(ng),hisVid(idTsur(itrc),ng),         &
+     &                     NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
+          END IF
+        END DO
+# endif
 # ifdef BULK_FLUXES
 !
 !  Define latent heat flux.
@@ -1034,6 +1110,7 @@
         END IF
 # endif
 #endif
+#ifndef ADJUST_WSTRESS
 !
 !  Define surface U-momentum stress.
 !
@@ -1068,6 +1145,7 @@
           status=def_var(ncHISid(ng),hisVid(idVsms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
+#endif
 !
 !  Define bottom U-momentum stress.
 !
@@ -1981,18 +2059,14 @@
      &                            hisVid(idMtls,ng))
           END IF
 # endif
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itemp)))) THEN
-            got_var(idTsur(itemp))=.TRUE.
-            status=nf90_inq_varid(ncHISid(ng),                          &
-     &                            TRIM(Vname(1,idTsur(itemp))),         &
-     &                            hisVid(idTsur(itemp),ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(isalt)))) THEN
-            got_var(idTsur(isalt))=.TRUE.
-            status=nf90_inq_varid(ncHISid(ng),                          &
-     &                            TRIM(Vname(1,idTsur(isalt))),         &
-     &                            hisVid(idTsur(isalt),ng))
-          END IF
+          DO itrc=1,NAT
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+              got_var(idTsur(itemp))=.TRUE.
+              status=nf90_inq_varid(ncHISid(ng),                        &
+     &                              TRIM(Vname(1,idTsur(itrc))),        &
+     &                              hisVid(idTsur(itrc),ng))
+            END IF
+          END DO
 # ifdef BULK_FLUXES
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idLhea))) THEN
             got_var(idLhea)=.TRUE.
@@ -2405,16 +2479,13 @@
           RETURN
         END IF
 # endif
-        IF (.not.got_var(idTsur(itemp)).and.Hout(idTsur(itemp),ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idTsur(itemp))), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idTsur(isalt)).and.Hout(idTsur(isalt),ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idTsur(isalt))), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
+        DO itrc=1,NAT
+          IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN
+            WRITE (stdout,60) TRIM(Vname(1,idTsur(itrc))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
 # ifdef BULK_FLUXES
         IF (.not.got_var(idLhea).and.Hout(idLhea,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idLhea)), TRIM(ncname)

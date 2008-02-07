@@ -43,6 +43,9 @@
 # if defined W4DPSAS || defined NLM_OUTER
       USE forcing_mod, ONLY : forcing
 # endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE frc_adjust_mod, ONLY : load_NLforcing
+# endif
 # ifdef GLS_MIXING
       USE gls_corstep_mod, ONLY : gls_corstep
       USE gls_prestep_mod, ONLY : gls_prestep
@@ -303,6 +306,22 @@
       END DO
 !$OMP END PARALLEL DO
 
+# ifdef ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Load surface forcing to storage arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL load_NLforcing (ng, TILE, Lfout(ng))
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
+
 # ifdef SET_ZETA
 !
 !-----------------------------------------------------------------------
@@ -364,18 +383,18 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
-# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+#  if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
           CALL set_diags (ng, TILE)
-# endif
+#  endif
           CALL rhs3d (ng, TILE)
-# ifdef MY25_MIXING
+#  ifdef MY25_MIXING
           CALL my25_prestep (ng, TILE)
-# elif defined GLS_MIXING
+#  elif defined GLS_MIXING
           CALL gls_prestep (ng, TILE)
-# endif
-# if defined AVERAGES && !defined ADJOINT
+#  endif
+#  if defined AVERAGES && !defined ADJOINT
           CALL set_avg (ng, TILE)
-# endif
+#  endif
         END DO
       END DO
 !$OMP END PARALLEL DO
@@ -388,7 +407,7 @@
 !
       CALL output (ng)
       IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
-#endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  Solve the vertically integrated primitive equations for the

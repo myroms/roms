@@ -47,7 +47,9 @@
 
       integer :: i, j, itrc, nrec, nvd, nvd3, nvd4
       integer :: recdim, status, varid
-
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      integer :: frecdim
+# endif
       integer :: DimIDs(29), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
@@ -55,6 +57,12 @@
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+#  ifdef ADJUST_STFLUX
+      integer :: t3dfrc(3)
+#  endif
+# endif
+# ifdef ADJUST_STFLUX
+      integer :: u3dfrc(3), v3dfrc(3)
 # endif
 
       real(r8) :: Aval(6)
@@ -169,6 +177,10 @@
         status=nf90_def_dim(ncTLMid(ng),'Nstate  ',NstateVar(ng),       &
      &                      DimIDs(29))
 # endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        status=nf90_def_dim(ncTLMid(ng),'Nadjust ',Nfrec(ng),           &
+     &                      frecdim)
+# endif
         status=nf90_def_dim(ncTLMid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
      &                      nf90_unlimited,DimIDs(12))
         recdim=DimIDs(12)
@@ -202,6 +214,11 @@
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
 #  endif
+#  ifdef ADJUST_STFLUX
+        t3dfrc(1)=DimIDs( 1)
+        t3dfrc(2)=DimIDs( 5)
+        t3dfrc(3)=frecdim
+#  endif
 # endif
 !
 !  Define dimension vectors for staggered u-momemtum type variables.
@@ -223,6 +240,11 @@
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
 #  endif
+#  ifdef ADJUST_WSTRESS
+        u3dfrc(1)=DimIDs( 2)
+        u3dfrc(2)=DimIDs( 6)
+        u3dfrc(3)=frecdim
+#  endif
 # endif
 !
 !  Define dimension vectors for staggered v-momemtum type variables.
@@ -243,6 +265,11 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+#  endif
+#  ifdef ADJUST_WSTRESS
+        v3dfrc(1)=DimIDs( 3)
+        v3dfrc(2)=DimIDs( 7)
+        v3dfrc(3)=frecdim
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -327,6 +354,63 @@
         Vinfo( 2)='Ritz eigenvectors Euclidean norm'
         status=def_var(ncTLMid(ng),varid,NF_TYPE,                       &
      &                 1,recdim,Aval,Vinfo,ncname)
+# endif
+# ifdef ADJUST_WSTRESS
+!
+!  Define surface U-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+        Vinfo( 1)=Vname(1,idUsms)
+        WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
+        Vinfo( 3)=Vname(3,idUsms)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
+        status=def_var(ncTLMid(ng),tlmVid(idUsms,ng),NF_FOUT,           &
+     &                 nvd3,u3dfrc,Aval,Vinfo,ncname)
+!
+!  Define surface V-momentum stress.
+!
+        Vinfo( 1)=Vname(1,idVsms)
+        WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
+        Vinfo( 2)=Vname(2,idVsms)
+        Vinfo( 3)=Vname(3,idVsms)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
+        status=def_var(ncTLMid(ng),tlmVid(idVsms,ng),NF_FOUT,           &
+     &                 nvd3,v3dfrc,Aval,Vinfo,ncname)
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Define surface net heat flux. Notice that different tracer fluxes
+!  are written at their own fixed time-dimension (of size Nfrec) to
+!  allow 4DVAR adjustments at other times in addition to initial time.
+!
+        DO itrc=1,NT(ng)
+          Vinfo( 1)=Vname(1,idTsur(itrc))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
+          Vinfo( 3)=Vname(3,idTsur(itrc))
+          IF (itrc.eq.itemp) THEN
+            Vinfo(11)='upward flux, cooling'
+            Vinfo(12)='downward flux, heating'
+          ELSE IF (itrc.eq.isalt) THEN
+            Vinfo(11)='upward flux, freshening (net precipitation)'
+            Vinfo(12)='downward flux, salting (net evaporation)'
+          END IF
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+          status=def_var(ncTLMid(ng),tlmVid(idTsur(itrc),ng),           &
+     &                   NF_FOUT,nvd3,t3dfrc,Aval,Vinfo,ncname)
+        END DO
 # endif
 !
 !  Define free-surface.
@@ -747,64 +831,6 @@
         END IF
 #   endif
 #  endif
-#  ifdef ADJUST_STFLUX
-!
-!  Define surface net heat flux.
-!
-        DO itrc=1,NT(ng)
-          IF (Hout(idTsur(itrc),ng)) THEN
-            Vinfo( 1)=Vname(1,idTsur(itrc))
-            WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
-            Vinfo( 3)=Vname(3,idTsur(itrc))
-            Vinfo(14)=Vname(4,idTsur(itrc))
-            Vinfo(16)=Vname(1,idtime)
-#   if defined WRITE_WATER && defined MASKING
-            Vinfo(20)='mask_rho'
-#   endif
-            Vinfo(22)='coordinates'
-            Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
-            status=def_var(ncTLMid(ng),tlmVid(idTsur(itrc),ng),         &
-     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
-          END IF
-        END DO
-#  endif
-# endif
-# ifdef ADJUST_WSTRESS
-!
-!  Define surface U-momentum stress.
-!
-        IF (Hout(idUsms,ng)) THEN
-          Vinfo( 1)=Vname(1,idUsms)
-          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
-          Vinfo( 3)=Vname(3,idUsms)
-          Vinfo(14)=Vname(4,idUsms)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_u'
-#  endif
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idUsms,ng),NF_FOUT,         &
-     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
-        END IF
-!
-!  Define surface V-momentum stress.
-!
-        IF (Hout(idVsms,ng)) THEN
-          Vinfo( 1)=Vname(1,idVsms)
-          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
-          Vinfo( 2)=Vname(2,idVsms)
-          Vinfo( 3)=Vname(3,idVsms)
-          Vinfo(14)=Vname(4,idVsms)
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_v'
-#  endif
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVsms,ng),NF_FOUT,         &
-     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
-        END IF
 # endif
 !
 !-----------------------------------------------------------------------

@@ -44,6 +44,9 @@
 !***********************************************************************
 !
       USE mod_param
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+#endif
 !
 !  Imported variable declarations.
 !
@@ -60,12 +63,12 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s_sustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: s_svstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s_sustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s_svstr(LBi:,LBj:,:,:)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s_tflux(LBi:,LBj:,:,:,:)
 #  endif
       real(r8), intent(inout) :: s_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: s_u(LBi:,LBj:,:,:)
@@ -84,12 +87,13 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s_sustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: s_svstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: s_sustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: s_svstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: s_tflux(LBi:UBi,LBj:UBj,               &
+     &                                   Nfrec(ng),2,NT(ng))
 #  endif
       real(r8), intent(inout) :: s_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -104,9 +108,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
+      integer :: i, j, k
 #ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 #endif
 
 #include "set_bounds.h"
@@ -143,14 +147,16 @@
 !
 !  Surface momentum stress.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          s_sustr(i,j,Lout)=fac
+      DO k=1,Nfrec(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            s_sustr(i,j,k,Lout)=fac
+          END DO
         END DO
-      END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          s_svstr(i,j,Lout)=fac
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            s_svstr(i,j,k,Lout)=fac
+          END DO
         END DO
       END DO
 #endif
@@ -191,9 +197,11 @@
 !  Surface tracers flux.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            s_tflux(i,j,Lout,itrc)=fac
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              s_tflux(i,j,k,Lout,itrc)=fac
+            END DO
           END DO
         END DO
       END DO

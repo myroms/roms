@@ -189,6 +189,12 @@
       ncFWDid(ng)=ncHISid(ng)
 #   endif
 #  endif
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Initialize surface forcing counter for storage arrays.
+!
+      SFcount(ng)=Nfrec(ng)+1
+#  endif
 !
 !  Initialize various variables needed for processing observations
 !  backwards in time.

@@ -306,12 +306,12 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -373,12 +373,13 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -405,9 +406,9 @@
 #  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, is, j
+      integer :: i, is, j, k
 # ifdef SOLVE3D
-      integer :: k, itrc
+      integer :: itrc
 # endif
       real(r8) :: cff
 # ifdef SOLVE3D
@@ -481,22 +482,24 @@
 !
 !  Adjoint surface momentum stress.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
-          ad_ustr(i,j,Linp)=ad_ustr(i,j,Linp)*HnormSUS(i,j)
+      DO k=1,Nfrec(ng)
+        DO j=JU_RANGE
+          DO i=IU_RANGE
+            ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)*HnormSUS(i,j)
+          END DO
         END DO
-      END DO
-      DO j=JV_RANGE
-        DO i=IV_RANGE
-          ad_vstr(i,j,Linp)=ad_vstr(i,j,Linp)*HnormSVS(i,j)
+        DO j=JV_RANGE
+          DO i=IV_RANGE
+            ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)*HnormSVS(i,j)
+          END DO
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
-     &                       LBi, UBi, LBj, UBj,                        &
+      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng),          &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_ustr(:,:,Linp),                        &
-     &                       ad_vstr(:,:,Linp))
+     &                       ad_ustr(:,:,:,Linp),                       &
+     &                       ad_vstr(:,:,:,Linp))
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -546,18 +549,20 @@
 !  Adjoint surface tracers flux.
 !
       DO itrc=1,NT(ng)
-        DO j=JR_RANGE
-          DO i=IR_RANGE
-            ad_tflux(i,j,Linp,itrc)=ad_tflux(i,j,Linp,itrc)*            &
-     &                              HnormSTF(i,j,itrc)
+        DO k=1,Nfrec(ng)
+          DO j=JR_RANGE
+            DO i=IR_RANGE
+              ad_tflux(i,j,k,Linp,itrc)=ad_tflux(i,j,k,Linp,itrc)*      &
+     &                                  HnormSTF(i,j,itrc)
+            END DO
           END DO
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
-     &                       LBi, UBi, LBj, UBj, 1, NT(ng),             &
+      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_tflux(:,:,Linp,:))
+     &                       ad_tflux(:,:,:,Linp,:))
 #   endif
 #  endif
 # endif
@@ -611,29 +616,31 @@
 !
 !  Adjoint surface momentum stress.
 !
-      CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints,                              &
-     &                       NHsteps(isUstr)/ifac,                      &
-     &                       DTsizeH(isUstr),                           &
-     &                       Kh,                                        &
-     &                       pm, pn, pmon_r, pnom_p,                    &
+      DO k=1,Nfrec(ng)
+        CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,        &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         NghostPoints,                            &
+     &                         NHsteps(isUstr)/ifac,                    &
+     &                         DTsizeH(isUstr),                         &
+     &                         Kh,                                      &
+     &                         pm, pn, pmon_r, pnom_p,                  &
 #  ifdef MASKING
-     &                       umask, pmask,                              &
+     &                         umask, pmask,                            &
 #  endif
-     &                       ad_ustr(:,:,Linp))
+     &                         ad_ustr(:,:,k,Linp))
 
-      CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints,                              &
-     &                       NHsteps(isVstr)/ifac,                      &
-     &                       DTsizeH(isVstr),                           &
-     &                       Kh,                                        &
-     &                       pm, pn, pmon_p, pnom_r,                    &
+        CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,        &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         NghostPoints,                            &
+     &                         NHsteps(isVstr)/ifac,                    &
+     &                         DTsizeH(isVstr),                         &
+     &                         Kh,                                      &
+     &                         pm, pn, pmon_p, pnom_r,                  &
 #  ifdef MASKING
-     &                       vmask, pmask,                              &
+     &                         vmask, pmask,                            &
 #  endif
-     &                       ad_vstr(:,:,Linp))
+     &                         ad_vstr(:,:,k,Linp))
+      END DO
 # endif
 # ifdef SOLVE3D
 !
@@ -694,17 +701,19 @@
 !
       DO itrc=1,NT(ng)
         is=isTsur(itrc)
-        CALL ad_conv_r2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,        &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         NghostPoints,                            &
-     &                         NHsteps(is)/ifac,                        &
-     &                         DTsizeH(is),                             &
-     &                         Kh,                                      &
-     &                         pm, pn, pmon_u, pnom_v,                  &
+        DO k=1,Nfrec(ng)
+          CALL ad_conv_r2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,      &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NghostPoints,                          &
+     &                           NHsteps(is)/ifac,                      &
+     &                           DTsizeH(is),                           &
+     &                           Kh,                                    &
+     &                           pm, pn, pmon_u, pnom_v,                &
 #   ifdef MASKING
-     &                         rmask, umask, vmask,                     &
+     &                           rmask, umask, vmask,                   &
 #   endif
-     &                         ad_tflux(:,:,Linp,itrc))
+     &                           ad_tflux(:,:,k,Linp,itrc))
+        END DO
       END DO
 #  endif
 # endif
@@ -749,24 +758,26 @@
 !
 !  Adjoint surface momentum stress.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
-          ad_ustr(i,j,Linp)=ad_ustr(i,j,Linp)/                          &
-     &                  SQRT(om_u(i,j)*on_u(i,j))
+      DO k=1,Nfrec(ng)
+        DO j=JU_RANGE
+          DO i=IU_RANGE
+            ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)/                    &
+     &                          SQRT(om_u(i,j)*on_u(i,j))
+          END DO
         END DO
-      END DO
-      DO j=JV_RANGE
-        DO i=IV_RANGE
-          ad_vstr(i,j,Linp)=ad_vstr(i,j,Linp)/                          &
-     &                  SQRT(om_v(i,j)*on_v(i,j))
+        DO j=JV_RANGE
+          DO i=IV_RANGE
+            ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)/                    &
+     &                          SQRT(om_v(i,j)*on_v(i,j))
+          END DO
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
-     &                       LBi, UBi, LBj, UBj,                        &
+      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng),          &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_ustr(:,:,Linp),                         &
-     &                       ad_vstr(:,:,Linp))
+     &                       ad_ustr(:,:,:,Linp),                       &
+     &                       ad_vstr(:,:,:,Linp))
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -826,15 +837,17 @@
         DO i=IR_RANGE
           fac=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
           DO itrc=1,NT(ng)
-            ad_tflux(i,j,Linp,itrc)=fac*ad_tflux(i,j,Linp,itrc)
+            DO k=1,Nfrec(ng)
+              ad_tflux(i,j,k,Linp,itrc)=fac*ad_tflux(i,j,k,Linp,itrc)
+            END DO
           END DO
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
-     &                       LBi, UBi, LBj, UBj, 1, NT(ng),             &
+      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_tflux(:,:,Linp,:))
+     &                       ad_tflux(:,:,:,Linp,:))
 #   endif
 #  endif
 # endif

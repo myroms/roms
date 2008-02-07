@@ -56,7 +56,7 @@
 !
 # include "tile.h"
 !
-      CALL cost_grad_tile (ng, Istr, Iend, Jstr, Jend,                  &  
+      CALL cost_grad_tile (ng, Istr, Iend, Jstr, Jend,                  &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Linp, Lout,                                  &
 # ifdef ADJUST_WSTRESS
@@ -125,6 +125,9 @@
 !***********************************************************************
 !
       USE mod_param
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+# endif
 !
 !  Imported variable declarations.
 !
@@ -134,12 +137,12 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:)
-      real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:,:)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tl_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: tl_tflux(LBi:,LBj:,:,:,:)
 #   endif
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
@@ -150,12 +153,12 @@
 #  endif
       real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #   endif
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
@@ -167,12 +170,13 @@
       real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
 # else
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  ifdef SOLVE3D 
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
 #   endif
      real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -183,12 +187,13 @@
 #  endif
       real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
 #   endif
       real(r8), intent(inout) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -203,9 +208,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
+      integer :: i, j, k
 # ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 # endif
 
 # include "set_bounds.h"
@@ -229,16 +234,18 @@
 !
 !  Surface momentum stress gradient norm.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          ad_ustr(i,j,Lout)=tl_ustr(i,j,Linp)+                          &
-     &                      ad_ustr(i,j,Lout)
+      DO k=1,Nfrec(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            ad_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Linp)+                    &
+     &                          ad_ustr(i,j,k,Lout)
+          END DO
         END DO
-      END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          ad_vstr(i,j,Lout)=tl_vstr(i,j,Linp)+                          &
-     &                      ad_vstr(i,j,Lout)
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            ad_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Linp)+                    &
+     &                          ad_vstr(i,j,k,Lout)
+          END DO
         END DO
       END DO
 # endif
@@ -295,10 +302,12 @@
 !  Surface tracers flux gradient norm.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            ad_tflux(i,j,Lout,itrc)=tl_tflux(i,j,Linp,itrc)+            &
-     &                              ad_tflux(i,j,Lout,itrc)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              ad_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Linp,itrc)+      &
+     &                                  ad_tflux(i,j,k,Lout,itrc)
+            END DO
           END DO
         END DO
       END DO

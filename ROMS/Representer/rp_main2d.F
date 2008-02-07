@@ -22,6 +22,9 @@
       USE mod_scalars
       USE mod_stepping
 !
+# ifdef ADJUST_WSTRESS
+      USE frc_adjust_mod, ONLY : load_TLforcing
+# endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif
@@ -224,6 +227,22 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# ifdef ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Load surface forcing to storage arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL load_TLforcing (ng, TILE, Lfout(ng))
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice

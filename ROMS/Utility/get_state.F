@@ -1306,15 +1306,15 @@
         IF (get_var(idUsms)) THEN
           IF (InpThread) THEN
             status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
-            gtype=vflag(varid)*u2dvar
+            gtype=vflag(varid)*u3dvar
           END IF
-          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
-     &                      FORCES(ng) % tl_ustr(LBi,LBj,Tindex))
+     &                      FORCES(ng) % tl_ustr(LBi,LBj,1,Tindex))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
@@ -1335,15 +1335,15 @@
         IF (get_var(idVsms)) THEN
           IF (InpThread) THEN
             status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
-            gtype=vflag(varid)*v2dvar
+            gtype=vflag(varid)*v3dvar
           END IF
-          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
-     &                      FORCES(ng) % tl_vstr(LBi,LBj,Tindex))
+     &                      FORCES(ng) % tl_vstr(LBi,LBj,1,Tindex))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
@@ -1493,15 +1493,16 @@
             IF (InpThread) THEN
               status=nf90_inq_varid(ncINPid,                            &
      &                              TRIM(Vname(1,idTsur(itrc))), varid)
-              gtype=vflag(varid)*r2dvar
+              gtype=vflag(varid)*r3dvar
             END IF
-            status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
-     &                        FORCES(ng)% tl_tflux(LBi,LBj,Tindex,itrc))
+     &                        FORCES(ng) % tl_tflux(LBi,LBj,1,          &
+     &                                              Tindex,itrc))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
@@ -1821,15 +1822,15 @@
         IF (get_var(idUsms)) THEN
           IF (InpThread) THEN
             status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
-            gtype=vflag(varid)*u2dvar
+            gtype=vflag(varid)*u3dvar
           END IF
-          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
-     &                      FORCES(ng) % ad_ustr(LBi,LBj,Tindex))
+     &                      FORCES(ng) % ad_ustr(LBi,LBj,1,Tindex))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
@@ -1850,15 +1851,15 @@
         IF (get_var(idVsms)) THEN
           IF (InpThread) THEN
             status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
-            gtype=vflag(varid)*v2dvar
+            gtype=vflag(varid)*v3dvar
           END IF
-          status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj,                  &
+          status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
-     &                      FORCES(ng) % ad_vstr(LBi,LBj,Tindex))
+     &                      FORCES(ng) % ad_vstr(LBi,LBj,1,Tindex))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
               WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
@@ -1976,15 +1977,16 @@
             IF (InpThread) THEN
               status=nf90_inq_varid(ncINPid,                            &
      &                              TRIM(Vname(1,idTsur(itrc))), varid)
-              gtype=vflag(varid)*r2dvar
+              gtype=vflag(varid)*r3dvar
             END IF
-            status=nf_fread2d(ng, model, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj,                &
+            status=nf_fread3d(ng, model, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
      &                        Fscl, Fmin, Fmax,                         &
 #   ifdef MASKING
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
-     &                        FORCES(ng)% ad_tflux(LBi,LBj,Tindex,itrc))
+     &                        FORCES(ng) % ad_tflux(LBi,LBj,1,          &
+     &                                              Tindex,itrc))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
                 WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &

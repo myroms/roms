@@ -10,16 +10,20 @@
 !                                                                      !
 !  This MODULE contains time stepping indices.                         !
 !                                                                      !
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!  Lfinp      Surface forcing adjustment input  fields index.          !
+!  Lfout      Surface forcing adjustment output fields index.          !
+#endif
 !  Lnew      New descent algorithm state solution index.               !
 !  Lold      Previous descent algorithm state solution index.          !
-!  knew      Fast time index corresponding to the newest time step     !
-!              for variables associated with 2D primitive equations    !
-!  krhs      Fast time index corresponding to the time step 2D         !
-!              primitive variables used to calculate the right-hand    !
-!              terms.                                                  !
-!  kstp      Fast time index corresponding to the time step 2D         !
-!              primitive variables to which the current changes        !
-!              are added to compute the new time step values.          !
+!                                                                      !
+!  knew      Barotropic (fast) time-step index corresponding to the    !
+!              newest values for 2D primitive equation variables.      !
+!  krhs      Barotropic (fast) time-step index used to compute the     !
+!              right-hand-terms of 2D primitive equation variables.    !
+!  kstp      Barotropic (fast) time-step index to which the current    !
+!              changes are added to compute new 2D primitive equation  !
+!              variables.                                              !
 !                                                                      !
 !  nfm3      Float index for time level "n-3".                         !
 !  nfm2      Float index for time level "n-2".                         !
@@ -27,10 +31,17 @@
 !  nf        Float index for time level "n".                           !
 !  nfp1      Float index for time level "n+1".                         !
 !                                                                      !
-!  nnew                                                                !
-!  nrhs                                                                !
-!  nstp                                                                !
+!  nnew      Baroclinic (slow) time-step index corresponding to the    !
+!              newest values for 3D primitive equation variables.      !
+!  nrhs      Baroclinic (slow) time-step index used to compute the     !
+!              right-hand-terms of 3D primitive equation variables.    !
+!  nstp      Baroclinic (slow) time-step index to which the current    !
+!              changes are added to compute new 3D primitive equation  !
+!              variables.                                              !
+#if defined SSH_TIDES || defined UV_TIDES
+!                                                                      !
 !  NTC       Number of tidal components to consider.                   !
+#endif
 !                                                                      !
 !=======================================================================
 !
@@ -58,6 +69,10 @@
 
 #if defined SSH_TIDES || defined UV_TIDES
         integer, dimension(Ngrids) :: NTC
+#endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        integer, dimension(Ngrids) :: Lfinp = (/ (1, ig=1,Ngrids) /)
+        integer, dimension(Ngrids) :: Lfout = (/ (1, ig=1,Ngrids) /)
 #endif
         integer, dimension(Ngrids) :: Lnew = (/ (1, ig=1,Ngrids) /)
         integer, dimension(Ngrids) :: Lold = (/ (1, ig=1,Ngrids) /)

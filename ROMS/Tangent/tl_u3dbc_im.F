@@ -96,7 +96,7 @@
 !
 !  Western edge, implicit upstream radiation condition.
 !
-          DO k=1,N(ng)(ng)
+          DO k=1,N(ng)
             DO j=Jstr,Jend+1
 !>            grad(Istr,j)=u(Istr,j  ,k,nstp)-                          &
 !>   &                     u(Istr,j-1,k,nstp)
@@ -222,9 +222,9 @@
             DO j=Jstr,Jend
 #   ifdef EAST_M3NUDGING
               IF (BOUNDARY(ng)%u_east_Cx(j,k).eq.0.0_r8) THEN
-                tau=M3obc_in(ieast)
+                tau=M3obc_in(ng,ieast)
               ELSE
-                tau=M3obc_out(ieast)
+                tau=M3obc_out(ng,ieast)
               END IF
               tau=tau*dt(ng)
 #   endif
@@ -341,9 +341,9 @@
             DO i=IstrU,Iend
 #   ifdef SOUTH_M3NUDGING
               IF (BOUNDARY(ng)%u_south_Ce(i,k).eq.0.0_r8) THEN
-                tau=M3obc_in(isouth)
+                tau=M3obc_in(ng,isouth)
               ELSE
-                tau=M3obc_out(isouth)
+                tau=M3obc_out(ng,isouth)
               END IF
               tau=tau*dt(ng)
 #   endif
@@ -472,9 +472,9 @@
             DO i=IstrU,Iend
 #   ifdef NORTH_M3NUDGING
               IF (BOUNDARY(ng)%u_north_Ce(i,k).eq.0.0_r8) THEN
-                tau=M3obc_in(inorth)
+                tau=M3obc_in(ng,inorth)
               ELSE
-                tau=M3obc_out(inorth)
+                tau=M3obc_out(ng,inorth)
               END IF
               tau=tau*dt(ng)
 #   endif

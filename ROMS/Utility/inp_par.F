@@ -855,11 +855,11 @@
             Npts=load_i(Nval, Rval, Ngrids, ndefHIS)
           ELSE IF (TRIM(KeyWord).eq.'NTSAVG') THEN
             Npts=load_i(Nval, Rval, Ngrids, ntsAVG)
-# ifdef ADJOINT
+#ifdef ADJOINT
             DO ng=1,Ngrids           
               IF (ntsAVG(ng).eq.1) ntsAVG(ng)=ntimes(ng)
             END DO
-# endif
+#endif
           ELSE IF (TRIM(KeyWord).eq.'NAVG') THEN
             Npts=load_i(Nval, Rval, Ngrids, nAVG)
           ELSE IF (TRIM(KeyWord).eq.'NDEFAVG') THEN
@@ -882,6 +882,14 @@
             Npts=load_i(Nval, Rval, Ngrids, nADJ)
           ELSE IF (TRIM(KeyWord).eq.'NDEFADJ') THEN
             Npts=load_i(Nval, Rval, Ngrids, ndefADJ)
+          ELSE IF (TRIM(KeyWord).eq.'NSFF') THEN
+            Npts=load_i(Nval, Rval, Ngrids, nSFF)
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+            DO ng=1,Ngrids
+              Nfrec(ng)=1+ntimes(ng)/nSFF(ng)
+            END DO
+            allocate ( SF_time(MAXVAL(Nfrec),Ngrids) )
+#endif
           ELSE IF (TRIM(KeyWord).eq.'LrstGST') THEN
             Npts=load_l(Nval, Cval, 1, LrstGST)
           ELSE IF (TRIM(KeyWord).eq.'MaxIterGST') THEN
@@ -1956,6 +1964,11 @@
      &            'Number of timesteps between creation of new',        &
      &            'adjoint file.'
           END IF
+#endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+          WRITE (out,130) nSFF(ng), 'nSFF',                             &
+     &          'Number of timesteps between 4DVAR adjustment of',      &
+     &          'surface forcing fields.'
 #endif
 #ifdef PROPAGATOR
           WRITE (out,170) LrstGST, 'LrstGST',                           &

@@ -37,7 +37,6 @@
 !
 !  Local variable declarations.
 !
-      logical, save :: First = .TRUE.
       logical :: ldef
 
       integer :: ifile, lstr, status
@@ -349,21 +348,6 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
       END IF
-# ifdef FOUR_DVAR
-!
-!-----------------------------------------------------------------------
-!  Create nonlinear model initial conditions file, if necessary. 
-!-----------------------------------------------------------------------
-!
-!  If start of descent algorithm iterations, create initial conditions
-!  file or prepare existing file to append new data to it.
-!
-      IF (First) THEN
-        First=.FALSE.
-        CALL def_ini (ng)
-        IF (exit_flag.ne.NoError) RETURN
-      END IF
-# endif
 # if defined FOUR_DVAR || defined VERIFICATION
 #  ifdef OBSERVATIONS
 !

@@ -780,6 +780,30 @@
 !
         integer, dimension(Ngrids) :: ninfo
 !
+!  Number of timesteps between adjustment of 4DVAR surface forcing
+!  fields. In strong constraint 4DVAR, it is possible to adjust surface
+!  forcing fields at other intervals in addition to initial time.
+!  These parameters are used to store the appropriate number of
+!  surface forcing records in output history NetCDF files.
+!
+!    Nfrec(:) = 1 + ntimes(:) / nSFF(:)
+!
+!  Here, it is assumed that nSFF is a multiple of NTIMES or greater
+!  than NTIMES. If nSFF > NTIMES, only one record is stored in the
+!  output history NetCDF files and the adjustment is for constant
+!  forcing with constant correction.
+!
+        integer, dimension(Ngrids) :: nSFF       ! number of timesteps
+        integer, dimension(Ngrids) :: Nfrec      ! number of records
+        integer, dimension(Ngrids) :: SFcount    ! record counter
+
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Time (s) of surface forcing adjustment.
+!
+        real(r8), allocatable :: SF_time(:,:)
+#endif
+!
 !  Restart time record to read from disk and use as the initial
 !  conditions. Use nrrec=0 for new solutions. If nrrec is negative
 !  (said, nrrec=-1), the model will restart from the most recent
@@ -1621,6 +1645,9 @@
       allocate ( Hdecay(MstateVar,Ngrids) )
       allocate ( Vdecay(MstateVar,Ngrids) )
 #endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      allocate ( SF_time(MAXVAL(Nfrec),Ngrids) )
+#endif
 !
 !---------------------------------------------------------------------
 !  Set tracer identification indices.
@@ -1913,6 +1940,9 @@
         gamma2(ng)=-1.0_r8
 #if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
         Hcount(ng)=0
+#endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        SFcount(ng)=0
 #endif
         first_time(ng)=0
         DO itrc=1,NAT+NPT

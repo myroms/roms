@@ -43,6 +43,9 @@
 !***********************************************************************
 !
       USE mod_param
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+#endif
 !
 !  Imported variable declarations.
 !
@@ -52,12 +55,12 @@
 !
 #ifdef ASSUMED_SHAPE
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: s2_sustr(LBi:,LBj:,:)
-      real(r8), intent(in) :: s2_svstr(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_sustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s2_svstr(LBi:,LBj:,:,:)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: s2_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s2_tflux(LBi:,LBj:,:,:,:)
 #  endif
       real(r8), intent(in) :: s2_t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: s2_u(LBi:,LBj:,:,:)
@@ -68,12 +71,12 @@
 # endif
       real(r8), intent(in) :: s2_zeta(LBi:,LBj:,:)
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s1_sustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: s1_svstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: s1_sustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s1_svstr(LBi:,LBj:,:,:)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s1_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: s1_tflux(LBi:,LBj:,:,:,:)
 #  endif
       real(r8), intent(inout) :: s1_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: s1_u(LBi:,LBj:,:,:)
@@ -87,12 +90,13 @@
 #else
 
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: s2_sustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(in) :: s2_svstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(in) :: s2_sustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: s2_svstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: s2_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(in) :: s2_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
 #  endif
       real(r8), intent(in) :: s2_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: s2_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -103,12 +107,13 @@
 # endif
       real(r8), intent(in) :: s2_zeta(LBi:UBi,LBj:UBj,3)
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: s1_sustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: s1_svstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: s1_sustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: s1_svstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: s1_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: s1_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #  endif
       real(r8), intent(inout) :: s1_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: s1_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -123,9 +128,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
+      integer :: i, j, k
 #ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 #endif
 
 #include "set_bounds.h"
@@ -164,14 +169,16 @@
 !
 !  Surface momentum stress.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          s1_sustr(i,j,Lout)=s2_sustr(i,j,Linp)
+      DO k=1,Nfrec(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            s1_sustr(i,j,k,Lout)=s2_sustr(i,j,k,Linp)
+          END DO
         END DO
-      END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          s1_svstr(i,j,Lout)=s2_svstr(i,j,Linp)
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            s1_svstr(i,j,k,Lout)=s2_svstr(i,j,k,Linp)
+          END DO
         END DO
       END DO
 #endif
@@ -212,9 +219,11 @@
 !  Surface tracers flux.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            s1_tflux(i,j,Lout,itrc)=s2_tflux(i,j,Linp,itrc)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              s1_tflux(i,j,k,Lout,itrc)=s2_tflux(i,j,k,Linp,itrc)
+            END DO
           END DO
         END DO
       END DO

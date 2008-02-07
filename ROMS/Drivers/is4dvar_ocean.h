@@ -254,6 +254,9 @@
 !
 !  Initialize relevant parameters.
 !
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Lfout(ng)=1         ! forcing index for output history files
+#endif
         Lold(ng)=1          ! old minimization time index
         Lnew(ng)=2          ! new minimization time index
         LTLM1=1             ! trial x-space TLM IC record in ITLname
@@ -725,14 +728,8 @@
 #endif
             tADJindx(ng)=tADJindx(ng)-1
             LwrtState2d(ng)=.TRUE.
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-            Ladjusted(ng)=.TRUE.
-#endif
             CALL ad_wrt_his (ng)
             LwrtState2d(ng)=.FALSE.
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-            Ladjusted(ng)=.FALSE.
-#endif
 !
 !  Write out previous v-space TLM initial conditions, currently in time
 !  index LTM1, into record 2 of ITLname NetCDF file.
@@ -868,6 +865,14 @@
           CALL mp_bcasti (ng, iNLM, exit_flag, 1)
 #endif
           IF (exit_flag.ne.NoError) RETURN
+
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Set index containing the surface forcing increments used the run
+!  the nonlinear model in the outer loop.
+!
+          Lfinp(ng)=Lcon
+#endif
 !
 !-----------------------------------------------------------------------
 !  Clear tangent linear state variables.

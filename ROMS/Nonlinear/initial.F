@@ -65,7 +65,9 @@
 
       integer :: LBi, UBi, LBj, UBj
       integer :: IniRec, Tindex, subs, tile, thread
-
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      integer :: irec
+#endif
       integer :: my_numthreads
 !
 !=======================================================================
@@ -169,6 +171,13 @@
       ELSE
         IniRec=tINIindx(ng)
       END IF
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Initialize surface forcing counter for storage arrays.
+!
+      SFcount(ng)=0
+# endif
 !
 !  Reset nonlinear history time record counters. These counters are
 !  reset on every iteration pass. This file is created on the first
@@ -532,6 +541,18 @@
       CALL mp_bcasti (ng, iNLM, exit_flag, 1)
 # endif
       IF (exit_flag.ne.NoError) RETURN
+#endif
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  If first pass of iteration loop, set time of surface forcing
+!  adjustment.
+!
+      IF (Nrun.eq.ERstr) THEN
+        SF_time(1,ng)=time(ng)
+        DO irec=2,Nfrec(ng)
+          SF_time(irec,ng)=SF_time(irec,ng)+nSFF(ng)*dt(ng)
+        END DO
+      END IF
 #endif
 
 #if defined W4DPSAS || defined NLM_OUTER

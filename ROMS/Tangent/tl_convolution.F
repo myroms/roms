@@ -307,12 +307,12 @@
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
@@ -374,12 +374,13 @@
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,2,N(ng))
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,2,N(ng))
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -406,9 +407,9 @@
 #  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, is, j
+      integer :: i, is, j, k
 # ifdef SOLVE3D
-      integer :: k, itrc
+      integer :: itrc
 # endif
       real(r8) :: cff
 # ifdef SOLVE3D
@@ -486,24 +487,26 @@
 !
 !  Tangent linear surface momentum stress.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
-          tl_ustr(i,j,Linp)=tl_ustr(i,j,Linp)/                          &
-     &                      SQRT(om_u(i,j)*on_u(i,j))
+      DO k=1,Nfrec(ng)
+        DO j=JU_RANGE
+          DO i=IU_RANGE
+            tl_ustr(i,j,k,Linp)=tl_ustr(i,j,k,Linp)/                    &
+     &                          SQRT(om_u(i,j)*on_u(i,j))
+          END DO
         END DO
-      END DO
-      DO j=JV_RANGE
-        DO i=IV_RANGE
-          tl_vstr(i,j,Linp)=tl_vstr(i,j,Linp)/                          &
-     &                      SQRT(om_v(i,j)*on_v(i,j))
+        DO j=JV_RANGE
+          DO i=IV_RANGE
+            tl_vstr(i,j,k,Linp)=tl_vstr(i,j,k,Linp)/                    &
+     &                          SQRT(om_v(i,j)*on_v(i,j))
+          END DO
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj,                           &
+      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng),             &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_ustr(:,:,Linp),                            &
-     &                    tl_vstr(:,:,Linp))
+     &                    tl_ustr(:,:,:,Linp),                          &
+     &                    tl_vstr(:,:,:,Linp))
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -563,15 +566,17 @@
         DO i=IR_RANGE
           fac=1.0_r8/SQRT(om_r(i,j)*on_r(i,j))
           DO itrc=1,NT(ng)
-            tl_tflux(i,j,Linp,itrc)=fac*tl_tflux(i,j,Linp,itrc)
+            DO k=1,Nfrec(ng)
+              tl_tflux(i,j,k,Linp,itrc)=fac*tl_tflux(i,j,k,Linp,itrc)
+            END DO
           END DO
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj, 1, NT(ng),                &
+      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng), 1, NT(ng),  &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_tflux(:,:,Linp,:))
+     &                    tl_tflux(:,:,:,Linp,:))
 #   endif
 #  endif
 # endif
@@ -625,29 +630,31 @@
 !
 !  Tangent linear surface momentum stress.
 !
-      CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,          &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints,                              &
-     &                       NHsteps(isUstr)/ifac,                      &
-     &                       DTsizeH(isUstr),                           &
-     &                       Kh,                                        &
-     &                       pm, pn, pmon_r, pnom_p,                    &
+      DO k=1,Nfrec(ng)
+        CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,        &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         NghostPoints,                            &
+     &                         NHsteps(isUstr)/ifac,                    &
+     &                         DTsizeH(isUstr),                         &
+     &                         Kh,                                      &
+     &                         pm, pn, pmon_r, pnom_p,                  &
 #   ifdef MASKING
-     &                       umask, pmask,                              &
+     &                         umask, pmask,                            &
 #   endif
-     &                       tl_ustr(:,:,Linp))
+     &                         tl_ustr(:,:,k,Linp))
 
-      CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,          &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       NghostPoints,                              &
-     &                       NHsteps(isVstr)/ifac,                      &
-     &                       DTsizeH(isVstr),                           &
-     &                       Kh,                                        &
-     &                       pm, pn, pmon_p, pnom_r,                    &
+        CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,        &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         NghostPoints,                            &
+     &                         NHsteps(isVstr)/ifac,                    &
+     &                         DTsizeH(isVstr),                         &
+     &                         Kh,                                      &
+     &                         pm, pn, pmon_p, pnom_r,                  &
 #  ifdef MASKING
-     &                       vmask, pmask,                              &
+     &                         vmask, pmask,                            &
 #  endif
-     &                       tl_vstr(:,:,Linp))
+     &                         tl_vstr(:,:,k,Linp))
+      END DO
 # endif
 # ifdef SOLVE3D
 !
@@ -708,17 +715,19 @@
 !
       DO itrc=1,NT(ng)
         is=isTsur(itrc)
-        CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,        &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         NghostPoints,                            &
-     &                         NHsteps(is)/ifac,                        &
-     &                         DTsizeH(is),                             &
-     &                         Kh,                                      &
-     &                         pm, pn, pmon_u, pnom_v,                  &
+        DO k=1,Nfrec(ng) 
+          CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           NghostPoints,                          &
+     &                           NHsteps(is)/ifac,                      &
+     &                           DTsizeH(is),                           &
+     &                           Kh,                                    &
+     &                           pm, pn, pmon_u, pnom_v,                &
 #   ifdef MASKING
-     &                         rmask, umask, vmask,                     &
+     &                           rmask, umask, vmask,                   &
 #   endif
-     &                         tl_tflux(:,:,Linp,itrc))
+     &                           tl_tflux(:,:,k,Linp,itrc))
+        END DO
       END DO
 #  endif
 # endif
@@ -760,22 +769,24 @@
 !
 !  Tangent linear surface momentum stress.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
-          tl_ustr(i,j,Linp)=tl_ustr(i,j,Linp)*HnormSUS(i,j)
+      DO k=1,Nfrec(ng)
+        DO j=JU_RANGE
+          DO i=IU_RANGE
+            tl_ustr(i,j,k,Linp)=tl_ustr(i,j,k,Linp)*HnormSUS(i,j)
+          END DO
         END DO
-      END DO
-      DO j=JV_RANGE
-        DO i=IV_RANGE
-          tl_vstr(i,j,Linp)=tl_vstr(i,j,Linp)*HnormSVS(i,j)
+        DO j=JV_RANGE
+          DO i=IV_RANGE
+            tl_vstr(i,j,k,Linp)=tl_vstr(i,j,k,Linp)*HnormSVS(i,j)
+          END DO
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj,                           &
+      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng),             &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_ustr(:,:,Linp),                            &
-     &                    tl_vstr(:,:,Linp))
+     &                    tl_ustr(:,:,:,Linp),                          &
+     &                    tl_vstr(:,:,:,Linp))
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -825,18 +836,20 @@
 !  Tangent linear surface tracers flux.
 !
       DO itrc=1,NT(ng)
-        DO j=JR_RANGE
-          DO i=IR_RANGE
-              tl_tflux(i,j,Linp,itrc)=tl_tflux(i,j,Linp,itrc)*          &
-     &                                HnormSTF(i,j,itrc)
+        DO k=1,Nfrec(ng)
+          DO j=JR_RANGE
+            DO i=IR_RANGE
+              tl_tflux(i,j,k,Linp,itrc)=tl_tflux(i,j,k,Linp,itrc)*      &
+     &                                   HnormSTF(i,j,itrc)
+            END DO
           END DO
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
-     &                    LBi, UBi, LBj, UBj, 1, NT(ng),                &
+      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+     &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng), 1, NT(ng),  &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_tflux(:,:,Linp,:))
+     &                    tl_tflux(:,:,:,Linp,:))
 #   endif
 #  endif
 # endif

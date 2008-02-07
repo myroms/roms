@@ -493,6 +493,8 @@
       integer :: i, ndims, ngatts, recdim, status, varid
       integer :: dimid, dimsiz
 
+      integer, dimension(Ngrids) :: MyStateVar
+
       real(r8), parameter :: IniVal = 0.0_r8
 
       character (len=20) :: dimnam
@@ -533,6 +535,8 @@
                 Ndatum(ng)=dimsiz
               ELSE IF (TRIM(dimnam).eq.'survey') THEN
                 Nsurvey(ng)=dimsiz
+              ELSE IF (TRIM(dimnam).eq.'state_variable') THEN
+                MyStateVar(ng)=dimsiz
               END IF
             END DO
             IF (Ndatum(ng).eq.0) THEN
@@ -904,7 +908,7 @@
             RETURN
           END IF
           start(1)=1
-          total(1)=NstateVar(ng)
+          total(1)=MyStateVar(ng)
           status=nf90_get_var(ncOBSid(ng), varid,                       &
      &                        FOURDVAR(ng)%ObsVar, start, total)
           IF (status.ne.nf90_noerr) THEN

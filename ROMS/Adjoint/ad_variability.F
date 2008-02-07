@@ -189,12 +189,12 @@
       real(r8), intent(inout) :: ad_u(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -220,12 +220,13 @@
       real(r8), intent(inout) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #   endif
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -247,9 +248,9 @@
 #  endif
 # endif
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, j
+      integer :: i, j, k
 # ifdef SOLVE3D
-      integer :: k, itrc
+      integer :: itrc
 # endif
       real(r8), dimension(MstateVar) :: fac
 !
@@ -306,24 +307,26 @@
 !
 !  Adjoint surface momentum stress.
 !
-      DO j=JU_RANGE
-        DO i=IU_RANGE
-          ad_ustr(i,j,Linp)=ad_ustr(i,j,Linp)*sustr_std(i,j)*           &
-     &                      fac(isUstr)
+      DO k=1,Nfrec(ng)
+        DO j=JU_RANGE
+          DO i=IU_RANGE
+            ad_ustr(i,j,k,Linp)=ad_ustr(i,j,k,Linp)*sustr_std(i,j)*     &
+     &                          fac(isUstr)
+          END DO
         END DO
-      END DO
-      DO j=JV_RANGE
-        DO i=IV_RANGE
-          ad_vstr(i,j,Linp)=ad_vstr(i,j,Linp)*svstr_std(i,j)*           &
-     &                      fac(isVstr)
+        DO j=JV_RANGE
+          DO i=IV_RANGE
+            ad_vstr(i,j,k,Linp)=ad_vstr(i,j,k,Linp)*svstr_std(i,j)*     &
+     &                          fac(isVstr)
+          END DO
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
-     &                       LBi, UBi, LBj, UBj,                        &
+      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng),          &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_ustr(:,:,Linp),                         &
-     &                       ad_vstr(:,:,Linp))
+     &                       ad_ustr(:,:,:,Linp),                       &
+     &                       ad_vstr(:,:,:,Linp))
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -376,19 +379,21 @@
 !  Adjoint surface tracers flux.
 !
       DO itrc=1,NT(ng)
-        DO j=JR_RANGE
-          DO i=IR_RANGE
-              ad_tflux(i,j,Linp,itrc)=ad_tflux(i,j,Linp,itrc)*          &
-     &                                stflx_std(i,j,itrc)*              &
-     &                                fac(isTsur(itrc))
+        DO k=1,Nfrec(ng)
+          DO j=JR_RANGE
+            DO i=IR_RANGE
+              ad_tflux(i,j,k,Linp,itrc)=ad_tflux(i,j,k,Linp,itrc)*      &
+     &                                  stflx_std(i,j,itrc)*            &
+     &                                  fac(isTsur(itrc))
+            END DO
           END DO
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
-     &                       LBi, UBi, LBj, UBj, 1, NT(ng),             &
+      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+     &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
-     &                       ad_tflux(:,:,Linp,:))
+     &                       ad_tflux(:,:,:,Linp,:))
 #   endif
 #  endif
 # endif
@@ -403,4 +408,3 @@
       END SUBROUTINE ad_variability_tile
 #endif
       END MODULE ad_variability_mod
-

@@ -46,7 +46,9 @@
 
       integer :: i, j, itrc, nrec, nvd, nvd3, nvd4
       integer :: recdim, status, varid
-
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      integer :: frecdim
+# endif
       integer :: DimIDs(29), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
@@ -54,6 +56,12 @@
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+#  ifdef ADJUST_STFLUX
+      integer :: t3dfrc(4)
+#  endif
+# endif
+# ifdef ADJUST_STFLUX
+      integer :: u3dfrc(4), v3dfrc(4)
 # endif
 
       real(r8) :: Aval(6)
@@ -168,6 +176,10 @@
         status=nf90_def_dim(ncHSSid(ng),'Nstate  ',NstateVar(ng),       &
      &                      DimIDs(29))
 # endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        status=nf90_def_dim(ncHSSid(ng),'Nadjust ',Nfrec(ng),           &
+     &                      frecdim)
+# endif
         status=nf90_def_dim(ncHSSid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
      &                      nf90_unlimited,DimIDs(12))
         recdim=DimIDs(12)
@@ -201,6 +213,12 @@
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
 #  endif
+#  ifdef ADJUST_STFLUX
+        t3dfrc(1)=DimIDs( 1)
+        t3dfrc(2)=DimIDs( 5)
+        t3dfrc(3)=frecdim
+        t3dfrc(4)=DimIDs(12)
+#  endif
 # endif
 !
 !  Define dimension vectors for staggered u-momemtum type variables.
@@ -222,6 +240,12 @@
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
 #  endif
+#  ifdef ADJUST_WSTRESS
+        u3dfrc(1)=DimIDs( 2)
+        u3dfrc(2)=DimIDs( 6)
+        u3dfrc(3)=frecdim
+        u3dfrc(4)=DimIDs(12)
+#  endif
 # endif
 !
 !  Define dimension vectors for staggered v-momemtum type variables.
@@ -242,6 +266,12 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+#  endif
+#  ifdef ADJUST_WSTRESS
+        v3dfrc(1)=DimIDs( 3)
+        v3dfrc(2)=DimIDs( 7)
+        v3dfrc(3)=frecdim
+        v3dfrc(4)=DimIDs(12)
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -434,6 +464,13 @@
           Vinfo( 1)=Vname(1,idTsur(itrc))
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
           Vinfo( 3)='nondimensional'
+          IF (itrc.eq.itemp) THEN
+            Vinfo(11)='upward flux, cooling'
+            Vinfo(12)='downward flux, heating'
+          ELSE IF (itrc.eq.isalt) THEN
+            Vinfo(11)='upward flux, freshening (net precipitation)'
+            Vinfo(12)='downward flux, salting (net evaporation)'
+          END IF
           Vinfo(14)=Vname(4,idTsur(itrc))
           Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
@@ -442,7 +479,7 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(r2dvar,r8)
           status=def_var(ncHSSid(ng),hssVid(idTsur(itrc),ng),           &
-     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
+     &                   NF_FOUT,nvd4,t3dfrc,Aval,Vinfo,ncname)
         END DO
 #  endif
 # endif
@@ -461,7 +498,7 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(u2dvar,r8)
         status=def_var(ncHSSid(ng),hssVid(idUsms,ng),NF_FOUT,           &
-     &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
+     &                 nvd4,u3dfrc,Aval,Vinfo,ncname)
 !
 !  Define surface V-momentum stress.
 !
@@ -477,7 +514,7 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(v2dvar,r8)
         status=def_var(ncHSSid(ng),hssVid(idVsms,ng),NF_FOUT,           &
-     &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+     &                 nvd4,v3dfrc,Aval,Vinfo,ncname)
 # endif
 !
 !-----------------------------------------------------------------------

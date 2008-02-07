@@ -47,7 +47,9 @@
 
       integer :: i, j, itrc, nrec, nvd, nvd3, nvd4
       integer :: recdim, status, varid
-
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      integer :: frecdim
+# endif
       integer :: DimIDs(29), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
@@ -55,6 +57,12 @@
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
+#  ifdef ADJUST_STFLUX
+      integer :: t3dfrc(3)
+#  endif
+# endif
+# ifdef ADJUST_WSTRESS
+      integer :: u3dfrc(3), v3dfrc(3)
 # endif
 
       real(r8) :: Aval(6)
@@ -169,6 +177,10 @@
         status=nf90_def_dim(ncADJid(ng),'Nstate  ',NstateVar(ng),       &
      &                      DimIDs(29))
 # endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        status=nf90_def_dim(ncADJid(ng),'Nadjust ',Nfrec(ng),           &
+     &                      frecdim)
+# endif
         status=nf90_def_dim(ncADJid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
      &                      nf90_unlimited,DimIDs(12))
         recdim=DimIDs(12)
@@ -202,6 +214,11 @@
         t3dgrd(3)=DimIDs( 9)
         t3dgrd(4)=DimIDs(12)
 #  endif
+#  ifdef ADJUST_STFLUX
+        t3dfrc(1)=DimIDs( 1)
+        t3dfrc(2)=DimIDs( 5)
+        t3dfrc(3)=frecdim
+#  endif
 # endif
 !
 !  Define dimension vectors for staggered u-momemtum type variables.
@@ -223,6 +240,11 @@
         u3dgrd(3)=DimIDs( 9)
         u3dgrd(4)=DimIDs(12)
 #  endif
+#  ifdef ADJUST_WSTRESS
+        u3dfrc(1)=DimIDs( 2)
+        u3dfrc(2)=DimIDs( 6)
+        u3dfrc(3)=frecdim
+#  endif
 # endif
 !
 !  Define dimension vectors for staggered v-momemtum type variables.
@@ -243,6 +265,11 @@
         v3dgrd(2)=DimIDs( 7)
         v3dgrd(3)=DimIDs( 9)
         v3dgrd(4)=DimIDs(12)
+#  endif
+#  ifdef ADJUST_WSTRESS
+        v3dfrc(1)=DimIDs( 3)
+        v3dfrc(2)=DimIDs( 7)
+        v3dfrc(3)=frecdim
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -328,11 +355,67 @@
         status=def_var(ncADJid(ng),varid,NF_TYPE,                       &
      &                 1,recdim,Aval,Vinfo,ncname)
 # endif
+# ifdef ADJUST_WSTRESS
+!
+!  Define surface U-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+        Vinfo( 1)=Vname(1,idUsms)
+        WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
+        Vinfo( 3)=Vname(3,idUsms)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
+        status=def_var(ncADJid(ng),adjVid(idUsms,ng),NF_FOUT,           &
+     &                 nvd3,u3dfrc,Aval,Vinfo,ncname)
+!
+!  Define surface V-momentum stress.
+!
+        Vinfo( 1)=Vname(1,idVsms)
+        WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
+        Vinfo( 3)=Vname(3,idVsms)
+#  if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#  endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
+        status=def_var(ncADJid(ng),adjVid(idVsms,ng),NF_FOUT,           &
+     &                 nvd3,v3dfrc,Aval,Vinfo,ncname)
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Define surface net heat flux. Notice that different tracer fluxes
+!  are written at their own fixed time-dimension (of size Nfrec) to
+!  allow 4DVAR adjustments at other times in addition to initial time.
+!
+        DO itrc=1,NT(ng)
+          Vinfo( 1)=Vname(1,idTsur(itrc))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
+          Vinfo( 3)=Vname(3,idTsur(itrc))
+          IF (itrc.eq.itemp) THEN
+            Vinfo(11)='upward flux, cooling'
+            Vinfo(12)='downward flux, heating'
+          ELSE IF (itrc.eq.isalt) THEN
+            Vinfo(11)='upward flux, freshening (net precipitation)'
+            Vinfo(12)='downward flux, salting (net evaporation)'
+          END IF
+#  if defined WRITE_WATER && defined MASKING
+          Vinfo(20)='mask_rho'
+#  endif
+          Vinfo(22)='coordinates'
+          Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+          status=def_var(ncADJid(ng),adjVid(idTsur(itrc),ng),           &
+     &                   NF_FOUT,nvd3,t3dfrc,Aval,Vinfo,ncname)
+        END DO
+# endif
 !
 !  Define bathymetry.
 !
         Vinfo( 1)=Vname(1,idbath)
-        WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idbath))
+        WRITE (Vinfo( 2),40) TRIM(Vname(2,idbath))
         Vinfo( 3)='meter-1'
         Vinfo(14)=Vname(4,idbath)
         Vinfo(16)=Vname(1,idtime)
@@ -348,7 +431,7 @@
 !
         IF (Hout(idFsur,ng)) THEN
           Vinfo( 1)=Vname(1,idFsur)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idFsur))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idFsur))
           Vinfo( 3)='meter-1'
           Vinfo(14)=Vname(4,idFsur)
           Vinfo(16)=Vname(1,idtime)
@@ -365,7 +448,7 @@
 !
         IF (Hout(idUbar,ng)) THEN
           Vinfo( 1)=Vname(1,idUbar)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idUbar))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUbar))
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,idUbar)
           Vinfo(16)=Vname(1,idtime)
@@ -382,7 +465,7 @@
 !
         IF (Hout(idVbar,ng)) THEN
           Vinfo( 1)=Vname(1,idVbar)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idVbar))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVbar))
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,idVbar)
           Vinfo(16)=Vname(1,idtime)
@@ -400,7 +483,7 @@
 !
         IF (Hout(idUvel,ng)) THEN
           Vinfo( 1)=Vname(1,idUvel)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idUvel))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUvel))
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,idUvel)
           Vinfo(16)=Vname(1,idtime)
@@ -417,7 +500,7 @@
 !
         IF (Hout(idVvel,ng)) THEN
           Vinfo( 1)=Vname(1,idVvel)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idVvel))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVvel))
           Vinfo( 3)='second meter-1'
           Vinfo(14)=Vname(4,idVvel)
           Vinfo(16)=Vname(1,idtime)
@@ -435,15 +518,14 @@
         DO itrc=1,NT(ng)
           IF (Hout(idTvar(itrc),ng)) THEN
             Vinfo( 1)=Vname(1,idTvar(itrc))
-            WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint',                     &
-     &                                   TRIM(Vname(2,idTvar(itrc)))
+            WRITE (Vinfo( 2),40) TRIM(Vname(2,idTvar(itrc)))
             Vinfo( 3)=Vname(3,idTvar(itrc))
             Vinfo(14)=Vname(4,idTvar(itrc))
             Vinfo(16)=Vname(1,idtime)
 #  ifdef SEDIMENT_NOT_YET
             DO i=1,NST
               IF (itrc.eq.idsed(i)) THEN
-                WRITE (Vinfo(19),40) 1000.0_r8*Sd50(i,ng)
+                WRITE (Vinfo(19),50) 1000.0_r8*Sd50(i,ng)
               END IF
             END DO
 #  endif
@@ -461,7 +543,7 @@
 !
         IF (Hout(idDano,ng)) THEN
           Vinfo( 1)=Vname(1,idDano)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idDano))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idDano))
           Vinfo( 3)=Vname(3,idDano)
           Vinfo(14)=Vname(4,idDano)
           Vinfo(16)=Vname(1,idtime)
@@ -478,8 +560,7 @@
 !
         IF (Hout(idVvis,ng)) THEN
           Vinfo( 1)=Vname(1,idVvis)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idVvis))
-          Vinfo( 2)=Vname(2,idVvis)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVvis))
           Vinfo( 3)=Vname(3,idVvis)
           Vinfo(14)=Vname(4,idVvis)
           Vinfo(16)=Vname(1,idtime)
@@ -496,8 +577,7 @@
 !
         IF (Hout(idTdif,ng)) THEN
           Vinfo( 1)=Vname(1,idTdif)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idTdif))
-          Vinfo( 2)=Vname(2,idTdif)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idTdif))
           Vinfo( 3)=Vname(3,idTdif)
           Vinfo(14)=Vname(4,idTdif)
           Vinfo(16)=Vname(1,idtime)
@@ -515,8 +595,7 @@
 !
         IF (Hout(idSdif,ng)) THEN
           Vinfo( 1)=Vname(1,idSdif)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idSdif))
-          Vinfo( 2)=Vname(2,idSdif)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idSdif))
           Vinfo( 3)=Vname(3,idSdif)
           Vinfo(14)=Vname(4,idSdif)
           Vinfo(16)=Vname(1,idtime)
@@ -529,59 +608,48 @@
      &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
         END IF
 #  endif
+#  ifndef ADJUST_STFLUX
 !
 !  Define surface net heat flux.
 !
-        IF (Hout(idTsur(itemp),ng)) THEN
-          Vinfo( 1)=Vname(1,idTsur(itemp))
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint',                       &
-     &                                 TRIM(Vname(2,idTsur(itemp)))
-          Vinfo( 3)=Vname(3,idTsur(itemp))
-          Vinfo(11)='upward flux, cooling'
-          Vinfo(12)='downward flux, heating'
-          Vinfo(14)=Vname(4,idTsur(itemp))
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
+        DO itrc=1,NT(ng)
+          IF (Hout(idTsur(itrc),ng)) THEN
+            Vinfo( 1)=Vname(1,idTsur(itrc))
+            WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
+            Vinfo( 3)=Vname(3,idTsur(itrc))
+            IF (itrc.eq.itemp) THEN
+              Vinfo(11)='upward flux, cooling'
+              Vinfo(12)='downward flux, heating'
+            ELSE IF (itrc.eq.isalt) THEN
+              Vinfo(11)='upward flux, freshening (net precipitation)'
+              Vinfo(12)='downward flux, salting (net evaporation)'
+            END IF
+            Vinfo(14)=Vname(4,idTsur(itrc))
+            Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+            Vinfo(20)='mask_rho'
+#   endif
+            Vinfo(22)='coordinates'
+            Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
+            status=def_var(ncADJid(ng),adjVid(idTsur(itrc),ng),         &
+     &                     NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
+          END IF
+        END DO
 #  endif
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
-          status=def_var(ncADJid(ng),adjVid(idTsur(itemp),ng),          &
-     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
-!
-!  Define surface net salt flux.
-!
-        IF (Hout(idTsur(isalt),ng)) THEN
-          Vinfo( 1)=Vname(1,idTsur(isalt))
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint',                       &
-     &                                 TRIM(Vname(2,idTsur(isalt)))
-          Vinfo( 3)=Vname(3,idTsur(isalt))
-          Vinfo(11)='upward flux, cooling'
-          Vinfo(12)='downward flux, heating'
-          Vinfo(14)=Vname(4,idTsur(isalt))
-          Vinfo(16)=Vname(1,idtime)
-#  if defined WRITE_WATER && defined MASKING
-          Vinfo(20)='mask_rho'
-#  endif
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(Iinfo(1,idTsur(itemp),ng),r8)
-          status=def_var(ncADJid(ng),adjVid(idTsur(isalt),ng),          &
-     &                   NF_FOUT,nvd3,t2dgrd,Aval,Vinfo,ncname)
-        END IF
 # endif
+# ifndef ADJUST_WSTRESS
 !
 !  Define surface U-momentum stress.
 !
         IF (Hout(idUsms,ng)) THEN
           Vinfo( 1)=Vname(1,idUsms)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idUsms))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
           Vinfo( 3)=Vname(3,idUsms)
           Vinfo(14)=Vname(4,idUsms)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
-# endif
+#  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
           status=def_var(ncADJid(ng),adjVid(idUsms,ng),NF_FOUT,         &
@@ -592,25 +660,25 @@
 !
         IF (Hout(idVsms,ng)) THEN
           Vinfo( 1)=Vname(1,idVsms)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idVsms))
-          Vinfo( 2)=Vname(2,idVsms)
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
           Vinfo( 3)=Vname(3,idVsms)
           Vinfo(14)=Vname(4,idVsms)
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
-# endif
+#  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
           status=def_var(ncADJid(ng),adjVid(idVsms,ng),NF_FOUT,         &
      &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
         END IF
+# endif
 !
 !  Define bottom U-momentum stress.
 !
         IF (Hout(idUbms,ng)) THEN
           Vinfo( 1)=Vname(1,idUbms)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idUbms))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idUbms))
           Vinfo( 3)=Vname(3,idUbms)
           Vinfo(14)=Vname(4,idUbms)
           Vinfo(16)=Vname(1,idtime)
@@ -627,7 +695,7 @@
 !
         IF (Hout(idVbms,ng)) THEN
           Vinfo( 1)=Vname(1,idVbms)
-          WRITE (Vinfo( 2),'(a,1x,a)') 'adjoint', TRIM(Vname(2,idVbms))
+          WRITE (Vinfo( 2),40) TRIM(Vname(2,idVbms))
           Vinfo( 3)=Vname(3,idVbms)
           Vinfo(14)=Vname(4,idVbms)
           Vinfo(16)=Vname(1,idtime)
@@ -673,7 +741,7 @@
 !
         status=nf90_open(TRIM(ncname),nf90_write,ncADJid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,50) TRIM(ncname)
+          WRITE (stdout,60) TRIM(ncname)
           exit_flag=3
           ioerror=status
           RETURN
@@ -733,12 +801,14 @@
             status=nf90_inq_varid(ncADJid(ng),TRIM(Vname(1,idDano)),    &
      &                            adjVid(idDano,ng))
           END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itemp)))) THEN
-            got_var(idTsur(itemp))=.TRUE.
-            status=nf90_inq_varid(ncADJid(ng),                          &
-     &                            TRIM(Vname(1,idTsur(itemp))),         &
-     &                            adjVid(idTsur(itemp),ng))
-          END IF
+          DO itrc=1,NT(ng)
+            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+              got_var(idTsur(itrc))=.TRUE.
+              status=nf90_inq_varid(ncADJid(ng),                        &
+     &                              TRIM(Vname(1,idTsur(itrc))),        &
+     &                              adjVid(idTsur(itemp),ng))
+            END IF
+          END DO
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.
             status=nf90_inq_varid(ncADJid(ng),TRIM(Vname(1,idVvis)),    &
@@ -786,76 +856,73 @@
 !  Check if adjoint variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idtime)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idtime)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur).and.Hout(idFsur,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idFsur)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idFsur)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar).and.Hout(idUbar,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUbar)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUbar)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar).and.Hout(idVbar,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVbar)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVbar)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Hout(idUvel,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUvel)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUvel)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel).and.Hout(idVvel,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVvel)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVvel)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc)).and.Hout(idTvar(itrc),ng)) THEN
-            WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
+            WRITE (stdout,70) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
         END DO
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idDano)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idDano)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idTsur(itemp)).and.Hout(idTsur(itemp),ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idTsur(itemp))), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
-        IF (.not.got_var(idTsur(isalt)).and.Hout(idTsur(isalt),ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idTsur(isalt))), TRIM(ncname)
-          exit_flag=3
-          RETURN
-        END IF
+        DO itrc=1,NT(ng)
+          IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN
+            WRITE (stdout,70) TRIM(Vname(1,idTsur(itrc))), TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+        END DO
 # endif
         IF (.not.got_var(idUsms).and.Hout(idUsms,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUsms)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUsms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVsms).and.Hout(idVsms,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVsms)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVsms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbms).and.Hout(idUbms,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idUbms)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idUbms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbms).and.Hout(idVbms,ng)) THEN
-          WRITE (stdout,60) TRIM(Vname(1,idVbms)), TRIM(ncname)
+          WRITE (stdout,70) TRIM(Vname(1,idVbms)), TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -883,9 +950,10 @@
   20  FORMAT (3x,'AD_DEF_HIS   - inquiring adjoint file: ',a)
   30  FORMAT (/,' AD_DEF_HIS - unable to create adjoint NetCDF file: ', &
      &        a)
-  40  FORMAT (1pe11.4,1x,'millimeter')
-  50  FORMAT (/,' AD_DEF_HIS - unable to open adjoint NetCDF file: ',a)
-  60  FORMAT (/,' AD_DEF_HIS - unable to find variable: ',a,2x,         &
+  40  FORMAT ('adjoint',1x,a)
+  50  FORMAT (1pe11.4,1x,'millimeter')
+  60  FORMAT (/,' AD_DEF_HIS - unable to open adjoint NetCDF file: ',a)
+  70  FORMAT (/,' AD_DEF_HIS - unable to find variable: ',a,2x,         &
      &        ' in adjoint NetCDF file: ',a)
       RETURN
       END SUBROUTINE ad_def_his

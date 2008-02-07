@@ -190,9 +190,24 @@
         CALL mp_bcasti (ng, iTLM, exit_flag, 1)
 #  endif
         IF (exit_flag.ne.NoError) RETURN
+!
+!  It first pass, write zero initial conditions into tangent linear
+!  initial NetCDF record 2. This is a saveguard against wrong values
+!  in this NetCDF record
+!
+        CALL tl_wrt_ini (ng, Tindex, 2)
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+#  endif
       END IF
       IniRec=tITLindx(ng)
 
+#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Initialize surface forcing counter for storage arrays.
+!
+      SFcount(ng)=0
+#  endif
 #  ifndef WEAK_CONSTRAINT
 !
 !  Reset tangent linear model history time record counters. These

@@ -500,7 +500,7 @@
         Vinfo( 1)='ndefADJ'
         Vinfo( 2)=                                                      &
      &    'number of time-steps between the creation of adjoint files'
-          status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
+        status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
       END IF
 #endif
 
@@ -509,12 +509,19 @@
       Vinfo( 2)='number of time-steps between tangent history records'
       status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 
-      IF (ndefADJ(ng).gt.0) THEN
+      IF (ndefTLM(ng).gt.0) THEN
         Vinfo( 1)='ndefTLM'
         Vinfo( 2)=                                                      &
      &    'number of time-steps between the creation of tanget files'
-          status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
+        status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
       END IF
+#endif
+
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      Vinfo( 1)='nSFF'
+      Vinfo( 2)=                                                        &
+     &  'number of time-steps between 4DVAR surface forcing adjustment'
+      status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 #endif
 
 #ifdef PROPAGATOR

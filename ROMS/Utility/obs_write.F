@@ -42,19 +42,18 @@
 !
       logical :: Lwrote
 
-      integer, dimension(2) ::  start, total
-
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: LBi, UBi, LBj, UBj
       integer :: Istr, Iend, Jstr, Jend
-# ifdef DISTRIBUTE
-      integer :: Ncollect
-# endif
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Mstr, Mend, ObsSum, ObsVoid
       integer :: i, ie, is, iobs, itrc, iweight, status, varid
 # ifdef SOLVE3D
       integer :: j, k
 # endif
+# ifdef DISTRIBUTE
+      integer :: Ncollect
+# endif
+      integer, dimension(2) ::  start, total
 
       real(r8), parameter :: IniVal = 0.0_r8
 

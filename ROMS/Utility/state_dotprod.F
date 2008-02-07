@@ -68,6 +68,9 @@
       USE mod_param
       USE mod_parallel
       USE mod_ncparam
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_scalars
+#endif
 #ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_reduce
@@ -86,15 +89,15 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: s1_sustr(LBi:,LBj:)
-      real(r8), intent(in) :: s2_sustr(LBi:,LBj:)
-      real(r8), intent(in) :: s1_svstr(LBi:,LBj:)
-      real(r8), intent(in) :: s2_svstr(LBi:,LBj:)
+      real(r8), intent(in) :: s1_sustr(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_sustr(LBi:,LBj:,:)
+      real(r8), intent(in) :: s1_svstr(LBi:,LBj:,:)
+      real(r8), intent(in) :: s2_svstr(LBi:,LBj:,:)
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: s1_tflux(LBi:,LBj:,:)
-      real(r8), intent(in) :: s2_tflux(LBi:,LBj:,:)
+      real(r8), intent(in) :: s1_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: s2_tflux(LBi:,LBj:,:,:)
 #  endif
       real(r8), intent(in) :: s1_t(LBi:,LBj:,:,:)
       real(r8), intent(in) :: s2_t(LBi:,LBj:,:,:)
@@ -119,15 +122,15 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: s1_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: s2_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: s1_svstr(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: s2_svstr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: s1_sustr(LBi:UBi,LBj:UBj,Nfrec(ng))
+      real(r8), intent(in) :: s2_sustr(LBi:UBi,LBj:UBj,Nfrec(ng))
+      real(r8), intent(in) :: s1_svstr(LBi:UBi,LBj:UBj,Nfrec(ng))
+      real(r8), intent(in) :: s2_svstr(LBi:UBi,LBj:UBj,Nfrec(ng))
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: s1_tflux(LBi:UBi,LBj:UBj,NT(ng))
-      real(r8), intent(in) :: s2_tflux(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(in) :: s1_tflux(LBi:UBi,LBj:UBj,Nfrec(ng),NT(ng))
+      real(r8), intent(in) :: s2_tflux(LBi:UBi,LBj:UBj,Nfrec(ng),NT(ng))
 #  endif
       real(r8), intent(in) :: s1_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
       real(r8), intent(in) :: s2_t(LBi:UBi,LBj:UBj,N(ng),NT(ng))
@@ -150,9 +153,9 @@
 !  Local variable declarations.
 !
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: NSUB, i, j
+      integer :: NSUB, i, j, k
 #ifdef SOLVE3D
-      integer :: itrc, k
+      integer :: itrc
 #endif
       real(r8) :: cff
       real(r8), dimension(0:NstateVars) :: my_DotProd
@@ -213,24 +216,26 @@
 !
 !  Surface momentum stress.
 !
-      DO j=JstrR,JendR
-        DO i=Istr,IendR
-          cff=s1_sustr(i,j)*s2_sustr(i,j)
+      DO k=1,Nfrec(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            cff=s1_sustr(i,j,k)*s2_sustr(i,j,k)
 # ifdef MASKING
-          cff=cff*umask(i,j)
+            cff=cff*umask(i,j)
 # endif
-          my_DotProd(0)=my_DotProd(0)+cff
-          my_DotProd(isUstr)=my_DotProd(isUstr)+cff
+            my_DotProd(0)=my_DotProd(0)+cff
+            my_DotProd(isUstr)=my_DotProd(isUstr)+cff
+          END DO
         END DO
-      END DO
-      DO j=Jstr,JendR
-        DO i=IstrR,IendR
-          cff=s1_svstr(i,j)*s2_svstr(i,j)
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            cff=s1_svstr(i,j,k)*s2_svstr(i,j,k)
 # ifdef MASKING
-          cff=cff*vmask(i,j)
+            cff=cff*vmask(i,j)
 # endif
-          my_DotProd(0)=my_DotProd(0)+cff
-          my_DotProd(isVstr)=my_DotProd(isVstr)+cff
+            my_DotProd(0)=my_DotProd(0)+cff
+            my_DotProd(isVstr)=my_DotProd(isVstr)+cff
+          END DO
         END DO
       END DO
 #endif
@@ -286,14 +291,16 @@
 !  Surface tracers flux.
 !
       DO itrc=1,NT(ng)
-        DO j=JstrR,JendR
-          DO i=IstrR,IendR
-            cff=s1_tflux(i,j,itrc)*s2_tflux(i,j,itrc)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              cff=s1_tflux(i,j,k,itrc)*s2_tflux(i,j,k,itrc)
 #  ifdef MASKING
-            cff=cff*rmask(i,j)
+              cff=cff*rmask(i,j)
 #  endif
-            my_DotProd(0)=my_DotProd(0)+cff
-            my_DotProd(isTsur(itrc))=my_DotProd(isTsur(itrc))+cff
+              my_DotProd(0)=my_DotProd(0)+cff
+              my_DotProd(isTsur(itrc))=my_DotProd(isTsur(itrc))+cff
+            END DO
           END DO
         END DO
       END DO

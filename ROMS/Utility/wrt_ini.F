@@ -21,6 +21,9 @@
 !
       USE mod_param
       USE mod_parallel
+# if defined ADJUST_WSTRESS || defined ADJUST_STFLUX
+      USE mod_forces
+# endif
       USE mod_fourdvar
       USE mod_grid
       USE mod_iounits
@@ -162,6 +165,52 @@
         ioerror=status
         RETURN
       END IF
+# ifdef ADJUST_WSTRESS
+!
+!  Write out surface U-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+!!    scale=rho0
+      scale=1.0_r8
+      gtype=gfactor*u3dvar
+      status=nf_fwrite3d(ng, iNLM, ncINIid(ng), iniVid(idUsms,ng),      &
+     &                   tINIindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % ustr(LBi,LBj,1,Tindex))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUsms)), tINIindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Write out surface V-momentum stress.
+!
+!!    scale=rho0
+      scale=1.0_r8
+      gtype=gfactor*v3dvar
+      status=nf_fwrite3d(ng, iNLM, ncINIid(ng), iniVid(idVsms,ng),      &
+     &                   tINIindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % vstr(LBi,LBj,1,Tindex))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVsms)), tINIindx(ng)
+        END IF 
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Write out 3D momentum component (m/s) in the XI-direction.
@@ -225,7 +274,35 @@
           RETURN
         END IF
       END DO
-
+#  ifdef ADJUST_STFLUX
+!
+!  Write out surface net tracers fluxes. Notice that fluxes have their
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+      DO itrc=1,NT(ng)
+!!      scale=rho0*Cp
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iNLM, ncINIid(ng),                       &
+     &                     iniVid(idTsur(itrc),ng),                     &
+     &                     tINIindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
+#   ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#   endif
+     &                     FORCES(ng) % tflux(LBi,LBj,1,Tindex,itrc))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),              &
+     &                        tINIindx(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+#  endif
 #  if defined BVF_MIXING  || defined GLS_MIXING || \
       defined MY25_MIXING || defined LMD_MIXING
 !

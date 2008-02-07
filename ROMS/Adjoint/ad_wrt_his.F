@@ -120,6 +120,79 @@
           RETURN
         END IF
       END IF
+
+# ifdef ADJUST_WSTRESS
+!
+!  Write out surface U-momentum stress.  Notice that the stress has its
+!  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
+!  at other times in addition to initialization time.
+!
+      scale=1.0_r8
+      gtype=gfactor*u3dvar
+      status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idUsms,ng),      &
+     &                   tADJindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % ad_ustr(LBi,LBj,1,Lfout(ng)))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUsms)), Lfout(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+!  Write out surface V-momentum stress.
+!
+      scale=1.0_r8
+      gtype=gfactor*v3dvar
+      status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idVsms,ng),      &
+     &                   tADJindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   FORCES(ng) % ad_vstr(LBi,LBj,1,Lfout(ng)))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVsms)), Lfout(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Write out surface net heat flux. Notice that different tracer fluxes
+!  are written at their own fixed time-dimension (of size Nfrec) to
+!  allow 4DVAR adjustments at other times in addition to initial time.
+!
+      DO itrc=1,NT(ng)
+        scale=1.0_r8
+        gtype=gfactor*r3dvar
+        status=nf_fwrite3d(ng, iADM, ncADJid(ng),                       &
+     &                     adjVid(idTsur(itrc),ng),                     &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
+#  ifdef MASKING
+     &                     GRID(ng) % rmask(LBi,LBj),                   &
+#  endif
+     &                     FORCES(ng) % ad_tflux(LBi,LBj,1,             &
+     &                                           Lfout(ng),itrc))
+        IF (status.ne.nf90_noerr) THEN
+          IF (Master) THEN
+            WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))), Lfout(ng)
+          END IF
+          exit_flag=3
+          ioerror=status
+          RETURN
+        END IF
+      END DO
+# endif
 !
 !  Write out bathymetry.
 !
@@ -396,116 +469,63 @@
         END IF
       END IF
 #  endif
+#  ifndef ADJUST_STFLUX
 !
-!  Write out surface net heat flux.
+!  Write out surface net tracer fluxes.
 !
-      IF (Hout(idTsur(itemp),ng)) THEN
-!!      scale=rho0*Cp
-#  if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
-        scale=1.0_r8/(rho0*Cp)
-#  else
-        scale=1.0_r8
-#  endif
-        gtype=gfactor*r2dvar
-        IF (.not.Ladjusted(ng)) THEN
+      DO itrc=1,NT(ng)
+        IF (Hout(idTsur(itrc),ng)) THEN
+#   if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+          IF (itrc.eq.itemp) THEN
+!!          scale=rho0*Cp
+            scale=1.0_r8/(rho0*Cp)
+          ELSE
+            scale=1.0_r8
+          END IF
+#   else
+          scale=1.0_r8
+#   endif
+          gtype=gfactor*r2dvar
           status=nf_fwrite2d(ng, iADM, ncADJid(ng),                     &
-     &                       adjVid(idTsur(itemp),ng),                  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask(LBi,LBj),                 &
-#  endif
-     &                       FORCES(ng) % ad_stflx(LBi,LBj,itemp))
-#  ifdef ADJUST_STFLUX
-        ELSE
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng),                     &
-     &                       adjVid(idTsur(itemp),ng),                  &
+     &                       adjVid(idTsur(itrc),ng),                   &
      &                       tADJindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
 #   ifdef MASKING
      &                       GRID(ng) % rmask(LBi,LBj),                 &
 #   endif
-     &                       FORCES(ng) % ad_tflux(LBi,LBj,nout,itemp))
-#  endif
-        END IF
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTsur(itemp))),             &
-     &                      tADJindx(ng)
+     &                       FORCES(ng) % ad_stflx(LBi,LBj,itrc))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),            &
+     &                          tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
         END IF
-      END IF
-!
-!  Write out surface net salt flux.
-!
-      IF (Hout(idTsur(isalt),ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*r2dvar
-        IF (.not.Ladjusted(ng)) THEN
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng),                     &
-     &                       adjVid(idTsur(isalt),ng),                  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask(LBi,LBj),                 &
+      END DO
 #  endif
-     &                       FORCES(ng) % ad_stflx(LBi,LBj,isalt))
-#  ifdef ADJUST_STFLUX
-        ELSE
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng),                     &
-     &                       adjVid(idTsur(isalt),ng),                  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#   ifdef MASKING
-     &                       GRID(ng) % rmask(LBi,LBj),                 &
-#   endif
-     &                       FORCES(ng) % ad_tflux(LBi,LBj,nout,isalt))
-#  endif
-        END IF
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTsur(isalt))),             &
-     &                        tADJindx(ng)
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
 # endif
+# ifndef ADJUST_WSTRESS
 !
 !  Write out surface U-momentum stress.
 !
       IF (Hout(idUsms,ng)) THEN
+#  if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
 !!      scale=rho0
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
-# else
+#  else
         scale=1.0_r8
-# endif
-        gtype=gfactor*u2dvar
-        IF (.not.Ladjusted(ng)) THEN
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUsms,ng),  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
-     &                       GRID(ng) % umask(LBi,LBj),                 &
-# endif
-     &                       FORCES(ng) % ad_sustr(LBi,LBj))
-# ifdef ADJUST_WSTRESS
-        ELSE
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUsms,ng),  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#  ifdef MASKING
-     &                       GRID(ng) % umask(LBi,LBj),                 &
 #  endif
-     &                       FORCES(ng) % ad_ustr(LBi,LBj,kout))
-# endif
-        END IF
+        gtype=gfactor*u2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUsms,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % umask(LBi,LBj),                   &
+#  endif
+     &                     FORCES(ng) % ad_sustr(LBi,LBj))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUsms)), tADJindx(ng)
@@ -520,31 +540,19 @@
 !
       IF (Hout(idVsms,ng)) THEN
 !!      scale=rho0
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+#  if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
-# else
+#  else
         scale=1.0_r8
-# endif
-        gtype=gfactor*v2dvar
-        IF (.not.Ladjusted(ng)) THEN
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVsms,ng),  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
-     &                       GRID(ng) % vmask(LBi,LBj),                 &
-# endif
-     &                       FORCES(ng) % ad_svstr(LBi,LBj))
-# ifdef ADJUST_WSTRESS
-        ELSE
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVsms,ng),  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-#  ifdef MASKING
-     &                       GRID(ng) % vmask(LBi,LBj),                 &
 #  endif
-     &                       FORCES(ng) % ad_vstr(LBi,LBj,kout))
-# endif
-        END IF
+        gtype=gfactor*v2dvar
+        status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVsms,ng),    &
+     &                     tADJindx(ng), gtype,                         &
+     &                     LBi, UBi, LBj, UBj, scale,                   &
+#  ifdef MASKING
+     &                     GRID(ng) % vmask(LBi,LBj),                   &
+#  endif
+     &                     FORCES(ng) % ad_svstr(LBi,LBj))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVsms)), tADJindx(ng)
@@ -554,6 +562,7 @@
           RETURN
         END IF
       END IF
+# endif
 !
 !  Write out bottom U-momentum stress.
 !
