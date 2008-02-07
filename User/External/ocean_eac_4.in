@@ -120,6 +120,7 @@
    LcycleADJ == F
         NADJ == 160
      NDEFADJ == 0
+        NSFF == 160
 
 ! Output check pointing GST restart parameters.
 
@@ -746,6 +747,18 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !              files get too large; it creates a new file every NDEFADJ
 !              time-steps.
 !
+!  NSFF        Number of time-steps between 4DVAR adjustment of surface forcing
+!              fluxes. In strong constraint 4DVAR, it is possible to adjust
+!              surface forcing at other time intervals in addition to initial
+!              time.  This parameter is used to store the appropriate number
+!              of surface forcing records in the output history NetCDF files:
+!              1+NTIMES/NSFF records. NSFF must be a multiple of NTIMES or
+!              greater than NTIMES. If NSFF > NTIMES, only one record is
+!              stored in the NetCDF files and the adjustment is for constant
+!              forcing with constant correction. This parameter is only
+!              relevant in 4DVAR when activacting either ADJUST_STFLUX or
+!              ADJUST_WSTRESS.
+!
 !------------------------------------------------------------------------------
 !  Generalized Stability Theory (GST) analysis parameters.
 !------------------------------------------------------------------------------
@@ -1001,12 +1014,12 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !              with 360 days in every year (30 days each month).  The "units"
 !              attribute is:
 !
-!                      'time-units since 0000-01-01 00:00:00'
+!                      'time-units since 0001-01-01 00:00:00'
 !
 !              If TIME_REF = 0, model time and DSTART are in a common year
 !              calendar with 365.25 days.  The "units" attribute is:
 !
-!                      'time-units since 0000-01-01 00:00:00'
+!                      'time-units since 0001-01-01 00:00:00'
 !
 !              If TIME_REF > 0, model time and DSTART are the elapsed time
 !              units since specified reference time.  For example,
