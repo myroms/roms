@@ -131,16 +131,23 @@
 !  Local variable declarations.
 !
       integer :: NSUB, i, j, k, trd
-
 #ifdef DISTRIBUTE
-      real(r8), dimension(3) :: buffer
-      character (len=3), dimension(3) :: op_handle
+# ifdef SOLVE3D
+      integer, parameter :: Nreduce = 5
+# else
+      integer, parameter :: Nreduce = 4
+# endif
+      real(r8), dimension(Nreduce) :: buffer
+      character (len=3), dimension(Nreduce) :: op_handle
 #else
       integer :: my_threadnum      
 #endif
 
       real(r8) :: cff, my_avgke, my_avgpe, my_volume
-
+      real(r8) :: my_maxspeed, maxspeed, u2v2
+#ifdef SOLVE3D
+      real(r8) :: my_maxrho, maxrho
+#endif
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ke2d
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: pe2d
 
@@ -152,6 +159,10 @@
 !-----------------------------------------------------------------------
 !
       IF (MOD(iic(ng)-1,ninfo(ng)).eq.0) THEN
+        my_maxspeed=0.0_r8
+#ifdef SOLVE3D
+        my_maxrho=-1.0E+20_r8
+#endif
         DO j=Jstr,Jend
 #ifdef SOLVE3D
           DO i=Istr,Iend
@@ -161,26 +172,29 @@
           cff=g/rho0
           DO k=N(ng),1,-1
             DO i=Istr,Iend
+              u2v2=u(i  ,j,k,nstp)*u(i  ,j,k,nstp)+                     &
+     &             u(i+1,j,k,nstp)*u(i+1,j,k,nstp)+                     &
+     &             v(i,j  ,k,nstp)*v(i,j  ,k,nstp)+                     &
+     &             v(i,j+1,k,nstp)*v(i,j+1,k,nstp)
               ke2d(i,j)=ke2d(i,j)+                                      &
-     &                  Hz(i,j,k)*                                      &
-     &                  0.25_r8*(u(i  ,j,k,nstp)*u(i  ,j,k,nstp)+       &
-     &                           u(i+1,j,k,nstp)*u(i+1,j,k,nstp)+       &
-     &                           v(i,j  ,k,nstp)*v(i,j  ,k,nstp)+       &
-     &                           v(i,j+1,k,nstp)*v(i,j+1,k,nstp))
+     &                  Hz(i,j,k)*0.25_r8*u2v2
               pe2d(i,j)=pe2d(i,j)+                                      &
      &                  cff*Hz(i,j,k)*(rho(i,j,k)+1000.0_r8)*           &
      &                  (z_r(i,j,k)-z_w(i,j,0))
+              my_maxspeed=MAX(my_maxspeed,SQRT(0.5_r8*u2v2))
+              my_maxrho=MAX(my_maxrho,rho(i,j,k))
             END DO
           END DO
 #else
           cff=0.5_r8*g
           DO i=Istr,Iend
-            ke2d(i,j)=(zeta(i,j,krhs)+h(i,j))*                          &
-     &                0.25_r8*(ubar(i  ,j,krhs)*ubar(i  ,j,krhs)+       &
-     &                         ubar(i+1,j,krhs)*ubar(i+1,j,krhs)+       &
-     &                         vbar(i,j  ,krhs)*vbar(i,j  ,krhs)+       &
-     &                         vbar(i,j+1,krhs)*vbar(i,j+1,krhs))
+     &      u2v2=ubar(i  ,j,krhs)*ubar(i  ,j,krhs)+                     &
+     &           ubar(i+1,j,krhs)*ubar(i+1,j,krhs)+                     &
+     &           vbar(i,j  ,krhs)*vbar(i,j  ,krhs)+                     &
+     &           vbar(i,j+1,krhs)*vbar(i,j+1,krhs)
+            ke2d(i,j)=(zeta(i,j,krhs)+h(i,j))*0.25_r8*u2v2
             pe2d(i,j)=cff*zeta(i,j,krhs)*zeta(i,j,krhs)
+            my_maxspeed=MAX(my_maxspeed,SQRT(0.5_r8*u2v2))
           END DO
 #endif
         END DO
@@ -237,10 +251,18 @@
           volume=0.0_r8
           avgke=0.0_r8
           avgpe=0.0_r8
+          maxspeed=0.0_r8
+#ifdef SOLVE3D
+          maxrho=0.0_r8
+#endif
         END IF
         volume=volume+my_volume
         avgke=avgke+my_avgke
         avgpe=avgpe+my_avgpe
+        maxspeed=maxspeed+my_maxspeed
+#ifdef SOLVE3D
+        maxrho=maxrho+my_maxrho
+#endif
         tile_count=tile_count+1
         IF (tile_count.eq.NSUB) THEN
           tile_count=0
@@ -248,13 +270,25 @@
           buffer(1)=volume
           buffer(2)=avgke
           buffer(3)=avgpe
+          buffer(4)=maxspeed
+# ifdef SOLVE3D
+          buffer(5)=maxrho
+# endif
           op_handle(1)='SUM'
           op_handle(2)='SUM'
           op_handle(3)='SUM'
-          CALL mp_reduce (ng, iNLM, 3, buffer, op_handle)
+          op_handle(4)='MAX'
+# ifdef SOLVE3D
+          op_handle(5)='MAX'
+# endif
+          CALL mp_reduce (ng, iNLM, Nreduce, buffer, op_handle)
           volume=buffer(1)
           avgke=buffer(2)
           avgpe=buffer(3)
+          maxspeed=buffer(4)
+# ifdef SOLVE3D
+          maxrho=buffer(5)
+# endif
           trd=MyMaster
 #else
           trd=my_threadnum()
@@ -286,6 +320,25 @@
               exit_flag=1
             END IF
           END DO
+!
+!  Stop computations if exceeding maximum speed allowed.  This will be
+!  useful during debugging to avoid NaNs in output NetCDF files.
+!
+          IF (maxspeed.gt.max_speed) THEN
+            exit_flag=1
+          END IF
+#ifdef SOLVE3D
+!
+!  Stop computation if exceeding maximum density anomaly allowed.
+!  Recall that  density is computed from potential temperature and
+!  salinity.  This is a good way to screen for very bad values which
+!  indicates that the model is blowing-up.
+!
+          IF (maxspeed.gt.max_rho) THEN
+            exit_flag=1
+          END IF
+#endif
+
         END IF
 !$OMP END CRITICAL (NL_DIAGNOSTICS)
       END IF
