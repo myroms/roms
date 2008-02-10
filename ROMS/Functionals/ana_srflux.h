@@ -107,11 +107,12 @@
 #if defined ALBEDO || defined DIURNAL_SRFLUX
       integer :: iday, month, year
       real(r8) :: Dangle, Hangle, LatRad
-      real(r8) :: cff, cff1, cff2, hour, yday
+      real(r8) :: cff1, cff2, hour, yday
 # ifdef ALBEDO
       real(r8) :: Rsolar, e_sat, vap_p, zenith
 # endif
 #endif
+      real(r8) :: cff
 
 #include "set_bounds.h"
 
@@ -224,13 +225,19 @@
 #else
 !
 !-----------------------------------------------------------------------
-!  Set incoming solar shortwave radiation (W/m2).
+!  Set incoming solar shortwave radiation (degC m/s).  Usually, the
+!  shortwave radiation from input files is Watts/m2 and then converted
+!  to degC m/s by multiplying by conversion factor 1/(rho0*Cp) during
+!  reading (Fscale). However, we are already inside ROMS kernel here
+!  and all the fluxes are kinematic so shortwave radiation units need
+!  to be degC m/s.
 !-----------------------------------------------------------------------
 !
+      cff=1.0_r8/(rho0*cp)
 # if defined UPWELLING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          srflx(i,j)=150.0_r8
+          srflx(i,j)=cff*150.0_r8
         END DO
       END DO
 # else

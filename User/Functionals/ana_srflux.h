@@ -110,11 +110,12 @@
 #if defined ALBEDO || defined DIURNAL_SRFLUX
       integer :: iday, month, year
       real(r8) :: Dangle, Hangle, LatRad
-      real(r8) :: cff, cff1, cff2, hour, yday
+      real(r8) :: cff1, cff2, hour, yday
 # ifdef ALBEDO
       real(r8) :: Rsolar, e_sat, vap_p, zenith
 # endif
 #endif
+      real(r8) :: cff
 
 #include "set_bounds.h"
 
@@ -211,9 +212,9 @@
 !  Normalization factor = INTEGRAL{ABS(a+b*COS(t)) dt} from 0 to 2*pi 
 !                       = (a*ARCCOS(-a/b)+SQRT(b**2-a**2))/pi
 !  
-          IF ((ABS(cff1)+1.E-8_r8).gt.ABS(cff2)) THEN
+          IF (ABS(cff1).gt.ABS(cff2)) THEN
             IF (cff1*cff2.gt.0.0_r8) THEN
-              cff=cff1                                 ! All day case
+              cff=cff1*2.0_r8*pi                       ! All day case
               srflx(i,j)=MAX(0.0_r8,                                    &
      &                       srflx(i,j)/cff*                            &
      &                       (cff1+cff2*COS(Hangle-lonr(i,j)*deg2rad)))
@@ -232,9 +233,15 @@
 #else
 !
 !-----------------------------------------------------------------------
-!  Set incoming solar shortwave radiation (W/m2).
+!  Set incoming solar shortwave radiation (degC m/s).  Usually, the
+!  shortwave radiation from input files is Watts/m2 and then converted
+!  to degC m/s by multiplying by conversion factor 1/(rho0*Cp) during
+!  reading (Fscale). However, we are already inside ROMS kernel here
+!  and all the fluxes are kinematic so shortwave radiation units need
+!  to be degC m/s.
 !-----------------------------------------------------------------------
 !
+      cff=1.0_r8/(rho0*cp)
 # if defined MY_APPLICATION
       DO j=JstrR,JendR
         DO i=IstrR,IendR
@@ -249,7 +256,6 @@
       END DO
 # endif
 #endif
-
 #if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
      &                        LBi, UBi, LBj, UBj,                       &
@@ -261,6 +267,5 @@
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    srflx)
 #endif
-
       RETURN
       END SUBROUTINE ana_srflux_tile
