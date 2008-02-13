@@ -200,19 +200,17 @@
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
       real(r8), parameter :: small = 1.0E-20_r8
 
-      real(r8) :: Gm, Gt, Gs, K_bl, Ribot, Ritop, Rk, Rref
-      real(r8) :: Uk, Uref, Ustar3, Vk, Vref, Vtc
+      real(r8) :: Gm, Gt, Gs, K_bl, Ribot, Ritop, Rk
+      real(r8) :: Uk, Ustar3, Vk, Vtc
       real(r8) :: a1, a2, a3, cff, cff1, cff2, cff_up, cff_dn
       real(r8) :: depth, dK_bl, hekman, sigma, zbl
       real(r8) :: zetahat, zetapar
 
-      real(r8), dimension (PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Bflux
-      real(r8), dimension (PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Kv
-      real(r8), dimension (PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Kt
-# ifdef SALINITY
-      real(r8), dimension (PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Ks
-# endif
+      real(r8), dimension (PRIVATE_1D_SCRATCH_ARRAY) :: Rref
+      real(r8), dimension (PRIVATE_1D_SCRATCH_ARRAY) :: Uref
+      real(r8), dimension (PRIVATE_1D_SCRATCH_ARRAY) :: Vref
 
+      real(r8), dimension (PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Bflux
       real(r8), dimension (PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
       real(r8), dimension (PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dR
       real(r8), dimension (PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dU
@@ -243,23 +241,6 @@
 !
       Vtc=lmd_Cv*SQRT(-lmd_betaT)/(SQRT(lmd_cs*lmd_epsilon)*            &
      &                             lmd_Ric*vonKar*vonKar)
-!
-!-----------------------------------------------------------------------
-!  Load current vertical viscosity and diffusivities into work
-!  arrays.
-!-----------------------------------------------------------------------
-!
-      DO k=0,N(ng)
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
-            Kv(i,j,k)=Akv(i,j,k)
-            Kt(i,j,k)=Akt(i,j,k,itemp)
-# ifdef SALINITY
-            Ks(i,j,k)=Akt(i,j,k,isalt)
-# endif
-          END DO
-        END DO
-      END DO
 !
 !-----------------------------------------------------------------------
 !  Get approximation of bottom layer depth using "lmd_eps" and
@@ -431,16 +412,18 @@
         cff1=1.0_r8/3.0_r8
         cff2=1.0_r8/6.0_r8
         DO i=Istr,Iend
-          Rref=pden(i,j,1)-                                             &
-     &         Hz(i,j,1)*(cff1*dR(i,0)+cff2*dR(i,1))
-          Uref=0.5_r8*(u(i,j,1,nstp)+u(i+1,j,1,nstp))-                  &
-     &         Hz(i,j,1)*(cff1*dU(i,0)+cff2*dU(i,1))
-          Vref=0.5_r8*(v(i,j,1,nstp)+v(i,j+1,1,nstp))-                  &
-     &         Hz(i,j,1)*(cff1*dV(i,0)+cff2*dV(i,1))
+          Rref(i)=pden(i,j,1)-                                          &
+     &            Hz(i,j,1)*(cff1*dR(i,0)+cff2*dR(i,1))
+          Uref(i)=0.5_r8*(u(i,j,1,nstp)+u(i+1,j,1,nstp))-               &
+     &            Hz(i,j,1)*(cff1*dU(i,0)+cff2*dU(i,1))
+          Vref(i)=0.5_r8*(v(i,j,1,nstp)+v(i,j+1,1,nstp))-               &
+     &            Hz(i,j,1)*(cff1*dV(i,0)+cff2*dV(i,1))
+        END DO
 !
 !  Compute turbulent velocity scales for momentum (wm) and tracers (ws).
 !  Then, compute critical function (FC) for bulk Richardson number.
 !
+        DO i=Istr,Iend
           FC(i,0)=0.0_r8
           DO k=1,N(ng)
             depth=z_w(i,j,k)-z_w(i,j,0)
@@ -477,8 +460,8 @@
             Vk=0.5_r8*(v(i,j,k,nstp)+v(i,j+1,k,nstp))+                  &
      &         Hz(i,j,k)*(cff1*dV(i,k)+cff2*dV(i,k-1))
 !
-            Ritop=-gorho0*(Rk-Rref)*depth
-            Ribot=(Uk-Uref)**2+(Vk-Vref)**2+                            &
+            Ritop=-gorho0*(Rk-Rref(i))*depth
+            Ribot=(Uk-Uref(i))**2+(Vk-Vref(i))**2+                      &
      &            Vtc*depth*ws(i,j)*SQRT(ABS(bvf(i,j,k)))
 # ifdef SASHA
             FC(i,k)=Ritop-lmd_Ric*Ribot
@@ -703,8 +686,8 @@
 !  Compute nondimensional shape function for viscosity "Gm1" and its
 !  vertical derivative "dGm1dS" evaluated at "hbbl".
 !
-          K_bl=cff_dn*Kv(i,j,k)+cff_up*Kv(i,j,k-1)
-          dK_bl=-cff*(Kv(i,j,k)-Kv(i,j,k-1))
+          K_bl=cff_dn*Akv(i,j,k)+cff_up*Akv(i,j,k-1)
+          dK_bl=-cff*(Akv(i,j,k)-Akv(i,j,k-1))
           Gm1(i,j)=K_bl/(zbl*wm(i,j)+eps)
 # ifdef MASKING
           Gm1(i,j)=Gm1(i,j)*rmask(i,j)
@@ -714,8 +697,8 @@
 !  Compute nondimensional shape function for diffusion of temperature
 !  "Gt1" and its vertical derivative "dGt1dS" evaluated at "hbbl".
 !
-          K_bl=cff_dn*Kt(i,j,k)+cff_up*Kt(i,j,k-1)
-          dK_bl=-cff*(Kt(i,j,k)-Kt(i,j,k-1))
+          K_bl=cff_dn*Akt(i,j,k,itemp)+cff_up*Akt(i,j,k-1,itemp)
+          dK_bl=-cff*(Akt(i,j,k,itemp)-Akt(i,j,k-1,itemp))
           Gt1(i,j)=K_bl/(zbl*ws(i,j)+eps)
 # ifdef MASKING
           Gt1(i,j)=Gt1(i,j)*rmask(i,j)
@@ -726,8 +709,8 @@
 !  Compute nondimensional shape function for diffusion of salinity
 !  "Gs1" and its vertical derivative "dGs1dS" evaluated at "hbbl".
 !
-          K_bl=cff_dn*Ks(i,j,k)+cff_up*Ks(i,j,k-1)
-          dK_bl=-cff*(Ks(i,j,k)-Ks(i,j,k-1))
+          K_bl=cff_dn*Akt(i,j,k,isalt)+cff_up*Akt(i,j,k-1,isalt)
+          dK_bl=-cff*(Akt(i,j,k,isalt)-Akt(i,j,k-1,isalt))
           Gs1(i,j)=K_bl/(zbl*ws(i,j)+eps)
 #  ifdef MASKING
           Gs1(i,j)=Gs1(i,j)*rmask(i,j)
@@ -794,46 +777,32 @@
 # endif
 !
 !  Compute boundary layer mixing coefficients, combine them
-!  with interior mixing coefficients.
+!  with interior mixing coefficients. Take the maximum estimate
+!  of vertical mixing only where the surface and bottom boundary
+!  layers overlap. (Do not let the interior overwrite the boundary
+!  layer estimate).
 !
-              Kv(i,j,k)=depth*wm(i,j)*(1.0_r8+sigma*Gm)
-              Kt(i,j,k)=depth*ws(i,j)*(1.0_r8+sigma*Gt)
+              IF (k.gt.ksbl(i,j)) THEN
+                Akv(i,j,k)=MAX(Akv(i,j,k),                              &
+     &                         depth*wm(i,j)*(1.0_r8+sigma*Gm))
+                Akt(i,j,k,itemp)=MAX(Akt(i,j,k,itemp),                  &
+     &                               depth*ws(i,j)*(1.0_r8+sigma*Gt))
 # ifdef SALINITY
-              Ks(i,j,k)=depth*ws(i,j)*(1.0_r8+sigma*Gs)
+                Akt(i,j,k,isalt)=MAX(Akt(i,j,k,isalt),                  &
+     &                               depth*ws(i,j)*(1.0_r8+sigma*Gs))
 # endif
-            END IF
-          END DO
-        END DO
-!
-!-----------------------------------------------------------------------
-!  Finally, set vertical mixing coefficients "Akv" and "Akt".
-!-----------------------------------------------------------------------
-!
-!  Take the maximum estimate of vertical mixing only where the surface
-!  and bottom boundary layers overlap. (Do not let the interior
-!  overwrite the boundary layer estimate).
-!
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
-            IF (z_w(i,j,k).lt.hbbl(i,j)) THEN
-               if(k.gt.ksbl(i,j)) THEN
-                  Akv(i,j,k)=MAX(Akv(i,j,k),Kv(i,j,k))
-                  Akt(i,j,k,itemp)=MAX(Akt(i,j,k,itemp),Kt(i,j,k))
+              ELSE
+                Akv(i,j,k)=depth*wm(i,j)*(1.0_r8+sigma*Gm)
+                Akt(i,j,k,itemp)=depth*ws(i,j)*(1.0_r8+sigma*Gt)
 # ifdef SALINITY
-                  Akt(i,j,k,isalt)=MAX(Akt(i,j,k,isalt),Ks(i,j,k))
+                Akt(i,j,k,isalt)=depth*ws(i,j)*(1.0_r8+sigma*Gs)
 # endif
-               ELSE
-                 Akv(i,j,k)=Kv(i,j,k)
-                 Akt(i,j,k,itemp)=Kt(i,j,k)
-# ifdef SALINITY
-                 Akt(i,j,k,isalt)=Ks(i,j,k)
-# endif
-               END IF
+              END IF
             END IF
           END DO
         END DO
       END DO
-!
+
       RETURN
       END SUBROUTINE lmd_bkpp_tile
 #endif

@@ -59,8 +59,10 @@
 !
       integer :: Jindex, i, j
 
-      real(r8) :: fac1, fac2, cff1, cff2
+      real(r8) :: cff1, cff2
       real(r8) :: ad_cff1, ad_cff2
+
+      real(r8), dimension(Istr:Iend) :: fac1, fac2, fac3
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -77,26 +79,31 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
           Jindex=MIXING(ng)%Jwtype(i,j)
-          fac1=Zscale/lmd_mu1(Jindex)
-          fac2=Zscale/lmd_mu2(Jindex)
-          cff1=EXP(Z(i,j)*fac1)
-          cff2=EXP(Z(i,j)*fac2)
-!>        tl_swdk(i,j)=tl_cff1*lmd_r1(Jindex)+                          &
-!>   &                 tl_cff2*(1.0_r8-lmd_r1(Jindex))
+          fac1(i)=Zscale/lmd_mu1(Jindex)
+          fac2(i)=Zscale/lmd_mu2(Jindex)
+          fac3(i)=lmd_r1(Jindex)
+        END DO
+!!DIR$ VECTOR ALWAYS
+        DO i=Istr,Iend
+          cff1=EXP(Z(i,j)*fac1(i))
+          cff2=EXP(Z(i,j)*fac2(i))
+!>        tl_swdk(i,j)=tl_cff1*fac3(i)+                                 &
+!>   &                 tl_cff2*(1.0_r8-fac3(i))
 !>
-          ad_cff1=ad_cff1+lmd_r1(Jindex)*ad_swdk(i,j)
-          ad_cff2=ad_cff2+(1.0_r8-lmd_r1(Jindex))*ad_swdk(i,j)
+          ad_cff1=ad_cff1+fac3(i)*ad_swdk(i,j)
+          ad_cff2=ad_cff2+(1.0_r8-fac3(i))*ad_swdk(i,j)
           ad_swdk(i,j)=0.0_r8
-!>        tl_cff2=fac2*tl_Z(i,j)*cff2
-!>        tl_cff1=fac1*tl_Z(i,j)*cff1
+!>        tl_cff2=fac2(i)*tl_Z(i,j)*cff2
+!>        tl_cff1=fac1(i)*tl_Z(i,j)*cff1
 !>
           ad_Z(i,j)=ad_Z(i,j)+                                          &
-     &              fac1*cff1*ad_cff1+                                  &
-     &              fac2*cff2*ad_cff2
+     &              fac1(i)*cff1*ad_cff1+                               &
+     &              fac2(i)*cff2*ad_cff2
           ad_cff2=0.0_r8
           ad_cff1=0.0_r8
         END DO
       END DO
+      RETURN
       END SUBROUTINE ad_lmd_swfrac_tile
 #else
       SUBROUTINE ad_lmd_swfrac

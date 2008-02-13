@@ -59,8 +59,10 @@
 !
       integer :: Jindex, i, j
 
-      real(r8) :: fac1, fac2, cff1, cff2
+      real(r8) :: cff1, cff2
       real(r8) :: tl_cff1, tl_cff2
+
+      real(r8), dimension(Istr:Iend) :: fac1, fac2, fac3
 !
 !-----------------------------------------------------------------------
 !  Use Paulson and Simpson (1977) two wavelength bands solar
@@ -70,19 +72,24 @@
       DO j=Jstr,Jend
         DO i=Istr,Iend
           Jindex=MIXING(ng)%Jwtype(i,j)
-          fac1=Zscale/lmd_mu1(Jindex)
-          fac2=Zscale/lmd_mu2(Jindex)
-          cff1=EXP(Z(i,j)*fac1)
-          tl_cff1=fac1*tl_Z(i,j)*cff1
-          cff2=EXP(Z(i,j)*fac2)
-          tl_cff2=fac2*tl_Z(i,j)*cff2
-!>        swdk(i,j)=cff1*lmd_r1(Jindex)+                                &
-!>   &              cff2*(1.0_r8-lmd_r1(Jindex))
+          fac1(i)=Zscale/lmd_mu1(Jindex)
+          fac2(i)=Zscale/lmd_mu2(Jindex)
+          fac3(i)=lmd_r1(Jindex)
+        END DO
+!!DIR$ VECTOR ALWAYS
+        DO i=Istr,Iend
+          cff1=EXP(Z(i,j)*fac1(i))
+          tl_cff1=fac1(i)*tl_Z(i,j)*cff1
+          cff2=EXP(Z(i,j)*fac2(i))
+          tl_cff2=fac2(i)*tl_Z(i,j)*cff2
+!>        swdk(i,j)=cff1*fac3(i)+                                       &
+!>   &              cff2*(1.0_r8-fac3(i))
 !>
-          tl_swdk(i,j)=tl_cff1*lmd_r1(Jindex)+                          &
-     &                 tl_cff2*(1.0_r8-lmd_r1(Jindex))
+          tl_swdk(i,j)=tl_cff1*fac3(i)+                                 &
+     &                 tl_cff2*(1.0_r8-fac3(i))
         END DO
       END DO
+      RETURN
       END SUBROUTINE tl_lmd_swfrac_tile
 #else
       SUBROUTINE tl_lmd_swfrac

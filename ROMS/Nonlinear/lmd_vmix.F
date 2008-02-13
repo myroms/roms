@@ -157,9 +157,6 @@
       real(r8) :: Rrho, ddDS, ddDT, nu_dds, nu_ddt
 # endif
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Kt
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Ks
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Kv
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Rig
 
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
@@ -344,9 +341,11 @@
 ! Sum contributions due to internal wave breaking, shear instability
 ! and convective diffusivity due to shear instability.
 !
-            Kv(i,j,k)=lmd_iwm+lmd_nu0m*nu_sx
-            Kt(i,j,k)=lmd_iws+lmd_nu0s*nu_sx
-            Ks(i,j,k)=Kt(i,j,k)
+            Akv(i,j,k)=lmd_iwm+lmd_nu0m*nu_sx
+            Akt(i,j,k,itemp)=lmd_iws+lmd_nu0s*nu_sx
+# ifdef SALINITY
+            Akt(i,j,k,isalt)=Akt(i,j,k,itemp)
+# endif
           END DO
         END DO
 # ifdef LMD_DDMIX
@@ -413,28 +412,13 @@
 !  Add double diffusion contribution to temperature and salinity
 !  mixing coefficients.
 !
-            Kt(i,j,k)=Kt(i,j,k)+nu_ddt
-            Ks(i,j,k)=Ks(i,j,k)+nu_dds
+            Akt(i,j,k,itemp)=Akt(i,j,k,itemp)+nu_ddt
+#  ifdef SALINITY
+            Akt(i,j,k,isalt)=Akt(i,j,k,isalt)+nu_dds
+#  endif
           END DO
         END DO
 # endif
-      END DO
-!
-!-----------------------------------------------------------------------
-!  Set vertical mixing coefficients "Akv" and "Akt" to interior
-!  values.
-!-----------------------------------------------------------------------
-!
-      DO k=1,N(ng)-1
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
-            Akv(i,j,k)=Kv(i,j,k)
-            Akt(i,j,k,itemp)=Kt(i,j,k)
-# ifdef SALINITY
-            Akt(i,j,k,isalt)=Ks(i,j,k)
-# endif
-          END DO
-        END DO
       END DO
 
       RETURN
@@ -459,15 +443,15 @@
 # include "tile.h"
 !
       CALL lmd_finish_tile (ng, Istr, Iend, Jstr, Jend,                 &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    nstp(ng),                                     &
-     &                    GRID(ng) % Hz,                                &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      nstp(ng),                                   &
+     &                      GRID(ng) % Hz,                              &
 # ifndef SPLINES
-     &                    GRID(ng) % z_r,                               &
+     &                      GRID(ng) % z_r,                             &
 # endif
-     &                    MIXING(ng) % bvf,                             &
-     &                    MIXING(ng) % Akt,                             &
-     &                    MIXING(ng) % Akv)
+     &                      MIXING(ng) % bvf,                           &
+     &                      MIXING(ng) % Akt,                           &
+     &                      MIXING(ng) % Akv)
       RETURN
       END SUBROUTINE lmd_finish
 !
@@ -567,7 +551,9 @@
 !
             Akv(i,j,k)=Akv(i,j,k)+lmd_nu0c*nu_sxc
             Akt(i,j,k,itemp)=Akt(i,j,k,itemp)+lmd_nu0c*nu_sxc
+# ifdef SALINITY
             Akt(i,j,k,isalt)=Akt(i,j,k,isalt)+lmd_nu0c*nu_sxc
+# endif
           END DO
         END DO
       END DO

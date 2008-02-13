@@ -255,8 +255,8 @@
 #  define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
 # endif
       DO j=J_RANGE
-        DO i=I_RANGE
-          DO k=2,N(ng)-1
+        DO k=2,N(ng)-1
+          DO i=I_RANGE
             C(i,k)=0.0625_r8*                                           &
      &             ((Ta(i  ,j,k+1)-Ta(i  ,j,k  ))*odz(i  ,j,k  )+       &
      &              (Ta(i  ,j,k  )-Ta(i  ,j,k-1))*odz(i  ,j,k-1)+       &
@@ -271,7 +271,9 @@
      &               (w(i  ,j,k  )*odz(i  ,j,k  )+                      &
      &                w(i  ,j,k-1)*odz(i  ,j,k-1))*pm(i  ,j)*pn(i  ,j))
           END DO
-          k=1
+        END DO
+        k=1
+        DO i=I_RANGE
           C(i,k)=0.25_r8*                                               &
      &           ((Ta(i  ,j,k+1)-Ta(i  ,j,k  ))*odz(i  ,j,k  )+         &
      &            (Ta(i-1,j,k+1)-Ta(i-1,j,k  ))*odz(i-1,j,k  ))*        &
@@ -281,7 +283,9 @@
           Wm(i,k)=0.25_r8*dt(ng)*                                       &
      &            (w(i-1,j,k  )*odz(i-1,j,k)*pm(i-1,j)*pn(i-1,j)+       &
      &             w(i  ,j,k  )*odz(i  ,j,k)*pm(i  ,j)*pn(i  ,j))
-          k=N(ng)
+        END DO
+        k=N(ng)
+        DO i=I_RANGE
           C(i,k)=0.25_r8*                                               &
      &           ((Ta(i  ,j,k  )-Ta(i  ,j,k-1))*odz(i  ,j,k-1)+         &
      &            (Ta(i-1,j,k  )-Ta(i-1,j,k-1))*odz(i-1,j,k-1))*        &
@@ -294,125 +298,126 @@
         END DO
         DO k=1,N(ng)
           DO i=I_RANGE
-            IF ((Ta(i-1,j,k).le.0.0_r8).or.                             &
-     &          (Ta(i  ,j,k).le.0.0_r8)) THEN
-              Ua(i,j,k)=0.0_r8
-            ELSE
-              A=(Ta(i,j,k)-Ta(i-1,j,k))/                                &
-     &          (Ta(i,j,k)+Ta(i-1,j,k)+eps)
+            A=(Ta(i,j,k)-Ta(i-1,j,k))/                                  &
+     &        (Ta(i,j,k)+Ta(i-1,j,k)+eps)
 # ifdef MASKING
-              B=0.03125_r8*                                             &
-     &          ((Ta(i  ,j+1,k)-Ta(i  ,j  ,k))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j+1))*vmask(i  ,j+1)+              &
-     &           (Ta(i  ,j  ,k)-Ta(i  ,j-1,k))*                         &
-     &           (pn(i  ,j-1)+pn(i  ,j  ))*vmask(i  ,j  )+              &
-     &           (Ta(i-1,j+1,k)-Ta(i-1,j  ,k))*                         &
-     &           (pn(i-1,j  )+pn(i-1,j+1))*vmask(i-1,j+1)+              &
-     &           (Ta(i-1,j  ,k)-Ta(i-1,j-1,k))*                         &
-     &           (pn(i-1,j-1)+pn(i-1,j  ))*vmask(i-1,j  ))
+            B=0.03125_r8*                                               &
+     &        ((Ta(i  ,j+1,k)-Ta(i  ,j  ,k))*                           &
+     &         (pn(i  ,j  )+pn(i  ,j+1))*vmask(i  ,j+1)+                &
+     &         (Ta(i  ,j  ,k)-Ta(i  ,j-1,k))*                           &
+     &         (pn(i  ,j-1)+pn(i  ,j  ))*vmask(i  ,j  )+                &
+     &         (Ta(i-1,j+1,k)-Ta(i-1,j  ,k))*                           &
+     &         (pn(i-1,j  )+pn(i-1,j+1))*vmask(i-1,j+1)+                &
+     &         (Ta(i-1,j  ,k)-Ta(i-1,j-1,k))*                           &
+     &         (pn(i-1,j-1)+pn(i-1,j  ))*vmask(i-1,j  ))
 # else
-              B=0.03125_r8*                                             &
-     &          ((Ta(i  ,j+1,k)-Ta(i  ,j  ,k))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j+1))+                             &
-     &           (Ta(i  ,j  ,k)-Ta(i  ,j-1,k))*                         &
-     &           (pn(i  ,j-1)+pn(i  ,j  ))+                             &
-     &           (Ta(i-1,j+1,k)-Ta(i-1,j  ,k))*                         &
-     &           (pn(i-1,j  )+pn(i-1,j+1))+                             &
-     &           (Ta(i-1,j  ,k)-Ta(i-1,j-1,k))*                         &
-     &           (pn(i-1,j-1)+pn(i-1,j  )))
+            B=0.03125_r8*                                               &
+     &        ((Ta(i  ,j+1,k)-Ta(i  ,j  ,k))*                           &
+     &         (pn(i  ,j  )+pn(i  ,j+1))+                               &
+     &         (Ta(i  ,j  ,k)-Ta(i  ,j-1,k))*                           &
+     &         (pn(i  ,j-1)+pn(i  ,j  ))+                               &
+     &         (Ta(i-1,j+1,k)-Ta(i-1,j  ,k))*                           &
+     &         (pn(i-1,j  )+pn(i-1,j+1))+                               &
+     &         (Ta(i-1,j  ,k)-Ta(i-1,j-1,k))*                           &
+     &         (pn(i-1,j-1)+pn(i-1,j  )))
 # endif
-              B=B*(on_v(i  ,j  )+on_v(i  ,j+1)+                         &
-     &           on_v(i-1,j  )+on_v(i-1,j+1))/                          &
-     &          (Ta(i-1,j,k)+Ta(i,j,k)+eps)
+            B=B*(on_v(i  ,j  )+on_v(i  ,j+1)+                           &
+     &        on_v(i-1,j  )+on_v(i-1,j+1))/                             &
+     &        (Ta(i-1,j,k)+Ta(i,j,k)+eps)
 !
-              Um=0.125_r8*Huon(i,j,k)*                                  &
-     &           dt(ng)*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))*        &
-     &           (oHz(i-1,j,k)+oHz(i,j,k))
-              Vm=0.03125_r8*dt(ng)*                                     &
-     &           (Hvom(i-1,j  ,k)*(pm(i-1,j)+pm(i-1,j-1))*              &
-     &                            (pn(i-1,j)+pn(i-1,j-1))*              &
-     &                            (oHz(i-1,j,  k)+oHz(i-1,j-1,k))+      &
-     &            Hvom(i-1,j+1,k)*(pm(i-1,j+1)+pm(i-1,j))*              &
-     &                            (pn(i-1,j+1)+pn(i-1,j))*              &
-     &                            (oHz(i-1,j+1,k)+oHz(i-1,j  ,k))+      &
-     &            Hvom(i  ,j  ,k)*(pm(i  ,j)+pm(i  ,j-1))*              &
-     &                            (pn(i  ,j)+pn(i  ,j-1))*              &
-     &                            (oHz(i  ,j  ,k)+oHz(i  ,j-1,k))+      &
-     &            Hvom(i  ,j+1,k)*(pm(i  ,j+1)+pm(i  ,j))*              &
-     &                            (pn(i  ,j+1)+pn(i  ,j))*              &
-     &                            (oHz(i  ,j+1,k)+oHz(i  ,j  ,k)))
+            Um=0.125_r8*Huon(i,j,k)*                                    &
+     &         dt(ng)*(pm(i,j)+pm(i-1,j))*(pn(i,j)+pn(i-1,j))*          &
+     &         (oHz(i-1,j,k)+oHz(i,j,k))
+            Vm=0.03125_r8*dt(ng)*                                       &
+     &         (Hvom(i-1,j  ,k)*(pm(i-1,j)+pm(i-1,j-1))*                &
+     &                          (pn(i-1,j)+pn(i-1,j-1))*                &
+     &                          (oHz(i-1,j,  k)+oHz(i-1,j-1,k))+        &
+     &          Hvom(i-1,j+1,k)*(pm(i-1,j+1)+pm(i-1,j))*                &
+     &                          (pn(i-1,j+1)+pn(i-1,j))*                &
+     &                          (oHz(i-1,j+1,k)+oHz(i-1,j  ,k))+        &
+     &          Hvom(i  ,j  ,k)*(pm(i  ,j)+pm(i  ,j-1))*                &
+     &                          (pn(i  ,j)+pn(i  ,j-1))*                &
+     &                          (oHz(i  ,j  ,k)+oHz(i  ,j-1,k))+        &
+     &          Hvom(i  ,j+1,k)*(pm(i  ,j+1)+pm(i  ,j))*                &
+     &                          (pn(i  ,j+1)+pn(i  ,j))*                &
+     &                          (oHz(i  ,j+1,k)+oHz(i  ,j  ,k)))
 !
-              X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
-              Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
-              Z=(ABS(Wm(i,k))-Wm(i,k)*Wm(i,k))*C(i,k)-                  &
-     &          A*Um*Wm(i,k)-B*Vm*Wm(i,k)
+            X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
+            Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
+            Z=(ABS(Wm(i,k))-Wm(i,k)*Wm(i,k))*C(i,k)-                    &
+     &        A*Um*Wm(i,k)-B*Vm*Wm(i,k)
 
 # ifdef MPDATA_HOT
 !
-              AA=A*A
-              BB=B*B
-              CC=C(i,k)*C(i,k)
-              AB=A*B
-              AC=A*C(i,k)
-              BC=B*C(i,k)
+            AA=A*A
+            BB=B*B
+            CC=C(i,k)*C(i,k)
+            AB=A*B
+            AC=A*C(i,k)
+            BC=B*C(i,k)
 
-              XX=X*X
-              YY=Y*Y
-              ZZ=Z*Z
-              XY=X*Y
-              XZ=X*Z
-              YZ=Y*Z
+            XX=X*X
+            YY=Y*Y
+            ZZ=Z*Z
+            XY=X*Y
+            XZ=X*Z
+            YZ=Y*Z
 # endif
 !
-              sig_alfa=1.0_r8/(1.0_r8-ABS(A)+eps)
+            sig_alfa=1.0_r8/(1.0_r8-ABS(A)+eps)
 # ifdef MPDATA_HOT
-              sig_beta=-A/((1.0_r8-ABS(A))*                             &
-     &                     (1.0_r8-AA)+eps)
-              sig_gama=2.0_r8*ABS(AA*A)/((1.0_r8-ABS(A))*               &
-     &                                   (1.0_r8-AA)*                   &
-     &                                   (1.0_r8-ABS(AA*A))+eps)
-              sig_a=-B/((1.0_r8-ABS(A))*                                &
-     &                  (1.0_r8-ABS(AB))+eps)
-              sig_b=AB/((1.0_r8-ABS(A))*                                &
-     &                  (1.0_r8-AA*ABS(B))+eps)*                        &
-     &              (ABS(B)/(1.0_r8-ABS(AB)+eps)+                       &
-     &               2.0_r8*A/(1.0_r8-AA+eps))
-              sig_c=ABS(A)*BB/((1.0_r8-ABS(A))*                         &
-     &                         (1.0_r8-BB*ABS(A))*                      &
-     &                         (1.0_r8-ABS(AB))+eps)
-              sig_d=-C(i,k)/((1.0_r8-ABS(A))*                           &
+            sig_beta=-A/((1.0_r8-ABS(A))*                               &
+     &                   (1.0_r8-AA)+eps)
+            sig_gama=2.0_r8*ABS(AA*A)/((1.0_r8-ABS(A))*                 &
+     &                                 (1.0_r8-AA)*                     &
+     &                                 (1.0_r8-ABS(AA*A))+eps)
+            sig_a=-B/((1.0_r8-ABS(A))*                                  &
+     &                (1.0_r8-ABS(AB))+eps)
+            sig_b=AB/((1.0_r8-ABS(A))*                                  &
+     &                (1.0_r8-AA*ABS(B))+eps)*                          &
+     &            (ABS(B)/(1.0_r8-ABS(AB)+eps)+                         &
+     &             2.0_r8*A/(1.0_r8-AA+eps))
+            sig_c=ABS(A)*BB/((1.0_r8-ABS(A))*                           &
+     &                       (1.0_r8-BB*ABS(A))*                        &
+     &                       (1.0_r8-ABS(AB))+eps)
+            sig_d=-C(i,k)/((1.0_r8-ABS(A))*                             &
+     &                     (1.0_r8-ABS(AC))+eps)
+            sig_e=AC/((1.0_r8-ABS(A))*                                  &
+     &                (1.0_r8-AA*ABS(C(i,k)))+eps)*                     &
+     &            (ABS(C(i,k))/(1.0_r8-ABS(AC)+eps)+                    &
+     &             2.0_r8*A/(1.0_r8-AA+eps))
+            sig_f=ABS(A)*CC/((1.0_r8-ABS(A))*                           &
+     &                       (1.0_r8-CC*ABS(A))*                        &
      &                       (1.0_r8-ABS(AC))+eps)
-              sig_e=AC/((1.0_r8-ABS(A))*                                &
-     &                  (1.0_r8-AA*ABS(C(i,k)))+eps)*                   &
-     &              (ABS(C(i,k))/(1.0_r8-ABS(AC)+eps)+                  &
-     &               2.0_r8*A/(1.0_r8-AA+eps))
-              sig_f=ABS(A)*CC/((1.0_r8-ABS(A))*                         &
-     &                         (1.0_r8-CC*ABS(A))*                      &
-     &                         (1.0_r8-ABS(AC))+eps)
 
-              Ua(i,j,k)=sig_alfa*X+                                     &
-     &                  sig_beta*XX+                                    &
-     &                  sig_gama*XX*X+                                  &
-     &                  sig_a*XY+                                       &
-     &                  sig_b*XX*Y+                                     &
-     &                  sig_c*X*YY+                                     &
-     &                  sig_d*XZ+                                       &
-     &                  sig_e*XX*Z+                                     &
-     &                  sig_f*X*ZZ
+            Ua(i,j,k)=sig_alfa*X+                                       &
+     &                sig_beta*XX+                                      &
+     &                sig_gama*XX*X+                                    &
+     &                sig_a*XY+                                         &
+     &                sig_b*XX*Y+                                       &
+     &                sig_c*X*YY+                                       &
+     &                sig_d*XZ+                                         &
+     &                sig_e*XX*Z+                                       &
+     &                sig_f*X*ZZ
 # else
-              Ua(i,j,k)=sig_alfa*X
+            Ua(i,j,k)=sig_alfa*X
 # endif
 !
 !  Limit by physical velocity.
 !
-              Ua(i,j,k)=MIN(ABS(Ua(i,j,k)),ABS(Um))*                    &
-     &                  SIGN(1.0_r8,Ua(i,j,k))
+            Ua(i,j,k)=MIN(ABS(Ua(i,j,k)),ABS(Um))*                      &
+     &                SIGN(1.0_r8,Ua(i,j,k))
 #  ifdef MASKING
-              Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
+            Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
 #  endif
 #  ifdef WET_DRY
-              Ua(i,j,k)=Ua(i,j,k)*rmask_wet(i-1,j)*rmask_wet(i,j)
+            Ua(i,j,k)=Ua(i,j,k)*rmask_wet(i-1,j)*rmask_wet(i,j)
 #  endif
+          END DO
+          DO i=I_RANGE
+            IF ((Ta(i-1,j,k).le.0.0_r8).or.                             &
+                (Ta(i  ,j,k).le.0.0_r8)) THEN
+              Ua(i,j,k)=0.0_r8
             END IF
           END DO
         END DO
@@ -461,8 +466,8 @@
 #  define J_RANGE MAX(Jstr-1,2),MIN(Jend+2,Mm(ng))
 # endif
       DO j=J_RANGE
-        DO i=I_RANGE
-          DO k=2,N(ng)-1
+        DO k=2,N(ng)-1
+          DO i=I_RANGE
             C(i,k)=0.0625_r8*                                           &
      &             ((Ta(i,j  ,k+1)-Ta(i,j  ,k  ))*odz(i,j  ,k  )+       &
      &              (Ta(i,j  ,k  )-Ta(i,j  ,k-1))*odz(i,j  ,k-1)+       &
@@ -477,7 +482,9 @@
      &               (w(i,j  ,k  )*odz(i,j  ,k  )+                      &
      &                w(i,j  ,k-1)*odz(i,j  ,k-1))*pm(i,j  )*pn(i,j  ))
           END DO
-          k=1
+        END DO
+        k=1
+        DO i=I_RANGE
           C(i,k)=0.25_r8*                                               &
      &           ((Ta(i,j  ,k+1)-Ta(i,j  ,k  ))*odz(i,j  ,k  )+         &
      &            (Ta(i,j-1,k+1)-Ta(i,j-1,k  ))*odz(i,j-1,k  ))*        &
@@ -487,7 +494,9 @@
           Wm(i,k)=0.25_r8*dt(ng)*                                       &
      &            (w(i,j-1,k  )*odz(i,j-1,k  )*pm(i,j-1)*pn(i,j-1)+     &
      &             w(i,j  ,k  )*odz(i,j  ,k  )*pm(i,j  )*pn(i,j  ))
-          k=N(ng)
+        END DO
+        k=N(ng)
+        DO i=I_RANGE
           C(i,k)=0.25_r8*                                               &
      &           ((Ta(i,j  ,k  )-Ta(i,j  ,k-1))*odz(i,j  ,k-1)+         &
      &            (Ta(i,j-1,k  )-Ta(i,j-1,k-1))*odz(i,j-1,k-1))*        &
@@ -500,126 +509,127 @@
         END DO
         DO k=1,N(ng)
           DO i=I_RANGE
-            IF ((Ta(i,j-1,k).le.0.0_r8).or.                             &
-     &          (Ta(i,j  ,k).le.0.0_r8)) THEN
-              Va(i,j,k)=0.0_r8
-            ELSE
 # ifdef MASKING
-              A=0.03125_r8*                                             &
-     &          ((Ta(i+1,j  ,k)-Ta(i  ,j  ,k))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j  )+              &
-     &           (Ta(i  ,j  ,k)-Ta(i-1,j  ,k))*                         &
-     &           (pm(i-1,j  )+pm(i  ,j  ))*umask(i  ,j  )+              &
-     &           (Ta(i+1,j-1,k)-Ta(i  ,j-1,k))*                         &
-     &           (pm(i+1,j-1)+pm(i  ,j-1))*umask(i+1,j-1)+              &
-     &           (Ta(i  ,j-1,k)-Ta(i-1,j-1,k))*                         &
-     &           (pm(i-1,j-1)+pm(i  ,j-1))*umask(i  ,j-1))
+            A=0.03125_r8*                                               &
+     &        ((Ta(i+1,j  ,k)-Ta(i  ,j  ,k))*                           &
+     &         (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j  )+                &
+     &         (Ta(i  ,j  ,k)-Ta(i-1,j  ,k))*                           &
+     &         (pm(i-1,j  )+pm(i  ,j  ))*umask(i  ,j  )+                &
+     &         (Ta(i+1,j-1,k)-Ta(i  ,j-1,k))*                           &
+     &         (pm(i+1,j-1)+pm(i  ,j-1))*umask(i+1,j-1)+                &
+     &         (Ta(i  ,j-1,k)-Ta(i-1,j-1,k))*                           &
+     &         (pm(i-1,j-1)+pm(i  ,j-1))*umask(i  ,j-1))
 # else
-              A=0.03125_r8*                                             &
-     &          ((Ta(i+1,j  ,k)-Ta(i  ,j  ,k))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
-     &           (Ta(i  ,j  ,k)-Ta(i-1,j  ,k))*                         &
-     &           (pm(i-1,j  )+pm(i  ,j  ))+                             &
-     &           (Ta(i+1,j-1,k)-Ta(i  ,j-1,k))*                         &
-     &           (pm(i+1,j-1)+pm(i  ,j-1))+                             &
-     &           (Ta(i  ,j-1,k)-Ta(i-1,j-1,k))*                         &
-     &           (pm(i-1,j-1)+pm(i  ,j-1)))
+            A=0.03125_r8*                                               &
+     &        ((Ta(i+1,j  ,k)-Ta(i  ,j  ,k))*                           &
+     &         (pm(i+1,j  )+pm(i  ,j  ))+                               &
+     &         (Ta(i  ,j  ,k)-Ta(i-1,j  ,k))*                           &
+     &         (pm(i-1,j  )+pm(i  ,j  ))+                               &
+     &         (Ta(i+1,j-1,k)-Ta(i  ,j-1,k))*                           &
+     &         (pm(i+1,j-1)+pm(i  ,j-1))+                               &
+     &         (Ta(i  ,j-1,k)-Ta(i-1,j-1,k))*                           &
+     &         (pm(i-1,j-1)+pm(i  ,j-1)))
 # endif
-              A=A*(om_u(i  ,j  )+om_u(i+1,j  )+                         &
-     &            om_u(i  ,j-1)+om_u(i+1,j-1))/                         &
-     &            (Ta(i  ,j-1,k)+Ta(i,j,k)+eps)
+            A=A*(om_u(i  ,j  )+om_u(i+1,j  )+                           &
+     &           om_u(i  ,j-1)+om_u(i+1,j-1))/                          &
+     &          (Ta(i  ,j-1,k)+Ta(i,j,k)+eps)
 
-              B=(Ta(i,j,k)-Ta(i,j-1,k))/                                &
-     &          (Ta(i,j,k)+Ta(i,j-1,k)+eps)
+            B=(Ta(i,j,k)-Ta(i,j-1,k))/                                  &
+     &        (Ta(i,j,k)+Ta(i,j-1,k)+eps)
 !
-              Um=0.03125_r8*dt(ng)*                                     &
-     &           (Huon(i+1,j  ,k)*(pm(i+1,j)+pm(i,j))*                  &
-     &                            (pn(i+1,j)+pn(i,j))*                  &
-     &                            (oHz(i+1,j  ,k)+oHz(i,j  ,k))+        &
-     &            Huon(i+1,j-1,k)*(pm(i+1,j-1)+pm(i,j-1))*              &
-     &                            (pn(i+1,j-1)+pn(i,j-1))*              &
-     &                            (oHz(i+1,j-1,k)+oHz(i,j-1,k))+        &
-     &            Huon(i  ,j  ,k)*(pm(i-1,j)+pm(i,j))*                  &
-     &                            (pn(i-1,j)+pn(i,j))*                  &
-     &                            (oHz(i-1,j  ,k)+oHz(i,j  ,k))+        &
-     &            Huon(i  ,j-1,k)*(pm(i-1,j-1)+pm(i,j-1))*              &
-     &                            (pn(i-1,j-1)+pn(i,j-1))*              &
-     &                            (oHz(i-1,j-1,k)+oHz(i,j-1,k)))
-              Vm=0.125_r8*Hvom(i,j,k)*                                  &
-     &           dt(ng)*(pn(i,j-1)+pn(i,j))*(pm(i,j-1)+pm(i,j))*        &
-     &           (oHz(i,j-1,k)+oHz(i,j,k))
+            Um=0.03125_r8*dt(ng)*                                       &
+     &         (Huon(i+1,j  ,k)*(pm(i+1,j)+pm(i,j))*                    &
+     &                          (pn(i+1,j)+pn(i,j))*                    &
+     &                          (oHz(i+1,j  ,k)+oHz(i,j  ,k))+          &
+     &          Huon(i+1,j-1,k)*(pm(i+1,j-1)+pm(i,j-1))*                &
+     &                          (pn(i+1,j-1)+pn(i,j-1))*                &
+     &                          (oHz(i+1,j-1,k)+oHz(i,j-1,k))+          &
+     &          Huon(i  ,j  ,k)*(pm(i-1,j)+pm(i,j))*                    &
+     &                          (pn(i-1,j)+pn(i,j))*                    &
+     &                          (oHz(i-1,j  ,k)+oHz(i,j  ,k))+          &
+     &          Huon(i  ,j-1,k)*(pm(i-1,j-1)+pm(i,j-1))*                &
+     &                          (pn(i-1,j-1)+pn(i,j-1))*                &
+     &                          (oHz(i-1,j-1,k)+oHz(i,j-1,k)))
+            Vm=0.125_r8*Hvom(i,j,k)*                                    &
+     &         dt(ng)*(pn(i,j-1)+pn(i,j))*(pm(i,j-1)+pm(i,j))*          &
+     &         (oHz(i,j-1,k)+oHz(i,j,k))
 !
-              X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
-              Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
-              Z=(ABS(Wm(i,k))-Wm(i,k)*Wm(i,k))*C(i,k)-                  &
-     &          A*Um*Wm(i,k)-B*Vm*Wm(i,k)
+            X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
+            Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
+            Z=(ABS(Wm(i,k))-Wm(i,k)*Wm(i,k))*C(i,k)-                    &
+     &        A*Um*Wm(i,k)-B*Vm*Wm(i,k)
 
 # ifdef MPDATA_HOT
 !
-              AA=A*A
-              BB=B*B
-              CC=C(i,k)*C(i,k)
-              AB=A*B
-              AC=A*C(i,k)
-              BC=B*C(i,k)
+            AA=A*A
+            BB=B*B
+            CC=C(i,k)*C(i,k)
+            AB=A*B
+            AC=A*C(i,k)
+            BC=B*C(i,k)
 
-              XX=X*X
-              YY=Y*Y
-              ZZ=Z*Z
-              XY=X*Y
-              XZ=X*Z
-              YZ=Y*Z
+            XX=X*X
+            YY=Y*Y
+            ZZ=Z*Z
+            XY=X*Y
+            XZ=X*Z
+            YZ=Y*Z
 # endif
 !
-              sig_alfa=1.0_r8/(1.0_r8-ABS(B)+eps)
+            sig_alfa=1.0_r8/(1.0_r8-ABS(B)+eps)
 # ifdef MPDATA_HOT
-              sig_beta=-B/((1.0_r8-ABS(B))*                             &
-     &                     (1.0_r8-BB)+eps)
-              sig_gama=2.0_r8*ABS(BB*B)/((1.0_r8-ABS(B))*               &
-     &                                   (1.0_r8-BB)*                   &
-     &                                   (1.0_r8-ABS(BB*B))+eps)
-              sig_a=-A/((1.0_r8-ABS(B))*                                &
-     &                  (1.0_r8-ABS(AB))+eps)
-              sig_b=AB/((1.0_r8-ABS(B))*                                &
-     &                  (1.0_r8-BB*ABS(A))+eps)*                        &
-     &              (ABS(A)/(1.0_r8-ABS(AB)+eps)+                       &
-     &               2.0_r8*B/(1.0_r8-BB+eps))
-              sig_c=ABS(B)*AA/((1.0_r8-ABS(B))*                         &
-     &                         (1.0_r8-AA*ABS(B))*                      &
-     &                         (1.0_r8-ABS(AB))+eps)
-              sig_d=-C(i,k)/((1.0_r8-ABS(B))*                           &
+            sig_beta=-B/((1.0_r8-ABS(B))*                               &
+     &                   (1.0_r8-BB)+eps)
+            sig_gama=2.0_r8*ABS(BB*B)/((1.0_r8-ABS(B))*                 &
+     &                                 (1.0_r8-BB)*                     &
+     &                                 (1.0_r8-ABS(BB*B))+eps)
+            sig_a=-A/((1.0_r8-ABS(B))*                                  &
+     &                (1.0_r8-ABS(AB))+eps)
+            sig_b=AB/((1.0_r8-ABS(B))*                                  &
+     &                (1.0_r8-BB*ABS(A))+eps)*                          &
+     &            (ABS(A)/(1.0_r8-ABS(AB)+eps)+                         &
+     &             2.0_r8*B/(1.0_r8-BB+eps))
+            sig_c=ABS(B)*AA/((1.0_r8-ABS(B))*                           &
+     &                       (1.0_r8-AA*ABS(B))*                        &
+     &                       (1.0_r8-ABS(AB))+eps)
+            sig_d=-C(i,k)/((1.0_r8-ABS(B))*                             &
+     &                     (1.0_r8-ABS(BC))+eps)
+            sig_e=BC/((1.0_r8-ABS(B))*                                  &
+     &                (1.0_r8-BB*ABS(C(i,k)))+eps)*                     &
+     &            (ABS(C(i,k))/(1.0_r8-ABS(BC)+eps)+                    &
+     &             2.0_r8*B/(1.0_r8-BB+eps))
+            sig_f=ABS(B)*CC/((1.0_r8-ABS(B))*                           &
+     &                       (1.0_r8-CC*ABS(B))*                        &
      &                       (1.0_r8-ABS(BC))+eps)
-              sig_e=BC/((1.0_r8-ABS(B))*                                &
-     &                  (1.0_r8-BB*ABS(C(i,k)))+eps)*                   &
-     &              (ABS(C(i,k))/(1.0_r8-ABS(BC)+eps)+                  &
-     &               2.0_r8*B/(1.0_r8-BB+eps))
-              sig_f=ABS(B)*CC/((1.0_r8-ABS(B))*                         &
-     &                         (1.0_r8-CC*ABS(B))*                      &
-     &                         (1.0_r8-ABS(BC))+eps)
 
-              Va(i,j,k)=sig_alfa*Y+                                     &
-     &                  sig_beta*YY+                                    &
-     &                  sig_gama*YY*Y+                                  &
-     &                  sig_a*XY+                                       &
-     &                  sig_b*Y*XX+                                     &
-     &                  sig_c*YY*X+                                     &
-     &                  sig_d*YZ+                                       &
-     &                  sig_e*YY*Z+                                     &
-     &                  sig_f*Y*ZZ
+            Va(i,j,k)=sig_alfa*Y+                                       &
+     &                sig_beta*YY+                                      &
+     &                sig_gama*YY*Y+                                    &
+     &                sig_a*XY+                                         &
+     &                sig_b*Y*XX+                                       &
+     &                sig_c*YY*X+                                       &
+     &                sig_d*YZ+                                         &
+     &                sig_e*YY*Z+                                       &
+     &                sig_f*Y*ZZ
 # else
-              Va(i,j,k)=sig_alfa*Y
+            Va(i,j,k)=sig_alfa*Y
 # endif
 !
 !  Limit by physical velocity.
 !
-              Va(i,j,k)=MIN(ABS(Va(i,j,k)),ABS(Vm))*                    &
-     &                  SIGN(1.0_r8,Va(i,j,k))
+            Va(i,j,k)=MIN(ABS(Va(i,j,k)),ABS(Vm))*                      &
+     &                SIGN(1.0_r8,Va(i,j,k))
 #  ifdef MASKING
-              Va(i,j,k)=Va(i,j,k)*vmask(i,j)
+            Va(i,j,k)=Va(i,j,k)*vmask(i,j)
 #  endif
 #  ifdef WET_DRY
-              Va(i,j,k)=Va(i,j,k)*rmask_wet(i,j-1)*rmask_wet(i,j)
+            Va(i,j,k)=Va(i,j,k)*rmask_wet(i,j-1)*rmask_wet(i,j)
 #  endif
+          END DO
+          DO i=I_RANGE
+            IF ((Ta(i,j-1,k).le.0.0_r8).or.                             &
+                (Ta(i,j  ,k).le.0.0_r8)) THEN
+              Va(i,j,k)=0.0_r8
             END IF
           END DO
         END DO
@@ -668,161 +678,164 @@
 #  define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
 # endif
       DO j=J_RANGE
-        DO i=I_RANGE
-          DO k=1,N(ng)-1
-            IF ((Ta(i,j,k  ).le.0.0_r8).or.                             &
-     &          (Ta(i,j,k+1).le.0.0_r8)) THEN
-              Wa(i,j,k)=0.0_r8
-            ELSE
-              C(i,k)=(Ta(i,j,k+1)-Ta(i,j,k))/                           &
-     &               (Ta(i,j,k+1)+Ta(i,j,k)+eps)
+        DO k=1,N(ng)-1
+          DO i=I_RANGE
+            C(i,k)=(Ta(i,j,k+1)-Ta(i,j,k))/                             &
+     &             (Ta(i,j,k+1)+Ta(i,j,k)+eps)
 # ifdef MASKING
-              A=0.0625_r8*                                              &
-     &          ((Ta(i+1,j,k+1)-Ta(i  ,j,k+1))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                &
-     &           (Ta(i  ,j,k+1)-Ta(i-1,j,k+1))*                         &
-     &           (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j)+                &
-     &           (Ta(i+1,j,k  )-Ta(i  ,j,k  ))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                &
-     &           (Ta(i  ,j,k  )-Ta(i-1,j,k  ))*                         &
-     &           (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j))
-              B=0.0625_r8*                                              &
-     &          ((Ta(i,j+1,k+1)-Ta(i,j  ,k+1))*                         &
-     &           (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                &
-     &           (Ta(i,j  ,k+1)-Ta(i,j-1,k+1))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  )+                &
-     &           (Ta(i,j+1,k  )-Ta(i,j  ,k  ))*                         &
-     &           (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                &
-     &           (Ta(i,j  ,k  )-Ta(i,j-1,k  ))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  ))
+            A=0.0625_r8*                                                &
+     &        ((Ta(i+1,j,k+1)-Ta(i  ,j,k+1))*                           &
+     &         (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                  &
+     &         (Ta(i  ,j,k+1)-Ta(i-1,j,k+1))*                           &
+     &         (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j)+                  &
+     &         (Ta(i+1,j,k  )-Ta(i  ,j,k  ))*                           &
+     &         (pm(i+1,j  )+pm(i  ,j  ))*umask(i+1,j)+                  &
+     &         (Ta(i  ,j,k  )-Ta(i-1,j,k  ))*                           &
+     &         (pm(i  ,j  )+pm(i-1,j  ))*umask(i  ,j))
+            B=0.0625_r8*                                                &
+     &        ((Ta(i,j+1,k+1)-Ta(i,j  ,k+1))*                           &
+     &         (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                  &
+     &         (Ta(i,j  ,k+1)-Ta(i,j-1,k+1))*                           &
+     &         (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  )+                  &
+     &         (Ta(i,j+1,k  )-Ta(i,j  ,k  ))*                           &
+     &         (pn(i  ,j+1)+pn(i  ,j  ))*vmask(i,j+1)+                  &
+     &         (Ta(i,j  ,k  )-Ta(i,j-1,k  ))*                           &
+     &         (pn(i  ,j  )+pn(i  ,j-1))*vmask(i,j  ))
 # else
-              A=0.0625_r8*                                              &
-     &          ((Ta(i+1,j,k+1)-Ta(i  ,j,k+1))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
-     &           (Ta(i  ,j,k+1)-Ta(i-1,j,k+1))*                         &
-     &           (pm(i  ,j  )+pm(i-1,j  ))+                             &
-     &           (Ta(i+1,j,k  )-Ta(i  ,j,k  ))*                         &
-     &           (pm(i+1,j  )+pm(i  ,j  ))+                             &
-     &           (Ta(i  ,j,k  )-Ta(i-1,j,k  ))*                         &
-     &           (pm(i  ,j  )+pm(i-1,j  )))
-              B=0.0625_r8*                                              &
-     &          ((Ta(i,j+1,k+1)-Ta(i,j  ,k+1))*                         &
-     &           (pn(i  ,j+1)+pn(i  ,j  ))+                             &
-     &           (Ta(i,j  ,k+1)-Ta(i,j-1,k+1))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j-1))+                             &
-     &           (Ta(i,j+1,k  )-Ta(i,j  ,k  ))*                         &
-     &           (pn(i  ,j+1)+pn(i  ,j  ))+                             &
-     &           (Ta(i,j  ,k  )-Ta(i,j-1,k  ))*                         &
-     &           (pn(i  ,j  )+pn(i  ,j-1)))
+            A=0.0625_r8*                                                &
+     &        ((Ta(i+1,j,k+1)-Ta(i  ,j,k+1))*                           &
+     &         (pm(i+1,j  )+pm(i  ,j  ))+                               &
+     &         (Ta(i  ,j,k+1)-Ta(i-1,j,k+1))*                           &
+     &         (pm(i  ,j  )+pm(i-1,j  ))+                               &
+     &         (Ta(i+1,j,k  )-Ta(i  ,j,k  ))*                           &
+     &         (pm(i+1,j  )+pm(i  ,j  ))+                               &
+     &         (Ta(i  ,j,k  )-Ta(i-1,j,k  ))*                           &
+     &         (pm(i  ,j  )+pm(i-1,j  )))
+            B=0.0625_r8*                                                &
+     &        ((Ta(i,j+1,k+1)-Ta(i,j  ,k+1))*                           &
+     &         (pn(i  ,j+1)+pn(i  ,j  ))+                               &
+     &         (Ta(i,j  ,k+1)-Ta(i,j-1,k+1))*                           &
+     &         (pn(i  ,j  )+pn(i  ,j-1))+                               &
+     &         (Ta(i,j+1,k  )-Ta(i,j  ,k  ))*                           &
+     &         (pn(i  ,j+1)+pn(i  ,j  ))+                               &
+     &         (Ta(i,j  ,k  )-Ta(i,j-1,k  ))*                           &
+     &         (pn(i  ,j  )+pn(i  ,j-1)))
 # endif
-              A=A*(om_u(i+1,j)+om_u(i  ,j))/                            &
-     &            (Ta(i,j,k+1)+Ta(i,j,k)+eps)
-              B=B*(on_v(i,j+1)+on_v(i,j  ))/                            &
-     &            (Ta(i,j,k+1)+Ta(i,j,k)+eps)
+            A=A*(om_u(i+1,j)+om_u(i  ,j))/                              &
+     &          (Ta(i,j,k+1)+Ta(i,j,k)+eps)
+            B=B*(on_v(i,j+1)+on_v(i,j  ))/                              &
+     &          (Ta(i,j,k+1)+Ta(i,j,k)+eps)
 !
-              Um=0.03125_r8*dt(ng)*                                     &
-     &            (Huon(i  ,j,k  )*(pm(i,j)+pm(i-1,j))*                 &
-     &                             (pn(i,j)+pn(i-1,j))*                 &
-     &                             (oHz(i,j,k  )+oHz(i-1,j,k  ))+       &
-     &             Huon(i  ,j,k+1)*(pm(i,j)+pm(i-1,j))*                 &
-     &                             (pn(i,j)+pn(i-1,j))*                 &
-     &                             (oHz(i,j,k+1)+oHz(i-1,j,k+1))+       &
-     &             Huon(i+1,j,k  )*(pm(i,j)+pm(i+1,j))*                 &
-     &                             (pn(i,j)+pn(i+1,j))*                 &
-     &                             (oHz(i,j,k  )+oHz(i+1,j,k  ))+       &
-     &             Huon(i+1,j,k+1)*(pm(i,j)+pm(i+1,j))*                 &
-     &                             (pn(i,j)+pn(i+1,j))*                 &
-     &                             (oHz(i,j,k+1)+oHz(i+1,j,k+1)))
-              Vm=0.03125_r8*dt(ng)*                                     &
-     &            (Hvom(i,j  ,k  )*(pm(i,j)+pm(i,j-1))*                 &
-     &                             (pn(i,j)+pn(i,j-1))*                 &
-     &                             (oHz(i,j,k  )+oHz(i,j-1,k  ))+       &
-     &             Hvom(i,j  ,k+1)*(pm(i,j)+pm(i,j-1))*                 &
-     &                             (pn(i,j)+pn(i,j-1))*                 &
-     &                             (oHz(i,j,k+1)+oHz(i,j-1,k+1))+       &
-     &             Hvom(i,j+1,k  )*(pm(i,j)+pm(i,j+1))*                 &
-     &                             (pn(i,j)+pn(i,j+1))*                 &
-     &                             (oHz(i,j,k  )+oHz(i,j+1,k  ))+       &
-     &             Hvom(i,j+1,k+1)*(pm(i,j)+pm(i,j+1))*                 &
-     &                             (pn(i,j)+pn(i,j+1))*                 &
-     &                             (oHz(i,j,k+1)+oHz(i,j+1,k+1)))
+            Um=0.03125_r8*dt(ng)*                                       &
+     &         (Huon(i  ,j,k  )*(pm(i,j)+pm(i-1,j))*                    &
+     &                          (pn(i,j)+pn(i-1,j))*                    &
+     &                          (oHz(i,j,k  )+oHz(i-1,j,k  ))+          &
+     &          Huon(i  ,j,k+1)*(pm(i,j)+pm(i-1,j))*                    &
+     &                          (pn(i,j)+pn(i-1,j))*                    &
+     &                          (oHz(i,j,k+1)+oHz(i-1,j,k+1))+          &
+     &          Huon(i+1,j,k  )*(pm(i,j)+pm(i+1,j))*                    &
+     &                          (pn(i,j)+pn(i+1,j))*                    &
+     &                          (oHz(i,j,k  )+oHz(i+1,j,k  ))+          &
+     &          Huon(i+1,j,k+1)*(pm(i,j)+pm(i+1,j))*                    &
+     &                          (pn(i,j)+pn(i+1,j))*                    &
+     &                          (oHz(i,j,k+1)+oHz(i+1,j,k+1)))
+            Vm=0.03125_r8*dt(ng)*                                       &
+     &         (Hvom(i,j  ,k  )*(pm(i,j)+pm(i,j-1))*                    &
+     &                          (pn(i,j)+pn(i,j-1))*                    &
+     &                          (oHz(i,j,k  )+oHz(i,j-1,k  ))+          &
+     &          Hvom(i,j  ,k+1)*(pm(i,j)+pm(i,j-1))*                    &
+     &                          (pn(i,j)+pn(i,j-1))*                    &
+     &                          (oHz(i,j,k+1)+oHz(i,j-1,k+1))+          &
+     &          Hvom(i,j+1,k  )*(pm(i,j)+pm(i,j+1))*                    &
+     &                          (pn(i,j)+pn(i,j+1))*                    &
+     &                          (oHz(i,j,k  )+oHz(i,j+1,k  ))+          &
+     &          Hvom(i,j+1,k+1)*(pm(i,j)+pm(i,j+1))*                    &
+     &                          (pn(i,j)+pn(i,j+1))*                    &
+     &                          (oHz(i,j,k+1)+oHz(i,j+1,k+1)))
 
-              Wm(i,k)=w(i,j,k)*odz(i,j,k)*pm(i,j)*pn(i,j)*dt(ng)
+            Wm(i,k)=w(i,j,k)*odz(i,j,k)*pm(i,j)*pn(i,j)*dt(ng)
 !
-              X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
-              Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
-              Z=(ABS(Wm(i,k))-Wm(i,k)*Wm(i,k))*C(i,k)-                  &
-     &          A*Um*Wm(i,k)-B*Vm*Wm(i,k)
+            X=(ABS(Um)-Um*Um)*A-B*Um*Vm-C(i,k)*Um*Wm(i,k)
+            Y=(ABS(Vm)-Vm*Vm)*B-A*Um*Vm-C(i,k)*Vm*Wm(i,k)
+            Z=(ABS(Wm(i,k))-Wm(i,k)*Wm(i,k))*C(i,k)-                    &
+     &        A*Um*Wm(i,k)-B*Vm*Wm(i,k)
 
 # ifdef MPDATA_HOT
 !
-              AA=A*A
-              BB=B*B
-              CC=C(i,k)*C(i,k)
-              AB=A*B
-              AC=A*C(i,k)
-              BC=B*C(i,k)
+            AA=A*A
+            BB=B*B
+            CC=C(i,k)*C(i,k)
+            AB=A*B
+            AC=A*C(i,k)
+            BC=B*C(i,k)
 
-              XX=X*X
-              YY=Y*Y
-              ZZ=Z*Z
-              XY=X*Y
-              XZ=X*Z
-              YZ=Y*Z
+            XX=X*X
+            YY=Y*Y
+            ZZ=Z*Z
+            XY=X*Y
+            XZ=X*Z
+            YZ=Y*Z
 # endif
 !
-              sig_alfa=1.0_r8/(1.0_r8-ABS(C(i,k))+eps)
+            sig_alfa=1.0_r8/(1.0_r8-ABS(C(i,k))+eps)
 # ifdef MPDATA_HOT
-              sig_beta=-C(i,k)/((1.0_r8-ABS(C(i,k)))*                   &
-     &                          (1.0_r8-CC)+eps)
-              sig_gama=2.0_r8*ABS(CC*C(i,k))/                           &
-     &                 ((1.0_r8-ABS(C(i,k)))*                           &
-     &                  (1.0_r8-CC)*                                    &
-     &                  (1.0_r8-ABS(CC*C(i,k)))+eps)
-              sig_a=-B/((1.0_r8-ABS(C(i,k)))*                           &
-     &                  (1.0_r8-ABS(BC))+eps)
-              sig_b=BC/((1.0_r8-ABS(C(i,k)))*                           &
-     &                  (1.0_r8-CC*ABS(B))+eps)*                        &
-     &                  (ABS(B)/(1.0_r8-ABS(BC)+eps)+                   &
-     &                   2.0_r8*C(i,k)/(1.0_r8-CC+eps))
-              sig_c=ABS(C(i,k))*BB/((1.0_r8-ABS(C(i,k)))*               &
-     &                              (1.0_r8-B*B*ABS(C(i,k)))*           &
-     &                              (1.0_r8-ABS(BC))+eps)
-              sig_d=-A/((1.0_r8-ABS(C(i,k)))*                           &
-     &                  (1.0_r8-ABS(AC))+eps)
-              sig_e=AC/((1.0_r8-ABS(C(i,k)))*                           &
-     &                  (1.0_r8-CC*ABS(A))+eps)*                        &
-     &              (ABS(A)/(1.0_r8-ABS(AC)+eps)+                       &
-     &               2.0_r8*C(i,k)/(1.0_r8-CC+eps))
-              sig_f=ABS(C(i,k))*AA/((1.0_r8-ABS(C(i,k)))*               &
-     &                              (1.0_r8-AA*ABS(C(i,k)))*            &
-     &                              (1.0_r8-ABS(AC))+eps)
+            sig_beta=-C(i,k)/((1.0_r8-ABS(C(i,k)))*                     &
+     &                        (1.0_r8-CC)+eps)
+            sig_gama=2.0_r8*ABS(CC*C(i,k))/                             &
+     &               ((1.0_r8-ABS(C(i,k)))*                             &
+     &                (1.0_r8-CC)*                                      &
+     &                (1.0_r8-ABS(CC*C(i,k)))+eps)
+            sig_a=-B/((1.0_r8-ABS(C(i,k)))*                             &
+     &                (1.0_r8-ABS(BC))+eps)
+            sig_b=BC/((1.0_r8-ABS(C(i,k)))*                             &
+     &                (1.0_r8-CC*ABS(B))+eps)*                          &
+     &                (ABS(B)/(1.0_r8-ABS(BC)+eps)+                     &
+     &                 2.0_r8*C(i,k)/(1.0_r8-CC+eps))
+            sig_c=ABS(C(i,k))*BB/((1.0_r8-ABS(C(i,k)))*                 &
+     &                            (1.0_r8-B*B*ABS(C(i,k)))*             &
+     &                            (1.0_r8-ABS(BC))+eps)
+            sig_d=-A/((1.0_r8-ABS(C(i,k)))*                             &
+     &                (1.0_r8-ABS(AC))+eps)
+            sig_e=AC/((1.0_r8-ABS(C(i,k)))*                             &
+     &                (1.0_r8-CC*ABS(A))+eps)*                          &
+     &            (ABS(A)/(1.0_r8-ABS(AC)+eps)+                         &
+     &             2.0_r8*C(i,k)/(1.0_r8-CC+eps))
+            sig_f=ABS(C(i,k))*AA/((1.0_r8-ABS(C(i,k)))*                 &
+     &                            (1.0_r8-AA*ABS(C(i,k)))*              &
+     &                            (1.0_r8-ABS(AC))+eps)
 
-              Wa(i,j,k)=sig_alfa*Z+                                     &
-     &                  sig_beta*ZZ+                                    &
-     &                  sig_gama*ZZ*Z+                                  &
-     &                  sig_a*YZ+                                       &
-     &                  sig_b*ZZ*Y+                                     &
-     &                  sig_c*Z*YY+                                     &
-     &                  sig_d*XZ+                                       &
-     &                  sig_e*ZZ*X+                                     &
-     &                  sig_f*Z*XX
+            Wa(i,j,k)=sig_alfa*Z+                                       &
+     &                sig_beta*ZZ+                                      &
+     &                sig_gama*ZZ*Z+                                    &
+     &                sig_a*YZ+                                         &
+     &                sig_b*ZZ*Y+                                       &
+     &                sig_c*Z*YY+                                       &
+     &                sig_d*XZ+                                         &
+     &                sig_e*ZZ*X+                                       &
+     &                sig_f*Z*XX
 # else
-              Wa(i,j,k)=sig_alfa*Z
+            Wa(i,j,k)=sig_alfa*Z
 # endif
 !
 !  Limit by physical velocity.
 !
-              Wa(i,j,k)=MIN(ABS(Wa(i,j,k)),ABS(Wm(i,k)))*               &
-     &                  SIGN(1.0_r8,Wa(i,j,k))
+            Wa(i,j,k)=MIN(ABS(Wa(i,j,k)),ABS(Wm(i,k)))*                 &
+     &                SIGN(1.0_r8,Wa(i,j,k))
 #  ifdef MASKING
-              Wa(i,j,k)=Wa(i,j,k)*rmask(i,j)
+            Wa(i,j,k)=Wa(i,j,k)*rmask(i,j)
 #  endif
 #  ifdef WET_DRY
-              Wa(i,j,k)=Wa(i,j,k)*rmask_wet(i,j)
+            Wa(i,j,k)=Wa(i,j,k)*rmask_wet(i,j)
 #  endif
+          END DO
+          DO i=I_RANGE
+            IF ((Ta(i,j,k  ).le.0.0_r8).or.                             &
+     &          (Ta(i,j,k+1).le.0.0_r8)) THEN
+              Wa(i,j,k)=0.0_r8
             END IF
           END DO
+        END DO
+        DO i=I_RANGE
           Wa(i,j,0)=0.0_r8
           Wa(i,j,N(ng))=0.0_r8
         END DO
