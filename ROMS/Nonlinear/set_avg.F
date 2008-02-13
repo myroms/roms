@@ -29,6 +29,9 @@
 !
       USE mod_param
       USE mod_average
+# if defined FORWARD_WRITE && defined SOLVE3D
+      USE mod_coupling
+# endif
       USE mod_forces
 # ifdef SOLVE3D
       USE mod_grid
@@ -64,6 +67,12 @@
 #  ifdef AVERAGES_QUADRATIC
      &                   GRID(ng) % Huon,                               &
      &                   GRID(ng) % Hvom,                               &
+#  endif
+#  ifdef FORWARD_WRITE
+     &                   COUPLING(ng) % DU_avg1,                        &
+     &                   COUPLING(ng) % DU_avg2,                        &
+     &                   COUPLING(ng) % DV_avg1,                        &
+     &                   COUPLING(ng) % DV_avg2,                        &
 #  endif
      &                   OCEAN(ng) % u,                                 &
      &                   OCEAN(ng) % v,                                 &
@@ -147,6 +156,12 @@
      &                   TIDES(ng) % u_detided,                         &
      &                   TIDES(ng) % v_tide,                            &
      &                   TIDES(ng) % v_detided,                         &
+#  endif
+#  ifdef FORWARD_WRITE
+     &                   AVERAGE(ng) % avgDU_avg1,                      &
+     &                   AVERAGE(ng) % avgDU_avg2,                      &
+     &                   AVERAGE(ng) % avgDV_avg1,                      &
+     &                   AVERAGE(ng) % avgDV_avg2,                      &
 #  endif
      &                   AVERAGE(ng) % avgu3d,                          &
      &                   AVERAGE(ng) % avgv3d,                          &
@@ -252,6 +267,10 @@
 #  ifdef AVERAGES_QUADRATIC
      &                         Huon, Hvom,                              &
 #  endif
+#  ifdef FORWARD_WRITE
+     &                         DU_avg1, DU_avg2,                        &
+     &                         DV_avg1, DV_avg2,                        &
+#  endif
      &                         u, v,                                    &
      &                         W, wvel, t, rho,                         &
 #  ifdef AVERAGES_NEARSHORE
@@ -307,6 +326,10 @@
 #  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
      &                         u_tide, u_detided,                       &
      &                         v_tide, v_detided,                       &
+#  endif
+#  ifdef FORWARD_WRITE
+     &                         avgDU_avg1, avgDU_avg2,                  &
+     &                         avgDV_avg1, avgDV_avg2,                  &
 #  endif
      &                         avgu3d, avgv3d,                          &
      &                         avgw3d, avgwvel,                         &
@@ -390,6 +413,12 @@
 #   ifdef AVERAGES_QUADRATIC
       real(r8), intent(in) :: Huon(LBi:,LBj:,:)
       real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
+#   endif
+#   ifdef FORWARD_WRITE
+      real(r8), intent(in) :: DU_avg1(LBi:,LBj:)
+      real(r8), intent(in) :: DU_avg2(LBi:,LBj:)
+      real(r8), intent(in) :: DV_avg1(LBi:,LBj:)
+      real(r8), intent(in) :: DV_avg2(LBi:,LBj:)
 #   endif
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: v(LBi:,LBj:,:,:)
@@ -477,6 +506,12 @@
       real(r8), intent(inout) :: u_detided(LBi:,LBj:,:)
       real(r8), intent(inout) :: v_tide(LBi:,LBj:,:,0:)
       real(r8), intent(inout) :: v_detided(LBi:,LBj:,:)
+#   endif
+#   ifdef FORWARD_WRITE
+      real(r8), intent(inout) :: avgDU_avg1(LBi:,LBj:)
+      real(r8), intent(inout) :: avgDU_avg2(LBi:,LBj:)
+      real(r8), intent(inout) :: avgDV_avg1(LBi:,LBj:)
+      real(r8), intent(inout) :: avgDV_avg2(LBi:,LBj:)
 #   endif
       real(r8), intent(inout) :: avgu3d(LBi:,LBj:,:)
       real(r8), intent(inout) :: avgv3d(LBi:,LBj:,:)
@@ -572,6 +607,12 @@
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
 #   endif
+#   ifdef FORWARD_WRITE
+      real(r8), intent(in) :: DU_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: DU_avg2(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: DV_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: DV_avg2(LBi:UBi,LBj:UBj)
+#   endif
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: W(LBi:UBi,LBj:UBj,0:N(ng))
@@ -658,6 +699,12 @@
       real(r8), intent(inout) :: u_detided(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: v_tide(LBi:UBi,LBj:UBj,N(ng),0:2*NTC)
       real(r8), intent(inout) :: v_detided(LBi:UBi,LBj:UBj,N(ng))
+#   endif
+#   ifdef FORWARD_WRITE
+      real(r8), intent(inout) :: avgDU_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgDU_avg2(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgDV_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: avgDV_avg2(LBi:UBi,LBj:UBj)
 #   endif
       real(r8), intent(inout) :: avgu3d(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: avgv3d(LBi:UBi,LBj:UBj,N(ng))
@@ -828,6 +875,12 @@
             avgzeta(i,j)=zeta(i,j,Kout)
             avgu2d (i,j)=ubar(i,j,Kout)
             avgv2d (i,j)=vbar(i,j,Kout)
+# if defined FORWARD_WRITE && defined SOLVE3D
+            avgDU_avg1(i,j)=DU_avg1(i,j)
+            avgDU_avg2(i,j)=DU_avg2(i,j)
+            avgDV_avg1(i,j)=DV_avg1(i,j)
+            avgDV_avg2(i,j)=DV_avg2(i,j)
+# endif
 # ifdef AVERAGES_NEARSHORE
             avgu2Sd(i,j)=ubar_stokes(i,j)
             avgv2Sd(i,j)=vbar_stokes(i,j)
@@ -1036,6 +1089,12 @@
             avgzeta(i,j)=avgzeta(i,j)+zeta(i,j,Kout)
             avgu2d (i,j)=avgu2d (i,j)+ubar(i,j,Kout)
             avgv2d (i,j)=avgv2d (i,j)+vbar(i,j,Kout)
+# if defined FORWARD_WRITE && defined SOLVE3D
+            avgDU_avg1(i,j)=avgDU_avg1(i,j)+DU_avg1(i,j)
+            avgDU_avg2(i,j)=avgDU_avg2(i,j)+DU_avg2(i,j)
+            avgDV_avg1(i,j)=avgDV_avg1(i,j)+DV_avg1(i,j)
+            avgDV_avg2(i,j)=avgDV_avg2(i,j)+DV_avg2(i,j)
+# endif
 # ifdef AVERAGES_NEARSHORE
             avgu2Sd(i,j)=avgu2Sd(i,j)+ubar_stokes(i,j)
             avgv2Sd(i,j)=avgv2Sd(i,j)+vbar_stokes(i,j)
@@ -1328,6 +1387,12 @@
             avgzeta(i,j)=fac*avgzeta(i,j)
             avgu2d (i,j)=fac*avgu2d (i,j)
             avgv2d (i,j)=fac*avgv2d (i,j)
+# endif
+# if defined FORWARD_WRITE && defined SOLVE3D
+            avgDU_avg1(i,j)=fac*avgDU_avg1(i,j)
+            avgDU_avg2(i,j)=fac*avgDU_avg2(i,j)
+            avgDV_avg1(i,j)=fac*avgDV_avg1(i,j)
+            avgDV_avg2(i,j)=fac*avgDV_avg2(i,j)
 # endif
 # ifdef AVERAGES_NEARSHORE
             avgu2Sd(i,j)=fac*avgu2Sd(i,j)

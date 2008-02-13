@@ -59,6 +59,13 @@
 !  avgw3d     S-coordinate [omega*Hz/mn] vertical velocity (m3/s).     !
 !  avgwvel    3D "true" vertical velocity (m/s).                       !
 !                                                                      !
+# if defined FORWARD_WRITE && defined SOLVE3D
+!  avgDU_avg1 time-averaged u-flux for 3D momentum coupling.           !
+!  avgDU_avg2 time-averaged u-flux for 3D momentum coupling.           !
+!  avgDV_avg1 time-averaged v-flux for 3D momentum coupling.           !
+!  avgDV_avg2 time-averaged v-flux for 3D momentum coupling.           !
+!                                                                      !
+# endif
 # ifdef AVERAGES_NEARSHORE
 !  Time-averaged radiation stresses.                                   !
 !                                                                      !
@@ -113,6 +120,12 @@
           real(r8), pointer :: avgv3d(:,:,:)
           real(r8), pointer :: avgw3d(:,:,:)
           real(r8), pointer :: avgwvel(:,:,:)
+#  ifdef FORWARD_WRITE
+          real(r8), pointer :: avgDU_avg1(:,:)
+          real(r8), pointer :: avgDU_avg2(:,:)
+          real(r8), pointer :: avgDV_avg1(:,:)
+          real(r8), pointer :: avgDV_avg2(:,:)
+#  endif
 #  ifdef AVERAGES_NEARSHORE
           real(r8), pointer :: avgu3Sd(:,:,:)
           real(r8), pointer :: avgv3Sd(:,:,:)
@@ -231,6 +244,12 @@
       allocate ( AVERAGE(ng) % avgt(LBi:UBi,LBj:UBj,N(ng),NT(ng)) )
       allocate ( AVERAGE(ng) % avgu3d(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( AVERAGE(ng) % avgv3d(LBi:UBi,LBj:UBj,N(ng)) )
+#  ifdef FORWARD_WRITE
+      allocate ( AVERAGE(ng) % avgDU_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgDU_avg2(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgDV_avg1(LBi:UBi,LBj:UBj) )
+      allocate ( AVERAGE(ng) % avgDV_avg2(LBi:UBi,LBj:UBj) )
+#  endif
 #  ifdef AVERAGES_NEARSHORE
       allocate ( AVERAGE(ng) % avgu3Sd(LBi:UBi,LBj:UBj,N(ng)) )
       allocate ( AVERAGE(ng) % avgv3Sd(LBi:UBi,LBj:UBj,N(ng)) )
@@ -397,6 +416,12 @@
           AVERAGE(ng) % avgbvs(i,j) = IniVal
 # endif
 # ifdef SOLVE3D
+#  ifdef FORWARD_WRITE
+          AVERAGE(ng) % avgDU_avg1(i,j) = IniVal
+          AVERAGE(ng) % avgDU_avg2(i,j) = IniVal
+          AVERAGE(ng) % avgDV_avg1(i,j) = IniVal
+          AVERAGE(ng) % avgDV_avg2(i,j) = IniVal
+#  endif
 #  ifdef AVERAGES_FLUXES
           AVERAGE(ng) % avgstf(i,j) = IniVal
           AVERAGE(ng) % avgswf(i,j) = IniVal

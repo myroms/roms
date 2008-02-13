@@ -146,7 +146,6 @@
      &                     GRID(ng) % umask(LBi,LBj),                   &
 # endif
      &                     AVERAGE(ng) % avgu2d(LBi,LBj))
-
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idUbar)), tAVGindx(ng)
@@ -218,6 +217,79 @@
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idv2dD)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+# endif
+# if defined FORWARD_WRITE && defined SOLVE3D
+!
+!  Write out time-averaged mass fluxes for 3D momentum coupling.
+!
+      scale=1.0_r8
+      gtype=gfactor*u2dvar
+      status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idUfx1,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgDU_avg1(LBi,LBj))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUfx1)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+      gtype=gfactor*u2dvar
+      status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idUfx2,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgDU_avg2(LBi,LBj))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idUfx2)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+      gtype=gfactor*v2dvar
+      status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idVfx1,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % vmask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgDV_avg1(LBi,LBj))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVfx1)), tAVGindx(ng)
+        END IF
+        exit_flag=3
+        ioerror=status
+        RETURN
+      END IF
+!
+      gtype=gfactor*v2dvar
+      status=nf_fwrite2d(ng, iNLM, ncAVGid(ng), avgVid(idVfx2,ng),      &
+     &                   tAVGindx(ng), gtype,                           &
+     &                   LBi, UBi, LBj, UBj, scale,                     &
+#  ifdef MASKING
+     &                   GRID(ng) % umask(LBi,LBj),                     &
+#  endif
+     &                   AVERAGE(ng) % avgDV_avg2(LBi,LBj))
+      IF (status.ne.nf90_noerr) THEN
+        IF (Master) THEN
+          WRITE (stdout,10) TRIM(Vname(1,idVfx2)), tAVGindx(ng)
         END IF
         exit_flag=3
         ioerror=status

@@ -440,6 +440,62 @@
      &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
 # endif
 # ifdef SOLVE3D
+#  ifdef FORWARD_WRITE
+!
+!  Define time-averaged mass fluxes for 3D momentum coupling.
+!
+        Vinfo( 1)=Vname(1,idUfx1)
+        Vinfo( 2)=Vname(2,idUfx1)
+        Vinfo( 3)=Vname(3,idUfx1)
+        Vinfo(14)=Vname(4,idUfx1)
+        Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#   endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(u2dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idUfx1,ng),NF_FOUT,           &
+     &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
+!
+        Vinfo( 1)=Vname(1,idUfx2)
+        Vinfo( 2)=Vname(2,idUfx2)
+        Vinfo( 3)=Vname(3,idUfx2)
+        Vinfo(14)=Vname(4,idUfx2)
+        Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_u'
+#   endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(u2dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idUfx2,ng),NF_FOUT,           &
+     &                 nvd3,u2dgrd,Aval,Vinfo,ncname)
+!
+        Vinfo( 1)=Vname(1,idVfx1)
+        Vinfo( 2)=Vname(2,idVfx1)
+        Vinfo( 3)=Vname(3,idVfx1)
+        Vinfo(14)=Vname(4,idVfx1)
+        Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#   endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(v2dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idVfx1,ng),NF_FOUT,           &
+     &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+!
+        Vinfo( 1)=Vname(1,idVfx2)
+        Vinfo( 2)=Vname(2,idVfx2)
+        Vinfo( 3)=Vname(3,idVfx2)
+        Vinfo(14)=Vname(4,idVfx2)
+        Vinfo(16)=Vname(1,idtime)
+#   if defined WRITE_WATER && defined MASKING
+        Vinfo(20)='mask_v'
+#   endif
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(v2dvar,r8)
+        status=def_var(ncAVGid(ng),avgVid(idVfx2,ng),NF_FOUT,           &
+     &                 nvd3,v2dgrd,Aval,Vinfo,ncname)
+#  endif
 !
 !  Define 3D momentum component in the XI-direction.
 !
@@ -1533,6 +1589,28 @@
           END IF
 # endif
 # ifdef SOLVE3D
+#  ifdef FORWARD_WRITE
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUfx1))) THEN
+            got_var(idUfx1)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUfx1)),    &
+     &                            avgVid(idUfx1,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUfx2))) THEN
+            got_var(idUfx2)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUfx2)),    &
+     &                            avgVid(idUfx2,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVfx1))) THEN
+            got_var(idVfx1)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVfx1)),    &
+     &                            avgVid(idVfx1,ng))
+          END IF
+          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVfx2))) THEN
+            got_var(idVfx2)=.TRUE.
+            status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idVfx2)),    &
+     &                            avgVid(idVfx2,ng))
+          END IF
+#  endif
           IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
             status=nf90_inq_varid(ncAVGid(ng),TRIM(Vname(1,idUvel)),    &
@@ -1905,6 +1983,28 @@
         END IF
 # endif
 # ifdef SOLVE3D
+#  ifdef FORWARD_WRITE
+        IF (.not.got_var(idUfx1)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idUfx1)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idUfx2)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idUfx2)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVfx1)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idVfx1)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+        IF (.not.got_var(idVfx2)) THEN
+          WRITE (stdout,60) TRIM(Vname(1,idVfx2)), TRIM(ncname)
+          exit_flag=3
+          RETURN
+        END IF
+#  endif
         IF (.not.got_var(idUvel).and.Hout(idUvel,ng)) THEN
           WRITE (stdout,60) TRIM(Vname(1,idUvel)), TRIM(ncname)
           exit_flag=3
