@@ -188,7 +188,7 @@
 #else
           cff=0.5_r8*g
           DO i=Istr,Iend
-     &      u2v2=ubar(i  ,j,krhs)*ubar(i  ,j,krhs)+                     &
+            u2v2=ubar(i  ,j,krhs)*ubar(i  ,j,krhs)+                     &
      &           ubar(i+1,j,krhs)*ubar(i+1,j,krhs)+                     &
      &           vbar(i,j  ,krhs)*vbar(i,j  ,krhs)+                     &
      &           vbar(i,j+1,krhs)*vbar(i,j+1,krhs)

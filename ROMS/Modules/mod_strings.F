@@ -22,7 +22,7 @@
         implicit none
 
         character (len=80)   :: title
-        character (len=1024) :: Coptions
+        character (len=2048) :: Coptions
 
         integer, parameter :: Nregion = 47
 
