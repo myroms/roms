@@ -83,7 +83,7 @@
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncTLMid(ng).ne.-1) status=nf90_close(ncTLMid(ng))
-            IF ((iic(ng).eq.ntstart(ng)).and.                               &
+            IF ((iic(ng).eq.ntstart(ng)).and.                           &
      &          (MOD(iic(ng)-1,ndefTLM(ng)).gt.0)) THEN
               ldef=ldefout(ng)
             ELSE
@@ -92,8 +92,20 @@
             CALL tl_def_his (ng, ldef)
             IF (exit_flag.ne.NoError) RETURN
             LwrtTLM(ng)=.TRUE.
-!!          LdefTLM(ng)=.FALSE.
-          END IF
+          ELSE IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
+            NrecTLM(ng)=0                       ! restart and unfinished
+            ifile=(iic(ng)-1)/ndefTLM(ng)+1     ! tangent file
+            idefTLM(ng)=idefTLM(ng)+nTLM(ng)
+            IF (Master) THEN
+              lstr=LEN_TRIM(TLMbase(ng))
+              WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3),ifile
+            END IF
+            ldef=.FALSE.
+            CALL tl_def_his (ng, ldef)
+            IF (exit_flag.ne.NoError) RETURN
+            LwrtTLM(ng)=.TRUE.
+            tTLMindx(ng)=MAX(0,tTLMindx(ng)-1)  ! overwrite last record
+          END IF                                ! with restart fields
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
             CALL tl_def_his (ng, ldefout(ng))

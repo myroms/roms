@@ -931,15 +931,9 @@
 !
 !!      tADJindx(ng)=tsize
         IF (ndefADJ(ng).gt.0) THEN
-          IF ((ntstart(ng)-1).lt.ndefADJ(ng)) THEN
-            tADJindx(ng)=1+((ntstart(ng)-1)-                            &
-     &                       ndefADJ(ng)*((ntstart(ng)-1)/ndefADJ(ng)))/&
-     &                     nADJ(ng)
-          ELSE
-            tADJindx(ng)=((ntstart(ng)-1)-                              &
-     &                     ndefADJ(ng)*((ntstart(ng)-1)/ndefADJ(ng)))/  &
-     &                   nADJ(ng)
-          END IF
+          tADJindx(ng)=((ntstart(ng)-1)-                                &
+     &                  ndefADJ(ng)*((ntstart(ng)-1)/ndefADJ(ng)))/     &
+     &                 nADJ(ng)
         ELSE
           tADJindx(ng)=(ntstart(ng)-1)/nADJ(ng)
         END IF

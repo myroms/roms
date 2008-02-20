@@ -33,7 +33,7 @@
 !
       logical :: ldef, wrtHIS
 
-      integer :: ifile, lstr, status, subs, tile, thread
+      integer :: ifile, lstr, status
 
 # ifdef PROFILE
 !
@@ -80,8 +80,20 @@
             CALL ad_def_his (ng, ldef)
             IF (exit_flag.ne.NoError) RETURN
             LwrtADJ(ng)=.TRUE.
-!!          LdefADJ(ng)=.FALSE.
-          END IF
+          ELSE IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
+            NrecADJ(ng)=0                       ! restart and unfinished
+            ifile=(iic(ng)-1)/ndefADJ(ng)+1     ! adjoint file
+            idefADJ(ng)=idefADJ(ng)+nADJ(ng)
+            IF (Master) THEN
+              lstr=LEN_TRIM(ADJbase(ng))
+              WRITE (ADJname(ng),10) ADJbase(ng)(1:lstr-3),ifile
+            END IF
+            ldef=.FALSE.
+            CALL ad_def_his (ng, ldef)
+            IF (exit_flag.ne.NoError) RETURN
+            LwrtADJ(ng)=.TRUE.
+            tADJindx(ng)=MAX(0,tADJindx(ng)-1)  ! overwrite last record
+          END IF                                ! with restart fields
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
             CALL ad_def_his (ng, ldefout(ng))
@@ -127,19 +139,36 @@
 !
       IF (LdefAVG(ng)) THEN
         IF (ndefAVG(ng).gt.0) THEN
-          IF (idefAVG(ng).lt.0) idefAVG(ng)=ntstart(ng)-1
+          IF (idefAVG(ng).lt.0) THEN
+            idefAVG(ng)=((ntstart(ng)-1)/ndefAVG(ng))*ndefAVG(ng)
+            IF (ndefAVG(ng).eq.nAVG(ng)) THEN      ! one file per record
+              IF (idefAVG(ng).le.0) THEN
+                idefAVG(ng)=ndefAVG(ng)
+              ELSE
+                idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)      ! restart logic
+              END IF
+            ELSE IF (idefAVG(ng).lt.iic(ng)-1) THEN
+              idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)
+            END IF
+          END IF
           IF ((iic(ng)-1).eq.idefAVG(ng)) THEN
-            idefAVG(ng)=idefAVG(ng)-ndefAVG(ng)+1
-            NrecAVG(ng)=0
-            ifile=(iic(ng)-1)/ndefAVG(ng)+1
+            idefAVG(ng)=idefAVG(ng)+ndefAVG(ng)
+            IF (nAVG(ng).ne.ndefAVG(ng).and.iic(ng).eq.ntstart(ng)) THEN
+              idefAVG(ng)=idefAVG(ng)+nAVG(ng)
+            END IF
+            IF (ndefAVG(ng).eq.nAVG(ng)) THEN
+              ifile=(iic(ng)-1)/ndefAVG(ng)
+            ELSE
+              ifile=(iic(ng)-1)/ndefAVG(ng)+1
+            END IF
             IF (Master) THEN
               lstr=LEN_TRIM(AVGbase(ng))
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncAVGid(ng).ne.-1) status=nf90_close(ncAVGid(ng))
-            IF ((iic(ng).eq.ntstart(ng)).and.                           &
-     &          (MOD(iic(ng)-1,ndefAVG(ng)).gt.0)) THEN
+            IF ((iic(ng).eq.ntstart(ng)+nAVG(ng)).and.                  &
+     &           (MOD(iic(ng)-nAVG(ng)-1,ndefAVG(ng)).ne.0)) THEN
               ldef=ldefout(ng)
             ELSE
               ldef=.TRUE.
@@ -147,7 +176,18 @@
             CALL def_avg (ng, ldef)
             IF (exit_flag.ne.NoError) RETURN
             LwrtAVG(ng)=.TRUE.
-!!          LdefAVG(ng)=.FALSE.
+          ELSE IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
+            NrecAVG(ng)=0                       ! restart and unfinished
+            ifile=(iic(ng)-1)/ndefAVG(ng)+1     ! average file
+            idefAVG(ng)=idefAVG(ng)+nAVG(ng)
+            IF (Master) THEN
+              lstr=LEN_TRIM(AVGbase(ng))
+              WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
+            END IF
+            ldef=.FALSE.
+            CALL def_avg (ng, ldef)
+            IF (exit_flag.ne.NoError) RETURN
+            LwrtAVG(ng)=.TRUE.
           END IF
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN

@@ -145,12 +145,28 @@
 !  Terminate execution requested variables are not found.
 !
           IF (.not.got_var) THEN
-            WRITE (stdout,10) TRIM(Vname(1,ifield)), TRIM(ncfile)
+            IF (nfiles.gt.1) THEN
+              WRITE (stdout,10) TRIM(Vname(1,ifield)), 'files:'
+              DO i=1,nfiles
+                WRITE (stdout,'(15x,a)') TRIM(fname(i))
+              END DO
+            ELSE
+              WRITE (stdout,10) TRIM(Vname(1,ifield)), 'file:'
+              WRITE (stdout,'(15x,a)') TRIM(ncfile)
+            END IF
             exit_flag=2
             RETURN
           END IF
           IF (.not.got_time) THEN
-            WRITE (stdout,10) TRIM(Tname(ifield)), TRIM(ncfile)
+            IF (nfiles.gt.1) THEN
+              WRITE (stdout,10) TRIM(Tname(ifield)), 'files:'
+              DO i=1,nfiles
+                WRITE (stdout,'(15x,a)') TRIM(fname(i))
+              END DO
+            ELSE
+              WRITE (stdout,10) TRIM(Tname(ifield)), 'file:'
+              WRITE (stdout,'(15x,a)') TRIM(ncfile)
+            END IF
             exit_flag=2
             RETURN
           END IF
@@ -459,7 +475,7 @@
       END IF
 !
   10  FORMAT (/,' GET_2DFLDR  - unable to find requested variable: ',a, &
-     &        /,15x,'in input NetCDF file: ',a)
+     &        /,15x,'in input NetCDF ',a)
   20  FORMAT (/,' GET_2DFLDR  - unable to open input NetCDF file: ',a)
   30  FORMAT (/,' GET_2DFLDR  - error while reading attribute: ',a)
   40  FORMAT (/,' GET_2DFLDR  - error while inquiring attributes for',  &
