@@ -7279,7 +7279,7 @@
           ELSE IF (TRIM(KeyWord).eq.'Sout(idMtls)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Sout(idMtls,1))
 # if defined SOLVE3D && (defined BBL_MODEL || defined SEDIMENT)
-          ELSE IF (TRIM(KeyWord).eq.'Hout(idBott)') THEN
+          ELSE IF (TRIM(KeyWord).eq.'Sout(idBott)') THEN
             IF (MAXVAL(idBott).eq.0) THEN
               WRITE (out,110) 'idBott'
               STOP
@@ -7361,7 +7361,7 @@
      &          'Write out omega vertical velocity.'
             DO itrc=1,NT(ng)
               IF (Sout(idTvar(itrc),ng)) WRITE (out,90)                 &
-     &            Sout(idTvar(itrc),ng), 'Hout(idTvar)',                &
+     &            Sout(idTvar(itrc),ng), 'Sout(idTvar)',                &
      &            'Write out tracer ', itrc, TRIM(Vname(1,idTvar(itrc)))
             END DO
 # endif
