@@ -88,7 +88,7 @@
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Iteration = ',i5.5, ', Ipass = ',i1,' >>>>',/)
 #endif
-        WRITE (stdout,20) 'INITIAL: Configurating and initializing ',   &
+        WRITE (stdout,20) 'INITIAL: Configuring and initializing ',     &
      &                    'forward nonlinear model ...'
   20    FORMAT (/,1x,a,a,/)
       END IF

@@ -95,7 +95,7 @@
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Iteration = ',i5.5, ', Ipass = ',i1,' >>>>',/)
 # endif
-        WRITE (stdout,20) 'TL_INITIAL: Configurating and ',             &
+        WRITE (stdout,20) 'TL_INITIAL: Configuring and ',               &
      &                    'initializing tangent linear model ...'
   20    FORMAT (/,1x,a,a,/)
       END IF

@@ -2552,7 +2552,7 @@
      &                        TRIM(HISname(ng))
             ELSE
               Lstr=LEN_TRIM(HISname(ng))
-              WRITE (out,230) '    Prefix for History Files:  ',        &
+              WRITE (out,230) '      Prefix for History Files:  ',      &
      &                        HISname(ng)(1:Lstr-3)
             END IF
           END IF

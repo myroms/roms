@@ -1994,7 +1994,9 @@
         LdefADJ(ng)=.FALSE.
         LdefAVG(ng)=.TRUE.
         LdefDIA(ng)=.TRUE.
+#ifdef FLOATS
         LdefFLT(ng)=.TRUE.
+#endif
         LdefHIS(ng)=.TRUE.
         LdefINI(ng)=.FALSE.
         LdefIRP(ng)=.FALSE.

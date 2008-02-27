@@ -96,7 +96,7 @@
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Outer = ',i3.3, ', Inner = ',i3.3,' >>>>',/)
 # endif
-        WRITE (stdout,20) 'RP_INITIAL: Configurating and ',             &
+        WRITE (stdout,20) 'RP_INITIAL: Configuring and ',               &
      &                    'initializing representer model ...'
   20    FORMAT (/,1x,a,a,/)
       END IF

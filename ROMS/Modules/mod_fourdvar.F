@@ -802,7 +802,7 @@
 #   endif
       END IF
 #  endif
-#  ifndef LACNZOS
+#  ifndef LANCZOS
 !
 !  Set number of eigenpairs to use to available quantity.
 !

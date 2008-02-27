@@ -34,7 +34,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: ldef
+      logical :: Ldefine, NewFile
 
       integer :: ifile, lstr, status
 
@@ -69,12 +69,26 @@
               idefTLM(ng)=idefTLM(ng)+ndefTLM(ng)
             END IF
           END IF
-          IF ((iic(ng)-1).eq.idefTLM(ng)) THEN
+          IF ((nrrec(ng).ne.0).and.(iic(ng).eq.ntstart(ng))) THEN
+            IF ((iic(ng)-1).eq.idefTLM(ng)) THEN
+              Ldefine=.FALSE.                 ! finished file, delay
+            ELSE                              ! creation of next file
+              Ldefine=.TRUE.
+              NewFile=.FALSE.                 ! unfinished file, inquire
+            END IF                            ! content for appending
+            idefTLM(ng)=idefTLM(ng)+nTLM(ng)  ! restart offset
+          ELSE IF ((iic(ng)-1).eq.idefTLM(ng)) THEN
             idefTLM(ng)=idefTLM(ng)+ndefTLM(ng)
             IF (nTLM(ng).ne.ndefTLM(ng).and.iic(ng).eq.ntstart(ng)) THEN
-              idefTLM(ng)=idefTLM(ng)+nTLM(ng)
+              idefTLM(ng)=idefTLM(ng)+nTLM(ng)  ! multiple record offset
             END IF
-            NrecTLM(ng)=0
+            Ldefine=.TRUE.
+            NewFile=.TRUE.
+          ELSE
+            Ldefine=.FALSE.
+          END IF
+          IF (Ldefine) THEN                     ! create new file or
+            NrecTLM(ng)=0                       ! inquire existing file
             ifile=(iic(ng)-1)/ndefTLM(ng)+1
             IF (Master) THEN
               lstr=LEN_TRIM(TLMbase(ng))
@@ -82,29 +96,14 @@
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
             IF (ncTLMid(ng).ne.-1) status=nf90_close(ncTLMid(ng))
-            IF ((iic(ng).eq.ntstart(ng)).and.                           &
-     &          (MOD(iic(ng)-1,ndefTLM(ng)).gt.0)) THEN
-              ldef=ldefout(ng)
-            ELSE
-              ldef=.TRUE.
-            END IF
-            CALL tl_def_his (ng, ldef)
+            CALL tl_def_his (ng, NewFile)
             IF (exit_flag.ne.NoError) RETURN
+          END IF
+          IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
+            LwrtTLM(ng)=.FALSE.                 ! avoid writing initial
+          ELSE                                  ! fields during restart
             LwrtTLM(ng)=.TRUE.
-          ELSE IF ((iic(ng).eq.ntstart(ng)).and.(nrrec(ng).ne.0)) THEN
-            NrecTLM(ng)=0                       ! restart and unfinished
-            ifile=(iic(ng)-1)/ndefTLM(ng)+1     ! tangent file
-            idefTLM(ng)=idefTLM(ng)+nTLM(ng)
-            IF (Master) THEN
-              lstr=LEN_TRIM(TLMbase(ng))
-              WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3),ifile
-            END IF
-            ldef=.FALSE.
-            CALL tl_def_his (ng, ldef)
-            IF (exit_flag.ne.NoError) RETURN
-            LwrtTLM(ng)=.TRUE.
-            tTLMindx(ng)=MAX(0,tTLMindx(ng)-1)  ! overwrite last record
-          END IF                                ! with restart fields
+          END IF
         ELSE
           IF (iic(ng).eq.ntstart(ng)) THEN
             CALL tl_def_his (ng, ldefout(ng))
