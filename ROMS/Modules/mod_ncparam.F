@@ -521,8 +521,8 @@
 !
 !  SVN revision and repository root URL.
 !
-        character (len=40 ) :: svn_Rev
-        character (len=120) :: svn_URL
+        character (len=40 ) :: svn_rev
+        character (len=120) :: svn_url
 
       CONTAINS
 
