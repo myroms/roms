@@ -821,9 +821,15 @@
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-! Initialize time-averaged arrays when appropriate.  Notice that
-! fields are initilized twice during re-start.  However, the time-
-! averaged fields are computed correctly.
+!  Return if time-averaging window is zero.
+!-----------------------------------------------------------------------
+!
+      IF (nAVG(ng).eq.0) RETURN
+!
+!-----------------------------------------------------------------------
+!  Initialize time-averaged arrays when appropriate.  Notice that
+!  fields are initilized twice during re-start.  However, the time-
+!  averaged fields are computed correctly.
 !-----------------------------------------------------------------------
 !
       IF (((iic(ng).gt.ntsAVG(ng)).and.                                 &

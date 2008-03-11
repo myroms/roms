@@ -1771,22 +1771,28 @@
         ndefTLM(ng)=0
         ndefADJ(ng)=0
 #endif
-        IF ((nrrec(ng).eq.0).and.(nAVG(ng).gt.ntimes(ng))) THEN
+        IF (((nrrec(ng).eq.0).and.(nAVG(ng).gt.ntimes(ng))).or.         &
+     &      (nAVG(ng).eq.0)) THEN
           LdefAVG(ng)=.FALSE.
         END IF
-        IF ((nrrec(ng).eq.0).and.(nDIA(ng).gt.ntimes(ng))) THEN
+        IF (((nrrec(ng).eq.0).and.(nDIA(ng).gt.ntimes(ng))).or.         &
+     &      (nDIA(ng).eq.0)) THEN
           LdefDIA(ng)=.FALSE.
         END IF
-        IF ((nrrec(ng).eq.0).and.(nFLT(ng).gt.ntimes(ng))) THEN
+        IF (((nrrec(ng).eq.0).and.(nFLT(ng).gt.ntimes(ng))).or.         &
+     &      (nFLT(ng).eq.0)) THEN
           LdefFLT(ng)=.FALSE.
         END IF
-        IF ((nrrec(ng).eq.0).and.(nHIS(ng).gt.ntimes(ng))) THEN
+        IF (((nrrec(ng).eq.0).and.(nHIS(ng).gt.ntimes(ng))).or.         &
+     &      (nHIS(ng).eq.0)) THEN
           LdefHIS(ng)=.FALSE.
         END IF
-        IF ((nrrec(ng).eq.0).and.(nRST(ng).gt.ntimes(ng))) THEN
+        IF (((nrrec(ng).eq.0).and.(nRST(ng).gt.ntimes(ng))).or.         &
+     &      (nRST(ng).eq.0)) THEN
           LdefRST(ng)=.FALSE.
         END  IF
-        IF ((nrrec(ng).eq.0).and.(nSTA(ng).gt.ntimes(ng))) THEN
+        IF (((nrrec(ng).eq.0).and.(nSTA(ng).gt.ntimes(ng))).or.         &
+     &      (nSTA(ng).eq.0)) THEN
           LdefSTA(ng)=.FALSE.
         END IF
       END DO
@@ -2631,7 +2637,8 @@
           WRITE (out,230) '  Input Nonlinear Initial File:  ',          &
      &                    TRIM(fname)
 # endif
-# if defined TANGENT && !defined OPT_OBSERVATIONS
+# if defined TANGENT && \
+    !(defined OPT_OBSERVATIONS || defined SANITY_CHECK)
           fname=ITLname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -2647,7 +2654,8 @@
 # endif
 # if defined ADJOINT && \
     !(defined FOUR_DVAR        || defined AD_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI)
+      defined OPT_OBSERVATIONS || defined SANITY_CHECK   || \
+      defined SO_SEMI)
           fname=IADname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30

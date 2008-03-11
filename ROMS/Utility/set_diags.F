@@ -89,6 +89,12 @@
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
+!  Return if time-averaging window is zero.
+!-----------------------------------------------------------------------
+!
+      IF (nDIA(ng).eq.0) RETURN
+!
+!-----------------------------------------------------------------------
 ! Initialize time-averaged diagnostic arrays when appropriate.  Notice
 ! that fields are initilized twice during re-start.  However, the time-
 ! averaged fields are computed correctly.
