@@ -40,21 +40,21 @@
       CALL wclock_on (ng, iNLM, 15)
 #endif
       CALL ad_biology_tile (ng, Istr, Iend, Jstr, Jend,                 &
-     &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-     &                   nnew(ng),                                      &
+     &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      nstp(ng), nnew(ng),                         &
 #ifdef MASKING
-     &                   GRID(ng) % rmask,                              &
+     &                      GRID(ng) % rmask,                           &
 #endif
-     &                   GRID(ng) % Hz,                                 &
-     &                   GRID(ng) % ad_Hz,                              &
-     &                   GRID(ng) % z_r,                                &
-     &                   GRID(ng) % ad_z_r,                             &
-     &                   GRID(ng) % z_w,                                &
-     &                   GRID(ng) % ad_z_w,                             &
-     &                   FORCES(ng) % srflx,                            &
-     &                   FORCES(ng) % ad_srflx,                         &
-     &                   OCEAN(ng) % t,                                 &
-     &                   OCEAN(ng) % ad_t)
+     &                      GRID(ng) % Hz,                              &
+     &                      GRID(ng) % ad_Hz,                           &
+     &                      GRID(ng) % z_r,                             &
+     &                      GRID(ng) % ad_z_r,                          &
+     &                      GRID(ng) % z_w,                             &
+     &                      GRID(ng) % ad_z_w,                          &
+     &                      FORCES(ng) % srflx,                         &
+     &                      FORCES(ng) % ad_srflx,                      &
+     &                      OCEAN(ng) % t,                              &
+     &                      OCEAN(ng) % ad_t)
 
 #ifdef PROFILE
       CALL wclock_off (ng, iNLM, 15)
@@ -64,14 +64,14 @@
 !
 !-----------------------------------------------------------------------
       SUBROUTINE ad_biology_tile (ng, Istr, Iend, Jstr, Jend,           &
-     &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
-     &                         nnew,                                    &
+     &                            LBi, UBi, LBj, UBj, UBk, UBt,         &
+     &                            nstp, nnew,                           &
 #ifdef MASKING
-     &                         rmask,                                   &
+     &                            rmask,                                &
 #endif
-     &                         Hz, ad_Hz, z_r, ad_z_r, z_w, ad_z_w,     &
-     &                         srflx, ad_srflx,                         &
-     &                         t, ad_t)
+     &                            Hz, ad_Hz, z_r, ad_z_r, z_w, ad_z_w,  &
+     &                            srflx, ad_srflx,                      &
+     &                            t, ad_t)
 !-----------------------------------------------------------------------
 !
       USE mod_param
@@ -83,7 +83,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
-      integer, intent(in) :: nnew
+      integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -190,7 +190,6 @@
       KLB=LBOUND(Bio,DIM=3)
       KUB=UBOUND(Bio,DIM=3)
 !
-!
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.
 !-----------------------------------------------------------------------
@@ -213,55 +212,53 @@
       ad_Wbio(1)=0.0_r8
       ad_Wbio(2)=0.0_r8
 !
-!  Compute inverse thickness to avoid repeated divisions.
-!
       J_LOOP : DO j=Jstr,Jend
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
 !
-      ad_PAR=0.0_r8
-      ad_Att=0.0_r8
-      ad_dltL=0.0_r8
-      ad_dltR=0.0_r8
-      ad_cu=0.0_r8
-      ad_cff=0.0_r8
-      ad_cff1=0.0_r8
-      ad_cff4=0.0_r8
-      ad_cffL=0.0_r8
-      ad_cffR=0.0_r8
-      adfac=0.0_r8
-      adfac1=0.0_r8
-      adfac2=0.0_r8
-      adfac3=0.0_r8
+        ad_PAR=0.0_r8
+        ad_Att=0.0_r8
+        ad_dltL=0.0_r8
+        ad_dltR=0.0_r8
+        ad_cu=0.0_r8
+        ad_cff=0.0_r8
+        ad_cff1=0.0_r8
+        ad_cff4=0.0_r8
+        ad_cffL=0.0_r8
+        ad_cffR=0.0_r8
+        adfac=0.0_r8
+        adfac1=0.0_r8
+        adfac2=0.0_r8
+        adfac3=0.0_r8
 !
-      DO k=1,N(ng)
-       DO i=ILB,IUB
-        ad_Hz_inv(i,k)=0.0_r8
-        ad_Hz_inv2(i,k)=0.0_r8
-        ad_Hz_inv3(i,k)=0.0_r8
-        ad_WL(i,k)=0.0_r8
-        ad_WR(i,k)=0.0_r8
-        ad_bL(i,k)=0.0_r8
-        ad_bR(i,k)=0.0_r8
-        ad_qc(i,k)=0.0_r8
-        ad_Light(i,k)=0.0_r8
-       END DO
-      END DO
-      DO itrc=1,NBT
-       ibio=idbio(itrc)
-       ad_BioTrc(ibio,1)=0.0_r8
-       ad_BioTrc(ibio,2)=0.0_r8
-      END DO
-      DO i=ILB,IUB
-        ad_PARsur(i)=0.0_r8
-      END DO
-      DO k=0,N(ng)
-       DO i=ILB,IUB
-        ad_FC(i,k)=0.0_r8
-       END DO
-      END DO
+        DO k=1,N(ng)
+          DO i=ILB,IUB
+            ad_Hz_inv(i,k)=0.0_r8
+            ad_Hz_inv2(i,k)=0.0_r8
+            ad_Hz_inv3(i,k)=0.0_r8
+            ad_WL(i,k)=0.0_r8
+            ad_WR(i,k)=0.0_r8
+            ad_bL(i,k)=0.0_r8
+            ad_bR(i,k)=0.0_r8
+            ad_qc(i,k)=0.0_r8
+            ad_Light(i,k)=0.0_r8
+          END DO
+        END DO
+        DO itrc=1,NBT
+          ibio=idbio(itrc)
+          ad_BioTrc(ibio,1)=0.0_r8
+          ad_BioTrc(ibio,2)=0.0_r8
+        END DO
+        DO i=ILB,IUB
+          ad_PARsur(i)=0.0_r8
+        END DO
+        DO k=0,N(ng)
+          DO i=ILB,IUB
+            ad_FC(i,k)=0.0_r8
+          END DO
+        END DO
 !
 !  Clear ad_Bio and Bio arrays.
 !
@@ -276,6 +273,8 @@
             END DO
           END DO
         END DO
+!
+!  Compute inverse thickness to avoid repeated divisions.
 !
         DO k=1,N(ng)
           DO i=Istr,Iend
@@ -295,7 +294,6 @@
 !
 !  Compute the required basic state arrays.
 !
-!
 !  Restrict biological tracer to be positive definite. If a negative
 !  concentration is detected, nitrogen is drawn from the most abundant
 !  pool to supplement the negative pools to a lower limit of MinVal
@@ -304,19 +302,25 @@
         DO k=1,N(ng)
           DO i=Istr,Iend
 !
-!  Notice that at input all tracers are in transport units: m Tunits.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
-!  NOTE: In the following code, t should be in units of tracer times
-!        depth. However the basic state that is read from the forward
-!        file is in units of tracer. Since BioTrc is in tracer units,
-!        we simply use t instead of t*Hz_inv.
+!  NOTE: In the following code, t(:,:,:,nnew,:) should be in units of
+!        tracer times depth. However the basic state (nstp and nnew
+!        indices) that is read from the forward file is in units of
+!        tracer. Since BioTrc(ibio,nnew) is in tracer units, we simply
+!        use t instead of t*Hz_inv.
 !
             DO itrc=1,NBT
               ibio=idbio(itrc)
-!             BioTrc(ibio,1)=t(i,j,k,1,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,1)=t(i,j,k,1,ibio)
-!             BioTrc(ibio,2)=t(i,j,k,2,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,2)=t(i,j,k,2,ibio)
+!>            BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>
+              BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>            BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
+!>
+              BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)
             END DO           
 !
 !  Impose positive definite concentrations.
@@ -342,8 +346,8 @@
 !
             DO itrc=1,NBT
               ibio=idbio(itrc)
-              Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-              Bio(i,k,ibio)=BioTrc(ibio,nnew)
+              Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+              Bio(i,k,ibio)=BioTrc(ibio,nstp)
             END DO           
           END DO          
         END DO
@@ -732,22 +736,6 @@
           ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-!>              tl_t(i,j,k,nnew,ibio)=(0.5_r8+SIGN(0.5_r8,              &
-!>   &            (t(i,j,k,nnew,ibio)+Bio(i,k,ibio)-Bio_bak(i,k,ibio))* &
-!>   &            Hz(i,j,k)))*(tl_t(i,j,k,nnew,ibio)+                   &
-!>   &            (tl_Bio(i,k,ibio)-tl_Bio_bak(i,k,ibio))*Hz(i,j,k)+    &
-!>   &            (Bio(i,k,ibio)-Bio_bak(i,k,ibio))*tl_Hz(i,j,k))
-
-
-              adfac=(0.5_r8+SIGN(0.5_r8,                                &
-     &           (t(i,j,k,nnew,ibio)+Bio(i,k,ibio)-Bio_bak(i,k,ibio))*  &
-     &            Hz(i,j,k)))*ad_t(i,j,k,nnew,ibio)
-              adfac1=adfac*Hz(i,j,k)
-              ad_Bio(i,k,ibio)=ad_Bio(i,k,ibio)+adfac1
-              ad_Bio_bak(i,k,ibio)=ad_Bio_bak(i,k,ibio)-adfac1
-              ad_Hz(i,j,k)=ad_Hz(i,j,k)+adfac*                          &
-     &                               (Bio(i,k,ibio)-Bio_bak(i,k,ibio))
-              ad_t(i,j,k,nnew,ibio)=adfac
 #ifdef TS_MPDATA_NOT_YET
 !>            tl_t(i,j,k,3,ibio)=tl_t(i,j,k,nnew,ibio)*Hz_inv(i,k)+     &
 !>   &                           t(i,j,k,nnew,ibio)*Hz(i,j,k)*          &
@@ -760,26 +748,36 @@
      &                       ad_t(i,j,k,3,ibio)
               ad_t(i,j,k,3,ibio)=0.0_r8
 #endif
+!>            tl_t(i,j,k,nnew,ibio)=(0.5_r8+                            &
+!>   &                               SIGN(0.5_r8,(t(i,j,k,nnew,ibio)+   &
+!>   &                                            Bio(i,k,ibio)-        &
+!>   &                                            Bio_bak(i,k,ibio))*   &
+!>   &                                           Hz(i,j,k)))*           &
+!>   &                              (tl_t(i,j,k,nnew,ibio)+             &
+!>   &                               (tl_Bio(i,k,ibio)-                 &
+!>   &                                tl_Bio_bak(i,k,ibio))*Hz(i,j,k)+  &
+!>   &                               (Bio(i,k,ibio)-                    &
+!>   &                                Bio_bak(i,k,ibio))*tl_Hz(i,j,k))
+!>
+              adfac=(0.5_r8+                                            &
+     &               SIGN(0.5_r8,(t(i,j,k,nnew,ibio)+                   &
+     &                            Bio(i,k,ibio)-                        &
+     &                            Bio_bak(i,k,ibio))*Hz(i,j,k)))*       &
+     &              ad_t(i,j,k,nnew,ibio)
+              adfac1=adfac*Hz(i,j,k)
+              ad_Bio(i,k,ibio)=ad_Bio(i,k,ibio)+adfac1
+              ad_Bio_bak(i,k,ibio)=ad_Bio_bak(i,k,ibio)-adfac1
+              ad_Hz(i,j,k)=ad_Hz(i,j,k)+                                &
+     &                     adfac*(Bio(i,k,ibio)-Bio_bak(i,k,ibio))
+              ad_t(i,j,k,nnew,ibio)=adfac
             END DO
           END DO
         END DO
-
 !
 !=======================================================================
 !  Start internal iterations to achieve convergence of the nonlinear
 !  backward-implicit solution.
 !=======================================================================
-!
-!  During the iterative procedure a series of fractional time steps are
-!  performed in a chained mode (splitting by different biological
-!  conversion processes) in sequence of the main food chain.  In all
-!  stages the concentration of the component being consumed is treated
-!  in a fully implicit manner, so the algorithm guarantees non-negative
-!  values, no matter how strong the concentration of active consuming
-!  component (Phytoplankton or Zooplankton).  The overall algorithm,
-!  as well as any stage of it, is formulated in conservative form
-!  (except explicit sinking) in sense that the sum of concentration of
-!  all components is conserved.
 !
         ITER_LOOP1: DO Iter=BioIter(ng),1,-1
 !
@@ -791,103 +789,110 @@
 !  "Bio(:,:,isink)" in terms of a set of parabolic segments within each
 !  grid box. Then, compute semi-Lagrangian flux due to sinking.
 !
+!  Compute appropriate basic state arrays III.
 !
-!      Compute appropriate basic state arrays III.
-        DO k=1,N(ng)
-          DO i=Istr,Iend
+          DO k=1,N(ng)
+            DO i=Istr,Iend
 !
-!  Notice that at input all tracers are in transport units: m Tunits.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
-!  NOTE: In the following code, t should be in units of tracer times
-!        depth. However the basic state that is read from the forward
-!        file is in units of tracer. Since BioTrc is in tracer units,
-!        we simply use t instead of t*Hz_inv.
+!  NOTE: In the following code, t(:,:,:,nnew,:) should be in units of
+!        tracer times depth. However the basic state (nstp and nnew
+!        indices) that is read from the forward file is in units of
+!        tracer. Since BioTrc(ibio,nnew) is in tracer units, we simply
+!        use t instead of t*Hz_inv.
 !
-            DO itrc=1,NBT
-              ibio=idbio(itrc)
-!             BioTrc(ibio,1)=t(i,j,k,1,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,1)=t(i,j,k,1,ibio)
-!             BioTrc(ibio,2)=t(i,j,k,2,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,2)=t(i,j,k,2,ibio)
-            END DO
+              DO itrc=1,NBT
+                ibio=idbio(itrc)
+!>              BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>
+                BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>              BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
+!>
+                BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)
+              END DO
 !
 !  Impose positive definite concentrations.
 !
-            cff2=0.0_r8
-            DO itime=1,2
-              cff1=0.0_r8
-              iTrcMax=idbio(1)
-              DO itrc=1,NBT
-                ibio=idbio(itrc)
-                cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
-                IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
-                  iTrcMax=ibio
+              cff2=0.0_r8
+              DO itime=1,2
+                cff1=0.0_r8
+                iTrcMax=idbio(1)
+                DO itrc=1,NBT
+                  ibio=idbio(itrc)
+                  cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
+                  IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
+                    iTrcMax=ibio
+                  END IF
+                  BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+                END DO
+                IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
+                  BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
                 END IF
-                BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
               END DO
-              IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
-                BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
-              END IF
-            END DO
 !
 !  Load biological tracers into local arrays.
 !
-            DO itrc=1,NBT
-              ibio=idbio(itrc)
-              Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-              Bio(i,k,ibio)=BioTrc(ibio,nnew)
-            END DO           
-          END DO          
-        END DO
+              DO itrc=1,NBT
+                ibio=idbio(itrc)
+                Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+                Bio(i,k,ibio)=BioTrc(ibio,nstp)
+              END DO           
+            END DO          
+          END DO
 !
 !  Calculate surface Photosynthetically Available Radiation (PAR).  The
 !  net shortwave radiation is scaled back to Watts/m2 and multiplied by
 !  the fraction that is photosynthetically available, PARfrac.
 !
-        DO i=Istr,Iend
+          DO i=Istr,Iend
 #ifdef CONST_PAR
 !
 !  Specify constant surface irradiance a la Powell and Spitz.
 !
-          PARsur(i)=158.075_r8
+            PARsur(i)=158.075_r8
 #else
-          PARsur(i)=PARfrac(ng)*srflx(i,j)*rho0*Cp
+            PARsur(i)=PARfrac(ng)*srflx(i,j)*rho0*Cp
 #endif
-        END DO
+          END DO
 !
 !=======================================================================
 !  Start internal iterations to achieve convergence of the nonlinear
 !  backward-implicit solution.
 !=======================================================================
 !
-        DO Iteradj=1,Iter
+          DO Iteradj=1,Iter
 !
 !  Compute light attenuation as function of depth.
 !
-          DO i=Istr,Iend
-            PAR=PARsur(i)
-            IF (PARsur(i).gt.0.0_r8) THEN              ! day time
-              DO k=N(ng),1,-1
+            DO i=Istr,Iend
+              PAR=PARsur(i)
+              IF (PARsur(i).gt.0.0_r8) THEN            ! day time
+                DO k=N(ng),1,-1
 !
 !  Attenuate the light to the center of the grid cell. Here, AttSW is
 !  the light attenuation due to seawater and AttPhy is the attenuation
 !  due to phytoplankton (self-shading coefficient).
 !
-                Att=EXP(-0.5_r8*(AttSW(ng)+AttPhy(ng)*Bio(i,k,iPhyt))*  &
-     &                  (z_w(i,j,k)-z_w(i,j,k-1)))
-                PAR=PAR*Att
-                Light(i,k)=PAR
+                  Att=EXP(-0.5_r8*(AttSW(ng)+                           &
+     &                             AttPhy(ng)*Bio(i,k,iPhyt))*          &
+     &                            (z_w(i,j,k)-z_w(i,j,k-1)))
+                  PAR=PAR*Att
+                  Light(i,k)=PAR
 !
 !  Attenuate the light to the bottom of the grid cell.
 !
-                PAR=PAR*Att
-              END DO
-            ELSE                                       ! night time
-              DO k=1,N(ng)
-                Light(i,k)=0.0_r8
-              END DO
-            END IF
-          END DO
+                  PAR=PAR*Att
+                END DO
+              ELSE                                     ! night time
+                DO k=1,N(ng)
+                  Light(i,k)=0.0_r8
+                END DO
+              END IF
+            END DO
 !
 !  Phytoplankton photosynthetic growth and nitrate uptake (Vm_NO3 rate).
 !  The Michaelis-Menten curve is used to describe the change in uptake
@@ -896,97 +901,97 @@
 !  phytoplankton nitrate uptake.  
 !
 #ifdef SPITZ
-          cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
-          cff2=Vm_NO3(ng)*Vm_NO3(ng)
-          cff3=PhyIS(ng)*PhyIS(ng)
+            cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
+            cff2=Vm_NO3(ng)*Vm_NO3(ng)
+            cff3=PhyIS(ng)*PhyIS(ng)
 #else
-          cff1=dtdays*Vm_NO3(ng)
+            cff1=dtdays*Vm_NO3(ng)
 #endif
-          DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO k=1,N(ng)
+              DO i=Istr,Iend
 #ifdef SPITZ 
-              cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
-              cff=Bio(i,k,iPhyt)*                                       &
-     &            cff1*cff4*Light(i,k)/                                 &
-     &            (K_NO3(ng)+Bio(i,k,iNO3_))
+                cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
+                cff=Bio(i,k,iPhyt)*                                     &
+     &              cff1*cff4*Light(i,k)/                               &
+     &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #else
-              cff=Bio(i,k,iPhyt)*                                       &
-     &            cff1*Light(i,k)/                                      &
-     &            (K_NO3(ng)+Bio(i,k,iNO3_))
+                cff=Bio(i,k,iPhyt)*                                     &
+     &              cff1*Light(i,k)/                                    &
+     &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #endif
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                            &
-     &                       Bio(i,k,iNO3_)*cff
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
+                Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                          &
+     &                         Bio(i,k,iNO3_)*cff
+              END DO
             END DO
-          END DO
 !
 !  Grazing on phytoplankton by zooplankton (ZooGR rate) using the Ivlev
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
 !
-          cff1=dtdays*ZooGR(ng)
-          cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              cff=Bio(i,k,iZoop)*                                       &
-     &            cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio(i,k,iPhyt)))/         &
-     &            Bio(i,k,iPhyt)
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/(1.0_r8+cff)
-              Bio(i,k,iZoop)=Bio(i,k,iZoop)+                            &
-     &                       Bio(i,k,iPhyt)*cff2*cff
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iPhyt)*ZooEEN(ng)*cff
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iPhyt)*ZooEED(ng)*cff
+            cff1=dtdays*ZooGR(ng)
+            cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                cff=Bio(i,k,iZoop)*                                     &
+     &              cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio(i,k,iPhyt)))/       &
+     &              Bio(i,k,iPhyt)
+                Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/(1.0_r8+cff)
+                Bio(i,k,iZoop)=Bio(i,k,iZoop)+                          &
+     &                         Bio(i,k,iPhyt)*cff2*cff
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                          &
+     &                         Bio(i,k,iPhyt)*ZooEEN(ng)*cff
+                Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
+     &                         Bio(i,k,iPhyt)*ZooEED(ng)*cff
+              END DO
             END DO
-          END DO
 !
 !  Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
 !  (PhyMRD rate).
 !
-          cff3=dtdays*PhyMRD(ng)
-          cff2=dtdays*PhyMRN(ng)
-          cff1=1.0_r8/(1.0_r8+cff2+cff3)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iPhyt)*cff2
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iPhyt)*cff3
+            cff3=dtdays*PhyMRD(ng)
+            cff2=dtdays*PhyMRN(ng)
+            cff1=1.0_r8/(1.0_r8+cff2+cff3)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                          &
+     &                         Bio(i,k,iPhyt)*cff2
+                Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
+     &                         Bio(i,k,iPhyt)*cff3
+              END DO
             END DO
-          END DO
 !
 !  Zooplankton mortality to nutrients (ZooMRN rate) and Detritus
 !  (ZooMRD rate).
 !
-          cff3=dtdays*ZooMRD(ng)
-          cff2=dtdays*ZooMRN(ng)
-          cff1=1.0_r8/(1.0_r8+cff2+cff3)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iZoop)=Bio(i,k,iZoop)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iZoop)*cff2
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iZoop)*cff3
+            cff3=dtdays*ZooMRD(ng)
+            cff2=dtdays*ZooMRN(ng)
+            cff1=1.0_r8/(1.0_r8+cff2+cff3)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Bio(i,k,iZoop)=Bio(i,k,iZoop)*cff1
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                          &
+     &                         Bio(i,k,iZoop)*cff2
+                Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
+     &                         Bio(i,k,iZoop)*cff3
+              END DO
             END DO
-          END DO
 !
 !  Detritus breakdown to nutrients: remineralization (DetRR rate).
 !
-          cff2=dtdays*DetRR(ng)
-          cff1=1.0_r8/(1.0_r8+cff2)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iSDet)*cff2
+            cff2=dtdays*DetRR(ng)
+            cff1=1.0_r8/(1.0_r8+cff2)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                Bio(i,k,iSDet)=Bio(i,k,iSDet)*cff1
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                          &
+     &                         Bio(i,k,iSDet)*cff2
+              END DO
             END DO
-          END DO
 !
-         IF(Iteradj.ne.Iter) THEN
+            IF (Iteradj.ne.Iter) THEN
 !
 !-----------------------------------------------------------------------
 !  Vertical sinking terms: Phytoplankton and Detritus
@@ -996,44 +1001,44 @@
 !  "Bio(:,:,isink)" in terms of a set of parabolic segments within each
 !  grid box. Then, compute semi-Lagrangian flux due to sinking.
 !
-          DO isink=1,Nsink
-            ibio=idsink(isink)
+              DO isink=1,Nsink
+                ibio=idsink(isink)
 !
 !  Copy concentration of biological particulates into scratch array
 !  "qc" (q-central, restrict it to be positive) which is hereafter
 !  interpreted as a set of grid-box averaged values for biogeochemical
 !  constituent concentration.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                qc(i,k)=Bio(i,k,ibio)
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    qc(i,k)=Bio(i,k,ibio)
+                  END DO
+                END DO
 !
-            DO k=N(ng)-1,1,-1
-              DO i=Istr,Iend
-                FC(i,k)=(qc(i,k+1)-qc(i,k))*Hz_inv2(i,k)
-              END DO
-            END DO
-            DO k=2,N(ng)-1
-              DO i=Istr,Iend
-                dltR=Hz(i,j,k)*FC(i,k)
-                dltL=Hz(i,j,k)*FC(i,k-1)
-                cff=Hz(i,j,k-1)+2.0_r8*Hz(i,j,k)+Hz(i,j,k+1)
-                cffR=cff*FC(i,k)
-                cffL=cff*FC(i,k-1)
+                DO k=N(ng)-1,1,-1
+                  DO i=Istr,Iend
+                    FC(i,k)=(qc(i,k+1)-qc(i,k))*Hz_inv2(i,k)
+                  END DO
+                END DO
+                DO k=2,N(ng)-1
+                  DO i=Istr,Iend
+                    dltR=Hz(i,j,k)*FC(i,k)
+                    dltL=Hz(i,j,k)*FC(i,k-1)
+                    cff=Hz(i,j,k-1)+2.0_r8*Hz(i,j,k)+Hz(i,j,k+1)
+                    cffR=cff*FC(i,k)
+                    cffL=cff*FC(i,k-1)
 !
 !  Apply PPM monotonicity constraint to prevent oscillations within the
 !  grid box.
 !
-                IF ((dltR*dltL).le.0.0_r8) THEN
-                  dltR=0.0_r8
-                  dltL=0.0_r8
-                ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
-                  dltR=cffL
-                ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
-                  dltL=cffR
-                END IF
+                    IF ((dltR*dltL).le.0.0_r8) THEN
+                      dltR=0.0_r8
+                      dltL=0.0_r8
+                    ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
+                      dltR=cffL
+                    ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
+                      dltL=cffR
+                    END IF
 !
 !  Compute right and left side values (bR,bL) of parabolic segments
 !  within grid box Hz(k); (WR,WL) are measures of quadratic variations.
@@ -1044,72 +1049,72 @@
 !        qc(i,k+1)-qc(i,k).  This possibility is excluded,
 !        after bL and bR are reconciled using WENO procedure.
 !
-                cff=(dltR-dltL)*Hz_inv3(i,k)
-                dltR=dltR-cff*Hz(i,j,k+1)
-                dltL=dltL+cff*Hz(i,j,k-1)
-                bR(i,k)=qc(i,k)+dltR
-                bL(i,k)=qc(i,k)-dltL
-                WR(i,k)=(2.0_r8*dltR-dltL)**2
-                WL(i,k)=(dltR-2.0_r8*dltL)**2
-              END DO
-            END DO
-            cff=1.0E-14_r8
-            DO k=2,N(ng)-2
-              DO i=Istr,Iend
-                dltL=MAX(cff,WL(i,k  ))
-                dltR=MAX(cff,WR(i,k+1))
-                bR(i,k)=(dltR*bR(i,k)+dltL*bL(i,k+1))/(dltR+dltL)
-                bL(i,k+1)=bR(i,k)
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,N(ng))=0.0_r8            ! NO-flux boundary condition
+                    cff=(dltR-dltL)*Hz_inv3(i,k)
+                    dltR=dltR-cff*Hz(i,j,k+1)
+                    dltL=dltL+cff*Hz(i,j,k-1)
+                    bR(i,k)=qc(i,k)+dltR
+                    bL(i,k)=qc(i,k)-dltL
+                    WR(i,k)=(2.0_r8*dltR-dltL)**2
+                    WL(i,k)=(dltR-2.0_r8*dltL)**2
+                  END DO
+                END DO
+                cff=1.0E-14_r8
+                DO k=2,N(ng)-2
+                  DO i=Istr,Iend
+                    dltL=MAX(cff,WL(i,k  ))
+                    dltR=MAX(cff,WR(i,k+1))
+                    bR(i,k)=(dltR*bR(i,k)+dltL*bL(i,k+1))/(dltR+dltL)
+                    bL(i,k+1)=bR(i,k)
+                  END DO
+                END DO
+                DO i=Istr,Iend
+                  FC(i,N(ng))=0.0_r8        ! NO-flux boundary condition
 #if defined LINEAR_CONTINUATION
-              bL(i,N(ng))=bR(i,N(ng)-1)
-              bR(i,N(ng))=2.0_r8*qc(i,N(ng))-bL(i,N(ng))
+                  bL(i,N(ng))=bR(i,N(ng)-1)
+                  bR(i,N(ng))=2.0_r8*qc(i,N(ng))-bL(i,N(ng))
 #elif defined NEUMANN
-              bL(i,N(ng))=bR(i,N(ng)-1)
-              bR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
+                  bL(i,N(ng))=bR(i,N(ng)-1)
+                  bR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
 #else
-              bR(i,N(ng))=qc(i,N(ng))       ! default strictly monotonic
-              bL(i,N(ng))=qc(i,N(ng))       ! conditions
-              bR(i,N(ng)-1)=qc(i,N(ng))
+                  bR(i,N(ng))=qc(i,N(ng))   ! default strictly monotonic
+                  bL(i,N(ng))=qc(i,N(ng))   ! conditions
+                  bR(i,N(ng)-1)=qc(i,N(ng))
 #endif
 #if defined LINEAR_CONTINUATION
-              bR(i,1)=bL(i,2)
-              bL(i,1)=2.0_r8*qc(i,1)-bR(i,1)
+                  bR(i,1)=bL(i,2)
+                  bL(i,1)=2.0_r8*qc(i,1)-bR(i,1)
 #elif defined NEUMANN
-              bR(i,1)=bL(i,2)
-              bL(i,1)=1.5_r8*qc(i,1)-0.5_r8*bR(i,1)
+                  bR(i,1)=bL(i,2)
+                  bL(i,1)=1.5_r8*qc(i,1)-0.5_r8*bR(i,1)
 #else
-              bL(i,2)=qc(i,1)               ! bottom grid boxes are
-              bR(i,1)=qc(i,1)               ! re-assumed to be
-              bL(i,1)=qc(i,1)               ! piecewise constant.
+                  bL(i,2)=qc(i,1)           ! bottom grid boxes are
+                  bR(i,1)=qc(i,1)           ! re-assumed to be
+                  bL(i,1)=qc(i,1)           ! piecewise constant.
 #endif
-            END DO
+                END DO
 !
 !  Apply monotonicity constraint again, since the reconciled interfacial
 !  values may cause a non-monotonic behavior of the parabolic segments
 !  inside the grid box.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                dltR=bR(i,k)-qc(i,k)
-                dltL=qc(i,k)-bL(i,k)
-                cffR=2.0_r8*dltR
-                cffL=2.0_r8*dltL
-                IF ((dltR*dltL).lt.0.0_r8) THEN
-                  dltR=0.0_r8
-                  dltL=0.0_r8
-                ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
-                  dltR=cffL
-                ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
-                  dltL=cffR
-                END IF
-                bR(i,k)=qc(i,k)+dltR
-                bL(i,k)=qc(i,k)-dltL
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    dltR=bR(i,k)-qc(i,k)
+                    dltL=qc(i,k)-bL(i,k)
+                    cffR=2.0_r8*dltR
+                    cffL=2.0_r8*dltL
+                    IF ((dltR*dltL).lt.0.0_r8) THEN
+                      dltR=0.0_r8
+                      dltL=0.0_r8
+                    ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
+                      dltR=cffL
+                    ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
+                      dltL=cffR
+                    END IF
+                    bR(i,k)=qc(i,k)+dltR
+                    bL(i,k)=qc(i,k)-dltL
+                  END DO
+                END DO
 !
 !  After this moment reconstruction is considered complete. The next
 !  stage is to compute vertical advective fluxes, FC. It is expected
@@ -1125,54 +1130,52 @@
 !  During the search: also add in content of whole grid boxes
 !  participating in FC.
 !
-            cff=dtdays*ABS(Wbio(isink))
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                FC(i,k-1)=0.0_r8
-                WL(i,k)=z_w(i,j,k-1)+cff
-                WR(i,k)=Hz(i,j,k)*qc(i,k)
-                ksource(i,k)=k
-              END DO
-            END DO
-            DO k=1,N(ng)
-              DO ks=k,N(ng)-1
-                DO i=Istr,Iend
-                  IF (WL(i,k).gt.z_w(i,j,ks)) THEN
-                    ksource(i,k)=ks+1
-                    FC(i,k-1)=FC(i,k-1)+WR(i,ks)
-                  END IF
+                cff=dtdays*ABS(Wbio(isink))
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    FC(i,k-1)=0.0_r8
+                    WL(i,k)=z_w(i,j,k-1)+cff
+                    WR(i,k)=Hz(i,j,k)*qc(i,k)
+                    ksource(i,k)=k
+                  END DO
                 END DO
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO ks=k,N(ng)-1
+                    DO i=Istr,Iend
+                      IF (WL(i,k).gt.z_w(i,j,ks)) THEN
+                        ksource(i,k)=ks+1
+                        FC(i,k-1)=FC(i,k-1)+WR(i,ks)
+                      END IF
+                    END DO
+                  END DO
+                END DO
 !
 !  Finalize computation of flux: add fractional part.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                ks=ksource(i,k)
-                cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
-                FC(i,k-1)=FC(i,k-1)+                                    &
-     &                    Hz(i,j,ks)*cu*                                &
-     &                    (bL(i,ks)+                                    &
-     &                     cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-              &
-     &                         (1.5_r8-cu)*                             &
-     &                         (bR(i,ks)+bL(i,ks)-                      &
-     &                          2.0_r8*qc(i,ks))))
-              END DO
-            END DO
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                Bio(i,k,ibio)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
-              END DO
-            END DO
-
-          END DO 
-         END IF
-        END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    ks=ksource(i,k)
+                    cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
+                    FC(i,k-1)=FC(i,k-1)+                                &
+     &                        Hz(i,j,ks)*cu*                            &
+     &                        (bL(i,ks)+                                &
+     &                         cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-          &
+     &                             (1.5_r8-cu)*                         &
+     &                             (bR(i,ks)+bL(i,ks)-                  &
+     &                              2.0_r8*qc(i,ks))))
+                  END DO
+                END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    Bio(i,k,ibio)=qc(i,k)+                              &
+     &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
+                  END DO
+                END DO
+              END DO 
+            END IF
+          END DO
 !
-!    End of compute basic state arrays III.
-!
-!
+!  End of compute basic state arrays III.
 !
           SINK_LOOP1: DO isink=1,Nsink
             ibio=idsink(isink)
@@ -1180,7 +1183,6 @@
 !
 !  Compute required flux arrays.
 !
-!
 !  Copy concentration of biological particulates into scratch array
 !  "qc" (q-central, restrict it to be positive) which is hereafter
 !  interpreted as a set of grid-box averaged values for biogeochemical
@@ -1342,22 +1344,20 @@
      &                          2.0_r8*qc(i,ks))))
               END DO
             END DO
-
-
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              tl_Bio(i,k,ibio)=tl_qc(i,k)+                            &
-!>   &                          (tl_FC(i,k)-tl_FC(i,k-1))*Hz_inv(i,k)+  &
-!>   &                          (FC(i,k)-FC(i,k-1))*tl_Hz_inv(i,k)
+!>   &                           (tl_FC(i,k)-tl_FC(i,k-1))*Hz_inv(i,k)+ &
+!>   &                           (FC(i,k)-FC(i,k-1))*tl_Hz_inv(i,k)
+!>
                 ad_qc(i,k)=ad_qc(i,k)+ad_Bio(i,k,ibio)
                 ad_FC(i,k)=ad_FC(i,k)+Hz_inv(i,k)*ad_Bio(i,k,ibio)
                 ad_FC(i,k-1)=ad_FC(i,k-1)-Hz_inv(i,k)*ad_Bio(i,k,ibio)
                 ad_Hz_inv(i,k)=ad_Hz_inv(i,k)+                          &
-     &                             (FC(i,k)-FC(i,k-1))*ad_Bio(i,k,ibio)
+     &                         (FC(i,k)-FC(i,k-1))*ad_Bio(i,k,ibio)
                 ad_Bio(i,k,ibio)=0.0_r8
               END DO
             END DO
-
 !
 !  Adjoint of final computation of flux: add fractional part.
 !
@@ -1366,62 +1366,62 @@
                 ks=ksource(i,k)
                 cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
 !>              tl_FC(i,k-1)=tl_FC(i,k-1)+                              &
-!>   &                    (tl_Hz(i,j,ks)*cu+Hz(i,j,ks)*tl_cu)*          &
-!>   &                    (bL(i,ks)+                                    &
-!>   &                     cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-              &
-!>   &                         (1.5_r8-cu)*                             &
-!>   &                         (bR(i,ks)+bL(i,ks)-                      &
-!>   &                          2.0_r8*qc(i,ks))))+                     &
-!>   &                    Hz(i,j,ks)*cu*                                &
-!>   &                    (tl_bL(i,ks)+                                 &
-!>   &                     tl_cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-           &
-!>   &                         (1.5_r8-cu)*                             &
-!>   &                         (bR(i,ks)+bL(i,ks)-                      &
-!>   &                          2.0_r8*qc(i,ks)))+                      &
-!>   &                     cu*(0.5_r8*(tl_bR(i,ks)-tl_bL(i,ks))+        &
-!>   &                         tl_cu*                                   &
-!>   &                         (bR(i,ks)+bL(i,ks)-2.0_r8*qc(i,ks))-     &
-!>   &                         (1.5_r8-cu)*                             &
-!>   &                         (tl_bR(i,ks)+tl_bL(i,ks)-                &
-!>   &                          2.0_r8*tl_qc(i,ks)))                    &
-!>   &                                       )
-
-                adfac=(bL(i,ks)+cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-         &
-     &                         (1.5_r8-cu)*(bR(i,ks)+bL(i,ks)-          &
-     &                          2.0_r8*qc(i,ks))))*ad_FC(i,k-1)
+!>   &                       (tl_Hz(i,j,ks)*cu+Hz(i,j,ks)*tl_cu)*       &
+!>   &                       (bL(i,ks)+                                 &
+!>   &                        cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-           &
+!>   &                            (1.5_r8-cu)*                          &
+!>   &                            (bR(i,ks)+bL(i,ks)-                   &
+!>   &                             2.0_r8*qc(i,ks))))+                  &
+!>   &                       Hz(i,j,ks)*cu*                             &
+!>   &                       (tl_bL(i,ks)+                              &
+!>   &                        tl_cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-        &
+!>   &                               (1.5_r8-cu)*                       &
+!>   &                               (bR(i,ks)+bL(i,ks)-                &
+!>   &                               2.0_r8*qc(i,ks)))+                 &
+!>   &                        cu*(0.5_r8*(tl_bR(i,ks)-tl_bL(i,ks))+     &
+!>   &                            tl_cu*                                &
+!>   &                            (bR(i,ks)+bL(i,ks)-2.0_r8*qc(i,ks))-  &
+!>   &                            (1.5_r8-cu)*                          &
+!>   &                            (tl_bR(i,ks)+tl_bL(i,ks)-             &
+!>   &                             2.0_r8*tl_qc(i,ks))))
+!>
+                adfac=(bL(i,ks)+                                        &
+     &                 cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-                  &
+     &                     (1.5_r8-cu)*                                 &
+     &                     (bR(i,ks)+bL(i,ks)-                          &
+     &                      2.0_r8*qc(i,ks))))*ad_FC(i,k-1)
                 adfac1=Hz(i,j,ks)*cu*ad_FC(i,k-1)
-                adfac2=cu*adfac1
-                adfac3=(1.5_r8-cu)*adfac2
+                adfac2=adfac1*cu
+                adfac3=adfac2*(1.5_r8-cu)
                 ad_Hz(i,j,ks)=ad_Hz(i,j,ks)+cu*adfac
                 ad_cu=ad_cu+Hz(i,j,ks)*adfac
                 ad_bL(i,ks)=ad_bL(i,ks)+adfac1
-                ad_cu=ad_cu+adfac1*(0.5_r8*(bR(i,ks)-bL(i,ks))-         &
-     &                         (1.5_r8-cu)*                             &
+                ad_cu=ad_cu+                                            &
+     &                adfac1*(0.5_r8*(bR(i,ks)-bL(i,ks))-               &
+     &                        (1.5_r8-cu)*                              &
      &                         (bR(i,ks)+bL(i,ks)-                      &
      &                          2.0_r8*qc(i,ks)))+                      &
-     &                    (bR(i,ks)+bL(i,ks)-2.0_r8*qc(i,ks))*adfac2
+     &                adfac2*(bR(i,ks)+bL(i,ks)-2.0_r8*qc(i,ks))
                 ad_bR(i,ks)=ad_bR(i,ks)+0.5_r8*adfac2-adfac3
                 ad_bL(i,ks)=ad_bL(i,ks)-0.5_r8*adfac2-adfac3
                 ad_qc(i,ks)=ad_qc(i,ks)+2.0_r8*adfac3
-              
 !>              tl_cu=(0.5_r8+SIGN(0.5_r8,                              &
-!>   &                  (1.0_r8-(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks)))* &
-!>   &                  ((tl_WL(i,k)-tl_z_w(i,j,ks-1))*Hz_inv(i,ks)+    &
-!>   &                   (WL(i,k)-z_w(i,j,ks-1))*tl_Hz_inv(i,ks))
-
+!>   &                             (1.0_r8-(WL(i,k)-z_w(i,j,ks-1))*     &
+!>   &                             Hz_inv(i,ks))))*                     &
+!>   &                ((tl_WL(i,k)-tl_z_w(i,j,ks-1))*Hz_inv(i,ks)+      &
+!>   &                 (WL(i,k)-z_w(i,j,ks-1))*tl_Hz_inv(i,ks))
+!>
                 adfac=(0.5_r8+SIGN(0.5_r8,                              &
-     &                  (1.0_r8-(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))))*&
-     &                  ad_cu
+     &                             (1.0_r8-(WL(i,k)-z_w(i,j,ks-1))*     &
+     &                             Hz_inv(i,ks))))*ad_cu
                 adfac1=adfac*Hz_inv(i,ks)
                 ad_WL(i,k)=ad_WL(i,k)+adfac1
                 ad_z_w(i,j,ks-1)=ad_z_w(i,j,ks-1)-adfac1
-                ad_Hz_inv(i,ks)=ad_Hz_inv(i,ks)+(WL(i,k)-z_w(i,j,ks-1))*&
-     &                          adfac
+                ad_Hz_inv(i,ks)=ad_Hz_inv(i,ks)+                        &
+     &                          (WL(i,k)-z_w(i,j,ks-1))*adfac
                 ad_cu=0.0_r8
-
               END DO
             END DO
-
 !
 !  After this moment reconstruction is considered complete. The next
 !  stage is to compute vertical advective fluxes, FC. It is expected
@@ -1443,6 +1443,7 @@
                 DO i=Istr,Iend
                   IF (WL(i,k).gt.z_w(i,j,ks)) THEN
 !>                  tl_FC(i,k-1)=tl_FC(i,k-1)+tl_WR(i,ks)
+!>
                     ad_WR(i,ks)=ad_WR(i,ks)+ad_FC(i,k-1)
                   END IF
                 END DO
@@ -1451,25 +1452,27 @@
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              tl_WR(i,k)=tl_Hz(i,j,k)*qc(i,k)+Hz(i,j,k)*tl_qc(i,k)
+!>
                 ad_Hz(i,j,k)=ad_Hz(i,j,k)+qc(i,k)*ad_WR(i,k)
                 ad_qc(i,k)=ad_qc(i,k)+Hz(i,j,k)*ad_WR(i,k)
                 ad_WR(i,k)=0.0_r8
 !>              tl_WL(i,k)=tl_z_w(i,j,k-1)+tl_cff
+!>
                 ad_z_w(i,j,k-1)=ad_z_w(i,j,k-1)+ad_WL(i,k)
                 ad_cff=ad_cff+ad_WL(i,k)
                 ad_WL(i,k)=0.0_r8
 !>              tl_FC(i,k-1)=0.0_r8
+!>
                 ad_FC(i,k-1)=0.0_r8
               END DO
             END DO
-!
 !>          tl_cff=dtdays*SIGN(1.0_r8,Wbio(isink))*tl_Wbio(isink)
+!>
             ad_Wbio(isink)=ad_Wbio(isink)+                              &
-     &                    dtdays*SIGN(1.0_r8,Wbio(isink))*ad_cff
+     &                     dtdays*SIGN(1.0_r8,Wbio(isink))*ad_cff
             ad_cff=0.0_r8
 !
 !  Compute appropriate values of bR and bL.
-!
 !
 !  Copy concentration of biological particulates into scratch array
 !  "qc" (q-central, restrict it to be positive) which is hereafter
@@ -1560,7 +1563,6 @@
 #endif
             END DO
 !
-!
 !  Apply monotonicity constraint again, since the reconciled interfacial
 !  values may cause a non-monotonic behavior of the parabolic segments
 !  inside the grid box.
@@ -1572,38 +1574,48 @@
                 cffR=2.0_r8*dltR
                 cffL=2.0_r8*dltL
 !>              tl_bL(i,k)=tl_qc(i,k)-tl_dltL
+!>
                 ad_qc(i,k)=ad_qc(i,k)+ad_bL(i,k)
                 ad_dltL=ad_dltL-ad_bL(i,k)
                 ad_bL(i,k)=0.0_r8
 !>              tl_bR(i,k)=tl_qc(i,k)+tl_dltR
+!>
                 ad_qc(i,k)=ad_qc(i,k)+ad_bR(i,k)
                 ad_dltR=ad_dltR+ad_bR(i,k)
                 ad_bR(i,k)=0.0_r8
                 IF ((dltR*dltL).lt.0.0_r8) THEN
 !>                tl_dltR=0.0_r8
+!>
                   ad_dltR=0.0_r8
 !>                tl_dltL=0.0_r8
+!>
                   ad_dltL=0.0_r8
                 ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
 !>                tl_dltR=tl_cffL
+!>
                   ad_cffL=ad_cffL+ad_dltR
                   ad_dltR=0.0_r8
                 ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
 !>                tl_dltL=tl_cffR
+!>
                   ad_cffR=ad_cffR+ad_dltL
                   ad_dltL=0.0_r8
                 END IF
 !>              tl_cffL=2.0_r8*tl_dltL
+!>
                 ad_dltL=ad_dltL+2.0_r8*ad_cffL
                 ad_cffL=0.0_r8
 !>              tl_cffR=2.0_r8*tl_dltR
+!>
                 ad_dltR=ad_dltR+2.0_r8*ad_cffR
                 ad_cffR=0.0_r8
 !>              tl_dltL=tl_qc(i,k)-tl_bL(i,k)
+!>
                 ad_qc(i,k)=ad_qc(i,k)+ad_dltL
                 ad_bL(i,k)=ad_bL(i,k)-ad_dltL
                 ad_dltL=0.0_r8
 !>              tl_dltR=tl_bR(i,k)-tl_qc(i,k)
+!>
                 ad_bR(i,k)=ad_bR(i,k)+ad_dltR
                 ad_qc(i,k)=ad_qc(i,k)-ad_dltR
                 ad_dltR=0.0_r8
@@ -1612,17 +1624,21 @@
             DO i=Istr,Iend
 #if defined LINEAR_CONTINUATION
 !>            tl_bR(i,1)=tl_bL(i,2)
+!>
               ad_bL(i,2)=ad_bL(i,2)+ad_bR(i,1)
               ad_bR(i,1)=0.0_r8
 !>            tl_bL(i,1)=2.0_r8*tl_qc(i,1)-tl_bR(i,1)
+!>
               ad_qc(i,1)=ad_qc(i,1)+2.0_r8*ad_bL(i,1)
               ad_bR(i,1)=ad_bR(i,1)-ad_bL(i,1)
               ad_bL(i,1)=0.0_r8
 #elif defined NEUMANN
 !>            tl_bR(i,1)=tl_bL(i,2)
+!>
               ad_bL(i,2)=ad_bL(i,2)+ad_bR(i,1)
               ad_bR(i,1)=0.0_r8
 !>            tl_bL(i,1)=1.5_r8*tl_qc(i,1)-0.5_r8*tl_bR(i,1)
+!>
               ad_qc(i,1)=ad_qc(i,1)+1.5_r8*ad_bL(i,1)
               ad_bR(i,1)=ad_bR(i,1)-0.5_r8*ad_bL(i,1)
               ad_bL(i,1)=0.0_r8
@@ -1630,24 +1646,31 @@
 !>            tl_bL(i,2)=tl_qc(i,1)         ! bottom grid boxes are
 !>            tl_bR(i,1)=tl_qc(i,1)         ! re-assumed to be
 !>            tl_bL(i,1)=tl_qc(i,1)         ! piecewise constant.
-              ad_qc(i,1)=ad_qc(i,1)+ad_bL(i,2)+ad_bR(i,1)+ad_bL(i,1)
-              ad_bL(i,2)=0.0_r8
-              ad_bR(i,1)=0.0_r8
+!>
+              ad_qc(i,1)=ad_qc(i,1)+ad_bL(i,1)+                         &
+     &                              ad_bR(i,1)+                         &
+     &                              ad_bL(i,2)
               ad_bL(i,1)=0.0_r8
+              ad_bR(i,1)=0.0_r8
+              ad_bL(i,2)=0.0_r8
 #endif
 #if defined LINEAR_CONTINUATION
 !>            tl_bL(i,N(ng))=tl_bR(i,N(ng)-1)
+!>
               ad_bR(i,N(ng)-1)=ad_bR(i,N(ng)-1)+ad_bL(i,N(ng))
               ad_bL(i,N(ng))=0.0_r8
 !>            tl_bR(i,N(ng))=2.0_r8*tl_qc(i,N(ng))-tl_bL(i,N(ng))
+!>
               ad_qc(i,N(ng))=ad_qc(i,N(ng))+2.0_r8*ad_bR(i,N(ng))
               ad_bL(i,N(ng))=ad_bL(i,N(ng))-ad_bR(i,N(ng))
               ad_bR(i,N(ng))=0.0_r8
 #elif defined NEUMANN
 !>            tl_bL(i,N(ng))=tl_bR(i,N(ng)-1)
+!>
               ad_bR(i,N(ng)-1)=ad_bR(i,N(ng)-1)+ad_bL(i,N(ng))
               ad_bL(i,N(ng))=0.0_r8
 !>            tl_bR(i,N(ng))=1.5_r8*tl_qc(i,N(ng))-0.5_r8*tl_bL(i,N(ng))
+!>
               ad_qc(i,N(ng))=ad_qc(i,N(ng))+1.5_r8*ad_bR(i,N(ng))
               ad_bL(i,N(ng))=ad_bL(i,N(ng))-0.5_r8*ad_bR(i,N(ng))
               ad_bR(i,N(ng))=0.0_r8
@@ -1655,19 +1678,17 @@
 !>            tl_bR(i,N(ng))=tl_qc(i,N(ng)) ! default strictly monotonic
 !>            tl_bL(i,N(ng))=tl_qc(i,N(ng)) ! conditions
 !>            tl_bR(i,N(ng)-1)=tl_qc(i,N(ng))
-              ad_qc(i,N(ng))=ad_qc(i,N(ng))+ad_bR(i,N(ng))+             &
+!>
+              ad_qc(i,N(ng))=ad_qc(i,N(ng))+ad_bR(i,N(ng)-1)+           &
      &                                      ad_bL(i,N(ng))+             &
-     &                                      ad_bR(i,N(ng)-1)
-              ad_bR(i,N(ng))=0.0_r8
-              ad_bL(i,N(ng))=0.0_r8
+     &                                      ad_bR(i,N(ng))
               ad_bR(i,N(ng)-1)=0.0_r8
+              ad_bL(i,N(ng))=0.0_r8
+              ad_bR(i,N(ng))=0.0_r8
 #endif
-
             END DO
-
 !
-!   Compute  WR and WL arrays appropriate for this part of the code.
-!
+!  Compute  WR and WL arrays appropriate for this part of the code.
 !
 !  Copy concentration of biological particulates into scratch array
 !  "qc" (q-central, restrict it to be positive) which is hereafter
@@ -1734,12 +1755,14 @@
                 bL1(i,k+1)=bL(i,k+1)
                 bL(i,k+1)=bR(i,k)
 !>              tl_bL(i,k+1)=tl_bR(i,k)
+!>
                 ad_bR(i,k)=ad_bR(i,k)+ad_bL(i,k+1)
                 ad_bL(i,k+1)=0.0_r8
 !>              tl_bR(i,k)=(tl_dltR*bR1(i,k)+dltR*tl_bR(i,k)+           &
 !>   &                      tl_dltL*bL1(i,k+1)+dltL*tl_bL(i,k+1))/      &
 !>   &                      (dltR+dltL)-                                &
 !>   &                      (tl_dltR+tl_dltL)*bR(i,k)/(dltR+dltL)
+!>
                 adfac=ad_bR(i,k)/(dltR+dltL)
                 adfac1=ad_bR(i,k)*bR(i,k)/(dltR+dltL)
                 ad_dltR=ad_dltR+adfac*bR1(i,k)
@@ -1748,13 +1771,19 @@
                 ad_dltR=ad_dltR-adfac1
                 ad_dltL=ad_dltL-adfac1
                 ad_bR(i,k)=dltR*adfac
-!>              tl_dltR=(0.5_r8-SIGN(0.5_r8,cff-WR(i,k+1)))*tl_WR(i,k+1)
+!>              tl_dltR=(0.5_r8-SIGN(0.5_r8,cff-WR(i,k+1)))*            &
+!>   &                  tl_WR(i,k+1)
+!>
                 ad_WR(i,k+1)=ad_WR(i,k+1)+                              &
-     &                  (0.5_r8-SIGN(0.5_r8,cff-WR(i,k+1)))*ad_dltR
+     &                       (0.5_r8-SIGN(0.5_r8,cff-WR(i,k+1)))*       &
+     &                       ad_dltR
                 ad_dltR=0.0_r8
-!>              tl_dltL=(0.5_r8-SIGN(0.5_r8,cff-WL(i,k  )))*tl_WL(i,k  )
+!>              tl_dltL=(0.5_r8-SIGN(0.5_r8,cff-WL(i,k  )))*            &
+!>   &                  tl_WL(i,k  )
+!>
                 ad_WL(i,k  )=ad_WL(i,k  )+                              &
-     &                  (0.5_r8-SIGN(0.5_r8,cff-WL(i,k  )))*ad_dltL
+     &                       (0.5_r8-SIGN(0.5_r8,cff-WL(i,k  )))*       &
+     &                       ad_dltL
                 ad_dltL=0.0_r8
               END DO
             END DO
@@ -1794,27 +1823,28 @@
                 cff=(dltR-dltL)*Hz_inv3(i,k)
                 dltR=dltR-cff*Hz(i,j,k+1)
                 dltL=dltL+cff*Hz(i,j,k-1)
-
 !>              tl_WL(i,k)=2.0_r8*(dltR-2.0_r8*dltL)*                   &
-!>   &                                     (tl_dltR-2.0_r8*tl_dltL)
+!>   &                            (tl_dltR-2.0_r8*tl_dltL)
+!>
                 adfac=ad_WL(i,k)*2.0_r8*(dltR-2.0_r8*dltL)
                 ad_dltR=ad_dltR+adfac
                 ad_dltL=ad_dltL-2.0_r8*adfac
                 ad_WL(i,k)=0.0_r8
 
 !>              tl_WR(i,k)=2.0_r8*(2.0_r8*dltR-dltL)*                   &
-!>   &                                     (2.0_r8*tl_dltR-tl_dltL)
+!>   &                            (2.0_r8*tl_dltR-tl_dltL)
+!>
                 adfac=ad_WR(i,k)*2.0_r8*(2.0_r8*dltR-dltL)
                 ad_dltR=ad_dltR+2.0_r8*adfac
                 ad_dltL=ad_dltL-adfac
                 ad_WR(i,k)=0.0_r8
-
 !>              tl_bL(i,k)=tl_qc(i,k)-tl_dltL
+!>
                 ad_qc(i,k)=ad_qc(i,k)+ad_bL(i,k)
                 ad_dltL=ad_dltL-ad_bL(i,k)
                 ad_bL(i,k)=0.0_r8
-
 !>              tl_bR(i,k)=tl_qc(i,k)+tl_dltR
+!>
                 ad_qc(i,k)=ad_qc(i,k)+ad_bR(i,k)
                 ad_dltR=ad_dltR+ad_bR(i,k)
                 ad_bR(i,k)=0.0_r8
@@ -1839,25 +1869,24 @@
                 ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
                   dltL=cffR
                 END IF
-!
-                cff=(dltR-dltL)*Hz_inv3(i,k)
 
+                cff=(dltR-dltL)*Hz_inv3(i,k)
 !>              tl_dltL=tl_dltL+tl_cff*Hz(i,j,k-1)+cff*tl_Hz(i,j,k-1)
+!>
                 ad_cff=ad_cff+ad_dltL*Hz(i,j,k-1)
                 ad_Hz(i,j,k-1)=ad_Hz(i,j,k-1)+cff*ad_dltL
-
 !>              tl_dltR=tl_dltR-tl_cff*Hz(i,j,k+1)-cff*tl_Hz(i,j,k+1)
+!>
                 ad_cff=ad_cff-ad_dltR*Hz(i,j,k+1)
                 ad_Hz(i,j,k+1)=ad_Hz(i,j,k+1)-cff*ad_dltR
-
 !>              tl_cff=(tl_dltR-tl_dltL)*Hz_inv3(i,k)+                  &
-!>   &                  (dltR-dltL)*tl_Hz_inv3(i,k)
+!>   &                 (dltR-dltL)*tl_Hz_inv3(i,k)
+!>
                 adfac=ad_cff*Hz_inv3(i,k)
                 ad_dltR=ad_dltR+adfac
                 ad_dltL=ad_dltL-adfac
                 ad_Hz_inv3(i,k)=ad_Hz_inv3(i,k)+(dltR-dltL)*ad_cff
                 ad_cff=0.0_r8
-
 !
 !  Compute appropriate dltL and dltr.
 !
@@ -1869,52 +1898,55 @@
 
                 IF ((dltR*dltL).le.0.0_r8) THEN
 !>                tl_dltR=0.0_r8
+!>
                   ad_dltR=0.0_r8
 !>                tl_dltL=0.0_r8
+!>
                   ad_dltL=0.0_r8
                 ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
 !>                tl_dltR=tl_cffL
+!>
                   ad_cffL=ad_cffL+ad_dltR
                   ad_dltR=0.0_r8
                 ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
 !>                tl_dltL=tl_cffR
+!>
                   ad_cffR=ad_cffR+ad_dltL
                   ad_dltL=0.0_r8
                 END IF
-
 !>              tl_cffL=tl_cff*FC(i,k-1)+cff*tl_FC(i,k-1)
+!>
                 ad_cff=ad_cff+ad_cffL*FC(i,k-1)
                 ad_FC(i,k-1)=ad_FC(i,k-1)+cff*ad_cffL
                 ad_cffL=0.0_r8
-
 !>              tl_cffR=tl_cff*FC(i,k)+cff*tl_FC(i,k)
+!>
                 ad_cff=ad_cff+ad_cffR*FC(i,k)
                 ad_FC(i,k)=ad_FC(i,k)+cff*ad_cffR
                 ad_cffR=0.0_r8
-
 !>              tl_cff=tl_Hz(i,j,k-1)+2.0_r8*tl_Hz(i,j,k)+tl_Hz(i,j,k+1)
+!>
                 ad_Hz(i,j,k-1)=ad_Hz(i,j,k-1)+ad_cff
                 ad_Hz(i,j,k)=ad_Hz(i,j,k)+2.0_r8*ad_cff
                 ad_Hz(i,j,k+1)=ad_Hz(i,j,k+1)+ad_cff
                 ad_cff=0.0_r8
-
 !>              tl_dltL=tl_Hz(i,j,k)*FC(i,k-1)+Hz(i,j,k)*tl_FC(i,k-1)
+!>
                 ad_Hz(i,j,k)=ad_Hz(i,j,k)+ad_dltL*FC(i,k-1)
                 ad_FC(i,k-1)=ad_FC(i,k-1)+ad_dltL*Hz(i,j,k)
                 ad_dltL=0.0_r8
-
 !>              tl_dltR=tl_Hz(i,j,k)*FC(i,k)+Hz(i,j,k)*tl_FC(i,k)
+!>
                 ad_Hz(i,j,k)=ad_Hz(i,j,k)+ad_dltR*FC(i,k)
                 ad_FC(i,k)=ad_FC(i,k)+ad_dltR*Hz(i,j,k)
                 ad_dltR=0.0_r8
-
               END DO
             END DO
-
             DO k=N(ng)-1,1,-1
               DO i=Istr,Iend
 !>              tl_FC(i,k)=(tl_qc(i,k+1)-tl_qc(i,k))*Hz_inv2(i,k)+      &
 !>   &                     (qc(i,k+1)-qc(i,k))*tl_Hz_inv2(i,k)
+!>
                 adfac=ad_FC(i,k)*Hz_inv2(i,k)
                 ad_qc(i,k+1)=ad_qc(i,k+1)+adfac
                 ad_qc(i,k)=ad_qc(i,k)-adfac
@@ -1923,10 +1955,10 @@
                 ad_FC(i,k)=0.0_r8
               END DO
             END DO
-
             DO k=1,N(ng)
               DO i=Istr,Iend
 !>              tl_qc(i,k)=tl_Bio(i,k,ibio)
+!>
                 ad_Bio(i,k,ibio)=ad_Bio(i,k,ibio)+ad_qc(i,k)
                 ad_qc(i,k)=0.0_r8
               END DO
@@ -1935,102 +1967,110 @@
           END DO SINK_LOOP1
 
 !
-!      Compute appropriate basic state arrays II.
-        DO k=1,N(ng)
-          DO i=Istr,Iend
+!  Compute appropriate basic state arrays II.
 !
-!  Notice that at input all tracers are in transport units: m Tunits.
+          DO k=1,N(ng)
+            DO i=Istr,Iend
 !
-!  NOTE: In the following code, t should be in units of tracer times
-!        depth. However the basic state that is read from the forward
-!        file is in units of tracer. Since BioTrc is in tracer units,
-!        we simply use t instead of t*Hz_inv.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
-            DO itrc=1,NBT
-              ibio=idbio(itrc)
-!             BioTrc(ibio,1)=t(i,j,k,1,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,1)=t(i,j,k,1,ibio)
-!             BioTrc(ibio,2)=t(i,j,k,2,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,2)=t(i,j,k,2,ibio)
-            END DO
+!  NOTE: In the following code, t(:,:,:,nnew,:) should be in units of
+!        tracer times depth. However the basic state (nstp and nnew
+!        indices) that is read from the forward file is in units of
+!        tracer. Since BioTrc(ibio,nnew) is in tracer units, we simply
+!        use t instead of t*Hz_inv.
+!
+              DO itrc=1,NBT
+                ibio=idbio(itrc)
+!>              BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>
+                BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>              BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
+!>
+                BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)
+              END DO
 !
 !  Impose positive definite concentrations.
 !
-            cff2=0.0_r8
-            DO itime=1,2
-              cff1=0.0_r8
-              iTrcMax=idbio(1)
-              DO itrc=1,NBT
-                ibio=idbio(itrc)
-                cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
-                IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
-                  iTrcMax=ibio
+              cff2=0.0_r8
+              DO itime=1,2
+                cff1=0.0_r8
+                iTrcMax=idbio(1)
+                DO itrc=1,NBT
+                  ibio=idbio(itrc)
+                  cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
+                  IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
+                    iTrcMax=ibio
+                  END IF
+                  BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+                END DO
+                IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
+                  BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
                 END IF
-                BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
               END DO
-              IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
-                BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
-              END IF
-            END DO
 !
 !  Load biological tracers into local arrays.
 !
-            DO itrc=1,NBT
-              ibio=idbio(itrc)
-              Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-              Bio(i,k,ibio)=BioTrc(ibio,nnew)
-            END DO           
-          END DO          
-        END DO
+              DO itrc=1,NBT
+                ibio=idbio(itrc)
+                Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+                Bio(i,k,ibio)=BioTrc(ibio,nstp)
+              END DO           
+            END DO          
+          END DO
 !
 !  Calculate surface Photosynthetically Available Radiation (PAR).  The
 !  net shortwave radiation is scaled back to Watts/m2 and multiplied by
 !  the fraction that is photosynthetically available, PARfrac.
 !
-        DO i=Istr,Iend
+          DO i=Istr,Iend
 #ifdef CONST_PAR
 !
 !  Specify constant surface irradiance a la Powell and Spitz.
 !
-          PARsur(i)=158.075_r8
+            PARsur(i)=158.075_r8
 #else
-          PARsur(i)=PARfrac(ng)*srflx(i,j)*rho0*Cp
+            PARsur(i)=PARfrac(ng)*srflx(i,j)*rho0*Cp
 #endif
-        END DO
+          END DO
 !
 !=======================================================================
 !  Start internal iterations to achieve convergence of the nonlinear
 !  backward-implicit solution.
 !=======================================================================
 !
-        DO Iteradj=1,Iter
+          DO Iteradj=1,Iter
 !
 !  Compute light attenuation as function of depth.
 !
-          DO i=Istr,Iend
-            PAR=PARsur(i)
-            IF (PARsur(i).gt.0.0_r8) THEN              ! day time
-              DO k=N(ng),1,-1
+            DO i=Istr,Iend
+              PAR=PARsur(i)
+              IF (PARsur(i).gt.0.0_r8) THEN            ! day time
+                DO k=N(ng),1,-1
 !
 !  Attenuate the light to the center of the grid cell. Here, AttSW is
 !  the light attenuation due to seawater and AttPhy is the attenuation
 !  due to phytoplankton (self-shading coefficient).
 !
-                Att=EXP(-0.5_r8*(AttSW(ng)+AttPhy(ng)*Bio(i,k,iPhyt))*  &
-     &                  (z_w(i,j,k)-z_w(i,j,k-1)))
-                PAR=PAR*Att
-                Light(i,k)=PAR
+                  Att=EXP(-0.5_r8*(AttSW(ng)+                           &
+     &                             AttPhy(ng)*Bio(i,k,iPhyt))*          &
+     &                            (z_w(i,j,k)-z_w(i,j,k-1)))
+                  PAR=PAR*Att
+                  Light(i,k)=PAR
 !
 !  Attenuate the light to the bottom of the grid cell.
 !
-                PAR=PAR*Att
-              END DO
-            ELSE                                       ! night time
-              DO k=1,N(ng)
-                Light(i,k)=0.0_r8
-              END DO
-            END IF
-          END DO
+                  PAR=PAR*Att
+                END DO
+              ELSE                                     ! night time
+                DO k=1,N(ng)
+                  Light(i,k)=0.0_r8
+                END DO
+              END IF
+            END DO
 !
 !  Phytoplankton photosynthetic growth and nitrate uptake (Vm_NO3 rate).
 !  The Michaelis-Menten curve is used to describe the change in uptake
@@ -2039,99 +2079,99 @@
 !  phytoplankton nitrate uptake.  
 !
 #ifdef SPITZ
-          cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
-          cff2=Vm_NO3(ng)*Vm_NO3(ng)
-          cff3=PhyIS(ng)*PhyIS(ng)
+            cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
+            cff2=Vm_NO3(ng)*Vm_NO3(ng)
+            cff3=PhyIS(ng)*PhyIS(ng)
 #else
-          cff1=dtdays*Vm_NO3(ng)
+            cff1=dtdays*Vm_NO3(ng)
 #endif
-          DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO k=1,N(ng)
+              DO i=Istr,Iend
 #ifdef SPITZ 
-              cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
-              cff=Bio(i,k,iPhyt)*                                       &
-     &            cff1*cff4*Light(i,k)/                                 &
-     &            (K_NO3(ng)+Bio(i,k,iNO3_))
+                cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
+                cff=Bio(i,k,iPhyt)*                                     &
+     &              cff1*cff4*Light(i,k)/                               &
+     &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #else
-              cff=Bio(i,k,iPhyt)*                                       &
-     &            cff1*Light(i,k)/                                      &
-     &            (K_NO3(ng)+Bio(i,k,iNO3_))
+                cff=Bio(i,k,iPhyt)*                                     &
+     &              cff1*Light(i,k)/                                    &
+     &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #endif
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                            &
-     &                       Bio(i,k,iNO3_)*cff
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
+                Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                          &
+     &                         Bio(i,k,iNO3_)*cff
+              END DO
             END DO
-          END DO
 !
 !  Grazing on phytoplankton by zooplankton (ZooGR rate) using the Ivlev
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
 !
-          cff1=dtdays*ZooGR(ng)
-          cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              cff=Bio(i,k,iZoop)*                                       &
-     &            cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio(i,k,iPhyt)))/         &
-     &            Bio(i,k,iPhyt)
-              Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/(1.0_r8+cff)
-              Bio1(i,k,iZoop)=Bio(i,k,iZoop)
-              Bio(i,k,iZoop)=Bio(i,k,iZoop)+                            &
-     &                       Bio(i,k,iPhyt)*cff2*cff
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iPhyt)*ZooEEN(ng)*cff
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iPhyt)*ZooEED(ng)*cff
+            cff1=dtdays*ZooGR(ng)
+            cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
+            DO k=1,N(ng)
+              DO i=Istr,Iend
+                cff=Bio(i,k,iZoop)*                                     &
+     &              cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio(i,k,iPhyt)))/       &
+     &              Bio(i,k,iPhyt)
+                Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
+                Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/(1.0_r8+cff)
+                Bio1(i,k,iZoop)=Bio(i,k,iZoop)
+                Bio(i,k,iZoop)=Bio(i,k,iZoop)+                          &
+     &                         Bio(i,k,iPhyt)*cff2*cff
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                          &
+     &                         Bio(i,k,iPhyt)*ZooEEN(ng)*cff
+                Bio(i,k,iSDet)=Bio(i,k,iSDet)+                          &
+     &                         Bio(i,k,iPhyt)*ZooEED(ng)*cff
+              END DO
             END DO
-          END DO
 !
-         IF(Iteradj.ne.Iter) THEN
+            IF (Iteradj.ne.Iter) THEN
 !
 !  Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
 !  (PhyMRD rate).
 !
-          cff3=dtdays*PhyMRD(ng)
-          cff2=dtdays*PhyMRN(ng)
-          cff1=1.0_r8/(1.0_r8+cff2+cff3)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iPhyt)*cff2
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iPhyt)*cff3
-            END DO
-          END DO
+              cff3=dtdays*PhyMRD(ng)
+              cff2=dtdays*PhyMRN(ng)
+              cff1=1.0_r8/(1.0_r8+cff2+cff3)
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
+                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
+     &                           Bio(i,k,iPhyt)*cff2
+                  Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
+     &                           Bio(i,k,iPhyt)*cff3
+                END DO
+              END DO
 !
 !  Zooplankton mortality to nutrients (ZooMRN rate) and Detritus
 !  (ZooMRD rate).
 !
-          cff3=dtdays*ZooMRD(ng)
-          cff2=dtdays*ZooMRN(ng)
-          cff1=1.0_r8/(1.0_r8+cff2+cff3)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iZoop)=Bio(i,k,iZoop)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iZoop)*cff2
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iZoop)*cff3
-            END DO
-          END DO
+              cff3=dtdays*ZooMRD(ng)
+              cff2=dtdays*ZooMRN(ng)
+              cff1=1.0_r8/(1.0_r8+cff2+cff3)
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  Bio(i,k,iZoop)=Bio(i,k,iZoop)*cff1
+                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
+     &                           Bio(i,k,iZoop)*cff2
+                  Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
+     &                           Bio(i,k,iZoop)*cff3
+                END DO
+              END DO
 !
 !  Detritus breakdown to nutrients: remineralization (DetRR rate).
 !
-          cff2=dtdays*DetRR(ng)
-          cff1=1.0_r8/(1.0_r8+cff2)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iSDet)*cff2
-            END DO
-          END DO
+              cff2=dtdays*DetRR(ng)
+              cff1=1.0_r8/(1.0_r8+cff2)
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  Bio(i,k,iSDet)=Bio(i,k,iSDet)*cff1
+                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
+     &                           Bio(i,k,iSDet)*cff2
+                END DO
+              END DO
 !
 !-----------------------------------------------------------------------
 !  Vertical sinking terms: Phytoplankton and Detritus
@@ -2141,44 +2181,44 @@
 !  "Bio(:,:,isink)" in terms of a set of parabolic segments within each
 !  grid box. Then, compute semi-Lagrangian flux due to sinking.
 !
-          DO isink=1,Nsink
-            ibio=idsink(isink)
+              DO isink=1,Nsink
+                ibio=idsink(isink)
 !
 !  Copy concentration of biological particulates into scratch array
 !  "qc" (q-central, restrict it to be positive) which is hereafter
 !  interpreted as a set of grid-box averaged values for biogeochemical
 !  constituent concentration.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                qc(i,k)=Bio(i,k,ibio)
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    qc(i,k)=Bio(i,k,ibio)
+                  END DO
+                END DO
 !
-            DO k=N(ng)-1,1,-1
-              DO i=Istr,Iend
-                FC(i,k)=(qc(i,k+1)-qc(i,k))*Hz_inv2(i,k)
-              END DO
-            END DO
-            DO k=2,N(ng)-1
-              DO i=Istr,Iend
-                dltR=Hz(i,j,k)*FC(i,k)
-                dltL=Hz(i,j,k)*FC(i,k-1)
-                cff=Hz(i,j,k-1)+2.0_r8*Hz(i,j,k)+Hz(i,j,k+1)
-                cffR=cff*FC(i,k)
-                cffL=cff*FC(i,k-1)
+                DO k=N(ng)-1,1,-1
+                  DO i=Istr,Iend
+                    FC(i,k)=(qc(i,k+1)-qc(i,k))*Hz_inv2(i,k)
+                  END DO
+                END DO
+                DO k=2,N(ng)-1
+                  DO i=Istr,Iend
+                    dltR=Hz(i,j,k)*FC(i,k)
+                    dltL=Hz(i,j,k)*FC(i,k-1)
+                    cff=Hz(i,j,k-1)+2.0_r8*Hz(i,j,k)+Hz(i,j,k+1)
+                    cffR=cff*FC(i,k)
+                    cffL=cff*FC(i,k-1)
 !
 !  Apply PPM monotonicity constraint to prevent oscillations within the
 !  grid box.
 !
-                IF ((dltR*dltL).le.0.0_r8) THEN
-                  dltR=0.0_r8
-                  dltL=0.0_r8
-                ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
-                  dltR=cffL
-                ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
-                  dltL=cffR
-                END IF
+                    IF ((dltR*dltL).le.0.0_r8) THEN
+                      dltR=0.0_r8
+                      dltL=0.0_r8
+                    ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
+                      dltR=cffL
+                    ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
+                      dltL=cffR
+                    END IF
 !
 !  Compute right and left side values (bR,bL) of parabolic segments
 !  within grid box Hz(k); (WR,WL) are measures of quadratic variations.
@@ -2189,72 +2229,72 @@
 !        qc(i,k+1)-qc(i,k).  This possibility is excluded,
 !        after bL and bR are reconciled using WENO procedure.
 !
-                cff=(dltR-dltL)*Hz_inv3(i,k)
-                dltR=dltR-cff*Hz(i,j,k+1)
-                dltL=dltL+cff*Hz(i,j,k-1)
-                bR(i,k)=qc(i,k)+dltR
-                bL(i,k)=qc(i,k)-dltL
-                WR(i,k)=(2.0_r8*dltR-dltL)**2
-                WL(i,k)=(dltR-2.0_r8*dltL)**2
-              END DO
-            END DO
-            cff=1.0E-14_r8
-            DO k=2,N(ng)-2
-              DO i=Istr,Iend
-                dltL=MAX(cff,WL(i,k  ))
-                dltR=MAX(cff,WR(i,k+1))
-                bR(i,k)=(dltR*bR(i,k)+dltL*bL(i,k+1))/(dltR+dltL)
-                bL(i,k+1)=bR(i,k)
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,N(ng))=0.0_r8            ! NO-flux boundary condition
+                    cff=(dltR-dltL)*Hz_inv3(i,k)
+                    dltR=dltR-cff*Hz(i,j,k+1)
+                    dltL=dltL+cff*Hz(i,j,k-1)
+                    bR(i,k)=qc(i,k)+dltR
+                    bL(i,k)=qc(i,k)-dltL
+                    WR(i,k)=(2.0_r8*dltR-dltL)**2
+                    WL(i,k)=(dltR-2.0_r8*dltL)**2
+                  END DO
+                END DO
+                cff=1.0E-14_r8
+                DO k=2,N(ng)-2
+                  DO i=Istr,Iend
+                    dltL=MAX(cff,WL(i,k  ))
+                    dltR=MAX(cff,WR(i,k+1))
+                    bR(i,k)=(dltR*bR(i,k)+dltL*bL(i,k+1))/(dltR+dltL)
+                    bL(i,k+1)=bR(i,k)
+                  END DO
+                END DO
+                DO i=Istr,Iend
+                  FC(i,N(ng))=0.0_r8        ! NO-flux boundary condition
 #if defined LINEAR_CONTINUATION
-              bL(i,N(ng))=bR(i,N(ng)-1)
-              bR(i,N(ng))=2.0_r8*qc(i,N(ng))-bL(i,N(ng))
+                  bL(i,N(ng))=bR(i,N(ng)-1)
+                  bR(i,N(ng))=2.0_r8*qc(i,N(ng))-bL(i,N(ng))
 #elif defined NEUMANN
-              bL(i,N(ng))=bR(i,N(ng)-1)
-              bR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
+                  bL(i,N(ng))=bR(i,N(ng)-1)
+                  bR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
 #else
-              bR(i,N(ng))=qc(i,N(ng))       ! default strictly monotonic
-              bL(i,N(ng))=qc(i,N(ng))       ! conditions
-              bR(i,N(ng)-1)=qc(i,N(ng))
+                  bR(i,N(ng))=qc(i,N(ng))   ! default strictly monotonic
+                  bL(i,N(ng))=qc(i,N(ng))   ! conditions
+                  bR(i,N(ng)-1)=qc(i,N(ng))
 #endif
 #if defined LINEAR_CONTINUATION
-              bR(i,1)=bL(i,2)
-              bL(i,1)=2.0_r8*qc(i,1)-bR(i,1)
+                  bR(i,1)=bL(i,2)
+                  bL(i,1)=2.0_r8*qc(i,1)-bR(i,1)
 #elif defined NEUMANN
-              bR(i,1)=bL(i,2)
-              bL(i,1)=1.5_r8*qc(i,1)-0.5_r8*bR(i,1)
+                  bR(i,1)=bL(i,2)
+                  bL(i,1)=1.5_r8*qc(i,1)-0.5_r8*bR(i,1)
 #else
-              bL(i,2)=qc(i,1)               ! bottom grid boxes are
-              bR(i,1)=qc(i,1)               ! re-assumed to be
-              bL(i,1)=qc(i,1)               ! piecewise constant.
+                  bL(i,2)=qc(i,1)           ! bottom grid boxes are
+                  bR(i,1)=qc(i,1)           ! re-assumed to be
+                  bL(i,1)=qc(i,1)           ! piecewise constant.
 #endif
-            END DO
+                END DO
 !
 !  Apply monotonicity constraint again, since the reconciled interfacial
 !  values may cause a non-monotonic behavior of the parabolic segments
 !  inside the grid box.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                dltR=bR(i,k)-qc(i,k)
-                dltL=qc(i,k)-bL(i,k)
-                cffR=2.0_r8*dltR
-                cffL=2.0_r8*dltL
-                IF ((dltR*dltL).lt.0.0_r8) THEN
-                  dltR=0.0_r8
-                  dltL=0.0_r8
-                ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
-                  dltR=cffL
-                ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
-                  dltL=cffR
-                END IF
-                bR(i,k)=qc(i,k)+dltR
-                bL(i,k)=qc(i,k)-dltL
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    dltR=bR(i,k)-qc(i,k)
+                    dltL=qc(i,k)-bL(i,k)
+                    cffR=2.0_r8*dltR
+                    cffL=2.0_r8*dltL
+                    IF ((dltR*dltL).lt.0.0_r8) THEN
+                      dltR=0.0_r8
+                      dltL=0.0_r8
+                    ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
+                      dltR=cffL
+                    ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
+                      dltL=cffR
+                    END IF
+                    bR(i,k)=qc(i,k)+dltR
+                    bL(i,k)=qc(i,k)-dltL
+                  END DO
+                END DO
 !
 !  After this moment reconstruction is considered complete. The next
 !  stage is to compute vertical advective fluxes, FC. It is expected
@@ -2270,94 +2310,97 @@
 !  During the search: also add in content of whole grid boxes
 !  participating in FC.
 !
-            cff=dtdays*ABS(Wbio(isink))
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                FC(i,k-1)=0.0_r8
-                WL(i,k)=z_w(i,j,k-1)+cff
-                WR(i,k)=Hz(i,j,k)*qc(i,k)
-                ksource(i,k)=k
-              END DO
-            END DO
-            DO k=1,N(ng)
-              DO ks=k,N(ng)-1
-                DO i=Istr,Iend
-                  IF (WL(i,k).gt.z_w(i,j,ks)) THEN
-                    ksource(i,k)=ks+1
-                    FC(i,k-1)=FC(i,k-1)+WR(i,ks)
-                  END IF
+                cff=dtdays*ABS(Wbio(isink))
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    FC(i,k-1)=0.0_r8
+                    WL(i,k)=z_w(i,j,k-1)+cff
+                    WR(i,k)=Hz(i,j,k)*qc(i,k)
+                    ksource(i,k)=k
+                  END DO
                 END DO
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO ks=k,N(ng)-1
+                    DO i=Istr,Iend
+                      IF (WL(i,k).gt.z_w(i,j,ks)) THEN
+                        ksource(i,k)=ks+1
+                        FC(i,k-1)=FC(i,k-1)+WR(i,ks)
+                      END IF
+                    END DO
+                  END DO
+                END DO
 !
 !  Finalize computation of flux: add fractional part.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                ks=ksource(i,k)
-                cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
-                FC(i,k-1)=FC(i,k-1)+                                    &
-     &                    Hz(i,j,ks)*cu*                                &
-     &                    (bL(i,ks)+                                    &
-     &                     cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-              &
-     &                         (1.5_r8-cu)*                             &
-     &                         (bR(i,ks)+bL(i,ks)-                      &
-     &                          2.0_r8*qc(i,ks))))
-              END DO
-            END DO
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                Bio(i,k,ibio)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
-              END DO
-            END DO
-
-          END DO 
-         END IF
-        END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    ks=ksource(i,k)
+                    cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
+                    FC(i,k-1)=FC(i,k-1)+                                &
+     &                        Hz(i,j,ks)*cu*                            &
+     &                        (bL(i,ks)+                                &
+     &                         cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-          &
+     &                             (1.5_r8-cu)*                         &
+     &                             (bR(i,ks)+bL(i,ks)-                  &
+     &                              2.0_r8*qc(i,ks))))
+                  END DO
+                END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    Bio(i,k,ibio)=qc(i,k)+                              &
+     &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
+                  END DO
+                END DO
+              END DO 
+            END IF
+          END DO
 !
-!    End of compute basic state arrays II.
+!  End of compute basic state arrays II.
 !
-!
-! Adjoint detritus breakdown to nutrients: remineralization (DetRR rate).
+!  Adjoint detritus breakdown to nutrients: remineralization
+!  (DetRR rate).
 !
           cff2=dtdays*DetRR(ng)
           cff1=1.0_r8/(1.0_r8+cff2)
           DO k=1,N(ng)
             DO i=Istr,Iend
 !>            tl_Bio(i,k,iNO3_)=tl_Bio(i,k,iNO3_)+                      &
-!>   &                       tl_Bio(i,k,iSDet)*cff2
+!>   &                          tl_Bio(i,k,iSDet)*cff2
+!>
               ad_Bio(i,k,iSDet)=ad_Bio(i,k,iSDet)+                      &
-     &                                  cff2*ad_Bio(i,k,iNO3_)
+     &                          cff2*ad_Bio(i,k,iNO3_)
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)*cff1
+!>
               ad_Bio(i,k,iSDet)=ad_Bio(i,k,iSDet)*cff1
             END DO
           END DO
 !
-! Adjoint Zooplankton mortality to nutrients (ZooMRN rate) and Detritus
-!  (ZooMRD rate).
+!  Adjoint Zooplankton mortality to nutrients (ZooMRN rate) and
+!  Detritus (ZooMRD rate).
+!
           cff3=dtdays*ZooMRD(ng)
           cff2=dtdays*ZooMRN(ng)
           cff1=1.0_r8/(1.0_r8+cff2+cff3)
           DO k=1,N(ng)
             DO i=Istr,Iend
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)+                      &
-!>   &                       tl_Bio(i,k,iZoop)*cff3
+!>   &                          tl_Bio(i,k,iZoop)*cff3
+!>
               ad_Bio(i,k,iZoop)=ad_Bio(i,k,iZoop)+                      &
-     &                             cff3*ad_Bio(i,k,iSDet)
-
+     &                          cff3*ad_Bio(i,k,iSDet)
 !>            tl_Bio(i,k,iNO3_)=tl_Bio(i,k,iNO3_)+                      &
-!>   &                       tl_Bio(i,k,iZoop)*cff2
+!>   &                          tl_Bio(i,k,iZoop)*cff2
+!>
               ad_Bio(i,k,iZoop)=ad_Bio(i,k,iZoop)+                      &
-     &                             cff2*ad_Bio(i,k,iNO3_)
-
+     &                          cff2*ad_Bio(i,k,iNO3_)
 !>            tl_Bio(i,k,iZoop)=tl_Bio(i,k,iZoop)*cff1
+!>
               ad_Bio(i,k,iZoop)=ad_Bio(i,k,iZoop)*cff1
-
             END DO
           END DO
 !
-! Adjoint Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
-!  (PhyMRD rate).
+!  Adjoint Phytoplankton mortality to nutrients (PhyMRN rate) and
+!  detritus (PhyMRD rate).
 !
           cff3=dtdays*PhyMRD(ng)
           cff2=dtdays*PhyMRN(ng)
@@ -2365,14 +2408,17 @@
           DO k=1,N(ng)
             DO i=Istr,Iend
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)+                      &
-!>   &                       tl_Bio(i,k,iPhyt)*cff3
+!>   &                          tl_Bio(i,k,iPhyt)*cff3
+!>
               ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
-     &                             cff3*ad_Bio(i,k,iSDet)
+     &                          cff3*ad_Bio(i,k,iSDet)
 !>            tl_Bio(i,k,iNO3_)=tl_Bio(i,k,iNO3_)+                      &
-!>   &                       tl_Bio(i,k,iPhyt)*cff2  
+!>   &                          tl_Bio(i,k,iPhyt)*cff2  
+!>
               ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
-     &                             cff2*ad_Bio(i,k,iNO3_)
+     &                          cff2*ad_Bio(i,k,iNO3_)
 !>            tl_Bio(i,k,iPhyt)=tl_Bio(i,k,iPhyt)*cff1
+!>
               ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)*cff1
             END DO
           END DO
@@ -2390,143 +2436,158 @@
      &            cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio1(i,k,iPhyt)))/        &
      &            Bio1(i,k,iPhyt)
 !>            tl_Bio(i,k,iSDet)=tl_Bio(i,k,iSDet)+                      &
-!>   &                       ZooEED(ng)*(tl_Bio(i,k,iPhyt)*cff+         &
-!>   &                                   Bio(i,k,iPhyt)*tl_cff)
+!>   &                          ZooEED(ng)*(tl_Bio(i,k,iPhyt)*cff+      &
+!>   &                                      Bio(i,k,iPhyt)*tl_cff)
+!>
               ad_cff=ZooEED(ng)*Bio(i,k,iPhyt)*ad_Bio(i,k,iSDet)
-              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+ZooEED(ng)*cff*       &
-     &                             ad_Bio(i,k,iSDet)
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
+     &                          ZooEED(ng)*cff*ad_Bio(i,k,iSDet)
 !>            tl_Bio(i,k,iNO3_)=tl_Bio(i,k,iNO3_)+                      &
-!>   &                       ZooEEN(ng)*(tl_Bio(i,k,iPhyt)*cff+         &
-!>   &                                   Bio(i,k,iPhyt)*tl_cff)
-              ad_cff=ad_cff+ZooEEN(ng)*Bio(i,k,iPhyt)*ad_Bio(i,k,iNO3_)
-              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+ZooEEN(ng)*cff*       &
-     &                             ad_Bio(i,k,iNO3_)
+!>   &                          ZooEEN(ng)*(tl_Bio(i,k,iPhyt)*cff+      &
+!>   &                                      Bio(i,k,iPhyt)*tl_cff)
+!>
+              ad_cff=ad_cff+                                            &
+     &               ZooEEN(ng)*Bio(i,k,iPhyt)*ad_Bio(i,k,iNO3_)
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
+     &                          ZooEEN(ng)*cff*ad_Bio(i,k,iNO3_)
 !>            tl_Bio(i,k,iZoop)=tl_Bio(i,k,iZoop)+                      &
-!>   &                       cff2*(tl_Bio(i,k,iPhyt)*cff+               &
-!>   &                             Bio(i,k,iPhyt)*tl_cff)
-              ad_cff=ad_cff+cff2*Bio(i,k,iPhyt)*ad_Bio(i,k,iZoop)
-              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+cff2*cff*             &
-     &                             ad_Bio(i,k,iZoop)
-!>            tl_Bio(i,k,iPhyt)=tl_Bio(i,k,iPhyt)/(1.0_r8+cff)-         &
-!>   &                          tl_cff*Bio(i,k,iPhyt)/(1.0_r8+cff)
-              ad_cff=ad_cff-Bio(i,k,iPhyt)*ad_Bio(i,k,iPhyt)/           &
-     &                                                (1.0_r8+cff)
-              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)/(1.0_r8+cff)
-!>            tl_cff=tl_Bio(i,k,iZoop)*                                 &
-!>   &            cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio1(i,k,iPhyt)))/        &
-!>   &            Bio1(i,k,iPhyt)+                                      &
-!>   &            Bio1(i,k,iZoop)*Ivlev(ng)*tl_Bio(i,k,iPhyt)*cff1*     &
-!>   &            EXP(-Ivlev(ng)*Bio1(i,k,iPhyt))/Bio1(i,k,iPhyt)-      &
-!>   &            tl_Bio(i,k,iPhyt)*cff/Bio1(i,k,iPhyt)
-	       fac=EXP(-Ivlev(ng)*Bio1(i,k,iPhyt))
-               adfac=ad_cff/Bio1(i,k,iPhyt)
-               ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)-adfac*cff
-               ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                     &
-     &                 Bio1(i,k,iZoop)*Ivlev(ng)*adfac*cff1*fac
-               ad_Bio(i,k,iZoop)=ad_Bio(i,k,iZoop)+                     &
-     &                               adfac*cff1*(1.0_r8-fac)
-               ad_cff=0.0_r8
-             
+!>   &                          cff2*(tl_Bio(i,k,iPhyt)*cff+            &
+!>   &                                Bio(i,k,iPhyt)*tl_cff)
+!>
+              ad_cff=ad_cff+                                            &
+     &               cff2*Bio(i,k,iPhyt)*ad_Bio(i,k,iZoop)
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
+     &                          cff2*cff*ad_Bio(i,k,iZoop)
+!>            tl_Bio(i,k,iPhyt)=(tl_Bio(i,k,iPhyt)-                     &
+!>   &                           tl_cff*Bio(i,k,iPhyt))/                &
+!>   &                          (1.0_r8+cff)
+!>
+              adfac=ad_Bio(i,k,iPhyt)/(1.0_r8+cff)
+              ad_cff=ad_cff-Bio(i,k,iPhyt)*adfac
+              ad_Bio(i,k,iPhyt)=adfac
+!>            tl_cff=(tl_Bio(i,k,iZoop)*                                &
+!>   &                cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio1(i,k,iPhyt)))+    &
+!>   &                Bio1(i,k,iZoop)*Ivlev(ng)*tl_Bio(i,k,iPhyt)*cff1* &
+!>   &                EXP(-Ivlev(ng)*Bio1(i,k,iPhyt))-                  &
+!>   &                tl_Bio(i,k,iPhyt)*cff)/                           &
+!>   &               Bio1(i,k,iPhyt)
+!>
+	      fac=EXP(-Ivlev(ng)*Bio1(i,k,iPhyt))
+              adfac=ad_cff/Bio1(i,k,iPhyt)
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)-adfac*cff
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
+     &                          Bio1(i,k,iZoop)*Ivlev(ng)*              &
+     &                          adfac*cff1*fac
+              ad_Bio(i,k,iZoop)=ad_Bio(i,k,iZoop)+                      &
+     &                          adfac*cff1*(1.0_r8-fac)
+              ad_cff=0.0_r8
             END DO
           END DO
 !
-!      Compute appropriate basic state arrays I.
+!  Compute appropriate basic state arrays I.
 !
-        DO k=1,N(ng)
-          DO i=Istr,Iend
+          DO k=1,N(ng)
+            DO i=Istr,Iend
 !
-!  Notice that at input all tracers are in transport units: m Tunits.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
-!  NOTE: In the following code, t should be in units of tracer times
-!        depth. However the basic state that is read from the forward
-!        file is in units of tracer. Since BioTrc is in tracer units,
-!        we simply use t instead of t*Hz_inv.
+!  NOTE: In the following code, t(:,:,:,nnew,:) should be in units of
+!        tracer times depth. However the basic state (nstp and nnew
+!        indices) that is read from the forward file is in units of
+!        tracer. Since BioTrc(ibio,nnew) is in tracer units, we simply
+!        use t instead of t*Hz_inv.
 !
-            DO itrc=1,NBT
-              ibio=idbio(itrc)
-!             BioTrc(ibio,1)=t(i,j,k,1,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,1)=t(i,j,k,1,ibio)
-!             BioTrc(ibio,2)=t(i,j,k,2,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,2)=t(i,j,k,2,ibio)
-            END DO
+              DO itrc=1,NBT
+                ibio=idbio(itrc)
+!>              BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>
+                BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+!>              BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
+!>
+                BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)
+              END DO
 !
 !  Impose positive definite concentrations.
 !
-            cff2=0.0_r8
-            DO itime=1,2
-              cff1=0.0_r8
-              iTrcMax=idbio(1)
-              DO itrc=1,NBT
-                ibio=idbio(itrc)
-                cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
-                IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
-                  iTrcMax=ibio
+              cff2=0.0_r8
+              DO itime=1,2
+                cff1=0.0_r8
+                iTrcMax=idbio(1)
+                DO itrc=1,NBT
+                  ibio=idbio(itrc)
+                  cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
+                  IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
+                    iTrcMax=ibio
+                  END IF
+                  BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
+                END DO
+                IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
+                  BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
                 END IF
-                BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
               END DO
-              IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
-                BioTrc(iTrcMax,itime)=BioTrc(iTrcMax,itime)-cff1
-              END IF
-            END DO
 !
 !  Load biological tracers into local arrays.
 !
-            DO itrc=1,NBT
-              ibio=idbio(itrc)
-              Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-              Bio(i,k,ibio)=BioTrc(ibio,nnew)
-            END DO           
-          END DO          
-        END DO
+              DO itrc=1,NBT
+                ibio=idbio(itrc)
+                Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+                Bio(i,k,ibio)=BioTrc(ibio,nstp)
+              END DO           
+            END DO          
+          END DO
 !
 !  Calculate surface Photosynthetically Available Radiation (PAR).  The
 !  net shortwave radiation is scaled back to Watts/m2 and multiplied by
 !  the fraction that is photosynthetically available, PARfrac.
 !
-        DO i=Istr,Iend
+          DO i=Istr,Iend
 #ifdef CONST_PAR
 !
 !  Specify constant surface irradiance a la Powell and Spitz.
 !
-          PARsur(i)=158.075_r8
+            PARsur(i)=158.075_r8
 #else
-          PARsur(i)=PARfrac(ng)*srflx(i,j)*rho0*Cp
+            PARsur(i)=PARfrac(ng)*srflx(i,j)*rho0*Cp
 #endif
-        END DO
+          END DO
 !
 !=======================================================================
 !  Start internal iterations to achieve convergence of the nonlinear
 !  backward-implicit solution.
 !=======================================================================
 !
-        DO Iteradj=1,Iter
+          DO Iteradj=1,Iter
 !
 !  Compute light attenuation as function of depth.
 !
-          DO i=Istr,Iend
-            PAR=PARsur(i)
-            IF (PARsur(i).gt.0.0_r8) THEN              ! day time
-              DO k=N(ng),1,-1
+            DO i=Istr,Iend
+              PAR=PARsur(i)
+              IF (PARsur(i).gt.0.0_r8) THEN            ! day time
+                DO k=N(ng),1,-1
 !
 !  Attenuate the light to the center of the grid cell. Here, AttSW is
 !  the light attenuation due to seawater and AttPhy is the attenuation
 !  due to phytoplankton (self-shading coefficient).
 !
-                Att=EXP(-0.5_r8*(AttSW(ng)+AttPhy(ng)*Bio(i,k,iPhyt))*  &
-     &                  (z_w(i,j,k)-z_w(i,j,k-1)))
-                PAR=PAR*Att
-                Light(i,k)=PAR
+                  Att=EXP(-0.5_r8*(AttSW(ng)+                           &
+     &                             AttPhy(ng)*Bio(i,k,iPhyt))*          &
+     &                            (z_w(i,j,k)-z_w(i,j,k-1)))
+                  PAR=PAR*Att
+                  Light(i,k)=PAR
 !
 !  Attenuate the light to the bottom of the grid cell.
 !
-                PAR=PAR*Att
-              END DO
-            ELSE                                       ! night time
-              DO k=1,N(ng)
-                Light(i,k)=0.0_r8
-              END DO
-            END IF
-          END DO
+                  PAR=PAR*Att
+                END DO
+              ELSE                                     ! night time
+                DO k=1,N(ng)
+                  Light(i,k)=0.0_r8
+                END DO
+              END IF
+            END DO
 !
 !  Phytoplankton photosynthetic growth and nitrate uptake (Vm_NO3 rate).
 !  The Michaelis-Menten curve is used to describe the change in uptake
@@ -2535,99 +2596,99 @@
 !  phytoplankton nitrate uptake.  
 !
 #ifdef SPITZ
-          cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
-          cff2=Vm_NO3(ng)*Vm_NO3(ng)
-          cff3=PhyIS(ng)*PhyIS(ng)
+            cff1=dtdays*Vm_NO3(ng)*PhyIS(ng)
+            cff2=Vm_NO3(ng)*Vm_NO3(ng)
+            cff3=PhyIS(ng)*PhyIS(ng)
 #else
-          cff1=dtdays*Vm_NO3(ng)
+            cff1=dtdays*Vm_NO3(ng)
 #endif
-          DO k=1,N(ng)
-            DO i=Istr,Iend
+            DO k=1,N(ng)
+              DO i=Istr,Iend
 #ifdef SPITZ 
-              cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
-              cff=Bio(i,k,iPhyt)*                                       &
-     &            cff1*cff4*Light(i,k)/                                 &
-     &            (K_NO3(ng)+Bio(i,k,iNO3_))
+                cff4=1.0_r8/SQRT(cff2+cff3*Light(i,k)*Light(i,k))
+                cff=Bio(i,k,iPhyt)*                                     &
+     &              cff1*cff4*Light(i,k)/                               &
+     &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #else
-              cff=Bio(i,k,iPhyt)*                                       &
-     &            cff1*Light(i,k)/                                      &
-     &            (K_NO3(ng)+Bio(i,k,iNO3_))
+                cff=Bio(i,k,iPhyt)*                                     &
+     &              cff1*Light(i,k)/                                    &
+     &              (K_NO3(ng)+Bio(i,k,iNO3_))
 #endif
-              Bio1(i,k,iNO3_)=Bio(i,k,iNO3_)
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
-              Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                            &
-     &                       Bio(i,k,iNO3_)*cff
+                Bio1(i,k,iNO3_)=Bio(i,k,iNO3_)
+                Bio(i,k,iNO3_)=Bio(i,k,iNO3_)/(1.0_r8+cff)
+                Bio1(i,k,iPhyt)=Bio(i,k,iPhyt)
+                Bio(i,k,iPhyt)=Bio(i,k,iPhyt)+                          &
+     &                         Bio(i,k,iNO3_)*cff
+              END DO
             END DO
-          END DO
 !
-         IF(Iteradj.ne.Iter) THEN
+            IF (Iteradj.ne.Iter) THEN
 !
 !  Grazing on phytoplankton by zooplankton (ZooGR rate) using the Ivlev
 !  formulation (Ivlev, 1955) and lost of phytoplankton to the nitrate
 !  pool as function of "sloppy feeding" and metabolic processes
 !  (ZooEEN and ZooEED fractions).
 !
-          cff1=dtdays*ZooGR(ng)
-          cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              cff=Bio(i,k,iZoop)*                                       &
-     &            cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio(i,k,iPhyt)))/         &
-     &            Bio(i,k,iPhyt)
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/(1.0_r8+cff)
-              Bio(i,k,iZoop)=Bio(i,k,iZoop)+                            &
-     &                       Bio(i,k,iPhyt)*cff2*cff
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iPhyt)*ZooEEN(ng)*cff
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iPhyt)*ZooEED(ng)*cff
-            END DO
-          END DO
+              cff1=dtdays*ZooGR(ng)
+              cff2=1.0_r8-ZooEEN(ng)-ZooEED(ng)
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  cff=Bio(i,k,iZoop)*                                   &
+     &                cff1*(1.0_r8-EXP(-Ivlev(ng)*Bio(i,k,iPhyt)))/     &
+     &                Bio(i,k,iPhyt)
+                  Bio(i,k,iPhyt)=Bio(i,k,iPhyt)/(1.0_r8+cff)
+                  Bio(i,k,iZoop)=Bio(i,k,iZoop)+                        &
+     &                           Bio(i,k,iPhyt)*cff2*cff
+                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
+     &                           Bio(i,k,iPhyt)*ZooEEN(ng)*cff
+                  Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
+     &                           Bio(i,k,iPhyt)*ZooEED(ng)*cff
+                END DO
+              END DO
 !
 !  Phytoplankton mortality to nutrients (PhyMRN rate) and detritus
 !  (PhyMRD rate).
 !
-          cff3=dtdays*PhyMRD(ng)
-          cff2=dtdays*PhyMRN(ng)
-          cff1=1.0_r8/(1.0_r8+cff2+cff3)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iPhyt)*cff2
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iPhyt)*cff3
-            END DO
-          END DO
+              cff3=dtdays*PhyMRD(ng)
+              cff2=dtdays*PhyMRN(ng)
+              cff1=1.0_r8/(1.0_r8+cff2+cff3)
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  Bio(i,k,iPhyt)=Bio(i,k,iPhyt)*cff1
+                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
+     &                           Bio(i,k,iPhyt)*cff2
+                  Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
+     &                           Bio(i,k,iPhyt)*cff3
+                END DO
+              END DO
 !
 !  Zooplankton mortality to nutrients (ZooMRN rate) and Detritus
 !  (ZooMRD rate).
 !
-          cff3=dtdays*ZooMRD(ng)
-          cff2=dtdays*ZooMRN(ng)
-          cff1=1.0_r8/(1.0_r8+cff2+cff3)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iZoop)=Bio(i,k,iZoop)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iZoop)*cff2
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)+                            &
-     &                       Bio(i,k,iZoop)*cff3
-            END DO
-          END DO
+              cff3=dtdays*ZooMRD(ng)
+              cff2=dtdays*ZooMRN(ng)
+              cff1=1.0_r8/(1.0_r8+cff2+cff3)
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  Bio(i,k,iZoop)=Bio(i,k,iZoop)*cff1
+                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
+     &                           Bio(i,k,iZoop)*cff2
+                  Bio(i,k,iSDet)=Bio(i,k,iSDet)+                        &
+     &                           Bio(i,k,iZoop)*cff3
+                END DO
+              END DO
 !
 !  Detritus breakdown to nutrients: remineralization (DetRR rate).
 !
-          cff2=dtdays*DetRR(ng)
-          cff1=1.0_r8/(1.0_r8+cff2)
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iSDet)=Bio(i,k,iSDet)*cff1
-              Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                            &
-     &                       Bio(i,k,iSDet)*cff2
-            END DO
-          END DO
+              cff2=dtdays*DetRR(ng)
+              cff1=1.0_r8/(1.0_r8+cff2)
+              DO k=1,N(ng)
+                DO i=Istr,Iend
+                  Bio(i,k,iSDet)=Bio(i,k,iSDet)*cff1
+                  Bio(i,k,iNO3_)=Bio(i,k,iNO3_)+                        &
+     &                           Bio(i,k,iSDet)*cff2
+                END DO
+              END DO
 !
 !-----------------------------------------------------------------------
 !  Vertical sinking terms: Phytoplankton and Detritus
@@ -2637,44 +2698,44 @@
 !  "Bio(:,:,isink)" in terms of a set of parabolic segments within each
 !  grid box. Then, compute semi-Lagrangian flux due to sinking.
 !
-          DO isink=1,Nsink
-            ibio=idsink(isink)
+              DO isink=1,Nsink
+                ibio=idsink(isink)
 !
 !  Copy concentration of biological particulates into scratch array
 !  "qc" (q-central, restrict it to be positive) which is hereafter
 !  interpreted as a set of grid-box averaged values for biogeochemical
 !  constituent concentration.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                qc(i,k)=Bio(i,k,ibio)
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    qc(i,k)=Bio(i,k,ibio)
+                  END DO
+                END DO
 !
-            DO k=N(ng)-1,1,-1
-              DO i=Istr,Iend
-                FC(i,k)=(qc(i,k+1)-qc(i,k))*Hz_inv2(i,k)
-              END DO
-            END DO
-            DO k=2,N(ng)-1
-              DO i=Istr,Iend
-                dltR=Hz(i,j,k)*FC(i,k)
-                dltL=Hz(i,j,k)*FC(i,k-1)
-                cff=Hz(i,j,k-1)+2.0_r8*Hz(i,j,k)+Hz(i,j,k+1)
-                cffR=cff*FC(i,k)
-                cffL=cff*FC(i,k-1)
+                DO k=N(ng)-1,1,-1
+                  DO i=Istr,Iend
+                    FC(i,k)=(qc(i,k+1)-qc(i,k))*Hz_inv2(i,k)
+                  END DO
+                END DO
+                DO k=2,N(ng)-1
+                  DO i=Istr,Iend
+                    dltR=Hz(i,j,k)*FC(i,k)
+                    dltL=Hz(i,j,k)*FC(i,k-1)
+                    cff=Hz(i,j,k-1)+2.0_r8*Hz(i,j,k)+Hz(i,j,k+1)
+                    cffR=cff*FC(i,k)
+                    cffL=cff*FC(i,k-1)
 !
 !  Apply PPM monotonicity constraint to prevent oscillations within the
 !  grid box.
 !
-                IF ((dltR*dltL).le.0.0_r8) THEN
-                  dltR=0.0_r8
-                  dltL=0.0_r8
-                ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
-                  dltR=cffL
-                ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
-                  dltL=cffR
-                END IF
+                    IF ((dltR*dltL).le.0.0_r8) THEN
+                      dltR=0.0_r8
+                      dltL=0.0_r8
+                    ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
+                      dltR=cffL
+                    ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
+                      dltL=cffR
+                    END IF
 !
 !  Compute right and left side values (bR,bL) of parabolic segments
 !  within grid box Hz(k); (WR,WL) are measures of quadratic variations.
@@ -2685,72 +2746,72 @@
 !        qc(i,k+1)-qc(i,k).  This possibility is excluded,
 !        after bL and bR are reconciled using WENO procedure.
 !
-                cff=(dltR-dltL)*Hz_inv3(i,k)
-                dltR=dltR-cff*Hz(i,j,k+1)
-                dltL=dltL+cff*Hz(i,j,k-1)
-                bR(i,k)=qc(i,k)+dltR
-                bL(i,k)=qc(i,k)-dltL
-                WR(i,k)=(2.0_r8*dltR-dltL)**2
-                WL(i,k)=(dltR-2.0_r8*dltL)**2
-              END DO
-            END DO
-            cff=1.0E-14_r8
-            DO k=2,N(ng)-2
-              DO i=Istr,Iend
-                dltL=MAX(cff,WL(i,k  ))
-                dltR=MAX(cff,WR(i,k+1))
-                bR(i,k)=(dltR*bR(i,k)+dltL*bL(i,k+1))/(dltR+dltL)
-                bL(i,k+1)=bR(i,k)
-              END DO
-            END DO
-            DO i=Istr,Iend
-              FC(i,N(ng))=0.0_r8            ! NO-flux boundary condition
+                    cff=(dltR-dltL)*Hz_inv3(i,k)
+                    dltR=dltR-cff*Hz(i,j,k+1)
+                    dltL=dltL+cff*Hz(i,j,k-1)
+                    bR(i,k)=qc(i,k)+dltR
+                    bL(i,k)=qc(i,k)-dltL
+                    WR(i,k)=(2.0_r8*dltR-dltL)**2
+                    WL(i,k)=(dltR-2.0_r8*dltL)**2
+                  END DO
+                END DO
+                cff=1.0E-14_r8
+                DO k=2,N(ng)-2
+                  DO i=Istr,Iend
+                    dltL=MAX(cff,WL(i,k  ))
+                    dltR=MAX(cff,WR(i,k+1))
+                    bR(i,k)=(dltR*bR(i,k)+dltL*bL(i,k+1))/(dltR+dltL)
+                    bL(i,k+1)=bR(i,k)
+                  END DO
+                END DO
+                DO i=Istr,Iend
+                  FC(i,N(ng))=0.0_r8        ! NO-flux boundary condition
 #if defined LINEAR_CONTINUATION
-              bL(i,N(ng))=bR(i,N(ng)-1)
-              bR(i,N(ng))=2.0_r8*qc(i,N(ng))-bL(i,N(ng))
+                  bL(i,N(ng))=bR(i,N(ng)-1)
+                  bR(i,N(ng))=2.0_r8*qc(i,N(ng))-bL(i,N(ng))
 #elif defined NEUMANN
-              bL(i,N(ng))=bR(i,N(ng)-1)
-              bR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
+                  bL(i,N(ng))=bR(i,N(ng)-1)
+                  bR(i,N(ng))=1.5*qc(i,N(ng))-0.5_r8*bL(i,N(ng))
 #else
-              bR(i,N(ng))=qc(i,N(ng))       ! default strictly monotonic
-              bL(i,N(ng))=qc(i,N(ng))       ! conditions
-              bR(i,N(ng)-1)=qc(i,N(ng))
+                  bR(i,N(ng))=qc(i,N(ng))   ! default strictly monotonic
+                  bL(i,N(ng))=qc(i,N(ng))   ! conditions
+                  bR(i,N(ng)-1)=qc(i,N(ng))
 #endif
 #if defined LINEAR_CONTINUATION
-              bR(i,1)=bL(i,2)
-              bL(i,1)=2.0_r8*qc(i,1)-bR(i,1)
+                  bR(i,1)=bL(i,2)
+                  bL(i,1)=2.0_r8*qc(i,1)-bR(i,1)
 #elif defined NEUMANN
-              bR(i,1)=bL(i,2)
-              bL(i,1)=1.5_r8*qc(i,1)-0.5_r8*bR(i,1)
+                  bR(i,1)=bL(i,2)
+                  bL(i,1)=1.5_r8*qc(i,1)-0.5_r8*bR(i,1)
 #else
-              bL(i,2)=qc(i,1)               ! bottom grid boxes are
-              bR(i,1)=qc(i,1)               ! re-assumed to be
-              bL(i,1)=qc(i,1)               ! piecewise constant.
+                  bL(i,2)=qc(i,1)           ! bottom grid boxes are
+                  bR(i,1)=qc(i,1)           ! re-assumed to be
+                  bL(i,1)=qc(i,1)           ! piecewise constant.
 #endif
-            END DO
+                END DO
 !
 !  Apply monotonicity constraint again, since the reconciled interfacial
 !  values may cause a non-monotonic behavior of the parabolic segments
 !  inside the grid box.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                dltR=bR(i,k)-qc(i,k)
-                dltL=qc(i,k)-bL(i,k)
-                cffR=2.0_r8*dltR
-                cffL=2.0_r8*dltL
-                IF ((dltR*dltL).lt.0.0_r8) THEN
-                  dltR=0.0_r8
-                  dltL=0.0_r8
-                ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
-                  dltR=cffL
-                ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
-                  dltL=cffR
-                END IF
-                bR(i,k)=qc(i,k)+dltR
-                bL(i,k)=qc(i,k)-dltL
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    dltR=bR(i,k)-qc(i,k)
+                    dltL=qc(i,k)-bL(i,k)
+                    cffR=2.0_r8*dltR
+                    cffL=2.0_r8*dltL
+                    IF ((dltR*dltL).lt.0.0_r8) THEN
+                      dltR=0.0_r8
+                      dltL=0.0_r8
+                    ELSE IF (ABS(dltR).gt.ABS(cffL)) THEN
+                      dltR=cffL
+                    ELSE IF (ABS(dltL).gt.ABS(cffR)) THEN
+                      dltL=cffR
+                    END IF
+                    bR(i,k)=qc(i,k)+dltR
+                    bL(i,k)=qc(i,k)-dltL
+                  END DO
+                END DO
 !
 !  After this moment reconstruction is considered complete. The next
 !  stage is to compute vertical advective fluxes, FC. It is expected
@@ -2766,53 +2827,52 @@
 !  During the search: also add in content of whole grid boxes
 !  participating in FC.
 !
-            cff=dtdays*ABS(Wbio(isink))
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                FC(i,k-1)=0.0_r8
-                WL(i,k)=z_w(i,j,k-1)+cff
-                WR(i,k)=Hz(i,j,k)*qc(i,k)
-                ksource(i,k)=k
-              END DO
-            END DO
-            DO k=1,N(ng)
-              DO ks=k,N(ng)-1
-                DO i=Istr,Iend
-                  IF (WL(i,k).gt.z_w(i,j,ks)) THEN
-                    ksource(i,k)=ks+1
-                    FC(i,k-1)=FC(i,k-1)+WR(i,ks)
-                  END IF
+                cff=dtdays*ABS(Wbio(isink))
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    FC(i,k-1)=0.0_r8
+                    WL(i,k)=z_w(i,j,k-1)+cff
+                    WR(i,k)=Hz(i,j,k)*qc(i,k)
+                    ksource(i,k)=k
+                  END DO
                 END DO
-              END DO
-            END DO
+                DO k=1,N(ng)
+                  DO ks=k,N(ng)-1
+                    DO i=Istr,Iend
+                      IF (WL(i,k).gt.z_w(i,j,ks)) THEN
+                        ksource(i,k)=ks+1
+                        FC(i,k-1)=FC(i,k-1)+WR(i,ks)
+                      END IF
+                    END DO
+                  END DO
+                END DO
 !
 !  Finalize computation of flux: add fractional part.
 !
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                ks=ksource(i,k)
-                cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
-                FC(i,k-1)=FC(i,k-1)+                                    &
-     &                    Hz(i,j,ks)*cu*                                &
-     &                    (bL(i,ks)+                                    &
-     &                     cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-              &
-     &                         (1.5_r8-cu)*                             &
-     &                         (bR(i,ks)+bL(i,ks)-                      &
-     &                          2.0_r8*qc(i,ks))))
-              END DO
-            END DO
-            DO k=1,N(ng)
-              DO i=Istr,Iend
-                Bio(i,k,ibio)=qc(i,k)+(FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
-              END DO
-            END DO
-
-          END DO 
-         END IF
-        END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    ks=ksource(i,k)
+                    cu=MIN(1.0_r8,(WL(i,k)-z_w(i,j,ks-1))*Hz_inv(i,ks))
+                    FC(i,k-1)=FC(i,k-1)+                                &
+     &                        Hz(i,j,ks)*cu*                            &
+     &                        (bL(i,ks)+                                &
+     &                         cu*(0.5_r8*(bR(i,ks)-bL(i,ks))-          &
+     &                             (1.5_r8-cu)*                         &
+     &                             (bR(i,ks)+bL(i,ks)-                  &
+     &                              2.0_r8*qc(i,ks))))
+                  END DO
+                END DO
+                DO k=1,N(ng)
+                  DO i=Istr,Iend
+                    Bio(i,k,ibio)=qc(i,k)+                              &
+     &                            (FC(i,k)-FC(i,k-1))*Hz_inv(i,k)
+                  END DO
+                END DO
+              END DO 
+            END IF
+          END DO
 !
-!    End of compute basic state arrays I.
-!
+!  End of compute basic state arrays I.
 !
 !  Adjoint Phytoplankton photosynthetic growth and nitrate uptake
 !  (Vm_NO3 rate). The Michaelis-Menten curve is used to describe the
@@ -2840,41 +2900,55 @@
      &            (K_NO3(ng)+Bio1(i,k,iNO3_))
 #endif
 !>            tl_Bio(i,k,iPhyt)=tl_Bio(i,k,iPhyt)+                      &
-!>   &                       tl_Bio(i,k,iNO3_)*cff+Bio(i,k,iNO3_)*tl_cff
+!>   &                          tl_Bio(i,k,iNO3_)*cff+                  &
+!>   &                          Bio(i,k,iNO3_)*tl_cff
+!>
               ad_cff=Bio(i,k,iNO3_)*ad_Bio(i,k,iPhyt)
-              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)+cff*ad_Bio(i,k,iPhyt)
-!>            tl_Bio(i,k,iNO3_)=tl_Bio(i,k,iNO3_)/(1.0_r8+cff)-         &
-!>   &                          tl_cff*Bio(i,k,iNO3_)/(1.0_r8+cff)
-              ad_cff=ad_cff-Bio(i,k,iNO3_)*ad_Bio(i,k,iNO3_)/           &
-     &                                              (1.0_r8+cff)
-              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)/(1.0_r8+cff)
+              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)+                      &
+     &                          cff*ad_Bio(i,k,iPhyt)
+!>            tl_Bio(i,k,iNO3_)=(tl_Bio(i,k,iNO3_)-                     &
+!>   &                           tl_cff*Bio(i,k,iNO3_))/                &
+!>   &                          (1.0_r8+cff)
+!>
+              adfac=ad_Bio(i,k,iNO3_)/(1.0_r8+cff)
+              ad_cff=ad_cff-Bio(i,k,iNO3_)*adfac
+              ad_Bio(i,k,iNO3_)=adfac
 #ifdef SPITZ
 !>            tl_cff=(tl_Bio(i,k,iPhyt)*cff1*cff4*Light(i,k)+           &
-!>   &            Bio1(i,k,iPhyt)*cff1*                                 &
-!>   &                 (tl_cff4*Light(i,k)+cff4*tl_Light(i,k)))/        &
-!>   &                       (K_NO3(ng)+Bio1(i,k,iNO3_))-               &
-!>   &            tl_Bio(i,k,iNO3_)*cff/(K_NO3(ng)+Bio1(i,k,iNO3_))
+!>   &                Bio1(i,k,iPhyt)*cff1*                             &
+!>   &                (tl_cff4*Light(i,k)+cff4*tl_Light(i,k))-          &
+!>   &                tl_Bio(i,k,iNO3_)*cff)/                           &
+!>   &               (K_NO3(ng)+Bio1(i,k,iNO3_))
+!>
               adfac=ad_cff/(K_NO3(ng)+Bio1(i,k,iNO3_))
               adfac1=adfac*Bio1(i,k,iPhyt)*cff1
               ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
-     &                                cff1*cff4*Light(i,k)*adfac
+     &                          cff1*cff4*Light(i,k)*adfac
               ad_cff4=adfac1*Light(i,k)
-              ad_Light(i,k)=ad_Light(i,k)+adfac1*cff4
-              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-adfac*cff
+              ad_Light(i,k)=ad_Light(i,k)+                              &
+     &                      adfac1*cff4
+              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-                      &
+     &                          adfac*cff
               ad_cff=0.0_r8
 !>            tl_cff4=-cff3*tl_Light(i,k)*Light(i,k)*cff4*cff4*cff4
-              ad_Light(i,k)=ad_Light(i,k)-cff3*Light(i,k)*              &
-     &                           cff4*cff4*cff4*ad_cff4
+!>
+              ad_Light(i,k)=ad_Light(i,k)-                              &
+     &                       cff3*Light(i,k)*                           &
+     &                       cff4*cff4*cff4*ad_cff4
               ad_cff4=0.0_r8
 #else
 !>            tl_cff=(tl_Bio(i,k,iPhyt)*cff1*Light(i,k)+                &
-!>   &            Bio1(i,k,iPhyt)*cff1*tl_Light(i,k))/                  &
-!>   &            (K_NO3(ng)+Bio1(i,k,iNO3_))-                          &
-!>   &             tl_Bio(i,k,iNO3_)*cff/(K_NO3(ng)+Bio1(i,k,iNO3_))
+!>   &                Bio1(i,k,iPhyt)*cff1*tl_Light(i,k)-               &
+!>   &                tl_Bio(i,k,iNO3_)*cff)/                           &
+!>   &               (K_NO3(ng)+Bio1(i,k,iNO3_))
+!>
               adfac=ad_cff/(K_NO3(ng)+Bio1(i,k,iNO3_))
-              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+adfac*cff1*Light(i,k)
-              ad_Light(i,k)=ad_Light(i,k)+adfac*Bio1(i,k,iPhyt)*cff1
-              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-cff*adfac
+              ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)+                      &
+     &                          adfac*cff1*Light(i,k)
+              ad_Light(i,k)=ad_Light(i,k)+                              &
+     &                      adfac*Bio1(i,k,iPhyt)*cff1
+              ad_Bio(i,k,iNO3_)=ad_Bio(i,k,iNO3_)-                      &
+     &                          cff*adfac
               ad_cff=0.0_r8
 #endif
             END DO
@@ -2896,8 +2970,9 @@
 !  the light attenuation due to seawater and AttPhy is the attenuation
 !  due to phytoplankton (self-shading coefficient).
 !
-                  Att=EXP(-0.5_r8*(AttSW(ng)+AttPhy(ng)*                &
-     &                   Bio1(i,kk,iPhyt))*(z_w(i,j,kk)-z_w(i,j,kk-1)))
+                  Att=EXP(-0.5_r8*(AttSW(ng)+                           &
+     &                             AttPhy(ng)*Bio1(i,kk,iPhyt))*        &
+     &                            (z_w(i,j,kk)-z_w(i,j,kk-1)))
                   PAR1=PAR
                   PAR=PAR*Att
 !
@@ -2911,6 +2986,7 @@
 ! Adjoint attenuation of the light to the bottom of the grid cell.
 !
 !>              tl_PAR=tl_PAR*Att+PAR2*tl_Att
+!>
                 ad_Att=ad_Att+PAR2*ad_PAR
                 ad_PAR=ad_PAR*Att
 
@@ -2920,22 +2996,25 @@
 !  due to phytoplankton (self-shading coefficient).
 !
 !>              tl_Light(i,k)=tl_PAR
+!>
                 ad_PAR=ad_PAR+ad_Light(i,k)
                 ad_Light(i,k)=0.0_r8
 
 !>              tl_PAR=tl_PAR*Att+PAR1*tl_Att
+!>
                 ad_Att=ad_Att+PAR1*ad_PAR
                 ad_PAR=ad_PAR*Att
-
-!
-!>              tl_Att=Att*(-0.5_r8*AttPhy(ng)*tl_Bio(i,k,iPhyt)*       &
-!>   &                  (z_w(i,j,k)-z_w(i,j,k-1))                       &
-!>   &                  -0.5_r8*(AttSW(ng)+AttPhy(ng)*Bio1(i,k,iPhyt))* &
+!>              tl_Att=-Att*0.5_r8*                                     &
+!>   &                 (AttPhy(ng)*tl_Bio(i,k,iPhyt)*                   &
+!>   &                  (z_w(i,j,k)-z_w(i,j,k-1))+                      &
+!>   &                  (AttSW(ng)+AttPhy(ng)*Bio1(i,k,iPhyt))*         &
 !>   &                  (tl_z_w(i,j,k)-tl_z_w(i,j,k-1)))
-                adfac=-0.5_r8*(AttSW(ng)+AttPhy(ng)*Bio1(i,k,iPhyt))*   &
-     &                     Att*ad_Att
+!>
+                adfac=-Att*0.5_r8*                                      &
+     &                (AttSW(ng)+AttPhy(ng)*Bio1(i,k,iPhyt))*ad_Att
                 ad_Bio(i,k,iPhyt)=ad_Bio(i,k,iPhyt)-                    &
-     &            Att*0.5_r8*AttPhy(ng)*ad_Att*(z_w(i,j,k)-z_w(i,j,k-1))
+     &                            Att*0.5_r8*AttPhy(ng)*                &
+     &                            ad_Att*(z_w(i,j,k)-z_w(i,j,k-1))
                 ad_z_w(i,j,k)=ad_z_w(i,j,k)+adfac
                 ad_z_w(i,j,k-1)=ad_z_w(i,j,k-1)-adfac
                 ad_Att=0.0_r8
@@ -2943,21 +3022,22 @@
             ELSE                                       ! night time
               DO k=1,N(ng)
 !>              tl_Light(i,k)=0.0_r8
+!>
                 ad_Light(i,k)=0.0_r8
               END DO
             END IF
 !>          tl_PAR=tl_PARsur(i)
+!>
             ad_PARsur(i)=ad_PARsur(i)+ad_PAR
             ad_PAR=0.0_r8
           END DO
-!
 
         END DO ITER_LOOP1
-
 !
-!  Calculate adjoint surface Photosynthetically Available Radiation (PAR).  The
-!  net shortwave radiation is scaled back to Watts/m2 and multiplied by
-!  the fraction that is photosynthetically available, PARfrac.
+!  Calculate adjoint surface Photosynthetically Available Radiation
+!  (PAR).  The net shortwave radiation is scaled back to Watts/m2
+!  and multiplied by the fraction that is photosynthetically
+!  available, PARfrac.
 !
         DO i=Istr,Iend
 #ifdef CONST_PAR
@@ -2965,13 +3045,16 @@
 !  Specify constant surface irradiance a la Powell and Spitz.
 !
 !>        tl_PARsur(i)=0.0_r8
-!>        ad_PARsur(i)=0.0_r8
+!>
+!!        ad_PARsur(i)=0.0_r8
 #else
 !>        tl_PARsur(i)=(tl_PARfrac(ng)*srflx(i,j)+                      &
 !>   &                  PARfrac(ng)*tl_srflx(i,j))*rho0*Cp
+!>
           adfac=rho0*Cp*ad_PARsur(i)
           ad_srflx(i,j)=ad_srflx(i,j)+PARfrac(ng)*adfac
           ad_PARfrac(ng)=ad_PARfrac(ng)+srflx(i,j)*adfac
+!!        ad_PARsur(i)=0.0_r8
 #endif
         END DO
 !
@@ -2987,12 +3070,15 @@
 !
             DO itrc=1,NBT
               ibio=idbio(itrc)
-!>            tl_Bio(i,k,ibio)=tl_BioTrc(ibio,nnew)
-              ad_BioTrc(ibio,nnew)=ad_BioTrc(ibio,nnew)+ad_Bio(i,k,ibio)
+!>            tl_Bio(i,k,ibio)=tl_BioTrc(ibio,nstp)
+!>
+              ad_BioTrc(ibio,nstp)=ad_BioTrc(ibio,nstp)+                &
+     &                             ad_Bio(i,k,ibio)
               ad_Bio(i,k,ibio)=0.0_r8
-!>            tl_Bio_bak(i,k,ibio)=tl_BioTrc(ibio,nnew)
-              ad_BioTrc(ibio,nnew)=ad_BioTrc(ibio,nnew)+                &
-     &                                     ad_Bio_bak(i,k,ibio)
+!>            tl_Bio_bak(i,k,ibio)=tl_BioTrc(ibio,nstp)
+!>
+              ad_BioTrc(ibio,nstp)=ad_BioTrc(ibio,nstp)+                &
+     &                             ad_Bio_bak(i,k,ibio)
               ad_Bio_bak(i,k,ibio)=0.0_r8
             END DO
 !
@@ -3004,7 +3090,11 @@
               iTrcMax=idbio(1)
               DO itrc=1,NBT
                 ibio=idbio(itrc)
-! Basic state: No Hz_inv here because t is in tracer units
+!
+!  The basic state (nstp and nnew indices) that is read from the
+!  forward file is in units of tracer. Since BioTrc(ibio,:) is in
+!  tracer units, we simply use t instead of t*Hz_inv.
+!
                 BioTrc(ibio,itime)=t(i,j,k,itime,ibio)
                 cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
                 IF (BioTrc(ibio,itime).gt.BioTrc(iTrcMax,itime)) THEN
@@ -3013,95 +3103,112 @@
                 BioTrc1(ibio,itime)=BioTrc(ibio,itime)
                 BioTrc(ibio,itime)=MAX(MinVal,BioTrc(ibio,itime))
               END DO
-
               IF (BioTrc(iTrcMax,itime).gt.cff1) THEN
 !>              tl_BioTrc(iTrcMax,itime)=tl_BioTrc(iTrcMax,itime)-      &
 !>   &                                   tl_cff1
+!>
                 ad_cff1=-ad_BioTrc(iTrcMax,itime)
               END IF
 
               cff1=0.0_r8
               DO itrc=1,NBT
                 ibio=idbio(itrc)
-! Basic state: No Hz_inv here because t is in tracer units
+!
+!  The basic state (nstp and nnew indices) that is read from the
+!  forward file is in units of tracer. Since BioTrc(ibio,:) is in
+!  tracer units, we simply use t instead of t*Hz_inv.
+!
                 BioTrc(ibio,itime)=t(i,j,k,itime,ibio)
                 cff1=cff1+MAX(0.0_r8,MinVal-BioTrc(ibio,itime))
-!>              tl_BioTrc(ibio,itime)=                                  &
-!>   &                (0.5_r8-SIGN(0.5_r8,MinVal-BioTrc1(ibio,itime))*  &
-!>   &                 tl_BioTrc(ibio,itime)
-                ad_BioTrc(ibio,itime)=                                  &
-     &                (0.5_r8-SIGN(0.5_r8,MinVal-BioTrc1(ibio,itime)))* &
-     &                ad_BioTrc(ibio,itime)
-
+!>              tl_BioTrc(ibio,itime)=(0.5_r8-                          &
+!>   &                                 SIGN(0.5_r8,                     &
+!>   &                                      MinVal-                     &
+!>   &                                      BioTrc1(ibio,itime)))*      &
+!>   &                                tl_BioTrc(ibio,itime)
+!>
+                ad_BioTrc(ibio,itime)=(0.5_r8-                          &
+     &                                 SIGN(0.5_r8,                     &
+     &                                      MinVal-                     &
+     &                                      BioTrc1(ibio,itime)))*      &
+     &                                ad_BioTrc(ibio,itime)
 !>              tl_cff1=tl_cff1-                                        &
-!>   &                 (0.5_r8-SIGN(0.5_r8,BioTrc(ibio,itime)-MinVal))* &
+!>   &                  (0.5_r8-SIGN(0.5_r8,                            &
+!>   &                               BioTrc(ibio,itime)-MinVal))*       &
 !>   &                  tl_BioTrc(ibio,itime)
-                ad_BioTrc(ibio,itime)=ad_BioTrc(ibio,itime)             &
-     &          -(0.5_r8-SIGN(0.5_r8,BioTrc(ibio,itime)-MinVal))*ad_cff1
-
+!>
+                ad_BioTrc(ibio,itime)=ad_BioTrc(ibio,itime)-            &
+     &                                (0.5_r8-SIGN(0.5_r8,              &
+     &                                             BioTrc(ibio,itime)-  &
+     &                                             MinVal))*ad_cff1
               END DO
               ad_cff1=0.0_r8
             END DO
-
 !
-!  Notice that at input all tracers are in transport units: m Tunits.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
-!  NOTE: In the following code, t should be in units of tracer times
-!        depth. However the basic state that is read from the forward
-!        file is in units of tracer. Since BioTrc is in tracer units,
-!        we simply use t instead of t*Hz_inv.
+!  NOTE: In the following code, t(:,:,:,nnew,:) should be in units of
+!        tracer times depth. However the basic state (nstp and nnew
+!        indices) that is read from the forward file is in units of
+!        tracer. Since BioTrc(ibio,nnew) is in tracer units, we simply
+!        use t instead of t*Hz_inv.
 !
             DO itrc=1,NBT
               ibio=idbio(itrc)
-!>            tl_BioTrc(ibio,2)=tl_t(i,j,k,2,ibio)*Hz_inv(i,k)+         &
-!>   &                          t(i,j,k,2,ibio)*Hz(i,j,k)*tl_Hz_inv(i,k)
+!>            tl_BioTrc(ibio,nnew)=tl_t(i,j,k,nnew,ibio)*               &
+!>   &                             Hz_inv(i,k)+                         &
+!>   &                             t(i,j,k,nnew,ibio)*Hz(i,j,k)*        &
+!>   &                             tl_Hz_inv(i,k)
+!>
               ad_Hz_inv(i,k)=ad_Hz_inv(i,k)+                            &
-     &                      t(i,j,k,2,ibio)*Hz(i,j,k)*ad_BioTrc(ibio,2)
-              ad_t(i,j,k,2,ibio)=ad_t(i,j,k,2,ibio)+                    &
-     &                      Hz_inv(i,k)*ad_BioTrc(ibio,2)
-              ad_BioTrc(ibio,2)=0.0_r8
-!>            tl_BioTrc(ibio,1)=tl_t(i,j,k,1,ibio)*Hz_inv(i,k)+         &
-!>   &                          t(i,j,k,1,ibio)*Hz(i,j,k)*tl_Hz_inv(i,k)
-              ad_Hz_inv(i,k)=ad_Hz_inv(i,k)+                            &
-     &                       t(i,j,k,1,ibio)*Hz(i,j,k)*ad_BioTrc(ibio,1)
-              ad_t(i,j,k,1,ibio)=ad_t(i,j,k,1,ibio)+                    &
-     &                      Hz_inv(i,k)*ad_BioTrc(ibio,1)
-              ad_BioTrc(ibio,1)=0.0_r8
+     &                       t(i,j,k,nnew,ibio)*Hz(i,j,k)*              &
+     &                       ad_BioTrc(ibio,nnew)
+              ad_t(i,j,k,nnew,ibio)=ad_t(i,j,k,nnew,ibio)+              &
+     &                              Hz_inv(i,k)*ad_BioTrc(ibio,nnew)
+              ad_BioTrc(ibio,nnew)=0.0_r8
+!>            tl_BioTrc(ibio,nstp)=tl_t(i,j,k,nstp,ibio)
+!>
+              ad_t(i,j,k,nstp,ibio)=ad_t(i,j,k,nstp,ibio)+              &
+     &                              ad_BioTrc(ibio,nstp)
+              ad_BioTrc(ibio,nstp)=0.0_r8
             END DO
           END DO
         END DO
-
 !
 !  Adjoint inverse thickness to avoid repeated divisions.
 !
         DO k=2,N(ng)-1
           DO i=Istr,Iend
-!>          tl_Hz_inv3(i,k)=-(tl_Hz(i,j,k-1)+tl_Hz(i,j,k)               &
-!>   &               +tl_Hz(i,j,k+1))*Hz_inv3(i,k)/                     &
-!>   &                       (Hz(i,j,k-1)+Hz(i,j,k)+Hz(i,j,k+1))
-            adfac=ad_Hz_inv3(i,k)*Hz_inv3(i,k)/                         &
-     &                       (Hz(i,j,k-1)+Hz(i,j,k)+Hz(i,j,k+1))
+!>          tl_Hz_inv3(i,k)=-Hz_inv3(i,k)*Hz_inv3(i,k)*                 &
+!>   &                      (tl_Hz(i,j,k-1)+tl_Hz(i,j,k)+               &
+!>   &                       tl_Hz(i,j,k+1))
+!>
+            adfac=Hz_inv3(i,k)*Hz_inv3(i,k)*ad_Hz_inv3(i,k)
             ad_Hz(i,j,k-1)=ad_Hz(i,j,k-1)-adfac
-            ad_Hz(i,j,k)=ad_Hz(i,j,k)-adfac
+            ad_Hz(i,j,k  )=ad_Hz(i,j,k  )-adfac
             ad_Hz(i,j,k+1)=ad_Hz(i,j,k+1)-adfac
             ad_Hz_inv3(i,k)=0.0_r8
           END DO
         END DO
         DO k=1,N(ng)-1
           DO i=Istr,Iend
-!>          tl_Hz_inv2(i,k)=-(tl_Hz(i,j,k)+tl_Hz(i,j,k+1))*Hz_inv2(i,k)/&
-!>   &                       (Hz(i,j,k)+Hz(i,j,k+1))
-            adfac=ad_Hz_inv2(i,k)*Hz_inv2(i,k)/(Hz(i,j,k)+Hz(i,j,k+1))
-            ad_Hz(i,j,k)=ad_Hz(i,j,k)-adfac
+!>          tl_Hz_inv2(i,k)=-Hz_inv2(i,k)*Hz_inv2(i,k)*                 &
+!>   &                      (tl_Hz(i,j,k)+tl_Hz(i,j,k+1))
+!>
+            adfac=Hz_inv2(i,k)*Hz_inv2(i,k)*ad_Hz_inv2(i,k)
+            ad_Hz(i,j,k  )=ad_Hz(i,j,k  )-adfac
             ad_Hz(i,j,k+1)=ad_Hz(i,j,k+1)-adfac
             ad_Hz_inv2(i,k)=0.0_r8
           END DO
         END DO
         DO k=1,N(ng)
           DO i=Istr,Iend
-!>          tl_Hz_inv(i,k)=-tl_Hz(i,j,k)*Hz_inv(i,k)/Hz(i,j,k)
-            ad_Hz(i,j,k)=ad_Hz(i,j,k)-ad_Hz_inv(i,k)*Hz_inv(i,k)/       &
-     &                                   Hz(i,j,k)
+!>          tl_Hz_inv(i,k)=-Hz_inv(i,k)*Hz_inv(i,k)*tl_Hz(i,j,k)
+!>
+            ad_Hz(i,j,k)=ad_Hz(i,j,k)-                                  &
+     &                   Hz_inv(i,k)*Hz_inv(i,k)*ad_Hz_inv(i,k)
             ad_Hz_inv(i,k)=0.0_r8
           END DO
         END DO
@@ -3112,11 +3219,13 @@
 !  identification vector, IDSINK.
 !
 !>    tl_Wbio(2)=tl_wDet(ng)          ! Small detritus
+!>
       ad_wDet(ng)=ad_wDet(ng)+ad_Wbio(2)
       ad_Wbio(2)=0.0_r8
 !>    tl_Wbio(1)=tl_wPhy(ng)          ! Phytoplankton
+!>
       ad_wPhy(ng)=ad_wPhy(ng)+ad_Wbio(1)
       ad_Wbio(1)=0.0_r8
-!
+
       RETURN
       END SUBROUTINE ad_biology_tile
