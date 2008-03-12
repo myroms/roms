@@ -52,7 +52,7 @@
 #endif
       CALL biology_tile (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-     &                   nnew(ng),                                      &
+     &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #endif
@@ -71,7 +71,7 @@
 !-----------------------------------------------------------------------
       SUBROUTINE biology_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
-     &                         nnew,                                    &
+     &                         nstp, nnew,                              &
 #ifdef MASKING
      &                         rmask,                                   &
 #endif
@@ -89,7 +89,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
-      integer, intent(in) :: nnew
+      integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -202,14 +202,16 @@
 !
 !  Extract biological variables from tracer arrays, place them into
 !  scratch arrays, and restrict their values to be positive definite.
-!  All the tracer at input have transport units: m Tunits.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
         DO itrc=1,NBT
           ibio=idbio(itrc)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              Bio_bak(i,k,ibio)=MAX(0.0_r8,t(i,j,k,nnew,ibio))*         &
-     &                          Hz_inv(i,k)
+              Bio_bak(i,k,ibio)=MAX(0.0_r8,t(i,j,k,nstp,ibio))
               Bio(i,k,ibio)=Bio_bak(i,k,ibio)
             END DO
           END DO
@@ -219,7 +221,7 @@
 !
         DO k=1,N(ng)
           DO i=Istr,Iend
-            Bio(i,k,itemp)=t(i,j,k,nnew,itemp)*Hz_inv(i,k)
+            Bio(i,k,itemp)=t(i,j,k,nstp,itemp)
           END DO
         END DO
 !

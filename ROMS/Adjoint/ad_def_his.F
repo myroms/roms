@@ -610,7 +610,7 @@
 #  endif
 #  ifndef ADJUST_STFLUX
 !
-!  Define surface net heat flux.
+!  Define surface tracer fluxes.
 !
         DO itrc=1,NT(ng)
           IF (Hout(idTsur(itrc),ng)) THEN

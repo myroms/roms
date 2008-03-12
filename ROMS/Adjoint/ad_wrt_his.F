@@ -471,7 +471,7 @@
 #  endif
 #  ifndef ADJUST_STFLUX
 !
-!  Write out surface net tracer fluxes.
+!  Write out net surface active tracer fluxes.
 !
       DO itrc=1,NT(ng)
         IF (Hout(idTsur(itrc),ng)) THEN

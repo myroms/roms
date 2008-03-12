@@ -245,8 +245,8 @@
 ! Logical switches (TRUE/FALSE) to activate writing of biological tracers
 ! into HISTORY output file: [1:NBT,Ngrids].
 
-Hout(idTvar) == 11*T
-
+Hout(idTvar) == 11*T                       ! biological tracers
+Hout(idTsur) == 11*F                       ! surface tracer flux
 
 !
 !  GLOSSARY:
@@ -541,7 +541,8 @@ Hout(idTvar) == 11*T
 !                History/Average NetCDF files. Currently, NEMURO has NBT=11
 !                ecosystem compartments.
 !
-!                Hout(idTvar):
+!                Hout(idTvar)           biological tracers
+!                Hout(idTsur)           biological tracers surface flux
 !
 !                  idTvar( 1)=iPhyL     Large Phytoplankton biomass
 !                  idTvar( 2)=iPhyS     Small Phytoplankton biomass

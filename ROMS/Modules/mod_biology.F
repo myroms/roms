@@ -553,6 +553,12 @@
         real(r8), dimension(Ngrids) :: K_NO3         ! mmol/m3
         real(r8), dimension(Ngrids) :: Ivlev         ! nondimensional
         real(r8), dimension(Ngrids) :: PARfrac       ! nondimensional
+#  ifdef TANGENT
+        real(r8), dimension(Ngrids) :: tl_PARfrac
+#  endif
+#  ifdef ADJOINT
+        real(r8), dimension(Ngrids) :: ad_PARfrac
+#  endif
         real(r8), dimension(Ngrids) :: PhyIS         ! m2/W
         real(r8), dimension(Ngrids) :: PhyMRD        ! 1/day
         real(r8), dimension(Ngrids) :: PhyMRN        ! 1/day

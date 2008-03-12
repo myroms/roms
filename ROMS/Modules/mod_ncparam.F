@@ -3051,7 +3051,37 @@
   30    WRITE (stdout,80) TRIM(ADJUSTL(Vinfo(1)))
         STOP
   40    CLOSE (inp)
+
+#ifdef SOLVE3D
 !
+!-----------------------------------------------------------------------
+!  Set passive tracers surface flux metadata. The variable name is the
+!  same as the basic tracer but with the _sflux suffix.
+!-----------------------------------------------------------------------
+!
+        DO i=NAT+1,MT
+          varid=varid+1
+          IF (varid.gt.MV) THEN
+            WRITE (stdout,60) MV, varid
+            STOP
+          END IF
+          idTsur(i)=varid
+          DO ng=1,Ngrids
+            Fscale(varid,ng)=1.0_r8
+            Iinfo(1,varid,ng)=r2dvar
+          END DO
+          WRITE (Vname(1,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(1,idTvar(i)))), '_sflux'
+          WRITE (Vname(2,varid),'(a,a)')                                &
+     &          TRIM(ADJUSTL(Vname(2,idTvar(i)))), ', surface flux'
+          WRITE (Vname(3,varid),'(a,1x,a)')                             &
+     &          TRIM(ADJUSTL(Vname(3,idTvar(i)))), 'meter second-1'
+          WRITE (Vname(4,varid),'(a,a)')                                &
+     &          TRIM(Vname(1,varid)), ', scalar, series'
+          WRITE (Vname(5,varid),'(a)')                                  &
+     &          TRIM(ADJUSTL(Vname(5,idTvar(i))))
+        END DO
+#endif
 !
 !-----------------------------------------------------------------------
 !  Set model state variables indices.

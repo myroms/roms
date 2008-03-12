@@ -3018,6 +3018,18 @@
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTsur(idbio(itrc))
+                IF (i.eq.0) THEN
+                  WRITE (out,120) 'idTsur(idbio(', itrc, '))'
+                  STOP
+                END IF                  
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
 #  ifdef DIAGNOSTICS_BIO
 #   ifdef CARBON
           ELSE IF (TRIM(KeyWord).eq.'Hout(iCOfx)') THEN
@@ -3210,6 +3222,12 @@
      &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
      &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
             END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTsur(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
+     &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
 #  ifdef DIAGNOSTICS_BIO
 #   if !(defined CARBON || defined OXYGEN || defined DENITRIFICATION) 
             DO itrc=1,NDbio2d
@@ -3397,6 +3415,18 @@
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTsur(idbio(itrc))
+                IF (i.eq.0) THEN
+                  WRITE (out,120) 'idTsur(idbio(', itrc, '))'
+                  STOP
+                END IF                  
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
           END IF
         END IF
       END DO
@@ -3553,6 +3583,12 @@
               IF (Hout(idTvar(i),ng)) WRITE (out,60)                    &
      &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
      &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTsur(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
+     &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
             END DO
           END IF
         END DO
@@ -3812,6 +3848,18 @@
                 i=idTvar(idbio(itrc))
                 IF (i.eq.0) THEN
                   WRITE (out,120) 'idTvar(idbio(', itrc, '))'
+                  STOP
+                END IF                  
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTsur(idbio(itrc))
+                IF (i.eq.0) THEN
+                  WRITE (out,120) 'idTsur(idbio(', itrc, '))'
                   STOP
                 END IF                  
                 Hout(i,ng)=Ltrc(itrc,ng)
@@ -4106,6 +4154,12 @@
      &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
      &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
             END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTsur(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
+     &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
           END IF
         END DO
       END IF
@@ -4239,6 +4293,18 @@
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTsur(idbio(itrc))
+                IF (i.eq.0) THEN
+                  WRITE (out,120) 'idTsur(idbio(', itrc, '))'
+                  STOP
+                END IF                  
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
           END IF
         END IF
       END DO
@@ -4325,6 +4391,12 @@
               IF (Hout(idTvar(i),ng)) WRITE (out,60)                    &
      &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
      &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTsur(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
+     &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
             END DO
           END IF
         END DO
@@ -4468,6 +4540,18 @@
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTsur(idbio(itrc))
+                IF (i.eq.0) THEN
+                  WRITE (out,120) 'idTsur(idbio(', itrc, '))'
+                  STOP
+                END IF                  
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
           END IF
         END IF
       END DO
@@ -4568,6 +4652,12 @@
               IF (Hout(idTvar(i),ng)) WRITE (out,60)                    &
      &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
      &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTsur(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
+     &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
             END DO
           END IF
         END DO
@@ -4835,6 +4925,18 @@
                   WRITE (out,150) 'idTvar(idbio(', itrc, '))'
                   STOP
                 END IF
+                Hout(i,ng)=Ltrc(itrc,ng)
+              END DO
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
+            Npts=load_l(Nval, Cval, NBT*Ngrids, Ltrc)
+            DO ng=1,Ngrids
+              DO itrc=1,NBT
+                i=idTsur(idbio(itrc))
+                IF (i.eq.0) THEN
+                  WRITE (out,120) 'idTsur(idbio(', itrc, '))'
+                  STOP
+                END IF                  
                 Hout(i,ng)=Ltrc(itrc,ng)
               END DO
             END DO
@@ -5351,7 +5453,12 @@
      &            Hout(idTvar(i),ng), 'Hout(idTvar)',                   &
      &            'Write out tracer ', i, TRIM(Vname(1,idTvar(i)))
             END DO
-
+            DO itrc=1,NBT
+              i=idbio(itrc)
+              IF (Hout(idTsur(i),ng)) WRITE (out,60)                    &
+     &            Hout(idTsur(i),ng), 'Hout(idTsur)',                   &
+     &            'Write out tracer flux ', i, TRIM(Vname(1,idTvar(i)))
+            END DO
           END IF
         END DO
       END IF
@@ -5843,15 +5950,15 @@
             WRITE (out,60)
             DO itrc=1,NST
               WRITE (out,70) itrc, Sd50(itrc,ng), Csed(itrc,ng),        &
-     &                          Srho(itrc,ng), Wsed(itrc,ng),           &
-     &                          Erate(itrc,ng), poros(itrc,ng)
+     &                       Srho(itrc,ng), Wsed(itrc,ng),              &
+     &                       Erate(itrc,ng), poros(itrc,ng)
             END DO
             WRITE (out,80)
             DO itrc=1,NST
               i=idsed(itrc)
               WRITE (out,70) itrc, tau_ce(itrc,ng), tau_cd(itrc,ng),    &
-     &                          tnu2(i,ng), tnu4(i,ng), Akt_bak(i,ng),  &
-     &                          Tnudg(i,ng)
+     &                       tnu2(i,ng), tnu4(i,ng), Akt_bak(i,ng),     &
+     &                       Tnudg(i,ng)
             END DO
             WRITE (out,85)
             DO itrc=1,NST

@@ -44,7 +44,7 @@
 #endif
       CALL biology_tile (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-     &                   nnew(ng),                                      &
+     &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #endif
@@ -79,7 +79,7 @@
 !-----------------------------------------------------------------------
       SUBROUTINE biology_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
-     &                         nnew,                                    &
+     &                         nstp, nnew,                              &
 #ifdef MASKING
      &                         rmask,                                   &
 #endif
@@ -109,7 +109,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
-      integer, intent(in) :: nnew
+      integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -367,14 +367,16 @@
 !
 !  Extract biological variables from tracer arrays, place them into
 !  scratch arrays, and restrict their values to be positive definite.
-!  All the tracer at input have transport units: m Tunits.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
         DO ibio=1,NBT
           indx=idbio(ibio)
           DO k=1,N(ng)
             DO i=Istr,Iend
-              Bio(i,k,indx)=MAX(t(i,j,k,nnew,indx),0.0_r8)*             &
-     &                      Hz_inv(i,k)
+              Bio(i,k,indx)=MAX(t(i,j,k,nstp,indx),0.0_r8)
             END DO
           END DO
         END DO
@@ -391,8 +393,8 @@
 !
         DO k=1,N(ng)
           DO i=Istr,Iend
-            Bio(i,k,itemp)=MIN(t(i,j,k,nnew,itemp)*Hz_inv(i,k),35.0_r8)
-            Bio(i,k,isalt)=MAX(t(i,j,k,nnew,isalt)*Hz_inv(i,k),0.0_r8)
+            Bio(i,k,itemp)=MIN(t(i,j,k,nstp,itemp),35.0_r8)
+            Bio(i,k,isalt)=MAX(t(i,j,k,nstp,isalt), 0.0_r8)
           END DO
         END DO
 !

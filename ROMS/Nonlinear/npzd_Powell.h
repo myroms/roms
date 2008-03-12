@@ -43,7 +43,7 @@
 #endif
       CALL biology_tile (ng, Istr, Iend, Jstr, Jend,                    &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
-     &                   nnew(ng),                                      &
+     &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % rmask,                              &
 #endif
@@ -62,7 +62,7 @@
 !-----------------------------------------------------------------------
       SUBROUTINE biology_tile (ng, Istr, Iend, Jstr, Jend,              &
      &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
-     &                         nnew,                                    &
+     &                         nstp, nnew,                              &
 #ifdef MASKING
      &                         rmask,                                   &
 #endif
@@ -80,7 +80,7 @@
 !
       integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
-      integer, intent(in) :: nnew
+      integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -140,7 +140,6 @@
       real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qc
 
 #include "set_bounds.h"
-
 !
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.
@@ -188,12 +187,15 @@
         DO k=1,N(ng)
           DO i=Istr,Iend
 !
-!  Notice that at input all tracers are in transport units: m Tunits.
+!  At input, all tracers (index nnew) from predictor step have
+!  transport units (m Tunits) since we do not have yet the new
+!  values for zeta and Hz. These are known after the 2D barotropic
+!  time-stepping.
 !
             DO itrc=1,NBT
               ibio=idbio(itrc)
-              BioTrc(ibio,1)=t(i,j,k,1,ibio)*Hz_inv(i,k)
-              BioTrc(ibio,2)=t(i,j,k,2,ibio)*Hz_inv(i,k)
+              BioTrc(ibio,nstp)=t(i,j,k,nstp,ibio)
+              BioTrc(ibio,nnew)=t(i,j,k,nnew,ibio)*Hz_inv(i,k)
             END DO           
 !
 !  Impose positive definite concentrations.
@@ -219,8 +221,8 @@
 !
             DO itrc=1,NBT
               ibio=idbio(itrc)
-              Bio_bak(i,k,ibio)=BioTrc(ibio,nnew)
-              Bio(i,k,ibio)=BioTrc(ibio,nnew)
+              Bio_bak(i,k,ibio)=BioTrc(ibio,nstp)
+              Bio(i,k,ibio)=BioTrc(ibio,nstp)
             END DO           
           END DO          
         END DO
