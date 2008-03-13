@@ -11,7 +11,7 @@
 ! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
 ! symbols. Any comment lines are allowed and must begin with an exclamation   !
 ! mark (!) in column one.  Comments may  appear to the right of a parameter   !
-! specification to improve documentation.  All comments will ignored during   !
+! specification to improve documentation.  Comments will be ignored  during   !
 ! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
 ! a parameter specification are allowed and must be preceded by a backslash   !
 ! (\).  In some instances, more than one value is required for a parameter.   !
@@ -35,7 +35,7 @@
 !                                                                             !
 !==============================================================================
 !
-! NOTICE: Input parameter units are specified within brakets and default 
+! NOTICE: Input parameter units are specified within brackets and default 
 ! ******  values are specified within braces.
 !
 ! Switch to control the computation of biology within nested and/or multiple
@@ -79,17 +79,17 @@
        VmaxS == 0.4d0                      ! small biomass
        VmaxL == 0.8d0                      ! large biomass
 
-! Phytoplankton half satuation constant for Nitrate [millimole_N/m3].
+! Phytoplankton half saturation constant for Nitrate [millimole_N/m3].
   
        KNO3S == 1.0d0                      ! small biomass
        KNO3L == 3.0d0                      ! large biomass
 
-! Phytoplankton half satuation constant for Ammonium [millimole_N/m3].
+! Phytoplankton half saturation constant for Ammonium [millimole_N/m3].
 
        KNH4S == 0.1d0                      ! small biomass
        KNH4L == 0.3d0                      ! large biomass
 
-! Phytoplankton half satuation constant for Silicate [millimole_Si/m3].
+! Phytoplankton half saturation constant for Silicate [millimole_Si/m3].
 
         KSiL == 6.0d0                      ! large biomass
 
@@ -272,7 +272,7 @@ Hout(idTsur) == 11*F                       ! surface tracer flux
 ! Light Parameters, [1:Ngrids] values are expected.
 !------------------------------------------------------------------------------
 !
-!  AttSW       Light attenuation do to seawater [1/m].
+!  AttSW       Light attenuation due to seawater [1/m].
 !
 !  AttPS       Light attenuation due to Small Phytoplankton, self-shading
 !                coefficient, [m2/millimole_N].
@@ -307,19 +307,19 @@ Hout(idTsur) == 11*F                       ! surface tracer flux
 !  VmaxL       Maximum Large Phytoplankton photosynthetic rate [1/day] in the
 !                absence of photoinhibition under optimal light.
 !
-!  KNO3S       Small Phytoplankton half satuation constant for Nitrate,
+!  KNO3S       Small Phytoplankton half saturation constant for Nitrate,
 !                [millimole_N/m3].
 !
-!  KNO3L       Large Phytoplankton half satuation constant for Nitrate,
+!  KNO3L       Large Phytoplankton half saturation constant for Nitrate,
 !                [millimole_N/m3].
 !
-!  KNH4S       Small Phytoplankton half satuation constant for Ammonium,
+!  KNH4S       Small Phytoplankton half saturation constant for Ammonium,
 !                [millimole_N/m3].
 !
-!  KNH4L       Large Phytoplankton half satuation constant for Ammonium,
+!  KNH4L       Large Phytoplankton half saturation constant for Ammonium,
 !                [millimole_N/m3].
 !
-!  KSiL        Large Phytoplankton half satuation constant for Silicate,
+!  KSiL        Large Phytoplankton half saturation constant for Silicate,
 !                [millimole_Si/m3].
 !
 !  PusaiS      Small Phytoplankton Ammonium inhibition coefficient,
@@ -414,7 +414,7 @@ Hout(idTsur) == 11*F                       ! surface tracer flux
 !  KZS2ZL      Large Zooplankton half-saturation, squared coefficient for
 !                ingestion on Small Phytoplankton [millimole_N/m3]^2.
 !
-!  KPL2ZP      Predator Zooplankton half-saturation, sqaured coefficient for
+!  KPL2ZP      Predator Zooplankton half-saturation, squared coefficient for
 !                ingestion on Large Phytoplankton [millimole_N/m3]^2.
 !
 !  KZS2ZP      Predator Zooplankton half-saturation, squared coefficient for

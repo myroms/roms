@@ -11,7 +11,7 @@
 ! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
 ! symbols. Any comment lines are allowed and must begin with an exclamation   !
 ! mark (!) in column one.  Comments may  appear to the right of a parameter   !
-! specification to improve documentation.  All comments will ignored during   !
+! specification to improve documentation.  Comments will be ignored  during   !
 ! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
 ! a parameter specification are allowed and must be preceded by a backslash   !
 ! (\).  In some instances, more than one value is required for a parameter.   !
@@ -35,7 +35,7 @@
 !                                                                             !
 !==============================================================================
 !
-! NOTICE: Input parameter units are specified within brakets and default 
+! NOTICE: Input parameter units are specified within brackets and default 
 ! ******  values are specified within braces.
 !
 ! Switch to control the computation of biology within nested and/or multiple
@@ -200,7 +200,7 @@ BioIni(iSDet) == 0.04d0                          ! detritus
 !
 !  Hout      Logical switches (T/F) to write out biological data into output
 !              History/Average NetCDF file, [1:NBT,1:Ngrids] values are
-!              expeted.
+!              expected.
 !
 !              Hout(idTvar)     biological tracers
 !              Hout(idTsur)     biological tracers surface flux

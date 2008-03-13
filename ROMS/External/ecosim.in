@@ -12,7 +12,7 @@
 ! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
 ! symbols. Any comment lines are allowed and must begin with an exclamation   !
 ! mark (!) in column one.  Comments may  appear to the right of a parameter   !
-! specification to improve documentation.  All comments will ignored during   !
+! specification to improve documentation.  Comments will be ignored  during   !
 ! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
 ! a parameter specification are allowed and must be preceded by a backslash   !
 ! (\).  In some instances, more than one value is required for a parameter.   !
@@ -921,7 +921,7 @@
 !                   (1/day)
 !
 !------------------------------------------------------------------------------
-! Physical and output paramters. This file is configured for NBT=63.
+! Physical and output parameters. This file is configured for NBT=63.
 !------------------------------------------------------------------------------
 !
 !  TNU2           Lateral, Laplacian, constant, mixing coefficient (m2/s) for

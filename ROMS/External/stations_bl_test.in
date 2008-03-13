@@ -11,7 +11,7 @@
 ! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
 ! symbols. Any comment lines are allowed and must begin with an exclamation   !
 ! mark (!) in column one.  Comments may  appear to the right of a parameter   !
-! specification to improve documentation.  All comments will ignored during   !
+! specification to improve documentation.  Comments will be ignored  during   !
 ! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
 ! a parameter specification are allowed and must be preceded by a backslash   !
 ! (\).  In some instances, more than one value is required for a parameter.   !
@@ -133,7 +133,7 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !
 !  This input file provides the positions of stations data to be extracted
 !  and written into STATIONS output file.  This file is use to monitor model
-!  fields at frequent time intervals.  It is also used to sample model at
+!  fields at frequent time intervals.  It is also used to sample the model at
 !  observation locations in order to build the penalty function used in
 !  variational data assimilation.
 !
@@ -229,7 +229,7 @@ POS =  GRID  FLAG      X-POS       Y-POS     COMMENT
 !                    SCALARS(ng)%SposY(is(ng))=Ypos
 !                  END DO
 !
-!                Since there is no decoding during the reading the stations
+!                Since there is no decoding during the reading of the stations
 !                locations, the POS keyword must be the last one to process.
 !                That is, it should be at the end of the input specification.
 !                

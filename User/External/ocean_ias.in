@@ -12,7 +12,7 @@
 ! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
 ! symbols. Any comment lines are allowed and must begin with an exclamation   !
 ! mark (!) in column one.  Comments may  appear to the right of a parameter   !
-! specification to improve documentation.  All comments will ignored during   !
+! specification to improve documentation.  Comments will be ignored  during   !
 ! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
 ! a parameter specification are allowed and must be preceded by a backslash   !
 ! (\).  In some instances, more than one value is required for a parameter.   !
@@ -421,12 +421,12 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
      ADSNAME == ias20_ads.nc
 
 ! Input forcing NetCDF file name(s).  The USER has the option to enter
-! several files names per each nested grid.  For example, the USER may
-! have a different files for wind products, heat fluxes, rivers, tides,
+! several file names for each nested grid.  For example, the USER may
+! have different files for wind products, heat fluxes, rivers, tides,
 ! etc.  The model will scan the file list and will read the needed data
 ! from the first file in the list containing the forcing field. Therefore,
-! the order of the file names is very important.  If multiple forcing
-! files per grid, enter first all the file names for grid 1, then grid 2,
+! the order of the file names is very important. If using multiple forcing
+! files per grid, first enter all the file names for grid 1, then grid 2,
 ! and so on.  Use a single line per entry with a continuation (\) symbol
 ! at the each entry, except the last one.
 
@@ -467,13 +467,13 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !
 !  TITLE       Application title.
 !
-!  MyAppCPP    Application C-preprocession option.
+!  MyAppCPP    Application C-preprocessing option.
 !
 !------------------------------------------------------------------------------
 ! Variable information file name (string with a maximum of eighty characters).
 !------------------------------------------------------------------------------
 !
-!  VARNAME     Input/Output variable information file name.  This file need to
+!  VARNAME     Input/Output variable information file name.  This file needs to
 !              be processed first so all information arrays and indices can be
 !              initialized properly in "mod_ncparam.F".
 !
@@ -481,11 +481,11 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 ! Grid dimension parameters.
 !------------------------------------------------------------------------------
 !
-! These parameters are very important since it determine the grid of the
+! These parameters are very important since they determine the grid of the
 ! application to solve. They need to be read first in order to dynamically
 ! allocate all model variables.
 !
-! WARNING: It is trivial and posible to change these dimension parameters in
+! WARNING: It is trivial and possible to change these dimension parameters in
 ! -------  idealized applications via analytical expressions.  However, in
 ! realistic applications any change to these parameters requires redoing all
 ! input NetCDF files. 
@@ -541,8 +541,8 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !                This parameter is only relevant if CPP option SEDIMENT is
 !                activated.
 !
-!              The total of sediment tracers is NST=NCS+NNS.  Notice that
-!              NST must be greater than zero (NST>0).
+!              The total number of sediment tracers is NST=NCS+NNS.  Notice
+!              that NST must be greater than zero (NST>0).
 !
 !------------------------------------------------------------------------------
 ! Domain tile partition parameters.
@@ -554,10 +554,10 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 ! in serial applications.
 !
 !  NtileI      Number of domain partitions in the I-direction (XI-coordinate).
-!              It must be equal or greater than one.
+!              It must be equal to or greater than one.
 !
 !  NtileJ      Number of domain partitions in the J-direction (ETA-coordinate).
-!              It must be equal or greater than one.
+!              It must be equal to or greater than one.
 !
 !  WARNING:    In shared-memory (OpenMP), the product of NtileI and NtileJ must
 !              be a MULTIPLE of the number of parallel threads specified with
@@ -576,12 +576,12 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !              configuration, NTIMES is the total of barotropic time-steps.
 !
 !  DT          Time-Step size in seconds.  If 3D configuration, DT is the
-!              size of baroclinic time-step.  If only 2D configuration, DT
-!              is the size of the barotropic time-step.
+!              size of the baroclinic time-step.  If only 2D configuration,
+!              DT is the size of the barotropic time-step.
 !
 !  NDTFAST     Number of barotropic time-steps between each baroclinic time
 !              step. If only 2D configuration, NDTFAST should be unity since
-!              there is not need to splitting time-stepping.
+!              there is no need to split time-stepping.
 !
 !------------------------------------------------------------------------------
 ! Model iteration loops parameters.
@@ -598,7 +598,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !  Nintervals  Number of time interval divisions for stochastic optimals
 !              computations. It must be a multiple of NTIMES. The tangent
 !              linear model (TLM) and the adjoint model (ADM) are integrated
-!              forward and backward in different intervals.  For example,
+!              forward and backward at different intervals.  For example,
 !              if Nintervals=3,
 !
 !              1               NTIMES/3         2*NTIMES/3           NTIMES
@@ -637,7 +637,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !  NEV and NCV.  If NEV is large (greater than 10 say), you can use NCV=2*NEV+1
 !  but for NEV small (less than 6) it will be inefficient to use NCV=2*NEV+1.
 !  In complicated applications, you can start with NEV=2 and NCV=10. Otherwise,
-!  it will iterate for very long time.
+!  it will iterate for a very long time.
 !
 !------------------------------------------------------------------------------
 ! Input/Output parameters.
@@ -646,11 +646,11 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !  NRREC       Switch to indicate re-start from a previous solution.  Use
 !              NRREC=0 for new solutions. In a re-start solution, NRREC
 !              is the time index of the re-start NetCDF file assigned for
-!              initialization.  If NRREC is negative (said NRREC=-1), the
+!              initialization.  If NRREC is negative (say NRREC=-1), the
 !              model will re-start from the most recent time record. That
 !              is, the initialization record is assigned internally.
 !              Notice that it is also possible to re-start from a history
-!              or time-averaged NetCDF files.  If a history file is used
+!              or time-averaged NetCDF file.  If a history file is used
 !              for re-start, it must contains all the necessary primitive
 !              variables at all levels.
 !
@@ -668,7 +668,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !  NFLT        Number of time-steps between writing data into floats file.
 !
 !  NINFO       Number of time-steps between print of single line information
-!              to standard output.  If also determines the interval between
+!              to standard output.  It also determines the interval between
 !              computation of global energy diagnostics.
 !
 !------------------------------------------------------------------------------
@@ -679,7 +679,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !              initializing from a re-start file, abs(NRREC) > 0.  If TRUE
 !              and applicable, a new history, average, diagnostic and
 !              station files are created during the initialization stage.
-!              If FALSE and applicable, data is appended to an existing
+!              If FALSE and applicable, data is appended to existing
 !              history, average, diagnostic and station files.  See also
 !              parameters NDEFHIS, NDEFAVG and NDEFDIA below.
 !
@@ -752,11 +752,11 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !              surface forcing at other time intervals in addition to initial
 !              time.  This parameter is used to store the appropriate number
 !              of surface forcing records in the output history NetCDF files:
-!              1+NTIMES/NSFF records. NSFF must be a multiple of NTIMES or
+!              1+NTIMES/NSFF records. NSFF must be a factor of NTIMES or
 !              greater than NTIMES. If NSFF > NTIMES, only one record is
 !              stored in the NetCDF files and the adjustment is for constant
 !              forcing with constant correction. This parameter is only
-!              relevant in 4DVAR when activacting either ADJUST_STFLUX or
+!              relevant in 4DVAR when activating either ADJUST_STFLUX or
 !              ADJUST_WSTRESS.
 !
 !------------------------------------------------------------------------------
@@ -892,7 +892,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !   GLS_SIGP = 1.96d0        1.30d0       2.0d0        1.07d0
 !
 !------------------------------------------------------------------------------
-! Constants used in the various formulation of surface turbulent kinetic
+! Constants used in the various formulations of surface turbulent kinetic
 ! energy flux in the GLS.
 !------------------------------------------------------------------------------
 !
@@ -1091,7 +1091,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !
 !              The adjoint forcing is applied at every time step according to
 !              desired state functional stored in the adjoint sensitivity
-!              NetCDF file. DstrS must be less or equal to DendS. If both
+!              NetCDF file. DstrS must be less than or equal to DendS. If both
 !              values are zero, their values are reset internally to the full
 !              range of the adjoint integration.
 !
@@ -1223,7 +1223,7 @@ Hout(idBott) == F F F F F F F F F F F F F F F F
 !                               [isVbar=3] 2D V-momentum
 !                               [isUvel=4] 3D U-momentum
 !                               [isVvel=5] 3D V-momentum
-!                               [isTvar=6] Firt tracer (temperature)
+!                               [isTvar=6] First tracer (temperature)
 !                               [   ...  ]
 !                               [isTvar=?] Last tracer
 !

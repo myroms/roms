@@ -11,7 +11,7 @@
 ! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
 ! symbols. Any comment lines are allowed and must begin with an exclamation   !
 ! mark (!) in column one.  Comments may  appear to the right of a parameter   !
-! specification to improve documentation.  All comments will ignored during   !
+! specification to improve documentation.  Comments will be ignored  during   !
 ! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
 ! a parameter specification are allowed and must be preceded by a backslash   !
 ! (\).  In some instances, more than one value is required for a parameter.   !
@@ -35,7 +35,7 @@
 !                                                                             !
 !==============================================================================
 !
-! NOTICE: Input parameter units are specified within brakets and default 
+! NOTICE: Input parameter units are specified within brackets and default 
 ! ******  values are specified within braces.
 !
 ! Switch to control the computation of biology within nested and/or multiple
@@ -240,7 +240,7 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !  BioIter   Maximum number of iterations to achieve convergence of
 !              the nonlinear solution.
 !
-!  AttSW     Light attenuation do to seawater [1/m].
+!  AttSW     Light attenuation due to seawater [1/m].
 !
 !  AttChl    Light attenuation by chlorophyll [1/(mg_Chl m2)].
 !
@@ -268,7 +268,7 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !
 !  Chl2C_m   Maximum chlorophyll to carbon ratio [mg_Chl/mg_C].
 !
-!  ChlMin    Chlorophyll mimimum threshold value [mg_Chl/m3].  Set to
+!  ChlMin    Chlorophyll minimum threshold value [mg_Chl/m3].  Set to
 !              zero to avoid limiting.
 !
 !  PhyCN     Phytoplankton Carbon:Nitrogen ratio [mole_C/mole_N].
@@ -278,7 +278,7 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !  PhyIS     Phytoplankton, initial slope of P-I curve
 !              [(mg_C)/(mg_Chl Watts m-2 day)].
 !
-!  PhyMin    Phytoplankton mimimum threshold value [millimole_N/m3].
+!  PhyMin    Phytoplankton minimum threshold value [millimole_N/m3].
 !              Set to zero to avoid limiting.
 !
 !  PhyMR     Phytoplankton mortality rate [1/day].
@@ -293,7 +293,7 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !
 !  ZooGR     Zooplankton maximum growth rate [1/day].
 !
-!  ZooMin    Zooplankton mimimum threshold value [millimole_N/m3].
+!  ZooMin    Zooplankton minimum threshold value [millimole_N/m3].
 !              Set to zero to avoid limiting.
 !
 !  ZooMR     Zooplankton mortality rate [1/day].
@@ -338,7 +338,7 @@ Hout(iNO3u) == T                      ! NO3 uptake
 !  Hout      Logical switches (T/F) to write out biological data into output
 !              NetCDF files:
 !
-!            History/Average file, [1:NBT,1:Ngrids] values are expeted:
+!            History/Average file, [1:NBT,1:Ngrids] values are expected:
 !
 !              Hout(idTvar)     biological tracers
 !              Hout(idTsur)     biological tracers surface flux

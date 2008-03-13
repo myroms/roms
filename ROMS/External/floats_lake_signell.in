@@ -11,7 +11,7 @@
 ! KEYWORD (usually, upper case) is typed correctly followed by "="  or "=="   !
 ! symbols. Any comment lines are allowed and must begin with an exclamation   !
 ! mark (!) in column one.  Comments may  appear to the right of a parameter   !
-! specification to improve documentation.  All comments will ignored during   !
+! specification to improve documentation.  Comments will be ignored  during   !
 ! reading.  Blank lines are also allowed and ignored. Continuation lines in   !
 ! a parameter specification are allowed and must be preceded by a backslash   !
 ! (\).  In some instances, more than one value is required for a parameter.   !
@@ -35,7 +35,7 @@
 !                                                                             !
 !==============================================================================
 !
-! Switch to control the computation of floats tracjectories within nested
+! Switch to control the computation of floats trajectories within nested
 ! and/or multiple connected grids, [1:Ngrids].
 !
      Lfloats == T
@@ -45,8 +45,8 @@
 
        FRREC == 0
 
-! Number of stations to process in each nested grid.  These values are
-! essential because the FLOATS structure in "mod_floast" is dynamically
+! Number of floats to release in each nested grid.  These values are
+! essential because the FLOATS structure in "mod_floats" is dynamically
 ! allocated using these values, [1:Ngrids].
 
      NFLOATS == 4
@@ -56,7 +56,7 @@
 !   G      Nested grid number
 !   C      Initial horizontal coordinate type (0: grid units, 1: spherical)
 !   T      Float trajectory type (1: neutral 3D Lagrangian, 2:isobaric)
-!   N      Number floats to be releazed at (Fx0,Fy0,Fz0)
+!   N      Number floats to be released at (Fx0,Fy0,Fz0)
 !   Ft0    Float release time (days) after model initialization
 !   Fx0    Initial float X-location (grid units or longitude)
 !   Fy0    Initial float Y-location (grid units or latitude)
@@ -84,17 +84,17 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 ! Control Switches.
 !------------------------------------------------------------------------------
 !
-! Lfloats   Switch to control the computation of floats tracjectories within 
+! Lfloats   Switch to control the computation of floats trajectories within 
 !             nested and/or multiple connected grids. Ngrids values are
 !             expected. By default this switch is set to TRUE in "mod_scalars"
-!             for all grids when the CPP option FLOATS is activacted. The
+!             for all grids when the CPP option FLOATS is activated. The
 !             USER can control which grid to process by turning on/off this
 !             switch.
 !
 ! FRREC     Flag to indicate re-start from a previous solution.  Use
 !             FRREC=0 for new solutions. In a re-start solution, FRREC
 !             is the time index in the floats NetCDF file assigned for
-!             initialization.  If FRREC is negative (said NRREC=-1), the
+!             initialization.  If FRREC is negative (say FRREC=-1), the
 !             floats will re-start from the most recent time record.
 !             That is, the initialization record is assigned internally.
 !
@@ -136,14 +136,14 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !              NOTE:  The total number of floats trajectories to compute
 !              ====   must add to NFLOATS. 
 !
-!  Ft0       Time (days) of float release after model initialization .
+!  Ft0       Time (days) of float release after model initialization (real).
 !
 !  Fx0       Initial float x-location (real; grid units or longitude).
 !
 !  Fy0       Initial float y-location (real; grid units or latitude).
 !
 !  Fz0       Initial float z-location (real; vertical level or depth).
-!              If Fz0 is less or equal than zero, Fz0 is the initial
+!              If Fz0 is less than or equal to zero, Fz0 is the initial
 !              depth in meters.  Otherwise, if Fz0 is positive and
 !
 !                             0 < Fz0 =< N(ng),
@@ -158,7 +158,7 @@ POS = G, C, T, N,   Ft0,    Fx0,    Fy0,    Fz0,    Fdt,    Fdx,    Fdy,   Fdz
 !  Fdt       Float cluster release time interval (real; days), only used
 !              if Fcount > 1:
 !
-!              Fdt = 0,  Fcount floats will be deployed simulataneously
+!              Fdt = 0,  Fcount floats will be deployed simultaneously
 !                        with a distribution centered at (Fx0,Fy0,Fz0)
 !                        and defined by (Fdx,Fdy,Fdz).
 !
