@@ -1121,8 +1121,13 @@
 !
 !  Adjoint of free-surface initialization.
 !
+# ifndef OBC_FSRADIATION
       DO j=Jstr,Jend
         DO i=Istr,Iend
+# else
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+# endif
 # ifdef SOLVE3D
 !>        tl_zeta(i,j,kstp)=tl_cff1
 !>        tl_zeta(i,j,knew)=tl_cff1

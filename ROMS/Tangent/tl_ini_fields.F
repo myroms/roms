@@ -277,8 +277,13 @@
 !  Initialize other free-surface time-levels.
 !-----------------------------------------------------------------------
 !
+# ifndef OBC_FSRADIATION
       DO j=Jstr,Jend
         DO i=Istr,Iend
+# else
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+# endif
 !>        cff1=zeta(i,j,kstp)
 !>
           tl_cff1=tl_zeta(i,j,kstp)

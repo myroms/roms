@@ -140,12 +140,12 @@
       real(r8), intent(inout) :: ad_v(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: ad_t(LBi:,LBj:,:,:,:)
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 # endif
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -155,12 +155,12 @@
       real(r8), intent(inout) :: tl_v(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:)
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
 # endif
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
@@ -171,12 +171,13 @@
       real(r8), intent(inout) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: ad_t(LBi:UBI,LBj:UBj,N(ng),2,NT(ng))
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 # endif
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -186,12 +187,13 @@
       real(r8), intent(inout) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 #  ifdef ADJUST_STFLUX
-      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,2,NT(ng))
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,2)
-      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,2)
+      real(r8), intent(inout) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 # endif
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
@@ -234,11 +236,11 @@
      &                        IperTL, JperTL
 #ifdef ADJUST_WSTRESS
           ELSE IF (ivarTL.eq.isUstr) THEN
-            WRITE (stdout,10) 'tl_ustr perturbed at (i,j) = ',          &
-     &                        IperTL, JperTL
+            WRITE (stdout,10) 'tl_ustr perturbed at (i,j,k) = ',        &
+     &                        IperTL, JperTL, KperTL
           ELSE IF (ivarTL.eq.isVstr) THEN
-            WRITE (stdout,10) 'tl_vstr perturbed at (i,j) = ',          &
-     &                        IperTL, JperTL
+            WRITE (stdout,10) 'tl_vstr perturbed at (i,j,k) = ',        &
+     &                        IperTL, JperTL, KperTL
 #endif
 #ifdef SOLVE3D
           ELSE IF (ivarTL.eq.isUvel) THEN
@@ -256,8 +258,8 @@
      &                          IperTL, JperTL, KperTL, itrc
 # ifdef ADJUST_STFLUX
             ELSE IF (ivarTL.eq.isTsur(itrc)) THEN
-              WRITE (stdout,20) 'tl_tflux perturbed at (i,j,itrc) = ',  &
-     &                          IperTL, JperTL, itrc
+              WRITE (stdout,20) 'tl_tflux perturbed at (i,j,k,itrc) = ',&
+     &                          IperTL, JperTL, KperTL, itrc
 # endif
            END IF
           END DO
@@ -275,11 +277,11 @@
      &                        IperAD, JperAD
 #ifdef ADJUST_WSTRESS
           ELSE IF (ivarAD.eq.isUstr) THEN
-            WRITE (stdout,40) 'ad_ustr perturbed at (i,j) = ',          &
-     &                        IperAD, JperAD
+            WRITE (stdout,40) 'ad_ustr perturbed at (i,j,k) = ',        &
+     &                        IperAD, JperAD, KperAD
           ELSE IF (ivarAD.eq.isVstr) THEN
-            WRITE (stdout,40) 'ad_vstr perturbed at (i,j) = ',          &
-     &                        IperAD, JperAD
+            WRITE (stdout,40) 'ad_vstr perturbed at (i,j,k) = ',        &
+     &                        IperAD, JperAD, KperAD
 #endif
 #ifdef SOLVE3D
           ELSE IF (ivarAD.eq.isUvel) THEN
@@ -297,8 +299,8 @@
      &                          IperAD, JperAD, KperAD, itrc
 # ifdef ADJUST_STFLUX
             ELSE IF (ivarAD.eq.isTsur(itrc)) THEN
-              WRITE (stdout,50) 'ad_tflux perturbed at (i,j,itrc) = ',  &
-     &                          IperAD, JperAD, itrc
+              WRITE (stdout,50) 'ad_tflux perturbed at (i,j,k,itrc) = ',&
+     &                          IperAD, JperAD, KperAD, itrc
 # endif
             END IF
           END DO
@@ -362,47 +364,55 @@
 !-----------------------------------------------------------------------
 !
       IF (TLmodel) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            IF ((ivarTL.eq.isUstr).and.                                 &
-     &          (i.eq.IperTL).and.(j.eq.JperTL)) THEN
-              tl_ustr(i,j,kstp)=1.0_r8
-            ELSE
-              tl_ustr(i,j,kstp)=0.0_r8
-            END IF
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              IF ((ivarTL.eq.isUstr).and.                               &
+     &            (i.eq.IperTL).and.(j.eq.JperTL).and.                  &
+     &            (k.eq.KperTL)) THEN
+                tl_ustr(i,j,k,kstp)=1.0_r8
+              ELSE
+                tl_ustr(i,j,k,kstp)=0.0_r8
+              END IF
+            END DO
           END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            IF ((ivarTL.eq.isVstr).and.                                 &
-     &          (i.eq.IperTL).and.(j.eq.JperTL)) THEN
-              tl_vstr(i,j,kstp)=1.0_r8
-            ELSE
-              tl_vstr(i,j,kstp)=0.0_r8
-            END IF
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              IF ((ivarTL.eq.isVstr).and.                               &
+     &            (i.eq.IperTL).and.(j.eq.JperTL).and.                  &
+     &            (k.eq.KperTL)) THEN
+                tl_vstr(i,j,k,kstp)=1.0_r8
+              ELSE
+                tl_vstr(i,j,k,kstp)=0.0_r8
+              END IF
+            END DO
           END DO
         END DO
       END IF
 !
       IF (ADmodel) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            IF ((ivarAD.eq.isUstr).and.                                 &
-     &          (i.eq.IperAD).and.(j.eq.JperAD)) THEN
-              ad_ustr(i,j,knew)=1.0_r8
-            ELSE
-              ad_ustr(i,j,knew)=0.0_r8
-            END IF
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=Istr,IendR
+              IF ((ivarAD.eq.isUstr).and.                               &
+     &            (i.eq.IperAD).and.(j.eq.JperAD).and.                  &
+     &            (k.eq.KperAD)) THEN
+                ad_ustr(i,j,k,knew)=1.0_r8
+              ELSE
+                ad_ustr(i,j,k,knew)=0.0_r8
+              END IF
+            END DO
           END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            IF ((ivarAD.eq.isVstr).and.                                 &
-     &          (i.eq.IperAD).and.(j.eq.JperAD)) THEN
-              ad_vstr(i,j,knew)=1.0_r8
-            ELSE
-              ad_vstr(i,j,knew)=0.0_r8
-            END IF
+          DO j=Jstr,JendR
+            DO i=IstrR,IendR
+              IF ((ivarAD.eq.isVstr).and.                               &
+     &            (i.eq.IperAD).and.(j.eq.JperAD).and.                  &
+     &            (k.eq.KperAD)) THEN
+                ad_vstr(i,j,k,knew)=1.0_r8
+              ELSE
+                ad_vstr(i,j,k,knew)=0.0_r8
+              END IF
+            END DO
           END DO
         END DO
       END IF
@@ -545,31 +555,37 @@
 !
       IF (TLmodel) THEN
         DO itrc=1,NT(ng)
+          DO k=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 IF ((ivarTL.eq.isTsur(itrc)).and.                       &
-     &              (i.eq.IperTL).and.(j.eq.JperTL)) THEN
-                  tl_tflux(i,j,nstp,itrc)=1.0_r8
+     &              (i.eq.IperTL).and.(j.eq.JperTL).and.                &
+     &              (k.eq.KperTL)) THEN
+                  tl_tflux(i,j,k,nstp,itrc)=1.0_r8
                 ELSE
-                  tl_tflux(i,j,nstp,itrc)=0.0_r8
+                  tl_tflux(i,j,k,nstp,itrc)=0.0_r8
                 END IF
               END DO
             END DO
+          END DO
         END DO
       END IF
 !
       IF (ADmodel) THEN
         DO itrc=1,NT(ng)
+          DO k=1,Nfrec(ng)
             DO j=JstrR,JendR
               DO i=IstrR,IendR
                 IF ((ivarAD.eq.isTsur(itrc)).and.                       &
-     &              (i.eq.IperAD).and.(j.eq.JperAD)) THEN
-                  ad_tflux(i,j,nstp,itrc)=1.0_r8
+     &              (i.eq.IperAD).and.(j.eq.JperAD).and.                &
+     &              (k.eq.KperAD)) THEN
+                  ad_tflux(i,j,k,nstp,itrc)=1.0_r8
                 ELSE
-                  ad_tflux(i,j,nstp,itrc)=0.0_r8
+                  ad_tflux(i,j,k,nstp,itrc)=0.0_r8
                 END IF
               END DO
             END DO
+          END DO
         END DO
       END IF
 # endif

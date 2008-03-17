@@ -31,8 +31,8 @@
 !    (p166 Soulsby 1997)                                               !
 !  * Bedload slope term options: Nemeth et al, 2006, Coastal           !
 !    Engineering, v 53, p 265-275; Lesser et al, 2004, Coastal         !
-!    Engineering, v 51, p 883-915.
-!  
+!    Engineering, v 51, p 883-915.                                     !
+!                                                                      !
 !  * Seawater/sediment vertical level distribution:                    !
 !                                                                      !
 !         W-level  RHO-level                                           !
@@ -532,6 +532,7 @@
             cff2=0.125_r8*g*Hwave(i,j)**2/(wavec*Dstp+eps)
             cff3=pi*Hwave(i,j)/(Pwave_bot(i,j)*SINH(cff4)+eps)
             w_asym=MAX(MIN((cff1-cff2)/cff3,0.2_r8),0.0_r8)
+            w_asym=0.0_r8
 !
 ! Compute nondimensional stresses.
 !
@@ -556,18 +557,23 @@
 ! Calc bed loads in direction of current and perpendicular direction.
 !
             phi_x1=12.0_r8*SQRT(theta_mean)*                            &
-     &             (theta_mean-tau_ce(ised,ng))
+     &             MAX((theta_mean-tau_ce(ised,ng)),0.0_r8)
             phi_x2=12.0_r8*(0.9534_r8+0.1907*COS(2.0_r8*phicw(i,j)))*   &
      &             SQRT(theta_wav)*theta_mean+                          &
      &             12.0_r8*(0.229_r8*w_asym*theta_wav**1.5_r8*          &
      &                      COS(phicw(i,j)))
-            phi_x=MAX(phi_x1,phi_x2)*cff3
-            bedld_x=phi_x*smgdr
+!           phi_x=MAX(phi_x1,phi_x2) !  <- original
+            IF (ABS(phi_x2).gt.phi_x1) THEN
+              phi_x=phi_x2
+            ELSE
+              phi_x=phi_x1
+            END IF
+            bedld_x=phi_x*smgdr*cff3
 !
             cff5=theta_wav**1.5_r8+1.5_r8*(theta_mean**1.5_r8)
             phi_y=12.0_r8*0.1907_r8*theta_wav*theta_wav*                &
      &            (theta_mean*SIN(2.0_r8*phicw(i,j))+1.2_r8*w_asym*     &
-     &            SIN(phicw(i,j)))/cff5*cff3
+     &            theta_wav*SIN(phicw(i,j)))/cff5*cff3
             bedld_y=phi_y*smgdr
 !
 ! Partition bedld into xi and eta directions, still at rho points.

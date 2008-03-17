@@ -309,8 +309,13 @@
 !-----------------------------------------------------------------------
 !
       IF (.not.PerfectRST(ng)) THEN
+# ifndef OBC_FSRADIATION
         DO j=Jstr,Jend
           DO i=Istr,Iend
+# else
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+# endif
             cff1=zeta(i,j,kstp)
 # ifdef MASKING
             cff1=cff1*rmask(i,j)

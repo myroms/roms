@@ -60,7 +60,7 @@
       integer :: t3dfrc(4)
 #  endif
 # endif
-# ifdef ADJUST_STFLUX
+# ifdef ADJUST_WSTRESS
       integer :: u3dfrc(4), v3dfrc(4)
 # endif
 

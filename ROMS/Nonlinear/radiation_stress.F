@@ -411,17 +411,16 @@
 !  Compute metrics for roller contribution.
 !
           oroller(i,j)=0.0_r8
-          gamw(i,j)=Dstp(i,j)/(Hwave(i,j)+eps)
+          gamw(i,j)=MIN(Dstp(i,j)/(Hwave(i,j)+eps),5.0_r8)
           DO k=1,N(ng)
             cff2=SCALARS(ng)%Cs_r(k)
-!! s^4 tanh functional
+!! tanh s^4 functional
             oroller(i,j)=oroller(i,j)+                                  &
-     &                   Hz(i,j,k)/Dstp(i,j)*                           &
+     &                   Hz(i,j,k)*                                     &
      &                   (1.0_r8-TANH((2.0_r8*cff2*gamw(i,j))**4))
 !! s^4 functional
 !!             oroller(i,j)=oroller(i,j)+                               &
-!!   &                      Hz(i,j,k)*                                  &
-!!   &                      (1.0_r8-cff2**4)/Dstp(i,j)
+!!   &                      Hz(i,j,k)*(1.0_r8-cff2**4)
           END DO
           oroller(i,j)=1.0_r8/(oroller(i,j)+eps)
 
@@ -454,23 +453,21 @@
 !-----------------------------------------------------------------------
 !
       K_LOOP : DO k=1,N(ng)
+        fac2=1.0_r8+SCALARS(ng)%Cs_r(k)
         DO j=Jstr-1,Jend+1
           DO i=Istr-1,Iend+1
             cff1=waven(i,j)*waveE(i,j)
-            cff2=1.0_r8+SCALARS(ng)%Cs_r(k)
-            FCCr=COSH(kD(i,j)*cff2)*ocosh(i,j)
-            FCSr=COSH(kD(i,j)*cff2)*osinh(i,j)
-            FSSr=SINH(kD(i,j)*cff2)*osinh(i,j)
+            FCCr=COSH(kD(i,j)*fac2)*ocosh(i,j)
+            FCSr=COSH(kD(i,j)*fac2)*osinh(i,j)
+            FSSr=SINH(kD(i,j)*fac2)*osinh(i,j)
             waveEr(i,j)=cff1*FCSr*FCCr
 #  ifdef SVENDSEN_ROLLER
-!! s^4 tanh functional
-            cff3=(1.0_r8-TANH((2.0_r8*(cff2-1.0_r8)*gamw(i,j))**4))
-            waveEr(i,j)=waveEr(i,j)+                                    &
-     &                  rollA(i,j)*cff3*oroller(i,j)/Dstp(i,j)
+!! tanh s^4 functional
+            cff3=(1.0_r8-TANH((2.0_r8*(fac2-1.0_r8)*gamw(i,j))**4))
 !! s^4 functional
-!!           waveEr(i,j)=waveEr(i,j)+                                   &
-!!   &                   rollA(i,j)*oroller(i,j)*                       &
-!!   &                  (1.0_r8-(cff2-1.0_r8)**4)/Dstp(i,j)
+!!          cff3=(1.0_r8-(fac2-1.0_r8)**4)
+            waveEr(i,j)=waveEr(i,j)+                                    &
+     &                 cff3*rollA(i,j)*oroller(i,j)
 #  endif
 !
 !  Compute local copy of radiation stresses at RHO-points.
@@ -559,12 +556,11 @@
      &           (Wave_break(i-1,j)+Wave_break(i,j))
 #   else
             cff2=cff2+                                                  &
-     &           0.0424_r8*g*(Hwave(i-1,j)+Hwave(i,j))*                 &
+     &           0.25_r8*0.0424_r8*g*(Hwave(i-1,j)+Hwave(i,j))*         &
      &           (Wave_break(i-1,j)+Wave_break(i,j))*                   &
      &           (Dstp(i-1,j)+Dstp(i,j))
 #   endif
 #  endif
-            fac2=1.0_r8+SCALARS(ng)%Cs_r(k)
 !
 !  Store old value to compute tendency term.
 !
@@ -633,12 +629,11 @@
      &           (Wave_break(i,j-1)+Wave_break(i,j))
 #   else
             cff2=cff2+                                                  &
-     &           0.0424_r8*g*(Hwave(i,j-1)+Hwave(i,j))*                 &
+     &           0.25_r8*0.0424_r8*g*(Hwave(i,j-1)+Hwave(i,j))*         &
      &           (Wave_break(i,j-1)+Wave_break(i,j))*                   &
      &           (Dstp(i,j-1)+Dstp(i,j))
 #   endif
 #  endif
-            fac2=1.0_r8+SCALARS(ng)%Cs_r(k)
 !
 !  Store old value to compute tendency term.
 !
@@ -646,8 +641,8 @@
              v_stokes(i,j,k)=cff2*                                      &
      &                       (waveny(i,j-1)+waveny(i,j))/               &
      &                       (wavec (i,j-1)+wavec (i,j))*               &
-     &                       COSH(cff3*fac2)/SINH(cff3)*                &
-     &                       (o2sinh(i,j-1)+o2sinh(i,j))
+     &                       COSH(cff3*fac2)*                           &
+     &                       0.5_r8*(o2sinh(i,j-1)+o2sinh(i,j))
 #  ifdef MASKING
               v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
 #  endif

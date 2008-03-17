@@ -812,7 +812,7 @@
 !
 !  Restart time record to read from disk and use as the initial
 !  conditions. Use nrrec=0 for new solutions. If nrrec is negative
-!  (said, nrrec=-1), the model will restart from the most recent
+!  (say, nrrec=-1), the model will restart from the most recent
 !  time record. That is, the initialization record is assigned
 !  internally.
 !
@@ -1427,7 +1427,7 @@
         logical, dimension(Ngrids) :: extend_SST    ! SST
         logical, dimension(Ngrids) :: extend_UV     ! Surface currents
 !
-!  Switches activacted at the beggining of observations assimilation.
+!  Switches activated at the beggining of observations assimilation.
 !
         logical, dimension(Ngrids) :: first_SSH     ! Sea surface height
         logical, dimension(Ngrids) :: first_UV      ! Currents

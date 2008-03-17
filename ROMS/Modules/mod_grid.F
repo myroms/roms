@@ -69,11 +69,11 @@
 !  pnom_u     Compound term, pn/pm at U-points.                        !
 !  pnom_v     Compound term, pn/pm at V-points.                        !
 !  rmask      Mask at RHO-points (0=Land, 1=Sea).                      !
-!  rmask_wet  Mask at RHO-points for wetting and drying (0=Land, 1=Sea)!
+!  rmask_wet  Mask at RHO-points for wetting and drying (0=dry, 1=wet) !
 !  umask      Mask at U-points (0=Land, 1=Sea).                        !
-!  umask_wet  Mask at U-points for wetting and drying (0=Land, 1=Sea)  !
+!  umask_wet  Mask at U-points for wetting and drying (0=dry, 1,2=wet) !
 !  vmask      Mask at V-points (0=Land, 1=Sea).                        !
-!  vmask_wet  Mask at V-points for wetting and drying (0=Land, 1=Sea)  !
+!  vmask_wet  Mask at V-points for wetting and drying (0=dry, 1,2=wet) !
 !  xp         XI-coordinates (m) at PSI-points.                        !
 !  xr         XI-coordinates (m) at RHO-points.                        !
 !  xu         XI-coordinates (m) at U-points.                          !

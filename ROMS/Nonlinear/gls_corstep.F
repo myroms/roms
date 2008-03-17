@@ -225,6 +225,7 @@
       real(r8) :: gls_c3, gls_exp1, gls_fac1, gls_fac2, gls_fac3
       real(r8) :: gls_fac4, gls_fac5, gls_fac6, ql, sqrt2, strat2
       real(r8) :: tke_exp1, tke_exp2, tke_exp3, tke_exp4, wall_fac
+      real(r8) :: gls_d, gls_sigp_cb, ogls_sigp, sig_eff
       real(r8) :: L_sft
 # if defined CRAIG_BANNER || defined TKE_WAVEDISS
       real(r8) :: cb_wallE
@@ -272,37 +273,24 @@
         Lmy25=.TRUE.
       END IF
 
-#if defined CRAIG_BANNER || defined TKE_WAVEDISS
-!
-!  Select asymptotic value of wall function. The parabolic wall function
-!  with the free surface correction (default below) asymptotes to
-!  1+0.25. For Craig_Banner and parabolic wall function with free
-!  surface correction, use cb_wallE=0.25_r8.
-!  All other wall functions coded below asymptote to 1+1.33 at the
-!  free surface. For Craig_Banner and all other wall functions, 
-!  use cb_wallE=gls_E2 (1.33).
-!
+# if defined CRAIG_BANNER || defined TKE_WAVEDISS
       IF (Lmy25) THEN
-        cb_wallE=0.25_r8
-!!      cb_wallE=gls_E2
-!
-        cff2=gls_cmu0(ng)**2.0*gls_sigp(ng)*gls_c2(ng)*                 &
-     &       cb_wallE/vonKar**2.0
+!!      cb_wallE=1.0_r8+gls_E2
+        cb_wallE=1.25_r8
       ELSE
-        cff2=0.0_r8
+        cb_wallE=1.0_r8
       END IF
-      cff1=gls_cmu0(ng)*sqrt(2.0_r8*gls_sigk(ng)/3.0_r8)
-      L_sft=ABS((cff1*ABS(gls_n(ng))*(gls_m(ng)+0.25_r8)-               &
-     &           SQRT(cff1*cff1*(0.0625_r8*gls_n(ng)*gls_n(ng)+         &
-     &                           0.5_r8*cff2*gls_m(ng)+                 &
-     &                           cff2*gls_m(ng)*gls_m(ng))+             &
-     &                gls_cmu0(ng)*gls_cmu0(ng)*                        &
-     &                gls_sigp(ng)*gls_c2(ng)*                          &
-     &                (gls_n(ng)**2.0_r8-cff2)))/                       &
-     &          (gls_n(ng)*gls_n(ng)-cff2))
-#else
       L_sft=vonKar
-#endif
+      cff1=sqrt(1.5_r8*gls_sigk(ng))*gls_cmu0(ng)/L_sft
+      gls_sigp_cb=L_sft**2/(gls_cmu0(ng)**2*gls_c2(ng)*cb_wallE)*       &
+     &            (gls_n(ng)**2-                                        &
+     &             cff1*gls_n(ng)/3.0_r8*(4.0_r8*gls_m(ng)+1.0_r8)+     &
+     &             cff1**2*gls_m(ng)/9.0_r8*(2.0_r8+4.0_r8*gls_m(ng)))
+# else
+      L_sft=vonKar
+      gls_sigp_cb=gls_sigp(ng)
+# endif
+      ogls_sigp=1.0_r8/gls_sigp_cb
 !
       sqrt2=SQRT(2.0_r8)
       cmu_fac1=gls_cmu0(ng)**(-gls_p(ng)/gls_n(ng))
@@ -310,16 +298,12 @@
       cmu_fac3=1.0_r8/gls_cmu0(ng)**2.0_r8
       cmu_fac4=(1.5_r8*gls_sigk(ng))**(1.0_r8/3.0_r8)/                  &
      &         (gls_cmu0(ng)**(4.0_r8/3.0_r8))
-!!    gls_fac1=gls_cmu0(ng)**(1.0_r8+gls_p(ng))*gls_n(ng)*              &
-!!   &         vonKar**(1.0_r8+gls_n(ng))
+      gls_fac1=gls_n(ng)*gls_cmu0(ng)**(gls_p(ng)+1.0_r8)
       gls_fac2=gls_cmu0(ng)**(gls_p(ng))*gls_n(ng)*                     &
      &         vonKar**(gls_n(ng))
-!!    gls_fac3=gls_cmu0(ng)**(gls_p(ng))*                               &
-!!   &         (vonKar*Zos(ng))**(gls_n(ng))
+      gls_fac3=gls_cmu0(ng)**(gls_p(ng))*gls_n(ng)
       gls_fac4=gls_cmu0(ng)**(gls_p(ng))*                               &
      &         (vonKar*Zob_min)**(gls_n(ng))
-!!    gls_fac5=0.045_r8**(-0.5_r8*gls_n(ng))*                           &
-!!   &         gls_cmu0(ng)**(gls_p(ng)+3.0_r8*gls_n(ng))
       gls_fac5=0.56_r8**(0.5_r8*gls_n(ng))*gls_cmu0(ng)**gls_p(ng)
       gls_fac6=8.0_r8/gls_cmu0(ng)**6.0_r8
 !
@@ -333,15 +317,17 @@
 !  Compute vertical velocity shear at W-points.
 !-----------------------------------------------------------------------
 !
+# define I_RANGE MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
+# define J_RANGE MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
 # ifdef SPLINES
-      DO j=MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
-        DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
+      DO j=J_RANGE
+        DO i=I_RANGE
           CF(i,0)=0.0_r8
           dU(i,0)=0.0_r8
           dV(i,0)=0.0_r8
         END DO
         DO k=1,N(ng)-1
-          DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
+          DO i=I_RANGE
             cff=1.0_r8/(2.0_r8*Hz(i,j,k+1)+                             &
      &                  Hz(i,j,k)*(2.0_r8-CF(i,k-1)))
             CF(i,k)=cff*Hz(i,j,k+1)
@@ -353,26 +339,26 @@
      &                   Hz(i,j,k)*dV(i,k-1))
           END DO
         END DO
-        DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
+        DO i=I_RANGE
           dU(i,N(ng))=0.0_r8
           dV(i,N(ng))=0.0_r8
         END DO
         DO k=N(ng)-1,1,-1
-          DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
+          DO i=I_RANGE
             dU(i,k)=dU(i,k)-CF(i,k)*dU(i,k+1)
             dV(i,k)=dV(i,k)-CF(i,k)*dV(i,k+1)
           END DO
         END DO
         DO k=1,N(ng)-1
-          DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
+          DO i=I_RANGE
             shear2(i,j,k)=dU(i,k)*dU(i,k)+dV(i,k)*dV(i,k)
           END DO
         END DO
       END DO
 # else
       DO k=1,N(ng)-1
-        DO j=MAX(1,Jstr-1),MIN(Jend+1,Mm(ng))
-          DO i=MAX(1,Istr-1),MIN(Iend+1,Lm(ng))
+        DO j=J_RANGE
+          DO i=I_RANGE
             cff=0.5_r8/(z_r(i,j,k+1)-z_r(i,j,k))
             shear2(i,j,k)=(cff*(u(i  ,j,k+1,nstp)-u(i  ,j,k,nstp)+      &
      &                          u(i+1,j,k+1,nstp)-u(i+1,j,k,nstp)))**2+ &
@@ -382,6 +368,8 @@
         END DO
       END DO
 # endif
+# undef I_RANGE
+# undef J_RANGE
 !
 ! Load Brunt-Vaisala frequency.
 !
@@ -875,17 +863,17 @@
 !  Solve tri-diagonal system for turbulent kinetic energy.
 !
         DO i=Istr,Iend
-#if defined CRAIG_BANNER
-        tke_fluxt(i)=dt(ng)*crgban_cw(ng)*                              &
-     &               (0.50_r8*                                          &
-     &                SQRT((sustr(i,j)+sustr(i+1,j))**2+                &
-     &                     (svstr(i,j)+svstr(i,j+1))**2))**1.5_r8
-#elif defined TKE_WAVEDISS
-        tke_fluxt(i)=dt(ng)*sz_alpha(ng)*Wave_dissip(i,j)
-#else
-        tke_fluxt(i)=0.0_r8
-#endif
-        tke_fluxb(i)=0.0_r8
+# if defined CRAIG_BANNER
+          tke_fluxt(i)=dt(ng)*crgban_cw(ng)*                            &
+     &                 (0.50_r8*                                        &
+     &                  SQRT((sustr(i,j)+sustr(i+1,j))**2+              &
+     &                       (svstr(i,j)+svstr(i,j+1))**2))**1.5_r8
+# elif defined TKE_WAVEDISS
+          tke_fluxt(i)=dt(ng)*sz_alpha(ng)*Wave_dissip(i,j)
+# else
+          tke_fluxt(i)=0.0_r8
+# endif
+          tke_fluxb(i)=0.0_r8
 !
           cff=1.0_r8/BCK(i,N(ng)-1)
           CF(i,N(ng)-1)=cff*FCK(i,N(ng)-1)
@@ -909,49 +897,36 @@
 !  Solve tri-diagonal system for generic statistical field.
 !
         DO i=Istr,Iend
+          cff=0.5_r8*(tke(i,j,N(ng),nnew)+tke(i,j,N(ng)-1,nnew))
+          gls_fluxt(i)=dt(ng)*gls_fac3*cff**gls_m(ng)*                  &
+     &                 L_sft**(gls_n(ng))*                              &
+     &                 (Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))**              &
+     &                 (gls_n(ng)-1.0_r8)*                              &
+     &                 0.5_r8*(Akp(i,j,N(ng))+Akp(i,j,N(ng)-1))
 # ifdef CRAIG_BANNER
-          gls_fluxt(i)=dt(ng)*                                          &
-     &                 (gls_n(ng)*gls_cmu0(ng)**(gls_p(ng)+1.0_r8)*     &
-     &                  L_sft**(gls_n(ng)+1.0_r8)*                      &
-     &                  tke(i,j,N(ng),nnew)**(gls_m(ng)+0.5_r8)*        &
-     &                  Zos_eff(i)**gls_n(ng)/                          &
-     &                  gls_sigp(ng)-                                   &
-     &                  gls_m(ng)*(gls_cmu0(ng)**gls_p(ng))*            &
-     &                  tke(i,j,N(ng),nnew)**(gls_m(ng)-1.0_r8)*        &
-     &                  (Zos_eff(i)*L_sft)**gls_n(ng)*                  &
-     &                  crgban_cw(ng)*gls_sigk(ng)/gls_sigp(ng)*        &
-     &                  (0.5_r8*                                        &
-     &                   SQRT((sustr(i,j)+sustr(i+1,j))**2+             &
-     &                        (svstr(i,j)+svstr(i,j+1))**2))**1.5_r8)
+          gls_fluxt(i)=gls_fluxt(i)-dt(ng)*                             &
+     &                 gls_m(ng)*(gls_cmu0(ng)**gls_p(ng))*             &
+     &                 cff**(gls_m(ng)-1.0_r8)*                         &
+     &                 ((Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))*L_sft)**      &
+     &                 gls_n(ng)*                                       &
+     &                 gls_sigk(ng)*ogls_sigp*crgban_cw(ng)*            &
+     &                 (0.5_r8*                                         &
+     &                  SQRT((sustr(i,j)+sustr(i+1,j))**2+              &
+     &                       (svstr(i,j)+svstr(i,j+1))**2))**1.5_r8
 # elif defined TKE_WAVEDISS
-          gls_fluxt(i)=dt(ng)*                                          &
-     &                 (gls_n(ng)*gls_cmu0(ng)**(gls_p(ng)+1.0_r8)*     &
-     &                  L_sft**(gls_n(ng)+1.0_r8)*                      &
-     &                  (0.5_r8*(tke(i,j,N(ng)  ,nnew)+                 &
-     &                           tke(i,j,N(ng)-1,nnew)))**              &
-     &                          (gls_m(ng)+0.5_r8)*                     &
-     &                  (Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))**gls_n(ng)/   &
-     &                  gls_sigp(ng)-                                   &
-     &                  gls_m(ng)*(gls_cmu0(ng)**gls_p(ng))*            &
-     &                  (0.5_r8*(tke(i,j,N(ng)  ,nnew)+                 &
-     &                           tke(i,j,N(ng)-1,nnew)))**              &
-     &                          (gls_m(ng)-1.0_r8)*                     &
-     &                  ((Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))*L_sft)**     &
-     &                  gls_n(ng)*                                      &
-     &                  gls_sigk(ng)/gls_sigp(ng)*sz_alpha(ng)*         &
-     &                  Wave_dissip(i,j))
-# else
-        gls_fluxt(i)=dt(ng)*gls_fac2*(0.5_r8*(tke(i,j,N(ng),nnew)+      &
-     &               tke(i,j,N(ng)-1,nnew)))**gls_m(ng)*                &
-     &               (0.5_r8*Hz(i,j,N(ng))+Zos_eff(i))**                &
-     &               (gls_n(ng)-1.0_r8)*                                &
-     &               0.5_r8*(Akp(i,j,N(ng))+Akp(i,j,N(ng)-1))
+          gls_fluxt(i)=gls_fluxt(i)-dt(ng)*                             &
+     &                 gls_m(ng)*(gls_cmu0(ng)**gls_p(ng))*             &
+     &                 cff**(gls_m(ng)-1.0_r8)*                         &
+     &                 ((Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))*L_sft)**      &
+     &                 gls_n(ng)*                                       &
+     &                 gls_sigk(ng)*ogls_sigp*sz_alpha(ng)*             &
+     &                 Wave_dissip(i,j))
 # endif
-        gls_fluxb(i)=dt(ng)*gls_fac2*(0.5_r8*(tke(i,j,0,nnew)+          &
-     &               tke(i,j,1,nnew)))**(gls_m(ng))*                    &
-     &               (0.5_r8*Hz(i,j,1)+Zob_min)**                       &
-     &               (gls_n(ng)-1.0_r8)*                                &
-     &               0.5_r8*(Akp(i,j,0)+Akp(i,j,1))
+          cff=0.5_r8*(tke(i,j,0,nnew)+tke(i,j,1,nnew))
+          gls_fluxb(i)=dt(ng)*gls_fac2*(cff**gls_m(ng))*                &
+     &                 (0.5_r8*Hz(i,j,1)+Zob_min)**                     &
+     &                 (gls_n(ng)-1.0_r8)*                              &
+     &                 0.5_r8*(Akp(i,j,0)+Akp(i,j,1))
 !
           cff=1.0_r8/BCP(i,N(ng)-1)
           CF(i,N(ng)-1)=cff*FCP(i,N(ng)-1)
@@ -1011,9 +986,9 @@
 !
 ! Recompute gls based on limited length scale
 !
-              gls(i,j,k,nnew)=MAX(gls_cmu0(ng)**gls_p(ng)*              &
-     &                            tke(i,j,k,nnew)**gls_m(ng)*           &
-     &                            Ls_lmt**gls_n(ng), gls_Pmin(ng))
+            gls(i,j,k,nnew)=MAX(gls_cmu0(ng)**gls_p(ng)*                &
+     &                          tke(i,j,k,nnew)**gls_m(ng)*             &
+     &                          Ls_lmt**gls_n(ng), gls_Pmin(ng))
 !
 !  Compute nondimensional stability functions for tracers (Sh) and
 !  momentum (Sm).
@@ -1073,8 +1048,21 @@
 !
             Akk(i,j,k)=Akk_bak(ng)+                                     &
      &                 Sm*ql/gls_sigk(ng)
-            Akp(i,j,k)=Akp_bak(ng)+                                     &
-     &                 Sm*ql/gls_sigp(ng)
+
+# if defined CRAIG_BANNER || defined TKE_WAVEDISS
+!
+!  If wave breaking, modify surface boundary condition for 
+!  gls diffusivity Schmidt number. 
+!
+            Pprod=gls_c1(ng)*shear2(i,j,k)*Akv(i,j,k)
+            cff=cmu_fac2*tke(i,j,k,nnew)**(1.5_r8+tke_exp1)*            &
+     &          gls(i,j,k,nnew)**(-1.0_r8/gls_n(ng))
+            cff2=MIN(Pprod/cff, 1.0_r8)
+            sig_eff=cff2*gls_sigp(ng)+(1.0_r8-cff2)*gls_sigp_cb
+            Akp(i,j,k)=Akp_bak(ng)+Sm*ql/sig_eff
+# else
+            Akp(i,j,k)=Akp_bak(ng)+Sm*ql*ogls_sigp
+# endif
 !
 !  Save limited length scale.
 !
@@ -1091,7 +1079,7 @@
 !
           Akk(i,j,N(ng))=Akk_bak(ng)+Akv(i,j,N(ng))/gls_sigk(ng)
           Akk(i,j,0)=Akk_bak(ng)+Akv(i,j,0)/gls_sigk(ng)
-          Akp(i,j,N(ng))=Akp_bak(ng)+Akv(i,j,N(ng))/gls_sigp(ng)
+          Akp(i,j,N(ng))=Akp_bak(ng)+Akv(i,j,N(ng))*ogls_sigp
           Akp(i,j,0)=Akp_bak(ng)+Akv(i,j,0)/gls_sigp(ng)
 !
           DO itrc=1,NAT
