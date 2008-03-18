@@ -46,11 +46,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC  :: initialize, run, finalize
+      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_run
+      PUBLIC  :: ROMS_finalize
 
       CONTAINS
 
-      SUBROUTINE initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, MyCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -160,9 +162,9 @@
       END IF
 
       RETURN
-      END SUBROUTINE initialize
+      END SUBROUTINE ROMS_initialize
 
-      SUBROUTINE run
+      SUBROUTINE ROMS_run (Tstr, Tend)
 !
 !=======================================================================
 !                                                                      !
@@ -182,7 +184,11 @@
 # ifdef GRADIENT_CHECK
       USE dotproduct_mod, ONLY : ad_dotproduct
 # endif
-
+!
+!  Imported variable declarations
+!
+      integer, dimension(Ngrids) :: Tstr
+      integer, dimension(Ngrids) :: Tend
 !
 !  Local variable declarations.
 !
@@ -502,9 +508,9 @@
 150   FORMAT (i4,2x,1p,e8.1,2(2x,1p,e21.14,0p),2x,f15.10,' %')
 
       RETURN
-      END SUBROUTINE run
+      END SUBROUTINE ROMS_run
 
-      SUBROUTINE finalize
+      SUBROUTINE ROMS_finalize
 !
 !=======================================================================
 !                                                                      !
@@ -568,6 +574,6 @@
       CALL close_io
 
       RETURN
-      END SUBROUTINE finalize
+      END SUBROUTINE ROMS_finalize
 
       END MODULE ocean_control_mod

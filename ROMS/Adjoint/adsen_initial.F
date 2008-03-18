@@ -42,7 +42,7 @@
 !
 # include "tile.h"
 !
-      CALL adsen_initial_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL adsen_initial_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         knew(ng),                                &
 # ifdef SOLVE3D
@@ -72,7 +72,7 @@
       END SUBROUTINE adsen_initial
 !
 !***********************************************************************
-      SUBROUTINE adsen_initial_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE adsen_initial_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               knew,                              &
 # ifdef SOLVE3D
@@ -95,7 +95,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
 # ifdef SOLVE3D
@@ -146,7 +146,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
 # include "set_bounds.h"

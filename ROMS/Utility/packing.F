@@ -98,7 +98,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iADM, 1)
 #  endif
-      CALL ad_pack_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL ad_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   kstp(ng),                                      &
 #  ifdef SOLVE3D
@@ -150,7 +150,7 @@
       END SUBROUTINE ad_pack      
 !
 !***********************************************************************
-      SUBROUTINE ad_pack_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ad_pack_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         kstp,                                    &
 #  ifdef SOLVE3D
@@ -182,7 +182,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: kstp
@@ -250,7 +250,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
@@ -732,7 +731,7 @@
      &                      state, Swork)
 !
 #  endif
-      CALL ad_unpack_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_unpack_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     knew(ng),                                    &
 #  ifdef SOLVE3D
@@ -769,7 +768,7 @@
       END SUBROUTINE ad_unpack      
 !
 !***********************************************************************
-      SUBROUTINE ad_unpack_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ad_unpack_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           knew,                                  &
 #  ifdef SOLVE3D
@@ -797,7 +796,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: knew
@@ -855,7 +854,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
@@ -1236,7 +1234,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 1)
 #  endif
-      CALL tl_pack_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL tl_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   krhs(ng), kstp(ng), knew(ng),                  &
 #  ifdef SOLVE3D
@@ -1283,7 +1281,7 @@
       END SUBROUTINE tl_pack      
 !
 !***********************************************************************
-      SUBROUTINE tl_pack_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE tl_pack_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         krhs, kstp, knew,                        &
 #  ifdef SOLVE3D
@@ -1311,7 +1309,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: krhs, kstp, knew
@@ -1371,7 +1369,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
@@ -1768,7 +1765,7 @@
      &                      state, Swork)
 !
 #  endif
-      CALL tl_unpack_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL tl_unpack_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     kstp(ng),                                    &
 #  ifdef SOLVE3D
@@ -1810,7 +1807,7 @@
       END SUBROUTINE tl_unpack      
 !
 !***********************************************************************
-      SUBROUTINE tl_unpack_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE tl_unpack_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           kstp,                                  &
 #  ifdef SOLVE3D
@@ -1842,7 +1839,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: kstp
@@ -1910,7 +1907,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
@@ -2382,7 +2378,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iADM, 1)
 #  endif
-      CALL so_pack_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL so_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
 #  ifdef DISTRIBUTE
      &                   1, Mstate(ng), Swork,                          &
@@ -2420,7 +2416,7 @@
       END SUBROUTINE so_pack      
 !
 !***********************************************************************
-      SUBROUTINE so_pack_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE so_pack_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Nstr, Nend,                              &
      &                         so_state,                                &
@@ -2442,7 +2438,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nstr, Nend
 !
@@ -2482,7 +2478,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif
@@ -2740,7 +2735,7 @@
       END DO
       CALL mp_collect (ng, iADM, Mstate(ng), Aspv, Swork)
 #  endif
-      CALL so_unpack_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL so_unpack_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
 #  ifdef DISTRIBUTE
      &                     1, Mstate(ng), Swork,                        &
@@ -2768,7 +2763,7 @@
       END SUBROUTINE so_unpack      
 !
 !***********************************************************************
-      SUBROUTINE so_unpack_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE so_unpack_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Nstr, Nend, state,                     &
 #  ifdef MASKING
@@ -2788,7 +2783,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nstr, Nend
 !
@@ -2829,7 +2824,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 #  ifndef MASKING
       integer :: Imax, Ioff, Jmax, Joff
 #  endif

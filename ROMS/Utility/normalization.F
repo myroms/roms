@@ -102,7 +102,7 @@
 !  the very expensive exact method.
 !
       IF (Nmethod(ng).eq.0) THEN
-        CALL normalization_tile (ng, Istr, Iend, Jstr, Jend,            &
+        CALL normalization_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           nstp(ng), nnew(ng), ifac,              &
      &                           GRID(ng) % pm,                         &
@@ -159,7 +159,7 @@
 !  the approximated randomization method.
 !
       ELSE IF (Nmethod(ng).eq.1) THEN
-        CALL randomization_tile (ng, Istr, Iend, Jstr, Jend,            &
+        CALL randomization_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           nstp(ng), nnew(ng), ifac,              &
      &                           GRID(ng) % pm,                         &
@@ -217,7 +217,7 @@
       END SUBROUTINE normalization
 !
 !***********************************************************************
-      SUBROUTINE normalization_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE normalization_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               nstp, nnew, ifac,                  &
      &                               pm, om_r, om_u, om_v,              &
@@ -277,7 +277,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew, ifac
 !
@@ -404,7 +404,6 @@
 # ifdef SOLVE3D
       logical :: Ldiffer, Lsame
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Imin, Imax, Jmin, Jmax
       integer :: i, ic, is, j, jc, status
 # ifdef SOLVE3D
@@ -435,7 +434,7 @@
         END DO
       END DO
 
-      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
@@ -518,7 +517,7 @@
      &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
                 A2d(ic,jc)=Hscale(ic,jc)
               END IF
-              CALL ad_conv_r2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,  &
+              CALL ad_conv_r2d_tile (ng, tile, iADM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isFsur)/ifac,              &
@@ -534,7 +533,7 @@
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
-              CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,  &
+              CALL tl_conv_r2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isFsur)/ifac,              &
@@ -558,16 +557,16 @@
             END IF
           END DO
         END DO
-        CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_r2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormR)
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormR)
 # endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idFsur,                    &
      &                   ncNRMid(ng), nrmVid(idFsur,ng), tNRMindx(ng),  &
 # ifdef MASKING
@@ -623,7 +622,7 @@
      &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
                 A2d(ic,jc)=Hscale(ic,jc)
               END IF
-              CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,  &
+              CALL ad_conv_u2d_tile (ng, tile, iADM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isUbar)/ifac,              &
@@ -639,7 +638,7 @@
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
-              CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,  &
+              CALL tl_conv_u2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isUbar)/ifac,              &
@@ -663,16 +662,16 @@
             END IF
           END DO
         END DO
-        CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormU)
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormU)
 # endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idUbar,                    &
      &                   ncNRMid(ng), nrmVid(idUbar,ng), tNRMindx(ng),  &
 # ifdef MASKING
@@ -728,7 +727,7 @@
      &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
                 A2d(ic,jc)=Hscale(ic,jc)
               END IF
-              CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,  &
+              CALL ad_conv_v2d_tile (ng, tile, iADM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isVbar)/ifac,              &
@@ -744,7 +743,7 @@
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
-              CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,  &
+              CALL tl_conv_v2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isVbar)/ifac,              &
@@ -768,16 +767,16 @@
             END IF
           END DO
         END DO
-        CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormV)
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormV)
 # endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idVbar,                    &
      &                   ncNRMid(ng), nrmVid(idVbar,ng), tNRMindx(ng),  &
 # ifdef MASKING
@@ -836,7 +835,7 @@
      &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
                 A2d(ic,jc)=Hscale(ic,jc)
               END IF
-              CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,  &
+              CALL ad_conv_u2d_tile (ng, tile, iADM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isUstr)/ifac,              &
@@ -852,7 +851,7 @@
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
-              CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,  &
+              CALL tl_conv_u2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isUstr)/ifac,              &
@@ -876,16 +875,16 @@
             END IF
           END DO
         END DO
-        CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormSUS)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormSUS)
 #  endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idUsms,                    &
      &                   ncNRMid(ng), nrmVid(idUsms,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -942,7 +941,7 @@
      &            ((Istr.le.ic).and.(ic.le.Iend))) THEN
                 A2d(ic,jc)=Hscale(ic,jc)
               END IF
-              CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,  &
+              CALL ad_conv_v2d_tile (ng, tile, iADM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isVstr)/ifac,              &
@@ -958,7 +957,7 @@
                   A2d(i,j)=A2d(i,j)*Hscale(i,j)
                 END DO
               END DO
-              CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,  &
+              CALL tl_conv_v2d_tile (ng, tile, iTLM,                    &
      &                               LBi, UBi, LBj, UBj,                &
      &                               NghostPoints,                      &
      &                               NHsteps(isVstr)/ifac,              &
@@ -982,16 +981,16 @@
             END IF
           END DO
         END DO
-        CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormSVS)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormSVS)
 #  endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idVsms,                    &
      &                   ncNRMid(ng), nrmVid(idVsms,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -1056,7 +1055,7 @@
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
                   A3d(ic,jc,kc)=Vscale(ic,jc,kc)
                 END IF
-                CALL ad_conv_u3d_tile (ng, iADM, Istr, Iend, Jstr, Jend,&
+                CALL ad_conv_u3d_tile (ng, tile, iADM,                  &
      &                                 LBi, UBi, LBj, UBj, 1, N(ng),    &
      &                                 NghostPoints,                    &
      &                                 NHsteps(isUvel)/ifac,            &
@@ -1077,7 +1076,7 @@
                     END DO
                   END DO
                 END DO
-                CALL tl_conv_u3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,&
+                CALL tl_conv_u3d_tile (ng, tile, iTLM,                  &
      &                                 LBi, UBi, LBj, UBj, 1, N(ng),    &
      &                                 NghostPoints,                    &
      &                                 NHsteps(isUvel)/ifac,            &
@@ -1105,16 +1104,16 @@
             END DO
           END DO
         END DO
-        CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    VnormU)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange3d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      VnormU)
 #  endif
-        CALL wrt_norm3d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm3d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), idUvel,          &
      &                   ncNRMid(ng), nrmVid(idUvel,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -1176,7 +1175,7 @@
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
                   A3d(ic,jc,kc)=Vscale(ic,jc,kc)
                 END IF
-                CALL ad_conv_v3d_tile (ng, iADM, Istr, Iend, Jstr, Jend,&
+                CALL ad_conv_v3d_tile (ng, tile, iADM,                  &
      &                                 LBi, UBi, LBj, UBj, 1, N(ng),    &
      &                                 NghostPoints,                    &
      &                                 NHsteps(isVvel)/ifac,            &
@@ -1197,7 +1196,7 @@
                     END DO
                   END DO
                 END DO
-                CALL tl_conv_v3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,&
+                CALL tl_conv_v3d_tile (ng, tile, iTLM,                  &
      &                                 LBi, UBi, LBj, UBj, 1, N(ng),    &
      &                                 NghostPoints,                    &
      &                                 NHsteps(isVvel)/ifac,            &
@@ -1225,16 +1224,16 @@
             END DO
           END DO
         END DO
-        CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    VnormV)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange3d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      VnormV)
 #  endif
-        CALL wrt_norm3d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm3d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), idVvel,          &
      &                   ncNRMid(ng), nrmVid(idVvel,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -1321,8 +1320,7 @@
      &                ((Istr.le.ic).and.(ic.le.Iend))) THEN
                     A3d(ic,jc,kc)=Vscale(ic,jc,kc)
                   END IF
-                  CALL ad_conv_r3d_tile (ng, iADM,                      &
-     &                                   Istr, Iend, Jstr, Jend,        &
+                  CALL ad_conv_r3d_tile (ng, tile, iADM,                &
      &                                   LBi, UBi, LBj, UBj, 1, N(ng),  &
      &                                   NghostPoints,                  &
      &                                   NHsteps(is)/ifac,              &
@@ -1343,8 +1341,7 @@
                       END DO
                     END DO
                   END DO
-                  CALL tl_conv_r3d_tile (ng, iTLM,                      &
-     &                                   Istr, Iend, Jstr, Jend,        &
+                  CALL tl_conv_r3d_tile (ng, tile, iTLM,                &
      &                                   LBi, UBi, LBj, UBj, 1, N(ng),  &
      &                                   NghostPoints,                  &
      &                                   NHsteps(is)/ifac,              &
@@ -1383,16 +1380,16 @@
       DO itrc=1,NT(ng)
         is=isTvar(itrc)
         IF (Cnorm(is)) THEN
-          CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_r3d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      VnormR(:,:,:,itrc))
 #  ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange3d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        VnormR(:,:,:,itrc))
 #  endif
-          CALL wrt_norm3d (ng, iTLM, Istr, Iend, Jstr, Jend,            &
+          CALL wrt_norm3d (ng, tile, iTLM,                              &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), idTvar(itrc),  &
      &                     ncNRMid(ng), nrmTid(itrc,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -1474,8 +1471,7 @@
      &              ((Istr.le.ic).and.(ic.le.Iend))) THEN
                   A2d(ic,jc)=Hscale(ic,jc)
                 END IF
-                CALL ad_conv_r2d_tile (ng, iADM,                        &
-     &                                 Istr, Iend, Jstr, Jend,          &
+                CALL ad_conv_r2d_tile (ng, tile, iADM,                  &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 NghostPoints,                    &
      &                                 NHsteps(is)/ifac,                &
@@ -1491,8 +1487,7 @@
                     A2d(i,j)=A2d(i,j)*Hscale(i,j)
                   END DO
                 END DO
-                CALL tl_conv_r2d_tile (ng, iTLM,                        &
-     &                                 Istr, Iend, Jstr, Jend,          &
+                CALL tl_conv_r2d_tile (ng, tile, iTLM,                  &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 NghostPoints,                    &
      &                                 NHsteps(is)/ifac,                &
@@ -1527,16 +1522,16 @@
       DO itrc=1,NT(ng)
         is=isTsur(itrc)
         IF (Cnorm(is)) THEN
-          CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_r2d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      HnormSTF(:,:,itrc))
 #   ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        HnormSTF(:,:,itrc))
 #   endif
-          CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,            &
+          CALL wrt_norm2d (ng, tile, iTLM,                              &
      &                     LBi, UBi, LBj, UBj, idTsur(itrc),            &
      &                     ncNRMid(ng), nrmVid(idTsur(itrc),ng),        &
      &                     tNRMindx(ng),                                &
@@ -1564,7 +1559,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE randomization_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE randomization_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               nstp, nnew, ifac,                  &
      &                               pm, om_r, om_u, om_v,              &
@@ -1623,7 +1618,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew, ifac
 !
@@ -1750,7 +1745,6 @@
 # ifdef SOLVE3D
       logical :: Ldiffer, Lsame
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, is, iter, j, status
 # ifdef SOLVE3D
       integer :: UBt, itrc, k
@@ -1784,7 +1778,7 @@
         END DO
       END DO
 
-      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
@@ -1863,7 +1857,7 @@
               A2d(i,j)=A2d(i,j)*Hscale(i,j)
             END DO
           END DO
-          CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+          CALL tl_conv_r2d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NghostPoints,                          &
      &                           NHsteps(isFsur)/ifac,                  &
@@ -1897,16 +1891,16 @@
 # endif
           END DO
         END DO
-        CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_r2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormR)
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormR)
 # endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idFsur,                    &
      &                   ncNRMid(ng), nrmVid(idFsur,ng), tNRMindx(ng),  &
 # ifdef MASKING
@@ -1939,7 +1933,7 @@
               A2d(i,j)=A2d(i,j)*Hscale(i,j)
             END DO
           END DO
-          CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+          CALL tl_conv_u2d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NghostPoints,                          &
      &                           NHsteps(isUbar)/ifac,                  &
@@ -1973,16 +1967,16 @@
 # endif
           END DO
         END DO
-        CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormU)
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormU)
 # endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idUbar,                    &
      &                   ncNRMid(ng), nrmVid(idUbar,ng), tNRMindx(ng),  &
 # ifdef MASKING
@@ -2015,7 +2009,7 @@
               A2d(i,j)=A2d(i,j)*Hscale(i,j)
             END DO
           END DO
-          CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+          CALL tl_conv_v2d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NghostPoints,                          &
      &                           NHsteps(isVbar)/ifac,                  &
@@ -2049,16 +2043,16 @@
 # endif
           END DO
         END DO
-        CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormV)
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormV)
 # endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idVbar,                    &
      &                   ncNRMid(ng), nrmVid(idVbar,ng), tNRMindx(ng),  &
 # ifdef MASKING
@@ -2093,7 +2087,7 @@
               A2d(i,j)=A2d(i,j)*Hscale(i,j)
             END DO
           END DO
-          CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+          CALL tl_conv_u2d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NghostPoints,                          &
      &                           NHsteps(isUstr)/ifac,                  &
@@ -2127,16 +2121,16 @@
 #  endif
           END DO
         END DO
-        CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormSUS)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormSUS)
 #  endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idUsms,                    &
      &                   ncNRMid(ng), nrmVid(idUsms,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -2169,7 +2163,7 @@
               A2d(i,j)=A2d(i,j)*Hscale(i,j)
             END DO
           END DO
-          CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+          CALL tl_conv_v2d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NghostPoints,                          &
      &                           NHsteps(isVstr)/ifac,                  &
@@ -2203,16 +2197,16 @@
 #  endif
           END DO
         END DO
-        CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    HnormSVS)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      HnormSVS)
 #  endif
-        CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm2d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, idVsms,                    &
      &                   ncNRMid(ng), nrmVid(idVsms,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -2253,7 +2247,7 @@
               END DO
             END DO
           END DO
-          CALL tl_conv_u3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+          CALL tl_conv_u3d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           NghostPoints,                          &
      &                           NHsteps(isUvel)/ifac,                  &
@@ -2294,16 +2288,16 @@
             END DO
           END DO
         END DO
-        CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    VnormU)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange3d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      VnormU)
 #  endif
-        CALL wrt_norm3d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm3d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), idUvel,          &
      &                   ncNRMid(ng), nrmVid(idUvel,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -2341,7 +2335,7 @@
               END DO
             END DO
           END DO
-          CALL tl_conv_v3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+          CALL tl_conv_v3d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           NghostPoints,                          &
      &                           NHsteps(isVvel)/ifac,                  &
@@ -2382,16 +2376,16 @@
             END DO
           END DO
         END DO
-        CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    VnormV)
 #  ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange3d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      VnormV)
 #  endif
-        CALL wrt_norm3d (ng, iTLM, Istr, Iend, Jstr, Jend,              &
+        CALL wrt_norm3d (ng, tile, iTLM,                                &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), idVvel,          &
      &                   ncNRMid(ng), nrmVid(idVvel,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -2467,7 +2461,7 @@
                 END DO
               END DO
             END DO
-            CALL tl_conv_r3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,    &
+            CALL tl_conv_r3d_tile (ng, tile, iTLM,                      &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             NghostPoints,                        &
      &                             NHsteps(is)/ifac,                    &
@@ -2525,16 +2519,16 @@
       DO itrc=1,NT(ng)
         is=isTvar(itrc)
         IF (Cnorm(is)) THEN
-          CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_r3d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      VnormR(:,:,:,itrc))
 #  ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange3d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        VnormR(:,:,:,itrc))
 #  endif
-          CALL wrt_norm3d (ng, iTLM, Istr, Iend, Jstr, Jend,            &
+          CALL wrt_norm3d (ng, tile, iTLM,                              &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), idTvar(itrc),  &
      &                     ncNRMid(ng), nrmTid(itrc,ng), tNRMindx(ng),  &
 #  ifdef MASKING
@@ -2604,7 +2598,7 @@
                 A2d(i,j)=A2d(i,j)*Hscale(i,j)
               END DO
             END DO
-            CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,    &
+            CALL tl_conv_r2d_tile (ng, tile, iTLM,                      &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             NghostPoints,                        &
      &                             NHsteps(is)/ifac,                    &
@@ -2655,16 +2649,16 @@
       DO itrc=1,NT(ng)
         is=isTsur(itrc)
         IF (Cnorm(is)) THEN
-          CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_r2d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      HnormSTF(:,:,itrc))
 #   ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange2d (ng, tile, iTLM, 1,                        &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        HnormSTF(:,:,itrc))
 #   endif
-          CALL wrt_norm2d (ng, iTLM, Istr, Iend, Jstr, Jend,            &
+          CALL wrt_norm2d (ng, tile, iTLM,                              &
      &                     LBi, UBi, LBj, UBj, idTsur(itrc),            &
      &                     ncNRMid(ng), nrmVid(idTsur(itrc),ng),        &
      &                     tNRMindx(ng),                                &
@@ -2692,7 +2686,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE wrt_norm2d (ng, model, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE wrt_norm2d (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ifield, ncid, ncvarid, tindex,             &
 # ifdef MASKING
@@ -2710,7 +2704,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Istr, Iend, Jstr, Jend
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: ifield, ncid, ncvarid, tindex
 !
@@ -2733,6 +2727,8 @@
       integer :: nf_fwrite2d
 
       real(r8) :: scale
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Write out requested 2D field into normalization NetCDF file. Since
@@ -2796,7 +2792,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE wrt_norm3d (ng, model, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE wrt_norm3d (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj, LBk, UBk,              &
      &                       ifield, ncid, ncvarid, tindex,             &
 # ifdef MASKING
@@ -2814,7 +2810,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Istr, Iend, Jstr, Jend
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: ifield, ncid, ncvarid, tindex
 !
@@ -2837,6 +2833,8 @@
       integer :: nf_fwrite3d
 
       real(r8) :: scale
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Write out requested 3D field into normalization NetCDF file. Since

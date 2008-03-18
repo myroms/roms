@@ -135,7 +135,7 @@
 
       CONTAINS
 
-      SUBROUTINE allocate_nesting2d (field2d, id, Tindex)
+      SUBROUTINE allocate_nesting2d (field2d, id, gtype, Tindex)
 !
 !=======================================================================
 !                                                                      !
@@ -156,7 +156,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, target :: id
+      integer, target :: id, gtype
 
       integer, intent(in), optional :: Tindex
 
@@ -165,7 +165,6 @@
 !  Local variable declarations.
 !
       integer :: ng
-      integer, target :: gtype
 !
 !-----------------------------------------------------------------------
 !  Generic 2D structure.
@@ -181,7 +180,6 @@
 !  Load field descriptors.
 !
       DO ng=1,Ngrids
-        gtype=Iinfo(1,id,ng)
 !
 !  Load id, grid type, tile, array bounds, and starting/ending
 !  computational indices.
@@ -270,7 +268,7 @@
 
 # ifdef SOLVE3D
 
-      SUBROUTINE allocate_nesting3d (field3d, id, Tindex)
+      SUBROUTINE allocate_nesting3d (field3d, id, gtype, Tindex)
 !
 !=======================================================================
 !                                                                      !
@@ -288,7 +286,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, target :: id
+      integer, target :: id, gtype
 
       integer, intent(in), optional :: Tindex
 
@@ -297,7 +295,7 @@
 !  Local variable declarations.
 !
       integer :: ng
-      integer, target :: LBk, UBk, Kstr, Kend, gtype
+      integer, target :: LBk, UBk, Kstr, Kend
 !
 !-----------------------------------------------------------------------
 !  Generic 3D structure.
@@ -313,7 +311,6 @@
 !  Load field descriptors.
 !
       DO ng=1,Ngrids
-        gtype=Iinfo(1,id,ng)
 !
 !  Load id, grid type, tile, array bounds, and starting/ending
 !  computational indices.
@@ -434,7 +431,7 @@
       RETURN
       END SUBROUTINE allocate_nesting3d
 
-      SUBROUTINE allocate_nesting4d (field4d, id, Tindex)
+      SUBROUTINE allocate_nesting4d (field4d, id, gtype, Tindex)
 !
 !=======================================================================
 !                                                                      !
@@ -452,7 +449,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, target :: id
+      integer, target :: id, gtype
 
       integer, intent(in), optional :: Tindex
 
@@ -463,7 +460,6 @@
       integer :: ng
       integer, target :: LBk, UBk, LBl, UBl
       integer, target :: Kstr, Kend, Lstr, Lend
-      integer, target :: gtype
 !
 !-----------------------------------------------------------------------
 !  Generic 4D structure.
@@ -479,7 +475,6 @@
 !  Load field descriptors.
 !
       DO ng=1,Ngrids
-        gtype=Iinfo(1,id,ng)
 !
 !  Load id, grid type, tile, array bounds, and starting/ending
 !  computational indices.

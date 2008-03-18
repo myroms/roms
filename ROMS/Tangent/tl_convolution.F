@@ -119,7 +119,7 @@
 !
 # include "tile.h"
 !
-      CALL tl_convolution_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL tl_convolution_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp(ng), nnew(ng), Linp, ifac,         &
      &                          GRID(ng) % pm,                          &
@@ -191,7 +191,7 @@
       END SUBROUTINE tl_convolution
 !
 !***********************************************************************
-      SUBROUTINE tl_convolution_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE tl_convolution_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                nstp, nnew, Linp, ifac,           &
      &                                pm, om_r, om_u, om_v,             &
@@ -251,7 +251,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew, Linp, ifac
 !
@@ -406,7 +406,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, is, j, k
 # ifdef SOLVE3D
       integer :: itrc
@@ -433,7 +432,7 @@
         END DO
       END DO
 
-      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
@@ -476,7 +475,7 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iTLM, 3, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 3,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_zeta(:,:,Linp),                            &
@@ -502,7 +501,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng),             &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_ustr(:,:,:,Linp),                          &
@@ -532,7 +531,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_u(:,:,:,Linp),                             &
@@ -553,7 +552,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,Linp,:))
@@ -573,7 +572,7 @@
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng), 1, NT(ng),  &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_tflux(:,:,:,Linp,:))
@@ -589,7 +588,7 @@
 !
 !  Tangent linear free-surface.
 !
-      CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,          &
+      CALL tl_conv_r2d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints,                              &
      &                       NHsteps(isFsur)/ifac,                      &
@@ -603,7 +602,7 @@
 !
 !  Tangent linear 2D momentum.
 !
-      CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,          &
+      CALL tl_conv_u2d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints,                              &
      &                       NHsteps(isUbar)/ifac,                      &
@@ -615,7 +614,7 @@
 # endif
      &                       tl_ubar(:,:,Linp))
 
-      CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,          &
+      CALL tl_conv_v2d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints,                              &
      &                       NHsteps(isVbar)/ifac,                      &
@@ -631,7 +630,7 @@
 !  Tangent linear surface momentum stress.
 !
       DO k=1,Nfrec(ng)
-        CALL tl_conv_u2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,        &
+        CALL tl_conv_u2d_tile (ng, tile, iTLM,                          &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         NghostPoints,                            &
      &                         NHsteps(isUstr)/ifac,                    &
@@ -643,7 +642,7 @@
 #   endif
      &                         tl_ustr(:,:,k,Linp))
 
-        CALL tl_conv_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,        &
+        CALL tl_conv_v2d_tile (ng, tile, iTLM,                          &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         NghostPoints,                            &
      &                         NHsteps(isVstr)/ifac,                    &
@@ -660,7 +659,7 @@
 !
 !  Tangent linear 3D momentum.
 !
-      CALL tl_conv_u3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,          &
+      CALL tl_conv_u3d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
      &                       NHsteps(isUvel)/ifac,                      &
@@ -675,7 +674,7 @@
      &                       Hz, z_r,                                   &
      &                       tl_u(:,:,:,Linp))
 
-      CALL tl_conv_v3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,          &
+      CALL tl_conv_v3d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
      &                       NHsteps(isVvel)/ifac,                      &
@@ -694,7 +693,7 @@
 !
       DO itrc=1,NT(ng)
         is=isTvar(itrc)
-        CALL tl_conv_r3d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,        &
+        CALL tl_conv_r3d_tile (ng, tile, iTLM,                          &
      &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                         NghostPoints,                            &
      &                         NHsteps(is)/ifac,                        &
@@ -715,8 +714,8 @@
 !
       DO itrc=1,NT(ng)
         is=isTsur(itrc)
-        DO k=1,Nfrec(ng) 
-          CALL tl_conv_r2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,      &
+        DO k=1,Nfrec(ng)
+          CALL tl_conv_r2d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NghostPoints,                          &
      &                           NHsteps(is)/ifac,                      &
@@ -758,7 +757,7 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iTLM, 3, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 3,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_zeta(:,:,Linp),                            &
@@ -782,7 +781,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng),             &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_ustr(:,:,:,Linp),                          &
@@ -806,7 +805,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_u(:,:,:,Linp),                             &
@@ -826,7 +825,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,Linp,:))
@@ -846,7 +845,7 @@
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng), 1, NT(ng),  &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_tflux(:,:,:,Linp,:))

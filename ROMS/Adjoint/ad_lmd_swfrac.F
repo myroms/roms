@@ -3,7 +3,8 @@
 #if defined ADJOINT  && defined SOLVE3D       && \
    (defined LMD_SKPP_NOT_YET || defined SOLAR_SOURCE)
 
-      SUBROUTINE ad_lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE ad_lmd_swfrac_tile (ng, tile,                          &
+     &                               LBi, UBi, LBj, UBj,                &
      &                               Zscale, Z, ad_Z, ad_swdk)
 !
 !svn $Id$
@@ -46,7 +47,8 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
 
       real(r8), intent(in) :: Zscale
 
@@ -62,7 +64,9 @@
       real(r8) :: cff1, cff2
       real(r8) :: ad_cff1, ad_cff2
 
-      real(r8), dimension(Istr:Iend) :: fac1, fac2, fac3
+      real(r8), dimension(LBi:UBi) :: fac1, fac2, fac3
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.

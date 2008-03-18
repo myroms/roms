@@ -60,7 +60,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iNLM, 7)
 #  endif
-      CALL nl_dotproduct_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL nl_dotproduct_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         KOUT, Linp,                              &
 #  ifdef SOLVE3D
@@ -98,7 +98,7 @@
       END SUBROUTINE nl_dotproduct
 !
 !***********************************************************************
-      SUBROUTINE nl_dotproduct_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE nl_dotproduct_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               Kinp, Linp,                        &
 #  ifdef SOLVE3D
@@ -131,7 +131,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kinp, Linp
 #  ifdef SOLVE3D
@@ -202,7 +202,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, Tindex, i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -391,7 +390,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iADM, 7)
 #  endif
-      CALL ad_statenorm_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL ad_statenorm_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Kinp, Ninp,                               &
      &                        StateNorm,                                &
@@ -421,7 +420,7 @@
       END SUBROUTINE ad_statenorm
 !
 !***********************************************************************
-      SUBROUTINE ad_statenorm_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE ad_statenorm_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              Kinp, Ninp,                         &
      &                              StateNorm,                          &
@@ -452,7 +451,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kinp, Ninp
 
@@ -502,7 +501,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -696,7 +694,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 7)
 #  endif
-      CALL tl_statenorm_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL tl_statenorm_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Kinp, Ninp,                               &
      &                        StateNorm,                                &
@@ -727,7 +725,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE tl_statenorm_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE tl_statenorm_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              Kinp, Ninp,                         &
      &                              StateNorm,                          &
@@ -758,7 +756,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kinp, Ninp
 
@@ -808,7 +806,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -1001,7 +998,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 7)
 #  endif
-      CALL tl_dotproduct_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL tl_dotproduct_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         KOUT, Linp,                              &
 #  ifdef SOLVE3D
@@ -1034,7 +1031,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE tl_dotproduct_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE tl_dotproduct_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               Kinp, Linp,                        &
 #  ifdef SOLVE3D
@@ -1066,7 +1063,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kinp, Linp
 #  ifdef SOLVE3D
@@ -1125,7 +1122,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, Tindex, i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -1302,7 +1298,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iADM, 7)
 #  endif
-      CALL ad_dotproduct_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL ad_dotproduct_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Linp,                                    &
 #  ifdef MASKING
@@ -1325,7 +1321,7 @@
       END SUBROUTINE ad_dotproduct
 !
 !***********************************************************************
-      SUBROUTINE ad_dotproduct_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE ad_dotproduct_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               Linp,                              &
 #  ifdef MASKING
@@ -1350,7 +1346,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp
 !
@@ -1386,7 +1382,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 #  ifdef SOLVE3D
       integer :: itrc, k

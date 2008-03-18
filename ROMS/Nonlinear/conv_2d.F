@@ -57,7 +57,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE conv_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE conv_r2d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Nghost, NHsteps, DTsizeH,               &
      &                          Kh,                                     &
@@ -77,7 +77,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost, NHsteps
 
@@ -123,7 +123,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Nnew, Nold, Nsav, i, j, step
 
       real(r8), dimension(LBi:UBi,LBj:UBj,2) :: Awrk
@@ -151,7 +150,7 @@
       Nold=1
       Nnew=2
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -202,11 +201,11 @@
 !
 !  Apply boundary conditions. If applicable, exchange boundary data.
 !
-        CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_r2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Awrk(:,:,Nnew))
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Nghost, EWperiodic, NSperiodic,             &
      &                      Awrk(:,:,Nnew))
@@ -228,11 +227,11 @@
           A(i,j)=Awrk(i,j,Nold)
         END DO
       END DO
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  A)
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -242,7 +241,7 @@
       END SUBROUTINE conv_r2d_tile
 !
 !***********************************************************************
-      SUBROUTINE conv_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE conv_u2d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Nghost, NHsteps, DTsizeH,               &
      &                          Kh,                                     &
@@ -262,7 +261,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost, NHsteps
 
@@ -306,7 +305,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Nnew, Nold, Nsav, i, j, step
 
       real(r8) :: cff
@@ -338,7 +336,7 @@
       Nold=1
       Nnew=2
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -387,11 +385,11 @@
 !
 !  Apply boundary conditions. If applicable, exchange boundary data.
 !
-        CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Awrk(:,:,Nnew))
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Nghost, EWperiodic, NSperiodic,             &
      &                      Awrk(:,:,Nnew))
@@ -413,11 +411,11 @@
           A(i,j)=Awrk(i,j,Nold)
         END DO
       END DO
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  A)
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -427,7 +425,7 @@
       END SUBROUTINE conv_u2d_tile
 !
 !***********************************************************************
-      SUBROUTINE conv_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE conv_v2d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Nghost, NHsteps, DTsizeH,               &
      &                          Kh,                                     &
@@ -447,7 +445,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost, NHsteps
 
@@ -491,7 +489,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Nnew, Nold, Nsav, i, j, step
 
       real(r8) :: cff
@@ -523,7 +520,7 @@
       Nold=1
       Nnew=2
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -572,11 +569,11 @@
 !
 !  Apply boundary conditions. If applicable, exchange boundary data.
 !
-        CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v2d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Awrk(:,:,Nnew))
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Nghost, EWperiodic, NSperiodic,             &
      &                      Awrk(:,:,Nnew))
@@ -598,11 +595,11 @@
           A(i,j)=Awrk(i,j,Nold)
         END DO
       END DO
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  A)
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)

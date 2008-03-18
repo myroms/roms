@@ -40,6 +40,15 @@
         MDEPFLAGS := --cpp --fext=f90 --file=- --objdir=$(SCRATCH_DIR)
 
 #
+# Perform floating-point operations in strict conformance with the
+# IEEE standard. This may slow down computations because some
+# optimizations are disabled.  However, we noticed a speed-up.
+# The user may want to uncomment this option to allow similar,
+# if not identical solutions between different of the PGI compiler.
+
+#          FFLAGS += -Kieee
+
+#
 # Library locations, can be overridden by environment variables.
 #
 
@@ -71,8 +80,7 @@ ifdef USE_MPI
                FC := mpif90
                LD := $(FC)
  else
-#            LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
-             LIBS += -lfmpi-pgi -lmpi-pgi
+             LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
  endif
 endif
 
@@ -91,10 +99,16 @@ ifdef USE_DEBUG
            FFLAGS += -g -C
 #          FFLAGS += -g
 else
-#          FFLAGS += -O3 -tp k8-64
 #          FFLAGS += -Bstatic -fastsse -Mipa=fast -tp k8-64
-           FFLAGS += -fastsse -Mipa=fast -tp k8-64
+           FFLAGS += -O3 -tp k8-64
 endif
+
+# Save compiler flags without the MCT or ESMF libraries additions
+# to keep the string (MY_FFLAGS) in "mod_strings.o" short. Otherwise,
+# it will exceed the maximum number of characters allowed for
+# free-format compilation.
+
+        MY_FFLAGS := $(FFLAGS)
 
 ifdef USE_MCT
        MCT_INCDIR ?= /opt/pgisoft/mct/include
@@ -104,8 +118,14 @@ ifdef USE_MCT
 endif
 
 ifdef USE_ESMF
-      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
-      ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
+#     ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
+#     ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
+#     ESMF_MK_DIR ?= /opt/pgisoft/esmf-2.2.2rp1/lib/libO/Linux.pgi.64.mpich.default
+#     ESMF_MK_DIR ?= /opt/pgisoft/esmf-3.0.2/lib/libO/Linux.pgi.64.mpich.default
+#     ESMF_MK_DIR ?= /opt/pgisoft/esmf-3.0.3/lib/libO/Linux.pgi.64.mpich.default
+      ESMF_MK_DIR ?= /opt/pgisoft/esmf-3.1.0/lib/libO/Linux.pgi.64.mpich.default
+#     ESMF_MK_DIR ?= /opt/pgisoft/esmfbeta/lib/libO/Linux.pgi.64.mpich.default
+#     ESMF_MK_DIR ?= /opt/pgisoft/esmf/lib/libO/Linux.pgi.64.mpich.default
                      include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) -lesmf -lC
@@ -114,22 +134,13 @@ endif
        clean_list += ifc* work.pc*
 
 #
-# Perform floating-point operations in strict conformance with the
-# IEEE standard. This may slow down computations because some
-# optimizations are disabled.  However, we noticed a speed-up.
-# The user may want to uncomment this option to allow similar,
-# if not identical solutions between different of the PGI compiler.
-
-#          FFLAGS += -Kieee
-
-#
 # Set free form format in source files to allow long string for
 # local directory and compilation flags inside the code.
 #
 
-$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
-$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -Mfree
 $(SCRATCH_DIR)/analytical.o: FFLAGS += -Mfree
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS := $(MY_FFLAGS) -Mfree
 
 #
 # Supress free format in SWAN source files since there are comments

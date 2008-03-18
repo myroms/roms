@@ -79,7 +79,7 @@
 
       integer :: grdziceid
 # endif
-      integer :: LBi, UBi, LBj, UBj
+      integer :: tile, LBi, UBi, LBj, UBj
 # ifdef DISTRIBUTE
 #  ifdef EW_PERIODIC
       logical :: EWperiodic=.TRUE.
@@ -92,7 +92,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: Istr, Iend, Jstr, Jend
       integer :: grdangid, grdelid, grdfid, grddmid, grddnid
       integer :: grdhid, grdpmid, grdpnid
       integer :: grdlatpid, grdlatrid, grdlatuid, grdlatvid
@@ -408,21 +407,15 @@
 !  Read in grid arrays.
 !-----------------------------------------------------------------------
 !
+# ifdef DISTRIBUTE
+      tile=MyRank
+# else
+      tile=-1
+# endif
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
-# ifdef DISTRIBUTE
-      Istr=BOUNDS(ng)%Istr(MyRank)
-      Iend=BOUNDS(ng)%Iend(MyRank)
-      Jstr=BOUNDS(ng)%Jstr(MyRank)
-      Jend=BOUNDS(ng)%Jend(MyRank)
-# else
-      Istr=1
-      Iend=Lm(ng)
-      Jstr=1
-      Jend=Mm(ng)
-# endif
 
 # ifdef MASKING
 !
@@ -489,22 +482,22 @@
       END IF
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % rmask)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % umask)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % vmask)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_p2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % pmask)
 #  endif
 #  ifdef DISTRIBUTE
 !
-      CALL mp_exchange2d (ng, model, 4, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 4,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % pmask,                             &
@@ -565,19 +558,19 @@
       END IF
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % Rscope)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % Uscope)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % Vscope)
 #  endif
 #  ifdef DISTRIBUTE
 !
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % Rscope,                            &
@@ -605,12 +598,12 @@
         RETURN
       END IF
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % h)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % h)
@@ -636,12 +629,12 @@
         RETURN
       END IF
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % zice)
 #  endif
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % zice)
@@ -667,12 +660,12 @@
         RETURN
       END IF
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % f)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % f)
@@ -716,15 +709,15 @@
         RETURN
       END IF
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % pm)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % pn)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % pm,                                &
@@ -769,15 +762,15 @@
         RETURN
       END IF
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % dmde)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % dndx)
 #  endif
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % dmde,                              &
@@ -805,7 +798,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % xp)
@@ -829,7 +822,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % yp)
@@ -856,7 +849,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % xr)
@@ -880,7 +873,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % yr)
@@ -907,7 +900,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % xu)
@@ -931,7 +924,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % yu)
@@ -958,7 +951,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % xv)
@@ -982,7 +975,7 @@
           RETURN
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, .FALSE., .FALSE.,             &
      &                      GRID(ng) % yv)
@@ -1010,7 +1003,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % lonp)
@@ -1034,7 +1027,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % latp)
@@ -1063,7 +1056,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % lonr)
@@ -1087,7 +1080,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % latr)
@@ -1116,7 +1109,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % lonu)
@@ -1140,7 +1133,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % latu)
@@ -1169,7 +1162,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % lonv)
@@ -1193,7 +1186,7 @@
             RETURN
           END IF
 # ifdef DISTRIBUTE
-          CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange2d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NghostPoints, .FALSE., .FALSE.,           &
      &                        GRID(ng) % latv)
@@ -1221,12 +1214,12 @@
           RETURN
         END IF
 # if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          GRID(ng) % angler)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    GRID(ng) % angler)

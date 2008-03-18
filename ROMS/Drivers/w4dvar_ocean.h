@@ -26,11 +26,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC  :: initialize, run, finalize
+      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_run
+      PUBLIC  :: ROMS_finalize
 
       CONTAINS
 
-      SUBROUTINE initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, MyCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -156,9 +158,9 @@
       END IF
 
       RETURN
-      END SUBROUTINE initialize
+      END SUBROUTINE ROMS_initialize
 
-      SUBROUTINE run
+      SUBROUTINE ROMS_run (Tstr, Tend)
 !
 !=======================================================================
 !                                                                      !
@@ -195,6 +197,11 @@
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
+!
+!  Imported variable declarations
+!
+      integer, dimension(Ngrids) :: Tstr
+      integer, dimension(Ngrids) :: Tend
 !
 !  Local variable declarations.
 !
@@ -552,9 +559,9 @@
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
                 CALL ad_balance (ng, TILE, Lold(ng))
-#endif
+# endif
                 CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lold(ng), 2)
                 CALL initialize_ocean (ng, TILE, iTLM)
@@ -578,9 +585,9 @@
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                 CALL tl_convolution (ng, TILE, Lold(ng), 2)
                 CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lold(ng))
-#endif
+# endif
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -621,9 +628,9 @@
                   subs=NtileX(ng)*NtileE(ng)/numthreads
                   DO tile=subs*thread,subs*(thread+1)-1
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
                     CALL ad_balance (ng, TILE, Lold(ng))
-#endif
+# endif
                     CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                     CALL ad_convolution (ng, TILE, Lold(ng), 2)
                     CALL initialize_ocean (ng, TILE, iTLM)
@@ -648,9 +655,9 @@
                     CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                     CALL tl_convolution (ng, TILE, Lold(ng), 2)
                     CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
                     CALL tl_balance (ng, TILE, Lold(ng))
-#endif
+# endif
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
                   END DO
                 END DO
@@ -682,7 +689,12 @@
             END IF
             tTLFindx(ng)=0
             outer_impulse=.FALSE.
-            CALL impulse (ng, iADM, outer_impulse, ADJname(ng))
+#ifdef DISTRIBUTE
+            tile=MyRank
+#else
+            tile=-1
+#endif
+            CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Integrate tangent linear model forced by the convolved adjoint
@@ -884,9 +896,9 @@
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
               CALL ad_balance (ng, TILE, Lold(ng))
-#endif
+# endif
               CALL ad_variability (ng, TILE, Lold(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lold(ng), 2)
               CALL initialize_ocean (ng, TILE, iTLM)
@@ -915,9 +927,9 @@
               CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
               CALL tl_convolution (ng, TILE, Lold(ng), 2)
               CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
               CALL tl_balance (ng, TILE, Lold(ng))
-#endif
+# endif
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
               CALL rp_ini_adjust (ng, TILE, Lold(ng), Lbck)
             END DO
@@ -961,9 +973,9 @@
                 subs=NtileX(ng)*NtileE(ng)/numthreads
                 DO tile=subs*thread,subs*(thread+1)-1
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
                   CALL ad_balance (ng, TILE, Lold(ng))
-#endif
+# endif
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
@@ -988,9 +1000,9 @@
                   CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                   CALL tl_convolution (ng, TILE, Lold(ng), 2)
                   CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-#ifdef BALANCE_OPERATOR
+# ifdef BALANCE_OPERATOR
                   CALL tl_balance (ng, TILE, Lold(ng))
-#endif
+# endif
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
                 END DO
               END DO
@@ -1022,7 +1034,12 @@
           END IF
           tTLFindx(ng)=0
           outer_impulse=.TRUE.
-          CALL impulse (ng, iADM, outer_impulse, ADJname(ng))
+#ifdef DISTRIBUTE
+          tile=MyRank
+#else
+          tile=-1
+#endif
+          CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run representer model and compute a "new estimate" of the state
@@ -1115,9 +1132,9 @@
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
 
       RETURN
-      END SUBROUTINE run
+      END SUBROUTINE ROMS_run
 
-      SUBROUTINE finalize
+      SUBROUTINE ROMS_finalize
 !
 !=======================================================================
 !                                                                      !
@@ -1181,6 +1198,6 @@
       CALL close_io
 
       RETURN
-      END SUBROUTINE finalize
+      END SUBROUTINE ROMS_finalize
 
       END MODULE ocean_control_mod

@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 #if defined FOUR_DVAR  && defined OBSERVATIONS && \
     defined DISTRIBUTE && defined SOLVE3D
-      SUBROUTINE obs_depth (ng, model)
+      SUBROUTINE obs_depth (ng, tile, model)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -19,7 +19,6 @@
 !-----------------------------------------------------------------------
 !
       USE mod_param
-      USE mod_parallel
       USE mod_fourdvar
       USE mod_ncparam
       USE mod_scalars
@@ -28,34 +27,17 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model
+      integer, intent(in) :: ng, tile, model
 !
 !  Local variable declarations.
 !
       logical :: r_bound, u_bound, v_bound
 
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: Istr, Iend, Jstr, Jend
       integer :: Mstr, Mend, i, iobs, itrc, j
 
       real(r8) :: IniVal = 0.0_r8
-!
-!-----------------------------------------------------------------------
-!  Get physical no-overlapping horizontal indices.
-!-----------------------------------------------------------------------
-!
-      Istr=BOUNDS(ng)%Istr(MyRank)
-      Iend=BOUNDS(ng)%Iend(MyRank)
-      Jstr=BOUNDS(ng)%Jstr(MyRank)
-      Jend=BOUNDS(ng)%Jend(MyRank)
 
-      IstrR=BOUNDS(ng)%IstrR(MyRank)
-      IstrU=BOUNDS(ng)%IstrU(MyRank)
-      IendR=BOUNDS(ng)%IendR(MyRank)
-
-      JstrR=BOUNDS(ng)%JstrR(MyRank)
-      JstrV=BOUNDS(ng)%JstrV(MyRank)
-      JendR=BOUNDS(ng)%JendR(MyRank)
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  If distributed-memory and Zobs < 0, zero-out Zobs values in all

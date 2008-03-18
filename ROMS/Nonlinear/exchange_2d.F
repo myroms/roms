@@ -26,7 +26,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE exchange_p2d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              A)
 !***********************************************************************
@@ -35,7 +35,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -46,7 +46,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 # include "set_bounds.h"
@@ -193,7 +192,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE exchange_r2d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              A)
 !***********************************************************************
@@ -202,7 +201,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -213,7 +212,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 #  include "set_bounds.h"
@@ -360,7 +358,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE exchange_u2d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              A)
 !***********************************************************************
@@ -369,7 +367,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -380,7 +378,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 # include "set_bounds.h"
@@ -527,7 +524,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE exchange_v2d_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              A)
 !***********************************************************************
@@ -536,7 +533,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -547,7 +544,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 # include "set_bounds.h"

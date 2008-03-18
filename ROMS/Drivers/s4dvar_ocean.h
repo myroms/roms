@@ -45,11 +45,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC  :: initialize, run, finalize
+      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_run
+      PUBLIC  :: ROMS_finalize
 
       CONTAINS
 
-      SUBROUTINE initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, MyCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -157,9 +159,9 @@
       END IF
 
       RETURN
-      END SUBROUTINE initialize
+      END SUBROUTINE ROMS_initialize
 
-      SUBROUTINE run
+      SUBROUTINE ROMS_run (Tstr, Tend)
 !
 !=======================================================================
 !                                                                      !
@@ -178,6 +180,11 @@
       USE back_cov_mod, ONLY : back_cov
       USE downhill_mod, ONLY : downhill
       USE ini_fields_mod, ONLY : ini_fields
+!
+!  Imported variable declarations
+!
+      integer, dimension(Ngrids) :: Tstr
+      integer, dimension(Ngrids) :: Tend
 !
 !  Local variable declarations.
 !
@@ -579,9 +586,9 @@
      &        ', Ipass = ',i1,' >>>>',/,25x,'Step Size = ',1p,e15.8,/)
 
       RETURN
-      END SUBROUTINE run
+      END SUBROUTINE ROMS_run
 
-      SUBROUTINE finalize
+      SUBROUTINE ROMS_finalize
 !
 !=======================================================================
 !                                                                      !
@@ -645,6 +652,6 @@
       CALL close_io
 
       RETURN
-      END SUBROUTINE finalize
+      END SUBROUTINE ROMS_finalize
 
       END MODULE ocean_control_mod

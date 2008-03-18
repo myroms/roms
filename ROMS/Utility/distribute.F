@@ -2716,10 +2716,10 @@
 
       logical, save :: first = .TRUE.
 
-      integer :: Istr, Iend, Jstr, Jend
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Imin, Imax, Ioff, Jmin, Jmax, Joff
       integer :: unit
+
+# include "set_bounds.h"
 !
 !------------------------------------------------------------------------
 !  Write out requested field.
@@ -2736,18 +2736,6 @@
       END IF
 !
 !  Write out field including ghost-points.
-!
-      Istr=BOUNDS(ng)%Istr(tile)
-      Iend=BOUNDS(ng)%Iend(tile)
-      Jstr=BOUNDS(ng)%Jstr(tile)
-      Jend=BOUNDS(ng)%Jend(tile)
-!
-      IstrR=BOUNDS(ng)%IstrR(tile)
-      IstrU=BOUNDS(ng)%IstrU(tile)
-      IendR=BOUNDS(ng)%IendR(tile)
-      JstrR=BOUNDS(ng)%JstrR(tile)
-      JstrV=BOUNDS(ng)%JstrV(tile)
-      JendR=BOUNDS(ng)%JendR(tile)
 !
       Imin=0
       Imax=Lm(ng)+1

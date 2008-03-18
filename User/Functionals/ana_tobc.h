@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets tracer-type variables open boundary conditions    !
@@ -26,7 +25,7 @@
 
 #include "tile.h"
 !
-      CALL ana_tobc_tile (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL ana_tobc_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj, nstp(ng),                 &
      &                    GRID(ng) % z_r,                               &
      &                    OCEAN(ng) % t)
@@ -41,7 +40,7 @@
       END SUBROUTINE ana_tobc
 !
 !***********************************************************************
-      SUBROUTINE ana_tobc_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ana_tobc_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj, nstp,               &
      &                          z_r, t)
 !***********************************************************************
@@ -53,7 +52,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, nstp
 
 #ifdef ASSUMED_SHAPE
@@ -66,7 +65,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, ised, itrc, j, k
       real(r8) :: cff
 

@@ -49,7 +49,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 6)
 #  endif
-      CALL tl_set_vbc_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL tl_set_vbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nrhs(ng),                                   &
      &                      GRID(ng) % Hz,                              &
@@ -100,7 +100,7 @@
       END SUBROUTINE tl_set_vbc
 !
 !***********************************************************************
-      SUBROUTINE tl_set_vbc_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE tl_set_vbc_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            nrhs,                                 &
      &                            Hz, tl_Hz,                            &
@@ -145,7 +145,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 !
@@ -250,7 +250,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, itrc
 
 #  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
@@ -538,27 +537,27 @@
 !  Apply periodic or gradient boundary conditions for output
 !  purposes only.
 !
-!>    CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_u2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  sustr)
 !>
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_sustr)
-!>    CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_v2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  svstr)
 !>
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_svstr)
 #   ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    sustr, svstr)
 !>
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_sustr, tl_svstr)
@@ -713,27 +712,27 @@
 !
 !  Apply boundary conditions.
 ! 
-!>    CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_u2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  bustr)
 !>
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_bustr)
-!>    CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_v2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  bvstr)
 !>
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_bvstr)
 #   ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    bustr, bvstr)
 !>
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_bustr, tl_bvstr)
@@ -766,7 +765,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 6)
 #  endif
-      CALL tl_set_vbc_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL tl_set_vbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      krhs(ng), kstp(ng), knew(ng),               &
      &                      OCEAN(ng) % ubar,                           &
@@ -782,7 +781,7 @@
       END SUBROUTINE tl_set_vbc
 !
 !***********************************************************************
-      SUBROUTINE tl_set_vbc_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE tl_set_vbc_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            krhs, kstp, knew,                     &
      &                            ubar, vbar,                           &
@@ -800,7 +799,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: krhs, kstp, knew
 !
@@ -834,7 +833,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
       real(r8) :: cff1, cff2
@@ -918,27 +916,27 @@
 !
 !  Apply boundary conditions.
 !
-!>    CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_u2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  bustr)
 !>
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_bustr)
-!>    CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_v2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  bvstr)
 !>
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  tl_bvstr)
 #   ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    sustr, svstr)
 !>
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_bustr, tl_bvstr)

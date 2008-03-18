@@ -85,7 +85,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Istr, Iend, Jstr, Jend
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i1, i2, j1, j2, np
 
       real(r8), parameter :: Aspv = 0.0_r8
@@ -101,15 +101,15 @@
 !-----------------------------------------------------------------------
 !    
 #ifdef DISTRIBUTE
-      Istr=BOUNDS(ng)%Istr(MyRank)
-      Iend=BOUNDS(ng)%Iend(MyRank)
-      Jstr=BOUNDS(ng)%Jstr(MyRank)
-      Jend=BOUNDS(ng)%Jend(MyRank)
+      Imin=BOUNDS(ng)%Istr(MyRank)
+      Imax=BOUNDS(ng)%Iend(MyRank)
+      Jmin=BOUNDS(ng)%Jstr(MyRank)
+      Jmax=BOUNDS(ng)%Jend(MyRank)
 #else
-      Istr=1
-      Iend=Lm(ng)
-      Jstr=1
-      Jend=Mm(ng)
+      Imin=1
+      Imax=Lm(ng)
+      Jmin=1
+      Jmax=Mm(ng)
 #endif
 !
 !-----------------------------------------------------------------------
@@ -138,8 +138,8 @@
           j1=INT(Ygrd)
           j2=j1+1
           bounded(np)=0.0_r8
-          IF (((Istr.le.i1).and.(i1.le.Iend)).and.                      &
-     &        ((Jstr.le.j1).and.(j1.le.Jend))) THEN
+          IF (((Imin.le.i1).and.(i1.le.Imax)).and.                      &
+     &        ((Jmin.le.j1).and.(j1.le.Jmax))) THEN
             bounded(np)=1.0_r8
             p2=REAL(i2-i1,r8)*(Xgrd-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(Ygrd-REAL(j1,r8))
@@ -187,8 +187,8 @@
           j1=INT(Ygrd)
           j2=j1+1
           bounded(np)=0.0_r8
-          IF (((Istr.le.i1).and.(i1.le.Iend)).and.                      &
-     &        ((Jstr.le.j1).and.(j1.le.Jend))) THEN
+          IF (((Imin.le.i1).and.(i1.le.Imax)).and.                      &
+     &        ((Jmin.le.j1).and.(j1.le.Jmax))) THEN
             bounded(np)=1.0_r8
             p2=REAL(i2-i1,r8)*(Xgrd-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(Ygrd-REAL(j1,r8))
@@ -236,8 +236,8 @@
           j1=INT(Ygrd)
           j2=j1+1
           bounded(np)=0.0_r8
-          IF (((Istr.le.i1).and.(i1.le.Iend)).and.                      &
-     &        ((Jstr.le.j1).and.(j1.le.Jend))) THEN
+          IF (((Imin.le.i1).and.(i1.le.Imax)).and.                      &
+     &        ((Jmin.le.j1).and.(j1.le.Jmax))) THEN
             bounded(np)=1.0_r8
             p2=REAL(i2-i1,r8)*(Xgrd-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(Ygrd-REAL(j1,r8))
@@ -333,7 +333,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Istr, Iend, Jstr, Jend
+      integer :: Imin, Imax, Jmin, Jmax
       integer :: i1, i2, j1, j2, k, k1, k2, np
 
       real(r8), parameter :: Aspv = 0.0_r8
@@ -349,15 +349,15 @@
 !-----------------------------------------------------------------------
 !    
 # ifdef DISTRIBUTE
-      Istr=BOUNDS(ng)%Istr(MyRank)
-      Iend=BOUNDS(ng)%Iend(MyRank)
-      Jstr=BOUNDS(ng)%Jstr(MyRank)
-      Jend=BOUNDS(ng)%Jend(MyRank)
+      Imin=BOUNDS(ng)%Istr(MyRank)
+      Imax=BOUNDS(ng)%Iend(MyRank)
+      Jmin=BOUNDS(ng)%Jstr(MyRank)
+      Jmax=BOUNDS(ng)%Jend(MyRank)
 # else
-      Istr=1
-      Iend=Lm(ng)
-      Jstr=1
-      Jend=Mm(ng)
+      Imin=1
+      Imax=Lm(ng)
+      Jmin=1
+      Jmax=Mm(ng)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -389,8 +389,8 @@
           j1=INT(Ygrd)
           j2=j1+1
           bounded(np)=0.0_r8
-          IF (((Istr.le.i1).and.(i1.le.Iend)).and.                      &
-     &        ((Jstr.le.j1).and.(j1.le.Jend))) THEN
+          IF (((Imin.le.i1).and.(i1.le.Imax)).and.                      &
+     &        ((Jmin.le.j1).and.(j1.le.Jmax))) THEN
             bounded(np)=1.0_r8
             p2=REAL(i2-i1,r8)*(Xgrd-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(Ygrd-REAL(j1,r8))
@@ -495,8 +495,8 @@
           j1=INT(Ygrd)
           j2=j1+1
           bounded(np)=0.0_r8
-          IF (((Istr.le.i1).and.(i1.le.Iend)).and.                      &
-     &        ((Jstr.le.j1).and.(j1.le.Jend))) THEN
+          IF (((Imin.le.i1).and.(i1.le.Imax)).and.                      &
+     &        ((Jmin.le.j1).and.(j1.le.Jmax))) THEN
             bounded(np)=1.0_r8
             p2=REAL(i2-i1,r8)*(Xgrd-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(Ygrd-REAL(j1,r8))
@@ -609,8 +609,8 @@
           j1=INT(Ygrd)
           j2=j1+1
           bounded(np)=0.0_r8
-          IF (((Istr.le.i1).and.(i1.le.Iend)).and.                      &
-     &        ((Jstr.le.j1).and.(j1.le.Jend))) THEN
+          IF (((Imin.le.i1).and.(i1.le.Imax)).and.                      &
+     &        ((Jmin.le.j1).and.(j1.le.Jmax))) THEN
             bounded(np)=1.0_r8
             p2=REAL(i2-i1,r8)*(Xgrd-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(Ygrd-REAL(j1,r8))
@@ -723,8 +723,8 @@
           j1=INT(Ygrd)
           j2=j1+1
           bounded(np)=0.0_r8
-          IF (((Istr.le.i1).and.(i1.le.Iend)).and.                      &
-     &        ((Jstr.le.j1).and.(j1.le.Jend))) THEN
+          IF (((Imin.le.i1).and.(i1.le.Imax)).and.                      &
+     &        ((Jmin.le.j1).and.(j1.le.Jmax))) THEN
             bounded(np)=1.0_r8
             p2=REAL(i2-i1,r8)*(Xgrd-REAL(i1,r8))
             q2=REAL(j2-j1,r8)*(Ygrd-REAL(j1,r8))

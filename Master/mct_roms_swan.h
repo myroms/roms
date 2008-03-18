@@ -194,7 +194,7 @@
 !
 !  Initialize a router to the Waves component.
 !
-      CALL Router_init (WavId, GSMapROMS, OCN_COMM_WORLD, RoutROMS)
+      CALL Router_init (Iwave, GSMapROMS, OCN_COMM_WORLD, RoutROMS)
 !
 !  Deallocate working arrays.
 !
@@ -252,7 +252,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iNLM, 36)
 #endif
-      CALL waves_coupling_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL waves_coupling_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          knew(ng),                               &
      &                          GRID(ng) % angler,                      &
@@ -278,7 +278,7 @@
       END SUBROUTINE waves_coupling
 !
 !***********************************************************************
-      SUBROUTINE waves_coupling_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE waves_coupling_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                knew,                             &
      &                                angler, h,                        &
@@ -308,7 +308,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
 
@@ -364,7 +364,6 @@
 # endif
 #endif
 
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Asize, MyError
       integer :: i, ij, j
 
@@ -377,34 +376,8 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: vbar_rho
 
       real(r8), pointer :: A(:)
-!
-!-----------------------------------------------------------------------
-!  Compute lower and upper bounds over a particular domain partition or
-!  tile for RHO-, U-, and V-variables. Notice that "set_bounds.h" is
-!  not used here because of implementation of periodicity in other
-!  models.
-!-----------------------------------------------------------------------
-!
-      IF (WESTERN_EDGE) THEN
-        IstrR=Istr-1
-      ELSE
-        IstrR=Istr
-      END IF
-      IF (EASTERN_EDGE) THEN
-        IendR=Iend+1
-      ELSE
-        IendR=Iend
-      END IF
-      IF (SOUTHERN_EDGE) THEN
-        JstrR=Jstr-1
-      ELSE
-        JstrR=Jstr
-      END IF
-      IF (NORTHERN_EDGE) THEN
-        JendR=Jend+1
-      ELSE
-        JendR=Jend
-      END IF
+
+#include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Allocate communications array.
@@ -535,29 +508,29 @@
 !  Apply periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Wave_dissip)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Hwave)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Pwave_top)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Pwave_bot)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Ub_swan)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Dwave)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Lwave)
 # ifdef SVENDSEN_ROLLER
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Wave_break)
 # endif
@@ -568,16 +541,16 @@
 !  Exchange tile boundaries.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange2d (ng, iNLM, 4, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 4,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Wave_dissip, Hwave, Dwave, Lwave)
-      CALL mp_exchange2d (ng, iNLM, 3, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 3,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Pwave_top, Pwave_bot, Ub_swan)
 # ifdef SVENDSEN_ROLLER
-      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    wave_break)

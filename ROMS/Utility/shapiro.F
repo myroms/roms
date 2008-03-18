@@ -23,7 +23,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE shapiro2d_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE shapiro2d_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
 #ifdef MASKING
      &                           Amask,                                 &
@@ -35,7 +35,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 #ifdef ASSUMED_SHAPE
@@ -52,7 +52,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk1
@@ -125,7 +124,7 @@
 #ifdef SOLVE3D
 !
 !***********************************************************************
-      SUBROUTINE shapiro3d_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE shapiro3d_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj, LBk, UBk,          &
 # ifdef MASKING
      &                           Amask,                                 &
@@ -137,7 +136,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
 # ifdef ASSUMED_SHAPE
@@ -154,7 +153,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk1

@@ -34,11 +34,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC  :: initialize, run, finalize
+      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_run
+      PUBLIC  :: ROMS_finalize
 
       CONTAINS
 
-      SUBROUTINE initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, MyCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -144,9 +146,9 @@
       END IF
 
       RETURN
-      END SUBROUTINE initialize
+      END SUBROUTINE ROMS_initialize
 
-      SUBROUTINE run
+      SUBROUTINE ROMS_run (Tstr, Tend)
 !
 !=======================================================================
 !                                                                      !
@@ -174,6 +176,11 @@
       USE mod_storage
 !
       USE propagator_mod
+!
+!  Imported variable declarations
+!
+      integer, dimension(Ngrids) :: Tstr
+      integer, dimension(Ngrids) :: Tend
 !
 !  Local variable declarations.
 !
@@ -537,9 +544,9 @@
      &        '  Ritz values ',1pe14.6,0p,2x,1pe14.6)
 
       RETURN
-      END SUBROUTINE run
+      END SUBROUTINE ROMS_run
 
-      SUBROUTINE finalize
+      SUBROUTINE ROMS_finalize
 !
 !=======================================================================
 !                                                                      !
@@ -603,7 +610,7 @@
       CALL close_io
 
       RETURN
-      END SUBROUTINE finalize
+      END SUBROUTINE ROMS_finalize
 
       SUBROUTINE IRAM_error (info, icall, string)
 !

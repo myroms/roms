@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets kinematic surface momentum flux (wind stress)     !
@@ -24,7 +23,7 @@
 
 #include "tile.h"
 !
-      CALL ana_smflux_tile (ng, model, Istr, Iend, Jstr, Jend,          &
+      CALL ana_smflux_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      GRID(ng) % angler,                          &
 #ifdef SPHERICAL
@@ -51,7 +50,7 @@
       END SUBROUTINE ana_smflux
 !
 !***********************************************************************
-      SUBROUTINE ana_smflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+      SUBROUTINE ana_smflux_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            angler,                               &
 #ifdef SPHERICAL
@@ -77,7 +76,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -126,7 +125,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
       real(r8) :: Ewind, Nwind, cff, val1, val2, windamp, winddir
 #if defined LAKE_SIGNELL
@@ -412,28 +410,28 @@
       END DO
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        sustr)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        svstr)
 # ifdef TL_IOMS
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_sustr)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_svstr)
 # endif
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    sustr, svstr)
 #  ifdef TL_IOMS
-      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_sustr, tl_svstr)

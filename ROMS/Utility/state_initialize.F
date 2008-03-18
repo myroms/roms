@@ -23,7 +23,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE state_initialize (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE state_initialize (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             Lout, fac,                           &
 #ifdef MASKING
@@ -50,7 +50,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lout
 !
@@ -107,7 +107,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc

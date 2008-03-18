@@ -118,7 +118,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, model, 36)
 #endif
-      CALL cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL cgradient_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lold(ng), Lnew(ng),                          &
      &                     innLoop, outLoop,                            &
@@ -198,7 +198,7 @@
       END SUBROUTINE cgradient
 !
 !***********************************************************************
-      SUBROUTINE cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE cgradient_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lold, Lnew,                            &
      &                           innLoop, outLoop,                      &
@@ -270,7 +270,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew
       integer, intent(in) :: innLoop, outLoop
@@ -434,6 +434,8 @@
       real(r8), dimension(0:NstateVar(ng)) :: Adjust
       real(r8), dimension(0:NstateVar(ng)) :: dot_old, dot_new
       real(r8), dimension(0:NstateVar(ng)) :: old_dot, new_dot
+
+#include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Initialize trial step size.
@@ -496,7 +498,7 @@
 !-----------------------------------------------------------------------
 !
       IF (innLoop.gt.0) THEN
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot_old(0:),                 &
 #ifdef MASKING
@@ -521,7 +523,7 @@
 !
 !  If preconditioning, compute new dot product, <d(k), H^-1 * Ghat(k)>.
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot_new(0:),                 &
 #ifdef MASKING
@@ -579,7 +581,7 @@
       IF (Lprecond) THEN
         Lscale=-1
         Lwrk=2
-        CALL precond (ng, model, Istr, Iend, Jstr, Jend,                &
+        CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                NstateVar(ng), Lold, Lwrk, Lscale,                &
      &                nConvRitz, Ritz,                                  &
@@ -603,7 +605,7 @@
 #endif
      &                ad_zeta, nl_zeta, tl_zeta)
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), old_dot(0:),                 &
 #ifdef MASKING
@@ -632,7 +634,7 @@
 !  after this.
 !
       ELSE
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), old_dot(0:),                 &
 #ifdef MASKING
@@ -666,7 +668,7 @@
 !  Also save G(k+1) in time index Lold as a non-orthogonalized new
 !  gradient.
 !
-      CALL ad_new_state (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL ad_new_state (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lold, Lnew,                                    &
      &                   cg_alpha(innLoop,outLoop),                     &
@@ -695,7 +697,7 @@
 !
       IF (innLoop.gt.0) THEN
         Lwrk=2
-        CALL orthogonalize (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL orthogonalize (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Lold, Lnew, Lwrk,                           &
      &                      innLoop, outLoop,                           &
@@ -754,7 +756,7 @@
       IF (innLoop.gt.0) THEN
         Linp=1
         Lout=1
-        CALL tl_new_state (ng, Istr, Iend, Jstr, Jend,                  &
+        CALL tl_new_state (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Linp, Lout,                                  &
      &                     cg_alpha(innLoop,outLoop),                   &
@@ -803,7 +805,7 @@
       IF (Lprecond) THEN
         Lscale=-1
         Lwrk=2
-        CALL precond (ng, model, Istr, Iend, Jstr, Jend,                &
+        CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                NstateVar(ng), Lnew, Lwrk, Lscale,                &
      &                nConvRitz, Ritz,                                  &
@@ -832,7 +834,7 @@
 !
       IF (innLoop.gt.0) THEN
         IF (Lprecond) THEN
-          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+          CALL state_dotprod (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NstateVar(ng), new_dot(0:),               &
 #ifdef MASKING
@@ -859,7 +861,7 @@
 !
 !  If not preconditioning, compute new dot product, <G(k+1), G(k+1)>.
 !
-          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+          CALL state_dotprod (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NstateVar(ng), new_dot(0:),               &
 #ifdef MASKING
@@ -895,7 +897,7 @@
 !  that the preconditined gradient is in NLM (index Lwrk) state arrays.
 !
       IF (Lprecond) THEN
-        CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL new_direction (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Lold, Lwrk,                                 &
      &                      cg_beta(innLoop,outLoop),                   &
@@ -930,7 +932,7 @@
 !  If not preconditioning, compute new conjugate direction, d(k+1).
 !
       ELSE
-        CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL new_direction (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Lold, Lnew,                                 &
      &                      cg_beta(innLoop,outLoop),                   &
@@ -966,7 +968,7 @@
 !  Compute next iteration dot product, <d(k), G(k)>, using new d(k+1)
 !  and non-orthogonalized G(k+1) used to adjust cost function.
 !
-      CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL state_dotprod (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NstateVar(ng),                                &
      &                    FOURDVAR(ng)%CostGradDot(0:),                 &
@@ -1002,7 +1004,7 @@
 !
       Linp=1
       Lout=2
-      CALL tl_new_state (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL tl_new_state (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Linp, Lout,                                    &
      &                   cg_alpha(innLoop,outLoop),                     &
@@ -1075,7 +1077,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE tl_new_state (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE tl_new_state (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Linp, Lout, alphaK,                      &
 #ifdef MASKING
@@ -1114,7 +1116,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 
@@ -1202,7 +1204,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc
@@ -1341,7 +1342,7 @@
       END SUBROUTINE tl_new_state
 !
 !***********************************************************************
-      SUBROUTINE ad_new_state (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ad_new_state (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lold, Lnew, alphaK, tauK,                &
 #ifdef MASKING
@@ -1368,7 +1369,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew
 
@@ -1423,7 +1424,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc
@@ -1584,7 +1584,7 @@
       END SUBROUTINE ad_new_state
 !
 !***********************************************************************
-      SUBROUTINE orthogonalize (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE orthogonalize (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Lold, Lnew, Lwrk,                       &
      &                          innLoop, outLoop,                       &
@@ -1641,7 +1641,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -1763,7 +1763,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k, lstr, rec, Lscale
 #ifdef SOLVE3D
       integer :: itrc
@@ -1808,7 +1807,7 @@
 !  TLM (index Lwrk, if not preconditioning) state arrays.
 !
         IF (Lprecond) THEN
-          CALL read_state (ng, model, Istr, Iend, Jstr, Jend,           &
+          CALL read_state (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     L2, rec,                                     &
      &                     ndefADJ(ng), ncADJid(ng), ncname,            &
@@ -1829,7 +1828,7 @@
      &                     nl_zeta)
 !
         ELSE
-          CALL read_state (ng, model, Istr, Iend, Jstr, Jend,           &
+          CALL read_state (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lwrk, rec,                                   &
      &                     ndefADJ(ng), ncADJid(ng), ncname,            &
@@ -1855,7 +1854,7 @@
 !
         IF (Lprecond) THEN
           Lscale=-1
-          CALL precond (ng, model, Istr, Iend, Jstr, Jend,              &
+          CALL precond (ng, tile, model,                                &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  NstateVar(ng), L2, Lwrk, Lscale,                &
      &                  nConvRitz, Ritz,                                &
@@ -1884,7 +1883,7 @@
 !  Otherwise, compute <G(k+1), G(rec)>. Recall that the TLM
 !  (index Lwrk) contains either H^-1 G(rec) or G(rec).
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
@@ -1912,7 +1911,7 @@
 !  If preconditioning, compute dot product <G(rec), H^-1 * G(rec)>.
 !
         IF (Lprecond) THEN
-          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+          CALL state_dotprod (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NstateVar(ng), dot(0:),                   &
 #ifdef MASKING
@@ -1939,7 +1938,7 @@
 !  Otherwise, compute dot product <G(rec), G(rec)>.
 !
         ELSE
-          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+          CALL state_dotprod (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NstateVar(ng), dot(0:),                   &
 #ifdef MASKING
@@ -1977,7 +1976,7 @@
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * nl_var(L2)
 !
         IF (Lprecond) THEN
-          CALL state_addition (ng, Istr, Iend, Jstr, Jend,              &
+          CALL state_addition (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lnew, L2, Lnew, fac1, fac2,              &
 #ifdef MASKING
@@ -2005,7 +2004,7 @@
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
 !
         ELSE
-          CALL state_addition (ng, Istr, Iend, Jstr, Jend,              &
+          CALL state_addition (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lnew, Lwrk, Lnew, fac1, fac2,            &
 #ifdef MASKING
@@ -2052,7 +2051,7 @@
 !  each gradient solution is loaded into TANGENT LINEAR STATE ARRAYS
 !  at index Lwrk.
 !
-        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+        CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lwrk, rec,                                     &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
@@ -2072,7 +2071,7 @@
 #endif
      &                   tl_zeta)
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
@@ -2126,7 +2125,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE new_direction (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE new_direction (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Lwrk, Lnew, betaK,                      &
 #ifdef MASKING
@@ -2166,7 +2165,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lwrk, Lnew
 
@@ -2254,7 +2253,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc
@@ -2389,7 +2387,7 @@
 
 !
 !**********************************************************************
-      SUBROUTINE precond (ng, model, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE precond (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NstateVars, Linp, Lwrk, Lscale,               &
      &                    nConvRitz, Ritz,                              &
@@ -2432,7 +2430,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: NstateVars, Linp, Lwrk, Lscale
       integer, intent(in) :: nConvRitz
@@ -2556,7 +2554,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j, k, L1, L2, nvec
 #ifdef SOLVE3D
       integer :: itrc
@@ -2577,7 +2574,7 @@
 !
 !  Copy ad_var(Linp) into tl_var(Lwrk)
 !
-      CALL state_copy (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL state_copy (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj,                              &
      &                 Linp, Lwrk,                                      &
 #ifdef ADJUST_WSTRESS
@@ -2603,7 +2600,7 @@
       DO nvec=1,nConvRitz
         L1=1
         L2=2
-        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+        CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   L1, nvec,                                      &
      &                   0, ncHSSid(ng), HSSname(ng),                   &
@@ -2625,7 +2622,7 @@
 !
 !  Compute dot product between gradient and Hessian eigenvector.
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVars, Dotprod(0:),                    &
 #ifdef MASKING
@@ -2670,7 +2667,7 @@
           fac2=(1.0_r8/SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
         END IF
 
-        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
+        CALL state_addition (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lwrk, L1, Lwrk, fac1, fac2,                &
 #ifdef MASKING
@@ -2698,7 +2695,7 @@
       END SUBROUTINE precond
 !
 !***********************************************************************
-      SUBROUTINE read_state (ng, model, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE read_state (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lwrk, rec,                                 &
      &                       ndef, ncfileid, ncname,                    &
@@ -2728,7 +2725,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lwrk, rec, ndef, ncfileid
 
@@ -2783,7 +2780,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #ifdef SOLVE3D
       integer :: itrc, k

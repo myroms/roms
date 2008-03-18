@@ -35,7 +35,7 @@
       logical :: Lwrite
 
       integer :: Itile, Jtile, Nghost, Ntiles, tile
-      integer :: Istr, Iend, Jstr, Jend
+      integer :: Imin, Imax, Jmin, Jmax
 #ifdef DISTRIBUTE
       integer :: MaxHaloLenI, MaxHaloLenJ
 #endif
@@ -137,21 +137,25 @@
         allocate ( BOUNDS(Ngrids) )
         DO ng=1,Ngrids
           Ntiles=NtileI(ng)*NtileJ(ng)-1
-          allocate ( BOUNDS(ng) % tile (0:Ntiles) )
-          allocate ( BOUNDS(ng) % LBi  (0:Ntiles) )
-          allocate ( BOUNDS(ng) % UBi  (0:Ntiles) )
-          allocate ( BOUNDS(ng) % LBj  (0:Ntiles) )
-          allocate ( BOUNDS(ng) % UBj  (0:Ntiles) )
-          allocate ( BOUNDS(ng) % Iend (0:Ntiles) )
-          allocate ( BOUNDS(ng) % Istr (0:Ntiles) )
-          allocate ( BOUNDS(ng) % Jstr (0:Ntiles) )
-          allocate ( BOUNDS(ng) % Jend (0:Ntiles) )
-          allocate ( BOUNDS(ng) % IstrR(0:Ntiles) )
-          allocate ( BOUNDS(ng) % IstrU(0:Ntiles) )
-          allocate ( BOUNDS(ng) % IendR(0:Ntiles) )
-          allocate ( BOUNDS(ng) % JstrR(0:Ntiles) )
-          allocate ( BOUNDS(ng) % JstrV(0:Ntiles) )
-          allocate ( BOUNDS(ng) % JendR(0:Ntiles) )
+          allocate ( BOUNDS(ng) % tile (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % LBi  (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % UBi  (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % LBj  (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % UBj  (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % Iend (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % Istr (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % Jstr (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % Jend (-1:Ntiles) )
+          allocate ( BOUNDS(ng) % IstrR(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % IstrT(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % IstrU(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % IendR(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % IendT(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % JstrR(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % JstrT(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % JstrV(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % JendR(-1:Ntiles) )
+          allocate ( BOUNDS(ng) % JendT(-1:Ntiles) )
         END DO
       END IF
 !
@@ -159,7 +163,7 @@
 !
       Nghost=GHOST_POINTS
       DO ng=1,Ngrids
-        DO tile=0,NtileI(ng)*NtileJ(ng)-1
+        DO tile=-1,NtileI(ng)*NtileJ(ng)-1
           BOUNDS(ng) % tile(tile) = tile
           CALL get_tile (ng, tile, Itile, Jtile,                        &
      &                   BOUNDS(ng) % Istr(tile),                       &
@@ -167,11 +171,15 @@
      &                   BOUNDS(ng) % Jstr(tile),                       &
      &                   BOUNDS(ng) % Jend(tile),                       &
      &                   BOUNDS(ng) % IstrR(tile),                      &
+     &                   BOUNDS(ng) % IstrT(tile),                      &
      &                   BOUNDS(ng) % IstrU(tile),                      &
      &                   BOUNDS(ng) % IendR(tile),                      &
+     &                   BOUNDS(ng) % IendT(tile),                      &
      &                   BOUNDS(ng) % JstrR(tile),                      &
+     &                   BOUNDS(ng) % JstrT(tile),                      &
      &                   BOUNDS(ng) % JstrV(tile),                      &
-     &                   BOUNDS(ng) % JendR(tile))
+     &                   BOUNDS(ng) % JendR(tile),                      &
+     &                   BOUNDS(ng) % JendT(tile))
           CALL get_bounds (ng, tile, 0, Nghost, Itile, Jtile,           &
      &                     BOUNDS(ng) % LBi(tile),                      &
      &                     BOUNDS(ng) % UBi(tile),                      &
@@ -203,30 +211,39 @@
           END IF
 #endif
           DO tile=0,NtileI(ng)*NtileJ(ng)-1
-            Istr=BOUNDS(ng)%Istr(tile)
-            Iend=BOUNDS(ng)%Iend(tile)
-            Jstr=BOUNDS(ng)%Jstr(tile)
-            Jend=BOUNDS(ng)%Jend(tile)
 #ifdef SOLVE3D
-            npts=(Iend-Istr+1)*(Jend-Jstr+1)*N(ng)
+            npts=(BOUNDS(ng)%Iend(tile)-                                &
+     &            BOUNDS(ng)%Istr(tile)+1)*                             &
+     &           (BOUNDS(ng)%Jend(tile)-                                &
+     &            BOUNDS(ng)%Jstr(tile)+1)*N(ng)
 #else
-            npts=(Iend-Istr+1)*(Jend-Jstr+1)
+            npts=(BOUNDS(ng)%Iend(tile)-                                &
+     &            BOUNDS(ng)%Istr(tile)+1)*                             &
+     &           (BOUNDS(ng)%Jend(tile)-                                &
+     &            BOUNDS(ng)%Jstr(tile)+1)
 #endif
-            WRITE (stdout,70) tile, Istr, Iend, Jstr, Jend, npts
-            IF ((Iend-Istr+1).lt.2) THEN
+            WRITE (stdout,70) tile,                                     &
+     &                        BOUNDS(ng)%Istr(tile),                    &
+     &                        BOUNDS(ng)%Iend(tile),                    &
+     &                        BOUNDS(ng)%Jstr(tile),                    &
+     &                        BOUNDS(ng)%Jend(tile),                    &
+     &                        npts
+            IF ((BOUNDS(ng)%Iend(tile)-                                 &
+     &           BOUNDS(ng)%Istr(tile)+1).lt.2) THEN
               WRITE (stdout,80) ng, 'NtileI = ', NtileI(ng),            &
      &                              'Lm = ', Lm(ng),                    &
-     &                              'Istr = ', Istr,                    &
-     &                              '  Iend = ', Iend,                  &
+     &                              'Istr = ', BOUNDS(ng)%Istr(tile),   &
+     &                              '  Iend = ', BOUNDS(ng)%Iend(tile), &
      &                              'NtileI'
               exit_flag=6
               RETURN
             END IF
-            IF ((Jend-Jstr+1).lt.2) THEN
+            IF ((BOUNDS(ng)%Jend(tile)-                                 &
+     &           BOUNDS(ng)%Jstr(tile)+1).lt.2) THEN
               WRITE (stdout,80) ng, 'NtileJ = ', NtileJ(ng),            &
      &                              'Mm = ', Mm(ng),                    &
-     &                              'Jstr = ', Jstr,                    &
-     &                              '  Jend = ', Jend,                  &
+     &                              'Jstr = ', BOUNDS(ng)%Jstr(tile),   &
+     &                              '  Jend = ', BOUNDS(ng)%Jend(tile), &
      &                              'NtileJ'
               exit_flag=6
               RETURN
@@ -275,10 +292,12 @@
         MaxHaloLenI=0
         MaxHaloLenJ=0
         DO tile=0,NtileI(ng)*NtileJ(ng)-1
-          CALL get_bounds (ng, tile, 0, Nghost, Itile, Jtile,            &
-     &                     Istr, Iend, Jstr, Jend)
-          MaxHaloLenI=MAX(MaxHaloLenI,(Iend-Istr+1))
-          MaxHaloLenJ=MAX(MaxHaloLenJ,(Jend-Jstr+1))
+          Imin=BOUNDS(ng)%LBi(tile)-1
+          Imax=BOUNDS(ng)%UBi(tile)+1
+          Jmin=BOUNDS(ng)%LBj(tile)-1
+          Jmax=BOUNDS(ng)%UBj(tile)+1
+          MaxHaloLenI=MAX(MaxHaloLenI,(Imax-Imin+1))
+          MaxHaloLenJ=MAX(MaxHaloLenJ,(Jmax-Jmin+1))
         END DO
         HaloSizeI(ng)=Nghost*MaxHaloLenI+6*Nghost
         HaloSizeJ(ng)=Nghost*MaxHaloLenJ+6*Nghost
@@ -441,6 +460,7 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_coupler
       USE mod_iounits
       USE mod_scalars
 
@@ -459,13 +479,14 @@
 !
       logical :: Lwrite
 
-      integer :: Npts, Nval, i, inp, ng, out, status
+      integer :: Npts, Nval, i, ic, j, inp, ng, out, status
 
       integer :: decode_line, load_i, load_r
 
       real(r8), dimension(100) :: Rval
 
-      character (len=1 ), parameter :: blank = ' '
+      real(r8), allocatable :: MyRval(:)
+
       character (len=40) :: KeyWord
       character (len=80) :: Cname
       character (len=160) :: line
@@ -522,33 +543,175 @@
         READ (inp,'(a)',ERR=40,END=50) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
         IF (status.gt.0) THEN
-          IF (TRIM(KeyWord).eq.'VARNAME') THEN
-            DO i=1,LEN(USRname)
-              varname(i:i)=blank
+          IF (TRIM(KeyWord).eq.'Nmodels') THEN
+            Npts=load_i(Nval, Rval, 1, Nmodels)
+            IF (.not.allocated(MyRval) ) THEN
+              allocate ( MyRval(Nmodels) )
+            END IF
+            IF (.not.allocated(OrderLabel) ) THEN
+              allocate ( OrderLabel(Nmodels) )
+            END IF
+            IF (.not.allocated(Nthreads) ) THEN
+              allocate ( Nthreads(Nmodels) )
+              Nthreads=0
+            END IF
+            IF (.not.allocated(TimeInterval) ) THEN
+              allocate ( TimeInterval(Nmodels,Nmodels) )
+              TimeInterval=0.0_r8
+            END IF
+            IF (.not.allocated(INPname) ) THEN
+              allocate ( INPname(Nmodels) )
+            END IF
+            IF (.not.allocated(Nexport) ) THEN
+              allocate ( Nexport(Nmodels) )
+              Nexport=0
+            END IF
+            IF (.not.allocated(Nimport) ) THEN
+              allocate ( Nimport(Nmodels) )
+              Nimport=0
+            END IF
+            IF (.not.allocated(Export)) THEN
+              allocate ( Export(Nmodels) )
+            END IF
+            IF (.not.allocated(Import)) THEN
+              allocate ( Import(Nmodels) )
+            END IF
+         ELSE IF (TRIM(KeyWord).eq.'OrderLabel') THEN
+            DO i=1,Nmodels
+              IF (i.eq.Nval) THEN
+                OrderLabel(i)=TRIM(ADJUSTL(Cval(Nval)))
+                IF (INDEX(TRIM(OrderLabel(i)),'ocean').ne.0) THEN
+                  Iocean=i
+                ELSE IF (INDEX(TRIM(OrderLabel(i)),'waves').ne.0) THEN
+                  Iwaves=i
+                ELSE IF (INDEX(TRIM(OrderLabel(i)),'atmos').ne.0) THEN
+                  Iatmos=i
+                END IF
+              END IF  
             END DO
-            varname=TRIM(ADJUSTL(Cval(Nval)))
-          ELSE IF (TRIM(KeyWord).eq.'NnodesATM') THEN
-            Npts=load_i(Nval, Rval, 1, NnodesATM)
-          ELSE IF (TRIM(KeyWord).eq.'NnodesWAV') THEN
-            Npts=load_i(Nval, Rval, 1, NnodesWAV)
-          ELSE IF (TRIM(KeyWord).eq.'NnodesOCN') THEN
-            Npts=load_i(Nval, Rval, 1, NnodesOCN)
-          ELSE IF (TRIM(KeyWord).eq.'TI_ATM_WAV') THEN
-            Npts=load_r(Nval, Rval, 1, TI_ATM_WAV)
-          ELSE IF (TRIM(KeyWord).eq.'TI_ATM_OCN') THEN
-            Npts=load_r(Nval, Rval, 1, TI_ATM_OCN)
-          ELSE IF (TRIM(KeyWord).eq.'TI_WAV_OCN') THEN
-            Npts=load_r(Nval, Rval, 1, TI_WAV_OCN)
-          ELSE IF (TRIM(KeyWord).eq.'OCN_name') THEN
-            DO i=1,LEN(Iname)
-              Iname(i:i)=blank
+          ELSE IF (TRIM(KeyWord).eq.'Nthreads(ocean)') THEN
+            IF ((0.lt.Iocean).and.(Iocean.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nthreads(Iocean))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Nthreads(waves)') THEN
+            IF ((0.lt.Iwaves).and.(Iwaves.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nthreads(Iwaves))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Nthreads(waves)') THEN
+            IF ((0.lt.Iatmos).and.(Iatmos.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nthreads(Iatmos))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'TimeInterval') THEN
+            Npts=load_i(Nval, Rval, Nmodels, MyRval)
+            ic=0
+            DO j=1,Nmodels
+              DO i=1,Nmodels
+                IF (i.gt.j) THEN
+                  ic=ic+1
+                  TimeInterval(i,j)=MyRval(ic)
+                  TimeInterval(j,i)=MyRval(ic)
+                END IF
+              END DO
             END DO
-            Iname=TRIM(ADJUSTL(Cval(Nval)))
-          ELSE IF (TRIM(KeyWord).eq.'WAV_name') THEN
-            DO i=1,LEN(Wname)
-              Wname(i:i)=blank
-            END DO
-            Wname=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'INPname(ocean)') THEN
+            IF ((0.lt.Iocean).and.(Iocean.le.Nmodels)) THEN
+              INPname(Iocean)=TRIM(ADJUSTL(Cval(Nval)))
+              Iname=TRIM(INPname(Iocean))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'INPname(waves)') THEN
+            IF ((0.lt.Iwaves).and.(Iwaves.le.Nmodels)) THEN
+              INPname(Iwaves)=TRIM(ADJUSTL(Cval(Nval)))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'INPname(atmos)') THEN
+            IF ((0.lt.Iatmos).and.(Iatmos.le.Nmodels)) THEN
+              INPname(Iatmos)=TRIM(ADJUSTL(Cval(Nval)))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'CPLname') THEN
+            CPLname=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'Nexport(ocean)') THEN
+            IF ((0.lt.Iocean).and.(Iocean.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nexport(Iocean))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Nexport(waves)') THEN
+            IF ((0.lt.Iwaves).and.(Iwaves.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nexport(Iwaves))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Nexport(atmos)') THEN
+            IF ((0.lt.Iatmos).and.(Iatmos.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nexport(Iatmos))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Export(ocean)') THEN
+            IF ((0.lt.Iocean).and.(Iocean.le.Nmodels)) THEN
+              IF (.not.allocated(Export(Iocean)%code)) THEN
+                allocate ( Export(Iocean)%code(Nexport(Iocean)) )
+                Export(Iocean)%code=' '
+              END IF
+              IF (Nval.le.Nexport(Iocean)) THEN
+                Export(Iocean)%code(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+              END IF
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Export(waves)') THEN
+            IF ((0.lt.Iwaves).and.(Iwaves.le.Nmodels)) THEN
+              IF (.not.allocated(Export(Iwaves)%code)) THEN
+                allocate ( Export(Iwaves)%code(Nexport(Iwaves)) )
+                Export(Iwaves)%code=' '
+              END IF
+              IF (Nval.le.Nexport(Iwaves)) THEN
+                Export(Iwaves)%code(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+              END IF
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Export(atmos)') THEN
+            IF ((0.lt.Iatmos).and.(Iatmos.le.Nmodels)) THEN
+              IF (.not.allocated(Export(Iatmos)%code)) THEN
+                allocate ( Export(Iatmos)%code(Nexport(Iatmos)) )
+                Export(Iatmos)%code=' '
+              END IF
+              IF (Nval.le.Nexport(Iatmos)) THEN
+                Export(Iatmos)%code(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+              END IF
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Nimport(ocean)') THEN
+            IF ((0.lt.Iocean).and.(Iocean.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nimport(Iocean))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Nimport(waves)') THEN
+            IF ((0.lt.Iwaves).and.(Iwaves.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nimport(Iwaves))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Nimport(atmos)') THEN
+            IF ((0.lt.Iatmos).and.(Iatmos.le.Nmodels)) THEN
+              Npts=load_i(Nval, Rval, 1, Nimport(Iatmos))
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Import(ocean)') THEN
+            IF ((0.lt.Iocean).and.(Iocean.le.Nmodels)) THEN
+              IF (.not.allocated(Import(Iocean)%code)) THEN
+                allocate ( Import(Iocean)%code(Nimport(Iocean)) )
+                Import(Iocean)%code=' '
+              END IF
+              IF (Nval.le.Nimport(Iocean)) THEN
+                Import(Iocean)%code(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+              END IF
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Import(waves)') THEN
+            IF ((0.lt.Iwaves).and.(Iwaves.le.Nmodels)) THEN
+              IF (.not.allocated(Import(Iwaves)%code)) THEN
+                allocate ( Import(Iwaves)%code(Nimport(Iwaves)) )
+                Import(Iwaves)%code=' '
+              END IF
+              IF (Nval.le.Nimport(Iwaves)) THEN
+                Import(Iwaves)%code(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+              END IF
+            END IF
+          ELSE IF (TRIM(KeyWord).eq.'Import(atmos)') THEN
+            IF ((0.lt.Iatmos).and.(Iatmos.le.Nmodels)) THEN
+              IF (.not.allocated(Import(Iatmos)%code)) THEN
+                allocate ( Import(Iatmos)%code(Nimport(Iatmos)) )
+                Import(Iatmos)%code=' '
+              END IF
+              IF (Nval.le.Nimport(Iatmos)) THEN
+                Import(Iatmos)%code(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+              END IF
+            END IF
           END IF
         END IF
       END DO
@@ -784,7 +947,7 @@
             Npts=load_r(Nval, Rval, Ngrids, dt)
 #ifdef AIR_OCEAN
             DO ng=1,Ngrids
-              nOCN_ATM(ng)=MIN(1,INT(TI_ATM_OCN/dt(ng)))
+              nOCN_ATM(ng)=MAX(1,INT(TI_ATM_OCN/dt(ng)))
             END DO
 #endif
 #ifdef WAVES_OCEAN

@@ -65,7 +65,7 @@
       CALL wclock_on (ng, iNLM, 2)
 # endif
 # ifdef ASSIMILATION_SSH
-      CALL oi_ssh_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL oi_ssh_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  knew(ng),                                       &
 #  ifdef MASKING
@@ -78,7 +78,7 @@
 # endif
 
 # ifdef ASSIMILATION_T
-      CALL oi_trc_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL oi_trc_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  nnew(ng),                                       &
 #  ifdef MASKING
@@ -91,7 +91,7 @@
 # endif
 
 # if defined ASSIMILATION_UV || defined ASSIMILATION_UVsur
-      CALL oi_vel_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL oi_vel_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  knew(ng), nnew(ng),                             &
 #  ifdef MASKING
@@ -120,7 +120,7 @@
 # ifdef ASSIMILATION_SSH
 !
 !***********************************************************************
-      SUBROUTINE oi_ssh_tile (ng, Istr, Iend, Jstr, Jend,               &
+      SUBROUTINE oi_ssh_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        knew,                                     &
 #  ifdef MASKING
@@ -137,7 +137,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
 !
@@ -163,14 +163,13 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
       real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: arg, cff, cff1, cff2, delta
       real(r8) :: decay, mu, ratio, Aweight
-!
+
 #  include "set_bounds.h"
 !
 !---------------------------------------------------------------------
@@ -239,7 +238,7 @@
 # ifdef ASSIMILATION_T
 !
 !***********************************************************************
-      SUBROUTINE oi_trc_tile (ng, Istr, Iend, Jstr, Jend,               &
+      SUBROUTINE oi_trc_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        nnew,                                     &
 #  ifdef MASKING
@@ -256,7 +255,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nnew
 !
@@ -282,14 +281,13 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
       real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: arg, cff, cff1, cff2, delta
       real(r8) :: decay, mu, ratio, Aweight
-!
+
 # include "set_bounds.h"
 !
 !---------------------------------------------------------------------
@@ -373,7 +371,7 @@
 # if defined ASSIMILATION_UV || defined ASSIMILATION_UVsur
 !
 !***********************************************************************
-      SUBROUTINE oi_vel_tile (ng, Istr, Iend, Jstr, Jend,               &
+      SUBROUTINE oi_vel_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        knew, nnew,                               &
 #  ifdef MASKING
@@ -394,7 +392,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew, nnew
 !
@@ -438,7 +436,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8), parameter :: eps = 1.0E-4_r8

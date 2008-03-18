@@ -245,7 +245,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 36)
 # endif
-      CALL atmos_coupling_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL atmos_coupling_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nrhs(ng),                               &
      &                          GRID(ng) % angler,                      &
@@ -259,7 +259,7 @@
       END SUBROUTINE atmos_coupling
 !
 !***********************************************************************
-      SUBROUTINE atmos_coupling_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE atmos_coupling_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                nrhs,                             &
      &                                angler,                           &
@@ -283,7 +283,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 !
@@ -316,7 +316,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: MyStatus, RealType, i, j
 
       integer :: DomainDesc = 0
@@ -465,10 +464,10 @@
 !  Apply periodic boundary conditions.
 !-----------------------------------------------------------------------
 !
-      CALL exchange_u2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        sustr)
-      CALL exchange_v2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,         &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        svstr)
 #endif
@@ -478,7 +477,7 @@
 !  Exchange tile boundaries.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    sustr, svstr)

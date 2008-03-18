@@ -54,7 +54,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 5)
 # endif
-      CALL set_avg_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL set_avg_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
      &                   NTC(ng),                                       &
@@ -255,7 +255,7 @@
       END SUBROUTINE set_avg
 !
 !***********************************************************************
-      SUBROUTINE set_avg_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE set_avg_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
      &                         NTC,                                     &
@@ -396,7 +396,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kout
 # ifdef SOLVE3D
@@ -794,7 +794,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       integer :: mk, nk

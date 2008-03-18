@@ -35,7 +35,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE mpdata_adiff_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              ILB, IUB, JLB, JUB,                 &
      &                              nrhs,                               &
@@ -58,7 +58,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: ILB, IUB, JLB, JUB
       Integer, intent(in) :: nrhs
@@ -139,6 +139,8 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: beta_dn
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: beta_up
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: odz
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Compute anti-diffusive MPDATA velocities (Ua,Va,Wa).

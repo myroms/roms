@@ -38,7 +38,7 @@
 !
 # include "tile.h"
 !
-      CALL tkebc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL tkebc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj, N(ng),                       &
      &                 nout, nstp(ng),                                  &
      &                 MIXING(ng)% gls,                                 &
@@ -47,7 +47,7 @@
       END SUBROUTINE tkebc
 !
 !***********************************************************************
-      SUBROUTINE tkebc_tile (ng, Istr, Iend, Jstr, Jend,                &
+      SUBROUTINE tkebc_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj, UBk,                   &
      &                       nout, nstp,                                &
      &                       gls, tke)
@@ -59,7 +59,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk
       integer, intent(in) :: nout, nstp
 !
@@ -73,7 +73,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8), parameter :: eps = 1.0e-20_r8

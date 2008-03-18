@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets analytical tracer and mass point Sources       !
@@ -29,7 +28,8 @@
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
 !
-      CALL ana_psource_grid (ng, model, LBi, UBi, LBj, UBj,             &
+      CALL ana_psource_grid (ng, tile, model,                           &
+     &                       LBi, UBi, LBj, UBj,                        &
      &                       nnew(ng), knew(ng), Nsrc(ng),              &
      &                       OCEAN(ng) % zeta,                          &
      &                       OCEAN(ng) % ubar,                          &
@@ -67,7 +67,8 @@
       END SUBROUTINE ana_psource
 !
 !***********************************************************************
-      SUBROUTINE ana_psource_grid (ng, model, LBi, UBi, LBj, UBj,       &
+      SUBROUTINE ana_psource_grid (ng, tile, model,                     &
+     &                             LBi, UBi, LBj, UBj,                  &
      &                             nnew, knew, Nsrc,                    &
      &                             zeta, ubar, vbar,                    &
 #ifdef SOLVE3D
@@ -97,7 +98,8 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, LBi, UBi, LBj, UBj
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nnew, knew
 
       integer, intent(out) :: Nsrc
@@ -166,10 +168,16 @@
 !
       integer :: is, i, j, k, ised
       real(r8) :: fac, my_area, ramp
+
+#include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Set tracer and/or mass point sources and/or sink.
 !-----------------------------------------------------------------------
+!
+!  HGA:  This routine has several parallel bugs.  There is also
+!        reductions.  This applications can only be run serially
+!        and with not domain partions for now, 09/09/07.
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
 !
@@ -236,11 +244,14 @@
           DO is=1,Nsrc
             i=Isrc(is)
             j=Jsrc(is)
-            Qshape(is,k)=ABS(u(i,j,k,nnew)/ubar(i,j,knew))*             &
-     &                   (z_w(i-1,Mm(ng)/2,k)-z_w(i-1,Mm(ng)/2,k-1)+    &
-     &                    z_w(i  ,Mm(ng)/2,k)-z_w(i  ,Mm(ng)/2,k-1))/   &
-     &                   (z_w(i-1,Mm(ng)/2,N(ng))-z_w(i-1,Mm(ng)/2,0)+  &
-     &                    z_w(i  ,Mm(ng)/2,N(ng))-z_w(i  ,Mm(ng)/2,0))
+            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
+     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              Qshape(is,k)=ABS(u(i,j,k,nnew)/ubar(i,j,knew))*           &
+     &                     (z_w(i-1,j,k    )-z_w(i-1,j,k-1)+            &
+     &                      z_w(i  ,j,k    )-z_w(i  ,j,k-1))/           &
+     &                     (z_w(i-1,j,N(ng))-z_w(i-1,j,0  )+            &
+     &                      z_w(i  ,j,N(ng))-z_w(i  ,j,0  ))
+            END IF
           END DO
         END DO
 #  elif defined RIVERPLUME2
@@ -248,11 +259,14 @@
           DO is=1,Nsrc-1
             i=Isrc(is)
             j=Jsrc(is)
-            Qshape(is,k)=ABS(v(i,j,k,nnew)/vbar(i,j,knew))*             &
-     &                   (z_w(i,j-1,k)-z_w(i,j-1,k-1)+                  &
-     &                    z_w(i  ,j,k)-z_w(i  ,j,k-1))/                 &
-     &                   (z_w(i,j-1,N(ng))-z_w(i,j-1,0)+                &
-     &                    z_w(i  ,j,N(ng))-z_w(i  ,j,0))
+            IF (((IstrR.le.i).and.(i.le.IendR)).and.                    &
+     &          ((JstrR.le.j).and.(j.le.JendR))) THEN
+              Qshape(is,k)=ABS(v(i,j,k,nnew)/vbar(i,j,knew))*           &
+     &                     (z_w(i,j-1,k)-z_w(i,j-1,k-1)+                &
+     &                      z_w(i  ,j,k)-z_w(i  ,j,k-1))/               &
+     &                     (z_w(i,j-1,N(ng))-z_w(i,j-1,0)+              &
+     &                      z_w(i  ,j,N(ng))-z_w(i  ,j,0))
+            END IF
           END DO
           Qshape(Nsrc,k)=1.0_r8/REAL(N(ng),r8)
         END DO
@@ -282,15 +296,22 @@
       DO is=1,(Nsrc-1)/2                     ! North end
         i=Isrc(is)
         j=Jsrc(is)
-        Qbar(is)=-0.05_r8*om_v(i,j)*(0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+ &
-     &                                       zeta(i  ,j,knew)+h(i  ,j)))
+        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
+     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+          Qbar(is)=-0.05_r8*om_v(i,j)*                                  &
+     &             (0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+                  &
+     &                      zeta(i  ,j,knew)+h(i  ,j)))
+        END IF
       END DO
-      ! South End
       DO is=(Nsrc-1)/2+1,Nsrc-1              ! South end
         i=Isrc(is)
         j=Jsrc(is)
-        Qbar(is)=-0.05_r8*om_v(i,j)*(0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+ &
-     &                                       zeta(i  ,j,knew)+h(i  ,j)))
+        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
+     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+          Qbar(is)=-0.05_r8*om_v(i,j)*                                  &
+     &             (0.5_r8*(zeta(i,j-1,knew)+h(i,j-1)+                  &
+     &                      zeta(i  ,j,knew)+h(i  ,j)))
+        END IF
       END DO
       Qbar(Nsrc)=1500.0_r8                   ! West wall
 # elif defined SED_TEST1
@@ -298,31 +319,44 @@
       DO is=1,Nsrc/2
         i=Isrc(is)
         j=Jsrc(is)
-        my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
-     &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
+        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
+     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+          my_area=my_area+                                              &
+     &            0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+                    &
+     &                    zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
+        END IF
       END DO
       fac=-36.0_r8*10.0_r8*1.0_r8
       DO is=1,Nsrc/2
         i=Isrc(is)
         j=Jsrc(is)
-        Qbar(is)=fac*(0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+                &
-     &                        zeta(i  ,j,knew)+h(i  ,j)))*              &
-     &           on_u(i,j)/my_area
+        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
+     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+          Qbar(is)=fac*(0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
+     &                          zeta(i  ,j,knew)+h(i  ,j)))*            &
+     &             on_u(i,j)/my_area
+        END IF
       END DO
       my_area=0.0_r8                         ! East end
       DO is=Nsrc/2+1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)
-        my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
-     &                          zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
+        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
+     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+          my_area=my_area+0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+            &
+     &                            zeta(i  ,j,knew)+h(i  ,j))*on_u(i,j)
+        END IF
       END DO
       fac=-36.0_r8*10.0_r8*1.0_r8
       DO is=Nsrc/2+1,Nsrc
         i=Isrc(is)
         j=Jsrc(is)
-        Qbar(is)=fac*(0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+                &
-     &                        zeta(i  ,j,knew)+h(i  ,j)))*              &
-     &           on_u(i,j)/my_area
+        IF (((IstrR.le.i).and.(i.le.IendR)).and.                        &
+     &      ((JstrR.le.j).and.(j.le.JendR))) THEN
+          Qbar(is)=fac*(0.5_r8*(zeta(i-1,j,knew)+h(i-1,j)+              &
+     &                          zeta(i  ,j,knew)+h(i  ,j)))*            &
+     &             on_u(i,j)/my_area
+        END IF
       END DO
 # else
       ana_psource.h: No values provided for Qbar.

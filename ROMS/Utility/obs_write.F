@@ -1,6 +1,6 @@
 #include "cppdefs.h"
 #if (defined FOUR_DVAR || defined VERIFICATION) && defined OBSERVATIONS
-      SUBROUTINE obs_write (ng, model)
+      SUBROUTINE obs_write (ng, tile, model)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -36,15 +36,12 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model
+      integer, intent(in) :: ng, tile, model
 !
 !  Local variable declarations.
 !
       logical :: Lwrote
-
       integer :: LBi, UBi, LBj, UBj
-      integer :: Istr, Iend, Jstr, Jend
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Mstr, Mend, ObsSum, ObsVoid
       integer :: i, ie, is, iobs, itrc, iweight, status, varid
 # ifdef SOLVE3D
@@ -60,6 +57,8 @@
       real(r8) :: misfit(Mobs)
 
       character (len=50) :: string
+
+# include "set_bounds.h"
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -71,21 +70,6 @@
 !-----------------------------------------------------------------------
 !
       IF (ProcessObs(ng)) THEN
-!
-!  Get physical non-overlapping horizontal tile bounds.
-!
-# ifdef DISTRIBUTE
-        Istr=BOUNDS(ng)%Istr(MyRank)
-        Iend=BOUNDS(ng)%Iend(MyRank)
-        Jstr=BOUNDS(ng)%Jstr(MyRank)
-        Jend=BOUNDS(ng)%Jend(MyRank)
-# else
-        Istr=1
-        Iend=Lm(ng)
-        Jstr=1
-        Jend=Mm(ng)
-# endif
-# include "set_bounds.h"
 !
 !  Set starting and ending indices of observations to process for the
 !  current time survey. In weak constraint, the entire observation

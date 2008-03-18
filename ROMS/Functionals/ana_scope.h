@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets analytical adjoint sensitivity spatial scope   !
@@ -23,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_scope_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL ana_scope_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
 #ifdef MASKING
      &                     GRID(ng) % rmask,                            &
@@ -44,7 +43,7 @@
       END SUBROUTINE ana_scope
 !
 !***********************************************************************
-      SUBROUTINE ana_scope_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE ana_scope_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
@@ -64,7 +63,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -101,7 +100,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Imin, Imax, Jmin, Jmax, i, j
       real(r8) :: scope(PRIVATE_2D_SCRATCH_ARRAY)
 
@@ -170,18 +168,18 @@
 !-----------------------------------------------------------------------
 !
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Rscope)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Uscope)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Vscope)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Rscope, Uscope, Vscope)

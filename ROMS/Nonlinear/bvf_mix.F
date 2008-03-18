@@ -38,7 +38,7 @@
 !
 # include "tile.h"
 !
-      CALL bvf_mix_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL bvf_mix_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   MIXING(ng) % bvf,                              &
      &                   MIXING(ng) % AKt,                              &
@@ -47,7 +47,7 @@
       END SUBROUTINE bvf_mix
 !
 !***********************************************************************
-      SUBROUTINE bvf_mix_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE bvf_mix_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         bvf, Akt, Akv)
 !***********************************************************************
@@ -64,7 +64,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -94,6 +94,8 @@
       integer :: i, itrc, j, k
 
       real(r8) :: cff
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Set tracer diffusivity as function of the Brunt-vaisala frequency.
@@ -135,21 +137,21 @@
 !
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        Akv)
       DO itrc=1,NAT
-        CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_w3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 0, N(ng),           &
      &                          Akt(:,:,:,itrc))
       END DO
 #  endif
 #  ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Akv)
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng), 1, NAT,         &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Akt)

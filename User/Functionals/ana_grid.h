@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets model grid using an analytical expressions.       !
@@ -44,7 +43,7 @@
 
 #include "tile.h"
 !
-      CALL ana_grid_tile (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL ana_grid_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % angler,                            &
 #if defined CURVGRID && defined UV_ADV
@@ -88,7 +87,7 @@
       END SUBROUTINE ana_grid
 !
 !***********************************************************************
-      SUBROUTINE ana_grid_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ana_grid_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          angler,                                 &
 #if defined CURVGRID && defined UV_ADV
@@ -123,7 +122,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -207,7 +206,6 @@
 # endif
 #endif
       integer :: Imin, Imax, Jmin, Jmax
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j, k
 
       real(r8) :: Esize, Xsize, beta, depth
@@ -219,7 +217,7 @@
 #endif
       real(r8) :: wrkX(PRIVATE_2D_SCRATCH_ARRAY)
       real(r8) :: wrkY(PRIVATE_2D_SCRATCH_ARRAY)
-!
+
 #include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
@@ -295,11 +293,11 @@
       END DO
 
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 4, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 4,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, .FALSE., .FALSE.,               &
      &                    xp, xr, xu, xv)
-      CALL mp_exchange2d (ng, model, 4, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 4,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, .FALSE., .FALSE.,               &
      &                    yp, yr, yu, yv)
@@ -330,15 +328,15 @@
       END DO
 
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        pm)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        pn)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    pm, pn)
@@ -359,15 +357,15 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        dndx)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        dmde)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    dndx, dmde)
@@ -392,12 +390,12 @@
       END DO
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        angler)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    angler)
@@ -422,12 +420,12 @@
       END DO
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        f)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    f)
@@ -451,12 +449,12 @@
       END DO
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        h)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    h)
@@ -518,12 +516,12 @@
       ana_grid.h: No value provided for zice.
 # endif
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        zice)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    zice)

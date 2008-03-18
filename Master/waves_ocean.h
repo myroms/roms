@@ -88,10 +88,10 @@
 !
       MyKey=0
       IF ((peOCN_frst.le.MyRank).and.(MyRank.le.peOCN_last)) THEN
-        MyColor=OCNid
+        MyColor=Iocean
       END IF
       IF ((peWAV_frst.le.MyRank).and.(MyRank.le.peWAV_last)) THEN
-        MyColor=WAVid
+        MyColor=Iwaves
       END IF
       CALL mpi_comm_split (MPI_COMM_WORLD, MyColor, MyKey, MyCOMM,      &
      &                     MyError)
@@ -110,20 +110,20 @@
 !-----------------------------------------------------------------------
 !
 #ifdef SWAN_COUPLING
-      IF (MyColor.eq.WAVid) THEN
-        CALL SWAN_INITIALIZE (MyCOMM, Wname)
+      IF (MyColor.eq.Iwaves) THEN
+        CALL SWAN_INITIALIZE (MyCOMM, INPname(Iwave))
         CALL SWAN_RUN (REAL(TI_WAV_OCN))
         CALL SWAN_FINALIZE
       END IF
 #endif
 #ifdef REFDIF_COUPLING
-      IF (MyColor.eq.WAVid) THEN
+      IF (MyColor.eq.Iwaves) THEN
         CALL refdif_initialize (MyCOMM)
-        CALL refdif_run (REAL(TI_WAV_OCN), Wname)
+        CALL refdif_run (REAL(TI_WAV_OCN), INPname(Iwave))
         CALL refdif_finalize
       END IF
 #endif
-      IF (MyColor.eq.OCNid) THEN
+      IF (MyColor.eq.Iocean) THEN
         first=.TRUE.
         Nrun=1
         IF (exit_flag.eq.NoError) THEN

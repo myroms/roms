@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets 2D momentum open boundary conditions using        !
@@ -25,7 +24,7 @@
 
 #include "tile.h"
 !    
-      CALL ana_m2obc_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL ana_m2obc_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     knew(ng),                                    &
      &                     GRID(ng) % angler,                           &
@@ -48,7 +47,7 @@
       END SUBROUTINE ana_m2obc
 !
 !***********************************************************************
-      SUBROUTINE ana_m2obc_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE ana_m2obc_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           knew,                                  &
      &                           angler, h, pm, pn, on_u,               &
@@ -65,7 +64,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
 !
@@ -93,7 +92,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 #include "set_bounds.h"

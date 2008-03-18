@@ -38,7 +38,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iNLM, 15)
 #endif
-      CALL biology_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL biology_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
      &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
@@ -56,7 +56,7 @@
       END SUBROUTINE biology
 !
 !-----------------------------------------------------------------------
-      SUBROUTINE biology_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE biology_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
      &                         nstp, nnew,                              &
 #ifdef MASKING
@@ -73,7 +73,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
       integer, intent(in) :: nstp, nnew
 
@@ -99,7 +99,6 @@
 !
       integer, parameter :: Nsink = 1
 
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iter, i, ibio, isink, itrc, itrmx, j, k, ks
 
       integer, dimension(Nsink) :: idsink

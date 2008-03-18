@@ -57,7 +57,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 18)
 # endif
-      CALL lmd_vmix_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL lmd_vmix_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    nstp(ng),                                     &
      &                    GRID(ng) % Hz,                                &
@@ -88,7 +88,7 @@
       END SUBROUTINE lmd_vmix
 !
 !***********************************************************************
-      SUBROUTINE lmd_vmix_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE lmd_vmix_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp,                                   &
      &                          Hz,                                     &
@@ -107,7 +107,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       Integer, intent(in) :: nstp
 !
@@ -147,7 +147,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
       real(r8), parameter :: eps = 1.0E-14_r8
@@ -442,7 +441,7 @@
 !
 # include "tile.h"
 !
-      CALL lmd_finish_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL lmd_finish_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nstp(ng),                                   &
      &                      GRID(ng) % Hz,                              &
@@ -456,7 +455,7 @@
       END SUBROUTINE lmd_finish
 !
 !***********************************************************************
-      SUBROUTINE lmd_finish_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE lmd_finish_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            nstp,                                 &
      &                            Hz,                                   &
@@ -476,7 +475,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       Integer, intent(in) :: nstp
 !
@@ -514,7 +513,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
       real(r8), parameter :: eps = 1.0E-14_r8
@@ -560,20 +558,20 @@
 !
 !  Apply boundary conditions.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_w3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
      &                  Akv)
       DO itrc=1,NAT
-        CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_w3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    Akt(:,:,:,itrc))
       END DO
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Akv)
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng), 1, NAT,         &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Akt)

@@ -27,7 +27,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 4)
 # endif
-      CALL set_data_tile (ng, tile, Istr, Iend, Jstr, Jend,             &
+      CALL set_data_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 4)
@@ -36,7 +36,7 @@
       END SUBROUTINE set_data
 !
 !***********************************************************************
-      SUBROUTINE set_data_tile (ng, tile, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE set_data_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
@@ -90,7 +90,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Istr, Iend, Jstr, Jend
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
@@ -112,7 +112,6 @@
 # ifdef OBC
       integer :: ILB, IUB, JLB, JUB
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k, order
 
       real(r8) :: Zr, cff, cff1, cff2
@@ -135,7 +134,7 @@
 #   ifdef ANA_CLOUD
       CALL ana_cloud (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idCfra,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idCfra,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%cloudG,                           &
      &                     FORCES(ng)%cloud,                            &
@@ -153,7 +152,7 @@
 #   ifdef ANA_TAIR
       CALL ana_tair (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idTair,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idTair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%TairG,                            &
      &                     FORCES(ng)%Tair,                             &
@@ -171,7 +170,7 @@
 #   ifdef ANA_HUMIDITY
       CALL ana_humid (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idQair,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idQair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%HairG,                            &
      &                     FORCES(ng)%Hair,                             &
@@ -188,7 +187,7 @@
 #   ifdef ANA_SRFLUX
       CALL ana_srflux (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSrad,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idSrad,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%srflxG,                           &
      &                     FORCES(ng)%srflx,                            &
@@ -209,7 +208,7 @@
 !  Surface net longwave radiation (degC m/s).
 !-----------------------------------------------------------------------
 !
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idLrad,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idLrad,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%lrflxG,                           &
      &                     FORCES(ng)%lrflx,                            &
@@ -222,7 +221,7 @@
 !  Surface downwelling longwave radiation (degC m/s).
 !-----------------------------------------------------------------------
 !
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idLdwn,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idLdwn,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%lrflxG,                           &
      &                     FORCES(ng)%lrflx,                            &
@@ -238,7 +237,7 @@
 #   ifdef ANA_PAIR
       CALL ana_pair (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idPair,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idPair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%PairG,                            &
      &                     FORCES(ng)%Pair,                             &
@@ -254,12 +253,12 @@
 #   ifdef ANA_WINDS
       CALL ana_winds (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUair,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idUair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%UwindG,                           &
      &                     FORCES(ng)%Uwind,                            &
      &                     update)
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVair,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idVair,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%VwindG,                           &
      &                     FORCES(ng)%Vwind,                            &
@@ -283,15 +282,15 @@
           END DO
         END DO
 #     if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%UWind)
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%VWind)
 #     endif
 #     ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      FORCES(ng)%UWind,                           &
@@ -311,7 +310,7 @@
 #   ifdef ANA_RAIN
       CALL ana_rain (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idrain,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idrain,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%rainG,                            &
      &                     FORCES(ng)%rain,                             &
@@ -328,8 +327,7 @@
 #   ifdef ANA_STFLUX
       CALL ana_stflux (ng, tile, iNLM, itemp)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
-     &                     idTsur(itemp),                               &
+      CALL set_2dfld_tile (ng, tile, iNLM, idTsur(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%stflxG(:,:,:,itemp),              &
      &                     FORCES(ng)%stflx (:,:,itemp),                &
@@ -347,12 +345,12 @@
 #   ifdef ANA_SST
       CALL ana_sst (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSSTc,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idSSTc,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%sstG,                             &
      &                     FORCES(ng)%sst,                              &
      &                     update)
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, iddQdT,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, iddQdT,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%dqdtG,                            &
      &                     FORCES(ng)%dqdt,                             &
@@ -367,8 +365,7 @@
 #  ifdef ANA_BTFLUX
       CALL ana_btflux (ng, tile, iNLM, itemp)
 #  else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
-     &                     idTbot(itemp),                               &
+      CALL set_2dfld_tile (ng, tile, iNLM, idTbot(itemp),               &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%btflxG(:,:,:,itemp),              &
      &                     FORCES(ng)%btflx (:,:,itemp),                &
@@ -385,8 +382,7 @@
       CALL ana_stflux (ng, tile, iNLM, isalt)
 #   else
 #   if !(defined EMINUSP || defined SRELAXATION)
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
-     &                     idsfwf,                                      &
+      CALL set_2dfld_tile (ng, tile, iNLM, idsfwf,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%stflxG(:,:,:,isalt),              &
      &                     FORCES(ng)%stflx (:,:,isalt),                &
@@ -403,7 +399,7 @@
 #    ifdef ANA_SSS
       CALL ana_sss (ng, tile, iNLM)
 #    else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSSSc,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idSSSc,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%sssG,                             &
      &                     FORCES(ng)%sss,                              &
@@ -418,8 +414,7 @@
 #   ifdef ANA_BSFLUX
       CALL ana_btflux (ng, tile, iNLM, isalt)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
-     &                     idTbot(isalt),                               &
+      CALL set_2dfld_tile (ng, tile, iNLM, idTbot(isalt),               &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%btflxG(:,:,:,isalt),              &
      &                     FORCES(ng)%btflx (:,:,isalt),                &
@@ -437,8 +432,7 @@
 #   ifdef ANA_SPFLUX
         CALL ana_stflux (ng, tile, iNLM, itrc)
 #   else
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,          &
-     &                       idTsur(itrc),                              &
+        CALL set_2dfld_tile (ng, tile, iNLM, idTsur(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       FORCES(ng)%stflxG(:,:,:,itrc),             &
      &                       FORCES(ng)%stflx (:,:,itrc),               &
@@ -447,8 +441,7 @@
 #   ifdef ANA_BPFLUX
         CALL ana_btflux (ng, tile, iNLM, itrc)
 #   else
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,          &
-     &                       idTbot(itrc),                              &
+        CALL set_2dfld_tile (ng, tile, iNLM, idTbot(itrc),              &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       FORCES(ng)%btflxG(:,:,:,itrc),             &
      &                       FORCES(ng)%btflx (:,:,itrc),               &
@@ -468,12 +461,12 @@
 #   ifdef ANA_SMFLUX
       CALL ana_smflux (ng, tile, iNLM)
 #   else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUsms,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idUsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%sustrG,                           &
      &                     FORCES(ng)%sustr,                            &
      &                     update)
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVsms,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idVsms,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%svstrG,                           &
      &                     FORCES(ng)%svstr,                            &
@@ -497,15 +490,15 @@
           END DO
         END DO
 #     if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%sustr)
-        CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%svstr)
 #     endif
 #     ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      FORCES(ng)%sustr,                           &
@@ -527,7 +520,7 @@
       CALL ana_wwave (ng, tile, iNLM)
 #  else
 #   ifdef WAVES_DIR
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWdir,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWdir,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%DwaveG,                           &
      &                     FORCES(ng)%Dwave,                            &
@@ -547,12 +540,12 @@
         END DO
       END IF
 #     if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        FORCES(ng)%Dwave)
 #     endif
 #     ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    FORCES(ng)%Dwave)
@@ -560,49 +553,49 @@
 #    endif
 #   endif
 #   ifdef WAVES_HEIGHT
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWamp,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWamp,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%HwaveG,                           &
      &                     FORCES(ng)%Hwave,                            &
      &                     update)
 #   endif
 #   ifdef WAVES_LENGTH
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWlen,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWlen,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%LwaveG,                           &
      &                     FORCES(ng)%Lwave,                            &
      &                     update)
 #   endif
 #   ifdef WAVES_TOP_PERIOD
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWptp,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWptp,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Pwave_topG,                       &
      &                     FORCES(ng)%Pwave_top,                        &
      &                     update)
 #   endif
 #   ifdef WAVES_BOT_PERIOD
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWpbt,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWpbt,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Pwave_botG,                       &
      &                     FORCES(ng)%Pwave_bot,                        &
      &                     update)
 #   endif
 #   if defined WAVES_UB
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWorb,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWorb,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Ub_swanG,                         &
      &                     FORCES(ng)%Ub_swan,                          &
      &                     update)
 #   endif
 #   if defined TKE_WAVEDISS
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWdis,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWdis,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Wave_dissipG,                     &
      &                     FORCES(ng)%Wave_dissip,                      &
      &                     update)
 #   endif
 #   if defined SVENDSEN_ROLLER
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idWbrk,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idWbrk,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     FORCES(ng)%Wave_breakG,                      &
      &                     FORCES(ng)%Wave_break,                       &
@@ -881,7 +874,7 @@
 #  ifdef ANA_SSH
       CALL ana_ssh (ng, tile, iNLM)
 #  else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSSHc,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idSSHc,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     CLIMA(ng)%sshG,                              &
      &                     CLIMA(ng)%ssh,                               &
@@ -898,12 +891,12 @@
 #  ifdef ANA_M2CLIMA
       CALL ana_m2clima (ng, tile, iNLM)
 #  else
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUbcl,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idUbcl,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     CLIMA(ng)%ubarclmG,                          &
      &                     CLIMA(ng)%ubarclm,                           &
      &                     update)
-      CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVbcl,    &
+      CALL set_2dfld_tile (ng, tile, iNLM, idVbcl,                      &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     CLIMA(ng)%vbarclmG,                          &
      &                     CLIMA(ng)%vbarclm,                           &
@@ -921,8 +914,7 @@
       CALL ana_tclima (ng, tile, iNLM)
 #  else
       DO itrc=1,NAT
-        CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,          &
-     &                       idTclm(itrc),                              &
+        CALL set_3dfld_tile (ng, tile, iNLM, idTclm(itrc),              &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       CLIMA(ng)%tclmG(:,:,:,:,itrc),             &
      &                       CLIMA(ng)%tclm (:,:,:,itrc),               &
@@ -940,12 +932,12 @@
 #  ifdef ANA_M3CLIMA
       CALL ana_m3clima (ng, tile, iNLM)
 #  else
-      CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUclm,    &
+      CALL set_3dfld_tile (ng, tile, iNLM, idUclm,                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
      &                     CLIMA(ng)%uclmG,                             &
      &                     CLIMA(ng)%uclm,                              &
      &                     update)
-      CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVclm,    &
+      CALL set_3dfld_tile (ng, tile, iNLM, idVclm,                      &
      &                     LBi, UBi, LBj, UBj, 1, N(ng),                &
      &                     CLIMA(ng)%vclmG,                             &
      &                     CLIMA(ng)%vclm,                              &
@@ -960,12 +952,12 @@
 !-----------------------------------------------------------------------
 !
       IF (assi_SSH(ng)) THEN
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSSHo,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idSSHo,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OBS(ng)%SSHdat,                            &
      &                       OBS(ng)%SSHobs,                            &
      &                       update)
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSSHe,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idSSHe,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OBS(ng)%EdatSSH,                           &
      &                       OBS(ng)%EobsSSH,                           &
@@ -986,12 +978,12 @@
 !
       IF (assi_SST(ng)) THEN
 #   ifdef NUDGING_SST
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSSTo,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idSSTo,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OBS(ng)%SSTdat,                            &
      &                       OBS(ng)%SSTobs,                            &
      &                       update)
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idSSTe,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idSSTe,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OBS(ng)%EdatSST,                           &
      &                       OBS(ng)%EobsSST,                           &
@@ -1036,15 +1028,15 @@
             END DO
           END DO
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            OBS(ng)%EobsT(:,:,:,itemp))
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            OBS(ng)%Tobs(:,:,:,itemp))
 #   endif
 #   ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange3d (ng, tile, iNLM, 2,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        OBS(ng)%EobsT(:,:,:,itemp),               &
@@ -1062,14 +1054,12 @@
 !
       DO itrc=1,NAT
         IF (assi_T(itrc,ng)) THEN
-          CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,        &
-     &                         idTobs(itrc),                            &
+          CALL set_3dfld_tile (ng, tile, iNLM, idTobs(itrc),            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                         OBS(ng)%Tdat(:,:,:,:,itrc),              &
      &                         OBS(ng)%Tobs(:,:,:,itrc),                &
      &                         update)
-          CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,        &
-     &                         idTerr(itrc),                            &
+          CALL set_3dfld_tile (ng, tile, iNLM, idTerr(itrc),            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                         OBS(ng)%EdatT(:,:,:,:,itrc),             &
      &                         OBS(ng)%EobsT(:,:,:,itrc),               &
@@ -1090,17 +1080,17 @@
 !
       IF (assi_UVsur(ng)) THEN
 #   ifdef NUDGING_UVsur
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUsur,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idUsur,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OBS(ng)%Usurdat,                           &
      &                       OBS(ng)%Usur,                              &
      &                       update)
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVsur,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idVsur,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OBS(ng)%Vsurdat,                           &
      &                       OBS(ng)%Vsur,                              &
      &                       update)
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUVse,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idUVse,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OBS(ng)%EdatVsur,                          &
      &                       OBS(ng)%EobsVsur,                          &
@@ -1168,12 +1158,12 @@
             END DO
           END DO
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            OBS(ng)%EobsUV)
 #   endif
 #   ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange3d (ng, tile, iNLM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        OBS(ng)%EobsUV)
@@ -1189,17 +1179,17 @@
 !-----------------------------------------------------------------------
 !
       IF (assi_UV(ng)) THEN
-        CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUobs,  &
+        CALL set_3dfld_tile (ng, tile, iNLM, idUobs,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OBS(ng)%Udat,                              &
      &                       OBS(ng)%Uobs,                              &
      &                       update)
-        CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVobs,  &
+        CALL set_3dfld_tile (ng, tile, iNLM, idVobs,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OBS(ng)%Vdat,                              &
      &                       OBS(ng)%Vobs,                              &
      &                       update)
-        CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUVer,  &
+        CALL set_3dfld_tile (ng, tile, iNLM, idUVer,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OBS(ng)%EdatUV,                            &
      &                       OBS(ng)%EobsUV,                            &
@@ -1231,7 +1221,7 @@
 !
 !  Set free-surface forcing.
 !
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idFsur,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idFsur,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng)%zetaG,                           &
      &                       OCEAN(ng)%f_zeta,                          &
@@ -1239,12 +1229,12 @@
 !
 !  Set 2D momentum forcing.
 !
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUbar,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idUbar,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng)%ubarG,                           &
      &                       OCEAN(ng)%f_ubar,                          &
      &                       update)
-        CALL set_2dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVbar,  &
+        CALL set_2dfld_tile (ng, tile, iNLM, idVbar,                    &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng)%vbarG,                           &
      &                       OCEAN(ng)%f_vbar,                          &
@@ -1254,12 +1244,12 @@
 !
 !  Set 3D momentum.
 !
-        CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idUvel,  &
+        CALL set_3dfld_tile (ng, tile, iNLM, idUvel,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OCEAN(ng)%uG,                              &
      &                       OCEAN(ng)%f_u,                             &
      &                       update)
-        CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend, idVvel,  &
+        CALL set_3dfld_tile (ng, tile, iNLM, idVvel,                    &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       OCEAN(ng)%vG,                              &
      &                       OCEAN(ng)%f_v,                             &
@@ -1268,8 +1258,7 @@
 !  Set 3D tracers.
 !
         DO itrc=1,NT(ng)
-          CALL set_3dfld_tile (ng, iNLM, Istr, Iend, Jstr, Jend,        &
-     &                         idTvar(itrc),                            &
+          CALL set_3dfld_tile (ng, tile, iNLM, idTvar(itrc),            &
      &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                         OCEAN(ng)%tG(:,:,:,:,itrc),              &
      &                         OCEAN(ng)%f_t(:,:,:,itrc),               &

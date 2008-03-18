@@ -54,7 +54,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iTLM, 35)
 # endif
-      CALL tl_step3d_t_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL tl_step3d_t_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       nrhs(ng), nstp(ng), nnew(ng),              &
 # if defined TS_PSOURCE || defined Q_PSOURCE
@@ -128,7 +128,7 @@
       END SUBROUTINE tl_step3d_t
 !
 !***********************************************************************
-      SUBROUTINE tl_step3d_t_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE tl_step3d_t_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             nrhs, nstp, nnew,                    &
 # if defined TS_PSOURCE || defined Q_PSOURCE
@@ -192,7 +192,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs, nstp, nnew
 !
@@ -370,7 +370,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 # ifdef TS_MPDATA_NOT_YET
       integer :: ILB, IUB, JLB, JUB
 # endif
@@ -473,22 +472,22 @@
 !
 #  if defined EW_PERIODIC || defined NS_PERIODIC
       DO itrc=1,NT(ng)
-!>      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          t(:,:,:,3,itrc))
 !>
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_t(:,:,:,3,itrc))
       END DO
 #  endif
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    t(:,:,:,3,:))
 !>
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,3,:))
@@ -1333,7 +1332,7 @@
 !-----------------------------------------------------------------------
 !
       DO itrc=1,NT(ng)
-!>      CALL mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL mpdata_adiff_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          ILB, IUB, JLB, JUB,                     &
 !>   &                          nrhs,                                   &
@@ -1349,7 +1348,7 @@
 !>   &                          t(:,:,:,3,itrc),                        &
 !>   &                          Ta(:,:,:,itrc),  Ua, Va, Wa)
 !>
-        CALL tl_mpdata_adiff_tile (ng, Istr, Iend, Jstr, Jend,          &
+        CALL tl_mpdata_adiff_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ILB, IUB, JLB, JUB,                  &
      &                             nrhs,                                &
@@ -1758,12 +1757,12 @@
 !
 !  Set lateral boundary conditions.
 !
-!>      CALL t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,              &
+!>      CALL t3dbc_tile (ng, tile, itrc,                                &
 !>   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
 !>   &                   nstp, nnew,                                    &
 !>   &                   t)
 !>
-        CALL tl_t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,           &
+        CALL tl_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      nstp, nnew,                                 &
      &                      tl_t)
@@ -1837,11 +1836,11 @@
 !
 !  Apply periodic boundary conditions.
 !
-!>      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          t(:,:,:,nnew,itrc))
 !>
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tl_t(:,:,:,nnew,itrc))
 # endif
@@ -1850,12 +1849,12 @@
 !
 !  Exchange boundary data.
 !
-!>    CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    t(:,:,:,nnew,:))
 !>
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,nnew,:))

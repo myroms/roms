@@ -96,7 +96,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 16)
 # endif
-      CALL sediment_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL sediment_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    nstp(ng), nnew(ng),                           &
      &                    GRID(ng) % pm,                                &
@@ -152,7 +152,7 @@
       END SUBROUTINE sediment
 !
 !***********************************************************************
-      SUBROUTINE sediment_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE sediment_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp, nnew,                             &
      &                          pm, pn,                                 &
@@ -211,7 +211,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew
 !
@@ -325,7 +325,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Ksed, i, indx, ised, j, k, ks
       integer :: bnew
 
@@ -1513,7 +1512,7 @@
           END DO
         END DO
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          bed_thick(:,:,nnew))
 #  endif
@@ -1524,29 +1523,29 @@
 !-----------------------------------------------------------------------
 !
       DO ised=1,NST
-        CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_r3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
      &                    bed_frac(:,:,:,ised))
-        CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_r3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
      &                    bed_mass(:,:,:,nnew,ised))
 # if defined BEDLOAD && (defined EW_PERIODIC || defined NS_PERIODIC)
-        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          bedldu(:,:,ised))
-        CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          bedldv(:,:,ised))
 # endif
       END DO
 # ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, NST,          &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bed_frac,                                     &
      &                    bed_mass(:,:,:,nnew,:))
 #  if defined BEDLOAD && (defined EW_PERIODIC || defined NS_PERIODIC)
-      CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, NST,                   &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bedldu, bedldv)
@@ -1554,22 +1553,22 @@
 # endif
 
       DO i=1,MBEDP
-        CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_r3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, 1, Nbed,                  &
      &                    bed(:,:,:,i))
       END DO
 # ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nbed, 1, MBEDP,        &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bed)
 # endif
 
-      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, MBOTP,                   &
      &                  bottom)
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, MBOTP,                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    bottom)

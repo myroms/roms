@@ -37,7 +37,7 @@
       logical, save :: First = .TRUE.
       logical :: Ldefine, NewFile
 
-      integer :: ifile, lstr, status
+      integer :: ifile, lstr, status, tile
 
 # ifdef PROFILE
 !
@@ -159,8 +159,13 @@
       IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.                &
      &    (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
         ProcessObs(ng)=.TRUE.
+#   ifdef DISTRIBUTE
+        tile=MyRank
+#   else
+        tile=-1
+#   endif
         CALL obs_read (ng, iRPM, .FALSE.)
-        CALL obs_write (ng, iRPM)
+        CALL obs_write (ng, tile, iRPM)
 #   if !(defined WEAK_CONSTRAINT || defined IOM)
         CALL obs_cost (ng)
 #   endif

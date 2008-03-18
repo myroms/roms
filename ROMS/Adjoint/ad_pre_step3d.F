@@ -68,7 +68,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 22)
 # endif
-      CALL ad_pre_step3d_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL ad_pre_step3d_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
 # ifdef FOUR_DVAR
      &                         kstp(ng), knew(ng),                      &
@@ -149,7 +149,7 @@
       END SUBROUTINE ad_pre_step3d
 !
 !***********************************************************************
-      SUBROUTINE ad_pre_step3d_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE ad_pre_step3d_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
 # ifdef FOUR_DVAR
      &                               kstp, knew,                        &
@@ -211,7 +211,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 # ifdef FOUR_DVAR
       integer, intent(in) :: kstp, knew
@@ -393,7 +393,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: i, indx, is, itrc, j, k, ltrc
 
@@ -479,22 +478,22 @@
 !=======================================================================
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_t(:,:,:,3,:))
 !>
-      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,3,:))
 #   ifdef TS_MPDATA_NOT_YET
-!>    CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_t(:,:,:,nnew,:))
 !>
-      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,nnew,:))
@@ -502,20 +501,20 @@
 #  endif
       DO itrc=1,NT(ng)
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_r3d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
 !>   &                          tl_t(:,:,:,3,itrc))
 !>
-        CALL ad_exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,          &
+        CALL ad_exchange_r3d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             ad_t(:,:,:,3,itrc))
 #  endif
-!>      CALL tl_t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,           &
+!>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
 !>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !>   &                      nstp, 3,                                    &
 !>   &                      tl_t)
 !>
-        CALL ad_t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,           &
+        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      nstp, 3,                                    &
      &                      ad_t)
@@ -2342,11 +2341,11 @@
             ad_swdk(i,j,k)=0.0_r8
           END DO
         END DO
-!>      CALL tl_lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, -1.0_r8,   &
-!>     &                         FX, tl_FX, tl_FE)
+!>      CALL tl_lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,          &
+!>   &                           -1.0_r8, FX, tl_FX, tl_FE)
 !>
-        CALL ad_lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, -1.0_r8,   &
-     &                           FX, ad_FX, ad_FE)
+        CALL ad_lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,          &
+     &                           -1.0_r8, FX, ad_FX, ad_FE)
         DO j=Jstr,Jend
           DO i=Istr,Iend
 !>          tl_FX(i,j)=tl_z_w(i,j,N(ng))-tl_z_w(i,j,k)

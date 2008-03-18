@@ -38,7 +38,7 @@
 !
 # include "tile.h"
 !
-      CALL ad_htobs_tile (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL ad_htobs_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
 # ifdef MASKING
      &                    GRID(ng) % rmask,                             &
@@ -59,7 +59,7 @@
       END SUBROUTINE ad_htobs
 !
 !***********************************************************************
-      SUBROUTINE ad_htobs_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ad_htobs_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
 # ifdef MASKING
      &                          rmask, umask, vmask,                    &
@@ -88,7 +88,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -127,7 +127,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Mstr, Mend, ObsSum, ObsVoid
 # ifdef DISTRIBUTE
       integer :: Ncollect

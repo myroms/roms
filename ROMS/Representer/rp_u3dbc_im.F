@@ -40,7 +40,7 @@
 !
 # include "tile.h"
 !
-      CALL rp_u3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL rp_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    nstp(ng), nout,                               &
      &                    OCEAN(ng) % tl_u)
@@ -49,7 +49,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE rp_u3dbc_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE rp_u3dbc_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, UBk,                &
      &                          nstp, nout,                             &
      &                          tl_u)
@@ -62,7 +62,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk
       integer, intent(in) :: nstp, nout
 !
@@ -74,7 +74,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8) :: Ce, Cx, cff, tau

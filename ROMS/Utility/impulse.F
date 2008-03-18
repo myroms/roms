@@ -58,7 +58,7 @@
 
       CONTAINS
 
-      SUBROUTINE impulse (ng, model, outer_impulse, INPncname)
+      SUBROUTINE impulse (ng, tile, model, outer_impulse, INPncname)
 !
 !=======================================================================
 !                                                                      !
@@ -68,9 +68,11 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     INPncname  Input adjoint solution NetCDF file name.              !
+!     ng              Nested grid number.                              !
+!     tile            Domain partition.                                !
+!     model           Calling model identifier.                        !
+!     outer_impulse   Switch to process outer loop impulses.           !
+!     INPncname       Input adjoint solution NetCDF file name.         !
 !                                                                      !
 !=======================================================================
 !
@@ -94,7 +96,7 @@
 !
       logical, intent(in) :: outer_impulse
 
-      integer, intent(in) :: ng, model
+      integer, intent(in) :: ng, tile, model
 
       character (len=*), intent(in) :: INPncname
 !
@@ -103,8 +105,6 @@
       logical, dimension(NV) :: get_var
       logical, dimension(NV) :: have_var
 
-      integer :: Istr, Iend, Jstr, Jend
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: LBi, UBi, LBj, UBj
       integer :: INPncid, INPvid
       integer :: Nrec, Nsave, gtype, status, varid
@@ -115,27 +115,13 @@
 
       character (len=6 ) :: string
       character (len=15) :: tvarnam
-!
-!-----------------------------------------------------------------------
-!  Get physical non-overlapping horizontal tile bounds.
-!-----------------------------------------------------------------------
+
+# include "set_bounds.h"
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
-# ifdef DISTRIBUTE
-      Istr=BOUNDS(ng)%Istr(MyRank)
-      Iend=BOUNDS(ng)%Iend(MyRank)
-      Jstr=BOUNDS(ng)%Jstr(MyRank)
-      Jend=BOUNDS(ng)%Jend(MyRank)
-# else
-      Istr=1
-      Iend=Lm(ng)
-      Jstr=1
-      Jend=Mm(ng)
-# endif
-# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Determine variables to read and their availability.

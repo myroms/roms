@@ -28,7 +28,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE ad_exchange_p3d_tile (ng, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ad_exchange_p3d_tile (ng, tile,                        &
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
@@ -37,7 +37,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
 # ifdef ASSUMED_SHAPE
@@ -48,7 +48,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -409,7 +408,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ad_exchange_r3d_tile (ng, tile,                        &
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
@@ -418,7 +417,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
 # ifdef ASSUMED_SHAPE
@@ -429,7 +428,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -790,7 +788,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ad_exchange_u3d_tile (ng, tile,                        &
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
@@ -799,7 +797,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
 # ifdef ASSUMED_SHAPE
@@ -810,7 +808,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -1171,7 +1168,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ad_exchange_v3d_tile (ng, tile,                        &
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
@@ -1180,7 +1177,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
 # ifdef ASSUMED_SHAPE
@@ -1191,7 +1188,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"
@@ -1552,7 +1548,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ad_exchange_w3d_tile (ng, tile,                        &
      &                                 LBi, UBi, LBj, UBj, LBk, UBk,    &
      &                                 ad_A)
 !***********************************************************************
@@ -1561,7 +1557,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
 # ifdef ASSUMED_SHAPE
@@ -1572,7 +1568,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 # include "set_bounds.h"

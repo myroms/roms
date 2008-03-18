@@ -33,7 +33,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 5)
 # endif
-      CALL set_diags_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_diags_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 5)
@@ -42,7 +42,7 @@
       END SUBROUTINE set_diags
 !
 !***********************************************************************
-      SUBROUTINE set_diags_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE set_diags_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
@@ -63,7 +63,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
@@ -80,7 +80,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, it, j, k
       integer :: idiag
 
@@ -205,7 +204,7 @@
 !
         DO idiag=1,NDT
           DO it=1,NT(ng)
-            CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+            CALL bc_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        DIAGS(ng)%DiaTrc(:,:,:,it,idiag))
 #  ifdef MASKING
@@ -221,7 +220,7 @@
 #  endif
           END DO
 #  ifdef DISTRIBUTE
-          CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange4d (ng, tile, iNLM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),  &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        DIAGS(ng)%DiaTrc(:,:,:,:,idiag))
@@ -233,15 +232,15 @@
 !  Apply periodic or gradient boundary conditions for output purposes.
 !
         DO idiag=1,NDM2d
-          CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_u2d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      DIAGS(ng)%DiaU2d(:,:,idiag))
-          CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_v2d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      DIAGS(ng)%DiaV2d(:,:,idiag))
         END DO
 #  ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange3d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj, 1, NDM2d,               &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      DIAGS(ng)%DiaU2d,                           &
@@ -249,15 +248,15 @@
 #  endif
 #  ifdef SOLVE3D
         DO idiag=1,NDM3d
-          CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_u3d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      DIAGS(ng)%DiaU3d(:,:,:,idiag))
-          CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                 &
+          CALL bc_v3d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      DIAGS(ng)%DiaV3d(:,:,:,idiag))
         END DO
 #   ifdef DISTRIBUTE
-        CALL mp_exchange4d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange4d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NDM3d,     &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      DIAGS(ng)%DiaU3d,                           &

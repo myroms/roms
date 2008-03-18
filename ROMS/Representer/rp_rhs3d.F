@@ -126,7 +126,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iRPM, 21)
 # endif
-      CALL rp_rhs3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL rp_rhs3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    nrhs(ng),                                     &
      &                    GRID(ng) % Hz,                                &
@@ -231,7 +231,7 @@
       END SUBROUTINE rp_rhs3d
 !
 !***********************************************************************
-      SUBROUTINE rp_rhs3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE rp_rhs3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nrhs,                                   &
      &                          Hz, tl_Hz,                              &
@@ -293,7 +293,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 !
@@ -453,7 +453,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8), parameter :: Gadv = -0.25_r8
@@ -3226,29 +3225,29 @@
         END DO
       END DO
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        zeta(:,:,1))
 !>
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_zeta(:,:,1))
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        zeta(:,:,2))
 !>
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_zeta(:,:,2))
 #  endif
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    zeta(:,:,1),                                  &
 !>   &                    zeta(:,:,2))
 !>
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_zeta(:,:,1),                               &

@@ -57,7 +57,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE ad_conv_r2d_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ad_conv_r2d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             Nghost, NHsteps, DTsizeH,            &
      &                             Kh,                                  &
@@ -77,7 +77,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost, NHsteps
 
@@ -123,7 +123,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, step
 
@@ -171,21 +170,21 @@
 !------------------------------------------------------------------------
 !
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    Nghost, EWperiodic, NSperiodic,               &
 !>   &                    tl_A)
 !>
-      CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,      &
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Nghost, EWperiodic, NSperiodic,            &
      &                       ad_A)
 # endif
-!>    CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_r2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  tl_A)
 !>
-      CALL ad_bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_bc_r2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_A)
       DO j=Jstr,Jend
@@ -213,21 +212,21 @@
 !  data.
 !
 # ifdef DISTRIBUTE
-!>      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+!>      CALL mp_exchange2d (ng, tile, model, 1,                         &
 !>   &                      LBi, UBi, LBj, UBj,                         &
 !>   &                      Nghost, EWperiodic, NSperiodic,             &
 !>   &                      tl_Awrk(:,:,Nnew))
 !>
-        CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,    &
+        CALL ad_mp_exchange2d (ng, tile, model, 1,                      &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Nghost, EWperiodic, NSperiodic,          &
      &                         ad_Awrk(:,:,Nnew))
 # endif
-!>      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+!>      CALL bc_r2d_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    tl_Awrk(:,:,Nnew))
 !>
-        CALL ad_bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                &
+        CALL ad_bc_r2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_Awrk(:,:,Nnew))
 !
@@ -298,21 +297,21 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    Nghost, EWperiodic, NSperiodic,               &
 !>   &                    tl_A)
 !>
-      CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,      &
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Nghost, EWperiodic, NSperiodic,            &
      &                       ad_A)
 # endif
-!>    CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_r2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  tl_A)
 !>
-      CALL ad_bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_bc_r2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_A)
 
@@ -320,7 +319,7 @@
       END SUBROUTINE ad_conv_r2d_tile
 !
 !***********************************************************************
-      SUBROUTINE ad_conv_u2d_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ad_conv_u2d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             Nghost, NHsteps, DTsizeH,            &
      &                             Kh,                                  &
@@ -340,7 +339,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost, NHsteps
 
@@ -384,7 +383,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, step
 
@@ -433,21 +431,21 @@
 !------------------------------------------------------------------------
 !
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    Nghost, EWperiodic, NSperiodic,               &
 !>   &                    tl_A)
 !>
-      CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,      &
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Nghost, EWperiodic, NSperiodic,            &
      &                       ad_A)
 # endif
-!>    CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_u2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  tl_A)
 !>
-      CALL ad_bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_bc_u2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_A)
       DO j=Jstr,Jend
@@ -475,21 +473,21 @@
 !  data.
 !
 # ifdef DISTRIBUTE
-!>      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+!>      CALL mp_exchange2d (ng, tile, model, 1,                         &
 !>   &                      LBi, UBi, LBj, UBj,                         &
 !>   &                      Nghost, EWperiodic, NSperiodic,             &
 !>   &                      tl_Awrk(:,:,Nnew))
 !>
-        CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,    &
+        CALL ad_mp_exchange2d (ng, tile, model, 1,                      &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Nghost, EWperiodic, NSperiodic,          &
      &                         ad_Awrk(:,:,Nnew))
 # endif
-!>      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+!>      CALL bc_u2d_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    tl_Awrk(:,:,Nnew))
 !>
-        CALL ad_bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                &
+        CALL ad_bc_u2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_Awrk(:,:,Nnew))
 !
@@ -558,21 +556,21 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    Nghost, EWperiodic, NSperiodic,               &
 !>   &                    tl_A)
 !>
-      CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,      &
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Nghost, EWperiodic, NSperiodic,            &
      &                       ad_A)
 # endif
-!>    CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_u2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  tl_A)
 !>
-      CALL ad_bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_bc_u2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_A)
 
@@ -580,7 +578,7 @@
       END SUBROUTINE ad_conv_u2d_tile
 !
 !***********************************************************************
-      SUBROUTINE ad_conv_v2d_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ad_conv_v2d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             Nghost, NHsteps, DTsizeH,            &
      &                             Kh,                                  &
@@ -600,7 +598,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost, NHsteps
 
@@ -644,7 +642,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, step
 
@@ -693,21 +690,21 @@
 !------------------------------------------------------------------------
 !
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    Nghost, EWperiodic, NSperiodic,               &
 !>   &                    tl_A)
 !>
-      CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,      &
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Nghost, EWperiodic, NSperiodic,            &
      &                       ad_A)
 # endif
-!>    CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_v2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  tl_A)
 !>
-      CALL ad_bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_bc_v2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_A)
       DO j=JstrV,Jend
@@ -735,21 +732,21 @@
 !  data.
 !
 # ifdef DISTRIBUTE
-!>      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+!>      CALL mp_exchange2d (ng, tile, model, 1,                         &
 !>   &                      LBi, UBi, LBj, UBj,                         &
 !>   &                      Nghost, EWperiodic, NSperiodic,             &
 !>   &                      tl_Awrk(:,:,Nnew))
 !>
-        CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,    &
+        CALL ad_mp_exchange2d (ng, tile, model, 1,                      &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Nghost, EWperiodic, NSperiodic,          &
      &                         ad_Awrk(:,:,Nnew))
 # endif
-!>      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+!>      CALL bc_v2d_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    tl_Awrk(:,:,Nnew))
 !>
-        CALL ad_bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                &
+        CALL ad_bc_v2d_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       ad_Awrk(:,:,Nnew))
 !
@@ -818,21 +815,21 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    Nghost, EWperiodic, NSperiodic,               &
 !>   &                    tl_A)
 !>
-      CALL ad_mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,      &
+      CALL ad_mp_exchange2d (ng, tile, model, 1,                        &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Nghost, EWperiodic, NSperiodic,            &
      &                       ad_A)
 # endif
-!>    CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_v2d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  tl_A)
 !>
-      CALL ad_bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_bc_v2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     ad_A)
 

@@ -56,7 +56,7 @@
 !
 # include "tile.h"
 !
-      CALL back_step_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL back_step_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lnew, Lold,                                  &
 # ifdef SOLVE3D
@@ -72,7 +72,7 @@
       END SUBROUTINE back_step
 !
 !***********************************************************************
-      SUBROUTINE back_step_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE back_step_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lold, Lnew,                            &
 # ifdef SOLVE3D
@@ -98,7 +98,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew
 !
@@ -126,7 +126,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 # ifdef SOLVE3D
       integer :: itrc, k

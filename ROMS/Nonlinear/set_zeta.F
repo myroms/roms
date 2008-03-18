@@ -41,7 +41,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 12)
 # endif
-      CALL set_zeta_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL set_zeta_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    COUPLING(ng) % Zt_avg1,                       &
      &                    OCEAN(ng) % zeta)
@@ -52,7 +52,7 @@
       END SUBROUTINE set_zeta
 !
 !***********************************************************************
-      SUBROUTINE set_zeta_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE set_zeta_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Zt_avg1, zeta)
 !***********************************************************************
@@ -70,7 +70,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -97,7 +97,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 # include "set_bounds.h"
@@ -115,15 +114,15 @@
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        zeta(:,:,1))
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        zeta(:,:,2))
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    zeta(:,:,1),                                  &

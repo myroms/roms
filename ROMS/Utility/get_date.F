@@ -295,7 +295,7 @@
         rday=time+r_date(3)+                                            &
      &       (r_date(6)+(r_date(7)+r_date(8)/60.0_r8)/60.0_r8)/24.0_r8
         year=INT(r_date(2))+INT(rday/365.25_r8)
-        yday=1.0_r8+MOD(rday,365.25_r8)
+        yday=MAX(1.0_r8,MOD(rday,365.25_r8))
         leap=MOD(year,4)
         IF (leap.eq.0) THEN
           month=MIN(12,1+INT((yday+1.0_r8)/30.6001_r8))
@@ -311,8 +311,10 @@
 !  days in every year.
 !
       ELSE IF (INT(r_date(1)).eq.0) THEN
-        year=INT(r_date(2))+INT(time/365.25_r8)
-        yday=1.0_r8+MOD(time,365.25_r8)
+        rday=time+r_date(3)+                                            &
+     &       (r_date(6)+(r_date(7)+r_date(8)/60.0_r8)/60.0_r8)/24.0_r8
+        year=INT(r_date(2))+INT(rday/365.25_r8)
+        yday=MAX(1.0_r8,MOD(rday,365.25_r8))
         leap=MOD(year,4)
         IF (leap.eq.0) THEN
           month=MIN(12,1+INT((yday+1.0_r8)/30.6001_r8))
@@ -322,17 +324,19 @@
           IF ((yday.gt.59).and.(yday.le.90)) month=3
           day=INT(yday)-iydl(month)+1
         END IF
-        hour=(time-AINT(time))*24.0_r8
+        hour=(rday-AINT(rday))*24.0_r8
 !
 !  The reference time is for a climatological simulation with 360.0
 !  days in every year.
 !
       ELSE IF (INT(r_date(1)).eq.-1) THEN
-        year=0
-        yday=MOD(time,360.0_r8)
-        month=0
-        day=0
-        hour=0.0_r8
+        rday=time+r_date(3)+                                            &
+     &       (r_date(6)+(r_date(7)+r_date(8)/60.0_r8)/60.0_r8)/24.0_r8
+        year=INT(r_date(2))+INT(rday/360.0_r8)
+        yday=MAX(1.0_r8,MOD(rday,360.0_r8))
+        month=INT(yday/30.0_r8)
+        day=INT(MOD(yday,30.0_r8))
+        hour=(rday-AINT(rday))*24.0_r8
 !
 !  The reference time is in terms of modified Julian days.
 !
@@ -428,7 +432,7 @@
 !  Decode reference time.
 !-----------------------------------------------------------------------
 !
-      iyear=INT(r_time*0.0001_r8)
+      iyear=MAX(1,INT(r_time*0.0001_r8))
       month=MIN(12,MAX(1,INT((r_time-REAL(iyear*10000,r8))*0.01_r8)))
       day=r_time-AINT(r_time*0.01_r8)*100.0_r8
       iday=INT(day)
@@ -454,9 +458,9 @@
 !
       r_date(1)=r_time
       r_date(2)=REAL(iyear,r8)
-      r_date(3)=yday
+      r_date(3)=MAX(1.0_r8,yday)
       r_date(4)=REAL(month,r8)
-      r_date(5)=REAL(iday,r8)
+      r_date(5)=MAX(1.0_r8,REAL(iday,r8))
       r_date(6)=REAL(ihour,r8)
       r_date(7)=REAL(minute,r8)
       r_date(8)=REAL(isec,r8)

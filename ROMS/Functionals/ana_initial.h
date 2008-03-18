@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets initial conditions for momentum and tracer     !
@@ -26,7 +25,7 @@
 #include "tile.h"
 !
       IF (model.eq.iNLM) THEN
-        CALL ana_NLMinitial_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+        CALL ana_NLMinitial_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            GRID(ng) % h,                         &
 #ifdef SPHERICAL
@@ -47,7 +46,7 @@
      &                            OCEAN(ng) % zeta)
 #ifdef TANGENT
       ELSE IF ((model.eq.iTLM).or.(model.eq.iRPM)) THEN
-        CALL ana_TLMinitial_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+        CALL ana_TLMinitial_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            kstp(ng),                             &
 # ifdef SOLVE3D
@@ -62,7 +61,7 @@
 #endif
 #ifdef ADJOINT
       ELSE IF (model.eq.iADM) THEN
-        CALL ana_ADMinitial_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+        CALL ana_ADMinitial_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            knew(ng),                             &
 # ifdef SOLVE3D
@@ -87,7 +86,7 @@
       END SUBROUTINE ana_initial
 !
 !***********************************************************************
-      SUBROUTINE ana_NLMinitial_tile (ng, model, Istr, Iend, Jstr, Jend,&
+      SUBROUTINE ana_NLMinitial_tile (ng, tile, model,                  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                h,                                &
 #ifdef SPHERICAL
@@ -107,7 +106,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -152,7 +151,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iless, Iplus, i, itrc, j, k
       real(r8) :: depth, dx, val1, val2, val3, val4, x, x0, y, y0
 
@@ -657,7 +655,7 @@
 #ifdef TANGENT
 !
 !***********************************************************************
-      SUBROUTINE ana_TLMinitial_tile (ng, model, Istr, Iend, Jstr, Jend,&
+      SUBROUTINE ana_TLMinitial_tile (ng, tile, model,                  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                kstp,                             &
 # ifdef SOLVE3D
@@ -672,7 +670,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: kstp
 # ifdef SOLVE3D
@@ -701,7 +699,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
 # include "set_bounds.h"
@@ -770,7 +767,7 @@
 #ifdef ADJOINT
 !
 !***********************************************************************
-      SUBROUTINE ana_ADMinitial_tile (ng, model, Istr, Iend, Jstr, Jend,&
+      SUBROUTINE ana_ADMinitial_tile (ng, tile, model,                  &
      &                                LBi, UBi, LBj, UBj,               &
      &                                knew,                             &
 # ifdef SOLVE3D
@@ -785,7 +782,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
 # ifdef SOLVE3D
@@ -814,7 +811,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
 # include "set_bounds.h"

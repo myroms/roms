@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets analytical Land/Sea masking.                   !
@@ -22,7 +21,7 @@
 
 #include "tile.h"
 !
-      CALL ana_mask_tile (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL ana_mask_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    GRID(ng) % pmask,                             &
      &                    GRID(ng) % rmask,                             &
@@ -39,7 +38,7 @@
       END SUBROUTINE ana_mask
 !
 !***********************************************************************
-      SUBROUTINE ana_mask_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ana_mask_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          pmask, rmask, umask, vmask)
 !***********************************************************************
@@ -56,7 +55,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -85,7 +84,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j
       real(r8) :: mask(PRIVATE_2D_SCRATCH_ARRAY)
@@ -221,21 +219,21 @@
         END DO
       END DO
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        rmask)
-      CALL exchange_p2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_p2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        pmask)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        umask)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        vmask)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 4, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 4,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rmask, pmask, umask, vmask)

@@ -47,7 +47,7 @@
 !
 #  include "tile.h"
 !
-      CALL tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL tl_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % h,                             &
@@ -67,7 +67,7 @@
       END SUBROUTINE tl_set_depth
 !
 !***********************************************************************
-      SUBROUTINE tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE tl_set_depth_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              nstp, nnew,                         &
      &                              h, tl_h,                            &
@@ -94,7 +94,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew
 !
@@ -144,7 +144,6 @@
       logical :: NSperiodic=.FALSE.
 #   endif
 #  endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8) :: cff, cff_r, cff1_r, cff_w, cff1_w
@@ -231,60 +230,60 @@
 !-----------------------------------------------------------------------
 !
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        h)
 !>
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_h)
-!>    CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
 !>   &                        z_w)
 !>
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        tl_z_w)
-!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        z_r)
 !>
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_z_r)
-!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        Hz)
 !>
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_Hz)
 #   endif
 #   ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    h)
 !>
-      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_h)
-!>    CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    z_w)
 !>
-      CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_z_w)
-!>    CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    z_r, Hz)
 !>
-      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_z_r, tl_Hz)
@@ -309,14 +308,14 @@
 !
 # include "tile.h"
 !
-      CALL tl_bath_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL tl_bath_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   GRID(ng) % tl_h)
       RETURN
       END SUBROUTINE tl_bath
 !
 !***********************************************************************
-      SUBROUTINE tl_bath_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE tl_bath_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         tl_h)
 !***********************************************************************
@@ -332,7 +331,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -355,7 +354,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 # include "set_bounds.h"
@@ -371,12 +369,12 @@
       END DO
 
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_h)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_h)

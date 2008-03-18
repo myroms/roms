@@ -46,7 +46,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 20)
 # endif
-      CALL my25_prestep_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL my25_prestep_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        nstp(ng), nnew(ng),                       &
 # ifdef MASKING
@@ -68,7 +68,7 @@
       END SUBROUTINE my25_prestep
 !
 !***********************************************************************
-      SUBROUTINE my25_prestep_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE my25_prestep_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              nstp, nnew,                         &
 # ifdef MASKING
@@ -91,7 +91,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew
 !
@@ -139,7 +139,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, indx, j, k
 
       real(r8), parameter :: Gamma = 1.0_r8/6.0_r8
@@ -409,20 +408,20 @@
 !
 !  Apply lateral boundary conditions.
 !
-      CALL tkebc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL tkebc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj, N(ng),                       &
      &                 3, nstp,                                         &
      &                 gls, tke)
 # if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        tke(:,:,:,3))
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        gls(:,:,:,3))
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tke(:,:,:,3),                                 &

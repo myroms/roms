@@ -40,7 +40,7 @@
 !
 # include "tile.h"
 !
-      CALL tl_t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,             &
+      CALL tl_t3dbc_tile (ng, tile, itrc,                               &
      &                    LBi, UBi, LBj, UBj, N(ng), NT(ng),            &
      &                    nstp(ng), nout,                               &
      &                    OCEAN(ng)% tl_t)
@@ -48,7 +48,7 @@
       END SUBROUTINE tl_t3dbc
 !
 !***********************************************************************
-      SUBROUTINE tl_t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,       &
+      SUBROUTINE tl_t3dbc_tile (ng, tile, itrc,                         &
      &                          LBi, UBi, LBj, UBj, UBk, UBt,           &
      &                          nstp, nout,                             &
      &                          tl_t)
@@ -61,7 +61,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr, itrc
+      integer, intent(in) :: ng, tile, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
       integer, intent(in) :: nstp, nout
 !
@@ -73,7 +73,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8) :: Ce, Cx, cff, tau

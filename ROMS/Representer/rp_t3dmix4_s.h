@@ -43,7 +43,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iRPM, 27)
 #endif
-      CALL rp_t3dmix4_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL rp_t3dmix4_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nrhs(ng), nnew(ng),                         &
 #ifdef MASKING
@@ -69,7 +69,7 @@
       END SUBROUTINE rp_t3dmix4
 !
 !***********************************************************************
-      SUBROUTINE rp_t3dmix4_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE rp_t3dmix4_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            nrhs, nnew,                           &
 #ifdef MASKING
@@ -89,7 +89,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs, nnew
 
@@ -132,7 +132,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
       real(r8) :: cff, cff1, tl_cff, tl_cff1

@@ -119,7 +119,7 @@
 !
 # include "tile.h"
 !
-      CALL ad_convolution_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL ad_convolution_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp(ng), nnew(ng), Linp, ifac,         &
      &                          GRID(ng) % pm,                          &
@@ -190,7 +190,7 @@
       END SUBROUTINE ad_convolution
 !
 !***********************************************************************
-      SUBROUTINE ad_convolution_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE ad_convolution_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                nstp, nnew, Linp, ifac,           &
      &                                pm, om_r, om_u, om_v,             &
@@ -250,7 +250,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew, Linp, ifac
 !
@@ -405,7 +405,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, is, j, k
 # ifdef SOLVE3D
       integer :: itrc
@@ -432,7 +431,7 @@
         END DO
       END DO
 
-      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
@@ -471,7 +470,7 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-      CALL ad_mp_exchange2d (ng, iADM, 3, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 3,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_zeta(:,:,Linp),                         &
@@ -495,7 +494,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng),          &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_ustr(:,:,:,Linp),                       &
@@ -519,7 +518,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_u(:,:,:,Linp),                          &
@@ -539,7 +538,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,Linp,:))
@@ -559,7 +558,7 @@
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_tflux(:,:,:,Linp,:))
@@ -575,7 +574,7 @@
 !
 !  Adjoint free-surface.
 !
-      CALL ad_conv_r2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
+      CALL ad_conv_r2d_tile (ng, tile, iADM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints,                              &
      &                       NHsteps(isFsur)/ifac,                      &
@@ -589,7 +588,7 @@
 !
 !  Adjoint 2D momentum.
 !
-      CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
+      CALL ad_conv_u2d_tile (ng, tile, iADM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints,                              &
      &                       NHsteps(isUbar)/ifac,                      &
@@ -601,7 +600,7 @@
 # endif
      &                       ad_ubar(:,:,Linp))
 
-      CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
+      CALL ad_conv_v2d_tile (ng, tile, iADM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints,                              &
      &                       NHsteps(isVbar)/ifac,                      &
@@ -617,7 +616,7 @@
 !  Adjoint surface momentum stress.
 !
       DO k=1,Nfrec(ng)
-        CALL ad_conv_u2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,        &
+        CALL ad_conv_u2d_tile (ng, tile, iADM,                          &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         NghostPoints,                            &
      &                         NHsteps(isUstr)/ifac,                    &
@@ -629,7 +628,7 @@
 #  endif
      &                         ad_ustr(:,:,k,Linp))
 
-        CALL ad_conv_v2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,        &
+        CALL ad_conv_v2d_tile (ng, tile, iADM,                          &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         NghostPoints,                            &
      &                         NHsteps(isVstr)/ifac,                    &
@@ -646,7 +645,7 @@
 !
 !  Adjoint 3D momentum.
 !
-      CALL ad_conv_u3d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
+      CALL ad_conv_u3d_tile (ng, tile, iADM,                            &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
      &                       NHsteps(isUvel)/ifac,                      &
@@ -661,7 +660,7 @@
      &                       Hz, z_r,                                   &
      &                       ad_u(:,:,:,Linp))
 
-      CALL ad_conv_v3d_tile (ng, iADM, Istr, Iend, Jstr, Jend,          &
+      CALL ad_conv_v3d_tile (ng, tile, iADM,                            &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints,                              &
      &                       NHsteps(isUvel)/ifac,                      &
@@ -680,7 +679,7 @@
 !
       DO itrc=1,NT(ng)
         is=isTvar(itrc)
-        CALL ad_conv_r3d_tile (ng, iADM, Istr, Iend, Jstr, Jend,        &
+        CALL ad_conv_r3d_tile (ng, tile, iADM,                          &
      &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                         NghostPoints,                            &
      &                         NHsteps(is)/ifac,                        &
@@ -702,7 +701,7 @@
       DO itrc=1,NT(ng)
         is=isTsur(itrc)
         DO k=1,Nfrec(ng)
-          CALL ad_conv_r2d_tile (ng, iADM, Istr, Iend, Jstr, Jend,      &
+          CALL ad_conv_r2d_tile (ng, tile, iADM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NghostPoints,                          &
      &                           NHsteps(is)/ifac,                      &
@@ -747,7 +746,7 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-      CALL ad_mp_exchange2d (ng, iADM, 3, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 3,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_zeta(:,:,Linp),                         &
@@ -773,7 +772,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, Nfrec(ng),          &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_ustr(:,:,:,Linp),                       &
@@ -803,7 +802,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_u(:,:,:,Linp),                          &
@@ -824,7 +823,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),   &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_t(:,:,:,Linp,:))
@@ -844,7 +843,7 @@
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL ad_mp_exchange4d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange4d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 1,Nfrec(ng), 1,NT(ng), &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_tflux(:,:,:,Linp,:))

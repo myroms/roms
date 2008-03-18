@@ -43,7 +43,7 @@
 !
 #include "tile.h"
 !
-      CALL stiffness_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL stiffness_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
 #ifdef MASKING
      &                     GRID(ng) % rmask,                            &
@@ -61,7 +61,7 @@
       END SUBROUTINE stiffness
 !
 !***********************************************************************
-      SUBROUTINE stiffness_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE stiffness_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
@@ -86,7 +86,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 #ifdef ASSUMED_SHAPE
@@ -119,7 +119,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j, k
 
       real(r8) :: cff, ratio

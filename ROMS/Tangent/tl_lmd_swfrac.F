@@ -3,7 +3,8 @@
 #if defined TANGENT  && defined SOLVE3D       && \
    (defined LMD_SKPP_NOT_YET || defined SOLAR_SOURCE)
 
-      SUBROUTINE tl_lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE tl_lmd_swfrac_tile (ng, tile,                          &
+     &                               LBi, UBi, LBj, UBj,                &
      &                               Zscale, Z, tl_Z, tl_swdk)
 !
 !svn $Id$
@@ -46,7 +47,8 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
 
       real(r8), intent(in) :: Zscale
 
@@ -63,6 +65,8 @@
       real(r8) :: tl_cff1, tl_cff2
 
       real(r8), dimension(Istr:Iend) :: fac1, fac2, fac3
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Use Paulson and Simpson (1977) two wavelength bands solar

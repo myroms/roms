@@ -95,7 +95,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 21)
 # endif
-      CALL ad_rhs3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ad_rhs3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    knew(ng), nrhs(ng),                           &
      &                    GRID(ng) % Hz,                                &
@@ -207,7 +207,7 @@
       END SUBROUTINE ad_rhs3d
 !
 !***********************************************************************
-      SUBROUTINE ad_rhs3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ad_rhs3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          knew, nrhs,                             &
      &                          Hz, ad_Hz,                              &
@@ -269,7 +269,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew, nrhs
 !
@@ -433,7 +433,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 
@@ -534,31 +533,31 @@
 !  step "n").
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_zeta(:,:,1),                               &
 !>   &                    tl_zeta(:,:,2))
 !>
-      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_zeta(:,:,1),                            &
      &                       ad_zeta(:,:,2))
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_zeta(:,:,2))
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_zeta(:,:,2))
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_zeta(:,:,1))
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_zeta(:,:,1))
 #  endif

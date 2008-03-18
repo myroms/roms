@@ -49,7 +49,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 13)
 # endif
-      CALL omega_tile (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL omega_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj,                              &
 # if defined SEDIMENT && defined SED_MORPH
      &                 nstp(ng), nnew(ng),                              &
@@ -76,7 +76,7 @@
       END SUBROUTINE omega
 !
 !***********************************************************************
-      SUBROUTINE omega_tile (ng, Istr, Iend, Jstr, Jend,                &
+      SUBROUTINE omega_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
 # if defined SEDIMENT && defined SED_MORPH
      &                       nstp, nnew,                                &
@@ -102,7 +102,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 # if defined SEDIMENT && defined SED_MORPH
       integer, intent(in) :: nstp, nnew
@@ -157,7 +157,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 # ifdef Q_PSOURCE
       integer :: ii, jj, is
@@ -238,11 +237,11 @@
 !
 !  Set lateral boundary conditions.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_w3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
      &                  W)
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    W)
@@ -277,17 +276,9 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR
       integer :: i, j, k
-!
-!-----------------------------------------------------------------------
-!  Get physical non-overlaping horizontal tile bounds.
-!-----------------------------------------------------------------------
-!
-      IstrR=BOUNDS(ng)%IstrR(tile)
-      IendR=BOUNDS(ng)%IendR(tile)
-      JstrR=BOUNDS(ng)%JstrR(tile)
-      JendR=BOUNDS(ng)%JendR(tile)
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Scale omega vertical velocity to m/s.

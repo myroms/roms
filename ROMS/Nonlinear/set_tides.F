@@ -45,7 +45,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 11)
 # endif
-      CALL set_tides_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_tides_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     NTC(ng),                                     &
      &                     GRID(ng) % angler,                           &
@@ -95,7 +95,7 @@
       END SUBROUTINE set_tides
 !
 !***********************************************************************
-      SUBROUTINE set_tides_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE set_tides_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           NTC,                                   &
      &                           angler,                                &
@@ -142,7 +142,7 @@
 !
 !  Imported variables declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: NTC
 !
@@ -246,7 +246,6 @@
 # endif
       logical :: update
 
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 # ifdef DISTRIBUTE
       integer :: ILB, IUB, JLB, JUB
 # endif
@@ -332,12 +331,12 @@
         END DO
       END DO
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        ssh)
 #   endif
 #   ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    ssh)
@@ -488,15 +487,15 @@
         END DO
       END DO
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        ubarclm)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        vbarclm)
 #   endif
 #   ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    ubarclm, vbarclm)

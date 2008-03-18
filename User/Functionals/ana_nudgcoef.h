@@ -22,7 +22,8 @@
 !
 #include "tile.h"
 !
-      CALL ana_nudgcoef_tile (ng, model, Istr, Iend, Jstr, Jend)
+      CALL ana_nudgcoef_tile (ng, tile, model,                          &
+     &                        LBi, UBi, LBj, UBj)
 !
 ! Set analytical header file name used.
 !
@@ -34,7 +35,8 @@
       END SUBROUTINE ana_nudgcoef
 !
 !***********************************************************************
-      SUBROUTINE ana_nudgcoef_tile (ng, model, Istr, Iend, Jstr, Jend)
+      SUBROUTINE ana_nudgcoef_tile (ng, tile, model,                    &
+     &                              LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
       USE mod_param
@@ -55,11 +57,11 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj)
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iwrk, i, itrc, j
 
       real(r8) :: cff1, cff2

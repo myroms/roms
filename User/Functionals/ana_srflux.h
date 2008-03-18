@@ -23,7 +23,7 @@
 
 #include "tile.h"
 !
-      CALL ana_srflux_tile (ng, model, Istr, Iend, Jstr, Jend,          &
+      CALL ana_srflux_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      GRID(ng) % lonr,                            &
      &                      GRID(ng) % latr,                            &
@@ -45,7 +45,7 @@
       END SUBROUTINE ana_srflux
 !
 !***********************************************************************
-      SUBROUTINE ana_srflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+      SUBROUTINE ana_srflux_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            lonr, latr,                           &
 #ifdef ALBEDO 
@@ -66,7 +66,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -105,7 +105,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #if defined ALBEDO || defined DIURNAL_SRFLUX
       integer :: iday, month, year
@@ -257,7 +256,7 @@
 # endif
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        srflx)
 #endif

@@ -27,11 +27,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC  :: initialize, run, finalize
+      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_run
+      PUBLIC  :: ROMS_finalize
 
       CONTAINS
 
-      SUBROUTINE initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, MyCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -138,9 +140,9 @@
       END IF
 
       RETURN
-      END SUBROUTINE initialize
+      END SUBROUTINE ROMS_initialize
 
-      SUBROUTINE run
+      SUBROUTINE ROMS_run (Tstr, Ted)
 !
 !=======================================================================
 !                                                                      !
@@ -175,10 +177,15 @@
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
 !
+!  Imported variable declarations
+!
+      integer, dimension(Ngrids) :: Tstr
+      integer, dimension(Ngrids) :: Tend
+!
 !  Local variable declarations.
 !
       logical :: BOUNDED_TL, add
-      logical :: Lweak
+      logical :: Lweak, outer_impulse
 
       integer :: i, j, my_iic, ng, subs, tile, thread
       integer :: ADrec, Lstate, Nrec, rec
@@ -486,7 +493,13 @@
 !  increasing time coordinates.
 !
           tTLFindx(ng)=0
-          CALL impulse (ng, iADM, ADJname(ng))
+          outer_impulse=.FALSE.
+#ifdef DISTRIBUTE
+          tile=MyRank
+#else
+          tile=-1
+#endif
+          CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
 !
 !-----------------------------------------------------------------------
 !  Integrate tangent linear model forced by the convolved adjoint
@@ -605,9 +618,9 @@
  40   FORMAT (/,1x,a,/)
 
       RETURN
-      END SUBROUTINE run
+      END SUBROUTINE ROMS_run
 
-      SUBROUTINE finalize
+      SUBROUTINE ROMS_finalize
 !
 !=======================================================================
 !                                                                      !
@@ -670,6 +683,6 @@
       CALL close_io
 
       RETURN
-      END SUBROUTINE finalize
+      END SUBROUTINE ROMS_finalize
 
       END MODULE ocean_control_mod

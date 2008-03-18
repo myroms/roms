@@ -39,7 +39,7 @@
 !
       logical :: Ldefine, NewFile
 
-      integer :: ifile, lstr, status
+      integer :: ifile, lstr, status, tile
 
 # ifdef PROFILE
 !
@@ -382,8 +382,13 @@
       IF (((time(ng)-0.5_r8*dt(ng)).le.ObsTime(ng)).and.                &
      &    (ObsTime(ng).lt.(time(ng)+0.5_r8*dt(ng)))) THEN
         ProcessObs=.TRUE.
+#   ifdef DISTRIBUTE
+        tile=MyRank
+#   else
+        tile=-1
+#   endif
         CALL obs_read (ng, iNLM, .FALSE.)
-        CALL obs_write (ng, iNLM)
+        CALL obs_write (ng, tile, iNLM)
 #   ifdef S4DVAR
         CALL obs_cost (ng, iNLM)
 #   endif

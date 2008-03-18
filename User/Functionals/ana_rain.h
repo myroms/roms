@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets precipitation rate (kg/m2/s) using an             !
@@ -23,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_rain_tile (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL ana_rain_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    FORCES(ng) % rain)
 !
@@ -37,7 +36,7 @@
       END SUBROUTINE ana_rain
 !
 !***********************************************************************
-      SUBROUTINE ana_rain_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ana_rain_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          rain)
 !***********************************************************************
@@ -53,7 +52,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -76,7 +75,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 #include "set_bounds.h"
@@ -96,12 +94,12 @@
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        rain)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rain)

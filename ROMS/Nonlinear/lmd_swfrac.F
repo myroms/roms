@@ -3,7 +3,8 @@
 #if defined NONLINEAR && (defined LMD_SKPP || defined SOLAR_SOURCE) && \
     defined SOLVE3D
 
-      SUBROUTINE lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE lmd_swfrac_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
      &                            Zscale, Z, swdk)
 !
 !svn $Id$
@@ -44,7 +45,8 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
 
       real(r8), intent(in) :: Zscale
 
@@ -55,7 +57,9 @@
 !
       integer :: Jindex, i, j
 
-      real(r8), dimension(Istr:Iend) :: fac1, fac2, fac3
+      real(r8), dimension(LBi:UBi) :: fac1, fac2, fac3
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Use Paulson and Simpson (1977) two wavelength bands solar

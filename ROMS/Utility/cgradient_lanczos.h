@@ -115,7 +115,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, model, 36)
 #endif
-      CALL cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL cgradient_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lold(ng), Lnew(ng),                          &
      &                     innLoop, outLoop,                            &
@@ -179,7 +179,7 @@
       END SUBROUTINE cgradient
 !
 !***********************************************************************
-      SUBROUTINE cgradient_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE cgradient_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lold, Lnew,                            &
      &                           innLoop, outLoop,                      &
@@ -237,7 +237,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew
       integer, intent(in) :: innLoop, outLoop
@@ -368,6 +368,8 @@
       real(r8), dimension(2*Ninner-2) :: work
 
       character (len=13) :: string
+
+#include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Initialize trial step size.
@@ -393,7 +395,7 @@
         Lwrk=2
         Linp=1
         Lout=2
-        CALL hessian (ng, model, Istr, Iend, Jstr, Jend,                &
+        CALL hessian (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                Linp, Lout, Lwrk,                                 &
      &                innLoop, outLoop,                                 &
@@ -439,7 +441,7 @@
       Linp=1
       Lout=2
       Lwrk=2
-      CALL lanczos (ng, model, Istr, Iend, Jstr, Jend,                  &
+      CALL lanczos (ng, tile, model,                                    &
      &              LBi, UBi, LBj, UBj,                                 &
      &              Linp, Lout, Lwrk,                                   &
      &              innLoop, outLoop,                                   &
@@ -473,7 +475,7 @@
 !
 !  Compute new direction, d(k+1).
 !
-      CALL new_direction (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL new_direction (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Linp, Lout,                                   &
 #ifdef MASKING
@@ -538,7 +540,7 @@
         Linp=1
         Lout=2
         Lwrk=2
-        CALL new_gradient (ng, model, Istr, Iend, Jstr, Jend,           &
+        CALL new_gradient (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Linp, Lout, Lwrk,                            &
      &                     innLoop, outLoop,                            &
@@ -657,7 +659,7 @@
           Lwrk=2
           Linp=1
           Lout=2
-          CALL hessian_evecs (ng, model, Istr, Iend, Jstr, Jend,        &
+          CALL hessian_evecs (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Linp, Lout, Lwrk,                         &
      &                        innLoop, outLoop,                         &
@@ -708,7 +710,7 @@
 !
       Linp=1
       Lout=2
-      CALL tl_new_state (ng, model, Istr, Iend, Jstr, Jend,             &
+      CALL tl_new_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Linp, Lout,                                    &
      &                   innLoop, outLoop,                              &
@@ -806,7 +808,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE tl_new_state (ng, model, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE tl_new_state (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Linp, Lout,                              &
      &                         innLoop, outLoop,                        &
@@ -864,7 +866,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
       integer, intent(in) :: innLoop, outLoop
@@ -986,7 +988,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k, lstr, rec
 #ifdef SOLVE3D
       integer :: itrc
@@ -1131,7 +1132,7 @@
 !
         fac=0.0_r8
 
-        CALL state_initialize (ng, Istr, Iend, Jstr, Jend,              &
+        CALL state_initialize (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Linp, fac,                               &
 #ifdef MASKING
@@ -1168,7 +1169,7 @@
 !  Read gradient solution and load it into TANGENT LINEAR STATE ARRAYS
 !  at index Lout.
 !
-          CALL read_state (ng, model, Istr, Iend, Jstr, Jend,           &
+          CALL read_state (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lout, rec,                                   &
      &                     ndefADJ(ng), ncADJid(ng), ncname,            &
@@ -1195,7 +1196,7 @@
           fac1=1.0_r8
           fac2=cg_zu(rec,outLoop)
 
-          CALL state_addition (ng, Istr, Iend, Jstr, Jend,              &
+          CALL state_addition (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Linp, Lout, Linp, fac1, fac2,            &
 #ifdef MASKING
@@ -1224,7 +1225,7 @@
 !
 !    tl_var(Lout) = ad_var(Linp)
 !
-        CALL state_copy (ng, Istr, Iend, Jstr, Jend,                    &
+        CALL state_copy (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Linp, Lout,                                    &
 #ifdef ADJUST_WSTRESS
@@ -1249,7 +1250,7 @@
       END SUBROUTINE tl_new_state
 !
 !***********************************************************************
-      SUBROUTINE read_state (ng, model, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE read_state (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lwrk, rec,                                 &
      &                       ndef, ncfileid, ncname,                    &
@@ -1279,7 +1280,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lwrk, rec, ndef, ncfileid
 
@@ -1334,7 +1335,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc
@@ -1601,8 +1601,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE new_direction (ng, model,                              &
-     &                          Istr, Iend, Jstr, Jend,                 &
+      SUBROUTINE new_direction (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Lold, Lnew,                             &
 #ifdef MASKING
@@ -1642,7 +1641,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew
 !
@@ -1728,7 +1727,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc
@@ -1855,7 +1853,7 @@
       END SUBROUTINE new_direction
 !
 !***********************************************************************
-      SUBROUTINE hessian (ng, model, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE hessian (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lold, Lnew, Lwrk,                             &
      &                    innLoop, outLoop,                             &
@@ -1898,7 +1896,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -1985,7 +1983,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k, lstr
 #ifdef SOLVE3D
       integer :: itrc
@@ -2166,7 +2163,7 @@
 !  Read current gradient solution into tangent linear state array,
 !  index Lwrk.
 !
-      CALL read_state (ng, model, Istr, Iend, Jstr, Jend,               &
+      CALL read_state (ng, tile, model,                                 &
      &                 LBi, UBi, LBj, UBj,                              &
      &                 Lwrk, innLoop,                                   &
      &                 ndefADJ(ng), ncADJid(ng), ncname,                &
@@ -2189,7 +2186,7 @@
 !  Compute current iteration norm Delta(k) used to compute tri-diagonal
 !  matrix T(k) in the Lanczos recurrence.
 !
-      CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL state_dotprod (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
@@ -2219,7 +2216,7 @@
       END SUBROUTINE hessian
 !
 !***********************************************************************
-      SUBROUTINE lanczos (ng, model, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE lanczos (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lold, Lnew, Lwrk,                             &
      &                    innLoop, outLoop,                             &
@@ -2265,7 +2262,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -2352,7 +2349,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, lstr, rec
 #ifdef SOLVE3D
       integer :: itrc, k
@@ -2387,7 +2383,7 @@
         fac1=1.0_r8
         fac2=-cg_delta(innLoop,outLoop)
 
-        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
+        CALL state_addition (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
 #ifdef MASKING
@@ -2427,7 +2423,7 @@
 !
 !  Read in the previous (innLoop-1) orthonormal Lanczos vector.
 !
-        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+        CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lwrk, innLoop-1,                               &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
@@ -2454,7 +2450,7 @@
         fac1=1.0_r8
         fac2=-cg_beta(innLoop,outLoop)
 
-        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
+        CALL state_addition (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
 #ifdef MASKING
@@ -2503,7 +2499,7 @@
 !  compute its associated dot angaint curret G(k+1). Each gradient
 !  solution is loaded into TANGENT LINEAR STATE ARRAYS at index Lwrk.
 !
-        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+        CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lwrk, rec,                                     &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
@@ -2525,7 +2521,7 @@
 !
 !  Compute dot product <q(k+1), q(rec)>.
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
@@ -2560,7 +2556,7 @@
         fac1=1.0_r8
         fac2=-DotProd(rec)
 
-        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
+        CALL state_addition (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
 #ifdef MASKING
@@ -2588,7 +2584,7 @@
 !  Normalize current orthogonal gradient vector.
 !-----------------------------------------------------------------------
 !
-      CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL state_dotprod (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
@@ -2624,7 +2620,7 @@
 !
       fac=1.0_r8/SQRT(dot(0))
 
-      CALL state_scale (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL state_scale (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Lnew, Lnew, fac,                                &
 #ifdef MASKING
@@ -2648,7 +2644,7 @@
 !-----------------------------------------------------------------------
 !
       IF (innLoop.eq.0) THEN
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
@@ -2672,7 +2668,7 @@
 #endif
      &                      ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
       ELSE
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
@@ -2724,7 +2720,7 @@
 !  each gradient solution is loaded into TANGENT LINEAR STATE ARRAYS
 !  at index Lwrk.
 !
-        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+        CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lwrk, rec,                                     &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
@@ -2744,7 +2740,7 @@
 # endif
      &                   tl_zeta)
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
 # ifdef MASKING
@@ -2797,7 +2793,7 @@
       END SUBROUTINE lanczos
 !
 !***********************************************************************
-      SUBROUTINE new_gradient (ng, model, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE new_gradient (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lold, Lnew, Lwrk,                        &
      &                         innLoop, outLoop,                        &
@@ -2843,7 +2839,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -2930,7 +2926,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, lstr, rec
 #ifdef SOLVE3D
       integer :: itrc, k
@@ -2956,7 +2951,7 @@
       fac1=cg_Gnorm(outLoop)
       fac2=cg_beta(innLoop+1,outLoop)*cg_Tmatrix(innLoop,3)
 
-      CALL state_addition (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL state_addition (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lold, Lnew, Lold, fac1, fac2,                &
 #ifdef MASKING
@@ -2997,7 +2992,7 @@
 !  compute its associated dot angaint curret G(k+1). Each gradient
 !  solution is loaded into TANGENT LINEAR STATE ARRAYS at index Lwrk.
 !
-        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+        CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lwrk, rec,                                     &
      &                   ndefADJ(ng), ncADJid(ng), ncname,              &
@@ -3026,7 +3021,7 @@
         fac1=1.0_r8
         fac2=-(cg_Tmatrix(rec,3)+cg_QG(rec,outLoop))
 
-        CALL state_addition (ng, Istr, Iend, Jstr, Jend,                &
+        CALL state_addition (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lold, Lwrk, Lold, fac1, fac2,              &
 #ifdef MASKING
@@ -3052,7 +3047,7 @@
 !
 !  Compute excess cost function.
 !
-      CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL state_dotprod (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
@@ -3082,7 +3077,7 @@
       END SUBROUTINE new_gradient
 !
 !***********************************************************************
-      SUBROUTINE hessian_evecs (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE hessian_evecs (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Lold, Lnew, Lwrk,                       &
      &                          innLoop, outLoop,                       &
@@ -3130,7 +3125,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
@@ -3217,7 +3212,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, ingood, j, lstr, rec, nvec, status, varid
 #ifdef SOLVE3D
       integer :: itrc, k
@@ -3278,7 +3272,7 @@
 !
           fac=0.0_r8
 
-          CALL state_initialize (ng, Istr, Iend, Jstr, Jend,            &
+          CALL state_initialize (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lold, fac,                             &
 #ifdef MASKING
@@ -3313,7 +3307,7 @@
 !  Read gradient solution and load it into TANGENT LINEAR STATE ARRAYS
 !  at index Lwrk.
 !
-            CALL read_state (ng, model, Istr, Iend, Jstr, Jend,         &
+            CALL read_state (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Lwrk, rec,                                 &
      &                       ndefADJ(ng), ncADJid(ng), ncname,          &
@@ -3340,7 +3334,7 @@
             fac1=1.0_r8
             fac2=cg_zv(rec,nvec)
 
-            CALL state_addition (ng, Istr, Iend, Jstr, Jend,            &
+            CALL state_addition (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lold, Lwrk, Lold, fac1, fac2,          &
 #ifdef MASKING
@@ -3390,7 +3384,7 @@
 !  Read in just computed Hessian eigenvectors into adjoint state array
 !  index Lold.
 !
-        CALL read_state (ng, model, Istr, Iend, Jstr, Jend,             &
+        CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lold, nvec,                                    &
      &                   0, ncHSSid(ng), HSSname(ng),                   &
@@ -3417,7 +3411,7 @@
 !
         fac=1.0_r8
 
-        CALL state_scale (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL state_scale (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lold, Lnew, fac,                              &
 #ifdef MASKING
@@ -3443,7 +3437,7 @@
 !  Read in gradient just computed Hessian eigenvectors into tangent
 !  linear state array index Lwrk.
 !
-          CALL read_state (ng, model, Istr, Iend, Jstr, Jend,           &
+          CALL read_state (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lwrk, rec,                                   &
      &                     0, ncHSSid(ng), HSSname(ng),                 &
@@ -3465,7 +3459,7 @@
 !
 !  Compute dot product.
 !
-          CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,        &
+          CALL state_dotprod (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        NstateVar(ng), dot(0:),                   &
 #ifdef MASKING
@@ -3496,7 +3490,7 @@
           fac1=1.0_r8
           fac2=-dot(0)
 
-          CALL state_addition (ng, Istr, Iend, Jstr, Jend,              &
+          CALL state_addition (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lnew, Lwrk, Lnew, fac1, fac2,            &
 #ifdef MASKING
@@ -3522,7 +3516,7 @@
 !
 !  Compute normalization factor.
 !
-        CALL state_dotprod (ng, model, Istr, Iend, Jstr, Jend,          &
+        CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
@@ -3552,7 +3546,7 @@
 !
         fac=1.0_r8/SQRT(dot(0))
 
-        CALL state_scale (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL state_scale (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lnew, Lnew, fac,                              &
 #ifdef MASKING

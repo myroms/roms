@@ -40,7 +40,7 @@
 !
 # include "tile.h"
 !
-      CALL ad_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ad_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    krhs(ng), kstp(ng), kout,                     &
      &                    OCEAN(ng) % ubar,                             &
@@ -55,7 +55,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ad_v2dbc_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          krhs, kstp, kout,                       &
      &                          ubar, vbar, zeta,                       &
@@ -70,7 +70,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: krhs, kstp, kout
 !
@@ -94,7 +94,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, know
 
       real(r8) :: Ce, Cx

@@ -52,7 +52,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 21)
 # endif
-      CALL radiation_stress_tile (ng, Istr, Iend, Jstr, Jend,           &
+      CALL radiation_stress_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, N(ng),            &
 # ifdef SOLVE3D
      &                            nrhs(ng),                             &
@@ -123,7 +123,7 @@
       END SUBROUTINE radiation_stress
 !
 !***********************************************************************
-      SUBROUTINE radiation_stress_tile (ng, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE radiation_stress_tile (ng, tile,                       &
      &                                  LBi, UBi, LBj, UBj, UBk,        &
 # ifdef SOLVE3D
      &                                  nrhs,                           &
@@ -178,7 +178,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Istr, Iend, Jstr, Jend
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk
 # ifdef SOLVE3D
       integer, intent(in) :: nrhs
@@ -323,7 +323,6 @@
 #  endif
 # endif
 
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 
@@ -1147,71 +1146,71 @@
 !
 !  Apply boundary conditions.
 !
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Sxx_bar)
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Sxy_bar)
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Syy_bar)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  ubar_stokes)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  vbar_stokes)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  rustr2d)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  rvstr2d)
 # ifdef SOLVE3D
-      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  Sxx)
-      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  Sxy)
-      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  Syy)
-      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  Szx)
-      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  Szy)
-      CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  u_stokes)
-      CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  v_stokes)
-      CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  rustr3d)
-      CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
      &                  rvstr3d)
 # endif
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 4, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 4,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rustr2d, rvstr2d, rulag2d, rvlag2d)
-      CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    ubar_stokes, vbar_stokes)
 #  ifdef SOLVE3D
-      CALL mp_exchange3d (ng, iNLM, 4, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 4,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rustr3d,  rvstr3d, rulag3d,  rvlag3d)
-      CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    u_stokes, v_stokes)

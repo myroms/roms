@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets initial conditions for  sedimen t tracer fields   !
@@ -26,7 +25,7 @@
 
 #include "tile.h"
 !
-      CALL ana_sediment_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+      CALL ana_sediment_tile (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        GRID(ng) % pm,                            &
      &                        GRID(ng) % pn,                            &
@@ -53,7 +52,7 @@
       END SUBROUTINE ana_sediment
 !
 !***********************************************************************
-      SUBROUTINE ana_sediment_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+      SUBROUTINE ana_sediment_tile (ng, tile, model,                    &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              pm, pn,                             &
      &                              xr, yr,                             &
@@ -80,7 +79,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -130,7 +129,6 @@
 # endif
 #endif
 
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, ised, j, k
 
       real(r8) :: cff1, cff2, cff3, cff4

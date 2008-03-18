@@ -70,7 +70,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 7)
 # endif
-      CALL frc_adjust_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL frc_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -95,7 +95,7 @@
       END SUBROUTINE frc_adjust
 !
 !***********************************************************************
-      SUBROUTINE frc_adjust_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE frc_adjust_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
 # ifdef MASKING
      &                            rmask, umask, vmask,                  &
@@ -115,7 +115,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp
 !
@@ -164,7 +164,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, it1, it2, j
 # ifdef SOLVE3D
       integer :: itrc
@@ -272,7 +271,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 8)
 # endif
-      CALL load_ADforcing_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL load_ADforcing_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
 # ifdef ADJUST_WSTRESS
      &                          FORCES(ng) % ad_sustr,                  &
@@ -293,7 +292,7 @@
       END SUBROUTINE load_ADforcing
 !
 !***********************************************************************
-      SUBROUTINE load_ADforcing_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE load_ADforcing_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
 # ifdef ADJUST_WSTRESS
      &                                ad_sustr, ad_svstr,               &
@@ -310,7 +309,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lout
 !
@@ -349,7 +348,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 # ifdef SOLVE3D
       integer :: itrc
@@ -430,7 +428,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 8)
 # endif
-      CALL load_NLforcing_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL load_NLforcing_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
 # ifdef ADJUST_WSTRESS
      &                          FORCES(ng) % sustr,                     &
@@ -451,7 +449,7 @@
       END SUBROUTINE load_NLforcing
 !
 !***********************************************************************
-      SUBROUTINE load_NLforcing_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE load_NLforcing_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
 # ifdef ADJUST_WSTRESS
      &                                sustr, svstr,                     &
@@ -468,7 +466,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lout
 !
@@ -507,7 +505,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 # ifdef SOLVE3D
       integer :: itrc
@@ -585,7 +582,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iTLM, 8)
 # endif
-      CALL load_TLforcing_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL load_TLforcing_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
 # ifdef ADJUST_WSTRESS
      &                          FORCES(ng) % tl_sustr,                  &
@@ -606,7 +603,7 @@
       END SUBROUTINE load_TLforcing
 !
 !***********************************************************************
-      SUBROUTINE load_TLforcing_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE load_TLforcing_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
 # ifdef ADJUST_WSTRESS
      &                                tl_sustr, tl_svstr,               &
@@ -623,7 +620,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lout
 !
@@ -662,7 +659,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 # ifdef SOLVE3D
       integer :: itrc

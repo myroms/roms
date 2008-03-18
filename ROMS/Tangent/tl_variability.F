@@ -90,7 +90,7 @@
 !
 # include "tile.h"
 !
-      CALL tl_variability_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL tl_variability_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Linp, Lweak,                            &
 # ifdef SOLVE3D
@@ -128,7 +128,7 @@
       END SUBROUTINE tl_variability
 !
 !***********************************************************************
-      SUBROUTINE tl_variability_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE tl_variability_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                Linp, Lweak,                      &
 # ifdef SOLVE3D
@@ -165,7 +165,7 @@
 !
       logical, intent(in) :: Lweak
 
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp
 !
@@ -248,7 +248,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 # ifdef SOLVE3D
       integer :: itrc
@@ -297,7 +296,7 @@
         END DO
       END DO
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iTLM, 3, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 3,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_zeta(:,:,Linp),                            &
@@ -323,7 +322,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng),             &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_ustr(:,:,:,Linp),                          &
@@ -349,7 +348,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_u(:,:,:,Linp),                             &
@@ -370,7 +369,7 @@
         END DO
       END DO
 #  ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,Linp,:))
@@ -391,7 +390,7 @@
         END DO
       END DO
 #   ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, Nfrec(ng), 1, NT(ng),  &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_tflux(:,:,:,Linp,:))

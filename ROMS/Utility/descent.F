@@ -82,7 +82,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, model, 36)
 # endif
-      CALL descent_tile (ng, model, Istr, Iend, Jstr, Jend,             &
+      CALL descent_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   Lold(ng), Lnew(ng), Iter, step,                &
 # ifdef MASKING
@@ -121,7 +121,7 @@
       END SUBROUTINE descent
 !
 !***********************************************************************
-      SUBROUTINE descent_tile (ng, model, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE descent_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lold, Lnew, Iter, step,                  &
 # ifdef MASKING
@@ -153,7 +153,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Iter
 
@@ -225,7 +225,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 # ifdef SOLVE3D
       integer :: itrc, k

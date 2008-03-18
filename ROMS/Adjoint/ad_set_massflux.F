@@ -61,7 +61,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 12)
 # endif
-      CALL ad_set_massflux_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_set_massflux_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           nrhs(ng),                              &
      &                           OCEAN(ng) % u,                         &
@@ -88,7 +88,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_set_massflux_tile (ng, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ad_set_massflux_tile (ng, tile,                        &
      &                                 LBi, UBi, LBj, UBj,              &
      &                                 nrhs,                            &
      &                                 u, v,                            &
@@ -114,7 +114,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 !
@@ -176,7 +176,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8) :: adfac, adfac1
@@ -192,29 +191,29 @@
 !  Exchange boundary information.
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_Huon, tl_Hvom)
 !>
-      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_Huon, ad_Hvom)
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_v3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_Hvom)
 !>
-      CALL ad_exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_v3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_Hvom)
-!>    CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_u3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_Huon)
 !>
-      CALL ad_exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_u3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_Huon)
 #  endif

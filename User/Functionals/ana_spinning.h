@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets time-variable rotation force as the sum of     !
@@ -24,7 +23,7 @@
 
 #include "tile.h"
 !
-      CALL ana_spinning_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+      CALL ana_spinning_tile (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
 #ifdef SPHERICAL
      &                        GRID(ng) % lonr,                          &
@@ -47,7 +46,7 @@
       END SUBROUTINE ana_spinning
 !
 !***********************************************************************
-      SUBROUTINE ana_spinning_tile (ng, model, Istr, Iend, Jstr, Jend,  &
+      SUBROUTINE ana_spinning_tile (ng, tile, model,                    &
      &                              LBi, UBi, LBj, UBj,                 &
 #ifdef SPHERICAL
      &                              lonr, latr                          &
@@ -62,7 +61,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -91,7 +90,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: i, j
 
 #include "set_bounds.h"
 !

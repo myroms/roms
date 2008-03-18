@@ -46,9 +46,9 @@
       USE mod_iounits
       USE mod_scalars
 !
-      USE ocean_control_mod, ONLY : initialize
-      USE ocean_control_mod, ONLY : run
-      USE ocean_control_mod, ONLY : finalize
+      USE ocean_control_mod, ONLY : ROMS_initialize
+      USE ocean_control_mod, ONLY : ROMS_run
+      USE ocean_control_mod, ONLY : ROMS_finalize
 !
       implicit none
 !
@@ -56,7 +56,10 @@
 !
       logical, save :: first
 
-      integer :: MyError
+      integer :: ng, MyError
+
+      integer, dimension(Ngrids) :: Tstr
+      integer, dimension(Ngrids) :: Tend
 
 #ifdef DISTRIBUTE
 # ifdef MPI
@@ -92,22 +95,26 @@
 !
       IF (exit_flag.eq.NoError) THEN
         first=.TRUE.
-        CALL initialize (first)
+        CALL ROMS_initialize (first)
       END IF
 !
 !-----------------------------------------------------------------------
 !  Time-step ocean model.
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
+        Tstr(ng)=ntstart(ng)
+        Tend(ng)=ntend(ng)+1
+      END DO
       IF (exit_flag.eq.NoError) THEN
-        CALL run
+        CALL ROMS_run (Tstr, Tend) 
       END IF
 !
 !-----------------------------------------------------------------------
 !  Terminate ocean model execution: flush and close all IO files.
 !-----------------------------------------------------------------------
 !
-      CALL finalize
+      CALL ROMS_finalize
 #if defined DISTRIBUTE && defined MPI
       CALL mpi_finalize (MyError)
 #endif

@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets kinematic bottom flux of tracer type variables    !
@@ -23,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_btflux_tile (ng, model, Istr, Iend, Jstr, Jend, itrc,    &
+      CALL ana_btflux_tile (ng, tile, model, itrc,                      &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng) % btflx)
 !
@@ -37,8 +36,8 @@
       END SUBROUTINE ana_btflux
 !
 !***********************************************************************
-      SUBROUTINE ana_btflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
-     &                            itrc, LBi, UBi, LBj, UBj,             &
+      SUBROUTINE ana_btflux_tile (ng, tile, model, itrc,                &
+     &                            LBi, UBi, LBj, UBj,                   &
      &                            btflx)
 !***********************************************************************
 !
@@ -47,7 +46,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr, itrc
+      integer, intent(in) :: ng, tile, model, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -58,7 +57,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 #include "set_bounds.h"

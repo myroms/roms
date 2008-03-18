@@ -44,7 +44,7 @@
 !
 # include "tile.h"
 !
-      CALL back_cov_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL back_cov_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    nstp(ng), nnew(ng), Lold(ng),                 &
      &                    GRID(ng) % h,                                 &
@@ -75,7 +75,7 @@
       END SUBROUTINE back_cov
 !
 !***********************************************************************
-      SUBROUTINE back_cov_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE back_cov_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp, nnew, Lold,                       &
      &                          h, omn, om_u, om_v, on_u, on_v,         &
@@ -106,7 +106,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, nstp, nnew
 !
@@ -172,7 +172,6 @@
       logical :: k_bound, r_bound, u_bound, v_bound
       integer :: iobs
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 # ifdef SOLVE3D
       integer :: itrc, k, order
@@ -213,7 +212,7 @@
 !  Compute new depths and thicknesses for preconditioning.
 !-----------------------------------------------------------------------
 ! 
-      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nstp, nnew,                                  &
      &                     h,                                           &

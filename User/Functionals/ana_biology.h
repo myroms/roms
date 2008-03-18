@@ -22,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_biology_tile (ng, model, Istr, Iend, Jstr, Jend,         &
+      CALL ana_biology_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng) % t)
 !
@@ -36,7 +36,7 @@
       END SUBROUTINE ana_biology
 !
 !***********************************************************************
-      SUBROUTINE ana_biology_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ana_biology_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             t)
 !***********************************************************************
@@ -47,7 +47,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -58,7 +58,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, is, itrc, j, k
 
 #if defined BIO_FASHAM || defined NEMURO

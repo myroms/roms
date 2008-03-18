@@ -56,7 +56,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 34)
 # endif
-      CALL ad_step3d_uv_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL ad_step3d_uv_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        knew(ng), nrhs(ng), nstp(ng), nnew(ng),   &
 # ifdef UV_PSOURCE
@@ -131,7 +131,7 @@
       END SUBROUTINE ad_step3d_uv
 !
 !***********************************************************************
-      SUBROUTINE ad_step3d_uv_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE ad_step3d_uv_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              knew, nrhs, nstp, nnew,             &
 # ifdef UV_PSOURCE
@@ -187,7 +187,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew, nrhs, nstp, nnew
 !
@@ -345,7 +345,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB
       integer :: i, idiag, is, j, k
 
@@ -425,25 +424,25 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iTLM, 4, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iTLM, 4,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_ubar(:,:,1), tl_vbar(:,:,1),               &
 !>   &                    tl_ubar(:,:,2), tl_vbar(:,:,2))
 !>
-      CALL ad_mp_exchange2d (ng, iADM, 4, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 4,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_ubar(:,:,1), ad_vbar(:,:,1),            &
      &                       ad_ubar(:,:,2), ad_vbar(:,:,2))
 
-!>    CALL mp_exchange3d (ng, iTLM, 4, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iTLM, 4,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_u(:,:,:,nnew), tl_v(:,:,:,nnew),           &
 !>   &                    tl_Huon, tl_Hvom)
 !>
-      CALL ad_mp_exchange3d (ng, iADM, 4, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 4,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_u(:,:,:,nnew), ad_v(:,:,:,nnew),        &
@@ -451,56 +450,56 @@
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
       DO k=1,2
-!>      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_v2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          tl_vbar(:,:,k))
 !>
-        CALL ad_exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,          &
+        CALL ad_exchange_v2d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ad_vbar(:,:,k))
-!>      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_u2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          tl_ubar(:,:,k))
 !>
-        CALL ad_exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,          &
+        CALL ad_exchange_u2d_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             ad_ubar(:,:,k))
       END DO
 !
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Hvom)
-!>    CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_v3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_Hvom)
 !>
-      CALL ad_exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_v3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_Hvom)
 
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        Huon)
-!>    CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_u3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_Huon)
 !>
-      CALL ad_exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_u3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_Huon)
 
-!>    CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_v3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_v(:,:,:,nnew))
 !>
-      CALL ad_exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_v3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_v(:,:,:,nnew))
-!>    CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_u3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_u(:,:,:,nnew))
 !>
-      CALL ad_exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_u3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_u(:,:,:,nnew))
 #  endif
@@ -1321,21 +1320,21 @@
 !  Set lateral adjoint boundary conditions.
 !-----------------------------------------------------------------------
 !
-!>    CALL tl_v3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+!>    CALL tl_v3dbc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj, N(ng),                    &
 !>   &                    nstp, nnew,                                   &
 !>   &                    v)
 !>
-      CALL ad_v3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ad_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    nstp, nnew,                                   &
      &                    ad_v)
-!>    CALL tl_u3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+!>    CALL tl_u3dbc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj, N(ng),                    &
 !>   &                    nstp, nnew,                                   &
 !>   &                    tl_u)
 !>
-      CALL ad_u3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ad_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    nstp, nnew,                                   &
      &                    ad_u)

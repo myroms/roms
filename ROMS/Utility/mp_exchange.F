@@ -282,8 +282,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE mp_exchange2d (ng, model, Nvar,                        &
-     &                          Istr, Iend, Jstr, Jend,                 &
+      SUBROUTINE mp_exchange2d (ng, tile, model, Nvar,                  &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Nghost, EWperiodic, NSperiodic,         &
      &                          A, B, C, D)
@@ -300,8 +299,7 @@
 !
       logical, intent(in) :: EWperiodic, NSperiodic
 
-      integer, intent(in) :: ng, model, Nvar
-      integer, intent(in) :: Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost
 !
@@ -351,6 +349,8 @@
       real(r8), dimension(Nvar*HaloSizeI(ng)) :: recvS, recvN
 
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+# include "set_bounds.h"
 
 # ifdef PROFILE
 !
@@ -890,8 +890,7 @@
       END SUBROUTINE mp_exchange2d
 !
 !***********************************************************************
-      SUBROUTINE mp_exchange3d (ng, model, Nvar,                        &
-     &                          Istr, Iend, Jstr, Jend,                 &
+      SUBROUTINE mp_exchange3d (ng, tile, model, Nvar,                  &
      &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
      &                          Nghost, EWperiodic, NSperiodic,         &
      &                          A, B, C, D)
@@ -908,8 +907,7 @@
 !
       logical, intent(in) :: EWperiodic, NSperiodic
 
-      integer, intent(in) :: ng, model, Nvar
-      integer, intent(in) :: Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost
 
@@ -963,6 +961,8 @@
      &                          (UBk-LBk+1)) :: recvS, recvN
 
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+# include "set_bounds.h"
 
 # ifdef PROFILE
 !
@@ -1601,8 +1601,7 @@
       END SUBROUTINE mp_exchange3d
 !
 !***********************************************************************
-      SUBROUTINE mp_exchange4d (ng, model, Nvar,                        &
-     &                          Istr, Iend, Jstr, Jend,                 &
+      SUBROUTINE mp_exchange4d (ng, tile, model, Nvar,                  &
      &                          LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt, &
      &                          Nghost, EWperiodic, NSperiodic,         &
      &                          A, B)
@@ -1619,8 +1618,7 @@
 !
       logical, intent(in) :: EWperiodic, NSperiodic
 
-      integer, intent(in) :: ng, model, Nvar
-      integer, intent(in) :: Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
       integer, intent(in) :: Nghost
 !
@@ -1671,6 +1669,8 @@
      &                    (UBk-LBk+1)*(UBt-LBt+1)) :: recvS, recvN
 
       character (len=MPI_MAX_ERROR_STRING) :: string
+
+# include "set_bounds.h"
 
 # ifdef PROFILE
 !
@@ -2130,8 +2130,7 @@
 # ifdef ADJOINT
 !
 !***********************************************************************
-      SUBROUTINE ad_mp_exchange2d (ng, model, Nvar,                     &
-     &                             Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ad_mp_exchange2d (ng, tile, model, Nvar,               &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             Nghost, EWperiodic, NSperiodic,      &
      &                             ad_A, ad_B, ad_C, ad_D)
@@ -2148,8 +2147,7 @@
 !
       logical, intent(in) :: EWperiodic, NSperiodic
 
-      integer, intent(in) :: ng, model, Nvar
-      integer, intent(in) :: Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Nghost
 
@@ -2200,6 +2198,7 @@
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
+#  include "set_bounds.h"
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -2872,8 +2871,7 @@
       END SUBROUTINE ad_mp_exchange2d
 !
 !***********************************************************************
-      SUBROUTINE ad_mp_exchange3d (ng, model, Nvar,                     &
-     &                             Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ad_mp_exchange3d (ng, tile, model, Nvar,               &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
      &                             Nghost, EWperiodic, NSperiodic,      &
      &                             ad_A, ad_B, ad_C, ad_D)
@@ -2890,8 +2888,7 @@
 !
       logical, intent(in) :: EWperiodic, NSperiodic
 
-      integer, intent(in) :: ng, model, Nvar
-      integer, intent(in) :: Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost
 !
@@ -2942,6 +2939,7 @@
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
+#  include "set_bounds.h"
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------
@@ -3713,8 +3711,7 @@
       END SUBROUTINE ad_mp_exchange3d
 !
 !***********************************************************************
-      SUBROUTINE ad_mp_exchange4d (ng, model, Nvar,                     &
-     &                             Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ad_mp_exchange4d (ng, tile, model, Nvar,               &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
      &                             LBt, UBt,                            &
      &                             Nghost, EWperiodic, NSperiodic,      &
@@ -3732,8 +3729,7 @@
 !
       logical, intent(in) :: EWperiodic, NSperiodic
 
-      integer, intent(in) :: ng, model, Nvar
-      integer, intent(in) :: Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model, Nvar
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
       integer, intent(in) :: Nghost
 !
@@ -3785,6 +3781,7 @@
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
+#  include "set_bounds.h"
 #  ifdef PROFILE
 !
 !-----------------------------------------------------------------------

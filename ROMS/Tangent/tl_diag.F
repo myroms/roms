@@ -40,7 +40,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iTLM, 7)
 # endif
-      CALL tl_diag_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL tl_diag_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   nstp(ng), kstp(ng),                            &
      &                   GRID(ng) % h,                                  &
@@ -63,7 +63,7 @@
       END SUBROUTINE tl_diag
 !
 !***********************************************************************
-      SUBROUTINE tl_diag_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE tl_diag_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         nstp, kstp,                              &
      &                         h, omn,                                  &
@@ -88,7 +88,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, kstp
 !
@@ -139,6 +139,8 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: pe2d
 
       character (len=8) :: kechar, pechar
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Compute and report out volume averaged kinetic, potential total

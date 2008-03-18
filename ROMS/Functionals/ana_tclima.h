@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets analytical tracer climatology fields.             !
@@ -22,7 +21,7 @@
 
 #include "tile.h"
 !
-      CALL ana_tclima_tile (ng, model, Istr, Iend, Jstr, Jend,          &
+      CALL ana_tclima_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      CLIMA(ng) % tclm)
 !
@@ -36,7 +35,7 @@
       END SUBROUTINE ana_tclima
 !
 !***********************************************************************
-      SUBROUTINE ana_tclima_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+      SUBROUTINE ana_tclima_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            tclm)
 !***********************************************************************
@@ -54,7 +53,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -77,7 +76,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
       real(r8) :: val1, val2, val3, val4
 
@@ -115,13 +113,13 @@
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
       DO itrc=1,NAT
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          tclm(:,:,:,itrc))
       END DO
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange4d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange4d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NAT,         &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tclm)

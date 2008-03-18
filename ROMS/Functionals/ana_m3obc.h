@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets 3D momentum open boundary conditions using        !
@@ -23,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_m3obc_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL ana_m3obc_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj)
 !
 ! Set analytical header file name used.
@@ -36,7 +35,7 @@
       END SUBROUTINE ana_m3obc
 !
 !***********************************************************************
-      SUBROUTINE ana_m3obc_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE ana_m3obc_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
@@ -45,12 +44,11 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
       real(r8) :: fac, val
 

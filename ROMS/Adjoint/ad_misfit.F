@@ -36,7 +36,7 @@
 !
 # include "tile.h"
 !
-      CALL ad_misfit_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL ad_misfit_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     knew(ng),                                    &
 # ifdef SOLVE3D
@@ -61,7 +61,7 @@
       END SUBROUTINE ad_misfit
 !
 !***********************************************************************
-      SUBROUTINE ad_misfit_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE ad_misfit_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           knew,                                  &
 # ifdef SOLVE3D
@@ -94,7 +94,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
 # ifdef SOLVE3D
@@ -137,7 +137,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV 
       integer :: ObsSum, ObsVoid
       integer :: i, ie, iobs, is, kfrc
 

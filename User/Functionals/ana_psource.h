@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets analytical tracer and mass point Sources       !
@@ -29,7 +28,8 @@
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
 !
-      CALL ana_psource_grid (ng, model, LBi, UBi, LBj, UBj,             &
+      CALL ana_psource_grid (ng, tiel, model,                           &
+     &                       LBi, UBi, LBj, UBj,                        &
      &                       nnew(ng), knew(ng), Nsrc(ng),              &
      &                       OCEAN(ng) % zeta,                          &
      &                       OCEAN(ng) % ubar,                          &
@@ -67,7 +67,8 @@
       END SUBROUTINE ana_psource
 !
 !***********************************************************************
-      SUBROUTINE ana_psource_grid (ng, model, LBi, UBi, LBj, UBj,       &
+      SUBROUTINE ana_psource_grid (ng, tile, model,                     &
+     &                             LBi, UBi, LBj, UBj,                  &
      &                             nnew, knew, Nsrc,                    &
      &                             zeta, ubar, vbar,                    &
 #ifdef SOLVE3D
@@ -97,7 +98,8 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, LBi, UBi, LBj, UBj
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nnew, knew
 
       integer, intent(out) :: Nsrc
@@ -166,6 +168,8 @@
 !
       integer :: is, i, j, k, ised
       real(r8) :: fac, my_area, ramp
+
+#include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Set tracer and/or mass point sources and/or sink.

@@ -79,7 +79,7 @@
 ** Determine if the ARPACK library is needed.
 */
 
-#if defined PROPAGATOR || defined W4DPSAS || \
+#if defined PROPAGATOR || defined W4DPSAS ||  defined W4DVAR || \
    (defined IS4DVAR    && defined LANCZOS)
   USE_ARPACK := on
 #else
@@ -100,7 +100,7 @@
 ** Determine if the Earth System Modeling Framework library is needed.
 */
 
-#ifdef ESMF
+#ifdef ESMF_LIB
   USE_ESMF := on
 #else
   USE_ESMF :=

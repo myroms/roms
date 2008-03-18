@@ -59,7 +59,7 @@
 !
 # include "tile.h"
 !
-      CALL lmd_bkpp_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL lmd_bkpp_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    nstp(ng),                                     &
 # ifdef MASKING
@@ -91,7 +91,7 @@
       END SUBROUTINE lmd_bkpp
 !
 !***********************************************************************
-      SUBROUTINE lmd_bkpp_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE lmd_bkpp_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp,                                   &
 # ifdef MASKING
@@ -121,7 +121,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, Intent(in) :: nstp
 !
@@ -193,7 +193,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
       real(r8), parameter :: eps = 1.0E-10_r8
@@ -297,8 +296,8 @@
             zgrid(i,j)=z_w(i,j,N(ng))-z_w(i,j,k)
           END DO
         END DO
-        CALL lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, -1.0_r8,      &
-     &                        zgrid, swdk)
+        CALL lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,             &
+     &                        -1.0_r8, zgrid, swdk)
         DO j=Jstr,Jend
           DO i=Istr,Iend
             Bflux(i,j,k)=(Bo(i,j)+Bosol(i,j)*(1.0_r8-swdk(i,j)))
@@ -513,8 +512,8 @@
 # endif
         END DO
       END DO
-      CALL lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, -1.0_r8,        &
-     &                      zgrid, swdk)
+      CALL lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,               &
+     &                      -1.0_r8, zgrid, swdk)
       DO j=Jstr,Jend
         DO i=Istr,Iend
           Bfbot(i,j)=(Bo(i,j)+Bosol(i,j)*(1.0_r8-swdk(i,j)))
@@ -545,11 +544,11 @@
 !
 !  Apply gradient or periodic boundary conditions.
 !
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  hbbl)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    hbbl)
@@ -562,7 +561,7 @@
           bl_dpth(i,j)=hbbl(i,j)-z_w(i,j,0)
         END DO
       END DO
-      CALL shapiro2d_tile (ng, iNLM, Istr, Iend, Jstr, Jend,            &
+      CALL shapiro2d_tile (ng, tile, iNLM,                              &
      &                     LBi, UBi, LBj, UBj,                          &
 #  ifdef MASKING
      &                     rmask,                                       &
@@ -577,11 +576,11 @@
 !
 !  Apply gradient or periodic boundary conditions.
 !
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  hbbl)
 # ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    hbbl)
@@ -612,8 +611,8 @@
 # endif
         END DO
       END DO
-      CALL lmd_swfrac_tile (ng, Istr, Iend, Jstr, Jend, -1.0_r8,        &
-     &                      zgrid, swdk)
+      CALL lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,               &
+     &                      -1.0_r8, zgrid, swdk)
       DO j=Jstr,Jend
         DO i=Istr,Iend
           Bfbot(i,j)=(Bo(i,j)+Bosol(i,j)*(1.0_r8-swdk(i,j)))

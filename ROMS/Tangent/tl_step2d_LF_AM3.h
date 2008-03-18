@@ -50,7 +50,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iTLM, 9)
 # endif
-      CALL tl_step2d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL tl_step2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj, N(ng),                   &
      &                     krhs(ng), kstp(ng), knew(ng),                &
 # ifdef SOLVE3D
@@ -158,7 +158,7 @@
       END SUBROUTINE tl_step2d
 !
 !***********************************************************************
-      SUBROUTINE tl_step2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE tl_step2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, UBk,               &
      &                           krhs, kstp, knew,                      &
 # ifdef SOLVE3D
@@ -266,7 +266,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk
       integer, intent(in) :: krhs, kstp, knew
 # ifdef SOLVE3D
@@ -547,7 +547,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: i, j, ptsk
 # if defined UV_PSOURCE || defined Q_PSOURCE
@@ -728,24 +727,24 @@
 !  boundary conditions if no partitions in I- or J-directions.
 !
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        ILB, IUB, JLB, JUB,                       &
      &                        DUon)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        ILB, IUB, JLB, JUB,                       &
      &                        tl_DUon)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        ILB, IUB, JLB, JUB,                       &
      &                        DVom)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        ILB, IUB, JLB, JUB,                       &
      &                        tl_DVom)
 #  endif
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    ILB, IUB, JLB, JUB,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    DUon, DVom)
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    ILB, IUB, JLB, JUB,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_DUon, tl_DVom)
@@ -769,7 +768,7 @@
 !  for volume conservation. Compute BASIC STATE value.
 !  This needs to be computed here instead of below.
 !
-      CALL obc_flux_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL obc_flux_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    knew,                                         &
 #  ifdef MASKING
@@ -781,7 +780,7 @@
 !  Set vertically integrated mass fluxes DUon and DVom along the open
 !  boundaries in such a way that the integral volume is conserved.
 !
-      CALL set_DUV_bc_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL set_DUV_bc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      ILB, IUB, JLB, JUB,                         &
      &                      krhs,                                       &
@@ -791,7 +790,7 @@
      &                      om_v, on_u,                                 &
      &                      ubar, vbar,                                 &
      &                      Drhs, DUon, DVom)
-      CALL tl_set_DUV_bc_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL tl_set_DUV_bc_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         ILB, IUB, JLB, JUB,                      &
      &                         krhs,                                    &
@@ -913,40 +912,40 @@
 !
       IF ((iif(ng).eq.(nfast(ng)+1)).and.PREDICTOR_2D_STEP(ng)) THEN
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_r2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          Zt_avg1)
 !>
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_Zt_avg1)
-!>      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_u2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          DU_avg1)
 !>
-        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_DU_avg1)
-!>      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_v2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          DV_avg1)
 !>
-        CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_DV_avg1)
 #  endif
 #  ifdef DISTRIBUTE
-!>      CALL mp_exchange2d (ng, iNLM, 3, Istr, Iend, Jstr, Jend,        &
+!>      CALL mp_exchange2d (ng, tile, iNLM, 3,                          &
 !>   &                      LBi, UBi, LBj, UBj,                         &
 !>   &                      NghostPoints, EWperiodic, NSperiodic,       &
 !>   &                      Zt_avg1, DU_avg1, DV_avg1)
 !>
-        CALL mp_exchange2d (ng, iTLM, 3, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 3,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      tl_Zt_avg1, tl_DU_avg1, tl_DV_avg1)
 #  endif
-!>      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                &
+!>      CALL set_depth_tile (ng, tile,                                  &
 !>   &                       LBi, UBi, LBj, UBj,                        &
 !>   &                       nstp, nnew,                                &
 !>   &                       h,                                         &
@@ -958,7 +957,7 @@
 #  endif
 !>   &                       Zt_avg1, Hz, z_r, z_w)
 !>
-        CALL tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL tl_set_depth_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp, nnew,                             &
      &                          h, tl_h,                                &
@@ -1156,21 +1155,21 @@
           END DO
         END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC
-!>      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+!>      CALL exchange_r2d_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
 !>   &                          rzeta(:,:,krhs))
 !>
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_rzeta(:,:,krhs))
 # endif
 # ifdef DISTRIBUTE
-!>      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,        &
+!>      CALL mp_exchange2d (ng, tile, iNLM, 1,                          &
 !>   &                      LBi, UBi, LBj, UBj,                         &
 !>   &                      NghostPoints, EWperiodic, NSperiodic,       &
 !>   &                      rzeta(:,:,krhs))
 !>
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      tl_rzeta(:,:,krhs))
@@ -1196,31 +1195,31 @@
 !
 !  Set free-surface lateral boundary conditions.
 !
-!>    CALL zetabc_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL zetabc_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
 !>   &                  krhs, kstp, knew,                               &
 !>   &                  zeta)
 !>
-      CALL tl_zetabc_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL tl_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     krhs, kstp, knew,                            &
      &                     zeta, tl_zeta)
 # if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        zeta(:,:,knew))
 !>
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_zeta(:,:,knew))
 # endif
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    zeta(:,:,knew))
 !>
-      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_zeta(:,:,knew))
@@ -3543,29 +3542,29 @@
 !
 !  Apply boundary conditions
 !
-      CALL bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  rmask_wet)
-      CALL bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  umask_wet)
-      CALL bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v2d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  vmask_wet)
 
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        rmask_wet)
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        umask_wet)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        vmask_wet)
 #  endif
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 3, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 3,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rmask_wet, umask_wet, vmask_wet)
@@ -3753,22 +3752,22 @@
 !  Apply lateral boundary conditions.
 !-----------------------------------------------------------------------
 !
-!>    CALL u2dbc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+!>    CALL u2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
 !>   &                 krhs, kstp, knew,                                &
 !>   &                 ubar, vbar, zeta)
 !>
-      CALL tl_u2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    krhs, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
-!>    CALL v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+!>    CALL v2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
 !>   &                 krhs, kstp, knew,                                &
 !>   &                 ubar, vbar, zeta)
 !>
-      CALL tl_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    krhs, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
@@ -3778,7 +3777,7 @@
 !  Compute integral mass flux across open boundaries and adjust
 !  for volume conservation.
 !
-      CALL tl_obc_flux_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL tl_obc_flux_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       knew,                                      &
 #  ifdef MASKING
@@ -3840,29 +3839,29 @@
 !-----------------------------------------------------------------------
 !
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_u2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        ubar(:,:,knew))
 !>
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_ubar(:,:,knew))
-!>    CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_v2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        vbar(:,:,knew))
 !>
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_vbar(:,:,knew))
 #  endif
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    ubar(:,:,knew),                               &
 !>   &                    vbar(:,:,knew))
 !>
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_ubar(:,:,knew),                            &

@@ -36,7 +36,7 @@
 !
 # include "tile.h"
 !
-      CALL ad_forcing_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ad_forcing_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Kfrc, Nfrc,                                 &
 # ifdef SOLVE3D
@@ -62,7 +62,7 @@
       END SUBROUTINE ad_forcing
 !
 !***********************************************************************
-      SUBROUTINE ad_forcing_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ad_forcing_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Kfrc, Nfrc,                           &
 # ifdef SOLVE3D
@@ -83,7 +83,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kfrc
       integer, intent(in) :: Nfrc
@@ -130,7 +130,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 # ifdef SOLVE3D
       integer :: itrc, k

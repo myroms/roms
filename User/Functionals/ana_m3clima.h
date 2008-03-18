@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets analytical 3D momentum climatology fields.        !
@@ -22,7 +21,7 @@
 
 #include "tile.h"
 !
-      CALL ana_m3clima_tile (ng, model, Istr, Iend, Jstr, Jend,         &
+      CALL ana_m3clima_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       CLIMA(ng) % uclm,                          &
      &                       CLIMA(ng) % vclm)
@@ -37,7 +36,7 @@
       END SUBROUTINE ana_m3clima
 !
 !***********************************************************************
-      SUBROUTINE ana_m3clima_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ana_m3clima_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             uclm, vclm)
 !***********************************************************************
@@ -53,7 +52,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -78,7 +77,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
 #include "set_bounds.h"
@@ -105,15 +103,15 @@
 #endif
 
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        uclm)
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        vclm)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange3d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    uclm, vclm)

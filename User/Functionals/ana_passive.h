@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets initial conditions for passive inert tracers      !
@@ -23,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_passive_tile (ng, model, Istr, Iend, Jstr, Jend,         &
+      CALL ana_passive_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       OCEAN(ng) % t)
 !
@@ -37,7 +36,7 @@
       END SUBROUTINE ana_passive
 !
 !***********************************************************************
-      SUBROUTINE ana_passive_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ana_passive_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             t)
 !***********************************************************************
@@ -47,7 +46,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -58,7 +57,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
 #include "set_bounds.h"

@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets spatially varying bottom roughness Zo, rdrg2, or  !
@@ -22,7 +21,7 @@
 
 #include "tile.h"
 !
-      CALL ana_bmflux_tile (ng, model, Istr, Iend, Jstr, Jend,          &
+      CALL ana_bmflux_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      GRID(ng) % xr,                              &
      &                      GRID(ng) % yr,                              &
@@ -38,7 +37,7 @@
       END SUBROUTINE ana_bmflux
 !
 !***********************************************************************
-      SUBROUTINE ana_bmflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
+      SUBROUTINE ana_bmflux_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            xr, yr,                               &
      &                            bottom)
@@ -54,7 +53,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
 #ifdef ASSUMED_SHAPE
@@ -69,7 +68,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 #include "set_bounds.h"
@@ -92,7 +90,7 @@
       END DO
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC || defined DISTRIBUTE
-      CALL exchange_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,        &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, MBOTP,             &
      &                        NghostPoints,                             &
      &                        bottom)

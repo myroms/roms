@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets surface wind components using an analytical       !
@@ -24,7 +23,7 @@
 
 #include "tile.h"
 !
-      CALL ana_winds_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL ana_winds_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
 #ifdef SPHERICAL
      &                     GRID(ng) % lonr,                             &
@@ -46,7 +45,7 @@
       END SUBROUTINE ana_winds
 !
 !***********************************************************************
-      SUBROUTINE ana_winds_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE ana_winds_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
 #ifdef SPHERICAL
      &                           lonr, latr,                            &
@@ -68,7 +67,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -107,7 +106,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
       real(r8) :: Wdir, Wmag, cff, u_wind, v_wind
 
@@ -142,15 +140,15 @@
       ana_winds.h: No values provided for Uwind and Vwind.
 #endif
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Uwind)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Vwind)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 2, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Uwind, Vwind)

@@ -93,7 +93,7 @@
 #   ifdef PROFILE
       CALL wclock_on (ng, iNLM, 7)
 #   endif
-      CALL ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ini_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Linp, Lout,                                 &
 #   ifdef MASKING
@@ -124,7 +124,7 @@
       END SUBROUTINE ini_adjust
 !
 !***********************************************************************
-      SUBROUTINE ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ini_adjust_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Linp, Lout,                           &
 #   ifdef MASKING
@@ -144,7 +144,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 !
@@ -196,7 +196,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #   ifdef SOLVE3D
       integer :: itrc, k
@@ -313,7 +312,7 @@
 #   ifdef PROFILE
       CALL wclock_on (ng, iNLM, 7)
 #   endif
-      CALL ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ini_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Linp, Lout,                                 &
 #   ifdef MASKING
@@ -344,7 +343,7 @@
       END SUBROUTINE ini_adjust
 !
 !***********************************************************************
-      SUBROUTINE ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ini_adjust_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            Linp, Lout,                           &
 #   ifdef MASKING
@@ -364,7 +363,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 !
@@ -416,7 +415,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #   ifdef SOLVE3D
       integer :: itrc, k
@@ -533,7 +531,7 @@
 #   ifdef PROFILE
       CALL wclock_on (ng, iRPM, 7)
 #   endif
-      CALL rp_ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL rp_ini_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Linp, Lout,                              &
 #   ifdef MASKING
@@ -575,7 +573,7 @@
       END SUBROUTINE rp_ini_adjust
 !
 !***********************************************************************
-      SUBROUTINE rp_ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE rp_ini_adjust_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               Linp, Lout,                        &
 #   ifdef MASKING
@@ -605,7 +603,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 !
@@ -679,7 +677,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #   ifdef SOLVE3D
       integer :: itrc, k
@@ -801,7 +798,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 7)
 #  endif
-      CALL load_ADtoTL_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL load_ADtoTL_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Linp, Lout, add,                           &
 #  ifdef MASKING
@@ -846,7 +843,7 @@
       END SUBROUTINE load_ADtoTL
 !
 !***********************************************************************
-      SUBROUTINE load_ADtoTL_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE load_ADtoTL_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             Linp, Lout, add,                     &
 #  ifdef MASKING
@@ -882,7 +879,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: add
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 !
@@ -964,7 +961,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #  ifdef SOLVE3D
       integer :: itrc
@@ -1203,7 +1199,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iADM, 7)
 #  endif
-      CALL load_TLtoAD_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL load_TLtoAD_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       Linp, Lout, add,                           &
 #  ifdef MASKING
@@ -1248,7 +1244,7 @@
       END SUBROUTINE load_TLtoAD
 !
 !***********************************************************************
-      SUBROUTINE load_TLtoAD_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE load_TLtoAD_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             Linp, Lout, add,                     &
 #  ifdef MASKING
@@ -1284,7 +1280,7 @@
 !  Imported variable declarations.
 !
       logical, intent(in) :: add
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 !
@@ -1366,7 +1362,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #  ifdef SOLVE3D
       integer :: itrc
@@ -1601,7 +1596,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iNLM, 7)
 #  endif
-      CALL ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL ini_perturb_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       nstp(ng), nnew(ng), Linp, Lout,            &
 #  ifdef MASKING
@@ -1643,7 +1638,7 @@
       END SUBROUTINE ini_perturb
 !
 !***********************************************************************
-      SUBROUTINE ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE ini_perturb_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             nstp, nnew, Linp, Lout,              &
 #  ifdef MASKING
@@ -1698,7 +1693,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew, Linp, Lout
 !
@@ -1792,7 +1787,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -1966,30 +1960,30 @@
 !  Apply lateral boundary conditions to 2D fields.
 !-----------------------------------------------------------------------
 !
-      CALL zetabc_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL zetabc_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  Lout, Lout, Lout,                               &
      &                  zeta)
 #  ifndef SOLVE3D
-      CALL u2dbc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL u2dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj,                              &
      &                 Lout, Lout, Lout,                                &
      &                 ubar, vbar, zeta)
-      CALL v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL v2dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj,                              &
      &                 Lout, Lout, Lout,                                &
      &                 ubar, vbar, zeta)
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        zeta(:,:,Lout))
 #   ifndef SOLVE3D
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        ubar(:,:,Lout))
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        vbar(:,:,Lout))
 #   endif
@@ -1997,12 +1991,12 @@
 
 #  ifdef DISTRIBUTE
 !
-      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    zeta(:,:,Lout))
 #   ifndef SOLVE3D
-      CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    ubar(:,:,Lout),                               &
@@ -2015,7 +2009,7 @@
 !  Compute new depths and thicknesses.
 !-----------------------------------------------------------------------
 !
-      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
@@ -2032,28 +2026,28 @@
 !  Apply lateral boundary conditions to perturbed 3D fields.
 !-----------------------------------------------------------------------
 !
-      CALL u3dbc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL u3dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj, N(ng),                       &
      &                 Lout, Lout, u)
-      CALL v3dbc_tile (ng, Istr, Iend, Jstr, Jend,                      &
+      CALL v3dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj, N(ng),                       &
      &                 Lout, Lout, v)
       DO itrc=1,NT(ng)
-        CALL t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,              &
+        CALL t3dbc_tile (ng, tile,                   itrc,              &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
      &                   Lout, Lout, t)
       END DO
 
 #   if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        u(:,:,:,Lout))
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        v(:,:,:,Lout))
       DO itrc=1,NT(ng)
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          t(:,:,:,Lout,itrc))
       END DO
@@ -2061,12 +2055,12 @@
 
 #   ifdef DISTRIBUTE
 !
-      CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    u(:,:,:,Lout),                                &
      &                    v(:,:,:,Lout))
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    t(:,:,:,Lout,:))
@@ -2110,7 +2104,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iADM, 7)
 #  endif
-      CALL ad_ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL ad_ini_perturb_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Kinp, Kout, Ninp, Nout,                 &
 #  ifdef MASKING
@@ -2145,7 +2139,7 @@
       END SUBROUTINE ad_ini_perturb
 !
 !***********************************************************************
-      SUBROUTINE ad_ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE ad_ini_perturb_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                Kinp, Kout, Ninp, Nout,           &
 #  ifdef MASKING
@@ -2172,7 +2166,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Kinp, Kout, Ninp, Nout
 !
@@ -2236,7 +2230,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -2398,7 +2391,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 7)
 #  endif
-      CALL tl_ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL tl_ini_perturb_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp(ng), nnew(ng), Linp, Lout,         &
 #  ifdef SOLVE3D
@@ -2442,7 +2435,7 @@
       END SUBROUTINE tl_ini_perturb
 !
 !***********************************************************************
-      SUBROUTINE tl_ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE tl_ini_perturb_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                nstp, nnew, Linp, Lout,           &
 #  ifdef SOLVE3D
@@ -2499,7 +2492,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew, Linp, Lout
 !
@@ -2611,7 +2604,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -2784,17 +2776,17 @@
 !  Apply lateral boundary conditions to 2D fields.
 !-----------------------------------------------------------------------
 !
-      CALL tl_zetabc_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL tl_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lout, Lout, Lout,                            &
      &                     zeta, tl_zeta)
 #  ifndef SOLVE3D
-      CALL tl_u2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
-      CALL tl_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
@@ -2803,14 +2795,14 @@
 
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_zeta(:,:,Lout))
 #   ifndef SOLVE3D
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_ubar(:,:,Lout))
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_vbar(:,:,Lout))
 #   endif
@@ -2818,12 +2810,12 @@
 
 #  ifdef DISTRIBUTE
 !
-      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_zeta(:,:,Lout))
 #   ifndef SOLVE3D
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_ubar(:,:,Lout),                            &
@@ -2836,7 +2828,7 @@
 !  Compute new depths and thicknesses.
 !-----------------------------------------------------------------------
 !
-      CALL tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL tl_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        nstp, nnew,                               &
      &                        h, tl_h,                                  &
@@ -2853,28 +2845,28 @@
 !  Apply lateral boundary conditions to perturbed 3D fields.
 !-----------------------------------------------------------------------
 !
-      CALL tl_u3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    Lout, Lout, tl_u)
-      CALL tl_v3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    Lout, Lout, tl_v)
       DO itrc=1,NT(ng)
-        CALL tl_t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,           &
+        CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      Lout, Lout, tl_t)
       END DO
 
 #   if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_u(:,:,:,Lout))
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_v(:,:,:,Lout))
       DO itrc=1,NT(ng)
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          t(:,:,:,Lout,itrc))
       END DO
@@ -2882,12 +2874,12 @@
 
 #   ifdef DISTRIBUTE
 !
-      CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_u(:,:,:,Lout),                             &
      &                    tl_v(:,:,:,Lout))
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,Lout,:))
@@ -2933,7 +2925,7 @@
 #  ifdef PROFILE
       CALL wclock_on (ng, iTLM, 7)
 #  endif
-      CALL tl_ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,             &
+      CALL tl_ini_perturb_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          nstp(ng), nnew(ng), Linp, Lout,         &
 #  ifdef MASKING
@@ -2988,7 +2980,7 @@
       END SUBROUTINE tl_ini_perturb
 !
 !***********************************************************************
-      SUBROUTINE tl_ini_perturb_tile (ng, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE tl_ini_perturb_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
      &                                nstp, nnew, Linp, Lout,           &
 #  ifdef MASKING
@@ -3055,7 +3047,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew, Linp, Lout
 !
@@ -3179,7 +3171,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 #  ifdef SOLVE3D
       integer :: itrc, k
@@ -3416,17 +3407,17 @@
 !  Apply lateral boundary conditions to 2D fields.
 !-----------------------------------------------------------------------
 !
-      CALL tl_zetabc_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL tl_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lout, Lout, Lout,                            &
      &                     zeta, tl_zeta)
 #  ifndef SOLVE3D
-      CALL tl_u2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
-      CALL tl_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
@@ -3435,14 +3426,14 @@
 
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_zeta(:,:,Lout))
 #   ifndef SOLVE3D
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_ubar(:,:,Lout))
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_vbar(:,:,Lout))
 #   endif
@@ -3450,12 +3441,12 @@
 
 #  ifdef DISTRIBUTE
 !
-      CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_zeta(:,:,Lout))
 #   ifndef SOLVE3D
-      CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_ubar(:,:,Lout),                            &
@@ -3468,7 +3459,7 @@
 !  Compute new depths and thicknesses.
 !-----------------------------------------------------------------------
 !
-      CALL set_depth_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
@@ -3480,7 +3471,7 @@
 #   endif
      &                     Zt_avg1,                                     &
      &                     Hz, z_r, z_w)
-      CALL tl_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL tl_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        nstp, nnew,                               &
      &                        h, tl_h,                                  &
@@ -3497,28 +3488,28 @@
 !  Apply lateral boundary conditions to perturbed 3D fields.
 !-----------------------------------------------------------------------
 !
-      CALL tl_u3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    Lout, Lout, tl_u)
-      CALL tl_v3dbc_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL tl_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
      &                    Lout, Lout, tl_v)
       DO itrc=1,NT(ng)
-        CALL tl_t3dbc_tile (ng, Istr, Iend, Jstr, Jend, itrc,           &
+        CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      Lout, Lout, tl_t)
       END DO
 
 #   if defined EW_PERIODIC || defined NS_PERIODIC
 !
-      CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_u(:,:,:,Lout))
-      CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_v(:,:,:,Lout))
       DO itrc=1,NT(ng)
-        CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          t(:,:,:,Lout,itrc))
       END DO
@@ -3526,12 +3517,12 @@
 
 #   ifdef DISTRIBUTE
 !
-      CALL mp_exchange3d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_u(:,:,:,Lout),                             &
      &                    tl_v(:,:,:,Lout))
-      CALL mp_exchange4d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange4d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),      &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_t(:,:,:,Lout,:))
@@ -3576,7 +3567,7 @@
 #   endif
           END DO
         END DO
-        CALL tl_u2dbc_tile (ng, Istr, Iend, Jstr, Jend,                 &
+        CALL tl_u2dbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Lout, Lout, Lout,                           &
      &                      ubar, vbar, zeta,                           &
@@ -3584,13 +3575,13 @@
 
 #   if defined EW_PERIODIC || defined NS_PERIODIC
 !
-        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_ubar(:,:,Lout))
 #   endif
 #   ifdef DISTRIBUTE
 !
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      tl_ubar(:,:,Lout))
@@ -3631,7 +3622,7 @@
 #   endif
           END DO
         END DO
-        CALL tl_v2dbc_tile (ng, Istr, Iend, Jstr, Jend,                 &
+        CALL tl_v2dbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      Lout, Lout, Lout,                           &
      &                      ubar, vbar, zeta,                           &
@@ -3639,13 +3630,13 @@
 
 #   if defined EW_PERIODIC || defined NS_PERIODIC
 !
-        CALL exchange_v2d_tile (ng, iTLM, Istr, Iend, Jstr, Jend,       &
+        CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          tl_vbar(:,:,Lout))
 #   endif
 #   ifdef DISTRIBUTE
 !
-        CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iTLM, 1,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      tl_vbar(:,:,Lout))

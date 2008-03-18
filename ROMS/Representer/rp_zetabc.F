@@ -40,7 +40,7 @@
 !
 # include "tile.h"
 !
-      CALL rp_zetabc_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL rp_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     krhs(ng), kstp(ng), kout,                    &
      &                     OCEAN(ng) % zeta,                            &
@@ -49,7 +49,7 @@
       END SUBROUTINE rp_zetabc
 !
 !***********************************************************************
-      SUBROUTINE rp_zetabc_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE rp_zetabc_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           krhs, kstp, kout,                      &
      &                           zeta, tl_zeta)
@@ -62,7 +62,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: krhs, kstp, kout
 !
@@ -78,7 +78,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, know
 
       real(r8) :: Ce, Cx

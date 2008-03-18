@@ -65,7 +65,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iRPM, 14)
 # endif
-      CALL rp_rho_eos_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL rp_rho_eos_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      nrhs(ng),                                   &
 # ifdef MASKING
@@ -114,7 +114,7 @@
 # ifdef NONLIN_EOS
 !
 !***********************************************************************
-      SUBROUTINE rp_rho_eos_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE rp_rho_eos_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            nrhs,                                 &
 #  ifdef MASKING
@@ -164,7 +164,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 !
@@ -271,7 +271,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, ised, itrc, j, k
 
       real(r8) :: SedDen, Tp, Tpr10, Ts, Tt, sqrtTs
@@ -942,86 +941,86 @@
 !-----------------------------------------------------------------------
 !
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        rho)
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_rho)
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
-!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        pden)
 !>
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_pden)
 #    endif
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
         defined BULK_FLUXES_NOT_YET
 #     ifdef LMD_DDMIX_NOT_YET
-!>    CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
 !>   &                        alfaobeta)
 !>
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        tl_alfaobeta)
 #     endif
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        alpha)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_alpha)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        beta)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_beta)
 #    endif    
 #    ifdef VAR_RHO_2D
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        rhoA)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_rhoA)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        rhoS)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_rhoS)
 #    endif
 #    ifdef BV_FREQUENCY_NOT_YET
-!>    CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
 !>   &                        bvf)
 !>
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        tl_bvf)
 #    endif
 #   endif
 
 #   ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rho)
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_rho)
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
-!>    CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    pden)
 !>
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_pden)
@@ -1029,42 +1028,42 @@
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
         defined BULK_FLUXES_NOT_YET
 #     ifdef LMD_DDMIX_NOT_YET
-!>    CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    alfaobeta)
 !>
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_alfaobeta)
 #     endif
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    alpha, beta)
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_alpha, tl_beta)
 #    endif    
 #    ifdef VAR_RHO_2D
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rhoA, rhoS)
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_rhoA, tl_rhoS)
 #    endif
 #    ifdef BV_FREQUENCY_NOT_YET
-!>    CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    bvf)
 !>
-      CALL mp_exchange2d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_bvf)
@@ -1079,7 +1078,7 @@
 # ifndef NONLIN_EOS
 !
 !***********************************************************************
-      SUBROUTINE rp_rho_eos_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE rp_rho_eos_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            nrhs,                                 &
 #  ifdef MASKING
@@ -1128,7 +1127,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 !
@@ -1234,7 +1233,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, ised, itrc, j, k
 
       real(r8) :: SedDen, cff, cff1, cff2
@@ -1461,86 +1459,86 @@
 !-----------------------------------------------------------------------
 !
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        rho)
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_rho)
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
-!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        pden)
 !>
-      CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        tl_pden)
 #    endif
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
         defined BULK_FLUXES_NOT_YET
 #     ifdef LMD_DDMIX_NOT_YET
-!>    CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
 !>   &                        alfaobeta)
 !>
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        tl_alfaobeta)
 #     endif
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        alpha)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_alpha)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        beta)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_beta)
 #    endif    
 #    ifdef VAR_RHO_2D
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        rhoA)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_rhoA)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        rhoS)
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_rhoS)
 #    endif
 #    ifdef BV_FREQUENCY_NOT_YET
-!>    CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
 !>   &                        bvf)
 !>
-      CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        tl_bvf)
 #    endif
 #   endif
 
 #   ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rho)
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_rho)
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET
-!>    CALL mp_exchange3d (ng, iNLM, Istr, Iend, Jstr, Jend,             &
+!>    CALL mp_exchange3d (ng, tile, iNLM,             &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    pden)
 !>
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_pden)
@@ -1548,42 +1546,42 @@
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
         defined BULK_FLUXES_NOT_YET
 #     ifdef LMD_DDMIX_NOT_YET
-!>    CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    alfaobeta)
 !>
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_alfaobeta)
 #     endif
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    alpha, beta)
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_alpha, tl_beta)
 #    endif    
 #    ifdef VAR_RHO_2D
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    rhoA, rhoS)
-      CALL mp_exchange2d (ng, iRPM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_rhoA, tl_rhoS)
 #    endif
 #    ifdef BV_FREQUENCY_NOT_YET
-!>    CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    bvf)
 !>
-      CALL mp_exchange3d (ng, iRPM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iRPM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_bvf)

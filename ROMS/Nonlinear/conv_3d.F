@@ -62,7 +62,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE conv_r3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE conv_r3d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
      &                          Nghost, NHsteps, NVsteps,               &
      &                          DTsizeH, DTsizeV,                       &
@@ -84,7 +84,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
@@ -138,7 +138,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
       real(r8) :: cff, cff1
@@ -207,7 +206,7 @@
       Nold=1
       Nnew=2
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -262,11 +261,11 @@
 !
 !  Apply boundary conditions.
 !
-        CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_r3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Awrk(:,:,:,Nnew))
 # ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange3d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
      &                      Nghost, EWperiodic, NSperiodic,             &
      &                      Awrk(:,:,:,Nnew))
@@ -471,11 +470,11 @@
           END DO
         END DO
       END DO
-      CALL bc_r3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_r3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  A)
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
      &                      Nghost, EWperiodic, NSperiodic,             &
      &                      A)
@@ -485,7 +484,7 @@
       END SUBROUTINE conv_r3d_tile
 !
 !***********************************************************************
-      SUBROUTINE conv_u3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE conv_u3d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
      &                          Nghost, NHsteps, NVsteps,               &
      &                          DTsizeH, DTsizeV,                       &
@@ -507,7 +506,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
@@ -559,7 +558,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
       real(r8) :: cff, cff1
@@ -634,7 +632,7 @@
       Nold=1
       Nnew=2
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -687,11 +685,11 @@
 !
 !  Apply boundary conditions.
 !
-        CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_u3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Awrk(:,:,:,Nnew))
 # ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange3d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
      &                      Nghost, EWperiodic, NSperiodic,             &
      &                      Awrk(:,:,:,Nnew))
@@ -901,11 +899,11 @@
           END DO
         END DO
       END DO
-      CALL bc_u3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_u3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  A)
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -915,7 +913,7 @@
       END SUBROUTINE conv_u3d_tile
 !
 !***********************************************************************
-      SUBROUTINE conv_v3d_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE conv_v3d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
      &                          Nghost, NHsteps, NVsteps,               &
      &                          DTsizeH, DTsizeV,                       &
@@ -937,7 +935,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
@@ -989,7 +987,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
       real(r8) :: cff, cff1
@@ -1064,7 +1061,7 @@
       Nold=1
       Nnew=2
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)
@@ -1117,11 +1114,11 @@
 !
 !  Apply boundary conditions.
 !
-        CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                   &
+        CALL bc_v3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Awrk(:,:,:,Nnew))
 # ifdef DISTRIBUTE
-        CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,       &
+        CALL mp_exchange3d (ng, tile, model, 1,                         &
      &                      LBi, UBi, LBj, UBj, LBk, UBk,               &
      &                      Nghost, EWperiodic, NSperiodic,             &
      &                      Awrk(:,:,:,Nnew))
@@ -1331,11 +1328,11 @@
           END DO
         END DO
       END DO
-      CALL bc_v3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_v3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, LBk, UBk,                   &
      &                  A)
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange3d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj, LBk, UBk,                 &
      &                    Nghost, EWperiodic, NSperiodic,               &
      &                    A)

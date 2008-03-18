@@ -53,7 +53,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iTLM, 7)
 # endif
-      CALL tl_ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,              &
+      CALL tl_ini_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lbck, Lini, Lnew,                        &
 # ifdef SOLVE3D
@@ -79,7 +79,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE tl_ini_adjust_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE tl_ini_adjust_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               Lbck, Lini, Lnew,                  &
 # ifdef SOLVE3D
@@ -100,7 +100,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lbck, Lini, Lnew
 !
@@ -146,7 +146,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 # ifdef SOLVE3D
       integer :: itrc, k

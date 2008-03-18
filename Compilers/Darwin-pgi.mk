@@ -71,8 +71,7 @@ ifdef USE_MPI
                FC := /usr/local/openmpi-pgi/bin/mpif90
                LD := $(FC)
  else
-#            LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
-             LIBS += -lfmpi-pgi -lmpi-pgi
+             LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
  endif
 endif
 

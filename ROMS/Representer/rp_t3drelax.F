@@ -45,7 +45,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iRPM, 24)
 # endif
-      CALL rp_t3drelax_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL rp_t3drelax_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       nrhs(ng), nnew(ng),                        &
 # ifdef MASKING
@@ -66,7 +66,7 @@
       END SUBROUTINE rp_t3drelax
 !
 !***********************************************************************
-      SUBROUTINE rp_t3drelax_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE rp_t3drelax_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             nrhs, nnew,                          &
 # ifdef MASKING
@@ -82,7 +82,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs, nnew
 
@@ -116,7 +116,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE

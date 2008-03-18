@@ -80,7 +80,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, model, 36)
 # endif
-      CALL downhill_tile (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL downhill_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    Lold(ng), Lnew(ng), Iter, step,               &
 # ifdef MASKING
@@ -127,7 +127,7 @@
       END SUBROUTINE downhill
 !
 !***********************************************************************
-      SUBROUTINE downhill_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE downhill_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Lold, Lnew, Iter, step,                 &
 # ifdef MASKING
@@ -163,7 +163,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lold, Lnew, Iter
 
@@ -253,7 +253,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 # ifdef SOLVE3D
       integer :: itrc, k
@@ -269,7 +268,7 @@
 
       character (len=3), dimension(4) :: op_handle
 # endif
-!
+
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------

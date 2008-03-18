@@ -54,7 +54,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iADM, 30)
 #endif
-      CALL ad_uv3dmix2_tile (ng, Istr, Iend, Jstr, Jend,                &
+      CALL ad_uv3dmix2_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       nrhs(ng), nnew(ng),                        &
 #ifdef MASKING
@@ -94,7 +94,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_uv3dmix2_tile (ng, Istr, Iend, Jstr, Jend,          &
+      SUBROUTINE ad_uv3dmix2_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             nrhs, nnew,                          &
 #ifdef MASKING
@@ -119,7 +119,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs, nnew
 
@@ -179,7 +179,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 

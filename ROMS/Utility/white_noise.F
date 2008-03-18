@@ -42,7 +42,7 @@
 !
 !***********************************************************************
       SUBROUTINE white_noise1d (ng, model, Rscheme,                     &
-     &                          Istr, Iend, LBi, UBi,                   &
+     &                          Imin, Imax, LBi, UBi,                   &
      &                          Rmin, Rmax, R)
 !***********************************************************************
 !
@@ -55,7 +55,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, Rscheme
-      integer, intent(in) :: Istr, Iend, LBi, UBi
+      integer, intent(in) :: Imin, Imax, LBi, UBi
 
       real(r8), intent(out) :: Rmin, Rmax
 
@@ -95,7 +95,7 @@
 !
 !  where F(R) is the random variable probability distribution.
 !
-        DO i=Istr,Iend
+        DO i=Imin,Imax
           R(i)=fac*(R(i)-0.5_r8)
         END DO
         Rmin=MINVAL(R)
@@ -111,7 +111,7 @@
           Rmax=MAXVAL(random)
         END IF
         ic=0
-        DO i=Istr,Iend
+        DO i=Imin,Imax
           ic=ic+1
           R(i)=random(ic)
         END DO
@@ -123,7 +123,7 @@
 !
 !***********************************************************************
       SUBROUTINE white_noise2d (ng, model, gtype, Rscheme,              &
-     &                          Istr, Iend, Jstr, Jend,                 &
+     &                          Imin, Imax, Jmin, Jmax,                 &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          Rmin, Rmax, R)
 !***********************************************************************
@@ -140,7 +140,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, gtype, Rscheme
-      integer, intent(in) :: Istr, Iend, Jstr, Jend
+      integer, intent(in) :: Imin, Imax, Jmin, Jmax
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
       real(r8), intent(out) :: Rmin, Rmax
@@ -183,8 +183,8 @@
 !
 !  where F(R) is the random variable probability distribution.
 !
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
             R(i,j)=fac*(R(i,j)-0.5_r8)
           END DO
         END DO
@@ -206,8 +206,8 @@
      &                   SIZE(random), random, R)
 #else
         ic=0
-        DO j=Jstr,Jend
-          DO i=Istr,Iend
+        DO j=Jmin,Jmax
+          DO i=Imin,Imax
             ic=ic+1
             R(i,j)=random(ic)
           END DO
@@ -222,7 +222,7 @@
 !
 !***********************************************************************
       SUBROUTINE white_noise3d (ng, model, gtype, Rscheme,              &
-     &                          Istr, Iend, Jstr, Jend,                 &
+     &                          Imin, Imax, Jmin, Jmax,                 &
      &                          LBi, UBi, LBj, UBj, LBk, UBk,           &
      &                          Rmin, Rmax, R)
 !***********************************************************************
@@ -239,7 +239,7 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, model, gtype, Rscheme
-      integer, intent(in) :: Istr, Iend, Jstr, Jend
+      integer, intent(in) :: Imin, Imax, Jmin, Jmax
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
       real(r8), intent(out) :: Rmin, Rmax
@@ -285,8 +285,8 @@
 !  where F(R) is the random variable probability distribution
 !
         DO k=LBk,UBk
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
               R(i,j,k)=fac*(R(i,j,k)-0.5_r8)
             END DO
           END DO
@@ -310,8 +310,8 @@
 # else
         ic=0
         DO k=LBk,UBk
-          DO j=Jstr,Jend
-            DO i=Istr,Iend
+          DO j=Jmin,Jmax
+            DO i=Imin,Imax
               ic=ic+1
               R(i,j,k)=random(ic)
             END DO

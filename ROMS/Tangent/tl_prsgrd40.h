@@ -41,7 +41,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iTLM, 23)
 #endif
-      CALL tl_prsgrd_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL tl_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nrhs(ng),                                    &
      &                     GRID(ng) % om_v,                             &
@@ -65,7 +65,7 @@
       END SUBROUTINE tl_prsgrd
 !
 !***********************************************************************
-      SUBROUTINE tl_prsgrd_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE tl_prsgrd_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           nrhs,                                  &
      &                           om_v, on_u,                            &
@@ -83,7 +83,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 
@@ -123,7 +123,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8) :: cff, cff1, dh

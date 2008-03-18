@@ -97,12 +97,16 @@
           integer, pointer :: Jend(:)  ! ending   tile J-direction
 
           integer, pointer :: IstrR(:) ! starting tile I-direction (RHO)
+          integer, pointer :: IstrT(:) ! starting nest I-direction (RHO)
           integer, pointer :: IstrU(:) ! starting tile I-direction (U)
           integer, pointer :: IendR(:) ! ending   tile I-direction (RHO)
+          integer, pointer :: IendT(:) ! ending   nest I-direction (RHO)
 
           integer, pointer :: JstrR(:) ! starting tile J-direction (RHO)
+          integer, pointer :: JstrT(:) ! starting nest J-direction (RHO)
           integer, pointer :: JstrV(:) ! starting tile J-direction (V)
           integer, pointer :: JendR(:) ! ending   tile J-direction (RHO)
+          integer, pointer :: JendT(:) ! ending   nest J-direction (RHO)
         END TYPE T_BOUNDS
 
         TYPE (T_BOUNDS), allocatable :: BOUNDS(:)

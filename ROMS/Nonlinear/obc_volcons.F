@@ -38,7 +38,7 @@
 !
 # include "tile.h"
 !
-      CALL obc_flux_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL obc_flux_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    kinp,                                         &
 # ifdef MASKING
@@ -55,7 +55,7 @@
       END SUBROUTINE obc_flux
 !
 !***********************************************************************
-      SUBROUTINE obc_flux_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE obc_flux_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          kinp,                                   &
 # ifdef MASKING
@@ -76,7 +76,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: kinp
 !
@@ -106,7 +106,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j
 
       real(r8) :: cff, my_area, my_flux
@@ -217,7 +216,7 @@
       END SUBROUTINE obc_flux_tile
 !
 !***********************************************************************
-      SUBROUTINE set_DUV_bc_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE set_DUV_bc_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
      &                            ILB, IUB, JLB, JUB,                   &
      &                            kinp,                                 &
@@ -237,7 +236,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: ILB, IUB, JLB, JUB
       integer, intent(in) :: kinp
@@ -284,7 +283,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 # include "set_bounds.h"
@@ -358,13 +356,13 @@
 ! order numerical stencil.
 !
 #  if defined WEST_VOLCONS || defined EAST_VOLCONS
-      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    ILB, IUB, JLB, JUB,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Duon)
 #  endif
 #  if defined SOUTH_VOLCONS || defined NORTH_VOLCONS
-      CALL mp_exchange2d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
      &                    ILB, IUB, JLB, JUB,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Dvom)
@@ -377,7 +375,7 @@
       END SUBROUTINE set_DUV_bc_tile
 !
 !***********************************************************************
-      SUBROUTINE conserve_mass_tile (ng, Istr, Iend, Jstr, Jend,        &
+      SUBROUTINE conserve_mass_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               kinp,                              &
 # ifdef MASKING
@@ -391,7 +389,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: kinp
 !
@@ -416,6 +414,8 @@
 !  Local variable declarations.
 !
       integer :: i, j
+
+# include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
 !  Corrects velocities across the open boundaries to enforce global

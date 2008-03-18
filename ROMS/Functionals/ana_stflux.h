@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine sets kinematic surface flux of tracer type variables   !
@@ -23,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_stflux_tile (ng, model, Istr, Iend, Jstr, Jend, itrc,    &
+      CALL ana_stflux_tile (ng, tile, model, itrc,                      &
      &                      LBi, UBi, LBj, UBj,                         &
 #ifdef SHORTWAVE
      &                      FORCES(ng) % srflx,                         &
@@ -43,8 +42,8 @@
       END SUBROUTINE ana_stflux
 !
 !***********************************************************************
-      SUBROUTINE ana_stflux_tile (ng, model, Istr, Iend, Jstr, Jend,    &
-     &                            itrc, LBi, UBi, LBj, UBj,             &
+      SUBROUTINE ana_stflux_tile (ng, tile, model, itrc,                &
+     &                            LBi, UBi, LBj, UBj,                   &
 #ifdef SHORTWAVE
      &                            srflx,                                &
 #endif
@@ -66,7 +65,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -101,8 +100,7 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
-      integer :: i, itrc, j
+      integer :: i, j
 
 #include "set_bounds.h"
 !
@@ -158,22 +156,22 @@
         END DO
       END IF
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        stflx(:,:,itrc))
 # ifdef TL_IOMS
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        tl_stflx(:,:,itrc))
 # endif
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    stflx(:,:,itrc))
 # ifdef TL_IOMS
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_stflx(:,:,itrc))

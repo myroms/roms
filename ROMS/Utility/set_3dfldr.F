@@ -19,8 +19,8 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE set_3dfldr_tile (ng, model, Istr, Iend, Jstr, Jend,    &
-     &                            ifield, LBi, UBi, LBj, UBj, LBk, UBk, &
+      SUBROUTINE set_3dfldr_tile (ng, tile, model, ifield,              &
+     &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
      &                            Finp, Fout, update)
 !***********************************************************************
 !
@@ -41,7 +41,7 @@
 !
       logical, intent(out) :: update
 
-      integer, intent(in) :: ng, model, Istr, Iend, Jstr, Jend, ifield
+      integer, intent(in) :: ng, tile, model, ifield
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 !
 # ifdef ASSUMED_SHAPE
@@ -67,7 +67,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Tindex, gtype, i, it1, it2, j, k
 
       real(r8) :: Fval, fac, fac1, fac2
@@ -183,25 +182,25 @@
       IF (update) THEN
 #  if defined EW_PERIODIC || defined NS_PERIODIC
         IF (gtype.eq.r3dvar) THEN
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
      &                            Fout)
         ELSE IF (gtype.eq.u3dvar) THEN
-          CALL exchange_u3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_u3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
      &                            Fout)
         ELSE IF (gtype.eq.v3dvar) THEN
-          CALL exchange_v3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_v3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
      &                            Fout)
         ELSE IF (gtype.eq.w3dvar) THEN
-          CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_w3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, LBk, UBk,         &
      &                            Fout)
         END IF
 #  endif
 #  ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, model, 1, Istr, Iend, Jstr, Jend,     &
+          CALL mp_exchange3d (ng, tile, model, 1,                       &
      &                        LBi, UBi, LBj, UBj, LBk, UBk,             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        Fout)

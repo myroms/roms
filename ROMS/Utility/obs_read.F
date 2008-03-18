@@ -211,7 +211,7 @@
 !  tiles latter before writting into observation NetCDF file.
 !
         IF (.not.wrote_Zobs(ng)) THEN
-          CALL obs_depth (ng, model)
+          CALL obs_depth (ng, MyRank, model)
         END IF
 #  endif
 # endif

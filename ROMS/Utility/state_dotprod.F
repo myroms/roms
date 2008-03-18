@@ -41,7 +41,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE state_dotprod (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE state_dotprod (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          NstateVars, DotProd,                    &
 #ifdef MASKING
@@ -78,7 +78,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: NstateVars
 !
@@ -152,7 +152,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j, k
 #ifdef SOLVE3D
       integer :: itrc

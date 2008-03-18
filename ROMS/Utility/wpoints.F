@@ -52,7 +52,7 @@
 !
 # include "tile.h"
 !
-      CALL wpoints_tile (ng, model, Istr, Iend, Jstr, Jend,             &
+      CALL wpoints_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
 # ifdef MASKING
      &                   GRID(ng) % pmask,                              &
@@ -71,7 +71,7 @@
       END SUBROUTINE wpoints
 !
 !***********************************************************************
-      SUBROUTINE wpoints_tile (ng, model, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE wpoints_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
 # ifdef MASKING
      &                         pmask, rmask, umask, vmask,              &
@@ -99,7 +99,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -142,7 +142,6 @@
       integer :: my_NwaterV = 0
 # endif
 
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 # ifdef PROPAGATOR
       integer :: Imin, Imax, Jmin, Jmax
 # endif

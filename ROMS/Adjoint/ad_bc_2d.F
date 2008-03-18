@@ -26,7 +26,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_bc_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ad_bc_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 !***********************************************************************
@@ -40,7 +40,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -51,7 +51,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
       real(r8) :: adfac
@@ -64,7 +63,7 @@
 !  Set adjoint periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 # endif
@@ -166,7 +165,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_bc_u2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ad_bc_u2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 !***********************************************************************
@@ -182,7 +181,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -193,7 +192,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
       real(r8) :: adfac
@@ -206,7 +204,7 @@
 !  Set adjoint periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
-      CALL ad_exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_u2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 # endif
@@ -362,7 +360,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_bc_v2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ad_bc_v2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 !***********************************************************************
@@ -378,7 +376,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 # ifdef ASSUMED_SHAPE
@@ -389,7 +387,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
       real(r8) :: adfac
@@ -402,7 +399,7 @@
 !  Set adjoint periodic boundary conditons.
 !-----------------------------------------------------------------------
 !
-      CALL ad_exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_v2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_A)
 # endif

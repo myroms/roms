@@ -27,7 +27,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 4)
 # endif
-      CALL ad_set_data_tile (ng, tile, Istr, Iend, Jstr, Jend,          &
+      CALL ad_set_data_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj)
 # ifdef PROFILE
       CALL wclock_off (ng, iADM, 4)
@@ -36,7 +36,7 @@
       END SUBROUTINE ad_set_data
 !
 !***********************************************************************
-      SUBROUTINE ad_set_data_tile (ng, tile, Istr, Iend, Jstr, Jend,    &
+      SUBROUTINE ad_set_data_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
@@ -91,7 +91,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Istr, Iend, Jstr, Jend
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 !  Local variable declarations.
@@ -113,7 +113,6 @@
 # ifdef OBC
       integer :: ILB, IUB, JLB, JUB
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k, order
 
       real(r8) :: Zr, cff, cff1, cff2
@@ -136,7 +135,7 @@
 #   ifdef ANA_CLOUD
       CALL ana_cloud (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idCfra,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idCfra,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%cloudG,                          &
      &                      FORCES(ng)%cloud,                           &
@@ -154,7 +153,7 @@
 #   ifdef ANA_TAIR
       CALL ana_tair (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idTair,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idTair,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%TairG,                           &
      &                      FORCES(ng)%Tair,                            &
@@ -172,7 +171,7 @@
 #   ifdef ANA_HUMIDITY
       CALL ana_humid (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idQair,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idQair,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%HairG,                           &
      &                      FORCES(ng)%Hair,                            &
@@ -189,7 +188,7 @@
 #   ifdef ANA_SRFLUX
       CALL ana_srflux (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSrad,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idSrad,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%srflxG,                          &
      &                      FORCES(ng)%srflx,                           &
@@ -210,7 +209,7 @@
 !  Surface net longwave radiation (degC m/s).
 !-----------------------------------------------------------------------
 !
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idLrad,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idLrad,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%lrflxG,                          &
      &                      FORCES(ng)%lrflx,                           &
@@ -223,7 +222,7 @@
 !  Surface downwelling longwave radiation (degC m/s).
 !-----------------------------------------------------------------------
 !
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idLdwn,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idLdwn,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%lrflxG,                          &
      &                      FORCES(ng)%lrflx,                           &
@@ -239,7 +238,7 @@
 #   ifdef ANA_PAIR
       CALL ana_pair (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idPair,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idPair,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%PairG,                           &
      &                      FORCES(ng)%Pair,                            &
@@ -255,12 +254,12 @@
 #   ifdef ANA_WINDS
       CALL ana_winds (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUair,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idUair,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%UwindG,                          &
      &                      FORCES(ng)%Uwind,                           &
      &                      update)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVair,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idVair,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%VwindG,                          &
      &                      FORCES(ng)%Vwind,                           &
@@ -284,15 +283,15 @@
           END DO
         END DO
 #     if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%UWind)
-        CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_r2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%VWind)
 #     endif
 #     ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iADM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      FORCES(ng)%UWind,                           &
@@ -312,7 +311,7 @@
 #   ifdef ANA_RAIN
       CALL ana_rain (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idrain,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idrain,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%rainG,                           &
      &                      FORCES(ng)%rain,                            &
@@ -329,8 +328,7 @@
 #   ifdef ANA_STFLUX
       CALL ana_stflux (ng, tile, iADM, itemp)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idTsur(itemp),                              &
+      CALL set_2dfldr_tile (ng, tile, iADM, idTsur(itemp),              &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%stflxG(:,:,:,itemp),             &
      &                      FORCES(ng)%stflx (:,:,itemp),               &
@@ -348,12 +346,12 @@
 #   ifdef ANA_SST
       CALL ana_sst (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSSTc,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idSSTc,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%sstG,                            &
      &                      FORCES(ng)%sst,                             &
      &                      update)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, iddQdT,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, iddQdT,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%dqdtG,                           &
      &                      FORCES(ng)%dqdt,                            &
@@ -368,8 +366,7 @@
 #  ifdef ANA_BTFLUX
       CALL ana_btflux (ng, tile, iADM, itemp)
 #  else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idTbot(itemp),                              &
+      CALL set_2dfldr_tile (ng, tile, iADM, idTbot(itemp),              &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%btflxG(:,:,:,itemp),             &
      &                      FORCES(ng)%btflx (:,:,itemp),               &
@@ -386,8 +383,7 @@
       CALL ana_stflux (ng, tile, iADM, isalt)
 #   else
 #    if !(defined EMINUSP || defined SRELAXATION)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idsfwf,                                     &
+      CALL set_2dfldr_tile (ng, tile, iADM, idsfwf,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%stflxG(:,:,:,isalt),             &
      &                      FORCES(ng)%stflx (:,:,isalt),               &
@@ -404,7 +400,7 @@
 #    ifdef ANA_SSS
       CALL ana_sss (ng, tile, iADM)
 #    else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSSSc,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idSSSc,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%sssG,                            &
      &                      FORCES(ng)%sss,                             &
@@ -419,8 +415,7 @@
 #   ifdef ANA_BSFLUX
       CALL ana_btflux (ng, tile, iADM, isalt)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idTbot(isalt),                              &
+      CALL set_2dfldr_tile (ng, tile, iADM, idTbot(isalt),              &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%btflxG(:,:,:,isalt),             &
      &                      FORCES(ng)%btflx (:,:,isalt),               &
@@ -438,8 +433,7 @@
 #   ifdef ANA_SPFLUX
         CALL ana_stflux (ng, tile, iADM, itrc)
 #   else
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,         &
-     &                        idTsur(itrc),                             &
+        CALL set_2dfldr_tile (ng, tile, iADM, idTsur(itrc),             &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        FORCES(ng)%stflxG(:,:,:,itrc),            &
      &                        FORCES(ng)%stflx (:,:,itrc),              &
@@ -448,8 +442,7 @@
 #   ifdef ANA_BPFLUX
         CALL ana_btflux (ng, tile, iADM, itrc)
 #   else
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,         &
-     &                        idTbot(itrc),                             &
+        CALL set_2dfldr_tile (ng, tile, iADM, idTbot(itrc),             &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        FORCES(ng)%btflxG(:,:,:,itrc),            &
      &                        FORCES(ng)%btflx (:,:,itrc),              &
@@ -469,12 +462,12 @@
 #   ifdef ANA_SMFLUX
       CALL ana_smflux (ng, tile, iADM)
 #   else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUsms,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idUsms,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%sustrG,                          &
      &                      FORCES(ng)%sustr,                           &
      &                      update)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVsms,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idVsms,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%svstrG,                          &
      &                      FORCES(ng)%svstr,                           &
@@ -498,15 +491,15 @@
           END DO
         END DO
 #     if defined EW_PERIODIC || defined NS_PERIODIC
-        CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_u2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%sustr)
-        CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,             &
+        CALL exchange_v2d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
      &                          FORCES(ng)%svstr)
 #     endif
 #     ifdef DISTRIBUTE
-        CALL mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,        &
+        CALL mp_exchange2d (ng, tile, iADM, 2,                          &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      FORCES(ng)%sustr,                           &
@@ -528,7 +521,7 @@
       CALL ana_wwave (ng, tile, iADM)
 #  else
 #   ifdef WAVES_DIR
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWdir,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWdir,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%DwaveG,                          &
      &                      FORCES(ng)%Dwave,                           &
@@ -548,12 +541,12 @@
         END DO
       END IF
 #     if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        FORCES(ng)%Dwave)
 #     endif
 #     ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iADM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iADM, 1,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    FORCES(ng)%Dwave)
@@ -561,49 +554,49 @@
 #    endif
 #   endif
 #   ifdef WAVES_HEIGHT
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWamp,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWamp,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%HwaveG,                          &
      &                      FORCES(ng)%Hwave,                           &
      &                      update)
 #   endif
 #   ifdef WAVES_LENGTH
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWlen,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWlen,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%LwaveG,                          &
      &                      FORCES(ng)%Lwave,                           &
      &                      update)
 #   endif
 #   ifdef WAVES_TOP_PERIOD
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWptp,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWptp,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%Pwave_topG,                      &
      &                      FORCES(ng)%Pwave_top,                       &
      &                      update)
 #   endif
 #   ifdef WAVES_BOT_PERIOD
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWpbt,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWpbt,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%Pwave_botG,                      &
      &                      FORCES(ng)%Pwave_bot,                       &
      &                      update)
 #   endif
 #   if defined WAVES_UB
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWorb,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWorb,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%Ub_swanG,                        &
      &                      FORCES(ng)%Ub_swan,                         &
      &                      update)
 #   endif
 #   if defined TKE_WAVEDISS
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWdis,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWdis,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%Wave_dissipG,                    &
      &                      FORCES(ng)%Wave_dissip,                     &
      &                      update)
 #   endif
 #   if defined SVENDSEN_ROLLER
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idWbrk,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idWbrk,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      FORCES(ng)%Wave_breakG,                     &
      &                      FORCES(ng)%Wave_break,                      &
@@ -882,7 +875,7 @@
 #  ifdef ANA_SSH
       CALL ana_ssh (ng, tile, iADM)
 #  else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSSHc,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idSSHc,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      CLIMA(ng)%sshG,                             &
      &                      CLIMA(ng)%ssh,                              &
@@ -899,12 +892,12 @@
 #  ifdef ANA_M2CLIMA
       CALL ana_m2clima (ng, tile, iADM)
 #  else
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUbcl,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idUbcl,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      CLIMA(ng)%ubarclmG,                         &
      &                      CLIMA(ng)%ubarclm,                          &
      &                      update)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVbcl,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idVbcl,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      CLIMA(ng)%vbarclmG,                         &
      &                      CLIMA(ng)%vbarclm,                          &
@@ -922,8 +915,7 @@
       CALL ana_tclima (ng, tile, iADM)
 #  else
       DO itrc=1,NAT
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,         &
-     &                        idTclm(itrc),                             &
+        CALL set_3dfldr_tile (ng, tile, iADM, idTclm(itrc),             &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        CLIMA(ng)%tclmG(:,:,:,:,itrc),            &
      &                        CLIMA(ng)%tclm (:,:,:,itrc),              &
@@ -941,12 +933,12 @@
 #  ifdef ANA_M3CLIMA
       CALL ana_m3clima (ng, tile, iADM)
 #  else
-      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUclm,   &
+      CALL set_3dfldr_tile (ng, tile, iADM, idUclm,                     &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      CLIMA(ng)%uclmG,                            &
      &                      CLIMA(ng)%uclm,                             &
      &                      update)
-      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVclm,   &
+      CALL set_3dfldr_tile (ng, tile, iADM, idVclm,                     &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      CLIMA(ng)%vclmG,                            &
      &                      CLIMA(ng)%vclm,                             &
@@ -961,12 +953,12 @@
 !-----------------------------------------------------------------------
 !
       IF (assi_SSH(ng)) THEN
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSSHo, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idSSHo,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OBS(ng)%SSHdat,                           &
      &                        OBS(ng)%SSHobs,                           &
      &                        update)
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSSHe, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idSSHe,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OBS(ng)%EdatSSH,                          &
      &                        OBS(ng)%EobsSSH,                          &
@@ -987,12 +979,12 @@
 !
       IF (assi_SST(ng)) THEN
 #   ifdef NUDGING_SST
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSSTo, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idSSTo,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OBS(ng)%SSTdat,                           &
      &                        OBS(ng)%SSTobs,                           &
      &                        update)
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idSSTe, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idSSTe,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OBS(ng)%EdatSST,                          &
      &                        OBS(ng)%EobsSST,                          &
@@ -1037,15 +1029,15 @@
             END DO
           END DO
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            OBS(ng)%EobsT(:,:,:,itemp))
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            OBS(ng)%Tobs(:,:,:,itemp))
 #   endif
 #   ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange3d (ng, tile, iADM, 2,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        OBS(ng)%EobsT(:,:,:,itemp),               &
@@ -1063,14 +1055,12 @@
 !
       DO itrc=1,NAT
         IF (assi_T(itrc,ng)) THEN
-          CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,       &
-     &                          idTobs(itrc),                           &
+          CALL set_3dfldr_tile (ng, tile, iADM, idTobs(itrc),           &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          OBS(ng)%Tdat(:,:,:,:,itrc),             &
      &                          OBS(ng)%Tobs(:,:,:,itrc),               &
      &                          update)
-          CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,       &
-     &                          idTerr(itrc),                           &
+          CALL set_3dfldr_tile (ng, tile, iADM, idTerr(itrc),           &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          OBS(ng)%EdatT(:,:,:,:,itrc),            &
      &                          OBS(ng)%EobsT(:,:,:,itrc),              &
@@ -1091,17 +1081,17 @@
 !
       IF (assi_UVsur(ng)) THEN
 #   ifdef NUDGING_UVsur
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUsur, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idUsur,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OBS(ng)%Usurdat,                          &
      &                        OBS(ng)%Usur,                             &
      &                        update)
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVsur, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idVsur,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OBS(ng)%Vsurdat,                          &
      &                        OBS(ng)%Vsur,                             &
      &                        update)
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUVse, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idUVse,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OBS(ng)%EdatVsur,                         &
      &                        OBS(ng)%EobsVsur,                         &
@@ -1169,12 +1159,12 @@
             END DO
           END DO
 #   if defined EW_PERIODIC || defined NS_PERIODIC
-          CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,           &
+          CALL exchange_r3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, 1, N(ng),         &
      &                            OBS(ng)%EobsUV)
 #   endif
 #   ifdef DISTRIBUTE
-          CALL mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,      &
+          CALL mp_exchange3d (ng, tile, iADM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        OBS(ng)%EobsUV)
@@ -1190,17 +1180,17 @@
 !-----------------------------------------------------------------------
 !
       IF (assi_UV(ng)) THEN
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUobs, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idUobs,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OBS(ng)%Udat,                             &
      &                        OBS(ng)%Uobs,                             &
      &                        update)
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVobs, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idVobs,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OBS(ng)%Vdat,                             &
      &                        OBS(ng)%Vobs,                             &
      &                        update)
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUVer, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idUVer,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OBS(ng)%EdatUV,                           &
      &                        OBS(ng)%EobsUV,                           &
@@ -1222,7 +1212,7 @@
 !  Set forward free-surface.
 !
       DO k=1,3
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idFsur, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idFsur,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%zetaG,                          &
      &                        OCEAN(ng)%zeta(:,:,k),                    &
@@ -1239,12 +1229,12 @@
 !  Set forward 2D momentum.
 !
       DO k=1,3
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUbar, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idUbar,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%ubarG,                          &
      &                        OCEAN(ng)%ubar(:,:,k),                    &
      &                        update)
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVbar, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idVbar,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%vbarG,                          &
      &                        OCEAN(ng)%vbar(:,:,k),                    &
@@ -1256,17 +1246,17 @@
 !  Set forward variables associated with 2D right-hand-side terms.
 !
       DO k=1,2
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idRzet, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idRzet,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%rzetaG,                         &
      &                        OCEAN(ng)%rzeta(:,:,k),                   &
      &                        update)
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idRu2d, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idRu2d,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%rubarG,                         &
      &                        OCEAN(ng)%rubar(:,:,k),                   &
      &                        update)
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idRv2d, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idRv2d,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        OCEAN(ng)%rvbarG,                         &
      &                        OCEAN(ng)%rvbar(:,:,k),                   &
@@ -1277,23 +1267,23 @@
 !
 !  Set forward time-averaged barotropic fluxes.
 !
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUfx1,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idUfx1,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      COUPLING(ng)%DU_avg1G,                      &
      &                      COUPLING(ng)%DU_avg1,                       &
      &                      update)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUfx2,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idUfx2,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      COUPLING(ng)%DU_avg2G,                      &
      &                      COUPLING(ng)%DU_avg2,                       &
      &                      update)
 
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVfx1,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idVfx1,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      COUPLING(ng)%DV_avg1G,                      &
      &                      COUPLING(ng)%DV_avg1,                       &
      &                      update)
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVfx2,   &
+      CALL set_2dfldr_tile (ng, tile, iADM, idVfx2,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      COUPLING(ng)%DV_avg2G,                      &
      &                      COUPLING(ng)%DV_avg2,                       &
@@ -1302,12 +1292,12 @@
 !  Set 3D momentum.
 !
       DO k=1,2
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUvel, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idUvel,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OCEAN(ng)%uG,                             &
      &                        OCEAN(ng)%u(:,:,:,k),                     &
      &                        update)
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVvel, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idVvel,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OCEAN(ng)%vG,                             &
      &                        OCEAN(ng)%v(:,:,:,k),                     &
@@ -1319,12 +1309,12 @@
 !  Set variables associated with 3D momentum right-hand-side terms.
 !
       DO k=1,2
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idRu3d, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idRu3d,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OCEAN(ng)%ruG,                            &
      &                        OCEAN(ng)%ru(:,:,:,k),                    &
      &                        update)
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idRv3d, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idRv3d,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        OCEAN(ng)%rvG,                            &
      &                        OCEAN(ng)%rv(:,:,:,k),                    &
@@ -1336,8 +1326,7 @@
 !
       DO itrc=1,NT(ng)
         DO k=1,3
-          CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,       &
-     &                          idTvar(itrc),                           &
+          CALL set_3dfldr_tile (ng, tile, iADM, idTvar(itrc),           &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          OCEAN(ng)%tG(:,:,:,:,itrc),             &
      &                          OCEAN(ng)%t(:,:,:,k,itrc),              &
@@ -1350,15 +1339,13 @@
 !  Set forward vertical mixing variables.
 !
       DO itrc=1,NAT
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,         &
-     &                        idDiff(itrc),                             &
+        CALL set_3dfldr_tile (ng, tile, iADM, idDiff(itrc),             &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        MIXING(ng)%AktG(:,:,:,:,itrc),            &
      &                        MIXING(ng)%Akt(:,:,:,itrc),               &
      &                        update)
       END DO
-      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idVvis,                                     &
+      CALL set_3dfldr_tile (ng, tile, iADM, idVvis,                     &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      MIXING(ng)%AkvG,                            &
      &                      MIXING(ng)%Akv,                             &
@@ -1370,8 +1357,7 @@
 !  Set forward turbulent kinetic energy.
 !
       DO k=1,3
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,         &
-     &                        idMtke,                                   &
+        CALL set_3dfldr_tile (ng, tile, iADM, idMtke,                   &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        MIXING(ng)%tkeG,                          &
      &                        MIXING(ng)%tke(:,:,:,k),                  &
@@ -1381,8 +1367,7 @@
 !  Set forward turbulent kinetic energy times length scale.
 !
       DO k=1,3
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,         &
-     &                        idMtls,                                   &
+        CALL set_3dfldr_tile (ng, tile, iADM, idMtls,                   &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        MIXING(ng)%glsG,                          &
      &                        MIXING(ng)%gls(:,:,:,k),                  &
@@ -1391,8 +1376,7 @@
 !
 !  Set forward vertical mixing length scale.
 !
-      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idVmLS,                                     &
+      CALL set_3dfldr_tile (ng, tile, iADM, idVmLS,                     &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      MIXING(ng)%LscaleG,                         &
      &                      MIXING(ng)%Lscale,                          &
@@ -1400,8 +1384,7 @@
 !
 !  Set forward vertical mixing coefficient for turbulent kinetic energy.
 !
-      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idVmKK,                                     &
+      CALL set_3dfldr_tile (ng, tile, iADM, idVmKK,                     &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      MIXING(ng)%AkkG,                            &
      &                      MIXING(ng)%Akk,                             &
@@ -1410,8 +1393,7 @@
 !
 !  Set forward vertical mixing coefficient for turbulent length scale.
 !
-      CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idVmKP,                                     &
+      CALL set_3dfldr_tile (ng, tile, iADM, idVmKP,                     &
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      MIXING(ng)%AkpG,                            &
      &                      MIXING(ng)%Akp,                             &
@@ -1423,8 +1405,7 @@
 !
 !  Set forward depth of surface oceanic boundary layer.
 !
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idHsbl,                                     &
+      CALL set_2dfldr_tile (ng, tile, iADM, idHsbl,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      MIXING(ng)%hsblG,                           &
      &                      MIXING(ng)%hsbl,                            &
@@ -1434,8 +1415,7 @@
 !
 !  Set forward depth of bottom oceanic boundary layer.
 !
-      CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,           &
-     &                      idHbbl,                                     &
+      CALL set_2dfldr_tile (ng, tile, iADM, idHbbl,                     &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      MIXING(ng)%hbblG,                           &
      &                      MIXING(ng)%hbbl,                            &
@@ -1446,8 +1426,7 @@
 !  Set forward boundary layer nonlocal transport.
 !
       DO itrc=1,NAT
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,         &
-     &                        idGhat(itrc),                             &
+        CALL set_3dfldr_tile (ng, tile, iADM, idGhat(itrc),             &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
      &                        MIXING(ng)%ghatsG(:,:,:,:,itrc),          &
      &                        MIXING(ng)%ghat(:,:,:,itrc),              &
@@ -1467,7 +1446,7 @@
 !  Free-surface.
 !
       IF (SCALARS(ng)%Lstate(isFsur)) THEN
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idZads, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idZads,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        CLIMA(ng)%zeta_adsG,                      &
      &                        CLIMA(ng)%zeta_ads,                       &
@@ -1477,7 +1456,7 @@
 !  2D momentum.
 !
       IF (SCALARS(ng)%Lstate(isUbar)) THEN
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUbas, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idUbas,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        CLIMA(ng)%ubar_adsG,                      &
      &                        CLIMA(ng)%ubar_ads,                       &
@@ -1485,7 +1464,7 @@
       END IF
 !
       IF (SCALARS(ng)%Lstate(isVbar)) THEN
-        CALL set_2dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVbas, &
+        CALL set_2dfldr_tile (ng, tile, iADM, idVbas,                   &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        CLIMA(ng)%vbar_adsG,                      &
      &                        CLIMA(ng)%vbar_ads,                       &
@@ -1497,7 +1476,7 @@
 !  Set 3D momentum.
 !
       IF (SCALARS(ng)%Lstate(isUvel)) THEN
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idUads, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idUads,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        CLIMA(ng)%u_adsG,                         &
      &                        CLIMA(ng)%u_ads,                          &
@@ -1505,7 +1484,7 @@
       END IF
 !
       IF (SCALARS(ng)%Lstate(isVvel)) THEN
-        CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend, idVads, &
+        CALL set_3dfldr_tile (ng, tile, iADM, idVads,                   &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        CLIMA(ng)%v_adsG,                         &
      &                        CLIMA(ng)%v_ads,                          &
@@ -1516,8 +1495,7 @@
 !
       DO itrc=1,NT(ng)
         IF (SCALARS(ng)%Lstate(isTvar(itrc))) THEN
-          CALL set_3dfldr_tile (ng, iADM, Istr, Iend, Jstr, Jend,       &
-     &                          idTads(itrc),                           &
+          CALL set_3dfldr_tile (ng, tile, iADM, idTads(itrc),           &
      &                          LBi, UBi, LBj, UBj, 1, N(ng),           &
      &                          CLIMA(ng)%t_adsG(:,:,:,:,itrc),         &
      &                          CLIMA(ng)%t_ads(:,:,:,itrc),            &

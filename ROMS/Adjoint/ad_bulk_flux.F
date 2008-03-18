@@ -72,7 +72,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 17)
 # endif
-      CALL ad_bulk_flux_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL ad_bulk_flux_tile (ng, tile,                                 &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nrhs(ng),                                    &
 # ifdef MASKING
@@ -124,7 +124,7 @@
       END SUBROUTINE ad_bulk_flux
 !
 !***********************************************************************
-      SUBROUTINE ad_bulk_flux_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE ad_bulk_flux_tile (ng, tile,                           &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           nrhs,                                  &
 # ifdef MASKING
@@ -161,7 +161,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 !
@@ -270,7 +270,6 @@
 #  endif
 # endif
       integer :: ILB, IUB, JLB, JUB
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Iter, IterA, i, j, k
       integer :: IterMax
 
@@ -496,97 +495,97 @@
 !-----------------------------------------------------------------------
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_sustr, tl_svstr)
 !>
-      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_sustr, ad_svstr)
 #   ifdef EMINUSP
-!>    CALL mp_exchange2d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iTLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_evap,                                      &
 !>   &                    tl_stflx(:,:,isalt))
 !>
-      CALL ad_mp_exchange2d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_evap,                                   &
      &                       ad_stflx(:,:,isalt))
 #   endif
-!>    CALL mp_exchange2d (ng, iTLM, 4, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iTLM, 4,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_lrflx, tl_lhflx, tl_shflx,                 &
 !>   &                    tl_stflx(:,:,itemp))
 !>
-      CALL ad_mp_exchange2d (ng, iADM, 4, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 4,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_lrflx, ad_lhflx, ad_shflx,              &
      &                       ad_stflx(:,:,itemp))
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_v2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_svstr)
 !>
-      CALL ad_exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_v2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_svstr)
-!>    CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_u2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_sustr)
 !>
-      CALL ad_exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_u2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_sustr)
 #   ifdef EMINUSP
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_stflx(:,:,isalt))
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_stflx(:,:,isalt))
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_evap)
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_evap)
 #   endif
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_stflx(:,:,itemp))
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_stflx(:,:,itemp))
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_shflx)
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_shflx)
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_lhflx)
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_lhflx)
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_lrflx)
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_lrflx)
 #  endif

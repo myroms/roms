@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets sea surface salinity SST (PSU) which is        !
@@ -23,7 +22,7 @@
 
 #include "tile.h"
 !
-      CALL ana_sss_tile (ng, model, Istr, Iend, Jstr, Jend,             &
+      CALL ana_sss_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   FORCES(ng) % sss)
 !
@@ -37,7 +36,7 @@
       END SUBROUTINE ana_sss
 !
 !***********************************************************************
-      SUBROUTINE ana_sss_tile (ng, model, Istr, Iend, Jstr, Jend,       &
+      SUBROUTINE ana_sss_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         sss)
 !***********************************************************************
@@ -65,7 +64,7 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -76,7 +75,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 #include "set_bounds.h"
@@ -92,12 +90,12 @@
       END DO
       ana_sss.h: no values provided for sss.
 #if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        sss)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    sss)

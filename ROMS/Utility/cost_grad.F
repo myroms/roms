@@ -56,7 +56,7 @@
 !
 # include "tile.h"
 !
-      CALL cost_grad_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL cost_grad_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Linp, Lout,                                  &
 # ifdef ADJUST_WSTRESS
@@ -95,7 +95,7 @@
       END SUBROUTINE cost_grad
 !
 !***********************************************************************
-      SUBROUTINE cost_grad_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE cost_grad_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Linp, Lout,                            &
 # ifdef ADJUST_WSTRESS
@@ -131,7 +131,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp, Lout
 !
@@ -207,7 +207,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 # ifdef SOLVE3D
       integer :: itrc

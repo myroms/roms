@@ -116,7 +116,6 @@
 # endif
       logical, dimension(Lstr:Lend) :: MyThread
 
-      integer :: Istr, Iend, Jstr, Jend
       integer :: LBi, UBi, LBj, UBj
       integer :: Ir, Jr, Npts, i, i1, i2, j, j1, j2, itrc, l, k
 
@@ -160,14 +159,10 @@
 !
       Npts=NFV(ng)*(NFT+1)*Nfloats(ng)
 
-      Istr=BOUNDS(ng)%Istr(MyRank)
-      Iend=BOUNDS(ng)%Iend(MyRank)
-      Jstr=BOUNDS(ng)%Jstr(MyRank)
-      Jend=BOUNDS(ng)%Jend(MyRank)
-      Xstr=REAL(Istr,r8)-0.5_r8
-      Xend=REAL(Iend,r8)+0.5_r8
-      Ystr=REAL(Jstr,r8)-0.5_r8
-      Yend=REAL(Jend,r8)+0.5_r8
+      Xstr=REAL(BOUNDS(ng)%Istr(MyRank),r8)-0.5_r8
+      Xend=REAL(BOUNDS(ng)%Iend(MyRank),r8)+0.5_r8
+      Ystr=REAL(BOUNDS(ng)%Jstr(MyRank),r8)-0.5_r8
+      Yend=REAL(BOUNDS(ng)%Jend(MyRank),r8)+0.5_r8
       DO l=Lstr,Lend
         IF ((Xstr.le.track(ixgrd,nf,l)).and.                            &
      &      (track(ixgrd,nf,l).lt.Xend).and.                            &

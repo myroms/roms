@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This routine is provided so the USER can compute any specialized    !
@@ -24,7 +23,7 @@
 
 #include "tile.h"
 !
-      CALL ana_diag_tile (ng, model, Istr, Iend, Jstr, Jend,            &
+      CALL ana_diag_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
 #ifdef SOLVE3D
      &                    OCEAN(ng) % u,                                &
@@ -43,7 +42,7 @@
       END SUBROUTINE ana_diag
 !
 !***********************************************************************
-      SUBROUTINE ana_diag_tile (ng, model, Istr, Iend, Jstr, Jend,      &
+      SUBROUTINE ana_diag_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
 #ifdef SOLVE3D
      &                          u, v,                                   &
@@ -60,7 +59,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -84,8 +83,14 @@
       integer :: i, j, k
       real(r8) :: umax, ubarmax, vmax, vbarmax
 
-#ifdef SEAMOUNT
+#include "set_bounds.h"
 !
+!-----------------------------------------------------------------------
+!  Compute user diagnostics.
+!-----------------------------------------------------------------------
+!
+#ifdef SEAMOUNT
+
 !  Open USER file.
 !
       IF (iic(ng).eq.ntstart(ng)) THEN

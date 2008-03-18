@@ -7,17 +7,27 @@
 **   See License_ROMS.txt                                             **
 ************************************************************************
 **                                                                    **
-**  Master program to run ROMS/TOMS on single ocean mode or to couple **
-**  it (sequentially or concurrently) to an atmospheric model  or any **
-**  other Earth modeling system.                                      **
+**  Master program to run ROMS/TOMS as single ocean mode or to couple **
+**  (sequentially or concurrently) to atmospheric model,  wave model, **
+**  or any other modeling system.                                     **
 **                                                                    **
 ************************************************************************
 */
 
-#if defined AIR_OCEAN
-# include "air_ocean.h"
-#elif defined WAVES_OCEAN
-# include "waves_ocean.h"
+#if defined MODEL_COUPLING
+# if defined MCT_LIB
+#  if defined AIR_OCEAN
+#   include "mct_air_ocean.h"
+#  elif defined WAVES_OCEAN
+#   include "mct_waves_ocean.h"
+#  endif
+# elif defined ESMF_LIB
+#  include "esmf_coupler.h"
+# endif
 #else
-# include "ocean.h"
+# if defined ESMF_LIB
+#  include "esmf_ocean.h"
+# else
+#  include "ocean.h"
+# endif
 #endif

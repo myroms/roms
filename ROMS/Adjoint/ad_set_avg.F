@@ -47,7 +47,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 5)
 # endif
-      CALL ad_set_avg_tile (ng, Istr, Iend, Jstr, Jend,                 &
+      CALL ad_set_avg_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
 # ifdef SOLVE3D
      &                      nstp(ng),                                   &
@@ -163,7 +163,7 @@
       END SUBROUTINE ad_set_avg
 !
 !***********************************************************************
-      SUBROUTINE ad_set_avg_tile (ng, Istr, Iend, Jstr, Jend,           &
+      SUBROUTINE ad_set_avg_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
 # ifdef SOLVE3D
      &                            nstp,                                 &
@@ -254,7 +254,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 # ifdef SOLVE3D
       integer, intent(in) :: nstp
@@ -478,7 +478,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, itrc, j, k
 
       real(r8) :: fac

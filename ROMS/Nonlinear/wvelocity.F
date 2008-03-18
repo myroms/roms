@@ -40,7 +40,7 @@
 !
 # include "tile.h"
 !
-      CALL wvelocity_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL wvelocity_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Ninp,                                        &
      &                     GRID(ng) % pm,                               &
@@ -57,7 +57,7 @@
       END SUBROUTINE wvelocity
 !
 !***********************************************************************
-      SUBROUTINE wvelocity_tile (ng, Istr, Iend, Jstr,Jend,             &
+      SUBROUTINE wvelocity_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Ninp,                                  &
      &                           pm, pn, z_r, z_w,                      &
@@ -79,7 +79,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Ninp
 !
@@ -122,7 +122,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 
       real(r8) :: cff1, cff2, cff3, cff4, cff5, slope
@@ -154,15 +153,15 @@
 !  Exchange time-averaged fields.
 !
 #  if defined EW_PERIODIC || defined NS_PERIODIC
-      CALL exchange_u2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_u2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        DU_avg1)
-      CALL exchange_v2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_v2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        DV_avg1)
 #  endif
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, iNLM, 2, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange2d (ng, tile, iNLM, 2,                            &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    DU_avg1, DV_avg1)
@@ -264,11 +263,11 @@
 !
 !  Set lateral boundary conditions.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_w3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
      &                  wvel)
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iNLM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    wvel)

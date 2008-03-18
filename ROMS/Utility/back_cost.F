@@ -84,7 +84,7 @@
 !
 # include "tile.h"
 !
-      CALL back_cost_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL back_cost_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Lbck,                                        &
 # ifdef ADJUST_WSTRESS
@@ -107,7 +107,7 @@
       END SUBROUTINE back_cost
 !
 !***********************************************************************
-      SUBROUTINE back_cost_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE back_cost_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Lbck,                                  &
 # ifdef ADJUST_WSTRESS
@@ -140,7 +140,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Lbck
 !
@@ -183,7 +183,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: NSUB, i, j, k
 # ifdef SOLVE3D
       integer :: itrc

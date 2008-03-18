@@ -48,7 +48,7 @@
 
 #include "tile.h"
 !
-      CALL ana_perturb_tile (ng, model, Istr, Iend, Jstr, Jend,         &
+      CALL ana_perturb_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       kstp(ng), krhs(ng), knew(ng),              &
 #ifdef SOLVE3D
@@ -93,7 +93,7 @@
       END SUBROUTINE ana_perturb
 !
 !***********************************************************************
-      SUBROUTINE ana_perturb_tile (ng, model, Istr, Iend, Jstr, Jend,   &
+      SUBROUTINE ana_perturb_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
      &                             kstp, krhs, knew,                    &
 #ifdef SOLVE3D
@@ -127,7 +127,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: kstp, krhs, knew
 #ifdef SOLVE3D
@@ -202,11 +202,10 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: IperAD, JperAD, KperAD, ivarAD
       integer :: IperTL, JperTL, KperTL, ivarTL
       integer :: i, itrc, j, k
-!
+
 #include "set_bounds.h"
 !
 !-----------------------------------------------------------------------

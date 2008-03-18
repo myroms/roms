@@ -22,11 +22,13 @@
       implicit none
 
       PRIVATE
-      PUBLIC  :: initialize, run, finalize
+      PUBLIC  :: ROMS_initialize
+      PUBLIC  :: ROMS_run
+      PUBLIC  :: ROMS_finalize
 
       CONTAINS
 
-      SUBROUTINE initialize (first, MyCOMM)
+      SUBROUTINE ROMS_initialize (first, MyCOMM)
 !
 !=======================================================================
 !                                                                      !
@@ -98,7 +100,6 @@
 !
         IF (Master) THEN
           WRITE (stdout,10)
- 10       FORMAT (' Process Information:',/)
         END IF
         DO ng=1,Ngrids
 !$OMP PARALLEL DO PRIVATE(thread) SHARED(ng,numthreads)
@@ -157,15 +158,58 @@
           RETURN
         END IF
       END DO
+!
+!  Initialize run or ensemble counter.
+!
+      Nrun=1
+
+#ifdef VERIFICATION
+!
+!  Create out NetCDF file containing model solution at observation
+!  locations
+!
+      IF (Nrun.eq.1) THEN
+        DO ng=1,Ngrids
+          LdefMOD(ng)=.TRUE.
+          CALL def_mod (ng)
+        END IF
+        wrtNLmod(ng)=.TRUE.
+#endif
+
+#ifdef IOM
+!
+!  Set the current outer loop iteration.
+!
+      outer=Nouter
+      IF (Master) THEN
+        WRITE (stdout,'(/,a,i3,/)')                                     &
+     &        'NL ROMS/TOMS: Outer Loop Iteration = ', outer
+      END IF
+#endif
+!
+!  Substract a time-step to model time after initialization because the
+!  main time-stepping driver always add a single time-step.
+!
+      DO ng=1,Ngrids
+        IF (Master) THEN
+          WRITE (stdout,20) ng, ntstart(ng), ntend(ng)
+        END IF
+        time(ng)=time(ng)-dt(ng)
+      END DO
+
+ 10   FORMAT (' Process Information:',/)
+ 20   FORMAT ('NL ROMS/TOMS: started time-stepping:',                   &
+     &        ' (Grid: ',i2.2,' TimeSteps: ',i8.8,' - ',i8.8,')')
 
       RETURN
-      END SUBROUTINE initialize
+      END SUBROUTINE ROMS_initialize
 
-      SUBROUTINE run
+      SUBROUTINE ROMS_run (Tstr, Tend)
 !
 !=======================================================================
 !                                                                      !
-!  This routine time-steps ROMS/TOMS nonlinear model.                  !
+!  This routine runs ROMS/TOMS nonlinear model from specified starting !
+!  (Tstr) to ending (Tend) time-steps.                                 !
 !                                                                      !
 !=======================================================================
 !
@@ -177,6 +221,11 @@
       USE mod_iounits
       USE mod_scalars
 !
+!  Imported variable declarations.
+!
+      integer, dimension(Ngrids) :: Tstr   ! starting time-step
+      integer, dimension(Ngrids) :: Tend   ! ending   time-step
+!
 !  Local variable declarations.
 !
       integer :: ng, my_iic
@@ -185,40 +234,9 @@
 !  Run model for all nested grids, if any.
 !-----------------------------------------------------------------------
 !
-      Nrun=1
-
-#ifdef VERIFICATION
-!
-!  Create out NetCDF file containing model solution at observation
-!  locations
-!
-      IF (Nrun.eq.1) THEN
-        ng=1
-        LdefMOD(ng)=.TRUE.
-        CALL def_mod (ng)
-      END IF
-      wrtNLmod(ng)=.TRUE.
-#endif
-
-#ifdef IOM
-!
-!  Set the current outer loop iteration.
-!
-      outer=Nouter
-      IF (Master) THEN
-        WRITE (stdout,20) 'NL ROMS/TOMS: Outer Loop Iteration = ', outer
-      END IF
-#endif
-
       NEST_LOOP : DO ng=1,Ngrids
 
-        IF (Master) THEN
-          WRITE (stdout,10) ntstart(ng), ntend(ng)
-        END IF
-
-        time(ng)=time(ng)-dt(ng)
-
-        NL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
+        NL_LOOP : DO my_iic=Tstr(ng),Tend(ng)
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -228,30 +246,19 @@
 #endif
           IF (exit_flag.ne.NoError) THEN
             IF (Master) THEN
-              WRITE (stdout,20) Rerror(exit_flag), exit_flag
+              WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
             END IF
             RETURN
           END IF
 
         END DO NL_LOOP
 
-#ifdef VERIFICATION
-!
-!  Compute and report model-observation comparison statistics.
-!
-        CALL stats_modobs (ng)
-#endif
-
       END DO NEST_LOOP
-!
- 10   FORMAT (/,'NL ROMS/TOMS: started time-stepping:',                 &
-     &            '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 20   FORMAT (/,a,i3,/)
 
       RETURN
-      END SUBROUTINE run
+      END SUBROUTINE ROMS_run
 
-      SUBROUTINE finalize
+      SUBROUTINE ROMS_finalize
 !
 !=======================================================================
 !                                                                      !
@@ -268,6 +275,17 @@
 !  Local variable declarations.
 !
       integer :: ng, thread
+
+#ifdef VERIFICATION
+!
+!-----------------------------------------------------------------------
+!  Compute and report model-observation comparison statistics.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        CALL stats_modobs (ng)
+      END DO
+#endif
 !
 !-----------------------------------------------------------------------
 !  If blowing-up, save latest model state into RESTART NetCDF file.
@@ -314,6 +332,6 @@
       CALL close_io
 
       RETURN
-      END SUBROUTINE finalize
+      END SUBROUTINE ROMS_finalize
 
       END MODULE ocean_control_mod

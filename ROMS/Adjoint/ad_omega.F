@@ -51,7 +51,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 13)
 # endif
-      CALL ad_omega_tile (ng, Istr, Iend, Jstr, Jend,                   &
+      CALL ad_omega_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    nstp(ng), nnew(ng),                           &
@@ -83,7 +83,7 @@
       END SUBROUTINE ad_omega
 !
 !***********************************************************************
-      SUBROUTINE ad_omega_tile (ng, Istr, Iend, Jstr, Jend,             &
+      SUBROUTINE ad_omega_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                          nstp, nnew,                             &
@@ -112,7 +112,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       integer, intent(in) :: nstp, nnew
@@ -179,7 +179,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB
       integer :: i, j, k
 # ifdef Q_PSOURCE
@@ -214,21 +213,21 @@
 !  Set lateral boundary conditions.
 !
 # ifdef DISTRIBUTE
-!>    CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_W)
 !>
-      CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_W)
 # endif
-!>    CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+!>    CALL bc_w3d_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
 !>   &                  tl_W)
 !>
-      CALL ad_bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_bc_w3d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj, 0, N(ng),                &
      &                     ad_W)
 !
@@ -393,11 +392,11 @@
 !
 !  Set lateral boundary conditions for basic state.
 !
-      CALL bc_w3d_tile (ng, Istr, Iend, Jstr, Jend,                     &
+      CALL bc_w3d_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj, 0, N(ng),                   &
      &                  W)
 # ifdef DISTRIBUTE
-      CALL mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,          &
+      CALL mp_exchange3d (ng, tile, iADM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    W)

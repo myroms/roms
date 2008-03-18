@@ -24,7 +24,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE state_addition (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE state_addition (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           Linp1, Linp2, Lout,                    &
      &                           fac1, fac2,                            &
@@ -56,7 +56,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: Linp1, Linp2, Lout
 !
@@ -148,7 +148,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j, k
 #ifdef SOLVE3D
       integer :: itrc

@@ -40,7 +40,7 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iADM, 7)
 # endif
-      CALL ad_diag_tile (ng, Istr, Iend, Jstr, Jend,                    &
+      CALL ad_diag_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   nstp(ng), kstp(ng),                            &
      &                   GRID(ng) % h,                                  &
@@ -63,7 +63,7 @@
       END SUBROUTINE ad_diag
 !
 !***********************************************************************
-      SUBROUTINE ad_diag_tile (ng, Istr, Iend, Jstr, Jend,              &
+      SUBROUTINE ad_diag_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         nstp, kstp,                              &
      &                         h, omn,                                  &
@@ -88,7 +88,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, kstp
 !
@@ -140,6 +140,8 @@
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: pe2d
 
       character (len=8) :: kechar, pechar
+
+# include "set_bounds.h"
 !
       ILB=LBOUND(ke2d,DIM=1)
       IUB=UBOUND(ke2d,DIM=1)

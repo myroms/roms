@@ -48,7 +48,7 @@
 #ifdef PROFILE
       CALL wclock_on (ng, iADM, 23)
 #endif
-      CALL ad_prsgrd_tile (ng, Istr, Iend, Jstr, Jend,                  &
+      CALL ad_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     nrhs(ng),                                    &
 #ifdef MASKING
@@ -78,7 +78,7 @@
       END SUBROUTINE ad_prsgrd
 !
 !***********************************************************************
-      SUBROUTINE ad_prsgrd_tile (ng, Istr, Iend, Jstr, Jend,            &
+      SUBROUTINE ad_prsgrd_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           nrhs,                                  &
 #ifdef MASKING
@@ -100,7 +100,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nrhs
 
@@ -150,7 +150,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 

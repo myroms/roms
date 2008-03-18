@@ -42,7 +42,7 @@
 !
 # include "tile.h"
 !
-      CALL ad_set_depth_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL ad_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % h,                             &
@@ -64,7 +64,7 @@
 
 !
 !***********************************************************************
-      SUBROUTINE ad_set_depth_tile (ng, Istr, Iend, Jstr, Jend,         &
+      SUBROUTINE ad_set_depth_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
      &                              nstp, nnew,                         &
      &                              h, ad_h,                            &
@@ -94,7 +94,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: nstp, nnew
 !
@@ -144,7 +144,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       integer :: ILB, IUB, JLB, JUB
 # endif
@@ -192,62 +191,62 @@
 !  Exchange boundary information.
 !
 #  ifdef DISTRIBUTE
-!>    CALL mp_exchange3d (ng, iTLM, 2, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iTLM, 2,                            &
 !>   &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_z_r, tl_Hz)
 !>
-      CALL ad_mp_exchange3d (ng, iADM, 2, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 2,                         &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_z_r, ad_Hz)
-!>    CALL mp_exchange3d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange3d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_z_w)
 !>
-      CALL ad_mp_exchange3d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange3d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj, 0, N(ng),              &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_z_w)
-!>    CALL mp_exchange2d (ng, iTLM, 1, Istr, Iend, Jstr, Jend,          &
+!>    CALL mp_exchange2d (ng, tile, iTLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj,                           &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    tl_h)
 !>
-      CALL ad_mp_exchange2d (ng, iADM, 1, Istr, Iend, Jstr, Jend,       &
+      CALL ad_mp_exchange2d (ng, tile, iADM, 1,                         &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       NghostPoints, EWperiodic, NSperiodic,      &
      &                       ad_h)
 #  endif
 #  if defined EW_PERIODIC || defined NS_PERIODIC
 
-!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_Hz)
 !>
-      CALL ad_exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_Hz)
-!>    CALL exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
 !>   &                        tl_z_r)
 !>
-      CALL ad_exchange_r3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
      &                           ad_z_r)
-!>    CALL exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
 !>   &                        tl_z_w)
 !>
-      CALL ad_exchange_w3d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_w3d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, 0, N(ng),          &
      &                           ad_z_w)
-!>    CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj,                       &
 !>   &                        tl_h)
 !>
-      CALL ad_exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,            &
+      CALL ad_exchange_r2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           ad_h)
 #  endif

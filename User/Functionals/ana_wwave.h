@@ -5,7 +5,6 @@
 !! Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !!   Licensed under a MIT/X style license                              !
 !!   See License_ROMS.txt                                              !
-!!                                                                     !
 !=======================================================================
 !                                                                      !
 !  This subroutine sets wind induced wave amplitude, direction and     !
@@ -24,7 +23,7 @@
 
 #include "tile.h"
 !
-      CALL ana_wwave_tile (ng, model, Istr, Iend, Jstr, Jend,           &
+      CALL ana_wwave_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
 #if defined BBL_MODEL || defined NEARSHORE_MELLOR
      &                     FORCES(ng) % Dwave,                          &
@@ -60,7 +59,7 @@
       END SUBROUTINE ana_wwave
 !
 !***********************************************************************
-      SUBROUTINE ana_wwave_tile (ng, model, Istr, Iend, Jstr, Jend,     &
+      SUBROUTINE ana_wwave_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
 #if defined BBL_MODEL || defined NEARSHORE_MELLOR
      &                           Dwave,                                 &
@@ -98,7 +97,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, Iend, Istr, Jend, Jstr
+      integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
 !
 #ifdef ASSUMED_SHAPE
@@ -167,7 +166,6 @@
       logical :: NSperiodic=.FALSE.
 # endif
 #endif
-      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: i, j
 
 #include "set_bounds.h"
@@ -193,77 +191,77 @@
 
 #if defined EW_PERIODIC || defined NS_PERIODIC
 # if defined WAVES_DIR
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Dwave)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Dwave)
 #  endif
 # endif
 # ifdef WAVES_HEIGHT
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Hwave)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Hwave)
 #  endif
 # endif
 # ifdef WAVES_LENGTH
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Lwave)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Lwave)
 #  endif
 # endif
 # ifdef WAVES_TOP_PERIOD
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Pwave_top)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Pwave_top)
 #  endif
 # endif
 # ifdef WAVES_BOT_PERIOD
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Pwave_bot)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Pwave_bot)
 #  endif
 # endif
 # ifdef WAVES_UB
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        Ub_swan)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    Ub_swan)
 #  endif
 # endif
 # ifdef TKE_WAVEDISS
-      CALL exchange_r2d_tile (ng, Istr, Iend, Jstr, Jend,               &
+      CALL exchange_r2d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
      &                        wave_dissip)
 #  ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 3, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 3,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    wave_dissip)
