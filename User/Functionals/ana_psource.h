@@ -28,7 +28,7 @@
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
 !
-      CALL ana_psource_grid (ng, tiel, model,                           &
+      CALL ana_psource_grid (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
      &                       nnew(ng), knew(ng), Nsrc(ng),              &
      &                       OCEAN(ng) % zeta,                          &
@@ -166,7 +166,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: is, i, j, k, ised
+      integer :: is, i, itrc, j, k, ised
       real(r8) :: fac, my_area, ramp
 
 #include "set_bounds.h"

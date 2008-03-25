@@ -118,14 +118,8 @@ ifdef USE_MCT
 endif
 
 ifdef USE_ESMF
-#     ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
-#     ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
-#     ESMF_MK_DIR ?= /opt/pgisoft/esmf-2.2.2rp1/lib/libO/Linux.pgi.64.mpich.default
-#     ESMF_MK_DIR ?= /opt/pgisoft/esmf-3.0.2/lib/libO/Linux.pgi.64.mpich.default
-#     ESMF_MK_DIR ?= /opt/pgisoft/esmf-3.0.3/lib/libO/Linux.pgi.64.mpich.default
-      ESMF_MK_DIR ?= /opt/pgisoft/esmf-3.1.0/lib/libO/Linux.pgi.64.mpich.default
-#     ESMF_MK_DIR ?= /opt/pgisoft/esmfbeta/lib/libO/Linux.pgi.64.mpich.default
-#     ESMF_MK_DIR ?= /opt/pgisoft/esmf/lib/libO/Linux.pgi.64.mpich.default
+      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
+      ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
                      include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)
              LIBS += $(ESMF_F90LINKPATHS) -lesmf -lC

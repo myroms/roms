@@ -30,7 +30,7 @@
 !
 !  Finalize ROMS component.
 !
-      CALL ROMS_Finalize
+      CALL ROMS_finalize
 
 #ifdef ESMF_LIB
 !
