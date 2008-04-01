@@ -14,9 +14,9 @@
 !  and  finalization  of the tangent model execution following         !
 !  ESMF conventions:                                                   !
 !                                                                      !
-!     initialize                                                       !
-!     run                                                              !
-!     finalize                                                         !
+!     ROMS_initialize                                                  !
+!     ROMS_run                                                         !
+!     ROMS_finalize                                                    !
 !                                                                      !
 !=======================================================================
 !

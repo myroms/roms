@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/COMPU      file 2 of 5
 !
@@ -1950,7 +1949,3 @@
       RETURN
 !     end of subroutine PLTSRC
       END
-#else
-      MODULE swancom2_mod
-      END MODULE swancom2_mod
-#endif

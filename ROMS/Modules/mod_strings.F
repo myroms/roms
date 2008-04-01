@@ -22,7 +22,7 @@
         character (len=80)   :: title
         character (len=2048) :: Coptions
 
-        integer, parameter :: Nregion = 47
+        integer, parameter :: Nregion = 48
 
         character (len=55), dimension(9) :: Mstate =                    &
      &    (/'Read state initial conditions,               ',            &
@@ -82,7 +82,8 @@
      &      'Message Passage: data gathering ..................',       &
      &      'Message Passage: data scattering..................',       &
      &      'Message Passage: boundary data gathering .........',       &
-     &      'Message Passage: point data gathering ............'/)
+     &      'Message Passage: point data gathering ............',       &
+     &      'Message Passage: multi-model coupling ............'/)
 
         character (len=80) :: my_os = MY_OS
         character (len=80) :: my_cpu = MY_CPU

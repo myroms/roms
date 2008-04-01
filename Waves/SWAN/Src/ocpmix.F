@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !     Ocean Pack miscellaneous routines
 !
 !     real function DTTIME
@@ -2611,7 +2610,3 @@
       RETURN
 !*    end of subroutine COPYCH   **
       END
-#else
-      MODULE ocpmix_mod
-      END MODULE ocpmix_mod
-#endif

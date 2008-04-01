@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !               OCEAN PACK  command reading routines
 !
 !  Contents of this file:
@@ -2554,7 +2553,3 @@
    5  FORMAT (' NOT IGNORED: ', A, 2X, A)
       RETURN
       END
-#else
-      MODULE waves_coupler_mod
-      END MODULE waves_coupler_mod
-#endif

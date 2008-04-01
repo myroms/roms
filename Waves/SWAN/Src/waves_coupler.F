@@ -1,6 +1,8 @@
 #include "cppdefs.h"
-      MODULE waves_coupler_mod
-#ifdef WAVES_OCEAN
+      MODULE WAVES_COUPLER_MOD
+
+#if defined MODEL_COUPLING && defined MCT_LIB
+!
 !svn $Id$
 !==================================================== John C. Warner ===
 !  Copyright (c) 2002-2008 The ROMS/TOMS Group      Hernan G. Arango   !
@@ -51,9 +53,15 @@
 !
       PRIVATE
 
-      PUBLIC :: initialize_ocean_coupling
-      PUBLIC :: ocean_coupling
-      PUBLIC :: finalize_ocean_coupling
+      PUBLIC :: initialize_wav2ocn_coupling
+      PUBLIC :: wav2ocn_coupling
+      PUBLIC :: finalize_wav2ocn_coupling
+
+# ifdef WRF_COUPLING
+      PUBLIC :: initialize_wav2atm_coupling
+      PUBLIC :: wav2atm_coupling
+      PUBLIC :: finalize_wav2atm_coupling
+# endif
 
       include 'mpif.h'
 !
@@ -61,14 +69,18 @@
 !
       TYPE(GlobalSegMap) :: GSMapSWAN         ! GloabalSegMap variables
 
-      TYPE(AttrVect) :: ToOceanAV             ! AttrVect variables
-      TYPE(AttrVect) :: FromOceanAV
+      TYPE(AttrVect) :: wav2ocn_AV            ! AttrVect variables
+      TYPE(AttrVect) :: ocn2wav_AV
+      type(Router)   :: SWANtoROMS            ! Router variables
 
-      type(Router) :: RoutSWAN                ! Router variables
+# if defined WRF_COUPLING
+      TYPE(AttrVect) :: atm2wav_AV            ! AttrVec variables
+      type(Router)   :: WRFtoSWAN             ! Router variables
+# endif
 
       CONTAINS
 
-      SUBROUTINE initialize_ocean_coupling
+      SUBROUTINE INITIALIZE_WAV2OCN_COUPLING
 !
 !=======================================================================
 !                                                                      !
@@ -82,32 +94,35 @@
       USE SWCOMM3
       USE M_GENARR
       USE M_PARALL
+      USE mod_coupler
 !
       include 'mpif.h'
 !
 !  Local variable declarations.
 !
-      integer :: MyColor, MyCOMM, MyError, MyRank, MyKey, MyValue
+      integer :: MyError, MyRank
       integer :: npoints, gsmsize, nprocs, localsize
       integer :: j, Isize, Jsize
 
       integer, pointer :: start(:), length(:)
-
+!
 !-----------------------------------------------------------------------
 !  Begin initialization phase.
 !-----------------------------------------------------------------------
 !
-! Get local rank and size.
+!  Get communicator local rank and size.
 !
       CALL mpi_comm_rank (WAV_COMM_WORLD, MyRank, MyError)
       CALL mpi_comm_size (WAV_COMM_WORLD, nprocs, MyError)
 !
-! Initialize MCTworld.
+!  Initialize MCT coupled model registry.
 !
-      CALL MCTWorld_init (ncomps,MPI_COMM_WORLD,WAV_COMM_WORLD,WavId)
+      CALL MCTWorld_init (Nmodels, MPI_COMM_WORLD, WAV_COMM_WORLD,      &
+     &                    WAVid)
 !
-! Initialize a Global Segment Map for non-haloed transfer of data out of
-! SWAN. Determine non-haloed start and length arrays for this processor.
+!  Initialize a Global Segment Map for non-haloed transfer of data out
+!  of SWAN. Determine non-haloed start and length arrays for this
+!  processor.
 !
       IF (nprocs.eq.1) THEN
         Isize=MXCGL
@@ -141,38 +156,52 @@
           END IF
         END IF
       END DO
-!
       gsmsize=Isize*Jsize
 !
-      CALL GlobalSegMap_init(GSMapSWAN,start,length,0,                  &
-     &                       WAV_COMM_WORLD,WavId)
+      CALL GlobalSegMap_init (GSMapSWAN, start, length, 0,              &
+     &                        WAV_COMM_WORLD, WAVid)
 !
-! Initialize Attribute Vector ToOceanAv to hold the data sent to ROMS.
+!  Initialize attribute vector holding the export data code strings of
+!  the wave model.
 !
-      CALL AttrVect_init (ToOceanAV,                                    &
-     &     rlist="DISSIP:HSIGN:RTP:SETUP:TMBOT:UBOT:DIR:WLEN:TM01:QB",  &
-     &     lsize=gsmsize)
-      CALL AttrVect_zero (ToOceanAV)
-!
-! Initialize Attribute Vector FromOceanAV that will have ROMS data in
-! it.
-!
-      CALL AttrVect_init (FromOceanAV,rList="DEPTH:WLEV:VELX:VELY",     &
+      CALL AttrVect_init (wav2ocn_AV, rlist=TRIM(ExportList(Iwaves)),   &
      &                    lsize=gsmsize)
-      CALL AttrVect_zero (FromOceanAV)
+      CALL AttrVect_zero (wav2ocn_AV)
 !
-! Initialize a router to the Waves component.
+!  Initialize attribute vector holding the export data code string of
+!  the ocean model.
 !
-      CALL Router_init (OcnId,GSMapSWAN,WAV_COMM_WORLD,RoutSWAN)
+      CALL AttrVect_init (ocn2wav_AV, rList=TRIM(ExportList(Iocean)),   &
+     &                    lsize=gsmsize)
+      CALL AttrVect_zero (ocn2wav_AV)
 !
+!  Initialize a router to the waves model component.
+!
+      CALL Router_init (OCNid, GSMapSWAN, WAV_COMM_WORLD, SWANtoROMS)
+!
+# ifdef WRF_COUPLING
+!
+!  Initialize attribute vector holding the export data code string of
+!  the atmosphere model.
+!
+      CALL AttrVect_init (atm2wav_AV, rList=TRIM(ExportList(Iatmos)),   &
+     &                    lsize=gsmsize)
+      CALL AttrVect_zero (atm2wav_AV)
+!
+! Initialize a router to the WRF component.
+!
+      CALL Router_init (ATMid, GSMapSWAN, WAV_COMM_WORLD, WRFtoSWAN)
+!
+# endif
+
       deallocate (start)
       deallocate (length)
 
       RETURN
-      END SUBROUTINE initialize_ocean_coupling
+      END SUBROUTINE INITIALIZE_WAV2OCN_COUPLING
 
-      SUBROUTINE ocean_coupling (MIP, NVOQP, VOQR, VOQ, IRQ, IVTYPE,    &
-     &                           COMPDA)
+      SUBROUTINE WAV2OCN_COUPLING (MIP, NVOQP, VOQR, VOQ, IRQ,          &
+     &                             IVTYPE, COMPDA, numsteps)
 !
 !=======================================================================
 !                                                                      !
@@ -180,22 +209,23 @@
 !  ocean and wave models. Currently, the following data streams are    !
 !  processed:                                                          !
 !                                                                      !
-!  Fields sent to the OCEAN Model:                                     !
+!  Fields exported to the OCEAN model:                                 !
 !                                                                      !
-!     * Dwave      Wave direction.                                     !
-!     * Hwave      Wave height.                                        !
-!     * Lwave      Wave length.                                        !
-!     * Pwave_bot  Wave bottom period.                                 !
-!     * Pwave_top  Wave surface period.                                !
-!     * Wave_break Percent of breakig waves.                           !
-!     * Wave_dissip Wave energy dissipation.                           !
+!     * Wave direction (degrees)                                       !
+!     * Significant wave height (m)                                    !
+!     * Average wave length (m)                                        !
+!     * Surface wave relative peak period (s)                          !
+!     * Bottom wave period (s)                                         !
+!     * Percent of breakig waves (nondimensional)                      !
+!     * Wave energy dissipation (W/m2)                                 !
+!     * Wave bottom orbital velocity (m/s)                             !
 !                                                                      !
-!  Fields acquired from the OCEAN Model:                               !
+!  Fields imported from the OCEAN Model:                               !
 !                                                                      !
-!     * ubar       Depth integrated xi-direction velocity.             !
-!     * vbar       Depth integrated eta-direction velocity.            !
-!     * zeta       Water surface elevation.                            !
-!     * h          Bottom elevation.                                   !
+!     * Bathymetry, bottom elevation (m)                               !
+!     * Free-surface, water surface elevation (m)                      !
+!     * Depth integrated u-momentum (m/s)                              !
+!     * Depth integrated v-momentum (m/s)                              !
 !                                                                      !
 !=======================================================================
 !
@@ -205,12 +235,13 @@
       USE M_PARALL
       USE M_GENARR
       USE SWCOMM1
+      USE mod_coupler
 !
       implicit none
 !
 !  Imported variable declarations.
 !
-      integer :: MIP, IRQ, nvoqp
+      integer :: MIP, IRQ, nvoqp, numsteps
       integer :: VOQR(NMOVAR), IVTYPE, IP, IX, IY
 
       real :: COMPDA(MCGRD,MCMVAR)
@@ -218,20 +249,26 @@
 !
 !  Local variable declarations.
 !
-      integer :: MyStatus, i, j, gsmsize, ierr, MyRank
+      integer :: MyStatus, i, id, ifield, j, gsmsize, ierr, MyRank
       integer :: MyError, MySize, indx, Istr, Iend, Jstr, Jend
       integer :: Isize, Jsize, INDXG, NPROCS, OFFSET
       integer :: NUMTRANSFER, NNEIGH, HALOSIZE, NUMSENT, INB
       integer :: WHICHWAY, GDEST, GSRC, TAGT, TAGB, TAGR, TAGL
       integer :: TREQUEST,BREQUEST,RREQUEST,LREQUEST,MSIZE
 
+      integer, save :: Iexport = 0
+      integer, save :: Iimport = 0
+
       integer, dimension(MPI_STATUS_SIZE,4) :: status
       integer, pointer :: points(:)
 
       real :: cff
-      real, pointer :: avdata(:), TEMPMCT(:,:)
+      real(r8), pointer :: avdata(:)
+      real, pointer :: TEMPMCT(:,:)
       real, pointer :: GRECVT(:), GRECVB(:), GRECVR(:), GRECVL(:)
       real, pointer :: GSENDT(:), GSENDB(:), GSENDR(:), GSENDL(:)
+
+      character (len=40) :: code
 !
 !-----------------------------------------------------------------------
 !  Send wave fields to ROMS.
@@ -240,87 +277,117 @@
       CALL MPI_COMM_RANK (WAV_COMM_WORLD, MyRank, MyError)
       CALL MPI_COMM_SIZE (WAV_COMM_WORLD, NPROCS, MyError)
 !
-!  Size is the number of grid point on this processor.
+!  Get the number of grid point on this processor.
 !
-      gsmsize=GlobalSegMap_lsize(GSMapSWAN,WAV_COMM_WORLD)
+      gsmsize=GlobalSegMap_lsize(GSMapSWAN, WAV_COMM_WORLD)
 !
-!  Load wave data into Attribute Vector Array ToOceanAV.
+!  Allocate attribute vector array used to export/import data.
 !
       allocate ( avdata(gsmsize),stat=ierr )
       allocate ( points(gsmsize),stat=ierr )
-      avdata=0.0
+      avdata=0.0_r8
       points=0
 !
 !  Ask for points in this tile.
 !
-      CALL GlobalSegMap_Ordpnts (GSMapSWAN,MyRank,points)
+      CALL GlobalSegMap_Ordpnts (GSMapSWAN, MyRank, points)
 !
-!  Load output data into temporary array.
+!  Load SWAN exporting data into MCT storage buffers.  Since this
+!  routine is called several times from main, only load field
+!  according to the IVTYPE flag.  The data is exported using ROMS
+!  definition for real kind r8.
 !
-      DO IP=1,gsmsize
-        avdata(IP)=VOQ(points(IP),VOQR(IVTYPE))
-      END DO
+      IF (IVTYPE.le.50) THEN
+        DO IP=1,gsmsize
+          avdata(IP)=REAL( VOQ(points(IP),VOQR(IVTYPE)),r8 )
+        END DO
 !
-!  Load output date into MCT attribute.
-!
-      IF (IVTYPE.eq.7) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"DISSIP",avdata)
-      ELSE IF (IVTYPE.eq.10) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"HSIGN",avdata)
-      ELSE IF (IVTYPE.eq.12) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"RTP",avdata)
-      ELSE IF (IVTYPE.eq.11) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"TM01",avdata)
-      ELSE IF (IVTYPE.eq.39) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"SETUP",avdata)
-      ELSE IF (IVTYPE.eq.50) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"TMBOT",avdata)
-      ELSE IF (IVTYPE.eq.6) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"UBOT",avdata)
-      ELSE IF (IVTYPE.eq.13) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"DIR",avdata)
-      ELSE IF (IVTYPE.eq.17) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"WLEN",avdata)
-      ELSE IF (IVTYPE.eq.8) THEN
-        CALL AttrVect_importRAttr (ToOceanAV,"QB",avdata)
+        DO ifield=1,Nexport(Iwaves)
+          id=ExportID(Iwaves)%val(ifield)
+          code=ADJUSTL(Fields(id)%code)
+          IF ((TRIM(code).eq.'Wdiss').and.(IVTYPE.eq.7)) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'Wamp' ).and.(IVTYPE.eq.10)) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'Wptop').and.(IVTYPE.eq.12)) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'TM01' ).and.(IVTYPE.eq.11)) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'Wpbot').and.(IVTYPE.eq.50)) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'Wubot').and.(IVTYPE.eq.6 )) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'Wdir' ).and.(IVTYPE.eq.13)) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'Wlen' ).and.(IVTYPE.eq.17)) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          ELSE IF ((TRIM(code).eq.'Wbrk' ).and.(IVTYPE.eq.8 )) THEN
+            CALL AttrVect_importRAttr (wav2ocn_AV, TRIM(code), avdata)
+            Iexport=Iexport+1
+          END IF
+        END DO
       END IF
+!
+      IF (IRQ.eq.NREOQ) THEN
 !
 !-----------------------------------------------------------------------
 !  Create a restart file.
 !-----------------------------------------------------------------------
 !
-      IF (IRQ.eq.NREOQ) THEN
         CALL BACKUP (AC2, SPCSIG, SPCDIR, KGRPNT, XCGRID, YCGRID)
 !
 !-----------------------------------------------------------------------
-!  Send wave parameters to ROMS.
+!  Send wave fields bundle to ocean model, ROMS.
 !-----------------------------------------------------------------------
 !
-        CALL MCT_SEND (ToOceanAV,RoutSWAN,MyError)
-        IF (MYRANK.EQ.0) THEN
-          WRITE (*,*) '== SWAN sent wave fields and Myerror= ',MyError
-        END IF
+        CALL MCT_Send (wav2ocn_AV, SWANtoROMS, MyError)
         IF (MyError.ne.0) THEN
-          WRITE (*,*) 'coupling send fail swancplr, MyStatus= ', MyError
-          CALL finalize_ocean_coupling ("Coupling failed swancplr")
+          IF (MyRank.eq.0) THEN
+            WRITE (6,10) 'ocean model, MyError = ', MyError
+          END IF
+!!        CALL finalize_wav2ocn_coupling
         END IF
 !
 !-----------------------------------------------------------------------
 !  Receive from ROMS: Depth, Water Level, VELX, and VELY.
 !-----------------------------------------------------------------------
 !
-        NUMTRANSFER=4
-        CALL MCT_Recv (FromOceanAV, RoutSWAN, MyError)
-        IF (MYRANK.EQ.0) THEN
-          WRITE (*,*) '== SWAN recvd ocean fields and Myerror= ',       &
-     &                MyError
-        END IF
+!  Schedule receiving field from ocean model.
+!
+        CALL MCT_Recv (ocn2wav_AV, SWANtoROMS, MyError)
         IF (MyError.ne.0) THEN
-          WRITE (*,*) 'coupling fail swancplr, MyStatus= ', MyError
-          CALL finalize_ocean_coupling ("Coupling failed swancplr")
+          IF (MyRank.eq.0) THEN
+             WRITE (6,20) 'ocean model, MyError = ', MyError
+          END IF
+!!        CALL finalize_wav2ocn_coupling
         END IF
+
+# ifdef AIR_OCEAN
+!
+!  Schedule receiving fields from atmosphere model.
+!
+!       IF (numsteps.gt.1) THEN
+          CALL MCT_Recv (atm2wav_AV, WRFtoSWAN, MyError)
+          IF (MyError.ne.0) THEN
+            IF (MyRank.eq.0) THEN
+              WRITE (6,20) 'atmosphere model, MyError = ', MyError
+            END IF
+!!          CALL finalize_wav2ocn_coupling
+          END IF
+!       END IF
+# endif
 !
 ! Pass the non-halo data from MCT into tempmct array.
+!
+        NUMTRANSFER=Nimport(Iwaves)
 !
         NNEIGH = IBLKAD(1)
         IF (nprocs.eq.1) THEN
@@ -356,61 +423,118 @@
 !
         allocate ( TEMPMCT(MXC*MYC,NUMTRANSFER),stat=ierr )
         TEMPMCT=0.0
-!
-!  Bottom elevation.
-!
-        CALL AttrVect_exportRAttr (FromOceanAV,"DEPTH",avdata,gsmsize)
-        IP=0
-        DO IY=Jstr,Jend
-          DO IX=Istr,Iend
-            IP=IP+1
-            INDXG=(IY-1)*MXC+IX
-            TEMPMCT(INDXG,1)=avdata(IP)
-          END DO
-        END DO
-!
-!  Water surface elevation.
-!
-        CALL AttrVect_exportRAttr (FromOceanAV,"WLEV",avdata,gsmsize)
-        IP=0
-        DO IY=Jstr,Jend
-          DO IX=Istr,Iend
-            IP=IP+1
-            INDXG=(IY-1)*MXC+IX
-            TEMPMCT(INDXG,2)=avdata(IP)
-          END DO
-        END DO
-!
-!  Depth-integrated u-velocity.
-!
-        CALL AttrVect_exportRAttr(FromOceanAV,"VELX",avdata,gsmsize)
-        IP=0
-        DO IY=Jstr,Jend
-          DO IX=Istr,Iend
-            IP=IP+1
-            INDXG=(IY-1)*MXC+IX
-            TEMPMCT(INDXG,3)=avdata(IP)
-          END DO
-        END DO
-!
-!  Depth-integrated v-velocity.
-!
-        CALL AttrVect_exportRAttr(FromOceanAV,"VELY",avdata,gsmsize)
-        IP=0
-        DO IY=Jstr,Jend
-          DO IX=Istr,Iend
-            IP=IP+1
-            INDXG=(IY-1)*MXC+IX
-            TEMPMCT(INDXG,4)=avdata(IP)
-          END DO
-        END DO
 
-        IF (NPROCS.GT.1) THEN
+        Iimport=0
+        DO ifield=1,Nimport(Iwaves)
+          id=ImportID(Iwaves)%val(ifield)
+          code=ADJUSTL(Fields(id)%code)
+
+          SELECT CASE (TRIM(code))
+
+            CASE ('bath')               ! bathymetry
+
+              CALL AttrVect_exportRAttr (ocn2wav_AV, TRIM(code),        &
+     &                                   avdata, gsmsize)
+              Iimport=Iimport+1
+              IP=0
+              DO IY=Jstr,Jend
+                DO IX=Istr,Iend
+                  IP=IP+1
+                  INDXG=(IY-1)*MXC+IX
+                  TEMPMCT(INDXG,1)=REAL( avdata(IP) )
+                END DO
+              END DO
+
+            CASE ('SSH')                ! Water surface elevation.
+
+              CALL AttrVect_exportRAttr (ocn2wav_AV, TRIM(code),        &
+     &                                   avdata, gsmsize)
+              Iimport=Iimport+1
+              IP=0
+              DO IY=Jstr,Jend
+                DO IX=Istr,Iend
+                  IP=IP+1
+                  INDXG=(IY-1)*MXC+IX
+                  TEMPMCT(INDXG,2)=REAL( avdata(IP) )
+                END DO
+              END DO
+
+            CASE ('Ubar')               ! Depth-integrated u-velocity
+
+              CALL AttrVect_exportRAttr (ocn2wav_AV, TRIM(code),        &
+     &                                   avdata, gsmsize)
+              Iimport=Iimport+1
+              IP=0
+              DO IY=Jstr,Jend
+                DO IX=Istr,Iend
+                  IP=IP+1
+                  INDXG=(IY-1)*MXC+IX
+                  TEMPMCT(INDXG,3)=REAL( avdata(IP) )
+                END DO
+              END DO
+
+            CASE ('Vbar')               !  Depth-integrated v-velocity
+
+              CALL AttrVect_exportRAttr (ocn2wav_AV, TRIM(code),        &
+     &                                   avdata, gsmsize)
+              Iimport=Iimport+1
+              IP=0
+              DO IY=Jstr,Jend
+                DO IX=Istr,Iend
+                  IP=IP+1
+                  INDXG=(IY-1)*MXC+IX
+                  TEMPMCT(INDXG,4)=REAL( avdata(IP) )
+                END DO
+              END DO
+
+# ifdef AIR_OCEAN
+
+            CASE ('Uwind')               ! surface wind u-velocity
+
+              CALL AttrVect_exportRAttr (atm2wav_AV, TRIM(code),        &
+     &                                   avdata, gsmsize)
+              Iimport=Iimport+1
+              IP=0
+              DO IY=Jstr,Jend
+                DO IX=Istr,Iend
+                  IP=IP+1
+                  INDXG=(IY-1)*MXC+IX
+                  TEMPMCT(INDXG,5)=REAL( -1.0_r8*avdata(IP) )
+                END DO
+              END DO
+
+            CASE ('Vwind')              ! surface wind v-velocity
+
+              CALL AttrVect_exportRAttr (atm2wav_AV, TRIM(code),        &
+     &                                   avdata, gsmsize)
+              Iimport=Iimport+1
+              IP=0
+              DO IY=Jstr,Jend
+                DO IX=Istr,Iend
+                  IP=IP+1
+                  INDXG=(IY-1)*MXC+IX
+                  TEMPMCT(INDXG,6)=REAL( -1.0_r8*avdata(IP) )
+                END DO
+              END DO
+# endif
+          END SELECT
+        END DO
+!
+!  Report.
+!
+        IF (MyRank.eq.0) THEN
+          IF ((Iimport.gt.0).or.(Iexport.gt.0)) THEN
+            WRITE (6,30) Iimport, Iexport, TRIM(CHTIME)
+            CALL my_flush (6)
+          END IF
+        END IF
+        Iexport=0
 !
 !  Pack and send halo regions to be exchanged with adjacent tiles.
 !  IBLKAD contains the tile data.
 !  WHICHWAY: [top, bot, right, left] = [1 2 3 4]
 !
+        IF (NPROCS.GT.1) THEN
           MSIZE=HALOSIZE*NUMTRANSFER
           IF (MXCGL.GT.MYCGL) THEN
             allocate ( GSENDR(MSIZE),stat=ierr )
@@ -625,9 +749,13 @@
             IP=IP+1
             INDX = KGRPNT(IX,IY)
             IF (INDX.GT.1) THEN
-              COMPDA(INDX,JWLV2)=REAL(TEMPMCT(IP,2))
-              COMPDA(INDX,JVX2)=REAL(TEMPMCT(IP,3))
-              COMPDA(INDX,JVY2)=REAL(TEMPMCT(IP,4))
+              COMPDA(INDX,JWLV2)=TEMPMCT(IP,2)
+              COMPDA(INDX,JVX2)=TEMPMCT(IP,3)
+              COMPDA(INDX,JVY2)=TEMPMCT(IP,4)
+# ifdef AIR_OCEAN
+              COMPDA(INDX,JWX2)=TEMPMCT(IP,5)
+              COMPDA(INDX,JWY2)=TEMPMCT(IP,6)
+# endif
             END IF
           END DO
         END DO
@@ -635,11 +763,18 @@
         deallocate (TEMPMCT)
       END IF
       deallocate (avdata, points)
+!
+ 10   FORMAT (' WAV2OCN_COUPLING - error while sending fields to ',     &
+     &        a,i4)
+ 20   FORMAT (' WAV2OCN_COUPLING - error while receiving fields from ', &
+     &        a,i4)
+ 30   FORMAT (6x,'WAV2OCN   - (', i2.2, ') imported and (', i2.2,       &
+     &        ') exported fields,', t61, 't = ', a)
 
       RETURN
-      END SUBROUTINE ocean_coupling
+      END SUBROUTINE WAV2OCN_COUPLING
 
-      SUBROUTINE finalize_ocean_coupling (string)
+      SUBROUTINE FINALIZE_WAV2OCN_COUPLING
 !
 !=======================================================================
 !                                                                    ===
@@ -647,26 +782,22 @@
 !                                                                    ===
 !=======================================================================
 !
-!  Imported variable declarations.
-!
-      character (len=*), intent(in) :: string
-!
 !  Local variable declarations.
 !
-      integer :: MyStatus
+      integer :: MyError
 !
 !-----------------------------------------------------------------------
-!  Terminate MPI execution environment.
+!  Deallocate MCT environment.
 !-----------------------------------------------------------------------
 !
-      CALL Router_clean (RoutSWAN)
-      CALL AttrVect_clean (ToOceanAV)
-      CALL AttrVect_clean (FromOceanAV)
-      CALL GlobalSegMap_clean (GSMapSWAN)
-      CALL MCTWorld_clean ()
-      CALL mpi_finalize (MyStatus)
+      CALL Router_clean (SWANtoROMS, MyError)
+      CALL AttrVect_clean (wav2ocn_AV, MyError)
+# ifdef WRF_COUPLING
+      CALL Router_clean (WRFtoSWAN, MyError)
+      CALL AttrVect_clean (atm2wav_AV, MyError)
+# endif
+      CALL GlobalSegMap_clean (GSMapSWAN, MyError)
 
-      STOP
-      END SUBROUTINE finalize_ocean_coupling
+      END SUBROUTINE FINALIZE_WAV2OCN_COUPLING
 #endif
-      END MODULE waves_coupler_mod
+      END MODULE WAVES_COUPLER_MOD

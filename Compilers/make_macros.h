@@ -90,7 +90,7 @@
 ** Determine if the Model Coupling Tool library is needed.
 */
 
-#ifdef MCT
+#ifdef MCT_LIB
   USE_MCT := on
 #else
   USE_MCT :=

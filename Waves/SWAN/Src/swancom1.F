@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/COMPU    file 1 of 5
 !
@@ -1665,7 +1664,7 @@
 !
             IF (SCREEN.NE.PRINTF) THEN
               IF (NSTATC.EQ.1) THEN                                       40.00
-                IF (INODE.EQ.MASTER) WRITE(SCREEN,313) CHTIME, IT,        40.30
+                IF (INODE.EQ.MASTER) WRITE(PRINTF,313) CHTIME, IT,        40.30
      &                                                 ITER, SWPDIR       40.30
  313            FORMAT ('+time ', A18, ', step ',I4, '; iteration '
      &                  ,I4, '; sweep ',I1)                               40.23 40.00
@@ -10584,7 +10583,3 @@
 
       RETURN
       END
-#else
-      MODULE swancom1_mod
-      END MODULE swancom1_mod
-#endif

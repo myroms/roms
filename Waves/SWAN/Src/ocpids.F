@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !     Last change:  NB   04 Jan 2001   12:00 pm
 !
 !          OCEAN PACK - Installation dependent subroutines
@@ -674,7 +673,3 @@
 !
       RETURN
       END
-#else
-      MODULE ocpids_mod
-      END MODULE ocpids_mod
-#endif

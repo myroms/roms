@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/COMPU    file 5 of 5
 !
@@ -5550,7 +5549,3 @@
 !     End of subroutine DIFPAR
       RETURN
       END
-#else
-      MODULE swancom5_mod
-      END MODULE swancom5_mod
-#endif

@@ -18,6 +18,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef MODEL_COUPLING
+      USE mod_coupler
+# endif
       USE mod_iounits
       USE mod_scalars
       USE mod_stepping
@@ -34,10 +37,10 @@
 # endif
       USE ini_fields_mod, ONLY : ini_fields
 # ifdef AIR_OCEAN
-      USE ocean_coupler_mod, ONLY : atmos_coupling
+      USE ocean_coupler_mod, ONLY : ocn2atm_coupling
 # endif
 # ifdef WAVES_OCEAN
-      USE ocean_coupler_mod, ONLY : waves_coupling
+      USE ocean_coupler_mod, ONLY : ocn2wav_coupling
 # endif
 # ifdef ASSIMILATION
       USE oi_update_mod, ONLY : oi_update
@@ -81,6 +84,7 @@
 !
       time(ng)=time(ng)+dt(ng)
       tdays(ng)=time(ng)*sec2day
+      CALL time_string (time(ng), time_code(ng))
 
 # if defined W4DPSAS || defined NLM_OUTER
 !
@@ -170,16 +174,16 @@
 # ifdef AIR_OCEAN
 !
 !-----------------------------------------------------------------------
-!  Couple to atmospheric model every "nOCN_ATM" timesteps: get air/sea
-!  fluxes.
+!  Couple ocean to atmosphere model every "CoupleSteps(Iatmos)"
+!  timesteps: get air/sea fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),nOCN_ATM(ng)).eq.0) THEN
+      IF (MOD(iic(ng),CoupleSteps(Iatmos,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
-            CALL atmos_coupling (ng, TILE)
+            CALL ocn2atm_coupling (ng, TILE)
           END DO
         END DO
 !$OMP END PARALLEL DO
@@ -189,16 +193,16 @@
 # ifdef WAVES_OCEAN
 !
 !-----------------------------------------------------------------------
-!  Couple to waves model every "nOCN_WAV" timesteps: get waves/sea
-!  fluxes.
+!  Couple ocean to waves model every "CoupleSteps(Iwaves)"
+!  timesteps: get waves/sea fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),nOCN_WAV(ng)).eq.0) THEN
+      IF (MOD(iic(ng),CoupleSteps(Iwaves,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL waves_coupling (ng, TILE)
+            CALL ocn2wav_coupling (ng, TILE)
           END DO
         END DO
 !$OMP END PARALLEL DO

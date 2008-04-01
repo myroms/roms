@@ -401,13 +401,13 @@
             WRITE (stdout,20) ObsSum, ObsVoid,                          &
      &                        FOURDVAR(ng)%ObsCount(0),                 &
      &                        FOURDVAR(ng)%ObsReject(0)
-            WRITE (stdout,30) tdays(ng), NstrObs(ng), NendObs(ng),      &
+            WRITE (stdout,30) time_code(ng), NstrObs(ng), NendObs(ng),  &
      &                        iic(ng)
   10        FORMAT (10x,a,t25,4(1x,i10))
   20        FORMAT (/,10x,'Total',t47,2(1x,i10),                        &
      &              /,10x,'Obs Tally',t47,2(1x,i10),/)
   30        FORMAT (3x,' AD_HTOBS    - Computed adjoint observations ', &
-     &              'forcing,',t64,'t = ',f12.4,/,19x,'(Observation ',  &
+     &              'forcing,',t62,'t = ',a,/,19x,'(Observation ',      &
      &              'records = ',i7.7,' - ',i7.7,', iic = ',i7.7,')')
           END IF
         END IF

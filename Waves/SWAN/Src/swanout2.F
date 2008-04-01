@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/OUTPUT       file 2 of 2
 !
@@ -2261,7 +2260,3 @@
 
       RETURN
       END
-#else
-      MODULE swanout2_mod
-      END MODULE swanout2_mod
-#endif

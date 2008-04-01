@@ -25,9 +25,9 @@
 !  stepping,  and  finalization  of the representer  tangent  linear   !
 !  model via:                                                          !
 !                                                                      !
-!     initialize                                                       !
-!     run                                                              !
-!     finalize                                                         !
+!     ROMS_initialize                                                  !
+!     ROMS_run                                                         !
+!     ROMS_finalize                                                    !
 !                                                                      !
 !=======================================================================
 !

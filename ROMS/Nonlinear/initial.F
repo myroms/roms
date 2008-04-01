@@ -49,7 +49,7 @@
       USE wpoints_mod, ONLY : wpoints
 #endif
 #ifdef WAVES_OCEAN
-      USE ocean_coupler_mod, ONLY : waves_coupling
+      USE ocean_coupler_mod, ONLY : ocn2wav_coupling
 #endif
 !
       implicit none
@@ -122,6 +122,7 @@
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
       ntend(ng)=ntimes(ng)
       ntfirst(ng)=ntstart(ng)
+      CALL time_string (time(ng), time_code(ng))
 
       IniRec=nrrec(ng)
       Tindex=1
@@ -608,10 +609,11 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL waves_coupling (ng, TILE)
+          CALL ocn2wav_coupling (ng, TILE)
         END DO
       END DO
 !$OMP END PARALLEL DO
+      IF (Master) WRITE (stdout,'(/)')
 # endif
 
 #ifdef PROFILE

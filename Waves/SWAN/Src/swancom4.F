@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/COMPU   file 4 of 5
 !
@@ -4565,7 +4564,3 @@
       RETURN
 !
       END SUBROUTINE SWINTFXNL
-#else
-      MODULE swancom4_mod
-      END MODULE swancom4_mod
-#endif

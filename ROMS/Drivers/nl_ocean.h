@@ -13,9 +13,9 @@
 !  controls the initialization, time-stepping, and finalization        !
 !  of the nonlinear model execution following ESMF conventions:        !
 !                                                                      !
-!     initialize                                                       !
-!     run                                                              !
-!     finalize                                                         !
+!     ROMS_initialize                                                  !
+!     ROMS_run                                                         !
+!     ROMS_finalize                                                    !
 !                                                                      !
 !=======================================================================
 !
@@ -46,10 +46,10 @@
       USE mod_scalars
 !
 #ifdef AIR_OCEAN 
-      USE ocean_coupler_mod, ONLY : initialize_atmos_coupling
+      USE ocean_coupler_mod, ONLY : initialize_ocn2atm_coupling
 #endif
 #ifdef WAVES_OCEAN
-      USE ocean_coupler_mod, ONLY : initialize_waves_coupling
+      USE ocean_coupler_mod, ONLY : initialize_ocn2wav_coupling
 #endif
 !
 !  Imported variable declarations.
@@ -124,16 +124,16 @@
 !
         CALL mod_arrays (allocate_vars)
 
-#if defined AIR_OCEAN || defined WAVES_OCEAN
+#if defined MCT_LIB && (defined AIR_OCEAN || defined WAVES_OCEAN)
 !
 !  Initialize coupling streams between model(s).
 !
         DO ng=1,Ngrids
 # ifdef AIR_OCEAN
-          CALL initialize_atmos_coupling (ng, MyRank)
+          CALL initialize_ocn2atm_coupling (ng, MyRank)
 # endif
 # ifdef WAVES_OCEAN
-          CALL initialize_waves_coupling (ng, MyRank)
+          CALL initialize_ocn2wav_coupling (ng, MyRank)
 # endif
         END DO
 #endif

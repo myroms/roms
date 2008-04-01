@@ -173,7 +173,7 @@
 
 'Wdir'
   'Dwave'
-  'wind-induced wave direction'
+  'wave direction'
   'degrees'                                        ! [radians]
   'r2dvar'
   0.0d0
@@ -181,7 +181,7 @@
 
 'Wamp'
   'Hwave'
-  'wind-induced significant wave height'
+  'significant wave height'
   'meter'                                          ! [m]
   'r2dvar'
   0.0d0
@@ -189,7 +189,7 @@
 
 'Wlen'
   'Lwave'
-  'wind-induced mean wavelength'
+  'average wave length'
   'meter'                                          ! [m]
   'r2dvar'
   0.0d0
@@ -197,7 +197,7 @@
 
 'Wptop'
   'Pwave_top'
-  'wind-induced surface wave Period'
+  'surface wave relative peak period'
   'second'                                         ! [s]
   'r2dvar'
   0.0d0
@@ -205,7 +205,7 @@
 
 'Wpbot'
   'Pwave_bot'
-  'wind-induced bottom wave Period'
+  'bottom wave period'
   'second'                                         ! [s]
   'r2dvar'
   0.0d0
@@ -213,7 +213,7 @@
 
 'Wdiss'
   'wave_dissip'
-  'wave dissipation'
+  'wave energy dissipation'
   'Watts meter-2'                                  ! [W/m2]
   'r2dvar'
   0.0d0
@@ -223,6 +223,14 @@
   'wave_break'
   'percent wave breaking'
   'nondimensionsal'
+  'r2dvar'
+  0.0d0
+  1.0d0
+
+'Wubot'
+  'Ub_swan'
+  'wave bottom orbital velocity'
+  'meter second-1'                                 ! [m/s]
   'r2dvar'
   0.0d0
   1.0d0

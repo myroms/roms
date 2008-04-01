@@ -1,104 +1,30 @@
-!
-!svn $Id$
-!==================================================== John C. Warner ===
-!  Copyright (c) 2002-2008 The ROMS/TOMS Group      Hernan G. Arango   !
-!    Licensed under a MIT/X style license                              !
-!    See License_ROMS.txt                                              !
-!=======================================================================
-!                                                                      !
-!  This module is for coupling ROMS/TOMS to SWAN wave model using the  !
-!  Model Coupling Toolkit (MCT), developed at the Argonne National     !
-!  Laboratory.                                                         !
-!                                                                      !
-!=======================================================================
-!
-!  Component Model Registry.
-!
-      USE m_MCTWorld, ONLY : MCTWorld_init => init
-      USE m_MCTWorld, ONLY : MCTWorld_clean => clean
-!
-!  Domain Decomposition Descriptor DataType and associated methods.
-!
-      USE m_GlobalSegMap, ONLY : GlobalSegMap
-      USE m_GlobalSegMap, ONLY : GlobalSegMap_init => init
-      USE m_GlobalSegMap, ONLY : GlobalSegMap_lsize => lsize
-      USE m_GlobalSegMap, ONLY : GlobalSegMap_clean => clean
-      USE m_GlobalSegMap, ONLY : GlobalSegMap_Ordpnts => OrderedPoints
-!
-!  Field Storage DataType and associated methods.
-!
-      USE m_AttrVect, ONLY : AttrVect
-      USE m_AttrVect, ONLY : AttrVect_init => init
-      USE m_AttrVect, ONLY : AttrVect_zero => zero
-      USE m_AttrVect, ONLY : AttrVect_lsize => lsize
-      USE m_AttrVect, ONLY : AttrVect_clean => clean
-      USE m_AttrVect, ONLY : AttrVect_importRAttr => importRAttr
-      USE m_AttrVect, ONLY : AttrVect_exportRAttr => exportRAttr
-!
-!  Intercomponent communications scheduler.
-!
-      USE m_Router, ONLY : Router
-      USE m_Router, ONLY : Router_init => init
-      USE m_Router, ONLY : Router_clean => clean
-!
-!  Intercomponent transfer.
-!
-      USE m_Transfer, ONLY: MCT_Send => send
-      USE m_Transfer, ONLY: MCT_Recv => recv
-!
-!  Sparse Matrix DataType and associated methods.
-!
-      USE m_SparseMatrix, ONLY : SparseMatrix
-      USE m_SparseMatrix, ONLY : SparseMatrix_init => init
-      USE m_SparseMatrix, ONLY : SparseMatrix_importGRowInd =>          &
-     &                           importGlobalRowIndices
-      USE m_SparseMatrix, ONLY : SparseMatrix_importGColInd =>          &
-     &                           importGlobalColumnIndices
-      USE m_SparseMatrix, ONLY : SparseMatrix_importMatrixElts =>       &
-     &                           importMatrixElements
-      USE m_SparseMatrixPlus, ONLY : SparseMatrixPlus
-      USE m_SparseMatrixPlus, ONLY : SparseMatrixPlus_init => init
-      USE m_SparseMatrixPlus, ONLY : SparseMatrixPlus_clean => clean
-!
-!  Decompose matrix by row.
-!
-      USE m_SparseMatrixPlus, ONLY : Xonly
-!
-!  Matrix-Vector multiply methods.
-!
-      USE m_MatAttrVectMul, ONLY : MCT_MatVecMul => sMatAvMult
-!
-      implicit none
-!
-      PRIVATE
+/*
+** svn $Id$
+***************************************************** John C. Warner ***
+** Copyright (c) 2002-2008 The ROMS/TOMS Group      Hernan G. Arango  **
+**   Licensed under a MIT/X style license                             **
+**   See License_ROMS.txt                                             **
+************************************************************************
+**                                                                    **
+** These routines are use couple ROMS/TOMS to SWAN wave model using   **
+** the Model Coupling Toolkit (MCT).                                  **
+**                                                                    **
+************************************************************************
+*/
 
-      PUBLIC :: initialize_waves_coupling
-      PUBLIC :: waves_coupling
-      PUBLIC :: finalize_waves_coupling
-!
-!  Declarations.
-!
-      TYPE(GlobalSegMap) :: GSMapROMS         ! GloabalSegMap variables
-
-      TYPE(AttrVect) :: FromWavesAV           ! AttrVect variables
-      TYPE(AttrVect) :: ToWavesAV 
-
-      TYPE(Router) :: RoutROMS                ! Router variables
-
-      CONTAINS
-
-      SUBROUTINE initialize_waves_coupling (ng, tile)
+      SUBROUTINE initialize_ocn2wav_coupling (ng, tile)
 !
 !=======================================================================
 !                                                                      !
-!  Initialize waves and ocean modeles coupling stream. This is the     !
-!  training phase use to constuct  MCT  parallel interpolators and     !
-!  stablish communication patterns.                                    !
+!  Initialize ocean and wave models coupling stream.  This is the      !
+!  training phase used to constuct MCT parallel interpolators and      !
+!  and stablish communication patterns.                                !
 !                                                                      !
 !=======================================================================
 !
       USE mod_param
       USE mod_parallel
+      USE mod_coupler
       USE mod_forces
       USE mod_kinds
       USE mod_scalars
@@ -109,14 +35,13 @@
 !
 !  Local variable declarations.  
 !
+      integer :: Istr, Iend, Jstr, Jend
       integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
       integer :: Asize, Jsize, MyError
       integer :: j, jc, nprocs
 
       integer, allocatable :: length(:)
       integer, allocatable :: start(:)
-
-# include "tile.h"
 !
 !-----------------------------------------------------------------------
 !  Compute lower and upper bounds over a particular domain partition or
@@ -125,25 +50,30 @@
 !  models.
 !-----------------------------------------------------------------------
 !
+      Istr=BOUNDS(ng)%Istr(tile)
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
       IF (WESTERN_EDGE) THEN
-        IstrR=Istr-1
+        IstrR=BOUNDS(ng)%Istr(tile)-1
       ELSE
-        IstrR=Istr
+        IstrR=BOUNDS(ng)%Istr(tile)
       END IF
       IF (EASTERN_EDGE) THEN
-        IendR=Iend+1
+        IendR=BOUNDS(ng)%Iend(tile)+1
       ELSE
-        IendR=Iend
+        IendR=BOUNDS(ng)%Iend(tile)
       END IF
       IF (SOUTHERN_EDGE) THEN
-        JstrR=Jstr-1
+        JstrR=BOUNDS(ng)%Jstr(tile)-1
       ELSE
-        JstrR=Jstr
+        JstrR=BOUNDS(ng)%Jstr(tile)
       END IF
       IF (NORTHERN_EDGE) THEN
-        JendR=Jend+1
+        JendR=BOUNDS(ng)%Jend(tile)+1
       ELSE
-        JendR=Jend
+        JendR=BOUNDS(ng)%Jend(tile)
       END IF
 !
 !-----------------------------------------------------------------------
@@ -151,13 +81,14 @@
 !-----------------------------------------------------------------------
 !
 !  Get communicator local rank and size.
-
+!
       CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
       CALL mpi_comm_size (OCN_COMM_WORLD, nprocs, MyError)
 !
 !  Initialize MCT coupled model registry.
 !
-      CALL MCTWorld_init (2, MPI_COMM_WORLD, OCN_COMM_WORLD, OcnId)
+      CALL MCTWorld_init (Nmodels, MPI_COMM_WORLD, OCN_COMM_WORLD,      &
+     &                    OCNid)
 !
 !  Determine start and lengths for domain decomposition.
 !
@@ -175,26 +106,26 @@
         length(jc)=(IendR-IstrR+1)
       END DO
       CALL GlobalSegMap_init (GSMapROMS, start, length, 0,              &
-     &                        OCN_COMM_WORLD, OcnId)
+     &                        OCN_COMM_WORLD, OCNid)
 !
-!  Initialize Attribute vectors.  Their size is the number of grid point
-!  on this processor.
+!  Initialize attribute vector holding the export data code strings of
+!  the wave model. The Asize is the number of grid point on this
+!  processor.
 !
       Asize=GlobalSegMap_lsize(GSMapROMS, OCN_COMM_WORLD)
-      CALL AttrVect_init(FromWavesAV,                                   &
-     &     rList="DISSIP:HSIGN:RTP:SETUP:TMBOT:UBOT:DIR:WLEN:TM01:QB",  &
-     &     lsize=Asize)
-!
-!  Initialize oceanAv with one real attribute for now.
-!
-      CALL AttrVect_init (ToWavesAV,                                    &
-     &                    rList="DEPTH:WLEV:VELX:VELY",                 &
+      CALL AttrVect_init (wav2ocn_AV, rList=TRIM(ExportList(Iwaves)),   &
      &                    lsize=Asize)
-      CALL AttrVect_zero (ToWavesAV)
 !
-!  Initialize a router to the Waves component.
+!  Initialize attribute vector holding the export data code string of
+!  the ocean model.
 !
-      CALL Router_init (Iwave, GSMapROMS, OCN_COMM_WORLD, RoutROMS)
+      CALL AttrVect_init (ocn2wav_AV, rList=TRIM(ExportList(Iocean)),   &
+     &                    lsize=Asize)
+      CALL AttrVect_zero (ocn2wav_AV)
+!
+!  Initialize a router to the wave model component.
+!
+      CALL Router_init (WAVid, GSMapROMS, OCN_COMM_WORLD, ROMStoSWAN)
 !
 !  Deallocate working arrays.
 !
@@ -206,39 +137,40 @@
       END IF
 
       RETURN
-      END SUBROUTINE initialize_waves_coupling
+      END SUBROUTINE initialize_ocn2wav_coupling
 
-      SUBROUTINE waves_coupling (ng, tile)
+      SUBROUTINE ocn2wav_coupling (ng, tile)
 !
 !=======================================================================
 !                                                                      !
-!  This subroutine acquires the coupling data streams between waves    !
-!  and ocean models. Currently, the following data streams are         !
-!  processed:                                                          !
+!  This routine acquires the coupling data streams between waves       !
+!  and ocean models.  Currently,  the following data streams are       !
+!  coded:                                                              !
 !                                                                      !
-!  Fields acquired from the WAVE Model:                                !
+!     (...) SWAN units                                                 !
+!     [...] ROMS units                                                 !
 !                                                                      !
-!     * Dwave      Wave direction.                                     !
-!     * Hwave      Wave height.                                        !
-!     * Lwave      Wave length.                                        !
-!     * Pwave_bot  Wave bottom period.                                 !
-!     * Pwave_top  Wave surface period.                                !
-!     * Wave_break Percent of breakig waves.                           !
-!     * Wave_dissip Wave energy dissipation.                           !
+!  Fields imported from SWAN model:                                    !
 !                                                                      !
-!  Fields sent to the WAVE Model:                                      !
+!     * Wave direction (degrees), [radians]                            !
+!     * Significant wave height (m), [m]                               !
+!     * Average wave length (m), [m]                                   !
+!     * Surface wave relative peak period (s), [s]                     !
+!     * Bottom wave period (s), [s]                                    !
+!     * Percent of breakig waves (nondimensional), [nondimensional]    !
+!     * Wave energy dissipation (W/m2), [m3/s3]                        !
+!     * Wave bottom orbital velocity (m/s), [m/s]                      !
 !                                                                      !
-!     * ubar       Depth integrated xi-direction velocity.             !
-!     * vbar       Depth integrated eta-direction velocity.            !
-!     * zeta       Water surface elevation.                            !
-!     * h          Bottom elevation.                                   !
+!  Fields exported to SWAN model:                                      !
+!                                                                      !
+!     * Bathymetry, bottom elevation (m), [m]                          !
+!     * Free-surface, water surface elevation (m), [m]                 !
+!     * Depth integrated u-momentum (m/s), [m/s]                       !
+!     * Depth integrated v-momentum (m/s), [m/s]                       !
 !                                                                      !
 !=======================================================================
 !
       USE mod_param
-      USE mod_forces
-      USE mod_grid
-      USE mod_ocean
       USE mod_stepping
 !
       implicit none
@@ -247,62 +179,40 @@
 !
       integer, intent(in) :: ng, tile
 !
+!  Local variable declarations.
+!
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 36)
+      CALL wclock_on (ng, iNLM, 48)
 #endif
-      CALL waves_coupling_tile (ng, tile,                               &
-     &                          LBi, UBi, LBj, UBj,                     &
-     &                          knew(ng),                               &
-     &                          GRID(ng) % angler,                      &
-     &                          GRID(ng) % h,                           &
-     &                          FORCES(ng) % Dwave,                     &
-     &                          FORCES(ng) % Hwave,                     &
-     &                          FORCES(ng) % Lwave,                     &
-     &                          FORCES(ng) % Pwave_bot,                 &
-     &                          FORCES(ng) % Pwave_top,                 &
-#ifdef SVENDSEN_ROLLER
-     &                          FORCES(ng) % Wave_break,                &
-#endif
-     &                          FORCES(ng) % Wave_dissip,               &
-     &                          FORCES(ng) % Ub_swan,                   &
-     &                          OCEAN(ng) % ubar,                       &
-     &                          OCEAN(ng) % vbar,                       &
-     &                          OCEAN(ng) % zeta)
+      CALL ocn2wav_coupling_tile (ng, tile,                             &
+     &                            LBi, UBi, LBj, UBj,                   &
+     &                            knew(ng))
 #ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 36)
+      CALL wclock_off (ng, iNLM, 48)
 #endif
 
       RETURN
-      END SUBROUTINE waves_coupling
+      END SUBROUTINE ocn2wav_coupling
 !
 !***********************************************************************
-      SUBROUTINE waves_coupling_tile (ng, tile,                         &
-     &                                LBi, UBi, LBj, UBj,               &
-     &                                knew,                             &
-     &                                angler, h,                        &
-     &                                Dwave, Hwave, Lwave,              &
-     &                                Pwave_bot, Pwave_top,             &
-#ifdef SVENDSEN_ROLLER
-     &                                Wave_break,                       &
-#endif
-     &                                Wave_dissip, Ub_swan,             &
-     &                                ubar, vbar,                       &
-     &                                zeta)
+      SUBROUTINE ocn2wav_coupling_tile (ng, tile,                       &
+     &                                  LBi, UBi, LBj, UBj,             &
+     &                                  knew)
 !***********************************************************************
 !
       USE mod_param
       USE mod_parallel
+      USE mod_coupler
+      USE mod_forces
+      USE mod_grid
+      USE mod_ocean
       USE mod_scalars
       USE mod_iounits
 !
-#if defined EW_PERIODIC || defined NS_PERIODIC
-      USE exchange_2d_mod, ONLY : exchange_r2d_tile
-#endif
-#ifdef DISTRIBUTE
-      USE mp_exchange_mod, ONLY : mp_exchange2d
-#endif
+      USE ROMS_import_mod, ONLY : ROMS_import2d
+      USE ROMS_export_mod, ONLY : ROMS_export2d
 !
       implicit none
 !
@@ -311,73 +221,54 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: knew
-
-#ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: angler(LBi:,LBj:)
-      real(r8), intent(in) :: h(LBi:,LBj:)
-      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
-      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
-      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
-
-      real(r8), intent(inout) :: Dwave(LBi:,LBj:)
-      real(r8), intent(inout) :: Hwave(LBi:,LBj:)
-      real(r8), intent(inout) :: Lwave(LBi:,LBj:)
-      real(r8), intent(inout) :: Pwave_bot(LBi:,LBj:)
-      real(r8), intent(inout) :: Pwave_top(LBi:,LBj:)
-# ifdef SVENDSEN_ROLLER
-      real(r8), intent(inout) :: Wave_break(LBi:,LBj:)
-# endif
-      real(r8), intent(inout) :: Wave_dissip(LBi:,LBj:)
-      real(r8), intent(inout) :: Ub_swan(LBi:,LBj:)
-
-#else
-      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
-
-      real(r8), intent(inout) :: Dwave(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: Hwave(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: Lwave(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: Pwave_bot(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: Pwave_top(LBi:UBi,LBj:UBj)
-# ifdef SVENDSEN_ROLLER
-      real(r8), intent(inout) :: Wave_break(LBi:UBi,LBj:UBj)
-# endif
-      real(r8), intent(inout) :: Wave_dissip(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: Ub_swan(LBi:UBi,LBj:UBj)
-#endif
 !
 !  Local variable declarations.
 !
-#ifdef DISTRIBUTE
-# ifdef EW_PERIODIC
-      logical :: EWperiodic=.TRUE.
-# else
-      logical :: EWperiodic=.FALSE.
-# endif
-# ifdef NS_PERIODIC
-      logical :: NSperiodic=.TRUE.
-# else
-      logical :: NSperiodic=.FALSE.
-# endif
-#endif
+      integer :: Istr, Iend, Jstr, Jend
+      integer :: IstrR, IendR, JstrR, JendR, IstrU, JstrV
+      integer :: Asize, Iimport, Iexport, MyError
+      integer :: gtype, i, id, ifield, ij, j, status
 
-      integer :: Asize, MyError
-      integer :: i, ij, j
-
-      integer, pointer :: points(:)
-
-      real(r8) :: cff, ramp
       real(r8), parameter ::  Lwave_max=500.0_r8
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ubar_rho
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: vbar_rho
+      real(r8) :: add_offset, scale
 
       real(r8), pointer :: A(:)
 
-#include "set_bounds.h"
+      character (len=40) :: code
+!
+!-----------------------------------------------------------------------
+!  Compute lower and upper bounds over a particular domain partition or
+!  tile for RHO-, U-, and V-variables. Notice that "set_bounds.h" is
+!  not used here because of implementation of periodicity in other
+!  models.
+!-----------------------------------------------------------------------
+!
+      Istr=BOUNDS(ng)%Istr(tile)
+      Iend=BOUNDS(ng)%Iend(tile)
+      Jstr=BOUNDS(ng)%Jstr(tile)
+      Jend=BOUNDS(ng)%Jend(tile)
+!
+      IF (WESTERN_EDGE) THEN
+        IstrR=BOUNDS(ng)%Istr(tile)-1
+      ELSE
+        IstrR=BOUNDS(ng)%Istr(tile)
+      END IF
+      IF (EASTERN_EDGE) THEN
+        IendR=BOUNDS(ng)%Iend(tile)+1
+      ELSE
+        IendR=BOUNDS(ng)%Iend(tile)
+      END IF
+      IF (SOUTHERN_EDGE) THEN
+        JstrR=BOUNDS(ng)%Jstr(tile)-1
+      ELSE
+        JstrR=BOUNDS(ng)%Jstr(tile)
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        JendR=BOUNDS(ng)%Jend(tile)+1
+      ELSE
+        JendR=BOUNDS(ng)%Jend(tile)
+      END IF
 !
 !-----------------------------------------------------------------------
 !  Allocate communications array.
@@ -385,339 +276,326 @@
 !
       Asize=GlobalSegMap_lsize (GSMapROMS, OCN_COMM_WORLD)
       allocate ( A(Asize) )
+      A=0.0_r8
 !
 !-----------------------------------------------------------------------
-!  Receive needed fields from wave model.
+!  Import fields from wave model (SWAN) to ocean model (ROMS).
+!  Currently, both waves and ocean model grids are the same.
+!  We need to revisit this logic to allow interpolation.
 !-----------------------------------------------------------------------
+!
+!  Schedule receiving fields from wave model.
 !
       CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
-      CALL MCT_Recv (FromWavesAV, RoutROMS, MyError)
-      IF (Master) THEN
-        WRITE (stdout,10) tdays(ng)
-      END IF
+      CALL MCT_Recv (wav2ocn_AV, ROMStoSWAN, MyError)
       IF (MyError.ne.0) THEN
         IF (Master) THEN
-          WRITE (stdout,30) MyError
+          WRITE (stdout,10) 'wave model, MyError = ', MyError
         END IF
-        CALL finalize_waves_coupling
+        exit_flag=2
+        RETURN
       END IF
 !
-!  Set ramp coefficient.
+!  Receive fields from wave model.
 !
-!!    ramp=MIN((tdays(ng)-dstart)*4.0_r8,1.0_r8)
-      ramp=1.0_r8
-!
-!  Wave dissipation.
-!
-      CALL AttrVect_exportRAttr (FromWavesAV, "DISSIP", A, Asize)
-      ij=0
-      cff=1.0_r8/rho0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          Wave_dissip(i,j)=MAX(0.0_r8,A(ij)*ramp)*cff
-        END DO
-      END DO
-!
-!  Wave height.
-!
-      CALL AttrVect_exportRAttr (FromWavesAV, "HSIGN", A, Asize)
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          Hwave(i,j)=MAX(0.0_r8,A(ij)*ramp)
-        END DO
-      END DO
-!
-!  Surface wave period.
-!
-      CALL AttrVect_exportRAttr(FromWavesAV, "RTP", A, Asize)
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          Pwave_top(i,j)=MAX(0.0_r8,A(ij))
-        END DO
-      END DO
-!
-!  Bottom wave period.
-!
-      CALL AttrVect_exportRAttr (FromWavesAV, "TMBOT", A, Asize)
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          Pwave_bot(i,j)=MAX(0.0_r8,A(ij))
-        END DO
-      END DO
-!
-!  Bottom orbital velocity (m/s).
-!
-      CALL AttrVect_exportRAttr(FromWavesAV, "UBOT", A, Asize)
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          Ub_swan(i,j)=MAX(0.0_r8,A(ij)*ramp)
-        END DO
-      END DO
-!
-!  Wave direction (radians).
-!
-      CALL AttrVect_exportRAttr (FromWavesAV, "DIR", A, Asize)
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          Dwave(i,j)=MAX(0.0_r8,A(ij))*deg2rad
-        END DO
-      END DO
-!
-!  Wave length (m).
-!
-      CALL AttrVect_exportRAttr (FromWavesAV, "WLEN", A, Asize)
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-            Lwave(i,j)=MAX(0.0_r8,A(ij))
-            IF (Lwave(i,j).eq.1.0_r8/0.0_r8) THEN
-              Lwave(i,j)=Lwave_max
-            END IF
-        END DO
-      END DO
+      Iimport=0
+      DO ifield=1,Nimport(Iocean)
+        id=ImportID(Iocean)%val(ifield)
+        code=ADJUSTL(Fields(id)%code)
+        gtype=Fields(id)%GridType
+        scale=Fields(id)%scale
+        add_offset=Fields(id)%AddOffset
+
+        SELECT CASE (TRIM(code))
+
+          CASE ('Wdir')                   ! wave direction
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+            END DO
+            scale=deg2rad                 ! degress to radians
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Dwave,                       &
+     &                          status)
+
+          CASE ('Wamp')                   ! significant wave hight
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+            END DO
+            scale=1.0_r8                  ! m
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Hwave,                       &
+     &                          status)
+
+          CASE ('Wlen')                   ! wave length
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+              IF (A(i).eq.1.0_r8/0.0_r8) THEN
+                A(i)=Lwave_max
+              END IF
+            END DO
+            scale=1.0_r8                  ! m
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Lwave,                       &
+     &                          status)
+
+          CASE ('Wptop')                  ! peak surface wave period
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+            END DO
+            scale=1.0_r8
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Pwave_top,                   &
+     &                          status)
+
+          CASE ('Wpbot')                  ! mean bottom wave period
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+            END DO
+            scale=1.0_r8
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Pwave_bot,                   &
+     &                          status)
+
+          CASE ('Wdiss')                  ! wave dissipation
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+            END DO
+            scale=1.0_r8/rho0
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Wave_dissip,                 &
+     &                          status)
+
+          CASE ('Wubot')                  ! bottom orbital velocity
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+            END DO
+            scale=1.0_r8                  ! m/s
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Ub_swan,                     &
+     &                          status)
 
 #ifdef SVENDSEN_ROLLER
-!
-!  Percent wave breaking.
-!  
-      CALL AttrVect_exportRAttr (FromWavesAV, "QB", A, Asize)
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          Wave_break(i,j)=MAX(0.0_r8,A(ij))
-        END DO
-      END DO
-#endif
 
-#if defined EW_PERIODIC || defined NS_PERIODIC
-!
-!-----------------------------------------------------------------------
-!  Apply periodic boundary conditions.
-!-----------------------------------------------------------------------
-!
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Wave_dissip)
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Hwave)
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Pwave_top)
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Pwave_bot)
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Ub_swan)
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Dwave)
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Lwave)
-# ifdef SVENDSEN_ROLLER
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        Wave_break)
-# endif
+          CASE ('Wbrk')                   ! percent wave breaking
+
+            CALL AttrVect_exportRAttr (wav2ocn_AV, TRIM(code), A, Asize)
+            Iimport=Iimport+1
+            DO i=1,Asize
+              A(i)=MAX(0.0_r8,A(i))
+            END DO
+            scale=1.0_r8
+            add_offset=0.0_r8
+            CALL ROMS_import2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          Asize, A,                               &
+     &                          IstrR, IendR, JstrR, JendR,             &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Fields(id)%ImpMin, Fields(id)%ImpMax,   &
+     &                          FORCES(ng)%Wave_break,                  &
+     &                          status)
 #endif
-#ifdef DISTRIBUTE
+        END SELECT
+      END DO
 !
 !-----------------------------------------------------------------------
-!  Exchange tile boundaries.
+!  Export fields from ocean (ROMS) to wave (SWAN) model.
 !-----------------------------------------------------------------------
 !
-      CALL mp_exchange2d (ng, tile, iNLM, 4,                            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Wave_dissip, Hwave, Dwave, Lwave)
-      CALL mp_exchange2d (ng, tile, iNLM, 3,                            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    Pwave_top, Pwave_bot, Ub_swan)
-# ifdef SVENDSEN_ROLLER
-      CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    wave_break)
-# endif
-#endif
+!  Schedule sending fields to the wave model.
 !
-!-----------------------------------------------------------------------
-!  Schedule and send required fields to wave model.
-!-----------------------------------------------------------------------
-!
-!  Depth (bathymetry).
-!
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          A(ij)=h(i,j)
-        END DO
+      Iexport=0
+      DO ifield=1,Nexport(Iocean)
+        id=ExportID(Iocean)%val(ifield)
+        code=ADJUSTL(Fields(id)%code)
+        gtype=Fields(id)%GridType
+        scale=Fields(id)%scale
+        add_offset=Fields(id)%AddOffset
+
+        SELECT CASE (TRIM(code))
+
+          CASE ('bath')                   ! bathymetry (depth)
+
+            CALL ROMS_export2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          GRID(ng)%h,                             &
+     &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
+     &                          Asize, A,                               &
+     &                          status)
+            CALL AttrVect_importRAttr (ocn2wav_AV, TRIM(code), A, Asize)
+            Iexport=Iexport+1
+
+          CASE ('SSH')                    ! free-surface (water level)
+
+            CALL ROMS_export2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          OCEAN(ng)%zeta(:,:,knew),               &
+     &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
+     &                          Asize, A,                               &
+     &                          status)
+            CALL AttrVect_importRAttr (ocn2wav_AV, TRIM(code), A, Asize)
+            Iexport=Iexport+1
+
+          CASE ('Ubar')                   ! 2D U-momentum
+
+            CALL ROMS_export2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          OCEAN(ng)%ubar(:,:,knew),               &
+     &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
+     &                          Asize, A,                               &
+     &                          status)
+            CALL AttrVect_importRAttr (ocn2wav_AV, TRIM(code), A, Asize)
+            Iexport=Iexport+1
+
+          CASE ('Vbar')                   ! 2D V-momentum
+
+            CALL ROMS_export2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          OCEAN(ng)%vbar(:,:,knew),               &
+     &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
+     &                          Asize, A,                               &
+     &                          status)
+            CALL AttrVect_importRAttr (ocn2wav_AV, TRIM(code), A, Asize)
+            Iexport=Iexport+1
+
+        END SELECT
       END DO
-      CALL AttrVect_importRAttr (ToWavesAV, "DEPTH", A, Asize)
 !
-!  Water level (free-surface).
+!  Send ocean fields to wave model.
 !
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          A(ij)=zeta(i,j,knew)
-        END DO
-      END DO
-      CALL AttrVect_importRAttr (ToWavesAV, "WLEV", A, Asize)
-!
-!  Vertically-integrated U-velocity at RHO-points.
-!
-      DO j=JstrR,JendR
-        DO i=Istr,Iend
-          ubar_rho(i,j)=0.5_r8*(ubar(i,j,knew)+ubar(i+1,j,knew))
-        END DO
-      END DO
-      IF (WESTERN_EDGE) THEN
-        DO j=Jstr,Jend
-          ubar_rho(Istr-1,j)=ubar_rho(Istr,j)
-        END DO
-      END IF
-      IF (EASTERN_EDGE) THEN
-        DO j=Jstr,Jend
-          ubar_rho(Iend+1,j)=ubar_rho(Iend,j)
-        END DO
-      END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
-        ubar_rho(Istr-1,Jstr-1)=0.5_r8*(ubar_rho(Istr  ,Jstr-1)+        &
-     &                                  ubar_rho(Istr-1,Jstr  ))
-      END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
-        ubar_rho(Iend+1,Jstr-1)=0.5_r8*(ubar_rho(Iend  ,Jstr-1)+        &
-     &                                  ubar_rho(Iend+1,Jstr  ))
-      END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
-        ubar_rho(Istr-1,Jend+1)=0.5_r8*(ubar_rho(Istr-1,Jend  )+        &
-     &                                  ubar_rho(Istr  ,Jend+1))
-      END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
-        ubar_rho(Iend+1,Jend+1)=0.5_r8*(ubar_rho(Iend+1,Jend  )+        &
-     &                                  ubar_rho(Iend  ,Jend+1))
-      END IF
-!
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          A(ij)=ubar_rho(i,j)
-        END DO
-      END DO
-      CALL AttrVect_importRAttr (ToWavesAV, "VELX", A, Asize)
-!
-!  Vertically-integrated V-velocity at RHO-points.
-!
-      DO j=Jstr,Jend
-        DO i=IstrR,IendR
-          vbar_rho(i,j)=0.5_r8*(vbar(i,j,knew)+vbar(i,j+1,knew))
-        END DO
-      END DO
-      IF (NORTHERN_EDGE) THEN
-        DO i=Istr,Iend
-          vbar_rho(i,Jend+1)=vbar_rho(i,Jend)
-        END DO
-      END IF
-      IF (SOUTHERN_EDGE) THEN
-        DO i=Istr,Iend
-          vbar_rho(i,Jstr-1)=vbar_rho(i,Jstr)
-        END DO
-      END IF
-      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
-        vbar_rho(Istr-1,Jstr-1)=0.5_r8*(vbar_rho(Istr  ,Jstr-1)+        &
-     &                                  vbar_rho(Istr-1,Jstr  ))
-      END IF
-      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
-        vbar_rho(Iend+1,Jstr-1)=0.5_r8*(vbar_rho(Iend  ,Jstr-1)+        &
-     &                                  vbar_rho(Iend+1,Jstr  ))
-      END IF
-      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
-        vbar_rho(Istr-1,Jend+1)=0.5_r8*(vbar_rho(Istr-1,Jend  )+        &
-     &                                  vbar_rho(Istr  ,Jend+1))
-      END IF
-      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
-        vbar_rho(Iend+1,Jend+1)=0.5_r8*(vbar_rho(Iend+1,Jend  )+        &
-     &                                  vbar_rho(Iend  ,Jend+1))
-      END IF
-!
-      ij=0
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-          ij=ij+1
-          A(ij)=vbar_rho(i,j)
-        END DO
-      END DO
-      CALL AttrVect_importRAttr (ToWavesAV, "VELY", A, Asize)
-!
-!  Send the data.
-!
-      CALL MCT_Send (ToWavesAV, RoutROMS, MyError)
-      IF (Master) THEN
-        WRITE (stdout,20) tdays(ng)
-      END IF
-      IF (MyError.ne.0) THEN
-        IF (Master) THEN
-          WRITE (stdout,40) MyError
+      IF (Iexport.gt.0) THEN
+        CALL MCT_Send (ocn2wav_AV, ROMStoSWAN, MyError)
+        IF (MyError.ne.0) THEN
+          IF (Master) THEN
+            WRITE (stdout,20) 'wave model, MyError = ', MyError
+          END IF
+          exit_flag=2
+          RETURN
         END IF
-        CALL finalize_waves_coupling
+      END IF
+!
+!-----------------------------------------------------------------------
+!  Report.
+!-----------------------------------------------------------------------
+!
+      IF (Master.and.((Iimport.gt.0).or.(Iexport.gt.0))) THEN
+        WRITE (stdout,30) Iimport, Iexport, time_code(ng)
+        IF (Lreport) THEN
+          DO ifield=1,Nimport(Iocean)
+            id=ImportID(Iocean)%val(ifield)
+            WRITE (stdout,40) 'ROMS Import: ',TRIM(fields(id)%name),    &
+     &                        Fields(id)%ImpMin, Fields(id)%ImpMax
+          END DO
+          DO ifield=1,Nexport(Iocean)
+            id=ExportID(Iocean)%val(ifield)
+            WRITE (stdout,40) 'ROMS Export: ',TRIM(fields(id)%name),    &
+     &                        Fields(id)%ExpMin, Fields(id)%ExpMax
+          END DO
+        END IF
       END IF
 !
 !  Deallocate communication arrays.
 !
       deallocate (A)
-
- 10   FORMAT (1x,'Wave-Ocean models coupling, receive',t64,'t= ',f12.4)
- 20   FORMAT (1x,'Wave-Ocean models coupling, send,',t64,'t= ',f12.4)
- 30   FORMAT (/,' WAVES_COUPLING - error while receiving data,',         &
-     &          ' MyError = ',i4)   
- 40   FORMAT (/,' WAVES_COUPLING - error while sending data,',           &
-     &          ' MyError = ',i4)   
+!
+ 10   FORMAT (' OCN2WAV_COUPLING - error while receiving fields from ', &
+     &        a, i4)
+ 20   FORMAT (' OCN2WAV_COUPLING - error while sending fields to: ',    &
+     &        a, i4)
+ 30   FORMAT (6x,'OCN2WAV   - (', i2.2, ') imported and (', i2.2,       &
+     &        ') exported fields,', t62, 't = ', a)
+ 40   FORMAT (16x,'- ',a,a,                                             &
+     &        /,19x,'(Min= ',1p,e15.8,0p,' Max= ',1p,e15.8,0p,')')
 
       RETURN
-      END SUBROUTINE waves_coupling_tile
+      END SUBROUTINE ocn2wav_coupling_tile
 
-      SUBROUTINE finalize_waves_coupling
+      SUBROUTINE finalize_ocn2wav_coupling
 !
 !========================================================================
-!                                                                     ===
-!  This routine terminates execution during coupling error.           ===
-!                                                                     ===
+!                                                                       !
+!  This routine finalizes ocean and wave models coupling data streams.  !
+!                                                                       !
 !========================================================================
 !
 !  Local variable declarations.
 !
-      integer :: MyStatus
+      integer :: MyError
 !
 !-----------------------------------------------------------------------
-!  Terminate MPI execution environment.
+!  Deallocate MCT environment.
 !-----------------------------------------------------------------------
 !
-      CALL Router_clean (RoutROMS)
-      CALL AttrVect_clean (ToWavesAV)
-      CALL AttrVect_clean (FromWavesAV)
-      CALL GlobalSegMap_clean (GSMapROMS)
-      CALL MCTWorld_clean ()
-      CALL mpi_finalize (MyStatus)
+      CALL Router_clean (ROMStoSWAN, MyError)
+      CALL AttrVect_clean (ocn2wav_AV, MyError)
+      CALL GlobalSegMap_clean (GSMapROMS, MyError)
 
-      STOP
-      END SUBROUTINE finalize_waves_coupling
+      RETURN
+
+      END SUBROUTINE finalize_ocn2wav_coupling

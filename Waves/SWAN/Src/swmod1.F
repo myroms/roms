@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !                 COMMON VARIABLES RELATED MODULES, file 1 of 3
 !
 !     Contents of this file
@@ -2434,7 +2433,3 @@
 ! 13. Source text
 !
       END MODULE TIMECOMM
-#else
-      MODULE swmod1_mod
-      END MODULE swmod1_mod
-#endif

@@ -31,13 +31,19 @@
 !    UCLA, Los Angeles, CA, USA                                        !
 !    (alex@atmos.ucla.edu)                                             !
 !                                                                      !
-!  Tangent linear and Adjoint Models Developers:                       !
+!  Dr. John C. Warner                                                  !
+!    U.S. Geological Survey                                            !
+!    Woods Hole, MA, USA                                               !
+!    (jcwarner@usgs.gov)                                               !
+!                                                                      !
+!  Tangent linear and Adjoint Models and Algorithms Developers:        !
 !                                                                      !
 !    Dr. Hernan G. Arango    (arango@marine.rutgers.edu)               !
 !    Dr. Bruce Cornuelle     (bcornuelle@ucsd.edu)                     !
 !    Dr. Emanuele Di Lorenzo (edl@eas.gatech.edu)                      !
 !    Dr. Arthur J. Miller    (ajmiller@ucsd.edu)                       !
 !    Dr. Andrew M. Moore     (ammoore@ucsc.edu)                        !
+!    Dr. Brian Powell        (powellb@uscs.edu)                        !
 !                                                                      !
 !=======================================================================
 !

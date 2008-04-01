@@ -83,6 +83,7 @@
       real(r8) :: INPtime(1)
 
       character (len=6 ) :: string
+      character (len=14) :: t_code
       character (len=15) :: attnam, tvarnam
       character (len=40) :: tunits
 !
@@ -267,6 +268,7 @@
         ntend(ng)=1
         ntfirst(ng)=ntend(ng)
       END IF
+      CALL time_string (time(ng), time_code(ng))
 !
 !  Over-write "IniRec" to the actual initial record processed.
 !
@@ -282,13 +284,12 @@
       lstr=SCAN(ncname,'/',BACK=.TRUE.)+1
       lend=LEN_TRIM(ncname)
       IF (InpThread) THEN
+        CALL time_string (INPtime(1), t_code)
         IF (ERend.gt.ERstr) THEN
-          WRITE (stdout,80) string, TRIM(Mstate(msg)),                  &
-     &                      INPtime(1)*sec2day, Nrun,                   &
+          WRITE (stdout,80) string, TRIM(Mstate(msg)), t_code, Nrun,    &
      &                      ncname(lstr:lend), InpRec, Tindex
         ELSE
-          WRITE (stdout,90) string, TRIM(Mstate(msg)),                  &
-     &                      INPtime(1)*sec2day,                         &
+          WRITE (stdout,90) string, TRIM(Mstate(msg)), t_code,          &
      &                      ncname(lstr:lend), InpRec, Tindex
         END IF
       END IF
@@ -3068,10 +3069,10 @@
      &          ' for variable: ',a)
   70  FORMAT (/,a,'GET_STATE - cannot inquire about time variable',/,   &
      &        18x,'in input NetCDF file: ',a)
-  80  FORMAT (/,a,'GET_STATE - ',a,t64,'t = ',f12.4,                    &
+  80  FORMAT (/,a,'GET_STATE - ',a,t62,'t = ',a,                        &
      &        /,19x,'(Iter=',i4.4,', File: ',a,', Rec=',i4.4,           &
      &        ', Index=',i1,')')
-  90  FORMAT (/,a,'GET_STATE - ',a,t64,'t = ',f12.4,                    &
+  90  FORMAT (/,a,'GET_STATE - ',a,t62,'t = ',a,                        &
      &        /,19x,'(File: ',a,', Rec=',i4.4,', Index=',i1,')')
  100  FORMAT (16x,'- ',a,/,19x,'(Min = ',1p,e15.8,                      &
      &        ' Max = ',1p,e15.8,')')

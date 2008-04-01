@@ -760,7 +760,6 @@
 
 #if defined AIR_OCEAN || defined WAVES_OCEAN
 # define MODEL_COUPLING
-# define MCT
 #endif
 
 /*

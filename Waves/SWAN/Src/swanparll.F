@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN - routines for distributed-memory approach based on MPI
 !
@@ -219,7 +218,8 @@
 !
 !!!MPI      USE MPI
       USE OCPCOMM4                                                        40.41
-      USE M_PARALL                                                         jcw
+      USE M_PARALL                                                        jcw
+!     USE WAVES_COUPLER_MOD, ONLY: FINALIZE_WAV2OCN_COUPLING              jcw
 !
       IMPLICIT NONE
       include 'mpif.h'
@@ -327,7 +327,7 @@
 
 !        --- otherwise stop MPI operations on this computer
 
-            CALL MPI_FINALIZE ( IERR )
+!           CALL MPI_FINALIZE ( IERR )
 
          END IF
 
@@ -4273,7 +4273,3 @@
 
       RETURN
       END
-#else
-      MODULE swanparll_mod
-      END MODULE swanparll_mod
-#endif

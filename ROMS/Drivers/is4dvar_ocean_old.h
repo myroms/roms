@@ -43,9 +43,9 @@
 !  stepping, and finalization of  ROMS/TOMS  model following ESMF      !
 !  conventions:                                                        !
 !                                                                      !
-!     initialize                                                       !
-!     run                                                              !
-!     finalize                                                         !
+!     ROMS_initialize                                                  !
+!     ROMS_run                                                         !
+!     ROMS_finalize                                                    !
 !                                                                      !
 !=======================================================================
 !

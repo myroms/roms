@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/READ file 1 of 2
 !
@@ -5163,7 +5162,3 @@
       RETURN
 !     end of subr BACKUP
       END
-#else
-      MODULE swanpre1_mod
-      END MODULE swanpre1_mod
-#endif

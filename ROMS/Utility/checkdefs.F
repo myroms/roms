@@ -817,6 +817,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' EMINUSP,'
 #endif
+#if defined ESMF_LIB && defined MODEL_COUPLING
+      IF (Master) WRITE (stdout,20) 'ESMF_LIB',                         &
+     &   'Using Earth System Modeling Framework library.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+10)=' ESMF_LIB,'
+#endif
 #ifdef ENSEMBLE
       IF (Master) WRITE (stdout,20) 'ENSEMBLE',                         &
      &   'Ensemble Forecasting Propagator.'
@@ -1167,6 +1173,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' MB_Z0RIP,'
 # endif
+#endif
+#if defined MCT_LIB && defined MODEL_COUPLING
+      IF (Master) WRITE (stdout,20) 'MCT_LIB',                          &
+     &   'Using Model Coupling Toolkit library.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' MCT_LIB,'
 #endif
 #if (defined TS_DIF2 || defined TS_DIF4) && defined SOLVE3D
 # ifdef MIX_GEO_TS
@@ -2778,7 +2790,7 @@
       IF (Master.and.(EnergyN.gt.1)) THEN
         WRITE (stdout,100)
  100    FORMAT (/,' CHECKDEFS - only one energy norm scaling is',       &
-     &            ' allowed')
+     &            ' allowed.')
         exit_flag=5
       END IF
 #endif
@@ -2786,7 +2798,7 @@
       IF (Master) THEN
         WRITE (stdout,110)
  110    FORMAT (/,' CHECKDEFS - cannot run the adjoint model in',       &
-     &            ' shared-memory mode')
+     &            ' shared-memory mode.')
         exit_flag=5
       END IF
 #endif
@@ -2797,7 +2809,7 @@
       IF (Master) THEN
         WRITE (stdout,120)
  120    FORMAT (/,' CHECKDEFS - More than one grazing algorithm',       &
-     &            ' selected for Nemuro model')
+     &            ' selected for Nemuro model.')
         exit_flag=5
       END IF
 #endif
@@ -2809,10 +2821,18 @@
       IF (Master) THEN
         WRITE (stdout,130)
  130    FORMAT (/,' CHECKDEFS - More than one vertical convolution',    &
-     &            ' algorithm selected ')
+     &            ' algorithm selected.')
         exit_flag=5
       END IF
 # endif
+#endif
+#if defined MODEL_COUPLING && (defined ESMF_LIB && defined MCT_LIB)
+      IF (Master) THEN
+        WRITE (stdout,140)
+ 140    FORMAT (/,' CHECKDEFS - More than one coupling library',        &
+     &            ' selected.')
+        exit_flag=5
+      END IF
 #endif
 
       RETURN

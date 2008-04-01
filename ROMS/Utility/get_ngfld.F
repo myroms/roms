@@ -85,6 +85,7 @@
 
       real(r8), dimension((UBi-LBi+1)*UBj) :: A
 
+      character (len=14) :: t_code
       character (len=45) :: attnam
 !
 !-----------------------------------------------------------------------
@@ -368,7 +369,8 @@
             CALL mp_bcasti (ng, model, exit_flag, 1)
             CALL mp_bcastf (ng, model, Tval, 1)
 #endif
-            Vtime(Tindex,ifield,ng)=Tval(1)*Tscale
+            Tval(1)=Tval(1)*Tscale
+            Vtime(Tindex,ifield,ng)=Tval(1)
           END IF
 !
 !  Read in non-grided data.
@@ -424,7 +426,9 @@
               ELSE
                 lstr=SCAN(ncfile,'/',BACK=.TRUE.)+1
                 lend=LEN_TRIM(ncfile)
-                WRITE (stdout,60) TRIM(Vname(2,ifield)), Tval(1)*Tscale,&
+                Tval(1)=Tval(1)*day2sec
+                CALL time_string (Tval(1), t_code)
+                WRITE (stdout,60) TRIM(Vname(2,ifield)), t_code,        &
      &                            ncfile(lstr:lend), Trec, Tindex,      &
      &                            Tmin, Tmax, Fmin, Fmax
               END IF
@@ -458,7 +462,7 @@
      &          ' at TIME index = ',i4)
   50  FORMAT (3x,' GET_NGFLD   - ',a,/,19x,'(Min = ',1pe15.8,' Max = ', &
      &        1pe15.8,')')
-  60  FORMAT (3x,' GET_NGFLD   - ',a,',',t64,'t = ',f12.4,/,19x,        &
+  60  FORMAT (3x,' GET_NGFLD   - ',a,',',t62,'t = ',a,/,19x,            &
      &        '(File: ',a,', Rec=',i4.4,', Index=',i1,')',/,19x,        &
      &        '(Tmin= ', f15.4, ' Tmax= ', f15.4,')',/, 19x,            &
      &        '(Min = ', 1p,e15.8,0p,' Max = ',1p,e15.8,0p,')')

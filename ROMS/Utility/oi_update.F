@@ -168,7 +168,9 @@
       real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: arg, cff, cff1, cff2, delta
-      real(r8) :: decay, mu, ratio, Aweight
+      real(r8) :: decay, mu, ratio, Aweight, Tval
+
+      character (len=14) :: t_code
 
 #  include "set_bounds.h"
 !
@@ -226,9 +228,11 @@
             tSSHobs(2,ng)=tSSHobs(1,ng)
             synchro_flag(ng)=.TRUE.
             update_SSH(ng)=.FALSE.
-            IF (Master) WRITE (stdout,10) 'SSH', tSSHobs(1,ng)
- 10         FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,       &
-     &             't = ',f12.4)
+            Tval=tSSHobs(1,ng)*day2sec
+            CALL time_string (Tval, t_code)
+            IF (Master) WRITE (stdout,10) 'SSH', t_code
+ 10         FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t62,       &
+     &             't = ',a)
           END IF
         END IF
       END IF
@@ -286,7 +290,9 @@
       real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: arg, cff, cff1, cff2, delta
-      real(r8) :: decay, mu, ratio, Aweight
+      real(r8) :: decay, mu, ratio, Aweight, Tval
+
+      character (len=14) :: t_code
 
 # include "set_bounds.h"
 !
@@ -351,15 +357,16 @@
               synchro_flag(ng)=.TRUE.
               update_T(itrc,ng)=.FALSE.
               ntfirst(ng)=iic(ng)+1
+              Tval=tTobs(1,itrc,ng)*day2sec
+              CALL time_string (Tval, t_code)
               IF (update_SST(ng).and.(itrc.eq.itemp)) THEN
-                IF (Master) WRITE (stdout,10) 'SST', tTobs(1,itrc,ng)
- 10             FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,  &
-     &                  't = ',f12.4)
+                IF (Master) WRITE (stdout,10) 'SST', t_code
+ 10             FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t62,  &
+     &                  't = ',a)
               ELSE
-                IF (Master) WRITE (stdout,20) 'TRACER', itrc,           &
-     &                                        tTobs(1,itrc,ng)
+                IF (Master) WRITE (stdout,20) 'TRACER', itrc, t_code
  20             FORMAT (' OI_UPDATE   - Assimilating ',a,1x,i2.2,       &
-     &                  ' data,',t64,'t = ',f12.4)
+     &                  ' data,',t62,'t = ',a)
               END IF
             END IF
           END IF
@@ -441,10 +448,12 @@
       real(r8), parameter :: eps = 1.0E-4_r8
 
       real(r8) :: Eobs, arg, cff, cff1, cff2, delta
-      real(r8) :: decay, mu, ratio, Aweight
+      real(r8) :: decay, mu, ratio, Aweight, Tval
 
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: Uwrk
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: Vwrk
+
+      character (len=14) :: t_code
 
 #  include "set_bounds.h"
 !
@@ -603,11 +612,13 @@
             tVobs(2,ng)=tVobs(1,ng)
             synchro_flag(ng)=.TRUE.
             ntfirst(ng)=iic(ng)+1
+            Tval=tVobs(1,ng)*day2sec
+            CALL time_string (Tval, t_code)
             IF (update_UVsur(ng)) THEN
               update_UVsur(ng)=.FALSE.
-              IF (Master) WRITE (stdout,10) 'UVsur', tVobs(1,ng)
- 10           FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t64,    &
-     &                't = ',f12.4)
+              IF (Master) WRITE (stdout,10) 'UVsur', t_code
+ 10           FORMAT (' OI_UPDATE   - Assimilating ',a,' data,',t62,    &
+     &                't = ',a)
             ELSE
               update_UV(ng)=.FALSE.
               IF (Master) WRITE (stdout,10) 'UV', tVobs(1,ng)

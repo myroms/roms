@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN main program and miscellaneous routines
 !
@@ -25,14 +24,16 @@
 !             fields                                                      40.00
 !     SWINCO
 !     SWCLME: Clean memory
+
+# ifndef MODEL_COUPLING
 !
 !***********************************************************************
 !                                                                      *
-!jcw      PROGRAM SWAN
+      PROGRAM SWAN
 !                                                                      *
 !***********************************************************************
 !
-!jcw      IMPLICIT NONE
+      IMPLICIT NONE
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -101,31 +102,37 @@
 !     SWINITMPI                                                           40.30
 !     SWMAIN
 !
-!jcw      LOGICAL STPNOW                                                  40.30 34.01
+      LOGICAL STPNOW                                                      40.30 34.01
 !
 ! 13. Source Code
 !
 !     --- initialize the MPI execution environment                        40.30
 
-!jcw      CALL SWINITMPI                                                  40.30
-!jcw      IF (STPNOW()) GOTO 999                                          40.30
+      CALL SWINITMPI                                                      40.30
+      IF (STPNOW()) GOTO 999                                              40.30
 
 !     --- start SWAN run
 
-!jcw      CALL SWMAIN                                                     40.31 34.01
+      CALL SWMAIN                                                         40.31 34.01
 
-!jcw999   CONTINUE
+  999 CONTINUE
 
 !     --- stop MPI                                                        40.30
 
-!jcw      CALL SWEXITMPI                                                  40.30
+      CALL SWEXITMPI                                                      40.30
 !
 !     --- end of MAIN PROGRAM
 !
-!jcw      END
+      END PROGRAM SWAN
+# endif
+
 !***********************************************************************
 !                                                                      *
-      SUBROUTINE SWAN_INITIALIZE(MyComm, WNAME)
+# ifdef MODEL_COUPLING
+      SUBROUTINE SWAN_INITIALIZE (MyComm, WNAME)
+# else
+      SUBROUTINE SWMAIN
+# endif
 !                                                                      *
 !***********************************************************************
 !
@@ -139,8 +146,10 @@
       USE OUTP_DATA                                                       40.51
       USE M_GENARR                                                        40.31
       USE M_PARALL                                                        40.31
+# ifdef WAVES_OCEAN
       USE M_PARALL2                                                       jcw
-      USE WAVES_COUPLER_MOD, ONLY: INITIALIZE_OCEAN_COUPLING              jcw
+      USE WAVES_COUPLER_MOD, ONLY: INITIALIZE_WAV2OCN_COUPLING            jcw
+# endif
 !
       IMPLICIT NONE
 !
@@ -261,8 +270,10 @@
 !     LOPEN :     indicates whether a file is open                        34.01
 !     MSGSTR:     string to pass message to call MSGERR                   40.41
 !
+# ifdef MODEL_COUPLING
       CHARACTER*80, intent(in) :: WNAME                                   jcw
-      integer, intent(in) :: MyCOMM                                       jcw
+      INTEGER, INTENT(in) :: MyCOMM                                       jcw
+# endif
       INTEGER   IUNIT                                                     34.01
       INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN                             40.30
       INTEGER   INERR                                                     40.31
@@ -344,7 +355,7 @@
 ! 13. Source text
 !
 !     initialize MPI
-      CALL SWINITMPI(MyComm)                                              40.30
+      CALL SWINITMPI (MyComm)                                             40.30
       INPFIL = WNAME                                                      jcw
 
 !     --- initialize various data
@@ -501,22 +512,32 @@
                ALLOCATE (OURQT(MAX_OUTP_REQ))                             40.51 40.30
                OURQT = -9999.                                             40.51 40.30
             ENDIF                                                         40.00
-
-! jcw Call to initialize MCT coupling
-          CALL INITIALIZE_OCEAN_COUPLING
-! exchange initial conditions with ocean model.
+# ifdef WAVES_OCEAN
+!
+!         --- initialize MCT coupling
+!
+            CALL INITIALIZE_WAV2OCN_COUPLING
+!
+!         --- exchange initial conditions with ocean model.
+!
             CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,         40.31
      &                    KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,         40.51 40.31
      &                    0, 0)
             CALL SWTSTO(1)                                                40.30
+# endif
  900  CONTINUE
 
       RETURN                                                              30.82
-      END subroutine SWAN_INITIALIZE
+# ifdef MODEL_COUPLING
+      END SUBROUTINE SWAN_INITIALIZE
+# else
+      SUBROUTINE SWMAIN
+# endif
 
+!
 !***********************************************************************
 !                                                                      *
-      SUBROUTINE SWAN_RUN(TI_WAV_OCN)                                     40.31 34.01
+      SUBROUTINE SWAN_RUN (CouplingTime)                                  40.31 34.01
 !                                                                      *
 !***********************************************************************
 !
@@ -649,7 +670,7 @@
 !     LOPEN :     indicates whether a file is open                        34.01
 !     MSGSTR:     string to pass message to call MSGERR                   40.41
 !
-      REAL,  intent(in) :: TI_WAV_OCN                                     jcw
+      REAL,  intent(in) :: CouplingTime                                   jcw
       INTEGER   IUNIT                                                     34.01
       INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN                             40.30
       INTEGER   INERR                                                     40.31
@@ -824,7 +845,7 @@
               numsteps = numsteps + 1                                     jcw
               CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,       40.31
      &                      KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,       40.51 40.31
-     &                      numsteps, TI_WAV_OCN)
+     &                      numsteps, CouplingTime)
             END IF
             CALL SWTSTO(9)                                                40.30
             IF (STPNOW()) RETURN                                          40.30
@@ -844,7 +865,7 @@
  500      CONTINUE
 !
       RETURN                                                              30.82
-      END subroutine SWAN_RUN
+      END SUBROUTINE SWAN_RUN
 
 !***********************************************************************
 !                                                                      *
@@ -863,13 +884,19 @@
       USE M_GENARR                                                        40.31
       USE M_PARALL                                                        40.31
       USE M_PARALL2                                                       jcw
-
+!
+      USE WAVES_COUPLER_MOD, ONLY : finalize_wav2ocn_coupling
+# if defined WRF_COUPLING
+      USE WAVES_COUPLER_MOD, ONLY : finalize_wav2atm_coupling
+# endif
+!
 !  6. Local variables
 !
 !     BLKND :     array giving node number per subdomain                  40.41
 !     BLKNDC:     auxiliary array for collecting the array BLKND          40.41
       LOGICAL STPNOW                                                      34.01
       LOGICAL LOPEN                                                       34.01
+      INTEGER MyStatus
       REAL, ALLOCATABLE    :: BLKND(:), BLKNDC(:)
 
       DO IUNIT=1,HIOPEN                                                   34.01
@@ -912,8 +939,19 @@
       CALL SWCLME                                                         40.31
 !
       CALL SWEXITMPI                                                      40.30
+
+# ifdef MCT_LIB
+!
+!  Terminate MCT coupling.
+!
+      CALL finalize_wav2ocn_coupling
+#  ifdef WRF_COUPLING
+      CALL finalize_wav2atm_coupling
+#  endif
+# endif
+
       RETURN                                                              30.82
-      END subroutine SWAN_FINALIZE
+      END SUBROUTINE SWAN_FINALIZE
 
 !***********************************************************************
 !                                                                      *
@@ -1110,7 +1148,7 @@
      &        /,20X,'---------------------------------------',//)
 !
       IF (SCREEN.NE.PRINTF.AND.INODE.EQ.MASTER) WRITE (SCREEN,6020)       40.30
- 6020 FORMAT (/, ' SWAN is preparing computation',/)
+ 6020 FORMAT (/, ' SWAN is preparing computation ...',/)
 !
 !     ***** initial values for common variables *****
 !     ***** names *****
@@ -4722,6 +4760,8 @@
 !     --- update input fields (wind, water level etc.)
 !
 !     fields 5 and 6: wind
+!jcw
+# if !defined AIR_OCEAN
       IF (IFLDYN(5) .EQ. 1) THEN
         CALL FLFILE ( 5, 6, WXI, WYI,                                     40.31
      &               0, JWX2, JWX3, 0, JWY2, JWY3,
@@ -4745,10 +4785,10 @@
           ENDDO
           WRITE (PRTEST, 122) ' Y-comp: ',
      &          (TSTVAL(IPTST), IPTST=1,MIN(10,NPTST))
- 122      FORMAT (A, 10(1X,E11.4))
         ENDIF
       ENDIF
-
+# endif
+ 122      FORMAT (A, 10(1X,E11.4))
 !     field 4: friction coeff.
       IF (IFLDYN(4) .EQ. 1) THEN
         CALL FLFILE ( 4, 0, FRIC, 0.,                                     40.31
@@ -6446,8 +6486,8 @@
       ENDDO
 !
       RETURN
-! * end of subroutine SWINCO *
-      END
+      END SUBROUTINE SWINCO
+!
 !****************************************************************
 !
       SUBROUTINE SWCLME
@@ -6540,8 +6580,4 @@
       IF (ALLOCATED(DIFPARDY)) DEALLOCATE(DIFPARDY)
 
       RETURN
-      END
-#else
-      MODULE swanmain_mod
-      END MODULE swanmain_mod
-#endif
+      END SUBROUTINE SWCLME

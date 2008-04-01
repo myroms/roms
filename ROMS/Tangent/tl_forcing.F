@@ -160,9 +160,9 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTH_WEST_CORNER) THEN
-        IF (Master) WRITE (stdout,10) tdays(ng)
+        IF (Master) WRITE (stdout,10) time_code(ng)
  10     FORMAT (3x,'TL_FORCING   - added convolved adjoint impulse,',   &
-     &          t64,'t = ', f12.4,/)
+     &          t62,'t = ', a,/)
       END IF
 !
 !  Tangent linear free-surface. The two different cases in the

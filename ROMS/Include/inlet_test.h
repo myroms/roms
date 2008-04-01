@@ -42,6 +42,10 @@
 #define ANA_FSOBC
 #define ANA_M2OBC
 
+#ifdef SWAN_COUPLING
+# define MCT_LIB
+#endif
+
 /* define only one of the following 5 */
 #undef  UV_LOGDRAG
 #undef  UV_QDRAG

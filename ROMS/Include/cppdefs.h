@@ -12,10 +12,10 @@
 **                                                                           **
 ** OPTIONS associated with momentum equations:                               **
 **                                                                           **
-**   The default horizontal advection is 3rd-order upstream bias and the     **
-**   default vertical advection is 4th-order centered. Use the splines       **
-**   vertical advection option is shallow, high vertical resolution          **
-**   applications.                                                           **
+**   The default (no flags need to be activated) horizontal advection is     **
+**   3rd-order upstream bias and the default vertical advection is           **
+**   4th-order centered. Use the splines vertical advection option in        **
+**   shallow, high vertical resolution applications.                         **
 **                                                                           **
 ** UV_ADV              use to turn ON or OFF advection terms                 **
 ** UV_COR              use to turn ON or OFF Coriolis term                   **
@@ -34,7 +34,7 @@
 **                                                                           **
 **   The default horizontal advection is 3rd-order upstream bias and the     **
 **   default vertical advection is 4th-order centered. Use the splines       **
-**   vertical advection option is shallow, high vertical resolution          **
+**   vertical advection option in shallow, high vertical resolution          **
 **   applications.                                                           **
 **                                                                           **
 ** TS_A4HADVECTION     use if 4th-order Akima horizontal advection           **
@@ -588,6 +588,11 @@
 ** WRITE_WATER         use if only writing water points data                 **
 ** RST_SINGLE          use if writing single precision restart fields        **
 ** OUT_DOUBLE          use if writing double precision output fields         **
+**                                                                           **
+** Coupling Library OPTIONS:                                                 **
+**                                                                           **
+** ESMF_LIB            use Earth System Modeling Framework Library           **
+** MCT_LIB             use Model Coupling Toolkit Library                    **
 **                                                                           **
 ** OPTION to process 3D data by levels (2D slabs) to reduce memory needs in  **
 ** distributed-memory configurations. This option is convinient for large    **

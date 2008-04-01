@@ -474,3 +474,58 @@
       ref_att=text
       RETURN
       END FUNCTION ref_att
+
+      SUBROUTINE time_string (time, time_code)
+!
+!=======================================================================
+!                                                                      !
+!  This routine encodes current model time in seconds to a time        !
+!  string of the form:                                                 !
+!                                                                      !
+!       DDDDD HH:MM:SS                                                 !
+!                                                                      !
+!  This allow a more accurate label when reporting time.               !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     time       Current model time  (seconds)                         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     time_code  Current model time string.                            !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_kinds
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      real(r8), intent(in) :: time
+
+      character(len=14), intent(out) :: time_code
+!
+!  Local variable declarations.
+!
+      integer :: iday, ihour, isec, itime, minute
+
+      character (len=14) :: text
+!
+!-----------------------------------------------------------------------
+!  Encode current mode time.
+!-----------------------------------------------------------------------
+!
+      itime=INT(time)
+      iday=itime/86400
+      isec=itime-iday*86400
+      ihour=isec/3600
+      minute=MOD(isec,3600)/60
+      isec=MOD(isec,60)
+!
+      WRITE (text,10) iday, ihour, minute, isec
+ 10   FORMAT (i5,1x,i2.2,':',i2.2,':',i2.2)
+      time_code=text
+
+      RETURN
+      END SUBROUTINE time_string

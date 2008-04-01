@@ -52,6 +52,10 @@
 #undef  SG_BBL
 #undef  SSW_BBL
 
+#ifdef SWAN_COUPLING
+# define MCT_LIB
+#endif
+
 #ifdef SG_BBL
 # define SG_CALC_ZNOT
 # undef  SG_LOGINT

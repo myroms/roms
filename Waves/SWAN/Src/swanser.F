@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN - SERVICE ROUTINES
 !
@@ -7269,7 +7268,3 @@
 
       RETURN
       END
-#else
-      MODULE swanser_mod
-      END MODULE swanser_mod
-#endif

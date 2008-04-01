@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !                 ALLOCATABLE DATA RELATED MODULES, file 2 of 3
 !
 !     Contents of this file
@@ -939,10 +938,6 @@
       REAL   , SAVE, ALLOCATABLE :: XGRDGL(:,:), YGRDGL(:,:)
 
       INTEGER WAV_COMM_WORLD                                              jcw
-      INTEGER :: ncomps = 2         ! we are using 2 components: ROMS + SWAN
-      INTEGER :: WavId = 2
-      INTEGER :: OcnId = 1
-
 !
 !  8. Subroutines and functions used
 !
@@ -1140,7 +1135,3 @@
 !DOS      MODULE MPI
 !DOS      INCLUDE 'mpif.h'
 !DOS      END MODULE MPI
-#else
-      MODULE swmod2_mod
-      END MODULE swmod2_mod
-#endif

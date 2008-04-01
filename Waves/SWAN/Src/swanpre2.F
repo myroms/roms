@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/SWREAD  file 2 of 2
 !
@@ -5325,7 +5324,3 @@
       RETURN
 !     end of subroutine RETSTP
       END
-#else
-      MODULE swanpre2_mod
-      END MODULE swanpre2_mod
-#endif

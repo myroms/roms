@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !
 !     SWAN/OUTPUT       file 1 of 2
 !
@@ -24,7 +23,7 @@
      &                   KGRPNT          ,XCGRID  ,                       30.72
      &                   YCGRID          ,KGRBND  ,                       40.30
      &                   OURQT           ,                                40.51 40.30
-     &                   numsteps, TI_WAV_OCN)                            jcw
+     &                   numsteps        ,CouplingTime)                   jcw
 
 !                                                                      *
 !***********************************************************************
@@ -38,7 +37,7 @@
       USE M_PARALL                                                        40.31
 
 !jcw
-      USE WAVES_COUPLER_MOD, ONLY: OCEAN_COUPLING
+      USE WAVES_COUPLER_MOD, ONLY: WAV2OCN_COUPLING
 !
 !
 !
@@ -141,7 +140,7 @@
       REAL    XCGRID(MXC,MYC),    YCGRID(MXC,MYC)                         30.72
 
       INTEGER numsteps                                                    jcw
-      REAL    TI_WAV_OCN                                                  jcw
+      REAL    CouplingTime                                                jcw
       LOGICAL cplout, userout                                             jcw
 !
 !     AC2     real arr input  action density in all computational points
@@ -271,7 +270,7 @@
 !
 !       ***** processing of output instructions *****
 !
-        IF(SCREEN.NE.PRINTF.AND.INODE.EQ.MASTER) WRITE(SCREEN, 15) IRQ    40.30
+        IF(SCREEN.NE.PRINTF.AND.INODE.EQ.MASTER) WRITE(PRINTF, 15) IRQ    40.30
   15    FORMAT ('+SWAN is processing output request ', I4)                40.41 30.00
         IF (ITEST.GE.10) WRITE(PRINTF,16) IRQ
   16    FORMAT (' SWAN is processing output request ', I4)                40.41
@@ -286,7 +285,8 @@
         SNAME = CORQ%PSNAME                                               40.31
         CALL SWORDC (CORQ%OQI, CORQ%OQR, CORQ%IVTYP, RTYPE,               40.31 30.90
      &               SNAME, NVOQP, OQPROC, BKC, VOQR, OURQT(IRQ),         40.51
-     &               LOGACT, cplout,userout, numsteps, TI_WAV_OCN, IRQ)   jcw
+     &               LOGACT, cplout,userout, numsteps, CouplingTime,      jcw
+     &               IRQ)                                                 jcw
         IF (.NOT.LOGACT) THEN                                             40.31 30.00
            CORQ => CORQ%NEXTORQ                                           40.31
            GOTO 70                                                        40.31 30.00
@@ -439,8 +439,8 @@
 !jcw CALL to coupling
         IF (cplout) THEN
           IVTYPE=CORQ%IVTYP(1)
-          CALL OCEAN_COUPLING(MIP, NVOQP, VOQR, VOQ(1), IRQ, IVTYPE,    &
-     &                        COMPDA)
+          CALL WAV2OCN_COUPLING (MIP, NVOQP, VOQR, VOQ(1), IRQ,         &
+     &                           IVTYPE, COMPDA, numsteps)
           IF (STPNOW()) RETURN
         ENDIF
 !jcw end
@@ -458,7 +458,7 @@
       SUBROUTINE SWORDC (OUTI, OUTR, IVTYP, RTYPE, PSNAME, NVOQP,         40.31
      &                   OQPROC, BKC,                                     40.31
      &                   VOQR, OURQT, LOGACT,                             40.51 30.00
-     &                   cplout, userout, numsteps, TI_WAV_OCN, IRQ)      jcw
+     &                   cplout, userout, numsteps, CouplingTime, IRQ)    jcw
 !                                                                      *
 !***********************************************************************
 !
@@ -600,8 +600,8 @@
 !
       INTEGER    VOQR(*), OUTI(*), BKC                                    30.00
       INTEGER    IVTYP(*)                                                 40.31
-      INTEGER    numsteps,nWAV_steps                                      jcw
-      REAL       TI_WAV_OCN                                               jcw
+      INTEGER    numsteps, nWAV_steps                                     jcw
+      REAL       CouplingTime                                             jcw
       REAL       OUTR(*)                                                  30.00
       REAL       OURQT                                                    40.51
       LOGICAL    OQPROC(NMOVAR), LOGACT                                   30.00
@@ -622,12 +622,12 @@
         IF (ITEST.GE.60) WRITE (PRTEST, *) ' output times ', TNEXT,
      &        OUTR(2), DT, TFINC, TIMCO
 !jcw : determine if we are just coupling
-        cplout = .FALSE.                                                    jcw
-        userout = .FALSE.                                                   jcw
-        nWAV_steps=MAX(1,INT(TI_WAV_OCN/DT))                                jcw
-        IF ((numsteps.ge.0).and.(MOD(numsteps, nWAV_steps).eq.0)) THEN      jcw
+        cplout = .FALSE.                                                  jcw
+        userout = .FALSE.                                                 jcw
+        nWAV_steps=MAX(1,INT(CouplingTime/DT))                            jcw
+        IF ((numsteps.ge.0).and.(MOD(numsteps, nWAV_steps).eq.0)) THEN    jcw
           cplout = .TRUE.
-          LOGACT = .TRUE.                                                   jcw
+          LOGACT = .TRUE.                                                 jcw
         ENDIF
         IF (ABS(DIF).LT.0.5*DT .AND. OUTR(2).LT.0.) THEN                  40.00
           OUTR(1) = TIMCO
@@ -3679,7 +3679,3 @@
       RETURN
 !     end of subroutine SWOEXF
       END
-#else
-      MODULE swanout1_mod
-      END MODULE swanout1_mod
-#endif

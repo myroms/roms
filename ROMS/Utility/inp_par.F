@@ -481,7 +481,7 @@
 
       integer :: Npts, Nval, i, ic, j, inp, ng, out, status
 
-      integer :: decode_line, load_i, load_r
+      integer :: decode_line, load_i, load_l, load_r
 
       real(r8), dimension(100) :: Rval
 
@@ -559,6 +559,10 @@
               allocate ( TimeInterval(Nmodels,Nmodels) )
               TimeInterval=0.0_r8
             END IF
+            IF (.not.allocated(CoupleSteps) ) THEN
+              allocate ( CoupleSteps(Nmodels,Ngrids) )
+              CoupleSteps=0
+            END IF
             IF (.not.allocated(INPname) ) THEN
               allocate ( INPname(Nmodels) )
             END IF
@@ -576,6 +580,8 @@
             IF (.not.allocated(Import)) THEN
               allocate ( Import(Nmodels) )
             END IF
+         ELSE IF (TRIM(KeyWord).eq.'Lreport') THEN
+            Npts=load_l(Nval, Cval, 1, Lreport)
          ELSE IF (TRIM(KeyWord).eq.'OrderLabel') THEN
             DO i=1,Nmodels
               IF (i.eq.Nval) THEN
@@ -602,7 +608,7 @@
               Npts=load_i(Nval, Rval, 1, Nthreads(Iatmos))
             END IF
           ELSE IF (TRIM(KeyWord).eq.'TimeInterval') THEN
-            Npts=load_i(Nval, Rval, Nmodels, MyRval)
+            Npts=load_r(Nval, Rval, Nmodels, MyRval)
             ic=0
             DO j=1,Nmodels
               DO i=1,Nmodels
@@ -735,6 +741,9 @@
 !
       USE mod_param
       USE mod_parallel
+#ifdef MODEL_COUPLING
+      USE mod_coupler
+#endif
       USE mod_iounits
       USE mod_ncparam
       USE mod_scalars
@@ -945,14 +954,17 @@
             Npts=load_i(Nval, Rval, Ngrids, ntimes)
           ELSE IF (TRIM(KeyWord).eq.'DT') THEN
             Npts=load_r(Nval, Rval, Ngrids, dt)
-#ifdef AIR_OCEAN
+#ifdef MODEL_COUPLING
             DO ng=1,Ngrids
-              nOCN_ATM(ng)=MAX(1,INT(TI_ATM_OCN/dt(ng)))
-            END DO
-#endif
-#ifdef WAVES_OCEAN
-            DO ng=1,Ngrids
-              nOCN_WAV(ng)=MAX(1,INT(TI_WAV_OCN/dt(ng)))
+              DO i=1,Nmodels
+                IF (TimeInterval(Iocean,i).eq.dt(ng)) THEN
+                  CoupleSteps(i,ng)=1
+                ELSE
+                  CoupleSteps(i,ng)=MAX(1,                              &
+     &                                  INT(TimeInterval(Iocean,i)/     &
+     &                                  dt(ng))+1)
+                END IF
+              END DO
             END DO
 #endif
           ELSE IF (TRIM(KeyWord).eq.'NDTFAST') THEN
@@ -2015,18 +2027,6 @@
           WRITE (out,130) ndtfast(ng), 'ndtfast',                       &
      &          'Number of timesteps for 2-D equations between',        &
      &          'each 3D timestep.'
-#ifdef AIR_OCEAN
-          WRITE (out,140) TI_ATM_OCN, 'TI_ATM_OCN',                     &
-     &          'Time interval (s) between coupling ATM-OCN models.'
-          WRITE (out,120) nOCN_ATM(ng), 'nOCN_ATM',                     &
-     &          'Number of OCN timesteps between coupling to ATM.'
-#endif
-#ifdef WAVES_OCEAN
-          WRITE (out,140) TI_WAV_OCN, 'TI_WAV_OCN',                     &
-     &          'Time interval (s) between coupling WAV-OCN models.'
-          WRITE (out,120) nOCN_WAV(ng), 'nOCN_WAV',                     &
-     &          'Number of OCN timesteps between coupling to WAV.'
-#endif
           WRITE (out,120) ERstr, 'ERstr',                               &
      &          'Starting ensemble/perturbation run number.'
           WRITE (out,120) ERend, 'ERend',                               &
@@ -6207,7 +6207,7 @@
   85  FORMAT (/,9x,'morph_fac',/,9x,'(nondim)',/)
   90  FORMAT (10x,l1,2x,a,t29,a,i2.2,':',1x,a)
  100  FORMAT (/,' READ_SEDPAR - variable info not yet loaded, ', a)
- 110  FORMAT (' New bed layer formed when deposition exceeds ',e11.5,   &
+ 110  FORMAT (/,' New bed layer formed when deposition exceeds ',e11.5, &
      &        ' (m).')
  120  FORMAT (' Rate coefficient for bed load transport = ',e11.5,/)
       RETURN

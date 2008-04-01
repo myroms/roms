@@ -131,6 +131,7 @@
       ntstart(ng)=ntimes(ng)+1
       ntend(ng)=ntfirst(ng)
       ntfirst(ng)=ntend(ng)
+      CALL time_string (time(ng), time_code(ng))
 
       IniRec=nrrec(ng)
       Tindex=1

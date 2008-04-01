@@ -18,6 +18,9 @@
 !
       USE mod_param
       USE mod_parallel
+# ifdef MODEL_COUPLING
+      USE mod_coupler
+# endif
 # ifdef FOUR_DVAR
       USE mod_fourdvar
 # endif
@@ -104,6 +107,7 @@
 !
       time(ng)=time(ng)-dt(ng)
       tdays(ng)=time(ng)*sec2day
+      CALL time_string (time(ng), time_code(ng))
 !
 !-----------------------------------------------------------------------
 !  Read in required data, if any, from input NetCDF files.
@@ -310,11 +314,11 @@
 # ifdef WAVES_OCEAN_NOT_YET
 !
 !-----------------------------------------------------------------------
-!  Couple to waves model every "nOCN_WAV" timesteps: get waves/sea
-!  fluxes.
+!  Couple to waves model every CoupleSteps(Iwaves,ng) timesteps: get
+!  waves/sea fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),nOCN_WAV(ng)).eq.0) THEN
+      IF (MOD(iic(ng),CoupleSteps(Iwaves,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -329,11 +333,11 @@
 # ifdef AIR_OCEAN_NOT_YET
 !
 !-----------------------------------------------------------------------
-!  Couple to atmospheric model every "nOCN_ATM" timesteps: get air/sea
-!  fluxes.
+!  Couple to atmospheric model every CoupleSteps(Iatmos) timesteps: get
+!  air/sea fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),nOCN_ATM(ng)).eq.0) THEN
+      IF (MOD(iic(ng),CoupleSteps(Iatmos,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

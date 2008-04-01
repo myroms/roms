@@ -267,15 +267,14 @@
           avgkp=avgke+avgpe
           IF (first_time(ng).eq.0) THEN
             first_time(ng)=1
-            IF (Master) WRITE (stdout,10) 'STEP', 'time[DAYS]',         &
+            IF (Master) WRITE (stdout,10) 'STEP', 'Day HH:MM:SS',       &
      &                                    'KINETIC_ENRG', 'POTEN_ENRG', &
-     &                                    'TOTAL_ENRG', 'NET_VOLUME',   &
-     &                                    'trd'
- 10         FORMAT (/,3x,a,2x,a,2x,a,4x,a,4x,a,3x,a,2x,a,/)
+     &                                    'TOTAL_ENRG', 'NET_VOLUME'
+ 10         FORMAT (/,3x,a,3x,a,2x,a,3x,a,4x,a,4x,a,/)
           END IF
-          IF (Master) WRITE (stdout,20) iic(ng)-1, tdays(ng), avgke,    &
-     &                                  avgpe, avgkp, volume, trd
- 20       FORMAT (i7,f12.5,4(1pe14.6),i4)
+          IF (Master) WRITE (stdout,20) iic(ng)-1, time_code(ng),       &
+     &                                  avgke, avgpe, avgkp, volume
+ 20       FORMAT (i7,1x,a,4(1pe14.6))
           IF (Master) CALL my_flush (stdout)
 !
 !  If blowing-up, set exit_flag to stop computations.

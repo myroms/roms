@@ -1074,7 +1074,7 @@
       USE mod_forces
       USE mod_scalars
 !
-      USE import_mod, ONLY : ROMS_import2d
+      USE ROMS_import_mod, ONLY : ROMS_import2d
 !
 !  Imported variable definitions.
 !
@@ -1127,85 +1127,105 @@
           SELECT CASE (TRIM(ADJUSTL(code)))
 # ifdef CLOUDS
             CASE ('cloud')                    ! cloud fraction
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%cloud,                     &
      &                            status)
 # endif
 # ifdef SHORTWAVE
             CASE ('SWrad')                    ! shortwave radiation
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%swrad,                     &
      &                            status)
 # endif
 # if defined BULK_FLUXES || defined ECOSIM || defined ATM_PRESS
             CASE ('Pair')                     ! surface air pressure
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Pair,                      &
      &                            status)
 # endif
 # if defined BULK_FLUXES || defined ECOSIM     || \
     (defined SHORTWAVE   && defined ANA_SRFLUX)
             CASE ('Tair')                     ! surface air temperature
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Tair,                      &
      &                            status)
             CASE ('Hair')                     ! surface air humidity
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Hair,                      &
      &                            status)
 # endif
 # if defined BULK_FLUXES || defined ECOSIM
             CASE ('Uwind')                    ! U-wind component
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Uwind,                     &
      &                            status)
             CASE ('Vwind')                    ! V-wind component
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Vwind,                     &
      &                            status)
 # endif
 # ifdef BULK_FLUXES
             CASE ('LWrad')                    ! longwave radiation
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%lwrad,                     &
      &                            status)
             CASE ('rain')                     ! precipitation
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%rain,                      &
      &                            status)
 # else
             CASE ('heat')                     ! surface net heat flux
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, JstrR, JendR,           &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%stflx(:,:,itemp),          &
      &                            status)
             CASE ('Ustr')                     ! surface U-wind stress
@@ -1213,6 +1233,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%sustr,                     &
      &                            status)
             CASE ('Vstr')                     ! surface V-wind stress
@@ -1220,6 +1241,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%svstr,                     &
      &                            status)
 # endif
@@ -1230,6 +1252,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Dwave,                     &
      &                            status)
 #  endif
@@ -1239,6 +1262,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Hwave,                     &
      &                            status)
 #  endif
@@ -1248,6 +1272,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Lwave,                     &
      &                            status)
 #  endif
@@ -1257,6 +1282,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Pwave_top,                 &
      &                            status)
 #  endif
@@ -1266,6 +1292,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%Pwave_bot,                 &
      &                            status)
 #  endif
@@ -1275,6 +1302,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%wave_dissip,               &
      &                            status)
 #  endif
@@ -1284,6 +1312,7 @@
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            Fields(id)%ImpMin, Fields(id)%ImpMax, &
      &                            FORCES(ng)%wave_break,                &
      &                            status)
 #  endif

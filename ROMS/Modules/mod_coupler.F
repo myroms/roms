@@ -1,3 +1,4 @@
+#include "cppdefs.h"
       MODULE mod_coupler
 
 #if defined MODEL_COUPLING || defined ESMF_LIB
@@ -41,6 +42,10 @@
         integer :: GridType             ! grid type (RHO-, U-, V-points)
         real(r8) :: AddOffset           ! number added to data
         real(r8) :: scale               ! scaling factor
+        real(r8) :: ExpMin              ! exported minimum value
+        real(r8) :: ExpMax              ! exported maximum value
+        real(r8) :: ImpMin              ! imported minimum value
+        real(r8) :: ImpMax              ! imported maximum value
         character (len=40) :: code      ! field code
         character (len=40) :: variable  ! associated model variable
         character (len=80) :: name      ! long descriptive field name
@@ -96,6 +101,10 @@
       integer :: WAVid = 2
       integer :: OCNid = 1
 !
+!  Logical switch to report verbose import/export field ranges.
+!
+      logical :: Lreport = .FALSE.
+!
 !  Input coupled model order labels used to determine the values of
 !  each model index in information variable.
 !
@@ -134,6 +143,12 @@
 !
       real(r8), allocatable :: TimeInterval(:,:)
 !
+!  Number of time-steps for how often to couple ROMS to other models.
+!
+!     CoupleSteps(:,ng) = MAX(1,INT(TimeInterval(Iocean,:)/dt(ng)))
+!
+      integer, allocatable :: CoupleSteps(:,:)
+!
 !  Export/Import fields information structure.  This information is read
 !  from input CPLname file.
 !
@@ -155,6 +170,10 @@
 !
       TYPE (T_STRING), allocatable :: Export(:)
       TYPE (T_STRING), allocatable :: Import(:)
+!
+!  Export fields attribute string.
+!
+      character (len=240), allocatable :: ExportList(:)
 
 # if defined ESMF_COUPLING || defined ESMF_LIB
 !
@@ -222,10 +241,11 @@
       integer, parameter :: inp = 20
 
       integer :: Nfields
-      integer :: gtype, i, ifield, inode, lvar, model, ng, varid
+      integer :: gtype, i, id, ifield, inode, lvar, model, ng, varid
 
       real(r8) :: add_offset, scale
 
+      character (len=40) :: code
       character (len=80) :: string
       character (len=80), dimension(5) :: Vinfo
 !
@@ -320,13 +340,18 @@
         allocate ( ExportID(Nmodels) )
         DO model=1,Nmodels
           allocate ( ExportID(model)%val(Nexport(model)) )
+          ExportID(model)%val=0
         END DO
       END IF
       IF (.not.allocated(ImportID)) THEN
         allocate ( ImportID(Nmodels) )
         DO model=1,Nmodels
           allocate ( ImportID(model)%val(Nimport(model)) )
+          ImportID(model)%val=0
         END DO
+      END IF
+      IF (.not.allocated(ExportList)) THEN
+        allocate ( ExportList(Nmodels) )
       END IF
 !
 !  Look fields information and extract Export/Import fields IDs for
@@ -348,6 +373,24 @@
               ImportID(model)%val(ifield)=Fields(i)%FieldID
             END IF
           END DO
+        END DO
+      END DO
+      DO model=1,Nmodels
+        ExportList(model)=''
+        DO ifield=1,Nexport(model)
+          id=ExportID(model)%val(ifield)
+          IF (id.gt.0) THEN
+            code=ADJUSTL(Fields(id)%code)
+            IF (ifield.eq.1) THEN
+              ExportList(model)=TRIM(ExportList(model))//TRIM(code)
+            ELSE
+              ExportList(model)=TRIM(ExportList(model))//':'//TRIM(code)
+            END IF
+          ELSE
+            WRITE (stdout,70) model, TRIM(ExportList(model)),           &
+     &                        TRIM(CPLname)
+            STOP
+          END IF
         END DO
       END DO
 !
@@ -379,26 +422,39 @@
 !
       IF ((inode+1).ne.Nnodes) THEN
         IF (MyRank.eq.0) THEN
-          WRITE (stdout,70) inode, Nnodes
+          WRITE (stdout,80) inode, Nnodes
         END IF
         STOP
       ELSE
         IF (MyRank.eq.0) THEN
-          WRITE (stdout,80)
+          WRITE (stdout,90) 
           DO model=1,Nmodels
             IF (model.eq.Iocean) THEN
-              string='Ocean Model MPI nodes: '
+              string='Ocean Model MPI nodes:'
             ELSE IF (model.eq.Iwaves) THEN
-              string='Waves Model MPI nodes: '
+              string='Waves Model MPI nodes:'
             ELSE IF (model.eq.Iatmos) THEN
-              string='Atmos Model MPI nodes: '
+              string='Atmos Model MPI nodes:'
             END IF
-            WRITE (stdout,90) TRIM(string),                             &
-     &                        pets(model)%val(1),                       &
-     &                        pets(model)%val(Nthreads(model))
+            WRITE (stdout,100) TRIM(string),                            &
+     &                         pets(model)%val(1),                      &
+     &                         pets(model)%val(Nthreads(model))
           END DO
-          WRITE (stdout,'(/)')
         END IF
+        WRITE (stdout,'(/)')
+      END IF
+      IF (MyRank.eq.0) THEN
+        DO model=1,Nmodels
+          IF (model.eq.Iocean) THEN
+            string='Ocean Export:'
+          ELSE IF (model.eq.Iwaves) THEN
+            string='Waves Export:'
+          ELSE IF (model.eq.Iatmos) THEN
+            string='Atmos Export:'
+          END IF
+          WRITE (stdout,110) TRIM(string), TRIM(ExportList(model))
+        END DO
+        WRITE (stdout,'(/)')
       END IF
 
 # if defined ESMF_COUPLING || defined ESMF_LIB
@@ -467,10 +523,14 @@
  60   FORMAT (/,' MOD_COUPLER - too small dimension ',                  &
      &        'parameter, MV = ',2i5,/,15x,                             &
      &        'change file  mod_ncparam.F  and recompile.')
- 70   FORMAT (/,' ESMF_COUPLER - Number assigned processors: ',         &
+ 70   FORMAT (/,' MOD_COUPLER - Unregistered export field for ',        &
+     &          ' model = ',i1,/,15x,'ExportList = ',a,/,15x,           &
+     &          ' check file = ',a)
+ 80   FORMAT (/,' MOD_COUPLER - Number assigned processors: ',          &
      &        i3.3,/,15x,'not equal to spawned MPI nodes: ',i3.3)
- 80   FORMAT (/,' Model Coupling Parallel Threads:',/)
- 90   FORMAT (7x,a,3x,i3.3,' - ',i3.3)
+ 90   FORMAT (/,' Model Coupling Parallel Threads:',/)
+100   FORMAT (3x,a,3x,i3.3,' - ',i3.3)
+110   FORMAT (3x,a,1x,a)
 
       END SUBROUTINE allocate_coupler
 #endif

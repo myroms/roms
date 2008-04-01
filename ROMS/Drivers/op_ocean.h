@@ -18,13 +18,13 @@
 !  These  routines  control the  initialization,  time-stepping,  and  !
 !  finalization of  ROMS/TOMS  model following ESMF conventions:       !
 !                                                                      !
-!     initialize                                                       !
-!     run                                                              !
-!     finalize                                                         !
+!     ROMS_initialize                                                  !
+!     ROMS_run                                                         !
+!     ROMS_finalize                                                    !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
-!    Moore, A.M. et al., 2004: A comprehensice ocean prediction and    !
+!    Moore, A.M. et al., 2004: A comprehensive ocean prediction and    !
 !      analysis system based on the tangent linear and adjoint of a    !
 !      regional ocean model, Ocean Modelling, 7, 227-258.              !
 !                                                                      !

@@ -251,6 +251,7 @@
 !    dtfast        Size barotropic timestep (s).
 !    tdays         Model time clock (days).
 !    time          Model time clock (s).
+!    time_code     Model time clock (string, Day HH:MM:SS)
 !    AVGtime       Model time clock for averages output (s).
 !    DIAtime       Model time clock for diagnostics output (s).
 !    IMPtime       Impulse forcing time (s) to process.
@@ -295,6 +296,7 @@
         real(r8) :: tide_start = 0.0_r8                  ! days
         real(r8) :: time_ref = 0.0_r8                    ! YYYYMMDD.dd
 
+        character (len=14) :: time_code(Ngrids)          ! DD HH:MM:SS
         character (len=19) :: r_text
 
 #if defined POWER_LAW && defined SOLVE3D
@@ -344,6 +346,7 @@
 !  a multiple of "ntimes".
 !
         integer :: Nintervals = 1
+#ifdef JUNK
 !
 !  Number of coupling models.
 !
@@ -372,6 +375,7 @@
         integer :: ATMid = 3
         integer :: WAVid = 2
         integer :: OCNid = 1
+#endif
 !
 !  Starting, current, and ending ensemble run parameters.
 !
@@ -1972,6 +1976,7 @@
       lmd_Cg=lmd_Cstar*                                                 &
      &       vonKar*(lmd_cs*vonKar*lmd_epsilon)**(1.0_r8/3.0_r8)
 #endif
+#ifdef JUNK
 !
 !  Set number of couple models.
 !
@@ -1981,6 +1986,7 @@
 #endif
 #ifdef WAVES_OCEAN
       Ncouple=Ncouple+1
+#endif
 #endif
 !
 !  Initialize several IO flags.

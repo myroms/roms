@@ -129,6 +129,7 @@
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1
       ntend(ng)=ntimes(ng)
       ntfirst(ng)=ntstart(ng)
+      CALL time_string (time(ng), time_code(ng))
 
       IniRec=nrrec(ng)
       Tindex=1

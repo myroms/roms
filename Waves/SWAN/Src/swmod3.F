@@ -1,5 +1,4 @@
 #include "cppdefs.h"
-#ifdef WAVES_OCEAN
 !                 Exact-NL RELATED MODULES, file 3 of 3
 !
 !     Contents of this file
@@ -10899,7 +10898,3 @@
       end  function
 !
       end module
-#else
-      MODULE swmod3_mod
-      END MODULE swmod3_mod
-#endif

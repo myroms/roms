@@ -36,8 +36,13 @@
 !                                                                             !
 !==============================================================================
 !
+! Logical switch to report verbose information about import/export field
+! ranges.
+
+        Lreport = T
+
 ! Number of models to couple.
-!
+
         Nmodels = 3
 
 ! Coupled models order label used to process information arrays, [1:Nmodels]
@@ -106,13 +111,14 @@ Nthreads(atmos) = 1
 !   SSH     ocean     waves             free-surface
 !   Ubar    ocean     waves             vertically integrated U-momentum
 !   Vbar    ocean     waves             vertically integrated V-momentum
-!   Wdir    waves     ocean             wind-induced wave direction
-!   Wamp    waves     ocean             wind-induced significat wave height
-!   Wlen    waves     ocean             wind-induced mean wavelength
-!   Wptop   waves     ocean             wind-induced surface wave period
-!   Wpbot   waves     ocean             wind-induced bottom wave period
-!   Wdiss   waves     ocean             wave dissipation
+!   Wdir    waves     ocean             wave direction
+!   Wamp    waves     ocean             significant wave height
+!   Wlen    waves     ocean             average wave length
+!   Wptop   waves     ocean             surface wave relative peak period
+!   Wpbot   waves     ocean             bottom wave period
+!   Wdiss   waves     ocean             wave energy dissipation
 !   Wbrk    waves     ocean             percent wave breaking
+!   Wubot   waves     ocean             wave bottom orbital velocity
 !   
 ! Export fields per model, [1:Nexport(...)] string values are expected per
 ! coupled model. The string inside parenthesis must be the same as the one
@@ -188,6 +194,9 @@ Nthreads(atmos) = 1
 !------------------------------------------------------------------------------
 ! Coupled model parameters.
 !------------------------------------------------------------------------------
+!
+! Lreport       Logical switch (T/F) to report verbose information about
+!                 import/export field ranges.
 !
 ! Nmodels       Number of models to couple.
 !
@@ -297,13 +306,14 @@ Nthreads(atmos) = 1
 !               SSH       free-surface
 !               Ubar      vertically integrated U-momentum
 !               Vbar      vertically integrated V-momentum
-!               Wdir      wind-induced wave direction
-!               Wamp      wind-induced significant wave height
-!               Wlen      wind-induced mean wavelength
-!               Wptop     wind-induced surface wave period
-!               Wpbot     wind-induced bottom wave period
-!               Wdiss     wave dissipation
+!               Wdir      wave direction
+!               Wamp      significant wave height
+!               Wlen      average wave length
+!               Wptop     surface wave relative peak period
+!               Wpbot     bottom wave period
+!               Wdiss     wave energy dissipation
 !               Wbrk      percent wave breaking
+!               Wubot     wave bottom orbital velocity
 !
 !  Nexport(...) Number of export fields per model, [1:Nmodels] KEYWORD
 !                 entries are expected with the label code in parenthesis.
