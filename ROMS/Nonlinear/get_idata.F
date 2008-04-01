@@ -175,8 +175,8 @@
         time(ng)=time_save
         tdays(ng)=time(ng)*sec2day
       END IF
-
-#  if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
+# endif
+# if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 !
 !------------------------------------------------------------------------
 !  If detiding and applicable, define additional variable to store
@@ -198,9 +198,9 @@
         IF (InpThread) THEN
           status=nf90_get_var(ncTIDEid(ng), tideVid(idtime,ng), Htime)
         END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iNLM, status, 1)
-#   endif
+#  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idtime)), TRIM(TIDEname(ng))
@@ -209,9 +209,9 @@
           ioerror=status
           RETURN
         END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         CALL mp_bcastf (ng, iNLM, Htime, 1)
-#   endif
+#  endif
         IF (time(ng).ne.Htime) THEN
           IF (Master) THEN
             WRITE (stdout,20) tdays(ng), Htime*sec2day
@@ -227,9 +227,9 @@
           status=nf90_inq_varid(ncTIDEid(ng), 'Hcount', varid)
           status=nf90_get_var(ncTIDEid(ng), varid, Hcount(ng))
         END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iNLM, status, 1)
-#   endif
+#  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) 'Hcount', TRIM(TIDEname(ng))
@@ -238,9 +238,9 @@
           ioerror=status
           RETURN
         END IF
-#   ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iNLM, Hcount(ng), 1)
-#   endif
+#  endif
 !
 !  Time-accumulated COS(omega(k)*t) harmonics.
 !
@@ -284,9 +284,9 @@
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
-#   ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-#   endif
+#  endif
      &                    TIDES(ng) % zeta_tide(LBi,LBj,0))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -308,9 +308,9 @@
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
-#   ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % umask(LBi,LBj),                    &
-#   endif
+#  endif
      &                    TIDES(ng) % ubar_tide(LBi,LBj,0))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -332,9 +332,9 @@
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
-#   ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % vmask(LBi,LBj),                    &
-#   endif
+#  endif
      &                    TIDES(ng) % vbar_tide(LBi,LBj,0))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -349,7 +349,7 @@
           END IF
         END IF
 
-#   ifdef SOLVE3D
+#  ifdef SOLVE3D
 !
 !  Time-accumulated 3D u-momentum tide harmonics.
 !
@@ -358,9 +358,9 @@
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),   &
      &                    Fscl, Fmin, Fmax,                             &
-#    ifdef MASKING
+#   ifdef MASKING
      &                    GRID(ng) % umask(LBi,LBj),                    &
-#    endif
+#   endif
      &                    TIDES(ng) % u_tide(LBi,LBj,1,0))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
@@ -382,11 +382,11 @@
      &                    0, gtype, Vsize,                              &
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),   &
      &                    Fscl, Fmin, Fmax,                             &
-#    ifdef MASKING
+#   ifdef MASKING
      &                    GRID(ng) % vmask(LBi,LBj),                    &
-#    endif
-     &                    TIDES(ng) % v_tide(LBi,LBj,1,0))
 #   endif
+     &                    TIDES(ng) % v_tide(LBi,LBj,1,0))
+#  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idv3dH)), TRIM(TIDEname(ng))
@@ -400,7 +400,6 @@
           END IF
         END IF
       END IF
-#  endif
 # endif
 # if !defined ANA_PSOURCE && (defined UV_PSOURCE || \
                               defined TS_PSOURCE || defined Q_PSOURCE)
