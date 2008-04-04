@@ -263,7 +263,12 @@
       integer, pointer :: points(:)
 
       real :: cff
+      real(r8) :: RecvTime, SendTime, wtime(2)
+
+      real(r8) :: my_wtime
+
       real(r8), pointer :: avdata(:)
+
       real, pointer :: TEMPMCT(:,:)
       real, pointer :: GRECVT(:), GRECVB(:), GRECVR(:), GRECVL(:)
       real, pointer :: GSENDT(:), GSENDB(:), GSENDR(:), GSENDL(:)
@@ -348,7 +353,9 @@
 !  Send wave fields bundle to ocean model, ROMS.
 !-----------------------------------------------------------------------
 !
+        SendTime=my_wtime(wtime)
         CALL MCT_Send (wav2ocn_AV, SWANtoROMS, MyError)
+        SendTime=my_wtime(wtime)-SendTime
         IF (MyError.ne.0) THEN
           IF (MyRank.eq.0) THEN
             WRITE (6,10) 'ocean model, MyError = ', MyError
@@ -362,7 +369,9 @@
 !
 !  Schedule receiving field from ocean model.
 !
+        RecvTime=my_wtime(wtime)
         CALL MCT_Recv (ocn2wav_AV, SWANtoROMS, MyError)
+        RecvTime=my_wtime(wtime)-RecvTime
         IF (MyError.ne.0) THEN
           IF (MyRank.eq.0) THEN
              WRITE (6,20) 'ocean model, MyError = ', MyError
@@ -524,8 +533,9 @@
 !
         IF (MyRank.eq.0) THEN
           IF ((Iimport.gt.0).or.(Iexport.gt.0)) THEN
-            WRITE (6,30) Iimport, Iexport, TRIM(CHTIME)
-            CALL my_flush (6)
+            WRITE (6,30) Iimport, Iexport, TRIM(CHTIME),                &
+     &                   RecvTime, SendTime 
+           CALL my_flush (6)
           END IF
         END IF
         Iexport=0
@@ -769,7 +779,9 @@
  20   FORMAT (' WAV2OCN_COUPLING - error while receiving fields from ', &
      &        a,i4)
  30   FORMAT (6x,'WAV2OCN   - (', i2.2, ') imported and (', i2.2,       &
-     &        ') exported fields,', t61, 't = ', a)
+     &        ') exported fields,', t62, 't = ', a,/, 16x,              &
+     &        '- SWAN coupling wall clock (s):',/, 19x,                 &
+     &        '(Recv= ', 1p,e14.8,0p, ' Send= ', 1p,e14.8,0p,')')
 
       RETURN
       END SUBROUTINE WAV2OCN_COUPLING

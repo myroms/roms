@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !
 !     SWAN/OUTPUT       file 1 of 2
 !
@@ -22,9 +22,12 @@
      &                   COMPDA          ,XYTST   ,
      &                   KGRPNT          ,XCGRID  ,                       30.72
      &                   YCGRID          ,KGRBND  ,                       40.30
-     &                   OURQT           ,                                40.51 40.30
-     &                   numsteps        ,CouplingTime)                   jcw
-
+#ifdef MODEL_COUPLING
+     &                   OURQT           ,
+     &                   numsteps        ,CouplingTime)
+#else
+     &                   OURQT                    )                       40.51 40.30
+#endif
 !                                                                      *
 !***********************************************************************
 !
@@ -35,9 +38,10 @@
       USE SWCOMM4                                                         40.41
       USE OUTP_DATA                                                       40.31
       USE M_PARALL                                                        40.31
-
-!jcw
+#ifdef MODEL_COUPLING
+!
       USE WAVES_COUPLER_MOD, ONLY: WAV2OCN_COUPLING
+#endif
 !
 !
 !
@@ -47,15 +51,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -139,9 +140,11 @@
       REAL    SPCSIG(MSC)                                                 30.72
       REAL    XCGRID(MXC,MYC),    YCGRID(MXC,MYC)                         30.72
 
-      INTEGER numsteps                                                    jcw
-      REAL    CouplingTime                                                jcw
-      LOGICAL cplout, userout                                             jcw
+#ifdef MODEL_COUPLING
+      LOGICAL cplout, userout
+      INTEGER numsteps
+      REAL    CouplingTime
+#endif
 !
 !     AC2     real arr input  action density in all computational points
 !     SPCDIR  real arr input  spectral directions, cosines and sines
@@ -270,7 +273,11 @@
 !
 !       ***** processing of output instructions *****
 !
-        IF(SCREEN.NE.PRINTF.AND.INODE.EQ.MASTER) WRITE(PRINTF, 15) IRQ    40.30
+#ifdef MODEL_COUPLING
+        IF (SCREEN.NE.PRINTF.AND.INODE.EQ.MASTER) WRITE(PRINTF, 15) IRQ
+#else
+        IF (SCREEN.NE.PRINTF.AND.INODE.EQ.MASTER) WRITE (SCREEN, 15) IRQ  40.30
+#endif
   15    FORMAT ('+SWAN is processing output request ', I4)                40.41 30.00
         IF (ITEST.GE.10) WRITE(PRINTF,16) IRQ
   16    FORMAT (' SWAN is processing output request ', I4)                40.41
@@ -285,12 +292,17 @@
         SNAME = CORQ%PSNAME                                               40.31
         CALL SWORDC (CORQ%OQI, CORQ%OQR, CORQ%IVTYP, RTYPE,               40.31 30.90
      &               SNAME, NVOQP, OQPROC, BKC, VOQR, OURQT(IRQ),         40.51
-     &               LOGACT, cplout,userout, numsteps, CouplingTime,      jcw
-     &               IRQ)                                                 jcw
+#ifdef MODEL_COUPLING
+     &               LOGACT, cplout, userout, numsteps, CouplingTime,
+     &               IRQ)
+#else
+     &               LOGACT)                                              30.00
+#endif
         IF (.NOT.LOGACT) THEN                                             40.31 30.00
            CORQ => CORQ%NEXTORQ                                           40.31
            GOTO 70                                                        40.31 30.00
         END IF
+!
         CUOPS => FOPS                                                     40.31
         DO                                                                40.31
           IF (CUOPS%PSNAME.EQ.SNAME) EXIT                                 40.31
@@ -353,7 +365,6 @@
 !         call SWOEXA to compute quantities for which spectrum is needed
 !         (except Force, see further down)
 !
-
           CALL SWOEXA (OQPROC              ,BKC                 ,
      &                 MIP                 ,VOQ(1+2*MIP)        ,         40.31 30.90
      &                 VOQ(1+3*MIP)        ,VOQR                ,         40.31 30.90
@@ -391,7 +402,9 @@
   25      CONTINUE
         ENDIF
 
-        IF (userout) THEN                                                 jcw
+#ifdef MODEL_COUPLING
+        IF (userout) THEN
+#endif
 !
 !       ***** block output *****
         IF (RTYPE(1:3) .EQ. 'BLK') THEN
@@ -431,19 +444,23 @@
 !
   60    WRITE (PRINTF, 62) IRQ, NVOQP, RTYPE, SNAME, MIP
   62    FORMAT (' Error in output request ', 2I6, 2X, A4, 2X, A16, I6)
-
-        ENDIF                                                             jcw
 !
+#ifdef MODEL_COUPLING
+        ENDIF
+#endif
   68    CONTINUE                                                          40.31
 
-!jcw CALL to coupling
+#ifdef MODEL_COUPLING
+
+!     Couple to ocean model
+
         IF (cplout) THEN
           IVTYPE=CORQ%IVTYP(1)
-          CALL WAV2OCN_COUPLING (MIP, NVOQP, VOQR, VOQ(1), IRQ,         &
+          CALL WAV2OCN_COUPLING (MIP, NVOQP, VOQR, VOQ(1), IRQ,
      &                           IVTYPE, COMPDA, numsteps)
           IF (STPNOW()) RETURN
         ENDIF
-!jcw end
+#endif
         DEALLOCATE(VOQ,IONOD)                                             40.51 40.31
         CORQ => CORQ%NEXTORQ                                              40.31
   70  CONTINUE
@@ -457,8 +474,12 @@
 !                                                                      *
       SUBROUTINE SWORDC (OUTI, OUTR, IVTYP, RTYPE, PSNAME, NVOQP,         40.31
      &                   OQPROC, BKC,                                     40.31
-     &                   VOQR, OURQT, LOGACT,                             40.51 30.00
-     &                   cplout, userout, numsteps, CouplingTime, IRQ)    jcw
+#ifdef MODEL_COUPLING
+     &                   VOQR, OURQT, LOGACT,
+     &                   cplout, userout, numsteps, CouplingTime, IRQ)
+#else
+     &                   VOQR, OURQT, LOGACT)                             40.51 30.00
+#endif
 !                                                                      *
 !***********************************************************************
 !
@@ -477,15 +498,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -600,19 +618,21 @@
 !
       INTEGER    VOQR(*), OUTI(*), BKC                                    30.00
       INTEGER    IVTYP(*)                                                 40.31
-      INTEGER    numsteps, nWAV_steps                                     jcw
-      REAL       CouplingTime                                             jcw
+#ifdef MODEL_COUPLING
+      LOGICAL    cplout, userout
+      INTEGER    numsteps, nWAV_steps
+      REAL       CouplingTime
+#endif
       REAL       OUTR(*)                                                  30.00
       REAL       OURQT                                                    40.51
       LOGICAL    OQPROC(NMOVAR), LOGACT                                   30.00
-      LOGICAL    cplout, userout                                          jcw
       CHARACTER  PSNAME *(*), RTYPE *(*)                                  40.31 30.81
       SAVE IENT
       DATA IENT /0/                                                       40.31 30.81
       CALL STRACE (IENT, 'SWORDC')
 !
 !     check time of output action:                                        30.00
-      IF (NSTATM.EQ.1) THEN                                               40.00
+      IF (NSTATM.EQ.1) THEN                                                    40.00
 !       check time of output action:                                      40.00
 !       DIF  in case that timco is not a fraction of the
 !       computational period and the user do not ask for a periodic plots
@@ -621,27 +641,39 @@
         IF ( PARLL.AND.OURQT.EQ.-9999.) OURQT = OUTR(1)                   40.51 40.30
         IF (ITEST.GE.60) WRITE (PRTEST, *) ' output times ', TNEXT,
      &        OUTR(2), DT, TFINC, TIMCO
-!jcw : determine if we are just coupling
-        cplout = .FALSE.                                                  jcw
-        userout = .FALSE.                                                 jcw
-        nWAV_steps=MAX(1,INT(CouplingTime/DT))                            jcw
-        IF ((numsteps.ge.0).and.(MOD(numsteps, nWAV_steps).eq.0)) THEN    jcw
+#ifdef MODEL_COUPLING
+!     determine if we are just coupling
+
+        cplout = .FALSE.
+        userout = .FALSE.
+        nWAV_steps=MAX(1,INT(CouplingTime/DT))
+        IF ((numsteps.ge.0).and.(MOD(numsteps, nWAV_steps).eq.0)) THEN
           cplout = .TRUE.
-          LOGACT = .TRUE.                                                 jcw
+          LOGACT = .TRUE.
         ENDIF
+#endif
         IF (ABS(DIF).LT.0.5*DT .AND. OUTR(2).LT.0.) THEN                  40.00
           OUTR(1) = TIMCO
           LOGACT = .TRUE.
+#ifdef MODEL_COUPLING
           userout= .TRUE.
+#endif
         ELSE IF (OUTR(2).GT.0. .AND. TIMCO.GE.TNEXT) THEN                 40.00
           OUTR(1) = TIMCO + OUTR(2)                                       40.00
           LOGACT = .TRUE.
+#ifdef MODEL_COUPLING
           userout= .TRUE.
+#endif
         ELSE
-          IF(.not.cplout) THEN                                            jcw
+#ifdef MODEL_COUPLING
+          IF(.not.cplout) THEN
             LOGACT = .FALSE.
             RETURN
           ENDIF
+#else
+          LOGACT = .FALSE.
+          RETURN
+#endif
         ENDIF
       ELSE
         LOGACT = .TRUE.                                                   30.00
@@ -707,12 +739,28 @@
            ENDIF
          ENDIF
 !
+!        for BFI add steepness and Qp as output quantities                40.64
+!
+         IF (IVTYPE.EQ.59) THEN
+           IF (.NOT.OQPROC(18)) THEN
+             NVOQP = NVOQP + 1
+             VOQR(18) = NVOQP
+             OQPROC(18) = .TRUE.
+           ENDIF
+           IF (.NOT.OQPROC(58)) THEN
+             NVOQP = NVOQP + 1
+             VOQR(58) = NVOQP
+             OQPROC(58) = .TRUE.
+           ENDIF
+         ENDIF
+!
 !        for some quantities compute action densities
 !
          IF (IVTYPE.EQ.10 .OR. IVTYPE.EQ.11 .OR. IVTYPE.EQ.12 .OR.
      &       IVTYPE.EQ.13 .OR. IVTYPE.EQ.14 .OR. IVTYPE.EQ.16 .OR.
      &       IVTYPE.EQ.21 .OR. IVTYPE.EQ.22 .OR. IVTYPE.EQ.43 .OR.
-     &       IVTYPE.EQ.48                                          )      40.41 40.00
+     &       IVTYPE.EQ.44 .OR. IVTYPE.EQ.48 .OR. IVTYPE.EQ.53 .OR.
+     &       IVTYPE.EQ.58                                          )      40.64 40.61 40.51 40.41 40.00
      &   BKC = MAX (1, BKC)
 !
 !        for some quantities also compute Depth, current, K and Cg
@@ -720,7 +768,7 @@
          IF (IVTYPE.EQ.15 .OR. IVTYPE.EQ.17 .OR. IVTYPE.EQ.18 .OR.
      &       IVTYPE.EQ.19 .OR. IVTYPE.EQ.20 .OR. IVTYPE.EQ.28 .OR.        10.10
      &       IVTYPE.EQ.32 .OR. IVTYPE.EQ.33 .OR. IVTYPE.EQ.42 .OR.
-     &       IVTYPE.EQ.47                                          )      40.41 40.00
+     &       IVTYPE.EQ.47 .OR. IVTYPE.EQ.59                        )      40.64 40.41 40.00
      &   BKC = 2
 !
          IF (IVTYPE.EQ.11 .AND. ICUR.GT.0) BKC = 2                        20.36
@@ -780,15 +828,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1036,15 +1081,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1349,15 +1391,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1383,6 +1422,7 @@
 !     40.21: Agnieszka Herman
 !     40.41: Marcel Zijlema
 !     40.51: Marcel Zijlema
+!     40.61: Marcel Zijlema
 !
 !  1. Updates
 !
@@ -1400,6 +1440,8 @@
 !     40.41, Aug. 04: friction coefficient added
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
 !     40.51, Feb. 05: bottom wave period added
+!     40.51, Sep. 05: water level and bottom level added
+!     40.61, Sep. 06: separate dissipation coefficients added
 !
 !  2. Purpose
 !
@@ -1545,14 +1587,20 @@
 !
       IF (OQPROC(50)) THEN                                                40.51
         IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 50,
-     &  VOQR(50)
-        CALL SWIPOL (COMPDA(1,JPBOT), OVEXCV(50), XC, YC, MIP,
-     &               VOQ(1,VOQR(50)) ,KGRPNT, COMPDA(1,JDP2))
+     &  VOQR(50), JPBOT
+        IF (JPBOT.GT.1) THEN                                              40.65
+           CALL SWIPOL (COMPDA(1,JPBOT), OVEXCV(50), XC, YC, MIP,
+     &                  VOQ(1,VOQR(50)) ,KGRPNT, COMPDA(1,JDP2))
+        ELSE
+           DO IP = 1, MIP                                                 40.65
+             VOQ(IP,VOQR(50)) = OVEXCV(50)                                40.65
+           ENDDO                                                          40.65
+        ENDIF
       ENDIF
 !
 !     dissipation
 !
- 150  IF (OQPROC(7)) THEN
+      IF (OQPROC(7)) THEN
         IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 7,
      &  VOQR(7)
         CALL SWIPOL (COMPDA(1,JDISS), OVEXCV(7), XC, YC, MIP,
@@ -1565,9 +1613,72 @@
         ENDIF
       ENDIF
 !
+!     bottom friction dissipation
+!
+      IF (OQPROC(54)) THEN                                                40.61
+        IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 54,
+     &  VOQR(54), JDSXB
+        IF (JDSXB.GT.1) THEN                                              40.65
+           CALL SWIPOL (COMPDA(1,JDSXB), OVEXCV(54), XC, YC, MIP,
+     &                  VOQ(1,VOQR(54)) ,KGRPNT, COMPDA(1,JDP2))
+        ELSE
+           DO IP = 1, MIP                                                 40.65
+             VOQ(IP,VOQR(54)) = OVEXCV(54)                                40.65
+           ENDDO                                                          40.65
+        ENDIF
+        IF (INRHOG.EQ.1) THEN
+          DO IP = 1, MIP
+            F1 = VOQ(IP,VOQR(54))
+            IF (.NOT.EQREAL(F1,OVEXCV(54))) VOQ(IP,VOQR(54))=F1*RHO*GRAV
+          END DO
+        ENDIF
+      ENDIF
+!
+!     wave breaking dissipation
+!
+      IF (OQPROC(55)) THEN                                                40.61
+        IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 55,
+     &  VOQR(55), JDSXS
+        IF (JDSXS.GT.1) THEN                                              40.65
+           CALL SWIPOL (COMPDA(1,JDSXS), OVEXCV(55), XC, YC, MIP,
+     &                  VOQ(1,VOQR(55)) ,KGRPNT, COMPDA(1,JDP2))
+        ELSE
+           DO IP = 1, MIP                                                 40.65
+             VOQ(IP,VOQR(55)) = OVEXCV(55)                                40.65
+           ENDDO                                                          40.65
+        ENDIF
+        IF (INRHOG.EQ.1) THEN
+          DO IP = 1, MIP
+            F1 = VOQ(IP,VOQR(55))
+            IF (.NOT.EQREAL(F1,OVEXCV(55))) VOQ(IP,VOQR(55))=F1*RHO*GRAV
+          END DO
+        ENDIF
+      ENDIF
+!
+!     whitecapping dissipation
+!
+      IF (OQPROC(56)) THEN                                                40.61
+        IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 56,
+     &  VOQR(56), JDSXW
+        IF (JDSXW.GT.1) THEN                                              40.65
+           CALL SWIPOL (COMPDA(1,JDSXW), OVEXCV(56), XC, YC, MIP,
+     &                  VOQ(1,VOQR(56)) ,KGRPNT, COMPDA(1,JDP2))
+        ELSE
+           DO IP = 1, MIP                                                 40.65
+             VOQ(IP,VOQR(56)) = OVEXCV(56)                                40.65
+           ENDDO                                                          40.65
+        ENDIF
+        IF (INRHOG.EQ.1) THEN
+          DO IP = 1, MIP
+            F1 = VOQ(IP,VOQR(56))
+            IF (.NOT.EQREAL(F1,OVEXCV(56))) VOQ(IP,VOQR(56))=F1*RHO*GRAV
+          END DO
+        ENDIF
+      ENDIF
+!
 !     Qb
 !
- 160  IF (OQPROC(8)) THEN
+      IF (OQPROC(8)) THEN
         IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 8,
      &  VOQR(8)
         CALL SWIPOL (COMPDA(1,JQB), OVEXCV(8), XC, YC, MIP,
@@ -1576,7 +1687,7 @@
 !
 !     wind velocity                                                       10.07
 !
- 170  IF (OQPROC(26)) THEN
+      IF (OQPROC(26)) THEN
         JVQX = VOQR(26)
         JVQY = JVQX+1
         IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 26,
@@ -1703,7 +1814,7 @@
      &                 VOQ(1,VOQR(39)) ,KGRPNT, COMPDA(1,JDP2))           32.02
         ELSE                                                              32.02
           DO IP = 1, MIP                                                  32.02
-            VOQ(IP,VOQR(39)) = 0.                                         32.02
+            VOQ(IP,VOQR(39)) = OVEXCV(39)                                 32.02
           ENDDO                                                           32.02
         ENDIF                                                             32.02
       ENDIF                                                               32.02
@@ -1721,9 +1832,15 @@
 !
       IF (OQPROC(46)) THEN
         IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 46,      40.03
-     &  VOQR(46)
-        CALL SWIPOL (COMPDA(1,JASTD2), OVEXCV(46), XC, YC, MIP,
-     &               VOQ(1,VOQR(46)) ,KGRPNT, COMPDA(1,JDP2))             40.03
+     &  VOQR(46), JASTD2
+        IF (VARAST) THEN
+           CALL SWIPOL (COMPDA(1,JASTD2), OVEXCV(46), XC, YC, MIP,
+     &                  VOQ(1,VOQR(46)) ,KGRPNT, COMPDA(1,JDP2))          40.03
+        ELSE
+           DO IP = 1, MIP
+              VOQ(IP,VOQR(46)) = OVEXCV(46)
+           END DO
+        END IF
       ENDIF
 !
 !       Diffraction parameter                                             40.21
@@ -1755,8 +1872,16 @@
          IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 27,
      &   VOQR(27)
          IF (VARFR) THEN
+!           interpolation done in all active and non-active points
+            RTMP=DEPMIN
+            DEPMIN=-10.*ABS(MINVAL(COMPDA(:,JDP2)))
             CALL SWIPOL (COMPDA(1,JFRC2), OVEXCV(27), XC, YC, MIP,
      &                   VOQ(1,VOQR(27)) ,KGRPNT, COMPDA(1,JDP2))
+            DEPMIN=RTMP
+            DO IP = 1, MIP
+               F1 = VOQ(IP,VOQR(27))
+               IF (EQREAL(F1,EXCFLD(4))) VOQ(IP,VOQR(27)) = OVEXCV(27)
+            ENDDO
          ELSE
             F1=0.
             IF (IBOT.EQ.1) F1 = PBOT(3)
@@ -1766,6 +1891,56 @@
                IF (.NOT.EQREAL(F1,OVEXCV(27))) VOQ(IP,VOQR(27))=F1
             END DO
         END IF
+      ENDIF
+!
+!     water level
+!
+      IF (OQPROC(51)) THEN                                                40.51
+        IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 51,
+     &  VOQR(51)
+        IF (VARWLV) THEN
+!          interpolation done in all active and non-active points
+           RTMP=DEPMIN
+           DEPMIN=-10.*ABS(MINVAL(COMPDA(:,JDP2)))
+           CALL SWIPOL (COMPDA(1,JWLV2), OVEXCV(51), XC, YC, MIP,
+     &                  VOQ(1,VOQR(51)) ,KGRPNT, COMPDA(1,JDP2))
+           DEPMIN=RTMP
+           DO IP = 1, MIP
+              F1 = VOQ(IP,VOQR(51))
+              IF (EQREAL(F1,EXCFLD(7))) VOQ(IP,VOQR(51)) = OVEXCV(51)
+           ENDDO
+        ELSE
+           DO IP = 1, MIP
+              VOQ(IP,VOQR(51)) = 0.
+           END DO
+        END IF
+        DO IP = 1, MIP
+           F1 = VOQ(IP,VOQR(51))
+           IF (.NOT.EQREAL(F1,OVEXCV(51))) VOQ(IP,VOQR(51))=F1 + WLEV
+        END DO
+      ENDIF
+!
+!     bottom level
+!
+      IF (OQPROC(52)) THEN                                                40.51
+        IF (ITEST.GE.50 .OR. IOUTES .GE. 10) WRITE (PRTEST, 121) 52,
+     &  VOQR(52), JBOTLV
+        IF (JBOTLV.GT.1) THEN                                             40.65
+!          interpolation done in all active and non-active points
+           RTMP=DEPMIN
+           DEPMIN=-10.*ABS(MINVAL(COMPDA(:,JDP2)))
+           CALL SWIPOL (COMPDA(1,JBOTLV), OVEXCV(52), XC, YC, MIP,
+     &                  VOQ(1,VOQR(52)) ,KGRPNT, COMPDA(1,JDP2))
+           DEPMIN=RTMP
+           DO IP = 1, MIP
+              F1 = VOQ(IP,VOQR(52))
+              IF (EQREAL(F1,EXCFLD(1))) VOQ(IP,VOQR(52)) = OVEXCV(52)
+           ENDDO
+        ELSE
+           DO IP = 1, MIP                                                 40.65
+             VOQ(IP,VOQR(52)) = OVEXCV(52)                                40.65
+           ENDDO                                                          40.65
+        ENDIF
       ENDIF
 !
 !     --- in case of parallel run, mark location points inside own        40.31
@@ -1809,15 +1984,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2041,15 +2213,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2076,6 +2245,7 @@
 !     32.01: Roeland Ris & Cor van der Schelde
 !     40.30: Marcel Zijlema
 !     40.41: Marcel Zijlema
+!     40.51: Marcel Zijlema
 !
 !  1. Updates
 !
@@ -2099,6 +2269,7 @@
 !     40.30, May  03: introduction distributed-memory approach using MPI
 !     40.41, Sep. 04: added Tm-10 and RTm-10
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
+!     40.51, Feb. 06: added Tp based on parabolic fitting
 !
 !  2. Purpose
 !
@@ -2171,7 +2342,7 @@
 !
 ! 13. Source text
 !
-      PARAMETER  (NVOTP=18)                                               40.41 40.00
+      PARAMETER  (NVOTP=21)                                               40.64 40.51 40.41 40.00
       REAL       XC(MIP)        ,YC(MIP)       ,AC2(MDC,MSC,MCGRD),
      &           VOQ(MIP,*)     ,
      &           WK(*)          ,
@@ -2186,7 +2357,7 @@
       SAVE IENT, IVOTP
       DATA IENT /0/
       DATA IVOTP /10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 28, 32, 33,     20.61
-     &            42, 43, 44, 47, 48/                                     40.41 40.00
+     &            42, 43, 44, 47, 48, 53, 58, 59/                         40.64 40.51 40.41 40.00
       CALL STRACE (IENT, 'SWOEXA')
 !
 !     loop over all output points
@@ -2214,7 +2385,7 @@
 !
         EFTAIL = 1. / (PWTAIL(1) - 1.)
 !
-!       significant wave height, Hsig
+!       significant wave height
 !
         IVTYPE = 10
         IF (OQPROC(IVTYPE)) THEN
@@ -2386,6 +2557,58 @@
            ENDIF
         ENDIF
 !
+!       peak period based on parabolic fitting                            40.51
+!
+        IVTYPE = 53                                                       40.51
+        IF (OQPROC(IVTYPE)) THEN
+           EMAX = 0.
+           ETD  = 0.
+           ISIGM = -1
+           DO IS = 1, MSC
+              ED  = ETD
+              ETD = 0.
+              DO ID = 1, MDC
+                ETD = ETD + SPCSIG(IS)*ACLOC(ID,IS)*DDIR
+              END DO
+              IF (ETD.GT.EMAX) THEN
+                EMAX  = ETD
+                ISIGM = IS
+                EMAXD = ED
+                EMAXU = 0.
+                IF (IS.LT.MSC) THEN
+                   DO ID = 1, MDC
+                     EMAXU = EMAXU + SPCSIG(IS+1)*ACLOC(ID,IS+1)*DDIR
+                   END DO
+                ELSE
+                   EMAXU = EMAX
+                END IF
+              END IF
+           END DO
+           IF (ISIGM.GT.1) THEN
+             SIG1 = SPCSIG(ISIGM-1)
+             SIG2 = SPCSIG(ISIGM+1)
+             SIG3 = SPCSIG(ISIGM  )
+             E1   = EMAXD
+             E2   = EMAXU
+             E3   = EMAX
+             P    = SIG1+SIG2
+             Q    = (E1-E2)/(SIG1-SIG2)
+             R    = SIG1+SIG3
+             T    = (E1-E3)/(SIG1-SIG3)
+             A    = (T-Q)/(R-P)
+             IF (A.LT.0) THEN
+                SIGP = (-Q+P*A)/(2.*A)
+             ELSE
+                SIGP = SIG3
+             END IF
+             VOQ(IP,VOQR(IVTYPE)) = 2.*PI/SIGP
+           ELSE IF (ISIGM.EQ.1) THEN
+             VOQ(IP,VOQR(IVTYPE)) = 2.*PI/SPCSIG(1)
+           ELSE
+             VOQ(IP,VOQR(IVTYPE)) = OVEXCV(IVTYPE)
+           END IF
+        END IF
+!
 !       peak direction
 !
         IVTYPE = 14
@@ -2458,7 +2681,7 @@
                IF (DIRDEG.LT.0.) DIRDEG = DIRDEG + 360.                   10.15
 !
 !              *** Convert (if necessary) from nautical degrees ***       32.01
-!              *** to carthesian degrees                        ***       32.01
+!              *** to cartesian degrees                         ***       32.01
 !
                VOQ(IP,VOQR(IVTYP1)) = DEGCNV( DIRDEG )                    32.01
 !
@@ -2516,6 +2739,34 @@
      &             VOQ(IP,VOQR(IVTYP1)) = OVEXCV(IVTYP1)
              IF (OQPROC(IVTYP2))
      &             VOQ(IP,VOQR(IVTYP2)) = OVEXCV(IVTYP2)
+           ENDIF
+        ENDIF
+!
+!       peakedness (Qp)                                                   40.64
+!
+        IVTYPE = 58
+        IF (OQPROC(IVTYPE)) THEN
+           ETOT  = 0.
+           ESTOT = 0.
+           DO ID=1, MDC
+             DO IS = 1, MSC
+               SIG   = SPCSIG(IS)
+               EADD  = SIG**2 * ACLOC(ID,IS) * FRINTF * DDIR
+               ETOT  = ETOT  + EADD
+             ENDDO
+           ENDDO
+           DO IS = 1, MSC
+             SIG = SPCSIG(IS)
+             EADD = 0.
+             DO ID=1, MDC
+               EADD = EADD + SIG * ACLOC(ID,IS) * DDIR
+             ENDDO
+             ESTOT = ESTOT + SIG**2 * EADD**2 * FRINTF
+           ENDDO
+           IF (ETOT.GT.0.) THEN
+              VOQ(IP,VOQR(IVTYPE)) = 2.*ESTOT/(ETOT * ETOT)
+           ELSE
+              VOQ(IP,VOQR(IVTYPE)) = OVEXCV(IVTYPE)
            ENDIF
         ENDIF
 !
@@ -2584,7 +2835,7 @@
                 IF (DIRDEG.LT.0.) DIRDEG = DIRDEG + 360.                  10.15
 !
 !               *** Convert (if necessary) from nautical degrees ***      32.01
-!               *** to carthesian degrees                        ***      32.01
+!               *** to cartesian degrees                         ***      32.01
 !
                 VOQ(IP,VOQR(IVTYP1)) = DEGCNV( DIRDEG )                   32.01
 !
@@ -2858,6 +3109,19 @@
            ENDIF
         ENDIF
 !
+!       Benjamin-Feir Index (BFI)                                         40.64
+!
+        IVTYPE = 59
+        IF (OQPROC(IVTYPE)) THEN
+           STPNS = VOQ(IP,VOQR(18))
+           QP    = VOQ(IP,VOQR(58))
+           IF ( STPNS.NE.OVEXCV(18) .AND. QP.NE.OVEXCV(58) ) THEN
+              VOQ(IP,VOQR(IVTYPE)) = SQRT(PI2)*STPNS*QP
+           ELSE
+              VOQ(IP,VOQR(IVTYPE)) = OVEXCV(IVTYPE)
+           ENDIF
+        ENDIF
+!
         GOTO 800
 !
 !       points on land: assign exception value
@@ -2894,15 +3158,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2965,7 +3226,7 @@
       JX2 = JX1+1
       SX2 = XC + 1. - FLOAT(JX1)
       SX1 = 1. - SX2
-      IF (KREPTX .EQ. 0) THEN                                            40.13
+      IF (KREPTX .EQ. 0) THEN                                             40.13
         IF (SX1.LT.0.01 .OR. JX1.EQ.0)   THEN
           SX1 = 0.
           SX2 = 1.
@@ -2974,11 +3235,11 @@
           SX2 = 0.
           SX1 = 1.
         ENDIF
-      ELSE                                                               40.13
-!       repeating grid                                                   40.13
-        JX1 = 1 + MODULO (JX1-1, MXC)                                    40.13
-        JX2 = 1 + MODULO (JX2-1, MXC)                                    40.13
-      ENDIF                                                              40.13
+      ELSE                                                                40.13
+!       repeating grid                                                    40.13
+        JX1 = 1 + MODULO (JX1-1, MXC)                                     40.13
+        JX2 = 1 + MODULO (JX2-1, MXC)                                     40.13
+      ENDIF                                                               40.13
 !
       JY1 = INT(YC+3.) - 2
       JY2 = JY1+1
@@ -3106,15 +3367,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3283,7 +3541,7 @@
       REAL        ACWAV, ACWI, ACWJ, ACWX, ACWY, DDET, DDI, DDJ, DDX,
      &            DDY, DIX, DIY,DJX, DJY, DS2, DXI, DXJ, DYI, DYJ, DEP,
      &            DEPLOC, FX,FY, FXADD, FYADD, NAX, NAY, RRDI, RRDJ,
-     &            SIG, SXLO, SXUP, SYLO, SYUP
+     &            SIG, SXLO, SXUP, SYLO, SYUP, CSLAT
       INTEGER     ID, IENT, IND1, IND2, IND3, IND4, IND5, IND6, IND7,
      &            IND8, IND9, IP, IS, IVTYPE, JX, JXLO, JXUP, JY,
      &            JYLO, JYUP
@@ -3531,11 +3789,11 @@
         ENDIF
         IF (KSPHER.GT.0) THEN                                             40.13
 !         spherical coordinates are used; first compute cos(latitude)     40.13
-          COSLAT(1) = COS(YOFFS+YCGRID(JX,JY))                            40.13
-!         LENDEG is the length of one degree N-S                          40.13
-          DXI = DXI * LENDEG * COSLAT(1)                                  40.13
+          CSLAT = COS(DEGRAD*(YOFFS+YCGRID(JX,JY)))                       40.61 40.13
+!         LENDEG is the length of one degree of the sphere                40.13
+          DXI = DXI * LENDEG * CSLAT                                      40.13
           DYI = DYI * LENDEG                                              40.13
-          DXJ = DXJ * LENDEG * COSLAT(1)                                  40.13
+          DXJ = DXJ * LENDEG * CSLAT                                      40.13
           DYJ = DYJ * LENDEG                                              40.13
         ENDIF                                                             40.13
 !

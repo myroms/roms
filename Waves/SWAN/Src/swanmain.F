@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !
 !     SWAN main program and miscellaneous routines
 !
@@ -25,7 +25,7 @@
 !     SWINCO
 !     SWCLME: Clean memory
 
-# ifndef MODEL_COUPLING
+#ifndef MODEL_COUPLING
 !
 !***********************************************************************
 !                                                                      *
@@ -42,15 +42,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -115,7 +112,7 @@
 
       CALL SWMAIN                                                         40.31 34.01
 
-  999 CONTINUE
+999   CONTINUE
 
 !     --- stop MPI                                                        40.30
 
@@ -124,15 +121,15 @@
 !     --- end of MAIN PROGRAM
 !
       END PROGRAM SWAN
-# endif
+#endif
 
 !***********************************************************************
 !                                                                      *
-# ifdef MODEL_COUPLING
+#ifdef MODEL_COUPLING
       SUBROUTINE SWAN_INITIALIZE (MyComm, WNAME)
-# else
-      SUBROUTINE SWMAIN
-# endif
+#else
+      SUBROUTINE SWMAIN                                                   40.31 34.01
+#endif
 !                                                                      *
 !***********************************************************************
 !
@@ -146,10 +143,10 @@
       USE OUTP_DATA                                                       40.51
       USE M_GENARR                                                        40.31
       USE M_PARALL                                                        40.31
-# ifdef WAVES_OCEAN
-      USE M_PARALL2                                                       jcw
-      USE WAVES_COUPLER_MOD, ONLY: INITIALIZE_WAV2OCN_COUPLING            jcw
-# endif
+#ifdef WAVES_OCEAN
+      USE M_PARALL2
+      USE WAVES_COUPLER_MOD, ONLY: INITIALIZE_WAV2OCN_COUPLING
+#endif
 !
       IMPLICIT NONE
 !
@@ -160,15 +157,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -257,6 +251,8 @@
 !
 !     AC1   :     Contains action density at previous time step           40.31
 !     BGRIDP:     data concerning boundary grid points                    40.31
+!     BLKND :     array giving node number per subdomain                  40.41
+!     BLKNDC:     auxiliary array for collecting the array BLKND          40.41
 !     BSPECS:     array containing boundary spectra                       40.31
 !     CHARS :     array to pass character info to MSGERR                  40.41
 !     COMPDA:     array containing various data depending on grid         40.31
@@ -270,10 +266,10 @@
 !     LOPEN :     indicates whether a file is open                        34.01
 !     MSGSTR:     string to pass message to call MSGERR                   40.41
 !
-# ifdef MODEL_COUPLING
-      CHARACTER*80, intent(in) :: WNAME                                   jcw
-      INTEGER, INTENT(in) :: MyCOMM                                       jcw
-# endif
+#ifdef MODEL_COUPLING
+      CHARACTER*80, intent(in) :: WNAME
+      INTEGER, INTENT(in) :: MyCOMM
+#endif
       INTEGER   IUNIT                                                     34.01
       INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN                             40.30
       INTEGER   INERR                                                     40.31
@@ -283,6 +279,14 @@
       CHARACTER*20 NUMSTR, CHARS(1)                                       40.41
       CHARACTER*80 MSGSTR                                                 40.41
       LOGICAL   LOPEN                                                     34.01
+#ifndef MODEL_COUPLING
+      INTEGER, ALLOCATABLE :: CROSS(:,:)                                  40.31
+      INTEGER, ALLOCATABLE :: BGRIDP(:)                                   40.31
+      REAL   , ALLOCATABLE :: BSPECS(:,:,:,:)                             40.31
+      REAL   , ALLOCATABLE :: AC1(:,:,:), COMPDA(:,:)                     40.31
+!
+      REAL, ALLOCATABLE    :: BLKND(:), BLKNDC(:), OURQT(:)               40.51 40.41
+#endif
 !
 !  7. Common blocks used
 !
@@ -308,7 +312,7 @@
 !     SWPRTI                                                              40.23
 !     SWTSTA                                                              40.23
 !     SWTSTO                                                              40.23
-!     MSGERR : Handles error messeges according to severity               40.41
+!     MSGERR : Handles error messages according to severity               40.41
 !     NUMSTR : Converts integer/real to string                            40.41
 !     TXPBLA : Removes leading and trailing blanks in string              40.41
 !
@@ -354,12 +358,17 @@
 !
 ! 13. Source text
 !
-!     initialize MPI
-      CALL SWINITMPI (MyComm)                                             40.30
-      INPFIL = WNAME                                                      jcw
+#ifdef MODEL_COUPLING
+
+!     --- initialize MPI
+
+      CALL SWINITMPI (MyComm)
+      INPFIL = WNAME
+#endif
 
 !     --- initialize various data
-      DCUMTM(:,1:2) = 0.D0                                                 40.23
+
+      DCUMTM(:,1:2) = 0D0                                                 40.23
       NCUMTM(:)     = 0                                                   40.23
       CALL SWTSTA(1)                                                      40.23
 
@@ -375,7 +384,11 @@
       IF (STPNOW()) RETURN                                                34.01
 !
       COMPUT = '    '
+#ifndef MODEL_COUPLING
+!     --- repeat
 
+      DO
+#endif
 !       --- read and process user commands
 
         CALL SWTSTA(3)                                                    40.23
@@ -389,10 +402,14 @@
           IUNIT  = 0                                                      40.13
           IOSTAT = 0                                                      40.13
           FILENM = 'norm_end'                                             40.13
-          IF(INODE.EQ.MASTER) THEN                                         jcw
+#ifdef MODEL_COUPLING
+          IF  (INODE.EQ.MASTER) THEN
+#endif
           CALL FOR (IUNIT, FILENM, 'UF', IOSTAT)                          40.13
           WRITE (IUNIT, *) ' Normal end of run ', PROJNR                  40.13
-          ENDIF                                                           jcw
+#ifdef MODEL_COUPLING
+          ENDIF
+#endif
           GOTO 900                                                        40.13
         ENDIF                                                             40.13
 
@@ -470,9 +487,11 @@
      &      ,I3)
  6011     FORMAT(' ** To ignore this error, change [maxerr] with the',    30.72
      &           ' SET command')                                          30.72
-
-!        ELSE
+#ifdef MODEL_COUPLING
         ENDIF
+#else
+        ELSE
+#endif
 !
           IF (ITEST.GE.40) THEN                                           40.00
             IF (NSTATC.EQ.1) THEN                                         33.08
@@ -500,18 +519,18 @@
 !             --- reset ICOND to prevent second computation of
 !                 initial condition
               ICOND = 0                                                   40.00
+
             ENDIF
           ELSE
             IT0 = 1
           ENDIF
 
-!         --- synchronize nodes                                           40.30
-
-          IT=0                                                            jcw
-            IF ( IT.EQ.IT0 .AND. .NOT.ALLOCATED(OURQT) ) THEN             40.51 40.31
-               ALLOCATE (OURQT(MAX_OUTP_REQ))                             40.51 40.30
-               OURQT = -9999.                                             40.51 40.30
-            ENDIF                                                         40.00
+#ifdef MODEL_COUPLING
+          IT=0
+          IF ( IT.EQ.IT0 .AND. .NOT.ALLOCATED(OURQT) ) THEN
+             ALLOCATE (OURQT(MAX_OUTP_REQ))
+             OURQT = -9999.
+          ENDIF
 # ifdef WAVES_OCEAN
 !
 !         --- initialize MCT coupling
@@ -520,260 +539,81 @@
 !
 !         --- exchange initial conditions with ocean model.
 !
-            CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,         40.31
-     &                    KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,         40.51 40.31
+            CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,
+     &                    KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,
      &                    0, 0)
-            CALL SWTSTO(1)                                                40.30
+            CALL SWTSTO(1)
 # endif
  900  CONTINUE
 
-      RETURN                                                              30.82
-# ifdef MODEL_COUPLING
+      RETURN
       END SUBROUTINE SWAN_INITIALIZE
-# else
-      SUBROUTINE SWMAIN
-# endif
-
 !
 !***********************************************************************
 !                                                                      *
-      SUBROUTINE SWAN_RUN (CouplingTime)                                  40.31 34.01
+      SUBROUTINE SWAN_RUN (CouplingTime)
 !                                                                      *
 !***********************************************************************
 !
-      USE TIMECOMM                                                        40.41
-      USE OCPCOMM2                                                        40.41
-      USE OCPCOMM4                                                        40.41
-      USE SWCOMM1                                                         40.41
-      USE SWCOMM2                                                         40.41
-      USE SWCOMM3                                                         40.41
-      USE SWCOMM4                                                         40.41
-      USE OUTP_DATA                                                       40.51
-      USE M_GENARR                                                        40.31
-      USE M_PARALL                                                        40.31
-      USE M_PARALL2                                                       jcw
+      USE TIMECOMM
+      USE OCPCOMM2
+      USE OCPCOMM4
+      USE SWCOMM1
+      USE SWCOMM2
+      USE SWCOMM3
+      USE SWCOMM4
+      USE OUTP_DATA
+      USE M_GENARR
+      USE M_PARALL
+      USE M_PARALL2
 !
       IMPLICIT NONE
 !
+      REAL,  intent(in) :: CouplingTime
+      INTEGER   IUNIT
+      INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN
+      INTEGER   INERR
+      INTEGER   IERR
+      INTEGER   ISTAT, IF1, IL1
+      CHARACTER PTYPE, PNAME *8, COMPUT *4, DTTIWR*18
+      CHARACTER*20 NUMSTR, CHARS(1)
+      CHARACTER*80 MSGSTR
+      LOGICAL   LOPEN
+      INTEGER  numsteps
+      LOGICAL STPNOW
 !
-!   --|-----------------------------------------------------------|--
-!     | Delft University of Technology                            |
-!     | Faculty of Civil Engineering                              |
-!     | Environmental Fluid Mechanics Section                     |
-!     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
-!     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
-!   --|-----------------------------------------------------------|--
-!
-!
-!     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
-!
-!     This program is free software; you can redistribute it and/or
-!     modify it under the terms of the GNU General Public License as
-!     published by the Free Software Foundation; either version 2 of
-!     the License, or (at your option) any later version.
-!
-!     This program is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-!     GNU General Public License for more details.
-!
-!     A copy of the GNU General Public License is available at
-!     http://www.gnu.org/copyleft/gpl.html#SEC3
-!     or by writing to the Free Software Foundation, Inc.,
-!     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-!
-!
-!  0. Authors
-!
-!     30.60: Nico Booij
-!     30.72: IJsbrand Haagsma
-!     30.74: IJsbrand Haagsma (Include version)
-!     30.82: IJsbrand Haagsma
-!     30.90: IJsbrand Haagsma (Equivalence verion)
-!     32.01: Roeland Ris & Cor van der Schelde
-!     32.02: Roeland Ris & Cor van der Schelde (1D-version)
-!     34.01: IJsbrand Haagsma
-!     40.00, 40.13: Nico Booij
-!     34.01: Jeroen Adema
-!     33.08: W. Erick Rogers
-!     40.22: John Cazes and Tim Campbell
-!     40.23: Marcel Zijlema
-!     40.30: Marcel Zijlema
-!     40.31: Marcel Zijlema
-!     40.41: Marcel Zijlema
-!     40.51: Marcel Zijlema
-!
-!  1. Updates
-!
-!            10 FEB   Subroutine SWMAIN introduced
-!     30.60, Aug. 97: argument list of ERRCHK changed
-!     30.72, Sept 97: INTEGER*4 replaced by INTEGER
-!     30.72, Nov. 97: declaration of ITERMX removed because it is a common
-!                     variable, which is declared in the INCLUDE file
-!     30.72, Nov. 97: PWTAIL(3) is made dependent on PWTAIL(1), also in the
-!                     initialisation
-!     30.74, Nov. 97: Prepared for version with INCLUDE statements
-!     32.01, Jan. 98: Nautical convention included (project h3268)
-!     32.01, Jan. 98: Comparison of computed and prescribed significant
-!                     wave height (project h3268)
-!     32.02, Jan. 98: Introduction of 1D-version
-!     30.72, Mar. 98: Added instruction to change [maxerr] in case of a
-!                     terminating warning
-!     40.00, Nov. 97: time step loop reorganized,
-!                     argument list in call SNEXTI changed
-!                     declaration of ITERMX removed
-!                     argument added in call SWOUTP
-!     30.82, Sep. 98: Added check on error level each time step to prevent
-!                     continuation of computation
-!     30.90, Oct. 98: Introduced EQUIVALENCE POOL-arrays
-!     34.01, Feb. 99: Changed STOP statement in a jump to end of subroutine
-!     34.01, Feb. 99: Close all files at end of this subroutine
-!     34.01, Feb. 99: Introducing STPNOW
-!     33.08, July 98: S&L scheme-related changes
-!     40.13, July 01: coefficient PTRIAD(4) added
-!                     make file 'norm_end' if program ends normally
-!     40.22, Oct. 01: call SWCOMP changed in view of parallellization
-!     40.23, Aug. 02: Print of CPU times added
-!     40.30, Mar. 03: introduction distributed-memory approach using MPI
-!     40.31, Dec. 03: removing POOL mechanism and reconsidering this
-!                     subroutine
-!     40.41, Oct. 04: common blocks replaced by modules, include files removed
-!     40.51, Feb. 05: re-design output process in parallel mode
-!
-!  2. Purpose
-!
-!     SWMAIN subroutine, calling SWINIT, SWREAD, SWCOMP and SWOUTP
-!
-!  3. Method
-!
-!     ---
-!
-!  4. Argument variables
-!
-!  6. Local variables
-!
-!     AC1   :     Contains action density at previous time step           40.31
-!     BGRIDP:     data concerning boundary grid points                    40.31
-!     BSPECS:     array containing boundary spectra                       40.31
-!     CHARS :     array to pass character info to MSGERR                  40.41
-!     COMPDA:     array containing various data depending on grid         40.31
-!     CROSS :     integer array indicating obstacle crossing              40.30
-!                 (0=no, 1=yes)                                           40.30
-!     ILEN  :     length of array                                         40.30
-!     INERR :     number of the initialisation error                      40.31
-!     IUNIT :     counter for file unit numbers                           34.01
-!     LOPEN :     indicates whether a file is open                        34.01
-!     MSGSTR:     string to pass message to call MSGERR                   40.41
-!
-      REAL,  intent(in) :: CouplingTime                                   jcw
-      INTEGER   IUNIT                                                     34.01
-      INTEGER   IOSTAT, IT0, IT, SAVITE, ILEN                             40.30
-      INTEGER   INERR                                                     40.31
-      INTEGER   IERR                                                      40.31 40.00
-      INTEGER   ISTAT, IF1, IL1                                           40.41
-      CHARACTER PTYPE, PNAME *8, COMPUT *4, DTTIWR*18                     40.00
-      CHARACTER*20 NUMSTR, CHARS(1)                                       40.41
-      CHARACTER*80 MSGSTR                                                 40.41
-      LOGICAL   LOPEN                                                     34.01
-      INTEGER  numsteps                                                   jcw
-!
-!  7. Common blocks used
-!
-!
-!  8. Subroutines used
-!
-!     SWINIT
-!     SWREAD
-!     FOR
-!     SWPREP
-!     ERRCHK
-!     SWRBC
-!     SWINCO
-!     SWCOLOUT                                                            40.30
-!     SWGATHER                                                            40.30
-!     SWSYNC                                                              40.30
-!     SWCOLLECT        Collects geographical field array from all nodes   40.41
-!     SNEXTI
-!     SWCOMP
-!     HSOBND: Generates warning if comp. and prescr. Hs differ more than  32.01
-!             a fraction HSRERR at the up-wave boundary                   32.01
-!     SWOUTP
-!     SWPRTI                                                              40.23
-!     SWTSTA                                                              40.23
-!     SWTSTO                                                              40.23
-!     MSGERR : Handles error messeges according to severity               40.41
-!     NUMSTR : Converts integer/real to string                            40.41
-!     TXPBLA : Removes leading and trailing blanks in string              40.41
-!
-      LOGICAL STPNOW                                                      34.01
-!
-!  9. Subroutines calling
-!
-!     MAIN program SWAN
-!
-! 10. Error Messages
-!
-!     ---
-!
-! 11. Remarks
-!
-!     The description of the structure of this subroutine is very
-!     short as most of the source code can easily be understood with
-!     the aid of the command descriptions in the user manual and the
-!     purpose of the subroutines from the system documentation.
-!
-! 12. Structure
-!
-!     ----------------------------------------------------------------
-!     Call SWINIT to initialize various common data
-!     Repeat                                                              40.00
-!         Call SWREAD to read and process user commands
-!         If last command was STOP
-!         Then exit from repeat
-!         -------------------------------------------------------------
-!         Call SWPREP to check input and prepare computation
-!         If nonstationary computation is to be made                      40.00
-!         Then start time step loop at IT=0 and                           40.00
-!         Call SWINCO to calculate initial wave spectra                   40.00
-!         -------------------------------------------------------------
-!         For requested number of time steps do                           40.00
-!             Call SNEXTI to update boundary conditions and input fields  40.00
-!             If IT>0                                                     40.00
-!             Then Call SWCOMP to calculate the wave field                40.00
-!             ---------------------------------------------------------
-!             Call SWOUTP to postprocess the results and create output
-!             Update time
-!     ----------------------------------------------------------------
-!
-! 13. Source text
-          numsteps=0                                                      jcw
+!         ---  Time-stepping SWAN.
+
+          numsteps=0
+#endif
+
+!         --- synchronize nodes                                           40.30
+
           CALL SWSYNC                                                     40.30
           IF (STPNOW()) RETURN                                            40.30
 
 !         --- loop over time steps                                        40.00
 
-          IF (NSTATC.EQ.1) THEN                                           40.00
-            IT0 = 0                                                       40.00
+#ifdef MODEL_COUPLING
+          IF (NSTATC.EQ.1) THEN
+            IT0 = 0
           ELSE
             IT0 = 1
           ENDIF
-
+#endif
           DO 500 IT = IT0, MTC                                            40.00
 !
             IF (LEVERR.GT.MAXERR) THEN                                    30.82
               WRITE (PRINTF, 6030) LEVERR                                 30.82
               IF (LEVERR.LT.4) WRITE (PRINTF, 6011)                       40.30 30.82
+#ifdef MODEL_COUPLING
+ 6011     FORMAT(' ** To ignore this error, change [maxerr] with the',
+     &           ' SET command')
+#endif
  6030         FORMAT(' ** No continuation of computation because ',       30.82
      &               'of error level:',I3)                                30.82
               EXIT                                                        40.30
             ENDIF                                                         30.82
- 6011     FORMAT(' ** To ignore this error, change [maxerr] with the',    30.72
-     &           ' SET command')                                          30.72
 
 !           --- synchronize nodes
 
@@ -783,12 +623,10 @@
 !           --- update boundary conditions and input fields
 !
             CALL SWTSTA(7)                                                40.23
-
             CALL SNEXTI ( BSPECS, BGRIDP, COMPDA, AC1   , AC2   ,         40.31
      &                    SPCSIG, SPCDIR, XCGRID, YCGRID, KGRPNT,         40.31
      &                    XYTST , DEPTH , WLEVL , FRIC  , UXB   ,         40.31
      &                    UYB   , WXI   , WYI   )                         40.31
-
             CALL SWTSTO(7)                                                40.23
             IF (STPNOW()) RETURN                                          34.01
 !
@@ -827,6 +665,11 @@
 
             ENDIF
 !
+            IF ( IT.EQ.IT0 .AND. .NOT.ALLOCATED(OURQT) ) THEN             40.51 40.31
+               ALLOCATE (OURQT(MAX_OUTP_REQ))                             40.51 40.30
+               OURQT = -9999.                                             40.51 40.30
+            ENDIF                                                         40.00
+!
             SAVITE = ITEST                                                30.21
             IF (IOUTES .GT. ITEST) ITEST = IOUTES
 
@@ -839,14 +682,20 @@
 
             CALL SWTSTA(9)                                                40.30
 
-!jcw call coupler during output computations
+#ifdef MODEL_COUPLING
+
+!           --- couple models during output computations
 
             IF (IT.gt.0) THEN
-              numsteps = numsteps + 1                                     jcw
-              CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,       40.31
-     &                      KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,       40.51 40.31
+              numsteps = numsteps + 1
+              CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,
+     &                      KGRPNT, XCGRID, YCGRID, KGRBND, OURQT ,
      &                      numsteps, CouplingTime)
             END IF
+#else
+            CALL SWOUTP ( AC2   , SPCSIG, SPCDIR, COMPDA, XYTST ,         40.31
+     &                    KGRPNT, XCGRID, YCGRID, KGRBND, OURQT )         40.51 40.31
+#endif
             CALL SWTSTO(9)                                                40.30
             IF (STPNOW()) RETURN                                          40.30
 !
@@ -859,12 +708,13 @@
               IF (NSTATC.EQ.1 .AND. IT.LT.MTC) TIMCO = TIMCO + DT         40.00
               CHTIME = DTTIWR(ITMOPT, TIMCO)                              40.00
               IF (NSTATC.EQ.1) WRITE (PRINTF, 222) CHTIME, TIMCO          40.00
- 222          FORMAT(' Time of computation ->  ',A,' in sec:', F9.0)      40.00
+ 222          FORMAT(' Time of computation ->  ',A,' in sec:', F12.0)     40.00
             ENDIF                                                         40.00
 
  500      CONTINUE
-!
-      RETURN                                                              30.82
+
+#ifdef MODEL_COUPLING
+      RETURN
       END SUBROUTINE SWAN_RUN
 
 !***********************************************************************
@@ -873,32 +723,44 @@
 !                                                                      *
 !***********************************************************************
 !
-      USE TIMECOMM                                                        40.41
-      USE OCPCOMM2                                                        40.41
-      USE OCPCOMM4                                                        40.41
-      USE SWCOMM1                                                         40.41
-      USE SWCOMM2                                                         40.41
-      USE SWCOMM3                                                         40.41
-      USE SWCOMM4                                                         40.41
-      USE OUTP_DATA                                                       40.51
-      USE M_GENARR                                                        40.31
-      USE M_PARALL                                                        40.31
-      USE M_PARALL2                                                       jcw
+      USE TIMECOMM
+      USE OCPCOMM2
+      USE OCPCOMM4
+      USE SWCOMM1
+      USE SWCOMM2
+      USE SWCOMM3
+      USE SWCOMM4
+      USE OUTP_DATA
+      USE M_GENARR
+      USE M_PARALL
+      USE M_PARALL2
 !
       USE WAVES_COUPLER_MOD, ONLY : finalize_wav2ocn_coupling
 # if defined WRF_COUPLING
       USE WAVES_COUPLER_MOD, ONLY : finalize_wav2atm_coupling
 # endif
 !
-!  6. Local variables
+!     Local variables
 !
-!     BLKND :     array giving node number per subdomain                  40.41
-!     BLKNDC:     auxiliary array for collecting the array BLKND          40.41
-      LOGICAL STPNOW                                                      34.01
-      LOGICAL LOPEN                                                       34.01
+!     BLKND :     array giving node number per subdomain
+!     BLKNDC:     auxiliary array for collecting the array BLKND
+!
+      LOGICAL STPNOW
+      LOGICAL LOPEN
       INTEGER MyStatus
       REAL, ALLOCATABLE    :: BLKND(:), BLKNDC(:)
+#else
+          IF (LEVERR.GT.MAXERR) GOTO 900                                  40.30
 
+        END IF
+
+      END DO
+!
+ 900  CONTINUE
+!
+      CALL SWTSTO(1)                                                      40.23
+#endif
+!
       DO IUNIT=1,HIOPEN                                                   34.01
         INQUIRE(UNIT=IUNIT,OPENED=LOPEN)                                  34.01
         IF (LOPEN.AND.IUNIT.NE.PRINTF) CLOSE(IUNIT)                       40.30
@@ -908,7 +770,7 @@
 !         output requests in case of parallel computation                 40.30
 
       CALL SWSYNC                                                         40.30
-      CALL SWTSTA(10)                                                     40.30
+      CALL SWTSTA(9)                                                      40.30
       IF ( PARLL ) THEN                                                   40.30
          ALLOCATE (BLKND(MXC*MYC))                                        40.51 40.41
          BLKND = REAL(INODE)                                              40.41
@@ -920,7 +782,7 @@
             DEALLOCATE(BLKNDC)                                            40.41 40.30
          END IF                                                           40.30
       END IF                                                              40.30
-      CALL SWTSTO(10)                                                     40.30
+      CALL SWTSTO(9)                                                      40.30
 !
       CALL SWPRTI                                                         40.23
 !
@@ -938,6 +800,7 @@
       IF (ALLOCATED(BLKND )) DEALLOCATE(BLKND )                           40.41
       CALL SWCLME                                                         40.31
 !
+#ifdef MODEL_COUPLING
       CALL SWEXITMPI                                                      40.30
 
 # ifdef MCT_LIB
@@ -949,10 +812,14 @@
       CALL finalize_wav2atm_coupling
 #  endif
 # endif
-
+#endif
       RETURN                                                              30.82
+#ifdef MODEL_COUPLING
       END SUBROUTINE SWAN_FINALIZE
-
+#else
+!     end of subroutine SWMAIN
+      END
+#endif
 !***********************************************************************
 !                                                                      *
       SUBROUTINE SWINIT (INERR)                                           40.31 34.01
@@ -979,15 +846,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1030,6 +894,8 @@
 !     40.31: Marcel Zijlema
 !     40.41: Marcel Zijlema
 !     40.51: Marcel Zijlema
+!     40.61: Marcel Zijlema
+!     40.64: Marcel Zijlema
 !
 !  1. Updates
 !
@@ -1082,6 +948,10 @@
 !     40.41, Sep. 04: output variables TMM10 and RTMM10 added
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
 !     40.51, Feb. 05: output variable TMBOT added
+!     40.51, Sep. 05: output variables WATLEV and BOTLEV added
+!     40.51, Feb. 06: output variable TPS added
+!     40.61, Sep. 06: output variables DISBOT, DISSRF and DISWCP added
+!     40.64, Apr. 07: output variables Qp and BFI added
 !
 !  2. Purpose
 !
@@ -1131,7 +1001,7 @@
 ! 13. Source text
 !
       VERTXT = BLANK                                                      40.03
-      VERNUM = 40.41
+      VERNUM = 40.51
       WRITE (VERTXT, '(F5.2)') VERNUM                                     40.03
       CALL BUGFIX ('A')
       CALL BUGFIX ('B')
@@ -1148,7 +1018,11 @@
      &        /,20X,'---------------------------------------',//)
 !
       IF (SCREEN.NE.PRINTF.AND.INODE.EQ.MASTER) WRITE (SCREEN,6020)       40.30
+#ifdef MODEL_COUPLING
  6020 FORMAT (/, ' SWAN is preparing computation ...',/)
+#else
+ 6020 FORMAT (/, ' SWAN is preparing computation',/)
+#endif
 !
 !     ***** initial values for common variables *****
 !     ***** names *****
@@ -1199,6 +1073,7 @@
       NBFILS = 0                                                          40.00
       NBSPEC = 0                                                          40.00
       NBGRPT = 0                                                          40.00
+      NBGGL  = 0                                                          40.51
       FSHAPE = 2                                                          40.00
       DSHAPE = 2                                                          40.00
       PSHAPE(1) = 3.3                                                     40.00
@@ -1280,7 +1155,6 @@
       XOFFS  = 0.
       YOFFS  = 0.
       LXOFFS = .FALSE.
-      NESRUN = 0                                                          30.00
       DYNDEP = .FALSE.                                                    40.00
       NWAMN = 0
       MXOUTAR = 0
@@ -1472,18 +1346,12 @@
       PSURF(1)  = 1.0
       PSURF(2)  = 0.73                                                    20.67
 !
-      PTRIAD(1)  = 0.1                                                    30.82
-      PTRIAD(2)  = 2.2                                                    30.82
+!     triad interactions
+      PTRIAD(1)  = 0.05                                                   40.61 30.82
+      PTRIAD(2)  = 2.5                                                    40.61 40.55 30.82
       PTRIAD(3)  = 10.                                                    40.23
       PTRIAD(4)  = 0.2                                                    40.13
       PTRIAD(5)  = 0.01                                                   40.23
-!
-!     *** if the Lumped Triad Approximation of Eldeberky (1996) is used    rr
-!     *** the coefficient for PTRIAD(1) should be set equal to 0.25          rr
-!     **** moreover: the coefficient to calculate the maximum discrete      rr
-!     *** is stored in PTRIAD (2)  --> value has to be 2.5                   rr
-!     PTRIAD(1) = 0.25                                                       rr
-!     PTRIAD(2) = 2.5                                                        rr
 !
 !     quadruplet interactions
       PQUAD(1) = 0.25                                                     34.00
@@ -1551,8 +1419,7 @@
       JHSIBC = 25                                                         40.00
       JHS    = 26                                                         40.13
       JURSEL = 27                                                         40.13
-      JPBOT  = 28                                                         40.51
-      MCMVAR = 28                                                         40.51 40.13
+      MCMVAR = 27                                                         40.65 40.61 40.51 40.13
 !     subarray sequence number 1 is used only for unused subarrays        40.13
       JFRC2 = 1                                                           40.00
       JFRC3 = 1                                                           40.00
@@ -1568,6 +1435,14 @@
 !
       JSETUP = 1                                                          32.02
       JDPSAV = 1                                                          32.02
+!
+!     --- added for output purposes                                       40.65
+!
+      JPBOT  = 1                                                          40.65 40.51
+      JBOTLV = 1                                                          40.65
+      JDSXB  = 1                                                          40.65 40.61
+      JDSXS  = 1                                                          40.65 40.61
+      JDSXW  = 1                                                          40.65 40.61
 !
 !     Next pointers are for the plot of the source terms (SWTSDA)         40.31
 !
@@ -1698,7 +1573,7 @@
       OVLLIM(IVTYPE) = 0.
       OVULIM(IVTYPE) = 1000.
       OVLEXP(IVTYPE) = 0.
-      OVHEXP(IVTYPE) = 100.
+      OVHEXP(IVTYPE) = 0.1
       OVEXCV(IVTYPE) = -9.
 !
       IVTYPE = 8
@@ -2219,6 +2094,102 @@
       OVHEXP(IVTYPE) = 100.
       OVEXCV(IVTYPE) = -9.
 !
+      IVTYPE = 51                                                         40.51
+      OVKEYW(IVTYPE) = 'WATL'
+      OVSNAM(IVTYPE) = 'Watlev'
+      OVLNAM(IVTYPE) = 'Water level'
+      OVUNIT(IVTYPE) = UH
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = -1.E4
+      OVULIM(IVTYPE) = 1.E4
+      OVLEXP(IVTYPE) = -100.
+      OVHEXP(IVTYPE) = 100.
+      OVEXCV(IVTYPE) = -99.
+!
+      IVTYPE = 52                                                         40.51
+      OVKEYW(IVTYPE) = 'BOTL'
+      OVSNAM(IVTYPE) = 'Botlev'
+      OVLNAM(IVTYPE) = 'Bottom level'
+      OVUNIT(IVTYPE) = UH
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = -1.E4
+      OVULIM(IVTYPE) = 1.E4
+      OVLEXP(IVTYPE) = -100.
+      OVHEXP(IVTYPE) = 100.
+      OVEXCV(IVTYPE) = -99.
+!
+      IVTYPE = 53                                                         40.51
+      OVKEYW(IVTYPE) = 'TPS'
+      OVSNAM(IVTYPE) = 'TPsmoo'
+      OVLNAM(IVTYPE) = 'Relative peak period (smooth)'
+      OVUNIT(IVTYPE) = UT
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = 0.
+      OVULIM(IVTYPE) = 1000.
+      OVLEXP(IVTYPE) = 0.
+      OVHEXP(IVTYPE) = 100.
+      OVEXCV(IVTYPE) = -9.
+!
+      IVTYPE = 54
+      OVKEYW(IVTYPE) = 'DISB'                                             40.61
+      OVSNAM(IVTYPE) = 'Disbot'
+      OVLNAM(IVTYPE) = 'Bottom friction dissipation'
+      OVUNIT(IVTYPE) = 'm2/s'
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = 0.
+      OVULIM(IVTYPE) = 1000.
+      OVLEXP(IVTYPE) = 0.
+      OVHEXP(IVTYPE) = 0.1
+      OVEXCV(IVTYPE) = -9.
+!
+      IVTYPE = 55
+      OVKEYW(IVTYPE) = 'DISSU'                                            40.61
+      OVSNAM(IVTYPE) = 'Dissrf'
+      OVLNAM(IVTYPE) = 'Wave breaking dissipation'
+      OVUNIT(IVTYPE) = 'm2/s'
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = 0.
+      OVULIM(IVTYPE) = 1000.
+      OVLEXP(IVTYPE) = 0.
+      OVHEXP(IVTYPE) = 0.1
+      OVEXCV(IVTYPE) = -9.
+!
+      IVTYPE = 56
+      OVKEYW(IVTYPE) = 'DISW'                                             40.61
+      OVSNAM(IVTYPE) = 'Diswcp'
+      OVLNAM(IVTYPE) = 'Whitecapping dissipation'
+      OVUNIT(IVTYPE) = 'm2/s'
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = 0.
+      OVULIM(IVTYPE) = 1000.
+      OVLEXP(IVTYPE) = 0.
+      OVHEXP(IVTYPE) = 0.1
+      OVEXCV(IVTYPE) = -9.
+!
+      IVTYPE = 58                                                         40.64
+      OVKEYW(IVTYPE) = 'QP'
+      OVSNAM(IVTYPE) = 'Qp'
+      OVLNAM(IVTYPE) = 'Peakedness'
+      OVUNIT(IVTYPE) = ' '
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = 0.
+      OVULIM(IVTYPE) = 1.
+      OVLEXP(IVTYPE) = 0.
+      OVHEXP(IVTYPE) = 1.
+      OVEXCV(IVTYPE) = -9.
+!
+      IVTYPE = 59                                                         40.64
+      OVKEYW(IVTYPE) = 'BFI'
+      OVSNAM(IVTYPE) = 'BFI'
+      OVLNAM(IVTYPE) = 'Benjamin-Feir index'
+      OVUNIT(IVTYPE) = ' '
+      OVSVTY(IVTYPE) = 1
+      OVLLIM(IVTYPE) = 0.
+      OVULIM(IVTYPE) = 1000.
+      OVLEXP(IVTYPE) = 0.
+      OVHEXP(IVTYPE) = 1000.
+      OVEXCV(IVTYPE) = -9.
+!
 !     various parameters for computation of output quantities             40.00
 !
 !     reference time for TSEC
@@ -2262,15 +2233,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2511,7 +2479,7 @@
       END DO                                                              40.31
 
       BGRIDP = 0                                                          40.31
-      NBGGL  = NBGRPT                                                     40.31
+      IF (NBGGL.EQ.0) NBGGL  = NBGRPT                                     40.51 40.31
       NBGRPT = 0                                                          40.31
       DO IX = MXF, MXL                                                    40.31
          DO IY = MYF, MYL                                                 40.31
@@ -2571,15 +2539,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2788,6 +2753,18 @@
 !         computational grid is excluded from the test
           IF (SNAME.EQ.'COMPGRID') GOTO 100
 !
+!         wind grid is excluded from the test
+          IF (SNAME.EQ.'WXGRID' .OR. SNAME.EQ.'WYGRID') GOTO 100
+!
+!         velocity grid is excluded from the test
+          IF (SNAME.EQ.'VXGRID' .OR. SNAME.EQ.'VYGRID') GOTO 100
+!
+!         waterlevel grid is excluded from the test
+          IF (SNAME.EQ.'WLEVGRID') GOTO 100
+!
+!         friction grid is excluded from the test
+          IF (SNAME.EQ.'FRICGRID') GOTO 100
+!
           STYPE = CUOPS%PSTYPE                                            40.31
 !                                                                         32.02
 !         *** Check other output locations ***                            32.02
@@ -2917,15 +2894,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3050,10 +3024,10 @@
       IF (JDP1.GT.1) COMPDA(1,JDP1) = -1.                                 40.00
       IF (JDP3.GT.1) COMPDA(1,JDP3) = -1.                                 40.00
       IF (VARWLV) THEN
-        COMPDA(1,JWLV2) = 0.                                              40.00
+        COMPDA(1,JWLV2) = EXCFLD(7)                                       40.65 40.00
 !       next two lines only for nonstat water level
-        IF (JWLV1.GT.1) COMPDA(1,JWLV1) = 0.                              40.00
-        IF (JWLV3.GT.1) COMPDA(1,JWLV3) = 0.                              40.00
+        IF (JWLV1.GT.1) COMPDA(1,JWLV1) = EXCFLD(7)                       40.65 40.00
+        IF (JWLV3.GT.1) COMPDA(1,JWLV3) = EXCFLD(7)                       40.65 40.00
       ENDIF
       IF (ICUR.GT.0) THEN
         COMPDA(1,JVX2) = 0.                                               40.00
@@ -3064,8 +3038,8 @@
         IF (JVY3.GT.1) COMPDA(1,JVY3) = 0.                                40.00
       ENDIF
       IF (VARFR) THEN
-        COMPDA(1,JFRC2) = 0.                                              40.00
-        COMPDA(1,JFRC3) = 0.                                              40.00
+        COMPDA(1,JFRC2) = EXCFLD(4)                                       40.65 40.00
+        COMPDA(1,JFRC3) = EXCFLD(4)                                       40.65 40.00
       ENDIF
       IF (VARWI) THEN
         COMPDA(1,JWX2) = 0.                                               40.00
@@ -3077,6 +3051,7 @@
         COMPDA(1,JASTD2) = 0.                                             40.03
         COMPDA(1,JASTD3) = 0.                                             40.03
       ENDIF
+      COMPDA(1,JBOTLV) = EXCFLD(1)                                        40.65
 
       DO 20 IX = 1, MXC
         DO 10 IY = 1, MYC
@@ -3095,6 +3070,7 @@
 !         ***** compute depth and water level *****
 !
           DEP = SVALQI (XP, YP, 1, DEPTH, 1, IX, IY)                      40.31 30.90
+          COMPDA(INDX,JBOTLV) = DEP                                       40.65
 !
           IF (VARWLV) THEN                                                20.38
             WLVL = SVALQI (XP, YP, 7, WLEVL, 1 ,IX ,IY)                   40.31 30.90
@@ -3115,10 +3091,13 @@
 !
           IF (ICUR.EQ.1 .AND. IGTYPE(2) .GE. 1) THEN                      30.82
             IF (DEPW.GT.0.) THEN
-!jcw              UU  = SVALQI (XP, YP, 2, UXB, 0 ,IX ,IY)                    40.31 30.90
-!jcw              VV  = SVALQI (XP, YP, 3, UYB, 0 ,IX ,IY)                    40.31 30.90
-              UU  = SVALQI (XP, YP, 2, UXB, 1 ,IX ,IY)                    40.31 30.90
-              VV  = SVALQI (XP, YP, 3, UYB, 1 ,IX ,IY)                    40.31 30.90
+#ifdef MODEL_COUPLING
+              UU  = SVALQI (XP, YP, 2, UXB, 1 ,IX ,IY)
+              VV  = SVALQI (XP, YP, 3, UYB, 1 ,IX ,IY)
+#else
+              UU  = SVALQI (XP, YP, 2, UXB, 0 ,IX ,IY)                    40.31 30.90
+              VV  = SVALQI (XP, YP, 3, UYB, 0 ,IX ,IY)                    40.31 30.90
+#endif
               VTOT = SQRT (UU*UU + VV*VV)
               CGMAX = PNUMS(18)*SQRT(GRAV*DEPW)
               IF (VTOT .GT. CGMAX) THEN
@@ -3175,7 +3154,7 @@
 !     ***** compute variable air-sea temperature difference *****         40.03
 !
           IF (VARAST) THEN
-             ASTD = SVALQI (XP, YP, 9, ASTDF, 1 ,IX ,IY)                  40.31 40.03
+             ASTD = SVALQI (XP, YP, 10, ASTDF, 1 ,IX ,IY)                 40.31 40.03
              COMPDA(INDX,JASTD2) = ASTD                                   40.03
              COMPDA(INDX,JASTD3) = ASTD                                   40.03
           ENDIF
@@ -3221,15 +3200,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3619,15 +3595,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3753,15 +3726,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3883,15 +3853,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4044,15 +4011,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4146,15 +4110,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4181,6 +4142,7 @@
 !     33.10: Nico Booij and Erick Rogers (changes re: the SORDUP scheme)
 !     40.31: Marcel Zijlema
 !     40.41: Marcel Zijlema
+!     40.53: Andre van der Westhuysen
 !
 !  1. Updates
 !
@@ -4201,6 +4163,7 @@
 !                     added warning concerning frequency-resolution and DIA,
 !                     added check of resonance condition for triads
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
+!     40.53, Mar. 05: change Alves and Banner parameters in case of XNL
 !
 !  2. Purpose
 !
@@ -4229,7 +4192,7 @@
 !
 !  8. Subroutines used
 !
-!     MSGERR : Handles error messeges according to severity
+!     MSGERR : Handles error messages according to severity
 !     NUMSTR : Converts integer/real to string
 !     TXPBLA : Removes leading and trailing blanks in string
 !
@@ -4254,6 +4217,7 @@
 ! 13. Source text
 !
       LOGICAL  STPNOW                                                     40.00
+      LOGICAL  EQREAL                                                     40.53
       SAVE IENT
       DATA IENT/0/
       IF (LTRACE) CALL STRACE (IENT,'ERRCHK')
@@ -4275,10 +4239,16 @@
 !     *** WAM cycle 3 physics ***
 !
       IF  ( (IWIND .EQ. 3 .OR. IWIND .EQ. 5) .AND. IWCAP .NE. 1
+     &      .AND. IWCAP.NE.7                                              40.53
      &    ) THEN
         CALL MSGERR(1,'Activate whitecapping mechanism according to')
         CALL MSGERR(1,'Komen et al. (1984) for wind option G3/YAN')       20.74
       ENDIF
+
+      IF  ( IWCAP.EQ.7 .AND. IWIND.NE.5 ) THEN                            40.53
+        CALL MSGERR(1,'Activate wind option Yan (1987) in case of')       40.53
+        CALL MSGERR(1,'Alves & Banner (2003) white-capping method')       40.53
+      END IF                                                              40.53
 !
 !     *** WAM cycle 4 physics ***
 !
@@ -4338,9 +4308,10 @@
       ENDIF                                                               40.08
 !
 !     Here the various problems with quadruplets are checked
-!     The combination of quadruplets and sectors is an error in the calculation
-!     of Quadruplets when the SECTOR option is used in the CGRID command. This
-!     error should be corrected in the future
+!     The combination of quadruplets and sectors is an error
+!     in the calculation of quadruplets when the SECTOR option is
+!     used in the CGRID command. This error should be corrected
+!     in the future
 !
       IF (IWIND.EQ.3 .OR. IWIND.EQ.4) THEN                                30.60
         IF (IQUAD .EQ. 0) THEN
@@ -4379,6 +4350,8 @@
 !
       END IF                                                              30.72
 !
+!     Check whether limiter should be de-activated
+!
       IF (IQUAD.EQ.0 .AND. PNUMS(20).LT.100.) THEN                        40.41
          CALL MSGERR(1,
      &              'Limiter is de-activated in case of no quadruplets')  40.41
@@ -4407,35 +4380,6 @@
          CALL MSGERR(4,'must be less than 200                    ')       30.72
       END IF                                                              30.72
 !
-!     Check resonance condition for triads                                40.41
-!
-      IF ( ITRIAD.GE.1 ) THEN
-         IJ2    = INT (FLOAT(MSC) / 2.)
-         IJ1    = IJ2 - 1
-         FAC1   = SPCSIG(IJ2) / SPCSIG(IJ1)
-         IRES   = NINT ( LOG10( 2.) / LOG10( FAC1 ) )
-         FACSCL = SPCSIG(MSC)/SPCSIG(MSC-IRES)
-         IF (ABS(FACSCL-2.).GT.0.05) THEN
-            FACRES = 10.**( LOG10(2.) / FLOAT(IRES) )
-            SIGLOW   = SPCSIG(MSC) / ( FACRES**(FLOAT(MSC-1) ) )
-            CHARS(1) = NUMSTR(IRES,RNAN,'(I2)')
-            CALL TXPBLA(CHARS(1),IF1,IL1)
-            MSGSTR = 'The resonance condition RC for triads is '//
-     &               CHARS(1)(IF1:IL1)//' and thus '
-            CALL MSGERR ( 1, MSGSTR )
-            CHARS(2) = NUMSTR(INAN,FACSCL,'(F10.4)')
-            CALL TXPBLA(CHARS(2),IF2,IL2)
-            MSGSTR = '(1+df/f)^RC = '//CHARS(2)(IF2:IL2)//
-     &               ', which should be 2.0 for good'
-            CALL MSGERR ( 1, MSGSTR )
-            CHARS(3) = NUMSTR(INAN,SIGLOW/PI2,'(F10.4)')
-            CALL TXPBLA(CHARS(3),IF3,IL3)
-            MSGSTR = 'scaling behaviour. For this, set FLOW = '//
-     &               CHARS(3)(IF3:IL3)//' Hz.'
-            CALL MSGERR ( 1, MSGSTR )
-         END IF
-      END IF
-!
 !     When CSM is applied only DIA should be used                         40.41
 !
       IF (IWCAP.EQ.6 .AND. IQUAD.GT.3 .AND. IQUAD.NE.8) THEN              40.41 40.30
@@ -4443,7 +4387,18 @@
      &       'In case of cumulative steepness method, only DIA '//        40.30
      &       'technique is supported')                                    40.30
       END IF                                                              40.30
-!OMPC
+!
+!     When Alves and Banner and XNL are applied change the parameters     40.53
+!
+      IF ( IWCAP.EQ.7 .AND. (IQUAD.EQ.51 .OR. IQUAD.EQ.52 .OR.            40.53
+     &                       IQUAD.EQ.53) ) THEN                          40.53
+         IF (EQREAL(PWCAP( 1), 5.0E-5)) PWCAP( 1) = 5.0E-5                40.53
+         IF (EQREAL(PWCAP(12),1.75E-3)) PWCAP(12) = 1.95E-3               40.53
+         IF (EQREAL(PWCAP(10),    4.0)) PWCAP(10) = 4.                    40.53
+         IF (EQREAL(PWCAP( 9),    0.0)) PWCAP( 9) = 0.                    40.53
+         IF (EQREAL(PWCAP(11),    0.0)) PWCAP(11) = 0.                    40.53
+      END IF                                                              40.53
+!OMP!
 !OMP      IF ( IQUAD.EQ.51 .OR. IQUAD.EQ.52 .OR. IQUAD.EQ.53 ) THEN           40.41
 !OMP         CALL MSGERR(4,'XNL not supported within OpenMP environment')     40.41
 !OMP      END IF                                                              40.41
@@ -4467,7 +4422,7 @@
       SUBROUTINE SNEXTI (BSPECS, BGRIDP, COMPDA, AC1   , AC2   ,          40.31
      &                   SPCSIG, SPCDIR, XCGRID, YCGRID, KGRPNT,          40.31
      &                   XYTST , DEPTH , WLEVL , FRIC  , UXB   ,          40.31
-     &                   UYB   , WXI   , WYI)
+     &                   UYB   , WXI   , WYI   )                          40.31
 !                                                                    *
 !*********************************************************************
 !
@@ -4487,15 +4442,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4760,8 +4712,8 @@
 !     --- update input fields (wind, water level etc.)
 !
 !     fields 5 and 6: wind
-!jcw
-# if !defined AIR_OCEAN
+
+#ifndef AIR_OCEAN
       IF (IFLDYN(5) .EQ. 1) THEN
         CALL FLFILE ( 5, 6, WXI, WYI,                                     40.31
      &               0, JWX2, JWX3, 0, JWY2, JWY3,
@@ -4788,7 +4740,7 @@
         ENDIF
       ENDIF
 # endif
- 122      FORMAT (A, 10(1X,E11.4))
+ 122  FORMAT (A, 10(1X,E11.4))
 !     field 4: friction coeff.
       IF (IFLDYN(4) .EQ. 1) THEN
         CALL FLFILE ( 4, 0, FRIC, 0.,                                     40.31
@@ -4811,11 +4763,13 @@
 
 !     field 7: water level
       IF (IFLDYN(7) .EQ. 1) THEN
-!        CALL FLFILE ( 7, 0, WLEVL, 0.,                                    jcw 40.31
-!     &               JWLV1, JWLV2, JWLV3, 0, 0, 0,
-!     &               1., 0.,                                              40.31 30.90
-!     &               COMPDA, XCGRID, YCGRID,
-!     &               KGRPNT, IERR)
+#ifndef MODEL_COUPLING
+        CALL FLFILE ( 7, 0, WLEVL, 0.,                                    40.31
+     &               JWLV1, JWLV2, JWLV3, 0, 0, 0,
+     &               1., 0.,                                              40.31 30.90
+     &               COMPDA, XCGRID, YCGRID,
+     &               KGRPNT, IERR)
+#endif
         IF (STPNOW()) RETURN                                              34.01
 !       Add bottom level to obtain depth
         DO 31 IX = 1, MXC
@@ -4848,15 +4802,14 @@
       ENDIF
 
 !     field 2 and 3: current velocity
-      IF (IFLDYN(2) .EQ. 1) THEN                                          
-!          CALL FLFILE ( 2, 3, UXB, UYB,                                   jcw  40.31
-!     &               JVX1, JVX2, JVX3, JVY1, JVY2, JVY3,
-!     &               COSVC, SINVC,                                        40.31 30.90
-!     &               COMPDA, XCGRID, YCGRID,
-!     &               KGRPNT, IERR)                                        jcw
-
-
-
+      IF (IFLDYN(2) .EQ. 1) THEN
+#ifndef MODEL_COUPLING
+        CALL FLFILE ( 2, 3, UXB, UYB,                                     40.31
+     &               JVX1, JVX2, JVX3, JVY1, JVY2, JVY3,
+     &               COSVC, SINVC,                                        40.31 30.90
+     &               COMPDA, XCGRID, YCGRID,
+     &               KGRPNT, IERR)
+#endif
         IF (STPNOW()) RETURN                                              34.01
 !       reduce current velocity if Froude number is larger than PNUMS(18)
         DO IX = 1, MXC                                                    40.13
@@ -4930,15 +4883,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4966,6 +4916,7 @@
 !     40.05: Ekaterini E. Kriezi
 !     40.31: Marcel Zijlema
 !     40.41: Marcel Zijlema
+!     40.61: Roop Lalbeharry
 !
 !  1. Updates
 !
@@ -4982,6 +4933,7 @@
 !                     changed
 !     40.31, Nov. 03: removing POOL-mechanism, reconsidering this subroutine
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
+!     40.61, Nov. 06: variables USNEW, THWNEW no longer written in WAM4.5
 !
 !  2. Purpose
 !
@@ -5261,7 +5213,7 @@
 !             heading line                                                40.03
                 IF (BTYPE.EQ.'WAMW') THEN                                 40.03
                   READ(NDSD, END=380, ERR=920) XLON, XLAT, CDATE,
-     &               EMEAN, THQ, FMEAN, USNEW, THWNEW
+     &               EMEAN, THQ, FMEAN
                   TIMSTR = CDATE
 !                 convert time string to time in seconds
                   CALL DTRETI (TIMSTR, BFILED(6), TIMF2)                  40.03 40.05
@@ -5526,15 +5478,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -5561,6 +5510,7 @@
 !     40.31: Tim Campbell and John Cazes
 !     40.31: Marcel Zijlema
 !     40.41: Marcel Zijlema
+!     40.61: Roop Lalbeharry
 !
 !  1. Update
 !
@@ -5575,6 +5525,7 @@
 !     40.31, Nov. 03: removing POOL construction
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
 !     40.41, Nov. 04: small corrections
+!     40.61, Nov. 06: boundary spectra are read as written in WAM4.5
 !
 !  2. Purpose
 !
@@ -5727,7 +5678,7 @@
 !
 !     1-D spectral input                                                  40.05
 !
-        DO  IFRE=1,NFRE                                                   40.05
+        DO IFRE=1,NFRE                                                    40.05
 !         1-D spectral input (only function of frequency)
           IF (IFRE.EQ.1) THEN
             READ (NDSD,*,END=940,ERR=920) ETOT, ADEG, DD
@@ -5797,24 +5748,14 @@
 !
 !   (2D) fully spectral input
         IF (UNFORM) THEN
-!         unformatted reading
-          IF (IFRE.EQ.1) THEN
-            IF (DORDER.LT.0) THEN
-              READ (NDSD,END=940,ERR=920)
-     &               ((BAUX1(IANG,IFRE),IANG=NANG,1,-1),IFRE=1,NFRE)
-            ELSE
-              READ (NDSD,END=940,ERR=920)
-     &               ((BAUX1(IANG,IFRE),IANG=1,NANG),IFRE=1,NFRE)
-            ENDIF
-          ELSE
-            IF (DORDER.LT.0) THEN
+!          unformatted reading
+           IF (DORDER.LT.0) THEN                                          40.55
               READ (NDSD,END=930,ERR=920)
      &               ((BAUX1(IANG,IFRE),IANG=NANG,1,-1),IFRE=1,NFRE)
-            ELSE
+           ELSE
               READ (NDSD,END=930,ERR=920)
      &               ((BAUX1(IANG,IFRE),IANG=1,NANG),IFRE=1,NFRE)
-            ENDIF
-          ENDIF
+           ENDIF
         ELSEIF ((.NOT.UNFORM).AND.(BTYPE.EQ.'WW3N')) THEN                 40.05
 !
 !         WW3 reading
@@ -5834,15 +5775,11 @@
         ELSE
 !         format reading (except WW3)
           IF (DORDER.LT.0) THEN                                           40.31
-            READ (NDSD,*,END=940,ERR=920)                                 40.31
-     &             ((BAUX1(IANG,IFRE),IANG=NANG,1,-1),IFRE=1,1)           40.31
-            READ (NDSD,*,END=930,ERR=920)                                 40.31
-     &             ((BAUX1(IANG,IFRE),IANG=NANG,1,-1),IFRE=2,NFRE)        40.31
+            READ (NDSD,*,END=930,ERR=920)                                 40.61
+     &             ((BAUX1(IANG,IFRE),IANG=NANG,1,-1),IFRE=1,NFRE)        40.61
           ELSE                                                            40.31
-            READ (NDSD,*,END=940,ERR=920)                                 40.31
-     &             ((BAUX1(IANG,IFRE),IANG=1,NANG),IFRE=1,1)              40.31
-            READ (NDSD,*,END=930,ERR=920)                                 40.31
-     &             ((BAUX1(IANG,IFRE),IANG=1,NANG),IFRE=2,NFRE)           40.31
+            READ (NDSD,*,END=930,ERR=920)                                 40.61
+     &             ((BAUX1(IANG,IFRE),IANG=1,NANG),IFRE=1,NFRE)           40.61
           ENDIF                                                           40.31
         ENDIF
 !
@@ -5938,7 +5875,6 @@
       RETURN
 
       END SUBROUTINE RESPEC
-
 !**********************************************************************
 !
       SUBROUTINE FLFILE (IGR1, IGR2,
@@ -5964,15 +5900,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6201,13 +6134,19 @@
           IF (INDX.GT.1) THEN                                             40.00
             XP = XCGRID(IX,IY)
             YP = YCGRID(IX,IY)
-!jcw            UU = SVALQI (XP, YP, IGR1, ARR, 0, IX, IY)                    40.31 30.90
-            UU = SVALQI (XP, YP, IGR1, ARR, 1, IX, IY)                    40.31 30.90
+#ifdef MODEL_COUPLING
+            UU = SVALQI (XP, YP, IGR1, ARR, 1, IX, IY)
+#else
+            UU = SVALQI (XP, YP, IGR1, ARR, 0, IX, IY)                    40.31 30.90
+#endif
             IF (IGR2.EQ.0) THEN
               COMPDA(INDX,JX3) = UU
             ELSE
-!jcw              VV = SVALQI (XP, YP, IGR2, ARR2, 0, IX, IY)                 40.31 30.90
-              VV = SVALQI (XP, YP, IGR2, ARR2, 1, IX, IY)                 40.31 30.90
+#ifdef MODEL_COUPLING
+              VV = SVALQI (XP, YP, IGR2, ARR2, 1, IX, IY)
+#else
+              VV = SVALQI (XP, YP, IGR2, ARR2, 0, IX, IY)                 40.31 30.90
+#endif
               COMPDA(INDX,JX3) =  UU*COSFC + VV*SINFC
               COMPDA(INDX,JY3) = -UU*SINFC + VV*COSFC
             ENDIF
@@ -6273,15 +6212,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6392,7 +6328,6 @@
       DATA IENT/0/
       CALL STRACE(IENT,'SWINCO')
 !
-!
 !     *** Fetch Computation 'the mean delta' ***
       IF (KSPHER.EQ.0) THEN
         TLEN  = (XCLEN + YCLEN)/2.
@@ -6468,6 +6403,7 @@
 !             calculate dimensionless peak period:
               TPDLSS = MIN (1./0.13, 0.46*FDLSS**0.27)                    40.00
               SPPARM(2) = WSLOC * TPDLSS / GRAV                           40.00
+              IF (SPPARM(1).LT.0.05) SPPARM(2) = 2.                       40.51
               SPPARM(3) = 180. * WDLOC / PI
               SPPARM(4) = 2.
               IF (TESTFL) WRITE (PRTEST, 65) XCGRID(IX,IY),               30.70
@@ -6475,19 +6411,19 @@
   65          FORMAT (' test point ',6(1X,E12.4))                         30.70
             ELSE
               SPPARM(1) = 0.02
-              SPPARM(2) = 1.
+              SPPARM(2) = 2.                                              40.51
               SPPARM(3) = 0.
               SPPARM(4) = 0.
             ENDIF
-            CALL SSHAPE (AC2(1,1,INX), SPCSIG, SPCDIR, 2, 2)               40.00
+            CALL SSHAPE (AC2(1,1,INX), SPCSIG, SPCDIR, 2, 2)              40.00
 !
           ENDIF
         ENDDO
       ENDDO
 !
       RETURN
-      END SUBROUTINE SWINCO
-!
+! * end of subroutine SWINCO *
+      END
 !****************************************************************
 !
       SUBROUTINE SWCLME
@@ -6513,7 +6449,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6580,4 +6516,4 @@
       IF (ALLOCATED(DIFPARDY)) DEALLOCATE(DIFPARDY)
 
       RETURN
-      END SUBROUTINE SWCLME
+      END

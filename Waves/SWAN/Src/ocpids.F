@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !     Last change:  NB   04 Jan 2001   12:00 pm
 !
 !          OCEAN PACK - Installation dependent subroutines
@@ -23,15 +23,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -93,8 +90,11 @@
 !                        and command reading must be initialised
 !
       LOGICAL    LREAD, FILEXI
-!jcw  CHARACTER  INPFIL *40, OUTFIL *40, INIFIL *(*), TSTFIL *40,
+#ifdef MODEL_COUPLING
       CHARACTER  OUTFIL *40, INIFIL *(*), TSTFIL *40,
+#else
+      CHARACTER  INPFIL *40, OUTFIL *40, INIFIL *(*), TSTFIL *40,
+#endif
      &           PLTOPT *4, TIMSTR *24,
      &           OUTFO *40, TSTFO *40, TXT*120
       INTEGER    PRCTIM(6), INIVER, INIVEF
@@ -128,8 +128,11 @@
         IF (INIVEF.GT.INIVER .OR. INIVEF.LE.0) GOTO 935                   40.00
         READ (11, 120, ERR=930, END=930) INST
         READ (11, *,   ERR=930, END=930) INPUTF
-!jcw    READ (11, 120, ERR=930, END=930) INPFIL
-        READ (11, 120, ERR=930, END=930)                                  jcw
+#ifdef MODEL_COUPLING
+        READ (11, 120, ERR=930, END=930)
+#else
+        READ (11, 120, ERR=930, END=930) INPFIL
+#endif
         READ (11, *,   ERR=930, END=930) PRINTF
         READ (11, 120, ERR=930, END=930) OUTFIL
         READ (11, *,   ERR=930, END=930) PRTEST
@@ -185,7 +188,9 @@
 !       REFERENCE NUMBERS AND NAMES OF STANDARD FILES
 !
         INPUTF = 3
-!jcw    INPFIL = 'INPUT'
+#ifndef MODEL_COUPLING
+        INPFIL = 'INPUT'
+#endif
         PRINTF = 4
         OUTFIL = 'PRINT'
 !       unit ref. numbers for output to screen and to separate
@@ -193,11 +198,14 @@
         PRTEST = PRINTF
         TSTFIL = '    '
         SCREEN = 6
-!        IUNMAX = 99
-        IUNMAX = 99999999                                                  jcw
+#ifdef MODEL_COUPLING
+        IUNMAX = 99999999
+#else
+        IUNMAX = 99
+#endif
+!/SGI        IUNMAX = 199
 !       TABC is the Tab character (interpreted as blank in command reading)
-!DOS        TABC   = '	'
-        TABC   = '	'
+        TABC = CHAR(9)                                                    40.67
 !       COMID is the comment identifier (usually $)
         COMID  = '$'
 !       DIRCH1 is directory separation character as appears in input file
@@ -248,8 +256,11 @@
         WRITE (12, 210) PRTEST, 'test file ref. number'
         WRITE (12, 220) TSTFO,  'test file name'                          40.30
         WRITE (12, 210) SCREEN, 'screen ref. number'
-!jcw        WRITE (12, 210) IUNMAX, 'highest file ref. number'
-        WRITE (12, 211) IUNMAX, 'highest file ref. number'                jcw
+#ifdef MODEL_COUPLING
+        WRITE (12, 211) IUNMAX, 'highest file ref. number'
+#else
+        WRITE (12, 210) IUNMAX, 'highest file ref. number'
+#endif
         WRITE (12, 230) COMID,  'comment identifier'
         WRITE (12, 230) TABC,   'TAB character'
         WRITE (12, 230) DIRCH1, 'dir sep char in input file'
@@ -262,7 +273,9 @@
         END IF
         CLOSE (12)
   210   FORMAT (I5, T41, A)
+#ifdef MODEL_COUPLING
   211   FORMAT (I8, T41, A)
+#endif
   220   FORMAT (A40, A)
   230   FORMAT (A1, T41, A)
   240   FORMAT (I5, T41, A19, I3)
@@ -270,6 +283,7 @@
 !
       IUNMIN = 0
       FUNLO = 21
+!/SGI      FUNLO = 103
       FUNHI = IUNMAX
 !
       CALL OCDTIM (PRCTIM)
@@ -342,15 +356,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -444,15 +455,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -568,15 +576,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as

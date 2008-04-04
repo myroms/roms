@@ -178,7 +178,8 @@
 !  timesteps: get air/sea fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),CoupleSteps(Iatmos,ng)).eq.0) THEN
+      IF ((iic(ng).ne.ntstart(ng)).and.                                 &
+     &    MOD(iic(ng),CoupleSteps(Iatmos,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -197,7 +198,8 @@
 !  timesteps: get waves/sea fluxes.
 !-----------------------------------------------------------------------
 !
-      IF (MOD(iic(ng),CoupleSteps(Iwaves,ng)).eq.0) THEN
+      IF ((iic(ng).ne.ntstart(ng)).and.                                 &
+     &    MOD(iic(ng)-1,CoupleSteps(Iwaves,ng)).eq.0) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

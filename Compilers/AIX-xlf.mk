@@ -149,6 +149,9 @@ $(SCRATCH_DIR)/swanpre2.o: FFLAGS += -qfixed
 $(SCRATCH_DIR)/swanser.o: FFLAGS += -qfixed
 $(SCRATCH_DIR)/swmod1.o: FFLAGS += -qfixed
 $(SCRATCH_DIR)/swmod2.o: FFLAGS += -qfixed
-$(SCRATCH_DIR)/swmod3.o: FFLAGS += -qfixed
+$(SCRATCH_DIR)/m_constants.o: FFLAGS += -qfree
+$(SCRATCH_DIR)/m_fileio.o: FFLAGS += -qfree
+$(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += -qfree
+$(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += -qfree
 
 endif

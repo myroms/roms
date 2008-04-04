@@ -68,7 +68,7 @@ endif
 ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
-               FC := /usr/local/openmpi-intel/bin/mpif90
+               FC := mpif90
                LD := $(FC)
  else
              LIBS += -lfmpi-pgi -lmpi-pgi 
@@ -86,7 +86,7 @@ ifdef USE_DEBUG
 else
            FFLAGS += -ip -O3 -axP
  ifeq ($(CPU),x86_64)
-           FFLAGS += -xW
+#          FFLAGS += -xW
  endif
 endif
 
@@ -140,6 +140,9 @@ $(SCRATCH_DIR)/swanpre2.o: FFLAGS += -nofree
 $(SCRATCH_DIR)/swanser.o: FFLAGS += -nofree
 $(SCRATCH_DIR)/swmod1.o: FFLAGS += -nofree
 $(SCRATCH_DIR)/swmod2.o: FFLAGS += -nofree
-$(SCRATCH_DIR)/swmod3.o: FFLAGS += -nofree
+$(SCRATCH_DIR)/m_constants.o: FFLAGS += -ffree
+$(SCRATCH_DIR)/m_fileio.o: FFLAGS += -ffree
+$(SCRATCH_DIR)/mod_xnl4v5.o: FFLAGS += -ffree
+$(SCRATCH_DIR)/serv_xnl4v5.o: FFLAGS += -ffree
 
 endif

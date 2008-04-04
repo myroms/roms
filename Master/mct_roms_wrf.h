@@ -176,7 +176,6 @@
 !=======================================================================
 !
       USE mod_param
-      USE mod_stepping
 !
       implicit none
 !
@@ -192,8 +191,7 @@
       CALL wclock_on (ng, iNLM, 48)
 #endif
       CALL ocn2atm_coupling_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
-     &                            nstp(ng))
+     &                            LBi, UBi, LBj, UBj)
 #ifdef PROFILE
       CALL wclock_off (ng, iNLM, 48)
 #endif
@@ -203,8 +201,7 @@
 !
 !***********************************************************************
       SUBROUTINE ocn2atm_coupling_tile (ng, tile,                       &
-     &                                  LBi, UBi, LBj, UBj,             &
-     &                                  nstp)
+     &                                  LBi, UBi, LBj, UBj)
 !***********************************************************************
 !
       USE mod_param
@@ -213,6 +210,7 @@
       USE mod_forces
       USE mod_ocean
       USE mod_scalars
+      USE mod_stepping
       USE mod_iounits
 !
       USE ROMS_import_mod, ONLY : ROMS_import2d
@@ -224,7 +222,6 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: nstp
 !
 !  Local variable declarations.
 !
@@ -234,6 +231,9 @@
       integer :: gtype, i, id, ifield, j, status
 
       real(r8) :: add_offset, scale
+      real(r8) :: RecvTime, SendTime, wtime(2)
+
+      real(r8) :: my_wtime
 
       real(r8), pointer :: A(:)
 
@@ -289,7 +289,9 @@
 !  Schedule receiving fields from atmosphere model.
 !
       CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
+      RecvTime=my_wtime(wtime)
       CALL MCT_Recv (atm2ocn_AV, ROMStoWRF, MyError)
+      RecvTime=my_wtime(wtime)-RecvTime
       IF (MyError.ne.0) THEN
         IF (Master) THEN
           WRITE (stdout,10) 'atmosphere model, MyError = ', MyError
@@ -559,7 +561,7 @@
             CALL ROMS_export2d (ng, tile,                               &
      &                          id, gtype, scale, add_offset,           &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          OCEAN(ng)%t(:,:,N(ng),nstp,itemp),      &
+     &                          OCEAN(ng)%t(:,:,N(ng),NOUT,itemp),      &
      &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
      &                          Asize, A,                               &
      &                          status)
@@ -572,7 +574,9 @@
 !  Send ocean fields to atmosphere model.
 !
       IF (Iexport.gt.0) THEN
+        SendTime=my_wtime(wtime)
         CALL MCT_Send (ocn2atm_AV, ROMStoWRF, MyError)
+        SendTime=my_wtime(wtime)-SendTime
         IF (MyError.ne.0) THEN
           IF (Master) THEN
             WRITE (stdout,20) 'atmosphere model, MyError = ', MyError
@@ -587,7 +591,8 @@
 !-----------------------------------------------------------------------
 !
       IF (Master.and.((Iimport.gt.0).or.(Iexport.gt.0))) THEN
-        WRITE (stdout,30) Iimport, Iexport, time_code(ng)
+        WRITE (stdout,30) Iimport, Iexport, time_code(ng),              &
+     &                    RecvTime, SendTime
         IF (Lreport) THEN
           DO ifield=1,Nimport(Iocean)
             id=ImportID(Iocean)%val(ifield)
@@ -611,7 +616,9 @@
  20   FORMAT (' OCN2ATM_COUPLING - error while sending fields to ',     &
      &        a, i4)
  30   FORMAT (6x,'OCN2ATM   - (', i2.2, ') imported and (', i2.2,       &
-     &        ') exported fields,', t62, 't = ', a)
+     &        ') exported fields,', t62, 't = ', a,/, 16x,              &
+     &        '- ROMS coupling wall clock (s):',/, 19x,                 &
+     &        '(Recv= ', 1p,e14.8,0p, ' Send= ', 1p,e14.8,0p,')')
  40   FORMAT (16x,'- ',a,a,                                             &
      &        /,19x,'(Min= ',1p,e15.8,0p,' Max= ',1p,e15.8,0p,')')
 

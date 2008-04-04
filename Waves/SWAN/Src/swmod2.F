@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !                 ALLOCATABLE DATA RELATED MODULES, file 2 of 3
 !
 !     Contents of this file
@@ -21,15 +21,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -145,15 +142,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -289,15 +283,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -410,7 +401,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -555,7 +546,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -621,7 +612,7 @@
          INTEGER                :: TRTYPE
          REAL                   :: TRCOEF(3)
          INTEGER                :: RFTYP1, RFTYP2, RFTYP3
-         REAL                   :: RFCOEF(8)
+         REAL                   :: RFCOEF(6)
          INTEGER                :: NCRPTS
          REAL, POINTER          :: XCRP(:), YCRP(:)
          TYPE(OBSTDAT), POINTER :: NEXTOBST
@@ -667,7 +658,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -798,7 +789,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -915,6 +906,8 @@
 !               computational grid
 !     MYF     : first index w.r.t. global grid in y-direction
 !     MYL     : last index w.r.t. global grid in y-direction
+!     NBGGL   : number of grid points for which boundary condition holds
+!               in global domain
 !     NGRBGL  : number of boundary points in global domain
 !     XCLMAX  : maximum x-coordinate in subdomain
 !     XCLMIN  : minimum x-coordinate in subdomain
@@ -925,7 +918,7 @@
 !
       INTEGER MCGRDGL, MXCGL, MYCGL
       INTEGER MXF, MXL, MYF, MYL
-      INTEGER NGRBGL
+      INTEGER NGRBGL, NBGGL
       REAL    XCLMAX, XCLMIN, YCLMAX, YCLMIN
 
       INTEGER :: LENSPO = 1000
@@ -936,8 +929,9 @@
       INTEGER, SAVE, ALLOCATABLE :: IWEIG(:)
       INTEGER, SAVE, ALLOCATABLE :: KGRPGL(:,:), KGRBGL(:)
       REAL   , SAVE, ALLOCATABLE :: XGRDGL(:,:), YGRDGL(:,:)
-
-      INTEGER WAV_COMM_WORLD                                              jcw
+#ifdef MODEL_COUPLING
+      INTEGER WAV_COMM_WORLD
+#endif
 !
 !  8. Subroutines and functions used
 !
@@ -963,6 +957,7 @@
 !
       END MODULE M_PARALL
 
+#ifdef MODEL_COUPLING
       MODULE M_PARALL2
 !
 !
@@ -977,7 +972,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -997,7 +992,7 @@
 !
 !  0. Authors
 !
-!     40.41: jcw
+!     John C. Warner
 !
 !  1. Updates
 !
@@ -1023,13 +1018,14 @@
 !  6. Parameter variables
 !
 !
-      INTEGER, SAVE, ALLOCATABLE :: CROSS(:,:)                                jcw
-      INTEGER, SAVE, ALLOCATABLE :: BGRIDP(:)                                 jcw
-      REAL, SAVE,    ALLOCATABLE :: BSPECS(:,:,:,:)                           jcw
-      REAL, SAVE,    ALLOCATABLE :: AC1(:,:,:), COMPDA(:,:)                   jcw
-      REAL, SAVE,    ALLOCATABLE    :: OURQT(:)                               jcw
+      INTEGER, SAVE, ALLOCATABLE :: CROSS(:,:)
+      INTEGER, SAVE, ALLOCATABLE :: BGRIDP(:)
+      REAL, SAVE,    ALLOCATABLE :: BSPECS(:,:,:,:)
+      REAL, SAVE,    ALLOCATABLE :: AC1(:,:,:), COMPDA(:,:)
+      REAL, SAVE,    ALLOCATABLE    :: OURQT(:)
 
       END MODULE M_PARALL2
+#endif
 
       MODULE M_DIFFR
 !
@@ -1040,15 +1036,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1131,7 +1124,7 @@
 ! 13. Source text
 !
       END MODULE M_DIFFR
-!DOS
-!DOS      MODULE MPI
-!DOS      INCLUDE 'mpif.h'
-!DOS      END MODULE MPI
+
+      MODULE M_MPI
+        INCLUDE 'mpif.h'
+      END MODULE M_MPI

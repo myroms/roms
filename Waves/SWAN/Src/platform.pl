@@ -9,6 +9,17 @@ else
 @tmp = ();
 close P;
 
+if (open(P,"uname -m 2>&1 |") && (@tmp = <P>) && close(P))
+{
+   chop($cpu = $tmp[$#tmp]);
+}
+else
+{
+   $cpu = $^O;
+}
+@tmp = ();
+close P;
+
 open(OUTFILE,">macros.inc");
 
 if ($os =~ /IRIX64/i) {
@@ -33,7 +44,7 @@ if ($os =~ /IRIX64/i) {
   print OUTFILE "EXTO = o\n";
   print OUTFILE "MAKE = make\n";
   print OUTFILE "RM = rm -f\n";
-  print OUTFILE "swch = -unix -f95 -sgi\n";
+  print OUTFILE "swch = -unix -f95 -timg -sgi\n";
 }
 elsif ($os =~ /AIX/i) {
   print OUTFILE "##############################################################################\n";
@@ -58,7 +69,7 @@ elsif ($os =~ /AIX/i) {
   print OUTFILE "EXTO = o\n";
   print OUTFILE "MAKE = make\n";
   print OUTFILE "RM = rm -f\n";
-  print OUTFILE "swch = -unix\n";
+  print OUTFILE "swch = -unix -timg\n";
 }
 elsif ($os =~ /OSF1/i) {
   print OUTFILE "##############################################################################\n";
@@ -82,7 +93,7 @@ elsif ($os =~ /OSF1/i) {
   print OUTFILE "EXTO = o\n";
   print OUTFILE "MAKE = make\n";
   print OUTFILE "RM = rm -f\n";
-  print OUTFILE "swch = -unix\n";
+  print OUTFILE "swch = -unix -timg\n";
 }
 elsif ($os =~ /SunOS/i) {
   print OUTFILE "##############################################################################\n";
@@ -104,7 +115,7 @@ elsif ($os =~ /SunOS/i) {
   print OUTFILE "EXTO = o\n";
   print OUTFILE "MAKE = make\n";
   print OUTFILE "RM = rm -f\n";
-  print OUTFILE "swch = -unix\n";
+  print OUTFILE "swch = -unix -timg\n";
 }
 elsif ($os =~ /HP-UX/i) {
   print OUTFILE "##############################################################################\n";
@@ -128,7 +139,7 @@ elsif ($os =~ /HP-UX/i) {
   print OUTFILE "EXTO = o\n";
   print OUTFILE "MAKE = make\n";
   print OUTFILE "RM = rm -f\n";
-  print OUTFILE "swch = -unix -f95\n";
+  print OUTFILE "swch = -unix -f95 -timg\n";
 }
 elsif ($os =~ /Linux/i) {
   system 'sh ./getcmpl';
@@ -136,14 +147,21 @@ elsif ($os =~ /Linux/i) {
   {
     system 'rm ifort';
     print OUTFILE "##############################################################################\n";
-    print OUTFILE "# IA32_Intel:		Intel Pentium with Linux using Intel compiler 8.1.\n";
-    print OUTFILE "# Note: -tpp6 is for Pentium III & -tpp7 is for Pentium IV\n";
+    print OUTFILE "# IA32_Intel/x86-64_Intel:	Intel Pentium with Linux using Intel compiler 9.1.\n";
     print OUTFILE "##############################################################################\n";
     print OUTFILE "F90_SER = ifort\n";
     print OUTFILE "F90_OMP = ifort\n";
     print OUTFILE "F90_MPI = mpif90\n";
-    print OUTFILE "FLAGS_OPT = -O2 -tpp7 -xN -mp1\n";
-    print OUTFILE "FLAGS_MSC = -W0 -auto -assume byterecl\n";
+    if ($cpu =~ /i686/i) {
+      print OUTFILE "FLAGS_OPT = -O2 -xN -mp1\n";
+    }
+    elsif ($cpu =~ /x86_64/i) {
+      print OUTFILE "FLAGS_OPT = -O2 -ipo -xW -mp1\n";
+    }
+    else {
+      print OUTFILE "FLAGS_OPT = -O2\n";
+    }
+    print OUTFILE "FLAGS_MSC = -W0 -assume byterecl -traceback\n";
     print OUTFILE "FLAGS_SER =\n";
     print OUTFILE "FLAGS_OMP = -openmp -assume cc_omp -fpp2\n";
     print OUTFILE "FLAGS_MPI =\n";
@@ -157,13 +175,13 @@ elsif ($os =~ /Linux/i) {
     print OUTFILE "EXTO = o\n";
     print OUTFILE "MAKE = make\n";
     print OUTFILE "RM = rm -f\n";
-    print OUTFILE "swch = -unix -f95\n";
+    print OUTFILE "swch = -unix -f95 -timg -impi\n";
   }
   elsif ( -f "ifc" )
   {
     system 'rm ifc';
     print OUTFILE "##############################################################################\n";
-    print OUTFILE "# IA32_Intel:		Intel Pentium with Linux using Intel compiler.\n";
+    print OUTFILE "# IA32_Intel:		Intel Pentium with Linux using Intel compiler 7.0.\n";
     print OUTFILE "# Note: -tpp6 is for Pentium III & -tpp7 is for Pentium IV\n";
     print OUTFILE "##############################################################################\n";
     print OUTFILE "F90_SER = ifc\n";
@@ -184,7 +202,7 @@ elsif ($os =~ /Linux/i) {
     print OUTFILE "EXTO = o\n";
     print OUTFILE "MAKE = make\n";
     print OUTFILE "RM = rm -f\n";
-    print OUTFILE "swch = -unix -f95\n";
+    print OUTFILE "swch = -unix -f95 -timg\n";
   }
   elsif ( -f "efc" )
   {
@@ -211,7 +229,7 @@ elsif ($os =~ /Linux/i) {
     print OUTFILE "EXTO = o\n";
     print OUTFILE "MAKE = make\n";
     print OUTFILE "RM = rm -f\n";
-    print OUTFILE "swch = -unix -f95\n";
+    print OUTFILE "swch = -unix -f95 -timg\n";
   }
   elsif ( -f "pgf90" )
   {
@@ -222,12 +240,12 @@ elsif ($os =~ /Linux/i) {
     print OUTFILE "##############################################################################\n";
     print OUTFILE "F90_SER = pgf90\n";
     print OUTFILE "F90_OMP = pgf90\n";
-    print OUTFILE "F90_MPI = pgf90\n";
-    print OUTFILE "FLAGS_OPT = -fast\n";
-    print OUTFILE "FLAGS_MSC =\n";
-    print OUTFILE "FLAGS_SER =\n";
+    print OUTFILE "F90_MPI = mpif90\n";
+    print OUTFILE "FLAGS_OPT =\n";
+    print OUTFILE "FLAGS_MSC = -mcmodel=medium\n";
+    print OUTFILE "FLAGS_SER = -fast\n";
     print OUTFILE "FLAGS_OMP = -mp\n";
-    print OUTFILE "FLAGS_MPI =\n";
+    print OUTFILE "FLAGS_MPI = -fast\n";
     print OUTFILE "INCS_SER =\n";
     print OUTFILE "INCS_OMP =\n";
     print OUTFILE "INCS_MPI =\n";
@@ -238,7 +256,7 @@ elsif ($os =~ /Linux/i) {
     print OUTFILE "EXTO = o\n";
     print OUTFILE "MAKE = make\n";
     print OUTFILE "RM = rm -f\n";
-    print OUTFILE "swch = -unix\n";
+    print OUTFILE "swch = -unix -impi -timg\n";
   }
   elsif ( -f "lf95" )
   {
@@ -264,7 +282,59 @@ elsif ($os =~ /Linux/i) {
     print OUTFILE "EXTO = o\n";
     print OUTFILE "MAKE = make\n";
     print OUTFILE "RM = rm -f\n";
-    print OUTFILE "swch = -unix -f95\n";
+    print OUTFILE "swch = -unix -f95 -timg\n";
+  }
+  elsif ( -f "gfortran" )
+  {
+    system 'rm gfortran';
+    print OUTFILE "##############################################################################\n";
+    print OUTFILE "# IA32_GNU:		Intel Pentium with Linux using GNU compiler gfortran.\n";
+    print OUTFILE "##############################################################################\n";
+    print OUTFILE "F90_SER = gfortran\n";
+    print OUTFILE "F90_OMP = \n";
+    print OUTFILE "F90_MPI = mpif90\n";
+    print OUTFILE "FLAGS_OPT = -O\n";
+    print OUTFILE "FLAGS_MSC = -w\n";
+    print OUTFILE "FLAGS_SER =\n";
+    print OUTFILE "FLAGS_OMP =\n";
+    print OUTFILE "FLAGS_MPI =\n";
+    print OUTFILE "INCS_SER =\n";
+    print OUTFILE "INCS_OMP =\n";
+    print OUTFILE "INCS_MPI =\n";
+    print OUTFILE "LIBS_SER =\n";
+    print OUTFILE "LIBS_OMP =\n";
+    print OUTFILE "LIBS_MPI =\n";
+    print OUTFILE "OUT = -o \n";
+    print OUTFILE "EXTO = o\n";
+    print OUTFILE "MAKE = make\n";
+    print OUTFILE "RM = rm -f\n";
+    print OUTFILE "swch = -unix -f95 -timg\n";
+  }
+  elsif ( -f "g95" )
+  {
+    system 'rm g95';
+    print OUTFILE "##############################################################################\n";
+    print OUTFILE "# IA32_GNU:		Intel Pentium with Linux using GNU compiler g95.\n";
+    print OUTFILE "##############################################################################\n";
+    print OUTFILE "F90_SER = g95\n";
+    print OUTFILE "F90_OMP = \n";
+    print OUTFILE "F90_MPI = mpif90\n";
+    print OUTFILE "FLAGS_OPT = -O\n";
+    print OUTFILE "FLAGS_MSC = -w\n";
+    print OUTFILE "FLAGS_SER =\n";
+    print OUTFILE "FLAGS_OMP =\n";
+    print OUTFILE "FLAGS_MPI =\n";
+    print OUTFILE "INCS_SER =\n";
+    print OUTFILE "INCS_OMP =\n";
+    print OUTFILE "INCS_MPI =\n";
+    print OUTFILE "LIBS_SER =\n";
+    print OUTFILE "LIBS_OMP =\n";
+    print OUTFILE "LIBS_MPI =\n";
+    print OUTFILE "OUT = -o \n";
+    print OUTFILE "EXTO = o\n";
+    print OUTFILE "MAKE = make\n";
+    print OUTFILE "RM = rm -f\n";
+    print OUTFILE "swch = -unix -f95 -timg\n";
   }
   else
   {
@@ -272,17 +342,16 @@ elsif ($os =~ /Linux/i) {
   }
 }
 elsif ($os =~ /WindowsNT/i || $os =~ /MSWin32/i) {
-  system 'call dfvars.bat';
   print OUTFILE "##############################################################################\n";
-  print OUTFILE "# IA32_Compaq:		Intel Pentium with MS Windows using Compaq compiler\n";
+  print OUTFILE "# IA32_Intel/EM64T_Intel:	Intel Pentium with MS Windows using Intel compiler 9.1.\n";
   print OUTFILE "##############################################################################\n";
-  print OUTFILE "F90_SER = f90\n";
-  print OUTFILE "F90_OMP =\n";
-  print OUTFILE "F90_MPI = f90\n";
+  print OUTFILE "F90_SER = ifort\n";
+  print OUTFILE "F90_OMP = ifort\n";
+  print OUTFILE "F90_MPI = ifort\n";
   print OUTFILE "FLAGS_OPT = /optimize:2\n";
-  print OUTFILE "FLAGS_MSC = /assume:byterecl /nowarn /nologo\n";
+  print OUTFILE "FLAGS_MSC = /assume:byterecl /traceback /nowarn /nologo\n";
   print OUTFILE "FLAGS_SER =\n";
-  print OUTFILE "FLAGS_OMP =\n";
+  print OUTFILE "FLAGS_OMP = /Qopenmp /assume:cc_omp /fpp\n";
   print OUTFILE "FLAGS_MPI =\n";
   print OUTFILE "INCS_SER =\n";
   print OUTFILE "INCS_OMP =\n";
@@ -294,7 +363,31 @@ elsif ($os =~ /WindowsNT/i || $os =~ /MSWin32/i) {
   print OUTFILE "EXTO = obj\n";
   print OUTFILE "MAKE = nmake\n";
   print OUTFILE "RM = del\n";
-  print OUTFILE "swch = -dos -f95 -cvis\n";
+  print OUTFILE "swch = -dos -f95 -impi -cvis -timg\n";
+}
+elsif ($os =~ /Darwin/i) {
+  print OUTFILE "##############################################################################\n";
+  print OUTFILE "# MAC_IBM:		MAC OS X Apple with IBM Fortran Compiler.\n";
+  print OUTFILE "##############################################################################\n";
+  print OUTFILE "F90_SER = xlf90\n";
+  print OUTFILE "F90_OMP =\n";
+  print OUTFILE "F90_MPI =\n";
+  print OUTFILE "FLAGS_OPT = -O3 -qstrict -qtune=auto -qcache=auto -qalign=4k\n";
+  print OUTFILE "FLAGS_MSC = -w -qfixed\n";
+  print OUTFILE "FLAGS_SER =\n";
+  print OUTFILE "FLAGS_OMP =\n";
+  print OUTFILE "FLAGS_MPI =\n";
+  print OUTFILE "INCS_SER = \n";
+  print OUTFILE "INCS_OMP =\n";
+  print OUTFILE "INCS_MPI =\n";
+  print OUTFILE "LIBS_SER =\n";
+  print OUTFILE "LIBS_OMP =\n";
+  print OUTFILE "LIBS_MPI =\n";
+  print OUTFILE "OUT = -o \n";
+  print OUTFILE "EXTO = o\n";
+  print OUTFILE "MAKE = make\n";
+  print OUTFILE "RM = rm -f\n";
+  print OUTFILE "swch = -unix -timg\n";
 }
 else
 {

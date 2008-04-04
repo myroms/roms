@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !
 !     SWAN - SERVICE ROUTINES
 !
@@ -15,7 +15,7 @@
 !     NEWTON                                                              30.60
 !     EVALF                                                               30.60
 !     SWOBST                                                              30.60
-!     TCROSS2                                                             40.04
+!     TCROSS                                                              40.04
 !     SWTRCF
 !     SSHAPE                                                              40.00
 !     SINTRP                                                              40.00
@@ -63,15 +63,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -200,15 +197,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -330,15 +324,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -432,15 +423,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -589,15 +577,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -765,15 +750,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -833,15 +815,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1067,15 +1046,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1417,15 +1393,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1562,8 +1535,8 @@
      &    YP2+YOFFS
   28      FORMAT (' boundary point ', 2F12.4)
           IF (IBND.GT.1 .AND. IX1.GT.0) THEN                              40.51
-            IF (((XP1.GT.XP).AND.(XP2.LT.XP)).OR.
-     &          ((XP1.LT.XP).AND.(XP2.GT.XP))) THEN
+            IF (((XP1.GT.XP).AND.(XP2.LE.XP)).OR.
+     &          ((XP1.LE.XP).AND.(XP2.GT.XP))) THEN
               IF (YP1.GT.YP .OR. YP2.GT.YP) THEN
 !               determine y-coordinate of crossing point
                 YPS = YP1 + (XP-XP1) * (YP2-YP1) / (XP2-XP1)
@@ -1608,15 +1581,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1831,15 +1801,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1987,15 +1954,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2112,15 +2076,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2163,7 +2124,7 @@
 !  2. Purpose
 !
 !     Obtains all the data required to find obstacles and
-!     use subroutine TCROSS2 to find them
+!     use subroutine TCROSS to find them
 !
 !  3. Method
 !
@@ -2208,10 +2169,10 @@
 !
 !  8. Subroutines used
 !
-!     Function TCROSS2                                                    40.04
+!     TCROSS                                                              40.04
 !     STRACE
 !
-      LOGICAL   TCROSS2                                                   40.04
+      LOGICAL    TCROSS                                                   40.04
 !
 !  9. Subroutines calling
 !
@@ -2228,7 +2189,7 @@
 !           Read number of corners of the obstacle
 !           For every corner of the obstacle do
 !               For every grid point do
-!                   CALL FUNCTION TCROSS2 to search if there is crossing  40.04
+!                   call function TCROSS to search if there is crossing   40.04
 !                   point                                                 40.04
 !                   between the line of two points of the stencil and the
 !                   line of the corners of the obstacle.
@@ -2254,7 +2215,7 @@
  50         FORMAT( ' Obstacle number : ', I4,'  has ',I4,' corners')
           ENDIF
 !         *** X1 X2 X3 ETC. are the coordinates of point according ***
-!         *** with the scheme in the subroutine TCROSS2 header     ***    40.04
+!         *** with the scheme in the subroutine TCROSS header      ***    40.04
           X3 = COBST%XCRP(1)                                              40.31
           Y3 = COBST%YCRP(1)                                              40.31
           IF (ITEST.GE. 120)  WRITE(PRINTF,30) 1,X3,Y3
@@ -2289,7 +2250,7 @@
 !                     *** All links are analyzed in each point otherwise the   ***
 !                     *** boundaries can be excluded                           ***
 !
-                      IF (TCROSS2(X1, X2, X3, X4, Y1, Y2, Y3, Y4,         40.04
+                      IF (TCROSS(X1, X2, X3, X4, Y1, Y2, Y3, Y4,          40.04
      &                           XONOBST)) THEN                           40.04
                         CROSS(ILINK,ICC) = JJ
                       ENDIF
@@ -2311,7 +2272,7 @@
       END
 !***********************************************************************
 !                                                                      *
-      LOGICAL FUNCTION TCROSS2(X1, X2, X3, X4, Y1, Y2, Y3, Y4, X1ONOBST)
+      LOGICAL FUNCTION TCROSS (X1, X2, X3, X4, Y1, Y2, Y3, Y4, X1ONOBST)
 !                                                                      *
 !***********************************************************************
 !
@@ -2326,15 +2287,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2430,7 +2388,7 @@
 !     A,B,C,D    dummy variables
 !     DIV1       denominator of value of LMBD (or MIU)
 !     E,F        dummy variables
-!     IENT       number of entries of function TCROSS2
+!     IENT       number of entries
 !     LMBD       coefficient in vector equation for stencil points (or obstacle)
 !     MIU        coefficient in vector equation for obstacle (or stencil points)
 !
@@ -2453,14 +2411,14 @@
 !
 !     Calculate MIU and LMBD
 !     If 0 <= MIU, LMBD <= 1                                              40.04
-!     Then TCROSS2 is .True.
-!     Else TCROSS2 is .False.
+!     Then TCROSS is .True.
+!     Else TCROSS is .False.
 !
 ! 13. Source text
 ! ======================================================================
       SAVE IENT
       DATA IENT/0/
-      IF (LTRACE) CALL STRACE (IENT,'TCROSS2')
+      IF (LTRACE) CALL STRACE (IENT,'TCROSS')
 !
       EPS = EPSILON(X1)*SQRT((X2-X1)*(X2-X1)+(Y2-Y1)*(Y2-Y1))             40.04
       IF (EPS ==0.) EPS = TINY(X1)                                        40.04
@@ -2517,12 +2475,12 @@
      &    ' P3(',E10.4,',',E10.4,')',' P4(',E10.4,',',E10.4,')')
         ENDIF
 !
-        TCROSS2 = .TRUE.
+        TCROSS = .TRUE.
       ELSE
-        TCROSS2 = .FALSE.
+        TCROSS = .FALSE.
       ENDIF
 !
-!     End of subroutine TCROSS2
+!     End of subroutine TCROSS
       RETURN
       END
 !
@@ -2545,15 +2503,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2648,11 +2603,10 @@
 !  8. Subroutines used
 !
 !     STRACE
-!     Function TCROSS2 indicates whether there is an obstacle crossing the used
-!                      stencil or not
+!     TCROSS
 !     MSGERR
 !
-      LOGICAL    TCROSS2
+      LOGICAL    TCROSS
 !
 !  9. Subroutines calling
 !
@@ -2669,7 +2623,7 @@
 !           Read number of corners of the obstacle
 !           For every corner of the obstacle do
 !               For every grid point do
-!                   CALL FUNCTION TCROSS2 to search if there is crossing point
+!                   call function TCROSS to search if there is crossing point
 !                   between the line of two points of the stencil and the
 !                   line of the corners of the obstacle.
 !                   If there is crossing point then
@@ -2700,7 +2654,7 @@
  50         FORMAT( ' Obstacle number : ', I4,'  has ',I4,' corners')
           ENDIF
 !         *** X1 X2 X3 ETC. are the coordinates of point according ***
-!         *** with the scheme in the subroutine TCROSS2 header      ***
+!         *** with the scheme in the subroutine TCROSS header      ***
           X3 = COBST%XCRP(1)                                              40.31
           Y3 = COBST%YCRP(1)                                              40.31
           DO JP = 2, NUMCOR
@@ -2748,7 +2702,7 @@
 !                     *** All links are analyzed in each point otherwise the   ***
 !                     *** boundaries can be excluded                           ***
 !
-                      IF (TCROSS2(X1,X2,X3,X4,Y1,Y2,Y3,Y4,XCONOBST))THEN
+                      IF (TCROSS(X1,X2,X3,X4,Y1,Y2,Y3,Y4,XCONOBST))THEN
                         IF (XCONOBST) THEN
                         DXA=(X1-X2A)
                         DYA=(Y1-Y2A)
@@ -2808,11 +2762,12 @@
      &                   LINK  , OBREDF,                                  40.03
      &                   AC2   , REFLSO, KGRPNT, XCGRID,                  40.41 40.09
      &                   YCGRID, CAX,    CAY,    RDX,    RDY,    ANYBIN,  40.09
-     &                   SPCSIG)                                          40.28
+     &                   SPCSIG, SPCDIR)                                  40.13 40.28
 !                                                                      *
 !***********************************************************************
 
       USE OCPCOMM4                                                        40.41
+      USE SWCOMM2                                                         40.66
       USE SWCOMM3                                                         40.41
       USE SWCOMM4                                                         40.41
       USE M_OBSTA                                                         40.31
@@ -2828,15 +2783,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2860,12 +2812,14 @@
 !     40.03  Nico Booij
 !     40.08  Erick Rogers
 !     40.09  Annette Kieftenburg
+!     40.13  Nico Booij
 !     40.14  Annette Kieftenburg
 !     40.18  Annette Kieftenburg
 !     40.28  Annette Kieftenburg
 !     40.30  Marcel Zijlema
 !     40.31  Marcel Zijlema
 !     40.41: Marcel Zijlema
+!     40.66: Marcel Zijlema
 !
 !  1. Updates
 !
@@ -2880,20 +2834,30 @@
 !            Jan. 01: Constant waterlevel taken into account as well (bug fix 40.11E)
 !     40.18, Apr. 01: Scattered reflection against obstacles added        40.18
 !     40.28, Dec. 01: Frequency dependent reflection added
+!     40.13, Aug. 02: subroutine restructured:
+!                     loop in reflection procedure changed to avoid double
+!                     reflection
+!                     argument list of subr REFLECT revised
+!                     argument SPCDIR added
 !     40.30, Mar. 03: correcting indices of test point with offsets MXF, MYF
 !     40.08, Mar. 03: Dimensioning of RDX, RDX changed to be consistent
 !                     with other subroutines
 !     40.31, Oct. 03: changes w.r.t. obstacles
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
+!     40.66, Mar. 07: extension with d'Angremond and Van der Meer transmission
 !
 !  2. Purpose
 !
 !      take the value of transmission coefficient given
-!      by the user in case  obstacle TRANSMISSION
+!      by the user in case obstacle TRANSMISSION
+!
 !      or
+!
 !      compute the transmision coeficient in case obstacle DAM
-!      based on Goda (1967) [from Seelig (1979)].
-!      if reflections are turned on, calculate sourceterm in              40.09
+!      based on Goda (1967) [from Seelig (1979)]
+!      or d'Angremond and Van der Meer formula's (1996)                   40.66
+!
+!      if reflections are switched on, calculate sourceterm in            40.09
 !      subroutine REFLECT                                                 40.09
 !
 !  3. Method
@@ -2912,7 +2876,7 @@
 !     Hi         incident (significant) wave height                       40.09
 !                                                                         40.09
 !     If reflection are switched on and obstacle is not exactly on line   40.09
-!     of two neighbouring gridpoints, calculate reflections.              40.09
+!     of two neighbouring gridpoints, calculate reflections               40.09
 !
 !  4. Argument variables
 !
@@ -2939,49 +2903,53 @@
 !     Changed ICMAX to MICMAX, since MICMAX doesn't vary over gridpoint   40.22
       REAL     :: CAX(MDC,MSC,MICMAX), CAY(MDC,MSC,MICMAX)                40.09 40.22
       REAL     :: REFLSO(MDC,MSC), RDX(10), RDY(10)                       40.41 40.09 40.22 40.08
-      REAL     :: SPCSIG(MSC)                                             40.28
+      REAL     :: SPCSIG(MSC), SPCDIR(MDC,6)                              40.13 40.28
       LOGICAL  :: ANYBIN(MDC,MSC)                                         40.09
 !
 !  5. Parameter variables
 !
 !  6. Local variables
 !
-!     AC2REF   reflected action density spectrum
 !     ALOW     Lower limit for FVH
+!     BK       crest width                                                40.66
 !     BUPL     Upper limit for FVH
+!     BVH      Bk/Hsin                                                    40.66
 !     FD1      Coeff. for freq. dep. reflection: vertical displacement    40.28
 !     FD2      Coeff. for freq. dep. reflection: shape parameter          40.28
 !     FD3      Coeff. for freq. dep. reflection: directional coefficient  40.28
 !     FD4      Coeff. for freq. dep. reflection: bending point of freq.   40.28
-!     FVH      WATHIG/Hsin (= F/Hi in formulation of Goda/Seelig
-!              (1967/1979))
+!     FVH      WATHIG/Hsin
 !     HGT      elevation of top of obstacle above reference level
-!     HSIN     significant wave height in whole computational grid
+!     HSIN     incoming significant wave height
 !     ID       counter in directional space
 !     IENT     number of entries of this subroutine
-!     IS       counter in frequency space
-!     ITRAS    indicates kind of obstacle: 0 -> transm
-!                                          1 -> dam
-!     JP       counter for number of corner points of obstacles
-!     KDIF     fraction of energy reflected in a diffuse manner           40.28
-!     LOOP     indicates which link is analyzed: 1 -> neighbour in x
+!     ILINK    indicates which link is analyzed: 1 -> neighbour in x
 !                                                2 -> neighbour in y
-!     LREFDIFF inp  Indicates whether reflected energy should be          40.18
-!                   reflected (1) or not (0)                              40.18
-!     LRFRD     Indicates whether frequency dependent reflection is       40.28
-!               active (#0.) or not (=0.)                                 40.28
+!     IS       counter in frequency space
+!     ITRAS    indicates kind of obstacle: 0 -> constant transm
+!                                          1 -> dam, Goda
+!                                          2 -> dam, d'Angremond and      40.66
+!                                                    Van der Meer         40.66
+!     JP       counter for number of corner points of obstacles
+!     L0P      wave length in deep water                                  40.66
+!     LREFDIFF indicates whether reflected energy should be               40.18
+!              scattered (1) or not (0)                                   40.18
+!     LREFL    if LREFL=0, no reflection; if LREFL=1, constant            40.13
+!              reflection coeff.                                          40.13
+!     LRFRD    Indicates whether frequency dependent reflection is        40.28
+!              active (#0.) or not (=0.)                                  40.28
 !     NMPO     link number
 !     NUMCOR   number of corner points of obstacle
 !     OBET     user defined coefficient (beta) in formulation of
 !              Goda/Seelig (1967/1979)
-!     OBHKT    transmission coefficient according to Goda/Seelig (1967/1979)
+!     OBHKT    transmission coefficient in terms of wave height
 !     OGAM     user defined coefficient (alpha) in formulation of
 !              Goda/Seelig (1967/1979)
-!     POWD     inp  User defined power of diffusive redist. function      40.28
-!     POWS     inp  User defined power of scattered redistr.function      40.18
+!     POWN     user defined power of redistribution function              40.28
 !     REFLCOEF reflection coefficient in terms of action density
+!     REFLTST  used to test Refl^2+Transm^2 <=1                           40.13
+!     SLOPE    slope of obstacle                                          40.66
 !     SQRTREF  dummy variable
-!     SQRTTRC  dummy variable
 !     TRCF     transmission coefficient in terms of action density
 !              (user defined or calculated (in terms of waveheight))
 !     X1, Y1   user coordinates of one end of grid link
@@ -2989,31 +2957,34 @@
 !     X3, Y3   user coordinates of one end of obstacle side
 !     X4, Y4   user coordinates of other end of obstacle side
 !     XCGRID   Coordinates of computational grid in x-direction
+!     XI0P     breaker parameter                                          40.66
 !     XONOBST  Indicates whether computational point (X1,Y1) is on        40.14
 !              obstacle                                                   40.14
 !     YCGRID   Coordinates of computational grid in y-direction
 !     WATHIG   freeboard of the dam (= HGT-waterlevel)
 !
-      INTEGER    ID, IENT, ITRAS, IS, JP, LOOP, ICGRD,
-     &           NUMCOR, NMPO
+      INTEGER    ID, IENT, ILINK, ITRAS, IS, JP, ICGRD, LREFL,
+     &           NUMCOR, NMPO, ISIGM
       INTEGER    LREFDIFF, LRFRD                                          40.31
       REAL       ALOW, BUPL, FVH, HGT, HSIN, OBET, OBHKT,
-     &           POWS, OGAM, REFLCOEF,                                    40.18 40.09
+     &           SLOPE, BK, L0P, XI0P, BVH, EMAX, ETD, TP,                40.66
+     &           POWN, OGAM, REFLCOEF,                                    40.18 40.09
      &           TRCF, X1, X2, X3, X4, Y1, Y2, Y3, Y4, WATHIG
-      REAL       KDIF, FD1, FD2, FD3, FD4, POWD                           40.31 40.28
-      REAL       AC2REF(MDC,MSC), SQRTREF, SQRTTRC                        40.09
-      LOGICAL    EXC, XGTL, XONOBST                                       40.14
+      REAL       FD1, FD2, FD3, FD4                                       40.31 40.28
+      REAL       SQRTREF                                                  40.09
+      LOGICAL    XONOBST                                                  40.14
+      LOGICAL :: REFLTST                                                  40.13
       REAL       XCGRID(MXC,MYC), YCGRID(MXC,MYC)
       INTEGER    ICC, JJ
       TYPE(OBSTDAT), POINTER :: COBST                                     40.31
 !
 !  8. Subroutines used
 !
-!     OBSTLINE
-!     REFLECT
-!     Function TCROSS2                                                    40.14
+!     MSGERR           Writes error message
+!     REFLECT          Computes effect of reflection
+!     TCROSS           Searches for crossing point if exist               40.14
 !
-      LOGICAL TCROSS2                                                     40.14
+      LOGICAL TCROSS                                                      40.14
 !
 !  9. Subroutines calling
 !
@@ -3028,9 +2999,14 @@
 !
 ! 12. Structure
 !
-!     calculate transmission coefficients                                 40.09
-!     if activated: calculate reflection source terms (if computational   40.09
-!                   point not exactly on linepiece of obstacle)           40.09
+!     ------------------------------------------------------------------
+!     For both links from grid point (X1,Y1) do                           40.13
+!         calculate transmission coefficients                             40.09
+!         assign values to OBREDF                                         40.13
+!         If there is reflection                                          40.13
+!         Then select obstacle side which crosses the grid link           40.13
+!              calculate reflection source terms                          40.09
+!     ------------------------------------------------------------------  40.13
 !
 ! 13. Source text
 ! ======================================================================
@@ -3039,11 +3015,18 @@
       DATA IENT/0/
       IF (LTRACE) CALL STRACE (IENT,'SWTRCF')
 !
-      DO 30 LOOP = 1 ,2
+      REFLTST = .TRUE.                                                    40.13
+      DO 90 ILINK = 1 ,2
+!       default transmission coefficient
         TRCF = 1.
-        NMPO = LINK(LOOP)
-        HSIN = CHS(KCGRD(LOOP+1))                                         40.03
-        IF (NMPO .EQ. 0) GO TO 40
+        NMPO = LINK(ILINK)
+        IF (NMPO .EQ. 0) THEN
+           OBREDF(1:MDC,1:MSC,ILINK) = 1.                                 40.13
+           GOTO 90
+        END IF
+!       incoming wave height
+        HSIN = CHS(KCGRD(ILINK+1))                                        40.03
+        IF (HSIN.LT.0.1E-4) HSIN = 0.1E-4
         COBST => FOBSTAC                                                  40.31
         DO JJ = 1, NMPO-1                                                 40.31
            IF (.NOT.ASSOCIATED(COBST%NEXTOBST)) EXIT                      40.31
@@ -3051,17 +3034,18 @@
         END DO                                                            40.31
         ITRAS  = COBST%TRTYPE                                             40.31
         IF (ITRAS .EQ. 0) THEN
+!       constant transmission coefficient
 !         User defined transmission coefficient concerns ratio of         40.09
 !         waveheights, so:                                                40.09
-          SQRTTRC = COBST%TRCOEF(1)                                       40.31
-          TRCF = SQRTTRC * SQRTTRC                                        40.09
+          OBHKT = COBST%TRCOEF(1)                                         40.31
+          TRCF  = OBHKT * OBHKT                                           40.09
         ELSE IF (ITRAS .EQ. 1) THEN
+!       transmission coefficient according to Goda and Seelig
           HGT    =  COBST%TRCOEF(1)                                       40.31
           OGAM   =  COBST%TRCOEF(2)                                       40.31
           OBET   =  COBST%TRCOEF(3)                                       40.31
-!         level of dam above the water:
+!         level of dam above the water surface (freeboard):
           WATHIG =  HGT - WLEV2(KCGRD(1)) - WLEV                          40.14 30.70
-          IF (HSIN .LT. 0.1E-4) HSIN = 0.1E-4
 !
 !         *** Here the transmission coeff. is that of Goda and Seelig ***
           FVH  = WATHIG/HSIN
@@ -3073,7 +3057,7 @@
           OBHKT = 0.5*(1.0-SIN(PI*(FVH+OBET)/(2.0*OGAM)))
           IF (TESTFL) WRITE (PRTEST, 20) IXCGRD(1)+MXF-2,                 40.30
      &           IYCGRD(1)+MYF-2,                                         40.30
-     &           LOOP, HGT, WATHIG, HSIN, OBHKT                           40.01
+     &           ILINK, HGT, WATHIG, HSIN, OBHKT                          40.01
   20      FORMAT (' test SWTRCF ', 2X, 3I5, ' dam level=', F6.2,
      &            ' depth=', F6.2, ' Hs=', F6.2, ' transm=', F6.3)        40.01
           IF (TESTFL .AND. ITEST.GE.140) WRITE (PRTEST, 22)
@@ -3083,230 +3067,152 @@
 !         Formulation of Goda/Seelig concerns ratio of waveheights.       40.09
 !         Here we use action density so:                                  40.09
           TRCF = OBHKT*OBHKT
+        ELSE IF (ITRAS.EQ.2) THEN                                         40.66
+!       d'Angremond and Van der Meer formulae (1996)                      40.66
+          HGT   = COBST%TRCOEF(1)
+          SLOPE = COBST%TRCOEF(2)
+          BK    = COBST%TRCOEF(3)
+!
+!         level of dam above the water surface:
+          WATHIG =  HGT - WLEV2(KCGRD(1)) - WLEV
+!
+!         compute peak frequency of incoming wave
+          EMAX = 0.
+          ISIGM = -1
+          DO IS = 1, MSC
+             ETD = 0.
+             DO ID = 1, MDC
+                ETD = ETD + SPCSIG(IS)*AC2(ID,IS,KCGRD(ILINK+1))*DDIR
+             END DO
+             IF (ETD.GT.EMAX) THEN
+                EMAX  = ETD
+                ISIGM = IS
+             END IF
+          END DO
+          IF (ISIGM.LE.0) ISIGM=MSC
+          TP=2.*PI/SPCSIG(ISIGM)
+!
+!         compute breaker parameter
+          L0P  = MAX(1.E-8,1.5613*TP*TP)
+          XI0P = TAN(SLOPE*PI/180.)/SQRT(HSIN/L0P)
+!
+!         compute transmission coefficient
+          FVH = WATHIG/HSIN
+          BVH = BK/HSIN
+          IF (BVH.EQ.0.) THEN
+             OBHKT= -0.40*FVH
+             IF (OBHKT.LT.0.075) OBHKT = 0.075
+             IF (OBHKT.GT.0.900) OBHKT = 0.9
+          ELSE IF (BVH.LT.10.) THEN
+             OBHKT= -0.40*FVH + 0.64*(BVH**(-0.31))*(1.-EXP(-0.50*XI0P))
+             IF (OBHKT.LT.0.075) OBHKT = 0.075
+             IF (OBHKT.GT.0.900) OBHKT = 0.9
+          ELSE
+             OBHKT= -0.35*FVH + 0.51*(BVH**(-0.65))*(1.-EXP(-0.41*XI0P))
+             IF (OBHKT.GT.0.93-0.006*BVH) OBHKT = 0.93-0.006*BVH
+             IF (OBHKT.LT.0.05          ) OBHKT = 0.05
+          END IF
+          WRITE (PRINTF, 23)
+     &       XCGRID(IXCGRD(1),IYCGRD(1))+XOFFS,
+     &       YCGRID(IXCGRD(1),IYCGRD(1))+YOFFS,
+     &       ILINK, HGT, WATHIG, HSIN, SQRT(L0P/1.5613), XI0P, OBHKT      40.66
+  23      FORMAT (' Transmission: ', 2X, 2F12.4, I5, ' dam level=',F6.2,
+     &            ' board=', F6.2, ' Hs=', F6.2, ' Tp=', F6.2,
+     &            ' Xi0p=', F6.3, ' Kt=', F6.3)                           40.66
+          IF (TESTFL .AND. ITEST.GE.140) WRITE (PRTEST, 22)
+     &           TAN(SLOPE*PI/180.), FVH, BVH, L0P, XI0P
+!
+!         Formulation of d'Angremond concerns ratio of waveheights
+!         Here we use action density so:
+          TRCF = OBHKT*OBHKT
         ENDIF
+!       assign values to array OBREDF
+        DO IS = 1, MSC
+          DO ID = 1, MDC
+            OBREDF(ID,IS,ILINK) = TRCF
+          ENDDO
+        ENDDO
 !
 !     *** REFLECTION ****
 !     *** X1 X2 X3 ETC. are the coordinates of point according ***
-!     *** with the scheme in the function TCROSS2 header       ***        40.04
-        IF ( COBST%RFTYP1.GT.0. ) THEN                                    40.31
+!     *** with the scheme in the function TCROSS header        ***        40.04
+        LREFL = COBST%RFTYP1                                              40.13
+        IF ( LREFL.GT.0. ) THEN                                           40.31
 !         Reflections are activated                                       40.09
           SQRTREF  = COBST%RFCOEF(1)                                      40.31
           REFLCOEF = SQRTREF * SQRTREF                                    40.09
           LREFDIFF = COBST%RFTYP2                                         40.31
-          POWS     = COBST%RFCOEF(2)                                      40.31
-          POWD     = COBST%RFCOEF(3)                                      40.31
-          KDIF     = COBST%RFCOEF(4)                                      40.31
-          FD1      = COBST%RFCOEF(5)                                      40.31
-          FD2      = COBST%RFCOEF(6)                                      40.31
-          FD3      = COBST%RFCOEF(7)                                      40.31
-          FD4      = COBST%RFCOEF(8)                                      40.31
+          POWN     = COBST%RFCOEF(2)                                      40.31
+          FD1      = COBST%RFCOEF(3)                                      40.31
+          FD2      = COBST%RFCOEF(4)                                      40.31
+          FD3      = COBST%RFCOEF(5)                                      40.31
+          FD4      = COBST%RFCOEF(6)                                      40.31
           LRFRD    = COBST%RFTYP3                                         40.31
+!
+!         determine (X1,Y1) and (X2,Y2)
+          ICC   = KCGRD(1)                                                40.09
+          ICGRD = 0                                                       40.09
+          IF ( ICC.GT.1 ) THEN                                            40.09
+            X1 = XCGRID(IXCGRD(1),IYCGRD(1))                              40.09
+            Y1 = YCGRID(IXCGRD(1),IYCGRD(1))                              40.09
+            IF (KGRPNT(IXCGRD(ILINK+1),IYCGRD(ILINK+1)).GT.1) THEN        40.09
+              X2    = XCGRID(IXCGRD(ILINK+1),IYCGRD(ILINK+1))             40.09
+              Y2    = YCGRID(IXCGRD(ILINK+1),IYCGRD(ILINK+1))             40.09
+              ICGRD = KCGRD(ILINK+1)                                      40.09
+            ENDIF
+          ENDIF
+          IF (ICGRD.EQ.0) GOTO 90                                         40.13
+!         select obstacle side crossing the grid link
           X3 = COBST%XCRP(1)                                              40.31
           Y3 = COBST%YCRP(1)                                              40.31
           NUMCOR = COBST%NCRPTS                                           40.31
           DO JP = 2, NUMCOR                                               40.09
             X4 = COBST%XCRP(JP)                                           40.31
             Y4 = COBST%YCRP(JP)                                           40.31
-            ICC = KCGRD(1)                                                40.09
-            IF (ICC .GT. 1) THEN                                          40.09
-              X1 = XCGRID(IXCGRD(1),IYCGRD(1))                            40.09
-              Y1 = YCGRID(IXCGRD(1),IYCGRD(1))                            40.09
-!                                                                         40.09
-              ICGRD = 0                                                   40.09
-              IF (KGRPNT(IXCGRD(LOOP+1),IYCGRD(LOOP+1)).GT.1) THEN        40.09
-                X2    = XCGRID(IXCGRD(LOOP+1),IYCGRD(LOOP+1))             40.09
-                Y2    = YCGRID(IXCGRD(LOOP+1),IYCGRD(LOOP+1))             40.09
-                ICGRD = KCGRD(LOOP+1)                                     40.09
-                IF (ICGRD.GT.1) THEN                                      40.09
-                  IF (TCROSS2(X1, X2, X3, X4, Y1, Y2, Y3, Y4,             40.14
-     &                        XONOBST)) THEN                              40.14
-                    CALL OBSTLINE(X1,Y1,X2,Y2,X3,Y3,X4,Y4,XGTL,EXC)       40.09
-                    CALL REFLECT(AC2, AC2REF, REFLSO, X1, Y1, X2, Y2,     40.41 40.09
-     &                         X3, Y3, X4, Y4, XGTL, EXC, CAX,            40.09
-     &                         CAY, RDX, RDY, LOOP,                       40.09
-     &                         REFLCOEF, LREFDIFF, POWS, ANYBIN,          40.18 40.09
-     &                         KDIF, POWD,                                40.28
-     &                         LRFRD, SPCSIG, FD1, FD2, FD3, FD4)         40.28
-                  ENDIF                                                   40.14
-                ENDIF                                                     40.09
-              ENDIF                                                       40.09
-            ENDIF                                                         40.09
+            IF (TCROSS(X1,X2,X3,X4,Y1,Y2,Y3,Y4,XONOBST)) GOTO 70          40.14
             X3 = X4                                                       40.09
             Y3 = Y4                                                       40.09
-          END DO                                                          40.09
+          ENDDO
+!         no crossing found, skip procedure
+          GOTO 90
+
+  70      CALL REFLECT(AC2, REFLSO, X1, Y1, X2, Y2,                       40.13
+     &                 X3, Y3, X4, Y4, CAX,                               40.13
+     &                 CAY, RDX, RDY, ILINK,                              40.13
+     &                 REFLCOEF, LREFDIFF, POWN, ANYBIN,                  40.13
+     &                 LRFRD, SPCSIG, SPCDIR, FD1, FD2, FD3, FD4,         40.13
+     &                 OBREDF, REFLTST)                                   40.13
         END IF
 !
         IF (ITEST .GE. 120)  WRITE (PRTEST,10)
      &  IXCGRD(1)-1, IYCGRD(1)-1, NMPO, TRCF
   10    FORMAT(' SWTRCF: Point=', 2I5, ' NMPO  = ', I5, ' transm ',       40.03
      &  F8.3)                                                             40.03
-  40    DO IS = 1, MSC                                                   040697
-          DO ID = 1, MDC
-            OBREDF(ID,IS,LOOP) = TRCF
-          ENDDO
-        ENDDO
-  30  CONTINUE
+  90  CONTINUE
+      IF (.NOT.REFLTST) THEN                                              40.13
+        CALL MSGERR(3,'Kt^2 + Kr^2 > 1 ')                                 40.13
+        IF (ITEST.LT.50) THEN                                             40.13
+          WRITE (PRTEST, 74) IXCGRD(1)-1, IYCGRD(1)-1                     40.13
+  74      FORMAT (' Kt^2 + Kr^2 > 1 in grid point:', 2I4)                 40.13
+        ENDIF                                                             40.13
+      ENDIF                                                               40.13
       RETURN
 !     * end of SUBROUTINE SWTRCF
       END
 !
-!***********************************************************************  40.09
-!                                                                      *  40.09
-      SUBROUTINE OBSTLINE (X1, Y1, X2, Y2, X3, Y3, X4, Y4, XGTL, EXC)     40.09
-!                                                                      *  40.09
-!***********************************************************************  40.09
-!                                                                         40.09
-      USE OCPCOMM4                                                        40.41
-!
-      IMPLICIT NONE                                                       40.09
-!
-!
-!   --|-----------------------------------------------------------|--
-!     | Delft University of Technology                            |
-!     | Faculty of Civil Engineering                              |
-!     | Environmental Fluid Mechanics Section                     |
-!     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
-!     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
-!   --|-----------------------------------------------------------|--
-!
-!
-!     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
-!
-!     This program is free software; you can redistribute it and/or
-!     modify it under the terms of the GNU General Public License as
-!     published by the Free Software Foundation; either version 2 of
-!     the License, or (at your option) any later version.
-!
-!     This program is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-!     GNU General Public License for more details.
-!
-!     A copy of the GNU General Public License is available at
-!     http://www.gnu.org/copyleft/gpl.html#SEC3
-!     or by writing to the Free Software Foundation, Inc.,
-!     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-!
-!
-!  0. Authors                                                             40.09
-!                                                                         40.09
-!     40.09  Annette Kieftenburg                                          40.09
-!     40.41: Marcel Zijlema
-!                                                                         40.09
-!  1. Updates                                                             40.09
-!                                                                         40.09
-!     40.09, Dec 99: Function created                                     40.09
-!     40.41, Oct. 04: common blocks replaced by modules, include files removed
-!                                                                         40.09
-!  2. Purpose                                                             40.09
-!                                                                         40.09
-!     Find out whether vector (X1,Y1) lies 'above' the line piece         40.09
-!     through (X3,Y3) and (X4,Y4)                                         40.09
-!                                                                         40.09
-!  3. Method                                                              40.09
-!                                                                         40.09
-!     Calculate coefficients a and b in equation Y = A*X +B               40.09
-!     Check whether Y1 is greater than A*X1 + B                           40.09
-!     Then XGTL is true (else false)                                      40.09
-!                                                                         40.09
-!  4. Argument variables                                                  40.09
-!                                                                         40.09
-!     X1, Y1  inp    user coordinates of one end of grid link             40.09
-!     X3, Y3  inp    user coordinates of one end of obstacle side         40.09
-!     X4, Y4  inp    user coordinates of other end of obstacle side       40.09
-!     EXC     outp   indicates whether X4 = X3, which results in 'excep-  40.09
-!                    tional' situation (line parallel to y-axis)          40.09
-!     XGTL    outp   indicates whether (X1,Y1) is situated 'above'        40.09
-!                    linepiece (X3,Y3) (X4,Y4)                            40.09
-!                                                                         40.09
-      REAL       X1, X2, X3, X4, Y1, Y2, Y3, Y4                           40.09
-      LOGICAL    XGTL, EXC                                                40.09
-!                                                                         40.09
-!  5. Parameter variables                                                 40.09
-!                                                                         40.09
-!  6. Local variables                                                     40.09
-!                                                                         40.09
-!     A,B        dummy variables                                          40.09
-!     IENT       number of entries of subroutine OBSTLINE                 40.09
-!     EPS        small real                                               40.09
-!     RES        residual                                                 40.09
-!                                                                         40.09
-      INTEGER    IENT                                                     40.09
-      REAL A, B, RES, EPS                                                 40.09
-!                                                                         40.09
-!  8. Subroutines used                                                    40.09
-!                                                                         40.09
-!  9. Subroutines calling                                                 40.09
-!                                                                         40.09
-!     SWTRCF                                                              40.09
-!                                                                         40.09
-! 10. Error messages                                                      40.09
-!                                                                         40.09
-! 11. Remarks                                                             40.09
-!                                                                         40.09
-! 12. Structure                                                           40.09
-!                                                                         40.09
-!     If .NOT. (denominator of A = denominator of B = 0)                  40.09
-!              (i.e. parallel to y-axis)                                  40.09
-!     Then                                                                40.09
-!       Calculate coefficients A and B in y = Ax + B                      40.09
-!       EXC is .False.                                                    40.09
-!       RESidual  = Y1 - (A*X1+B)                                         40.09
-!       If RESidual <= Eps                                                40.09
-!       If Residual > 0                                                   40.09
-!       Then XGTL is .True.                                               40.09
-!       Else XGTL is .False.                                              40.09
-!     Else                                                                40.09
-!       EXC is .True.                                                     40.09
-!                                                                         40.09
-! 13. Source text                                                         40.09
-! ======================================================================  40.09
-      SAVE IENT                                                           40.09
-      DATA IENT/0/                                                        40.09
-      IF (LTRACE) CALL STRACE (IENT,'OBSTLINE')                           40.09
-!                                                                         40.09
-      EPS = TINY(X1)                                                      40.18 40.09
-      XGTL= .FALSE.                                                       40.09
-!                                                                         40.09
-      IF ( .NOT.( ABS(X4-X3).LE.EPS ) )THEN                               40.09
-        A = (Y4-Y3)/(X4-X3)                                               40.09
-        B = (X4*Y3-Y4*X3)/(X4-X3)                                         40.09
-        EXC = .FALSE.                                                     40.09
-!                                                                         40.09
-        RES = Y1 - (A*X1+B)                                               40.09
-        IF ( RES .GE. 0. ) THEN                                           40.09
-          XGTL = .TRUE.                                                   40.09
-        ELSE                                                              40.09
-          XGTL = .FALSE.                                                  40.09
-        ENDIF                                                             40.09
-!                                                                         40.09
-      ELSE                                                                40.09
-        A = -9999.                                                        40.09
-        B = -9999.                                                        40.09
-        EXC = .TRUE.                                                      40.09
-      END IF                                                              40.09
-!                                                                         40.09
-      RETURN                                                              40.09
-!     End of subroutine OBSTLINE                                          40.09
-      END                                                                 40.09
-!
-!************************************************************************ 40.09
-!                                                                       * 40.09
-      SUBROUTINE REFLECT (AC2, AC2REF, REFLSO, X1, Y1, X2, Y2, X3, Y3,    40.41 40.09
-     &                    X4, Y4, XGTL, EXC, CAX, CAY, RDX, RDY,          40.09
-     &                    LOOP, REF0, LREFDIFF, POWS, ANYBIN,             40.18 40.09
-     &                    KDIF, POWD,                                     40.28
-     &                    LRFRD,SPCSIG,FD1,FD2,FD3,FD4)                   40.28
-!                                                                       * 40.09
-!************************************************************************ 40.09
+!************************************************************************
+!                                                                       *
+      SUBROUTINE REFLECT (AC2, REFLSO, X1, Y1, X2, Y2, X3, Y3,            40.13
+     &                    X4, Y4, CAX, CAY, RDX, RDY,                     40.13
+     &                    ILINK, REF0, LREFDIFF, POWN, ANYBIN,            40.13
+     &                    LRFRD, SPCSIG, SPCDIR, FD1, FD2, FD3, FD4,      40.13
+     &                    OBREDF, REFLTST)                                40.13
+!                                                                       *
+!************************************************************************
 !                                                                         40.09
       USE OCPCOMM4                                                        40.41
       USE SWCOMM3                                                         40.41
+      USE SWCOMM4                                                         40.41
 !                                                                         40.09
       IMPLICIT NONE                                                       40.09
 !
@@ -3318,15 +3224,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3347,6 +3250,7 @@
 !  0. Authors                                                             40.09
 !                                                                         40.09
 !     40.09  Annette Kieftenburg                                          40.09
+!     40.13  Nico Booij
 !     40.18  Annette Kieftenburg                                          40.18
 !     40.28  Annette Kieftenburg                                          40.28
 !     40.38  Annette Kieftenburg                                          40.38
@@ -3358,8 +3262,12 @@
 !     40.18, Apr. 01: Scattered reflection against obstacles added        40.18
 !     40.28, Dec. 01: Frequency dependent reflection added                40.28
 !     40.38, Feb. 02: Diffuse reflection against obstacles added          40.38
+!     40.13, Sep. 02: Subroutine restructured
+!                     assumptions changed: reflected energy can come
+!                     from Th_norm-PI/2 to Th_norm+PI/2
 !     40.08, Mar. 03: Dimensioning of RDX, RDX changed to be consistent   40.08
 !                     with other subroutines                              40.08
+!     40.13, Nov. 03: test on refl + transm added
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
 !                                                                         40.09
 !  2. Purpose                                                             40.09
@@ -3371,12 +3279,11 @@
 !     Determine the angle of the obstacle,                                40.09
 !     Determine the angles between which reflections should be taken      40.09
 !     into account                                                        40.09
-!     If option is on: determine expression for frequency dependency      40.28
 !     Determine redistribution function                                   40.18
+!     determine expression of reflection coefficient for frequency
+!     dependency, if appropriate                                          40.28
 !     Determine reflected action density (corrected for angle obstacle    40.09
 !     and if option is on: redistribute energy)                           40.18
-!     If coefficient is Kd not equal to zero: determine diffuse           40.38
-!     reflection component                                                40.38
 !     Add reflected spectrum to contribution for the right hand side      40.41 40.09
 !     of matrix equation                                                  40.09
 !                                                                         40.09
@@ -3386,136 +3293,82 @@
 !                                                                         40.18
 !  5. Argument variables                                                  40.09
 !                                                                         40.09
-!     AC2      inp  Nonstationary case) action density as function        40.09
-!                   of D,S,X,Y at time T+DT                               40.09
-!     AC2REF   outp (Nonstationary case) reflected action density         40.09
-!                   as function of D,S,X,Y at time T+DT                   40.09
-!     CAX      inp  Propagation velocity                                  40.09
-!     CAY      inp  Propagation velocity                                  40.09
-!     EXC      inp  Indicates whether X4 = X3, which results in exception 40.09
-!                   situation (line parallel to y-axis)                   40.09
+!     AC2      inp  action density
+!     ANYBIN   inp  Determines whether a bin fall within a sweep
+!     CAX      inp  Propagation velocity in x-direction                   40.09
+!     CAY      inp  Propagation velocity in y-direction                   40.09
 !     FD1      inp  Coeff. freq. dep. reflection: vertical displacement   40.28
 !     FD2      inp  Coeff. freq. dep. reflection: shape parameter         40.28
 !     FD3      inp  Coeff. freq. dep. reflection: directional coefficient 40.28
 !     FD4      inp  Coeff. freq. dep. reflection: bending point of freq.  40.28
-!     KDIF     inp  Fraction of energy reflected in a diffuse manner      40.38
-!     LOOP     inp  Indicates which link is analyzed: 1 -> neighbour in x 40.09
+!     ILINK    inp  Indicates which link is analyzed: 1 -> neighbour in x 40.09
 !                                                     2 -> neighbour in y 40.09
 !     LREFDIFF inp  Indicates whether reflected energy should be          40.18
-!                   reflected (1) or not (0)                              40.18
+!                   scattered (1) or not (0)                              40.18
 !     LRFRD    inp  Indicates whether frequency dependent reflection is   40.28
 !                   active (#0.) or not (=0.)                             40.28
-!     POWD     inp  User defined power of diffuse redistr. function       40.38
-!     POWS     inp  User defined power of scattered redistr. function     40.18
-!     REF0     inp  User defined reflection coefficient                   40.18
-!                   w.r.t. waveheight (0<=REF0<=1)                        40.18
+!     OBREDF   inp  transmission coefficients
+!     POWN     inp  User defined power of redistribution function         40.18
+!     REF0     inp  reflection coefficient in terms of action density
 !     REFLSO   i/o  contribution to the source term due to reflection     40.41
+!     REFLTST  i/o  used to test Refl^2+Transm^2 <=1                      40.13
 !     RDX,RDY  inp  Array containing spatial derivative coefficients      40.09
+!     SPCDIR(*,1)   spectral directions (radians)
 !     SPCSIG   inp  Relative frequency (= 2*PI*Freq.)                     40.28
-!     XGTL     inp  Indicates whether (X1,Y1) is situated 'above'         40.09
-!                   linepiece (X3,Y3) (X4,Y4)                             40.09
 !     X1, Y1   inp  Coordinates of computational grid point under         40.09
 !                   consideration                                         40.09
 !     X2, Y2   inp  Coordinates of computational grid point neighbour     40.09
 !     X3, Y3   inp  User coordinates of one end of obstacle side          40.09
 !     X4, Y4   inp  User coordinates of other end of obstacle side        40.09
 !                                                                         40.09
-      REAL       :: AC2(MDC,MSC,MCGRD), AC2REF(MDC,MSC)                   40.18
+      REAL       :: AC2(MDC,MSC,MCGRD)                                    40.18
 !     Changed ICMAX to MICMAX, since MICMAX doesn't vary over gridpoint   40.22
       REAL       :: CAX(MDC,MSC,MICMAX), CAY(MDC,MSC,MICMAX)              40.18 40.22
-      REAL       :: REFLSO(MDC,MSC)                                       40.41 40.18
+      REAL       :: REFLSO(MDC,MSC), OBREDF(MDC,MSC,2)                    40.41 40.18
       REAL       :: RDX(10), RDY(10)                                      40.18 40.08
-      REAL       :: FD1, FD2, FD3, FD4, SPCSIG(MSC)                       40.41 40.28
+      REAL       :: FD1, FD2, FD3, FD4, SPCSIG(MSC), SPCDIR(MDC,6)        40.41 40.28
       REAL       :: REF0                                                  40.18
       REAL       :: X1, X2, X3, X4, Y1, Y2, Y3, Y4                        40.18
-      LOGICAL    :: EXC, XGTL, ANYBIN(MDC,MSC)                            40.18
-      INTEGER    :: LOOP                                                  40.18
-      REAL       :: POWS                                                  40.41 40.18
-      REAL       :: KDIF, POWD                                            40.38
+      LOGICAL    :: ANYBIN(MDC,MSC)                                       40.18
+      INTEGER    :: ILINK                                                 40.18
+      REAL       :: POWN                                                  40.41 40.18
       INTEGER    :: LREFDIFF, LRFRD                                       40.41
+      LOGICAL    :: REFLTST                                               40.13
 !                                                                         40.18
-      INTENT (IN)     AC2, CAX, CAY,                                      40.18
+      INTENT (IN)     AC2, CAX, CAY, OBREDF,                              40.18
      &                FD1, FD2, FD3, FD4, LRFRD,                          40.28
-     &                RDX, RDY, REF0, SPCSIG, X1, X2,                     40.18
-     &                X3, X4, Y1, Y2, Y3, Y4, EXC, XGTL, ANYBIN, LOOP,    40.18
-     &                KDIF, POWD,                                         40.38
-     &                POWS, LREFDIFF                                      40.18
-      INTENT (IN OUT) REFLSO                                              40.41 40.18
-      INTENT (OUT)    AC2REF                                              40.18
+     &                RDX, RDY, SPCSIG, SPCDIR, X1, X2,                   40.18
+     &                X3, X4, Y1, Y2, Y3, Y4, ANYBIN, ILINK,              40.18
+     &                POWN, LREFDIFF                                      40.18
+      INTENT (IN OUT) REF0, REFLSO                                        40.41 40.18
 !                                                                         40.09
 !  6. Parameter variables                                                 40.09
-!                                                                         40.09
-!     EPS2    constant used for redistribution function                   40.18
-!                                                                         40.18
-      REAL    :: EPS2                                                     40.18
 !                                                                         40.18
 !  7. Local variables                                                     40.09
 !                                                                         40.09
-!     AC2NEW  new action density spectrum (after optional redistribution) 40.18
-!     ACSRED  redistributed action density spectrum                       40.18
-!     ACDREF  diffusively reflected action density spectrum               40.28
-!     ACTOTTO total action density directed towards obstacle              40.28
-!     BETA    direction of obstacle                                       40.09
-!     CORID   correction integer for angle of reflected wave              40.09
-!     C1      counter for mirrored spectrum                               40.09
-!     C2,C3   counters for mirrored spectrum (for obstacle with possitive 40.09
-!             resp. negative angle)                                       40.09
-!     dBETA   'residual' of (integer) correction CORID,                   40.09
-!             used as weight factor                                       40.09
-!     DELTA   direction of line piece (X1,Y1) (X4,Y4)                     40.09
-!     DUMD    dummy variable for nearest integer for angle delta          40.09
-!     DUMG    dummy variable for nearest integer for angle delta          40.09
-!     DUMN1   dummy variable                                              40.18
-!     DUMN2   dummy variable                                              40.18
-!     EPS     gridsize dependent dummy (small) variable                   40.18
-!     FD      frequency dependence function                               40.28
-!     GAMMA_  direction of line piece (X1,Y1) (X3,Y3)                     40.09
-!     ID,IS   counters for directions and frequencies                     40.09
-!     IDD,IDG nearest integer for angle DELTA resp. GAMMA                 40.09
-!     IDJ     counter for directions                                      40.18
-!     IDMAX   maximum of IDG,IDD                                          40.09
-!     IDMIN   minimum of IDG,IDD                                          40.09
-!     IDR     counter for directions                                      40.18
-!     IDRJ    counter for directions                                      40.18
-!     IENT    number of entries of this subroutine                        40.09
-!     KSCAT   fraction of energy reflected in a scattered manner          40.28
-!     MAXID   absolute maximum for counter (ID) for width                 40.18
-!     MMRW    maximum or minimum counter for P                            40.18
-!                         (modulus of reflected width with minus sign)    40.18
-!     NB      angle of normal of obstacle with angle BETA                 40.28
-!     NORM    norm used to normalize redistribution function P            40.18
-!     P       normalized redistribution function                          40.18
-!     PMRW    maximum or minimum counter for P                            40.18
-!                         (modulus of reflected width with minus sign)    40.18
-!     R       reflection coefficient matrix                               40.09
-!             distributed REFLECTED energy directed TOWARDS the obstacle  40.18
-!     SUMP    total sum of redistribution function P                      40.18
-!     WIDTH   counter used to determine width of redistribution function  40.18
-!     WRES    resulting width of redistribution function P                40.18
-!                                                                         40.09
-      REAL    :: AC2NEW(MDC,MSC)                                          40.18
-      REAL, ALLOCATABLE :: ACSRED(:,:,:)                                  40.52 40.18
-      REAL    :: ACDREF(MDC,MSC)                                          40.28
-      REAL    :: ACTOTTO(MSC)                                             40.28
-      REAL    :: BETA, dBETA, DELTA                                       40.09
-      REAL    :: DUMN1, DUMN2                                             40.18
-      REAL    :: DUMA, DUMB, FD(MSC)                                      40.28
-      REAL    :: EPS, GAMMA_                                              40.09
-      REAL    :: NORM, P(MDC,MDC)                                         40.18
-      REAL    :: KSCAT, NB, PD(MDC), SUMPD                                40.28
-      REAL    :: R(MDC,MSC)                                               40.09
-      INTEGER :: C1, C2, C3, CORID, DUMD, DUMG, ID, IDD, IDG, IDMAX       40.09
-      INTEGER :: IDMIN                                                    40.09
-      INTEGER :: IDJ, IDR, IDRJ, MAXID,  WIDTH, WRES                      40.18
-      INTEGER :: IENT, IS                                                 40.09
-      LOGICAL :: STPNOW                                                   40.09
+      REAL :: AC2REF     ! reflected action density of one spectral bin
+      REAL :: BETA         ! local angle of obstacle                      40.09
+      REAL :: EPS                                                         40.09
+      REAL, ALLOCATABLE :: PRDIF(:)   ! scattering filter                 40.13
+      REAL    :: TH_INC         ! direction of incident wave
+      REAL    :: TH_NORM        ! direction of normal to obstacle
+      REAL    :: TH_OUT         ! direction of outgoing wave
+      REAL    :: IANG           ! angle divided by DTheta (DDIR)
+      REAL    :: SUMRD          ! sum of PRDIF array
+      REAL    :: W1, W2         ! interpolation coefficients
+
+      INTEGER :: ID             ! counter of directions
+      INTEGER :: IS             ! counter of frequencies
+      INTEGER :: MAXIDR         ! width of scattering filter
+      INTEGER :: IDR            ! relative directional counter
+      INTEGER :: ID_I1, ID_I2   ! counters of incoming directions
+      INTEGER :: IDA, IDB       ! counters of incoming directions
+      INTEGER :: IENT           ! number of entries
 !                                                                         40.18
 !  8. Subroutines used                                                    40.09
-!                                                                         40.18
-!     GAMMLN  natural logaritm of the (standard) GAMMA function           40.18
-!                                                                         40.18
-      REAL    :: GAMMLN                                                   40.18
 !                                                                         40.09
+      LOGICAL :: STPNOW                                                   40.09
+!
 !  9. Subroutines calling                                                 40.09
 !                                                                         40.09
 !     SWTRCF                                                              40.09
@@ -3528,7 +3381,7 @@
 !                                                                         40.09
 !    -In case the obstacle cuts exactly through computational grid point, 40.09
 !     the obstacle should be moved a bit with subroutine OBSTMOVE.        40.09
-!    -The order of magnitude of the obstacle linepiece is assumed to be   40.09
+!    -The length of the obstacle linepiece is assumed to be               40.09
 !     'long enough' compared to grid resolution (> 0.5*sqrt(dx^2+dy^2))   40.09
 !     (if this restriction is violated, the reflections due to an obsta-  40.09
 !     cle of one straight line can be very different from a similar line  40.09
@@ -3540,22 +3393,28 @@
 !                                                                         40.09
 ! 12. Structure                                                           40.09
 !                                                                         40.09
+!     -----------------------------------------------------------------
 !     Determine angle of obstacle, Beta                                   40.09
-!       If Beta < - PI/2 then Beta + PI                                   40.09
-!       If Beta >   PI/2 then Beta - PI                                   40.09
-!     Calculate correction on counter for direction CORID and weight      40.09
-!     factor dBeta                                                        40.09
-!     Determine maximum and minimum angle for which reflection should     40.09
-!     be taken into account                                               40.09
-!                                                                         40.18
-!     In option is on: determine redistribution function                  40.18
-!                      determine redistibuted action density spectrum     40.18
-!                      (first cut off directions, then redistribute)      40.18
-!     Else cut off directions not pointing towards obstacle               40.18
-!                                                                         40.18
-!     Determine reflected action density                                  40.09
-!     by reversing counter and correcting the angle with 2*Beta           40.09
-!     i.e. correct counter by NINT(2*Beta) and take weighted average      40.09
+!     Determine angle of normal from (X1,Y1) to obstacle                  40.13
+!     If there is constant diffuse reflection
+!     Then determine scattering distribution
+!     -----------------------------------------------------------------
+!     For all frequencies do
+!         If amount of reflection varies with frequency
+!         Then determine reflection coefficient
+!         -------------------------------------------------------------
+!         If there is diffuse reflection
+!         Then if scattering varies with frequency
+!              Then determine power of cos
+!              --------------------------------------------------------
+!              Determine distribution
+!         -------------------------------------------------------------
+!         For all active directions do
+!             Determine specular incoming direction
+!             For directions of scattering filter do
+!                 multiply incoming action with scattering coefficient
+!                 add this to array AC2REF
+!     -----------------------------------------------------------------
 !                                                                         40.09
 !     Add reflected spectrum to right hand side of matrix equation        40.09
 !                                                                         40.09
@@ -3565,25 +3424,17 @@
       DATA     IENT /0/                                                   40.09
       CALL STRACE (IENT, 'REFLECT')                                       40.09
 !                                                                         40.09
-      ALLOCATE(ACSRED(MDC,MDC,MSC))                                       40.52
-!
-!     initialization                                                      40.09
-      DO IS = 1, MSC                                                      40.09
-        FD(IS) = 0.                                                       40.28
-        DO ID = 1, MDC                                                    40.09
-          R(ID,IS) = 0.                                                   40.09
-          AC2REF(ID,IS) = 0.                                              40.09
-          AC2NEW(ID,IS) = 0.                                              40.18
-          ACDREF(ID,IS) = 0.                                              40.28
-          DO IDJ = 1, MDC                                                 40.18
-            ACSRED(ID,IDJ,IS) = 0.                                        40.18
-          END DO                                                          40.18
-        END DO                                                            40.09
-      END DO                                                              40.09
-!                                                                         40.09
       EPS = EPSILON(X1)*SQRT((X2-X1)*(X2-X1)+(Y2-Y1)*(Y2-Y1))             40.09
-      IF (EPS ==0.) EPS = TINY(X1)                                        40.09
-      EPS2  = 0.01                                                        40.18
+      IF (EPS ==0) EPS = TINY(X1)                                         40.09
+
+      IF (LREFDIFF .EQ. 0) THEN
+        ALLOCATE (PRDIF(0:0))
+        MAXIDR = 0
+        PRDIF(0) = 1.
+      ELSE
+        MAXIDR = MDC/2
+        ALLOCATE (PRDIF(0:MDC/2))
+      ENDIF
 !                                                                         40.09
 !     Determine angle of obstacle BETA, and related                       40.09
 !                                                                         40.09
@@ -3592,318 +3443,117 @@
       ELSE                                                                40.09
         CALL MSGERR (3, 'Obstacle contains line piece of length 0!')      40.09
       END IF                                                              40.09
-      IF (BETA.LE.-PI/2.) THEN                                            40.09
-        BETA = BETA + PI                                                  40.09
-      ELSE IF (BETA.GT.PI/2.) THEN                                        40.09
-        BETA = BETA - PI                                                  40.09
-      END IF                                                              40.09
-!                                                                         40.09
-      CORID = NINT(2.*BETA/DDIR)                                          40.09
-      dBETA = (2.*BETA)/DDIR-CORID                                        40.09
-!                                                                         40.28
-      IF ((EXC .AND. (X1 .GT. X3)).OR.(.NOT.XGTL))  THEN                  40.28
-        NB   = BETA + 3*PI/2                                              40.28
-      ELSE                                                                40.28
-        NB = BETA + PI/2                                                  40.28
-      ENDIF                                                               40.28
-!                                                                         40.09
-!     Wave components that are directed to obstacle are lying between     40.09
-!     GAMMA_ and DELTA.                                                   40.09
-!     In case MDC is odd and the absolute angle (DELTA or GAMMA_) is      40.09
-!     larger then PI/2 a trick is used to find the correct  nearest       40.09
-!     integer.                                                            40.09
-!                                                                         40.09
-        GAMMA_ = ATAN2((Y3-Y1),(X3-X1))                                   40.09
-!        IF ( (MOD(MDC,2).EQ.0) .OR.                                       40.09  40.18
-!     &     ((MOD(MDC,2).EQ.1).AND.(ABS(GAMMA_).LT.PI/2.)) ) THEN          40.09  40.18
-!          DUMG = NINT(GAMMA_/DDIR)                                        40.09  40.18
-!        ELSE                                                              40.09  40.18
-!          DUMG = SIGN(1.,GAMMA_)*(MDC+1)/2 -                              40.09  40.18
-!     &           NINT((SIGN(1.,GAMMA_)*PI-GAMMA_)/DDIR)                   40.09  40.18
-!        ENDIF                                                             40.09  40.18
-        DUMG = NINT((GAMMA_+0.5*DDIR)/DDIR)                               40.18
-        IF (DUMG.GT.0) THEN                                               40.09
-          IDG = DUMG                                                      40.09
-        ELSE                                                              40.09
-          IF (DUMG.NE.0) THEN                                             40.09
-            IDG = MDC+DUMG                                                40.18
-          ELSE                                                            40.09
-            IF (GAMMA_.LE.0.) THEN                                        40.09
-              IDG = MDC                                                   40.09
-            ELSE                                                          40.09
-              IDG= 1                                                      40.09
-            ENDIF                                                         40.09
-          ENDIF                                                           40.09
-        ENDIF                                                             40.09
-!                                                                         40.09
-        DELTA = ATAN2((Y4-Y1),(X4-X1))                                    40.09
-!        IF ( (MOD(MDC,2).EQ.0) .OR.                                       40.09  40.18
-!     &     ((MOD(MDC,2).EQ.1).AND.(ABS(DELTA).LT.PI/2.)) ) THEN           40.09  40.18
-!          DUMD = NINT(DELTA/DDIR)                                         40.09  40.18
-!        ELSE                                                              40.09  40.18
-!          DUMD = SIGN(1.,DELTA)*(MDC+1)/2 -                               40.09  40.18
-!     &           NINT((SIGN(1.,DELTA)*PI-DELTA)/DDIR)                     40.09  40.18
-!        ENDIF                                                             40.09  40.18
-        DUMD = NINT((DELTA+0.5*DDIR)/DDIR)                                40.18
-        IF (DUMD.GT.0) THEN                                               40.09
-          IDD = DUMD                                                      40.09
-        ELSE                                                              40.09
-          IF (DUMD.NE.0) THEN                                             40.09
-            IDD = MDC+DUMD                                                40.18
-          ELSE                                                            40.09
-            IF (DELTA.LE.0.) THEN                                         40.09
-              IDD = MDC                                                   40.09
-            ELSE                                                          40.09
-              IDD= 1                                                      40.09
-            ENDIF                                                         40.09
-          ENDIF                                                           40.09
-        ENDIF                                                             40.09
-!                                                                         40.09
-      IF (IDG .GE. IDD) THEN                                              40.09
-        IDMIN =IDD                                                        40.09
-        IDMAX =IDG                                                        40.09
-      ELSE                                                                40.09
-        IDMIN =IDG                                                        40.09
-        IDMAX =IDD                                                        40.09
-      ENDIF                                                               40.09
-!                                                                         40.09
-!     For those directions that are pointed towards the obstacle the      40.09
-!     reflection coefficients have a certain value. For the other         40.09
-!     directions it is set to zero.                                       40.09
-!                                                                         40.09
-      IF (IDMAX .NE. IDMIN) THEN                                          40.09
-        IF ( ( (EXC .AND. X3.GT.X1)  .OR.                                 40.18 40.09
-     &         (.NOT.XGTL .AND. BETA.LE.0.).OR.                           40.09
-     &         (XGTL .AND. BETA.GT.0.) )                                  40.09
-     &       .AND.                                                        40.09
-     &       ( (GAMMA_*DELTA.LT.0.) .OR.                                  40.09
-     &       (GAMMA_*DELTA.EQ.0. .AND.(GAMMA_.GT.0. .OR. DELTA.GT.0.)) )  40.09
-     &     ) THEN                                                         40.09
-!                                                                         40.09
-          DO IS = 1, MSC                                                  40.09
-          DUMA = FD3*(SPCSIG(IS)/PI2-FD4)                                 40.28
-          DUMB = REF0*FD2                                                 40.28
-          IF ((LRFRD.EQ.1) .AND.(DUMA /= 0. .OR. DUMB/=0.)) THEN          40.41 40.28
-            FD(IS)=FD1+FD2/PI*ATAN2((PI*DUMA),DUMB)                       40.28
-              IF(FD(IS) > 1.) FD(IS) = 1.                                 40.28
-              IF(FD(IS) < 0.) FD(IS) = 0.                                 40.28
-            ELSE                                                          40.28
-              FD(IS) = 1.                                                 40.28
-            ENDIF                                                         40.28
-            DO ID = 1, MDC                                                40.09
-              IF ((ID.GE.IDMAX).OR.(ID.LE.IDMIN)) THEN                    40.09
-                R(ID,IS) = REF0* FD(IS)                                   40.28 40.09
-              ELSE                                                        40.09
-                R(ID,IS) = 0.                                             40.09
-              END IF                                                      40.09
-            END DO                                                        40.09
-          END DO                                                          40.09
-        ELSE                                                              40.09
-          DO IS = 1, MSC                                                  40.09
-          DUMA = FD3 * (SPCSIG(IS)/PI2-FD4)                               40.28
-          DUMB = REF0 * FD2                                               40.28
-          IF ((LRFRD.EQ.1) .AND.(DUMA/= 0. .OR. DUMB/=0.)) THEN           40.41 40.28
-            FD(IS)=FD1+FD2/PI*ATAN2((PI*DUMA),DUMB)                       40.28
-              IF(FD(IS) > 1.) FD(IS) =1.                                  40.28
-              IF(FD(IS) < 0.) FD(IS) =0.                                  40.28
-            ELSE                                                          40.28
-              FD(IS) = 1.                                                 40.28
-            ENDIF                                                         40.28
-            DO ID = 1, MDC                                                40.09
-              IF ((ID.GE.IDMIN).AND.(ID.LE.IDMAX)) THEN                   40.09
-                R(ID,IS) = REF0 * FD(IS)                                  40.28 40.09
-              ELSE                                                        40.09
-                R(ID,IS) = 0.                                             40.09
-              END IF                                                      40.09
-            END DO                                                        40.09
-          END DO                                                          40.09
-        END IF                                                            40.09
-      ELSE                                                                40.09
-        DO IS = 1, MSC                                                    40.28
-          DUMA = FD3*(SPCSIG(IS)/PI2-FD4)                                 40.28
-          DUMB = REF0*FD2                                                 40.28
-          IF ((LRFRD.EQ.1) .AND.(DUMA/= 0. .OR. DUMB/=0.) )THEN           40.41 40.28
-            FD(IS)=FD1+FD2/PI*ATAN2((PI*DUMA),DUMB)                       40.28
-            IF(FD(IS) > 1.) FD(IS) = 1.                                   40.28
-            IF(FD(IS) < 0.) FD(IS) = 0.                                   40.28
-          ELSE                                                            40.28
-            FD(IS) = 1.                                                   40.28
-          ENDIF                                                           40.28
-          R(IDMIN,IS) = REF0 * FD(IS)                                     40.28 40.09
-        END DO                                                            40.09
-      END IF                                                              40.09
-!                                                                         40.18
-!     Determine the width of the redistribution function                  40.18
-      IF ((LREFDIFF.EQ.1) .AND. (KDIF < 1.)) THEN                         40.41 40.18 40.28
-        MAXID  = INT(MDC/4)                                               40.18
-        WIDTH = 0                                                         40.18
-        DO ID = 1, MAXID                                                  40.18
-          IF (((COS(ID*DDIR))**POWS).GE.EPS2 ) THEN                       40.18
-            WIDTH = WIDTH +1                                              40.18
-          END IF                                                          40.18
-        END DO                                                            40.18
-        WRES = WIDTH                                                      40.18
-!                                                                         40.18
-!       Initialize redistribution function                                40.18
-!                                                                         40.18
-        IF (WRES > 0) THEN                                                40.18
-          DUMN1 = (1+POWS)/2.                                             40.18
-          DUMN2 = 1+POWS/2.                                               40.18
-          NORM = SQRT(PI)*EXP(GAMMLN(DUMN1)-GAMMLN(DUMN2))                40.18
-          DO IDRJ = 1, MDC                                                40.18
-            DO IDR = 1, MDC                                               40.18
-              P(IDR,IDRJ) = 0.                                            40.18
-            END DO                                                        40.18
-          END DO                                                          40.18
-!                                                                         40.18
-!                                                                         40.18
-!         Use property of cosine function to determine maximum and        40.18
-!         minimum angle of redistribution                                 40.18
-          DO IDR = 1, MDC                                                 40.18
-            DO IDRJ = 1,MDC                                               40.18
-              IF (COS(((IDR-IDRJ)*DDIR)) > 0.) THEN                       40.18
-                P(IDR,IDRJ) = DDIR*(COS(((IDR-IDRJ)*DDIR))**POWS)/NORM    40.18
-              ELSE                                                        40.18
-                P(IDR,IDRJ) =0.                                           40.18
-              ENDIF                                                       40.18
-            END DO                                                        40.18
-          END DO                                                          40.18
-        ENDIF                                                             40.18
-!                                                                         40.18
-!       To avoid that the redistributed REFLECTed action density is       40.18
-!       directed TOWARDS the obstacle, those directions are exluded.      40.18
-!       Use the normal direction NB.                                      40.18
-        DO IDR = 1, MDC                                                   40.18
-          DO IDJ = 1, MDC                                                 40.18
-            IF (COS(((IDR-IDJ)*DDIR)-NB) < 0.) THEN                       40.18
-              P(IDR,IDJ) =0.                                              40.18
-            ENDIF                                                         40.18
-           END DO                                                         40.18
-        END DO                                                            40.18
-      ENDIF                                                               40.18
-!                                                                         40.28
-!     Determine the diffusive redistribution function                     40.38
-      IF ((LREFDIFF.EQ.1) .AND. (KDIF > 0.)) THEN                         40.41 40.38
-        SUMPD = 0.                                                        40.38
-        DO IDRJ = 1,MDC                                                   40.38
-          PD(IDRJ) = (COS((IDRJ-0.5)*DDIR-NB))**POWD                      40.38
-          IF (PD(IDRJ) < EPS2)  THEN                                      40.38
-            PD(IDRJ) = 0.                                                 40.38
-          ELSE                                                            40.38
-            SUMPD = SUMPD + PD(IDRJ)                                      40.38
-          ENDIF                                                           40.38
-        END DO                                                            40.38
-        DO IDRJ = 1,MDC                                                   40.38
-          PD(IDRJ) = PD(IDRJ)/SUMPD                                       40.38
-        END DO                                                            40.38
-      ENDIF                                                               40.38
-!                                                                         40.18
-      IF ((LREFDIFF.EQ.1) .AND. (WRES>0.) .AND. (KDIF<1.)) THEN           40.41 40.18 40.38
-!     If reflectionis not specular                                        40.18
-!     Determine redistributed action density spectrum per direction,      40.18
-!     cutting of directions not directed towards the obstacle             40.18
-          DO IS = 1, MSC                                                  40.18
-            DO IDR = 1, MDC                                               40.18
-              DO IDJ = 1, MDC                                             40.18
-              ACSRED(IDR,IDJ,IS) = AC2(IDR,IS,KCGRD(1))*R(IDR,IS)         40.18
-     &                                          *P(IDR,IDJ)               40.18
-              END DO                                                      40.18
-            END DO                                                        40.18
-          END DO                                                          40.18
-!         Sum for all components IDR to determine new action density      40.18
-!         in component IDJ                                                40.18
-          DO IS = 1, MSC                                                  40.18
-            DO IDJ = 1, MDC                                               40.18
-            AC2NEW(IDJ,IS) = 0.                                           40.18
-              DO IDR = 1, MDC                                             40.18
-              AC2NEW(IDJ,IS) = AC2NEW(IDJ,IS)+ACSRED(IDR,IDJ,IS)          40.18
-              END DO                                                      40.18
-            END DO                                                        40.18
-          END DO                                                          40.18
-      ELSE                                                                40.18
-!       Else determine 'new action density' to be used for reflection by  40.18
-!       only cutting of directions that are not directed towards the      40.18
-!       obstacle                                                          40.18
-        DO IS = 1, MSC                                                    40.18
-          ACTOTTO(IS) = 0.                                                40.28
-          DO ID = 1, MDC                                                  40.18
-            AC2NEW(ID,IS) = AC2(ID,IS,KCGRD(1))*R(ID,IS)                  40.18
-          END DO                                                          40.18
-        END DO                                                            40.18
-      ENDIF                                                               40.18
-!                                                                         40.38
-!     Determine total energy directed towards obstacle                    40.38
-      IF (KDIF > 0.) THEN                                                 40.38
-        DO IS = 1, MSC                                                    40.38
-          ACTOTTO(IS) = 0.                                                40.38
-          DO ID = 1, MDC                                                  40.38
-            ACTOTTO(IS) = ACTOTTO(IS) + AC2(ID,IS,KCGRD(1)) * R(ID,IS)    40.38
-          END DO                                                          40.38
-        END DO                                                            40.38
-      ENDIF                                                               40.38
-!                                                                         40.09
-      IF ((LREFDIFF.EQ.1) .AND. (KDIF > 0.)) THEN                         40.41 40.28 40.38
-        DO IS = 1, MSC                                                    40.28
-          DO ID = 1, MDC                                                  40.28
-            ACDREF(ID,IS) = ACTOTTO(IS) * PD(ID)                          40.28
-          END DO                                                          40.28
-        END DO                                                            40.28
-      ENDIF                                                               40.28
-      KSCAT = 1. - KDIF                                                   40.28
-!                                                                         40.09
-!     Determine reflected action denstity spectrum by reversing and       40.09
-!     correcting for obstacle angle in this counter (use C1), take        40.09
-!     weighted average using dBETA and neighbour in theta direction (C2   40.09
-!     for positive BETA or C3 for negative BETA)                          40.09
-!     Add reflected spectrum to contribution for the source term          40.41 40.09
-!     (for every (ID,IS)).                                                40.18
-!                                                                         40.09
-      DO IS = 1, MSC                                                      40.09
-        DO ID = 1, MDC                                                    40.09
-          IF (ANYBIN(ID,IS)) THEN                                         40.09
-            C1 = MOD((MDC-ID+1+CORID),MDC)                                40.09
-            IF (C1.LE.0) C1 = C1+MDC                                      40.09
-!                                                                         40.09
-            IF (BETA .LT. 0.) THEN                                        40.09
-              C2 = MOD((MDC-ID+1+CORID+1),MDC)                            40.09
-              IF (C2.LE.0) C2 = C2+MDC                                    40.09
-              IF (dBETA .GE. 0.) THEN                                     40.09
-                AC2REF(ID,IS) =                                           40.09
-     &            (RDX(LOOP)*CAX(ID,IS,1) + RDY(LOOP)*CAY(ID,IS,1))       40.09
-     &            * (  ( (1.-dBETA)*AC2NEW(C1,IS)                         40.18
-     &            + dBETA*AC2NEW(C2,IS) ) * KSCAT                         40.18  40.38
-     &            + ACDREF(ID,IS) * KDIF  )                               40.38
-              ELSE                                                        40.09
-                AC2REF(ID,IS) =                                           40.09
-     &            (RDX(LOOP)*CAX(ID,IS,1) + RDY(LOOP)*CAY(ID,IS,1))       40.09
-     &            * (  ( (1.+dBETA)*AC2NEW(C1,IS)                         40.18
-     &            - dBETA*AC2NEW(C2,IS) ) * KSCAT                         40.18  40.38
-     &            + ACDREF(ID,IS) * KDIF  )                               40.38
-              ENDIF                                                       40.09
-              REFLSO(ID,IS) = REFLSO(ID,IS) + AC2REF(ID,IS)               40.41 40.09
-            ELSE                                                          40.09
-              C3 = MOD((MDC-ID+1+CORID-1),MDC)                            40.09
-              IF (C3.LE.0) C3 = C3+MDC                                    40.09
-              IF (dBETA .GE. 0.) THEN                                     40.09
-                AC2REF(ID,IS) =                                           40.09
-     &            (RDX(LOOP)*CAX(ID,IS,1) + RDY(LOOP)*CAY(ID,IS,1))       40.09
-     &            * (  ( (1.-dBETA)*AC2NEW(C1,IS)                         40.18
-     &            + dBETA*AC2NEW(C3,IS) ) * KSCAT                         40.18  40.38
-     &            + ACDREF(ID,IS) * KDIF  )                               40.38
-              ELSE                                                        40.09
-                AC2REF(ID,IS) =                                           40.09
-     &            (RDX(LOOP)*CAX(ID,IS,1) + RDY(LOOP)*CAY(ID,IS,1))       40.09
-     &            * (  ( (1.+dBETA)*AC2NEW(C1,IS)                         40.18
-     &            - dBETA*AC2NEW(C3,IS) ) * KSCAT                         40.18  40.38
-     &            + ACDREF(ID,IS) * KDIF  )                               40.38
-              ENDIF                                                       40.09
-              REFLSO(ID,IS) = REFLSO(ID,IS) + AC2REF(ID,IS)               40.41 40.09
-            END IF                                                        40.09
+!     determine direction of normal                         (4)
+!     this is the normal from (X1,Y1)                        |
+!     towards the obstacle                                   |
+!     see sketch to establish sign                    (2)----+------(1)
+!                                                            |
+!                                                           (3)
+      IF ((X1-X3)*(Y4-Y3)-(Y1-Y3)*(X4-X3) .GT. 0.) THEN                   40.13
+        TH_NORM = BETA + 0.5*PI
+      ELSE
+        TH_NORM = BETA - 0.5*PI
+      ENDIF                                                               40.13
+
+!     prepare directional filter in case of diffuse reflection
+      IF (LREFDIFF.EQ.1) THEN
+        PRDIF(1:MAXIDR) = 0.
+        PRDIF(0) = 1.
+        SUMRD = 1.
+        DO ID = 1, MAXIDR
+          PRDIF(ID) = (COS(ID*DDIR))**POWN
+          IF (PRDIF(ID) .GT. 0.01) THEN
+            SUMRD = SUMRD + 2.*PRDIF(ID)
+          ELSE
+            MAXIDR = ID-1
+            GOTO 23
+          ENDIF
+        ENDDO
+  23    DO ID = 0, MAXIDR
+          PRDIF(ID) = PRDIF(ID) / SUMRD
+        ENDDO
+        IF (TESTFL .AND. ITEST.GE.50) THEN
+          WRITE (PRTEST, 27) POWN, MAXIDR
+  27      FORMAT (' power scattering filter:', F4.1, I3)
+          IF (ITEST.GE.130) WRITE (PRTEST, 28)
+     &    (PRDIF(IDR), IDR=0, MAXIDR)
+  28      FORMAT (10 F7.3)
+        ENDIF
+      ENDIF
+
+      DO IS = 1, MSC
+        IF (LRFRD.EQ.1) THEN
+!         amount of reflection varies with wave frequency
+          REF0 = FD1 +                                                    40.13
+     &           FD2/PI * ATAN2(PI*FD3*(SPCSIG(IS)-FD4),FD2)              40.13
+          IF (REF0 > 1.) REF0 = 1.                                        40.28
+          IF (REF0 < 0.) REF0 = 0.                                        40.28
+!         >>> should REF0 not be squared? <<<
+        ENDIF
+!       check whether reflection + transmission <= 1                      40.13
+        DO ID = 1, MDC                                                    40.13
+          IF ((REF0 + OBREDF(ID,IS,ILINK)) .GT. 1.) THEN                  40.13
+            REFLTST = .FALSE.                                             40.13
+            IF (ITEST.GE.50) THEN                                         40.13
+              WRITE (PRTEST, 72) IXCGRD(1)-1, IYCGRD(1)-1, ILINK,         40.13
+     &               IS, ID, REF0, OBREDF(ID,IS,ILINK)                    40.13
+  72          FORMAT (' Refl+Transm>1 in ', 2I4, 2X, 3I3, 2X, 2F6.2)      40.13
+            ENDIF                                                         40.13
+          ENDIF                                                           40.13
+        ENDDO                                                             40.13
+
+        IF (LREFDIFF.EQ.2) THEN
+!         spreading varies with frequency; not yet implemented
+        ENDIF
+        DO ID = 1, MDC
+          IF (ANYBIN(ID,IS)) THEN
+            AC2REF = 0.
+            TH_OUT = SPCDIR(ID,1)
+!           corresponding incident direction (assuming specular reflection)
+            TH_INC = 2.*BETA-TH_OUT
+!           determine counter for which direction is TH_INC:
+            IANG = MOD (TH_INC-SPCDIR(1,1), 2.*PI) / DDIR
+!           incident angle is between ID_I1 and ID_I2
+            ID_I1 = 1 + INT (IANG)
+            ID_I2 = ID_I1+1
+!           W1 and W2 are weighting coefficients for the above directions
+!           by linear interpolation
+            W2 = IANG + 1. - REAL(ID_I1)
+            W1 = 1. - W2
+            DO IDR = -MAXIDR, MAXIDR
+              IDA = ID_I1 + IDR
+              IDB = ID_I2 + IDR
+              IF (FULCIR) THEN
+                IDA = 1+MOD(2*MDC+IDA-1,MDC)
+!               only outgoing reflected waves, i.e. not towards obstacle
+                IF (COS(TH_NORM-SPCDIR(IDA,1)) .GT. 0.)
+     &          AC2REF = AC2REF +
+     &          REF0 * W1 * PRDIF(ABS(IDR)) * AC2(IDA,IS,KCGRD(1))
+                IDB = 1+MOD(2*MDC+IDB-1,MDC)
+                IF (COS(TH_NORM-SPCDIR(IDB,1)) .GT. 0.)
+     &          AC2REF = AC2REF +
+     &          REF0 * W2 * PRDIF(ABS(IDR)) * AC2(IDB,IS,KCGRD(1))
+              ELSE
+                IF (IDA.GE.1 .AND. IDA.LE.MDC) THEN
+                  IF (COS(TH_NORM-SPCDIR(IDA,1)) .GT. 0.)
+     &            AC2REF = AC2REF +
+     &            REF0 * W1 * PRDIF(ABS(IDR)) * AC2(IDA,IS,KCGRD(1))
+                ENDIF
+                IF (IDB.GE.1 .AND. IDB.LE.MDC) THEN
+                  IF (COS(TH_NORM-SPCDIR(IDB,1)) .GT. 0.)
+     &            AC2REF = AC2REF +
+     &            REF0 * W2 * PRDIF(ABS(IDR)) * AC2(IDB,IS,KCGRD(1))
+                ENDIF
+              ENDIF
+            ENDDO
+!           add reflected energy to right hand side of matrix
+            REFLSO(ID,IS) = REFLSO(ID,IS) + AC2REF *
+     &      (RDX(ILINK)*CAX(ID,IS,1) + RDY(ILINK)*CAY(ID,IS,1))           40.13
           END IF                                                          40.09
         END DO                                                            40.09
       END DO                                                              40.09
 !                                                                         40.18
-      DEALLOCATE(ACSRED)                                                  40.52
+      IF (LREFDIFF .GT. 0) DEALLOCATE (PRDIF)
       IF (STPNOW()) RETURN                                                40.09
       RETURN                                                              40.09
 !     End of subroutine REFLECT                                           40.09
@@ -3925,15 +3575,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4023,14 +3670,15 @@
 !
 !     PKPER    peak period                                                30.80
 !     APSHAP   aux. var. used in computation of spectrum
-!     AUX1     aux. variable
-!     AUX2          ,,
-!     AUX3          ,,
+!     AUX1     auxiliary variable
+!     AUX2     auxiliary variable
+!     AUX3     auxiliary variable
 !     COEFF    coefficient for behaviour around the peak (Jonswap)
 !     CPSHAP   aux. var. used in computation of spectrum
 !     CTOT     total energy
 !     CTOTT    total energy (used for comparison)
-!     DIFPER   aux. var. used to select bin closest to given frequency
+!     DIFPER   auxiliary variable used to select bin closest
+!              to given frequency
 !     MPER
 !     MS       power in directional distribution
 !     RA       action density
@@ -4045,7 +3693,7 @@
       REAL     APSHAP, AUX1, AUX2, AUX3
       REAL     COEFF ,SYF   ,MPER  ,CTOT  ,CTOTT,PKPER  ,DIFPER
       REAL     MS
-      REAL     RA    ,SALPHA,SF   ,SF4   ,SF5   ,FPK   ,FPK4
+      REAL     RA    ,SALPHA,SF   ,SF4   ,SF5   ,FPK   ,FPK4, FAC
 !
 !     LOGPM    indicates whether peak or mean frequency is used
 !     DVERIF   logical used in verification of incident direction
@@ -4111,6 +3759,8 @@
 !       case shape
 !       =1:   calculate value of Pierson-Moskowitz spectrum
 !       =2:   calculate value of Jonswap spectrum
+!       =3:   calculate value of bin spectrum
+!       =4:   calculate value of Gauss spectrum
 !       else: Give error message because of wrong shape
 !       ----------------------------------------------------------------
 !       if LOGPM is True
@@ -4158,6 +3808,7 @@
 !
 !     compute spectral shape using peak period PKPER                      30.80
 !
+      FAC  = 1.
  100  FPK  = (1./PKPER)                                                   30.80
       FPK4 = FPK**4
       IF (LSHAPE.EQ.1) THEN
@@ -4166,6 +3817,9 @@
 !       *** SALPHA = alpha*(grav**2)/(2.*pi)**4)
         SALPHA = (SPPARM(1)**2 * FPK4) /
      &             ((0.06533*(PSHAPE(1)**0.8015)+0.13467)*16.)
+      ELSE IF (LSHAPE.EQ.4) THEN
+        AUX1 = SPPARM(1)**2 / ( 16.* SQRT (PI2) * PSHAPE(2))
+        AUX3 = 2. * PSHAPE(2)**2
       ENDIF
 !
       CTOTT = 0.
@@ -4220,9 +3874,7 @@
 !
 !         *** energy Gaussian distributed (wave-current tests) ***
 !
-          AUX1 = SPPARM(1)**2 / ( 16.* SQRT (PI2) * PSHAPE(2))
           AUX2 = ( SPCSIG(IS) - ( PI2 / PKPER ) )**2
-          AUX3 = 2. * PSHAPE(2)**2
           RA = AUX1 * EXP ( -1. * AUX2 / AUX3 ) / SPCSIG(IS)
           ACLOC(MDC,IS) = RA
         ELSE
@@ -4244,7 +3896,7 @@
         ENDIF
       ENDIF
 !
-!     if mean frequency was given recalculate PKPER and start anew
+!     if mean frequency was given recalculate PKPER and restart
 !
       IF (.NOT.LOGPM .AND. ITPER.LT.10) THEN
         ITPER = ITPER + 1
@@ -4359,7 +4011,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4756,15 +4408,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4793,7 +4442,7 @@
 !
 !  2. PURPOSE
 !
-!       Transform degrees from nautical to carthesian or vice versa.
+!       Transform degrees from nautical to cartesian or vice versa.
 !
 !  3. METHOD
 !
@@ -4801,8 +4450,8 @@
 !
 !  4. PARAMETERLIST
 !
-!       DEGCNV      direction in carthesian or nautical degrees.
-!       DEGREE      direction in nautical or carthesian degrees.
+!       DEGCNV      direction in cartesian or nautical degrees.
+!       DEGREE      direction in nautical or cartesian degrees.
 !
 !  5. SUBROUTINES CALLING
 !
@@ -4884,15 +4533,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4985,15 +4631,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -5089,15 +4732,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -5285,7 +4925,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -5418,7 +5058,7 @@
 !         X is periodic; move interval in X1 if necessary
           TWICE = .FALSE.
           IADD = 0
-  60      IF (X1A.GT.X2HI) THEN
+  60      IF (X1B.GT.X2HI) THEN
             X1A = X1A - PERIOD
             X1B = X1B - PERIOD
             IADD = IADD + 1
@@ -5426,7 +5066,7 @@
      &         CALL MSGERR (2, 'endless loop in CHGBAS')
             GOTO 60
           ENDIF
-  70      IF (X1B.LT.X2LO) THEN
+  70      IF (X1A.LT.X2LO) THEN
             X1A = X1A + PERIOD
             X1B = X1B + PERIOD
             IADD = IADD + 1
@@ -5579,15 +5219,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -5723,7 +5360,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -5892,7 +5529,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6054,7 +5691,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6387,7 +6024,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6489,7 +6126,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6581,7 +6218,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6663,7 +6300,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6778,7 +6415,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -6893,7 +6530,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -7034,7 +6671,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as

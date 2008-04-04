@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !
 !     SWAN/COMPU   file 4 of 5
 !
@@ -34,16 +34,16 @@
 !     FILNL3 (fill main diagonal and right-hand side of the system with
 !             results of array MEMNL4)
 !
-!     *** nonlinear 3 wave-wave interactions ***
-!
-!     STRIAD (nonlinear three wave interactions using a semi-
-!             implicit scheme)
-!     STRIAN (triad-wave interactions calculated with the Lumped Triad
-!             Approximation of Eldeberky, 1996)
 !     RIAM_SLW (calculate nonlinear four wave interactions by means
 !               of the exact FD-RIAM technique)
+!
 !     SWINTFXNL (interface with SWAN model to compute nonlinear transfer
 !                with the XNL method for given action density spectrum)
+!
+!     *** nonlinear 3 wave-wave interactions ***
+!
+!     SWLTA  (triad-wave interactions calculated with the Lumped Triad
+!             Approximation of Eldeberky, 1996)
 !
 !----------------------------------------------------------------------
 !
@@ -71,7 +71,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -508,15 +508,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -709,7 +706,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1201,7 +1198,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1596,7 +1593,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1990,7 +1987,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2396,7 +2393,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2679,15 +2676,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2797,848 +2791,6 @@
 !
 !********************************************************************
 !
-      SUBROUTINE STRIAD (AC2     ,DEP2    ,CGO     ,IMATRA  ,KWAVE   ,
-     &                   HS      ,IDDLOW  ,IDDTOP  ,
-     &                   SPCSIG  ,SMEBRK  ,IMATDA  ,PLTRI   ,URSELL  )    40.03
-!
-!********************************************************************
-!
-      USE SWCOMM3                                                         40.41
-      USE SWCOMM4                                                         40.41
-      USE OCPCOMM4                                                        40.41
-!
-!   --|-----------------------------------------------------------|--
-!     | Delft University of Technology                            |
-!     | Faculty of Civil Engineering                              |
-!     | Fluid Mechanics Section                                   |
-!     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
-!     |                                                           |
-!     | Programmers: Y. Eldeberky, R.C. Ris                       |
-!   --|-----------------------------------------------------------|--
-!
-!
-!     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
-!
-!     This program is free software; you can redistribute it and/or
-!     modify it under the terms of the GNU General Public License as
-!     published by the Free Software Foundation; either version 2 of
-!     the License, or (at your option) any later version.
-!
-!     This program is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-!     GNU General Public License for more details.
-!
-!     A copy of the GNU General Public License is available at
-!     http://www.gnu.org/copyleft/gpl.html#SEC3
-!     or by writing to the Free Software Foundation, Inc.,
-!     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-!
-!
-!  0. Authors
-!
-!     30.72: IJsbrand Haagsma
-!     40.23: Marcel Zijlema
-!     40.41: Marcel Zijlema
-!
-!  1. Updates
-!
-!     30.50         : EXP is renamed TRIEXP to avoid confusion with
-!                     standard function EXP; EXP is made FALSE
-!     30.72, Feb. 98: Introduced generic names XCGRID, YCGRID and SPCSIG for SWAN
-!     30.80, Aug. 99: include file swcomm3.inc added
-!     40.03, Apr. 00: computation of Ursell moved to subr SDISPA
-!     40.23, Sep. 02: small correction (0.1 replaced by PTRIAD(5))
-!     40.41, Oct. 04: common blocks replaced by modules, include files removed
-!
-!  2. Purpose
-!
-!     Calculates triad wave interaction based on a Boussinesq-type
-!     wave equation
-!
-!  3. Method
-!
-!     Original code from Y. Eldeberky (17-03-1995). Subroutine has been
-!     recoded and optimized by R.C. Ris (12-09-1995). The procedure has
-!     been modified such that an explicit or an implicit scheme for the
-!     triad interaction source term can be used.
-!
-!  4. Argument variables
-!
-!     SPCSIG: Relative frequencies in computational domain in sigma-space 30.72
-!
-      REAL    SPCSIG(MSC)                                                 30.72
-!
-!     INTEGER
-!     -------
-!     i             Frequency counter at central bin
-!     j             Frequency counter at (higher and lower) harmonic bin
-!     MSC,MDC       Range of the original arrays
-!     IDDLOW/IDDTOP minimum, maximum counter in directional space
-!     IRES          counter that represents the resonance condition in
-!                   discrete freq. grid. Is a constant for logaritmic
-!                   distribution
-!     ISMAX         maximum counter for which the triad formulation
-!                   is valid and should be applied
-!
-!     REALS:
-!     ------
-!     DPI           two times PI
-!     Wi, Wj        radian frequency at central and interacting freq.
-!                   bin, respectively
-!     WNi,WNj       wavenumber at central and interacting freq.
-!                   bin, respectively
-!     CGi,CGj       Group velocity at central and interacting freq.
-!                   bin, respectively
-!     SMEBRK        mean frequency according to first oder moment
-!                   (see subroutine SDISPA)
-!     XISTRI        Rate between two succeding freq. counters
-!
-!     ARRAY:
-!     ------
-!     DEP2          depth at ix,iy
-!     KWAVE         wave number
-!     CGO           group velocity
-!     AC2           action density as function of d,s,x,y at time t
-!     E             energy density as functiion of d,f,x,y
-!     IMATRA        right hand vector
-!     IMATDA        diagonal
-!
-!  4. Subroutines used :
-!
-!     ---
-!
-!  5. Called by :
-!
-!     SOURCE
-!
-!  6. Error messages :
-!
-!     ---
-!
-!  7. Common blocks used
-!
-!
-!     -----------------------------------------------------------------
-!     Calculate :
-!
-!     -----------------------------------------------------------
-!     End of the subroutine STRIAD
-!     ----------------------------------------------------------
-!
-!*************************************************************
-!
-      INTEGER   IS      ,ID      ,                           IDDLOW  ,
-     &          IDDTOP  ,         IDDUM   ,IRES    ,I       ,J       ,
-     &          ISMAX   ,I1      ,I2                                      30.21
-!
-      REAL               DEP     ,DEP_2   ,DEP_3   ,         DPI     ,
-     &          FT      ,RHV_i   ,RHV_j   ,DIA_i   ,DIA_j   ,B       ,
-     &          ALPHA   ,BETA    ,XISTRI  ,SMEBRK  ,         BIPH    ,
-     &          SINBPH  ,JACi    ,JACj    ,Wi      ,Wj      ,WNi     ,
-     &          WNj     ,CGi     ,CGj     ,HS      ,TMN
-!
-      REAL  ::  AC2(MDC,MSC,MCGRD)
-      REAL  ::  DEP2(MCGRD)
-!     Changed ICMAX to MICMAX, since MICMAX doesn't vary over gridpoint   40.22
-      REAL  ::  KWAVE(MSC,MICMAX)                                         40.22
-      REAL  ::  IMATRA(MDC,MSC)
-      REAL  ::  IMATDA(MDC,MSC)
-!     Changed ICMAX to MICMAX, since MICMAX doesn't vary over gridpoint   40.22
-      REAL  ::  CGO(MSC,MICMAX)                                           40.22
-      REAL  ::  PLTRI(MDC,MSC,NPTST)
-      REAL  ::  URSELL(MCGRD)                                             40.03
-      REAL  ::  E(1:MSC)                                                  40.22
-!
-      LOGICAL   TRIEXP
-!
-      SAVE IENT
-      DATA IENT/0/
-      IF (LTRACE) CALL STRACE (IENT,'STRIAD')
-!
-!     *** initialization of variables ***
-!
-      DPI   = 2. * PI
-      DEP   = DEP2(KCGRD(1))                                              30.21
-      DEP_2 = DEP**2
-      DEP_3 = DEP**3
-      B     = 1. / 15.
-      IF (ITRIAD.EQ.1) THEN
-!       implicit computation
-        TRIEXP = .FALSE.
-      ELSE
-!       explicit computation
-        TRIEXP = .TRUE.
-      ENDIF
-!
-!     *** determine resonance condition and determine maximum  ***
-!     *** discrete counter for 3. "peak" frequency in Hz       ***
-!
-      I2     = INT (FLOAT(MSC) / 2.)
-      I1     = I2 - 1
-      XISTRI = SPCSIG(I2) / SPCSIG(I1)                                    30.72
-      IRES   = NINT ( LOG( 2.) / LOG ( XISTRI ) )
-!
-      ISMAX = 1                                                           20.88
-      DO IS = 1, MSC
-        IF ( SPCSIG(IS) .LT. ( PTRIAD(2) * SMEBRK) ) THEN                 30.72
-          ISMAX = IS
-        ENDIF
-      ENDDO
-      ISMAX = MAX ( ISMAX , IRES + 1 )
-!
-      TMN = DPI / SMEBRK
-      URSELL(KCGRD(1)) = MIN ( URSELL(KCGRD(1)) , 10. )
-      IF (URSELL(KCGRD(1)) .LT. PTRIAD(5)) THEN
-        BIPH = 0.0
-      ELSE
-        BIPH = - DPI / 8. * ( LOG10(URSELL(KCGRD(1))) + 1.)
-      ENDIF
-      SINBPH = ABS( SIN(BIPH) )
-!
-      IF ( URSELL(KCGRD(1)) .GE. PTRIAD(5) ) THEN
-        DO IDDUM = IDDLOW, IDDTOP
-          ID = MOD ( IDDUM - 1 + MDC , MDC ) + 1
-!
-          IF ( ITEST .GE. 10 .AND. TESTFL) THEN
-            WRITE(PRINTF,1001) ID
- 1001       FORMAT (' directional counter for interacting triad: ',2I4)
-          ENDIF
-!
-!         *** initialize array with E(f) for a direction considered ***
-!
-          DO IS = 1, MSC
-            E(IS)  = AC2(ID,IS,KCGRD(1)) * DPI * SPCSIG(IS)               30.72
-          ENDDO
-!
-!         *** (j) corresponds to central grid point           ***
-!         *** (i) corresponds to grid point lower harmonic    ***
-!         ***                                                 ***
-!         *** for log. distr.:                                ***
-!         ***                                                 ***
-!         ***       j =  i + ires                             ***
-!         ***      <------------>                             ***
-!         ***                                                 ***
-!         ***     i             j                             ***
-!         ***  ---+-------------+------------+--------        ***
-!         ***    fp/2           fp                            ***
-!         ***                                                 ***
-!         ***                                                 ***
-!         ***  start at i=1   ------> ISMAX-IRES              ***
-!         ***                                                 ***
-!         ***  at central point (j) :                         ***
-!         ***  ----------------------                         ***
-!         ***  Wj    radian frequency                         ***
-!         ***  WNj   wave number                              ***
-!         ***  CGj   group velocity                           ***
-!         ***  JACj  Jacobian function A(s) = E(f) / 2.pi.s   ***
-!         ***                                                 ***
-!
-          DO I = 1, ISMAX-IRES
-!           *** j = central , i = harmonic ***
-            J   = I + IRES
-            Wi  = SPCSIG(I)                                               30.72
-            Wj  = SPCSIG(J)                                               30.72
-            WNi = KWAVE(i,1)
-            WNj = KWAVE(j,1)
-            CGi = CGO(i,1)
-            CGj = CGO(j,1)
-            JACi = DPI * Wi
-            JACj = DPI * Wj
-!
-            ALPHA = 4. * WNi**2 *
-     &              ( 0.5 + ( Wi**2 / ( WNi**2 * GRAV * DEP ) ) )
-!
-            BETA  = -2. * WNj * ( GRAV * DEP +
-     &                            2. * B * GRAV * DEP_3 * WNj**2 -
-     &                          ( B + 1./3. ) * Wj**2 * DEP_2   )
-!
-!           *** constant FT, PTRIAD(1) controls the intensity ***
-!
-            FT = PTRIAD(1) * CGj * SINBPH * ( GRAV * ALPHA / BETA )**2
-!
-!           *** explicit or implicit calculation of source term ***
-!
-            RHV_i = 0.
-            RHV_j = 0.
-            DIA_i = 0.
-            DIA_j = 0.
-!
-            IF ( TRIEXP ) THEN
-!
-!             *** explicit calculation ***
-!
-              RHV_j = FT * (     (Wj/WNj) * E(i) * E(i)  -
-     &                      2. * (Wi/WNi) * E(j) * E(i)    )
-              RHV_i = RHV_j
-!
-              IF ( RHV_j .LE. 0. ) THEN
-                RHV_j = 0.
-                RHV_i = 0.
-              ENDIF
-!
-!             *** multiply source term Se(f) with Jacobian ***
-!
-              IMATRA(ID,i) = IMATRA(ID,i) - RHV_i / JACi
-              IMATRA(ID,j) = IMATRA(ID,j) + 0.5 * RHV_j / JACj
-!
-            ELSE
-!
-!             *** semi-implicit calculation ***
-!
-!             *** use explicit scheme for point J since there is ***
-!             *** grow at the higher frequencies                 ***
-!
-              RHV_j = FT * (     (Wj/WNj) * E(i) * E(i)  -
-     &                      2. * (Wi/WNi) * E(j) * E(i)    )
-!
-!             *** source term at point i : E(i) is unknown           ***
-!             *** at this point there is dissipation -> use implicit ***
-!             *** scheme                                             ***
-!
-              DIA_i = FT * (     (Wj/WNj) * E(i)         -
-     &                      2. * (Wi/WNi) * E(j)           )
-!
-              IF ( RHV_j .LE. 0. ) THEN
-                RHV_j = 0.
-                RHV_i = 0.
-                DIA_j = 0.
-                DIA_i = 0.
-              ENDIF
-!
-!             *** source term at point j : E(j) is unknown ***   deleted
-!
-!              RHV_j = FT * (       (Wj/WNj) * E(i) * E(i)  )     deleted
-!              DIA_j = FT * ( -2. * (Wi/WNi) *      * E(i)  )     deleted
-!              IMATRA(ID,j) = IMATRA(ID,j) + 0.5 * RHV_j / JACj   deleted
-!              IMATDA(ID,j) = IMATDA(ID,j) - 0.5 * DIA_j          deleted
-!
-              IMATRA(ID,j) = IMATRA(ID,j) + 0.5 * RHV_j / JACj
-              IMATDA(ID,i) = IMATDA(ID,i) + DIA_i
-!
-            ENDIF
-!
-!           *** store results in array for plot of triad term ***
-!
-            IF( TESTFL ) THEN
-              PLTRI(ID,I,IPTST) = PLTRI(ID,I,IPTST)                       40.00
-     &           - RHV_i / JACi - DIA_i * AC2(ID, i ,KCGRD(1))
-!
-              PLTRI(ID,J,IPTST) = PLTRI(ID,J,IPTST)                       40.00
-     &        + 0.5 * RHV_j / JACj + 0.5 * DIA_j * AC2(ID,j,KCGRD(1))     30.21
-            END IF
-          ENDDO
-!
-!         *** test output for a particular direction ***
-!
-          IF ( ITEST .GE. 10 .AND. TESTFL) THEN
-            WRITE(PRINTF,1002) ALPHA, BETA, FT, i, j
- 1002       FORMAT (' STRIAD: ALPH BETA FT i j :',3E12.4,2X,2I3)
-            WRITE(PRINTF,1003) Wi, WNi, CGi, JACi
- 1003       FORMAT (' STRIAD: Wi WNi CGi JACi  :',4E12.4)
-            WRITE(PRINTF,1004) Wj, WNj, CGj, JACj
- 1004       FORMAT (' STRIAD: Wj WNj CGj JACj  :',4E12.4)
-            WRITE(PRINTF,1005) RHV_i, RHV_j, DIA_i, DIA_j
- 1005       FORMAT (' STRIAD: RHV_i,j DIA_i,j  :',4E12.4)
-          ENDIF
-!
-        ENDDO
-      ENDIF
-!
-!     *** test output ***
-!
-      IF ( ITEST .GE. 10 .AND. TESTFL) THEN
-         WRITE(PRINTF,2000) KCGRD(1), IRES, ISMAX
- 2000    FORMAT (' STRIAD: POINT IRES ISMAX :',3I5)
-         WRITE(PRINTF,2001) GRAV, DEP, DEP_2, DEP_3
- 2001    FORMAT (' STRIAD: G DEP DEP2 DEP3  :',4E12.4)
-         WRITE(PRINTF,2002) DPI, PTRIAD(1), B, URSELL(KCGRD(1))
- 2002    FORMAT (' STRIAD: DPI PAR B URSELL :',4E12.4)
-         WRITE(PRINTF,2003) SMEBRK, TMN, HS, BIPH
- 2003    FORMAT (' STRIAD: SMEBRK TMN HS BIPH:',4E12.4)
-      ENDIF
-!
-!     *** end of subroutine STRIAD ***
-!
-      RETURN
-      END
-!
-!********************************************************************
-!
-      SUBROUTINE STRIAN (AC2   ,DEP2  ,CGO   ,IMATRA,KWAVE ,
-     &                   HS    ,IDDLOW,IDDTOP,
-     &                   SPCSIG,SMEBRK,IMATDA,PLTRI ,URSELL        )      40.03
-!
-!********************************************************************
-!
-      USE SWCOMM3                                                         40.41
-      USE SWCOMM4                                                         40.41
-      USE OCPCOMM4                                                        40.41
-!
-      IMPLICIT NONE
-!
-!
-!
-!   --|-----------------------------------------------------------|--
-!     | Delft University of Technology                            |
-!     | Faculty of Civil Engineering                              |
-!     | Environmental Fluid Mechanics Section                     |
-!     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
-!     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
-!   --|-----------------------------------------------------------|--
-!
-!
-!     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
-!
-!     This program is free software; you can redistribute it and/or
-!     modify it under the terms of the GNU General Public License as
-!     published by the Free Software Foundation; either version 2 of
-!     the License, or (at your option) any later version.
-!
-!     This program is distributed in the hope that it will be useful,
-!     but WITHOUT ANY WARRANTY; without even the implied warranty of
-!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-!     GNU General Public License for more details.
-!
-!     A copy of the GNU General Public License is available at
-!     http://www.gnu.org/copyleft/gpl.html#SEC3
-!     or by writing to the Free Software Foundation, Inc.,
-!     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-!
-!
-!  0. Authors
-!
-!     30.72: IJsbrand Haagsma
-!     30.81: Annette Kieftenburg
-!     30.82: IJsbrand Haagsma
-!     40.00, 40.13: Nico Booij
-!     40.23: Marcel Zijlema
-!     40.41: Marcel Zijlema
-!
-!  1. Updates
-!
-!            Jan. 97: New subroutine (Roeland Ris)
-!     30.72, Feb. 98: Introduced generic names XCGRID, YCGRID and SPCSIG for SWAN
-!     30.81, Aug. 98: Modified calculation of the Ursell number
-!     30.82, Sep. 98: Declaration of argument variable reorganised
-!     40.03, Apr. 00: computation of Ursell moved to subr SDISPA
-!     40.13, July 01: var. coeff. PTRIAD(3) [urslim] introduced
-!                     var. coeff. PTRIAD(4) [urcrit] introduced
-!                     array E(:) is made allocatable
-!     40.23, Sep. 02: PTRIAD(3) should be PTRIAD(5)
-!     40.41, Oct. 04: common blocks replaced by modules, include files removed
-!
-!  2. Purpose
-!
-!     In this subroutine the triad-wave interactions are calculated
-!     with the Lumped Triad Approximation of Eldeberky (1996). His
-!     expression is based on a parametrization of the bi-phase (in
-!     terms of the Ursell number), is directionally uncoupled and
-!     takes into account for the self-self interactions only.
-!
-!     For a full description of the equations reference is made
-!     to Eldeberky (1996). Here only the main equations are given.
-!
-!  3. Method
-!
-!     The Ursell number is given by (computed in routine SINTGRL):
-!
-!                  g         Hs Tm**2         g          Hs
-!     UR =  --------------- --------- = ---------- -------------
-!           8 sqrt(2) pi**2   d**2      2 sqrt (2) sig_m**2 d**2
-!
-!     in which:
-!
-!     d      depth (m)
-!     g      gravitational acceleration (m/s^2)
-!     Hs     significant wave height (m)
-!     sig_m  mean wave frequency (in rad/s) according to m1/m0
-!            (personal communication, Y. Eldeberky, 1997)
-!     Tm     mean wave period (s)
-!
-!     The biphase BIPH is given by (see eq. 3.19, Eldeberky, 1996 ):
-!
-!                                  0.2
-!     BIPH = - pi/2 + pi/2 tanh ( ----- )
-!                                   Ur
-!
-!     The source term is (see eq. 7.25):
-!
-!             +      -
-!     S(p) = S(p) + S(p)
-!
-!     in which
-!      +
-!     S(p) = a Cp Cg,p (R(p/2,p/2))**2 sin (|BIPH|) ( E(p/2)**2 -
-!
-!                          2 E(p) E(p/2)  )
-!      -          +
-!     S(p) = - 2 S(2p)
-!
-!     in which:
-!     a    tunable coefficient
-!     p    frequency
-!
-!     The value for the interaction coefficient R(p/2,p/2) is
-!     not given here (see eq 7.26 in Eldeberky, 1996)
-!
-!     Note that a slightly adapted formulation of the LTA is used in
-!     in the SWAN model:
-!
-!     - only positive contributions to higher harmonics are considered
-!       here (no energy is transferred to lower harmonics).
-!
-!     - the mean frequency in the expression of the Ursell number
-!       is calculated according to the first order moment over the
-!       zeroth order moment (personal communication, Y.Eldeberky, 1997)
-!
-!     - the interactions are calculated up to 2.5 times the mean
-!       frequency only.
-!
-!     - to avoid expensive interpolations between discrete bins the
-!       interactions are taken at discrete gridpoints only. Since the
-!       grid is logarimically distributed in frequency space the
-!       number of bins between the central bin and lower harmonic bin
-!       is constant (equal to IRES)
-!
-!     Moreover:
-!
-!     - the interactions are calculated in terms of energy density
-!       instead of action density. So the action density spectrum
-!       is firstly converted to the energy density grid, then the
-!       interactions are calculated and then the spectrum is converted
-!       to the action density spectrum again.
-!
-!     - To ensure numerical stability the positive contributions
-!       of S(p) are calculated with an explicit scheme and the
-!       negative contributions with an implicit scheme. Optionally
-!       a fully explicit scheme is available.
-!
-!  4. Argument variables
-!
-!     IDDLOW: Minimum counter in directional space                        30.82
-!     IDDTOP: Maximum counter in directional space                        30.82
-!     ITRIAD                                                              30.82
-!     MCGRD                                                               30.82
-!     MDC   : number of bins in theta-direction                           30.82
-!     MSC   : number of frequencies                                       30.82
-!     MTRIAD: Size of array containing triad-coefficients                 30.82
-!
-      INTEGER        IDDLOW, IDDTOP                                       30.82
-!
-!     AC2   : Action density as function of d,s,x,y at time t             30.82
-!     CGO   : Group velocity                                              30.82
-!     DEP2  : Depth at gridpoint ix,iy                                    30.82
-!     GRAV                                                                30.82
-!     HS                                                                  30.82
-!     IMATRA: Right-hand side of system of equations                      30.82
-!     IMATDA: Main diagonal of the linear system                          30.82
-!     KWAVE : Wave number                                                 30.82
-!     PI    : Constant Pi                                                 30.82
-!     PLTRI : Values of the triad source terms in TEST-points             30.82
-!     PTRIAD: Tunable coefficients for nonlinear sourceterms              30.82
-!     SMEBRK: Mean frequency (see subroutine SDISPA)                      30.82
-!     SPCSIG: Relative frequencies in computational domain in sigma-space 30.72
-!
-      REAL :: HS      ! significant wave height                           30.82
-      REAL :: SMEBRK  ! average (angular) frequency                       30.82
-      REAL :: AC2(MDC,MSC,MCGRD)                                          30.82
-!     Changed ICMAX to MICMAX, since MICMAX doesn't vary over gridpoint   40.22
-      REAL :: CGO(MSC,MICMAX)                                             30.82 40.22
-      REAL :: DEP2(MCGRD)                                                 30.82
-      REAL :: IMATDA(MDC,MSC), IMATRA(MDC,MSC)                            30.82
-!     Changed ICMAX to MICMAX, since MICMAX doesn't vary over gridpoint   40.22
-      REAL :: KWAVE(MSC,MICMAX)                                           30.82 40.22
-      REAL :: PLTRI(MDC,MSC,NPTST),                 SPCSIG(MSC)           30.82
-      REAL :: URSELL(MCGRD)                                               40.03
-!
-!  6. Local variables
-!
-!     I     : Frequency counter at bin of lower harmonic (f/2)            30.82
-!             and subscript for variable                                  30.82
-!     I1    : Temporary variable to determine the resonance conditions    30.82
-!     I2    : Temporary variable to determine the resonance conditions    30.82
-!     ID    : Grid counter in spectral space (direction)                  30.82
-!     IENT  : Number of entries into this subroutine                      30.82
-!     II    : Counter                                                     30.82
-!     IRES  : Number of bins between central and lower harm. freq.        30.82
-!             (is constant for a logaritmic frequency distribution)       30.82
-!     IS    : Grid counter in spectral space (frequency)                  30.82
-!     ISMAX : Maximum of the counter in spectral space (frequency) for    30.82
-!             which the triad interactions are calculated (cut-of)        30.82
-!     IX    : Grid counter in geographical space (x-direction)            30.82
-!     IY    : Grid counter in geographical space (y-direction)            30.82
-!     J     : Frequency counter at central gridpoint (f)                  30.82
-!             and subscript for variable                                  30.82
-!
-      INTEGER I, I1, I2, ID, IENT, II, IRES, IS, ISMAX, J                 30.82
-!
-!     AUX1  : Temporary variables                                         30.82
-!     AUX2  : Temporary variables                                         30.82
-!     BIPH  : Parameterized bi-phase of the spectrum                      30.82
-!     CGI   : Group velocity at interacting bin                           30.82
-!     CGJ   : Group velocity at central frequency bin                     30.82
-!     CI    : Phase velocity at interacting bin                           30.82
-!     CJ    : Phase velocity at central frequency bin                     30.82
-!     DEP   : =DEP2(IX,IY); Depth at gridpoint (IX,IY)                    30.82
-!     DEP_2 : =DEP**2;                                                    30.82
-!     DEP_3 : =DEP**3;                                                    30.82
-!     DPI   : =2*PI;                                                      30.82
-!     E     : Energy density as function of location, freq. and direction 30.82
-!     FT    : Coefficient                                                 30.82
-!     JACI       Jacobian function at bin i and j respectively            30.82
-!     JACJ       equal to :  A(s) = E(s) / 2.pi.s                         30.82
-!     URSELL: Ursell number                                               30.82
-!     WI    : Radian frequency at interacting bin                         30.82
-!     WJ    : Radian frequency at central frequency bin                   30.82
-!     WNI   : Wavenumber at interacting bin                               30.82
-!     WNJ   : Wavenumber at central freqency bin                          30.82
-!     RINT  : Interaction coefficient                                     30.82
-!     XISTRI: Rate between two succeeding frequency counters              30.82
-!
-      REAL    AUX1, AUX2, BIPH, CGI, CGJ, CI, CJ, DEP, DEP_2, DEP_3, DPI  30.82
-      REAL :: E(1:MSC)                                                    40.22
-      REAL    FT, JACI, JACJ, WI, WJ, WNI, WNJ, RINT, XISTRI              30.82
-!
-!     TRIEXP: Explicit integration scheme is used for calculating triads  30.82
-!             (semi-implicit when false)                                  30.82
-!
-      LOGICAL TRIEXP                                                      30.82
-!
-!  8. SUBROUTINES CALLING
-!
-!     SOURCE
-!
-!  9. ERROR MESSAGES
-!
-!     ---
-!
-! 10. REMARKS
-!
-!     ---
-!
-! 11. STRUCTURE
-!
-!     -----------------------------------------------------------------
-!     - Initialize variables
-!     - Determine resonance condition and the maximum discrete freq.
-!       for which the interactions are calculated.
-!     -----------------------------------------------------------------
-!     If Ursell number larger than 0.1 compute interactions
-!       Calculate Biphase
-!       Do for each direction
-!         Convert action density to energy density
-!         Do for all frequencies
-!           Calculate interaction coefficient and interaction factor
-!           Compute interactions and store results in matrix
-!         Enddo
-!         -------------------------------------------------------------
-!         If testfl store results in test array
-!       Enddo
-!       ---------------------------------------------------------------
-!
-! 13. Source text
-!
-      REAL      RHV_i ,RHV_j ,DIA_i ,DIA_j , SINBPH
-!
-      SAVE IENT
-      DATA IENT/0/
-      IF (LTRACE) CALL STRACE (IENT,'STRIAN')
-!
-!     *** initialization of variables ***
-!
-      DPI   = 2. * PI
-      DEP   = DEP2(KCGRD(1))
-      DEP_2 = DEP**2
-      DEP_3 = DEP**3
-      IF (ITRIAD.EQ.3) THEN
-!       implicit computation
-        TRIEXP = .FALSE.
-      ELSE
-!       explicit computation
-        TRIEXP = .TRUE.
-      ENDIF
-!
-      E(:) = 0.                                                           40.22
-!
-!     *** determine "resonance condition" and determine maximum    ***
-!     *** discrete counter (ISMAX) at 2.5 times the mean frequency ***
-!     *** value of 2.5 can be varied using PTRIAD(2)               ***
-!
-      I2     = INT (FLOAT(MSC) / 2.)
-      I1     = I2 - 1
-      XISTRI = SPCSIG(I2) / SPCSIG(I1)                                    30.72
-      IRES   = NINT ( LOG( 2.) / LOG ( XISTRI ) )
-!
-      ISMAX = 1
-      DO IS = 1, MSC
-       IF ( SPCSIG(IS) .LT. ( PTRIAD(2) * SMEBRK) ) THEN                  30.72
-          ISMAX = IS
-        ENDIF
-      ENDDO
-      ISMAX = MAX ( ISMAX , IRES + 1 )
-!
-!     Note: Ursell number is computed in routine SINTGRL                  40.13
-!
-      IF ( URSELL(KCGRD(1)) .GE. PTRIAD(5) ) THEN                         40.13
-!
-!       *** calculate Biphase ***
-!
-        BIPH   = (0.5*PI)*(TANH(PTRIAD(4)/URSELL(KCGRD(1)))-1)            40.13
-        SINBPH = ABS( SIN(BIPH) )
-!
-        DO II = IDDLOW, IDDTOP
-          ID = MOD ( II - 1 + MDC , MDC ) + 1
-!
-!         *** initialize array with E(f) for the direction considered ***
-!
-          DO IS = 1, MSC
-            E(IS)  = AC2(ID,IS,KCGRD(1)) * DPI * SPCSIG(IS)               30.72
-          ENDDO
-!
-!         *** (i) corresponds to grid point lower harmonic    ***
-!         *** (j) corresponds to central grid point           ***
-!         ***                                                 ***
-!         *** for log. distribution:                          ***
-!         ***                                                 ***
-!         ***       j =  i + ires                             ***
-!         ***      <------------>                             ***
-!         ***                                                 ***
-!         ***     i             j                             ***
-!         ***  ---+-------------+------------+--------        ***
-!         ***    fp/2           fp                            ***
-!         ***                                                 ***
-!         ***  start at i=1   ------> ISMAX-IRES              ***
-!         ***                                                 ***
-!
-          DO I = 1, ISMAX-IRES
-!           *** j = central bin, i = bin at lower harmonic ***
-            J   = I + IRES
-            Wi  = SPCSIG(I)                                               30.72
-            Wj  = SPCSIG(J)                                               30.72
-            WNi = KWAVE(i,1)
-            WNj = KWAVE(j,1)
-            Ci  = Wi / WNi
-            Cj  = Wj / WNj
-            CGi = CGO(i,1)
-            CGj = CGO(j,1)
-            JACi = DPI * Wi
-            JACj = DPI * Wj
-!
-            AUX1 = WNi**2 * ( GRAV * DEP + 2. * Ci**2 )
-            AUX2 = WNj * DEP * ( GRAV * DEP +
-     &                          (2./15.) * GRAV * DEP_3 * WNj**2 -        30.82
-     &                          (2./ 5.) * Wj**2 * DEP_2 )                30.82
-            RINT = AUX1 / AUX2
-!
-!           *** constant FT, PTRIAD(1) controls the intensity ***
-!
-            FT = PTRIAD(1) * Cj * CGj * RINT**2 * SINBPH
-!
-!           *** explicit or implicit calculation of source term ***
-!
-            RHV_i = 0.
-            RHV_j = 0.
-            DIA_i = 0.
-            DIA_j = 0.
-!
-            IF ( TRIEXP ) THEN
-!
-!             *** explicit calculation ***
-!
-              RHV_j = FT * (  E(i) * E(i)  - 2. * E(j) * E(i) )
-              RHV_i = RHV_j
-!
-!             *** consider only transfer from lower to higher harm ***
-!
-              IF ( RHV_j .LE. 0. ) THEN
-                RHV_j = 0.
-                RHV_i = 0.
-              ENDIF
-!
-!             *** multiply source term Se(f) with Jacobian ***
-!
-              IMATRA(ID,i) = IMATRA(ID,i) - 2. * RHV_i / JACi
-              IMATRA(ID,j) = IMATRA(ID,j) + RHV_j / JACj
-!
-            ELSE
-!
-!             *** semi-implicit calculation ***
-!
-!             *** use explicit scheme for point J since there is ***
-!             *** grow at the higher frequencies                 ***
-!
-              RHV_j = FT * ( E(i) * E(i) - 2. * E(j) * E(i) )
-!
-!             *** source term at point i : E(i) is unknown           ***
-!             *** at this point there is dissipation -> use implicit ***
-!             *** scheme                                             ***
-!
-              DIA_i = FT * ( E(i) - 2. * E(j) )
-!
-              IF ( RHV_j .LE. 0. ) THEN
-                RHV_j = 0.
-                RHV_i = 0.
-                DIA_j = 0.
-                DIA_i = 0.
-              ENDIF
-!
-              IMATRA(ID,j) = IMATRA(ID,j) + RHV_j / JACj
-              IMATDA(ID,i) = IMATDA(ID,i) + 2. * DIA_i
-!
-            ENDIF
-!
-!           *** store results in array for plot of triad term ***
-!
-            IF( TESTFL ) THEN
-              PLTRI(ID,I,IPTST) = PLTRI(ID,I,IPTST)                       40.00
-     &           - 2. * RHV_i / JACi - 2. * DIA_i * AC2(ID, i ,KCGRD(1))
-!
-              PLTRI(ID,J,IPTST) = PLTRI(ID,J,IPTST)                       40.00
-     &          + RHV_j / JACj  + DIA_j * AC2(ID, j ,KCGRD(1))
-            END IF
-          ENDDO
-!
-!         *** test output for a particular direction ***
-!
-          IF ( ITEST .GE. 5 .AND. TESTFL) THEN
-            WRITE(PRINTF,1002) AUX1, AUX2, FT, i, j
- 1002       FORMAT (' STRIAN: ALPH BETA FT i j  :',3E12.4,2X,2I3)
-            WRITE(PRINTF,1003) Wi, WNi, Ci, CGi, JACi
- 1003       FORMAT (' STRIAN: i, W WN C CG JAC:',5E12.4)
-            WRITE(PRINTF,1004) Wj, WNj, Cj, CGj, JACj
- 1004       FORMAT (' STRIAN: j, W WN C CG JAC:',5E12.4)
-            WRITE(PRINTF,1005) RINT, RHV_i, RHV_j, DIA_i, DIA_j
- 1005       FORMAT (' STRIAN: R RHVi,j DIAi,j :',5E12.4)
-          ENDIF
-!
-        ENDDO
-      ENDIF
-!
-!     *** test output ***
-!
-      IF ( ITEST .GE. 5 .AND. TESTFL) THEN
-         WRITE(PRINTF,2000) KCGRD(1), IRES, ISMAX
- 2000    FORMAT (' STRIAN: KCGRD IRES ISMAX  :',4I4)
-         WRITE(PRINTF,2001) GRAV, DEP, DEP_2, DEP_3
- 2001    FORMAT (' STRIAN: G DEP DEP2 DEP3   :',4E12.4)
-         WRITE(PRINTF,2002) DPI, PTRIAD(1), PTRIAD(2), URSELL(KCGRD(1))
- 2002    FORMAT (' STRIAN: DPI P(1) P(2) URSELL  :',4E12.4)
-         WRITE(PRINTF,2003) SMEBRK, HS, BIPH, ABS(SIN(BIPH))
- 2003    FORMAT (' STRIAN: SMEBRK HS B SIN(B):',4E12.4)
-      ENDIF
-
-      RETURN
-      END subroutine STRIAN                                               40.13
-!
-!********************************************************************
-!
 !     <<  Numerical Computations of the Nonlinear Energy Transfer
 !           of Gravity Wave Spectra in Finite Water Depth  >>
 !
@@ -3649,7 +2801,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4384,7 +3536,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -4564,3 +3716,357 @@
       RETURN
 !
       END SUBROUTINE SWINTFXNL
+!
+!****************************************************************
+!
+      SUBROUTINE SWLTA ( AC2   , DEP2  , CGO   , SPCSIG,
+     &                   KWAVE , IMATRA, IMATDA,
+     &                   IDDLOW, IDDTOP, ISSTOP, IDCMIN, IDCMAX,
+     &                   HS    , SMEBRK, PLTRI , URSELL )
+!
+!****************************************************************
+!
+      USE OCPCOMM4
+      USE SWCOMM3
+      USE SWCOMM4
+!
+      IMPLICIT NONE
+!
+!
+!
+!   --|-----------------------------------------------------------|--
+!     | Delft University of Technology                            |
+!     | Faculty of Civil Engineering                              |
+!     | Environmental Fluid Mechanics Section                     |
+!     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
+!     |                                                           |
+!     | Programmers: The SWAN team                                |
+!   --|-----------------------------------------------------------|--
+!
+!
+!     SWAN (Simulating WAves Nearshore); a third generation wave model
+!     Copyright (C) 2007  Delft University of Technology
+!
+!     This program is free software; you can redistribute it and/or
+!     modify it under the terms of the GNU General Public License as
+!     published by the Free Software Foundation; either version 2 of
+!     the License, or (at your option) any later version.
+!
+!     This program is distributed in the hope that it will be useful,
+!     but WITHOUT ANY WARRANTY; without even the implied warranty of
+!     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+!     GNU General Public License for more details.
+!
+!     A copy of the GNU General Public License is available at
+!     http://www.gnu.org/copyleft/gpl.html#SEC3
+!     or by writing to the Free Software Foundation, Inc.,
+!     59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+!
+!
+!  0. Authors
+!
+!     40.55: Marcel Zijlema
+!
+!  1. Updates
+!
+!     40.55, Feb. 06: New subroutine
+!
+!  2. Purpose
+!
+!     In this subroutine the triad-wave interactions are calculated
+!     with the Lumped Triad Approximation of Eldeberky (1996). His
+!     expression is based on a parametrization of the biphase (as
+!     function of the Ursell number), is directionally uncoupled and
+!     takes into account for the self-self interactions only.
+!
+!     For a full description of the equations reference is made
+!     to PhD thesis of Eldeberky (1996). Here only the main expressions
+!     are given.
+!
+!  3. Method
+!
+!     The parametrized biphase is given by (see eq. 3.19):
+!
+!                                  0.2
+!     beta = - pi/2 + pi/2 tanh ( ----- )
+!                                   Ur
+!
+!     The Ursell number is calculated in routine SINTGRL
+!
+!     The source term as function of frequency p is (see eq. 7.25):
+!
+!             +      -
+!     S(p) = S(p) + S(p)
+!
+!     in which
+!
+!      +
+!     S(p) = alpha Cp Cg,p (R(p/2,p/2))**2 sin (|beta|) ( E(p/2)**2 -2 E(p) E(p/2) )
+!
+!      -          +
+!     S(p) = - 2 S(2p)
+!
+!     with alpha a tunable coefficient and R(p/2,p/2) is the interaction
+!     coefficient of which the expression can be found in Eldeberky (1996);
+!     see eq. 7.26.
+!
+!     Note that a slightly adapted formulation of the LTA is used in
+!     in the SWAN model:
+!
+!     - Only positive contributions to higher harmonics are considered
+!       here (no energy is transferred to lower harmonics).
+!
+!     - The mean frequency in the expression of the Ursell number
+!       is calculated according to the first order moment over the
+!       zeroth order moment (personal communication, Y.Eldeberky, 1997).
+!
+!     - The interactions are calculated up to 2.5 times the mean
+!       frequency only.
+!
+!     - Since the spectral grid is logarithmically distributed in frequency
+!       space, the interactions between central bin and interacting bin
+!       are interpolated such that the distance between these bins is
+!       factor 2 (nearly).
+!
+!     - The interactions are calculated in terms of energy density
+!       instead of action density. So the action density spectrum
+!       is firstly converted to the energy density grid, then the
+!       interactions are calculated and then the spectrum is converted
+!       to the action density spectrum back.
+!
+!     - To ensure numerical stability the Patankar rule is used.
+!
+!  4. Argument variables
+!
+!     AC2         action density
+!     CGO         group velocity
+!     DEP2        water depth
+!     HS          significant wave height
+!     IDCMIN      minimum counter in directional space
+!     IDCMAX      maximum counter in directional space
+!     IDDLOW      minimum direction that is propagated within a sweep
+!     IDDTOP      maximum direction that is propagated within a sweep
+!     IMATDA      main diagonal of the linear system
+!     IMATRA      right-hand side of system of equations
+!     ISSTOP      maximum frequency counter in a sweep
+!     KWAVE       wave number
+!     PLTRI       triad contribution in TEST points
+!     SMEBRK      average (angular) frequency
+!     SPCSIG      relative frequencies in computational domain in sigma-space
+!     URSELL      Ursell number
+!
+      INTEGER IDDLOW, IDDTOP, ISSTOP
+      INTEGER IDCMIN(MSC), IDCMAX(MSC)
+
+      REAL :: HS, SMEBRK
+      REAL :: AC2(MDC,MSC,MCGRD)
+
+      REAL :: CGO(MSC,MICMAX)
+      REAL :: DEP2(MCGRD)
+      REAL :: IMATDA(MDC,MSC), IMATRA(MDC,MSC)
+      REAL :: SPCSIG(MSC)
+      REAL :: KWAVE(MSC,MICMAX)
+      REAL :: PLTRI(MDC,MSC,NPTST)
+      REAL :: URSELL(MCGRD)
+!
+!  6. Local variables
+!
+!     AUX1  :     auxiliary real
+!     AUX2  :     auxiliary real
+!     BIPH  :     parameterized bi-phase of the spectrum
+!     C0    :     phase velocity at central bin
+!     CM    :     phase velocity at interacting bin
+!     DEP   :     water depth
+!     DEP_2 :     water depth to power 2
+!     DEP_3 :     water depth to power 3
+!     E     :     energy density as function of frequency
+!     E0    :     energy density at central bin
+!     EM    :     energy density at interacting bin
+!     FT    :     auxiliary real indicating multiplication factor
+!                 for triad contribution
+!     I1    :     auxiliary integer
+!     I2    :     auxiliary integer
+!     ID    :     counter
+!     IDDUM :     loop counter in direction space
+!     IENT  :     number of entries
+!     II    :     loop counter
+!     IS    :     loop counter in frequency space
+!     ISM   :     negative range for IS
+!     ISM1  :     negative range for IS
+!     ISMAX :     maximum of the counter in frequency space for
+!                 which the triad interactions are calculated (cut-off)
+!     ISP   :     positive range for IS
+!     ISP1  :     positive range for IS
+!     RINT  :     interaction coefficient
+!     SA    :     interaction contribution of triad
+!     SIGPI :     frequency times 2pi
+!     SINBPH:     absolute sine of biphase
+!     STRI  :     total triad contribution
+!     WISM  :     interpolation weight factor corresponding to lower harmonic
+!     WISM1 :     interpolation weight factor corresponding to lower harmonic
+!     WISP  :     interpolation weight factor corresponding to higher harmonic
+!     WISP1 :     interpolation weight factor corresponding to higher harmonic
+!     W0    :     radian frequency of central bin
+!     WM    :     radian frequency of interacting bin
+!     WN0   :     wave number at central bin
+!     WNM   :     wave number at interacting bin
+!     XIS   :     rate between two succeeding frequency counters
+!     XISLN :     log of XIS
+!
+      INTEGER I1, I2, ID, IDDUM, IENT, II, IS, ISM, ISM1, ISMAX,
+     &        ISP, ISP1
+      REAL    AUX1, AUX2, BIPH, C0, CM, DEP, DEP_2, DEP_3, E0, EM,
+     &        FT, RINT, SIGPI, SINBPH, STRI, WISM, WISM1, WISP, WISP1,
+     &        W0, WM, WN0, WNM, XIS, XISLN
+      REAL, ALLOCATABLE :: E(:), SA(:,:)
+!
+!  9. Subroutines calling
+!
+!     SOURCE
+!
+! 12. Structure
+!
+!     Determine resonance condition and the maximum discrete freq.
+!     for which the interactions are calculated.
+!
+!     If Ursell number larger than prescribed value compute interactions
+!        Calculate biphase
+!        Do for each direction
+!           Convert action density to energy density
+!           Do for all frequencies
+!             Calculate interaction coefficient and interaction factor
+!             Compute interactions and store results in matrix
+!
+! 13. Source text
+!
+      SAVE IENT
+      DATA IENT/0/
+      IF (LTRACE) CALL STRACE (IENT,'SWLTA')
+
+      DEP   = DEP2(KCGRD(1))
+      DEP_2 = DEP**2
+      DEP_3 = DEP**3
+!
+!     --- compute some indices in sigma space
+!
+      I2     = INT (FLOAT(MSC) / 2.)
+      I1     = I2 - 1
+      XIS    = SPCSIG(I2) / SPCSIG(I1)
+      XISLN  = LOG( XIS )
+
+      ISP    = INT( LOG(2.) / XISLN )
+      ISP1   = ISP + 1
+      WISP   = (2. - XIS**ISP) / (XIS**ISP1 - XIS**ISP)
+      WISP1  = 1. - WISP
+
+      ISM    = INT( LOG(0.5) / XISLN )
+      ISM1   = ISM - 1
+      WISM   = (XIS**ISM -0.5) / (XIS**ISM - XIS**ISM1)
+      WISM1  = 1. - WISM
+
+      ALLOCATE (E (1:MSC))
+      ALLOCATE (SA(1:MDC,1:MSC+ISP1))
+      E  = 0.
+      SA = 0.
+!
+!     --- compute maximum frequency for which interactions are calculated
+!
+      ISMAX = 1
+      DO IS = 1, MSC
+       IF ( SPCSIG(IS) .LT. ( PTRIAD(2) * SMEBRK) ) THEN
+          ISMAX = IS
+        ENDIF
+      ENDDO
+      ISMAX = MAX ( ISMAX , ISP1 )
+!
+!     --- compute 3 wave-wave interactions
+!
+      IF ( URSELL(KCGRD(1)).GE.PTRIAD(5) ) THEN
+!
+!       --- calculate biphase
+!
+        BIPH   = (0.5*PI)*(TANH(PTRIAD(4)/URSELL(KCGRD(1)))-1.)
+        SINBPH = ABS( SIN(BIPH) )
+!
+        DO II = IDDLOW, IDDTOP
+           ID = MOD ( II - 1 + MDC , MDC ) + 1
+!
+!          --- initialize array with E(f) for the direction considered
+!
+           DO IS = 1, MSC
+              E(IS) = AC2(ID,IS,KCGRD(1)) * 2. * PI * SPCSIG(IS)
+           END DO
+!
+           DO IS = 1, ISMAX
+
+              E0  = E(IS)
+              W0  = SPCSIG(IS)
+              WN0 = KWAVE(IS,1)
+              C0  = W0 / WN0
+
+              IF ( IS.GT.-ISM1 ) THEN
+                 EM  = WISM * E(IS+ISM1)       + WISM1 * E(IS+ISM)
+                 WM  = WISM * SPCSIG(IS+ISM1)  + WISM1 * SPCSIG(IS+ISM)
+                 WNM = WISM * KWAVE(IS+ISM1,1) + WISM1 * KWAVE(IS+ISM,1)
+                 CM  = WM / WNM
+              ELSE
+                 EM  = 0.
+                 WM  = 0.
+                 WNM = 0.
+                 CM  = 0.
+              END IF
+
+              AUX1 = WNM**2 * ( GRAV * DEP + 2.*CM**2 )
+              AUX2 = WN0 * DEP * ( GRAV * DEP +
+     &                             (2./15.) * GRAV * DEP_3 * WN0**2 -
+     &                             (2./ 5.) * W0**2 * DEP_2 )
+              RINT = AUX1 / AUX2
+              FT = PTRIAD(1) * C0 * CGO(IS,1) * RINT**2 * SINBPH
+
+              SA(ID,IS) = MAX(0., FT * ( EM * EM - 2. * EM * E0 ))
+
+           END DO
+        END DO
+!
+!        ---  put source term together
+!
+        DO IS = 1, ISSTOP
+           SIGPI = SPCSIG(IS) * 2. * PI
+           DO IDDUM = IDCMIN(IS), IDCMAX(IS)
+              ID = MOD ( IDDUM - 1 + MDC , MDC ) + 1
+!
+              STRI = SA(ID,IS) - 2.*(WISP  * SA(ID,IS+ISP1) +
+     &                               WISP1 * SA(ID,IS+ISP ))
+!
+!             --- store results in rhs and main diagonal according
+!                 to Patankar-rules
+!
+              IF(TESTFL) PLTRI(ID,IS,IPTST) = STRI / SIGPI
+              IF (STRI.GT.0.) THEN
+                 IMATRA(ID,IS) = IMATRA(ID,IS) + STRI / SIGPI
+              ELSE
+                 IMATDA(ID,IS) = IMATDA(ID,IS) - STRI /
+     &                           MAX(1.E-18,AC2(ID,IS,KCGRD(1))*SIGPI)
+              END IF
+           END DO
+        END DO
+
+      END IF
+!
+!     --- test output
+!
+      IF ( ITEST .GE. 5 .AND. TESTFL ) THEN
+         WRITE(PRINTF,2000) KCGRD(1), ISMAX
+ 2000    FORMAT (' SWLTA: KCGRD ISMAX  :',2I4)
+         WRITE(PRINTF,2001) GRAV, DEP, DEP_2, DEP_3
+ 2001    FORMAT (' SWLTA: G DEP DEP2 DEP3   :',4E12.4)
+         WRITE(PRINTF,2002) PTRIAD(1), PTRIAD(2), URSELL(KCGRD(1))
+ 2002    FORMAT (' SWLTA: P(1) P(2) P4) URSELL  :',4E12.4)
+         WRITE(PRINTF,2003) SMEBRK, HS, BIPH, ABS(SIN(BIPH))
+ 2003    FORMAT (' SWLTA: SMEBRK HS B |SIN(B)|:',4E12.4)
+      END IF
+
+      DEALLOCATE(E,SA)
+
+      RETURN
+      END SUBROUTINE SWLTA

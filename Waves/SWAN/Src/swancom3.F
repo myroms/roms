@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !
 !     SWAN/COMPU   file 3 of 5
 !
@@ -49,15 +49,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -556,15 +553,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -924,15 +918,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1160,15 +1151,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1340,15 +1328,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1578,15 +1563,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1812,15 +1794,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1845,6 +1824,7 @@
 !     40.02: IJsbrand Haagsma
 !     40.31: Tim Campbell and John Cazes
 !     40.41: Marcel Zijlema
+!     40.61: Roop Lalbeharry
 !
 !  1. Updates
 !
@@ -1854,6 +1834,7 @@
 !     40.31, Jul. 03: correction calculation TAUDIR in test output
 !     40.41, Aug. 04: COS(THETA-THETAW) replaced by sumrule to make it cheaper
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
+!     40.61, Nov. 06: improvements to WAM4 based on WAM4.5
 !
 !  2. Purpose
 !
@@ -1911,6 +1892,7 @@
 !        THETAW      Mean direction of the relative wind vector
 !        WIND10      Velocity of the relative wind vector
 !        UFRIC       Wind friction velocity
+!        ZALP        Wave growth parameter used in WAM4                   40.61
 !
 !        one and more dimensional arrays:
 !        ---------------------------------
@@ -1973,6 +1955,7 @@
      &         RHOAW  ,ALPHA  ,XKAPPA ,F1     ,TAUWX  ,TAUWY  ,SE1    ,
      &         CTW    ,STW    ,COSDIF ,                                   40.41
      &         SE2    ,SINWAV ,COSWAV
+      REAL     ZALP                                                       40.61
 !
       REAL    AC2(MDC,MSC,MCGRD)   ,                                      30.21
      &        IMATRA(MDC,MSC)      ,
@@ -2002,6 +1985,7 @@
       RATIO  = 0.75
       BETAMX = 1.2
       F1     = BETAMX / XKAPPA**2
+      ZALP   = 0.011                                                      40.61
       CTW    = COS(THETAW)                                                40.41
       STW    = SIN(THETAW)                                                40.41
 !
@@ -2062,6 +2046,8 @@
           CW2    = SIGMA2 / WAVEN2
           ZCN1   = ALOG ( GRAV * ZE / CW1**2 )
           ZCN2   = ALOG ( GRAV * ZE / CW2**2 )
+          X1     = (UFRIC/CW1 + ZALP)**2                                  40.61
+          X2     = (UFRIC/CW2 + ZALP)**2                                  40.61
           DO IDDUM = IDWMIN, IDWMAX
             ID = MOD ( IDDUM - 1 + MDC, MDC ) + 1
             THETA  = SPCDIR(ID,1)                                         30.82
@@ -2076,19 +2062,19 @@
 !           *** Miles constant Beta ***
 !
             IF ( COS1 .GT. 0.01 ) THEN
-              ZARG1 = XKAPPA * CW1 / ( UFRIC * COS1 )
-              ZARG2 = XKAPPA * CW2 / ( UFRIC * COS1 )
+              ZARG1 = XKAPPA / ( (UFRIC / CW1 + ZALP ) * COS1 )           40.61
+              ZARG2 = XKAPPA / ( (UFRIC / CW2 + ZALP ) * COS1 )           40.61
               ZLOG1 = ZCN1 + ZARG1
               ZLOG2 = ZCN2 + ZARG2
-              IF ( ZLOG1 .LT. 0. ) BETA1 = F1 * EXP (ZLOG1) * ZLOG1**4
-              IF ( ZLOG2 .LT. 0. ) BETA2 = F1 * EXP (ZLOG2) * ZLOG2**4
+              IF (ZLOG1.LT.0.) BETA1 = F1 * X1 * EXP (ZLOG1) * ZLOG1**4   40.61
+              IF (ZLOG2.LT.0.) BETA2 = F1 * X2 * EXP (ZLOG2) * ZLOG2**4   40.61
             ENDIF
 !
 !           *** calculate wave stress by integrating input source ***
 !           *** term in x- and y direction respectively           ***
 !
-            SE1 = WAVEN1**2 * BETA1 * SIGMA1 * AC2(ID,IS  ,KCGRD(1))
-            SE2 = WAVEN2**2 * BETA2 * SIGMA2 * AC2(ID,IS+1,KCGRD(1))
+            SE1 = BETA1 * SIGMA1**3 * AC2(ID,IS  ,KCGRD(1))               40.61
+            SE2 = BETA2 * SIGMA2**3 * AC2(ID,IS+1,KCGRD(1))               40.61
 !
             TAUWX = TAUWX + 0.5 * ( SE1 + SE2 ) * DS * COSWAV * COS2
             TAUWY = TAUWY + 0.5 * ( SE1 + SE2 ) * DS * SINWAV * COS2
@@ -2125,6 +2111,9 @@
           ZCNHF1 = ALOG ( ZE * SIGHF1**2 / GRAV )
           ZCNHF2 = ALOG ( ZE * SIGHF2**2 / GRAV )
           AUX    = 0.0
+          SIGHF1 = SIGMAX                                                 40.61
+          CW1    = GRAV/SIGHF1                                            40.61
+          CW2    = GRAV/SIGHF2                                            40.61
           DO IDDUM = IDWMIN, IDWMAX
             ID = MOD ( IDDUM - 1 + MDC, MDC ) + 1
             THETA  = SPCDIR(ID,1)                                         30.82
@@ -2133,13 +2122,14 @@
             COSWAV = SPCDIR(ID,2)                                         40.41
             COS1   = MAX ( 0. , COSDIF )                                  40.41
             COS2   = COS1 * COS1
+            COS3   = COS2 * COS1                                          40.61
             BETA1  = 0.0
             BETA2  = 0.0
 !
             IF ( COS1 .GT. 0.01 ) THEN
 !             *** beta is independent of direction ! ***
-              ZAHF1 = GAMHF / SIGHF1
-              ZAHF2 = GAMHF / SIGHF2
+              ZAHF1 = XKAPPA / ( UFRIC / CW1 + ZALP )                     40.61
+              ZAHF2 = XKAPPA / ( UFRIC / CW2 + ZALP )                     40.61
               ZLOG1 = ZCNHF1 + ZAHF1
               ZLOG2 = ZCNHF2 + ZAHF2
               IF ( ZLOG1 .LT. 0. ) BETA1 = F1 * EXP (ZLOG1) * ZLOG1**4
@@ -2184,15 +2174,15 @@
 !
         TAUTOT = RHOA * UFRIC2
 !       *** wave stress ***
-        TAUWX  = TAUWX + TXHFR
-        TAUWY  = TAUWY + TYHFR
+        TAUWX  = TAUWX + TXHFR * UFRIC2                                   40.61
+        TAUWY  = TAUWY + TYHFR * UFRIC2                                   40.61
         IF (ABS(TAUWX).GT.0. .OR. ABS(TAUWY).GT.0.) THEN
           TAUDIR = ATAN2 ( TAUWX, TAUWY )
         ELSE
           TAUDIR = 0.
         ENDIF
         TAUDIR = MOD ( (TAUDIR + 2. * PI) , (2. * PI) )
-        TAUW   = RHOA * UFRIC2 * DD * SQRT ( TAUWX**2 + TAUWY**2 )
+        TAUW   = RHOA * DD * SQRT ( TAUWX**2 + TAUWY**2 )                 40.61
         TAUW   = MIN ( TAUW , 0.999 * TAUTOT )
 !
         IF ( ITEST .GE. 45 ) THEN
@@ -2276,10 +2266,10 @@
             COSDIF = SPCDIR(ID,2)*CTW + SPCDIR(ID,3)*STW                  40.41
             COS1   = MAX ( 0. , COSDIF )                                  40.41
             COS2   = COS1 * COS1
-            XFAC2  = ( UFRIC / CW1 )**2
+            XFAC2  = ( UFRIC / CW1 + ZALP )**2                            40.61
             BETA   = 0.
             IF ( COS1 .GT. 0.01 ) THEN
-              ZARG = XKAPPA * CW1 / ( UFRIC * COS1 )
+              ZARG = XKAPPA / ( (UFRIC / CW1 + ZALP ) * COS1 )            40.61
               ZLOG = ZCN + ZARG
               IF ( ZLOG .LT. 0. ) BETA = F1 * EXP (ZLOG) * ZLOG**4
             ENDIF
@@ -2346,15 +2336,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2377,6 +2364,7 @@
 !     30.72: IJsbrand Haagsma
 !     30.82: IJsbrand Haagsma
 !     40.41: Marcel Zijlema
+!     40.53: Andre van der Westhuysen
 !
 !  1. Updates
 !
@@ -2384,6 +2372,8 @@
 !     30.82, Oct. 98: Updated description of several variables
 !     40.41, Aug. 04: COS(THETA-THETAW) replaced by sumrule to make it cheaper
 !     40.41, Oct. 04: common blocks replaced by modules, include files removed
+!     40.53, Aug. 04: changes parameters of Yan formulae in case of Alves and
+!                     Banner whitecapping method
 !
 ! 2. Purpose
 !
@@ -2501,6 +2491,15 @@
       COF3 = 0.000055
       COF4 = 0.00031
 !
+!     adapted Yan fit for use of Alves and Banner method                  40.53
+!
+      IF (IWCAP.EQ.7) THEN                                                40.53
+         COF1 = 0.04                                                      40.53
+         COF2 = 0.00552                                                   40.53
+         COF3 = 0.000052                                                  40.53
+         COF4 = 0.000302                                                  40.53
+      END IF                                                              40.53
+!
       CTW  = COS(THETAW)                                                  40.41
       STW  = SIN(THETAW)                                                  40.41
       DO IS = 1, ISSTOP
@@ -2534,4 +2533,4 @@
       RETURN
 !     end of subroutine SWIND5
       END
-
+!

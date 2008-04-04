@@ -11,8 +11,8 @@
 !   MODE  / STATIONARY \  / TWODimensional
 !         \ DYNAMIC    /  \ ONEDimensional
 !
-!   COORDinates  /  -> CARTesian               \   REPeating
-!                \ SPHErical [rearth]  CCM|QC  /
+!   COORDinates  /  -> CARTesian          \   REPeating
+!                \ SPHErical      CCM|QC  /
 !
 !   CGRID  / REGular [xpc] [ypc] [alpc] [xlenc] [ylenc] [mxc] [myc] \
 !          \ CURVilinear [mxc] [myc]  [excval]                      /       &
@@ -36,9 +36,10 @@
 !
 !   WIND  [vel] [dir]
 !
-!                       /  JONswap  [gamma]  \
-!   BOUNd SHAPespec    <   PM                 >   PEAK|MEAN   DSPR  POWer|DEGRees
-!                       \  GAUSs  [sigfr]    /
+!                       |  JONswap  [gamma]  |
+!   BOUNd SHAPespec     |  PM                |
+!                      <   GAUSs  [sigfr]     >  PEAK|MEAN   DSPR  POWer|DEGRees
+!                       |  BIN               |
 !
 !              / -> SIDE  North|NW|West|SW|South|SE|East|NE   CCW|CLOCKWise   \
 !   BOUNdspec <                                                                > &
@@ -57,10 +58,15 @@
 !
 !   BOUNdnest3  WWIII 'fname'  CLOSed|OPEN  [xgc] [ygc]
 !
-!            | -> DEFault
-!   INITial <   ZERO
-!            |  PAR [hs] [per] [dir] [dd]
-!            |  HOTStart 'fname'
+!             | -> DEFault
+!             |
+!   INITial  <   ZERO
+!             |
+!             |  PAR  [hs] [per] [dir] [dd]
+!             |
+!             |            | -> MULTiple |
+!             |  HOTStart <               >  'fname'
+!             |            |    SINGle   |
 !
 !   GEN1  [cf10] [cf20] [cf30] [cf40] [edmlpm] [cdrag] [umin]
 !
@@ -71,6 +77,8 @@
 !         | -> KOMEN [cds2] [stpm]      |
 !   GEN3 <                               >    (AGROW [a])
 !         | YAN                         |
+!         |                             |
+!         | WESTHuysen                  |
 !
 !
 !         | ->KOMen    [cds2] [stpm] [powst] [delta] [powk]  |
@@ -84,6 +92,8 @@
 !         |   KBJ      [bjstp] [bjalf] [kconv]               |
 !         |                                                  |
 !         |   CSM      [cst] [pow]                           |
+!         |                                                  |
+!         |   AB       [cds2] [br] [p0] [powst] [powk]       |
 !
 !   QUADrupl [iquad] [limiter] [lambda] [cnl4] [csh1] [csh2] [csh3]
 !
@@ -91,8 +101,7 @@
 !   MDIA LAMbda < [lambda] > <                                 >
 !                             | CNL4_12 < [cnl4_1] [cnl4_2] > |
 !
-!   BREAKING CONSTANT [alpha] [gamma] | VARIABLE [alpha] [gammin] [gammax]  &
-!                                                [gamneg] [coeff1] [coeff2]
+!   BREaking CONSTANT [alpha] [gamma]
 !
 !   FRICTION  JONSWAP [cfjon] | COLLINS [cfw] | MADSEN [kn]
 !
@@ -100,13 +109,15 @@
 !
 !   LIMiter [ursell] [qb]
 !
-!               |  TRANSm [trcoef]              |
-!   OBSTacle   <                                 >                          &
-!               |  DAM    [hgt] [alpha] [beta]  |
+!               |  TRANSm [trcoef]                          |
+!   OBSTacle   <                                            |
+!               |       | -> GODA [hgt] [alpha] [beta]       >              &
+!               |  DAM <                                    |
+!                       |    DANGremond [hgt] [slope] [Bk]  |
 !
-!                          | -> RSPEC                    |
-!        ( REFLec [reflc] <                              > )                &
-!                          |    RDIFF [POWS][POWD][Kdif] |
+!                          | -> RSPEC        |
+!        ( REFLec [reflc] <                   > )                           &
+!                          |    RDIFF [pown] |
 !
 !               LINe < [xp] [yp] >
 !
@@ -163,14 +174,16 @@
 !   BLOCK   'sname'  HEADER | NOHEADER  'fname' (LAY-OUT [idla])            &
 !          <  DSPR|HSIGN|DIR|PDIR|TDIR|TM01|RTM01|RTP|TM02|FSPR|DEPTH|VEL|  &
 !             FRCOEFF|WIND|DISSIP|QB|TRANSP|FORCE|UBOT|URMS|WLEN|STEEPNESS| &
-!             DHSIGN|DRTM01|LEAK|TMM10|RTMM10|TMBOT  [unit]                 &
-!             (OUTPUT [tbegblk] [deltblk] SEC|MIN|HR|DAY)
+!             DHSIGN|DRTM01|LEAK|TSEC|XP|YP|DIST|SETUP|TMM10|RTMM10|        &
+!             TMBOT|QP|BFI|WATLEV|BOTLEV|TPS|DISBOT|DISSURF|DISWCAP  >      &
+!             ([unit]) (OUTPUT [tbegblk] [deltblk] SEC|MIN|HR|DAY)
 !
 !   TABLE   'sname'  HEADER | NOHEADER | INDEXED 'fname'                    &
 !          <  DSPR|HSIGN|DIR|PDIR|TDIR|TM01|RTM01|RTP|TM02|FSPR|DEPTH|VEL|  &
 !             FRCOEFF|WIND|DISSIP|QB|TRANSP|FORCE|UBOT|URMS|WLEN|STEEPNESS| &
-!             DHSIGN|DRTM01|LEAK|XP|YP|DIST|TMM10|RTMM10|TMBOT  [unit]      &
-!             (OUTPUT [tbegtbl] [delttbl] SEC|MIN|HR|DAY)
+!             DHSIGN|DRTM01|LEAK|TIME|TSEC|XP|YP|DIST|SETUP|TMM10|RTMM10|   &
+!             TMBOT|QP|BFI|WATLEV|BOTLEV|TPS|DISBOT|DISSURF|DISWCAP  >      &
+!             ([unit]) (OUTPUT [tbegtbl] [delttbl] SEC|MIN|HR|DAY)
 !
 !   SPECout 'sname'  SPEC1D|SPEC2D  ABS|REL   'fname'                       &
 !                    (OUTput [tbeg] [delt] SEC|MIN|HR|DAY)

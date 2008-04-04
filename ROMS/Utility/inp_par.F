@@ -957,13 +957,9 @@
 #ifdef MODEL_COUPLING
             DO ng=1,Ngrids
               DO i=1,Nmodels
-                IF (TimeInterval(Iocean,i).eq.dt(ng)) THEN
-                  CoupleSteps(i,ng)=1
-                ELSE
-                  CoupleSteps(i,ng)=MAX(1,                              &
-     &                                  INT(TimeInterval(Iocean,i)/     &
-     &                                  dt(ng))+1)
-                END IF
+                CoupleSteps(i,ng)=MAX(1,                                &
+     &                                INT(TimeInterval(Iocean,i)/       &
+     &                                dt(ng)))
               END DO
             END DO
 #endif

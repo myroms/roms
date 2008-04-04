@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !
 !     SWAN - routines for distributed-memory approach based on MPI
 !
@@ -27,17 +27,19 @@
 !
 !****************************************************************
 !
-      SUBROUTINE SWINITMPI(MyComm)
+#ifdef MODEL_COUPLING
+      SUBROUTINE SWINITMPI (MyComm)
+#else
+      SUBROUTINE SWINITMPI
+#endif
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
       USE M_PARALL                                                        40.31
-!jcw
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -51,7 +53,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -105,10 +107,12 @@
 !     IL2   :     last non-character in string2
 !     MSGSTR:     string to pass message to call MSGERR
 !
+#ifdef MODEL_COUPLING
+      INTEGER, intent(in), optional :: MyCOMM
+#endif
       INTEGER      IERR, IF1, IF2, IL1, IL2
       CHARACTER*20 INTSTR, CHARS(2)
       CHARACTER*80 MSGSTR
-      integer, intent(in), optional :: MyCOMM
 !
 !  8. Subroutines used
 !
@@ -137,24 +141,25 @@
       MAXERR = 1
       ITRACE = 0
 
-
-!!MPI!     --- enroll in MPI
-!!MPI
-!!MPI      CALL MPI_INIT ( IERR )                                         jcw
-!!MPI      IF ( IERR.NE.MPI_SUCCESS ) THEN
-!!MPI         CHARS(1) = INTSTR(IERR)
-!!MPI         CALL TXPBLA(CHARS(1),IF1,IL1)
-!!MPI         MSGSTR = 'MPI produces some internal error - '//
-!!MPI     &            'return code is '//CHARS(1)(IF1:IL1)
-!!MPI         CALL MSGERR ( 4, MSGSTR )
-!!MPI         RETURN
-!!MPI      END IF
-
+#ifdef MODEL_COUPLING
       IF (PRESENT(MyCOMM)) THEN
         WAV_COMM_WORLD=MyCOMM
       ELSE
         WAV_COMM_WORLD=MPI_COMM_WORLD
       END IF
+#else
+!     --- enroll in MPI
+
+      CALL MPI_INIT ( IERR )
+      IF ( IERR.NE.MPI_SUCCESS ) THEN
+         CHARS(1) = INTSTR(IERR)
+         CALL TXPBLA(CHARS(1),IF1,IL1)
+         MSGSTR = 'MPI produces some internal error - '//
+     &            'return code is '//CHARS(1)(IF1:IL1)
+         CALL MSGERR ( 4, MSGSTR )
+         RETURN
+      END IF
+#endif
 
 !     --- initialize common variables
 
@@ -163,7 +168,11 @@
 
 !     --- get node number INODE
 
+#ifdef MODEL_COUPLING
       CALL MPI_COMM_RANK ( WAV_COMM_WORLD, INODE, IERR )
+#else
+      CALL MPI_COMM_RANK ( MPI_COMM_WORLD, INODE, IERR )
+#endif
       INODE = INODE + 1
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS(1) = INTSTR(IERR)
@@ -179,7 +188,11 @@
 
 !     --- determine total number of processes
 
+#ifdef MODEL_COUPLING
       CALL MPI_COMM_SIZE ( WAV_COMM_WORLD, NPROC, IERR )
+#else
+      CALL MPI_COMM_SIZE ( MPI_COMM_WORLD, NPROC, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS(1) = INTSTR(IERR)
          CALL TXPBLA(CHARS(1),IF1,IL1)
@@ -216,13 +229,14 @@
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
-      USE M_PARALL                                                        jcw
-!     USE WAVES_COUPLER_MOD, ONLY: FINALIZE_WAV2OCN_COUPLING              jcw
+#ifdef MODEL_COUPLING
+      USE M_PARALL
+!     USE WAVES_COUPLER_MOD, ONLY: FINALIZE_WAV2OCN_COUPLING
+#endif
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -236,7 +250,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -313,21 +327,27 @@
       CALL MPI_INITIALIZED ( PARALMPI, IERR )
       IF ( PARALMPI ) THEN
 
-!!!!!MPI         CALL MPI_BARRIER ( MPI_COMM_WORLD, IERR )
+#ifdef MODEL_COUPLING
          CALL MPI_BARRIER ( WAV_COMM_WORLD, IERR )
+#else
+         CALL MPI_BARRIER ( MPI_COMM_WORLD, IERR )
+#endif
 
          IF ( LEVERR.GE.4 ) THEN
 
 !        --- in case of a severe error abort all MPI processes
 
-!!!!!MPI            CALL MPI_ABORT ( MPI_COMM_WORLD, LEVERR, IERR )
+#ifdef MODEL_COUPLING
             CALL MPI_ABORT ( WAV_COMM_WORLD, LEVERR, IERR )
+#else
+            CALL MPI_ABORT ( MPI_COMM_WORLD, LEVERR, IERR )
 
          ELSE
 
 !        --- otherwise stop MPI operations on this computer
 
-!           CALL MPI_FINALIZE ( IERR )
+            CALL MPI_FINALIZE ( IERR )
+#endif
 
          END IF
 
@@ -341,12 +361,11 @@
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
       USE M_PARALL                                                        40.31
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -360,7 +379,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -448,8 +467,11 @@
 
 !     --- blocks until all nodes have called this routine
 
-!!!!!!MPI      CALL MPI_BARRIER ( MPI_COMM_WORLD, IERR )
+#ifdef MODEL_COUPLING
       CALL MPI_BARRIER ( WAV_COMM_WORLD, IERR )
+#else
+      CALL MPI_BARRIER ( MPI_COMM_WORLD, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS(1) = INTSTR(IERR)
          CALL TXPBLA(CHARS(1),IF1,IL1)
@@ -470,12 +492,11 @@
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
       USE M_PARALL                                                        40.31
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -489,7 +510,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -585,8 +606,11 @@
       IF (.NOT.PARLL) RETURN
 
       CALL MPI_SEND ( IPTR, ILEN, ITYPE, IDEST-1,
+#ifdef MODEL_COUPLING
      &                ITAG, WAV_COMM_WORLD, IERR )
-!!!!!MPI     &                ITAG, MPI_COMM_WORLD, IERR )
+#else
+     &                ITAG, MPI_COMM_WORLD, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS(1) = INTSTR(IERR)
          CALL TXPBLA(CHARS(1),IF1,IL1)
@@ -607,12 +631,11 @@
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
       USE M_PARALL                                                        40.31
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -626,7 +649,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -728,8 +751,11 @@
       IF (.NOT.PARLL) RETURN
 
       CALL MPI_RECV ( IPTR, ILEN, ITYPE, ISOURCE-1, ITAG,
+#ifdef MODEL_COUPLING
      &                WAV_COMM_WORLD, ISTAT, IERR )
-!!!!!MPI     &                MPI_COMM_WORLD, ISTAT, IERR )
+#else
+     &                MPI_COMM_WORLD, ISTAT, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS(1) = INTSTR(IERR)
          CALL TXPBLA(CHARS(1),IF1,IL1)
@@ -750,12 +776,11 @@
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
       USE M_PARALL                                                        40.31
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -769,7 +794,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -866,8 +891,11 @@
 
       CALL SWTSTA(201)
       CALL MPI_BCAST ( IPTR, ILEN, ITYPE, MASTER-1,
+#ifdef MODEL_COUPLING
      &                 WAV_COMM_WORLD, IERR )
-!!!!!MPI     &                 MPI_COMM_WORLD, IERR )
+#else
+     &                 MPI_COMM_WORLD, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS = INTSTR(IERR)
          CALL TXPBLA(CHARS,IF,IL)
@@ -886,12 +914,11 @@
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
       USE M_PARALL                                                        40.31
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -905,7 +932,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1024,8 +1051,11 @@
 !     --- gather the array sizes to the master
 
       CALL MPI_GATHER( IILEN, 1, SWINT, ICOUNT, 1, SWINT,
+#ifdef MODEL_COUPLING
      &                 MASTER-1, WAV_COMM_WORLD, IERR )
-!!!!MPI     &                 MASTER-1, MPI_COMM_WORLD, IERR )
+#else
+     &                 MASTER-1, MPI_COMM_WORLD, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS = INTSTR(IERR)
          CALL TXPBLA(CHARS,IF,IL)
@@ -1060,8 +1090,11 @@
 !         to the master
 
       CALL MPI_GATHERV( IIPTR, IILEN, ITYPE, IOPTR, ICOUNT, IDSPLC,
+#ifdef MODEL_COUPLING
      &                  ITYPE, MASTER-1, WAV_COMM_WORLD, IERR )
-!!!!MPI     &                  ITYPE, MASTER-1, MPI_COMM_WORLD, IERR )
+#else
+     &                  ITYPE, MASTER-1, MPI_COMM_WORLD, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS = INTSTR(IERR)
          CALL TXPBLA(CHARS,IF,IL)
@@ -1081,12 +1114,11 @@
 !
 !****************************************************************
 !
-!!!MPI      USE MPI
+      USE M_MPI
       USE OCPCOMM4                                                        40.41
       USE M_PARALL                                                        40.31
 !
       IMPLICIT NONE
-      include 'mpif.h'
 !
 !
 !   --|-----------------------------------------------------------|--
@@ -1100,7 +1132,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1145,10 +1177,12 @@
 !     ITYPE       type of data
 !     ITYPRD      type of reduction
 !
-
-!!      INTEGER IPTR, ILEN, ITYPE, ITYPRD
+#ifdef MODEL_COUPLING
       INTEGER ILEN, ITYPE, ITYPRD
-      REAL IPTR                                                            jcw
+      REAL IPTR
+#else
+      INTEGER IPTR, ILEN, ITYPE, ITYPRD
+#endif
 !
 !  5. Parameter variables
 !
@@ -1164,9 +1198,12 @@
 !     IOPTR :     pointer to first element of output array
 !     MSGSTR:     string to pass message to call MSGERR
 !
-!!      INTEGER      IENT, IERR, IF, IL, IOPTR
+#ifdef MODEL_COUPLING
       INTEGER      IENT, IERR, IF, IL
-      REAL IOPTR(ILEN)                                                   jcw
+      REAL IOPTR(ILEN)
+#else
+      INTEGER      IENT, IERR, IF, IL, IOPTR
+#endif
       CHARACTER*20 INTSTR, CHARS
       CHARACTER*80 MSGSTR
 !
@@ -1211,8 +1248,11 @@
 
       CALL SWTSTA(202)
       CALL MPI_ALLREDUCE ( IPTR, IOPTR, ILEN, ITYPE,
+#ifdef MODEL_COUPLING
      &                     ITYPRD, WAV_COMM_WORLD, IERR )
-!!!!MPI     &                     ITYPRD, MPI_COMM_WORLD, IERR )  !jcw
+#else
+     &                     ITYPRD, MPI_COMM_WORLD, IERR )
+#endif
       IF ( IERR.NE.MPI_SUCCESS ) THEN
          CHARS = INTSTR(IERR)
          CALL TXPBLA(CHARS,IF,IL)
@@ -1226,7 +1266,6 @@
       ELSE IF ( ITYPE.EQ.SWREAL ) THEN
          CALL SWCOPR ( IOPTR, IPTR, ILEN )
       END IF
-
       CALL SWTSTO(202)
 
       RETURN
@@ -1238,7 +1277,9 @@
 !****************************************************************
 !
       USE OCPCOMM4                                                        40.41
-      USE M_PARALL                                                        jcw
+#ifdef MODEL_COUPLING
+      USE M_PARALL
+#endif
 !
       IMPLICIT NONE
 !
@@ -1254,7 +1295,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1456,7 +1497,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1622,7 +1663,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1964,7 +2005,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2131,7 +2172,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2246,6 +2287,7 @@
       NNEIGH = IBLKAD(1)
 
 !     --- for all neighbouring subdomains do
+
       DO INB = 1, NNEIGH
 
 !        --- get subdomain number, pointer and size
@@ -2289,7 +2331,8 @@
          DO K = 1, NOVLU
             FIELD(KGRPNT(IBLKAD(ISTART+NOVLU+K))) = WORK(K)
          END DO
-      END DO                                                              !jcw add
+
+      END DO
 
       CALL SWTSTO(203)
 
@@ -2319,7 +2362,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2485,7 +2528,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2652,7 +2695,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2913,7 +2956,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3262,7 +3305,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3592,7 +3635,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -3919,7 +3962,7 @@
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as

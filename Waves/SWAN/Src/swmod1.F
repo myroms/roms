@@ -1,4 +1,4 @@
-#include "cppdefs.h"
+#include "swancpp.h"
 !                 COMMON VARIABLES RELATED MODULES, file 1 of 3
 !
 !     Contents of this file
@@ -22,15 +22,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -183,15 +180,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -308,15 +302,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -414,15 +405,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -506,8 +494,9 @@
       INTEGER EXPORT, FUNHI , FUNLO , HIOPEN
       INTEGER IMPORT, INPUTF, ITMOPT, IUNMAX
       INTEGER IUNMIN, PRINTF, PRTEST, SCREEN
-      CHARACTER*40 INPFIL                                                jcw
-
+#ifdef MODEL_COUPLING
+      CHARACTER*40 INPFIL
+#endif
 !     *** test parameters ***
 !
 ! ITEST  [  0] indicates the amount of test output requested
@@ -561,15 +550,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -591,6 +577,8 @@
 !
 !     40.41: Marcel Zijlema
 !     40.51: Marcel Zijlema
+!     40.61: Marcel Zijlema
+!     40.64: Marcel Zijlema
 !
 !  1. Updates
 !
@@ -600,6 +588,12 @@
 !     40.41, Sep. 04: NMOVAR increased by 2 (quantities TMM10
 !                     and RTMM10 added)
 !     40.51, Feb. 05: NMOVAR increased by 1 (quantity TMBOT added)
+!     40.51, Sep. 05: NMOVAR increased by 2 (quantities WATLEV
+!                     and BOTLEV added)
+!     40.51, Feb. 06: NMOVAR increased by 1 (quantity TPS added)
+!     40.61, Sep. 06: NMOVAR increased by 3 (quantities DISBOT,
+!                     DISSRF and DISWCP added)
+!     40.64, Apr. 07: NMOVAR increased by 2 (quantities QP and BFI added)
 !
 !  2. Purpose
 !
@@ -621,11 +615,11 @@
 !
 !  6. Parameter variables
 !
-!     NMOVAR [  50]  maximum number of output variables                   40.51 40.21 40.41
+!     NMOVAR [  59]  maximum number of output variables                   40.64 40.61 40.51 40.21 40.41
 !     MOUTPA [   5]  number of output parameters
 !
       INTEGER NMOVAR, MOUTPA
-      PARAMETER (NMOVAR = 50, MOUTPA=5)                                   40.51 40.21 40.41
+      PARAMETER (NMOVAR = 59, MOUTPA=5)                                   40.64 40.61 40.51 40.21 40.41
 !
 !  7. Local variables
 !
@@ -679,6 +673,14 @@
 !  (48) ['RTMM10']
 !  (49) ['DIFPAR')
 !  (50) [ 'TMBOT']
+!  (51) [  'WATL']
+!  (52) [  'BOTL']
+!  (53) [   'TPS']
+!  (54) [  'DISB']
+!  (55) [ 'DISSU']
+!  (56) [  'DISW']
+!  (58) [    'QP']
+!  (59) [   'BFI']
 ! OVSNAM(NMOVAR)   short name of output quantity
 !  ( 1) [    'Xp']
 !  ( 2) [    'Yp']
@@ -725,6 +727,14 @@
 !  (48) ['RTm_10']
 !  (49) ['DifPar']
 !  (50) [ 'TmBot']
+!  (51) ['Watlev']
+!  (52) ['Botlev']
+!  (53) ['TPsmoo']
+!  (54) ['Disbot']
+!  (55) ['Dissrf']
+!  (56) ['Diswcp']
+!  (58) [    'Qp']
+!  (59) [   'BFI']
 ! OVLNAM(NMOVAR)   long name of output quantity
 !  ( 1) [                        'X user coordinate']
 !  ( 2) [                        'Y user coordinate']
@@ -771,6 +781,14 @@
 !  (48) [             'Average relative wave period']
 !  (49) [                    'Diffraction parameter']
 !  (50) [                       'Bottom wave period']
+!  (51) [                              'Water level']
+!  (52) [                             'Bottom level']
+!  (53) [            'Relative peak period (smooth)']
+!  (54) [              'Bottom friction dissipation']
+!  (55) [                'Wave breaking dissipation']
+!  (56) [                 'Whitecapping dissipation']
+!  (58) [                               'Peakedness']
+!  (59) [                      'Benjamin-Feir index']
 ! OVUNIT(NMOVAR)   unit of of output quantity
 !  ( 1) [CALCULAT] =UL
 !  ( 2) [CALCULAT] =UL
@@ -817,6 +835,14 @@
 !  (48) [CALCULAT] =UT
 !  (49) [     ' ']
 !  (50) [CALCULAT] =UT
+!  (51) [CALCULAT] =UH
+!  (52) [CALCULAT] =UH
+!  (53) [CALCULAT] =UT
+!  (54) [  'm2/s'] change to UDL ???, changed to 'W/m2', if INRHOG=1
+!  (55) [  'm2/s'] change to UDL ???, changed to 'W/m2', if INRHOG=1
+!  (56) [  'm2/s'] change to UDL ???, changed to 'W/m2', if INRHOG=1
+!  (58) [     ' ']
+!  (59) [     ' ']
 ! SNAME [        ] name of output point set
 ! UAP   [  'W/m2'] unit of dissipation
 ! UD    [        ] not used
@@ -908,11 +934,19 @@
 !  (48)  [  1]   RTm_10
 !  (49)  [  1]   DifPar
 !  (50)  [  1]   TmBot
+!  (51)  [  1]   Watlev
+!  (52)  [  1]   Botlev
+!  (53)  [  1]   TPSmoo
+!  (54)  [  1]   Disbot
+!  (55)  [  1]   Dissrf
+!  (56)  [  1]   Diswcp
+!  (58)  [  1]   Qp
+!  (59)  [  1]   BFI
 ! OVEXCV(NMOVAR)   exception value for output quantity
 !  ( 1)  [ -1.E10] Xp
 !  ( 2)  [ -1.E10] Yp
 !  ( 3)  [  -999.] Dist
-!  ( 4)  [  -1.E5] Depth
+!  ( 4)  [   -99.] Depth
 !  ( 5)  [     0.] Vel
 !  ( 6)  [   -10.] Ubot
 !  ( 7)  [   -10.] Dissip
@@ -952,6 +986,14 @@
 !  (48)  [    -9.] RTm_10
 !  (49)  [   -99.] DifPar
 !  (50)  [    -9.] TmBot
+!  (51)  [   -99.] Watlev
+!  (52)  [   -99.] Botlev
+!  (53)  [   -10.] TPSmoo
+!  (54)  [   -10.] Disbot
+!  (55)  [   -10.] Dissrf
+!  (56)  [   -10.] Diswcp
+!  (58)  [    -9.] Qp
+!  (59)  [    -9.] BFI
 ! OVLEXP(NMOVAR)   lower expected limit of output quantity
 !  ( 1)  [ -1.E10] Xp
 !  ( 2)  [ -1.E10] Yp
@@ -996,6 +1038,14 @@
 !  (48)  [     0.] RTm_10
 !  (49)  [   -10.] DifPar
 !  (50)  [     0.] TmBot
+!  (51)  [  -100.] Watlev
+!  (52)  [  -100.] Botlev
+!  (53)  [     0.] TPSmoo
+!  (54)  [     0.] Disbot
+!  (55)  [     0.] Dissrf
+!  (56)  [     0.] Diswcp
+!  (58)  [     0.] Qp
+!  (59)  [     0.] BFI
 ! OVLLIM(NMOVAR)   lower limit of validity of output quantity
 !  ( 1)  [ -1.E10] Xp
 !  ( 2)  [ -1.E10] Yp
@@ -1040,6 +1090,14 @@
 !  (48)  [     0.] RTm_10
 !  (49)  [   -50.] DifPar
 !  (50)  [     0.] TmBot
+!  (51)  [  -1.E4] Watlev
+!  (52)  [  -1.E4] Botlev
+!  (53)  [     0.] TPSmoo
+!  (54)  [     0.] Disbot
+!  (55)  [     0.] Dissrf
+!  (56)  [     0.] Diswcp
+!  (58)  [     0.] Qp
+!  (59)  [     0.] BFI
 ! OVHEXP(NMOVAR)   upper expected limit of output quantity
 !  ( 1)  [  1.E10] Xp
 !  ( 2)  [  1.E10] Yp
@@ -1084,6 +1142,14 @@
 !  (48)  [   100.] RTm_10
 !  (49)  [    10.] DifPar
 !  (50)  [   100.] TmBot
+!  (51)  [   100.] Watlev
+!  (52)  [   100.] Botlev
+!  (53)  [   100.] TPSmoo
+!  (54)  [   100.] Disbot
+!  (55)  [   100.] Dissrf
+!  (56)  [   100.] Diswcp
+!  (58)  [     1.] Qp
+!  (59)  [  1000.] BFI
 ! OVULIM(NMOVAR)   upper limit of validity
 !  ( 1)  [  1.E10] Xp
 !  ( 2)  [  1.E10] Yp
@@ -1128,6 +1194,14 @@
 !  (48)  [  1000.] RTm_10
 !  (49)  [    50.] DifPar
 !  (50)  [  1000.] TmBot
+!  (51)  [   1.E4] Watlev
+!  (52)  [   1.E4] Botlev
+!  (53)  [  1000.] TPSmoo
+!  (54)  [  1000.] Disbot
+!  (55)  [  1000.] Dissrf
+!  (56)  [  1000.] Diswcp
+!  (58)  [     1.] Qp
+!  (59)  [  1000.] BFI
 ! SINCQ  [       ] sin of ALCQ
 ! SINPQ  [       ] sin of ALPQ
 ! SPCPOW [      1] power in expression for computation of average frequency
@@ -1181,15 +1255,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1252,8 +1323,9 @@
 ! grid(5): wind velocity x-component
 ! grid(6): wind velocity y-component
 ! grid(7): water level
-! grid(8): vegetation density (not used yet)
-! grid(9): air-sea temperature difference
+! grid(8): y-coordinate
+! grid(9): x-coordinate
+! grid(10): air-sea temperature difference
 !
 ! ALPG(NUMGRD)  [    0.] direction of the x-axis w.r.t. user coordinates
 ! COSPG(NUMGRD) [    1.] cos of ALPG
@@ -1279,7 +1351,6 @@
 ! LXOFFS        [   FAL] offset values were/were not initialized already
 ! MXG(NUMGRD)   [     0] number of meshes in x-direction
 ! MYG(NUMGRD)   [     0] number of meshes in y-direction
-! NESRUN        [     0] indicator (=1) for a nested run
 ! NWAMN         [     0] indicator (=1) for a WAM-nested run
 ! OPTG          [     1] type of the computational grid
 !                        =1 when regular
@@ -1311,7 +1382,7 @@
 !
       INTEGER ICOND
       INTEGER IGTYPE(NUMGRD),           LEDS(NUMGRD)
-      INTEGER MXG(NUMGRD), MYG(NUMGRD), NESRUN,      NWAMN
+      INTEGER MXG(NUMGRD), MYG(NUMGRD), NWAMN
       INTEGER OPTG,        NBFILS,      NBSPEC,      NBGRPT
       REAL    ALPG(NUMGRD),             COSPG(NUMGRD)
       REAL    COSVC,       COSWC,       DXG(NUMGRD)
@@ -1381,15 +1452,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -1436,6 +1504,8 @@
 !  6. Parameter variables
 !
 !     MBOT   [  10] dimension of array PBOT
+!     MDIFFR [  10] dimension of array PDIFFR                             40.21
+!     MDISP  [   3] dimension for dissipation arrays                      40.67
 !     MICMAX [  10] max. number of points in comput. stencil
 !     MNUMS  [  30] dimension of array PNUMS
 !     MQUAD  [  10] dimension of array PQUAD
@@ -1446,15 +1516,17 @@
 !     MTRIAD [  10] dimension of array PTRIAD
 !     MWCAP  [  15] dimension of array PWCAP
 !     MWIND  [  40] dimension of array PWIND
-!     MDIFFR [  10] dimension of array PDIFFR                             40.21
 !
       INTEGER             MBOT,        MNUMS,       MQUAD
       INTEGER             MSETUP,      MSHAPE,      MSPPAR,      MSURF
       INTEGER             MTRIAD,      MWCAP,       MWIND
       INTEGER             MICMAX
       INTEGER             MDIFFR                                          40.21
+      INTEGER             MDISP                                           40.67
 !
       PARAMETER           (MBOT   = 10)
+      PARAMETER           (MDIFFR = 10)                                   40.21
+      PARAMETER           (MDISP  =  3)                                   40.67
       PARAMETER           (MICMAX = 10)
       PARAMETER           (MNUMS  = 30)
       PARAMETER           (MQUAD  = 10)
@@ -1465,40 +1537,46 @@
       PARAMETER           (MTRIAD = 10)
       PARAMETER           (MWCAP  = 15)
       PARAMETER           (MWIND  = 40)
-      PARAMETER           (MDIFFR = 10)                                   40.21
 !
 !  7. Local variables
 !
 !     *** pointers for data arrays on computational grid ***
 !
-! JABIN  [  7] within array SWMATR
-! JABLK  [  8] within array SWMATR
-! JAOLD  [ 12] within array SWMATR
-! JASTD2 [   ] new air-sea temp. diff. within array COMPDA
-! JASTD3 [   ] last read air-sea temp. diff. within array COMPDA
-! JBTIME [   ] ??
+! JABIN  [  1] within array LSWMAT
+! JABLK  [  2] within array LSWMAT
+! JAOLD  [ 8+2*MDISP] within array SWMATR
+! JASTD2 [  1] new air-sea temp. diff. within array COMPDA
+! JASTD3 [  1] last read air-sea temp. diff. within array COMPDA
+! JBOTLV [  1] bottom level within array COMPDA
+!              set by command TABLE/BLOCK
 ! JCDRAG [  1] drag coefficient within array COMPDA,
 !              set by command WCAP JANS ...
 ! JDHS   [  6] wave height correction within array COMPDA
 !              (difference in Hs between last two iterations)
-! JDIS0  [  9] within array SWMATR
-! JDIS1  [ 10] within array SWMATR
+! JDIS0  [  7] within array SWMATR
+! JDIS1  [  7+MDISP] within array SWMATR
 ! JDISS  [  2] dissipation within array COMPDA
 ! JDPSAV [  1] saved depth (for setup) within array COMPDA
 ! JDP1   [  7] old depth within array COMPDA
 ! JDP2   [  8] new depth within array COMPDA
 ! JDP3   [ 15] last read depth within array COMPDA
+! JDSXB  [  1] bottom friction dissipation within array COMPDA
+!              set by command TABLE/BLOCK
+! JDSXS  [  1] surf dissipation within array COMPDA
+!              set by command TABLE/BLOCK
+! JDSXW  [  1] whitecapping dissipation within array COMPDA
+!              set by command TABLE/BLOCK
 ! JDTM   [ 20] wave period correction within array COMPDA
 !              (difference in average wave period between last two iterations)
-! JFRC2  [  1] friction coefficcient within array COMPDA
+! JFRC2  [  1] friction coefficient within array COMPDA
 !              set by command READ FR ...
-! JFRC3  [  1] friction coefficcient within array COMPDA
+! JFRC3  [  1] friction coefficient within array COMPDA
 !              set by command READ FR ...
 ! JHS    [  1] significant wave height Hs within array COMPDA
 ! JHSIBC [ 25] significant wave height from boundary condition in array COMPDA
 ! JLEAK  [ 21] "leak" within array COMPDA
 !              (refractive energy tranport over sector boundaries)
-! JLEK1  [ 11] within array SWMATR
+! JLEK1  [  7+2*MDISP] within array SWMATR
 ! JMAT5  [  5] within array SWMATR
 ! JMAT6  [  6] within array SWMATR
 ! JMATD  [  1] within array SWMATR
@@ -1507,7 +1585,8 @@
 ! JMATU  [  4] within array SWMATR
 ! JP4D   [  7] within array SWTSDA, quadruplet interactions
 ! JP4S   [  6] within array SWTSDA, quadruplet interactions
-! JPBOT  [ 28] bottom wave period within array COMPDA
+! JPBOT  [  1] bottom wave period within array COMPDA
+!              set by command TABLE/BLOCK
 ! JPBTFR [  4] within array SWTSDA, bottom friction
 ! JPTRI  [  8] within array SWTSDA, triad interactions
 ! JPWBRK [  5] within array SWTSDA, surf breaking
@@ -1538,26 +1617,28 @@
 ! JWY3   [ 19] y of last read wind velocity within array COMPDA
 ! JZEL   [  1] roughness within array COMPDA,
 !              set by command WCAP JANS ...
-! MCMVAR [ 28] within array COMPDA,
-!              =MCMVAR+1, for command READ BOT ... (add JDP2) (obsolete)
+! MCMVAR [ 27] within array COMPDA,
 !              =MCMVAR+2, for command READ FR ... (add JFRC2, JFRC3)
-!              =MCMVAR+1, for command READ WL ... (add JWLV2) (obsolete)
-!              =MCMVAR+2, for command WIND ... (add JWX2, JWY2) (obsolete)
-!              =MCMVAR+2, for command READ WI ... (add JWX2, JWY2) (obsolete)
-!              =MCMVAR+2, for command READ CUR ... (add JVX2, JVY2) (obsolete)
-!              =MCMVAR+2, for command READ COOR ... (add JCOOX, JCOOY)
 !              =MCMVAR+4, for command WCAP JANS ... (add JCDRAG, JTAUW,
 !               JUSTAR, JZEL)
-!              =MCMVAR+1, for command TRIAD .......(add Ursell)
-! MSWMAT [ 12] within array SWMATR
+!              =MCMVAR+1, for command TABLE/BLOCK TMBOT (add JPBOT)
+!              =MCMVAR+1, for command TABLE/BLOCK BOTLEV (add JBOTLV)
+!              =MCMVAR+1, for command TABLE/BLOCK DISB (add JDSXB)
+!              =MCMVAR+1, for command TABLE/BLOCK DISSU (add JDSXS)
+!              =MCMVAR+1, for command TABLE/BLOCK DISW (add JDSXW)
+! MLSWMAT [  2] within array LSWMAT
+! MSWMATR [ 13] within array SWMATR
 ! MTSVAR [  8] within array TESTDA
 !
       INTEGER             JABIN,       JABLK,       JAOLD
       INTEGER             JASTD2,      JASTD3
-      INTEGER             JBTIME,      JCDRAG,      JDHS,        JDIS0
+      INTEGER             JCDRAG,      JDHS,        JDIS0
       INTEGER             JDIS1,       JDISS,       JDPSAV,      JDP1
       INTEGER             JDP2
       INTEGER             JDP3,        JDTM,        JFRC2,       JFRC3
+      INTEGER             JDSXB
+      INTEGER             JDSXS
+      INTEGER             JDSXW
       INTEGER             JHS,         JHSIBC,      JLEAK
       INTEGER             JLEK1,       JMAT5,       JMAT6,       JMATD
       INTEGER             JMATL,       JMATR,       JMATU
@@ -1570,7 +1651,7 @@
       INTEGER             JWX2,        JWX3
       INTEGER             JWY2,        JWY3,        JZEL  ,      JPBOT
       INTEGER             MCMVAR,                   MTSVAR,      JURSEL
-      INTEGER             MSWMATR,     MLSWMAT
+      INTEGER             JBOTLV,      MSWMATR,     MLSWMAT
 !
 !     *** location and dimensions of computational grid ***
 !
@@ -1934,19 +2015,16 @@
 !                 =0.012; set by command BRE VAR
 !                 =coeff2; set by command BRE VAR ... [coeff2]
 ! PTRIAD(MTRIAD)
-!  ( 1)  [   0.5] controls the proportionality coefficient,
-!                 =0.25; for command TRIAD LTA
-!                 =0.5; for command TRIAD DTA
+!  ( 1)  [  0.05] controls the proportionality coefficient,
 !                 =trfac; set by command TRIAD ... [trfac] ...
-!  ( 2)  [      ] controls the maximum frequency considered in the comp.,
-!                 =2.5; for command TRIAD ...
+!  ( 2)  [   2.5] controls the maximum frequency considered in the comp.,
 !                 =cutfr; set by command TRIAD ... [cutfr]
-!  ( 3)  [   0.1] controls above which Ursell number the quadruplets (and
+!  ( 3)  [  10.0] controls above which Ursell number the quadruplets (and
 !                 thus the limiter) are switched off
-!                 =ursell; set by command LIM [ursell]
+!                 =ursell; set by command LIM ... [ursell]
+!  ( 4)  [   0.2] critical Ursell number appearing in the biphase expression
 !                 =urcrit; set by command TRIAD ... [urcrit]
-!  ( 4)  [   0.2] controls above which Ursell number the triads are
-!                 calculated
+!  ( 5)  [  0.01] controls below which Ursell number the triads are switched off
 !                 =urslim; set by command TRIAD ... [urslim]
 ! PWCAP(MWCAP)     whitecapping coefficients
 !  ( 1)  [2.36E-5] coefficient for Komen et al. (1984),
@@ -2093,7 +2171,7 @@
       REAL                PSURF(MSURF),             PTRIAD(MTRIAD)
       REAL                PWCAP(MWCAP),             PWIND(MWIND)
       REAL                SIGMAG
-      REAL                SPPARM(MSPPAR),SY0,       U10,         U10C
+      REAL                SPPARM(MSPPAR),SY0,       U10
       REAL                WDIC,          WDIP,      HSRERR
       REAL                PQUAD(MQUAD)
       REAL                RCOMPT(50,5)
@@ -2136,15 +2214,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
@@ -2239,7 +2314,7 @@
 !                 propagation around the globe)
 ! KSPHER [     0] indicates whether spherical coordinates are used, and which projection method
 !                 0=Cartesian coordinates, >0=spherical coordinates
-! LENDEG [   1E5] length of a degree NS
+! LENDEG [   1E5] length of a degree of the sphere
 ! PROJ_METHOD[ 0] projection method; 0=(quasi-)Cartesian,
 !                 1=uniform Mercator (only spherical coordinates)
 ! PROPFL [CALCUL] indicates whether flux-limiting in spectral space is used
@@ -2295,15 +2370,12 @@
 !     | Environmental Fluid Mechanics Section                     |
 !     | P.O. Box 5048, 2600 GA  Delft, The Netherlands            |
 !     |                                                           |
-!     | Programmers: R.C. Ris, N. Booij,                          |
-!     |              IJ.G. Haagsma, A.T.M.M. Kieftenburg,         |
-!     |              M. Zijlema, E.E. Kriezi,                     |
-!     |              R. Padilla-Hernandez, L.H. Holthuijsen       |
+!     | Programmers: The SWAN team                                |
 !   --|-----------------------------------------------------------|--
 !
 !
 !     SWAN (Simulating WAves Nearshore); a third generation wave model
-!     Copyright (C) 2004-2005  Delft University of Technology
+!     Copyright (C) 2007  Delft University of Technology
 !
 !     This program is free software; you can redistribute it and/or
 !     modify it under the terms of the GNU General Public License as
