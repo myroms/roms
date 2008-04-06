@@ -234,6 +234,7 @@
       USE OUTP_DATA
       USE M_PARALL
       USE M_GENARR
+      USE M_MPI
       USE SWCOMM1
       USE mod_coupler
 !
@@ -255,6 +256,7 @@
       integer :: NUMTRANSFER, NNEIGH, HALOSIZE, NUMSENT, INB
       integer :: WHICHWAY, GDEST, GSRC, TAGT, TAGB, TAGR, TAGL
       integer :: TREQUEST,BREQUEST,RREQUEST,LREQUEST,MSIZE
+      integer :: handle(2)
 
       integer, save :: Iexport = 0
       integer, save :: Iimport = 0
@@ -264,6 +266,7 @@
 
       real :: cff
       real(r8) :: RecvTime, SendTime, wtime(2)
+      real(r8) :: inpbuffer(2), outbuffer(2)
 
       real(r8) :: my_wtime
 
@@ -343,6 +346,11 @@
 !
       IF (IRQ.eq.NREOQ) THEN
 !
+!  Initialize coupling wait time clocks.
+!
+        RecvTime=0.0_r8
+        SendTime=0.0_r8
+!
 !-----------------------------------------------------------------------
 !  Create a restart file.
 !-----------------------------------------------------------------------
@@ -353,9 +361,9 @@
 !  Send wave fields bundle to ocean model, ROMS.
 !-----------------------------------------------------------------------
 !
-        SendTime=my_wtime(wtime)
+        inpbuffer(2)=my_wtime(wtime)
         CALL MCT_Send (wav2ocn_AV, SWANtoROMS, MyError)
-        SendTime=my_wtime(wtime)-SendTime
+        SendTime=SendTime+my_wtime(wtime)-inpbuffer(2)
         IF (MyError.ne.0) THEN
           IF (MyRank.eq.0) THEN
             WRITE (6,10) 'ocean model, MyError = ', MyError
@@ -369,9 +377,9 @@
 !
 !  Schedule receiving field from ocean model.
 !
-        RecvTime=my_wtime(wtime)
+        inpbuffer(1)=my_wtime(wtime)
         CALL MCT_Recv (ocn2wav_AV, SWANtoROMS, MyError)
-        RecvTime=my_wtime(wtime)-RecvTime
+        RecvTime=RecvTime+my_wtime(wtime)-inpbuffer(1)
         IF (MyError.ne.0) THEN
           IF (MyRank.eq.0) THEN
              WRITE (6,20) 'ocean model, MyError = ', MyError
@@ -384,7 +392,9 @@
 !  Schedule receiving fields from atmosphere model.
 !
 !       IF (numsteps.gt.1) THEN
+          inpbuffer(1)=my_wtime(wtime)
           CALL MCT_Recv (atm2wav_AV, WRFtoSWAN, MyError)
+          RecvTime=RecvTime+my_wtime(wtime)-inpbuffer(1)
           IF (MyError.ne.0) THEN
             IF (MyRank.eq.0) THEN
               WRITE (6,20) 'atmosphere model, MyError = ', MyError
@@ -531,6 +541,17 @@
 !
 !  Report.
 !
+        IF (Nthreads(Iwaves).gt.1) THEN
+          inpbuffer(1)=RecvTime
+          inpbuffer(2)=SendTime
+          handle(1)=MPI_SUM
+          handle(2)=MPI_SUM
+          CALL mpi_allreduce (inpbuffer, outbuffer, 2,                  &
+     &                        MPI_DOUBLE_PRECISION, handle,             &
+     &                        WAV_COMM_WORLD, MyError)
+          RecvTime=outbuffer(1)
+          SendTime=outbuffer(2)
+        END IF
         IF (MyRank.eq.0) THEN
           IF ((Iimport.gt.0).or.(Iexport.gt.0)) THEN
             WRITE (6,30) Iimport, Iexport, TRIM(CHTIME),                &
@@ -780,7 +801,7 @@
      &        a,i4)
  30   FORMAT (6x,'WAV2OCN   - (', i2.2, ') imported and (', i2.2,       &
      &        ') exported fields,', t62, 't = ', a,/, 16x,              &
-     &        '- SWAN coupling wall clock (s):',/, 19x,                 &
+     &        '- SWAN coupling exchanges wait clock (s):',/, 19x,       &
      &        '(Recv= ', 1p,e14.8,0p, ' Send= ', 1p,e14.8,0p,')')
 
       RETURN

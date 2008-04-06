@@ -213,6 +213,7 @@
       USE mod_stepping
       USE mod_iounits
 !
+      USE distribute_mod, ONLY : mp_reduce
       USE ROMS_import_mod, ONLY : ROMS_import2d
       USE ROMS_export_mod, ONLY : ROMS_export2d
 !
@@ -231,12 +232,13 @@
       integer :: gtype, i, id, ifield, j, status
 
       real(r8) :: add_offset, scale
-      real(r8) :: RecvTime, SendTime, wtime(2)
+      real(r8) :: RecvTime, SendTime, buffer(2), wtime(2)
 
       real(r8) :: my_wtime
 
       real(r8), pointer :: A(:)
 
+      character (len=3 ), dimension(2) :: op_handle
       character (len=40) :: code
 !
 !-----------------------------------------------------------------------
@@ -280,6 +282,11 @@
       allocate ( A(Asize) )
       A=0.0_r8
 !
+!  Initialize coupling wait time clocks.
+!
+      RecvTime=0.0_r8
+      SendTime=0.0_r8
+!
 !-----------------------------------------------------------------------
 !  Import fields from atmosphere model (WRF) to ocean model (ROMS).
 !  Currently, both atmosphere and ocean model grids are the same.
@@ -289,9 +296,9 @@
 !  Schedule receiving fields from atmosphere model.
 !
       CALL mpi_comm_rank (OCN_COMM_WORLD, MyRank, MyError)
-      RecvTime=my_wtime(wtime)
+      buffer(1)=my_wtime(wtime)
       CALL MCT_Recv (atm2ocn_AV, ROMStoWRF, MyError)
-      RecvTime=my_wtime(wtime)-RecvTime
+      RecvTime=RecvTime+my_wtime(wtime)-buffer(1)
       IF (MyError.ne.0) THEN
         IF (Master) THEN
           WRITE (stdout,10) 'atmosphere model, MyError = ', MyError
@@ -574,9 +581,9 @@
 !  Send ocean fields to atmosphere model.
 !
       IF (Iexport.gt.0) THEN
-        SendTime=my_wtime(wtime)
+        buffer(2)=my_wtime(wtime)
         CALL MCT_Send (ocn2atm_AV, ROMStoWRF, MyError)
-        SendTime=my_wtime(wtime)-SendTime
+        SendTime=SendTime+my_wtime(wtime)-buffer(2)
         IF (MyError.ne.0) THEN
           IF (Master) THEN
             WRITE (stdout,20) 'atmosphere model, MyError = ', MyError
@@ -590,6 +597,15 @@
 !  Report.
 !-----------------------------------------------------------------------
 !
+      IF (Nthreads(Iocean).gt.1) THEN
+        buffer(1)=RecvTime
+        buffer(2)=SendTime
+        op_handle(1)='SUM'
+        op_handle(2)='SUM'
+        CALL mp_reduce (ng, iNLM, 2, buffer, op_handle)
+        RecvTime=buffer(1)
+        SendTime=buffer(2)
+      END IF
       IF (Master.and.((Iimport.gt.0).or.(Iexport.gt.0))) THEN
         WRITE (stdout,30) Iimport, Iexport, time_code(ng),              &
      &                    RecvTime, SendTime
@@ -617,7 +633,7 @@
      &        a, i4)
  30   FORMAT (6x,'OCN2ATM   - (', i2.2, ') imported and (', i2.2,       &
      &        ') exported fields,', t62, 't = ', a,/, 16x,              &
-     &        '- ROMS coupling wall clock (s):',/, 19x,                 &
+     &        '- ROMS coupling exchages wait clock (s):',/, 19x,        &
      &        '(Recv= ', 1p,e14.8,0p, ' Send= ', 1p,e14.8,0p,')')
  40   FORMAT (16x,'- ',a,a,                                             &
      &        /,19x,'(Min= ',1p,e15.8,0p,' Max= ',1p,e15.8,0p,')')

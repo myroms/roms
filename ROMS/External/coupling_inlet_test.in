@@ -79,7 +79,7 @@ Nthreads(waves) = 1
 ! expected with the label code in parenthesis.
 
  INPname(ocean) = ROMS/External/ocean_inlet_test.in
- INPname(waves) = Waves/SWAN/External/INPUT_inlet_test
+ INPname(waves) = Waves/SWAN/External/swan_inlet_test.in
 
 ! Coupled models variables information file name.
 
