@@ -47,6 +47,10 @@
       integer :: ibbl = 0
       integer :: ibiology = 0
       integer :: idriver = 0
+      integer :: itrcHadv = 0
+      integer :: itrcVadv = 0
+      integer :: ivelHadv = 0
+      integer :: ivelVadv = 0
       integer :: ivmix = 0
 
       integer :: is, lstr, ng
@@ -2184,59 +2188,87 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' T_PASSIVE,'
 # endif
-# if defined TS_MPDATA
+# ifdef TS_MPDATA
       IF (Master) WRITE (stdout,20) 'TS_MPDATA',                       &
      &   'Recursive flux corrected MPDATA 3D advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' TS_MPDATA,'
-# else
-#  if defined TS_A4HADVECTION
+      itrcHadv=itrcHadv+1
+      itrcVadv=itrcVadv+1
+# endif
+# ifdef TS_A4HADVECTION
       IF (Master) WRITE (stdout,20) 'TS_A4HADVECTION',                  &
-     &   'Fouth-order Akima horizontal advection of tracers.'
+     &   'Fourth-order Akima horizontal advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_A4HADVECTION,'
-#  elif defined TS_C2HADVECTION
+      itrcHadv=itrcHadv+1
+# endif
+# ifdef TS_C2HADVECTION
       IF (Master) WRITE (stdout,20) 'TS_C2HADVECTION',                  &
      &   'Second-order centered horizontal advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_C2HADVECTION,'
-#  elif defined TS_U3HADVECTION
-      IF (Master) WRITE (stdout,20) 'TS_U3HADVECTION',                  &
-     &   'Third-order upstream bias horizontal advection of tracers.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+17)=' TS_U3HADVECTION,'
-#  else
+      itrcHadv=itrcHadv+1
+# endif
+# ifdef TS_C4HADVECTION
       IF (Master) WRITE (stdout,20) 'TS_C4HADVECTION',                  &
      &   'Fourth-order centered horizontal advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_C4HADVECTION,'
-#  endif
-#  if defined TS_A4VADVECTION
+      itrcHadv=itrcHadv+1
+# endif
+# ifdef TS_U3HADVECTION
+      IF (Master) WRITE (stdout,20) 'TS_U3HADVECTION',                  &
+     &   'Third-order upstream bias horizontal advection of tracers.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' TS_U3HADVECTION,'
+      itrcHadv=itrcHadv+1
+# endif
+# if !(defined TS_MPDATA       || defined TS_A4HADVECTION || \
+       defined TS_C2HADVECTION || defined TS_C4HADVECTION || \
+       defined TS_U3HADVECTION)
+      IF (Master) WRITE (stdout,20) 'TS_C4HADVECTION',                  &
+     &   'Fourth-order centered horizontal advection of tracers.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' TS_C4HADVECTION,'
+      itrcHadv=itrcHadv+1
+# endif
+# ifdef TS_A4VADVECTION
       IF (Master) WRITE (stdout,20) 'TS_A4VADVECTION',                  &
-     &   'Fouth-order Akima vertical advection of tracers.'
+     &   'Fourth-order Akima vertical advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_A4VADVECTION,'
-#  elif defined TS_C2VADVECTION
+      itrcVadv=itrcVadv+1
+# endif
+# ifdef TS_C2VADVECTION
       IF (Master) WRITE (stdout,20) 'TS_C2VADVECTION',                  &
      &   'Second-order centered vertical advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_C2VADVECTION,'
-#  elif defined TS_C4VADVECTION
+      itrcVadv=itrcVadv+1
+# endif
+# ifdef TS_C4VADVECTION
       IF (Master) WRITE (stdout,20) 'TS_C4VADVECTION',                  &
      &   'Fourth-order centered vertical advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_C4VADVECTION,'
-#  elif defined TS_SVADVECTION
+      itrcVadv=itrcVadv+1
+# endif
+# ifdef TS_SVADVECTION
       IF (Master) WRITE (stdout,20) 'TS_SVADVECTION',                   &
      &   'Parabolic splines vertical advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' TS_SVADVECTION,'
-#  else
+      itrcVadv=itrcVadv+1
+# endif
+# if !(defined TS_MPDATA       || defined TS_A4VADVECTION || \
+       defined TS_C2VADVECTION || defined TS_C4VADVECTION || \
+       defined TS_SVADVECTION)
       IF (Master) WRITE (stdout,20) 'TS_C4VADVECTION',                  &
      &   'Fourth-order centered vertical advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_C4VADVECTION,'
-#  endif
+      itrcVadv=itrcVadv+1
 # endif
 #endif
 #if defined TS_DIF2 && defined SOLVE3D
@@ -2283,34 +2315,45 @@
       Coptions(is:is+8)=' UV_COR,'
 #endif
 #ifdef UV_ADV
-# if defined UV_C2ADVECTION
+# ifdef UV_C2ADVECTION
       IF (Master) WRITE (stdout,20) 'UV_C2ADVECTION',                   &
      &   'Second-order centered differences advection of momentum.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' UV_C2ADVECTION,'
-# elif defined UV_C4ADVECTION
+      ivelHadv=ivelHadv+1
+      ivelVadv=ivelVadv+1
+# endif
+# ifdef UV_C4ADVECTION
       IF (Master) WRITE (stdout,20) 'UV_C4ADVECTION',                   &
-     &   'Forth-order centered differences advection of momentum.'
+     &   'Fourth-order centered differences advection of momentum.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' UV_C4ADVECTION,'
-# else
-#  ifdef SOLVE3D
+      ivelHadv=ivelHadv+1
+      ivelVadv=ivelVadv+1
+# endif
+# ifdef SOLVE3D
+#  if !(defined UV_C2ADVECTION  || defined UV_C4ADVECTION)
       IF (Master) WRITE (stdout,20) 'UV_U3HADVECTION',                  &
-     &   'Third-order upstream bias advection of momentum.'
+     &   'Third-order upstream bias horizontal advection of 3D momentum.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' UV_U3HADVECTION,'
-#  else
-      IF (Master) WRITE (stdout,20) 'UV_C4ADVECTION',                   &
-     &   'Forth-order centered differences advection of momentum.'
+      ivelHadv=ivelHadv+1
+#  endif 
+#  if !(defined UV_C2ADVECTION  || defined UV_C4ADVECTION || \
+        defined UV_SADVECTION)
+      IF (Master) WRITE (stdout,20) 'UV_C4VADVECTION',                  &
+     &   'Fourth-order centered vertical advection of momentum.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' UV_C4ADVECTION,'
+      Coptions(is:is+16)=' UV_C4VADVECTION,'
+      ivelVadv=ivelVadv+1
 #  endif
-# endif
-# ifdef UV_SADVECTION
+#  ifdef UV_SADVECTION
       IF (Master) WRITE (stdout,20) 'UV_SADVECTION',                    &
      &   'Parabolic splines vertical advection of momentum.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' UV_SADVECTION,'
+      ivelVadv=ivelVadv+1
+#  endif
 # endif
 #endif
 #ifdef UV_LDRAG
@@ -2834,6 +2877,33 @@
         exit_flag=5
       END IF
 #endif
+#ifdef UV_ADV
+!
+!  Stop if more than one advection scheme has been activated.
+!
+      IF (Master.and.(ivelHadv.gt.1)) THEN
+        WRITE (stdout,150) 'horizontal','momentum','ivelHadv =',ivelHadv
+        exit_flag=5
+      END IF
+# ifdef SOLVE3D
+      IF (Master.and.(ivelVadv.gt.1)) THEN
+        WRITE (stdout,150) 'vertical','momentum','ivelVadv =',ivelVadv
+        exit_flag=5
+      END IF
+# endif
+#endif
+#ifdef SOLVE3D
+      IF (Master.and.(itrcHadv.gt.1)) THEN
+        WRITE (stdout,150) 'horizontal','tracers','itrcHadv =',itrcHadv
+        exit_flag=5
+      END IF
+      IF (Master.and.(itrcVadv.gt.1)) THEN
+        WRITE (stdout,150) 'vertical','tracers','itrcVadv =',itrcVadv
+        exit_flag=5
+      END IF
+#endif
+ 150  FORMAT (/,' CHECKDEFS - only one ',a,' advection scheme',         &
+     &        /,13x,'is allowed for ',a,', ',a,1x,i1)
 
       RETURN
       END SUBROUTINE checkdefs

@@ -12,10 +12,13 @@
 **                                                                           **
 ** OPTIONS associated with momentum equations:                               **
 **                                                                           **
-**   The default (no flags need to be activated) horizontal advection is     **
-**   3rd-order upstream bias and the default vertical advection is           **
-**   4th-order centered. Use the splines vertical advection option in        **
-**   shallow, high vertical resolution applications.                         **
+**   The default horizontal advection is 3rd-order upstream bias for         **
+**   3D momentum and 4th-order centered for 2D momentum. The default         **
+**   vertical advection is 4th-order centered for 3D momentum. If this       **
+**   is the case, no flags for momentum advection need to be activated.      **
+**                                                                           **
+**   WARNING:  Use the splines vertical advection option (UV_SADVECTION)     **
+**             only in shallow, high vertical resolution applications.       **
 **                                                                           **
 ** UV_ADV              use to turn ON or OFF advection terms                 **
 ** UV_COR              use to turn ON or OFF Coriolis term                   **
@@ -32,10 +35,10 @@
 **                                                                           **
 ** OPTIONS associated with tracers equations:                                **
 **                                                                           **
-**   The default horizontal advection is 3rd-order upstream bias and the     **
-**   default vertical advection is 4th-order centered. Use the splines       **
-**   vertical advection option in shallow, high vertical resolution          **
-**   applications.                                                           **
+**   The default horizontal and vertical advection is 4th-order centered.    **
+**                                                                           **
+**   WARNING:  Use the splines vertical advection option (TS_SVADVECTION)    **
+**             only in shallow, high vertical resolution applications.       **
 **                                                                           **
 ** TS_A4HADVECTION     use if 4th-order Akima horizontal advection           **
 ** TS_C2HADVECTION     use if 2nd-order centered horizontal advection        **
