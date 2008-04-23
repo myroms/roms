@@ -625,6 +625,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' DIAGNOSTICS_UV,'
 #endif
+#if defined DIFF_3DCOEF
+      IF (Master) WRITE (stdout,20) 'DIFF_3DCOEF',                      &
+     &   'Horizontal, time-dependent 3D diffusion coefficient.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' DIFF_3DCOEF,'
+#endif
 #if defined TS_DIF2 || defined TS_DIF4
 # ifdef DIFF_GRID
       IF (Master) WRITE (stdout,20) 'DIFF_GRID',                        &
@@ -1640,7 +1646,7 @@
       Coptions(is:is+15)=' K_C4ADVECTION,'
 # else
       IF (Master) WRITE (stdout,20) 'K_GSCHEME',                        &
-     &   'Third-order upstream bias advection of TKE fields.'
+     &   'Third-order upstream advection of TKE fields.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+11)=' K_GSCHEME,'
 # endif
@@ -2210,7 +2216,7 @@
       Coptions(is:is+17)=' TS_C2HADVECTION,'
       itrcHadv=itrcHadv+1
 # endif
-# ifdef TS_C4HADVECTION
+# if defined TS_C4HADVECTION || defined TS_U3ADV_SPLIT
       IF (Master) WRITE (stdout,20) 'TS_C4HADVECTION',                  &
      &   'Fourth-order centered horizontal advection of tracers.'
       is=LEN_TRIM(Coptions)+1
@@ -2219,7 +2225,7 @@
 # endif
 # ifdef TS_U3HADVECTION
       IF (Master) WRITE (stdout,20) 'TS_U3HADVECTION',                  &
-     &   'Third-order upstream bias horizontal advection of tracers.'
+     &   'Third-order upstream horizontal advection of tracers.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_U3HADVECTION,'
       itrcHadv=itrcHadv+1
@@ -2247,7 +2253,7 @@
       Coptions(is:is+17)=' TS_C2VADVECTION,'
       itrcVadv=itrcVadv+1
 # endif
-# ifdef TS_C4VADVECTION
+# if defined TS_C4VADVECTION || defined TS_U3ADV_SPLIT
       IF (Master) WRITE (stdout,20) 'TS_C4VADVECTION',                  &
      &   'Fourth-order centered vertical advection of tracers.'
       is=LEN_TRIM(Coptions)+1
@@ -2269,6 +2275,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TS_C4VADVECTION,'
       itrcVadv=itrcVadv+1
+# endif
+# ifdef TS_U3ADV_SPLIT
+      IF (Master) WRITE (stdout,20) 'TS_U3ADV_SPLIT',                   &
+     &   'Split third-order upstream advection of tracers.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' TS_U3ADV_SPLIT,'
 # endif
 #endif
 #if defined TS_DIF2 && defined SOLVE3D
@@ -2294,6 +2306,12 @@
      &   'Tracers point sources and sinks.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' TS_PSOURCE,'
+#endif
+#if defined TS_SMAGORINSKI && (defined TS_DIF2 || defined TS_DIF4)
+      IF (Master) WRITE (stdout,20) 'TS_SMAGORINSKY',                   &
+     &   'Smagorinksy-like time-dependent diffusion coefficients.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' TS_SMAGORINSKY,'
 #endif
 #ifdef UV_ADV
       IF (Master) WRITE (stdout,20) 'UV_ADV',                           &
@@ -2323,7 +2341,7 @@
       ivelHadv=ivelHadv+1
       ivelVadv=ivelVadv+1
 # endif
-# ifdef UV_C4ADVECTION
+# if defined UV_C4ADVECTION || defined UV_U3ADV_SPLIT
       IF (Master) WRITE (stdout,20) 'UV_C4ADVECTION',                   &
      &   'Fourth-order centered differences advection of momentum.'
       is=LEN_TRIM(Coptions)+1
@@ -2334,7 +2352,7 @@
 # ifdef SOLVE3D
 #  if !(defined UV_C2ADVECTION  || defined UV_C4ADVECTION)
       IF (Master) WRITE (stdout,20) 'UV_U3HADVECTION',                  &
-     &   'Third-order upstream bias horizontal advection of 3D momentum.'
+     &   'Third-order upstream horizontal advection of 3D momentum.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' UV_U3HADVECTION,'
       ivelHadv=ivelHadv+1
@@ -2353,6 +2371,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+15)=' UV_SADVECTION,'
       ivelVadv=ivelVadv+1
+#  endif
+#  ifdef TS_U3ADV_SPLIT
+      IF (Master) WRITE (stdout,20) 'UV_U3ADV_SPLIT',                   &
+     &   'Split third-order upstream advection of momentum.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' UV_U3ADV_SPLIT,'
 #  endif
 # endif
 #endif
@@ -2401,6 +2425,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' UV_VIS4,'
 #endif
+#if defined UV_SMAGORINSKI && (defined UV_DIF2 || defined UV_DIF4)
+      IF (Master) WRITE (stdout,20) 'UV_SMAGORINSKY',                   &
+     &   'Smagorinksy-like time-dependent viscosity coefficients.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' UV_SMAGORINSKY,'
+#endif
 #if defined VAR_RHO_2D && defined SOLVE3D
       IF (Master) WRITE (stdout,20) 'VAR_RHO_2D',                       &
      &   'Variable density barotropic mode.'
@@ -2426,6 +2456,12 @@
      &   'Proccess model solution at observation locations.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' VERIFICATION,'
+#endif
+#if defined VISC_3DCOEF
+      IF (Master) WRITE (stdout,20) 'VISC_3DCOEF',                      &
+     &   'Horizontal, time-dependent 3D viscosity coefficient.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+13)=' VISC_3DCOEF,'
 #endif
 #ifdef W4DPSAS
       IF (Master) WRITE (stdout,20) 'W4DPSAS',                          &

@@ -30,7 +30,8 @@
      &                          LBi, UBi, LBj, UBj,                     &
      &                          InpField,                               &
      &                          OutFmin, OutFmax,                       &
-# ifdef MCT_LIB
+# if defined ESMF_LIB
+# elif defined MCT_LIB
      &                          Npts, OutField,                         &
 # endif
      &                          status)
@@ -57,12 +58,14 @@
 
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in)  :: InpField(LBi:,LBj:)
-#  ifdef MCT_LIB
+#  if defined ESMF_LIB
+#  elif defined MCT_LIB
       real(r8), intent(out) :: OutField(:)
 #  endif
 # else
       real(r8), intent(in)  :: InpField(LBi:UBi,LBj:UBj)
-#  ifdef MCT_LIB
+#  if defined ESMF_LIB
+#  elif defined MCT_LIB
       real(r8), intent(out) :: OutField(Npts)
 #  endif
 # endif
@@ -75,8 +78,9 @@
 
       real(r8), dimension(2) :: range
 
+# ifdef MCT_LIB
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awork
-
+# endif
 # ifdef DISTRIBUTE
       character (len=3), dimension(2) :: op_handle
 # endif
@@ -91,6 +95,9 @@
       status=0
       range(1)= Large
       range(2)=-Large
+
+# if defined ESMF_LIB
+# elif defined MCT_LIB
 !
 !  RHO-type variables.
 !
@@ -201,7 +208,7 @@
           END DO
         END DO
       END IF
-
+# endif
 # ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------

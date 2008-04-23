@@ -56,7 +56,16 @@
      &                   GRID(ng) % pn,                                 &
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % z_r,                                &
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+     &                   MIXING(ng) % diff3d_u,                         &
+     &                   MIXING(ng) % diff3d_v,                         &
+# else
+     &                   MIXING(ng) % diff3d_r,                         &
+# endif
+#else
      &                   MIXING(ng) % diff4,                            &
+#endif
      &                   OCEAN(ng) % rho,                               &
 #ifdef DIAGNOSTICS_TS
      &                   DIAGS(ng) % DiaTwrk,                           &
@@ -77,7 +86,15 @@
 #endif
      &                         om_v, on_u, pm, pn,                      &
      &                         Hz, z_r,                                 &
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+     &                         diff3d_u, diff3d_v,                      &
+# else
+     &                         diff3d_r,                                &
+# endif
+#else
      &                         diff4,                                   &
+#endif
      &                         rho,                                     &
 #ifdef DIAGNOSTICS_TS
      &                         DiaTwrk,                                 &
@@ -99,7 +116,16 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef DIFF_3DCOEF
+#  ifdef TS_U3ADV_SPLIT
+      real(r8), intent(in) :: diff3d_u(LBi:,LBj:,:)
+      real(r8), intent(in) :: diff3d_v(LBi:,LBj:,:)
+#  else
+      real(r8), intent(in) :: diff3d_r(LBi:,LBj:,:)
+#  endif
+# else
       real(r8), intent(in) :: diff4(LBi:,LBj:,:)
+# endif
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
@@ -116,7 +142,16 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef DIFF_3DCOEF
+#  ifdef TS_U3ADV_SPLIT
+      real(r8), intent(in) :: diff3d_u(LBi:UBi,LBj:UBj,N(ng))
+      real(r8), intent(in) :: diff3d_v(LBi:UBi,LBj:UBj,N(ng))
+#  else
+      real(r8), intent(in) :: diff3d_r(LBi:UBi,LBj:UBj,N(ng))
+#  endif
+# else
       real(r8), intent(in) :: diff4(LBi:UBi,LBj:UBj,NT(ng))
+# endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
@@ -239,8 +274,17 @@
           IF (k.gt.0) THEN
             DO j=J_RANGE
               DO i=I_RANGE+1
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                cff=0.5_r8*diff3d_u(i,j,k)*on_u(i,j)
+# else
+                cff=0.25_r8*(diff3d_r(i,j,k)+diff3d_r(i-1,j,k))*        &
+     &              on_u(i,j)
+# endif
+#else
                 cff=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*        &
      &              on_u(i,j)
+#endif
                 FX(i,j)=cff*                                            &
      &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
      &                  (dTdx(i,j,k1)-                                  &
@@ -254,8 +298,17 @@
             END DO
             DO j=J_RANGE+1
               DO i=I_RANGE
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                cff=0.5_r8*diff3d_v(i,j,k)*om_v(i,j)
+# else
+                cff=0.25_r8*(diff3d_r(i,j,k)+diff3d_r(i,j-1,k))*        &
+     &              om_v(i,j)
+# endif
+#else
                 cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*        &
      &              om_v(i,j)
+#endif
                 FE(i,j)=cff*                                            &
      &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
      &                  (dTde(i,j,k1)-                                  &
@@ -270,12 +323,22 @@
             IF (k.lt.N(ng)) THEN
               DO j=J_RANGE
                 DO i=I_RANGE
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                  fac=0.125_r8*(diff3d_u(i,j,k  )+diff3d_u(i+1,j,k  )+  &
+     &                          diff3d_u(i,j,k+1)+diff3d_u(i+1,j,k+1))
+# else
+                  fac=0.5_r8*diff3d_r(i,j,k)
+# endif
+#else
                   fac=0.5_r8*diff4(i,j,itrc)
+#endif
                   cff1=MAX(dRdx(i  ,j,k1),0.0_r8)
                   cff2=MAX(dRdx(i+1,j,k2),0.0_r8)
                   cff3=MIN(dRdx(i  ,j,k2),0.0_r8)
                   cff4=MIN(dRdx(i+1,j,k1),0.0_r8)
-                  cff=cff1*(cff1*dTdr(i,j,k2)-dTdx(i  ,j,k1))+          &
+                  cff=fac*                                              &
+     &                cff1*(cff1*dTdr(i,j,k2)-dTdx(i  ,j,k1))+          &
      &                cff2*(cff2*dTdr(i,j,k2)-dTdx(i+1,j,k2))+          &
      &                cff3*(cff3*dTdr(i,j,k2)-dTdx(i  ,j,k2))+          &
      &                cff4*(cff4*dTdr(i,j,k2)-dTdx(i+1,j,k1))
@@ -283,12 +346,23 @@
                   cff2=MAX(dRde(i,j+1,k2),0.0_r8)
                   cff3=MIN(dRde(i,j  ,k2),0.0_r8)
                   cff4=MIN(dRde(i,j+1,k1),0.0_r8)
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                  fac=0.125_r8*(diff3d_v(i,j,k  )+diff3d_v(i,j+1,k  )+  &
+     &                          diff3d_v(i,j,k+1)+diff3d_v(i,j+1,k+1))
+# else
+                  fac=0.5_r8*diff3d_r(i,j,k)
+# endif
+#else
+                  fac=0.5_r8*diff4(i,j,itrc)
+#endif
                   cff=cff+                                              &
+     &                fac*                                              &
      &                cff1*(cff1*dTdr(i,j,k2)-dTde(i,j  ,k1))+          &
      &                cff2*(cff2*dTdr(i,j,k2)-dTde(i,j+1,k2))+          &
      &                cff3*(cff3*dTdr(i,j,k2)-dTde(i,j  ,k2))+          &
      &                cff4*(cff4*dTdr(i,j,k2)-dTde(i,j+1,k1))
-                  FS(i,j,k2)=fac*cff*FS(i,j,k2)
+                  FS(i,j,k2)=cff*FS(i,j,k2)
                 END DO
               END DO
             END IF
@@ -463,8 +537,17 @@
           IF (k.gt.0) THEN
             DO j=Jstr,Jend
               DO i=Istr,Iend+1
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                cff=0.5_r8*diff3d_u(i,j,k)*on_u(i,j)
+# else
+                cff=0.25_r8*(diff3d_r(i,j,k)+diff3d_r(i-1,j,k))*        &
+     &              on_u(i,j)
+# endif
+#else
                 cff=0.25_r8*(diff4(i,j,itrc)+diff4(i-1,j,itrc))*        &
      &              on_u(i,j)
+#endif
                 FX(i,j)=cff*                                            &
      &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
      &                  (dTdx(i,j,k1)-                                  &
@@ -478,8 +561,17 @@
             END DO
             DO j=Jstr,Jend+1
               DO i=Istr,Iend
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                cff=0.5_r8*diff3d_v(i,j,k)*om_v(i,j)
+# else
+                cff=0.25_r8*(diff3d_r(i,j,k)+diff3d_r(i,j-1,k))*        &
+     &              om_v(i,j)
+# endif
+#else
                 cff=0.25_r8*(diff4(i,j,itrc)+diff4(i,j-1,itrc))*        &
      &              om_v(i,j)
+#endif
                 FE(i,j)=cff*                                            &
      &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
      &                  (dTde(i,j,k1)-                                  &
@@ -494,25 +586,46 @@
             IF (k.lt.N(ng)) THEN
               DO j=Jstr,Jend
                 DO i=Istr,Iend
-                  fac=0.5*diff4(i,j,itrc)
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                  fac=0.125_r8*(diff3d_u(i,j,k  )+diff3d_u(i+1,j,k  )+  &
+     &                          diff3d_u(i,j,k+1)+diff3d_u(i+1,j,k+1))
+# else
+                  fac=0.5_r8*diff3d_r(i,j,k)
+# endif
+#else
+                  fac=0.5_r8*diff4(i,j,itrc)
+#endif
                   cff1=MAX(dRdx(i  ,j,k1),0.0_r8)
                   cff2=MAX(dRdx(i+1,j,k2),0.0_r8)
                   cff3=MIN(dRdx(i  ,j,k2),0.0_r8)
                   cff4=MIN(dRdx(i+1,j,k1),0.0_r8)
-                  cff=cff1*(cff1*dTdr(i,j,k2)-dTdx(i  ,j,k1))+          &
+                  cff=fac*                                              &
+     &                cff1*(cff1*dTdr(i,j,k2)-dTdx(i  ,j,k1))+          &
      &                cff2*(cff2*dTdr(i,j,k2)-dTdx(i+1,j,k2))+          &
      &                cff3*(cff3*dTdr(i,j,k2)-dTdx(i  ,j,k2))+          &
      &                cff4*(cff4*dTdr(i,j,k2)-dTdx(i+1,j,k1))
+#ifdef DIFF_3DCOEF
+# ifdef TS_U3ADV_SPLIT
+                  fac=0.125_r8*(diff3d_v(i,j,k  )+diff3d_v(i,j+1,k  )+  &
+     &                          diff3d_v(i,j,k+1)+diff3d_v(i,j+1,k+1))
+# else
+                  fac=0.5_r8*diff3d_r(i,j,k)
+# endif
+#else
+                  fac=0.5_r8*diff4(i,j,itrc)
+#endif
                   cff1=MAX(dRde(i,j  ,k1),0.0_r8)
                   cff2=MAX(dRde(i,j+1,k2),0.0_r8)
                   cff3=MIN(dRde(i,j  ,k2),0.0_r8)
                   cff4=MIN(dRde(i,j+1,k1),0.0_r8)
                   cff=cff+                                              &
+     &                fac*                                              &
      &                cff1*(cff1*dTdr(i,j,k2)-dTde(i,j  ,k1))+          &
      &                cff2*(cff2*dTdr(i,j,k2)-dTde(i,j+1,k2))+          &
      &                cff3*(cff3*dTdr(i,j,k2)-dTde(i,j  ,k2))+          &
      &                cff4*(cff4*dTdr(i,j,k2)-dTde(i,j+1,k1))
-                  FS(i,j,k2)=fac*cff*FS(i,j,k2)
+                  FS(i,j,k2)=cff*FS(i,j,k2)
                 END DO
               END DO
             END IF

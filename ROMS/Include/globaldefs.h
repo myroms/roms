@@ -980,3 +980,62 @@
     defined SPONGE         || defined VISC_GRID
 # define ANALYTICAL
 #endif
+
+/*
+** If splitting 3rd-order upstream bias horizontal advection of
+** tracer, activate other needed flags.
+*/
+
+#ifdef TS_U3ADV_SPLIT
+# define DIFF_3DCOEF
+# ifdef TS_U3HADVECTION
+#  undef TS_U3HADVECTION
+# endif
+# ifndef TS_C4HADVECTION
+#  define TS_C4HADVECTION
+# endif
+# ifndef TS_C4VADVECTION
+#  define TS_C4VADVECTION
+# endif
+# ifndef TS_DIF4
+#  define TS_DIF4
+# endif
+# ifdef TS_DIF2
+#  undef TS_DIF2
+# endif
+# ifdef TS_SMAGORINSKY
+#  undef TS_SMAGORINSKY
+# endif
+#endif
+
+/*
+** If splitting 3rd-order upstream bias horizontal advection of
+** momentum, activate other needed flags.
+*/
+
+#ifdef UV_U3ADV_SPLIT
+# define VISC_3DCOEF
+# ifndef UV_C4ADVECTION
+#  define UV_C4ADVECTION
+# endif
+# ifndef UV_VIS4
+#  define UV_VIS4
+# endif
+# ifdef UV_VIS2
+#  undef UV_VIS2
+# endif
+# ifdef UV_SMAGORINSKY
+#  undef UV_SMAGORINSKY
+# endif
+#endif
+
+/*
+** Define internal switch for Smagorinsky-like mixing. 
+*/
+
+#if !defined DIFF_3DCOEF && defined TS_SMAGORINSKY
+# define DIFF_3DCOEF
+#endif
+#if !defined VISC_3DCOEF && defined UV_SMAGORINSKY
+# define VISC_3DCOEF
+#endif

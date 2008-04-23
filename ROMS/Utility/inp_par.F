@@ -2919,11 +2919,12 @@
 !  Rescale active tracer parameters
 !-----------------------------------------------------------------------
 !
+      DO ng=1,Ngrids
+        DO itrc=1,NAT+NPT
+!
 !  Take the square root of the biharmonic coefficients so it can
 !  be applied to each harmonic operator.
 !
-      DO ng=1,Ngrids
-        DO itrc=1,NAT+NPT
           tnu4(itrc,ng)=SQRT(ABS(tnu4(itrc,ng)))
 !
 !  Compute inverse nudging coefficients (1/s) used in various tasks.

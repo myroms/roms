@@ -17,16 +17,28 @@
 **   vertical advection is 4th-order centered for 3D momentum. If this       **
 **   is the case, no flags for momentum advection need to be activated.      **
 **                                                                           **
+**   The 3rd-order upstream split advection (UV_U3ADV_SPLIT) can be used     **
+**   to correct for the spurious mixing of the advection operator in         **
+**   terrain-following coordinates. If this is the case, the advection       **
+**   operator is split in advective and viscosity components and several     **
+**   internal flags are activated in "globaldefs.h".  Notice that            **
+**   horizontal and vertical advection of momentum is 4th-order centered     **
+**   plus biharmonic viscosity to correct for spurious mixing. The total     **
+**   time-dependent horizontal mixing coefficient are computed in            **
+**   "hmixing.F".                                                            **
+**                                                                           **
 **   WARNING:  Use the splines vertical advection option (UV_SADVECTION)     **
 **             only in shallow, high vertical resolution applications.       **
 **                                                                           **
 ** UV_ADV              use to turn ON or OFF advection terms                 **
 ** UV_COR              use to turn ON or OFF Coriolis term                   **
+** UV_U3ADV_SPLIT      use if 3rd-order upstream split momentum advection    **
 ** UV_C2ADVECTION      use to turn ON or OFF 2nd-order centered advection    **
 ** UV_C4ADVECTION      use to turn ON or OFF 4th-order centered advection    **
 ** UV_SADVECTION       use to turn ON or OFF splines vertical advection      **
 ** UV_VIS2             use to turn ON or OFF harmonic horizontal mixing      **
 ** UV_VIS4             use to turn ON or OFF biharmonic horizontal mixing    **
+** UV_SMAGORINSKI      use to turn ON or OFF Smagorinski-like viscosity      **
 ** UV_LOGDRAG          use to turn ON or OFF logarithmic bottom friction     **
 ** UV_LDRAG            use to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG            use to turn ON or OFF quadratic bottom friction       **
@@ -37,9 +49,21 @@
 **                                                                           **
 **   The default horizontal and vertical advection is 4th-order centered.    **
 **                                                                           **
+**   The 3rd-order upstream split advection (TS_U3ADV_SPLIT) can be used     **
+**   to correct for the spurious diapycnal diffusion of the advection        **
+**   operator in terrain-following coordinates. If this is the case, the     **
+**   advection operator is split in advective and diffusive components       **
+**   and several internal flags are activated in "globaldefs.h".  Notice     **
+**   that horizontal and vertical advection of tracer is 4th-order centered  **
+**   plus biharmonic diffusion to correct for spurious diapycnal mixing.     **
+**   The total time-dependent horizontal mixing coefficient are computed     **
+**   in "hmixing.F". It is also recommended to use the rotated mixing        **
+**   tensor along geopotentials (MIX_GEO_TS) for the biharmonic operator.    **
+**                                                                           **
 **   WARNING:  Use the splines vertical advection option (TS_SVADVECTION)    **
 **             only in shallow, high vertical resolution applications.       **
 **                                                                           **
+** TS_U3ADV_SPLIT      use if 3rd-order upstream split tracer advection      **
 ** TS_A4HADVECTION     use if 4th-order Akima horizontal advection           **
 ** TS_C2HADVECTION     use if 2nd-order centered horizontal advection        **
 ** TS_C4HADVECTION     use if 4th-order centered horizontal advection        **
@@ -51,6 +75,7 @@
 ** TS_SVADVECTION      use if splines vertical advection                     **
 ** TS_DIF2             use to turn ON or OFF harmonic horizontal mixing      **
 ** TS_DIF4             use to turn ON or OFF biharmonic horizontal mixing    **
+** TS_SMAGORINSKI      use to turn ON or OFF Smagorinski-like diffusion      **
 ** TS_FIXED            use if diagnostic run, no evolution of tracers        **
 ** T_PASSIVE           use if inert passive tracers (dyes, etc)              **
 ** SALINITY            use if having salinity                                **

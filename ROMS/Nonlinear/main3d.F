@@ -53,6 +53,9 @@
       USE gls_corstep_mod, ONLY : gls_corstep
       USE gls_prestep_mod, ONLY : gls_prestep
 # endif
+# if defined DIFF_3DCOEF || defined VISC_3DCOEF
+      USE hmixing_mod, ONLY : hmixing
+# endif
       USE ini_fields_mod, ONLY : ini_fields
 # ifdef LMD_MIXING
       USE lmd_vmix_mod, ONLY : lmd_vmix
@@ -289,9 +292,9 @@
 !$OMP END PARALLEL DO
 !
 !-----------------------------------------------------------------------
-!  Compute vertical mixing coefficients for momentum and tracers.
-!  Compute S-coordinate vertical velocity, diagnostically from
-!  horizontal mass divergence.
+!  Compute time-dependent vertical/horizontal mixing coefficients for
+!  momentum and tracers. Compute S-coordinate vertical velocity,
+!  diagnostically from horizontal mass divergence.
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile)                             &
@@ -305,6 +308,9 @@
           CALL lmd_vmix (ng, TILE)
 # elif defined BVF_MIXING
           CALL bvf_mix (ng, TILE)
+# endif
+# if defined DIFF_3DCOEF || defined VISC_3DCOEF
+          CALL hmixing (ng, TILE)
 # endif
           CALL omega (ng, TILE)
           CALL wvelocity (ng, TILE, nstp(ng))

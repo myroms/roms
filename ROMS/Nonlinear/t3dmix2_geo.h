@@ -1,3 +1,5 @@
+#undef MIX_STABILITY
+
       SUBROUTINE t3dmix2 (ng, tile)
 !
 !svn $Id$
@@ -34,7 +36,7 @@
 #endif
       CALL t3dmix2_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
-     &                   nrhs(ng), nnew(ng),                            &
+     &                   nrhs(ng), nstp(ng), nnew(ng),                  &
 #ifdef MASKING
      &                   GRID(ng) % umask,                              &
      &                   GRID(ng) % vmask,                              &
@@ -45,7 +47,11 @@
      &                   GRID(ng) % pn,                                 &
      &                   GRID(ng) % Hz,                                 &
      &                   GRID(ng) % z_r,                                &
+#ifdef DIFF_3DCOEF
+     &                   MIXING(ng) % diff3d_r,                         &
+#else
      &                   MIXING(ng) % diff2,                            &
+#endif
 #ifdef DIAGNOSTICS_TS
      &                   DIAGS(ng) % DiaTwrk,                           &
 #endif
@@ -59,13 +65,17 @@
 !***********************************************************************
       SUBROUTINE t3dmix2_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         nrhs, nnew,                              &
+     &                         nrhs, nstp, nnew,                        &
 #ifdef MASKING
      &                         umask, vmask,                            &
 #endif
      &                         om_v, on_u, pm, pn,                      &
      &                         Hz, z_r,                                 &
+#ifdef DIFF_3DCOEF
+     &                         diff3d_r,                                &
+#else
      &                         diff2,                                   &
+#endif
 #ifdef DIAGNOSTICS_TS
      &                         DiaTwrk,                                 &
 #endif
@@ -79,14 +89,18 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: nrhs, nnew
+      integer, intent(in) :: nrhs, nstp, nnew
 
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef DIFF_3DCOEF
+      real(r8), intent(in) :: diff3d_r(LBi:,LBj:,:)
+# else
       real(r8), intent(in) :: diff2(LBi:,LBj:,:)
+# endif
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
@@ -102,7 +116,11 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
+# ifdef DIFF_3DCOEF
+      real(r8), intent(in) :: diff3d_r(LBi:UBi,LBj:UBj,N(ng))
+# else
       real(r8), intent(in) :: diff2(LBi:UBi,LBj:UBj,NT(ng))
+# endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
@@ -146,6 +164,12 @@
 !          FS,dTdz(:,:,k1) k-1/2   W-points
 !          FS,dTdz(:,:,k2) k+1/2   W-points
 !
+#ifdef MIX_STABILITY
+!  In order to increase stability, the biharmonic operator is applied
+!  as: 3/4 t(:,:,:,nrhs,:) + 1/4 t(:,:,:,nstp,:).
+!
+#endif
+
       T_LOOP : DO itrc=1,NT(ng)
         k2=1
         K_LOOP : DO k=0,N(ng)
@@ -160,8 +184,15 @@
 #endif
                 dZdx(i,j,k2)=cff*(z_r(i  ,j,k+1)-                       &
      &                            z_r(i-1,j,k+1))
+#ifdef MIX_STABILITY
+                dTdx(i,j,k2)=cff*(0.75_r8*(t(i  ,j,k+1,nrhs,itrc)-      &
+     &                                     t(i-1,j,k+1,nrhs,itrc))+     &
+     &                            0.25_r8*(t(i  ,j,k+1,nstp,itrc)-      &
+     &                                     t(i-1,j,k+1,nstp,itrc)))
+#else
                 dTdx(i,j,k2)=cff*(t(i  ,j,k+1,nrhs,itrc)-               &
      &                            t(i-1,j,k+1,nrhs,itrc))
+#endif
               END DO
             END DO
             DO j=Jstr,Jend+1
@@ -172,8 +203,15 @@
 #endif
                 dZde(i,j,k2)=cff*(z_r(i,j  ,k+1)-                       &
      &                            z_r(i,j-1,k+1))
+#ifdef MIX_STABILITY
+                dTde(i,j,k2)=cff*(0.75_r8*(t(i,j  ,k+1,nrhs,itrc)-      &
+     &                                     t(i,j-1,k+1,nrhs,itrc))+     &
+     &                            0.25_r8*(t(i,j  ,k+1,nstp,itrc)-      &
+     &                                     t(i,j-1,k+1,nstp,itrc)))
+#else
                 dTde(i,j,k2)=cff*(t(i,j  ,k+1,nrhs,itrc)-               &
      &                            t(i,j-1,k+1,nrhs,itrc))
+#endif
               END DO
             END DO
           END IF
@@ -188,8 +226,15 @@
             DO j=Jstr-1,Jend+1
               DO i=Istr-1,Iend+1
                 cff=1.0_r8/(z_r(i,j,k+1)-z_r(i,j,k))
+#ifdef MIX_STABILITY
+                dTdz(i,j,k2)=cff*(0.75_r8*(t(i,j,k+1,nrhs,itrc)-        &
+     &                                     t(i,j,k  ,nrhs,itrc))+       &
+     &                            0.25_r8*(t(i,j,k+1,nstp,itrc)-        &
+     &                                     t(i,j,k  ,nstp,itrc)))
+#else
                 dTdz(i,j,k2)=cff*(t(i,j,k+1,nrhs,itrc)-                 &
      &                            t(i,j,k  ,nrhs,itrc))
+#endif
               END DO
             END DO
           END IF
@@ -200,8 +245,13 @@
           IF (k.gt.0) THEN
             DO j=Jstr,Jend
               DO i=Istr,Iend+1
+#ifdef DIFF_3DCOEF
+                cff=0.25_r8*(diff3d_r(i,j,k)+diff3d_r(i-1,j,k))*        &
+     &              on_u(i,j)
+#else
                 cff=0.25_r8*(diff2(i,j,itrc)+diff2(i-1,j,itrc))*        &
      &              on_u(i,j)
+#endif
                 FX(i,j)=cff*                                            &
      &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
      &                  (dTdx(i,j,k1)-                                  &
@@ -215,8 +265,13 @@
             END DO
             DO j=Jstr,Jend+1
               DO i=Istr,Iend
+#ifdef DIFF_3DCOEF
+                cff=0.25_r8*(diff3d_r(i,j,k)+diff3d_r(i,j-1,k))*        &
+     &              om_v(i,j)
+#else
                 cff=0.25_r8*(diff2(i,j,itrc)+diff2(i,j-1,itrc))*        &
      &              om_v(i,j)
+#endif
                 FE(i,j)=cff*                                            &
      &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
      &                  (dTde(i,j,k1)-                                  &
@@ -231,7 +286,11 @@
             IF (k.lt.N(ng)) THEN
               DO j=Jstr,Jend
                 DO i=Istr,Iend
+#ifdef DIFF_3DCOEF
+                  cff=0.5_r8*diff3d_r(i,j,k)
+#else
                   cff=0.5_r8*diff2(i,j,itrc)
+#endif
                   cff1=MIN(dZdx(i  ,j,k1),0.0_r8)
                   cff2=MIN(dZdx(i+1,j,k2),0.0_r8)
                   cff3=MAX(dZdx(i  ,j,k2),0.0_r8)

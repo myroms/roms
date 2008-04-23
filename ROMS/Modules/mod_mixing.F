@@ -11,9 +11,61 @@
 !  Horizontal and vertical mixing coefficients:                        !
 !                                                                      !
 !  Akt          Vertical mixing coefficient (m2/s) for tracers.        !
+!  Akv          Vertical mixing coefficient (m2/s) for momentum.       !
+#ifdef DIFF_3DCOEF
+!  Hdiffusion   Time invariant, horizontal diffusion (harmonic or      !
+!                 (biharmonic) term at RHO-points.                     !
+#endif
+#ifdef VISC_3DCOEF
+!  Hviscosity   Time invariant, horizontal viscosity (harmonic or      !
+!                 (biharmonic) term at RHO-points.                     !
+#endif
 !  dAktdz       Vertical gradient in mixing coefficient (m/s) for      !
 !                 tracer 1, used in float random walk calculations     !
-!  Akv          Vertical mixing coefficient (m2/s) for momentum.       !
+!  diff2        Horizontal, time invariant harmonic coefficient        !
+!                 (m2/s) for tracers.                                  !
+!  diff4        Horizontal, time invariant biharmonic coefficient      !
+#ifdef DIFF_3DCOEF
+!                 (m4/s) for tracers.                                  !
+#else
+!                 SQRT(m4/s) for tracers.                              !
+#endif
+#ifdef DIFF_3DCOEF
+!  diff3d_r     Horizontal, time-dependent 3D diffusion coefficient at !
+!                 RHO-points.                                          !
+# ifdef TS_U3ADV_SPLIT
+!  diff3d_u     Horizontal, time-dependent 3D diffusion coefficient at !
+!                 U-points.                                            !
+!  diff3d_v     Horizontal, time-dependent 3D diffusiob coefficient at !
+!                 V-points.                                            !
+# endif
+#endif
+!  visc2_r      Horizontal, time invariant harmonic viscosity          !
+!                 coefficient (m2/s) at RHO-points.                    !
+!  visc2_p      Horizontal, time invariant harmonic viscosity          !
+!                 coefficient (m2/s) at PSI-points.                    !
+!  visc4_r      Horizontal, time invariant harmonic viscosity          !
+#ifdef DIFF_3DCOEF
+!                 coefficient (m4/s) at RHO-points.                    !
+#else
+!                 coefficient SQRT(m4/s) at RHO-points.                !
+#endif
+!  visc4_p      Horizontal, time invariant harmonic viscosity          !
+#ifdef DIFF_3DCOEF
+!                 coefficient (m4/s) at RHO-points.                    !
+#else
+!                 coefficient SQRT(m4/s) at RHO-points.                !
+#endif
+#ifdef DIFF_3DCOEF
+!  visc3d_r     Horizontal, time-dependent 3D viscosity coefficient    !
+!                 at RHO-points.                                       !
+# ifdef UV_U3ADV_SPLIT
+!  Uvis3d_r     Horizontal, time-dependent 3D U-viscosity coefficient  !
+!                 at RHO-points.                                       !
+!  Vvis3d_r     Horizontal, time-dependent 3D V-viscosity coefficient  !
+!                 at RHO-points.                                       !
+# endif
+#endif
 !                                                                      !
 #ifdef FOUR_DVAR
 !  Convolutions diffusion coefficients:                                !
@@ -91,7 +143,12 @@
 #  endif
 # endif
 #endif
-
+#if defined DIFF_3DCOEF && defined SOLVE3D
+          real(r8), pointer :: Hdiffusion(:,:)
+#endif
+#if defined VISC_3DCOEF && defined SOLVE3D
+          real(r8), pointer :: Hviscosity(:,:)
+#endif
 #if defined UV_VIS2 || !defined SOLVE3D
           real(r8), pointer :: visc2_p(:,:)
           real(r8), pointer :: visc2_r(:,:)
@@ -100,6 +157,14 @@
           real(r8), pointer :: visc4_p(:,:)
           real(r8), pointer :: visc4_r(:,:)
 #endif
+# ifdef VISC_3DCOEF
+#  ifdef UV_U3ADV_SPLIT
+          real(r8), pointer :: Uvis3d_r(:,:,:)
+          real(r8), pointer :: Vvis3d_r(:,:,:)
+#  else
+          real(r8), pointer :: visc3d_r(:,:,:)
+#  endif
+# endif
 #ifdef NEARSHORE_MELLOR
           real(r8), pointer :: Sxx_bar(:,:)
           real(r8), pointer :: Sxy_bar(:,:)
@@ -122,6 +187,14 @@
 # endif
 # ifdef TS_DIF4
           real(r8), pointer :: diff4(:,:,:)
+# endif
+# ifdef DIFF_3DCOEF
+#  ifdef TS_U3ADV_SPLIT
+          real(r8), pointer :: diff3d_u(:,:,:)
+          real(r8), pointer :: diff3d_v(:,:,:)
+#  else
+          real(r8), pointer :: diff3d_r(:,:,:)
+#  endif
 # endif
           real(r8), pointer :: Akv(:,:,:)
           real(r8), pointer :: Akt(:,:,:,:)
@@ -176,6 +249,22 @@
 !  Tangent linear model state.
 !
 # ifdef SOLVE3D
+#  ifdef DIFF_3DCOEF
+#   ifdef TS_U3ADV_SPLIT
+          real(r8), pointer :: tl_diff3d_u(:,:,:)
+          real(r8), pointer :: tl_diff3d_v(:,:,:)
+#   else
+          real(r8), pointer :: tl_diff3d_r(:,:,:)
+#   endif
+#  endif
+#  ifdef VISC_3DCOEF
+#   ifdef UV_U3ADV_SPLIT
+          real(r8), pointer :: tl_Uvis3d_r(:,:,:)
+          real(r8), pointer :: tl_Vvis3d_r(:,:,:)
+#   else
+          real(r8), pointer :: tl_visc3d_r(:,:,:)
+#   endif
+#  endif
           real(r8), pointer :: tl_Akv(:,:,:)
           real(r8), pointer :: tl_Akt(:,:,:,:)
 #  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
@@ -202,6 +291,22 @@
 !  Adjoint model state.
 !
 # ifdef SOLVE3D
+#  ifdef DIFF_3DCOEF
+#   ifdef TS_U3ADV_SPLIT
+          real(r8), pointer :: ad_diff3d_u(:,:,:)
+          real(r8), pointer :: ad_diff3d_v(:,:,:)
+#   else
+          real(r8), pointer :: ad_diff3d_r(:,:,:)
+#   endif
+#  endif
+#  ifdef VISC_3DCOEF
+#   ifdef UV_U3ADV_SPLIT
+          real(r8), pointer :: ad_Uvis3d_r(:,:,:)
+          real(r8), pointer :: ad_Vvis3d_r(:,:,:)
+#   else
+          real(r8), pointer :: ad_visc3d_r(:,:,:)
+#   endif
+#  endif
           real(r8), pointer :: ad_Akv(:,:,:)
           real(r8), pointer :: ad_Akt(:,:,:,:)
 #  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
@@ -292,6 +397,16 @@
       allocate ( MIXING(ng) % visc4_r(LBi:UBi,LBj:UBj) )
 #endif
 
+# ifdef VISC_3DCOEF
+      allocate ( MIXING(ng) % Hviscosity(LBi:UBi,LBj:UBj) )
+#  ifdef UV_U3ADV_SPLIT
+      allocate ( MIXING(ng) % Uvis3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( MIXING(ng) % Vvis3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#  else
+      allocate ( MIXING(ng) % visc3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#  endif
+# endif
+
 #ifdef NEARSHORE_MELLOR
       allocate ( MIXING(ng) % Sxx_bar(LBi:UBi,LBj:UBj) )
       allocate ( MIXING(ng) % Sxy_bar(LBi:UBi,LBj:UBj) )
@@ -316,6 +431,16 @@
 
 # ifdef TS_DIF4
       allocate ( MIXING(ng) % diff4(LBi:UBi,LBj:UBj,NT(ng)) )
+# endif
+
+# ifdef DIFF_3DCOEF
+      allocate ( MIXING(ng) % Hdiffusion(LBi:UBi,LBj:UBj) )
+#  ifdef TS_U3ADV_SPLIT
+      allocate ( MIXING(ng) % diff3d_u(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( MIXING(ng) % diff3d_v(LBi:UBi,LBj:UBj,N(ng)) )
+#  else
+      allocate ( MIXING(ng) % diff3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#  endif
 # endif
 
       allocate ( MIXING(ng) % Akv(LBi:UBi,LBj:UBj,0:N(ng)) )
@@ -388,6 +513,24 @@
 !  Tangent linear model state.
 !
 # ifdef SOLVE3D
+#  ifdef DIFF_3DCOEF
+#   ifdef TS_U3ADV_SPLIT
+      allocate ( MIXING(ng) % tl_diff3d_u(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( MIXING(ng) % tl_diff3d_v(LBi:UBi,LBj:UBj,N(ng)) )
+#   else
+      allocate ( MIXING(ng) % tl_diff3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#   endif
+#  endif
+
+#  ifdef VISC_3DCOEF
+#   ifdef UV_U3ADV_SPLIT
+      allocate ( MIXING(ng) % tl_Uvis3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( MIXING(ng) % tl_Vvis3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#   else
+      allocate ( MIXING(ng) % tl_visc3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#   endif
+#  endif
+
       allocate ( MIXING(ng) % tl_Akv(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( MIXING(ng) % tl_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT) )
 
@@ -417,6 +560,24 @@
 !  Adjoint model state.
 !
 # ifdef SOLVE3D
+#  ifdef DIFF_3DCOEF
+#   ifdef TS_U3ADV_SPLIT
+      allocate ( MIXING(ng) % ad_diff3d_u(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( MIXING(ng) % ad_diff3d_v(LBi:UBi,LBj:UBj,N(ng)) )
+#   else
+      allocate ( MIXING(ng) % ad_diff3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#   endif
+#  endif
+
+#  ifdef VISC_3DCOEF
+#   ifdef UV_U3ADV_SPLIT
+      allocate ( MIXING(ng) % ad_Uvis3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+      allocate ( MIXING(ng) % ad_Vvis3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#   else
+      allocate ( MIXING(ng) % ad_visc3d_r(LBi:UBi,LBj:UBj,N(ng)) )
+#   endif
+#  endif
+
       allocate ( MIXING(ng) % ad_Akv(LBi:UBi,LBj:UBj,0:N(ng)) )
       allocate ( MIXING(ng) % ad_Akt(LBi:UBi,LBj:UBj,0:N(ng),NAT) )
 
@@ -557,6 +718,21 @@
             MIXING(ng) % visc4_r(i,j) = visc4(ng)
           END DO
 #endif
+#ifdef SOLVE3D
+# ifdef VISC_3DCOEF
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % Hviscosity(i,j) = IniVal
+#  ifdef UV_U3ADV_SPLIT
+              MIXING(ng) % Uvis3d_r(i,j,k) = IniVal
+              MIXING(ng) % Vvis3d_r(i,j,k) = IniVal
+#  else
+              MIXING(ng) % visc3d_r(i,j,k) = IniVal
+#  endif
+            END DO
+          END DO
+# endif
+#endif
 #ifdef NEARSHORE_MELLOR
           DO i=Imin,Imax
             MIXING(ng) % Sxx_bar(i,j) = IniVal
@@ -589,6 +765,19 @@
           DO itrc=1,NT(ng)
             DO i=Imin,Imax
               MIXING(ng) % diff4(i,j,itrc) = tnu4(itrc,ng)
+            END DO
+          END DO
+# endif
+# ifdef DIFF_3DCOEF
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+              MIXING(ng) % Hdiffusion(i,j) = IniVal
+#  ifdef TS_U3ADV_SPLIT
+              MIXING(ng) % diff3d_u(i,j,k) = IniVal
+              MIXING(ng) % diff3d_v(i,j,k) = IniVal
+#  else
+              MIXING(ng) % diff3d_r(i,j,k) = IniVal
+#  endif
             END DO
           END DO
 # endif
@@ -743,6 +932,30 @@
 #  endif
       IF ((model.eq.0).or.(model.eq.iTLM).or.(model.eq.iRPM)) THEN
         DO j=Jmin,Jmax
+#  ifdef DIFF_3DCOEF
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+#   ifdef TS_U3ADV_SPLIT
+              MIXING(ng) % tl_diff3d_u(i,j,k) = IniVal
+              MIXING(ng) % tl_diff3d_v(i,j,k) = IniVal
+#   else
+              MIXING(ng) % tl_diff3d_r(i,j,k) = IniVal
+#   endif
+            END DO
+          END DO
+#  endif
+#  ifdef VISC_3DCOEF
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+#   ifdef UV_U3ADV_SPLIT
+              MIXING(ng) % tl_Uvis3d_r(i,j,k) = IniVal
+              MIXING(ng) % tl_Vvis3d_r(i,j,k) = IniVal
+#   else
+              MIXING(ng) % tl_visc3d_r(i,j,k) = IniVal
+#   endif
+            END DO
+          END DO
+#  endif
           DO k=0,N(ng)           
             DO i=Imin,Imax
               MIXING(ng) % tl_Akv(i,j,k) = IniVal
@@ -809,6 +1022,30 @@
 !
       IF ((model.eq.0).or.(model.eq.iADM)) THEN
         DO j=Jmin,Jmax
+#  ifdef DIFF_3DCOEF
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+#   ifdef TS_U3ADV_SPLIT
+              MIXING(ng) % ad_diff3d_u(i,j,k) = IniVal
+              MIXING(ng) % ad_diff3d_v(i,j,k) = IniVal
+#   else
+              MIXING(ng) % ad_diff3d_r(i,j,k) = IniVal
+#   endif
+            END DO
+          END DO
+#  endif
+#  ifdef VISC_3DCOEF
+          DO k=1,N(ng)
+            DO i=Imin,Imax
+#   ifdef UV_U3ADV_SPLIT
+              MIXING(ng) % ad_Uvis3d_r(i,j,k) = IniVal
+              MIXING(ng) % ad_Vvis3d_r(i,j,k) = IniVal
+#   else
+              MIXING(ng) % ad_visc3d_r(i,j,k) = IniVal
+#   endif
+            END DO
+          END DO
+#  endif
           DO k=0,N(ng)           
             DO i=Imin,Imax
               MIXING(ng) % ad_Akv(i,j,k) = IniVal

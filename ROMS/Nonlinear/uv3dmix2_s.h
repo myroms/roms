@@ -69,8 +69,12 @@
      &                    GRID(ng) % pn,                                &
      &                    GRID(ng) % pnom_p,                            &
      &                    GRID(ng) % pnom_r,                            &
+#ifdef VISC_3DCOEF
+     &                    MIXING(ng) % visc3d_r,                        &
+#else
      &                    MIXING(ng) % visc2_p,                         &
      &                    MIXING(ng) % visc2_r,                         &
+#endif
 #ifdef DIAGNOSTICS_UV
      &                    DIAGS(ng) % DiaRUfrc,                         &
      &                    DIAGS(ng) % DiaRVfrc,                         &
@@ -98,7 +102,11 @@
      &                          om_p, om_r, on_p, on_r,                 &
      &                          pm, pmon_p, pmon_r,                     &
      &                          pn, pnom_p, pnom_r,                     &
+#ifdef VISC_3DCOEF
+     &                          visc3d_r,                               &
+#else
      &                          visc2_p, visc2_r,                       &
+#endif
 #ifdef DIAGNOSTICS_UV
      &                          DiaRUfrc, DiaRVfrc,                     &
      &                          DiaU3wrk, DiaV3wrk,                     &
@@ -130,9 +138,12 @@
       real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: pnom_p(LBi:,LBj:)
       real(r8), intent(in) :: pnom_r(LBi:,LBj:)
+# ifdef VISC_3DCOEF
+      real(r8), intent(in) :: visc3d_r(LBi:,LBj:,:)
+# else
       real(r8), intent(in) :: visc2_p(LBi:,LBj:)
       real(r8), intent(in) :: visc2_r(LBi:,LBj:)
-
+# endif
 # ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRUfrc(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: DiaRVfrc(LBi:,LBj:,:,:)
@@ -158,9 +169,12 @@
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pnom_p(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pnom_r(LBi:UBi,LBj:UBj)
+# ifdef VISC_3DCOEF
+      real(r8), intent(in) :: visc3d_r(LBi:UBi,LBj:UBj,N(ng))
+# else
       real(r8), intent(in) :: visc2_p(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: visc2_r(LBi:UBi,LBj:UBj)
-
+# endif
 # ifdef DIAGNOSTICS_UV
       real(r8), intent(inout) :: DiaRUfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
       real(r8), intent(inout) :: DiaRVfrc(LBi:UBi,LBj:UBj,3,NDM2d-1)
@@ -178,7 +192,9 @@
       integer :: i, j, k
 
       real(r8) :: cff, cff1, cff2
-
+#ifdef VISC_3DCOEF
+      real(r8) :: visc_p
+#endif
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
@@ -197,21 +213,26 @@
 !
         DO j=JstrV-1,Jend
           DO i=IstrU-1,Iend
-            cff=visc2_r(i,j)*Hz(i,j,k)*0.5_r8*                          &
+            cff=Hz(i,j,k)*0.5_r8*                                       &
      &          (pmon_r(i,j)*                                           &
      &           ((pn(i  ,j)+pn(i+1,j))*u(i+1,j,k,nrhs)-                &
      &            (pn(i-1,j)+pn(i  ,j))*u(i  ,j,k,nrhs))-               &
      &           pnom_r(i,j)*                                           &
      &           ((pm(i,j  )+pm(i,j+1))*v(i,j+1,k,nrhs)-                &
      &            (pm(i,j-1)+pm(i,j  ))*v(i,j  ,k,nrhs)))
-            UFx(i,j)=on_r(i,j)*on_r(i,j)*cff
-            VFe(i,j)=om_r(i,j)*om_r(i,j)*cff
+#ifdef VISC_3DCOEF
+            UFx(i,j)=on_r(i,j)*on_r(i,j)*visc3d_r(i,j,k)*cff
+            VFe(i,j)=om_r(i,j)*om_r(i,j)*visc3d_r(i,j,k)*cff
+#else
+            UFx(i,j)=on_r(i,j)*on_r(i,j)*visc2_r(i,j)*cff
+            VFe(i,j)=om_r(i,j)*om_r(i,j)*visc2_r(i,j)*cff
+#endif
           END DO
         END DO
         DO j=Jstr,Jend+1
           DO i=Istr,Iend+1
-            cff=visc2_p(i,j)*0.125_r8*(Hz(i-1,j  ,k)+Hz(i,j  ,k)+       &
-     &                                 Hz(i-1,j-1,k)+Hz(i,j-1,k))*      &
+            cff=0.125_r8*(Hz(i-1,j  ,k)+Hz(i,j  ,k)+                    &
+     &                    Hz(i-1,j-1,k)+Hz(i,j-1,k))*                   &
      &          (pmon_p(i,j)*                                           &
      &           ((pn(i  ,j-1)+pn(i  ,j))*v(i  ,j,k,nrhs)-              &
      &            (pn(i-1,j-1)+pn(i-1,j))*v(i-1,j,k,nrhs))+             &
@@ -221,8 +242,15 @@
 #ifdef MASKING
             cff=cff*pmask(i,j)
 #endif
-            UFe(i,j)=om_p(i,j)*om_p(i,j)*cff
-            VFx(i,j)=on_p(i,j)*on_p(i,j)*cff
+#ifdef VISC_3DCOEF
+            visc_p=0.25_r8*(visc3d_r(i-1,j-1,k)+visc3d_r(i-1,j,k)+      &
+     &                      visc3d_r(i  ,j-1,k)+visc3d_r(i  ,j,k))
+            UFe(i,j)=om_p(i,j)*om_p(i,j)*visc_p*cff
+            VFx(i,j)=on_p(i,j)*on_p(i,j)*visc_p*cff
+#else
+            UFe(i,j)=om_p(i,j)*om_p(i,j)*visc2_p(i,j)*cff
+            VFx(i,j)=on_p(i,j)*on_p(i,j)*visc2_p(i,j)*cff
+#endif
           END DO
         END DO
 !

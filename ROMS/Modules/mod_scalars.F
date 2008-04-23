@@ -346,36 +346,6 @@
 !  a multiple of "ntimes".
 !
         integer :: Nintervals = 1
-#ifdef JUNK
-!
-!  Number of coupling models.
-!
-        integer :: Ncouple
-!
-!  Number of parallel nodes assigned to each model in the coupled
-!  system.
-!
-        integer :: NnodesATM
-        integer :: NnodesWAV
-        integer :: NnodesOCN
-!
-!  Time interval (seconds) between coupling of models.
-!
-        real(r8) :: TI_ATM_WAV        ! atmosphere-wave coupling interval
-        real(r8) :: TI_ATM_OCN        ! atmosphere-ocean coupling interval
-        real(r8) :: TI_WAV_OCN        ! wave-ocean coupling interval
-!
-!  Number of atmosphere model time-steps and atmosphere model ID.
-!
-        integer, dimension(Ngrids) :: nOCN_ATM
-        integer, dimension(Ngrids) :: nOCN_WAV
-!
-!  Coupled model components IDs.
-!
-        integer :: ATMid = 3
-        integer :: WAVid = 2
-        integer :: OCNid = 1
-#endif
 !
 !  Starting, current, and ending ensemble run parameters.
 !
@@ -543,7 +513,15 @@
 !  Maximum size of a grid node (m) over the whole curvilinear grid
 !  application. Used for scaling horizontal mixing by the grid size.
 !
-        real(r8), dimension(Ngrids) :: grdmax = 0.0_r8
+        real(r8), dimension(Ngrids) :: grdmax
+#ifdef DIFF_3DCOEF
+        real(r8), dimension(Ngrids) :: DiffMin  ! Minimun diffusion
+        real(r8), dimension(Ngrids) :: DiffMax  ! Maximum diffusion
+#endif
+#ifdef VISC_3DCOEF
+        real(r8), dimension(Ngrids) :: ViscMin  ! Minimum viscosity
+        real(r8), dimension(Ngrids) :: ViscMax  ! Maximum viscosity
+#endif
 !
 !  Courant Numbers.
 !
@@ -1975,18 +1953,6 @@
 !
       lmd_Cg=lmd_Cstar*                                                 &
      &       vonKar*(lmd_cs*vonKar*lmd_epsilon)**(1.0_r8/3.0_r8)
-#endif
-#ifdef JUNK
-!
-!  Set number of couple models.
-!
-      Ncouple=1
-#ifdef AIR_OCEAN
-      Ncouple=Ncouple+1
-#endif
-#ifdef WAVES_OCEAN
-      Ncouple=Ncouple+1
-#endif
 #endif
 !
 !  Initialize several IO flags.

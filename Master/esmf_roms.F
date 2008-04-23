@@ -987,7 +987,7 @@
       IF (CheckError(status, 'ESMF', 'ROMS_SetClock',                   &
      &               'setting stop time')) RETURN
 !
-!  Set time inteval, use the minimum value of all nested grids.
+!  Set time interval, use the minimum value of all nested grids.
 !  Currently, only integer type variables are implemented in ESMF.
 !
       MyTimeStep=INT(MINVAL(dt))
@@ -1229,7 +1229,8 @@
      &                            FORCES(ng)%stflx(:,:,itemp),          &
      &                            status)
             CASE ('Ustr')                     ! surface U-wind stress
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            Istr, IendR, JstrR, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1237,7 +1238,8 @@
      &                            FORCES(ng)%sustr,                     &
      &                            status)
             CASE ('Vstr')                     ! surface V-wind stress
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1248,7 +1250,8 @@
 # ifdef SWAN_COUPLING
 #  ifdef WAVES_DIR
             CASE ('Wdir')                      ! wave direction
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1258,7 +1261,8 @@
 #  endif
 #  ifdef WAVES_HEIGHT
             CASE ('Wamp')                      ! wave height
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1268,7 +1272,8 @@
 #  endif
 #  ifdef WAVES_LENGTH
             CASE ('Wlen')                      ! wave length
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1278,7 +1283,8 @@
 #  endif
 #  ifdef WAVES_TOP_PERIOD
             CASE ('Wptop')                     ! surface wave period
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1288,7 +1294,8 @@
 #  endif
 #  ifdef WAVES_BOT_PERIOD
             CASE ('Wpbot')                     ! bottom wave period
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1298,7 +1305,8 @@
 #  endif
 #  if defined TKE_WAVEDISS || defined WAVES_OCEAN
             CASE ('Wdiss')                     ! wave dissipation
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1308,7 +1316,8 @@
 #  endif
 #  if defined SVENDSEN_ROLLER
             CASE ('Wbrk')                      ! wave breaking
-              CALL ROMS_import2d (ng, id, gtype, scale, add_offset,     &
+              CALL ROMS_import2d (ng, MyRank,                           &
+     &                            id, gtype, scale, add_offset,         &
      &                            romsImpData(ifield,ng)%field,         &
      &                            IstrR, IendR, Jstr, JendR,            &
      &                            LBi, UBi, LBj, UBj,                   &
@@ -1793,7 +1802,7 @@
 !
 !  Initialize ROMS.
 !
-      CALL ROMS_initialize (.TRUE., MyMPIcomm)
+      CALL ROMS_initialize (.TRUE., mpiCOMM=MyMPIcomm)
 
       IF (CheckError(exit_flag, 'ROMS', 'ROMS_SetInitialize',           &
                      'initializing ROMS')) THEN

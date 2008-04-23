@@ -25,6 +25,9 @@
 !
       USE mod_param
       USE mod_grid
+#if defined DIFF_3DCOEF || defined VISC_3DCOEF
+      USE mod_mixing
+#endif
       USE mod_ocean
       USE mod_stepping
 !
@@ -63,8 +66,15 @@
      &                   GRID(ng) % z_r,                                &
      &                   GRID(ng) % z_w,                                &
 #endif
-#if defined VISC_GRID || defined DIFF_GRID
+#if defined DIFF_GRID || defined DIFF_3DCOEF || \
+    defined VISC_GRID || defined VISC_3DCOEF
      &                   GRID(ng) % grdscl,                             &
+#endif 
+#if defined DIFF_3DCOEF
+     &                   MIXING(ng) % Hdiffusion,                       &
+#endif
+#if defined VISC_3DCOEF
+     &                   MIXING(ng) % Hviscosity,                       &
 #endif
      &                   GRID(ng) % om_p,                               &
      &                   GRID(ng) % om_r,                               &
@@ -107,8 +117,15 @@
 # endif
      &                         Hz, z_r, z_w,                            &
 #endif
-#if defined VISC_GRID || defined DIFF_GRID
+#if defined DIFF_GRID || defined DIFF_3DCOEF || \
+    defined VISC_GRID || defined VISC_3DCOEF
      &                         grdscl,                                  &
+#endif
+#if defined DIFF_3DCOEF
+     &                         Hdiffusion,                              &
+#endif
+#if defined VISC_3DCOEF
+     &                         Hviscosity,                              &
 #endif
      &                         om_p, om_r, om_u, om_v,                  &
      &                         on_p, on_r, on_u, on_v,                  &
@@ -168,8 +185,15 @@
       real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
 #  endif
 # endif
-# if defined VISC_GRID || defined DIFF_GRID
-      real(r8), intent(inout) :: grdscl(LBi:,LBj:)
+#if defined DIFF_GRID || defined DIFF_3DCOEF || \
+    defined VISC_GRID || defined VISC_3DCOEF
+      real(r8), intent(out) :: grdscl(LBi:,LBj:)
+# endif
+# if defined DIFF_3DCOEF
+      real(r8), intent(out) :: Hdiffusion(LBi:,LBj:)
+# endif
+# if defined VISC_3DCOEF
+      real(r8), intent(out) :: Hviscosity(LBi:,LBj:)
 # endif
       real(r8), intent(out) :: om_p(LBi:,LBj:)
       real(r8), intent(out) :: om_r(LBi:,LBj:)
@@ -219,8 +243,15 @@
       real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
 #  endif
 # endif
-# if defined VISC_GRID || defined DIFF_GRID
-      real(r8), intent(inout) :: grdscl(LBi:UBi,LBj:UBj)
+#if defined DIFF_GRID || defined DIFF_3DCOEF || \
+    defined VISC_GRID || defined VISC_3DCOEF
+      real(r8), intent(out) :: grdscl(LBi:UBi,LBj:UBj)
+# endif
+# if defined DIFF_3DCOEF
+      real(r8), intent(out) :: Hdiffusion(LBi:UBi,LBj:UBj)
+# endif
+# if defined VISC_3DCOEF
+      real(r8), intent(out) :: Hviscosity(LBi:UBi,LBj:UBj)
 # endif
       real(r8), intent(out) :: om_p(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: om_r(LBi:UBi,LBj:UBj)
@@ -268,18 +299,29 @@
       integer :: NSUB, i, is, j, k
 
       real(r8), parameter :: Large = 1.0E+20_r8
-
+#if defined DIFF_3DCOEF || defined VISC_3DCOEF
+      real(r8), parameter :: PecletCoef = 1.0_r8 / 12.0_r8
+      real(r8), parameter :: Uscale = 0.1_r8
+#endif
       real(r8) :: cff, cff1, cff2
       real(r8) :: my_DXmax, my_DXmin, my_DYmax, my_DYmin
 #ifdef SOLVE3D
       real(r8) :: my_DZmax, my_DZmin
 #endif
       real(r8) :: my_Cu_Cor, my_Cu_max, my_Cu_min, my_grdmax
+#if defined DIFF_3DCOEF
+      real(r8) :: my_DiffMax, my_DiffMin
+#endif
+#if defined VISC_3DCOEF
+      real(r8) :: my_ViscMax, my_ViscMin
+#endif
+#if defined DIFF_3DCOEF || defined VISC_3DCOEF
+      character (len=4) :: units
+#endif
 
 #ifdef DISTRIBUTE
-      integer :: size
-      real(r8), dimension(10) :: buffer
-      character (len=3), dimension(10) :: op_handle
+      real(r8), dimension(14) :: buffer
+      character (len=3), dimension(14) :: op_handle
 #endif
 
 #ifdef SOLVE3D
@@ -287,7 +329,6 @@
 #endif
 
 #include "set_bounds.h"
-
 
 #ifdef EW_PERIODIC
 # define IU_RANGE Istr,Iend
@@ -564,18 +605,18 @@
      &                    CosAngler, SinAngler)
 # endif
 #endif
-#if defined VISC_GRID || defined DIFF_GRID
+#if defined DIFF_GRID || defined DIFF_3DCOEF || \
+    defined VISC_GRID || defined VISC_3DCOEF
 !
 !-----------------------------------------------------------------------
-! Determine maximum area of the grid box over the whole curvilinear
-! grid of the model. Used for scaling horizontal mixing by the grid
-! size.
+! Determine the squared root of the area of each grid cell used to
+! rescale horizontal mixing by the grid size.
 !-----------------------------------------------------------------------
 !
       cff=0.0_r8
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          grdscl(i,j)=SQRT(om_r(i,j)*om_r(i,j)+on_r(i,j)*on_r(i,j))
+          grdscl(i,j)=SQRT(om_r(i,j)*on_r(i,j))
         END DO
       END DO
 # if defined EW_PERIODIC || defined NS_PERIODIC
@@ -588,6 +629,75 @@
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    grdscl)
+# endif
+#endif
+#if defined DIFF_3DCOEF || defined VISC_3DCOEF
+!
+!-----------------------------------------------------------------------
+! Compute time invariant, horizontal mixing coefficient using grid
+! scale. Following Holland et (1998), Webb et al. (1998), Griffies
+! and Hallberg (2000), and Lee et al. (2002), the horizontal mixing
+! coefficient can be estimated as:
+!
+!   Hmixing = 1/12 * Uscale * grdscl           (Harmonic)
+!   Bmixing = 1/12 * Uscale * grdscl**3        (Biharmonic)
+!-----------------------------------------------------------------------
+!
+# if defined DIFF_3DCOEF
+      my_DiffMin= Large
+      my_DiffMax=-Large
+# endif
+# if defined VISC_3DCOEF
+      my_ViscMin= Large
+      my_ViscMax=-Large
+# endif
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+# if defined DIFF_3DCOEF
+#  if defined TS_DIF2
+          Hdiffusion(i,j)=PecletCoef*Uscale*grdscl(i,j)
+#  elif defined TS_DIF4
+          Hdiffusion(i,j)=PecletCoef*Uscale*grdscl(i,j)**3
+#  endif
+          my_DiffMin=MIN(my_DiffMin, Hdiffusion(i,j))
+          my_DiffMax=MAX(my_DiffMax, Hdiffusion(i,j))
+# endif
+# if defined VISC_3DCOEF
+#  if defined UV_VIS2
+          Hviscosity(i,j)=PecletCoef*Uscale*grdscl(i,j)
+#  elif defined UV_VIS4
+          Hviscosity(i,j)=PecletCoef*Uscale*grdscl(i,j)**3
+#  endif
+          my_ViscMin=MIN(my_ViscMin, Hviscosity(i,j))
+          my_ViscMax=MAX(my_ViscMax, Hviscosity(i,j))
+# endif
+        END DO
+      END DO
+# if defined EW_PERIODIC || defined NS_PERIODIC
+#  ifdef DIFF_3DCOEF
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Hdiffusion)
+#  endif
+#  ifdef VISC_3DCOEF
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        Hviscosity)
+#  endif
+# endif
+# ifdef DISTRIBUTE
+#  ifdef DIFF_3DCOEF
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Hdiffusion)
+#  endif
+#  ifdef VISC_3DCOEF
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    Hviscosity)
+#  endif
 # endif
 #endif
 !
@@ -634,7 +744,7 @@
 #if defined VISC_GRID || defined DIFF_GRID
           cff=grdscl(i,j)
 #else
-          cff=SQRT(om_r(i,j)*om_r(i,j)+on_r(i,j)*on_r(i,j))
+          cff=SQRT(om_r(i,j)*on_r(i,j))
 #endif
           my_DXmin=MIN(my_DXmin,om_r(i,j))
           my_DXmax=MAX(my_DXmax,om_r(i,j))
@@ -708,6 +818,14 @@
         DZmin(ng)=my_DZmin
         DZmax(ng)=my_DZmax
 #endif
+#ifdef DIFF_3DCOEF
+        DiffMin(ng)=my_DiffMin
+        DiffMax(ng)=my_DiffMax
+#endif
+#ifdef VISC_3DCOEF
+        ViscMin(ng)=my_ViscMin
+        ViscMax(ng)=my_ViscMax
+#endif
       ELSE
         Cu_min=MIN(Cu_min,my_Cu_min)
         Cu_max=MAX(Cu_max,my_Cu_max)
@@ -720,6 +838,14 @@
 #ifdef SOLVE3D
         DZmin(ng)=MIN(DZmin(ng),my_DZmin)
         DZmax(ng)=MAX(DZmax(ng),my_DZmax)
+#endif
+#ifdef DIFF_3DCOEF
+        DiffMin(ng)=MIN(DiffMin(ng),my_DiffMin)
+        DiffMax(ng)=MAX(DiffMax(ng),my_DiffMax)
+#endif
+#ifdef VISC_3DCOEF
+        ViscMin(ng)=MIN(ViscMin(ng),my_ViscMin)
+        ViscMax(ng)=MAX(ViscMax(ng),my_ViscMax)
 #endif
       END IF
       tile_count=tile_count+1
@@ -747,11 +873,35 @@
         op_handle(9)='MIN'
         buffer(10)=DZmax(ng)
         op_handle(10)='MAX'
-        size=10
 # else
-        size=8
+        buffer(9)=0.0_r8
+        op_handle(9)='MIN'
+        buffer(10)=0.0_r8
+        op_handle(10)='MAX'
 # endif
-        CALL mp_reduce (ng, model, size, buffer, op_handle)
+# ifdef DIFF_3DCOEF
+        buffer(11)=DiffMin(ng)
+        op_handle(11)='MIN'
+        buffer(12)=DiffMax(ng)
+        op_handle(12)='MAX'
+# else
+        buffer(11)=0.0_r8
+        op_handle(11)='MIN'
+        buffer(12)=0.0_r8
+        op_handle(12)='MAX'
+# endif
+# ifdef VISC_3DCOEF
+        buffer(13)=ViscMin(ng)
+        op_handle(13)='MIN'
+        buffer(14)=ViscMax(ng)
+        op_handle(14)='MAX'
+# else
+        buffer(13)=0.0_r8
+        op_handle(13)='MIN'
+        buffer(14)=0.0_r8
+        op_handle(14)='MAX'
+# endif
+        CALL mp_reduce (ng, model, 14, buffer, op_handle)
         Cu_min=buffer(1)
         Cu_max=buffer(2)
         Cu_Cor=buffer(3)
@@ -763,6 +913,14 @@
 # ifdef SOLVE3D
         DZmin(ng)=buffer(9)
         DZmax(ng)=buffer(10)
+# endif
+# ifdef DIFF_3DCOEF
+        DiffMin(ng)=buffer(11)
+        DiffMax(ng)=buffer(12)
+# endif
+# ifdef VISC_3DCOEF
+        ViscMin(ng)=buffer(13)
+        ViscMax(ng)=buffer(14)
 # endif
 #endif
         IF (Master) THEN
@@ -784,7 +942,33 @@
 # if defined VISC_GRID || defined DIFF_GRID
           WRITE (stdout,40) grdmax(ng)/1000.0_r8
   40      FORMAT (' Horizontal mixing scaled by grid size,',            &
-     &            ' GRDMAX = ',1pe15.8,' km',/)
+     &            ' GRDMAX = ',1pe15.8,' km')
+# endif
+# ifdef DIFF_3DCOEF
+#  ifdef TS_DIF2
+          units='m2/s'
+#  elif defined TS_DIF4
+          units='m4/s'
+#  endif
+          WRITE (stdout,50) DiffMin(ng), TRIM(units),                   &
+     &                      DiffMax(ng), TRIM(units)
+  50      FORMAT (/,' Minimum horizontal diffusion coefficient = ',     &
+     &             1pe15.8,1x,a,                                        &
+     &            /,' Maximum horizontal diffusion coefficient = ',     &
+     &             1pe15.8,1x,a)
+# endif
+# ifdef VISC_3DCOEF
+#  ifdef UV_VIS2
+          units='m2/s'
+#  elif defined UV_VIS4
+          units='m4/s'
+#  endif
+          WRITE (stdout,60) ViscMin(ng), TRIM(units),                   &
+     &                      ViscMax(ng), TRIM(units)
+  60      FORMAT (/,' Minimum horizontal viscosity coefficient = ',     &
+     &             1pe15.8,1x,a,                                        &
+     &            /,' Maximum horizontal viscosity coefficient = ',     &
+     &             1pe15.8,1x,a)
 # endif
         END IF
       END IF
@@ -845,17 +1029,17 @@
 !
       IF (Master) THEN
         DO is=1,NstateVar(ng)
-          WRITE (stdout,50) NHsteps(is), DTsizeH(ng),                   &
+          WRITE (stdout,70) NHsteps(is), DTsizeH(ng),                   &
      &                      TRIM(Vname(1,idSvar(is)))
-  50      FORMAT (' Horizontal convolution, NHsteps, DTsizeH = ',       &
+  70      FORMAT (' Horizontal convolution, NHsteps, DTsizeH = ',       &
      &            i5,1x,1pe15.8,' s',2x,a)
         END DO
 # if defined SOLVE3D && defined VCONVOLUTION
         WRITE (stdout,'(1x)')
         DO is=4,5+NT(ng)
-          WRITE (stdout,60) NVsteps(is), DTsizeV(is),                   &
+          WRITE (stdout,80) NVsteps(is), DTsizeV(is),                   &
      &                      TRIM(Vname(1,idSvar(is)))
-  60      FORMAT (' Vertical   convolution, NVsteps, DTsizeV = ',       &
+  80      FORMAT (' Vertical   convolution, NVsteps, DTsizeV = ',       &
      &            i5,1x,1pe15.8,' s',2x,a)
         END DO
 # endif
