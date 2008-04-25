@@ -147,8 +147,8 @@
   'svstr'
   'surface v-momentum stress'
   'meter2 second-2'                                ! [N/m2]
-  'icVsms'
   'v2dvar'
+  0.0d0
   1.0d0                                            ! 1/rho0
 
 !

@@ -2372,7 +2372,7 @@
       Coptions(is:is+15)=' UV_SADVECTION,'
       ivelVadv=ivelVadv+1
 #  endif
-#  ifdef TS_U3ADV_SPLIT
+#  ifdef UV_U3ADV_SPLIT
       IF (Master) WRITE (stdout,20) 'UV_U3ADV_SPLIT',                   &
      &   'Split third-order upstream advection of momentum.'
       is=LEN_TRIM(Coptions)+1
