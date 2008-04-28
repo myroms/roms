@@ -38,7 +38,7 @@
 ** UV_SADVECTION       use to turn ON or OFF splines vertical advection      **
 ** UV_VIS2             use to turn ON or OFF harmonic horizontal mixing      **
 ** UV_VIS4             use to turn ON or OFF biharmonic horizontal mixing    **
-** UV_SMAGORINSKI      use to turn ON or OFF Smagorinski-like viscosity      **
+** UV_SMAGORINSKY      use to turn ON or OFF Smagorinsky-like viscosity      **
 ** UV_LOGDRAG          use to turn ON or OFF logarithmic bottom friction     **
 ** UV_LDRAG            use to turn ON or OFF linear bottom friction          **
 ** UV_QDRAG            use to turn ON or OFF quadratic bottom friction       **
@@ -75,7 +75,7 @@
 ** TS_SVADVECTION      use if splines vertical advection                     **
 ** TS_DIF2             use to turn ON or OFF harmonic horizontal mixing      **
 ** TS_DIF4             use to turn ON or OFF biharmonic horizontal mixing    **
-** TS_SMAGORINSKI      use to turn ON or OFF Smagorinski-like diffusion      **
+** TS_SMAGORINSKY      use to turn ON or OFF Smagorinsky-like diffusion      **
 ** TS_FIXED            use if diagnostic run, no evolution of tracers        **
 ** T_PASSIVE           use if inert passive tracers (dyes, etc)              **
 ** SALINITY            use if having salinity                                **

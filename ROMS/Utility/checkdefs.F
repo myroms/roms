@@ -2307,7 +2307,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+12)=' TS_PSOURCE,'
 #endif
-#if defined TS_SMAGORINSKI && (defined TS_DIF2 || defined TS_DIF4)
+#if defined TS_SMAGORINSKY && (defined TS_DIF2 || defined TS_DIF4)
       IF (Master) WRITE (stdout,20) 'TS_SMAGORINSKY',                   &
      &   'Smagorinksy-like time-dependent diffusion coefficients.'
       is=LEN_TRIM(Coptions)+1
@@ -2425,7 +2425,7 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' UV_VIS4,'
 #endif
-#if defined UV_SMAGORINSKI && (defined UV_DIF2 || defined UV_DIF4)
+#if defined UV_SMAGORINSKY && (defined UV_DIF2 || defined UV_DIF4)
       IF (Master) WRITE (stdout,20) 'UV_SMAGORINSKY',                   &
      &   'Smagorinksy-like time-dependent viscosity coefficients.'
       is=LEN_TRIM(Coptions)+1
