@@ -14,8 +14,8 @@
 !  Flon       Initial longitude locations, if any.                     !
 !  Flat       Initial latitude locations, if any.                      !
 !  Ftype      Float trajectory type:                                   !
-!               Ftype(:) = 0,  neutral density 3D Lagrangian           !
-!               Ftype(:) = 1,  isobaric (constant depth) float.        !
+!               Ftype(:) = 1,  neutral density 3D Lagrangian           !
+!               Ftype(:) = 2,  isobaric (constant depth) float.        !
 !  Tinfo      Float trajectory initial information.                    !
 !  bounded    Float bounded status switch.                             !
 !  track      Multivariate float trajectory data at several time       !
