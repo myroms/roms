@@ -361,7 +361,7 @@
         DO ifield=1,Nexport(model)
           DO i=1,Nfields
             IF (TRIM(ADJUSTL(Fields(i)%code)).eq.                       &
-                TRIM(ADJUSTL(Export(model)%code(ifield)))) THEN
+     &          TRIM(ADJUSTL(Export(model)%code(ifield)))) THEN
               ExportID(model)%val(ifield)=Fields(i)%FieldID
             END IF
           END DO
@@ -369,7 +369,7 @@
         DO ifield=1,Nimport(model)
           DO i=1,Nfields
             IF (TRIM(ADJUSTL(Fields(i)%code)).eq.                       &
-                TRIM(ADJUSTL(Import(model)%code(ifield)))) THEN
+     &          TRIM(ADJUSTL(Import(model)%code(ifield)))) THEN
               ImportID(model)%val(ifield)=Fields(i)%FieldID
             END IF
           END DO

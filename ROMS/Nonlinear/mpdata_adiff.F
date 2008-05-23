@@ -418,7 +418,7 @@
           END DO
           DO i=I_RANGE
             IF ((Ta(i-1,j,k).le.0.0_r8).or.                             &
-                (Ta(i  ,j,k).le.0.0_r8)) THEN
+     &          (Ta(i  ,j,k).le.0.0_r8)) THEN
               Ua(i,j,k)=0.0_r8
             END IF
           END DO
@@ -630,7 +630,7 @@
           END DO
           DO i=I_RANGE
             IF ((Ta(i,j-1,k).le.0.0_r8).or.                             &
-                (Ta(i,j  ,k).le.0.0_r8)) THEN
+     &          (Ta(i,j  ,k).le.0.0_r8)) THEN
               Va(i,j,k)=0.0_r8
             END IF
           END DO
