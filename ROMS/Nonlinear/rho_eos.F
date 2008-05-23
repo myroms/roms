@@ -84,7 +84,8 @@
 # ifdef BV_FREQUENCY
      &                   MIXING(ng) % bvf,                              &
 # endif
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+# if defined LMD_SKPP    || defined LMD_BKPP         || \
+     defined BULK_FLUXES || defined BALANCE_OPERATOR
      &                   MIXING(ng) % alpha,                            &
      &                   MIXING(ng) % beta,                             &
 #  ifdef LMD_DDMIX
@@ -119,7 +120,8 @@
 #  ifdef BV_FREQUENCY
      &                         bvf,                                     &
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#  if defined LMD_SKPP    || defined LMD_BKPP         || \
+      defined BULK_FLUXES || defined BALANCE_OPERATOR
      &                         alpha, beta,                             &
 #   ifdef LMD_DDMIX
      &                         alfaobeta,                               &
@@ -169,7 +171,8 @@
 #   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:,LBj:,0:)
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   if defined LMD_SKPP    || defined LMD_BKPP         || \
+       defined BULK_FLUXES || defined BALANCE_OPERATOR
       real(r8), intent(out) :: alpha(LBi:,LBj:)
       real(r8), intent(out) :: beta(LBi:,LBj:)
 #    ifdef LMD_DDMIX
@@ -197,7 +200,8 @@
 #   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   if defined LMD_SKPP    || defined LMD_BKPP         || \
+       defined BULK_FLUXES || defined BALANCE_OPERATOR
       real(r8), intent(out) :: alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: beta(LBi:UBi,LBj:UBj)
 #    ifdef LMD_DDMIX
@@ -331,7 +335,8 @@
             bulk2(i,k)=C(8)+Ts*C(9)
             bulk (i,k)=bulk0(i,k)-Tp*(bulk1(i,k)-Tp*bulk2(i,k))
 
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#  if defined LMD_SKPP    || defined LMD_BKPP         || \
+      defined BULK_FLUXES || defined BALANCE_OPERATOR
 !
 !  Compute d(bulk)/d(S) and d(bulk)/d(T) derivatives used
 !  in the computation of thermal expansion and saline contraction
@@ -432,7 +437,8 @@
         END DO
 #  endif
 
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#  if defined LMD_SKPP    || defined LMD_BKPP         || \
+      defined BULK_FLUXES || defined BALANCE_OPERATOR
 !
 !-----------------------------------------------------------------------
 !  Compute thermal expansion (1/Celsius) and saline contraction
@@ -505,7 +511,9 @@
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        pden)
 #    endif
-#    if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#    if defined LMD_SKPP    || defined LMD_BKPP         || \
+        defined BULK_FLUXES || defined BALANCE_OPERATOR
+
 #     ifdef LMD_DDMIX
       CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
@@ -544,7 +552,8 @@
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    pden)
 #    endif
-#    if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#    if defined LMD_SKPP    || defined LMD_BKPP         || \
+        defined BULK_FLUXES || defined BALANCE_OPERATOR
 #     ifdef LMD_DDMIX
       CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
@@ -594,7 +603,8 @@
 #  ifdef BV_FREQUENCY
      &                         bvf,                                     &
 #  endif
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#  if defined LMD_SKPP    || defined LMD_BKPP         || \
+      defined BULK_FLUXES || defined BALANCE_OPERATOR
      &                         alpha, beta,                             &
 #   ifdef LMD_DDMIX
      &                         alfaobeta,                               &
@@ -644,7 +654,8 @@
 #   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:,LBj:,0:)
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   if defined LMD_SKPP    || defined LMD_BKPP         || \
+       defined BULK_FLUXES || defined BALANCE_OPERATOR
       real(r8), intent(out) :: alpha(LBi:,LBj:)
       real(r8), intent(out) :: beta(LBi:,LBj:)
 #    ifdef LMD_DDMIX
@@ -672,7 +683,8 @@
 #   ifdef BV_FREQUENCY
       real(r8), intent(out) :: bvf(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
-#   if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#   if defined LMD_SKPP    || defined LMD_BKPP         || \
+       defined BULK_FLUXES || defined BALANCE_OPERATOR
       real(r8), intent(out) :: alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: beta(LBi:UBi,LBj:UBj)
 #    ifdef LMD_DDMIX
@@ -785,7 +797,8 @@
         END DO
 #  endif
 
-#  if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#  if defined LMD_SKPP    || defined LMD_BKPP         || \
+      defined BULK_FLUXES || defined BALANCE_OPERATOR
 !
 !-----------------------------------------------------------------------
 !  Compute thermal expansion (1/Celsius) and saline contraction
@@ -833,7 +846,8 @@
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        pden)
 #    endif
-#    if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#    if defined LMD_SKPP    || defined LMD_BKPP         || \
+        defined BULK_FLUXES || defined BALANCE_OPERATOR
 #     ifdef LMD_DDMIX
       CALL exchange_w3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
@@ -872,7 +886,8 @@
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    pden)
 #    endif
-#    if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+#    if defined LMD_SKPP    || defined LMD_BKPP         || \
+        defined BULK_FLUXES || defined BALANCE_OPERATOR
 #     ifdef LMD_DDMIX
       CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
      &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &

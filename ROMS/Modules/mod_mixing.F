@@ -201,7 +201,8 @@
 # ifdef FLOAT_VWALK
           real(r8), pointer :: dAktdz(:,:,:)
 # endif
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+# if defined LMD_SKPP    || defined LMD_BKPP         || \
+     defined BULK_FLUXES || defined BALANCE_OPERATOR
           real(r8), pointer :: alpha(:,:)
           real(r8), pointer :: beta(:,:)
 # endif
@@ -450,7 +451,8 @@
       allocate ( MIXING(ng) % dAktdz(LBi:UBi,LBj:UBj,N(ng)) )
 # endif
 
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+# if defined LMD_SKPP    || defined LMD_BKPP         || \
+     defined BULK_FLUXES || defined BALANCE_OPERATOR
       allocate ( MIXING(ng) % alpha(LBi:UBi,LBj:UBj) )
       allocate ( MIXING(ng) % beta(LBi:UBi,LBj:UBj) )
 # endif
@@ -808,7 +810,8 @@
             END DO
           END DO
 # endif
-# if defined LMD_SKPP || defined LMD_BKPP || defined BULK_FLUXES
+# if defined LMD_SKPP    || defined LMD_BKPP         || \
+     defined BULK_FLUXES || defined BALANCE_OPERATOR
           DO i=Imin,Imax
             MIXING(ng) % alpha(i,j) = IniVal
             MIXING(ng) % beta(i,j) = IniVal

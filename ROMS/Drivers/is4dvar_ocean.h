@@ -207,7 +207,7 @@
       USE mod_stepping
 !
 #ifdef BALANCE_OPERATOR
-!!    USE ad_balance_mod, ONLY: ad_balance
+      USE ad_balance_mod, ONLY: ad_balance
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
@@ -224,7 +224,7 @@
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
 #ifdef BALANCE_OPERATOR
-!!    USE tl_balance_mod, ONLY: tl_balance
+      USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_ini_adjust_mod, ONLY : tl_ini_adjust
@@ -555,6 +555,9 @@
             END IF
             CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),     &
      &                      Lnew(ng))
+#ifdef BALANCE_OPERATOR
+            CALL get_state (ng, iNLM, 9, INIname(ng), Lini, Lini)
+#endif
 !
 !  Convert observation cost function gradient, GRADx(Jo), from model
 !  space (x-space) to minimization space (v-space):
@@ -569,12 +572,12 @@
 !
 !     GRADv(J) = GRADv(Jb) + GRADv(Jo) = deltaV + GRADv(Jo)
 !
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
             DO thread=0,numthreads-1
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
 #ifdef BALANCE_OPERATOR
-                CALL ad_balance (ng, TILE, Lnew(ng))
+                CALL ad_balance (ng, TILE, Lini, Lnew(ng))
 #endif
                 CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lnew(ng), 2)
@@ -780,14 +783,14 @@
             ELSE
               Lcon=LTLM2                     ! Equation 5a
             END IF
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
             DO thread=0,numthreads-1
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1,+1
                 CALL tl_convolution (ng, TILE, Lcon, 2)
                 CALL tl_variability (ng, TILE, Lcon, Lweak)
 #ifdef BALANCE_OPERATOR
-                CALL tl_balance (ng, TILE, Lcon)
+                CALL tl_balance (ng, TILE, Lini, Lcon)
 #endif
                 CALL tl_ini_adjust (ng, TILE, Lbck, Lini, Lcon)
               END DO

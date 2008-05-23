@@ -181,7 +181,7 @@
       USE mod_stepping
 !
 #ifdef BALANCE_OPERATOR
-!!    USE ad_balance_mod, ONLY: ad_balance
+      USE ad_balance_mod, ONLY: ad_balance
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
@@ -196,7 +196,7 @@
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
 #ifdef BALANCE_OPERATOR
-!!    USE tl_balance_mod, ONLY: tl_balance
+      USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
@@ -565,8 +565,8 @@
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR
-                CALL ad_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+                CALL ad_balance (ng, TILE, Lini, Lold(ng))
 # endif
                 CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lold(ng), 2)
@@ -591,8 +591,8 @@
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                 CALL tl_convolution (ng, TILE, Lold(ng), 2)
                 CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR
-                CALL tl_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+                CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
               END DO
             END DO
@@ -637,8 +637,8 @@
                   subs=NtileX(ng)*NtileE(ng)/numthreads
                   DO tile=subs*thread,subs*(thread+1)-1
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR
-                    CALL ad_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+                    CALL ad_balance (ng, TILE, Lini, Lold(ng))
 # endif
                     CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                     CALL ad_convolution (ng, TILE, Lold(ng), 2)
@@ -664,8 +664,8 @@
                     CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                     CALL tl_convolution (ng, TILE, Lold(ng), 2)
                     CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR
-                    CALL tl_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+                    CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
                   END DO
@@ -906,8 +906,8 @@
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR
-              CALL ad_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+              CALL ad_balance (ng, TILE, Lini, Lold(ng))
 # endif
               CALL ad_variability (ng, TILE, Lold(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lold(ng), 2)
@@ -937,8 +937,8 @@
               CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
               CALL tl_convolution (ng, TILE, Lold(ng), 2)
               CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR
-              CALL tl_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+              CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
@@ -984,8 +984,8 @@
                 subs=NtileX(ng)*NtileE(ng)/numthreads
                 DO tile=subs*thread,subs*(thread+1)-1
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR
-                  CALL ad_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+                  CALL ad_balance (ng, TILE, Lini, Lold(ng))
 # endif
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), 2)
@@ -1011,8 +1011,8 @@
                   CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                   CALL tl_convolution (ng, TILE, Lold(ng), 2)
                   CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR
-                  CALL tl_balance (ng, TILE, Lold(ng))
+# ifdef BALANCE_OPERATOR_NOT_YET
+                  CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
                 END DO

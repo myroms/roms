@@ -160,7 +160,7 @@
       USE mod_stepping
 !
 #ifdef BALANCE_OPERATOR
-!!    USE ad_balance_mod, ONLY: ad_balance
+      USE ad_balance_mod, ONLY: ad_balance
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
@@ -172,7 +172,7 @@
       USE ini_adjust_mod, ONLY : load_TLtoAD
       USE normalization_mod, ONLY : normalization
 #ifdef BALANCE_OPERATOR
-!!    USE tl_balance_mod, ONLY: tl_balance
+      USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
@@ -193,6 +193,9 @@
       integer :: IoutTL, JoutTL, KoutTL, ivarTL
 #ifdef DISTRIBUTE
       integer :: Istr, Iend, Jstr, Jend
+#endif
+#ifdef BALANCE_OPERATOR
+      integer :: Lbck = 1
 #endif
       integer, allocatable :: StateVar(:)
 
@@ -404,6 +407,13 @@
             END DO
           END DO
 !$OMF END PARALLEL DO
+
+#ifdef BALANCE_OPERATOR
+!
+!  Read background state.
+!
+          CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
+#endif
 !
 !  Proccess each time record of current adjoint solution in ADJname.
 !
@@ -441,7 +451,7 @@
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
 #ifdef BALANCE_OPERATOR
-                CALL ad_balance (ng, TILE, Lold(ng))
+                CALL ad_balance (ng, TILE, Lbck, Lold(ng))
 #endif
                 CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lold(ng), 2)
@@ -468,7 +478,7 @@
                 CALL tl_convolution (ng, TILE, Lold(ng), 2)
                 CALL tl_variability (ng, TILE, Lold(ng), Lweak)
 #ifdef BALANCE_OPERATOR
-                CALL tl_balance (ng, TILE, Lold(ng))
+                CALL tl_balance (ng, TILE, Lbck, Lold(ng))
 #endif
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
               END DO

@@ -155,7 +155,7 @@
       USE mod_stepping
 !
 #ifdef BALANCE_OPERATOR
-!!    USE ad_balance_mod, ONLY: ad_balance
+      USE ad_balance_mod, ONLY: ad_balance
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
@@ -167,7 +167,7 @@
       USE ini_adjust_mod, ONLY : load_TLtoAD
       USE normalization_mod, ONLY : normalization
 #ifdef BALANCE_OPERATOR
-!!    USE tl_balance_mod, ONLY: tl_balance
+      USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
@@ -182,6 +182,9 @@
       logical :: add, Lweak, outer_impulse
 
       integer :: IADrec, Nrec, i, ng, nvd, subs, tile, thread
+#ifdef BALANCE_OPERATOR
+      integer :: Lbck = 1
+#endif
 
       integer, dimension(4) :: Vsize
 
@@ -229,6 +232,15 @@
 #endif
           IF (exit_flag.ne.NoError) RETURN
         END IF
+
+#ifdef BALANCE_OPERATOR
+!
+!-----------------------------------------------------------------------
+!  Read background state.
+!-----------------------------------------------------------------------
+!
+        CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
+#endif
 !
 !-----------------------------------------------------------------------
 !  Read in adjoint solution (IADname), apply spatial convolution,
@@ -286,14 +298,14 @@
 !  tangent linear state arrays when done.
 !
           add=.FALSE.
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck)                     &
 !$OMP&            SHARED(inner,add,numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1
               CALL load_TLtoAD (ng, TILE, Lnew(ng), Lnew(ng), add)
 #ifdef BALANCE_OPERATOR
-              CALL ad_balance (ng, TILE, Lnew(ng))
+              CALL ad_balance (ng, TILE, Lbck, Lnew(ng))
 #endif
               CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lnew(ng), 2)
@@ -311,7 +323,7 @@
 !  arrays when done with the convolution for output purposes.
 !
           add=.FALSE.
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck)                    &
 !$OMP&            SHARED(inner,add,numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -320,7 +332,7 @@
               CALL tl_convolution (ng, TILE, Lnew(ng), 2)
               CALL tl_variability (ng, TILE, Lnew(ng), Lweak)
 #ifdef BALANCE_OPERATOR
-              CALL tl_balance (ng, TILE, Lnew(ng))
+              CALL tl_balance (ng, TILE, Lbck, Lnew(ng))
 #endif
               CALL load_TLtoAD (ng, TILE, Lnew(ng), Lnew(ng), add)
             END DO

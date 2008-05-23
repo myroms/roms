@@ -195,7 +195,7 @@
       USE mod_stepping
 !
 #ifdef BALANCE_OPERATOR
-!!    USE ad_balance_mod, ONLY: ad_balance
+      USE ad_balance_mod, ONLY: ad_balance
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
@@ -206,7 +206,7 @@
       USE ini_adjust_mod, ONLY : load_TLtoAD
       USE normalization_mod, ONLY : normalization
 #ifdef BALANCE_OPERATOR
-!!    USE tl_balance_mod, ONLY: tl_balance
+      USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
       USE tl_variability_mod, ONLY : tl_variability
@@ -222,7 +222,9 @@
       logical :: Lweak = .FALSE.
       
       integer :: Nrec, i, my_iic, ng, nvd, thread, subs, tile
-
+#ifdef BALANCE_OPERATOR
+      integer :: Lbck = 1
+#endif
       integer, dimension(4) :: Vsize
 
       real (r8) :: str_day, end_day
@@ -355,6 +357,10 @@
 !  Read adjoint solution.
 !
         CALL get_state (ng, iADM, 4, ADJname(ng), Nrec, Lnew(ng))
+#ifdef BALANCE_OPERATOR
+        CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
+#endif
+
 !
 !  First, multiply adjoint solution by the background-error standard
 !  deviations.  Second, convolve resulting adjoint solution with the
@@ -362,13 +368,13 @@
 !  correlations. Notice that the spatial convolution is only done
 !  for half of the diffusion steps.
 !
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck)                     &
 !$OMP&            SHARED(inner,CGstepF,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
 #ifdef BALANCE_OPERATOR
-            CALL ad_balance (ng, TILE, Lnew(ng))
+            CALL ad_balance (ng, TILE, Lbck, Lnew(ng))
 #endif
             CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
             CALL ad_convolution (ng, TILE, Lnew(ng), 2)
@@ -382,7 +388,7 @@
 !  background-error standard deviations.
 !
         add=.FALSE.
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck)                     &
 !$OMP&            SHARED(inner,add,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -391,7 +397,7 @@
             CALL tl_convolution (ng, TILE, Lnew(ng), 2)
             CALL tl_variability (ng, TILE, Lnew(ng), Lweak)
 #ifdef BALANCE_OPERATOR
-            CALL tl_balance (ng, TILE, Lnew(ng))
+            CALL tl_balance (ng, TILE, Lbck, Lnew(ng))
 #endif
           END DO
         END DO
