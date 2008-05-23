@@ -508,7 +508,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: iday, ihour, isec, itime, minute
+      integer :: iday, ihour, isec, minute
 
       character (len=14) :: text
 !
@@ -516,9 +516,8 @@
 !  Encode current mode time.
 !-----------------------------------------------------------------------
 !
-      itime=INT(time)
-      iday=itime/86400
-      isec=itime-iday*86400
+      iday=INT(time/86400)
+      isec=INT(time-iday*86400.0_r8)
       ihour=isec/3600
       minute=MOD(isec,3600)/60
       isec=MOD(isec,60)
