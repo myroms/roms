@@ -441,6 +441,9 @@
 !  Set threshold maximum speed (m/s) and density anomaly (kg/m3) to
 !  test if the model is blowing-up.
 !
+        real(r8), dimension(Ngrids) :: maxspeed
+        real(r8), dimension(Ngrids) :: maxrho
+!
         real(r8) :: max_speed = 20.0_r8         ! m/s
         real(r8) :: max_rho = 200.0_r8          ! kg/m3
 !

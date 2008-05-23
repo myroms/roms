@@ -144,9 +144,9 @@
 #endif
 
       real(r8) :: cff, my_avgke, my_avgpe, my_volume
-      real(r8) :: my_maxspeed, maxspeed, u2v2
+      real(r8) :: my_maxspeed, u2v2
 #ifdef SOLVE3D
-      real(r8) :: my_maxrho, maxrho
+      real(r8) :: my_maxrho
 #endif
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ke2d
       real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: pe2d
@@ -253,17 +253,17 @@
           volume=0.0_r8
           avgke=0.0_r8
           avgpe=0.0_r8
-          maxspeed=0.0_r8
+          maxspeed(ng)=0.0_r8
 #ifdef SOLVE3D
-          maxrho=0.0_r8
+          maxrho(ng)=0.0_r8
 #endif
         END IF
         volume=volume+my_volume
         avgke=avgke+my_avgke
         avgpe=avgpe+my_avgpe
-        maxspeed=maxspeed+my_maxspeed
+        maxspeed(ng)=MAX(maxspeed(ng),my_maxspeed)
 #ifdef SOLVE3D
-        maxrho=maxrho+my_maxrho
+        maxrho(ng)=MAX(maxrho(ng),my_maxrho)
 #endif
         tile_count=tile_count+1
         IF (tile_count.eq.NSUB) THEN
@@ -272,9 +272,9 @@
           buffer(1)=volume
           buffer(2)=avgke
           buffer(3)=avgpe
-          buffer(4)=maxspeed
+          buffer(4)=maxspeed(ng)
 # ifdef SOLVE3D
-          buffer(5)=maxrho
+          buffer(5)=maxrho(ng)
 # endif
           op_handle(1)='SUM'
           op_handle(2)='SUM'
@@ -287,9 +287,9 @@
           volume=buffer(1)
           avgke=buffer(2)
           avgpe=buffer(3)
-          maxspeed=buffer(4)
+          maxspeed(ng)=buffer(4)
 # ifdef SOLVE3D
-          maxrho=buffer(5)
+          maxrho(ng)=buffer(5)
 # endif
           trd=MyMaster
 #else
@@ -325,7 +325,7 @@
 !  Stop computations if exceeding maximum speed allowed.  This will be
 !  useful during debugging to avoid NaNs in output NetCDF files.
 !
-          IF (maxspeed.gt.max_speed) THEN
+          IF (maxspeed(ng).gt.max_speed) THEN
             exit_flag=1
           END IF
 #ifdef SOLVE3D
@@ -335,7 +335,7 @@
 !  salinity.  This is a good way to screen for very bad values which
 !  indicates that the model is blowing-up.
 !
-          IF (maxrho.gt.max_rho) THEN
+          IF (maxrho(ng).gt.max_rho) THEN
             exit_flag=1
           END IF
 #endif
