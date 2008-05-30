@@ -151,7 +151,7 @@
       val=fac*SIN(omega*time(ng))
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
-          cff=SQRT(g/GRID(ng)%h(Istr-1,j))
+          cff=SQRT(g*GRID(ng)%h(Istr-1,j))
           BOUNDARY(ng)%ubar_west(j)=val*cff*EXP(-GRID(ng)%f(Istr-1,j)*  &
      &                                           GRID(ng)%yp(Istr-1,j)/ &
      &                                          cff)
@@ -162,7 +162,7 @@
       END IF
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
-          cff=1.0_r8/SQRT(g/GRID(ng)%h(Iend,j))
+          cff=1.0_r8/SQRT(g*GRID(ng)%h(Iend,j))
           val=fac*EXP(-GRID(ng)%f(Iend,j)*GRID(ng)%yp(Istr-1,j)*cff)
           BOUNDARY(ng)%ubar_east(j)=val*SIN(omega*GRID(ng)%xp(Iend,j)*  &
      &                                      cff-omega*time(ng))
