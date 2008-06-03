@@ -295,6 +295,11 @@
 #ifdef MODEL_COUPLING
      &               LOGACT, cplout, userout, numsteps, CouplingTime,
      &               IRQ)
+        IF (RTYPE(1:2) .EQ. 'SP') THEN
+          IVTYPE=500
+        ELSE
+          IVTYPE=CORQ%IVTYP(1)
+        END IF
 #else
      &               LOGACT)                                              30.00
 #endif
@@ -455,7 +460,7 @@
 !     Couple to ocean model
 
         IF (cplout) THEN
-          IVTYPE=CORQ%IVTYP(1)
+!         IVTYPE=CORQ%IVTYP(1)
           CALL WAV2OCN_COUPLING (MIP, NVOQP, VOQR, VOQ(1), IRQ,
      &                           IVTYPE, COMPDA, numsteps)
           IF (STPNOW()) RETURN
