@@ -582,6 +582,10 @@
 **                                                                           **
 ** Nemuro lower trophic level ecosystem model OPTIONS:                       **
 **                                                                           **
+**    Need to choose a zooplankton grazing option (HOLLING_GRAZING or        **
+**    IVLEV_EXPLICIT). The default implicit IVLEV algorithm does not         **
+**    work yet.                                                              **
+**                                                                           **
 ** NEMURO              use if Nemuro ecosystem model.                        **
 ** BIO_SEDIMENT        use to restore fallen material to the nutrient pool   **
 ** HOLLING_GRAZING     use Holling-type s-shaped curve grazing (implicit)    **

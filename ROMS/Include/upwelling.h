@@ -58,6 +58,11 @@
 # define ANA_SRFLUX
 #endif
 
+#if defined NEMURO
+# define HOLLING_GRAZING
+# undef  IVLEV_EXPLICIT
+#endif
+
 #ifdef BIO_FASHAM
 # define CARBON
 # define DENITRIFICATION

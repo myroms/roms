@@ -2940,6 +2940,18 @@
 #endif
  150  FORMAT (/,' CHECKDEFS - only one ',a,' advection scheme',         &
      &        /,13x,'is allowed for ',a,', ',a,1x,i1)
+#if defined SOLVE3D && defined NEMURO
+# if !(defined IVLEV_EXPLICIT || defined HOLLING_GRAZING)
+      IF (Master) THEN
+        WRITE (stdout,160)
+ 160    FORMAT (/,' CHECKDEFS - Need to choose a zooplankton grazing',  &
+     &            ' option;',/,13x,'use either IVLEV_EXPLICIT or',      &
+     &            ' implicit HOLLING_GRAZING.',/,13x,'The default',     &
+     &            ' implicit IVLEV algorithm does not work well yet.')
+        exit_flag=5
+      END IF
+# endif
+#endif
 
       RETURN
       END SUBROUTINE checkdefs
