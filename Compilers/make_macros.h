@@ -46,6 +46,16 @@
 #endif
 
 /*
+** Process Sea Ice model.
+*/
+
+#ifdef ICE_MODEL
+  USE_SEAICE := on
+#else
+  USE_SEAICE :=
+#endif
+
+/*
 ** Process WRF Atmospheric model.
 */
 

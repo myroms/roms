@@ -387,12 +387,14 @@ endif
 ifdef USE_REPRESENTER
  modules  +=	ROMS/Representer
 endif
+ifdef USE_SEAICE
+ modules  +=	ROMS/SeaIce
+endif
 ifdef USE_TANGENT
  modules  +=	ROMS/Tangent
 endif
  modules  +=	ROMS/Nonlinear \
 		ROMS/Functionals \
-		ROMS/SeaIce \
 		ROMS/Utility \
 		ROMS/Modules
 
@@ -403,11 +405,13 @@ endif
 ifdef USE_REPRESENTER
  includes +=	ROMS/Representer
 endif
+ifdef USE_SEAICE
+ includes +=	ROMS/SeaIce
+endif
 ifdef USE_TANGENT
  includes +=	ROMS/Tangent
 endif
  includes +=	ROMS/Nonlinear \
-		ROMS/SeaIce \
 		ROMS/Utility \
 		ROMS/Drivers
 
