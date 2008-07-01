@@ -280,7 +280,7 @@
 #  endif
 # endif
       integer :: Iter, i, j, k
-      integer :: IterMax
+      integer, parameter :: IterMax = 3
 
       real(r8), parameter :: eps = 1.0E-20_r8
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
@@ -679,12 +679,6 @@
           END IF
           L10(i)=blk_ZW(ng)/Zetu(i)
           tl_L10(i)=-L10(i)*L10(i)*tl_Zetu(i)/blk_ZW(ng)
-          IF (Zetu(i).gt.50.0_r8) THEN
-            IterMax=1
-          ELSE
-            IterMax=3
-          END IF
-
 !
 !  First guesses for Monon-Obukhov similarity scales.
 !
@@ -750,8 +744,7 @@
 # endif
         END DO
 !
-!  Iterate until convergence. It usually converges within four
-!  iterations.
+!  Iterate until convergence. It usually converges within 3 iterations.
 !
         DO Iter=1,IterMax
           DO i=Istr-1,IendR

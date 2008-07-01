@@ -273,7 +273,7 @@
 #  endif
 # endif
       integer :: Iter, i, j, k
-      integer :: IterMax
+      integer, parameter :: IterMax = 3
 
       real(r8), parameter :: eps = 1.0E-20_r8
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
@@ -541,11 +541,6 @@
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+3.0_r8*Ri(i)/CC(i))   ! Stable
           END IF
           L10(i)=blk_ZW(ng)/Zetu(i)
-          IF (Zetu(i).gt.50.0_r8) THEN
-            IterMax=1
-          ELSE
-            IterMax=3
-          END IF
 !
 !  First guesses for Monon-Obukhov similarity scales.
 !
@@ -580,7 +575,7 @@
 # endif
         END DO
 !
-!  Iterate until convergence. It usually converges within 4 iterations.
+!  Iterate until convergence. It usually converges within 3 iterations.
 # if defined COARE_OOST || defined COARE_TAYLOR_YELLAND
 !  Use wave info if we have it, two different options.
 # endif

@@ -271,7 +271,7 @@
 # endif
       integer :: ILB, IUB, JLB, JUB
       integer :: Iter, IterA, i, j, k
-      integer :: IterMax
+      integer, parameter :: IterMax = 3
 
       real(r8), parameter :: eps = 1.0E-20_r8
       real(r8), parameter :: r3 = 1.0_r8/3.0_r8
@@ -919,11 +919,6 @@
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+3.0_r8*Ri(i)/CC(i))   ! Stable
           END IF
           L10(i)=blk_ZW(ng)/Zetu(i)
-          IF (Zetu(i).gt.50.0_r8) THEN
-            IterMax=1
-          ELSE
-            IterMax=3
-          END IF
 !
 !  First guesses for Monon-Obukhov similarity scales.
 !
@@ -953,9 +948,7 @@
 # endif
         END DO
 !
-!
-!  Iterate until convergence. It usually converges within four
-!  iterations.
+!  Iterate until convergence. It usually converges within 3 iterations.
 !
         DO Iter=1,IterMax
           DO i=Istr-1,IendR
@@ -1247,16 +1240,14 @@
           END IF
 
         END DO
-
 !
-!  Adjoint Iteration until convergence. It usually converges within four
-!  iterations.
+!  Adjoint Iteration until convergence. It usually converges within
+!  3 iterations.
 !
         DO Iter=IterMax,1,-1
-
 !
-!    Recompute appropriate basic state variables again prior to
-!    each adjoint iteration.
+!  Recompute appropriate basic state variables again prior to
+!  each adjoint iteration.
 !
         DO i=Istr-1,IendR
 !
@@ -1442,11 +1433,6 @@
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+3.0_r8*Ri(i)/CC(i))   ! Stable
           END IF
           L10(i)=blk_ZW(ng)/Zetu(i)
-!>          IF (Zetu(i).gt.50.0_r8) THEN
-!>            IterMax=1
-!>          ELSE
-!>            IterMax=3
-!>          END IF
 !
 !  First guesses for Monon-Obukhov similarity scales.
 !
@@ -2258,11 +2244,6 @@
             Zetu(i)=CC(i)*Ri(i)/(1.0_r8+3.0_r8*Ri(i)/CC(i))   ! Stable
           END IF
           L10(i)=blk_ZW(ng)/Zetu(i)
-!>          IF (Zetu(i).gt.50.0_r8) THEN
-!>            IterMax=1
-!>          ELSE
-!>            IterMax=3
-!>          END IF
 !
 !  First guesses for Monon-Obukhov similarity scales.
 !
