@@ -166,14 +166,15 @@
 #ifdef VERIFICATION
 !
 !  Create out NetCDF file containing model solution at observation
-!  locations
+!  locations.
 !
       IF (Nrun.eq.1) THEN
         DO ng=1,Ngrids
           LdefMOD(ng)=.TRUE.
+          wrtNLmod(ng)=.TRUE.
           CALL def_mod (ng)
-        END IF
-        wrtNLmod(ng)=.TRUE.
+        END DO
+      END IF
 #endif
 
 #ifdef IOM
