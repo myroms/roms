@@ -64,7 +64,7 @@
       real(r8) :: cff1, cff2
       real(r8) :: tl_cff1, tl_cff2
 
-      real(r8), dimension(Istr:Iend) :: fac1, fac2, fac3
+      real(r8), dimension(LBi:UBi) :: fac1, fac2, fac3
 
 # include "set_bounds.h"
 !
