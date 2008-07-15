@@ -76,11 +76,11 @@
 !    Cend          Ending time for program region.
 !    Csum          Accumulated time for progam region.
 !
-        integer  :: proc(0:1,7,Ngrids)
+        integer  :: proc(0:1,4,Ngrids)
 
-        real(r8) :: Cstr(0:Nregion,7,Ngrids)
-        real(r8) :: Cend(0:Nregion,7,Ngrids)
-        real(r8) :: Csum(0:Nregion,7,Ngrids)
+        real(r8) :: Cstr(0:Nregion,4,Ngrids)
+        real(r8) :: Cend(0:Nregion,4,Ngrids)
+        real(r8) :: Csum(0:Nregion,4,Ngrids)
 
 #ifdef _OPENMP
         common /process/ proc
@@ -190,10 +190,10 @@
 !  Initialize profiling variables.
 !-----------------------------------------------------------------------
 !
-          proc(0:1,1:7,1:Ngrids)=0
-          Cstr(0:Nregion,1:7,1:Ngrids)=0.0_r8
-          Cend(0:Nregion,1:7,1:Ngrids)=0.0_r8
-          Csum(0:Nregion,1:7,1:Ngrids)=0.0_r8
+          proc(0:1,1:4,1:Ngrids)=0
+          Cstr(0:Nregion,1:4,1:Ngrids)=0.0_r8
+          Cend(0:Nregion,1:4,1:Ngrids)=0.0_r8
+          Csum(0:Nregion,1:4,1:Ngrids)=0.0_r8
 
           RETURN
         END SUBROUTINE initialize_parallel

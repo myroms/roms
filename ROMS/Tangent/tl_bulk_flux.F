@@ -70,7 +70,7 @@
 # include "tile.h"
 !
 # ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 17)
+      CALL wclock_on (ng, iTLM, 17)
 # endif
       CALL tl_bulk_flux_tile (ng, tile,                                 &
      &                     LBi, UBi, LBj, UBj,                          &
@@ -119,7 +119,7 @@
      &                     FORCES(ng) % svstr,                          &
      &                     FORCES(ng) % tl_svstr)
 # ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 17)
+      CALL wclock_off (ng, iTLM, 17)
 # endif
       RETURN
       END SUBROUTINE tl_bulk_flux

@@ -34,7 +34,7 @@
 #include "tile.h"
 !
 #ifdef PROFILE
-      CALL wclock_on (ng, iNLM, 15)
+      CALL wclock_on (ng, iADM, 15)
 #endif
       CALL ad_biology_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
@@ -52,7 +52,7 @@
      &                      OCEAN(ng) % ad_t)
 
 #ifdef PROFILE
-      CALL wclock_off (ng, iNLM, 15)
+      CALL wclock_off (ng, iADM, 15)
 #endif
       RETURN
       END SUBROUTINE ad_biology

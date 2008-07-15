@@ -186,8 +186,8 @@
             DO iregion=0,Nregion
               buffer(iregion)=Csum(iregion,imodel,ng)
             END DO
-            CALL mp_reduce (ng, MyModel, Nregion+1, buffer(0),            &
-     &                      op_handle(0))
+            CALL mp_reduce (ng, MyModel, Nregion+1, buffer(0:),         &
+     &                      op_handle(0:))
             DO iregion=0,Nregion
               Csum(iregion,imodel,ng)=buffer(iregion)
             END DO
@@ -269,7 +269,7 @@
 # endif
           IF (Master) WRITE (stdout,60) Csum(region,MyModel,ng)
   60      FORMAT (/,' All percentages are with respect to total time =',&
-     &            6x,f12.3)
+     &            5x,f12.3)
 #endif
         END IF
 !$OMP END CRITICAL (FINALIZE_WCLOCK)
