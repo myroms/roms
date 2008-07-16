@@ -111,8 +111,6 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 #
 #export      MY_CPP_FLAGS="-DAVERAGES"
 
- export      MY_CPP_FLAGS="-DNPZD_POWELL"
-
 # Other user defined environmental variables. See the ROMS makefile for
 # details on other options the user might want to set here. 
 
@@ -125,6 +123,37 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 #export         USE_DEBUG=on
  export         USE_LARGE=on
 #export       USE_NETCDF4=on
+
+# There are several MPI libraries out there. The user can select here the
+# appropriate "mpif90" script to compile, provided that the makefile
+# macro file (say, Linux-pgi.mk) in the Compilers directory has:
+#
+#              FC := mpif90
+#
+# "mpif90" defined without any path. Recall that you still need to use the
+# appropriate "mpirun" to execute. Also notice that the path where the
+# MPI library is installed is computer dependent.
+
+if [ $USE_MPIF90 == 'on' ]; then
+  case "$FORT" in
+    ifort )
+#     export PATH=/opt/intelsoft/mpich/bin:$PATH
+#     export PATH=/opt/intelsoft/mpich2/bin:$PATH
+      export PATH=/opt/intelsoft/openmpi/bin:$PATH
+      ;;
+
+    pgi )
+      export PATH=/opt/pgisoft/mpich/bin:$PATH
+#     export PATH=/opt/pgisoft/openmpi/bin:$PATH
+      ;;
+
+    g95 )
+#     export PATH=/opt/g95soft/mpich2/bin:$PATH
+      export PATH=/opt/g95soft/openmpi/bin:$PATH
+      ;;
+
+  esac
+fi
 
 # The rest of this script sets the path to the users header file and
 # analytical source files, if any. See the templates in User/Functionals.

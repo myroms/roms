@@ -125,6 +125,38 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
  setenv USE_LARGE           on
 #setenv USE_NETCDF4         on
 
+# There are several MPI libraries out there. The user can select here the
+# appropriate "mpif90" script to compile, provided that the makefile
+# macro file (say, Linux-pgi.mk) in the Compilers directory has:
+#
+#              FC := mpif90
+#
+# "mpif90" defined without any path. Recall that you still need to use the
+# appropriate "mpirun" to execute. Also notice that the path where the
+# MPI library is installed is computer dependent.
+
+if ( $USE_MPIF90 == 'on' ) then
+  switch ($FORT)
+
+    case "ifort"
+#     setenv PATH /opt/intelsoft/mpich/bin:$PATH
+#     setenv PATH /opt/intelsoft/mpich2/bin:$PATH
+      setenv PATH /opt/intelsoft/openmpi/bin:$PATH
+    breaksw
+
+    case "pgi"
+      setenv PATH /opt/pgisoft/mpich/bin:$PATH
+#     setenv PATH /opt/pgisoft/openmpi/bin:$PATH
+    breaksw
+
+    case "g95"
+#     setenv PATH /opt/g95soft/mpich2/bin:$PATH
+      setenv PATH /opt/g95soft/openmpi/bin:$PATH
+    breaksw
+
+  endsw
+endif
+
 # The rest of this script sets the path to the users header file and
 # analytical source files, if any. See the templates in User/Functionals.
 

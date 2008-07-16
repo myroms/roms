@@ -68,7 +68,7 @@ endif
 ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
-               FC := /opt/g95soft/mpich2/bin/mpif90
+               FC := mpif90
                LD := $(FC)
  else
              LIBS += -lfmpi-pgi -lmpi-pgi 
