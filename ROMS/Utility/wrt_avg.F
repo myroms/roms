@@ -1222,7 +1222,8 @@
 !
       IF (Hout(idTsur(itemp),ng)) THEN
 #   ifdef ADJOINT
-#    if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+#    if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+        defined OPT_OBSERVATIONS
         scale=1.0_r8/(rho0*Cp)
 #    else
         scale=1.0_r8
@@ -1433,7 +1434,8 @@
 !
       IF (Hout(idUsms,ng)) THEN
 #  ifdef ADJOINT
-#   if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+#   if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+       defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
 #   else
         scale=1.0_r8
@@ -1463,7 +1465,8 @@
 !
       IF (Hout(idVsms,ng)) THEN
 #  ifdef ADJOINT
-#   if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+#   if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+       defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
 #   else
         scale=1.0_r8
@@ -1493,7 +1496,8 @@
 !
       IF (Hout(idUbms,ng)) THEN
 #  ifdef ADJOINT
-#   if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+#   if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+       defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
 #   else
         scale=1.0_r8
@@ -1523,7 +1527,8 @@
 !
       IF (Hout(idVbms,ng)) THEN
 #  ifdef ADJOINT
-#   if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+#   if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+       defined OPT_OBSERVATIONS
         scale=1.0_r8/rho0
 #   else
         scale=1.0_r8

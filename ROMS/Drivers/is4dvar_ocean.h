@@ -221,6 +221,9 @@
 #endif
       USE ini_adjust_mod, ONLY : ini_adjust
       USE ini_fields_mod, ONLY : ini_fields
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces, ONLY : initialize_forces
+#endif
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
 #ifdef BALANCE_OPERATOR
@@ -262,6 +265,7 @@
 !  Initialize relevant parameters.
 !
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Lfinp(ng)=1         ! forcing index for input
         Lfout(ng)=1         ! forcing index for output history files
 #endif
         Lold(ng)=1          ! old minimization time index
@@ -534,6 +538,9 @@
 #endif
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL initialize_ocean (ng, TILE, iADM)
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+                CALL initialize_forces (ng, TILE, iADM)
+#endif
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -732,6 +739,9 @@
 !  The switch "LwrtState2d" is activated to write out state arrays
 !  instead ad_*_sol arrays.
 !
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+            Lfout(ng)=Lnew(ng)
+#endif
             kstp(ng)=Lnew(ng)
 #ifdef SOLVE3D
             nstp(ng)=Lnew(ng)

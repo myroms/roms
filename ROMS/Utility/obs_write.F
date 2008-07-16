@@ -83,33 +83,35 @@
         Mstr=1
         Mend=Nobs(ng)
 # endif
+# ifndef OBS_SENSITIVITY
 !
 !  Some entries are not computed in the extraction routine.  Set values
 !  to zero to avoid problems when writing non initialized values.
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
 !  Notice that only the appropriate indices are zero-out to facilate
 !  collecting all the extrated data as sum between all nodes.
-# endif
+#  endif
 !
         IF (wrtNLmod(ng)) THEN
           DO iobs=Mstr,Mend
-# ifdef S4DVAR
+#  ifdef S4DVAR
             NLmodVal(iobs,Ipass)=IniVal
-# else
-            NLmodVal(iobs)=IniVal
-# endif
-          END DO
-        END IF
-# ifdef TLM_OBS
-        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
-          DO iobs=Mstr,Mend
-#  ifdef IS4DVAR_OLD
-            TLmodVal(iobs,Ipass)=IniVal
 #  else
-            TLmodVal(iobs)=IniVal
+            NLmodVal(iobs)=IniVal
 #  endif
           END DO
         END IF
+#  ifdef TLM_OBS
+        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+          DO iobs=Mstr,Mend
+#   ifdef IS4DVAR_OLD
+            TLmodVal(iobs,Ipass)=IniVal
+#   else
+            TLmodVal(iobs)=IniVal
+#   endif
+          END DO
+        END IF
+#  endif
 # endif
 # if !(defined WEAK_CONSTRAINT || defined IOM)
 !
@@ -128,6 +130,7 @@
 !
 !  Free-surface observations.
 !
+# ifndef OBS_SENSITIVITY
         IF (wrtNLmod(ng).and.                                           &
      &      (FOURDVAR(ng)%ObsCount(isFsur).gt.0)) THEN
           CALL extract_obs2d (ng, IstrR, IendR, JstrR, JendR,           &
@@ -140,15 +143,16 @@
      &                        ObsType, ObsScale,                        &
      &                        Tobs, Xobs, Yobs,                         &
      &                        OCEAN(ng)%zeta(:,:,KOUT),                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                        GRID(ng)%rmask,                           &
-# endif
-# ifdef S4DVAR
+#  endif
+#  ifdef S4DVAR
      &                        NLmodVal(:,Ipass))
-# else
+#  else
      &                        NLmodVal)
-# endif
+#  endif
         END IF
+# endif
 # ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isFsur).gt.0)) THEN
@@ -175,6 +179,7 @@
 !
 !  Vertically integrated u-velocity observations.
 !
+# ifndef OBS_SENSITIVITY
         IF (wrtNLmod(ng).and.                                           &
      &      (FOURDVAR(ng)%ObsCount(isUbar).gt.0)) THEN
           CALL extract_obs2d (ng, Istr, IendR, JstrR, JendR,            &
@@ -187,15 +192,16 @@
      &                        ObsType, ObsScale,                        &
      &                        Tobs, Xobs, Yobs,                         &
      &                        OCEAN(ng)%ubar(:,:,KOUT),                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                        GRID(ng)%umask,                           &
-# endif
-# ifdef S4DVAR
+#  endif
+#  ifdef S4DVAR
      &                        NLmodVal(:,Ipass))
-# else
+#  else
      &                        NLmodVal)
-# endif
+#  endif
         END IF
+# endif
 # ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isUbar).gt.0)) THEN
@@ -222,6 +228,7 @@
 !
 !  Vertically integrated v-velocity observations.
 !
+# ifndef OBS_SENSITIVITY
         IF (wrtNLmod(ng).and.                                           &
      &      (FOURDVAR(ng)%ObsCount(isVbar).gt.0)) THEN
           CALL extract_obs2d (ng, IstrR, IendR, Jstr, JendR,            &
@@ -234,15 +241,16 @@
      &                        ObsType, ObsScale,                        &
      &                        Tobs, Xobs, Yobs,                         &
      &                        OCEAN(ng)%vbar(:,:,KOUT),                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                        GRID(ng)%vmask,                           &
-# endif
-# ifdef S4DVAR
+#  endif
+#  ifdef S4DVAR
      &                        NLmodVal(:,Ipass))
-# else
+#  else
      &                        NLmodVal)
-# endif
+#  endif
         END IF
+# endif
 # ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isVbar).gt.0)) THEN
@@ -271,6 +279,7 @@
 !
 !  3D u-velocity observations.
 !
+#  ifndef OBS_SENSITIVITY
         IF (wrtNLmod(ng).and.                                           &
      &      (FOURDVAR(ng)%ObsCount(isUvel).gt.0)) THEN
           DO k=1,N(ng)
@@ -292,15 +301,16 @@
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%u(:,:,:,NOUT),                  &
      &                        GRID(ng)%z_v,                             &
-#  ifdef MASKING
+#   ifdef MASKING
      &                        GRID(ng)%umask,                           &
-#  endif
-#  ifdef S4DVAR
+#   endif
+#   ifdef S4DVAR
      &                        NLmodVal(:,Ipass))
-#  else
+#   else
      &                        NLmodVal)
-#  endif
+#   endif
         END IF
+#  endif
 #  ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isUvel).gt.0)) THEN
@@ -336,6 +346,7 @@
 !
 !  3D v-velocity observations.
 !
+#  ifndef OBS_SENSITIVITY
         IF (wrtNLmod(ng).and.                                           &
      &      (FOURDVAR(ng)%ObsCount(isVvel).gt.0)) THEN
           DO k=1,N(ng)
@@ -357,15 +368,16 @@
      &                        Tobs, Xobs, Yobs, Zobs,                   &
      &                        OCEAN(ng)%v(:,:,:,NOUT),                  &
      &                        GRID(ng)%z_v,                             &
-#  ifdef MASKING
+#   ifdef MASKING
      &                        GRID(ng)%vmask,                           &
-#  endif
-#  ifdef S4DVAR
+#   endif
+#   ifdef S4DVAR
      &                        NLmodVal(:,Ipass))
-#  else
+#   else
      &                        NLmodVal)
-#  endif
+#   endif
         END IF
+#  endif
 #  ifdef TLM_OBS
         IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                       &
      &      (FOURDVAR(ng)%ObsCount(isVvel).gt.0)) THEN
@@ -402,6 +414,7 @@
 !  Tracer type observations.
 !
         DO itrc=1,NT(ng)
+#  ifndef OBS_SENSITIVITY
           IF (wrtNLmod(ng).and.                                         &
      &        (FOURDVAR(ng)%ObsCount(isTvar(itrc)).gt.0)) THEN
             CALL extract_obs3d (ng, IstrR, IendR, JstrR, JendR,         &
@@ -415,15 +428,16 @@
      &                          Tobs, Xobs, Yobs, Zobs,                 &
      &                          OCEAN(ng)%t(:,:,:,NOUT,itrc),           &
      &                          GRID(ng)%z_r,                           &
-#  ifdef MASKING
+#   ifdef MASKING
      &                          GRID(ng)%rmask,                         &
-#  endif
-#  ifdef S4DVAR
+#   endif
+#   ifdef S4DVAR
      &                          NLmodVal(:,Ipass))
-#  else
+#   else
      &                          NLmodVal)
-#  endif
+#   endif
           END IF
+#  endif
 #  ifdef TLM_OBS
           IF ((wrtTLmod(ng).or.(wrtRPmod(ng))).and.                     &
      &        (FOURDVAR(ng)%ObsCount(isTvar(itrc)).gt.0)) THEN
@@ -451,6 +465,18 @@
         END DO
 # endif
 
+# ifdef OBS_SENSITIVITY
+!
+!-----------------------------------------------------------------------
+!  Scaled extracted data at observations location by the observation
+!  error (observation error covariance).
+!-----------------------------------------------------------------------
+!
+        DO iobs=Mstr,Mend
+          TLmodVal(iobs)=-TLmodVal(iobs)*ObsErr(iobs)
+        END DO
+# endif
+
 # ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
@@ -462,16 +488,19 @@
 #  else
         Ncollect=Mobs
 #  endif
+#  ifndef OBS_SENSITIVITY
+
         IF (wrtNLmod(ng)) THEN 
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
-#  if defined S4DVAR
+#   if defined S4DVAR
      &                     NLmodVal(:,Ipass))
-#  elif defined WEAK_CONSTRAINT
+#   elif defined WEAK_CONSTRAINT
      &                     NLmodVal(Mstr:))
-#  else
+#   else
      &                     NLmodVal)
-#  endif
+#   endif
         END IF
+#  endif
 #  ifdef TLM_OBS
         IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN 
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
@@ -501,7 +530,7 @@
      &                   ObsScale)
 #  endif
 # endif
-# ifdef FOUR_DVAR
+# if defined FOUR_DVAR && !defined OBS_SENSITIVITY
 !
 !-----------------------------------------------------------------------
 !  Compute and write initial and final model-observation misfit
@@ -565,7 +594,7 @@
 !-----------------------------------------------------------------------
 !  Write out data into output 4DVAR NetCDF file.
 !-----------------------------------------------------------------------
-# ifdef FOUR_DVAR
+# if defined FOUR_DVAR && !defined OBS_SENSITIVITY
 !
 !  Current outer and inner loop.
 !
@@ -605,24 +634,25 @@
             RETURN
           END IF
         END IF
+# ifndef OBS_SENSITIVITY
 !
 !  Nonlinear model or first guess (background) state at observation
 !  locations.
 !
         IF (OutThread.and.wrtNLmod(ng)) THEN 
-# ifdef S4DVAR
+#  ifdef S4DVAR
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
           start(2)=Ipass
           total(2)=1
           status=nf90_put_var(ncMODid(ng), modVid(idNLmo,ng),           &
      &                        NLmodVal(:,Ipass), start, total)
-# else
+#  else
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
           status=nf90_put_var(ncMODid(ng), modVid(idNLmo,ng),           &
      &                        NLmodVal(Mstr:), start, total)
-# endif
+#  endif
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idNLmo)), TRIM(MODname(ng))
             exit_flag=3
@@ -631,10 +661,11 @@
           END IF
           haveNLmod(ng)=.TRUE.
         END IF
-# ifdef DISTRIBUTE
+#  ifdef DISTRIBUTE
         IF (wrtNLmod(ng)) THEN
           CALL mp_bcastl (ng, model, haveNLmod(ng), 1)
         END IF
+#  endif
 # endif
 # ifdef TLM_OBS
 !
@@ -803,8 +834,13 @@
         ELSE IF (wrtRPmod(ng)) THEN
           string='Wrote RPM state at observation locations,         '
 #  else
+#   ifdef OBS_SENSITIVITY
+        ELSE IF (wrtTLmod(ng)) THEN
+          string='Wrote 4DVAR observation sensitivity,              '
+#   else
         ELSE IF (wrtTLmod(ng)) THEN
           string='Wrote TLM increments at observation locations,    '
+#   endif
 #  endif
 # endif
         END IF

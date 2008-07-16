@@ -42,8 +42,9 @@
 !
       USE mod_param
       USE mod_boundary
-# if defined CLIMATOLOGY      || defined AD_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
+     defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+     defined SO_SEMI
       USE mod_clima
 # endif
 # if defined FORWARD_READ && defined SOLVE3D
@@ -1436,8 +1437,8 @@
 #  endif   
 # endif
 
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-     defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SO_SEMI
 !
 !-----------------------------------------------------------------------
 !  Set forcing adjoint sensitivity functional.
@@ -1502,11 +1503,18 @@
      &                          update)
         END IF
       END DO
-#  endif   
+#  endif
+# endif
+
+# if defined ADJUST_STFLUX    || defined ADJUST_WSTRESS  || \
+     defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SO_SEMI
 !
+!-----------------------------------------------------------------------
 !  Clear adjoint vertical boundary conditions arrays for IO purposes at
 !  every time-step. Otherwise, their cumulative values will be written
 !  instead of instantaneous values.
+!-----------------------------------------------------------------------
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR

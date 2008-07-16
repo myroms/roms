@@ -32,14 +32,16 @@
       implicit none
 
       PRIVATE
-      PUBLIC :: frc_adjust
+      PUBLIC :: frc_ADadjust
+      PUBLIC :: frc_NLadjust
+      PUBLIC :: frc_TLadjust
       PUBLIC :: load_ADforcing
       PUBLIC :: load_NLforcing
       PUBLIC :: load_TLforcing
 
       CONTAINS
 
-      SUBROUTINE frc_adjust (ng, tile, Linp)
+      SUBROUTINE frc_NLadjust (ng, tile, Linp)
 !
 !=======================================================================
 !                                                                      !
@@ -70,44 +72,44 @@
 # ifdef PROFILE
       CALL wclock_on (ng, iNLM, 7)
 # endif
-      CALL frc_adjust_tile (ng, tile,                                   &
-     &                      LBi, UBi, LBj, UBj,                         &
+      CALL frc_NLadjust_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
 # ifdef MASKING
-     &                      GRID(ng) % rmask,                           &
-     &                      GRID(ng) % umask,                           &
-     &                      GRID(ng) % vmask,                           &
+     &                        GRID(ng) % rmask,                         &
+     &                        GRID(ng) % umask,                         &
+     &                        GRID(ng) % vmask,                         &
 # endif
 # ifdef ADJUST_WSTRESS
-     &                      FORCES(ng) % tl_ustr,                       &
-     &                      FORCES(ng) % tl_vstr,                       &
-     &                      FORCES(ng) % sustr,                         &
-     &                      FORCES(ng) % svstr,                         &
+     &                        FORCES(ng) % tl_ustr,                     &
+     &                        FORCES(ng) % tl_vstr,                     &
+     &                        FORCES(ng) % sustr,                       &
+     &                        FORCES(ng) % svstr,                       &
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
-     &                      FORCES(ng) % tl_tflux,                      &
-     &                      FORCES(ng) % stflx,                         &
+     &                        FORCES(ng) % tl_tflux,                    &
+     &                        FORCES(ng) % stflx,                       &
 # endif
      &                      Linp)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 7)
 # endif
       RETURN
-      END SUBROUTINE frc_adjust
+      END SUBROUTINE frc_NLadjust
 !
 !***********************************************************************
-      SUBROUTINE frc_adjust_tile (ng, tile,                             &
-     &                            LBi, UBi, LBj, UBj,                   &
+      SUBROUTINE frc_NLadjust_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
 # ifdef MASKING
-     &                            rmask, umask, vmask,                  &
+     &                              rmask, umask, vmask,                &
 # endif
 # ifdef ADJUST_WSTRESS
-     &                            tl_ustr,  tl_vstr,                    &
-     &                            sustr, svstr,                         &
+     &                              tl_ustr,  tl_vstr,                  &
+     &                              sustr, svstr,                       &
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
-     &                            tl_tflux, stflx,                      &
+     &                              tl_tflux, stflx,                    &
 # endif
-     &                            Linp)
+     &                              Linp)
 !***********************************************************************
 !
       USE mod_param
@@ -238,7 +240,353 @@
       END DO
 # endif
       RETURN
-      END SUBROUTINE frc_adjust_tile
+      END SUBROUTINE frc_NLadjust_tile
+
+      SUBROUTINE frc_ADadjust (ng, tile, Lout)
+!
+!=======================================================================
+!                                                                      !
+!  This routine adds 4DVAR surface forcing adjoint outputs to adjoint  !
+!  adjusted fields.  The adjustments can be constant (Nfrec=1) or time !
+!  interpolated between snapshots (Nfrec>1).                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng        Nested grid number.                                    !
+!     tile      Domain partition.                                      !
+!     Lout      Adjoint state time index were to add.                  !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_forces
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, Lout
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+# ifdef PROFILE
+      CALL wclock_on (ng, iADM, 7)
+# endif
+      CALL frc_ADadjust_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+# ifdef ADJUST_WSTRESS
+     &                        FORCES(ng) % ad_ustr,                     &
+     &                        FORCES(ng) % ad_vstr,                     &
+     &                        FORCES(ng) % ad_sustr,                    &
+     &                        FORCES(ng) % ad_svstr,                    &
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+     &                        FORCES(ng) % ad_tflux,                    &
+     &                        FORCES(ng) % ad_stflx,                    &
+# endif
+     &                        Lout)
+# ifdef PROFILE
+      CALL wclock_off (ng, iADM, 7)
+# endif
+      RETURN
+      END SUBROUTINE frc_ADadjust
+!
+!***********************************************************************
+      SUBROUTINE frc_ADadjust_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+# ifdef ADJUST_WSTRESS
+     &                              ad_ustr,  ad_vstr,                  &
+     &                              ad_sustr, ad_svstr,                 &
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+     &                              ad_tflux, ad_stflx,                 &
+# endif
+     &                              Lout)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Lout
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:,:)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_svstr(LBi:,LBj:)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:)
+#  endif
+# else
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_svstr(LBi:UBi,LBj:UBj)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#  endif
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: i, it1, it2, j
+# ifdef SOLVE3D
+      integer :: itrc
+# endif
+      real(r8) :: fac, fac1, fac2
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Adjust nonlinear surface forcing fields with 4DVAR increments.
+!-----------------------------------------------------------------------
+!
+!  Set time records and interpolation factor, if any.
+!
+      IF (Nfrec(ng).eq.1) THEN
+        it1=1
+        it2=1
+        fac1=1.0_r8
+        fac2=0.0_r8
+      ELSE
+        it1=MAX(1,iic(ng)/nSFF(ng))
+        it2=MIN(it1+1,Nfrec(ng))
+        fac1=SF_time(it2,ng)-time(ng)
+        fac2=time(ng)-SF_time(it1,ng)
+        fac=1.0_r8/(fac1+fac2)
+        fac1=fac*fac1
+        fac2=fac*fac2
+      END IF
+
+# ifdef ADJUST_WSTRESS
+!
+!  Adjoint of : Interpolate between surface forcing
+!  increments, if appropriate.
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+           ad_ustr(i,j,it1,Lout)=ad_ustr(i,j,it1,Lout)+                 &
+     &                           fac1*ad_sustr(i,j)
+           ad_ustr(i,j,it2,Lout)=ad_ustr(i,j,it2,Lout)+                 &
+     &                           fac2*ad_sustr(i,j)
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+           ad_vstr(i,j,it1,Lout)=ad_vstr(i,j,it1,Lout)+                 &
+     &                           fac1*ad_svstr(i,j)
+           ad_vstr(i,j,it2,Lout)=ad_vstr(i,j,it2,Lout)+                 &
+     &                           fac2*ad_svstr(i,j)
+        END DO
+      END DO
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Adjust surface tracer fluxes. Interpolate between surface forcing
+!  increments, if appropriate.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+           ad_tflux(i,j,it1,Lout,itrc)=ad_tflux(i,j,it1,Lout,itrc)+     &
+     &                                 fac1*ad_stflx(i,j,itrc)
+           ad_tflux(i,j,it2,Lout,itrc)=ad_tflux(i,j,it2,Lout,itrc)+     &
+     &                                 fac2*ad_stflx(i,j,itrc)
+          END DO
+        END DO
+      END DO
+# endif
+      RETURN
+      END SUBROUTINE frc_ADadjust_tile
+
+      SUBROUTINE frc_TLadjust (ng, tile, Linp)
+!
+!=======================================================================
+!                                                                      !
+!  This routine addsinterpolates 4DVAR surface forcing increments.     !
+!  The increments can be constant (Nfrec=1) or time                    !
+!  interpolated between snapshots (Nfrec>1).                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng        Nested grid number.                                    !
+!     tile      Domain partition.                                      !
+!     Linp      Tangent linear state time index to add                 !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_forces
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, Linp
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+# ifdef PROFILE
+      CALL wclock_on (ng, iTLM, 7)
+# endif
+      CALL frc_TLadjust_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+# ifdef ADJUST_WSTRESS
+     &                        FORCES(ng) % tl_ustr,                     &
+     &                        FORCES(ng) % tl_vstr,                     &
+     &                        FORCES(ng) % tl_sustr,                    &
+     &                        FORCES(ng) % tl_svstr,                    &
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+     &                        FORCES(ng) % tl_tflux,                    &
+     &                        FORCES(ng) % tl_stflx,                    &
+# endif
+     &                        Linp)
+# ifdef PROFILE
+      CALL wclock_off (ng, iTLM, 7)
+# endif
+      RETURN
+      END SUBROUTINE frc_TLadjust
+!
+!***********************************************************************
+      SUBROUTINE frc_TLadjust_tile (ng, tile,                           &
+     &                              LBi, UBi, LBj, UBj,                 &
+# ifdef ADJUST_WSTRESS
+     &                              tl_ustr,  tl_vstr,                  &
+     &                              tl_sustr, tl_svstr,                 &
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+     &                              tl_tflux, tl_stflx,                 &
+# endif
+     &                              Linp)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Linp
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:,:)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_sustr(LBi:,LBj:)
+      real(r8), intent(inout) :: tl_svstr(LBi:,LBj:)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: tl_stflx(LBi:,LBj:,:)
+#  endif
+# else
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,                 &
+     &                                 Nfrec(ng),2,NT(ng))
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: tl_svstr(LBi:UBi,LBj:UBj)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: tl_stflx(LBi:UBi,LBj:UBj,NT(ng))
+#  endif
+# endif
+!
+!  Local variable declarations.
+!
+      integer :: i, it1, it2, j
+# ifdef SOLVE3D
+      integer :: itrc
+# endif
+      real(r8) :: fac, fac1, fac2
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Adjust tangent linear surface forcing fields with 4DVAR increments.
+!-----------------------------------------------------------------------
+!
+!  Set time records and interpolation factor, if any.
+!
+      IF (Nfrec(ng).eq.1) THEN
+        it1=1
+        it2=1
+        fac1=1.0_r8
+        fac2=0.0_r8
+      ELSE
+        it1=MAX(1,iic(ng)/nSFF(ng))
+        it2=MIN(it1+1,Nfrec(ng))
+        fac1=SF_time(it2,ng)-time(ng)
+        fac2=time(ng)-SF_time(it1,ng)
+        fac=1.0_r8/(fac1+fac2)
+        fac1=fac*fac1
+        fac2=fac*fac2
+      END IF
+
+# ifdef ADJUST_WSTRESS
+!
+!  Adjoint of : Interpolate between surface forcing
+!  increments, if appropriate.
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+           tl_sustr(i,j)=fac1*tl_ustr(i,j,it1,Linp)+                    &
+     &                   fac2*tl_ustr(i,j,it2,Linp)
+        END DO
+      END DO
+      DO j=Jstr,JendR
+        DO i=IstrR,IendR
+           tl_svstr(i,j)=fac1*tl_vstr(i,j,it1,Linp)+                    &
+     &                   fac2*tl_vstr(i,j,it2,Linp)
+        END DO
+      END DO
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Adjust surface tracer fluxes. Interpolate between surface forcing
+!  increments, if appropriate.
+!
+      DO itrc=1,NT(ng)
+        DO j=JstrR,JendR
+          DO i=IstrR,IendR
+             tl_stflx(i,j,itrc)=fac1*tl_tflux(i,j,it1,Linp,itrc)+       &
+     &                          fac2*tl_tflux(i,j,it2,Linp,itrc)
+          END DO
+        END DO
+      END DO
+# endif
+      RETURN
+      END SUBROUTINE frc_TLadjust_tile
 
       SUBROUTINE load_ADforcing (ng, tile, Lout)
 !

@@ -349,7 +349,7 @@
       END DO
 !$OMP END PARALLEL DO
 
-# ifdef ADJUST_WSTRESS
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !-----------------------------------------------------------------------
 !  Load surface forcing to storage arrays.

@@ -371,7 +371,8 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
       END IF
-# if defined FOUR_DVAR || defined VERIFICATION
+# if (defined FOUR_DVAR || defined VERIFICATION) && \
+     !defined OBS_SENSITIVITY
 #  ifdef OBSERVATIONS
 !
 !-----------------------------------------------------------------------

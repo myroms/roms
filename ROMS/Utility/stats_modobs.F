@@ -62,7 +62,7 @@
       real(r8), allocatable :: Obs_scale(:)
       real(r8), allocatable :: Obs_value(:)
 
-      character (len=11), dimension(NstateVar(ng)) :: text, var_name
+      character (len=11), dimension(NstateVar(ng)) :: text, svar_name
 !
 !-----------------------------------------------------------------------
 !  Read in model and observations data.
@@ -324,17 +324,17 @@
 !
         ic=0
         DO i=1,NstateVar(ng)
-          var_name(i)='           '
+          svar_name(i)='           '
           text(i)='           '
           IF (Ncount(i).gt.0) THEN
             ic=ic+1
             is(ic)=i
-            var_name(ic)=TRIM(Vname(1,idSvar(i)))
+            svar_name(ic)=TRIM(Vname(1,idSvar(i)))
             text(ic)='-----------'
           END IF
         END DO
         WRITE (stdout,40)
-        WRITE (stdout,50) (var_name(i),i=1,ic)
+        WRITE (stdout,50) (svar_name(i),i=1,ic)
         WRITE (stdout,60) (text(i),i=1,ic)
         WRITE (stdout,70) 'Observation Min   ', (obs_min (is(i)),i=1,ic)
         WRITE (stdout,70) 'Observation Max   ', (obs_max (is(i)),i=1,ic)

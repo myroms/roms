@@ -58,11 +58,11 @@
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
 #  ifdef ADJUST_STFLUX
-      integer :: t3dfrc(3)
+      integer :: t3dfrc(4)
 #  endif
 # endif
 # ifdef ADJUST_WSTRESS
-      integer :: u3dfrc(3), v3dfrc(3)
+      integer :: u3dfrc(4), v3dfrc(4)
 # endif
 
       real(r8) :: Aval(6)
@@ -218,6 +218,7 @@
         t3dfrc(1)=DimIDs( 1)
         t3dfrc(2)=DimIDs( 5)
         t3dfrc(3)=frecdim
+        t3dfrc(4)=DimIDs(12)
 #  endif
 # endif
 !
@@ -244,6 +245,7 @@
         u3dfrc(1)=DimIDs( 2)
         u3dfrc(2)=DimIDs( 6)
         u3dfrc(3)=frecdim
+        u3dfrc(4)=DimIDs(12)
 #  endif
 # endif
 !
@@ -270,6 +272,7 @@
         v3dfrc(1)=DimIDs( 3)
         v3dfrc(2)=DimIDs( 7)
         v3dfrc(3)=frecdim
+        v3dfrc(4)=DimIDs(12)
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -364,13 +367,14 @@
         Vinfo( 1)=Vname(1,idUsms)
         WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
         Vinfo( 3)=Vname(3,idUsms)
+        Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
         status=def_var(ncTLMid(ng),tlmVid(idUsms,ng),NF_FOUT,           &
-     &                 nvd3,u3dfrc,Aval,Vinfo,ncname)
+     &                 nvd4,u3dfrc,Aval,Vinfo,ncname)
 !
 !  Define surface V-momentum stress.
 !
@@ -378,13 +382,14 @@
         WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
         Vinfo( 2)=Vname(2,idVsms)
         Vinfo( 3)=Vname(3,idVsms)
+        Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
         status=def_var(ncTLMid(ng),tlmVid(idVsms,ng),NF_FOUT,           &
-     &                 nvd3,v3dfrc,Aval,Vinfo,ncname)
+     &                 nvd4,v3dfrc,Aval,Vinfo,ncname)
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
 !
@@ -403,13 +408,14 @@
             Vinfo(11)='upward flux, freshening (net precipitation)'
             Vinfo(12)='downward flux, salting (net evaporation)'
           END IF
+          Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_rho'
 #  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
           status=def_var(ncTLMid(ng),tlmVid(idTsur(itrc),ng),           &
-     &                   NF_FOUT,nvd3,t3dfrc,Aval,Vinfo,ncname)
+     &                   NF_FOUT,nvd4,t3dfrc,Aval,Vinfo,ncname)
         END DO
 # endif
 !

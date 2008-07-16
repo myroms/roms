@@ -359,6 +359,20 @@
         real(r8), allocatable :: cg_zv(:,:)
 #  endif
 # endif
+# if defined OBS_SENSITIVITY
+!
+!-----------------------------------------------------------------------
+!  Lanczos algorithm coefficients.
+!-----------------------------------------------------------------------
+!
+!  These coefficients are computed in the IS4DVAR Lanczos data
+!  assimilation algorithm and are used here to tangent linear
+!  model initial conditions as weighted sum of the Lanczos
+!  vectors.
+!
+        real(r8), allocatable :: cg_beta(:,:)
+        real(r8), allocatable :: cg_delta(:,:)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Descent algorithm parameters.
@@ -477,84 +491,48 @@
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
-
-# ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
-# endif
 !
 !  Local variable declarations.
 !
-      integer :: ng
-      integer :: Nrec, Nritz, nvd
-      integer :: Vsize(4), start(4), total(4)
+      integer :: Nritz, i, ng
 
 # ifdef OBSERVATIONS
-      integer :: i, ndims, ngatts, recdim, status, varid
-      integer :: dimid, dimsiz
-
-      integer, dimension(Ngrids) :: MyStateVar
-
       real(r8), parameter :: IniVal = 0.0_r8
-
-      character (len=20) :: dimnam
 # endif
 
 # ifdef OBSERVATIONS
 !
 !-----------------------------------------------------------------------
-!  Inquire observations NetCDF and determine the maxumum dimension of
+!  Inquire observations NetCDF and determine the maximum dimension of
 !  several observations arrays.
 !-----------------------------------------------------------------------
-!
-      DO ng=1,Ngrids
-        IF (InpThread) THEN
-!
-!  Open observation NetCDF.
-!
-          status=nf90_open(TRIM(OBSname(ng)), nf90_nowrite, ncOBSid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(OBSname(ng))
-            exit_flag=4
-            ioerror=status
-            RETURN
-          END IF
 !
 !  Inquire about the size of the "datum" unlimitted dimension and
 !  "survey" dimension.
 !
-          Ndatum(ng)=0
-          Nsurvey(ng)=0
-          status=nf90_inquire(ncOBSid(ng), ndims, nvars, ngatts, recdim)
-          IF (status.eq.nf90_noerr) THEN
-            DO i=1,ndims
-              dimid=i
-              status=nf90_inquire_dimension(ncOBSid(ng), dimid, dimnam, &
-     &                                      dimsiz)
-              IF (TRIM(dimnam).eq.'datum') then
-                Ndatum(ng)=dimsiz
-              ELSE IF (TRIM(dimnam).eq.'survey') THEN
-                Nsurvey(ng)=dimsiz
-              ELSE IF (TRIM(dimnam).eq.'state_variable') THEN
-                MyStateVar(ng)=dimsiz
-              END IF
-            END DO
-            IF (Ndatum(ng).eq.0) THEN
-              WRITE (stdout,20) 'datum', TRIM(OBSname(ng))
-              exit_flag=4
-            END IF
-            IF (Nsurvey(ng).eq.0) THEN
-              WRITE (stdout,20) 'survey', TRIM(OBSname(ng))
-              exit_flag=4
-            END IF
-          ELSE
-            WRITE(stdout,30) OBSname(ng)
+      DO ng=1,Ngrids
+        CALL netcdf_get_dim(ng, iNLM, TRIM(OBSname(ng)))
+        IF (exit_flag.ne.NoError) RETURN
+!
+        Ndatum(ng)=0
+        Nsurvey(ng)=0
+        DO i=1,n_dim
+          IF (TRIM(dim_name(i)).eq.'datum') then
+            Ndatum(ng)=dim_size(i)
+          ELSE IF (TRIM(dim_name(i)).eq.'survey') THEN
+            Nsurvey(ng)=dim_size(i)
           END IF
+        END DO
+        IF (Ndatum(ng).eq.0) THEN
+          WRITE (stdout,10) 'datum', TRIM(OBSname(ng))
+          exit_flag=2
+          RETURN
         END IF
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, Nsurvey(ng), 1)
-        CALL mp_bcasti (ng, iNLM, Ndatum(ng), 1)
-#  endif
+        IF (Nsurvey(ng).eq.0) THEN
+          WRITE (stdout,10) 'survey', TRIM(OBSname(ng))
+          exit_flag=2
+          RETURN
+        END IF
       END DO
 !
 !-----------------------------------------------------------------------
@@ -627,55 +605,17 @@
 !
 !  Read in number of observations available per survey.
 !
-        IF (InpThread) THEN
-          status=nf90_inq_varid(ncOBSid(ng), TRIM(Vname(1,idNobs)),     &
-     &                          varid)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,40) TRIM(Vname(1,idNobs)), TRIM(OBSname(ng))
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-          start(1)=1
-          total(1)=Nsurvey(ng)
-          status=nf90_get_var(ncOBSid(ng), varid,                       &
-     &                        FOURDVAR(ng)%NobsSurvey, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,50) TRIM(Vname(1,idNobs)), TRIM(OBSname(ng))
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, FOURDVAR(ng)%NobsSurvey, Nsurvey(ng))
-#  endif
+        CALL netcdf_get_ivar (ng, iNLM, TRIM(OBSname(ng)),              &
+     &                        TRIM(Vname(1,idNobs)),                    &
+     &                        FOURDVAR(ng)%NobsSurvey)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in the time of each observation survey.
 !
-        IF (InpThread) THEN
-          status=nf90_inq_varid(ncOBSid(ng), TRIM(Vname(1,idOday)),     &
-     &                          varid)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,40) TRIM(Vname(1,idOday)), TRIM(OBSname(ng))
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-          start(1)=1
-          total(1)=Nsurvey(ng)
-          status=nf90_get_var(ncOBSid(ng), varid,                       &
-     &                        FOURDVAR(ng)%SurveyTime, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,50) TRIM(Vname(1,idOday)), TRIM(OBSname(ng))
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-#  ifdef DISTRIBUTE
-        CALL mp_bcastf (ng, iNLM, FOURDVAR(ng)%SurveyTime, Nsurvey(ng))
-#  endif
+        CALL netcdf_get_fvar (ng, iNLM, TRIM(OBSname(ng)),              &
+     &                        TRIM(Vname(1,idOday)),                    &
+     &                        FOURDVAR(ng)%SurveyTime)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Determine maximum size of observation arrays.
 !
@@ -791,15 +731,11 @@
 #  if !defined LANCZOS
       IF (Lprecond) THEN
         DO ng=1,Ngrids
-          IF (InpThread) THEN
-            CALL opencdf (ng, 1, HSSname(ng), ncfile, N(ng), idtime,    &
-     &                    Nrec, nvd, Vsize)
-            Nritz=Vsize(1)
-          END IF
+          CALL netcdf_get_dim (ng, iNLM, TRIM(HSSname(ng)),             &
+     &                         TRIM(Vname(1,idtime)),                   &
+     &                         Nritz)
+          IF (exit_flag.ne.NoError) RETURN
         END DO
-#   ifdef DISTRIBUTE
-        CALL mp_bcasti (1, iNLM, Nritz, 1)
-#   endif
       END IF
 #  endif
 #  ifndef LANCZOS
@@ -875,6 +811,16 @@
 
 #  endif
 # endif
+# if defined OBS_SENSITIVITY
+!
+!  Allocate Lanczos algorithm coefficients.
+!
+      allocate ( cg_beta(Ninner+1,Nouter) )
+      cg_beta = IniVal
+
+      allocate ( cg_delta(Ninner,Nouter) )
+      cg_delta = IniVal
+# endif
 !
 !-----------------------------------------------------------------------
 !  Initialize various variables.
@@ -898,49 +844,16 @@
 !
 !  Read in observations global variance.
 !
-        IF (InpThread) THEN
-          status=nf90_inq_varid(ncOBSid(ng), TRIM(Vname(1,idOvar)),     &
-     &                          varid)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,40) TRIM(Vname(1,idOvar)), TRIM(OBSname(ng))
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-          start(1)=1
-          total(1)=MyStateVar(ng)
-          status=nf90_get_var(ncOBSid(ng), varid,                       &
-     &                        FOURDVAR(ng)%ObsVar, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,50) TRIM(Vname(1,idOvar)), TRIM(OBSname(ng))
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-# ifdef DISTRIBUTE
-        CALL mp_bcastf (ng, iNLM, FOURDVAR(ng)%ObsVar, NstateVar(ng))
-# endif
-!
-!  Close observation NetCDF file.
-!
-        IF (InpThread) THEN
-          status=nf90_close (ncOBSid(ng))
-          ncOBSid(ng)=-1
-        END IF
+        CALL netcdf_get_fvar (ng, iNLM, TRIM(OBSname(ng)),              &
+     &                        TRIM(Vname(1,idOvar)),                    &
+     &                        FOURDVAR(ng)%ObsVar)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
       END DO
 
 # ifdef OBSERVATIONS
 !
- 10   FORMAT (/,' MOD_FOURDVAR - unable to open input NetCDF file: ',a)
- 20   FORMAT (/,' MOD_FOURDVAR - error inquiring dimension: ',a,2x,      &
-     &          ' in input NetCDF file: ',a)
- 30   FORMAT (/,' MOD_FOURDVAR - unable to inquire size of dimension',   &
-     &          ' in variable: ',a)
- 40   FORMAT (/,' MOD_FOURDVAR - error inquiring variable ID for: ',a,   &
-     &        2x,' in input NetCDF file: ',a)
- 50   FORMAT (/,' MOD_FOURDVAR - error while reading variable: ',a,2x,   &
+ 10   FORMAT (/,' MOD_FOURDVAR - error inquiring dimension: ',a,2x,      &
      &          ' in input NetCDF file: ',a)
 # endif
 

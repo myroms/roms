@@ -20,8 +20,9 @@
       USE mod_average, ONLY : allocate_average, initialize_average
 #endif
       USE mod_boundary, ONLY : allocate_boundary, initialize_boundary
-#if defined CLIMATOLOGY      || defined AD_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
+    defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+    defined SO_SEMI
       USE mod_clima, ONLY : allocate_clima, initialize_clima
 #endif
 #ifdef SOLVE3D
@@ -79,8 +80,9 @@
 #ifdef BBL_MODEL
           CALL allocate_bbl (ng, LBi, UBi, LBj, UBj)
 #endif
-#if defined CLIMATOLOGY      || defined AD_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
+    defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+    defined SO_SEMI
           CALL allocate_clima (ng, LBi, UBi, LBj, UBj)
 #endif
 #ifdef SOLVE3D
@@ -125,8 +127,9 @@
             CALL initialize_bbl (ng, TILE)
 #endif
             CALL initialize_boundary (ng, TILE)
-#if defined CLIMATOLOGY      || defined AD_SENSITIVITY || \
-    defined OPT_OBSERVATIONS || defined SO_SEMI
+#if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
+    defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+    defined SO_SEMI
             CALL initialize_clima (ng, TILE)
 #endif
 #ifdef SOLVE3D

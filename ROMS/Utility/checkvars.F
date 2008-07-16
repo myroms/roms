@@ -117,6 +117,19 @@
 # endif
 #endif
 #ifdef SOLVE3D
+# if defined BIOLOGY
+#  if defined ANA_BIOLOGY
+      IF (nrrec(ng).ne.0) THEN
+        DO itrc=1,NBT
+          get_var(idTvar(idbio(itrc)))=.TRUE.
+        END DO
+      END IF
+#  else
+      DO itrc=1,NBT
+        get_var(idTvar(idbio(itrc)))=.TRUE.
+      END DO
+#  endif
+# endif
 # if defined T_PASSIVE
 #  if defined ANA_PASSIVE
       IF (nrrec(ng).ne.0) THEN
@@ -131,12 +144,18 @@
 #  endif
 # endif
 # ifdef SEDIMENT
-#  ifdef SED_MORPH
+#  ifdef ANA_SEDIMENT
       IF (nrrec(ng).ne.0) THEN
-        get_var(idbath)=.TRUE.
+        DO itrc=1,NST
+          get_var(idTvar(idsed(itrc)))=.TRUE.
+          get_var(idfrac(itrc))=.TRUE.
+          get_var(idBmas(itrc))=.TRUE.
+        END DO
+        DO itrc=1,MBEDP
+          get_var(idSbed(itrc))=.TRUE.
+        END DO
       END IF
-#  endif
-#  ifndef ANA_SEDIMENT
+#  else
       DO itrc=1,NST
         get_var(idTvar(idsed(itrc)))=.TRUE.
         get_var(idfrac(itrc))=.TRUE.
@@ -145,24 +164,24 @@
       DO itrc=1,MBEDP
         get_var(idSbed(itrc))=.TRUE.
       END DO
-#   ifdef BEDLOAD
-      DO itrc=1,NST
-        IF (nrrec(ng).ne.0) THEN
+#  endif
+#  ifdef BEDLOAD
+      IF (nrrec(ng).ne.0) THEN
+        DO itrc=1,NST
           get_var(idUbld(itrc))=.TRUE.
           get_var(idVbld(itrc))=.TRUE.
-        END IF
-      END DO
-#   endif
+        END DO
+      END IF
+#  endif
+#  ifdef SED_MORPH
+      IF (nrrec(ng).ne.0) THEN
+        get_var(idbath)=.TRUE.
+      END IF
 #  endif
 # endif 
 # if defined SEDIMENT || defined BBL_MODEL
       DO itrc=1,MBOTP
         get_var(idBott(itrc))=.TRUE.
-      END DO
-# endif
-#  if defined BIOLOGY && !defined ANA_BIOLOGY
-      DO itrc=1,NBT
-        get_var(idTvar(idbio(itrc)))=.TRUE.
       END DO
 # endif
 #endif

@@ -792,8 +792,8 @@
       logical, dimension(MBOTP,Ngrids) :: Lbottom
 #endif
       logical, allocatable :: Ltracer(:,:)
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
       logical, allocatable :: Ladsen(:)
 #endif
 
@@ -942,8 +942,8 @@
             CALL initialize_param
             CALL initialize_scalars
             CALL initialize_ncparam
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
             IF (.not.allocated(Ladsen)) THEN
               allocate (Ladsen(MT*Ngrids))
             END IF
@@ -1227,8 +1227,8 @@
             END DO
           ELSE IF (TRIM(KeyWord).eq.'GAMMA2') THEN
             Npts=load_r(Nval, Rval, Ngrids, gamma2)
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
           ELSE IF (TRIM(KeyWord).eq.'DstrS') THEN
             Npts=load_r(Nval, Rval, Ngrids, DstrS)
           ELSE IF (TRIM(KeyWord).eq.'DendS') THEN
@@ -2043,8 +2043,9 @@
           WRITE (out,120) Nouter, 'Nouter',                             &
      &          'Maximun number of 4DVAR outer loop iterations.'
 #endif
-#if defined IS4DVAR || defined IS4DVAR_OLD || \
-    defined W4DPSAS || defined W4DVAR
+#if defined IS4DVAR         || defined IS4DVAR_OLD || \
+    defined OBS_SENSITIVITY || defined W4DPSAS     || \
+    defined W4DVAR
           WRITE (out,120) Ninner, 'Ninner',                             &
      &          'Maximun number of 4DVAR inner loop iterations.'
 #endif
@@ -2393,8 +2394,8 @@
           WRITE (out,160) gamma2(ng), 'gamma2',                         &
      &          'Slipperiness variable: free-slip (1.0) or ',           &
      &          '                     no-slip (-1.0).'
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
           WRITE (out,140) DstrS(ng), 'DstrS',                           &
      &          'Starting day for ADM sensitivity forcing.'
           WRITE (out,140) DendS(ng), 'DendS',                           &
@@ -2809,7 +2810,8 @@
      &                    TRIM(fname)
 # endif
 # if defined TANGENT && \
-    !(defined OPT_OBSERVATIONS || defined SANITY_CHECK)
+    !(defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+      defined SANITY_CHECK)
           fname=ITLname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -2824,9 +2826,9 @@
      &                    TRIM(fname)
 # endif
 # if defined ADJOINT && \
-    !(defined FOUR_DVAR        || defined AD_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SANITY_CHECK   || \
-      defined SO_SEMI)
+    !(defined AD_SENSITIVITY  || defined FOUR_DVAR        || \
+      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+      defined SANITY_CHECK    || defined SO_SEMI)
           fname=IADname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -2857,8 +2859,8 @@
           WRITE (out,230) '      Input Forward State File:  ',          &
      &                    TRIM(fname)
 #endif
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
           fname=ADSname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
@@ -6862,7 +6864,7 @@
 !
       IF (Lwrite) THEN
         DO ng=1,Ngrids
-#  ifdef FOUR_DVAR
+#  if defined FOUR_DVAR && !defined OBS_SENSITIVITY
           WRITE (out,60) ng
           WRITE (out,70) LcycleINI(ng), 'LcycleINI',                    &
      &            'Switch to recycle time-record in initial file.'
@@ -7079,7 +7081,7 @@
           WRITE (out,160) '      Standard Deviation File:  ',           &
      &                    TRIM(fname)
 #   endif
-#   ifndef S4DVAR
+#   if !(defined OBS_SENSITIVITY || S4DVAR)
           fname=NRMname(ng)
           WRITE (out,160) 'Correlation Norm Factors File:  ',           &
      &                    TRIM(fname)
@@ -7097,8 +7099,13 @@
      &                    TRIM(fname)
 #   endif
 #  endif
+#  ifdef OBS_SENSITIVITY
+          WRITE (out,160) '    Input/Output Lanczos File:  ',           &
+     &                    TRIM(HSSname(ng))
+#  else
           WRITE (out,160) '    Input/Output Hessian File:  ',           &
      &                    TRIM(HSSname(ng))
+#  endif
 #  ifdef VERIFICATION
           WRITE (out,160) '     Output verification File:  ',           &
      &                    TRIM(MODname(ng))

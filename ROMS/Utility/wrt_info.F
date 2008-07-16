@@ -77,8 +77,8 @@
 #endif
 
       character (len=1) :: char1
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
       character (len=1), dimension(NT(ng)) :: char1_trc
 #endif
 !
@@ -149,15 +149,13 @@
           RETURN
         END IF
 
-        IF (ndefHIS(ng).gt.0) THEN
-          wrt_info=nf90_inq_varid(ncid, 'ndefHIS', varid)
-          wrt_info=nf90_put_var(ncid, varid, ndefHIS(ng))
-          IF (wrt_info.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'ndefHIS', TRIM(ncname)
-            exit_flag=3
-            ioerror=wrt_info
-            RETURN
-          END IF
+        wrt_info=nf90_inq_varid(ncid, 'ndefHIS', varid)
+        wrt_info=nf90_put_var(ncid, varid, ndefHIS(ng))
+        IF (wrt_info.ne.nf90_noerr) THEN
+          WRITE (stdout,10) 'ndefHIS', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
         END IF
 
         wrt_info=nf90_inq_varid(ncid, 'nRST', varid)
@@ -188,15 +186,13 @@
           RETURN
         END IF
 
-        IF (ndefAVG(ng).gt.0) THEN
-          wrt_info=nf90_inq_varid(ncid, 'ndefAVG', varid)
-          wrt_info=nf90_put_var(ncid, varid, ndefAVG(ng))
-          IF (wrt_info.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'ndefAVG', TRIM(ncname)
-            exit_flag=3
-            ioerror=wrt_info
-            RETURN
-          END IF
+        wrt_info=nf90_inq_varid(ncid, 'ndefAVG', varid)
+        wrt_info=nf90_put_var(ncid, varid, ndefAVG(ng))
+        IF (wrt_info.ne.nf90_noerr) THEN
+          WRITE (stdout,10) 'ndefAVG', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
         END IF
 #endif
 
@@ -210,15 +206,13 @@
           RETURN
         END IF
 
-        IF (ndefADJ(ng).gt.0) THEN
-          wrt_info=nf90_inq_varid(ncid, 'ndefADJ', varid)
-          wrt_info=nf90_put_var(ncid, varid, ndefADJ(ng))
-          IF (wrt_info.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'ndefADJ', TRIM(ncname)
-            exit_flag=3
-            ioerror=wrt_info
-            RETURN
-          END IF
+        wrt_info=nf90_inq_varid(ncid, 'ndefADJ', varid)
+        wrt_info=nf90_put_var(ncid, varid, ndefADJ(ng))
+        IF (wrt_info.ne.nf90_noerr) THEN
+          WRITE (stdout,10) 'ndefADJ', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
         END IF
 #endif
 
@@ -232,15 +226,13 @@
           RETURN
         END IF
 
-        IF (ndefTLM(ng).gt.0) THEN
-          wrt_info=nf90_inq_varid(ncid, 'ndefTLM', varid)
-          wrt_info=nf90_put_var(ncid, varid, ndefTLM(ng))
-          IF (wrt_info.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'ndefTLM', TRIM(ncname)
-            exit_flag=3
-            ioerror=wrt_info
-            RETURN
-          END IF
+        wrt_info=nf90_inq_varid(ncid, 'ndefTLM', varid)
+        wrt_info=nf90_put_var(ncid, varid, ndefTLM(ng))
+        IF (wrt_info.ne.nf90_noerr) THEN
+          WRITE (stdout,10) 'ndefTLM', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
         END IF
 #endif
 
@@ -313,15 +305,13 @@
           RETURN
         END IF
 
-        IF (ndefDIA(ng).gt.0) THEN
-          wrt_info=nf90_inq_varid(ncid, 'ndefDIA', varid)
-          wrt_info=nf90_put_var(ncid, varid, ndefDIA(ng))
-          IF (wrt_info.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'ndefDIA', TRIM(ncname)
-            exit_flag=3
-            ioerror=wrt_info
-            RETURN
-          END IF
+        wrt_info=nf90_inq_varid(ncid, 'ndefDIA', varid)
+        wrt_info=nf90_put_var(ncid, varid, ndefDIA(ng))
+        IF (wrt_info.ne.nf90_noerr) THEN
+          WRITE (stdout,10) 'ndefDIA', TRIM(ncname)
+          exit_flag=3
+          ioerror=wrt_info
+          RETURN
         END IF
 #endif
 
@@ -1083,8 +1073,8 @@
 # endif
 #endif
 
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
 !
 !  Adjoint sensitivity parameters.
 !
@@ -3422,8 +3412,8 @@
           END IF
         END IF
 # endif
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-     defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SO_SEMI
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.
 !

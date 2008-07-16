@@ -1277,12 +1277,19 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Lwrk, rec, ndef, ncfileid
+      integer, intent(in) :: Lwrk, rec, ndef
+
+      integer, intent(inout) :: ncfileid
 
       character (len=*), intent(in) :: ncname
 !
@@ -1366,11 +1373,13 @@
             WRITE (stdout,10) TRIM(ncname)
             exit_flag=2
             ioerror=status
-            RETURN
           END IF            
+          ncfileid=ncid
         END IF
 #ifdef DISTRIBUTE
-
+        CALL mp_bcasti (ng, model, ncfileid, 1)
+        CALL mp_bcasti (ng, model, exit_flag, 1)
+        IF (exit_flag.ne.NoError) RETURN
 #endif
       ELSE
         ncid=ncfileid
@@ -1588,13 +1597,13 @@
 !
 !  If multiple files, close current file.
 !
-      IF (ndef.gt.0) THEN
+      IF (InpThread.and.(ndef.gt.0)) THEN
         status=nf90_close(ncid)
       END IF
 !
  10   FORMAT (' READ_STATE - unable to open NetCDF file: ',a)
  20   FORMAT (' READ_STATE - error while reading variable: ',a,2x,      &
-     &        'at time record = ',i3,/,16x,'in NetCDF file: ',a)
+     &        'at time record = ',i3,/,14x,'in NetCDF file: ',a)
 
       RETURN
       END SUBROUTINE read_state
@@ -3635,7 +3644,7 @@
 
       integer :: i, status
       integer :: start(2), total(2)
-      integer, save :: varid(16)
+      integer, save :: varid(18)
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient vectors.
@@ -3644,7 +3653,7 @@
       IF (OutThread) THEN
         IF (First) THEN
           First=.FALSE.
-          DO i=1,16
+          DO i=1,18
             varid(i)=0
           END DO
         END IF
@@ -3935,6 +3944,45 @@
             ioerror=status
             RETURN
           END IF
+        END IF
+!
+!  Write out Lanczos algorithm coefficients into the adjoint NetCDF
+!  file.  These coefficients can be used to compute the sensitivity
+!  of the observations to the 4DVAR data assimilation system.
+!
+        IF (innLoop.gt.0) THEN
+          IF (varid(17).eq.0) THEN
+            status=nf90_inq_varid(ncADJid(ng), 'cg_beta', varid(17))
+          END IF
+          start(1)=1
+          total(1)=Ninner+1
+          start(2)=1
+          total(2)=Nouter
+          status=nf90_put_var(ncADJid(ng), varid(17), cg_beta,          &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'cg_beta', TRIM(ADJname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+!
+          IF (varid(18).eq.0) THEN
+            status=nf90_inq_varid(ncADJid(ng), 'cg_delta', varid(18))
+          END IF
+          start(1)=1
+          total(1)=Ninner
+          start(2)=1
+          total(2)=Nouter
+          status=nf90_put_var(ncADJid(ng), varid(18), cg_delta,         &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'cg_delta', TRIM(ADJname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+
         END IF
       END IF
 !

@@ -511,6 +511,7 @@
 ** INNER_PRODUCT       use if tangent linear and adjoint inner product check **
 ** IS4DVAR             use if incremental 4DVar data assimilation            **
 ** IS4DVAR_OLD         use if old incremental 4DVar data assimilation        **
+** OBS_SENSITIVITY     use if 4DVAR observations sensitivity driver          **
 ** OPT_OBSERVATIONS    use if optimal observations driver                    **
 ** OPT_PERTURBATION    use if optimal perturbations driver, singular vectors **
 ** PICARD_TEST         use if representer tangent linear model test          **

@@ -40,6 +40,9 @@
 # if defined GRADIENT_CHECK || defined TLM_CHECK
       USE ini_adjust_mod, ONLY : tl_ini_perturb
 # endif
+# ifdef OBS_SENSITIVITY
+      USE ini_lanczos_mod, ONLY : ini_lanczos
+# endif
       USE metrics_mod, ONLY : metrics
 # if defined W4DPSAS || defined W4DVAR
       USE tl_set_depth_mod, ONLY : tl_bath
@@ -168,28 +171,29 @@
 !  If variational data assimilation, reset several IO switches and
 !  variables.
 !-----------------------------------------------------------------------
+#  ifndef OBS_SENSITIVITY
 !
 !  Set switches to create (TRUE) tangent linear initial conditions and
 !  history NetCDF files or append (FALSE) to existing NetCDF files.
 !  Set record to read from initial tangent linear NetCDF file.
 !
-#  if defined WEAK_CONSTRAINT
+#   if defined WEAK_CONSTRAINT
       IF (Nrun.eq.ERstr) THEN
-#  elif defined IS4DVAR
+#   elif defined IS4DVAR
       IF ((Nrun.eq.ERstr).and.(inner.eq.0)) THEN
-#  else    
+#   else    
       IF ((Nrun.eq.ERstr).and.((inner.eq.1).and.(Ipass.le.1))) THEN
-#  endif
-#  ifdef ANA_INITIAL
+#   endif
+#   ifdef ANA_INITIAL
         LdefITL(ng)=.TRUE.
-#  endif
-#  ifndef WEAK_CONSTRAINT
+#   endif
+#   ifndef WEAK_CONSTRAINT
         LdefTLM(ng)=.TRUE.
-#  endif
+#   endif
         CALL tl_def_ini (ng)
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#  endif
+#   endif
         IF (exit_flag.ne.NoError) RETURN
 !
 !  It first pass, write zero initial conditions into tangent linear
@@ -197,19 +201,19 @@
 !  in this NetCDF record
 !
         CALL tl_wrt_ini (ng, Tindex, 2)
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#  endif
+#   endif
       END IF
       IniRec=tITLindx(ng)
 
-#  if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+#   if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Initialize surface forcing counter for storage arrays.
 !
       SFcount(ng)=0
-#  endif
-#  ifndef WEAK_CONSTRAINT
+#   endif
+#   ifndef WEAK_CONSTRAINT
 !
 !  Reset tangent linear model history time record counters. These
 !  counters are reset in every iteration pass. This file is created
@@ -218,7 +222,7 @@
       tTLMindx(ng)=0
       NrecTLM(ng)=0
 
-#   ifdef IS4DVAR_OLD
+#    ifdef IS4DVAR_OLD
 !  
 !  Avoid writing tangent linear history file on the second pass
 !  (Ipass=2).
@@ -228,28 +232,29 @@
       ELSEif (Ipass.eq.2) THEN
         LwrtTLM(ng)=.FALSE.
       END IF
-#   else
+#    else
       LwrtTLM(ng)=.TRUE.
-#   endif
+#    endif
 !
 !  Insure that forward and history file names are the same. In 4DVar,
 !  the forward solution is computed by the nonlinear model and stored
 !  on HISNAME NetCDF file.
 !
-#   ifdef TLM_CHECK
+#    ifdef TLM_CHECK
       FWDname(ng)=HISbase(ng)
       ncFWDid(ng)=-1
-#   else
+#    else
       FWDname(ng)=HISname(ng)
       ncFWDid(ng)=ncHISid(ng)
-#   endif
-#  else
+#    endif
+#   else
 !
 !  If weak constraint 4DVAR, activate writting of history NetCDF
 !  file.
 !
 !!    LdefTLM(ng)=.TRUE.
 !!    LwrtTLM(ng)=.TRUE.
+#   endif
 #  endif
 !
 !  Open observations NetCDF file and initialize various variables
@@ -369,7 +374,7 @@
 !  executed for each ensemble/perturbation/iteration pass.
 !=======================================================================
 
-# ifdef FOUR_DVAR
+# if defined FOUR_DVAR && !defined OBS_SENSITIVITY
 #  if defined GRADIENT_CHECK || defined OPT_OBSERVATIONS || \
       defined TLM_CHECK      || defined WEAK_CONSTRAINT
 !
@@ -467,7 +472,7 @@
 # endif
 !
 !-----------------------------------------------------------------------
-!  Set primitive variables initial conditions.
+!  Set tangent linear model state variables initial conditions.
 !-----------------------------------------------------------------------
 
 # ifdef ANA_INITIAL
@@ -533,23 +538,41 @@
 !$OMP END PARALLEL DO
       END IF
 # endif
+
+# ifdef OBS_SENSITIVITY
+!
+!  Initialize with the weighted sum of all Lanczos vectors computed
+!  from the first outer loop of the IS4DVAR Lanczos algorithm.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile,Tindex)                      &
+!$OMP&            SHARED(ng,numthreads,Lnew)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1
+          CALL ini_lanczos (ng, TILE, Lnew(ng), Tindex)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+
+# else
 !
 !  Read in initial conditions for initial or restart NetCDF file.
 !
-# ifdef INI_FILE
+#  ifdef INI_FILE
       CALL get_state (ng, iTLM, 1, ITLname(ng), IniRec, Tindex)
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#  endif
+#   endif
       IF (exit_flag.ne.NoError) RETURN
-# else
+#  else
       IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, iTLM, 1, ITLname(ng), IniRec, Tindex)
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#  endif
+#   endif
         IF (exit_flag.ne.NoError) RETURN
       END IF
+#  endif
 # endif
 
 # if defined ANA_PERTURB && defined SANITY_CHECK

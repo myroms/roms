@@ -43,6 +43,7 @@
       INTERFACE mp_bcastf
         MODULE PROCEDURE mp_bcastf_s
         MODULE PROCEDURE mp_bcastf_v
+        MODULE PROCEDURE mp_bcastf_m
       END INTERFACE mp_bcastf
 
       INTERFACE mp_bcastl
@@ -53,6 +54,7 @@
       INTERFACE mp_bcasti
         MODULE PROCEDURE mp_bcasti_s
         MODULE PROCEDURE mp_bcasti_v
+        MODULE PROCEDURE mp_bcasti_m
       END INTERFACE mp_bcasti
 
       INTERFACE mp_reduce
@@ -255,9 +257,9 @@
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a floating-point matrix variable to all     !
-!  processors in the group. It is called by all the members in the     !
-!  group.                                                              !
+!  This routine broadcasts a floating-point 2D-array variable to       !
+!  all processors in the group.  It is called by all the members       !
+!  in the group.                                                       !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -313,7 +315,7 @@
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTF_V - error during ',a,' call, Node = ',    &
+ 10     FORMAT (/,' MP_BCASTF_M - error during ',a,' call, Node = ',    &
      &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
@@ -483,6 +485,86 @@
 
       RETURN
       END SUBROUTINE mp_bcasti_v
+
+      SUBROUTINE mp_bcasti_m (ng, model, A, Isize, Jsize)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts an integer 2D-array variable to all         !
+!  processors in the group. It is called by all the members in         !
+!  the group.                                                          !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          Variable to broadcast.                                !
+!     Isize      Number of columns to broadcast.                       !
+!     Jsize      Number of rows to broadcast.                          !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted variable.                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Isize, Jsize
+
+      integer, intent(inout) :: A(Isize,Jsize)
+!
+!  Local variable declarations
+!
+      integer :: Asize, Lstr, MyError, Serror
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 42)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+# ifdef MPI
+      Asize=Isize*Jsize
+      CALL mpi_bcast (A, Asize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,     &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTI_M - error during ',a,' call, Node = ',    &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 42)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_bcasti_m
 
       SUBROUTINE mp_bcastl_s (ng, model, A, Asize)
 !
@@ -1528,13 +1610,15 @@
 !     A          Field to read in (real).                              !
 !     mp_ncread  Error flag (integer).                                 !
 !                                                                      !
+!  Note: We cannot use mod_netcdf here because of cyclic dependency.   !
+!                                                                      !
 !***********************************************************************
 !
       USE mod_param
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
-      USE mod_netcdf
+      USE netcdf
       USE mod_scalars
 !
       implicit none
@@ -1735,13 +1819,15 @@
 !                                                                      !
 !     mp_ncwrite Error flag (integer).                                 !
 !                                                                      !
+!  Note: We cannot use mod_netcdf here because of cyclic dependency.   !
+!                                                                      !
 !***********************************************************************
 !
       USE mod_param
       USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
-      USE mod_netcdf
+      USE netcdf
       USE mod_scalars
 !
       implicit none

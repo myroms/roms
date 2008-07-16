@@ -21,6 +21,7 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+      USE mod_strings
 !
       implicit none
 !
@@ -121,6 +122,66 @@
 # endif
 !
 !-----------------------------------------------------------------------
+!  Define global attributes.
+!-----------------------------------------------------------------------
+!
+!  File type.
+!
+        type='ROMS/TOMS 4DVAR output observation processing file'
+        status=nf90_put_att(ncMODid(ng),nf90_global,'type',             &
+     &                      TRIM(type))
+!
+!  Input observations file.
+!
+        status=nf90_put_att(ncMODid(ng),nf90_global,'obs_file',         &
+     &                      TRIM(OBSname(ng)))
+!
+!  SVN repository information.
+!
+      status=nf90_put_att(ncMODid(ng),nf90_global,'svn_url',            &
+     &                    TRIM(svn_url))
+# ifdef SVN_REV
+      status=nf90_put_att(ncMODid(ng),nf90_global,'svn_rev',            &
+     &                    TRIM(svn_rev))
+# endif
+# ifdef ROOT_DIR
+      status=nf90_put_att(ncMODid(ng),nf90_global,'code_dir',           &
+     &                    TRIM(Rdir))
+# endif
+# ifdef HEADER_DIR
+      status=nf90_put_att(ncMODid(ng),nf90_global,'header_dir',         &
+     &                    TRIM(Hdir))
+# endif
+# ifdef ROMS_HEADER
+      status=nf90_put_att(ncMODid(ng),nf90_global,'header_file',        &
+     &                    TRIM(Hfile))
+# endif
+!
+!  Attributes describing platform and compiler
+!
+        status=nf90_put_att(ncMODid(ng),nf90_global,'os',               &
+     &                      TRIM(my_os))
+        status=nf90_put_att(ncMODid(ng),nf90_global,'cpu',              &
+     &                      TRIM(my_cpu))
+        status=nf90_put_att(ncMODid(ng),nf90_global,'compiler_system',  &
+     &                      TRIM(my_fort))
+        status=nf90_put_att(ncMODid(ng),nf90_global,'compiler_command', &
+     &                      TRIM(my_fc))
+        status=nf90_put_att(ncMODid(ng),nf90_global,'compiler_flags',   &
+     &                      TRIM(my_fflags))
+!
+!  History attribute.
+!
+        IF (LEN_TRIM(date_str).gt.0) THEN
+          WRITE (history,'(a,1x,a,", ",a)') 'ROMS/TOMS, Version',       &
+     &                                    TRIM( version), TRIM(date_str)
+        ELSE
+          WRITE (history,'(a,1x,a)') 'ROMS/TOMS, Version', TRIM(version)
+        END IF
+        status=nf90_put_att(ncMODid(ng),nf90_global,'history',          &
+     &                      TRIM(history))
+!
+!-----------------------------------------------------------------------
 !  Define variables and their attributes.
 !-----------------------------------------------------------------------
 
@@ -139,6 +200,7 @@
         status=def_var(ncMODid(ng),varid,nf90_int,1,0,                  &
      &                 Aval,Vinfo,ncname)
 # endif
+# ifndef OBS_SENSITIVITY
 !
 !  Define model-observations comparison statistics.
 !
@@ -186,7 +248,7 @@
         Vinfo( 2)='model-observations mean squared error'
         status=def_var(ncMODid(ng),varid,NF_FRST,1,stateDim,Aval,       &
      &                 Vinfo,ncname)
-
+# endif
 # if defined IS4DVAR
 !
 !  Converged Ritz eigenvalues.
@@ -212,7 +274,7 @@
      &                 Aval,Vinfo,ncname)
 #  endif
         Vinfo( 1)='cg_beta'
-        Vinfo( 2)='conjugate gradient alpha coefficient'
+        Vinfo( 2)='conjugate gradient beta coefficient'
         vardim(1)=MinnerDim
         vardim(2)=NouterDim
         status=def_var(ncMODid(ng),varid,NF_FRST,2,vardim,              &
@@ -340,7 +402,7 @@
         Vinfo( 2)=Vname(2,idObsS)
         status=def_var(ncMODid(ng),modVid(idObsS,ng),NF_FRST,           &
      &                 1,datumDim,Aval,Vinfo,ncname)
-# ifdef FOUR_DVAR
+# if defined FOUR_DVAR && !defined OBS_SENSITIVITY
 !
 !  Initial nonlinear model at observation locations.
 !
@@ -351,6 +413,7 @@
         status=def_var(ncMODid(ng),modVid(idNLmi,ng),NF_FRST,           &
      &                 1,datumDim,Aval,Vinfo,ncname)
 # endif
+# ifndef OBS_SENSITIVITY
 !
 !  Nonlinear model at observation points.
 !
@@ -359,23 +422,29 @@
         Vinfo( 2)=Vname(2,idNLmo)
         Vinfo(24)='_FillValue'
         Aval(6)=1.0E-6_r8
-# ifdef S4DVAR
+#  ifdef S4DVAR
         vardim(1)=datumDim
         vardim(2)=recordDim
         status=def_var(ncMODid(ng),modVid(idNLmo,ng),NF_FRST,           &
      &                 2,vardim,Aval,Vinfo,ncname)
-# else
+#  else
         status=def_var(ncMODid(ng),modVid(idNLmo,ng),NF_FRST,           &
      &                 1,datumDim,Aval,Vinfo,ncname)
+#  endif
 # endif
-# if defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined WEAK_CONSTRAINT || defined IOM
+# if defined IS4DVAR         || defined IS4DVAR_OLD     || \
+     defined IOM             || defined OBS_SENSITIVITY || \
+     defined WEAK_CONSTRAINT 
 !
 !  Tangent linear or representer model at observation points.
 !
         haveTLmod(ng)=.FALSE.
         Vinfo( 1)=Vname(1,idTLmo)
+#  ifdef OBS_SENSITIVITY
+        Vinfo( 2)='4DVAR sensitivity analysis at observations location'
+#  else
         Vinfo( 2)=Vname(2,idTLmo)
+#  endif
         Vinfo(24)='_FillValue'
         Aval(6)=1.0E-6_r8
 #  ifdef IS4DVAR_OLD

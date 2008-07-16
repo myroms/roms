@@ -31,7 +31,8 @@
       USE mod_storage
 # endif
 !
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+     defined OPT_OBSERVATIONS
       USE adsen_force_mod, ONLY : adsen_force
 # endif
       USE ad_diag_mod, ONLY : ad_diag
@@ -61,7 +62,7 @@
 !!    USE ad_step_floats_mod, ONLY : tl_step_floats
 # endif
 # ifdef ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : load_ADforcing
+      USE frc_adjust_mod, ONLY : frc_ADadjust, load_ADforcing
 # endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
@@ -138,7 +139,8 @@
 !$OMP END PARALLEL DO
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined FOUR_DVAR && defined OBSERVATIONS
+# if (defined FOUR_DVAR && !defined OBS_SENSITIVITY) && \
+      defined OBSERVATIONS
 !
 !-----------------------------------------------------------------------
 !  If appropriate, read observation and model state at observation
@@ -377,6 +379,7 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL frc_ADadjust (ng, TILE, Lfout(ng))
           CALL load_ADforcing (ng, TILE, Lfout(ng))
         END DO
       END DO
@@ -409,7 +412,8 @@
       END IF
 # endif
 
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+     defined OPT_OBSERVATIONS
 !
 !-----------------------------------------------------------------------
 !  Add appropriate forcing terms to the adjoint model. The form of the

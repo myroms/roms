@@ -10,7 +10,7 @@
 !!  Regional Ocean Model System (ROMS) Drivers:                        !
 !!                                                                     !
 !!  convolution.h     ROMS/TOMS convolve an adjoint solution.          !
-!!  correlation.h     ROMS?TOMS background-error correlation.          !
+!!  correlation.h     ROMS/TOMS background-error correlation.          !
 !!  nl_ocean.h        ROMS/TOMS nonlinear model.                       !
 !!  tl_ocean.h        ROMS/TOMS tangent linear model.                  !
 !!  rp_ocean.h        ROMS/TOMS representer tangent linear model.      !
@@ -27,6 +27,7 @@
 !!                      sanity test.                                   !
 !!  picard_ocean.h    ROMS/TOMS Picard test for representers tangent   !
 !!                      linear model.                                  ! 
+!!  obs_sen_ocean.h   ROMS/TOMS 4DVAR observations sensitivity.        !
 !!  op_ocean.h        ROMS/TOMS optimal perturbations.                 !
 !!  optobs_ocean.h    ROMS/TOMS optimal observations.                  !
 !!  symmetry.h        ROMS/TOMS representer matrix symmetry driver.    !
@@ -55,6 +56,8 @@
 # include "fsv_ocean.h"
 #elif defined GRADIENT_CHECK
 # include "grad_ocean.h"
+#elif defined OBS_SENSITIVITY
+# include "obs_sen_ocean.h"
 #elif defined OPT_PERTURBATION
 # include "op_ocean.h"
 #elif defined OPT_OBSERVATIONS

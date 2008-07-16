@@ -114,7 +114,7 @@
       IF (Master) WRITE (stdout,20) 'AD_SENSITIVITY',                   &
      &   'Adjoint Sensitivity Analysis.'
       is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+15)=' AD_SENSITIVITY,'
+      Coptions(is:is+16)=' AD_SENSITIVITY,'
       idriver=idriver+1
 #endif
 #ifdef AFT_EIGENMODES
@@ -1521,6 +1521,13 @@
      &   'Processing 4DVar observations.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' OBSERVATIONS,'
+#endif
+#ifdef OBS_SENSITIVITY
+      IF (Master) WRITE (stdout,20) 'OBS_SENSITIVITY',                  &
+     &   '4DVAR Observations Sensitivity Analysis.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' OBS_SENSITIVITY,'
+      idriver=idriver+1
 #endif
 #ifdef OUT_DOUBLE
       IF (Master) WRITE (stdout,20) 'OUT_DOUBLE',                       &

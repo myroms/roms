@@ -533,17 +533,8 @@
 !  input NetCDF files.  It loads the first relevant data record for
 !  the time-interpolation between snapshots.
 !-----------------------------------------------------------------------
-!
-# ifdef TIMELESS_DATA
-      CALL get_idata (ng)
-# endif
-      CALL get_data (ng)
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
-      IF (exit_flag.ne.NoError) RETURN
-#endif
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  If first pass of iteration loop, set time of surface forcing
 !  adjustment.
@@ -551,9 +542,22 @@
       IF (Nrun.eq.ERstr) THEN
         SF_time(1,ng)=time(ng)
         DO irec=2,Nfrec(ng)
-          SF_time(irec,ng)=SF_time(irec,ng)+nSFF(ng)*dt(ng)
+          SF_time(irec,ng)=SF_time(irec-1,ng)+nSFF(ng)*dt(ng)
         END DO
       END IF
+# endif
+!
+!  If applicable, read in input data.
+!
+# ifdef TIMELESS_DATA
+!
+      CALL get_idata (ng)
+# endif
+      CALL get_data (ng)
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+# endif
+      IF (exit_flag.ne.NoError) RETURN
 #endif
 
 #if defined W4DPSAS || defined NLM_OUTER

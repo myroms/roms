@@ -188,145 +188,146 @@
       ELSE IF (ncid.eq.ncFLTid(ng)) THEN
         type='ROMS/TOMS floats file'
       END IF
-      status=nf90_put_att(ncid, nf90_global, 'type',                        &
+      status=nf90_put_att(ncid, nf90_global, 'type',                    &
      &                    TRIM(type))
 !
 !  Define file climate and forecast metadata convention global
 !  attribute.
 !
       type='CF-1.0'
-      status=nf90_put_att(ncid, nf90_global, 'Conventions',                 &
+      status=nf90_put_att(ncid, nf90_global, 'Conventions',             &
      &                    TRIM(type))
 !
 !  Define other global attributes to NetCDF file.
 !
-      status=nf90_put_att(ncid, nf90_global, 'title',                       &
+      status=nf90_put_att(ncid, nf90_global, 'title',                   &
      &                    TRIM(title))
-      status=nf90_put_att(ncid, nf90_global, 'var_info',                    &
+      status=nf90_put_att(ncid, nf90_global, 'var_info',                &
      &                    TRIM(varname))
 #ifdef PROPAGATOR
-      status=nf90_put_att(ncid, nf90_global, 'gst_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'gst_file',                &
      &                    TRIM(GSTname(ng)))
 #endif
-      status=nf90_put_att(ncid, nf90_global, 'rst_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'rst_file',                &
      &                    TRIM(RSTname(ng)))
       IF (LdefHIS(ng)) THEN
         IF (ndefHIS(ng).gt.0) THEN
           lstr=LEN_TRIM(HISbase(ng))-3
-          status=nf90_put_att(ncid, nf90_global, 'his_base',                &
+          status=nf90_put_att(ncid, nf90_global, 'his_base',            &
      &                        HISbase(ng)(1:lstr))
         ELSE
-          status=nf90_put_att(ncid, nf90_global, 'his_file',                &
+          status=nf90_put_att(ncid, nf90_global, 'his_file',            &
      &                        TRIM(HISname(ng)))
         END IF
       END IF
 #ifdef AVERAGES
       IF (ndefAVG(ng).gt.0) THEN
         lstr=LEN_TRIM(AVGbase(ng))-3
-        status=nf90_put_att(ncid, nf90_global, 'avg_base',                  &
+        status=nf90_put_att(ncid, nf90_global, 'avg_base',              &
      &                      AVGbase(ng)(1:lstr))
       ELSE
-        status=nf90_put_att(ncid, nf90_global, 'avg_file',                  &
+        status=nf90_put_att(ncid, nf90_global, 'avg_file',              &
      &                      TRIM(AVGname(ng)))
       END IF
 #endif
 #ifdef DIAGNOSTICS
       IF (ndefDIA(ng).gt.0) THEN
         lstr=LEN_TRIM(DIAbase(ng))-3
-        status=nf90_put_att(ncid,nf90_global, 'dia_base',                   &
+        status=nf90_put_att(ncid,nf90_global, 'dia_base',               &
      &                      DIAbase(ng)(1:lstr))
       ELSE
-        status=nf90_put_att(ncid, nf90_global, 'dia_file',                  &
+        status=nf90_put_att(ncid, nf90_global, 'dia_file',              &
      &                      TRIM(DIAname(ng)))
       END IF
 #endif
 #ifdef STATIONS
-      status=nf90_put_att(ncid, nf90_global, 'sta_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'sta_file',                &
      &                    TRIM(STAname(ng)))
 #endif
 #ifdef FLOATS
-      status=nf90_put_att(ncid, nf90_global, 'flt_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'flt_file',                &
      &                    TRIM(FLTname(ng)))
 #endif
 #ifndef ANA_GRID
-      status=nf90_put_att(ncid, nf90_global, 'grd_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'grd_file',                &
      &                    TRIM(GRDname(ng)))
 #endif
 #ifdef INI_FILE
 # ifdef NONLINEAR
-      status=nf90_put_att(ncid, nf90_global, 'ini_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'ini_file',                &
      &                    TRIM(INIname(ng)))
 # endif
 # ifdef TANGENT
-      status=nf90_put_att(ncid,nf90_global,'itl_file',                      &
+      status=nf90_put_att(ncid,nf90_global,'itl_file',                  &
      &                    TRIM(ITLname(ng)))
 # endif
 # if defined ADJOINT && \
-    !(defined FOUR_DVAR        || defined AD_SENSITIVITY || \
-      defined OPT_OBSERVATIONS || defined SO_SEMI)
-      status=nf90_put_att(ncid, nf90_global, 'iad_file',                    &
+    !(defined AD_SENSITIVITY  || defined FOUR_DVAR        || \
+      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+      defined SO_SEMI)
+      status=nf90_put_att(ncid, nf90_global, 'iad_file',                &
      &                    TRIM(IADname(ng)))
 # endif
 #endif
 #if defined IS4DVAR || defined IS4DVAR_OLD || defined IOM || \
     defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
-      status=nf90_put_att(ncid, nf90_global, 'nrm_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'nrm_file',                &
      &                    TRIM(NRMname(ng)))
 #endif
 #if defined WEAK_CONSTRAINT || defined IOM
-      status=nf90_put_att(ncid, nf90_global, 'tlf_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'tlf_file',                &
      &                    TRIM(TLFname(ng)))
 #endif
 #ifdef FOUR_DVAR
-      status=nf90_put_att(ncid, nf90_global, 'obs_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'obs_file',                &
      &                    TRIM(OBSname(ng)))
 #endif
 #ifdef FRC_FILE
       DO i=1,nFfiles(ng)
         WRITE (frcatt,20) i
   20    FORMAT ('frc_file_',i2.2)
-        status=nf90_put_att(ncid, nf90_global, frcatt,                      &
+        status=nf90_put_att(ncid, nf90_global, frcatt,                  &
      &                      TRIM(FRCname(i,ng)))
       END DO
 #endif
 #ifdef OBC_DATA
-      status=nf90_put_att(ncid, nf90_global, 'bry_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'bry_file',                &
      &                    TRIM(BRYname(ng)))
 #endif
 #if (defined  ZCLIMATOLOGY && !defined ANA_SSH)     || \
     (defined M2CLIMATOLOGY && !defined ANA_M2CLIMA) || \
     (defined  TCLIMATOLOGY && !defined ANA_TCLIMA)  || \
     (defined M3CLIMATOLOGY && !defined ANA_M3CLIMA)
-      status=nf90_put_att(ncid, nf90_global, 'clm_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'clm_file',                &
      &                    TRIM(CLMname(ng)))
 #endif
 #ifdef FORWARD_READ
-      status=nf90_put_att(ncid, nf90_global, 'fwd_file',                    &
+      status=nf90_put_att(ncid, nf90_global, 'fwd_file',                &
      &                    TRIM(FWDname(ng)))
 #endif
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
-      status=nf90_put_att(ncid, nf90_global, 'ads_file',                    &
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
+      status=nf90_put_att(ncid, nf90_global, 'ads_file',                &
      &                    TRIM(ADSname(ng)))
 #endif
 #if !defined DEBUGGING && defined DISTRIBUTE
-      status=nf90_put_att(ncid, nf90_global, 'script_file',                 &
+      status=nf90_put_att(ncid, nf90_global, 'script_file',             &
      &                    TRIM(Iname))
 #endif
 #if defined ASSIMILATION || defined NUDGING
-      status=nf90_put_att(ncid, nf90_global, 'apar_file',                   &
+      status=nf90_put_att(ncid, nf90_global, 'apar_file',               &
      &                    TRIM(aparnam))
 #endif
 #ifdef BIOLOGY
-      status=nf90_put_att(ncid, nf90_global, 'bpar_file',                   &
+      status=nf90_put_att(ncid, nf90_global, 'bpar_file',               &
      &                    TRIM(bparnam))
 #endif
 #ifdef FLOATS
-      status=nf90_put_att(ncid, nf90_global, 'fpos_file',                   &
+      status=nf90_put_att(ncid, nf90_global, 'fpos_file',               &
      &                    TRIM(fposnam))
 #endif
 #ifdef STATIONS
-      status=nf90_put_att(ncid, nf90_global, 'spos_file',                   &
+      status=nf90_put_att(ncid, nf90_global, 'spos_file',               &
      &                    TRIM(sposnam))
 #endif
 !
@@ -459,12 +460,10 @@
       Vinfo( 2)='number of time-steps between history records'
       status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 
-      IF (ndefHIS(ng).gt.0) THEN
-        Vinfo( 1)='ndefHIS'
-        Vinfo( 2)=                                                      &
+      Vinfo( 1)='ndefHIS'
+      Vinfo( 2)=                                                        &
      &    'number of time-steps between the creation of history files'
-          status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
-      END IF
+      status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 
       Vinfo( 1)='nRST'
       Vinfo( 2)='number of time-steps between restart records'
@@ -483,12 +482,10 @@
       Vinfo( 2)='number of time-steps between time-averaged records'
       status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 
-      IF (ndefAVG(ng).gt.0) THEN
-        Vinfo( 1)='ndefAVG'
-        Vinfo( 2)=                                                      &
+      Vinfo( 1)='ndefAVG'
+      Vinfo( 2)=                                                        &
      &    'number of time-steps between the creation of average files'
         status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
-      END IF
 #endif
 
 #ifdef ADJOINT
@@ -496,12 +493,10 @@
       Vinfo( 2)='number of time-steps between adjoint history records'
       status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 
-      IF (ndefADJ(ng).gt.0) THEN
-        Vinfo( 1)='ndefADJ'
-        Vinfo( 2)=                                                      &
+      Vinfo( 1)='ndefADJ'
+      Vinfo( 2)=                                                        &
      &    'number of time-steps between the creation of adjoint files'
-        status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
-      END IF
+      status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 #endif
 
 #ifdef TANGENT
@@ -509,12 +504,10 @@
       Vinfo( 2)='number of time-steps between tangent history records'
       status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 
-      IF (ndefTLM(ng).gt.0) THEN
-        Vinfo( 1)='ndefTLM'
-        Vinfo( 2)=                                                      &
+      Vinfo( 1)='ndefTLM'
+      Vinfo( 2)=                                                        &
      &    'number of time-steps between the creation of tanget files'
-        status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
-      END IF
+      status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 #endif
 
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -552,12 +545,10 @@
       Vinfo( 2)='number of time-steps between diagnostic records'
       status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 
-      IF (ndefDIA(ng).gt.0) THEN
-        Vinfo( 1)='ndefDIA'
-        Vinfo( 2)=                                                      &
+      Vinfo( 1)='ndefDIA'
+      Vinfo( 2)=                                                        &
      &   'number of time-steps between the creation of diagnostic files'
-        status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
-      END IF
+      status=def_var(ncid,varid,nf90_int,1,0,Aval,Vinfo,ncname)
 #endif
 
 #ifdef STATIONS
@@ -960,8 +951,8 @@
 # endif
 #endif
 
-#if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI
+#if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI
 !
 !  Adjoint sensitivity parameters.
 !
@@ -2240,8 +2231,8 @@
      &                   ncname)
         END IF
 # endif
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-     defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SO_SEMI
 !
 !  Adjoint sensitivity spatial scope mask at RHO-, U-, and V-points.
 !

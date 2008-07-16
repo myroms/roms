@@ -1,8 +1,9 @@
 #include "cppdefs.h"
       MODULE adsen_force_mod
 
-#if defined ADJOINT        && \
-   (defined AD_SENSITIVITY || defined OPT_OBSERVATIONS)
+#if defined ADJOINT          && \
+   (defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

@@ -24,8 +24,9 @@
 # if defined FORWARD_READ && defined SOLVE3D
       USE mod_coupling
 # endif
-# if defined CLIMATOLOGY      || defined AD_SENSITIVITY || \
-     defined OPT_OBSERVATIONS || defined SO_SEMI
+# if defined AD_SENSITIVITY  || defined CLIMATOLOGY      || \
+     defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+     defined SO_SEMI
       USE mod_clima
 # endif
       USE mod_forces
@@ -1279,8 +1280,8 @@
 #  endif
 # endif
 
-# if defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-     defined SO_SEMI
+# if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+     defined OPT_OBSERVATIONS || defined SO_SEMI
 !
 !-----------------------------------------------------------------------
 !  Read in adjoint sensitivity functional.

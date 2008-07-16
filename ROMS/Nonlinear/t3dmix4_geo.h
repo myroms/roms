@@ -8,7 +8,7 @@
 #else
 # define J_RANGE MAX(Jstr-1,1),MIN(Jend+1,Mm(ng))
 #endif
-#define MIX_STABILITY
+#undef MIX_STABILITY
 
       SUBROUTINE t3dmix4 (ng, tile)
 !

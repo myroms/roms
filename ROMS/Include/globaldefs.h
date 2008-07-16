@@ -270,11 +270,11 @@
     defined GRADIENT_CHECK   || defined FT_EIGENMODES    || \
     defined FORCING_SV       || defined INNER_PRODUCT    || \
     defined IS4DVAR          || defined IS4DVAR_OLD      || \
-    defined OPT_PERTURBATION || defined OPT_OBSERVATIONS || \
-    defined R_SYMMETRY       || defined RPM_DRIVER       || \
-    defined SANITY_CHECK     || defined TLM_CHECK        || \
-    defined TLM_DRIVER       || defined W4DPSAS          || \
-    defined W4DVAR
+    defined OBS_SENSITIVITY  || defined OPT_PERTURBATION || \
+    defined OPT_OBSERVATIONS || defined R_SYMMETRY       || \
+    defined RPM_DRIVER       || defined SANITY_CHECK     || \
+    defined TLM_CHECK        || defined TLM_DRIVER       || \
+    defined W4DPSAS          || defined W4DVAR
 # define TANGENT
 #endif
 #if defined AD_SENSITIVITY   || defined ADM_DRIVER       || \
@@ -282,11 +282,11 @@
     defined CORRELATION      || defined GRADIENT_CHECK   || \
     defined FORCING_SV       || defined INNER_PRODUCT    || \
     defined IS4DVAR          || defined IS4DVAR_OLD      || \
-    defined OPT_PERTURBATION || defined OPT_OBSERVATIONS || \
-    defined R_SYMMETRY       || defined SANITY_CHECK     || \
-    defined SO_SEMI          || defined S4DVAR           || \
-    defined TLM_CHECK        || defined W4DPSAS          || \
-    defined W4DVAR
+    defined OBS_SENSITIVITY  || defined OPT_PERTURBATION || \
+    defined OPT_OBSERVATIONS || defined R_SYMMETRY       || \
+    defined SANITY_CHECK     || defined SO_SEMI          || \
+    defined S4DVAR           || defined TLM_CHECK        || \
+    defined W4DPSAS          || defined W4DVAR
 # define ADJOINT
 #endif
 #if defined PICARD_TEST      || defined RPM_DRIVER       || \
@@ -397,8 +397,9 @@
 #if defined CONVOLUTION      || defined CORRELATION      || \
     defined GRADIENT_CHECK   || defined IOM              || \
     defined IS4DVAR          || defined IS4DVAR_OLD      || \
-    defined WEAK_CONSTRAINT  || defined S4DVAR           || \
-    defined TLM_CHECK        || defined OPT_OBSERVATIONS
+    defined OBS_SENSITIVITY  || defined OPT_OBSERVATIONS || \
+    defined S4DVAR           || defined TLM_CHECK        || \
+    defined WEAK_CONSTRAINT
 # define FOUR_DVAR
 #endif
 #if !defined WEAK_CONSTRAINT && defined FOUR_DVAR
@@ -412,18 +413,18 @@
 ** Activate internal switch to process 4DVAR observations.
 */
 
-#if defined GRADIENT_CHECK || defined IOM          || \
-    defined IS4DVAR        || defined IS4DVAR_OLD  || \
-    defined S4DVAR         || defined TLM_CHECK    || \
-    defined VERIFICATION   || defined W4DPSAS      || \
-    defined W4DVAR
+#if defined GRADIENT_CHECK  || defined IOM          || \
+    defined IS4DVAR         || defined IS4DVAR_OLD  || \
+    defined OBS_SENSITIVITY || defined S4DVAR       || \
+    defined TLM_CHECK       || defined VERIFICATION || \
+    defined W4DPSAS         || defined W4DVAR
 # define OBSERVATIONS
 #endif
 
-#if defined GRADIENT_CHECK || defined IS4DVAR      || \
-    defined IS4DVAR_OLD    || defined R_SYMMETRY   || \
-    defined TLM_CHECK      || defined W4DPSAS      || \
-    defined W4DVAR
+#if defined GRADIENT_CHECK || defined IS4DVAR         || \
+    defined IS4DVAR_OLD    || defined OBS_SENSITIVITY || \
+    defined R_SYMMETRY     || defined TLM_CHECK       || \
+    defined W4DPSAS        || defined W4DVAR
 # define TLM_OBS
 #endif
 
@@ -441,15 +442,15 @@
 */
 
 #if !defined FORWARD_READ  && \
-    (defined IS4DVAR || defined IS4DVAR_OLD || \
-     defined S4DVAR  || defined W4DPSAS     || \
-     defined W4DVAR)
+    (defined IS4DVAR         || defined IS4DVAR_OLD || \
+     defined OBS_SENSITIVITY || defined S4DVAR      || \
+     defined W4DPSAS         || defined W4DVAR)
 # define FORWARD_READ
 #endif
 #if !defined FORWARD_WRITE  && \
-    (defined IS4DVAR || defined IS4DVAR_OLD || \
-     defined S4DVAR  || defined W4DPSAS     || \
-     defined W4DVAR)
+    (defined IS4DVAR         || defined IS4DVAR_OLD || \
+     defined OBS_SENSITIVITY || defined S4DVAR      || \
+     defined W4DPSAS         || defined W4DVAR)
 # define FORWARD_WRITE
 #endif
 

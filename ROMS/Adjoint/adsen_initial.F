@@ -1,9 +1,9 @@
 #include "cppdefs.h"
       MODULE adsen_initial_mod
 
-#if defined ADJOINT        && \
-   (defined AD_SENSITIVITY || defined OPT_OBSERVATIONS || \
-    defined SO_SEMI)
+#if defined ADJOINT          && \
+   (defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
+    defined OPT_OBSERVATIONS || defined SO_SEMI)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
