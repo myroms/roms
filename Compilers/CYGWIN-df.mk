@@ -123,6 +123,11 @@ endif
         LD_WINDOWS := on
 
 #
+# Use full path of compiler.
+#
+                FC := $(shell which ${FC})
+
+#
 # Set free form format in source files to allow long string for
 # local directory and compilation flags inside the code.
 #

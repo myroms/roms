@@ -94,6 +94,11 @@ ifdef USE_ESMF
              LIBS += $(ESMF_F90LINKPATHS) -lesmf -lC
 endif
 
+#
+# Use full path of compiler.
+#
+               FC := $(shell which ${FC})
+
 # Cray specials
 
 $(SCRATCH_DIR)/lmd_skpp.o: FFLAGS += -O inlinefrom=lmd_wscale.f90

@@ -85,7 +85,7 @@ setenv ROMS_APPLICATION     CBLAST
 # where all this project's files are kept.
 
 setenv MY_ROOT_DIR          /home/arango/ocean/toms/repository
-setenv MY_PROJECT_DIR       ${MY_ROOT_DIR}/Projects/cblast
+setenv MY_PROJECT_DIR       ${PWD}
 
 # The path to the user's local current ROMS source code. 
 #
@@ -113,7 +113,10 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 #setenv MY_CPP_FLAGS "-D"
 
 # Other user defined environmental variables. See the ROMS makefile for
-# details on other options the user might want to set here. 
+# details on other options the user might want to set here. Be sure to
+# leave the switched meant to be off set to an empty string or commented
+# out. Any string value (including off) will evaluate to TRUE in
+# conditional if-stamentents.
 
  setenv USE_MPI             on
  setenv USE_MPIF90          on
@@ -135,7 +138,7 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 # appropriate "mpirun" to execute. Also notice that the path where the
 # MPI library is installed is computer dependent.
 
-if ( $USE_MPIF90 == 'on' ) then
+if ($?USE_MPIF90) then
   switch ($FORT)
 
     case "ifort"
@@ -160,18 +163,18 @@ endif
 # The rest of this script sets the path to the users header file and
 # analytical source files, if any. See the templates in User/Functionals.
 
- setenv MY_HEADER_DIR       ${MY_PROJECT_DIR}/Forward
+ setenv MY_HEADER_DIR       ${MY_PROJECT_DIR}
 
-#setenv MY_ANALYTICAL_DIR   ${MY_PROJECT_DIR}/Functionals
+#setenv MY_ANALYTICAL_DIR   ${MY_PROJECT_DIR}
 
 # Put the binary to execute in the following directory.
 
- setenv BINDIR              ${MY_PROJECT_DIR}/Forward
+ setenv BINDIR              ${MY_PROJECT_DIR}
 
 # Put the f90 files in a project specific Build directory to avoid conflict
 # with other projects. 
 
- setenv SCRATCH_DIR         ${MY_PROJECT_DIR}/Forward/Build
+ setenv SCRATCH_DIR         ${MY_PROJECT_DIR}/Build
 
 # Go to the users source directory to compile. The options set above will
 # pick up the application-specific code from the appropriate place.

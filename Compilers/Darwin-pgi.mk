@@ -111,6 +111,11 @@ endif
        clean_list += ifc* work.pc*
 
 #
+# Use full path of compiler.
+#
+               FC := $(shell which ${FC})
+
+#
 # Perform floating-point operations in strict conformance with the
 # IEEE standard. This may slow down computations because some
 # optimizations are disabled.  However, we noticed a speed-up.

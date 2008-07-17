@@ -89,6 +89,11 @@ ifdef USE_ESMF
              LIBS += $(ESMF_F90LINKPATHS) -lesmf -lC
 endif
 
+#
+# Use full path of compiler.
+#
+               FC := $(shell which ${FC})
+
 # Turn off bounds checking for function def_var, as "dimension(*)"
 # declarations confuse Gnu Fortran 95 bounds-checking code.
 

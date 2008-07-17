@@ -86,7 +86,7 @@ export   ROMS_APPLICATION=UPWELLING
 # where all this project's files are kept.
 
 export        MY_ROOT_DIR=/home/arango/ocean/toms/repository
-export     MY_PROJECT_DIR=${MY_ROOT_DIR}/Projects/Upwelling
+export     MY_PROJECT_DIR=${PWD}
 
 # The path to the user's local current ROMS source code. 
 #
@@ -112,7 +112,10 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 #export      MY_CPP_FLAGS="-DAVERAGES"
 
 # Other user defined environmental variables. See the ROMS makefile for
-# details on other options the user might want to set here. 
+# details on other options the user might want to set here. Be sure to
+# leave the switched meant to be off set to an empty string or commented
+# out. Any string value (including off) will evaluate to TRUE in
+# conditional if-stamentents.
 
  export           USE_MPI=on
  export        USE_MPIF90=on
@@ -134,7 +137,7 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 # appropriate "mpirun" to execute. Also notice that the path where the
 # MPI library is installed is computer dependent.
 
-if [ $USE_MPIF90 == 'on' ]; then
+if [ -n "${USE_MPIF90+1}" ]; then
   case "$FORT" in
     ifort )
 #     export PATH=/opt/intelsoft/mpich/bin:$PATH
