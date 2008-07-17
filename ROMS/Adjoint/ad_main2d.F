@@ -62,7 +62,7 @@
 !!    USE ad_step_floats_mod, ONLY : tl_step_floats
 # endif
 # ifdef ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_ADadjust, load_ADforcing
+      USE frc_adjust_mod, ONLY : frc_ADadjust
 # endif
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
@@ -380,7 +380,6 @@
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
           CALL frc_ADadjust (ng, TILE, Lfout(ng))
-          CALL load_ADforcing (ng, TILE, Lfout(ng))
         END DO
       END DO
 !$OMP END PARALLEL DO

@@ -448,7 +448,7 @@
       RETURN
       END SUBROUTINE netcdf_check_dim
 
-      SUBROUTINE netcdf_inq_var (ng, model, ncname, VarName,            &
+      SUBROUTINE netcdf_inq_var (ng, model, ncname, myVarName,          &
      &                           VarID, nVarDim, nVarAtt)
 !
 !=======================================================================
@@ -464,7 +464,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     VarName      Requested variable name (string, OPTIONAL)          !
+!     myVarName    Requested variable name (string, OPTIONAL)          !
 !                                                                      !
 !  On Ouput:                                                           !
 !                                                                      !
@@ -485,7 +485,7 @@
 !     var_ndim     Variables number of dimensions (1:n_var)            !
 !     var_dim      Variables dimensions ID (:,1:n_var)                 !
 !                                                                      !
-!  If the OPTIONAL argument VarName is provided, the following         !
+!  If the OPTIONAL argument myVarName is provided, the following       !
 !  information for requested variable is also stored:                  !
 !                                                                      !
 !     n_vatt       Number of variable attributes                       !
@@ -518,7 +518,7 @@
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(in), optional :: VarName
+      character (len=*), intent(in), optional :: myVarName
 
       integer, intent(out), optional :: VarID
       integer, intent(out), optional :: nVarDim
@@ -619,7 +619,7 @@
 !
       IF (exit_flag.eq.NoError) THEN
         foundit=.FALSE.
-        IF (PRESENT(VarName)) THEN
+        IF (PRESENT(myVarName)) THEN
           var_Dids=-1
           var_Dsize=0
           var_Aint=0
@@ -639,7 +639,7 @@
           END DO
 !
           DO i=1,n_var
-            IF (TRIM(var_name(i)).eq.TRIM(VarName)) THEN
+            IF (TRIM(var_name(i)).eq.TRIM(myVarName)) THEN
               foundit=.TRUE.
               my_id=var_id(i)
               n_vatt=var_natt(i)
@@ -670,7 +670,7 @@
               status=nf90_inquire_dimension(ncid, var_Dids(i),          &
      &                                      var_Dname(i), var_Dsize(i))
               IF (status.ne.nf90_noerr) THEN
-                WRITE (stdout,50) i, TRIM(VarName), TRIM(ncname)
+                WRITE (stdout,50) i, TRIM(myVarName), TRIM(ncname)
                 exit_flag=2
                 ioerror=status
                 EXIT
@@ -692,7 +692,7 @@
                       IF (status.ne.nf90_noerr) THEN
                         WRITE (stdout,60) 'integer',                    &
      &                                    TRIM(var_Aname(i)),           &
-     &                                    TRIM(VarName), TRIM(ncname)
+     &                                    TRIM(myVarName), TRIM(ncname)
                         exit_flag=2
                         ioerror=status
                         EXIT
@@ -705,7 +705,7 @@
                       IF (status.ne.nf90_noerr) THEN
                         WRITE (stdout,60) 'float',                      &
      &                                    TRIM(var_Aname(i)),           &
-     &                                    TRIM(VarName), TRIM(ncname)
+     &                                    TRIM(myVarName), TRIM(ncname)
                         exit_flag=2
                         ioerror=status
                         EXIT
@@ -717,7 +717,7 @@
                       IF (status.ne.nf90_noerr) THEN
                         WRITE (stdout,60) 'string',                     &
      &                                    TRIM(var_Aname(i)),           &
-     &                                    TRIM(VarName), TRIM(ncname)
+     &                                    TRIM(myVarName), TRIM(ncname)
                         exit_flag=2
                         ioerror=status
                         EXIT
@@ -725,13 +725,13 @@
                       var_Achar(i)=text(1:my_Alen)
                     END IF
                   ELSE
-                    WRITE (stdout,70) i, TRIM(VarName), TRIM(ncname)
+                    WRITE (stdout,70) i, TRIM(myVarName), TRIM(ncname)
                     exit_flag=2
                     ioerror=status
                     EXIT
                   END IF
                 ELSE
-                  WRITE (stdout,80) i, TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,80) i, TRIM(myVarName), TRIM(ncname)
                   exit_flag=4
                   ioerror=status
                   EXIT
@@ -739,7 +739,7 @@
               END DO
             END IF
           ELSE
-            WRITE (stdout,90) TRIM(VarName), TRIM(ncname)
+            WRITE (stdout,90) TRIM(myVarName), TRIM(ncname)
             exit_flag=2
             ioerror=status
           END IF
@@ -815,7 +815,7 @@
       RETURN
       END SUBROUTINE netcdf_inq_var
 
-      SUBROUTINE netcdf_get_fvar_s (ng, model, ncname, VarName, A)
+      SUBROUTINE netcdf_get_fvar_s (ng, model, ncname, myVarName, A)
 !
 !=======================================================================
 !                                                                      !
@@ -827,7 +827,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     VarName      Variable name (string)                              !
+!     myVarName    Variable name (string)                              !
 !                                                                      !
 !  On Ouput:                                                           !
 !                                                                      !
@@ -855,7 +855,7 @@
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: VarName
+      character (len=*), intent(in) :: myVarName
 
       real(r8), intent(out) :: A
 !
@@ -875,16 +875,16 @@
 !  Read in variable.
 !
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inq_varid(ncid, TRIM(VarName), varid)
+          status=nf90_inq_varid(ncid, TRIM(myVarName), varid)
           IF (status.eq.nf90_noerr) THEN
             status=nf90_get_var(ncid, varid, A)
             IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(VarName), TRIM(ncname)
+              WRITE (stdout,10) TRIM(myVarName), TRIM(ncname)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,20) TRIM(VarName), TRIM(ncname)
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)
             exit_flag=2
             ioerror=status
           END IF
@@ -924,7 +924,7 @@
       RETURN
       END SUBROUTINE netcdf_get_fvar_s
 
-      SUBROUTINE netcdf_get_fvar_v (ng, model, ncname, VarName, A)
+      SUBROUTINE netcdf_get_fvar_v (ng, model, ncname, myVarName, A)
 !
 !=======================================================================
 !                                                                      !
@@ -936,7 +936,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     VarName      Variable name (string)                              !
+!     myVarName    Variable name (string)                              !
 !                                                                      !
 !  On Ouput:                                                           !
 !                                                                      !
@@ -965,7 +965,7 @@
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: VarName
+      character (len=*), intent(in) :: myVarName
 
       real(r8), intent(out) :: A(:)
 !
@@ -990,7 +990,7 @@
 !  Read in variable.
 !
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inq_varid(ncid, TRIM(VarName), varid)
+          status=nf90_inq_varid(ncid, TRIM(myVarName), varid)
           IF (status.eq.nf90_noerr) THEN
             status=nf90_inquire_variable(ncid, varid,                   &
      &                                   ndims = my_ndims,              &
@@ -1000,7 +1000,7 @@
                 status=nf90_inquire_dimension(ncid, my_dimids(i),       &
      &                                        len = my_len(i))
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,10) i, TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,10) i, TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                   EXIT
@@ -1011,18 +1011,18 @@
               IF (status.eq.nf90_noerr) THEN
                 status=nf90_get_var(ncid, varid, A, start, total)
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,20) TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                 END IF
               END IF
             ELSE
-              WRITE (stdout,30) TRIM(VarName), TRIM(ncname)
+              WRITE (stdout,30) TRIM(myVarName), TRIM(ncname)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,40) TRIM(VarName), TRIM(ncname)
+            WRITE (stdout,40) TRIM(myVarName), TRIM(ncname)
             exit_flag=4
             ioerror=status
           END IF
@@ -1066,7 +1066,7 @@
       RETURN
       END SUBROUTINE netcdf_get_fvar_v
 
-      SUBROUTINE netcdf_get_fvar_m (ng, model, ncname, VarName, A)
+      SUBROUTINE netcdf_get_fvar_m (ng, model, ncname, myVarName, A)
 !
 !=======================================================================
 !                                                                      !
@@ -1078,7 +1078,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     VarName      Variable name (string)                              !
+!     myVarName    Variable name (string)                              !
 !                                                                      !
 !  On Ouput:                                                           !
 !                                                                      !
@@ -1108,7 +1108,7 @@
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: VarName
+      character (len=*), intent(in) :: myVarName
 
       real(r8), intent(out) :: A(:,:)
 !
@@ -1134,7 +1134,7 @@
 !  Read in variable.
 !
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inq_varid(ncid, TRIM(VarName), varid)
+          status=nf90_inq_varid(ncid, TRIM(myVarName), varid)
           IF (status.eq.nf90_noerr) THEN
             status=nf90_inquire_variable(ncid, varid,                   &
      &                                   ndims = my_ndims,              &
@@ -1144,7 +1144,7 @@
                 status=nf90_inquire_dimension(ncid, my_dimids(i),       &
      &                                        len = my_len(i))
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,10) i, TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,10) i, TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                   EXIT
@@ -1155,18 +1155,18 @@
               IF (status.eq.nf90_noerr) THEN
                 status=nf90_get_var(ncid, varid, A, start, total)
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,20) TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                 END IF
               END IF
             ELSE
-              WRITE (stdout,30) TRIM(VarName), TRIM(ncname)
+              WRITE (stdout,30) TRIM(myVarName), TRIM(ncname)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,40) TRIM(VarName), TRIM(ncname)
+            WRITE (stdout,40) TRIM(myVarName), TRIM(ncname)
             exit_flag=4
             ioerror=status
           END IF
@@ -1210,7 +1210,7 @@
       RETURN
       END SUBROUTINE netcdf_get_fvar_m
 
-      SUBROUTINE netcdf_get_ivar_s (ng, model, ncname, VarName, A)
+      SUBROUTINE netcdf_get_ivar_s (ng, model, ncname, myVarName, A)
 !
 !=======================================================================
 !                                                                      !
@@ -1222,7 +1222,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     VarName      Variable name (string)                              !
+!     myVarName    Variable name (string)                              !
 !                                                                      !
 !  On Ouput:                                                           !
 !                                                                      !
@@ -1250,7 +1250,7 @@
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: VarName
+      character (len=*), intent(in) :: myVarName
 
       integer, intent(out) :: A
 !
@@ -1271,16 +1271,16 @@
 !  Read in variable.
 !
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inq_varid(ncid, TRIM(VarName), varid)
+          status=nf90_inq_varid(ncid, TRIM(myVarName), varid)
           IF (status.eq.nf90_noerr) THEN
             status=nf90_get_var(ncid, varid, A)
             IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(VarName), TRIM(ncname)
+              WRITE (stdout,10) TRIM(myVarName), TRIM(ncname)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,20) TRIM(VarName), TRIM(ncname)
+            WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)
             exit_flag=2
             ioerror=status
           END IF
@@ -1320,7 +1320,7 @@
       RETURN
       END SUBROUTINE netcdf_get_ivar_s
 
-      SUBROUTINE netcdf_get_ivar_v (ng, model, ncname, VarName, A)
+      SUBROUTINE netcdf_get_ivar_v (ng, model, ncname, myVarName, A)
 !
 !=======================================================================
 !                                                                      !
@@ -1332,7 +1332,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     VarName      Variable name (string)                              !
+!     myVarName    Variable name (string)                              !
 !                                                                      !
 !  On Ouput:                                                           !
 !                                                                      !
@@ -1361,7 +1361,7 @@
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: VarName
+      character (len=*), intent(in) :: myVarName
 
       integer, intent(out) :: A(:)
 !
@@ -1386,7 +1386,7 @@
 !  Read in variable.
 !
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inq_varid(ncid, TRIM(VarName), varid)
+          status=nf90_inq_varid(ncid, TRIM(myVarName), varid)
           IF (status.eq.nf90_noerr) THEN
             status=nf90_inquire_variable(ncid, varid,                   &
      &                                   ndims = my_ndims,              &
@@ -1396,7 +1396,7 @@
                 status=nf90_inquire_dimension(ncid, my_dimids(i),       &
      &                                        len = my_len(i))
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,10) i, TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,10) i, TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                   EXIT
@@ -1407,18 +1407,18 @@
               IF (status.eq.nf90_noerr) THEN
                 status=nf90_get_var(ncid, varid, A, start, total)
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,20) TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                 END IF
               END IF
             ELSE
-              WRITE (stdout,30) TRIM(VarName), TRIM(ncname)
+              WRITE (stdout,30) TRIM(myVarName), TRIM(ncname)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,40) TRIM(VarName), TRIM(ncname)
+            WRITE (stdout,40) TRIM(myVarName), TRIM(ncname)
             exit_flag=4
             ioerror=status
           END IF
@@ -1462,7 +1462,7 @@
       RETURN
       END SUBROUTINE netcdf_get_ivar_v
 
-      SUBROUTINE netcdf_get_ivar_m (ng, model, ncname, VarName, A)
+      SUBROUTINE netcdf_get_ivar_m (ng, model, ncname, myVarName, A)
 !
 !=======================================================================
 !                                                                      !
@@ -1474,7 +1474,7 @@
 !     ng           Nested grid number (integer)                        !
 !     model        Calling model identifier (integer)                  !
 !     ncname       NetCDF file name (string)                           !
-!     VarName      Variable name (string)                              !
+!     myVarName    Variable name (string)                              !
 !                                                                      !
 !  On Ouput:                                                           !
 !                                                                      !
@@ -1504,7 +1504,7 @@
       integer, intent(in) :: ng, model
 
       character (len=*), intent(in) :: ncname
-      character (len=*), intent(in) :: VarName
+      character (len=*), intent(in) :: myVarName
 
       integer, intent(out) :: A(:,:)
 !
@@ -1530,7 +1530,7 @@
 !  Read in variable.
 !
         IF (status.eq.nf90_noerr) THEN
-          status=nf90_inq_varid(ncid, TRIM(VarName), varid)
+          status=nf90_inq_varid(ncid, TRIM(myVarName), varid)
           IF (status.eq.nf90_noerr) THEN
             status=nf90_inquire_variable(ncid, varid,                   &
      &                                   ndims = my_ndims,              &
@@ -1540,7 +1540,7 @@
                 status=nf90_inquire_dimension(ncid, my_dimids(i),       &
      &                                        len = my_len(i))
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,10) i, TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,10) i, TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                   EXIT
@@ -1551,18 +1551,18 @@
               IF (status.eq.nf90_noerr) THEN
                 status=nf90_get_var(ncid, varid, A, start, total)
                 IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,20) TRIM(VarName), TRIM(ncname)
+                  WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)
                   exit_flag=2
                   ioerror=status
                 END IF
               END IF
             ELSE
-              WRITE (stdout,30) TRIM(VarName), TRIM(ncname)
+              WRITE (stdout,30) TRIM(myVarName), TRIM(ncname)
               exit_flag=2
               ioerror=status
             END IF
           ELSE
-            WRITE (stdout,40) TRIM(VarName), TRIM(ncname)
+            WRITE (stdout,40) TRIM(myVarName), TRIM(ncname)
             exit_flag=4
             ioerror=status
           END IF

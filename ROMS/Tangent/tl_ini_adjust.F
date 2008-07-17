@@ -41,6 +41,9 @@
 !
       USE mod_param
       USE mod_ocean
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces
+# endif
 !
 !  Imported variable declarations.
 !
@@ -56,6 +59,16 @@
       CALL tl_ini_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         Lbck, Lini, Lnew,                        &
+# if defined ADJUST_STFLUX && defined SOLVE3D
+     &                         FORCES(ng) % tflux,                      &
+     &                         FORCES(ng) % tl_tflux,                   &
+# endif
+# ifdef ADJUST_WSTRESS
+     &                         FORCES(ng) % ustr,                       &
+     &                         FORCES(ng) % tl_ustr,                    &
+     &                         FORCES(ng) % vstr,                       &
+     &                         FORCES(ng) % tl_vstr,                    &
+# endif
 # ifdef SOLVE3D
      &                         OCEAN(ng) % t,                           &
      &                         OCEAN(ng) % tl_t,                        &
@@ -82,6 +95,13 @@
       SUBROUTINE tl_ini_adjust_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
      &                               Lbck, Lini, Lnew,                  &
+# if defined ADJUST_STFLUX && defined SOLVE3D
+     &                               tflux, tl_tflux,                   &
+# endif
+# ifdef ADJUST_WSTRESS
+     &                               ustr, tl_ustr,                     &
+     &                               vstr, tl_vstr,                     &
+# endif
 # ifdef SOLVE3D
      &                               t, tl_t,                           &
      &                               u, tl_u,                           &
@@ -105,6 +125,13 @@
       integer, intent(in) :: Lbck, Lini, Lnew
 !
 # ifdef ASSUMED_SHAPE
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(in) :: tflux(LBi:,LBj:,:,:,:)
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: vstr(LBi:,LBj:,:,:)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: u(LBi:,LBj:,:,:)
@@ -114,6 +141,13 @@
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
 #  endif
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: tl_vstr(LBi:,LBj:,:,:)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: tl_t(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_u(LBi:,LBj:,:,:)
@@ -124,6 +158,14 @@
 #  endif
       real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 # else
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(in) :: tflux(LBi:UBi,LBj:UBj,                    &
+     &                              Nfrec(ng),2,NT(ng))
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -133,6 +175,14 @@
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
 #  endif
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: tl_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+#  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(inout) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
@@ -216,6 +266,42 @@
         END DO
       END DO
 # endif
+# ifdef ADJUST_WSTRESS
+!
+!   Surface momentum stress.
+!
+      DO k=1,Nfrec(ng)
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            tl_ustr(i,j,k,Lnew)=tl_ustr(i,j,k,Lnew)-                    &
+     &                          (ustr(i,j,k,Lini)-ustr(i,j,k,Lbck))
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            tl_vstr(i,j,k,Lnew)=tl_vstr(i,j,k,Lnew)-                    &
+     &                          (vstr(i,j,k,Lini)-vstr(i,j,k,Lbck))
+          END DO
+        END DO
+      END DO
+# endif
+# if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  Surface Tracers flux.
+!
+      DO itrc=1,NT(ng)
+        DO k=1,Nfrec(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              tl_tflux(i,j,k,Lnew,itrc)=tl_tflux(i,j,k,Lnew,itrc)-      &
+     &                                  (tflux(i,j,k,Lini,itrc)-        &
+     &                                   tflux(i,j,k,Lbck,itrc))
+            END DO
+          END DO          
+        END DO
+      END DO
+# endif
+
       RETURN
       END SUBROUTINE tl_ini_adjust_tile
 #endif       
