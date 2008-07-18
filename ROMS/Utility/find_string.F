@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-      FUNCTION find_string (A, Asize, string) RESULT (foundit)
+      FUNCTION find_string (A, Asize, string, Aindex) RESULT (foundit)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -19,6 +19,7 @@
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
+!     Aindex       Array element containing the string (integer)       !
 !     foundit      The value of the result is TRUE/FALSE if the        !
 !                    string was found or not.                          !
 !                                                                      !
@@ -27,6 +28,8 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: Asize
+
+      integer, intent(out) :: Aindex
 
       character (len=*), intent(in) :: A(Asize)
       character (len=*), intent(in) :: string
@@ -42,9 +45,11 @@
 !-----------------------------------------------------------------------
 !
       foundit=.FALSE.
+      Aindex=0
       DO i=1,Asize
         IF (TRIM(A(i)).eq.TRIM(string)) THEN
           foundit=.TRUE.
+          Aindex=i
           EXIT
         END IF
       END DO

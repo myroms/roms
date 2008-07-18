@@ -30,7 +30,7 @@
      &      'Read previous adjoint state solution,        ',            &
      &      'Read latest adjoint state solution,          ',            &
      &      'Read covariance normalization factors,       ',            &
-     &      'Read correlation standard deviation factors, ',            &
+     &      'Read correlation standard deviation,         ',            &
      &      'Read impulse forcing,                        ',            &
      &      'Read v-space increments,                     ',            &
      &      'Read background state,                       '/)

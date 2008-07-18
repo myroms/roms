@@ -52,6 +52,7 @@
       integer :: dim_size(Mdims)        ! dimensions value
       integer :: var_id(Mvars)          ! variables ID
       integer :: var_natt(Mvars)        ! variables number of attributes
+      integer :: var_flag(Mvars)        ! Variables water points flag
       integer :: var_type(Mvars)        ! variables external data type
       integer :: var_ndim(Mvars)        ! variables number of dimensions
       integer :: var_dim(NvarD,Mvars)   ! variables dimensions ID
@@ -481,6 +482,7 @@
 !     var_name     Variables name (1:n_var)                            !
 !     var_id       Variables ID (1:n_var)                              !
 !     var_natt     Variables number of attributes (1:n_var)            !
+!     var_flag     Variables flag [1=full field, -1=water points only] !
 !     var_type     Variables external data type (1:n_var)              !
 !     var_ndim     Variables number of dimensions (1:n_var)            !
 !     var_dim      Variables dimensions ID (:,1:n_var)                 !
@@ -563,11 +565,28 @@
 !
             DO i=1,n_var
               var_id(i)=i
+              var_flag(i)=1
               status=nf90_inquire_variable(ncid, var_id(i),             &
      &                                     var_name(i), var_type(i),    &
      &                                     var_ndim(i), var_dim(:,i),   &
      &                                     var_natt(i))
-              IF (status.ne.nf90_noerr) THEN
+              IF (status.eq.nf90_noerr) THEN
+                DO j=1,var_natt(i)
+                  status=nf90_inq_attname(ncid, var_id(i), j,           &
+     &                                    var_Aname(j))
+                  IF (status.eq.nf90_noerr) THEN
+                    IF (TRIM(var_Aname(j)).eq.'water_points'.and.       &
+     &                  (var_ndim(i).gt.0)) THEN
+                      var_flag(i)=-1
+                    END IF
+                  ELSE
+                    WRITE (stdout,70) j, TRIM(var_name(i)), TRIM(ncname)
+                    exit_flag=2
+                    ioerror=status
+                    EXIT
+                  END IF
+                END DO
+              ELSE
                 WRITE (stdout,10) var_id(i), TRIM(ncname)
                 exit_flag=2
                 ioerror=status
@@ -605,6 +624,7 @@
         rec_id=ibuffer(4)
         rec_size=ibuffer(5)
         CALL mp_bcasti (ng, model, var_id, Mvars)
+        CALL mp_bcasti (ng, model, var_flag, Mvars)
         CALL mp_bcasti (ng, model, var_type, Mvars)
         CALL mp_bcasti (ng, model, var_ndim, Mvars)
         CALL mp_bcasti (ng, model, var_natt, Mvars)
@@ -738,10 +758,6 @@
                 END IF
               END DO
             END IF
-          ELSE
-            WRITE (stdout,90) TRIM(myVarName), TRIM(ncname)
-            exit_flag=2
-            ioerror=status
           END IF
 
 #ifdef DISTRIBUTE
@@ -749,29 +765,36 @@
 !  Broadcast requested variable information to all processors in the
 !  group.
 !
-          CALL mp_bcasti (ng, model, exit_flag, 1)
-          IF (exit_flag.eq.NoError) THEN
-            DO i=1,n_vdim
-              CALL mp_bcasts (ng, model, var_Dname(i),                  &
-     &                        LEN(var_Dname(i)))
-            END DO
-            IF (n_vdim.gt.0) THEN
-              CALL mp_bcasti (ng, model, var_Dsize, NvarD)
-            END IF
-            DO i=1,n_vatt
-              CALL mp_bcasts (ng, model, var_Aname(i),                  &
-     &                        LEN(var_Aname(i)))
-              IF (LEN_TRIM(var_Achar(i)).gt.0) THEN
-                CALL mp_bcasts (ng, model, var_Achar(i),                &
-     &                          LEN(var_Achar(i)))
+          IF (foundit) THEN
+            CALL mp_bcasti (ng, model, exit_flag, 1)
+            IF (exit_flag.eq.NoError) THEN
+              DO i=1,n_vdim
+                CALL mp_bcasts (ng, model, var_Dname(i),                &
+     &                          LEN(var_Dname(i)))
+              END DO
+              IF (n_vdim.gt.0) THEN
+                CALL mp_bcasti (ng, model, var_Dsize, NvarD)
               END IF
-            END DO
-            IF (n_vatt.gt.0) THEN
-              CALL mp_bcasti (ng, model, var_Aint, NvarA)
-              CALL mp_bcastf (ng, model, var_Afloat, NvarA)
+              DO i=1,n_vatt
+                CALL mp_bcasts (ng, model, var_Aname(i),                &
+     &                          LEN(var_Aname(i)))
+                IF (LEN_TRIM(var_Achar(i)).gt.0) THEN
+                  CALL mp_bcasts (ng, model, var_Achar(i),              &
+     &                            LEN(var_Achar(i)))
+                END IF
+              END DO
+              IF (n_vatt.gt.0) THEN
+                CALL mp_bcasti (ng, model, var_Aint, NvarA)
+                CALL mp_bcastf (ng, model, var_Afloat, NvarA)
+              END IF
             END IF
           END IF
 #endif
+          IF (.not.foundit) THEN
+            IF (Master) WRITE (stdout,90) TRIM(myVarName), TRIM(ncname)
+            exit_flag=2
+            ioerror=status
+          END IF
         END IF
       END IF
 !
@@ -781,7 +804,7 @@
         status=nf90_close(ncid)
         IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,100) TRIM(ncname)
-          exit_flag=4
+          exit_flag=2
           ioerror=status
         END IF
       END IF

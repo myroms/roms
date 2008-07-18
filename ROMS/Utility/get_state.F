@@ -62,14 +62,16 @@
 !
 !  Local variable declarations.
 !
-      logical :: Perfect2D, Perfect3D
+      logical :: Perfect2D, Perfect3D, foundit
+
+      logical :: find_string
 
       logical, dimension(NV) :: get_var, have_var
 
       integer :: LBi, UBi, LBj, UBj
       integer :: IDmod, InpRec, gtype, i, itrc, lstr, lend
-      integer :: Nrec, ncINPid, nvatts, nvdim, status, varid, vartype
-      integer :: Vsize(4), start(4), total(4), vdimids(5)
+      integer :: Nrec, mySize, ncINPid, nvatts, nvdim, status, varid
+      integer :: Vsize(4), start(4), total(4)
 
       integer :: nf_fread2d
       integer :: nf_fread3d
@@ -79,8 +81,9 @@
 
       real(r8), parameter :: Fscl = 1.0_r8
 
-      real(r8) :: Fmax, Fmin, Tmax, time_scale
-      real(r8) :: INPtime(1)
+      real(r8) :: Fmax, Fmin, INPtime, Tmax, time_scale
+
+      real(r8), allocatable :: myTime(:)
 
       character (len=6 ) :: string
       character (len=14) :: t_code
@@ -132,6 +135,7 @@
 !
       CALL checkvars (ng, IDmod, ncname, string, Nrec, NV, tvarnam,     &
      &                get_var, have_var)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Set Vsize to zero to deactivate interpolation of input data to model
 !  grid in "nf_fread2d" and "nf_fread3d".
@@ -157,107 +161,82 @@
           WRITE (stdout,20) string, TRIM(ncname)
           exit_flag=2
           ioerror=status
-          RETURN
         END IF
+      END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, IDmod, exit_flag, 1)
+#endif
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Inquire about the input time variable.
+!
+      CALL netcdf_inq_var (ng, IDmod, ncname, TRIM(tvarnam), varid,     &
+     &                     nvdim, nvatts)
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Allocate input time variable and read its value(s).  Recall that
+!  input time variable is a one-dimensional array with one or several
+!  values.
+!
+      mySize=var_Dsize(1)
+      IF (.not.allocated(myTime)) allocate (myTime(mySize))
+      CALL netcdf_get_fvar (ng, IDmod, ncname, TRIM(tvarnam), myTime)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  If using the latest time record from input NetCDF file as the
-!  initialization record, find time record index to read and read
-!  in model time.
+!  initialization record, assign input time.
 !
-        status=nf90_inq_varid(ncINPid, TRIM(tvarnam), varid)
-        IF (LastRec(ng)) THEN
-          Tmax=-1.0_r8
-          DO i=1,tsize
-            start(1)=i
-            total(1)=1
-            status=nf90_get_var(ncINPid, varid, INPtime, start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,30) string, TRIM(tvarnam), i, TRIM(ncname)
-              exit_flag=2
-              ioerror=status
-              RETURN
-            END IF
-            IF (INPtime(1).gt.Tmax) THEN
-              Tmax=INPtime(1)
-              IniRec=i
-            END IF
-          END DO
-          INPtime(1)=Tmax
-          InpRec=IniRec
-        ELSE
-          IF ((IniRec.ne.0).and.(IniRec.gt.tsize)) THEN
-            WRITE (stdout,40) string, IniRec, TRIM(ncname), tsize
-            exit_flag=2
-            RETURN
+      IF (LastRec(ng)) THEN
+        Tmax=-1.0_r8
+        DO i=1,mySize
+          IF (myTime(i).gt.Tmax) THEN
+            Tmax=myTime(i)
+            IniRec=i
           END IF
-          IF (IniRec.ne.0) THEN
-            InpRec=IniRec
-          ELSE
-            InpRec=1
-          END IF
-          start(1)=InpRec
-          total(1)=1
-          status=nf90_get_var(ncINPid, varid, INPtime, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) string, TRIM(tvarnam), InpRec,            &
-     &                        TRIM(ncname)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-!
-!  Inquire time units. Set local time scale.
-!
-        time_scale=0.0_r8
-        status=nf90_inquire_variable(ncINPid, varid, tvarnam, vartype,  &
-     &                               nvdim, vdimids, nvatts)
-        IF (status.eq.nf90_noerr) THEN
-          DO i=1,nvatts
-            status=nf90_inq_attname(ncINPid, varid, i, attnam)
-            IF (status.eq.nf90_noerr) THEN
-              IF (TRIM(attnam).eq.'units') THEN
-                status=nf90_get_att(ncINPid, varid, TRIM(attnam),       &
-     &                              tunits)
-                IF (status.eq.nf90_noerr) THEN
-                  IF (tunits(1:3).eq.'day') THEN
-                    time_scale=day2sec
-                  ELSE IF (tunits(1:6).eq.'second') THEN
-                    time_scale=1.0_r8
-                  END IF
-                ELSE
-                  WRITE (stdout,50) string, TRIM(attnam)
-                  exit_flag=2
-                  ioerror=status
-                  RETURN
-                END IF
-              END IF
-            ELSE
-              WRITE (stdout,60) string, TRIM(tvarnam)
-              exit_flag=2
-              RETURN
-            END IF
-          END DO
-        ELSE
-          WRITE (stdout,70) string, TRIM(ncname)
+        END DO
+        INPtime=Tmax
+        InpRec=IniRec
+      ELSE
+        IF ((IniRec.ne.0).and.(IniRec.gt.mySize)) THEN
+          IF (Master)  WRITE (stdout,40) string, IniRec, TRIM(ncname),   &
+     &                                   mySize
           exit_flag=2
           RETURN
         END IF
-        INPtime(1)=INPtime(1)*time_scale
+        IF (IniRec.ne.0) THEN
+          InpRec=IniRec
+        ELSE
+          InpRec=1
+        END IF
+        INPtime=myTime(InpRec)
+      END IF
+      IF (allocated(myTime)) deallocate ( myTime )
+!
+!  Set input time scale by looking at the "units" attribute.
+!
+      time_scale=0.0_r8
+      DO i=1,nvatts
+        IF (TRIM(var_Aname(i)).eq.'units') THEN
+          IF (INDEX(TRIM(var_Achar(i)),'day').ne.0) THEN
+            time_scale=day2sec
+          ELSE IF (INDEX(TRIM(var_Achar(i)),'second').ne.0) THEN
+            time_scale=1.0_r8
+          END IF
+        END IF
+      END DO
+      IF (time_scale.gt.0.0_r8) THEN
+        INPtime=INPtime*time_scale
       END IF
 !
 !  Set starting time index and time clock in days.
 !
-#ifdef DISTRIBUTE
-      CALL mp_bcastf (ng, IDmod, INPtime, 1)
-#endif
       IF ((model.eq.0).or.(model.eq.iNLM).or.                           &
      &    (model.eq.iTLM).or.(model.eq.iRPM)) THEN
         IF (((model.eq.iTLM).or.(model.eq.iRPM)).and.                   &
-     &      (INPtime(1).ne.(dstart*day2sec))) THEN
-          INPtime(1)=dstart*day2sec
+     &      (INPtime.ne.(dstart*day2sec))) THEN
+          INPtime=dstart*day2sec
         END IF
-        time(ng)=INPtime(1)
+        time(ng)=INPtime
         tdays(ng)=time(ng)*sec2day
         ntstart(ng)=NINT((time(ng)-dstart*day2sec)/dt(ng))+1
         IF (ntstart(ng).lt.1) ntstart(ng)=1
@@ -268,7 +247,7 @@
         END IF
       ELSE IF (model.eq.iADM) THEN
         IF (msg.ne.1) THEN
-          time(ng)=INPtime(1)
+          time(ng)=INPtime
           tdays(ng)=time(ng)*sec2day
         END IF
         ntstart(ng)=ntimes(ng)+1
@@ -280,9 +259,6 @@
 !  Over-write "IniRec" to the actual initial record processed.
 !
       IF (model.eq.iNLM) THEN
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, IDmod, InpRec, 1)
-#endif
         IniRec=InpRec
       END IF
 !
@@ -290,8 +266,8 @@
 !
       lstr=SCAN(ncname,'/',BACK=.TRUE.)+1
       lend=LEN_TRIM(ncname)
-      IF (InpThread) THEN
-        CALL time_string (INPtime(1), t_code)
+      IF (Master) THEN
+        CALL time_string (INPtime, t_code)
         IF (ERend.gt.ERstr) THEN
           WRITE (stdout,80) string, TRIM(Mstate(msg)), t_code, Nrun,    &
      &                      ncname(lstr:lend), InpRec, Tindex
@@ -378,10 +354,9 @@
 !  Read in time-evolving bathymetry (m).
 !
         IF (get_var(idbath)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idbath)), varid)
-            gtype=vflag(varid)*r2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idbath)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -408,13 +383,12 @@
 !  Read in nonlinear free-surface (m).
 !
         IF (get_var(idFsur)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
-            IF (Perfect2d) THEN
-              gtype=vflag(varid)*r3dvar
-            ELSE
-              gtype=vflag(varid)*r2dvar
-            END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
+     &                        varid)
+          IF (Perfect2d) THEN
+            gtype=var_flag(varid)*r3dvar
+          ELSE
+            gtype=var_flag(varid)*r2dvar
           END IF
           IF (Perfect2d) THEN
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
@@ -451,10 +425,9 @@
 !  Read in nonlinear RHS of free-surface.
 !
         IF (get_var(idRzet).and.Perfect2D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRzet)), varid)
-            gtype=vflag(varid)*r3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idRzet)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
      &                      Fscl, Fmin, Fmax,                           &
@@ -480,13 +453,12 @@
 !  Read in nonlinear 2D momentum component (m/s) in the XI-direction.
 !
         IF (get_var(idUbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
-            IF (Perfect2D) THEN
-              gtype=vflag(varid)*u3dvar
-            ELSE
-              gtype=vflag(varid)*u2dvar
-            END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
+     &                        varid)
+          IF (Perfect2D) THEN
+            gtype=var_flag(varid)*u3dvar
+          ELSE
+            gtype=var_flag(varid)*u2dvar
           END IF
           IF (Perfect2D) THEN
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
@@ -523,10 +495,9 @@
 !  Read in nonlinear RHS of 2D momentum component in the XI-direction.
 !
         IF (get_var(idRu2d).and.Perfect2D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRu2d)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idRu2d)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
      &                      Fscl, Fmin, Fmax,                           &
@@ -552,13 +523,12 @@
 !  Read in nonlinear 2D momentum component (m/s) in the ETA-direction.
 !
         IF (get_var(idVbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
-            IF (Perfect2D) THEN
-              gtype=vflag(varid)*v3dvar
-            ELSE
-              gtype=vflag(varid)*v2dvar
-            END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
+     &                        varid)
+          IF (Perfect2D) THEN
+            gtype=var_flag(varid)*v3dvar
+          ELSE
+            gtype=var_flag(varid)*v2dvar
           END IF
           IF (Perfect2D) THEN
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
@@ -595,10 +565,9 @@
 !  Read in nonlinear RHS 2D momentum component in the ETA-direction.
 !
         IF (get_var(idRv2d).and.Perfect2D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRv2d)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idRv2d)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, 2,            &
      &                      Fscl, Fmin, Fmax,                           &
@@ -625,10 +594,9 @@
 !  Read in nonlinear 3D momentum component (m/s) in the XI-direction.
 !
         IF (get_var(idUvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           IF (Perfect3D) THEN
             status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng), 1, 2,&
@@ -664,10 +632,9 @@
 !  Read in nonlinear RHS of 3D momentum component in the XI-direction.
 !
         IF (get_var(idRu3d).and.Perfect3D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRu3d)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idRu3d)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -693,10 +660,9 @@
 !  Read in nonlinear 3D momentum component (m/s) in the ETA-direction.
 !
         IF (get_var(idVvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           IF (Perfect3D) THEN
             status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng), 1, 2,&
@@ -732,10 +698,9 @@
 !  Read in nonlinear RHS of 3D momentum component in the ETA-direction.
 !
         IF (get_var(idRv3d).and.Perfect3D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idRv3d)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idRv3d)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -762,11 +727,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTvar(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTvar(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             IF (Perfect3D) THEN
               status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec,      &
      &                          gtype, Vsize,                           &
@@ -808,10 +771,9 @@
 !  Read in vertical viscosity.
 !
         IF (have_var(idVvis)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvis)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvis)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                      Fscl, Fmin,Fmax,                            &
@@ -837,10 +799,9 @@
 !  Read in temperature vertical diffusion.
 !
         IF (have_var(idTdif)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idTdif)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idTdif)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                      Fscl, Fmin,Fmax,                            &
@@ -866,10 +827,9 @@
 !  Read in salinity vertical diffusion.
 !
         IF (have_var(idSdif)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSdif)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idSdif)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                      Fscl, Fmin,Fmax,                            &
@@ -897,10 +857,9 @@
 !  Read in turbulent kinetic energy.
 !
         IF (get_var(idMtke).and.Perfect3D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idMtke)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idMtke)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -926,10 +885,9 @@
 !  Read in turbulent kinetic energy time length scale.
 !
         IF (get_var(idMtls).and.Perfect3D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idMtls)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idMtls)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread4d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng), 1, 2,  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -955,10 +913,9 @@
 !  Read in vertical mixing turbulent length scale.
 !
         IF (get_var(idVmLS).and.Perfect3D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVmLS)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVmLS)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -984,10 +941,9 @@
 !  Read in turbulent kinetic energy vertical diffusion coefficient.
 !
         IF (get_var(idVmKK).and.Perfect3D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVmKK)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVmKK)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1014,10 +970,9 @@
 !  Read in turbulent length scale vertical diffusion coefficient.
 !
         IF (get_var(idVmKP).and.Perfect3D) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVmKP)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVmKP)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1048,11 +1003,9 @@
 !
         DO i=1,NST
           IF (get_var(idfrac(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idfrac(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1078,11 +1031,9 @@
 !  Read in nonlinear sediment mass of each size class in each bed layer.
 !
           IF (get_var(idBmas(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idBmas(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1110,11 +1061,9 @@
 !
         DO i=1,MBEDP
           IF (get_var(idSbed(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idSbed(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1144,11 +1093,9 @@
 !
         DO i=1,NST
           IF (get_var(idUbld(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*u2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idUbld(i))), varid)
+            gtype=var_flag(varid)*u2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1172,11 +1119,9 @@
           END IF
 !
           IF (get_var(idVbld(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*v2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idVbld(i))), varid)
+            gtype=var_flag(varid)*v2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1208,11 +1153,9 @@
 !
         DO i=1,MBOTP
           IF (get_var(idBott(i)).and.have_var(idBott(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*r2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idBott(i))), varid)
+            gtype=var_flag(varid)*r2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1251,10 +1194,9 @@
 !  Read in tangent linear free-surface (m).
 !
         IF (get_var(idFsur)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
-            gtype=vflag(varid)*r2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1281,10 +1223,9 @@
 !  XI-direction.
 !
         IF (get_var(idUbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
-            gtype=vflag(varid)*u2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1312,10 +1253,9 @@
 !  Read in tangent linear surface U-momentum stress.
 !
         IF (get_var(idUsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1341,10 +1281,9 @@
 !  Read in tangent linear surface V-momentum stress.
 !
         IF (get_var(idVsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1372,10 +1311,9 @@
 !  ETA-direction.
 !
         IF (get_var(idVbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
-            gtype=vflag(varid)*v2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1403,10 +1341,9 @@
 !  XI-direction.
 !
         IF (get_var(idUvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1433,10 +1370,9 @@
 !  ETA-direction.
 !
         IF (get_var(idVvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1463,11 +1399,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTvar(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTvar(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1498,11 +1432,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTsur(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTsur(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1535,11 +1467,9 @@
 !
         DO i=1,NST
           IF (get_var(idfrac(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idfrac(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1566,11 +1496,9 @@
 !  bed layer.
 !
           IF (get_var(idBmas(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idBmas(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1598,11 +1526,9 @@
 !
         DO i=1,MBEDP
           IF (get_var(idSbed(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idSbed(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1632,11 +1558,9 @@
 !
         DO i=1,NST
           IF (get_var(idUbld(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*u2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idUbld(i))), varid)
+            gtype=var_flag(varid)*u2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1660,11 +1584,9 @@
           END IF
 !
           IF (get_var(idVbld(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*v2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idVbld(i))), varid)
+            gtype=var_flag(varid)*v2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1696,11 +1618,9 @@
 !
         DO i=1,MBOTP
           IF (get_var(idBott(i)).and.have_var(idBott(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*r2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idBott(i))), varid)
+            gtype=var_flag(varid)*r2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1739,10 +1659,9 @@
 !  Read in adjoint free-surface (m).
 !
         IF (get_var(idFsur)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
-            gtype=vflag(varid)*r2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1768,10 +1687,9 @@
 !  Read in adjoint 2D momentum component (m/s) in the XI-direction.
 !
         IF (get_var(idUbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
-            gtype=vflag(varid)*u2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1797,10 +1715,9 @@
 !  Read in adjoint 2D momentum component (m/s) in the ETA-direction.
 !
         IF (get_var(idVbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
-            gtype=vflag(varid)*v2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1828,10 +1745,9 @@
 !  Read in adjoint linear surface U-momentum stress.
 !
         IF (get_var(idUsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1857,10 +1773,9 @@
 !  Read in adjoint linear surface V-momentum stress.
 !
         IF (get_var(idVsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1888,10 +1803,9 @@
 !  Read in adjoint 3D momentum component (m/s) in the XI-direction.
 !
         IF (get_var(idUvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1917,10 +1831,9 @@
 !  Read in adjoint 3D momentum component (m/s) in the ETA-direction.
 !
         IF (get_var(idVvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -1947,11 +1860,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTvar(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTvar(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                        Fscl, Fmin, Fmax,                         &
@@ -1982,11 +1893,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTsur(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTsur(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2020,11 +1929,9 @@
 !
         DO i=1,NST
           IF (get_var(idfrac(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idfrac(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idfrac(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2050,11 +1957,9 @@
 !  Read in adjoint sediment mass of each size class in each bed layer.
 !
           IF (get_var(idBmas(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBmas(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,
+     &                          TRIM(Vname(1,idBmas(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2082,11 +1987,9 @@
 !
         DO i=1,MBEDP
           IF (get_var(idSbed(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idSbed(i))),  &
-     &                            varid)
-              gtype=vflag(varid)*b3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idSbed(i))), varid)
+            gtype=var_flag(varid)*b3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nbed,       &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2116,11 +2019,9 @@
 !
         DO i=1,NST
           IF (get_var(idUbld(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbld(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*u2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idUbld(i))), varid)
+            gtype=var_flag(varid)*u2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2144,11 +2045,9 @@
           END IF
 !
           IF (get_var(idVbld(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbld(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*v2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idVbld(i))), varid)
+            gtype=var_flag(varid)*v2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2180,11 +2079,9 @@
 !
         DO i=1,MBOTP
           IF (get_var(idBott(i)).and.have_var(idBott(i))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idBott(i))),  &
-     &                              varid)
-              gtype=vflag(varid)*r2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idBott(i))), varid)
+            gtype=var_flag(varid)*r2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2223,10 +2120,9 @@
 !  Read in free-surface norm.
 !
         IF (get_var(idFsur)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
-            gtype=vflag(varid)*r2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2252,10 +2148,9 @@
 !  Read in 2D momentum norm in the XI-direction.
 !
         IF (get_var(idUbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
-            gtype=vflag(varid)*u2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2281,10 +2176,9 @@
 !  Read in 2D momentum norm in the ETA-direction.
 !
         IF (get_var(idVbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
-            gtype=vflag(varid)*v2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2311,10 +2205,9 @@
 !  Read in surface U-momentum stress norm.
 !
         IF (get_var(idUsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
-            gtype=vflag(varid)*u2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2340,10 +2233,9 @@
 !  Read in surface V-momentum stress norm.
 !
         IF (get_var(idVsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
-            gtype=vflag(varid)*v2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2371,10 +2263,9 @@
 !  Read in 3D momentum norm in the XI-direction.
 !
         IF (get_var(idUvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2400,10 +2291,9 @@
 !  Read in 3D momentum norm in the ETA-direction.
 !
         IF (get_var(idVvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2430,11 +2320,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTvar(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTvar(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2464,11 +2352,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTsur(itrc))), varid)
-              gtype=vflag(varid)*r2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTsur(itrc))), varid)
+            gtype=var_flag(varid)*r2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2508,10 +2394,9 @@
 !  Read in free-surface standard deviation.
 !
         IF (get_var(idFsur)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
-            gtype=vflag(varid)*r2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2537,10 +2422,9 @@
 !  Read in 2D momentum standard deviation in the XI-direction.
 !
         IF (get_var(idUbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
-            gtype=vflag(varid)*u2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2566,10 +2450,9 @@
 !  Read in 2D momentum standard deviation in the ETA-direction.
 !
         IF (get_var(idVbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
-            gtype=vflag(varid)*v2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2596,10 +2479,9 @@
 !  Read in surface U-momentum stress standard deviation.
 !
         IF (get_var(idUsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUsms)), varid)
-            gtype=vflag(varid)*u2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2625,10 +2507,9 @@
 !  Read in surface V-momentum stress standard deviation.
 !
         IF (get_var(idVsms)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVsms)), varid)
-            gtype=vflag(varid)*v2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2656,10 +2537,9 @@
 !  Read in 3D momentum standard deviation in the XI-direction.
 !
         IF (get_var(idUvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2685,10 +2565,9 @@
 !  Read in 3D momentum standard deviation in the ETA-direction.
 !
         IF (get_var(idVvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2715,11 +2594,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTvar(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTvar(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2749,11 +2626,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTsur(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTsur(itrc))), varid)
-              gtype=vflag(varid)*r2dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTsur(itrc))), varid)
+            gtype=var_flag(varid)*r2dvar
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
      &                        Fscl, Fmin, Fmax,                         &
@@ -2783,10 +2658,9 @@
 !  Read in convolution horizontal diffusion coefficients.
 !
         IF (have_var(idKhor)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idKhor)), varid)
-            gtype=vflag(varid)*r2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idKhor)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, KhMin(ng), KhMax(ng),                 &
@@ -2815,10 +2689,9 @@
 !  Read in convolution vertical diffusion coefficient.
 !
         IF (have_var(idKver)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idKver)), varid)
-            gtype=vflag(varid)*w3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idKver)),   &
+     &                        varid)
+          gtype=var_flag(varid)*w3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 0, N(ng),        &
      &                      Fscl, KvMin(ng), KvMax(ng),                 &
@@ -2870,9 +2743,12 @@
      &                        TRIM(ncname)
             exit_flag=2
             ioerror=status
-            RETURN
           END IF
         END IF
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, IDmod, exit_flag, 1)
+# endif
+        IF (exit_flag.ne.NoError) RETURN
 # ifdef DISTRIBUTE
         CALL mp_bcastf (ng, IDmod, FrcTime(ng), 1)
 # endif
@@ -2880,10 +2756,9 @@
 !  Read in free-surface forcing.
 !
         IF (get_var(idFsur)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idFsur)), varid)
-            gtype=vflag(varid)*r2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idFsur)),   &
+     &                        varid)
+          gtype=var_flag(varid)*r2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2909,10 +2784,9 @@
 !  Read in 2D momentum forcing in the XI-direction.
 !
         IF (get_var(idUbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUbar)), varid)
-            gtype=vflag(varid)*u2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2938,10 +2812,9 @@
 !  Read in 2D momentum forcing in the ETA-direction.
 !
         IF (get_var(idVbar)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVbar)), varid)
-            gtype=vflag(varid)*v2dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVbar)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v2dvar
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2968,10 +2841,9 @@
 !  Read in 3D momentum forcing in the XI-direction.
 !
         IF (get_var(idUvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idUvel)), varid)
-            gtype=vflag(varid)*u3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -2997,10 +2869,9 @@
 !  Read in 3D momentum norm in the ETA-direction.
 !
         IF (get_var(idVvel)) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(ncINPid, TRIM(Vname(1,idVvel)), varid)
-            gtype=vflag(varid)*v3dvar
-          END IF
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVvel)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                      Fscl, Fmin, Fmax,                           &
@@ -3027,11 +2898,9 @@
 !
         DO itrc=1,NT(ng)
           IF (get_var(idTvar(itrc))) THEN
-            IF (InpThread) THEN
-              status=nf90_inq_varid(ncINPid,                            &
-     &                              TRIM(Vname(1,idTvar(itrc))), varid)
-              gtype=vflag(varid)*r3dvar
-            END IF
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTvar(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, N(ng),      &
      &                        Fscl, Fmin, Fmax,                         &

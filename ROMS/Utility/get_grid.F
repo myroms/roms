@@ -56,7 +56,7 @@
       logical :: find_string
 
       integer :: tile, LBi, UBi, LBj, UBj
-      integer :: gtype, i, status
+      integer :: gtype, i, status, vindex
 
       integer :: Vsize(4)
 
@@ -91,84 +91,84 @@
 !  Check if required variables are available.
 !-----------------------------------------------------------------------
 !
-      IF (.not.find_string(var_name,n_var,'xl')) THEN
+      IF (.not.find_string(var_name,n_var,'xl',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'xl', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'el')) THEN
+      IF (.not.find_string(var_name,n_var,'el',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'el', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'spherical')) THEN
+      IF (.not.find_string(var_name,n_var,'spherical',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'spherical', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'h')) THEN
+      IF (.not.find_string(var_name,n_var,'h',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'h', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # ifdef ICESHELF
-      IF (.not.find_string(var_name,n_var,'zice')) THEN
+      IF (.not.find_string(var_name,n_var,'zice',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'zice', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # endif
-      IF (.not.find_string(var_name,n_var,'f')) THEN
+      IF (.not.find_string(var_name,n_var,'f',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'f', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'pm')) THEN
+      IF (.not.find_string(var_name,n_var,'pm',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'pm', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'pn')) THEN
+      IF (.not.find_string(var_name,n_var,'pn',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'pn', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # if (defined CURVGRID && defined UV_ADV)
-      IF (.not.find_string(var_name,n_var,'dndx')) THEN
+      IF (.not.find_string(var_name,n_var,'dndx',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'dndx', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'dmde')) THEN
+      IF (.not.find_string(var_name,n_var,'dmde',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'dmde', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # endif
 # ifdef CURVGRID
-      IF (.not.find_string(var_name,n_var,'angle')) THEN
+      IF (.not.find_string(var_name,n_var,'angle',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'angle', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
 # endif
 # ifdef MASKING
-      IF (.not.find_string(var_name,n_var,'mask_rho')) THEN
+      IF (.not.find_string(var_name,n_var,'mask_rho',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'mask_rho', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'mask_u')) THEN
+      IF (.not.find_string(var_name,n_var,'mask_u',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'mask_u', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'mask_v')) THEN
+      IF (.not.find_string(var_name,n_var,'mask_v',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'mask_v', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF
-      IF (.not.find_string(var_name,n_var,'mask_psi')) THEN
+      IF (.not.find_string(var_name,n_var,'mask_psi',vindex)) THEN
         IF (Master) WRITE (stdout,10) 'mask_rho', TRIM(ncname)
         exit_flag=2
         RETURN
@@ -1132,9 +1132,9 @@
 !
 !  Check if the adjoint sensitivity scope arrays are available.
 !
-      GotScope(4)=find_string(var_name,n_var,'scope_rho')
-      GotScope(5)=find_string(var_name,n_var,'scope_u')
-      GotScope(6)=find_string(var_name,n_var,'scope_v')
+      GotScope(4)=find_string(var_name,n_var,'scope_rho',vindex)
+      GotScope(5)=find_string(var_name,n_var,'scope_u',vindex)
+      GotScope(6)=find_string(var_name,n_var,'scope_v',vindex)
 !
       IF ((.not.GotScope(1)).and.(.not.GotScope(4))) THEN
         IF (Master) WRITE (stdout,10) 'scope_rho', TRIM(ncname)
