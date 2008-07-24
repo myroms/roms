@@ -28,7 +28,6 @@
       USE mod_fourdvar
       USE mod_grid
       USE mod_iounits
-      USE mod_mixing
       USE mod_ncparam
       USE mod_netcdf
       USE mod_ocean
@@ -37,6 +36,11 @@
       USE mod_sediment
 # endif
       USE mod_stepping
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -90,115 +94,12 @@
           WRITE (stdout,10) TRIM(Vname(1,idtime)), OutRec
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
       END IF
-# if defined IS4DVAR || defined IS4DVAR_OLD
-!
-!  Write out cost function gradient norm. Notice that it is written
-!  into MODname file instead of ITLname file.
-!
-#  ifdef IS4DVAR_OLD
-      IF ((Ipass.eq.1).and.OutThread) THEN
-#  else
-      IF (OutThread) THEN
-#  endif
-        start(1)=1
-        total(1)=NstateVar(ng)+1
-        start(2)=Nrun
-        total(2)=1
-        status=nf90_inq_varid(ncMODid(ng), 'cost_gradient', varid)
-        IF (status.eq.nf90_noerr) THEN
-          status=nf90_put_var(ncMODid(ng), varid,                       &
-     &                        FOURDVAR(ng)%CostGrad(0:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cost_gradient', Nrun
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END IF
-!
-!  Write out model minus observations misfit cost function value to
-!  both nonlinear and tangent linear initial file.  Notice that it is
-!  written into MODname file instead of ITLname file.
-!
-#  ifdef IS4DVAR_OLD
-      IF ((Ipass.eq.1).and.OutThread) THEN
-#  else
-      IF (OutThread) THEN
-#  endif
-        start(1)=1
-        total(1)=NstateVar(ng)+1
-        start(2)=Nrun
-        total(2)=1
-        status=nf90_inq_varid(ncMODid(ng), 'cost_function', varid)
-        IF (status.eq.nf90_noerr) THEN
-          status=nf90_put_var(ncMODid(ng), varid,                       &
-     &                        FOURDVAR(ng)%ObsCost(0:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cost_function', Nrun
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
 # endif
-# ifdef BACKGROUND
-!
-!  Write out model minus background misfit cost function value to
-!  both nonlinear and tangent linear initial file. Notice that it
-!  is written into MODname file instead of ITLname file.
-!
-#  ifdef IS4DVAR_OLD
-      IF ((Ipass.eq.1).and.OutThread) THEN
-#  else
-      IF (OutThread) THEN
-#  endif
-        start(1)=1
-        total(1)=NstateVar(ng)+1
-        start(2)=Nrun
-        total(2)=1
-        status=nf90_inq_varid(ncMODid(ng), 'back_function', varid)
-        IF (status.eq.nf90_noerr) THEN
-          status=nf90_put_var(ncMODid(ng), varid,                       &
-     &                        FOURDVAR(ng)%BackCost(0:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'back_function', Nrun
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END IF
-# endif
-# if defined IS4DVAR || defined IS4DVAR_OLD
-!
-!  Write out current optimal, normalized cost function minimun.  Notice
-!  that it is written into MODname file instead of ITLname file.
-!
-#  ifdef IS4DVAR_OLD
-      IF ((Ipass.eq.1).and.OutThread) THEN
-#  else
-      IF (OutThread) THEN
-#  endif
-        status=nf90_inq_varid(ncMODid(ng), 'Jmin', varid)
-        IF (status.eq.nf90_noerr) THEN
-          start(1)=Nrun
-          total(1)=1
-          status=nf90_put_var(ncMODid(ng), varid, Optimality(ng:),      &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'Jmin', Nrun
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-      END IF
-# endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface (m)
 !
@@ -259,14 +160,14 @@
         ioerror=status
         RETURN
       END IF
+
 # ifdef ADJUST_WSTRESS
 !
 !  Write out surface U-momentum stress.  Notice that the stress has its
 !  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
 !  at other times in addition to initialization time.
 !
-!!    scale=rho0
-      scale=1.0_r8
+      scale=rho0                            ! m2/s2 to N/m2 (Pa)
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idUsms,ng),      &
      &                   OutRec, gtype,                                 &
@@ -286,8 +187,7 @@
 !
 !  Write out surface V-momentum stress.
 !
-!!    scale=rho0
-      scale=1.0_r8
+      scale=rho0                            ! m2/s2 to N/m2 (Pa)
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idVsms,ng),      &
      &                   OutRec, gtype,                                 &
@@ -368,6 +268,7 @@
           RETURN
         END IF
       END DO
+
 #  ifdef ADJUST_STFLUX
 !
 !  Write out surface net tracers fluxes. Notice that fluxes have their
@@ -375,8 +276,11 @@
 !  at other times in addition to initialization time.
 !
       DO itrc=1,NT(ng)
-!!      scale=rho0*Cp
-        scale=1.0_r8
+        IF (itrc.eq.itemp) THEN
+          scale=rho0*Cp                     ! Celsius m/s to W/m2
+        ELSE
+          scale=1.0_r8
+        END IF
         gtype=gfactor*r3dvar
         status=nf_fwrite3d(ng, iTLM, ncITLid(ng),                       &
      &                     itlVid(idTsur(itrc),ng),                     &
@@ -398,6 +302,131 @@
       END DO
 #  endif
 # endif
+# if defined IS4DVAR || defined IS4DVAR_OLD || defined BACKGROUND
+!
+!-----------------------------------------------------------------------
+!  Write other 4DVAR data to MODname file.
+!-----------------------------------------------------------------------
+
+#  if defined IS4DVAR || defined IS4DVAR_OLD
+!
+!  Write out cost function gradient norm. Notice that it is written
+!  into MODname file instead of ITLname file.
+!
+#   ifdef IS4DVAR_OLD
+      IF ((Ipass.eq.1).and.OutThread) THEN
+#   else
+      IF (OutThread) THEN
+#   endif
+        start(1)=1
+        total(1)=NstateVar(ng)+1
+        start(2)=Nrun
+        total(2)=1
+        status=nf90_inq_varid(ncMODid(ng), 'cost_gradient', varid)
+        IF (status.eq.nf90_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid,                       &
+     &                        FOURDVAR(ng)%CostGrad(0:), start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'cost_gradient', Nrun
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+#   endif
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out model minus observations misfit cost function value to
+!  both nonlinear and tangent linear initial file.  Notice that it is
+!  written into MODname file instead of ITLname file.
+!
+#   ifdef IS4DVAR_OLD
+      IF ((Ipass.eq.1).and.OutThread) THEN
+#   else
+      IF (OutThread) THEN
+#   endif
+        start(1)=1
+        total(1)=NstateVar(ng)+1
+        start(2)=Nrun
+        total(2)=1
+        status=nf90_inq_varid(ncMODid(ng), 'cost_function', varid)
+        IF (status.eq.nf90_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid,                       &
+     &                        FOURDVAR(ng)%ObsCost(0:), start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'cost_function', Nrun
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+#   endif
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+#  ifdef BACKGROUND
+!
+!  Write out model minus background misfit cost function value to
+!  both nonlinear and tangent linear initial file. Notice that it
+!  is written into MODname file instead of ITLname file.
+!
+#   ifdef IS4DVAR_OLD
+      IF ((Ipass.eq.1).and.OutThread) THEN
+#   else
+      IF (OutThread) THEN
+#   endif
+        start(1)=1
+        total(1)=NstateVar(ng)+1
+        start(2)=Nrun
+        total(2)=1
+        status=nf90_inq_varid(ncMODid(ng), 'back_function', varid)
+        IF (status.eq.nf90_noerr) THEN
+          status=nf90_put_var(ncMODid(ng), varid,                       &
+     &                        FOURDVAR(ng)%BackCost(0:), start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'back_function', Nrun
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+#   endif
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+#  if defined IS4DVAR || defined IS4DVAR_OLD
+!
+!  Write out current optimal, normalized cost function minimun.  Notice
+!  that it is written into MODname file instead of ITLname file.
+!
+#   ifdef IS4DVAR_OLD
+      IF ((Ipass.eq.1).and.OutThread) THEN
+#   else
+      IF (OutThread) THEN
+#   endif
+        status=nf90_inq_varid(ncMODid(ng), 'Jmin', varid)
+        IF (status.eq.nf90_noerr) THEN
+          start(1)=Nrun
+          total(1)=1
+          status=nf90_put_var(ncMODid(ng), varid, Optimality(ng:),      &
+     &                        start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'Jmin', Nrun
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+#   ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+#   endif
+      IF (exit_flag.ne.NoError) RETURN
+#  endif
+# endif
 !
 !-----------------------------------------------------------------------
 !  Synchronize tangent linear initial NetCDF file to disk to allow other
@@ -410,24 +439,29 @@
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-# if defined IS4DVAR || defined IS4DVAR_OLD
-        status=nf90_sync(ncINIid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+# endif
+      IF (exit_flag.ne.NoError) RETURN
+
+# if defined IS4DVAR || defined IS4DVAR_OLD || defined BACKGROUND
+      IF (OutThread) THEN
         status=nf90_sync(ncMODid(ng))
         IF (status.ne.nf90_noerr) THEN
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
+      END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
 # endif
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+!
+      IF (Master) THEN
         IF (OutRec.eq.1) THEN
           string='initial  fields'
         ELSE IF (OutRec.eq.2) THEN

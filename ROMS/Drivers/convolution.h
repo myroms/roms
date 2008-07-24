@@ -42,11 +42,6 @@
       USE mod_fourdvar
       USE mod_iounits
       USE mod_scalars
-
-#ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
 !
 !  Imported variable declarations.
 !
@@ -105,12 +100,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -126,9 +116,6 @@
         STDrec=1
         DO ng=1,Ngrids
           CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
@@ -150,6 +137,7 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_ocean
       USE mod_scalars
       USE mod_stepping
@@ -159,9 +147,6 @@
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE impulse_mod, ONLY : impulse
       USE ini_adjust_mod, ONLY : load_ADtoTL
       USE ini_adjust_mod, ONLY : load_TLtoAD
@@ -181,14 +166,10 @@
 !
       logical :: add, Lweak, outer_impulse
 
-      integer :: IADrec, Nrec, i, ng, nvd, subs, tile, thread
+      integer :: IADrec, Nrec, i, ng, subs, tile, thread
 #ifdef BALANCE_OPERATOR
       integer :: Lbck = 1
 #endif
-
-      integer, dimension(4) :: Vsize
-
-      character (len=80) :: fname
 !
 !-----------------------------------------------------------------------
 !  Run model for all nested grids, if any.
@@ -201,6 +182,7 @@
 !-----------------------------------------------------------------------
 !
         CALL initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Compute or read in background-error correlations normalization
@@ -213,6 +195,7 @@
 !
         IF (LwrtNRM(ng)) THEN
           CALL def_norm (ng)
+          IF (exit_flag.ne.NoError) RETURN
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,numthreads)
           DO thread=0,numthreads-1
@@ -227,9 +210,6 @@
         ELSE
           tNRMindx(ng)=1
           CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END IF
 
@@ -240,6 +220,7 @@
 !-----------------------------------------------------------------------
 !
         CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
+        IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !-----------------------------------------------------------------------
@@ -249,16 +230,15 @@
 !
 !  Inquire about the number of records in input NetCDF.
 !
-        IF (InpThread) THEN
-          CALL opencdf (ng, 1, IADname(ng), fname, N(ng), 0, Nrec, nvd, &
-     &                  Vsize)
-          IF (exit_flag.ne.NoError) RETURN
-        END IF
+        CALL netcdf_get_dim (ng, iADM, IADname(ng))
+        IF (exit_flag.ne.NoError) RETURN
+        Nrec=rec_size
 !
 !  Create convoluted adjoint solution NetCDF file.
 !
         LdefADJ(ng)=.TRUE.
         CALL ad_def_his (ng, LdefADJ(ng))
+        IF (exit_flag.ne.NoError) RETURN
         LdefADJ(ng)=.FALSE.
         LwrtADJ(ng)=.TRUE.
 !
@@ -288,6 +268,7 @@
 !
           IADrec=i
           CALL get_state (ng, iTLM, 4, IADname(ng), IADrec, Lnew(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -359,6 +340,7 @@
         LdefTLF(ng)=.TRUE.
         tTLFindx(ng)=0
         CALL def_impulse (ng)
+        IF (exit_flag.ne.NoError) RETURN
         outer_impulse=.FALSE.
 #ifdef DISTRIBUTE
         tile=MyRank
@@ -366,6 +348,7 @@
         tile=-1
 #endif
         CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
+        IF (exit_flag.ne.NoError) RETURN
 
       END DO NEST_LOOP
 

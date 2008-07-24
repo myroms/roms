@@ -66,12 +66,7 @@
 !  Initialize the adjoint model always from rest.
 !
         CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate adjoint output.
 !
@@ -86,7 +81,7 @@
         DendS(ng)=DstrS(ng)
 
         IF (Master) THEN
-          WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'AD', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)+dt(ng)
@@ -99,12 +94,7 @@
 #else
           CALL ad_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO AD_LOOP
 
@@ -134,15 +124,14 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
-        WRITE (stdout,10) ' PROPAGATOR - Iteration Run: ', Nrun,        &
+        WRITE (stdout,20) ' PROPAGATOR - Iteration Run: ', Nrun,        &
      &                    ',  number converged RITZ values: ', Nconv,   &
      &                    'TRnorm = ', TRnorm(ng)
       END IF
 
- 10   FORMAT (/,a,i3,a,i3,/,35x,a,1p,e15.8)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 30   FORMAT (/,a,i3,/)
+ 20   FORMAT (/,a,i3,a,i3,/,35x,a,1p,e15.8)
 
       RETURN
       END SUBROUTINE propagator

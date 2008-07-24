@@ -205,12 +205,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iADM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -288,19 +283,14 @@
         tRSTindx(ng)=0
         NrecRST(ng)=0
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Run nonlinear model for the combined assimilation plus forecast
 !  period, t=t0 to t2. Save nonlinear (basic state) tracjectory, xb(t),
 !  needed by the adjoint and tangent linear models. 
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
@@ -313,12 +303,7 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP
 !
@@ -326,12 +311,7 @@
 !
         Lstiffness=.FALSE.
         CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate adjoint output.
 !
@@ -350,17 +330,17 @@
           DendS(ng)=str_day
         END IF
         IF (Master) THEN
-          WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng),               &
+          WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng),               &
      &                      DendS(ng), DstrS(ng)
         END IF
         IF ((DstrS(ng).gt.str_day).or.(DstrS(ng).lt.end_day)) THEN
-          IF (Master)  WRITE (stdout,40) 'DstrS = ', DstrS(ng),         &
+          IF (Master)  WRITE (stdout,30) 'DstrS = ', DstrS(ng),         &
      &                                   end_day, str_day
           exit_flag=7
           RETURN
         END IF
         IF ((DendS(ng).gt.str_day).or.(DendS(ng).lt.end_day)) THEN
-          IF (Master)  WRITE (stdout,40) 'DendS = ', DendS(ng),         &
+          IF (Master)  WRITE (stdout,30) 'DendS = ', DendS(ng),         &
      &                                   end_day, str_day
           exit_flag=7
           RETURN
@@ -376,10 +356,7 @@
 #else
           CALL ad_main2d (ng)
 #endif
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO AD_LOOP
 !
@@ -389,6 +366,7 @@
         Lnew(ng)=1
         CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),         &
      &                  Lnew(ng))
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
 !  time to run the tangent linear model.  This time must be the same
@@ -403,12 +381,7 @@
 !  above.
 !
         CALL tl_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
         wrtTLmod(ng)=.TRUE.
@@ -418,12 +391,13 @@
 !
         LdefMOD(ng)=.TRUE.
         CALL def_mod (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Run tangent linear model for the assimilation period, t=t0 to t1.
 !  Read and process the 4DVAR observations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
@@ -436,24 +410,18 @@
 #else
           CALL tl_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO TL_LOOP
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i2,/)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/,15x,                &
      &        'adjoint forcing time range: ',f12.4,' - ',f12.4 ,/)
- 40   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
+ 30   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
      &        ' It must be between ',f12.4,' and ',f12.4)
 
       RETURN

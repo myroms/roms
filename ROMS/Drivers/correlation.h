@@ -75,9 +75,6 @@
 #ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_waves_coupling
 #endif
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
 !
 !  Imported variable declarations.
 !
@@ -150,12 +147,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -171,9 +163,6 @@
         STDrec=1
         DO ng=1,Ngrids
           CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
@@ -204,9 +193,6 @@
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
       USE analytical_mod, ONLY : ana_perturb
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE ini_adjust_mod, ONLY : load_ADtoTL
       USE ini_adjust_mod, ONLY : load_TLtoAD
       USE normalization_mod, ONLY : normalization
@@ -240,6 +226,7 @@
 !-----------------------------------------------------------------------
 !
         CALL initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Get background-error covariance normalization matrix.
@@ -251,6 +238,7 @@
 !  
         IF (LwrtNRM(ng)) THEN
           CALL def_norm (ng)
+          IF (exit_flag.ne.NoError) RETURN
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -264,9 +252,6 @@
         ELSE
           tNRMindx(ng)=1
           CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END IF
 
@@ -277,6 +262,7 @@
 !-----------------------------------------------------------------------
 !
         CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
+        IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !-----------------------------------------------------------------------
@@ -336,10 +322,12 @@
         LwrtADJ(ng)=.TRUE.
         LwrtState2d(ng)=.TRUE.
         CALL ad_def_his (ng, LdefADJ(ng))
+        IF (exit_flag.ne.NoError) RETURN
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         Ladjusted(ng)=.TRUE.
 #endif
         CALL ad_wrt_his (ng)    
+        IF (exit_flag.ne.NoError) RETURN
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
         Ladjusted(ng)=.FALSE.
 #endif

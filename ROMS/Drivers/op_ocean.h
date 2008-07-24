@@ -131,12 +131,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -210,12 +205,7 @@
 !
       DO ng=1,Ngrids
         CALL tl_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
       END DO
 !
 !  Currently, only non-nested applications are considered.  Otherwise,
@@ -294,12 +284,7 @@
         ELSE
           CALL def_gst (ng, iTLM)
         END IF
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !  Iterate until either convergence or maximum iterations has been
@@ -339,12 +324,7 @@
           IF ((MOD(iter,nGST).eq.0).or.(iter.ge.MaxIterGST).or.         &
               (ido.eq.99)) THEN
             CALL wrt_gst (ng, iTLM)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
           END IF
 #endif
 !
@@ -367,17 +347,12 @@
             Nconv=iaup2(4)
             CALL propagator (ng, Nstr(ng), Nend(ng),                   &
      &                       SworkD(ipntr(1):), SworkD(ipntr(2):))
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
           ELSE
             IF (info.ne.0) THEN
               IF (Master) THEN
                 CALL IRAM_error (info, string)
-                WRITE (stdout,20) 'DSAUPD', TRIM(string),               &
+                WRITE (stdout,10) 'DSAUPD', TRIM(string),               &
      &                            ', info = ', info
               END IF
               RETURN
@@ -386,9 +361,9 @@
 !  Compute Ritz vectors. (The only choice left is IDO=99).
 !
               IF (Master) THEN
-                WRITE (stdout,10) 'Number of converged Ritz values:',   &
+                WRITE (stdout,20) 'Number of converged Ritz values:',   &
      &                            iparam(5)
-                WRITE (stdout,10) 'Number of Arnoldi iterations taken:',&
+                WRITE (stdout,20) 'Number of Arnoldi iterations taken:',&
      &                            iparam(3)
               END IF
 #ifdef PROFILE
@@ -415,7 +390,7 @@
               IF (info.ne.0) THEN
                 IF (Master) THEN
                   CALL IRAM_error (info, string)
-                  WRITE (stdout,20) 'DSEUPD', TRIM(string),             &
+                  WRITE (stdout,10) 'DSEUPD', TRIM(string),             &
      &                              ', info = ', info
                 END IF
                 RETURN
@@ -436,12 +411,7 @@
                 DO i=1,NconvRitz
                   CALL propagator (ng, Nstr(ng), Nend(ng),              &
      &                             Rvector(Nstr(ng):,i), SworkD)
-                  IF (exit_flag.ne.NoError) THEN
-                    IF (Master) THEN
-                      WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                    END IF
-                    RETURN
-                  END IF
+                  IF (exit_flag.ne.NoError) RETURN
                   CALL daxpy (Nsize, -RvalueR(i), Rvector(Nstr(ng):,i), &
      &                        1, SworkD, 1)
 #ifdef DISTRIBUTE
@@ -496,12 +466,7 @@
           IF ((MOD(iter,nGST).eq.0).or.(iter.ge.MaxIterGST).or.         &
               ((ido.eq.99).and.LwrtGST)) THEN
             CALL wrt_gst (ng, iTLM)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
             IF (ido.eq.99) LwrtGST=.FALSE.
           END IF
 #endif
@@ -510,8 +475,8 @@
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,1x,i2,/)
- 20   FORMAT (/,1x,'Error in ',a,1x,a,a,1x,i5,/)
+ 10   FORMAT (/,1x,'Error in ',a,1x,a,a,1x,i5,/)
+ 20   FORMAT (/,a,1x,i2,/)
  30   FORMAT (4x,i4.4,'-th residual ',1p,e14.6,0p,                      &
      &        ' Corresponding to Ritz value ',1pe14.6)
 

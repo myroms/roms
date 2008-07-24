@@ -721,6 +721,10 @@
 !
         logical, dimension(Ngrids) :: Ladjusted
 !
+!  Switch to write application set-up information to standard output.
+!
+        logical, dimension(Ngrids) :: LwrtInfo
+!
 !  Switch used to create new output NetCDF files. If TRUE, new output
 !  files are created. If FALSE, data is appended to an existing output
 !  files.  Used only for history, average and station files.
@@ -1990,6 +1994,7 @@
         LwrtPER(ng)=.FALSE.
         LwrtRST(ng)=.FALSE.
         LwrtTLM(ng)=.FALSE.
+        LwrtInfo(ng)=.TRUE.
         LwrtState2d(ng)=.FALSE.
         LwrtTime(ng)=.TRUE.
         ldefout(ng)=.FALSE.

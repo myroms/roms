@@ -184,12 +184,7 @@
 #else
         CALL ad_main2d (ng)
 #endif
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,40) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 
       END DO AD_LOOP
 !
@@ -266,7 +261,6 @@
  20   FORMAT (/,a,1p,e15.6,/)
  30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 40   FORMAT (/,a,i3,/)
 
       RETURN
       END SUBROUTINE propagator

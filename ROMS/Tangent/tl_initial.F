@@ -175,7 +175,6 @@
 !
 !  Set switches to create (TRUE) tangent linear initial conditions and
 !  history NetCDF files or append (FALSE) to existing NetCDF files.
-!  Set record to read from initial tangent linear NetCDF file.
 !
 #   if defined WEAK_CONSTRAINT
       IF (Nrun.eq.ERstr) THEN
@@ -184,27 +183,24 @@
 #   else    
       IF ((Nrun.eq.ERstr).and.((inner.eq.1).and.(Ipass.le.1))) THEN
 #   endif
-#   ifdef ANA_INITIAL
         LdefITL(ng)=.TRUE.
-#   endif
 #   ifndef WEAK_CONSTRAINT
         LdefTLM(ng)=.TRUE.
 #   endif
+!
+!  It first pass, create tangent linear model initialization file and
+!  write zero initial conditions for records 1 and 2.
+!
         CALL tl_def_ini (ng)
-#   ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#   endif
         IF (exit_flag.ne.NoError) RETURN
-!
-!  It first pass, write zero initial conditions into tangent linear
-!  initial NetCDF record 2. This is a saveguard against wrong values
-!  in this NetCDF record
-!
+        CALL tl_wrt_ini (ng, Tindex, 1)
+        IF (exit_flag.ne.NoError) RETURN
         CALL tl_wrt_ini (ng, Tindex, 2)
-#   ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#   endif
+        IF (exit_flag.ne.NoError) RETURN
       END IF
+!
+!  Set record to read from initial tangent linear NetCDF file.
+!
       IniRec=tITLindx(ng)
 
 #   if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -420,17 +416,11 @@
 !  conditions since the model needs to be started from at the first
 !  pass of the inner loop.
 !
-        IF (LcycleINI(ng)) THEN
-          wrtRec=3-tITLindx(ng)
-        ELSE
-          wrtRec=tITLindx(ng)-1
+        IF (Nrun.gt.1) THEN
+          wrtRec=1
+          CALL tl_wrt_ini (ng, Tindex, wrtRec)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
-        tITLindx(ng)=wrtRec
-        CALL tl_wrt_ini (ng, Tindex, 1)
-#    ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#    endif
-        IF (exit_flag.ne.NoError) RETURN
       END IF
 #   endif
 #  endif
@@ -560,16 +550,10 @@
 !
 #  ifdef INI_FILE
       CALL get_state (ng, iTLM, 1, ITLname(ng), IniRec, Tindex)
-#   ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#   endif
       IF (exit_flag.ne.NoError) RETURN
 #  else
       IF (nrrec(ng).ne.0) THEN
         CALL get_state (ng, iTLM, 1, ITLname(ng), IniRec, Tindex)
-#   ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#   endif
         IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
@@ -687,9 +671,6 @@
       IF (nADJ(ng).lt.ntimes(ng)) THEN
         FrcRec(ng)=1
         CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
-#  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#  endif
         IF (exit_flag.ne.NoError) RETURN
       END IF
 # endif

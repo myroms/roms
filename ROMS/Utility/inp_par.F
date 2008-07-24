@@ -2810,8 +2810,9 @@
      &                    TRIM(fname)
 # endif
 # if defined TANGENT && \
-    !(defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
-      defined SANITY_CHECK)
+    !(defined FOUR_DVAR       || defined GRADIENT_CHECK   || \
+      defined OBS_SENSITIVITY || defined OPT_OBSERVATIONS || \
+      defined SANITY_CHECK    || defined TLM_CHECK)
           fname=ITLname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30

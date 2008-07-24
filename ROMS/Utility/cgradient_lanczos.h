@@ -3576,26 +3576,26 @@
 !
 !  Write out converged Ritz eigenvalues and is associated accuracy.
 !
-      IF (OutThread) THEN
-        status=nf90_inq_varid(ncHSSid(ng),'Ritz',varid)
-        start(1)=nvec
-        total(1)=1
-        status=nf90_put_var(ncHSSid(ng), varid, Ritz, start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'Ritz', TRIM(HSSname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
+        IF (OutThread) THEN
+          status=nf90_inq_varid(ncHSSid(ng),'Ritz',varid)
+          start(1)=nvec
+          total(1)=1
+          status=nf90_put_var(ncHSSid(ng), varid, Ritz, start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'Ritz', TRIM(HSSname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+          status=nf90_inq_varid(ncHSSid(ng),'Ritz_error',varid)
+          status=nf90_put_var(ncHSSid(ng), varid, RitzErr, start, total)
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,10) 'Ritz_error', TRIM(HSSname(ng))
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
         END IF
-        status=nf90_inq_varid(ncHSSid(ng),'Ritz_error',varid)
-        status=nf90_put_var(ncHSSid(ng), varid, RitzErr, start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'Ritz_error', TRIM(HSSname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
 !
 !  Replace record "nvec" of Hessian eigenvectors NetCDF with the
 !  normalized value in adjoint state arrays at index Lnew.

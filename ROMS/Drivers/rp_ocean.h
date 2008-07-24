@@ -124,12 +124,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -148,12 +143,7 @@
 !
       DO ng=1,Ngrids
         CALL rp_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
       END DO
 
       RETURN
@@ -228,12 +218,7 @@
 #else
           CALL rp_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO RP_LOOP
 
@@ -241,7 +226,9 @@
 !
  10   FORMAT (/,'RP ROMS/TOMS: started time-stepping:',                 &
      &            '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
+#ifdef IOM
  20   FORMAT (/,a,i3,/)
+#endif
 
       RETURN
       END SUBROUTINE ROMS_run

@@ -144,10 +144,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (Master.and.(exit_flag.ne.NoError)) THEN
-          WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize module variables.
 !
@@ -217,10 +214,7 @@
 !
           Ipass=1
           CALL initial (ng)
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  If first pass, define output 4DVAR NetCDF file containing all
 !  processed data at observation locations.
@@ -228,13 +222,14 @@
           IF (Nrun.eq.ERstr) THEN
             LdefMOD(ng)=.TRUE.
             CALL def_mod (ng)
+            IF (exit_flag.ne.NoError) RETURN
           END IF
           wrtMisfit(ng)=.FALSE.
 !
 !  Time-step nonlinear model: Compute misfit cost function.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -247,10 +242,7 @@
 #else
             CALL main2d (ng)
 #endif
-            IF (Master.and.(exit_flag.ne.NoError)) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO NL_LOOP1
 !
@@ -264,7 +256,7 @@
             ELSE
               rate=0.0_r8
             END IF
-            WRITE (stdout,30) Nrun, FOURDVAR(ng)%CostFun(0), rate
+            WRITE (stdout,20) Nrun, FOURDVAR(ng)%CostFun(0), rate
             DO i=1,NstateVar(ng)
               IF (FOURDVAR(ng)%CostFun(i).gt.0.0_r8) THEN
                 IF (Nrun.gt.ERstr) THEN
@@ -275,10 +267,10 @@
                   rate=0.0_r8
                 END IF
                 IF (i.eq.1) THEN
-                  WRITE (stdout,40) Nrun, FOURDVAR(ng)%CostFun(i),      &
+                  WRITE (stdout,30) Nrun, FOURDVAR(ng)%CostFun(i),      &
      &                              TRIM(Vname(1,idSvar(i))), rate
                 ELSE
-                  WRITE (stdout,50) Nrun, FOURDVAR(ng)%CostFun(i),      &
+                  WRITE (stdout,40) Nrun, FOURDVAR(ng)%CostFun(i),      &
      &                              TRIM(Vname(1,idSvar(i))), rate
                 END IF
               END IF
@@ -295,10 +287,8 @@
 !  Initialize adjoint model from rest.
 !
           CALL ad_initial (ng)
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
+
 #ifdef AVOID_ADJOINT
 !
 !  Use model-observation misfit as a good approximation of the gradient.
@@ -313,7 +303,7 @@
 !  model and observations.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
@@ -326,10 +316,7 @@
 #else
             CALL ad_main2d (ng)
 #endif
-            IF (Master.and.(exit_flag.ne.NoError)) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO AD_LOOP
 #ifdef AVOID_ADJOINT
@@ -346,7 +333,7 @@
 !
           IF (MOD(Nrun-IterSD,NiterSD).eq.0) CGstepF=CGstepI
           IF (Master) THEN
-            WRITE (stdout,60) Nrun, Ipass, CGstepF
+            WRITE (stdout,50) Nrun, Ipass, CGstepF
           END IF
 !
 !  Read in previous state initial conditions and adjoint solution and
@@ -356,6 +343,7 @@
 !
           CALL get_state (ng, iNLM, 2, INIname(ng), tINIindx(ng),       &
      &                    Lold(ng))
+          IF (exit_flag.ne.NoError) RETURN
           IF (Nrun.gt.ERstr) THEN
             IF (LcycleADJ(ng)) THEN
               AdjRec=3-tADJindx(ng)
@@ -364,9 +352,11 @@
             END IF
             CALL get_state (ng, iADM, 3, ADJname(ng), AdjRec,           &
      &                      Lold(ng))
+            IF (exit_flag.ne.NoError) RETURN
           END IF
           CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),       &
      &                    Lnew(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute new intial conditions using first guess step size, CGstepF.
 !
@@ -404,6 +394,7 @@
 !  increasing memory with additional state arrays.
 !
           CALL wrt_ini (ng, Lnew(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Time-step nonlinear model: Compute change in misfit cost function.
@@ -413,10 +404,7 @@
 !
           Ipass=2
           CALL initial (ng)
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate switch to write out initial and final misfit between
 !  model and observations.
@@ -428,7 +416,7 @@
 !  Time-step nonlinear model: Compute change in misfit cost function.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -441,10 +429,7 @@
 #else
             CALL main2d (ng)
 #endif
-            IF (Master.and.(exit_flag.ne.NoError)) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO NL_LOOP2
 !
@@ -458,7 +443,7 @@
           CGstepR=-CGstepF*((StepTopBck+StepTopObs)/                    &
      &                      (StepBotBck+StepBotObs))
           IF (Master) THEN
-            WRITE (stdout,60) Nrun, Ipass, CGstepR
+            WRITE (stdout,50) Nrun, Ipass, CGstepR
           END IF
 !
 !  Read in previous initial conditions and load it into the appropriate
@@ -473,6 +458,7 @@
           END IF
 !!        tINIindx(ng)=IniRec
           CALL get_state (ng, iNLM, 2, INIname(ng), IniRec, Lold(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute new initial conditions using refined step size, CGstepR.
 !
@@ -509,6 +495,7 @@
 !  guess initial conditions are over written.
 !
           CALL wrt_ini (ng, Lnew(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Update iteration counters and conjugate gradient step size.
@@ -534,18 +521,13 @@
         tRSTindx(ng)=0
         NrecRST(ng)=0
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Run nonlinear model. Interpolate nonlinear model to observation
 !  locations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
@@ -558,12 +540,7 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP3
 !
@@ -573,16 +550,15 @@
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i2,/)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 30   FORMAT (/,' Iteration = ',i5.5,1x,'Cost Function = ',1p,e17.10,   &
+ 20   FORMAT (/,' Iteration = ',i5.5,1x,'Cost Function = ',1p,e17.10,   &
      &        t62,0p,f15.10,' %')
- 40   FORMAT (' ----------- ',i5.5,1x,'cost function = ',1p,e17.10,     &
+ 30   FORMAT (' ----------- ',i5.5,1x,'cost function = ',1p,e17.10,     &
      &        1x,a,t62,0p,f15.10,' %')
- 50   FORMAT (13x,i5.5,1x,'cost function = ',1pe17.10,1x,a,             &
+ 40   FORMAT (13x,i5.5,1x,'cost function = ',1pe17.10,1x,a,             &
      &        t62,0p,f15.10,' %')
- 60   FORMAT (/, ' <<<< Descent Algorithm, Iteration = ',i5.5,          &
+ 50   FORMAT (/, ' <<<< Descent Algorithm, Iteration = ',i5.5,          &
      &        ', Ipass = ',i1,' >>>>',/,25x,'Step Size = ',1p,e15.8,/)
 
       RETURN

@@ -196,7 +196,7 @@
 !
 !  Report weights.
 !
-      IF (Master) THEN
+      IF (Master.and.LwrtInfo(ng)) THEN
         WRITE (stdout,10) ndtfast(ng), nfast(ng)
         cff=0.0_r16
         cff1=0.0_r8

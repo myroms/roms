@@ -86,7 +86,7 @@
 !  Report information about vertical S-levels.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
+      IF (Master.and.LwrtInfo(ng)) THEN
         WRITE (stdout,10)
   10    FORMAT (/,' Vertical S-coordinate System: ',/,/,                &
      &            ' level   S-coord     Cs-curve',10x,                  &
@@ -109,7 +109,7 @@
 !  Report N2(z) profile for cost function normalization.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
+      IF (Master.and.LwrtInfo(ng)) THEN
         WRITE (stdout,30)
   30    FORMAT (/,' N2 (1/s2) vertical profile used for',               &
      &            ' normalization:',/)

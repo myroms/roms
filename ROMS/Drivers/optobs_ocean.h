@@ -67,9 +67,6 @@
 #ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_waves_coupling
 #endif
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
 !
 !  Imported variable declarations.
 !
@@ -142,12 +139,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iADM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -163,9 +155,6 @@
         STDrec=1
         DO ng=1,Ngrids
           CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iADM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
@@ -190,6 +179,7 @@
       USE mod_grid
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_ocean
       USE mod_scalars
       USE mod_stepping
@@ -199,9 +189,6 @@
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE ini_adjust_mod, ONLY : load_ADtoTL
       USE ini_adjust_mod, ONLY : load_TLtoAD
       USE normalization_mod, ONLY : normalization
@@ -221,15 +208,11 @@
       logical :: add
       logical :: Lweak = .FALSE.
       
-      integer :: Nrec, i, my_iic, ng, nvd, thread, subs, tile
+      integer :: Nrec, i, my_iic, ng, thread, subs, tile
 #ifdef BALANCE_OPERATOR
       integer :: Lbck = 1
 #endif
-      integer, dimension(4) :: Vsize
-
       real (r8) :: str_day, end_day
-
-      character (len=80) :: fname
 !
 !=======================================================================
 !  Run model for all nested grids, if any.
@@ -243,12 +226,7 @@
 !
         Lstiffness=.FALSE.
         CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate adjoint output.
 !
@@ -267,6 +245,7 @@
 !
         IF (LwrtNRM(ng)) THEN
           CALL def_norm (ng)
+          IF (exit_flag.ne.NoError) RETURN
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,numthreads)
           DO thread=0,numthreads-1
@@ -281,9 +260,6 @@
         ELSE
           tNRMindx(ng)=1
           CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -299,16 +275,16 @@
           DendS(ng)=str_day
         END IF
         IF (Master) THEN
-          WRITE (stdout,20) ntstart(ng), ntend(ng), DendS(ng), DstrS(ng)
+          WRITE (stdout,10) ntstart(ng), ntend(ng), DendS(ng), DstrS(ng)
         END IF
         IF ((DstrS(ng).gt.str_day).or.(DstrS(ng).lt.end_day)) THEN
-          IF (Master)  WRITE (stdout,30) 'DstrS = ', DstrS(ng),         &
+          IF (Master)  WRITE (stdout,20) 'DstrS = ', DstrS(ng),         &
      &                                   end_day, str_day
           exit_flag=7
           RETURN
         END IF
         IF ((DendS(ng).gt.str_day).or.(DendS(ng).lt.end_day)) THEN
-          IF (Master)  WRITE (stdout,30) 'DendS = ', DendS(ng),         &
+          IF (Master)  WRITE (stdout,20) 'DendS = ', DendS(ng),         &
      &                                   end_day, str_day
           exit_flag=7
           RETURN
@@ -324,10 +300,7 @@
 #else
           CALL ad_main2d (ng)
 #endif
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO AD_LOOP
 !
@@ -337,16 +310,14 @@
 !-----------------------------------------------------------------------
 !
         IF (Master) THEN
-          WRITE (stdout,40)
+          WRITE (stdout,30)
         END IF
 !
 !  Inquire about the number of records in input NetCDF.
 !
-        IF (InpThread) THEN
-          CALL opencdf (ng, 1, ADJname(ng), fname, N(ng), 0, Nrec, nvd, &
-     &                  Vsize)
-          IF (exit_flag.ne.NoError) RETURN
-        END IF
+        CALL netcdf_get_dim (ng, iADM, ADJname(ng))
+        IF (exit_flag.ne.NoError) RETURN
+        Nrec_rec_size
 !
 !  Process last available adjoint record.
 !
@@ -357,10 +328,11 @@
 !  Read adjoint solution.
 !
         CALL get_state (ng, iADM, 4, ADJname(ng), Nrec, Lnew(ng))
+        IF (exit_flag.ne.NoError) RETURN
 #ifdef BALANCE_OPERATOR
         CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
+        IF (exit_flag.ne.NoError) RETURN
 #endif
-
 !
 !  First, multiply adjoint solution by the background-error standard
 !  deviations.  Second, convolve resulting adjoint solution with the
@@ -411,6 +383,7 @@
         nstp(ng)=Lnew(ng)
 #endif
         CALL tl_def_ini (ng)
+        IF (exit_flag.ne.NoError) RETURN
         CALL tl_wrt_ini (ng, Lnew(ng), 1)
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -421,12 +394,7 @@
 !  Initialize tangent linear model.
 !
         CALL tl_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate tangent linear output.
 !
@@ -437,7 +405,7 @@
 !  Time-step tangent linear model.
 !
         IF (Master) THEN
-          WRITE (stdout,50) ntstart(ng), ntend(ng)
+          WRITE (stdout,40) ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
@@ -450,27 +418,20 @@
 #else
           CALL tl_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-	      WRITE (stdout,60) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO TL_LOOP
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i2,/)
- 20   FORMAT (/,'AD ROMS/TOMS: started time-stepping:',                 &
+ 10   FORMAT (/,'AD ROMS/TOMS: started time-stepping:',                 &
      &        ' (TimeSteps: ',i8.8,' - ',i8.8,')',/,14x,                &
      &        'adjoint forcing time range: ',f12.4,' - ',f12.4 ,/)
- 30   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
+ 20   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
      &        ' It must be between ',f12.4,' and ',f12.4)
- 40   FORMAT(/,'AD ROMS/TOMS: convolving final Adjoint solution:',/)
- 50   FORMAT (/,'TL ROMS/TOMS: started time-stepping:',                 &
-     &            '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 60   FORMAT (/,a,i3,/)
+ 30   FORMAT(/,'AD ROMS/TOMS: convolving final Adjoint solution:',/)
+ 40   FORMAT (/,'TL ROMS/TOMS: started time-stepping:',                 &
+     &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
 
       RETURN
       END SUBROUTINE ROMS_run

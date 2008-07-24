@@ -1208,7 +1208,7 @@
 !  Adjust surface forcing, add 4DVAR increments
 !-----------------------------------------------------------------------
 !
-      CALL frc_NLadjust (ng, tile, Lfinp(ng))
+      CALL frc_NLadjust (ng, tile, Lfinp(ng), Lfout(ng))
 # endif
 
 # if defined W4DPSAS || defined NLM_OUTER

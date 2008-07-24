@@ -154,12 +154,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -280,15 +275,10 @@
           TLmodel=.TRUE.
           ADmodel=.FALSE.
           CALL tl_initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
           IF (Master) THEN
-            WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -301,12 +291,7 @@
 #else
             CALL tl_main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO TL_LOOP
 
@@ -414,15 +399,10 @@
           TLmodel=.FALSE.
           ADmodel=.TRUE.
           CALL ad_initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
           IF (Master) THEN
-            WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
@@ -435,12 +415,7 @@
 #else
             CALL ad_main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO AD_LOOP
 
@@ -529,64 +504,64 @@
 # endif
           IF (Master) THEN
             IF (SAME_VAR) THEN
-              WRITE (stdout,30) 'Perturbing',                           &
+              WRITE (stdout,20) 'Perturbing',                           &
      &                          TRIM(Vname(1,idSvar(ivarTL)))
               IF (ivarTL.le.3) THEN
-                WRITE (stdout,40) 'Tangent:    ', val(1),IperTL,JperTL
-                WRITE (stdout,40) 'Adjoint:    ', val(2),IperAD,JperAD
-                WRITE (stdout,40) 'Difference: ', val(2)-val(1),        &
+                WRITE (stdout,30) 'Tangent:    ', val(1),IperTL,JperTL
+                WRITE (stdout,30) 'Adjoint:    ', val(2),IperAD,JperAD
+                WRITE (stdout,30) 'Difference: ', val(2)-val(1),        &
      &                                            IperTL,JperTL
               ELSE
-                WRITE (stdout,50) 'Tangent:    ', val(1),IperTL,JperTL, &
+                WRITE (stdout,40) 'Tangent:    ', val(1),IperTL,JperTL, &
      &                                                 KperTL
-                WRITE (stdout,50) 'Adjoint:    ', val(2),IperAD,JperAD, &
+                WRITE (stdout,40) 'Adjoint:    ', val(2),IperAD,JperAD, &
      &                                                   KperAD
-                WRITE (stdout,50) 'Difference: ', val(2)-val(1),        &
+                WRITE (stdout,40) 'Difference: ', val(2)-val(1),        &
      &                                            IperTL,JperTL,KperTL
               END IF
             ELSE
               IF (ivarTL.le.3) THEN
-                WRITE (stdout,60) 'Tangent, Perturbing: ',              &
+                WRITE (stdout,50) 'Tangent, Perturbing: ',              &
      &                            TRIM(Vname(1,idSvar(ivarTL))),        &
      &                            IperTL,JperTL
-                WRITE (stdout,70) TRIM(Vname(1,idSvar(ivarTL))),        &
+                WRITE (stdout,60) TRIM(Vname(1,idSvar(ivarTL))),        &
      &                            val(1),IperTL,JperTL
               ELSE
-                WRITE (stdout,80) 'Tangent, Perturbing: ',              &
+                WRITE (stdout,70) 'Tangent, Perturbing: ',              &
      &                            TRIM(Vname(1,idSvar(ivarTL))),        &
      &                            IperTL,JperTL,KperTL
-                WRITE (stdout,90) TRIM(Vname(1,idSvar(ivarTL))),        &
+                WRITE (stdout,80) TRIM(Vname(1,idSvar(ivarTL))),        &
      &                            val(1),IperTL,JperTL,KperTL
               END IF
               IF (ivarAD.le.3) THEN
-                WRITE (stdout,70) TRIM(Vname(1,idSvar(ivarAD))),        &
+                WRITE (stdout,60) TRIM(Vname(1,idSvar(ivarAD))),        &
      &                            val(3),IperAD,JperAD
               ELSE
-                WRITE (stdout,90) TRIM(Vname(1,idSvar(ivarAD))),        &
+                WRITE (stdout,80) TRIM(Vname(1,idSvar(ivarAD))),        &
      &                            val(3),IperAD,JperAD,KperAD
               END IF
 !
               IF (ivarAD.le.3) THEN
-                WRITE (stdout,60) 'Adjoint, Perturbing: ',              &
+                WRITE (stdout,50) 'Adjoint, Perturbing: ',              &
      &                            TRIM(Vname(1,idSvar(ivarAD))),        &
      &                            IperAD,JperAD
-                WRITE (stdout,70) TRIM(Vname(1,idSvar(ivarAD))),        &
+                WRITE (stdout,60) TRIM(Vname(1,idSvar(ivarAD))),        &
      &                            val(2),IperAD,JperAD
               ELSE
-                WRITE (stdout,80) 'Adjoint, Perturbing: ',              &
+                WRITE (stdout,70) 'Adjoint, Perturbing: ',              &
      &                            TRIM(Vname(1,idSvar(ivarAD))),        &
      &                            IperAD,JperAD,KperAD
-                WRITE (stdout,90) TRIM(Vname(1,idSvar(ivarAD))),        &
+                WRITE (stdout,80) TRIM(Vname(1,idSvar(ivarAD))),        &
      &                            val(2),IperAD,JperAD,KperAD
               END IF
               IF (ivarTL.le.3) THEN
-                WRITE (stdout,70) TRIM(Vname(1,idSvar(ivarTL))),        &
+                WRITE (stdout,60) TRIM(Vname(1,idSvar(ivarTL))),        &
      &                            val(4),IperTL,JperTL
               ELSE
-                WRITE (stdout,90) TRIM(Vname(1,idSvar(ivarTL))),        &
+                WRITE (stdout,80) TRIM(Vname(1,idSvar(ivarTL))),        &
      &                            val(4),IperTL,JperTL,KperTL
               END IF
-              WRITE (stdout,100) val(3)-val(4)
+              WRITE (stdout,90) val(3)-val(4)
             END IF
           END IF
 #endif
@@ -610,22 +585,21 @@
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i2,/)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
 #ifdef SANITY_CHECK
- 30   FORMAT (/,' Sanity Check - ',a,' variable: ',a,t60)
- 40   FORMAT (' Sanity Check - ', a, 1p,e19.12,                         &
+ 20   FORMAT (/,' Sanity Check - ',a,' variable: ',a,t60)
+ 30   FORMAT (' Sanity Check - ', a, 1p,e19.12,                         &
      &        3x, 'at (i,j)   ',2i4)
- 50   FORMAT (' Sanity Check - ', a, 1p,e19.12,                         &
+ 40   FORMAT (' Sanity Check - ', a, 1p,e19.12,                         &
      &        3x, 'at (i,j,k) ',3i4)
- 60   FORMAT (/,' Sanity Check - ',a, a, t52, 'at (i,j)   ', 2i4)
- 70   FORMAT (' Sanity Check - ', a, ' =', t30, 1p,e19.12,              &
+ 50   FORMAT (/,' Sanity Check - ',a, a, t52, 'at (i,j)   ', 2i4)
+ 60   FORMAT (' Sanity Check - ', a, ' =', t30, 1p,e19.12,              &
      &        t52, 'at (i,j)   ',2i4)
- 80   FORMAT (/,' Sanity Check - ',a, a, t52, 'at (i,j,k) ', 3i4)
- 90   FORMAT (' Sanity Check - ', a, ' =', t30, 1p,e19.12,              &
+ 70   FORMAT (/,' Sanity Check - ',a, a, t52, 'at (i,j,k) ', 3i4)
+ 80   FORMAT (' Sanity Check - ', a, ' =', t30, 1p,e19.12,              &
      &        t52, 'at (i,j,k) ',3i4)
-100   FORMAT (/,' Sanity Check - Difference = ', 1p,e19.12)
+ 90   FORMAT (/,' Sanity Check - Difference = ', 1p,e19.12)
 #endif
 
       RETURN

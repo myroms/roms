@@ -55,9 +55,6 @@
 #ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_waves_coupling
 #endif
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
 !
 !  Imported variable declarations.
 !
@@ -130,12 +127,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -151,9 +143,6 @@
         STDrec=1
         DO ng=1,Ngrids
           CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
@@ -185,9 +174,6 @@
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE impulse_mod, ONLY : impulse
       USE ini_adjust_mod, ONLY : ini_adjust
       USE ini_fields_mod, ONLY : ini_fields
@@ -248,12 +234,7 @@
         wrtRPmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Save nonlinear initial conditions (currently in time index 1,
 !  background) into record "Lbck" of INIname NetCDF file. The record
@@ -265,9 +246,7 @@
           NrecINI(ng)=1
         END IF
         CALL wrt_ini (ng, 1)
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Set nonlinear output history file as the initial basic state
 !  trajectory.
@@ -275,7 +254,7 @@
         LdefHIS(ng)=.TRUE.
         LwrtHIS(ng)=.TRUE.
         lstr=LEN_TRIM(FWDbase(ng))
-        WRITE (HISname(ng),20) FWDbase(ng)(1:lstr-3), outer
+        WRITE (HISname(ng),10) FWDbase(ng)(1:lstr-3), outer
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Model-error covariance normalization and stardard deviation factors.
@@ -288,6 +267,7 @@
 !  
         IF (LwrtNRM(ng)) THEN
           CALL def_norm (ng)
+          IF (exit_flag.ne.NoError) RETURN
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
             subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -301,9 +281,6 @@
         ELSE
           tNRMindx(ng)=1
           CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -311,24 +288,27 @@
 !
         LdefTLF(ng)=.TRUE.
         CALL def_impulse (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Define output 4DVAR NetCDF file containing all processed data
 !  at observation locations.
 !
         LdefMOD(ng)=.TRUE.
         CALL def_mod (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Inquire IDs of tangent linear initial conditions NetCDF files.
 !
         LdefITL(ng)=.FALSE.
         CALL tl_def_ini (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run nonlinear model and compute basic state trajectory, X_n-1(t).
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
         IF (Master) THEN
-          WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
+          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         SporadicImpulse=.FALSE.
@@ -343,12 +323,7 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF  
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP1
         wrtNLmod(ng)=.FALSE.
@@ -400,7 +375,7 @@
 !  (outer-1).
 !
           lstr=LEN_TRIM(FWDbase(ng))
-          WRITE (FWDname(ng),20) FWDbase(ng)(1:lstr-3), outer-1
+          WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
 !
 !  Activate switch to write the nonlinear model at observation points.
 !  Turn off writing into history file and turn off impulse forcing.
@@ -421,18 +396,13 @@
 !
             tINIindx(ng)=Lbck
             CALL initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Run nonlinear model using the nonlinear trajectory as a basic
 !  state.  Compute model solution at observation points, H * X_n.
 !
             IF (Master) THEN
-              WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
+              WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
@@ -445,12 +415,7 @@
 #else
               CALL main2d (ng)
 #endif
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO NL_LOOP2
           END IF
@@ -472,12 +437,7 @@
 !  Initialize the adjoint model from rest.
 !
             CALL ad_initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
             wrtMisfit(ng)=.FALSE.
 !
 !  Set adjoint history NetCDF parameters.  Define adjoint history
@@ -490,7 +450,7 @@
 !  Time-step adjoint model backwards forced with current PSI vector.
 !
             IF (Master) THEN
-              WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
+              WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)+dt(ng)
@@ -503,12 +463,7 @@
 #else
               CALL ad_main2d (ng)
 #endif
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO AD_LOOP1
 
@@ -525,7 +480,7 @@
             LwrtState2d(ng)=.TRUE.
             LwrtTime(ng)=.FALSE.
             IF (Master) THEN
-              WRITE (stdout,40) outer, inner
+              WRITE (stdout,30) outer, inner
             END IF
 !
 !  Clear adjoint state arrays.
@@ -548,6 +503,7 @@
             ADrec=Nrec
             Lweak=.FALSE.
             CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -603,6 +559,7 @@
 !  conditions are set to the convolved adjoint solution.
 !
             CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve all adjoint records in ADJname and
 !  impose model error covariance.
@@ -618,6 +575,7 @@
                 ADrec=rec
                 CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec,        &
      &                         Lold(ng))
+                IF (exit_flag.ne.NoError) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -693,7 +651,7 @@
 !  in ADJname is backwards in time).
 !
             IF (Master) THEN
-              WRITE (stdout,50) outer, inner
+              WRITE (stdout,40) outer, inner
             END IF
             tTLFindx(ng)=0
             outer_impulse=.FALSE.
@@ -720,12 +678,7 @@
 !
             tITLindx(ng)=Rec1
             CALL tl_initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate switch to write out initial misfit between model and
 !  observations.
@@ -747,7 +700,7 @@
 !  are used in the conjugate gradient algorithm.
 !
             IF (Master) THEN
-              WRITE (stdout,30) 'TL', ntstart(ng), ntend(ng)
+              WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             MyTime=time(ng)
@@ -774,12 +727,7 @@
 #endif
               MyTime=time(ng)
 
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO TL_LOOP
             wrtNLmod(ng)=.FALSE.
@@ -813,12 +761,7 @@
 !  Initialize the adjoint model always from rest.
 !
           CALL ad_initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Set adjoint history NetCDF parameters.  Define adjoint history
 !  file one to avoid opening to many files.
@@ -831,7 +774,7 @@
 !  coefficients, Beta_n.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'AD', ntstart(ng), ntend(ng)
+            WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
@@ -844,12 +787,7 @@
 #else
             CALL ad_main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO AD_LOOP2
 
@@ -866,7 +804,7 @@
           LwrtState2d(ng)=.TRUE.
           LwrtTime(ng)=.FALSE.
           IF (Master) THEN
-            WRITE (stdout,40) outer, inner
+            WRITE (stdout,30) outer, inner
           END IF
 !
 !  Clear adjoint state arrays.
@@ -889,6 +827,7 @@
           ADrec=Nrec
           Lweak=.FALSE.
           CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -927,6 +866,7 @@
 !  reference nonlinear state (INIname, record Lbck).
 !
           CALL get_state (ng, iNLM, 9, INIname(ng), Lbck, Lnew(ng))
+          IF (exit_flag.ne.NoError) RETURN
 
           add=.FALSE.
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
@@ -951,6 +891,7 @@
 !  Lini.
 !
           CALL wrt_ini (ng, Lbck)
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve adjoint records in ADJname and impose
 !  model error covariance.
@@ -965,6 +906,7 @@
 !
               ADrec=rec
               CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
+              IF (exit_flag.ne.NoError) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -1041,7 +983,7 @@
 !  in ADJname is backwards in time).
 !
           IF (Master) THEN
-            WRITE (stdout,50) outer, inner
+            WRITE (stdout,40) outer, inner
           END IF
           tTLFindx(ng)=0
           outer_impulse=.TRUE.
@@ -1064,7 +1006,7 @@
           wrtNLmod(ng)=.TRUE.
           wrtTLmod(ng)=.FALSE.
           lstr=LEN_TRIM(FWDbase(ng))
-          WRITE (HISname(ng),20) FWDbase(ng)(1:lstr-3), outer
+          WRITE (HISname(ng),10) FWDbase(ng)(1:lstr-3), outer
 !
 !  If weak constraint, the impulses are time-interpolated at each
 !  time-steps.
@@ -1077,12 +1019,7 @@
 !
           tINIindx(ng)=outer+2
           CALL initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate switch to write out final misfit between model and
 !  observations.
@@ -1095,7 +1032,7 @@
 !  compute new basic state trajectory X_n.
 !
           IF (Master) THEN
-            WRITE (stdout,30) 'NL', ntstart(ng), ntend(ng)
+            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -1108,12 +1045,7 @@
 #else
             CALL main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO NL_LOOP3
           wrtNLmod(ng)=.FALSE.
@@ -1137,7 +1069,9 @@
 !
         ADrec=Nrec
         CALL get_state (ng, iADM, 4, ADJname(ng), ADrec, Lold(ng))
+        IF (exit_flag.ne.NoError) RETURN
         CALL get_state (ng, iNLM, 1, INIname(ng), Lbck, Lini)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Notice that "ini_fields" is called below for output purposes only. 
 !  It computes the vertically integrated momentum in 3D applications.
@@ -1169,9 +1103,6 @@
           NrecINI(ng)=1
         END IF
         CALL wrt_ini (ng, Lini)
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
         IF (exit_flag.ne.NoError) RETURN
 #endif /* OLD_DRIVER */
 !
@@ -1181,13 +1112,12 @@
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i3,/)
- 20   FORMAT (a,'_',i3.3,'.nc')
- 30   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (a,'_',i3.3,'.nc')
+ 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 40   FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,        &
+ 30   FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,        &
      &          ' Inner = ',i3.3)
- 50   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
+ 40   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
 
       RETURN

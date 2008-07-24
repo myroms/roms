@@ -145,12 +145,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -226,12 +221,7 @@
 !  Initialize nonlinear model with first guess initial conditions.
 !
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Run nonlinear model. Extact and store nonlinear model values at
 !  observation locations.
@@ -253,12 +243,7 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP
 
@@ -289,12 +274,7 @@
 !  Initialize the adjoint model from rest.
 !
         CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-step adjoint model: Compute model state gradient, GRAD(J).
 !  Force the adjoint model with the adjoint misfit between nonlinear
@@ -314,12 +294,7 @@
 #else
           CALL ad_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO AD_LOOP
 !
@@ -372,12 +347,7 @@
 !  (adjoint state, GRAD(J)) times the perturbation amplitude "p".
 ! 
             CALL tl_initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-step tangent linear model:  Compute misfit cost function
 !  between model (nonlinear + tangent linear) and observations.
@@ -396,12 +366,7 @@
 #else
               CALL tl_main2d (ng)
 #endif
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO TL_LOOP
 !
@@ -483,7 +448,6 @@
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i3,/)
  20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
  30   FORMAT (/,' Nonlinear Model Cost Function = ',1p,e21.14)

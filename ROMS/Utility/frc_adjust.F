@@ -40,7 +40,7 @@
 
       CONTAINS
 
-      SUBROUTINE frc_NLadjust (ng, tile, Linp)
+      SUBROUTINE frc_NLadjust (ng, tile, Linp, Lout)
 !
 !=======================================================================
 !                                                                      !
@@ -53,6 +53,7 @@
 !     ng        Nested grid number.                                    !
 !     tile      Domain partition.                                      !
 !     Linp      Tangent linear state time index to add.                !
+!     Lout      Background state time index to save.                   !
 !                                                                      !
 !=======================================================================
 !
@@ -62,7 +63,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Linp
+      integer, intent(in) :: ng, tile, Linp, Lout
 !
 !  Local variable declarations.
 !
@@ -81,14 +82,17 @@
 # ifdef ADJUST_WSTRESS
      &                        FORCES(ng) % tl_ustr,                     &
      &                        FORCES(ng) % tl_vstr,                     &
+     &                        FORCES(ng) % ustr,                        &
+     &                        FORCES(ng) % vstr,                        &
      &                        FORCES(ng) % sustr,                       &
      &                        FORCES(ng) % svstr,                       &
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
      &                        FORCES(ng) % tl_tflux,                    &
+     &                        FORCES(ng) % tflux,                       &
      &                        FORCES(ng) % stflx,                       &
 # endif
-     &                      Linp)
+     &                        Linp, Lout)
 # ifdef PROFILE
       CALL wclock_off (ng, iNLM, 7)
 # endif
@@ -103,12 +107,13 @@
 # endif
 # ifdef ADJUST_WSTRESS
      &                              tl_ustr,  tl_vstr,                  &
+     &                              ustr, vstr,                         &
      &                              sustr, svstr,                       &
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
-     &                              tl_tflux, stflx,                    &
+     &                              tl_tflux, tflux, stflx,             &
 # endif
-     &                              Linp)
+     &                              Linp, Lout)
 !***********************************************************************
 !
       USE mod_param
@@ -118,7 +123,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: Linp
+      integer, intent(in) :: Linp, Lout
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING
@@ -131,9 +136,12 @@
       real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:,:)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(inout) :: tflux(LBi:,LBj:,:,:,:)
       real(r8), intent(inout) :: tl_tflux(LBi:,LBj:,:,:,:)
 #  endif
 #  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: vstr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: sustr(LBi:,LBj:)
       real(r8), intent(inout) :: svstr(LBi:,LBj:)
 #  endif
@@ -151,10 +159,14 @@
       real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(in) :: tflux(LBi:UBi,LBj:UBj,                    &
+     &                              Nfrec(ng),2,NT(ng))
       real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,                 &
      &                                 Nfrec(ng),2,NT(ng))
 #  endif
 #  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: sustr(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: svstr(LBi:UBi,LBj:UBj)
 #  endif
@@ -196,6 +208,24 @@
 
 # ifdef ADJUST_WSTRESS
 !
+!  If first pass, load background surface momentum stress to store
+!  arrays so it can be written into INIname NetCDF file for latter
+!  use.  Notice that "sustr" and "svstr" contains the initial
+!  interpolated forcing from snapshots.
+!
+      IF ((time(ng).eq.SF_time(it1,ng))) THEN
+        DO j=JstrR,JendR
+          DO i=Istr,IendR
+            ustr(i,j,it1,Lout)=sustr(i,j)
+          END DO
+        END DO
+        DO j=Jstr,JendR
+          DO i=IstrR,IendR
+            vstr(i,j,it1,Lout)=svstr(i,j)
+          END DO
+        END DO
+      END IF
+!
 !  Adjust surface momentum stress. Interpolate between surface forcing
 !  increments, if appropriate.
 !
@@ -221,6 +251,21 @@
       END DO
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
+!
+!  If first pass, load background surface tracers flux to store
+!  arrays so it can be written into INIname NetCDF file for latter
+!  use.  Notice that "stflx" contain the initial interpolated
+!  forcing from snapshots.
+!
+      IF ((time(ng).eq.SF_time(it1,ng))) THEN
+        DO itrc=1,NT(ng)
+          DO j=JstrR,JendR
+            DO i=IstrR,IendR
+              tflux(i,j,it1,Lout,itrc)=stflx(i,j,itrc)
+            END DO
+          END DO
+        END DO
+      END IF
 !
 !  Adjust surface tracer fluxes. Interpolate between surface forcing
 !  increments, if appropriate.
@@ -314,34 +359,34 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: ad_sustr(LBi:,LBj:)
+      real(r8), intent(in) :: ad_svstr(LBi:,LBj:)
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      real(r8), intent(in) :: ad_stflx(LBi:,LBj:,:)
+#  endif
+#  ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: ad_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: ad_vstr(LBi:,LBj:,:,:)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
       real(r8), intent(inout) :: ad_tflux(LBi:,LBj:,:,:,:)
 #  endif
-#  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_sustr(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_svstr(LBi:,LBj:)
-#  endif
-#  if defined ADJUST_STFLUX && defined SOLVE3D
-      real(r8), intent(inout) :: ad_stflx(LBi:,LBj:,:)
-#  endif
 # else
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: ad_sustr(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: ad_svstr(LBi:UBi,LBj:UBj)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
-      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,                 &
-     &                                 Nfrec(ng),2,NT(ng))
+      real(r8), intent(in) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(inout) :: ad_sustr(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: ad_svstr(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
-      real(r8), intent(inout) :: ad_stflx(LBi:UBi,LBj:UBj,NT(ng))
+      real(r8), intent(inout) :: ad_tflux(LBi:UBi,LBj:UBj,              &
+     &                                 Nfrec(ng),2,NT(ng))
 #  endif
 # endif
 !

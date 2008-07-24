@@ -923,7 +923,7 @@
         ViscMax(ng)=buffer(14)
 # endif
 #endif
-        IF (Master) THEN
+        IF (Master.and.LwrtInfo(ng)) THEN
           WRITE(stdout,10) DXmin(ng)/1000.0_r8, DXmax(ng)/1000.0_r8,    &
      &                     DYmin(ng)/1000.0_r8, DYmax(ng)/1000.0_r8
   10      FORMAT (/,' Minimum X-grid spacing, DXmin = ',1pe15.8,' km',  &
@@ -1027,7 +1027,7 @@
 !
 !  Report convolution parameters.
 !
-      IF (Master) THEN
+      IF (Master.and.LwrtInfo(ng)) THEN
         DO is=1,NstateVar(ng)
           WRITE (stdout,70) NHsteps(is), DTsizeH(ng),                   &
      &                      TRIM(Vname(1,idSvar(is)))
@@ -1046,6 +1046,12 @@
         WRITE (stdout,'(/)')
       END IF
 #endif
+!
+!  Turn off application information switch.
+!
+      IF (SOUTH_WEST_TEST) THEN
+        LwrtInfo(ng)=.FALSE.
+      END IF
 
       RETURN
       END SUBROUTINE metrics_tile

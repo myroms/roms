@@ -113,12 +113,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -151,12 +146,7 @@
 !
       DO ng=1,Ngrids
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
       END DO
 !
 !  Initialize run or ensemble counter.
@@ -173,6 +163,7 @@
           LdefMOD(ng)=.TRUE.
           wrtNLmod(ng)=.TRUE.
           CALL def_mod (ng)
+          IF (exit_flag.ne.NoError) RETURN
         END DO
       END IF
 #endif
@@ -245,12 +236,7 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP
 

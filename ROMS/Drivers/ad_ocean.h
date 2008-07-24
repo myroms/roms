@@ -123,12 +123,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iADM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -147,12 +142,7 @@
 !
       DO ng=1,Ngrids
         CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
       END DO
 
       RETURN
@@ -199,7 +189,7 @@
 !  Time-step adjoint model: compute gradient.
 !
         IF (Master) THEN
-          WRITE (stdout,20) ntstart(ng), ntend(ng)
+          WRITE (stdout,10) ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)+dt(ng)
@@ -212,17 +202,13 @@
 #else
           CALL ad_main2d (ng)
 #endif
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO AD_LOOP
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i2,/)
- 20   FORMAT (/,'AD ROMS/TOMS: started time-stepping:',                 &
+ 10   FORMAT (/,'AD ROMS/TOMS: started time-stepping:',                 &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
 
       RETURN

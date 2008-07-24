@@ -132,12 +132,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -203,15 +198,12 @@
 !  Initialize representer tangent linear model.
 !
           CALL rp_initial (ng)
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,30) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-step representers tangent linear model
 !
           IF (Master) THEN
-            WRITE (stdout,40) ntstart(ng), ntend(ng)
+            WRITE (stdout,30) ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -224,12 +216,7 @@
 #else
             CALL rp_main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,30) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO RP_LOOP
 !
@@ -244,8 +231,7 @@
  10   FORMAT (a,'_',i2.2,'.nc')
  20   FORMAT (/,a,i3,/,/,5x,'  History file: ',a,                       &
      &                 /,5x,'  Forward file: ',a,/)
- 30   FORMAT (/,a,i3,/)
- 40   FORMAT (/,'RP ROMS/TOMS: started time-stepping:',                 &
+ 30   FORMAT (/,'RP ROMS/TOMS: started time-stepping:',                 &
      &            '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
 
       RETURN

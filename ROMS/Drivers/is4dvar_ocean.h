@@ -79,9 +79,6 @@
 #ifdef WAVES_OCEAN
       USE ocean_coupler_mod, ONLY : initialize_waves_coupling
 #endif
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
 !
 !  Imported variable declarations.
 !
@@ -154,12 +151,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -175,9 +167,6 @@
         STDrec=1
         DO ng=1,Ngrids
           CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
@@ -216,9 +205,6 @@
       USE cgradient_mod, ONLY : cgradient
       USE cost_grad_mod, ONLY : cost_grad
       USE cost_norm_mod, ONLY : cost_norm
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE ini_adjust_mod, ONLY : ini_adjust
       USE ini_fields_mod, ONLY : ini_fields
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -230,6 +216,9 @@
       USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE tl_ini_adjust_mod, ONLY : tl_frc_adjust
+#endif
       USE tl_ini_adjust_mod, ONLY : tl_ini_adjust
       USE tl_variability_mod, ONLY : tl_variability
 !
@@ -294,12 +283,7 @@
           tRSTindx(ng)=0
           NrecRST(ng)=0
           CALL initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  If first pass, save nonlinear initial conditions (currently in time
 !  index 1, background) into next record (Lbck) of INIname NetCDF file.
@@ -313,9 +297,7 @@
               NrecINI(ng)=1
             END IF
             CALL wrt_ini (ng, 1)
-#ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
+            IF (exit_flag.ne.NoError) RETURN
           END IF
 !
 !  If first pass, compute or read in background-error covariance
@@ -326,6 +308,7 @@
           IF (Nrun.eq.1) THEN
             IF (LwrtNRM(ng)) THEN
               CALL def_norm (ng)
+              IF (exit_flag.ne.NoError) RETURN
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
               DO thread=0,numthreads-1
                 subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -339,9 +322,6 @@
             ELSE
               tNRMindx(ng)=1
               CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
-#ifdef DISTRIBUTE
-              CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
               IF (exit_flag.ne.NoError) RETURN
             END IF
           END IF
@@ -352,6 +332,7 @@
           IF (Nrun.eq.1) THEN
             LdefMOD(ng)=.TRUE.
             CALL def_mod (ng)
+            IF (exit_flag.ne.NoError) RETURN
           END IF
 !
 !  If first pass and preconditioning, open Hessian eigenvectors
@@ -360,6 +341,7 @@
           IF (Lprecond.and.(Nrun.eq.1)) THEN
             LdefHSS(ng)=.FALSE.
             CALL def_hessian (ng)
+            IF (exit_flag.ne.NoError) RETURN
           END IF
 !
 !  Run nonlinear model. Save nonlinear tracjectory needed by the
@@ -380,16 +362,24 @@
 #else
             CALL main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF  
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO NL_LOOP1
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.TRUE.
+
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Write out initial and background surface forcing into initial
+!  INIname NetCDF file for latter use.
+!
+          CALL wrt_frc (ng, Lfout(ng), Lini)
+          IF (exit_flag.ne.NoError) RETURN
+          IF (Nrun.eq.1) THEN
+            CALL wrt_frc (ng, Lfout(ng), Lbck)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  INNER LOOP: iterate using tangent linear model increments.
@@ -422,12 +412,7 @@
 ! 
             tITLindx(ng)=1
             CALL tl_initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
 #ifdef MULTIPLE_TLM
 !
@@ -468,12 +453,7 @@
 #else
               CALL tl_main2d (ng)
 #endif
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO TL_LOOP
 
@@ -494,12 +474,7 @@
 !  Initialize the adjoint model always from rest.
 !
             CALL ad_initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-step adjoint model backwards. The adjoint model is forced with
 !  the adjoint of the observation misfit (Jo) term.
@@ -518,12 +493,7 @@
 #else
               CALL ad_main2d (ng)
 #endif
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO AD_LOOP
 !
@@ -560,11 +530,14 @@
             ELSE
               CALL get_state (ng, iTLM, 8, ITLname(ng), Rec3, LTLM1)
             END IF
+            IF (exit_flag.ne.NoError) RETURN
             CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),     &
      &                      Lnew(ng))
+            IF (exit_flag.ne.NoError) RETURN
 #ifdef BALANCE_OPERATOR
             CALL get_state (ng, iNLM, 9, INIname(ng), Lini, Lini)
 #endif
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Convert observation cost function gradient, GRADx(Jo), from model
 !  space (x-space) to minimization space (v-space):
@@ -611,7 +584,9 @@
             IF (inner.gt.0) THEN
               CALL get_state (ng, iADM, 3, ADJname(ng),                 &
      &                        tADJindx(ng)-1, Lold(ng))
+              IF (exit_flag.ne.NoError) RETURN
               CALL get_state (ng, iTLM, 8, ITLname(ng), Rec2, LTLM1)
+              IF (exit_flag.ne.NoError) RETURN
             END IF
 !
 !  Determine the descent direction in which the quadractic total cost
@@ -728,6 +703,7 @@
                   END IF
                 END IF
               END DO
+              WRITE (stdout,'(/)')
             END IF
             DO i=0,NstateVar(ng)
               FOURDVAR(ng)%CostGradOld(i)=FOURDVAR(ng)%CostGrad(i)
@@ -749,31 +725,28 @@
             tADJindx(ng)=tADJindx(ng)-1
             LwrtState2d(ng)=.TRUE.
             CALL ad_wrt_his (ng)
+            IF (exit_flag.ne.NoError) RETURN
             LwrtState2d(ng)=.FALSE.
 !
 !  Write out previous v-space TLM initial conditions, currently in time
 !  index LTM1, into record 2 of ITLname NetCDF file.
 !
             CALL tl_wrt_ini (ng, LTLM1, Rec2)
-#ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#endif
             IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out trial v-space TLM initial conditions, currently in time
 !  index LTM2, into record 3 of ITLname NetCDF file.
 !
             CALL tl_wrt_ini (ng, LTLM2, Rec3)
-#ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#endif
             IF (exit_flag.ne.NoError) RETURN
 !
 !  Read current outer loop nonlinear model initial conditions and
 !  background state vectors.
 !
             CALL get_state (ng, iNLM, 2, INIname(ng), Lini, Lini)
+            IF (exit_flag.ne.NoError) RETURN
             CALL get_state (ng, iNLM, 9, INIname(ng), Lbck, Lbck)
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Convert increment vector, deltaV, from minimization space (v-space)
 !  to model space (x-space):
@@ -811,9 +784,6 @@
 !  in time index Lcon, into record 1 of ITLname NetCDF file.
 !
             CALL tl_wrt_ini (ng, Lcon, Rec1)
-#ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#endif
             IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
@@ -862,6 +832,17 @@
           nstp(ng)=Lini
 #endif
           CALL get_state (ng, iNLM, 1, INIname(ng), Lini, Lini)
+          IF (exit_flag.ne.NoError) RETURN
+
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Load surface forcing increments into TLM array which will be used
+!  in the next outer loop when calling frc_NLadjust.
+!
+          CALL get_state (ng, iTLM, 1, ITLname(ng), Lfinp(ng), Rec1)
+          IF (exit_flag.ne.NoError) RETURN
+#endif
+
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(numthreads)
           DO thread=0,numthreads-1
@@ -869,6 +850,9 @@
             DO tile=subs*thread,subs*(thread+1)-1
               CALL ini_adjust (ng, TILE, Lcon, Lini)
               CALL ini_fields (ng, TILE, iNLM)
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+              CALL tl_frc_adjust (ng, TILE, Lbck, Lini, Lcon)
+#endif
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -881,9 +865,6 @@
             NrecINI(ng)=1
           END IF
           CALL wrt_ini (ng, Lini)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
 
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -927,12 +908,7 @@
         tRSTindx(ng)=0
         NrecRST(ng)=0
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Run nonlinear model. Interpolate nonlinear model to observation
 !  locations.
@@ -951,12 +927,7 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF  
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP2
 !
@@ -966,7 +937,6 @@
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i3,/)
  20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
  30   FORMAT (/,'>(',i3.3,',',i3.3,'): Cost Jb, J  = ',                 &

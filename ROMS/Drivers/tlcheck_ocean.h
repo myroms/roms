@@ -124,12 +124,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -161,6 +156,9 @@
       USE mod_scalars
       USE mod_stepping
 !
+#ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
       USE dotproduct_mod, ONLY : ad_dotproduct
 !
 !  Imported variable declarations
@@ -202,18 +200,13 @@
 !  Initialize nonlinear model with first guess initial conditions.
 !
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Run nonlinear model. Extract and store nonlinear model values at
 !  observation locations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         wrtNLmod(ng)=.TRUE.
@@ -228,24 +221,24 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP1
 !
 !  Close current nonlinear model history file.
 !
-        status=nf90_close(ncHISid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,30) TRIM(HISname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
+        IF (OutThread) THEN
+          status=nf90_close(ncHISid(ng))
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(HISname(ng))
+            exit_flag=3
+            ioerror=status
+          END IF
         END IF
+#ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+#endif
+        IF (exit_flag.ne.NoError) RETURN
         wrtNLmod(ng)=.FALSE.
         wrtTLmod(ng)=.TRUE.
 !
@@ -256,14 +249,14 @@
           FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
         END DO
         IF (Master) THEN        
-          WRITE (stdout,40) FOURDVAR(ng)%CostFunOld(0)
+          WRITE (stdout,30) FOURDVAR(ng)%CostFunOld(0)
           DO i=1,NstateVar(ng)
             IF (FOURDVAR(ng)%CostFunOld(i).gt.0.0_r8) THEN
               IF (i.eq.1) THEN
-                WRITE (stdout,50) FOURDVAR(ng)%CostFunOld(i),           &
+                WRITE (stdout,40) FOURDVAR(ng)%CostFunOld(i),           &
      &                            TRIM(Vname(1,idSvar(i)))
               ELSE
-                WRITE (stdout,60) FOURDVAR(ng)%CostFunOld(i),           &
+                WRITE (stdout,50) FOURDVAR(ng)%CostFunOld(i),           &
      &                            TRIM(Vname(1,idSvar(i)))
               END IF
             END IF
@@ -273,19 +266,14 @@
 !  Initialize the adjoint model from rest.
 !
         CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Time-step adjoint model: Compute model state gradient, GRAD(J).
 !  Force the adjoint model with the adjoint misfit between nonlinear
 !  model and observations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'AD', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)+dt(ng)
@@ -298,12 +286,7 @@
 #else
           CALL ad_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO AD_LOOP
 !
@@ -317,6 +300,7 @@
 !
         CALL get_state (ng, iADM, 3, ADJname(ng), tADJindx(ng),         &
      &                  Lnew(ng))
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute adjoint solution dot product for scaling purposes.
 !
@@ -346,6 +330,7 @@
         OUTER_LOOP : DO outer=ERstr,ERend
 
           CALL get_state (ng, iNLM, 1, FWDname(ng), IniRec, Lnew(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  INNER LOOP: scale perturbation amplitude by selecting "p" scalar,
 !  ==========  such that:
@@ -359,15 +344,11 @@
 !  by grad(J) times the perturbation amplitude "p".
 !
             CALL initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
+
             IF (Master) THEN
               lstr=LEN_TRIM(HISbase(ng))
-              WRITE (HISname,70) HISbase(ng)(1:lstr-3), Nrun
+              WRITE (HISname,60) HISbase(ng)(1:lstr-3), Nrun
             END IF
             IF (ndefTLM(ng).lt.0) THEN
               LdefHIS(ng)=.FALSE.              ! suppress IO
@@ -381,7 +362,7 @@
 !  Time-step nonlinear model: compute perturbed nonlinear state.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+              WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
@@ -394,12 +375,7 @@
 #else
               CALL main2d (ng)
 #endif
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO NL_LOOP2
 !
@@ -407,20 +383,17 @@
 !
             FWDname(ng)=HISbase(ng)
             CALL get_state (ng, iNLM, 1, FWDname(ng), IniRec, Lnew(ng))
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Initialize tangent linear with the steepest decent direction
 !  (adjoint state, GRAD(J)) times the perturbation amplitude "p".
 ! 
             CALL tl_initial (ng)
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
+
             IF (Master) THEN
               lstr=LEN_TRIM(TLMbase(ng))
-              WRITE (TLMname(ng),70) TLMbase(ng)(1:lstr-3), Nrun
+              WRITE (TLMname(ng),60) TLMbase(ng)(1:lstr-3), Nrun
             END IF
             IF (ndefTLM(ng).lt.0) THEN
               LdefTLM(ng)=.FALSE.              ! suppress IO
@@ -433,7 +406,7 @@
 !  between model (nonlinear + tangent linear) and observations.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+              WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
@@ -446,24 +419,24 @@
 #else
               CALL tl_main2d (ng)
 #endif
-              IF (exit_flag.ne.NoError) THEN
-                IF (Master) THEN
-                  WRITE (stdout,10) Rerror(exit_flag), exit_flag
-                END IF
-                RETURN
-              END IF
+              IF (exit_flag.ne.NoError) RETURN
 
             END DO TL_LOOP
 !
 !  Close current tangent linear model history file.
 !
-            status=nf90_close(ncTLMid(ng))
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,30) TRIM(TLMname(ng))
-              exit_flag=3
-              ioerror=status
-              RETURN
+            IF (OutThread) THEN
+              status=nf90_close(ncTLMid(ng))
+              IF (status.ne.nf90_noerr) THEN
+                WRITE (stdout,20) TRIM(TLMname(ng))
+                exit_flag=3
+                ioerror=status
+              END IF
             END IF
+#ifdef DISTRIBUTE
+            CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+#endif
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Advance model run counter.
 !
@@ -476,37 +449,36 @@
 !  Report dot products.
 !
         IF (Master) THEN
-          WRITE (stdout,80)                                             &
+          WRITE (stdout,70)                                             &
      &      'TLM Test - Dot Products Summary: p, g1, g2, (g1-g2)/g1'
           inner=1
           DO i=1,MIN(ig1count,ig2count)
             p=10.0_r8**FLOAT(-inner)
             IF (MOD(i,1+ntimes(ng)/nTLM(ng)).eq.0) inner=inner+1
-            WRITE (stdout,90) i, p, g1(i), g2(i), (g1(i)-g2(i))/g1(i)
+            WRITE (stdout,80) i, p, g1(i), g2(i), (g1(i)-g2(i))/g1(i)
             IF ((MOD(i,1+ntimes(ng)/nTLM(ng)).eq.0).and.                &
      &          (MOD(i,Ninner*(1+ntimes(ng)/nTLM(ng))).ne.0)) THEN
-              WRITE (stdout,100)
+              WRITE (stdout,90)
             ELSE IF (MOD(i,Ninner*(1+ntimes(ng)/nTLM(ng))).eq.0) THEN
               inner=1
-              WRITE (stdout,110)
+              WRITE (stdout,100)
             END IF
           END DO
         END IF
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i3,/)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS : started time-stepping:',           &
+ 10   FORMAT (/,1x,a,1x,'ROMS/TOMS : started time-stepping:',           &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 30   FORMAT (/,' TLCHECK_OCEAN - unable to close file : ',a)
- 40   FORMAT (/,' Nonlinear Model Cost Function = ',1p,e21.14)
- 50   FORMAT (' --------------- ','cost function = ',1p,e21.14,2x,a)
- 60   FORMAT (17x,'cost function = ',1p,e21.14,2x,a)
- 70   FORMAT (a,'_',i3.3,'.nc')
- 80   FORMAT (/,a,/)
- 90   FORMAT (i4,2x,1pe8.1,3(1x,1p,e20.12,0p))
-100   FORMAT (77('.'))
-110   FORMAT (77('-'))
+ 20   FORMAT (/,' TLCHECK_OCEAN - unable to close file : ',a)
+ 30   FORMAT (/,' Nonlinear Model Cost Function = ',1p,e21.14)
+ 40   FORMAT (' --------------- ','cost function = ',1p,e21.14,2x,a)
+ 50   FORMAT (17x,'cost function = ',1p,e21.14,2x,a)
+ 60   FORMAT (a,'_',i3.3,'.nc')
+ 70   FORMAT (/,a,/)
+ 80   FORMAT (i4,2x,1pe8.1,3(1x,1p,e20.12,0p))
+ 90   FORMAT (77('.'))
+100   FORMAT (77('-'))
 
       RETURN
       END SUBROUTINE ROMS_run

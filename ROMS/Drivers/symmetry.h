@@ -47,11 +47,6 @@
       USE mod_fourdvar
       USE mod_iounits
       USE mod_scalars
-
-#ifdef DISTRIBUTE
-!
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
 !
 !  Imported variable declarations.
 !
@@ -110,12 +105,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -131,9 +121,6 @@
         STDrec=1
         DO ng=1,Ngrids
           CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END DO
 
@@ -219,17 +206,12 @@
         wrtRPmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
         CALL initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Run nonlinear model and compute basic state trajectory.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
@@ -242,12 +224,7 @@
 #else
           CALL main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO NL_LOOP
 !
@@ -267,6 +244,7 @@
 !
         IF (LwrtNRM(ng)) THEN
           CALL def_norm (ng)
+          IF (exit_flag.ne.NoError) RETURN
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,numthreads)
           DO thread=0,numthreads-1
@@ -281,9 +259,6 @@
         ELSE
           tNRMindx(ng)=1
           CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
-#ifdef DISTRIBUTE
-          CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -291,6 +266,7 @@
 !
         LdefTLF(ng)=.TRUE.
         CALL def_impulse (ng)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !=======================================================================
 !  Perturb the adjoint state variable, one at the time, with a delta
@@ -353,19 +329,14 @@
           ADmodel=.TRUE.
           TLmodel=.FALSE.
           CALL ad_initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
           NrecADJ(ng)=0
           tADJindx(ng)=0
 !
 !  Time-step adjoint model backwards forced with current PSI vector.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'AD', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)+dt(ng)
@@ -378,12 +349,7 @@
 #else
             CALL ad_main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO AD_LOOP
 !
@@ -413,6 +379,7 @@
 !  Read background state.
 !
           CALL get_state (ng, iNLM, 9, FWDname(ng), Lbck, Lbck)
+          IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !  Proccess each time record of current adjoint solution in ADJname.
@@ -434,6 +401,7 @@
 !
             ADrec=rec
             CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Load interior solution, read above, into adjoint state arrays. 
 !  Then, multiply adjoint solution by the background-error standard
@@ -525,19 +493,14 @@
           ADmodel=.FALSE.
           TLmodel=.FALSE.
           CALL tl_initial (ng)
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Run tangent linear model forward and force with convolved adjoint
 !  trajectory impulses. Compute R_n * PSI at observation points which
 !  are used in the conjugate gradient algorithm.
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -550,12 +513,7 @@
 #else
             CALL tl_main2d (ng)
 #endif
-            IF (exit_flag.ne.NoError) THEN
-              IF (Master) THEN
-                WRITE (stdout,10) Rerror(exit_flag), exit_flag
-              END IF
-              RETURN
-            END IF
+            IF (exit_flag.ne.NoError) RETURN
 
           END DO TL_LOOP
 !
@@ -593,12 +551,12 @@
         END DO
 #endif
         IF (Master) THEN
-          WRITE (stdout,30) 'Representer Matrix Symmetry Test: ',       &
+          WRITE (stdout,20) 'Representer Matrix Symmetry Test: ',       &
      &                      'Perturbing Point: ',                       &
      &                      IperAD, JperAD, KperAD,                     &
      &                      'Sampling   Point: ',                       &
      &                      IoutTL, JoutTL, KoutTL
-          WRITE (stdout,40) 'Sampled Representer Matrix: '
+          WRITE (stdout,30) 'Sampled Representer Matrix: '
           IF (Lstate.lt.10) THEN
             WRITE (frmt,'(i1,a)') Lstate, '(1x,1p,e14.7,0p)'
           ELSE
@@ -612,7 +570,7 @@
           DO i=1,Lstate
             WRITE (stdout,frmt) (R(i,j),j=1,Lstate)
           END DO
-          WRITE (stdout,40) 'Representer Matrix Symmetry Error: '
+          WRITE (stdout,30) 'Representer Matrix Symmetry Error: '
           DO i=1,Lstate
             WRITE (stdout,frmt) (Rerr(i,j),j=1,Lstate)
           END DO
@@ -620,12 +578,11 @@
 
       END DO NEST_LOOP
 
- 10   FORMAT (/,a,i3,/)
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 30   FORMAT (/,1x,a,/,/,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4,   &
+ 20   FORMAT (/,1x,a,/,/,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4,   &
      &                 /,3x,a,' i = ',i4.4,' j = ',i4.4,' k = ',i4.4)
- 40   FORMAT (/,1x,a,/)
+ 30   FORMAT (/,1x,a,/)
 
       RETURN
       END SUBROUTINE ROMS_run

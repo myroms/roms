@@ -156,7 +156,7 @@
 !
       logical :: foundit
 
-      integer :: ncid, i, status
+      integer :: ncid, i, j, status
       integer :: myID, myValue
 
 #ifdef DISTRIBUTE
@@ -166,6 +166,21 @@
 !-----------------------------------------------------------------------
 !  Inquire about the NetCDF dimensions (names and values).
 !-----------------------------------------------------------------------
+!
+!  Initialize.
+!
+      n_dim=0
+      n_var=0
+      n_gatt=0
+      rec_id=-1
+      rec_size=0
+      dim_id=0
+      dim_size=0
+      DO i=1,Mdims
+        DO j=1,LEN(dim_name(1))
+          dim_name(i)(j:j)=' '
+        END DO
+      END DO
 !
 !  Open NetCDF for reading.
 !
@@ -543,6 +558,24 @@
 !  Inquire about the NetCDF dimensions (names and values).
 !-----------------------------------------------------------------------
 !
+!  Initialize.
+!
+      n_dim=0
+      n_var=0
+      n_gatt=0
+      rec_id=-1
+      var_id=0
+      var_natt=0
+      var_flag=0
+      var_type=0
+      var_ndim=0
+      var_dim=0
+      DO i=1,Mvars
+        DO j=1,LEN(var_name(1))
+          var_name(i)(j:j)=' '
+        END DO
+      END DO
+!
 !  Open NetCDF for reading.
 !
       IF (InpThread) THEN
@@ -778,10 +811,8 @@
               DO i=1,n_vatt
                 CALL mp_bcasts (ng, model, var_Aname(i),                &
      &                          LEN(var_Aname(i)))
-                IF (LEN_TRIM(var_Achar(i)).gt.0) THEN
-                  CALL mp_bcasts (ng, model, var_Achar(i),              &
-     &                            LEN(var_Achar(i)))
-                END IF
+                CALL mp_bcasts (ng, model, var_Achar(i),                &
+     &                          LEN(var_Achar(i)))
               END DO
               IF (n_vatt.gt.0) THEN
                 CALL mp_bcasti (ng, model, var_Aint, NvarA)

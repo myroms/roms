@@ -81,7 +81,7 @@
 
       real(r8), parameter :: Fscl = 1.0_r8
 
-      real(r8) :: Fmax, Fmin, INPtime, Tmax, time_scale
+      real(r8) :: Fmax, Fmin, INPtime, Tmax, scale, time_scale
 
       real(r8), allocatable :: myTime(:)
 
@@ -589,6 +589,67 @@
             END IF
           END IF
         END IF
+
+# ifdef ADJUST_WSTRESS
+!
+!  Read in surface U-momentum stress.
+!
+        IF (get_var(idUsms)) THEN
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*u3dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
+          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+     &                      scale, Fmin, Fmax,                          &
+#  ifdef MASKING
+     &                      GRID(ng) % umask(LBi,LBj),                  &
+#  endif
+     &                      FORCES(ng) % ustr(LBi,LBj,1,Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+!
+!  Read in surface V-momentum stress.
+!
+        IF (get_var(idVsms)) THEN
+          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
+     &                        varid)
+          gtype=var_flag(varid)*v3dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
+          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
+     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
+     &                      scale, Fmin, Fmax,                          &
+#  ifdef MASKING
+     &                      GRID(ng) % vmask(LBi,LBj),                  &
+#  endif
+     &                      FORCES(ng) % vstr(LBi,LBj,1,Tindex))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
+     &                          TRIM(ncname)
+            END IF
+            exit_flag=2
+            ioerror=status
+            RETURN
+          ELSE
+            IF (Master) THEN
+              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+            END IF
+          END IF
+        END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Read in nonlinear 3D momentum component (m/s) in the XI-direction.
@@ -766,6 +827,44 @@
           END IF
         END DO
 
+#  ifdef ADJUST_STFLUX
+!
+!  Read in surface tracers flux.
+!
+        DO itrc=1,NT(ng)
+          IF (get_var(idTsur(itrc))) THEN
+            foundit=find_string(var_name, n_var,                        &
+     &                          TRIM(Vname(1,idTsur(itrc))), varid)
+            gtype=var_flag(varid)*r3dvar
+            IF (itrc.eq.itemp) THEN
+              scale=1.0_r8/(rho0*Cp)        ! W/m2 to Celsius m/s
+            ELSE
+              scale=1.0_r8
+            END IF
+            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+     &                        scale, Fmin, Fmax,                        &
+#   ifdef MASKING
+     &                        GRID(ng) % rmask(LBi,LBj),                &
+#   endif
+     &                        FORCES(ng) % tflux(LBi,LBj,1,Tindex,itrc))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
+     &                            InpRec, TRIM(ncname)
+              END IF             
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
+     &                             Fmin, Fmax
+              END IF
+            END IF
+          END IF
+        END DO
+#  endif
 #  if defined GLS_MIXING || defined MY25_MIXING || defined LMD_MIXING
 !
 !  Read in vertical viscosity.
@@ -1256,9 +1355,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      Fscl, Fmin, Fmax,                           &
+     &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
@@ -1284,9 +1384,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      Fscl, Fmin, Fmax,                           &
+     &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
@@ -1435,9 +1536,14 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
+            IF (itrc.eq.itemp) THEN
+              scale=1.0_r8/(rho0*Cp)        ! W/m2 to Celsius m/s
+            ELSE
+              scale=1.0_r8
+            END IF
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
-     &                        Fscl, Fmin, Fmax,                         &
+     &                        scale, Fmin, Fmax,                        &
 #   ifdef MASKING
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
@@ -1748,9 +1854,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      Fscl, Fmin, Fmax,                           &
+     &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
@@ -1776,9 +1883,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      Fscl, Fmin, Fmax,                           &
+     &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
@@ -1896,9 +2004,14 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
+            IF (itrc.eq.itemp) THEN
+              scale=1.0_r8/(rho0*Cp)        ! W/m2 to Celsius m/s
+            ELSE
+              scale=1.0_r8
+            END IF
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
-     &                        Fscl, Fmin, Fmax,                         &
+     &                        scale, Fmin, Fmax,                        &
 #   ifdef MASKING
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif
@@ -2112,7 +2225,8 @@
 #ifdef FOUR_DVAR
 !
 !-----------------------------------------------------------------------
-!  Read in background-error covariance normalization factors.
+!  Read in background-error covariance normalization (nondimensional)
+!  factors.
 !-----------------------------------------------------------------------
 !
       NRM_STATE: IF (model.eq.5) THEN
@@ -2482,9 +2596,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u2dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
-     &                      Fscl, Fmin, Fmax,                           &
+     &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % umask(LBi,LBj),                  &
 #  endif
@@ -2510,9 +2625,10 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v2dvar
+          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
-     &                      Fscl, Fmin, Fmax,                           &
+     &                      scale, Fmin, Fmax,                          &
 #  ifdef MASKING
      &                      GRID(ng) % vmask(LBi,LBj),                  &
 #  endif
@@ -2629,9 +2745,14 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r2dvar
+            IF (itrc.eq.itemp) THEN
+              scale=1.0_r8/(rho0*Cp)        ! W/m2 to Celsius m/s
+            ELSE
+              scale=1.0_r8
+            END IF
             status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj,                &
-     &                        Fscl, Fmin, Fmax,                         &
+     &                        scale, Fmin, Fmax,                        &
 #   ifdef MASKING
      &                        GRID(ng) % rmask(LBi,LBj),                &
 #   endif

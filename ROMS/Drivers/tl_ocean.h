@@ -123,12 +123,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iNLM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -147,12 +142,7 @@
 !
       DO ng=1,Ngrids
         CALL tl_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
       END DO
 
       RETURN
@@ -217,12 +207,7 @@
 #else
           CALL tl_main2d (ng)
 #endif
-          IF (exit_flag.ne.NoError) THEN
-            IF (Master) THEN
-              WRITE (stdout,20) Rerror(exit_flag), exit_flag
-            END IF
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO TL_LOOP
 
@@ -230,7 +215,6 @@
 !
  10   FORMAT (/,'TL ROMS/TOMS: started time-stepping:',                 &
      &            '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 20   FORMAT (/,a,i3,/)
 
       RETURN
       END SUBROUTINE ROMS_run

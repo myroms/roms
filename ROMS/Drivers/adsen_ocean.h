@@ -138,12 +138,7 @@
 !  "mod_param", "mod_ncparam" and "mod_scalar" modules.
 !
         CALL inp_par (iADM)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,'(/,a,i3,/)') Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Allocate and initialize modules variables.
 !
@@ -192,12 +187,7 @@
 !
         Lstiffness=.FALSE.
         CALL ad_initial (ng)
-        IF (exit_flag.ne.NoError) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-          END IF
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Activate adjoint output.
 !
@@ -215,16 +205,16 @@
           DendS(ng)=str_day
         END IF
         IF (Master) THEN
-          WRITE (stdout,20) ntstart(ng), ntend(ng), DendS(ng), DstrS(ng)
+          WRITE (stdout,10) ntstart(ng), ntend(ng), DendS(ng), DstrS(ng)
         END IF
         IF ((DstrS(ng).gt.str_day).or.(DstrS(ng).lt.end_day)) THEN
-          IF (Master)  WRITE (stdout,30) 'DstrS = ', DstrS(ng),         &
+          IF (Master)  WRITE (stdout,20) 'DstrS = ', DstrS(ng),         &
      &                                   end_day, str_day
           exit_flag=7
           RETURN
         END IF
         IF ((DendS(ng).gt.str_day).or.(DendS(ng).lt.end_day)) THEN
-          IF (Master)  WRITE (stdout,30) 'DendS = ', DendS(ng),         &
+          IF (Master)  WRITE (stdout,20) 'DendS = ', DendS(ng),         &
      &                                   end_day, str_day
           exit_flag=7
           RETURN
@@ -240,20 +230,16 @@
 #else
           CALL ad_main2d (ng)
 #endif
-          IF (Master.and.(exit_flag.ne.NoError)) THEN
-            WRITE (stdout,10) Rerror(exit_flag), exit_flag
-            RETURN
-          END IF
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO AD_LOOP
 
       END DO NEST_LOOP
 !
- 10   FORMAT (/,a,i2,/)
- 20   FORMAT (/,'AD ROMS/TOMS: started time-stepping:',                 &
+ 10   FORMAT (/,'AD ROMS/TOMS: started time-stepping:',                 &
      &        ' (TimeSteps: ',i8.8,' - ',i8.8,')',/,14x,                &
      &        'adjoint forcing time range: ',f12.4,' - ',f12.4 ,/)
- 30   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
+ 20   FORMAT (/,' Out of range adjoint forcing time, ',a,f12.4,/,       &
      &        ' It must be between ',f12.4,' and ',f12.4)
 
       RETURN
