@@ -649,7 +649,7 @@
               var_Aname(i)(j:j)=' '
             END DO
             DO j=1,LEN(var_Achar(1))
-              var_Aname(i)(j:j)=' '
+              var_Achar(i)(j:j)=' '
             END DO
           END DO
           DO i=1,NvarD

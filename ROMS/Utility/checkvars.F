@@ -214,7 +214,7 @@
 !
 !  Determine aditional 4Dvar state variables to adjust.
 !
-      IF ((model.eq.iADM).or.(model.eq.iTLM).or.                        &
+      IF ((model.eq.iADM).or.(model.eq.iTLM).or.(model.eq.iNLM).or.    &
      &    (model.eq.5).or.(model.eq.6)) THEN
 # ifdef ADJUST_STFLUX
         DO itrc=1,NT(ng)
@@ -320,6 +320,7 @@
      &             TRIM(Vname(1,idVbld(itrc)))) THEN
             have_var(idVbld(itrc))=.TRUE.
 #  endif
+          END IF
         END DO
         DO itrc=1,MBEDP
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSbed(itrc)))) THEN
