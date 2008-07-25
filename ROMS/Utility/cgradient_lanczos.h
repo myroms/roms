@@ -3580,7 +3580,8 @@
           status=nf90_inq_varid(ncHSSid(ng),'Ritz',varid)
           start(1)=nvec
           total(1)=1
-          status=nf90_put_var(ncHSSid(ng), varid, Ritz, start, total)
+          status=nf90_put_var(ncHSSid(ng), varid, Ritz(nvec:),          &
+     &                        start, total)
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'Ritz', TRIM(HSSname(ng))
             exit_flag=3
@@ -3588,7 +3589,8 @@
             RETURN
           END IF
           status=nf90_inq_varid(ncHSSid(ng),'Ritz_error',varid)
-          status=nf90_put_var(ncHSSid(ng), varid, RitzErr, start, total)
+          status=nf90_put_var(ncHSSid(ng), varid, RitzErr(nvec:),       &
+     &                        start, total)
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) 'Ritz_error', TRIM(HSSname(ng))
             exit_flag=3
