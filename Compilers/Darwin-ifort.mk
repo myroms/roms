@@ -77,7 +77,7 @@ endif
 
 ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
-           FFLAGS += -openmp
+           FFLAGS += -openmp -fpp
 endif
 
 ifdef USE_DEBUG
@@ -98,7 +98,7 @@ ifdef USE_MCT
 endif
 
 ifdef USE_ESMF 
-      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_SITE)
+      ESMF_SUBDIR := $(ESMF_OS).$(ESMF_COMPILER).$(ESMF_ABI).$(ESMF_COMM).$(ESMF_SITE)
       ESMF_MK_DIR ?= $(ESMF_DIR)/lib/lib$(ESMF_BOPT)/$(ESMF_SUBDIR)
                      include $(ESMF_MK_DIR)/esmf.mk
            FFLAGS += $(ESMF_F90COMPILEPATHS)

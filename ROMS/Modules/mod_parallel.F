@@ -83,11 +83,8 @@
         real(r8) :: Csum(0:Nregion,4,Ngrids)
 
 #ifdef _OPENMP
-        common /process/ proc
-!$OMP THREADPRIVATE (/process/)
-
-        common /wallclock/ Cstr, Cend
-!$OMP THREADPRIVATE (/wallclock/)
+!$OMP THREADPRIVATE (proc)
+!$OMP THREADPRIVATE (Cstr, Cend)
 #endif
 !
 !  Distributed-memory master process and rank of the local process.

@@ -130,7 +130,7 @@ setenv MY_ROMS_SRC          ${MY_ROOT_DIR}/branches/arango
 
 # There are several MPI libraries out there. The user can select here the
 # appropriate "mpif90" script to compile, provided that the makefile
-# macro file (say, Linux-pgi.mk) in the Compilers directory has:
+# macro definition file (say, Compilers/Linux-pgi.mk) has:
 #
 #              FC := mpif90
 #
@@ -155,6 +155,81 @@ if ($?USE_MPIF90) then
     case "g95"
 #     setenv PATH /opt/g95soft/mpich2/bin:$PATH
       setenv PATH /opt/g95soft/openmpi/bin:$PATH
+    breaksw
+
+    case "gfortran"
+#     setenv PATH /opt/gfortransoft/mpich2/bin:$PATH
+      setenv PATH /opt/gfortransoft/openmpi/bin:$PATH
+    breaksw
+
+  endsw
+endif
+
+# The path of the libraries required by ROMS can be set here using
+# environmental variables which take precedence to the values
+# specified in the makefile macro definitions file (Compilers/*.mk).
+# If so desired, uncomment the local USE_MY_LIBS definition below
+# and edit the paths to your values. For most applications, only
+# the location of the NetCDF library (NETCDF_LIBDIR) and include
+# directorry (NETCDF_INCDIR) are needed!
+
+#setenv USE_MY_LIBS         on
+
+if ($?USE_MY_LIBS) then
+  switch ($FORT)
+
+    case "ifort"
+      setenv ARPACK_LIBDIR  /opt/intelsoft/PARPACK
+      setenv ESMF_DIR       /opt/intelsoft/esmf
+      setenv ESMF_OS        Linux
+      setenv ESMF_COMPILER  ifort
+      setenv ESMF_BOPT      O
+      setenv ESMF_ABI       64
+      setenv ESMF_COMM      mpich
+      setenv ESMF_SITE      default
+      setenv HDF5_LIBDIR    /opt/intelsoft/hdf5/lib
+      setenv MCT_INCDIR     /opt/intelsoft/mct/include
+      setenv MCT_LIBDIR     /opt/intelsoft/mct/lib
+      setenv NETCDF_INCDIR  /opt/intelsoft/netcdf/include
+      setenv NETCDF_LIBDIR  /opt/intelsoft/netcdf/lib
+      setenv PARPACK_LIBDIR /opt/intelsoft/PARPACK
+    breaksw
+
+    case "pgi"
+      setenv ARPACK_LIBDIR  /opt/pgisoft/PARPACK
+      setenv ESMF_DIR       /opt/pgisoft/esmf-3.1.0
+      setenv ESMF_OS        Linux
+      setenv ESMF_COMPILER  pgi
+      setenv ESMF_BOPT      O
+      setenv ESMF_ABI       64
+      setenv ESMF_COMM      mpich
+      setenv ESMF_SITE      default
+      setenv HDF5_LIBDIR    /opt/pgisoft/hdf5/lib
+      setenv MCT_INCDIR     /opt/pgisoft/mct/include
+      setenv MCT_LIBDIR     /opt/pgisoft/mct/lib
+      setenv NETCDF_INCDIR  /opt/pgisoft/netcdf/include
+      setenv NETCDF_LIBDIR  /opt/pgisoft/netcdf/lib
+      setenv PARPACK_LIBDIR /opt/pgisoft/PARPACK
+    breaksw
+
+    case "g95"
+      setenv ARPACK_LIBDIR  /opt/g95soft/PARPACK
+      setenv HDF5_LIBDIR    /opt/g95soft/hdf5/lib
+      setenv MCT_INCDIR     /opt/g95soft/mct/include
+      setenv MCT_LIBDIR     /opt/g95soft/mct/lib
+      setenv NETCDF_INCDIR  /opt/g95soft/netcdf/include
+      setenv NETCDF_LIBDIR  /opt/g95soft/netcdf/lib
+      setenv PARPACK_LIBDIR /opt/g95soft/PARPACK
+    breaksw
+
+    case "gfortran"
+      setenv ARPACK_LIBDIR  /opt/gfortransoft/PARPACK
+      setenv HDF5_LIBDIR    /opt/gfortransoft/hdf5/lib
+      setenv MCT_INCDIR     /opt/gfortransoft/mct/include
+      setenv MCT_LIBDIR     /opt/gfortransoft/mct/lib
+      setenv NETCDF_INCDIR  /opt/gfortransoft/netcdf/include
+      setenv NETCDF_LIBDIR  /opt/gfortransoft/netcdf/lib
+      setenv PARPACK_LIBDIR /opt/gfortransoft/PARPACK
     breaksw
 
   endsw

@@ -155,6 +155,81 @@ if [ -n "${USE_MPIF90+1}" ]; then
       export PATH=/opt/g95soft/openmpi/bin:$PATH
       ;;
 
+    gfortran )
+#     export PATH=/opt/gfortransoft/mpich2/bin:$PATH
+      export PATH=/opt/gfortansoft/openmpi/bin:$PATH
+      ;;
+
+  esac
+fi
+
+# The path of the libraries required by ROMS can be set here using
+# environmental variables which take precedence to the values
+# specified in the makefile macro definitions file (Compilers/*.mk).
+# If so desired, uncomment the local USE_MY_LIBS definition below
+# and edit the paths to your values. For most applications, only
+# the location of the NetCDF library (NETCDF_LIBDIR) and include
+# directorry (NETCDF_INCDIR) are needed!
+
+#export         USE_MY_LIBS=on
+
+
+if [ -n "${USE_MY_LIBS+1}" ]; then
+  case "$FORT" in
+    ifort )
+      export  ARPACK_LIBDIR=/opt/intelsoft/PARPACK
+      export       ESMF_DIR=/opt/intelsoft/esmf-3.1.0
+      export        ESMF_OS=Linux
+      export  ESMF_COMPILER=ifort
+      export      ESMF_BOPT=O
+      export       ESMF_ABI=64
+      export      ESMF_COMM=mpich
+      export      ESMF_SITE=default
+      export    HDF5_LIBDIR=/opt/intelsoft/hdf5/lib
+      export     MCT_INCDIR=/opt/intelsoft/mct/include
+      export     MCT_LIBDIR=/opt/intelsoft/mct/lib
+      export  NETCDF_INCDIR=/opt/intelsoft/netcdf/include
+      export  NETCDF_LIBDIR=/opt/intelsoft/netcdf/lib
+      export PARPACK_LIBDIR=/opt/intelsoft/PARPACK
+      ;;
+
+    pgi )
+      export  ARPACK_LIBDIR=/opt/pgisoft/PARPACK
+      export       ESMF_DIR=/opt/pgisoft/esmf-3.1.0
+      export        ESMF_OS=Linux
+      export  ESMF_COMPILER=pgi
+      export      ESMF_BOPT=O
+      export       ESMF_ABI=64
+      export      ESMF_COMM=mpich
+      export      ESMF_SITE=default
+      export    HDF5_LIBDIR=/opt/pgisoft/hdf5/lib
+      export     MCT_INCDIR=/opt/pgisoft/mct/include
+      export     MCT_LIBDIR=/opt/pgisoft/mct/lib
+      export  NETCDF_INCDIR=/opt/pgisoft/netcdf/include
+      export  NETCDF_LIBDIR=/opt/pgisoft/netcdf/lib
+      export PARPACK_LIBDIR=/opt/pgisoft/PARPACK
+      ;;
+
+    g95 )
+      export  ARPACK_LIBDIR=/opt/g95soft/PARPACK
+      export    HDF5_LIBDIR=/opt/g95soft/hdf5/lib
+      export     MCT_INCDIR=/opt/g95soft/mct/include
+      export     MCT_LIBDIR=/opt/g95soft/mct/lib
+      export  NETCDF_INCDIR=/opt/g95soft/netcdf/include
+      export  NETCDF_LIBDIR=/opt/g95soft/netcdf/lib
+      export PARPACK_LIBDIR=/opt/g95soft/PARPACK
+      ;;
+
+    gfortran )
+      export  ARPACK_LIBDIR=/opt/gfortransoft/PARPACK
+      export    HDF5_LIBDIR=/opt/gfortransoft/hdf5/lib
+      export     MCT_INCDIR=/opt/gfortransoft/mct/include
+      export     MCT_LIBDIR=/opt/gfortransoft/mct/lib
+      export  NETCDF_INCDIR=/opt/gfortransoft/netcdf/include
+      export  NETCDF_LIBDIR=/opt/gfortransoft/netcdf/lib
+      export PARPACK_LIBDIR=/opt/gfortransoft/PARPACK
+      ;;
+
   esac
 fi
 
