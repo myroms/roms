@@ -127,7 +127,7 @@ endif
 #
 # Use full path of compiler.
 #
-               FC := $(shell which ${FC})
+               FC := "$(shell which ${FC})"
 
 #
 # For a Windows compiler, override the compilation rule

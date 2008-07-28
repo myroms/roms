@@ -330,7 +330,6 @@
 #  endif
       CALL tl_frc_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         Lbck, Lini, Lnew,                        &
 #  if defined ADJUST_STFLUX && defined SOLVE3D
      &                         FORCES(ng) % tflux,                      &
      &                         FORCES(ng) % tl_tflux,                   &
@@ -341,7 +340,7 @@
      &                         FORCES(ng) % vstr,                       &
      &                         FORCES(ng) % tl_vstr,                    &
 #  endif
-     &                         )
+     &                         Lbck, Lini, Lnew)
 #  ifdef PROFILE
       CALL wclock_off (ng, iTLM, 7)
 #  endif
@@ -351,7 +350,6 @@
 !***********************************************************************
       SUBROUTINE tl_frc_adjust_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
-     &                               Lbck, Lini, Lnew,                  &
 #  if defined ADJUST_STFLUX && defined SOLVE3D
      &                               tflux, tl_tflux,                   &
 #  endif
@@ -359,7 +357,7 @@
      &                               ustr, tl_ustr,                     &
      &                               vstr, tl_vstr,                     &
 #  endif
-     &                               )
+     &                               Lbck, Lini, Lnew)
 !***********************************************************************
 !
       USE mod_param
