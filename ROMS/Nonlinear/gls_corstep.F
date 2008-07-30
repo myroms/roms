@@ -919,7 +919,7 @@
      &                 ((Zos_eff(i)+0.5_r8*Hz(i,j,N(ng)))*L_sft)**      &
      &                 gls_n(ng)*                                       &
      &                 gls_sigk(ng)*ogls_sigp*sz_alpha(ng)*             &
-     &                 Wave_dissip(i,j))
+     &                 Wave_dissip(i,j)
 # endif
           cff=0.5_r8*(tke(i,j,0,nnew)+tke(i,j,1,nnew))
           gls_fluxb(i)=dt(ng)*gls_fac2*(cff**gls_m(ng))*                &

@@ -261,7 +261,7 @@
      &                        srflx)
 #endif
 #ifdef DISTRIBUTE
-      CALL mp_exchange2d (ng, model, 1, Istr, Iend, Jstr, Jend,         &
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    srflx)
