@@ -905,6 +905,9 @@
 # ifdef MASKING
      &                       GRID(ng) % rmask,                          &
 # endif
+# ifdef WET_DRY
+     &                       GRID(ng) % h,                              &
+# endif
 # ifdef SOLVE3D
      &                       COUPLING(ng) % tl_Zt_avg1,                 &
 # endif
@@ -920,6 +923,9 @@
      &                             kstp, krhs, knew,                    &
 # ifdef MASKING
      &                             rmask,                               &
+# endif
+# ifdef WET_DRY
+     &                             h,                                   &
 # endif
 # ifdef SOLVE3D
      &                             tl_Zt_avg1,                          &
@@ -950,6 +956,9 @@
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: h(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
@@ -958,6 +967,9 @@
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
