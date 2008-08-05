@@ -124,6 +124,7 @@
       USE mod_parallel
       USE mod_fourdvar
       USE mod_iounits
+      USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
 !
@@ -144,7 +145,7 @@
 !
       logical :: allocate_vars = .TRUE.
 
-      integer :: ng, thread
+      integer :: STDrec, ng, thread
 
 #ifdef DISTRIBUTE
 !
@@ -218,7 +219,7 @@
 !
 !-----------------------------------------------------------------------
 !  Read in Lanczos algorithm coefficients (cg_beta, cg_delta) from
-!  file HSSname NetCDF (IS4DVAR adjoint file), as computed in the
+!  file LCZname NetCDF (IS4DVAR adjoint file), as computed in the
 !  IS4DVAR Lanczos data assimilation algorithm for the first outer
 !  loop.  They are needed here, in routine "ini_lanczos", to compute
 !  the tangent linear model initial conditions as the weighted sum
@@ -227,12 +228,33 @@
 !-----------------------------------------------------------------------
 !
       DO ng=1,Ngrids
-        CALL netcdf_get_fvar (ng, iADM, HSSname(ng), 'cg_beta',         &
+        CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_beta',         &
      &                        cg_beta)
         IF (exit_flag.ne. NoError) RETURN
-        CALL netcdf_get_fvar (ng, iADM, HSSname(ng), 'cg_delta',        &
+        CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_delta',        &
      &                        cg_delta)
         IF (exit_flag.ne. NoError) RETURN
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Read in background-error standard deviation factors used in the
+!  spatial convolutions.
+!-----------------------------------------------------------------------
+!  
+      STDrec=1
+      DO ng=1,Ngrids
+        CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
+        IF (exit_flag.ne.NoError) RETURN
+      END DO
+!
+!-----------------------------------------------------------------------
+!  Read in background-error covariance normalization factors.
+!-----------------------------------------------------------------------
+!
+      DO ng=1,Ngrids
+        tNRMindx(ng)=1
+        CALL get_state (ng, 5, 5, NRMname(ng), tNRMindx(ng), 1)
+        IF (exit_flag.ne.NoError) RETURN
       END DO
 
       RETURN
@@ -258,6 +280,17 @@
       USE mod_scalars
       USE mod_stepping
 !
+#ifdef BALANCE_OPERATOR
+      USE ad_balance_mod, ONLY: ad_balance
+#endif
+      USE ad_convolution_mod, ONLY : ad_convolution
+      USE ad_variability_mod, ONLY : ad_variability
+#ifdef BALANCE_OPERATOR
+      USE tl_balance_mod, ONLY: tl_balance
+#endif
+      USE tl_convolution_mod, ONLY : tl_convolution 
+      USE tl_variability_mod, ONLY : tl_variability
+!
 !  Imported variable declarations
 !
       integer, dimension(Ngrids) :: Tstr
@@ -265,7 +298,10 @@
 !
 !  Local variable declarations.
 !
-      integer :: i, my_iic, ng
+      logical :: Lweak = .FALSE. 
+
+      integer :: i, my_iic, ng,  subs, tile, thread
+      integer :: Lini, Litl
 
       real (r8) :: str_day, end_day
 !
@@ -274,6 +310,12 @@
 !=======================================================================
 !
       NEST_LOOP : DO ng=1,Ngrids
+!
+!  Initialize relevant parameters.
+!
+        Lini=1              ! NLM initial conditions record in INIname
+        Litl=1              ! TLM initial conditions record
+        Lnew(ng)=1
 !
 !  Initialize nonlinear model with the same initial conditions, xb(0),
 !  used to run the IS4DVAR Lanczos algorithm.
@@ -363,16 +405,33 @@
 !  Load full adjoint sensitivity vector, x(0), for t=t0 into adjoint
 !  state arrays at index Lnew.
 !
-        Lnew(ng)=1
         CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),         &
      &                  Lnew(ng))
-        IF (exit_flag.ne.NoError) RETURN
+#ifdef BALANCE_OPERATOR
+        CALL get_state (ng, iNLM, 9, INIname(ng), Lini, Lini)
+#endif
+!
+!  Convert adjoint solution to v-space since the Lanczos vectors
+!  are in v-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1
+#ifdef BALANCE_OPERATOR
+            CALL ad_balance (ng, TILE, Lini, Lnew(ng))
+#endif
+            CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
+            CALL ad_convolution (ng, TILE, Lnew(ng), 2)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
 !
 !  Check Lanczos vector input file and determine t=t1. That is, the
 !  time to run the tangent linear model.  This time must be the same
 !  as the IS4DVAR Lanczos algorithm.
 !
-        CALL netcdf_get_ivar (ng, iADM, HSSname(ng), 'ntimes',          &
+        CALL netcdf_get_ivar (ng, iADM, LCZname(ng), 'ntimes',          &
      &                        ntimes(ng))
         IF (exit_flag.ne. NoError) RETURN
 !
@@ -385,6 +444,21 @@
         LdefTLM(ng)=.TRUE.
         LwrtTLM(ng)=.TRUE.
         wrtTLmod(ng)=.TRUE.
+!
+!  Convert TL initial condition from v-space to x-space.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_convolution (ng, TILE, Litl, 2)
+            CALL tl_variability (ng, TILE, Litl, Lweak)
+#ifdef BALANCE_OPERATOR
+            CALL tl_balance (ng, TILE, Lini, Litls)
+#endif
+          END DO
+        END DO
+!$OMP END PARALLEL DO
 !
 !  Define output 4DVAR NetCDF file containing the sensitivity at the
 !  observation locations.

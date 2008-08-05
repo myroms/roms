@@ -588,6 +588,7 @@
                   CALL cgradient (ng, TILE, iTLM, inner, outer)
                 END DO
               END DO
+              IF (exit_flag.ne.NoError) RETURN
             END IF
 !
 !$OMP END PARALLEL DO

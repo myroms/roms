@@ -95,8 +95,8 @@
 #  if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in):: bed_thick(LBi:,LBj:,:)
 #  endif
+      real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
       real(r8), intent(inout) :: h(LBi:,LBj:)
-      real(r8), intent(inout) :: Zt_avg1(LBi:,LBj:)
       real(r8), intent(out) :: Hz(LBi:,LBj:,:)
       real(r8), intent(out) :: z_r(LBi:,LBj:,:)
       real(r8), intent(out) :: z_w(LBi:,LBj:,0:)
@@ -107,8 +107,8 @@
 #  if defined SEDIMENT && defined SED_MORPH
       real(r8), intent(in):: bed_thick(LBi:UBi,LBj:UBj,2)
 #  endif
+      real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: h(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: Zt_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))

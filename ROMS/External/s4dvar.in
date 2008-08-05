@@ -224,6 +224,10 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 
        HSSname == ocean_hss.nc
 
+! Input/output Lanczos vectors file name, [1:Ngrids].
+
+       LCZname == ocean_lcz.nc
+
 ! Output model data at observation locations file name, [1:Ngrids].
 
        MODname == ocean_mod.nc
@@ -434,6 +438,8 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !  OBSname        Input/Output observations data file name.
 !
 !  HSSname        Input/Output Hessian eigenvectors file name.
+!
+!  LCZname        Input/output Lanczos vectors file name.
 !
 !  MODname        Output model data at observations locations file name.
 !

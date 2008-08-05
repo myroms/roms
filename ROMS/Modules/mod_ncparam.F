@@ -69,8 +69,8 @@
 !  Maximum number of variables in a generic NetCDF file (MV) and
 !  maximum number of variables in information arrays (NV).
 !
-        integer, parameter :: MV = 500
-        integer, parameter :: NV = 500
+        integer, parameter :: MV = 800
+        integer, parameter :: NV = 800
 !
 !  Input/output grid-type variables.
 !
@@ -398,10 +398,11 @@
         integer  :: ncGRDid(Ngrids)     ! input grid
         integer  :: ncGSTid(Ngrids)     ! input/output GST restart
         integer  :: ncHISid(Ngrids)     ! output history
+        integer  :: ncHSSid(Ngrids)     ! input/output Hessian vectors
         integer  :: ncINIid(Ngrids)     ! input/output NLM initial
         integer  :: ncIRPid(Ngrids)     ! input/output RPM initial
         integer  :: ncITLid(Ngrids)     ! input/output TLM initial
-        integer  :: ncHSSid(Ngrids)     ! input/output Hessian vectors
+        integer  :: ncLCZid(Ngrids)     ! input/output Lanczos vectors
         integer  :: ncMODid(Ngrids)     ! output 4DVAR fields
         integer  :: ncNRMid(Ngrids)     ! input/output covariance norm
         integer  :: ncOBSid(Ngrids)     ! input/output observations
@@ -429,10 +430,11 @@
         integer, allocatable :: avgTid(:,:)   ! averages tracers IDs
         integer, allocatable :: fltTid(:,:)   ! floats tracers IDs
         integer, allocatable :: hisTid(:,:)   ! history tracers IDs
+        integer, allocatable :: hssTid(:,:)   ! Hessian vectors IDs
         integer, allocatable :: iniTid(:,:)   ! initial NLM tracers IDs
         integer, allocatable :: irpTid(:,:)   ! initial RPM tracers IDs
         integer, allocatable :: itlTid(:,:)   ! initial TLM tracers IDs
-        integer, allocatable :: hssTid(:,:)   ! Hessian vectors IDs
+        integer, allocatable :: lczTid(:,:)   ! Lanczos vectors IDs
         integer, allocatable :: nrmTid(:,:)   ! norm tracers IDs
         integer, allocatable :: obsTid(:,:)   ! observations tracers IDs
         integer, allocatable :: rstTid(:,:)   ! restart tracers IDs
@@ -445,10 +447,11 @@
         integer  :: diaVid(NV,Ngrids)    ! diagnostics variables IDs
         integer  :: fltVid(-6:NV,Ngrids) ! floats variables IDs
         integer  :: hisVid(NV,Ngrids)    ! history variables IDs
+        integer  :: hssVid(NV,Ngrids)    ! Hessian variables IDs
         integer  :: iniVid(NV,Ngrids)    ! initial NLM variables IDs
         integer  :: irpVid(NV,Ngrids)    ! initial RPM variables IDs
         integer  :: itlVid(NV,Ngrids)    ! initial TLM variables IDs
-        integer  :: hssVid(NV,Ngrids)    ! Hessian variables IDs
+        integer  :: lczVid(NV,Ngrids)    ! Lanczos variables IDs
         integer  :: modVid(NV,Ngrids)    ! 4DVAR variables IDs
         integer  :: nrmVid(NV,Ngrids)    ! norm variables IDs
         integer  :: obsVid(NV,Ngrids)    ! observations variables IDs
@@ -463,10 +466,11 @@
         integer  :: tDIAindx(Ngrids)     ! diagnostics time record index
         integer  :: tFLTindx(Ngrids)     ! floats time record index
         integer  :: tHISindx(Ngrids)     ! history time record index
+        integer  :: tHSSindx(Ngrids)     ! Hessian time record index
         integer  :: tINIindx(Ngrids)     ! initial NLM time record index
         integer  :: tIRPindx(Ngrids)     ! initial RPM time record index
         integer  :: tITLindx(Ngrids)     ! initial TLM time record index
-        integer  :: tHSSindx(Ngrids)     ! Hessian time record index
+        integer  :: tLCZindx(Ngrids)     ! Lanczos time record index
         integer  :: tNRMindx(Ngrids)     ! norm time record index
         integer  :: tRSTindx(Ngrids)     ! restart time record index
         integer  :: tSTAindx(Ngrids)     ! stations time record index
@@ -576,10 +580,11 @@
         allocate ( avgTid(MT,Ngrids) )
         allocate ( fltTid(MT,Ngrids) )
         allocate ( hisTid(MT,Ngrids) )
+        allocate ( hssTid(MT,Ngrids) )
         allocate ( iniTid(MT,Ngrids) )
         allocate ( irpTid(MT,Ngrids) )
         allocate ( itlTid(MT,Ngrids) )
-        allocate ( hssTid(MT,Ngrids) )
+        allocate ( lczTid(MT,Ngrids) )
         allocate ( nrmTid(MT,Ngrids) )
         allocate ( obsTid(MT,Ngrids) )
         allocate ( rstTid(MT,Ngrids) )
@@ -743,6 +748,7 @@
           ncINIid(ng)=-1
           ncIRPid(ng)=-1
           ncITLid(ng)=-1
+          ncLCZid(ng)=-1
           ncMODid(ng)=-1
           ncNRMid(ng)=-1
           ncOBSid(ng)=-1

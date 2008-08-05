@@ -759,7 +759,8 @@
 !  Write out conjugate gradient information into NetCDF file.
 !-----------------------------------------------------------------------
 !
-      CALL cg_write (ng, innLoop, outLoop)
+      CALL cg_write (ng, model, innLoop, outLoop)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Report algorithm parameters.
 !
@@ -3617,7 +3618,7 @@
       RETURN
       END SUBROUTINE hessian_evecs
 
-      SUBROUTINE cg_write (ng, innLoop, outLoop)
+      SUBROUTINE cg_write (ng, model, innLoop, outLoop)
 !
 !=======================================================================
 !                                                                      !
@@ -3633,378 +3634,198 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
 !  Imported variable declarations
 !
-      integer, intent(in) :: ng, innLoop, outLoop
+      integer, intent(in) :: ng, model, innLoop, outLoop
 !
 !  Local variable declarations.
 !
-      logical, save :: First = .TRUE.
-
-      integer :: i, status
-      integer :: start(2), total(2)
-      integer, save :: varid(18)
+      integer :: status
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient vectors.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        IF (First) THEN
-          First=.FALSE.
-          DO i=1,18
-            varid(i)=0
-          END DO
-        END IF
-!
 !  Write out outer and inner iteration.
 !
-        IF (varid(1).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'outer', varid(1))
-        END IF        
-        status=nf90_put_var(ncMODid(ng), varid(1), outer)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'outer', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_ivar (ng, model, MODname(ng), 'outer',            &
+     &                      outer, (/0/), (/0/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
-        IF (varid(2).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'inner', varid(2))
-        END IF
-        status=nf90_put_var(ncMODid(ng), varid(2), inner)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'inner', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_ivar (ng, model, MODname(ng), 'inner',            &
+     &                      inner, (/0/), (/0/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out number of converged Ritz eigenvalues.
 !
-        IF (innLoop.eq.(Ninner-1)) THEN
-          IF (varid(3).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'nConvRitz', varid(3))
-          END IF
-          status=nf90_put_var(ncMODid(ng), varid(3), nConvRitz)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'nConvRitz', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.eq.(Ninner-1)) THEN
+        CALL netcdf_put_ivar (ng, model, MODname(ng), 'nConvRitz',      &
+     &                        nConvRitz, (/0/), (/0/),                  &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Write out converged Ritz eigenvalues.
 !
-        IF (innLoop.eq.(Ninner-1)) THEN
-          IF (varid(4).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'Ritz', varid(4))
-          END IF
-          start(1)=1
-          total(1)=nConvRitz
-          status=nf90_put_var(ncMODid(ng), varid(4), Ritz, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'Ritz', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.eq.(Ninner-1)) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'Ritz',           &
+     &                        Ritz, (/1/), (/nConvRitz/),               &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Write out conjugate gradient norms.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(5).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_beta', varid(5))
-          END IF
-          start(1)=1
-          total(1)=Ninner+1
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(5), cg_beta,           &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_beta', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_beta',        &
+     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
-        IF (varid(6).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'cg_tau', varid(6))
-        END IF
-        start(1)=1
-        total(1)=Ninner+1
-        start(2)=1
-        total(2)=Nouter
-        status=nf90_put_var(ncMODid(ng), varid(6), cg_tau(0:,:),        &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'cg_tau', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_tau',           &
+     &                      cg_tau(0:,:), (/1,1/), (/Ninner+1,Nouter/), &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out Lanczos algorithm coefficients.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(7).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_delta', varid(7))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(7), cg_delta,          &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_delta', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_delta',       &
+     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(8).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_gamma', varid(8))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(8), cg_gamma,          &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_gamma', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_gamma',       &
+     &                        cg_gamma, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Initial gradient normalization factor.
 !
-        IF (innLoop.eq.0) THEN
-          IF (varid(9).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_Gnorm', varid(9))
-          END IF
-          start(1)=1
-          total(1)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(9), cg_Gnorm,          &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_Gnorm', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.eq.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Gnorm',       &
+     &                        cg_Gnorm, (/1/), (/Nouter/),              &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Lanczos vector normalization factor.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(10).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_QG', varid(10))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(10), cg_QG,            &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_QG', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_QG',          &
+     &                        cg_QG, (/1,1/), (/Ninner,Nouter/),        &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Reduction in the gradient norm.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(11).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_Greduc', varid(11))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(11), cg_Greduc,        &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_Greduc', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc',      &
+     &                        cg_Greduc, (/1,1/), (/Ninner,Nouter/),    &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Lanczos recurrence tridiagonal matrix.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(12).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_Tmatrix', varid(12))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=3
-          status=nf90_put_var(ncMODid(ng), varid(12), cg_Tmatrix,       &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_Tmatrix', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Tmatrix',     &
+     &                        cg_Tmatrix, (/1,1/), (/Ninner,3/),        &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Lanczos tridiagonal matrix, upper diagonal elements.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(13).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_zu', varid(13))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(13), cg_zu,            &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_zu', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_zu',          &
+     &                        cg_zu, (/1,1/), (/Ninner,Nouter/),        &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Eigenvalues of Lanczos recurrence relationship.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(14).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_Ritz', varid(14))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(14), cg_Ritz,          &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_Ritz', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Ritz',        &
+     &                        cg_Ritz, (/1,1/), (/Ninner,Nouter/),      &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Eigenvalues relative error.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(15).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_RitzErr', varid(15))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncMODid(ng), varid(15), cg_RitzErr,       &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_RitzErr', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_RitzErr',     &
+     &                        cg_RitzErr, (/1,1/), (/Ninner,Nouter/),   &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Eigenvectors of Lanczos recurrence relationship.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(16).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'cg_zv', varid(16))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Ninner
-          status=nf90_put_var(ncMODid(ng), varid(16), cg_zv,            &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_zv', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_zv',          &
+     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
-!  Write out Lanczos algorithm coefficients into the adjoint NetCDF
-!  file.  These coefficients can be used to compute the sensitivity
+!  Write out Lanczos algorithm coefficients into Lanczos vectors
+!  output file (for now adjoint history file). These coefficients
+!  can be used for preconditioning or to compute the sensitivity
 !  of the observations to the 4DVAR data assimilation system.
 !
-        IF (innLoop.gt.0) THEN
-          IF (varid(17).eq.0) THEN
-            status=nf90_inq_varid(ncADJid(ng), 'cg_beta', varid(17))
-          END IF
-          start(1)=1
-          total(1)=Ninner+1
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncADJid(ng), varid(17), cg_beta,          &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_beta', TRIM(ADJname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, ADJname(ng), 'cg_beta',        &
+     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
+     &                        ncid = ncADJid(ng))
+        IF (exit_flag.ne.NoError) RETURN
 !
-          IF (varid(18).eq.0) THEN
-            status=nf90_inq_varid(ncADJid(ng), 'cg_delta', varid(18))
-          END IF
-          start(1)=1
-          total(1)=Ninner
-          start(2)=1
-          total(2)=Nouter
-          status=nf90_put_var(ncADJid(ng), varid(18), cg_delta,         &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'cg_delta', TRIM(ADJname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-
-        END IF
+        CALL netcdf_put_fvar (ng, model, ADJname(ng), 'cg_delta',       &
+     &                        cg_beta, (/1,1/), (/Ninner,Nouter/),      &
+     &                        ncid = ncADJid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+!
+        CALL netcdf_put_fvar (ng, model, ADJname(ng), 'cg_zv',          &
+     &                        cg_zv, (/1,1/), (/Ninner,Ninner/),        &
+     &                        ncid = ncADJid(ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !-----------------------------------------------------------------------
-!  Synchronize observations NetCDF file to disk.
+!  Synchronize model/observation NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
         status=nf90_sync(ncMODid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,10) TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag, 1)
+#endif
 
-  10  FORMAT (/,' CG_WRITE - error while writing variable: ',a,/,       &
-     &        12x,'into NetCDF file: ',a)
-  20  FORMAT (/,' CG_WRITE - unable to synchronize 4DVAR',              &
-     &        1x,'NetCDF file to disk.')
+  10  FORMAT (/,' CG_WRITE - unable to synchronize to disk ',           &
+     &        ' model/observation file: ',/,12x,a)
 
+      RETURN
       END SUBROUTINE cg_write

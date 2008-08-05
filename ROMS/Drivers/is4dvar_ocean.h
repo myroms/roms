@@ -561,19 +561,23 @@
 #endif
                 CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lnew(ng), 2)
-                CALL back_cost (ng, TILE, LTLM1)
                 CALL cost_grad (ng, TILE, LTLM1, Lnew(ng))
               END DO
             END DO
 !$OMP END PARALLEL DO
 !
-!  Compute current total cost function.
+!  Save the previous value of the cost function.
 !
-            DO i=0,NstateVar(ng)
-              FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
-              FOURDVAR(ng)%CostFun(i)=FOURDVAR(ng)%BackCost(i)+         &
-     &                                FOURDVAR(ng)%ObsCost(i)
-            END DO
+            IF (Nrun.eq.1) THEN
+              DO i=0,NstateVar(ng)
+                FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostNorm(i)
+                FOURDVAR(ng)%CostFun(i)=FOURDVAR(ng)%CostNorm(i)
+              END DO
+            ELSE
+              DO i=0,NstateVar(ng)
+                FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
+              END DO
+            END IF
 !
 !  Read in previous inner loop v-space total gradient, GRADv{J(Lold)},
 !  from adjoint history file ADJname record tADJindx(ng)-1.  Also, read
@@ -612,6 +616,39 @@
               END DO
             END DO
 !$OMP END PARALLEL DO
+            IF (exit_flag.ne.NoError) RETURN
+!
+!  Compute current total cost function.
+!
+!  The value of ObsCost=Jo computed during the run of the TL model is
+!  that associated with the trial initial condition xhat, so it is
+!  only correct during the first inner-loop. For Nrun=1,
+!  CostNorm=ObsCost (i.e. Jb=0 since v=0) computed in the TL model.
+!  The total cost function J=(Jo+Jb) is computed in cgradient and Jb
+!  is computed above from the new initial condition returned by 
+!  cgradient. Therefore, Jo=J-Jb.
+!
+!  NOTE: Jo and Jb cannot be decomposed into the contributions from
+!  the different variables in this case since only the total cost
+!  function can be estimated.
+!
+            IF (inner.gt.0) THEN
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1
+                  CALL back_cost (ng, TILE, LTLM1)
+                END DO
+              END DO
+!$OMP END PARALLEL DO
+!
+              FOURDVAR(ng)%ObsCost(0)=FOURDVAR(ng)%CostFun(0)-          &
+     &                                FOURDVAR(ng)%BackCost(0)
+              DO i=1,NstateVar(ng)
+                FOURDVAR(ng)%ObsCost(i)=0.0_r8
+                FOURDVAR(ng)%BackCost(i)=0.0_r8
+              END DO
+            END IF
 !
 !  Report background (Jb) and observations (Jo) cost function values
 !  normalized by their first minimization value. It also reports the

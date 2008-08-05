@@ -687,10 +687,11 @@
         logical, dimension(Ngrids) :: LdefDIA    ! Diagnostics file
         logical, dimension(Ngrids) :: LdefFLT    ! Floats file
         logical, dimension(Ngrids) :: LdefHIS    ! History file
+        logical, dimension(Ngrids) :: LdefHSS    ! Hessian file
         logical, dimension(Ngrids) :: LdefINI    ! Initial file
         logical, dimension(Ngrids) :: LdefIRP    ! Initial RPM file
         logical, dimension(Ngrids) :: LdefITL    ! Initial TLM file
-        logical, dimension(Ngrids) :: LdefHSS    ! Hessian file
+        logical, dimension(Ngrids) :: LdefLCZ    ! Lanczos file
         logical, dimension(Ngrids) :: LdefMOD    ! 4DVAR file
         logical, dimension(Ngrids) :: LdefNRM    ! Norm file
         logical, dimension(Ngrids) :: LdefRST    ! Restart file
@@ -761,11 +762,12 @@
         integer, dimension(Ngrids) :: NrecAVG    ! Average file
         integer, dimension(Ngrids) :: NrecDIA    ! Diagnostics file
         integer, dimension(Ngrids) :: NrecFLT    ! Floats file
+        integer, dimension(Ngrids) :: NrecHIS    ! History file
+        integer, dimension(Ngrids) :: NrecHSS    ! Hessian file
         integer, dimension(Ngrids) :: NrecINI    ! NLM Initial file
         integer, dimension(Ngrids) :: NrecITL    ! TLM Initial file
-        integer, dimension(Ngrids) :: NrecHSS    ! Hessian file
+        integer, dimension(Ngrids) :: NrecLCZ    ! Lanczos file
         integer, dimension(Ngrids) :: NrecNRM    ! norm file
-        integer, dimension(Ngrids) :: NrecHIS    ! History file
         integer, dimension(Ngrids) :: NrecRST    ! Restart file
         integer, dimension(Ngrids) :: NrecSTA    ! Station file
         integer, dimension(Ngrids) :: NrecTLM    ! Tangent linear file

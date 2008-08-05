@@ -26,12 +26,13 @@
 !  GSTname     Input/output GST analysis check pointing NetCDF file.   !
 !  HISbase     Output history base file name.                          !
 !  HISname     Output history file name.                               !
+!  HSSname     Input/output Hessian eigenvectors file name.            !
 !  IADname     Input adjoint initial conditions file name.             !
 !  INIname     Input nonlinear initial conditions file name.           !
 !  IPRname     Input representer initial conditions file name.         !
 !  ITLname     Input tangent linear initial conditions file name.      !
-!  HSSname     Input/output Hessian eigenvectors file name.            !
 !  Iname       Physical parameters standard input script file name.    !
+!  LCZname     Input/output Lanczos vectors file name.                 !
 !  MODname     Output 4DVAR processed fields file name.                !
 !  MyAppCPP    Application C-preprocessing flag.                       !
 !  NRMname     Input/output correlations normalization file name.      !
@@ -106,11 +107,12 @@
         character (len=80), dimension(Ngrids) :: GSTname
         character (len=80), dimension(Ngrids) :: HISbase
         character (len=80), dimension(Ngrids) :: HISname
+        character (len=80), dimension(Ngrids) :: HSSname
         character (len=80), dimension(Ngrids) :: IADname
         character (len=80), dimension(Ngrids) :: INIname
         character (len=80), dimension(Ngrids) :: IRPname
         character (len=80), dimension(Ngrids) :: ITLname
-        character (len=80), dimension(Ngrids) :: HSSname
+        character (len=80), dimension(Ngrids) :: LCZname
         character (len=80), dimension(Ngrids) :: MODname
         character (len=80), dimension(Ngrids) :: NRMname
         character (len=80), dimension(Ngrids) :: OBSname

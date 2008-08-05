@@ -108,8 +108,8 @@
       real(r8), intent(inout):: bed_thick0(LBi:,LBj:)
 #   endif
       real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
+      real(r8), intent(in) :: tl_Zt_avg1(LBi:,LBj:)
       real(r8), intent(inout) :: tl_h(LBi:,LBj:)
-      real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
       real(r8), intent(out) :: tl_Hz(LBi:,LBj:,:)
       real(r8), intent(out) :: tl_z_r(LBi:,LBj:,:)
       real(r8), intent(out) :: tl_z_w(LBi:,LBj:,0:)
@@ -123,8 +123,8 @@
       real(r8), intent(inout):: bed_thick0(LBi:UBi,LBj:UBi)
 #   endif
       real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: tl_h(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: tl_z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(out) :: tl_z_w(LBi:UBi,LBj:UBj,0:N(ng))

@@ -974,7 +974,7 @@
       END IF
 !$OMP END CRITICAL (REDUCTIONS)
 
-#if defined FOUR_DVAR && !defined OBS_SENSITIVITY
+#if defined FOUR_DVAR
 !
 !-----------------------------------------------------------------------
 !  Spatial convolution parameters.

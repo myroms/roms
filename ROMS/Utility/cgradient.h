@@ -8,7 +8,8 @@
 !                                                                      !
 !  This module minimizes  incremental  4Dvar  quadratic cost function  !
 !  using a preconditioned version of the conjugate gradient algorithm  !
-!  proposed by Mike Fisher (ECMWF).                                    !
+!  proposed by Mike Fisher (ECMWF) and modified  by  Tshimanga et al.  !
+!  (2008).                                                             !
 !                                                                      !
 !  In the following,  M represents the preconditioner.  Specifically,  !
 !                                                                      !
@@ -16,16 +17,25 @@
 !                                                                      !
 !  where mu_i can take the following values:                           !
 !                                                                      !
-!    Lscale= 1:    mu_i = lambda_i                                     !
-!    Lscale=-1:    mu_i = 1 / lambda_i                                 !
-!    Lscale= 2:    mu_i = SQRT (lambda_i)                              !
-!    Lscale=-2:    mu_i = 1 / SQRT(lambda_i)                           !
+!    Lscale=-1:    mu_i = lambda_i                                     !
+!    Lscale= 1:    mu_i = 1 / lambda_i                                 !
+!    Lscale=-2:    mu_i = SQRT (lambda_i)                              !
+!    Lscale= 2:    mu_i = 1 / SQRT(lambda_i)                           !
 !                                                                      !
 !  where lambda_i are the Hessian eigenvalues and h_i are the Hessian  !
-!  eigenvectors. For Lscale=-1 the preconditioner is an approximation  !
-!  of the inverse Hessian matrix constructed from the leading Hessian  !
-!  eigenvectors.  A full description is given in  Fisher and Courtier  !
-!  (1995), ECMWF Tech Memo 220.                                        !
+!  eigenvectors.                                                       !
+!                                                                      !
+!  For Lscale= 1 spectral LMP is used as the preconditioner.           !
+!  For Lscale=-1 inverse spectral LMP is used as the preconditioner.   !
+!  For Lscale= 2 SQRT spectral LMP is used as the preconditioner.      !
+!  For Lscale=-2 inverse SQRT spectral LMP is the preconditioner.      !
+!                                                                      !
+!  If Lritz=.TRUE. then Ritz LMP is used and the expressions for       !
+!   mu_i are more complicated.                                         !
+!                                                                      !
+!  For some operations the tranpose of the preconditioner is require.  !
+!  For spectral LMP the preconditioner and its tranpose are identical. !
+!  For Ritz LMP the preconditioner and its tranpose differ.            !
 !                                                                      !
 !  Given an initial model state X(0), gradient G(0), descent direction !
 !  d(0), and trial step size tau(1), the minimization algorithm at the !
@@ -63,17 +73,24 @@
 !      save all inner loop gradient solutions.                         !
 !                                                                      !
 !      For the preconditioned case the appropriate inner-product       !
-!      for the orthonormalizatio is <G,MG>.                            !
+!      for the orthonormalizatio is <G,G>.                             !
 !                                                                      !
 !  (7) Compute new descent direction, d(k+1):                          !
 !                                                                      !
-!      beta(k+1) = <G(k+1),M G(k+1)> / <G(k),M G(k)>           (Eq 5g) !
+!      beta(k+1) = <G(k+1), G(k+1)> / <G(k), G(k)>             (Eq 5g) !
 !                                                                      !
-!      d(k+1) = - MG(k+1) + beta(k+1) * d(k)                   (Eq 5f) !
+!      d(k+1) = - G(k+1) + beta(k+1) * d(k)                    (Eq 5f) !
 !                                                                      !
 !  After the first iteration, the trial step size is:                  !
 !                                                                      !
 !      tau(k) = alpha(k-1)                                             !
+!                                                                      !
+!  On entering cgradient, all variable are in v-space, the variable    !
+!  results from the first level of preconditioning. Within cgradient   !
+!  the minimization will be performed in y-space where v=My, and M is  !
+!  the square root spectral preconditioner. The congrad algorithm is   !
+!  is the same in y-space, but various transformations from v-space    !
+!  to y-space and vice-versa are required.                             !
 !                                                                      !
 !  NOTE: In all of the following computations we are using the NLM     !
 !        state variable arrays as temporary arrays.                    !
@@ -82,6 +99,11 @@
 !                                                                      !
 !    Fisher, M., 1997: Efficient Minimization of Quadratic Penalty     !
 !      funtions, unpublish manuscript, 1-14.                           !
+!                                                                      !
+!    Tshimanga, J., S. Gratton, A. Weaver, and A. Sartenaer, 2008:     !
+!      Limited-memory preconditioners with application to              !
+!      incremental four-dimensional ocean data assimilation,           !
+!      Q. J. R. Meteorol. Soc., 134, 753-771.                          !
 !                                                                      !
 !=======================================================================
 !
@@ -266,6 +288,7 @@
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
 #endif
+      USE state_copy_mod, ONLY : state_copy
       USE state_dotprod_mod, ONLY : state_dotprod
 !
 !  Imported variable declarations.
@@ -425,6 +448,8 @@
 !
 !  Local variable declarations.
 !
+      logical :: Lritz, Ltrans
+
       integer :: Linp, Lout, Lwrk, L1, L2, i, Lscale
       integer :: status, varid
       integer :: start(4), total(4)
@@ -441,6 +466,9 @@
 !  Initialize trial step size.
 !-----------------------------------------------------------------------
 !
+      Lritz=.FALSE.
+      Ltrans=.FALSE.
+!
       IF (innLoop.eq.0) THEN
         cg_tau(innLoop,outLoop)=CGstepI
         cg_alpha(innLoop,outLoop)=cg_tau(innLoop,outLoop)
@@ -449,7 +477,6 @@
           dot_new(i)=0.0_r8
           old_dot(i)=0.0_r8
           new_dot(i)=0.0_r8
-          FOURDVAR(ng)%CostGradDot(i)=0.0_r8
         END DO
       END IF
       IF (Master) THEN
@@ -491,6 +518,83 @@
 !  Reset number of eigenpairs to use to specified value.
 !
         nConvRitz=NritzEV
+
+      END IF
+!
+      IF (Lprecond) THEN
+!
+!  Convert ad_var(Lnew) from v-space to y-space.
+!
+        Lscale=2
+        Lwrk=1
+        Ltrans=.TRUE.
+!
+!  Copy ad_var(Lnew) into nl_var(1)
+!
+        CALL state_copy (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Lnew, Lwrk,                                    &
+#ifdef ADJUST_WSTRESS
+     &                   nl_ustr, ad_ustr,                              &
+     &                   nl_vstr, ad_vstr,                              &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                   nl_tflux, ad_tflux,                            &
+# endif
+     &                   nl_t, ad_t,                                    &
+     &                   nl_u, ad_u,                                    &
+     &                   nl_v, ad_v,                                    &
+#else
+     &                   nl_ubar, ad_ubar,                              &
+     &                   nl_vbar, ad_vbar,                              &
+#endif
+     &                   nl_zeta, ad_zeta)
+!
+        CALL precond (ng, tile, model,                                  &
+     &                LBi, UBi, LBj, UBj,                               &
+     &                NstateVar(ng), Lscale,                            &
+     &                Lritz, Ltrans,                                    &
+     &                nConvRitz, Ritz,                                  &
+#ifdef MASKING
+     &                rmask, umask, vmask,                              &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                nl_ustr, nl_vstr,                                 &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                nl_tflux,                                         &
+# endif
+     &                nl_t, nl_u, nl_v,                                 &
+#else
+     &                nl_ubar, nl_vbar,                                 &
+#endif
+     &                nl_zeta)
+!
+!  Copy nl_var(1) into ad_var(Lnew)
+!
+        Lwrk=1
+        CALL state_copy (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Lwrk, Lnew,                                    &
+#ifdef ADJUST_WSTRESS
+     &                   ad_ustr, nl_ustr,                              &
+     &                   ad_vstr, nl_vstr,                              &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                   ad_tflux, nl_tflux,                            &
+# endif
+     &                   ad_t, nl_t,                                    &
+     &                   ad_u, nl_u,                                    &
+     &                   ad_v, nl_v,                                    &
+#else
+     &                   ad_ubar, nl_ubar,                              &
+     &                   ad_vbar, nl_vbar,                              &
+#endif
+     &                   ad_zeta, nl_zeta)
+
       END IF
 !
 !-----------------------------------------------------------------------
@@ -520,8 +624,6 @@
      &                      d_vbar, ad_vbar(:,:,Lold),                  &
 #endif
      &                      d_zeta, ad_zeta(:,:,Lold))
-!
-!  If preconditioning, compute new dot product, <d(k), H^-1 * Ghat(k)>.
 !
         CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -553,87 +655,13 @@
      &                            dot_old(0)/(dot_old(0)-dot_new(0))
       END IF
 !
-!  Adjust the cost function for the previous inner-loop iteration.
-!  This is based on a first-order Taylor expansion of the cost function.
-!  Let vhat=v+tau*d. During each inner-loop the tangent linear
-!  model provides J(vhat). What we require is J(v). Using a 1st-order
-!  Taylor expansion we have: J(vhat)=J(v)+tau*<d,grad> where grad is
-!  the cost function gradient computed during the last inner-loop
-!  immediately prior to the orthogonalization. Rearranging this
-!  equation we have: J(v)=J(vhat)-tau*<d,grad>. In the code
-!  J(vhat)=CostFun(:) and <d,grad>=CostFunDot(:). Remember though
-!  that J(v) is the cost function associated with v from the previous
-!  inner-loop.
-!
-      DO i=0,NstateVar(ng)
-        Adjust(i)=cg_tau(innLoop,outLoop)*FOURDVAR(ng)%CostGradDot(i)
-        FOURDVAR(ng)%CostFun(i)=FOURDVAR(ng)%CostFun(i)-Adjust(i)
-      END DO
-!
 !-----------------------------------------------------------------------
 !  Estimate the gradient for the new state vector, G(k+1).
 !-----------------------------------------------------------------------
 !
-!  If preconditioning, compute old dot product, <G(k), H^-1 * G(k)>.
-!  The ADM arrays, index Lold, will be used a as temporary storage
-!  after this.
+!  Compute old dot product, <G(k), G(k)>. The ADM arrays, index Lold,
+!  will be used a as temporary storage after this.
 !
-      IF (Lprecond) THEN
-        Lscale=-1
-        Lwrk=2
-        CALL precond (ng, tile, model,                                  &
-     &                LBi, UBi, LBj, UBj,                               &
-     &                NstateVar(ng), Lold, Lwrk, Lscale,                &
-     &                nConvRitz, Ritz,                                  &
-#ifdef MASKING
-     &                rmask, umask, vmask,                              &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                ad_ustr, nl_ustr, tl_ustr,                        &
-     &                ad_vstr, nl_vstr, tl_vstr,                        &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                ad_tflux, nl_tflux, tl_tflux,                     &
-# endif
-     &                ad_t, nl_t, tl_t,                                 &
-     &                ad_u, nl_u, tl_u,                                 &
-     &                ad_v, nl_v, tl_v,                                 &
-#else
-     &                ad_ubar, nl_ubar, tl_ubar,                        &
-     &                ad_vbar, nl_vbar, tl_vbar,                        &
-#endif
-     &                ad_zeta, nl_zeta, tl_zeta)
-!
-        CALL state_dotprod (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NstateVar(ng), old_dot(0:),                 &
-#ifdef MASKING
-     &                      rmask, umask, vmask,                        &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                      ad_ustr(:,:,:,Lold), tl_ustr(:,:,:,Lwrk),   &
-     &                      ad_vstr(:,:,:,Lold), tl_vstr(:,:,:,Lwrk),   &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                      ad_tflux(:,:,:,Lold,:),                     &
-     &                      tl_tflux(:,:,:,Lwrk,:),                     &
-# endif
-     &                      ad_t(:,:,:,Lold,:), tl_t(:,:,:,Lwrk,:),     &
-     &                      ad_u(:,:,:,Lold), tl_u(:,:,:,Lwrk),         &
-     &                      ad_v(:,:,:,Lold), tl_v(:,:,:,Lwrk),         &
-#else
-     &                      ad_ubar(:,:,Lold), tl_ubar(:,:,Lwrk),       &
-     &                      ad_vbar(:,:,Lold), tl_vbar(:,:,Lwrk),       &
-#endif
-     &                      ad_zeta(:,:,Lold), tl_zeta(:,:,Lwrk))
-!
-!  If not preconditioning, compute old dot product, <G(k), G(k)>.
-!  The ADM arrays, index Lold, will be used a as temporary storage
-!  after this.
-!
-      ELSE
         CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
      &                      NstateVar(ng), old_dot(0:),                 &
@@ -657,7 +685,6 @@
      &                      ad_vbar(:,:,Lold), ad_vbar(:,:,Lold),       &
 #endif
      &                      ad_zeta(:,:,Lold), ad_zeta(:,:,Lold))
-      END IF
 !
 !  Notice that the current gradient Ghat(k) in time index Lnew is
 !  overwritten with the new gradient G(k+1).
@@ -694,6 +721,9 @@
 !  Orthogonalize new gradient, G(k+1), against all previous gradients
 !  G(0) to G(k). Use TLM state arrays at time index Lwrk=2, to load
 !  each of the previous gradients.
+!
+!  NOTE: All of the gradient vectors saved in the adjoint netcdf
+!        are in y-space.
 !
       IF (innLoop.gt.0) THEN
         Lwrk=2
@@ -753,9 +783,88 @@
 !    X(k+1) = X(k) + alpha(k) * d(k)
 !    Lout     Linp                      index
 !
+!  If preconditioning, convert tl_var(Linp) from v-space into y-space.
+!
       IF (innLoop.gt.0) THEN
+        IF (Lprecond) THEN
+          Lscale=-2
+          Linp=1
+          Lwrk=1
+          Ltrans=.FALSE.
+!
+!  Copy tl_var(Linp) into nl_var(1)
+!
+          CALL state_copy (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     Linp, Lwrk,                                  &
+#ifdef ADJUST_WSTRESS
+     &                     nl_ustr, tl_ustr,                            &
+     &                     nl_vstr, tl_vstr,                            &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     nl_tflux, tl_tflux,                          &
+# endif
+     &                     nl_t, tl_t,                                  &
+     &                     nl_u, tl_u,                                  &
+     &                     nl_v, tl_v,                                  &
+#else
+     &                     nl_ubar, tl_ubar,                            &
+     &                     nl_vbar, tl_vbar,                            &
+#endif
+     &                     nl_zeta, tl_zeta)
+!
+          CALL precond (ng, tile, model,                                &
+     &                  LBi, UBi, LBj, UBj,                             &
+     &                  NstateVar(ng), Lscale,                          &
+     &                  Lritz, Ltrans,                                  &
+     &                  nConvRitz, Ritz,                                &
+#ifdef MASKING 
+     &                  rmask, umask, vmask,                            &
+#endif 
+#ifdef ADJUST_WSTRESS
+     &                  nl_ustr, nl_vstr,                               &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                  nl_tflux,                                       &
+# endif
+     &                  nl_t, nl_u, nl_v,                               &
+#else
+     &                  nl_ubar, nl_vbar,                               &
+#endif
+     &                  nl_zeta)
+!
+!  Copy nl_var(1) into tl_var(Linp)
+!
+          Lwrk=1
+          CALL state_copy (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     Lwrk, Linp,                                  &
+#ifdef ADJUST_WSTRESS
+     &                     tl_ustr, nl_ustr,                            &
+     &                     tl_vstr, nl_vstr,                            &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     tl_tflux, nl_tflux,                          &
+# endif
+     &                     tl_t, nl_t,                                  &
+     &                     tl_u, nl_u,                                  &
+     &                     tl_v, nl_v,                                  &
+#else
+     &                     tl_ubar, nl_ubar,                            &
+     &                     tl_vbar, nl_vbar,                            &
+#endif
+     &                     tl_zeta, nl_zeta)
+
+        END IF
+!
         Linp=1
         Lout=1
+!
+!  tl_var(Lout) is now in y-space if preconditioning.
+!
         CALL tl_new_state (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     Linp, Lout,                                  &
@@ -788,6 +897,39 @@
 #endif
      &                     tl_zeta)
 !
+!  Compute the new cost function.
+!
+        CALL new_cost (ng, tile, model,                                 &
+     &                 LBi, UBi, LBj, UBj,                              &
+     &                 Lout,                                            &
+#ifdef MASKING
+     &                 rmask, umask, vmask,                             &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                 nl_ustr, nl_vstr,                                &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                 nl_tflux,                                        &
+# endif
+     &                 nl_t, nl_u, nl_v,                                &
+#else
+     &                 nl_ubar, nl_vbar,                                &
+#endif
+     &                 nl_zeta,                                         &
+#ifdef ADJUST_WSTRESS
+     &                 tl_ustr, tl_vstr,                                &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                 tl_tflux,                                        &
+# endif
+     &                 tl_t, tl_u, tl_v,                                &
+#else
+     &                 tl_ubar, tl_vbar,                                &
+#endif
+     &                 tl_zeta) 
+!
 !  If last iteration of inner loop, skip remaining computations. The
 !  TLM increments computed here are the ones that are needed update
 !  the NLM model initial conditions.
@@ -799,92 +941,33 @@
 !  Compute new conjugate descent direction, d(k+1).
 !-----------------------------------------------------------------------
 !
-!  If preconditioning, multiply the new gradient by H^-1 and save in
-!  nl_var(Lwrk).
-!
-      IF (Lprecond) THEN
-        Lscale=-1
-        Lwrk=2
-        CALL precond (ng, tile, model,                                  &
-     &                LBi, UBi, LBj, UBj,                               &
-     &                NstateVar(ng), Lnew, Lwrk, Lscale,                &
-     &                nConvRitz, Ritz,                                  &
-#ifdef MASKING
-     &                rmask, umask, vmask,                              &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                ad_ustr, nl_ustr, nl_ustr,                        &
-     &                ad_vstr, nl_vstr, nl_vstr,                        &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                ad_tflux, nl_tflux, nl_tflux,                     &
-# endif
-     &                ad_t, nl_t, nl_t,                                 &
-     &                ad_u, nl_u, nl_u,                                 &
-     &                ad_v, nl_v, nl_v,                                 &
-#else
-     &                ad_ubar, nl_ubar, nl_ubar,                        &
-     &                ad_vbar, nl_vbar, nl_vbar,                        &
-#endif
-     &                ad_zeta, nl_zeta, nl_zeta)
-       END IF
-!
-!  If preconditioning, compute new dot product, <G(k+1), H^-1 * G(k+1)>.
-!
       IF (innLoop.gt.0) THEN
-        IF (Lprecond) THEN
-          CALL state_dotprod (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        NstateVar(ng), new_dot(0:),               &
+!
+!  Compute new dot product, <G(k+1), G(k+1)>.
+!
+        CALL state_dotprod (ng, tile, model,                            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NstateVar(ng), new_dot(0:),                 &
 #ifdef MASKING
-     &                        rmask, umask, vmask,                      &
+     &                      rmask, umask, vmask,                        &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                        ad_ustr(:,:,:,Lnew), nl_ustr(:,:,:,Lwrk), &
-     &                        ad_vstr(:,:,:,Lnew), nl_vstr(:,:,:,Lwrk), &
+     &                      ad_ustr(:,:,:,Lnew), ad_ustr(:,:,:,Lnew),   &
+     &                      ad_vstr(:,:,:,Lnew), ad_vstr(:,:,:,Lnew),   &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                        ad_tflux(:,:,:,Lnew,:),                   &
-     &                        nl_tflux(:,:,:,Lwrk,:),                   &
+     &                      ad_tflux(:,:,:,Lnew,:),                     &
+     &                      ad_tflux(:,:,:,Lnew,:),                     &
 # endif
-     &                        ad_t(:,:,:,Lnew,:), nl_t(:,:,:,Lwrk,:),   &
-     &                        ad_u(:,:,:,Lnew), nl_u(:,:,:,Lwrk),       &
-     &                        ad_v(:,:,:,Lnew), nl_v(:,:,:,Lwrk),       &
+     &                      ad_t(:,:,:,Lnew,:), ad_t(:,:,:,Lnew,:),     &
+     &                      ad_u(:,:,:,Lnew), ad_u(:,:,:,Lnew),         &
+     &                      ad_v(:,:,:,Lnew), ad_v(:,:,:,Lnew),         &
 #else
-     &                        ad_ubar(:,:,Lnew), nl_ubar(:,:,Lwrk),     &
-     &                        ad_vbar(:,:,Lnew), nl_vbar(:,:,Lwrk),     &
+     &                      ad_ubar(:,:,Lnew), ad_ubar(:,:,Lnew),       &
+     &                      ad_vbar(:,:,Lnew), ad_vbar(:,:,Lnew),       &
 #endif
-     &                        ad_zeta(:,:,Lnew), nl_zeta(:,:,Lwrk))
-        ELSE
-!
-!  If not preconditioning, compute new dot product, <G(k+1), G(k+1)>.
-!
-          CALL state_dotprod (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        NstateVar(ng), new_dot(0:),               &
-#ifdef MASKING
-     &                        rmask, umask, vmask,                      &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                        ad_ustr(:,:,:,Lnew), ad_ustr(:,:,:,Lnew), &
-     &                        ad_vstr(:,:,:,Lnew), ad_vstr(:,:,:,Lnew), &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                        ad_tflux(:,:,:,Lnew,:),                   &
-     &                        ad_tflux(:,:,:,Lnew,:),                   &
-# endif
-     &                        ad_t(:,:,:,Lnew,:), ad_t(:,:,:,Lnew,:),   &
-     &                        ad_u(:,:,:,Lnew), ad_u(:,:,:,Lnew),       &
-     &                        ad_v(:,:,:,Lnew), ad_v(:,:,:,Lnew),       &
-#else
-     &                        ad_ubar(:,:,Lnew), ad_ubar(:,:,Lnew),     &
-     &                        ad_vbar(:,:,Lnew), ad_vbar(:,:,Lnew),     &
-#endif
-     &                        ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
-        END IF
+     &                      ad_zeta(:,:,Lnew), ad_zeta(:,:,Lnew))
 !
 !  Compute conjugate direction coefficient, beta(k+1).
 !
@@ -893,104 +976,39 @@
         cg_beta(innLoop,outLoop)=0.0_r8
       END IF
 !
-!  If preconditioning, compute new conjugate direction, d(k+1).  Notice
-!  that the preconditined gradient is in NLM (index Lwrk) state arrays.
+!  Compute new conjugate direction, d(k+1).
 !
-      IF (Lprecond) THEN
-        CALL new_direction (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      Lold, Lwrk,                                 &
-     &                      cg_beta(innLoop,outLoop),                   &
-#ifdef MASKING
-     &                      rmask, umask, vmask,                        &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                      nl_ustr, nl_vstr,                           &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                      nl_tflux,                                   &
-# endif
-     &                      nl_t, nl_u, nl_v,                           &
-#else
-     &                      nl_ubar, nl_vbar,                           &
-#endif
-     &                      nl_zeta,                                    &
-#ifdef ADJUST_WSTRESS
-     &                      d_sustr, d_svstr,                           &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                      d_stflx,                                    &
-# endif
-     &                      d_t, d_u, d_v,                              &
-#else
-     &                      d_ubar, d_vbar,                             &
-#endif
-     &                      d_zeta)
-!
-!  If not preconditioning, compute new conjugate direction, d(k+1).
-!
-      ELSE
-        CALL new_direction (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      Lold, Lnew,                                 &
-     &                      cg_beta(innLoop,outLoop),                   &
-#ifdef MASKING
-     &                      rmask, umask, vmask,                        &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                      ad_ustr, ad_vstr,                           &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                      ad_tflux,                                   &
-# endif
-     &                      ad_t, ad_u, ad_v,                           &
-#else
-     &                      ad_ubar, ad_vbar,                           &
-#endif
-     &                      ad_zeta,                                    &
-#ifdef ADJUST_WSTRESS
-     &                      d_sustr, d_svstr,                           &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                      d_stflx,                                    &
-# endif
-     &                      d_t, d_u, d_v,                              &
-#else
-     &                      d_ubar, d_vbar,                             &
-#endif
-     &                      d_zeta)
-      END IF
-!
-!  Compute next iteration dot product, <d(k), G(k)>, using new d(k+1)
-!  and non-orthogonalized G(k+1) used to adjust cost function.
-!
-      CALL state_dotprod (ng, tile, model,                              &
+      CALL new_direction (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NstateVar(ng),                                &
-     &                    FOURDVAR(ng)%CostGradDot(0:),                 &
+     &                    Lold, Lnew,                                   &
+     &                    cg_beta(innLoop,outLoop),                     &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                    d_sustr, ad_ustr(:,:,:,Lold),                 &
-     &                    d_svstr, ad_vstr(:,:,:,Lold),                 &
+     &                    ad_ustr, ad_vstr,                             &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                    d_stflx, ad_tflux(:,:,:,Lold,:),              &
+     &                    ad_tflux,                                     &
 # endif
-     &                    d_t, ad_t(:,:,:,Lold,:),                      &
-     &                    d_u, ad_u(:,:,:,Lold),                        &
-     &                    d_v, ad_v(:,:,:,Lold),                        &
+     &                    ad_t, ad_u, ad_v,                             &
 #else
-     &                    d_ubar, ad_ubar(:,:,Lold),                    &
-     &                    d_vbar, ad_vbar(:,:,Lold),                    &
+     &                    ad_ubar, ad_vbar,                             &
 #endif
-     &                    d_zeta, ad_zeta(:,:,Lold))
+     &                    ad_zeta,                                      &
+#ifdef ADJUST_WSTRESS
+     &                    d_sustr, d_svstr,                             &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                    d_stflx,                                      &
+# endif
+     &                    d_t, d_u, d_v,                                &
+#else
+     &                    d_ubar, d_vbar,                               &
+#endif
+     &                    d_zeta)
 !
 !-----------------------------------------------------------------------
 !  Set TLM initial conditions for next inner loop, Xhat(k+1).
@@ -998,6 +1016,9 @@
 !
 !  Here we are doing step (1), equation 5a, the new TLM initial
 !  conditions for the next inner loop are always saved at Lout=2.
+!
+!  NOTE: If preconditioning, then X(k+1) is already in y-space at this
+!        point.
 !
 !    Xhat(k+1) = X(k+1) + tau(k+1) * d(k+1),  where  tau(k+1)=alpha(k)
 !    Lout        Linp                         index
@@ -1036,11 +1057,158 @@
 #endif
      &                   tl_zeta)
 !
+!  Convert the new tl_var(Lout) and tl_var(Linp) back to v-space.
+!  Note that we leave ad_var(Lnew) in y-space since we want all of the
+!  gradient vectors in the adjoint netcdf file to be saved in y-space
+!  to avoid costly applications of the spectral LMP in the
+!  routine orthogonalize.
+!
+      IF (Lprecond) THEN
+        Lscale=2
+        Lwrk=1
+        Ltrans=.FALSE.
+
+!
+!  Copy tl_var(Lout) into nl_var(1)
+!
+        CALL state_copy (ng, tile,                                      &
+     &                 LBi, UBi, LBj, UBj,                              &
+     &                 Lout, Lwrk,                                      &
+#ifdef ADJUST_WSTRESS
+     &                 nl_ustr, tl_ustr,                                &
+     &                 nl_vstr, tl_vstr,                                &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                 nl_tflux, tl_tflux,                              &
+# endif
+     &                 nl_t, tl_t,                                      &
+     &                 nl_u, tl_u,                                      &
+     &                 nl_v, tl_v,                                      &
+#else
+     &                 nl_ubar, tl_ubar,                                &
+     &                 nl_vbar, tl_vbar,                                &
+#endif
+     &                 nl_zeta, tl_zeta)
+!
+        CALL precond (ng, tile, model,                                  &
+     &                LBi, UBi, LBj, UBj,                               &
+     &                NstateVar(ng), Lscale,                            &
+     &                Lritz, Ltrans,                                    &
+     &                nConvRitz, Ritz,                                  &
+#ifdef MASKING
+     &                rmask, umask, vmask,                              &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                nl_ustr, nl_vstr,                                 &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                nl_tflux,                                         &
+# endif
+     &                nl_t, nl_u, nl_v,                                 &
+#else
+     &                nl_ubar, nl_vbar,                                 &
+#endif
+     &                nl_zeta)
+!
+!  Copy nl_var(1) into tl_var(Lout)
+!
+        Lwrk=1
+        CALL state_copy (ng, tile,                                      &
+     &                 LBi, UBi, LBj, UBj,                              &
+     &                 Lwrk, Lout,                                      &
+#ifdef ADJUST_WSTRESS
+     &                 tl_ustr, nl_ustr,                                &
+     &                 tl_vstr, nl_vstr,                                &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                 tl_tflux, nl_tflux,                              &
+# endif
+     &                 tl_t, nl_t,                                      &
+     &                 tl_u, nl_u,                                      &
+     &                 tl_v, nl_v,                                      &
+#else
+     &                 tl_ubar, nl_ubar,                                &
+     &                 tl_vbar, nl_vbar,                                &
+#endif
+     &                 tl_zeta, nl_zeta)
+! 
+!  Copy tl_var(Linp) into nl_var(1)
+!
+        CALL state_copy (ng, tile,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Linp, Lwrk,                                    &
+#ifdef ADJUST_WSTRESS
+     &                   nl_ustr, tl_ustr,                              &
+     &                   nl_vstr, tl_vstr,                              &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                   nl_tflux, tl_tflux,                            &
+# endif
+     &                   nl_t, tl_t,                                    &
+     &                   nl_u, tl_u,                                    &
+     &                   nl_v, tl_v,                                    &
+#else
+     &                   nl_ubar, tl_ubar,                              &
+     &                   nl_vbar, tl_vbar,                              &
+#endif
+     &                   nl_zeta, tl_zeta)
+!
+        CALL precond (ng, tile, model,                                  &
+     &                LBi, UBi, LBj, UBj,                               &
+     &                NstateVar(ng), Lscale,                            &
+     &                Lritz, Ltrans,                                    &
+     &                nConvRitz, Ritz,                                  &
+#ifdef MASKING
+     &                rmask, umask, vmask,                              &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                nl_ustr, nl_vstr,                                 &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                nl_tflux,                                         &
+# endif
+     &                nl_t, nl_u, nl_v,                                 &
+#else
+     &                nl_ubar, nl_vbar,                                 &
+#endif
+     &                nl_zeta)
+!
+!  Copy nl_var(1) into tl_var(Linp)
+!
+        Lwrk=1
+        CALL state_copy (ng, tile,                                      &
+     &                 LBi, UBi, LBj, UBj,                              &
+     &                 Lwrk, Linp,                                      &
+#ifdef ADJUST_WSTRESS
+     &                 tl_ustr, nl_ustr,                                &
+     &                 tl_vstr, nl_vstr,                                &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                 tl_tflux, nl_tflux,                              &
+# endif
+     &                 tl_t, nl_t,                                      &
+     &                 tl_u, nl_u,                                      &
+     &                 tl_v, nl_v,                                      &
+#else
+     &                 tl_ubar, nl_ubar,                                &
+     &                 tl_vbar, nl_vbar,                                &
+#endif
+     &                 tl_zeta, nl_zeta)
+! 
+      END IF
+!
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient information into NetCDF file.
 !-----------------------------------------------------------------------
 !
-      CALL cg_write (ng, innLoop, outLoop)
+      CALL cg_write (ng, model, innLoop, outLoop)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Report  algorithm parameters.
 !
@@ -1803,85 +1971,31 @@
 !
 !  Read in each previous gradient state solutions, G(0) to G(k), and
 !  compute its associated dot against current G(k+1). Each gradient
-!  solution is loaded NLM (index L2, if preconditioning) or
-!  TLM (index Lwrk, if not preconditioning) state arrays.
+!  solution is loaded into TLM (index Lwrk, if not preconditioning)
+!  state arrays.
 !
-        IF (Lprecond) THEN
-          CALL read_state (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     L2, rec,                                     &
-     &                     ndefADJ(ng), ncADJid(ng), ncname,            &
+        CALL read_state (ng, tile, model,                               &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Lwrk, rec,                                     &
+     &                   ndefADJ(ng), ncADJid(ng), ncname,              &
 #ifdef MASKING
-     &                     rmask, umask, vmask,                         &
+     &                   rmask, umask, vmask,                           &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                     nl_ustr, nl_vstr,                            &
+     &                   tl_ustr, tl_vstr,                              &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                     nl_tflux,                                    &
+     &                   tl_tflux,                                      &
 # endif
-     &                     nl_t, nl_u, nl_v,                            &
+     &                   tl_t, tl_u, tl_v,                              &
 #else
-     &                     nl_ubar, nl_vbar,                            &
+     &                   tl_ubar, tl_vbar,                              &
 #endif
-     &                     nl_zeta)
+     &                   tl_zeta)
 !
-        ELSE
-          CALL read_state (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     Lwrk, rec,                                   &
-     &                     ndefADJ(ng), ncADJid(ng), ncname,            &
-#ifdef MASKING
-     &                     rmask, umask, vmask,                         &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                     tl_ustr, tl_vstr,                            &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                     tl_tflux,                                    &
-# endif
-     &                     tl_t, tl_u, tl_v,                            &
-#else
-     &                     tl_ubar, tl_vbar,                            &
-#endif
-     &                     tl_zeta)
-        END IF
-!
-!  If preconditioning, compute  H^-1 * G(rec) and store it TLM state
-!  arrays (index Lwrk).
-!
-        IF (Lprecond) THEN
-          Lscale=-1
-          CALL precond (ng, tile, model,                                &
-     &                  LBi, UBi, LBj, UBj,                             &
-     &                  NstateVar(ng), L2, Lwrk, Lscale,                &
-     &                  nConvRitz, Ritz,                                &
-#ifdef MASKING
-     &                  rmask, umask, vmask,                            &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                  nl_ustr, nl_ustr, tl_ustr,                      &
-     &                  nl_vstr, nl_vstr, tl_vstr,                      &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                  nl_tflux, nl_tflux, tl_tflux,                   &
-# endif
-     &                  nl_t, nl_t, tl_t,                               &
-     &                  nl_u, nl_u, tl_u,                               &
-     &                  nl_v, nl_v, tl_v,                               &
-#else
-     &                  nl_ubar, nl_ubar, tl_ubar,                      &
-     &                  nl_vbar, nl_vbar, tl_vbar,                      &
-#endif
-     &                  nl_zeta, nl_zeta, tl_zeta)
-        END IF
-!
-!  If preconditioning, compute dot product <G(k+1), H^-1 G(rec)>.
-!  Otherwise, compute <G(k+1), G(rec)>. Recall that the TLM
-!  (index Lwrk) contains either H^-1 G(rec) or G(rec).
+!  Compute <G(k+1), G(rec)>. Recall that the TLM (index Lwrk) contains
+!  G(rec).
 !
         CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -1908,60 +2022,31 @@
      &                      ad_zeta(:,:,Lnew), tl_zeta(:,:,Lwrk))
         dot_new(rec)=dot(0)
 !
-!  If preconditioning, compute dot product <G(rec), H^-1 * G(rec)>.
+!  Compute dot product <G(rec), G(rec)>.
 !
-        IF (Lprecond) THEN
-          CALL state_dotprod (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        NstateVar(ng), dot(0:),                   &
+        CALL state_dotprod (ng, tile, model,                            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NstateVar(ng), dot(0:),                     &
 #ifdef MASKING
-     &                        rmask, umask, vmask,                      &
+     &                      rmask, umask, vmask,                        &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                        nl_ustr(:,:,:,L2), tl_ustr(:,:,:,Lwrk),   &
-     &                        nl_vstr(:,:,:,L2), tl_vstr(:,:,:,Lwrk),   &
+     &                      tl_ustr(:,:,:,Lwrk), tl_ustr(:,:,:,Lwrk),   &
+     &                      tl_vstr(:,:,:,Lwrk), tl_vstr(:,:,:,Lwrk),   &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                        nl_tflux(:,:,:,L2,:),                     &
-     &                        tl_tflux(:,:,:,Lwrk,:),                   &
+     &                      tl_tflux(:,:,:,Lwrk,:),                     &
+     &                      tl_tflux(:,:,:,Lwrk,:),                     &
 # endif
-     &                        nl_t(:,:,:,L2,:), tl_t(:,:,:,Lwrk,:),     &
-     &                        nl_u(:,:,:,L2), tl_u(:,:,:,Lwrk),         &
-     &                        nl_v(:,:,:,L2), tl_v(:,:,:,Lwrk),         &
+     &                      tl_t(:,:,:,Lwrk,:), tl_t(:,:,:,Lwrk,:),     &
+     &                      tl_u(:,:,:,Lwrk), tl_u(:,:,:,Lwrk),         &
+     &                      tl_v(:,:,:,Lwrk), tl_v(:,:,:,Lwrk),         &
 #else
-     &                        nl_ubar(:,:,L2), tl_ubar(:,:,Lwrk),       &
-     &                        nl_vbar(:,:,L2), tl_vbar(:,:,Lwrk),       &
+     &                      tl_ubar(:,:,Lwrk), tl_ubar(:,:,Lwrk),       &
+     &                      tl_vbar(:,:,Lwrk), tl_vbar(:,:,Lwrk),       &
 #endif
-     &                        nl_zeta(:,:,L2), tl_zeta(:,:,Lwrk))
-!
-!  Otherwise, compute dot product <G(rec), G(rec)>.
-!
-        ELSE
-          CALL state_dotprod (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        NstateVar(ng), dot(0:),                   &
-#ifdef MASKING
-     &                        rmask, umask, vmask,                      &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                        tl_ustr(:,:,:,Lwrk), tl_ustr(:,:,:,Lwrk), &
-     &                        tl_vstr(:,:,:,Lwrk), tl_vstr(:,:,:,Lwrk), &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                        tl_tflux(:,:,:,Lwrk,:),                   &
-     &                        tl_tflux(:,:,:,Lwrk,:),                   &
-# endif
-     &                        tl_t(:,:,:,Lwrk,:), tl_t(:,:,:,Lwrk,:),   &
-     &                        tl_u(:,:,:,Lwrk), tl_u(:,:,:,Lwrk),       &
-     &                        tl_v(:,:,:,Lwrk), tl_v(:,:,:,Lwrk),       &
-#else
-     &                        tl_ubar(:,:,Lwrk), tl_ubar(:,:,Lwrk),     &
-     &                        tl_vbar(:,:,Lwrk), tl_vbar(:,:,Lwrk),     &
-#endif
-     &                        tl_zeta(:,:,Lwrk), tl_zeta(:,:,Lwrk))
-        END IF
+     &                      tl_zeta(:,:,Lwrk), tl_zeta(:,:,Lwrk))
         dot_old(rec)=dot(0)
 !
 !  Compute Gramm-Schmidt scaling coefficient.
@@ -1971,62 +2056,32 @@
         fac1=1.0_r8
         fac2=-DotProd(rec)
 !
-!  If preconditioning, perform Gramm-Schmidt orthonormalization as:
-!
-!    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * nl_var(L2)
-!
-        IF (Lprecond) THEN
-          CALL state_addition (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         Lnew, L2, Lnew, fac1, fac2,              &
-#ifdef MASKING
-     &                         rmask, umask, vmask,                     &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                         ad_ustr, nl_ustr,                        &
-     &                         ad_vstr, nl_vstr,                        &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                         ad_tflux, nl_tflux,                      &
-# endif
-     &                         ad_t, nl_t,                              &
-     &                         ad_u, nl_u,                              &
-     &                         ad_v, nl_v,                              &
-#else
-     &                         ad_ubar, nl_ubar,                        &
-     &                         ad_vbar, nl_vbar,                        &
-#endif
-     &                         ad_zeta, nl_zeta)
-!
-!  If not preconditioning, perform Gramm-Schmidt orthonormalization as:
+!  Perform Gramm-Schmidt orthonormalization as:
 !
 !    ad_var(Lnew) = fac1 * ad_var(Lnew) + fac2 * tl_var(Lwrk)
 !
-        ELSE
-          CALL state_addition (ng, tile,                                &
-     &                         LBi, UBi, LBj, UBj,                      &
-     &                         Lnew, Lwrk, Lnew, fac1, fac2,            &
+        CALL state_addition (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       Lnew, Lwrk, Lnew, fac1, fac2,              &
 #ifdef MASKING
-     &                         rmask, umask, vmask,                     &
+     &                       rmask, umask, vmask,                       &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                         ad_ustr, tl_ustr,                        &
-     &                         ad_vstr, tl_vstr,                        &
+     &                       ad_ustr, tl_ustr,                          &
+     &                       ad_vstr, tl_vstr,                          &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                         ad_tflux, tl_tflux,                      &
+     &                       ad_tflux, tl_tflux,                        &
 # endif
-     &                         ad_t, tl_t,                              &
-     &                         ad_u, tl_u,                              &
-     &                         ad_v, tl_v,                              &
+     &                       ad_t, tl_t,                                &
+     &                       ad_u, tl_u,                                &
+     &                       ad_v, tl_v,                                &
 #else
-     &                         ad_ubar, tl_ubar,                        &
-     &                         ad_vbar, tl_vbar,                        &
+     &                       ad_ubar, tl_ubar,                          &
+     &                       ad_vbar, tl_vbar,                          &
 #endif
-     &                         ad_zeta, tl_zeta)
-        END IF
+     &                       ad_zeta, tl_zeta)
       END DO
 
 #ifdef TEST_ORTHOGONALIZATION
@@ -2386,30 +2441,27 @@
       END SUBROUTINE new_direction
 
 !
-!**********************************************************************
+!***********************************************************************
       SUBROUTINE precond (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
-     &                    NstateVars, Linp, Lwrk, Lscale,               &
+     &                    NstateVars, Lscale,                           &
+     &                    Lritz, Ltrans,                                &
      &                    nConvRitz, Ritz,                              &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                    ad_ustr, nl_ustr, tl_ustr,                    &
-     &                    ad_vstr, nl_vstr, tl_vstr,                    &
+     &                    nl_ustr, nl_vstr,                             &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                    ad_tflux, nl_tflux, tl_tflux,                 &
+     &                    nl_tflux,                                     &
 # endif
-     &                    ad_t, nl_t, tl_t,                             &
-     &                    ad_u, nl_u, tl_u,                             &
-     &                    ad_v, nl_v, tl_v,                             &
+     &                    nl_t, nl_u, nl_v,                             &
 #else
-     &                    ad_ubar, nl_ubar, tl_ubar,                    &
-     &                    ad_vbar, nl_vbar, tl_vbar,                    &
+     &                    nl_ubar, nl_vbar,                             &
 #endif
-     &                    ad_zeta, nl_zeta, tl_zeta)
+     &                    nl_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -2430,9 +2482,12 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in) :: Lritz
+      logical, intent(in) :: Ltrans
+
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: NstateVars, Linp, Lwrk, Lscale
+      integer, intent(in) :: NstateVars, Lscale
       integer, intent(in) :: nConvRitz
 !
       real(r8), intent(in) :: Ritz(:)
@@ -2443,22 +2498,236 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 # endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: nl_vstr(LBi:,LBj:,:,:)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:,LBj:,:,:,:)
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(inout) :: nl_u(LBi:,LBj:,:,:)
+      real(r8), intent(inout) :: nl_v(LBi:,LBj:,:,:)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:,LBj:,:)
+      real(r8), intent(inout) :: nl_vbar(LBi:,LBj:,:)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:,LBj:,:)
+
+#else
+
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+# endif
+# ifdef ADJUST_WSTRESS
+      real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+      real(r8), intent(inout) :: nl_tflux(LBi:UBi,LBj:UBj,              &
+     &                                    Nfrec(ng),2,NT(ng))
+#  endif
+      real(r8), intent(inout) :: nl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(inout) :: nl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(inout) :: nl_v(LBi:UBi,LBj:UBj,N(ng),2)
+# else
+      real(r8), intent(inout) :: nl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(inout) :: nl_vbar(LBi:UBi,LBj:UBj,3)
+# endif
+      real(r8), intent(inout) :: nl_zeta(LBi:UBi,LBj:UBj,3)
+#endif
+!
+!  Local variable declarations.
+!
+      integer :: NSUB, i, j, k, L1, L2, nvec
+#ifdef SOLVE3D
+      integer :: itrc
+#endif
+      real(r8) :: cff, fac, fac1, fac2
+      real(r8), dimension(0:NstateVars) :: Dotprod
+#ifdef DISTRIBUTE
+      character (len=3) :: op_handle
+#endif
+
+#include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  THIS PRECONDITIONER IS WRITTEN IN PRODUCT FORM AS DESCRIBED BY
+!  TSHIMANGA - PhD thesis, page 75, proof of proposition 2.3.1.
+!  IT IS THEREFORE IMPORTANT THAT THE EIGENVECTORS/RITZ VECTORS THAT
+!  ARE COMPUTED BY IS4DVAR_LANCZOS ARE ORTHONORMALIZED.
+!
+!  Apply the preconditioner. The approximated Hessian matrix is computed
+!  from the eigenvectors computed by the Lanczos algorithm which are
+!  stored in HSSname NetCDF file.
+!-----------------------------------------------------------------------
+!
+!  Read the converged Hessian eigenvectors into NLM state array,
+!  index L2.
+!
+      L1=1
+      L2=2
+      DO nvec=1,nConvRitz
+        CALL read_state (ng, tile, model,                               &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   L2, nvec,                                      &
+     &                   0, ncHSSid(ng), HSSname(ng),                   &
+#ifdef MASKING
+     &                   rmask, umask, vmask,                           &
+#endif
 #ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_ustr(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: ad_vstr(LBi:,LBj:,:,:)
+     &                   nl_ustr, nl_vstr,                              &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: ad_tflux(LBi:,LBj:,:,:,:)
+     &                   nl_tflux,                                      &
 # endif
-      real(r8), intent(in) :: ad_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(in) :: ad_u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: ad_v(LBi:,LBj:,:,:)
+     &                   nl_t, nl_u, nl_v,                              &
 #else
-      real(r8), intent(in) :: ad_ubar(LBi:,LBj:,:)
-      real(r8), intent(in) :: ad_vbar(LBi:,LBj:,:)
+     &                   nl_ubar, nl_vbar,                              &
 #endif
-      real(r8), intent(in) :: ad_zeta(LBi:,LBj:,:)
+     &                   nl_zeta)
+!
+!  Compute dot product between input vector and Hessian eigenvector.
+!  The input vector is in nl_var(L1) and the Hessian vector in 
+!  nl_var(L2)
+!
+        CALL state_dotprod (ng, tile, model,                            &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NstateVars, Dotprod(0:),                    &
+#ifdef MASKING
+     &                      rmask, umask, vmask,                        &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                      nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L2),       &
+     &                      nl_vstr(:,:,:,L1), nl_vstr(:,:,:,L2),       &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                      nl_tflux(:,:,:,L1,:),                       &
+     &                      nl_tflux(:,:,:,L2,:),                       &
+# endif
+     &                      nl_t(:,:,:,L1,:), nl_t(:,:,:,L2,:),         &
+     &                      nl_u(:,:,:,L1), nl_u(:,:,:,L2),             &
+     &                      nl_v(:,:,:,L1), nl_v(:,:,:,L2),             &
+#else
+     &                      nl_ubar(:,:,L1), nl_ubar(:,:,L2),           &
+     &                      nl_vbar(:,:,L1), nl_vbar(:,:,L2),           &
+#endif
+     &                      nl_zeta(:,:,L1), nl_zeta(:,:,L2))
+!
+!    Lscale determines the form of the preconditioner:
+!
+!       1= Spectral LMP
+!      -1= Inverse Spectral LMP
+!       2= Square root spectral LMP
+!      -2= Inverse square root spectral LMP
+!
+!    tl_var(Lwrk) = fac1 * tl_var(Lwrk) + fac2 * nl_var(L1)
+!
+        fac1=1.0_r8
+
+        IF (Lscale.eq.-1) THEN
+          fac2=(Ritz(nvec)-1.0_r8)*Dotprod(0)
+        ELSE IF (Lscale.eq.1) THEN
+          fac2=(1.0_r8/Ritz(nvec)-1.0_r8)*Dotprod(0)
+        ELSE IF (Lscale.eq.-2) THEN
+          fac2=(SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
+        ELSE IF (Lscale.eq.2) THEN
+          fac2=(1.0_r8/SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
+        END IF
+
+        IF (Lritz.and.Lscale.eq.-2) THEN
+          fac2=(1.0_r8-SQRT(Ritz(nvec)))*Dotprod(0)
+        END IF
+
+        CALL state_addition (ng, tile,                                  &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       L1, L2, L1, fac1, fac2,                    &
+#ifdef MASKING
+     &                       rmask, umask, vmask,                       &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                       nl_ustr, nl_ustr,                          &
+     &                       nl_vstr, nl_vstr,                          &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                       nl_tflux, nl_tflux,                        &
+# endif
+     &                       nl_t, nl_t,                                &
+     &                       nl_u, nl_u,                                &
+     &                       nl_v, nl_v,                                &
+#else
+     &                       nl_ubar, nl_ubar,                          &
+     &                       nl_vbar, nl_vbar,                          &
+#endif
+     &                       nl_zeta, nl_zeta)
+      END DO
+
+      RETURN
+      END SUBROUTINE precond
+
+!
+!***********************************************************************
+      SUBROUTINE new_cost (ng, tile, model,                             &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     Lwrk,                                        &
+#ifdef MASKING
+     &                     rmask, umask, vmask,                         &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                     nl_ustr, nl_vstr,                            &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     nl_tflux,                                    &
+# endif
+     &                     nl_t, nl_u, nl_v,                            &
+#else
+     &                     nl_ubar, nl_vbar,                            &
+#endif
+     &                     nl_zeta,                                     &
+#ifdef ADJUST_WSTRESS
+     &                     tl_ustr, tl_vstr,                            &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                     tl_tflux,                                    &
+# endif
+     &                     tl_t, tl_u, tl_v,                            &
+#else
+     &                     tl_ubar, tl_vbar,                            &
+#endif
+     &                     tl_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
+!
+      USE state_addition_mod, ONLY : state_addition
+      USE state_dotprod_mod, ONLY : state_dotprod
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Lwrk
+!
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+# endif
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:,LBj:,:,:)
       real(r8), intent(inout) :: nl_vstr(LBi:,LBj:,:,:)
@@ -2499,23 +2768,6 @@
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 # endif
-#ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ad_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-      real(r8), intent(in) :: ad_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: ad_tflux(LBi:UBi,LBj:UBj,                 &
-     &                                 Nfrec(ng),2,NT(ng))
-# endif
-      real(r8), intent(in) :: ad_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(in) :: ad_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: ad_v(LBi:UBi,LBj:UBj,N(ng),2)
-#else
-      real(r8), intent(in) :: ad_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: ad_vbar(LBi:UBi,LBj:UBj,3)
-#endif
-      real(r8), intent(in) :: ad_zeta(LBi:UBi,LBj:UBj,3)
 # ifdef ADJUST_WSTRESS
       real(r8), intent(inout) :: nl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(inout) :: nl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -2554,145 +2806,103 @@
 !
 !  Local variable declarations.
 !
-      integer :: NSUB, i, j, k, L1, L2, nvec
+      integer :: i, j, k, lstr, rec, Lscale
 #ifdef SOLVE3D
       integer :: itrc
 #endif
-      real(r8) :: cff, fac, fac1, fac2
-      real(r8), dimension(0:NstateVars) :: Dotprod
-#ifdef DISTRIBUTE
-      character (len=3) :: op_handle
-#endif
+      integer :: L1 = 1
+      integer :: L2 = 2
+
+      real(r8) :: fac, fac1, fac2
+
+      real(r8), dimension(0:NstateVar(ng)) :: dot
+
+      character (len=80) :: ncname
 
 #include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
-!  Apply the preconditioner. The approximated Hessian matrix is computed
-!  from the eigenvectors computed by the Lanczos algorithm which are
-!  stored in HSSname NetCDF file.
+!  Compute the cost function based on the formula of Tshimanga
+!  (PhD thesis, p 154, eqn A.15):
+!
+!    J=J_initial+0.5*r'y where J_initial is the value of the
+!    cost function on the first iteration (i.e. CostNorm),
+!    r is the initial cost function gradient, and y is the 
+!    new increment. Note that even r and x are in y-space,
+!    their dot-product is equal to that of the same variables
+!    transformed to v-space.
 !-----------------------------------------------------------------------
 !
-!  Copy ad_var(Linp) into tl_var(Lwrk)
+!  Determine adjoint file to process.
 !
-      CALL state_copy (ng, tile,                                        &
+      rec=1
+      IF (ndefADJ(ng).gt.0) THEN
+        lstr=LEN_TRIM(ADJbase(ng))
+        WRITE (ncname,10) ADJbase(ng)(1:lstr-3), rec
+ 10     FORMAT (a,'_',i3.3,'.nc')
+      ELSE
+        ncname=ADJname(ng)
+      END IF
+!
+!  Read the initial gradient into NLM index L2.
+!
+      CALL read_state (ng, tile, model,                                 &
      &                 LBi, UBi, LBj, UBj,                              &
-     &                 Linp, Lwrk,                                      &
-#ifdef ADJUST_WSTRESS
-     &                 tl_ustr, ad_ustr,                                &
-     &                 tl_vstr, ad_vstr,                                &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                 tl_tflux, ad_tflux,                              &
-# endif
-     &                 tl_t, ad_t,                                      &
-     &                 tl_u, ad_u,                                      &
-     &                 tl_v, ad_v,                                      &
-#else
-     &                 tl_ubar, ad_ubar,                                &
-     &                 tl_vbar, ad_vbar,                                &
-#endif
-     &                 tl_zeta, ad_zeta)
-!
-!  Read the converged Hessian eigenvectors into NLM state array,
-!  index L1.
-!
-      DO nvec=1,nConvRitz
-        L1=1
-        L2=2
-        CALL read_state (ng, tile, model,                               &
-     &                   LBi, UBi, LBj, UBj,                            &
-     &                   L1, nvec,                                      &
-     &                   0, ncHSSid(ng), HSSname(ng),                   &
+     &                 L2, rec,                                         &
+     &                 ndefADJ(ng), ncADJid(ng), ncname,                &
 #ifdef MASKING
-     &                   rmask, umask, vmask,                           &
+     &                 rmask, umask, vmask,                             &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                   nl_ustr, nl_vstr,                              &
+     &                 nl_ustr, nl_vstr,                                &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                   nl_tflux,                                      &
+     &                 nl_tflux,                                        &
 # endif
-     &                   nl_t, nl_u, nl_v,                              &
+     &                 nl_t, nl_u, nl_v,                                &
 #else
-     &                   nl_ubar, nl_vbar,                              &
+     &                 nl_ubar, nl_vbar,                                &
 #endif
-     &                   nl_zeta)
+     &                 nl_zeta)
 !
-!  Compute dot product between gradient and Hessian eigenvector.
+!  Compute the dot-product of the initial gradient with the current
+!  increment.
 !
-        CALL state_dotprod (ng, tile, model,                            &
-     &                      LBi, UBi, LBj, UBj,                         &
-     &                      NstateVars, Dotprod(0:),                    &
+      CALL state_dotprod (ng, tile, model,                              &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NstateVar(ng), dot(0:),                       &
 #ifdef MASKING
-     &                      rmask, umask, vmask,                        &
+     &                    rmask, umask, vmask,                          &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                      ad_ustr(:,:,:,Linp), nl_ustr(:,:,:,L1),     &
-     &                      ad_vstr(:,:,:,Linp), nl_vstr(:,:,:,L1),     &
+     &                    nl_ustr(:,:,:,L2), tl_ustr(:,:,:,Lwrk),       &
+     &                    nl_vstr(:,:,:,L2), tl_vstr(:,:,:,Lwrk),       &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                      ad_tflux(:,:,:,Linp,:),                     &
-                            nl_tflux(:,:,:,L1,:),                       &
+     &                    nl_tflux(:,:,:,L2,:),                         &
+     &                    tl_tflux(:,:,:,Lwrk,:),                       &
 # endif
-     &                      ad_t(:,:,:,Linp,:), nl_t(:,:,:,L1,:),       &
-     &                      ad_u(:,:,:,Linp), nl_u(:,:,:,L1),           &
-     &                      ad_v(:,:,:,Linp), nl_v(:,:,:,L1),           &
+     &                    nl_t(:,:,:,L2,:), tl_t(:,:,:,Lwrk,:),         &
+     &                    nl_u(:,:,:,L2), tl_u(:,:,:,Lwrk),             &
+     &                    nl_v(:,:,:,L2), tl_v(:,:,:,Lwrk),             &
 #else
-     &                      ad_ubar(:,:,Linp), nl_ubar(:,:,L1),         &
-     &                      ad_vbar(:,:,Linp), nl_vbar(:,:,L1),         &
+     &                    nl_ubar(:,:,L2), tl_ubar(:,:,Lwrk),           &
+     &                    nl_vbar(:,:,L2), tl_vbar(:,:,Lwrk),           &
 #endif
-     &                      ad_zeta(:,:,Linp), nl_zeta(:,:,L1))
+     &                    nl_zeta(:,:,L2), tl_zeta(:,:,Lwrk))
 !
-!    Lscale determines the form of the preconditioner:
+!   Compute the new cost function. Only the total value is meaningful.
 !
-!       1= Hessian
-!      -1= Inverse Hessian
-!       2= Hessian square root
-!      -2= Inverse Hessian square root
-!
-!    tl_var(Lwrk) = fac1 * tl_var(Lwrk) + fac2 * nl_var(L1)
-!
-        fac1=1.0_r8
-
-        IF (Lscale.eq.1) THEN
-          fac2=(Ritz(nvec)-1.0_r8)*Dotprod(0)
-        ELSE IF (Lscale.eq.-1) THEN
-          fac2=(1.0_r8/Ritz(nvec)-1.0_r8)*Dotprod(0)
-        ELSE IF (Lscale.eq.2) THEN
-          fac2=(SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
-        ELSE IF (Lscale.eq.-2) THEN
-          fac2=(1.0_r8/SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
-        END IF
-
-        CALL state_addition (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj,                        &
-     &                       Lwrk, L1, Lwrk, fac1, fac2,                &
-#ifdef MASKING
-     &                       rmask, umask, vmask,                       &
-#endif
-#ifdef ADJUST_WSTRESS
-     &                       tl_ustr, nl_ustr,                          &
-     &                       tl_vstr, nl_vstr,                          &
-#endif
-#ifdef SOLVE3D
-# ifdef ADJUST_STFLUX
-     &                       tl_tflux, nl_tflux,                        &
-# endif
-     &                       tl_t, nl_t,                                &
-     &                       tl_u, nl_u,                                &
-     &                       tl_v, nl_v,                                &
-#else
-     &                       tl_ubar, nl_ubar,                          &
-     &                       tl_vbar, nl_vbar,                          &
-#endif
-     &                       tl_zeta, nl_zeta)
+      FOURDVAR(ng)%CostFun(0)=FOURDVAR(ng)%CostNorm(0)+0.5_r8*dot(0)
+      DO i=1,NstateVar(ng)
+        FOURDVAR(ng)%CostFun(i)=0.0_r8
       END DO
 
       RETURN
-      END SUBROUTINE precond
+      END SUBROUTINE new_cost
+
 !
 !***********************************************************************
       SUBROUTINE read_state (ng, tile, model,                           &
@@ -3041,7 +3251,7 @@
       RETURN
       END SUBROUTINE read_state
 
-      SUBROUTINE cg_write (ng, innLoop, outLoop)
+      SUBROUTINE cg_write (ng, model, innLoop, outLoop)
 !
 !=======================================================================
 !                                                                      !
@@ -3057,6 +3267,10 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -3066,148 +3280,80 @@
 !
 !  Local variable declarations.
 !
-      logical, save :: First = .TRUE.
-
-      integer :: i, status
-      integer :: start(2), total(2)
-      integer, save :: varid(7)
+      integer :: status
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient vectors.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
-        IF (First) THEN
-          First=.FALSE.
-          DO i=1,7
-            varid(i)=0
-          END DO
-        END IF
-!
 !  Write out outer and inner iteration.
 !
-        IF (varid(1).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'outer', varid(1))
-        END IF
-        status=nf90_put_var(ncMODid(ng), varid(1), outer)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'outer', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_ivar (ng, model, MODname(ng), 'outer',            &
+     &                      outer, (/0/), (/0/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
-        IF (varid(2).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'inner', varid(2))
-        END IF
-        status=nf90_put_var(ncMODid(ng), varid(2), inner)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'inner', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_ivar (ng, model, MODname(ng), 'inner',            &
+     &                      inner, (/0/), (/0/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out number of converged Ritz eigenvalues.
 !
-        IF ((innLoop.eq.0).and.(outloop.eq.1)) THEN
-          IF (varid(3).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'nConvRitz', varid(3))
-          END IF
-          status=nf90_put_var(ncMODid(ng), varid(3), nConvRitz)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'nConvRitz', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF ((innLoop.eq.0).and.(outloop.eq.1)) THEN
+        CALL netcdf_put_ivar (ng, model, MODname(ng), 'nConvRitz',      &
+     &                        nConvRitz, (/0/), (/0/),                  &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Write out converged Ritz eigenvalues.
 !
-        IF ((innLoop.eq.0).and.(outloop.eq.1)) THEN
-          IF (varid(4).eq.0) THEN
-            status=nf90_inq_varid(ncMODid(ng), 'Ritz', varid(4))
-          END IF
-          start(1)=1
-          total(1)=nConvRitz
-          status=nf90_put_var(ncMODid(ng), varid(4), Ritz, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'Ritz', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+      IF ((innLoop.eq.0).and.(outloop.eq.1)) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'Ritz',           &
+     &                        Ritz, (/1/), (/nConvRitz/),               &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
 !  Write out conjugate gradient norms.
 !
-        IF (varid(5).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'cg_alpha', varid(5))
-        END IF
-        start(1)=1
-        total(1)=Ninner+1
-        start(2)=1
-        total(2)=Nouter
-        status=nf90_put_var(ncMODid(ng), varid(5), cg_alpha(0:,:),      &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'cg_alpha', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_alpha',         &
+     &                      cg_alpha(0:,:), (/1,1/),                    &
+     &                      (/Ninner+1,Nouter/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
-        IF (varid(6).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'cg_beta', varid(6))
-        END IF
-        start(1)=1
-        total(1)=Ninner+1
-        start(2)=1
-        total(2)=Nouter
-        status=nf90_put_var(ncMODid(ng), varid(6), cg_beta(0:,:),       &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'cg_beta', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_beta',          &
+     &                      cg_beta(0:,:), (/1,1/),                     &
+     &                      (/Ninner+1,Nouter/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
-        IF (varid(7).eq.0) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'cg_tau', varid(7))
-        END IF
-        start(1)=1
-        total(1)=Ninner+1
-        start(2)=1
-        total(2)=Nouter
-        status=nf90_put_var(ncMODid(ng), varid(7), cg_tau(0:,:),        &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'cg_tau', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_tau',           &
+     &                      cg_tau(0:,:), (/1,1/),                      &
+     &                      (/Ninner+1,Nouter/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
-!  Synchronize observations NetCDF file to disk.
+!  Synchronize model/observation NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
         status=nf90_sync(ncMODid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,10) TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag, 1)
+#endif
 
-  10  FORMAT (/,' CG_WRITE - error while writing variable: ',a,/,       &
-     &        12x,'into NetCDF file: ',a)
-  20  FORMAT (/,' CG_WRITE - unable to synchronize 4DVAR',              &
-     &        1x,'NetCDF file to disk.')
+  10  FORMAT (/,' CG_WRITE - unable to synchronize to disk ',           &
+     &        ' model/observation file: ',/,12x,a)
 
+      RETURN
       END SUBROUTINE cg_write
