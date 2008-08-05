@@ -7,7 +7,7 @@
 !  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine updates representer model initial NetCDF file used     !
 !  for weak constraint, 4DVAR data assimilation.  It defines new       !
@@ -23,7 +23,7 @@
       USE mod_scalars
 # ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_bcastl
+      USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
       implicit none
@@ -34,25 +34,27 @@
 !
 !  Local variable declarations.
 !
+      logical :: got_var(NV)
+
       integer, parameter :: Natt = 24
 
-      logical :: Ldefine, got_var(NV)
+      logical :: Ldefine = .FALSE.
 
-      integer :: i, j, nrec, nvd, nvd4
-      integer :: frecdim, recdim, status, varid
+      integer :: i, j, nvd4
+      integer :: frecdim, status
 # ifdef SOLVE3D
       integer :: itrc
 # endif
 
-      integer :: DimIDs(29), t3dfrc(4), u3dfrc(4), v3dfrc(4)
+      integer :: DimIDs(31), t4dfrc(4), u4dfrc(4), v4dfrc(4)
       integer :: Vsize(4)
 
-      integer :: def_var
+      integer :: def_dim, def_var
 
       real(r8) :: Aval(6)
 
       character (len=80) :: Vinfo(Natt)
-      character (len=80) :: fname, ncname
+      character (len=80) :: ncname
 
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
@@ -64,112 +66,107 @@
       IF (exit_flag.ne.NoError) RETURN
       ncname=IRPname(ng)
 !
-!  Open NetCDF file.
+!  Inquire about the dimensions and check for consistency.
 !
-      IF (OutThread) THEN
-        status=nf90_open(TRIM(ncname),nf90_write,ncIRPid(ng))
-      END IF  
-#  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iRPM, status, 1)
-#  endif
-      IF (status.ne.nf90_noerr) THEN
-        IF (Master) THEN
-          WRITE (stdout,10) TRIM(ncname)
-        END IF
-        exit_flag=3
-        ioerror=status
-        RETURN
-      END IF
+      CALL netcdf_check_dim (ng, iNLM, ncname)
+      IF (exit_flag.ne.NoError) RETURN
 !
-!  Inquire about the contents of existing NetCDF file:  Inquire
-!  about the dimensions and variables.  Check for consistency.
+!  Inquire about the variables.
 !
-      IF (outThread) THEN
-        CALL opencdf (ng, 1, ncname, fname, N(ng), 0, nrec, nvd, Vsize)
-        IF (exit_flag.ne.NoError) RETURN
+      CALL netcdf_inq_var (ng, iNLM, ncname)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Check if surface forcing variables have been already defined.
 !
-        DO i=1,NV
-          got_var(i)=.FALSE.
-        END DO
+      DO i=1,NV
+        got_var(i)=.FALSE.
+      END DO
 !
-        DO i=1,nvars
-# ifdef ADJUST_WSTRESS
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUsms))) THEN
-            got_var(idUsms)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idUsms)),    &
-     &                            irpVid(idUsms,ng))
+      DO i=1,n_var
+#  ifdef ADJUST_WSTRESS
+        IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsms))) THEN
+          got_var(idUsms)=.TRUE.
+          irpVid(idUsms,ng)=var_id(i)
+        ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsms))) THEN
+          got_var(idVsms)=.TRUE.
+          irpVid(idVsms,ng)=var_id(i)
+        END IF
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+        DO itrc=1,NT(ng)
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
+            got_var(idTsur(itrc))=.TRUE.
+            irpVid(idTsur(itrc),ng)=var_id(i)
           END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVsms))) THEN
-            got_var(idVsms)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idVsms)),    &
-     &                            irpVid(idVsms,ng))
-          END IF
-# endif
-# if defined ADJUST_STFLUX && defined SOLVE3D
-          DO itrc=1,NT(ng)
-            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
-              got_var(idTsur(itrc))=.TRUE.
-              status=nf90_inq_varid(ncIRPid(ng),                        &
-     &                              TRIM(Vname(1,idTsur(itrc))),        &
-     &                              irpVid(idTsur(itrc),ng))
-            END IF
-          END DO
-# endif
         END DO
-        Ldefine=.FALSE.
-# ifdef ADJUST_WSTRESS
-        IF (.not.got_var(idUsms)) Ldefine=.TRUE.
-        IF (.not.got_var(idVsms)) Ldefine=.TRUE.
-# endif
-# if defined ADJUST_STFLUX && defined SOLVE3D
-          DO itrc=1,NT(ng)
-            IF (.not.got_var(idTsur(itrc))) Ldefine=.TRUE.
-          END DO
-# endif
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcastl (ng, iNLM, Ldefine, 1)
-# endif
+#  endif
+      END DO
+        
+#  ifdef ADJUST_WSTRESS
+      IF (.not.got_var(idUsms)) Ldefine=.TRUE.
+      IF (.not.got_var(idVsms)) Ldefine=.TRUE.
+#  endif
+#  if defined ADJUST_STFLUX && defined SOLVE3D
+      DO itrc=1,NT(ng)
+        IF (.not.got_var(idTsur(itrc))) Ldefine=.TRUE.
+      END DO
+#  endif
 !
 !  Put existing file into define mode so new variables can be added.
 !
       IF (Ldefine) THEN
         IF (OutThread) THEN
-          status=nf90_redef(ncIRPid(ng))
+          status=nf90_open(TRIM(ncname), nf90_write, ncIRPid(ng))
+          IF (status.eq.nf90_noerr) THEN
+            status=nf90_redef(ncIRPid(ng))
+            IF (status.ne.nf90_noerr) THEN
+              WRITE (stdout,10) TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          ELSE
+            WRITE (stdout,20) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
         END IF
 #  ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iRPM, status, 1)
+        CALL mp_bcasti (ng, iRPM, exit_flag, 1)
 #  endif
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,20) TRIM(ncname)
-          END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !-----------------------------------------------------------------------
 !  Define the dimensions of staggered fields.
 !-----------------------------------------------------------------------
 !
-      IF (Ldefine.and.OutThread) THEN
-        status=nf90_inq_dimid(ncIRPid(ng),'xi_rho' ,DimIDs( 1))
-        status=nf90_inq_dimid(ncIRPid(ng),'xi_u'   ,DimIDs( 2))
-        status=nf90_inq_dimid(ncIRPid(ng),'xi_v'   ,DimIDs( 3))
-        status=nf90_inq_dimid(ncIRPid(ng),'eta_rho',DimIDs( 5))
-        status=nf90_inq_dimid(ncIRPid(ng),'eta_u'  ,DimIDs( 6))
-        status=nf90_inq_dimid(ncIRPid(ng),'eta_v'  ,DimIDs( 7))
+      DEFINE: IF (Ldefine) THEN
+        DO i=1,n_dim
+          SELECT CASE (TRIM(ADJUSTL(dim_name(i))))
+            CASE ('xi_rho')
+              DimIDs( 1)=dim_id(i)
+            CASE ('xi_u')
+              DimIDs( 2)=dim_id(i)
+            CASE ('xi_v')
+              DimIDs( 3)=dim_id(i)
+            CASE ('eta_rho')
+              DimIDs( 5)=dim_id(i)
+            CASE ('eta_u')
+              DimIDs( 6)=dim_id(i)
+            CASE ('eta_v')
+              DimIDs( 7)=dim_id(i)
 #  ifdef SOLVE3D
-        status=nf90_inq_dimid(ncIRPid(ng),'s_rho'  ,DimIDs( 9))
-        status=nf90_inq_dimid(ncIRPid(ng),'s_w'    ,DimIDs(10))
+            CASE ('s_rho')
+              DimIDs( 9)=dim_id(i)
+            CASE ('s_w')
+              DimIDs(10)=dim_id(i)
 #  endif
-        status=nf90_inquire(ncIRPid(ng), unlimitedDimID = recdim)
-        DimIDs(12)=recdim
-        status=nf90_def_dim(ncIRPid(ng),'Nadjust',Nfrec(ng),frecdim)
+          END SELECT
+        END DO
+        DimIDs(12)=rec_id
+        status=def_dim(ng, iRPM, ncIRPid(ng), ncname, 'Nadjust',        &
+     &                 Nfrec(ng), frecdim)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Set number of dimensions for output variables.
 !
@@ -177,30 +174,30 @@
 !
 !  Define dimension vectors for staggered tracer type variables.
 !
-        t3dfrc(1)=DimIDs( 1)
-        t3dfrc(2)=DimIDs( 5)
-        t3dfrc(3)=frecdim
-        t3dfrc(4)=recdim
+        t4dfrc(1)=DimIDs( 1)
+        t4dfrc(2)=DimIDs( 5)
+        t4dfrc(3)=frecdim
+        t4dfrc(4)=DimIDs(12)
 !
 !  Define dimension vectors for staggered u-momemtum type variables.
 !
-        u3dfrc(1)=DimIDs( 2)
-        u3dfrc(2)=DimIDs( 6)
-        u3dfrc(3)=frecdim
-        u3dfrc(4)=recdim
+        u4dfrc(1)=DimIDs( 2)
+        u4dfrc(2)=DimIDs( 6)
+        u4dfrc(3)=frecdim
+        u4dfrc(4)=DimIDs(12)
 !
 !  Define dimension vectors for staggered v-momemtum type variables.
 !
-        v3dfrc(1)=DimIDs( 3)
-        v3dfrc(2)=DimIDs( 7)
-        v3dfrc(3)=frecdim
-        v3dfrc(4)=recdim
+        v4dfrc(1)=DimIDs( 3)
+        v4dfrc(2)=DimIDs( 7)
+        v4dfrc(3)=frecdim
+        v4dfrc(4)=DimIDs(12)
 !
 !  Initialize local information variable arrays.
 !
         DO i=1,Natt
-          DO j=1,80
-            Vinfo(i)=' '
+          DO j=1,LEN(Vinfo(1))
+            Vinfo(i)(j:j)=' '
           END DO
         END DO
         DO i=1,6
@@ -221,17 +218,14 @@
           Vinfo( 1)=Vname(1,idUsms)
           Vinfo( 2)=Vname(2,idUsms)
           Vinfo( 3)=Vname(3,idUsms)
-          Vinfo(14)=Vname(4,idUsms)
-          Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_u'
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
-          Vinfo(24)='_FillValue'
-          Aval(6)=0.0_r8
-          status=def_var(ncIRPid(ng),irpVid(idUsms,ng),NF_FOUT,         &
-     &                   nvd4,u3dfrc,Aval,Vinfo,ncname)
+          status=def_var(ng, iRPM, ncIRPid(ng), irpVid(idUsms,ng),      &
+     &                   NF_FOUT, nvd4, u4dfrc, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 !
 !  Define surface V-momentum stress.
@@ -240,17 +234,14 @@
           Vinfo( 1)=Vname(1,idVsms)
           Vinfo( 2)=Vname(2,idVsms)
           Vinfo( 3)=Vname(3,idVsms)
-          Vinfo(14)=Vname(4,idVsms)
-          Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
           Vinfo(20)='mask_v'
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
-          Vinfo(24)='_FillValue'
-          Aval(6)=0.0_r8
-          status=def_var(ncIRPid(ng),irpVid(idVsms,ng),NF_FOUT,         &
-     &                   nvd4,v3dfrc,Aval,Vinfo,ncname)
+          status=def_var(ng, iRPM, ncIRPid(ng), irpVid(idVsms,ng),      &
+     &                   NF_FOUT, nvd4, v4dfrc, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
@@ -271,17 +262,15 @@
               Vinfo(11)='upward flux, freshening (net precipitation)'
               Vinfo(12)='downward flux, salting (net evaporation)'
             END IF
-            Vinfo(14)=Vname(4,idTsur(itrc))
-            Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
             Vinfo(20)='mask_rho'
 #   endif
             Vinfo(22)='coordinates'
             Aval(5)=REAL(r2dvar,r8)
-            Vinfo(24)='_FillValue'
-            Aval(6)=0.0_r8
-            status=def_var(ncIRPid(ng),irpVid(idTsur(itrc),ng),         &
-     &                     NF_FOUT,nvd4,t3dfrc,Aval,Vinfo,ncname)
+            status=def_var(ng, iRPM, ncIRPid(ng),                       &
+     &                     irpVid(idTsur(itrc),ng), NF_FOUT,            &
+     &                     nvd4, t4dfrc, Aval, Vinfo, ncname)
+            IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
 #  endif
@@ -290,8 +279,19 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf90_enddef(ncIRPid(ng))
-      END IF
+        IF (OutThread) THEN
+          status=nf90_enddef(ncIRPid(ng))
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,30) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iRPM, exit_flag, 1)
+#  endif
+        IF (exit_flag.ne.NoError) RETURN
+      END IF DEFINE
 # endif
 !
 !=======================================================================
@@ -299,26 +299,35 @@
 !  prepare for appending data.
 !=======================================================================
 !
-      IF (.not.LdefIRP(ng).and.OutThread) THEN
+      IF (.not.LdefIRP(ng)) THEN
+        ncname=IRPname(ng)
 
 # if !(defined ADJUST_STFLUX || defined ADJUST_WSTRESS)
 !
-!  Inquire about the contents of initialization NetCDF file:  Inquire
-!  about the dimensions and variables.  Check for consistency.
+!  Inquire about the dimensions and check for consistency.
 !
-        ncname=IRPname(ng)
-        CALL opencdf (ng, 1, ncname, fname, N(ng), 0, nrec, nvd, Vsize)
+        CALL netcdf_check_dim (ng, iRPM, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
-!  Open initialization file for read/write.
+!  Inquire about the variables.
 !
-        status=nf90_open(TRIM(ncname),nf90_write,ncIRPid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,30) TRIM(ncname)
-          exit_flag=3
-          ioerror=status
-          RETURN
+        CALL netcdf_inq_var (ng, iRPM, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Open representer model initialization file for read/write.
+!
+        IF (OutThread) THEN
+          status=nf90_open(TRIM(ncname), nf90_write, ncIRPid(ng))
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
         END IF
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iRPM, exit_flag, 1)
+#  endif
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Initialize logical switches.
 !
@@ -330,64 +339,47 @@
 !  Scan variable list from input NetCDF and activate switches for
 !  initialization variables. Get variable IDs.
 !
-        DO i=1,nvars
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idtime))) THEN
+        DO i=1,n_var
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idtime)),    &
-     &                            irpVid(idtime,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
+            irpVid(idtime,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idFsur)),    &
-     &                            irpVid(idFsur,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbar))) THEN
+            irpVid(idFsur,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbar))) THEN
             got_var(idUbar)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idUbar)),    &
-     &                            irpVid(idUbar,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbar))) THEN
+            irpVid(idUbar,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbar))) THEN
             got_var(idVbar)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idVbar)),    &
-     &                            irpVid(idVbar,ng))
-          END IF
+            irpVid(idVbar,ng)=var_id(i)
 # ifdef SOLVE3D
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idUvel)),    &
-     &                            irpVid(idUvel,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvel))) THEN
+            irpVid(idUvel,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idVvel)),    &
-     &                            irpVid(idVvel,ng))
-          END IF
-          DO itrc=1,NT(ng)
-            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
-             got_var(idTvar(itrc))=.TRUE.
-             status=nf90_inq_varid(ncIRPid(ng),                         &
-     &                             TRIM(Vname(1,idTvar(itrc))),         &
-     &                             irpTid(itrc,ng))
-            END IF
-          END DO
+            irpVid(idVvel,ng)=var_id(i)
 #  if defined BVF_MIXING || defined LMD_MIXING || \
       defined GLS_MIXING || defined MY25_MIXING
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idVvis)),    &
-     &                            irpVid(idVvis,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTdif))) THEN
+            irpVid(idVvis,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTdif))) THEN
             got_var(idTdif)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idTdif)),    &
-     &                            irpVid(idTdif,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSdif))) THEN
+            irpVid(idTdif,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSdif))) THEN
             got_var(idSdif)=.TRUE.
-            status=nf90_inq_varid(ncIRPid(ng),TRIM(Vname(1,idSdif)),    &
-     &                            irpVid(idSdif,ng))
-          END IF
+            irpVid(idSdif,ng)=var_id(i)
 #  endif
+# endif
+          END IF
+# ifdef SOLVE3D
+          DO itrc=1,NT(ng)
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
+              got_var(idTvar(itrc))=.TRUE.
+              irpTid(itrc,ng)=var_id(i)
+            END IF
+          END DO
 # endif
         END DO
 !
@@ -395,57 +387,65 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          WRITE (stdout,30) TRIM(Vname(1,idtime)), TRIM(ncname)
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idtime)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur)) THEN
-          WRITE (stdout,30) TRIM(Vname(1,idFsur)), TRIM(ncname)
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idFsur)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar)) THEN
-          WRITE (stdout,30) TRIM(Vname(1,idUbar)), TRIM(ncname)
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUbar)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar)) THEN
-          WRITE (stdout,30) TRIM(Vname(1,idVbar)), TRIM(ncname)
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVbar)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
-          WRITE (stdout,30) TRIM(Vname(1,idUvel)), TRIM(ncname)
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUvel)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel)) THEN
-          WRITE (stdout,30) TRIM(Vname(1,idVvel)), TRIM(ncname)
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVvel)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc))) THEN
-            WRITE (stdout,30) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
+            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTvar(itrc))),  &
+     &                                    TRIM(ncname)
             exit_flag=3
             RETURN
           END IF
         END DO
 # endif
+!
+!  Set unlimited time record dimension to the appropriate value.
+!
+        tINIindx(ng)=rec_size
       END IF
-# ifdef DISTRIBUTE
 !
-!  Broadcast NetCDF variable indices.
-!
-      CALL mp_bcasti (ng, iRPM, irpVid(:,ng), NV)
-# endif
-!
-  10  FORMAT (/,' RP_DEF_INI - unable to open initial NetCDF file: ',a)
-  20  FORMAT (/,' RP_DEF_INI - unable to put in define mode initial',   &
+  10  FORMAT (/,' RP_DEF_INI - unable to put in define mode initial',   &
      &        ' NetCDF file: ',a)
-  30  FORMAT (/,' RP_DEF_INI - unable to find variable: ',a,2x,         &
-     &        ' in initial NetCDF file: ',a)
+  20  FORMAT (/,' RP_DEF_INI - unable to open initial NetCDF file: ',a)
+  30  FORMAT (/,' RP_DEF_INI - unable to leave definition mode for',    &
+     &        ' file: ', a)
+  40  FORMAT (/,' RP_DEF_INI - unable to find variable: ',a,2x,            &
+     &        ' in file: ',a)
+
       RETURN
       END SUBROUTINE rp_def_ini
 #else

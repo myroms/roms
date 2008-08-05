@@ -1,13 +1,13 @@
 #include "cppdefs.h"
 #if defined TANGENT || defined TL_IOMS
-      SUBROUTINE tl_def_his (ng,ldef)
+      SUBROUTINE tl_def_his (ng, ldef)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
 !  Copyright (c) 2002-2008 The ROMS/TOMS Group                         !
 !    Licensed under a MIT/X style license                              !
 !    See License_ROMS.txt                                              !
-!======================================================================= 
+!=======================================================================
 !                                                                      !
 !  This routine creates tangent linear history NetCDF file, it defines !
 !  its dimensions, attributes, and variables.                          !
@@ -45,15 +45,15 @@
 
       integer, parameter :: Natt = 24
 
-      integer :: i, j, itrc, nrec, nvd, nvd3, nvd4
+      integer :: i, j, itrc, nvd3, nvd4
       integer :: recdim, status, varid
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       integer :: frecdim
 # endif
-      integer :: DimIDs(29), t2dgrd(3), u2dgrd(3), v2dgrd(3)
+      integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
-      integer :: def_info, def_var, wrt_info
+      integer :: def_dim, def_var
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
@@ -68,7 +68,7 @@
       real(r8) :: Aval(6)
 
       character (len=80) :: Vinfo(Natt)
-      character (len=80) :: fname, ncname
+      character (len=80) :: ncname
 !
 !-----------------------------------------------------------------------
 !  Set and report file name.
@@ -89,101 +89,166 @@
 !  Create a new tangent linear history file.
 !=======================================================================
 !
-      IF (ldef.and.OutThread) THEN
-        status=nf90_create(TRIM(ncname),nf90_clobber,ncTLMid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,30) TRIM(ncname)
-          exit_flag=3
-          ioerror=status
-          RETURN
+      DEFINE : IF (ldef) THEN
+        IF (OutThread) THEN
+          status=nf90_create(TRIM(ncname), nf90_clobber, ncTLMid(ng))
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,30) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
         END IF
-      END IF
 # ifdef DISTRIBUTE
-      IF (ldef) THEN
+        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+# endif
+        IF (exit_flag.ne.NoError) RETURN
+# ifdef DISTRIBUTE
         CALL mp_bcasti (ng, iTLM, ncTLMid(ng), 1)
-      END IF
 # endif
 !
 !-----------------------------------------------------------------------
-!  Define the dimensions of staggered fields.
+!  Define file dimensions.
 !-----------------------------------------------------------------------
 !
-      IF (ldef.and.OutThread) THEN
-        status=nf90_def_dim(ncTLMid(ng),'xi_rho'  ,Lm(ng)+2,            &
-     &                      DimIDs( 1))
-        status=nf90_def_dim(ncTLMid(ng),'xi_u'    ,Lm(ng)+1,            &
-     &                      DimIDs( 2))
-        status=nf90_def_dim(ncTLMid(ng),'xi_v'    ,Lm(ng)+2,            &
-     &                      DimIDs( 3))
-        status=nf90_def_dim(ncTLMid(ng),'xi_psi'  ,Lm(ng)+1,            &
-     &                      DimIDs( 4))
-        status=nf90_def_dim(ncTLMid(ng),'eta_rho' ,Mm(ng)+2,            &
-     &                      DimIDs( 5))
-        status=nf90_def_dim(ncTLMid(ng),'eta_u'   ,Mm(ng)+2,            &
-     &                      DimIDs( 6))
-        status=nf90_def_dim(ncTLMid(ng),'eta_v'   ,Mm(ng)+1,            &
-     &                      DimIDs( 7))
-        status=nf90_def_dim(ncTLMid(ng),'eta_psi' ,Mm(ng)+1,            &
-     &                      DimIDs( 8))
+        DimIDs=0
+!
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xi_rho',         &
+     &                 IOBOUNDS(ng)%xi_rho, DimIDs( 1))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xi_u',           &
+     &                 IOBOUNDS(ng)%xi_u, DimIDs( 2))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xi_v',           &
+     &                 IOBOUNDS(ng)%xi_v, DimIDs( 3))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xi_psi',         &
+     &                 IOBOUNDS(ng)%xi_psi, DimIDs( 4))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'eta_rho',        &
+     &                 IOBOUNDS(ng)%eta_rho, DimIDs( 5))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'eta_u',          &
+     &                 IOBOUNDS(ng)%eta_u, DimIDs( 6))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'eta_v',          &
+     &                 IOBOUNDS(ng)%eta_v, DimIDs( 7))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'eta_psi',        &
+     &                 IOBOUNDS(ng)%eta_psi, DimIDs( 8))
+        IF (exit_flag.ne.NoError) RETURN
+
 # if defined WRITE_WATER && defined MASKING
-        status=nf90_def_dim(ncTLMid(ng),'xy_rho'  ,Nxyr(ng),            &
-     &                      DimIDs(17))
-        status=nf90_def_dim(ncTLMid(ng),'xy_u'    ,Nxyu(ng),            &
-     &                      DimIDs(18))
-        status=nf90_def_dim(ncTLMid(ng),'xy_v'    ,Nxyv(ng),            &
-     &                      DimIDs(19))
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xy_rho',         &
+     &                 IOBOUNDS(ng)%xy_rho, DimIDs(17))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xy_u',           &
+     &                 IOBOUNDS(ng)%xy_u, DimIDs(18))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xy_v',           &
+     &                 IOBOUNDS(ng)%xy_v, DimIDs(19))
+        IF (exit_flag.ne.NoError) RETURN
 # endif
+
 # ifdef SOLVE3D
 #  if defined WRITE_WATER && defined MASKING
-        status=nf90_def_dim(ncTLMid(ng),'xyz_rho' ,Nxyr(ng)*N(ng),      &
-     &                      DimIDs(20))
-        status=nf90_def_dim(ncTLMid(ng),'xyz_u'   ,Nxyu(ng)*N(ng),      &
-     &                      DimIDs(21))
-        status=nf90_def_dim(ncTLMid(ng),'xyz_v'   ,Nxyv(ng)*N(ng),      &
-     &                      DimIDs(22))
-        status=nf90_def_dim(ncTLMid(ng),'xyz_w'   ,Nxyr(ng)*(N(ng)+1),  &
-     &                      DimIDs(23))
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xyz_rho',        &
+     &                 IOBOUNDS(ng)%xy_rho*N(ng), DimIDs(20))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xyz_u',          &
+     &                 IOBOUNDS(ng)%xy_u*N(ng), DimIDs(21))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xyz_v',          &
+     &                 IOBOUNDS(ng)%xy_v*N(ng), DimIDs(22))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xyz_w',          &
+     &                 IOBOUNDS(ng)%xy_rho*(N(ng)+1), DimIDs(23))
+        IF (exit_flag.ne.NoError) RETURN
 #  endif
-        status=nf90_def_dim(ncTLMid(ng),'N'       ,N(ng),               &
-     &                      DimIDs( 9))
-        status=nf90_def_dim(ncTLMid(ng),'s_rho'   ,N(ng),               &
-     &                      DimIDs( 9))
-        status=nf90_def_dim(ncTLMid(ng),'s_w'     ,N(ng)+1,             &
-     &                      DimIDs(10))
-        status=nf90_def_dim(ncTLMid(ng),'tracer'  ,NT(ng),              &
-     &                      DimIDs(11))
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'N',              &
+     &                 N(ng), DimIDs( 9))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 's_rho',          &
+     &                 N(ng), DimIDs( 9))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 's_w',            &
+     &                 N(ng)+1, DimIDs(10))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'tracer',         &
+     &                 NT(ng), DimIDs(11))
+        IF (exit_flag.ne.NoError) RETURN
+
 #  ifdef SEDIMENT_NOT_YET
-        status=nf90_def_dim(ncTLMid(ng),'Nbed'    ,Nbed,                &
-     &                      DimIDs(16))
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'Nbed',           &
+     &                 Nbed, DimIDs(16))
+        IF (exit_flag.ne.NoError) RETURN
+
 #   if defined WRITE_WATER && defined MASKING
-        status=nf90_def_dim(ncTLMid(ng),'xybed'   ,Nxyr(ng)*Nbed,       &
-     &                      DimIDs(24))
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'xybed',          &
+     &                 IOBOUNDS(ng)%xy_rho*Nbed, DimIDs(24))
+        IF (exit_flag.ne.NoError) RETURN
 #   endif
 #  endif
+
 #  ifdef ECOSIM
-        status=nf90_def_dim(ncTLMid(ng),'Nphy'    ,Nphy,                &
-     &                      DimIDs(25))
-        status=nf90_def_dim(ncTLMid(ng),'Nbac'    ,Nbac,                &
-     &                      DimIDs(26))
-        status=nf90_def_dim(ncTLMid(ng),'Ndom'    ,Ndom,                &
-     &                      DimIDs(27))
-        status=nf90_def_dim(ncTLMid(ng),'Nfec'    ,Nfec,                &
-     &                      DimIDs(28))
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'Nphy',           &
+     &                 Nphy, DimIDs(25))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'Nbac',           &
+     &                 Nbac, DimIDs(26))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'Ndom',           &
+     &                 Ndom, DimIDs(27))
+        IF (exit_flag.ne.NoError) RETURN
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'Nfec',           &
+     &                 Nfec, DimIDs(28))
+        IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
-        status=nf90_def_dim(ncTLMid(ng),'boundary',4,                   &
-     &                      DimIDs(14))
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'boundary',       &
+     &                 4, DimIDs(14))
+        IF (exit_flag.ne.NoError) RETURN
+
 # ifdef FOUR_DVAR
-        status=nf90_def_dim(ncTLMid(ng),'Nstate  ',NstateVar(ng),       &
-     &                      DimIDs(29))
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'Nstate',         &
+     &                 NstateVar(ng), DimIDs(29))
+        IF (exit_flag.ne.NoError) RETURN
 # endif
+
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-        status=nf90_def_dim(ncTLMid(ng),'Nadjust ',Nfrec(ng),           &
-     &                      frecdim)
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname, 'Nadjust',        &
+     &                 Nfrec(ng), DimIDs(30))
+        IF (exit_flag.ne.NoError) RETURN
 # endif
-        status=nf90_def_dim(ncTLMid(ng),TRIM(ADJUSTL(Vname(5,idtime))), &
-     &                      nf90_unlimited,DimIDs(12))
+
+        status=def_dim(ng, iTLM, ncTLMid(ng), ncname,                   &
+     &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
+     &                 nf90_unlimited, DimIDs(12))
+        IF (exit_flag.ne.NoError) RETURN
+
         recdim=DimIDs(12)
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        frecdim=DimIDs(30)
+# endif
 !
 !  Set number of dimensions for output variables.
 !
@@ -297,7 +362,7 @@
 !  Initialize local information variable arrays.
 !
         DO i=1,Natt
-          DO j=1,80
+          DO j=1,LEN(Vinfo(1))
             Vinfo(i)(j:j)=' '
           END DO
         END DO
@@ -309,7 +374,7 @@
 !  Define time-recordless information variables.
 !-----------------------------------------------------------------------
 !
-        status=def_info(ng,ncTLMid(ng),ncname,DimIDs)
+        CALL def_info (ng, iTLM, ncTLMid(ng), ncname, DimIDs)
         IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
@@ -334,8 +399,9 @@
           Vinfo( 4)='standard'
         END IF
         Vinfo(14)=Vname(4,idtime)
-        status=def_var(ncTLMid(ng),tlmVid(idtime,ng),NF_TYPE,           &
-     &                 1,recdim,Aval,Vinfo,ncname)
+        status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idtime,ng),        &
+     &                 NF_TYPE, 1, recdim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
 
 # ifdef PROPAGATOR
 !
@@ -343,20 +409,23 @@
 !
         Vinfo( 1)='Ritz_rvalue'
         Vinfo( 2)='real Ritz eigenvalues'
-        status=def_var(ncTLMid(ng),varid,NF_TYPE,                       &
-     &                 1,recdim,Aval,Vinfo,ncname)
+        status=def_var(ng, iTLM, ncTLMid(ng), varid, NF_TYPE,           &
+     &                 1, recdim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
 
 #  if defined FT_EIGENMODES
         Vinfo( 1)='Ritz_ivalue'
         Vinfo( 2)='imaginary Ritz eigenvalues'
-        status=def_var(ncTLMid(ng),varid,NF_TYPE,                       &
-     &                 1,recdim,Aval,Vinfo,ncname)
+        status=def_var(ng, iTLM, ncTLMid(ng), varid, NF_TYPE,           &
+     &                 1, recdim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
 #  endif
 
         Vinfo( 1)='Ritz_norm'
         Vinfo( 2)='Ritz eigenvectors Euclidean norm'
-        status=def_var(ncTLMid(ng),varid,NF_TYPE,                       &
-     &                 1,recdim,Aval,Vinfo,ncname)
+        status=def_var(ng, iTLM, ncTLMid(ng), varid, NF_TYPE,           &
+     &                 1, recdim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
 # ifdef ADJUST_WSTRESS
 !
@@ -373,8 +442,9 @@
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUsms,ng),r8)
-        status=def_var(ncTLMid(ng),tlmVid(idUsms,ng),NF_FOUT,           &
-     &                 nvd4,u3dfrc,Aval,Vinfo,ncname)
+        status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idUsms,ng),        &
+     &                 NF_FOUT, nvd4, u3dfrc, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Define surface V-momentum stress.
 !
@@ -388,8 +458,9 @@
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVsms,ng),r8)
-        status=def_var(ncTLMid(ng),tlmVid(idVsms,ng),NF_FOUT,           &
-     &                 nvd4,v3dfrc,Aval,Vinfo,ncname)
+        status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVsms,ng),        &
+     &                 NF_FOUT, nvd4, v3dfrc, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
 !
@@ -414,8 +485,10 @@
 #  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idTsur(itrc),ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idTsur(itrc),ng),           &
-     &                   NF_FOUT,nvd4,t3dfrc,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng),                         &
+     &                   tlmVid(idTsur(itrc),ng), NF_FOUT,              &
+     &                   nvd4, t3dfrc, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END DO
 # endif
 !
@@ -432,8 +505,10 @@
 # endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idFsur,ng),NF_FOUT,         &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idFsur,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
 # if defined FORWARD_WRITE && defined FORWARD_RHS
           Vinfo( 1)=Vname(1,idRzet)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idRzet))
@@ -445,8 +520,9 @@
 #  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(r2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idRzet,ng),NF_FOUT,         &
-     &                   nvd3,t2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idRzet,ng),      &
+     &                   NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 # endif
         END IF
 !
@@ -463,8 +539,10 @@
 # endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUbar,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idUbar,ng),NF_FOUT,         &
-     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idUbar,ng),      &
+     &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
 # ifdef FORWARD_WRITE
 #  ifdef FORWARD_RHS
           Vinfo( 1)=Vname(1,idRu2d)
@@ -478,8 +556,9 @@
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
 
-          status=def_var(ncTLMid(ng),tlmVid(idRu2d,ng),NF_FOUT,         &
-     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idRu2d,ng),      &
+     &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #  endif
 #  ifdef SOLVE3D
 #   ifdef FORWARD_RHS
@@ -493,9 +572,11 @@
 #    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idRuct,ng),NF_FOUT,         &
-     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idRuct,ng),      &
+     &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #   endif
+
           Vinfo( 1)=Vname(1,idUfx1)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idUfx1))
           Vinfo( 3)=Vname(3,idUfx1)
@@ -506,8 +587,10 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idUfx1,ng),NF_FOUT,         &
-     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idUfx1,ng),      &
+     &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
           Vinfo( 1)=Vname(1,idUfx2)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idUfx2))
           Vinfo( 3)=Vname(3,idUfx2)
@@ -518,8 +601,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idUfx2,ng),NF_FOUT,         &
-     &                   nvd3,u2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idUfx2,ng),      &
+     &                   NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
         END IF
@@ -537,8 +621,10 @@
 # endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVbar,ng),NF_FOUT,         &
-     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVbar,ng),      &
+     &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
 # ifdef FORWARD_WRITE
 #  ifdef FORWARD_RHS
           Vinfo( 1)=Vname(1,idRv2d)
@@ -551,8 +637,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idRv2d,ng),NF_FOUT,         &
-     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idRv2d,ng),      &
+     &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #  endif
 #  ifdef SOLVE3D
 #   ifdef FORWARD_RHS
@@ -566,9 +653,11 @@
 #    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idRvct,ng),NF_FOUT,         &
-     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idRvct,ng),      &
+     &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #   endif
+
           Vinfo( 1)=Vname(1,idVfx1)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idVfx1))
           Vinfo( 3)=Vname(3,idVfx1)
@@ -579,8 +668,10 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVfx1,ng),NF_FOUT,         &
-     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVfx1,ng),      &
+     &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
           Vinfo( 1)=Vname(1,idVfx2)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idVfx2))
           Vinfo( 3)=Vname(3,idVfx2)
@@ -591,8 +682,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVfx2,ng),NF_FOUT,         &
-     &                   nvd3,v2dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVfx2,ng),      &
+     &                   NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
         END IF
@@ -611,8 +703,10 @@
 #  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUvel,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idUvel,ng),NF_FOUT,         &
-     &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idUvel,ng),      &
+     &                   NF_FOUT, nvd4, u3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
 #  if defined FORWARD_WRITE && defined FORWARD_RHS
           Vinfo( 1)=Vname(1,idRu3d)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idRu3d))
@@ -624,8 +718,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u3dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idRu3d,ng),NF_FOUT,         &
-     &                   nvd4,u3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idRu3d,ng),      &
+     &                   NF_FOUT, nvd4, u3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #  endif
         END IF
 !
@@ -642,8 +737,10 @@
 #  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVvel,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVvel,ng),NF_FOUT,         &
-     &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVvel,ng),      &
+     &                   NF_FOUT, nvd4, v3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
 #  if defined FORWARD_WRITE && defined FORWARD_RHS
           Vinfo( 1)=Vname(1,idRv3d)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idRv3d))
@@ -655,8 +752,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v3dvar,r8)
-          status=def_var(ncTLMid(ng),tlmVid(idRv3d,ng),NF_FOUT,         &
-     &                   nvd4,v3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idRv3d,ng),      &
+     &                   NF_FOUT, nvd4, v3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #  endif
         END IF
 !
@@ -681,8 +779,9 @@
 #  endif
             Vinfo(22)='coordinates'
             Aval(5)=REAL(r3dvar,r8)
-            status=def_var(ncTLMid(ng),tlmTid(itrc,ng),NF_FOUT,         &
-     &                     nvd4,t3dgrd,Aval,Vinfo,ncname)
+            status=def_var(ng, iTLM, ncTLMid(ng), tlmTid(itrc,ng),      &
+     &                     NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+            IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
 !
@@ -699,8 +798,9 @@
 #  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idDano,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idDano,ng),NF_FOUT,         &
-     &                   nvd4,t3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idDano,ng),      &
+     &                   NF_FOUT, nvd4, t3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 
 #  if defined FORWARD_MIXING && \
@@ -720,8 +820,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVvis,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVvis,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVvis,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 !
 !  Define vertical diffusion coefficient for potential temperature.
@@ -737,8 +838,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idTdif,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idTdif,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idTdif,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 #   ifdef SALINITY
 !
@@ -755,8 +857,9 @@
 #    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idSdif,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idSdif,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idSdif,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 #   endif
 #   if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
@@ -774,8 +877,9 @@
 #    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idMtke,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idMtke,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idMtke,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 
           Vinfo( 1)=Vname(1,idVmKK)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idVmKK))
@@ -787,9 +891,9 @@
 #    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVmKK,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVmKK,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
-
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVmKK,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 !
 !  Define turbulent kinetic energy time length scale.
@@ -805,8 +909,9 @@
 #    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idMtls,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idMtls,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idMtls,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 
           Vinfo( 1)=Vname(1,idVmLS)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idVmLS))
@@ -818,8 +923,10 @@
 #    endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVmLS,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVmLS,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVmLS,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
+
 #    ifdef GLS_MIXING_NOT_YET
           Vinfo( 1)=Vname(1,idVmKP)
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idVmKP))
@@ -831,8 +938,9 @@
 #     endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVmKP,ng),r8)
-          status=def_var(ncTLMid(ng),tlmVid(idVmKP,ng),NF_FOUT,         &
-     &                   nvd4,w3dgrd,Aval,Vinfo,ncname)
+          status=def_var(ng, iTLM, ncTLMid(ng), tlmVid(idVmKP,ng),      &
+     &                   NF_FOUT, nvd4, w3dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
 #    endif
         END IF
 #   endif
@@ -843,40 +951,62 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf90_enddef(ncTLMid(ng))
-      END IF
+        IF (OutThread) THEN
+          status=nf90_enddef(ncTLMid(ng))
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,60) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+# endif
+        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out time-recordless, information variables.
 !-----------------------------------------------------------------------
 !
-      IF (ldef) THEN
-        status=wrt_info(ng, iTLM, ncTLMid(ng), OutThread, ncname)
+        CALL wrt_info (ng, iTLM, ncTLMid(ng), ncname)
         IF (exit_flag.ne.NoError) RETURN
-      END IF
+      END IF DEFINE
 !
 !=======================================================================
 !  Open an existing tangent file, check its contents, and prepare for
 !  appending data.
 !=======================================================================
 !
-      IF (.not.ldef.and.OutThread) THEN
+      QUERY : IF (.not.ldef) THEN
+        ncname=TLMname(ng)
 !
-!  Inquire about the contents of tangent NetCDF file:  Inquire about
-!  the dimensions and variables.  Check for consistency.
+!  Inquire about the dimensions and check for consistency.
 !
-        CALL opencdf (ng, 1, ncname, fname, N(ng), 0, nrec, nvd, Vsize)
+        CALL netcdf_check_dim (ng, iTLM, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Inquire about the variables.
+!
+        CALL netcdf_inq_var (ng, iTLM, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Open tangent linear history file for read/write.
 !
-        status=nf90_open(TRIM(ncname),nf90_write,ncTLMid(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,60) TRIM(ncname)
-          exit_flag=3
-          ioerror=status
-          RETURN
+        IF (OutThread) THEN
+          status=nf90_open(TRIM(ncname), nf90_write, ncTLMid(ng))
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,70) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
         END IF
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+# endif
+        IF (exit_flag.ne.NoError) RETURN
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iTLM, ncTLMid(ng), 1)
+# endif
 !
 !  Initialize logical switches.
 !
@@ -887,271 +1017,225 @@
 !  Scan variable list from input NetCDF and activate switches for
 !  tangent variables. Get variable IDs.
 !
-        DO i=1,nvars
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idtime))) THEN
+        DO i=1,n_var
+          IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idtime)),    &
-     &                            tlmVid(idtime,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idFsur))) THEN
+            tlmVid(idtime,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsur))) THEN
             got_var(idFsur)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idFsur)),    &
-     &                            tlmVid(idFsur,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUbar))) THEN
+            tlmVid(idFsur,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbar))) THEN
             got_var(idUbar)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idUbar)),    &
-     &                            tlmVid(idUbar,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVbar))) THEN
+            tlmVid(idUbar,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbar))) THEN
             got_var(idVbar)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVbar)),    &
-     &                            tlmVid(idVbar,ng))
-          END IF
+            tlmVid(idVbar,ng)=var_id(i)
 # ifdef FORWARD_WRITE
 #  ifdef FORWARD_RHS
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRzet))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRzet))) THEN
             got_var(idRzet)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idRzet)),    &
-     &                            tlmVid(idRzet,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRu2d))) THEN
+            tlmVid(idRzet,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRu2d))) THEN
             got_var(idRu2d)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idRu2d)),    &
-     &                            tlmVid(idRu2d,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRv2d))) THEN
+            tlmVid(idRu2d,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRv2d))) THEN
             got_var(idRv2d)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idRv2d)),    &
-     &                            tlmVid(idRv2d,ng))
-          END IF
+            tlmVid(idRv2d,ng)=var_id(i)
 #  endif
 #  ifdef SOLVE3D
 #   ifdef FORWARD_RHS
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRuct))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRuct))) THEN
             got_var(idRuct)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idRuct)),    &
-     &                            tlmVid(idRuct,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRvct))) THEN
+            tlmVid(idRuct,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRvct))) THEN
             got_var(idRvct)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idRvct)),    &
-     &                            tlmVid(idRvct,ng))
-          END IF
+            tlmVid(idRvct,ng)=var_id(i)
 #   endif
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUfx1))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUfx1))) THEN
             got_var(idUfx1)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idUfx1)),    &
-     &                            tlmVid(idUfx1,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUfx1))) THEN
+            tlmVid(idUfx1,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUfx1))) THEN
             got_var(idUfx1)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idUfx1)),    &
-     &                            tlmVid(idUfx1,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUfx2))) THEN
+            tlmVid(idUfx1,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUfx2))) THEN
             got_var(idUfx2)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idUfx2)),    &
-     &                            tlmVid(idUfx2,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVfx1))) THEN
+            tlmVid(idUfx2,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVfx1))) THEN
             got_var(idVfx1)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVfx1)),    &
-     &                            tlmVid(idVfx1,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVfx2))) THEN
+            tlmVid(idVfx1,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVfx2))) THEN
             got_var(idVfx2)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVfx2)),    &
-     &                            tlmVid(idVfx2,ng))
-          END IF
+            tlmVid(idVfx2,ng)=var_id(i)
 #   ifdef FORWARD_RHS
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRu3d))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRu3d))) THEN
             got_var(idRu3d)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idRu3d)),    &
-     &                            tlmVid(idRu3d,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idRv3d))) THEN
+            tlmVid(idRu3d,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRv3d))) THEN
             got_var(idRv3d)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idRv3d)),    &
-     &                            tlmVid(idRv3d,ng))
-          END IF
+            tlmVid(idRv3d,ng)=var_id(i)
 #   endif
 #  endif
 # endif
 # ifdef SOLVE3D
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUvel))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUvel))) THEN
             got_var(idUvel)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idUvel)),    &
-     &                            tlmVid(idUvel,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvel))) THEN
+            tlmVid(idUvel,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
             got_var(idVvel)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVvel)),    &
-     &                            tlmVid(idVvel,ng))
-          END IF
-          DO itrc=1,NT(ng)
-            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
-              got_var(idTvar(itrc))=.TRUE.
-              status=nf90_inq_varid(ncTLMid(ng),                        &
-     &                              TRIM(Vname(1,idTvar(itrc))),        &
-     &                              tlmTid(itrc,ng))
-            END IF
-          END DO
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idDano))) THEN
+            tlmVid(idVvel,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idDano))) THEN
             got_var(idDano)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idDano)),    &
-     &                            tlmVid(idDano,ng))
-          END IF
+            tlmVid(idDano,ng)=var_id(i)
 #  if defined FORWARD_MIXING     && \
      (defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET)
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVvis))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvis))) THEN
             got_var(idVvis)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVvis)),    &
-     &                            tlmVid(idVvis,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTdif))) THEN
+            tlmVid(idVvis,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTdif))) THEN
             got_var(idTdif)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idTdif)),    &
-     &                            tlmVid(idTdif,ng))
-          END IF
+            tlmVid(idTdif,ng)=var_id(i)
 #   ifdef SALINITY
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idSdif))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idSdif))) THEN
             got_var(idSdif)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idSdif)),    &
-     &                            tlmVid(idSdif,ng))
-          END IF
+            tlmVid(idSdif,ng)=var_id(i)
 #   endif
 #   if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idMtke))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtke))) THEN
             got_var(idMtke)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idMtke)),    &
-     &                            tlmVid(idMtke,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVmKK))) THEN
+            tlmVid(idMtke,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVmKK))) THEN
             got_var(idVmKK)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVmKK)),    &
-     &                            tlmVid(idVmKK,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idMtls))) THEN
+            tlmVid(idVmKK,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMtls))) THEN
             got_var(idMtls)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idMtls)),    &
-     &                            tlmVid(idMtls,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVmLS))) THEN
+            tlmVid(idMtls,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVmLS))) THEN
             got_var(idVmLS)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVmLS)),    &
-     &                            tlmVid(idVmLS,ng))
-          END IF
+            tlmVid(idVmLS,ng)=var_id(i)
 #    ifdef GLS_MIXING_NOT_YET
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVmKP))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVmKP))) THEN
             got_var(idVmKP)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVmKP)),    &
-     &                            tlmVid(idVmKP,ng))
-          END IF
+            tlmVid(idVmKP,ng)=var_id(i)
 #    endif
 #   endif
 #  endif
-#  ifdef ADJUST_STFLUX
-          DO itrc=1,NT(ng)
-            IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
-              got_var(idTsur(itrc))=.TRUE.
-              status=nf90_inq_varid(ncTLMid(ng),                        &
-     &                              TRIM(Vname(1,idTsur(itrc))),        &
-     &                              tlmVid(idTsur(itrc),ng))
-            END IF
-          END DO
-#  endif
 # endif
 # ifdef ADJUST_WSTRESS
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idUsms))) THEN
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUsms))) THEN
             got_var(idUsms)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idUsms)),    &
-     &                            tlmVid(idUsms,ng))
-          END IF
-          IF (TRIM(varnam(i)).eq.TRIM(Vname(1,idVsms))) THEN
+            tlmVid(idUsms,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVsms))) THEN
             got_var(idVsms)=.TRUE.
-            status=nf90_inq_varid(ncTLMid(ng),TRIM(Vname(1,idVsms)),    &
-     &                            tlmVid(idVsms,ng))
+            tlmVid(idVsms,ng)=var_id(i)
+# endif
           END IF
+# ifdef SOLVE3D
+          DO itrc=1,NT(ng)
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
+              got_var(idTvar(itrc))=.TRUE.
+              tlmTid(itrc,ng)=var_id(i)
+#  ifdef ADJUST_STFLUX
+            ELSE IF (TRIM(var_name(i)).eq.                              &
+     &               TRIM(Vname(1,idTsur(itrc)))) THEN
+              got_var(idTsur(itrc))=.TRUE.
+              tlmVid(idTsur(itrc),ng)=var_id(i)
+#  endif
+            END IF
+          END DO
 # endif
         END DO
 !
 !  Check if tangent variables are available in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idtime)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idtime)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur).and.Hout(idFsur,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idFsur)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idFsur)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar).and.Hout(idUbar,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idUbar)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUbar)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar).and.Hout(idVbar,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVbar)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVbar)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef FORWARD_WRITE
         IF (.not.got_var(idRzet)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idRzet)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idRzet)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRu2d)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idRu2d)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idRu2d)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRv2d)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idRv2d)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idRv2d)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  ifdef SOLVE3D
         IF (.not.got_var(idRuct)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idRuct)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idRuct)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRvct)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idRvct)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idRvct)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUfx1)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idUfx1)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUfx1)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUfx2)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idUfx2)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUfx2)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVfx1)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVfx1)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVfx1)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVfx2)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVfx2)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVfx2)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRu3d)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idRu3d)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idRu3d)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idRv3d)) THEN
-          WRITE (stdout,30) TRIM(Vname(1,idRv3d)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idRv3d)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
@@ -1159,102 +1243,116 @@
 # endif
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel).and.Hout(idUvel,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idUvel)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUvel)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel).and.Hout(idVvel,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVvel)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVvel)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        DO itrc=1,NT(ng)
-          IF (.not.got_var(idTvar(itrc)).and.Hout(idTvar(itrc),ng)) THEN
-            WRITE (stdout,70) TRIM(Vname(1,idTvar(itrc))), TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
         IF (.not.got_var(idDano).and.Hout(idDano,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idDano)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idDano)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #  if defined FORWARD_MIXING     && \
      (defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET)
         IF (.not.got_var(idVvis).and.Hout(idVvis,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVvis)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVvis)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idTdif).and.Hout(idTdif,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idTdif)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idTdif)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #   ifdef SALINITY
         IF (.not.got_var(idSdif).and.Hout(idSdif,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idSdif)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idSdif)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #   endif
 #   if defined GLS_MIXING_NOT_YET || defined MY25_MIXING_NOT_YET
         IF (.not.got_var(idMtke).and.Hout(idMtke,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idMtke)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idMtke)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVmKK).and.Hout(idVmKK,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVmKK)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVmKK)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idMtls).and.Hout(idMtls,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idMtls)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idMtls)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVmLS).and.Hout(idVmLS,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVmLS)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVmLS)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #    ifdef GSL_MIXING
         IF (.not.got_var(idVmKP).and.Hout(idVmKP,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVmKP)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVmKP)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 #    endif
 #   endif
 #  endif
-#  ifdef ADJUST_STFLUX
-        DO itrc=1,NT(ng)
-          IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN
-            WRITE (stdout,70) TRIM(Vname(1,idTsur(itrc))), TRIM(ncname)
-            exit_flag=3
-            RETURN
-          END IF
-        END DO
-#  endif
 # endif
 # ifdef ADJUST_WSTRESS
         IF (.not.got_var(idUsms).and.Hout(idUsms,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idUsms)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idUsms)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVsms).and.Hout(idVsms,ng)) THEN
-          WRITE (stdout,70) TRIM(Vname(1,idVsms)), TRIM(ncname)
+          IF (Master) WRITE (stdout,80) TRIM(Vname(1,idVsms)),          &
+     &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # endif
+# ifdef SOLVE3D
+        DO itrc=1,NT(ng)
+          IF (.not.got_var(idTvar(itrc)).and.Hout(idTvar(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,80) TRIM(Vname(1,idTvar(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+#  ifdef ADJUST_STFLUX
+          IF (.not.got_var(idTsur(itrc)).and.Hout(idTsur(itrc),ng)) THEN
+            IF (Master) WRITE (stdout,80) TRIM(Vname(1,idTsur(itrc))),  &
+     &                                    TRIM(ncname)
+            exit_flag=3
+            RETURN
+          END IF
+#  endif
+# endif
+        END DO
 !
 !  Set unlimited time record dimension to the appropriate value.
 !
-!!      tTLMindx(ng)=tsize
         IF (ndefTLM(ng).gt.0) THEN
           tTLMindx(ng)=((ntstart(ng)-1)-                                &
      &                  ndefTLM(ng)*((ntstart(ng)-1)/ndefTLM(ng)))/     &
@@ -1262,8 +1360,8 @@
         ELSE
           tTLMindx(ng)=(ntstart(ng)-1)/nTLM(ng)
         END IF
-        tTLMindx(ng)=MIN(tTLMindx(ng),tsize)
-      END IF
+        tTLMindx(ng)=MIN(tTLMindx(ng),rec_size)
+      END IF QUERY
 !
   10  FORMAT (3x,'TL_DEF_HIS   - creating tangent  file: ',a)
   20  FORMAT (3x,'TL_DEF_HIS   - inquiring tangent file: ',a)
@@ -1271,9 +1369,12 @@
      &        a)
   40  FORMAT ('tangent linear',1x,a)
   50  FORMAT (1pe11.4,1x,'millimeter')
-  60  FORMAT (/,' TL_DEF_HIS - unable to open tangent NetCDF file: ',a)
-  70  FORMAT (/,' TL_DEF_HIS - unable to find variable: ',a,2x,         &
+  60  FORMAT (/,' TL_DEF_HIS - unable to leave definition mode for',    &
+     &        ' file: ', a)
+  70  FORMAT (/,' TL_DEF_HIS - unable to open tangent NetCDF file: ',a)
+  80  FORMAT (/,' TL_DEF_HIS - unable to find variable: ',a,2x,         &
      &        ' in tangent NetCDF file: ',a)
+
       RETURN
       END SUBROUTINE tl_def_his
 #else

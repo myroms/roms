@@ -49,7 +49,6 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gfactor, gtype, i, itrc, status, varid
-      integer :: start(4), total(4)
 
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
@@ -95,20 +94,11 @@
 !
 !  Write out model time (s).
 !
-      IF (OutThread) THEN
-        start(1)=tINIindx(ng)
-        total(1)=1
-        status=nf90_put_var(ncINIid(ng), iniVid(idtime,ng),             &
-     &                      time(ng:), start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tINIindx(ng)
-          exit_flag=3
-          ioerror=status
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-# endif
+      CALL netcdf_put_fvar (ng, iNLM, INIname(ng),                      &
+     &                      TRIM(Vname(1,idtime)), time(ng:),           &
+     &                      (/tINIindx(ng)/), (/1/),                    &
+     &                      ncid = ncINIid(ng),                         &
+     &                      varid = iniVid(idtime,ng))
       IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface (m)
@@ -315,7 +305,7 @@
       IF (OutThread) THEN
         status=nf90_sync(ncINIid(ng))
         IF (status.ne.nf90_noerr) THEN
-          IF (Master) WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(INIname(ng))
           exit_flag=3
           ioerror=status
         END IF
@@ -323,8 +313,6 @@
 # ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iNLM, exit_flag, 1)
 # endif
-      IF (status.ne.nf90_noerr) RETURN
-!
       IF (Master) THEN
 # ifdef SOLVE3D
         WRITE (stdout,30) Nrun, Tindex, Tindex, tINIindx(ng)
@@ -335,8 +323,8 @@
 !
   10  FORMAT (/,' WRT_INI - error while writing variable: ',a,/,11x,    &
      &        'into initial NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_INI - unable to synchronize initial NetCDF to ',  &
-     &        'disk.')
+  20  FORMAT (/,' WRT_INI - unable to synchronize to disk initial ',    &
+     &        'file:',/,11x,a)
 # ifdef SOLVE3D
   30  FORMAT (6x,'WRT_INI   - wrote initial  fields (Iter=',i4.4,       &
      &           ', Index=',i1,',',i1,', Rec=',i4.4,')')
@@ -499,7 +487,7 @@
       IF (OutThread) THEN
         status=nf90_sync(ncINIid(ng))
         IF (status.ne.nf90_noerr) THEN
-          IF (Master) WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(INIname(ng))
           exit_flag=3
           ioerror=status
         END IF
@@ -507,16 +495,14 @@
 #  ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iNLM, exit_flag, 1)
 #  endif
-      IF (status.ne.nf90_noerr) RETURN
-!
       IF (Master) THEN
         WRITE (stdout,30) Nrun, Tindex, tINIindx(ng)
       END IF
 !
   10  FORMAT (/,' WRT_FRC - error while writing variable: ',a,/,11x,    &
      &        'into initial NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_FRC - unable to synchronize initial NetCDF to ',  &
-     &        'disk.')
+  20  FORMAT (/,' WRT_FRC - unable to synchronize to disk initial ',    &
+     &        'file:',/,11x,a)
   30  FORMAT (6x,'WRT_FRC   - wrote initial  fields (Iter=',i4.4,       &
      &           ', Index=',i1,', Rec=',i4.4,')')
 

@@ -82,17 +82,36 @@
 !  Set first and last grid point according to staggered C-grid
 !  classification. Set loops offsets.
 !
-      Imin=0
-      Imax=Lm(ng)+1
-      Jmin=0
-      Jmax=Mm(ng)+1
-      MyType=ABS(gtype)
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar)) THEN
-        Imin=1
-      END IF
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar)) THEN
-        Jmin=1
-      END IF
+      MyType=gtype
+
+      SELECT CASE (ABS(MyType))
+        CASE (p2dvar)
+          Imin=IOBOUNDS(ng)%ILB_psi
+          Imax=IOBOUNDS(ng)%IUB_psi
+          Jmin=IOBOUNDS(ng)%JLB_psi
+          Jmax=IOBOUNDS(ng)%JUB_psi
+        CASE (r2dvar)
+          Imin=IOBOUNDS(ng)%ILB_rho
+          Imax=IOBOUNDS(ng)%IUB_rho
+          Jmin=IOBOUNDS(ng)%JLB_rho
+          Jmax=IOBOUNDS(ng)%JUB_rho
+        CASE (u2dvar)
+          Imin=IOBOUNDS(ng)%ILB_u
+          Imax=IOBOUNDS(ng)%IUB_u
+          Jmin=IOBOUNDS(ng)%JLB_u
+          Jmax=IOBOUNDS(ng)%JUB_u
+        CASE (v2dvar)
+          Imin=IOBOUNDS(ng)%ILB_v
+          Imax=IOBOUNDS(ng)%IUB_v
+          Jmin=IOBOUNDS(ng)%JLB_v
+          Jmax=IOBOUNDS(ng)%JUB_v
+        CASE DEFAULT
+          Imin=IOBOUNDS(ng)%ILB_rho
+          Imax=IOBOUNDS(ng)%IUB_rho
+          Jmin=IOBOUNDS(ng)%JLB_rho
+          Jmax=IOBOUNDS(ng)%JUB_rho
+      END SELECT
+
       Ilen=Imax-Imin+1
       Jlen=Jmax-Jmin+1
       IJlen=Ilen*Jlen

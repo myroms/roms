@@ -159,7 +159,7 @@
         END DO
       END IF
 !
-!  Set bounds.
+!  Set tile and arrays bounds.
 !
       Nghost=GHOST_POINTS
       DO ng=1,Ngrids
@@ -186,6 +186,12 @@
      &                     BOUNDS(ng) % LBj(tile),                      &
      &                     BOUNDS(ng) % UBj(tile))
         END DO
+      END DO
+!
+!  Set NetCDF IO bounds.
+!
+      DO ng=1,Ngrids
+        CALL get_iobounds (ng)
       END DO
 !
 !-----------------------------------------------------------------------
@@ -6847,6 +6853,11 @@
               HSSname(Nval)(i:i)=blank
             END DO
             HSSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+          ELSE IF (TRIM(KeyWord).eq.'LCZname') THEN
+            DO i=1,LEN(LCZname(Nval))
+              LCZname(Nval)(i:i)=blank
+            END DO
+            LCZname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'MODname') THEN
             DO i=1,LEN(MODname(Nval))
               MODname(Nval)(i:i)=blank
@@ -6865,11 +6876,14 @@
 !
       IF (Lwrite) THEN
         DO ng=1,Ngrids
-#  if defined FOUR_DVAR && !defined OBS_SENSITIVITY
+#  if defined FOUR_DVAR
           WRITE (out,60) ng
+#   ifndef OBS_SENSITIVITY
           WRITE (out,70) LcycleINI(ng), 'LcycleINI',                    &
      &            'Switch to recycle time-record in initial file.'
-#   if !(defined WEAK_CONSTRAINT || defined IOM)
+#   endif
+#   if !(defined WEAK_CONSTRAINT || defined IOM || \
+         defined OBS_SENSITIVITY)
 #    ifndef IS4DVAR
           WRITE (out,90) ICG, 'ICG',                                    &
      &            'Conjugate gradient descent scheme: ',                &
@@ -6884,8 +6898,10 @@
           WRITE (out,100) CostFunFac, 'CostFunFac',                     &
      &            'Cost function change convergence factor.'
 #   else
+#    ifndef OBS_SENSITIVITY
           WRITE (out,100) CGeps, 'CGeps',                               &
      &            'Conjugate gradient convergence criteria.'
+#    endif
 #    ifdef RPM_RELAXATION
           WRITE (out,120) tl_M2diff, 'tl_M2diff',                       &
      &            'RPM 2D momentum diffusive relaxation coefficient.'
@@ -6900,23 +6916,26 @@
 #     endif
 #    endif
 #   endif
-#   if defined IS4DVAR && defined LANCZOS
+#   ifndef OBS_SENSITIVITY
+#    if defined IS4DVAR && defined LANCZOS
           WRITE (out,100) GradErr, 'GradErr',                           &
      &            'Upper bound on relative error of the gradient.'
           WRITE (out,100) HevecErr, 'HevecErr',                         &
      &            'Accuracy required for Hessian eigenvectors.'
           WRITE (out,70) LhessianEV, 'LhessianEV',                      &
      &            'Switch to compute Hessian eigenvectors.'
-#   endif
+#    endif
           WRITE (out,70) Lprecond, 'Lprecond',                          &
      &           'Switch to preconditioning with Hessian eigenpairs.'
-#   ifndef LANCZOS
+#    ifndef LANCZOS
           IF (Lprecond.and.(NritzEV.gt.0)) THEN
             WRITE (out,80) NritzEV, 'NritzEV',                          &
      &           'Number of preconditioning eigenpairs to use.'
           END IF
+#    endif
 #   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
+#    ifndef OBS_SENSITIVITY
           WRITE (out,70) LdefNRM(ng), 'LdefNRM',                        &
      &            'Switch to create a normalization NetCDF file.'
           WRITE (out,70) LwrtNRM(ng), 'LwrtNRM',                        &
@@ -6946,13 +6965,13 @@
      &            'Compute 2D normalization factors at U-points.'
             WRITE (out,70) Cnorm(isVbar), 'Cnorm(isVbar)',              &
      &            'Compute 2D normalization factors at V-points.'
-#    ifdef ADJUST_WSTRESS
+#     ifdef ADJUST_WSTRESS
             WRITE (out,70) Cnorm(isUstr), 'Cnorm(isUstr)',              &
      &            'Compute normalization factors at surface U-stress.'
             WRITE (out,70) Cnorm(isVstr), 'Cnorm(isVstr)',              &
      &            'Compute normalization factors at surface V-stress.'
-#    endif
-#    ifdef SOLVE3D
+#     endif
+#     ifdef SOLVE3D
             WRITE (out,70) Cnorm(isUvel), 'Cnorm(isUvel)',              &
      &            'Compute 3D normalization factors at U-points.'
             WRITE (out,70) Cnorm(isVvel), 'Cnorm(isVvel)',              &
@@ -6962,15 +6981,16 @@
      &            'Compute normalization factors for tracer ',itrc,     &
      &            TRIM(Vname(1,idTvar(itrc)))
             END DO
-#     ifdef ADJUST_STFLUX
+#      ifdef ADJUST_STFLUX
             DO itrc=1,NT(ng)
               WRITE (out,110) Cnorm(isTsur(itrc)), 'Cnorm(isTsur)',     &
      &            'Compute normalization factors for flux of tracer ',  &
      &            itrc, TRIM(Vname(1,idTvar(itrc)))
             END DO
+#      endif
 #     endif
-#    endif
           END IF
+#    endif
           WRITE (out,100) Hgamma, 'Hgamma',                             &
      &            'Horizontal diffusion stability/accuracy factor.'
 #    ifdef SOLVE3D
@@ -7016,7 +7036,6 @@
      &            TRIM(Vname(1,idTvar(itrc)))
           END DO
 #    endif
-#   endif
           WRITE (out,120) Cfscale(isFsur,ng), 'Cfscale(isFsur)',        &
      &            'Forcing error scale factor, free-surface.'
           WRITE (out,120) Cfscale(isUbar,ng), 'Cfscale(isUbar)',        &
@@ -7049,7 +7068,7 @@
           END DO
 #     endif
 #    endif
-#   if defined SOLVE3D && defined N2NORM_PROFILE
+#    if defined SOLVE3D && defined N2NORM_PROFILE
           WRITE (out,80) npN2, 'npN2',                                  &
      &            'Order of polynomial for N2(z) profile.'
           IF (npN2.gt.0) THEN
@@ -7058,6 +7077,7 @@
               WRITE (out,140) k, pcoef_N2(k)
             END DO
           END IF
+#    endif
 #   endif
 #  endif
 !
@@ -7074,7 +7094,8 @@
      &                    TRIM(aparnam)
 #  endif
 #  ifdef FOUR_DVAR
-#   if defined IS4DVAR || defined IS4DVAR_OLD || defined IOM || \
+#   if defined IS4DVAR          || defined IS4DVAR_OLD     || \
+       defined IOM              || defined OBS_SENSITIBITY || \
        defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
           fname=STDname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
@@ -7082,7 +7103,7 @@
           WRITE (out,160) '      Standard Deviation File:  ',           &
      &                    TRIM(fname)
 #   endif
-#   if !(defined OBS_SENSITIVITY || S4DVAR)
+#   ifndef S4DVAR
           fname=NRMname(ng)
           WRITE (out,160) 'Correlation Norm Factors File:  ',           &
      &                    TRIM(fname)
@@ -7100,10 +7121,9 @@
      &                    TRIM(fname)
 #   endif
 #  endif
-#  ifdef OBS_SENSITIVITY
           WRITE (out,160) '    Input/Output Lanczos File:  ',           &
-     &                    TRIM(HSSname(ng))
-#  else
+     &                    TRIM(LCZname(ng))
+#  ifndef OBS_SENSITIVITY
           WRITE (out,160) '    Input/Output Hessian File:  ',           &
      &                    TRIM(HSSname(ng))
 #  endif
@@ -7192,6 +7212,10 @@
 !  Read in initial float locations.
 !-----------------------------------------------------------------------
 !
+!  Notice I added one when allocating local scratch arrays to avoid
+!  out of bounds in some compilers when reading the last blank line
+!  which signal termination of input data.
+!
       DO WHILE (.TRUE.)
         READ (inp,'(a)',ERR=20,END=30) line
         status=decode_line(line, KeyWord, Nval, Cval, Rval)
@@ -7203,8 +7227,8 @@
           ELSE IF (TRIM(KeyWord).eq.'NFLOATS') THEN
             Npts=load_i(Nval, Rval, Ngrids, Nfloats)
           ELSE IF (TRIM(KeyWord).eq.'POS') THEN
-            Npts=Nfloats(1)
-            IF (Ngrids.gt.1) Npts=MAXVAL(Nfloats)
+            Npts=Nfloats(1)+1
+            IF (Ngrids.gt.1) Npts=MAXVAL(Nfloats)+1
             allocate ( Fcoor (Npts,Ngrids) )
             allocate ( Fcount(Npts,Ngrids) )
             allocate ( Ftype (Npts,Ngrids) )

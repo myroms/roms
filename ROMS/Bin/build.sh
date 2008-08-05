@@ -81,6 +81,11 @@ end
 
 setenv ROMS_APPLICATION     CBLAST
 
+# Set number of nested/composed/mosaic grids.  Currently, only one grid
+# is supported.
+
+setenv NestedGrids          1
+
 # Set a local environmental variable to define the path to the directories
 # where all this project's files are kept.
 

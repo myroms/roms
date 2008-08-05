@@ -128,31 +128,52 @@
 !  correct adjoint solution reading.  The ghost points are then
 !  assumed to be zero.
 !
-      Imin=0
-      Imax=Lm(ng)+1
-      Jmin=0
-      Jmax=Mm(ng)+1
       MyType=gtype
-      IF (model.eq.iADM) THEN
-        Nghost=0
-      ELSE  
-        Nghost=GHOST_POINTS
-      END IF
-      IF ((ABS(MyType).eq.p3dvar).or.(ABS(MyType).eq.u3dvar)) THEN
-        Imin=1
-      END IF
-      IF ((ABS(MyType).eq.p3dvar).or.(ABS(MyType).eq.v3dvar)) THEN
-        Jmin=1
-      END IF
+
+      SELECT CASE (ABS(MyType))
+        CASE (p3dvar)
+          Imin=IOBOUNDS(ng)%ILB_psi
+          Imax=IOBOUNDS(ng)%IUB_psi
+          Jmin=IOBOUNDS(ng)%JLB_psi
+          Jmax=IOBOUNDS(ng)%JUB_psi
+        CASE (r3dvar)
+          Imin=IOBOUNDS(ng)%ILB_rho
+          Imax=IOBOUNDS(ng)%IUB_rho
+          Jmin=IOBOUNDS(ng)%JLB_rho
+          Jmax=IOBOUNDS(ng)%JUB_rho
+        CASE (u3dvar)
+          Imin=IOBOUNDS(ng)%ILB_u
+          Imax=IOBOUNDS(ng)%IUB_u
+          Jmin=IOBOUNDS(ng)%JLB_u
+          Jmax=IOBOUNDS(ng)%JUB_u
+        CASE (v3dvar)
+          Imin=IOBOUNDS(ng)%ILB_v
+          Imax=IOBOUNDS(ng)%IUB_v
+          Jmin=IOBOUNDS(ng)%JLB_v
+          Jmax=IOBOUNDS(ng)%JUB_v
+        CASE DEFAULT
+          Imin=IOBOUNDS(ng)%ILB_rho
+          Imax=IOBOUNDS(ng)%IUB_rho
+          Jmin=IOBOUNDS(ng)%JLB_rho
+          Jmax=IOBOUNDS(ng)%JUB_rho
+      END SELECT
+
+      Ilen=Imax-Imin+1
+      Jlen=Jmax-Jmin+1
+      Klen=UBk-LBk+1
+      IJlen=Ilen*Jlen
+
       IF (LBk.eq.0) THEN
         Koff=0
       ELSE
         Koff=1
       END IF
-      Ilen=Imax-Imin+1
-      Jlen=Jmax-Jmin+1
-      Klen=UBk-LBk+1
-      IJlen=Ilen*Jlen
+
+      IF (model.eq.iADM) THEN
+        Nghost=0
+      ELSE  
+        Nghost=GHOST_POINTS
+      END IF
 
 #if defined READ_WATER && defined MASKING
 !
@@ -160,16 +181,16 @@
 !  switch.
 !
       IF (ABS(MyType).eq.p3dvar) THEN
-        Npts=Nxyp(ng)
+        Npts=IOBOUNDS(ng)%xy_psi
         wtype=p2dvar
       ELSE IF (ABS(MyType).eq.u3dvar) THEN
-        Npts=Nxyu(ng)
+        Npts=IOBOUNDS(ng)%xy_u
         wtype=u2dvar
       ELSE IF (ABS(MyType).eq.v3dvar) THEN
-        Npts=Nxyv(ng)
+        Npts=IOBOUNDS(ng)%xy_v
         wtype=v2dvar
       ELSE
-        Npts=Nxyr(ng)
+        Npts=IOBOUNDS(ng)%xy_rho
         wtype=r2dvar
       END IF
       NWpts=(Lm(ng)+2)*(Mm(ng)+2)

@@ -29,7 +29,10 @@
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       USE mod_tides
 # endif
-
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -41,7 +44,6 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gfactor, gtype, i, itrc, status
-      integer :: start(4), total(4)
 
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
@@ -76,18 +78,12 @@
 !
 !  Write out averaged time.
 !
-      IF (OutThread) THEN
-        start(1)=tAVGindx(ng)
-        total(1)=1
-        status=nf90_put_var(ncAVGid(ng), avgVid(idtime,ng),             &
-     &                      AVGtime(ng:), start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tAVGindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iNLM, AVGname(ng),                      &
+     &                      TRIM(Vname(idtime,ng)), time(ng:),          &
+     &                      (/tAVGindx(ng)/), (/1/),                    &
+     &                      ncid = ncAVGid(ng),                         &
+     &                      varid = avgVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface (m).
 !
@@ -1615,18 +1611,20 @@
       IF (OutThread) THEN
         status=nf90_sync(ncAVGid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(AVGname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-        WRITE (stdout,30) tAVGindx(ng)
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+#endif
+      IF (Master) WRITE (stdout,30) tAVGindx(ng)
 !
   10  FORMAT (/,' WRT_AVG - error while writing variable: ',a,/,11x,    &
      &        'into averages NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_AVG - unable to synchronize averages NetCDF to ', &
-     &        'disk.')
+  20  FORMAT (/,' WRT_AVG - unable to synchronize to disk averages ',   &
+     &        'file:',/,11x,a)
   30  FORMAT (6x,'WRT_AVG   - wrote averaged fields into time ',        &
      &        'record =',t72,i7.7)
 #else

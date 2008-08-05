@@ -28,6 +28,11 @@
       USE mod_sediment
 # endif
       USE mod_stepping
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -43,7 +48,6 @@
 # ifdef SOLVE3D
       integer :: itrc, k, nout
 # endif
-      integer :: start(4), total(4)
 
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
@@ -102,23 +106,18 @@
 !
 !  Write out model time (s).
 !
-      IF (OutThread.and.LwrtTime(ng)) THEN
+      IF (LwrtTime(ng)) THEN
         IF (LwrtPER(ng)) THEN
           Tval(1)=REAL(Nrun,r8)*day2sec
         ELSE
           Tval(1)=time(ng)
         END IF
-        start(1)=tADJindx(ng)
-        total(1)=1
-        status=nf90_put_var(ncADJid(ng), adjVid(idtime,ng),             &
-     &                      Tval, start, total)
-
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tADJindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+        CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                    &
+     &                        TRIM(Vname(1,idtime)), tval,              &
+     &                        (/tADJindx(ng)/), (/1/),                  &
+     &                        ncid = ncADJid(ng),                       &
+     &                        varid = adjVid(idtime,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 
 # ifdef ADJUST_WSTRESS
@@ -625,22 +624,24 @@
       IF (OutThread) THEN
         status=nf90_sync(ncADJid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(ADJname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-# ifdef SOLVE3D
-        WRITE (stdout,30) kout, nout, tADJindx(ng)
-# else
-        WRITE (stdout,30) kout, tADJindx(ng)
-# endif
       END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iADM, exit_flag, 1)
+# endif
+# ifdef SOLVE3D
+      IF (Master) WRITE (stdout,30) kout, nout, tADJindx(ng)
+# else
+      IF (Master) WRITE (stdout,30) kout, tADJindx(ng)
+# endif
 !
   10  FORMAT (/,' AD_WRT_HIS - error while writing variable: ',a,/,14x, &
      &        'into adjoint NetCDF file for time record: ',i4)
-  20  FORMAT (/,' AD_WRT_HIS - unable to synchronize adjoint NetCDF ',  &
-     &        'to disk.')
+  20  FORMAT (/,' AD_WRT_HIS - unable to synchronize to disk adjoint ', &
+     &        'file:',/,14x,a)
 # ifdef SOLVE3D
   30  FORMAT (3x,'AD_WRT_HIS   - wrote adjoint  fields (Index=', i1,    &
      &        ',',i1,') into time record = ',i7.7)

@@ -34,6 +34,9 @@
 #endif
       USE mod_stepping
 !
+#ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
 #ifdef SOLVE3D
       USE omega_mod, ONLY : scale_omega
 #endif
@@ -51,8 +54,6 @@
 #ifdef SOLVE3D
       integer :: i, itrc, j, k, tile
 #endif
-      integer :: start(4), total(4)
-
       integer :: nf_fwrite2d
 #ifdef SOLVE3D
       integer :: nf_fwrite3d
@@ -72,15 +73,15 @@
 !  Write out history fields.
 !-----------------------------------------------------------------------
 !
-      if (exit_flag.ne.NoError) RETURN
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
 !
 #if defined WRITE_WATER && defined MASKING
-        gfactor=-1
+      gfactor=-1
 #else
-        gfactor=1
+      gfactor=1
 #endif
 !
 !  Set time record index.
@@ -90,18 +91,12 @@
 !
 !  Write out model time (s).
 !
-      IF (OutThread) THEN
-        start(1)=tHISindx(ng)
-        total(1)=1
-        status=nf90_put_var(ncHISid(ng), hisVid(idtime,ng),             &
-     &                      time(ng:), start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tHISindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iNLM, HISname(ng),                      &
+     &                      TRIM(Vname(idtime,ng)), time(ng:),          &
+     &                      (/tHISindx(ng)/), (/1/),                    &
+     &                      ncid = ncHISid(ng),                         &
+     &                      varid = hisVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 
 #ifdef ADJUST_WSTRESS
 !
@@ -1963,22 +1958,24 @@
       IF (OutThread) THEN
         status=nf90_sync(ncHISid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(RSTname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-#ifdef SOLVE3D
-        WRITE (stdout,30) KOUT, NOUT, tHISindx(ng)
-#else
-        WRITE (stdout,30) KOUT, tHISindx(ng)
-#endif
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+#endif
+#ifdef SOLVE3D
+      IF (Master) WRITE (stdout,30) KOUT, NOUT, tHISindx(ng)
+#else
+      IF (Master) WRITE (stdout,30) KOUT, tHISindx(ng)
+#endif
 !
   10  FORMAT (/,' WRT_HIS - error while writing variable: ',a,/,11x,    &
      &        'into history NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_HIS - unable to synchronize history NetCDF to ',  &
-     &        'disk.')
+  20  FORMAT (/,' WRT_HIS - unable to synchronize to disk history ',    &
+     &        'file:',/,11x,a)
 #ifdef SOLVE3D
   30  FORMAT (6x,'WRT_HIS   - wrote history  fields (Index=', i1,       &
      &        ',',i1,') into time record = ',i7.7)

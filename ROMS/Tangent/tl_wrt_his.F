@@ -35,6 +35,11 @@
       USE mod_sediment
 # endif
       USE mod_stepping
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -49,8 +54,6 @@
 # ifdef SOLVE3D
       integer :: i, itrc, j, k, tile
 # endif
-      integer :: start(4), total(4)
-
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
       integer :: nf_fwrite3d
@@ -92,23 +95,17 @@
 !
 !  Write out model time (s).
 !
-      IF (OutThread) THEN
-        IF (LwrtPER(ng)) THEN
-          Tval(1)=REAL(Nrun,r8)*day2sec
-        ELSE
-          Tval(1)=time(ng)
-        END IF
-        start(1)=tTLMindx(ng)
-        total(1)=1
-        status=nf90_put_var(ncTLMid(ng), tlmVid(idtime,ng),             &
-     &                      Tval, start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tTLMindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      IF (LwrtPER(ng)) THEN
+        Tval(1)=REAL(Nrun,r8)*day2sec
+      ELSE
+        Tval(1)=time(ng)
       END IF
+      CALL netcdf_put_fvar (ng, iTLM, TLMname(ng),                      &
+     &                      TRIM(Vname(1,idtime)), tval,                &
+     &                      (/tTLMindx(ng)/), (/1/),                    &
+     &                      ncid = ncTLMid(ng),                         &
+     &                      varid = tlmVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 
 # ifdef ADJUST_WSTRESS
 !
@@ -715,22 +712,24 @@
       IF (OutThread) THEN
         status=nf90_sync(ncTLMid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(TLMname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-# ifdef SOLVE3D
-        WRITE (stdout,30) KOUT, NOUT, tTLMindx(ng)
-# else
-        WRITE (stdout,30) KOUT, tTLMindx(ng)
-# endif
       END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+# endif
+# ifdef SOLVE3D
+      IF (Master) WRITE (stdout,30) KOUT, NOUT, tTLMindx(ng)
+# else
+      IF (Master)  WRITE (stdout,30) KOUT, tTLMindx(ng)
+# endif
 !
   10  FORMAT (/,' TL_WRT_HIS - error while writing variable: ',a,/,14x, &
      &        'into tangent NetCDF file for time record: ',i4)
-  20  FORMAT (/,' TL_WRT_HIS - unable to synchronize tangent NetCDF ',  &
-     &        'to disk.')
+  20  FORMAT (/,' TL_WRT_HIS - unable to synchronize to disk tangent ', &
+     &        'linear file:',/,14x,a)
 # ifdef SOLVE3D
   30  FORMAT (3x,'TL_WRT_HIS   - wrote tangent  fields (Index=', i1,    &
      &        ',',i1,') into time record = ',i7.7)

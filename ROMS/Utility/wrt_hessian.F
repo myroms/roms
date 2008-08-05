@@ -24,6 +24,11 @@
       USE mod_ocean
       USE mod_scalars
       USE mod_stepping
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -38,15 +43,12 @@
 # ifdef SOLVE3D
       integer :: itrc, k
 # endif
-      integer :: start(4), total(4)
-
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
       integer :: nf_fwrite3d
 # endif
 
       real(r8) :: scale
-      real(r8) :: Tval(1)
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
@@ -75,23 +77,12 @@
 !
 !  Write out model time (s).
 !
-      IF (OutThread.and.LwrtTime(ng)) THEN
-        IF (LwrtPER(ng)) THEN
-          Tval(1)=REAL(Nrun,r8)*day2sec
-        ELSE
-          Tval(1)=time(ng)
-        END IF
-        start(1)=tHSSindx(ng)
-        total(1)=1
-        status=nf90_put_var(ncHSSid(ng),hssVid(idtime,ng),              &
-     &                      Tval, start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tHSSindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iADM, HSSname(ng),                      &
+     &                      TRIM(Vname(1,idtime)), time(ng:),           &
+     &                      (/tHSSindx(ng)/), (/1/),                    &
+     &                      ncid = ncHSSid(ng),                         &
+     &                      varid = hssVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface.
 !
@@ -298,22 +289,24 @@
       IF (OutThread) THEN
         status=nf90_sync(ncHSSid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(HSSname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-# ifdef SOLVE3D
-        WRITE (stdout,30) kout, nout, tHSSindx(ng)
-# else
-        WRITE (stdout,30) kout, tHSSindx(ng)
-# endif
       END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iADM, exit_flag, 1)
+# endif
+# ifdef SOLVE3D
+      IF (Master) WRITE (stdout,30) kout, nout, tHSSindx(ng)
+# else
+      IF (Master) WRITE (stdout,30) kout, tHSSindx(ng)
+# endif
 !
   10  FORMAT (/,' WRT_HESSIAN - error while writing variable: ',a,/,    &
      &        15x,'into Hessian NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_HESSIAN - unable to synchronize Hessian NetCDF ', &
-     &        'to disk.')
+  20  FORMAT (/,' WRT_HESSIAN - unable to synchronize to disk Hessian', &
+     &        'file:',/,15x,a)
 # ifdef SOLVE3D
   30  FORMAT (3x,'WRT_HESSIAN  - wrote Hessian  fields (Index=', i1,    &
      &        ',',i1,') into time record = ',i7.7)

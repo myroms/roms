@@ -80,6 +80,16 @@
         implicit none
 !
 !-----------------------------------------------------------------------
+!  Number of nested and/or connected grids to solve.
+!-----------------------------------------------------------------------
+!
+!  Because of ROMS design, the Ngrids parameter is assigned during
+!  C-preprocessing before compilation in the "makefile" or "build"
+!  script. This is the only way that can be done.
+!
+        integer, parameter :: Ngrids = NestedGrids
+!
+!-----------------------------------------------------------------------
 !  Lower and upper bounds indices per domain partition for all grids.
 !-----------------------------------------------------------------------
 !
@@ -112,12 +122,53 @@
         TYPE (T_BOUNDS), allocatable :: BOUNDS(:)
 !
 !-----------------------------------------------------------------------
-!  Model grid(s) parameters.
+!  Lower and upper bounds in NetCDF files.
 !-----------------------------------------------------------------------
 !
-!  Number of nested and/or connected grids to solve.
+        TYPE T_IOBOUNDS
+          integer :: ILB_psi        ! I-direction lower bound (PSI)
+          integer :: IUB_psi        ! I-direction upper bound (PSI)
+          integer :: JLB_psi        ! J-direction lower bound (PSI)
+          integer :: JUB_psi        ! J-direction upper bound (PSI)
+
+          integer :: ILB_rho        ! I-direction lower bound (RHO)
+          integer :: IUB_rho        ! I-direction upper bound (RHO)
+          integer :: JLB_rho        ! J-direction lower bound (RHO)
+          integer :: JUB_rho        ! J-direction upper bound (RHO)
+
+          integer :: ILB_u          ! I-direction lower bound (U)
+          integer :: IUB_u          ! I-direction upper bound (U)
+          integer :: JLB_u          ! J-direction lower bound (U)
+          integer :: JUB_u          ! J-direction upper bound (U)
+
+          integer :: ILB_v          ! I-direction lower bound (V)
+          integer :: IUB_v          ! I-direction upper bound (V)
+          integer :: JLB_v          ! J-direction lower bound (V)
+          integer :: JUB_v          ! J-direction upper bound (V)
+
+          integer :: xi_psi         ! number of I-direction points (PSI)
+          integer :: xi_rho         ! number of I-direction points (RHO)
+          integer :: xi_u           ! number of I-direction points (U)
+          integer :: xi_v           ! number of I-direction points (V)
+
+          integer :: eta_psi        ! number of J-direction points (PSI)
+          integer :: eta_rho        ! number of J-direction points (RHO)
+          integer :: eta_u          ! number of I-direction points (U)
+          integer :: eta_v          ! number of I-direction points (V)
+
+#if defined WRITE_WATER && defined MASKING
+          integer :: xy_psi         ! number of IJ-water points (PSI)
+          integer :: xy_rho         ! number of IJ-water points (RHO)
+          integer :: xy_u           ! number of IJ-water points (U)
+          integer :: xy_v           ! number of IJ-water points (V)
+#endif
+        END TYPE T_IOBOUNDS
+
+        TYPE (T_IOBOUNDS) :: IOBOUNDS(Ngrids)
 !
-        integer, parameter :: Ngrids = NestedGrids
+!-----------------------------------------------------------------------
+!  Model grid(s) parameters.
+!-----------------------------------------------------------------------
 !
 !  Number of interior RHO-points in the XI- and ETA-directions. The
 !  size of models state variables (C-grid) at input and output are:

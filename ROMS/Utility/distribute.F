@@ -57,6 +57,11 @@
         MODULE PROCEDURE mp_bcasti_m
       END INTERFACE mp_bcasti
 
+      INTERFACE mp_bcasts
+        MODULE PROCEDURE mp_bcasts_s
+        MODULE PROCEDURE mp_bcasts_v
+      END INTERFACE mp_bcasts
+
       INTERFACE mp_reduce
         MODULE PROCEDURE mp_reduce_s
         MODULE PROCEDURE mp_reduce_v
@@ -721,12 +726,12 @@
       RETURN
       END SUBROUTINE mp_bcastl_v
 
-      SUBROUTINE mp_bcasts (ng, model, A, Asize)
+      SUBROUTINE mp_bcasts_s (ng, model, A, Asize)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine broadcasts a string variable to all processors in the  !
-!  group. It is called by all the members in the group.                !
+!  This routine broadcasts a string scalar variable to all processors  !
+!  in the group. It is called by all the members in the group.         !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -756,7 +761,7 @@
 !
 !  Local variable declarations
 !
-      integer :: Lstr, MyError, Serror
+      integer :: Lstr, MyError, Nchars, Serror
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -773,15 +778,16 @@
 !  Broadcast requested variable.
 !-----------------------------------------------------------------------
 !
+      Nchars=LEN(A)
 # ifdef MPI
-      CALL mpi_bcast (A, Asize, MPI_BYTE, MyMaster, OCN_COMM_WORLD,     &
+      CALL mpi_bcast (A, Nchars, MPI_BYTE, MyMaster, OCN_COMM_WORLD,    &
      &                MyError)
       IF (MyError.ne.MPI_SUCCESS) THEN
         CALL mpi_error_string (MyError, string, Lstr, Serror)
         Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_BCASTS - error during ',a,' call, Node = ',i3.3, &
-     &          ' Error = ',i3,/,13x,a)
+ 10     FORMAT (/,' MP_BCASTS_S - error during ',a,' call, Node = ',    &
+     &          i3.3,' Error = ',i3,/,13x,a)
         exit_flag=2
         RETURN
       END IF
@@ -796,7 +802,86 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_bcasts
+      END SUBROUTINE mp_bcasts_s
+
+      SUBROUTINE mp_bcasts_v (ng, model, A, Asize)
+!
+!***********************************************************************
+!                                                                      !
+!  This subroutine broadcasts a  string 1D-array variable to all       !
+!  processors! in the  group. It is called by all the members in       !
+!  the group.                                                          !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     A          Variable to broadcast.                                !
+!     Asize      Number of entries to broadcast.                       !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     A          Broadcasted variable.                                 !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model, Asize
+
+      character (len=*), intent(inout) :: A(Asize)
+!
+!  Local variable declarations
+!
+      integer :: Lstr, MyError, Nchars, Serror
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 42)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Broadcast requested variable.
+!-----------------------------------------------------------------------
+!
+      Nchars=LEN(A(1))*Asize
+# ifdef MPI
+      CALL mpi_bcast (A, Nchars, MPI_BYTE, MyMaster, OCN_COMM_WORLD,    &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+        Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_BCASTS_V - error during ',a,' call, Node = ',    &
+     &          i3.3,' Error = ',i3,/,13x,a)
+        exit_flag=2
+        RETURN
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 42)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_bcasts_v
 
       SUBROUTINE mp_boundary (ng, model, Imin, Imax,                    &
      &                        LBi, UBi, LBk, UBk,                       &
@@ -1580,7 +1665,7 @@
       RETURN
       END SUBROUTINE mp_gather_state
 
-      FUNCTION mp_ncread (ng, model, ncid, ncvar, ncname, ncrec,        &
+      FUNCTION mp_ncread (ng, model, ncid, ncvname, ncname, ncrec,      &
      &                    LB1, UB1, LB2, UB2, Ascale, A)
 !
 !***********************************************************************
@@ -1595,7 +1680,7 @@
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
 !     ncid       NetCDF file ID.                                       !
-!     ncvar      NetCDF variable name.                                 !
+!     ncvname    NetCDF variable name.                                 !
 !     ncname     NetCDF file name.                                     !
 !     ncrec      NetCDF record index to write. If negative, it assumes !
 !                  that the variable is recordless.                    !
@@ -1632,7 +1717,7 @@
 
       real(r8), intent(out) :: A(LB1:UB1,LB2:UB2)
 
-      character (len=*), intent(in) :: ncvar
+      character (len=*), intent(in) :: ncvname
       character (len=*), intent(in) :: ncname
 !
 !  Local variable declarations.
@@ -1641,7 +1726,7 @@
 
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
-      integer :: my_bounds(4), start(2), total(2)
+      integer :: ibuffer(2), my_bounds(4), start(2), total(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
@@ -1727,46 +1812,67 @@
 !
 !  If master node, loop over all nodes and read buffers to send.
 !
-        DO rank=0,NtileI(ng)*NtileJ(ng)-1
-          start(1)=Asize(1,rank)
-          total(1)=Asize(2,rank)-Asize(1,rank)+1
-          IF (IsNodeDim) THEN
-            start(2)=rank+1
-            total(2)=1
-          ELSE
-            start(2)=Asize(3,rank)
-            total(2)=Asize(4,rank)-Asize(3,rank)+1
-          END IF
-          mp_ncread=nf90_inq_varid(ncid, TRIM(ncvar), varid)
-          mp_ncread=nf90_get_var(ncid, varid,  Asend, start, total)
+        mp_ncread=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (mp_ncread.ne.nf90_noerr) THEN
+          WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
+          exit_flag=2
+          ioerror=mp_ncread
+        END IF
+        IF (exit_flag.eq.NoError) THEN
+          DO rank=0,NtileI(ng)*NtileJ(ng)-1
+            start(1)=Asize(1,rank)
+            total(1)=Asize(2,rank)-Asize(1,rank)+1
+            IF (IsNodeDim) THEN
+              start(2)=rank+1
+              total(2)=1
+            ELSE
+              start(2)=Asize(3,rank)
+              total(2)=Asize(4,rank)-Asize(3,rank)+1
+            END IF
+            mp_ncread=nf90_get_var(ncid, varid,  Asend, start, total)
+            IF (mp_ncread.ne.nf90_noerr) THEN
+              WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
+              exit_flag=2
+              ioerror=mp_ncread
+              EXIT
+            END IF
 !
 !  Send buffer to all nodes, except itself.
 !
-          IF (rank.eq.MyMaster) THEN
-            np=0
-            DO j=LB2,UB2
-              DO i=LB1,UB1
-                np=np+1
-                A(i,j)=Asend(np)*Ascale
+            IF (rank.eq.MyMaster) THEN
+              np=0
+              DO j=LB2,UB2
+                DO i=LB1,UB1
+                  np=np+1
+                  A(i,j)=Asend(np)*Ascale
+                END DO
               END DO
-            END DO
-          ELSE
-            np=(Asize(2,rank)-Asize(1,rank)+1)*                         &
-     &         (Asize(4,rank)-Asize(3,rank)+1)
-            CALL mpi_isend (Asend, np, MP_FLOAT, rank, rank+5,          &
-     &                      OCN_COMM_WORLD, request, MyError)
-            CALL mpi_wait (request, status, MyError)
-            IF (MyError.ne.MPI_SUCCESS) THEN
-              CALL mpi_error_string (MyError, string, Lstr, Serror)
-              Lstr=LEN_TRIM(string)
-              WRITE (stdout,10) 'MPI_ISEND', rank, MyError,             &
-     &                          string(1:Lstr)
-              exit_flag=2
-              RETURN
+            ELSE
+              np=(Asize(2,rank)-Asize(1,rank)+1)*                       &
+     &           (Asize(4,rank)-Asize(3,rank)+1)
+              CALL mpi_isend (Asend, np, MP_FLOAT, rank, rank+5,        &
+     &                        OCN_COMM_WORLD, request, MyError)
+              CALL mpi_wait (request, status, MyError)
+              IF (MyError.ne.MPI_SUCCESS) THEN
+                CALL mpi_error_string (MyError, string, Lstr, Serror)
+                Lstr=LEN_TRIM(string)
+                WRITE (stdout,10) 'MPI_ISEND', rank, MyError,           &
+     &                            string(1:Lstr)
+                exit_flag=2
+                RETURN
+              END IF
             END IF
-          END IF
-        END DO
+          END DO
+        END IF
       END IF
+!
+!  Broadcast error flags to all nodes.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer, 2)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
 !
 !  Deallocate send buffer.
 !
@@ -1785,11 +1891,15 @@
 
  10   FORMAT (/,' MP_NCREAD - error during ',a,' call, Node = ',        &
      &          i3.3,' Error = ',i3,/,13x,a)
+ 20   FORMAT (/,' MP_NCREAD - error while inquiring ID for variable: ', &
+     &        a,/,13x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCREAD - error while reading variable: ',          &
+     &        a,/,13x,'in file: ',a)
 
       RETURN
       END FUNCTION mp_ncread
 
-      FUNCTION mp_ncwrite (ng, model, ncid, ncvar, ncname, ncrec,       &
+      FUNCTION mp_ncwrite (ng, model, ncid, ncvname, ncname, ncrec,     &
      &                     LB1, UB1, LB2, UB2, Ascale, A)
 !
 !***********************************************************************
@@ -1804,7 +1914,7 @@
 !     ng         Nested grid number.                                   !
 !     model      Calling model identifier.                             !
 !     ncid       NetCDF file ID.                                       !
-!     ncvar      NetCDF variable name.                                 !
+!     ncvname    NetCDF variable name.                                 !
 !     ncname     NetCDF file name.                                     !
 !     ncrec      NetCDF record index to write. If negative, it assumes !
 !                  that the variable is recordless.                    !
@@ -1841,7 +1951,7 @@
 
       real(r8), intent(in) :: A(LB1:UB1,LB2:UB2)
 
-      character (len=*), intent(in) :: ncvar
+      character (len=*), intent(in) :: ncvname
       character (len=*), intent(in) :: ncname
 !
 !  Local variable declarations.
@@ -1850,7 +1960,7 @@
 
       integer :: Lstr, MyError, Npts, Serror
       integer :: i, j, np, rank, request, varid
-      integer :: my_bounds(4), start(2), total(2)
+      integer :: ibuffer(2), my_bounds(4), start(2), total(2)
 
       integer, dimension(MPI_STATUS_SIZE) :: status
       integer, dimension(4,0:NtileI(ng)*NtileJ(ng)-1) :: Asize
@@ -1929,41 +2039,61 @@
             Arecv(np)=A(i,j)
           END DO
         END DO
-        mp_ncwrite=nf90_inq_varid(ncid, TRIM(ncvar), varid)
-        mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
+        mp_ncwrite=nf90_inq_varid(ncid, TRIM(ncvname), varid)
+        IF (mp_ncwrite.eq.nf90_noerr) THEN
+          mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
+          IF (mp_ncwrite.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
+            exit_flag=3
+            ioerror=mp_ncwrite
+          END IF
+        ELSE
+          WRITE (stdout,30) TRIM(ncvname), TRIM(ncname)
+          exit_flag=3
+          ioerror=mp_ncwrite
+        END IF
 !
 !  If master node, loop over other nodes and receive the data.
 !
-        DO rank=1,NtileI(ng)*NtileJ(ng)-1
-          np=(Asize(2,rank)-Asize(1,rank)+1)*                           &
-     &       (Asize(4,rank)-Asize(3,rank)+1)
-          CALL mpi_irecv (Arecv, np, MP_FLOAT, rank, rank+5,            &
-     &                    OCN_COMM_WORLD, request, MyError)
-          CALL mpi_wait (request, status, MyError)
-          IF (MyError.ne.MPI_SUCCESS) THEN
-            CALL mpi_error_string (MyError, string, Lstr, Serror)
-            Lstr=LEN_TRIM(string)
-            WRITE (stdout,10) 'MPI_IRECV', rank, MyError, string(1:Lstr)
-            exit_flag=2
-            RETURN
-          END IF
+        IF (exit_flag.ne.NoError) THEN
+          DO rank=1,NtileI(ng)*NtileJ(ng)-1
+            np=(Asize(2,rank)-Asize(1,rank)+1)*                         &
+     &         (Asize(4,rank)-Asize(3,rank)+1)
+            CALL mpi_irecv (Arecv, np, MP_FLOAT, rank, rank+5,          &
+     &                      OCN_COMM_WORLD, request, MyError)
+            CALL mpi_wait (request, status, MyError)
+            IF (MyError.ne.MPI_SUCCESS) THEN
+              CALL mpi_error_string (MyError, string, Lstr, Serror)
+              Lstr=LEN_TRIM(string)
+              WRITE (stdout,10) 'MPI_IRECV', rank, MyError,             &
+     &                          string(1:Lstr)
+              exit_flag=3
+              RETURN
+            END IF
 !
 !  Write out data into NetCDF file.
 !
-          start(1)=Asize(1,rank)
-          total(1)=Asize(2,rank)-Asize(1,rank)+1
-          IF (IsNodeDim) THEN
-            start(2)=rank+1
-            total(2)=1
-          ELSE
-            start(2)=Asize(3,rank)
-            total(2)=Asize(4,rank)-Asize(3,rank)+1
-          END IF
-          DO i=1,np
-            Arecv(i)=Arecv(i)*Ascale
+            start(1)=Asize(1,rank)
+            total(1)=Asize(2,rank)-Asize(1,rank)+1
+            IF (IsNodeDim) THEN
+              start(2)=rank+1
+              total(2)=1
+            ELSE
+              start(2)=Asize(3,rank)
+              total(2)=Asize(4,rank)-Asize(3,rank)+1
+            END IF
+            DO i=1,np
+              Arecv(i)=Arecv(i)*Ascale
+            END DO
+            mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
+            IF (mp_ncwrite.ne.nf90_noerr) THEN
+              WRITE (stdout,20) TRIM(ncvname), TRIM(ncname)
+              exit_flag=3
+              ioerror=mp_ncwrite
+              EXIT
+            END IF
           END DO
-          mp_ncwrite=nf90_put_var(ncid, varid, Arecv, start, total)
-        END DO
+        END IF
 !
 !  Otherwise, send data to master node.
 !
@@ -1980,6 +2110,14 @@
           RETURN
         END IF
       END IF
+!
+!  Broadcast error flags to all nodes.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer, 2)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
 !
 !  Deallocate receive buffer.
 !
@@ -1998,6 +2136,10 @@
 
  10   FORMAT (/,' MP_NCWRITE - error during ',a,' call, Node = ',       &
      &          i3.3,' Error = ',i3,/,13x,a)
+ 20   FORMAT (/,' MP_NCWRITE - error while writing variable: ',         &
+     &        a,/,13x,'in file: ',a)
+ 30   FORMAT (/,' MP_NCWRITE - error while inquiring ID for variable: ',&
+     &        a,/,13x,'in file: ',a)
 
       RETURN
       END FUNCTION mp_ncwrite

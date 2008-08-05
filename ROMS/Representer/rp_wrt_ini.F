@@ -37,6 +37,11 @@
       USE mod_sediment
 # endif
       USE mod_stepping
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -48,7 +53,6 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gfactor, gtype, i, itrc, status, varid
-      integer :: start(4), total(4)
 
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
@@ -74,25 +78,19 @@
 !  points (gfactor=-1) fields only.
 !
 # if defined WRITE_WATER && defined MASKING
-        gfactor=-1
+      gfactor=-1
 # else
-        gfactor=1
+      gfactor=1
 # endif
 !
 !  Write out model time (s).
 !
-      IF (OutThread) THEN
-        start(1)=OutRec
-        total(1)=1
-        status=nf90_put_var(ncIRPid(ng), irpVid(idtime,ng),             &
-     &                      time(ng:), start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), OutRec
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iRPM, IRPname(ng),                      &
+     &                      TRIM(Vname(1,idtime)), time(ng:),           &
+     &                      (/OutRec/), (/1/),                          &
+     &                      ncid = ncIRPid(ng),                         &
+     &                      varid = irpVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface (m)
 !
@@ -301,11 +299,16 @@
       IF (OutThread) THEN
         status=nf90_sync(ncIRPid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(IRPname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
+      END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+# endif
+
+      IF (Master) THEN
         IF (OutRec.eq.2) THEN
           string='initial  fields'
         END IF
@@ -318,8 +321,8 @@
 !
   10  FORMAT (/,' RP_WRT_INI - error while writing variable: ',a,/,14x,    &
      &        'into tangent initial NetCDF file for time record: ',i4)
-  20  FORMAT (/,' RP_WRT_INI - unable to synchronize tangent initial',     &
-     &        ' NetCDF to disk.')
+  20  FORMAT (/,' RP_WRT_INI - unable to synchronize to disk ',            &
+     &        'representers model initial file:',/,14x,a)
 # ifdef SOLVE3D
   30  FORMAT (3x,'RP_WRT_INI   - wrote ',a,' (Iter=',i4.4,', Index=',i1,   &
      &        ',',i1,', Rec=',i4.4,')')

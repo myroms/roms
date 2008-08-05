@@ -311,6 +311,20 @@
       END IF
 !$OMP END CRITICAL (MAX_WATER)
 
+# if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
+!
+!-----------------------------------------------------------------------
+!  Load number of water points into structure array.
+!-----------------------------------------------------------------------
+!
+      IF (SOUTH_WEST_TEST) THEN
+        IOBOUNDS(ng) % xy_psi = Nxyp(ng)
+        IOBOUNDS(ng) % xy_rho = Nxyr(ng)
+        IOBOUNDS(ng) % xy_u   = Nxyr(ng)
+        IOBOUNDS(ng) % xy_v   = Nxyr(ng)
+      END IF
+# endif
+
 # ifdef PROPAGATOR
 !
 !-----------------------------------------------------------------------

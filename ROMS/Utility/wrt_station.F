@@ -31,6 +31,9 @@
 # endif
       USE mod_stepping
 !
+# ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 # ifdef SOLVE3D
       USE extract_sta_mod, ONLY : extract_sta2d, extract_sta3d
 # else
@@ -49,8 +52,6 @@
 
       integer :: NposB, NposR, NposW, LBi, UBi, LBj, UBj
       integer :: i, ifield, k, np, status, tile
-
-      integer, dimension(3) :: start, total
 
       real(r8) :: scale
 
@@ -80,16 +81,6 @@
 !
       tSTAindx(ng)=tSTAindx(ng)+1
       NrecSTA(ng)=NrecSTA(ng)+1
-!
-!  Specify parameters for writing profiles to NetCDF files. These
-!  are overridden for some variables below
-!
-      start(1)=1
-      total(1)=N(ng)
-      start(2)=1
-      total(2)=Nstation(ng)
-      start(3)=tSTAindx(ng)
-      total(3)=1
 !
 !  Set switch to extract station data at native C-grid position (TRUE)
 !  or at RHO-points (FALSE).
@@ -135,16 +126,12 @@
 !
 !  Write out model time (s).
 !
-      IF (Master) THEN
-        status=nf90_put_var(ncSTAid(ng), staVid(idtime,ng),             &
-     &                      time(ng:), start(3:), total(3:))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tSTAindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                      &
+     &                      TRIM(Vname(1,idtime)), time(ng:),           &
+     &                      (/tSTAindx(ng)/), (/1/),                    &
+     &                      ncid = ncSTAid(ng),                         &
+     &                      varid = staVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface (m).
 !
@@ -154,16 +141,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng)%zeta(:,:,KOUT),            &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idFsur,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idFsur)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idFsur)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idFsur,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
@@ -174,16 +157,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng)%ubar(:,:,KOUT),            &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUbar,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbar)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUbar)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUbar,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out 2D momentum component (m/s) in the ETA-direction.
@@ -194,17 +173,14 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, OCEAN(ng)%vbar(:,:,KOUT),            &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVbar,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbar)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVbar)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVbar,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
+
 # ifdef SOLVE3D
 !
 !  Write out 3D momentum component (m/s) in the XI-direction.
@@ -215,16 +191,13 @@
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng)%u(:,:,:,NOUT),             &
      &                      NposR, XposR, YposR, ZposR, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUvel,ng),           &
-     &                        rsta, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUvel)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUvel)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUvel,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out 3D momentum component (m/s) in the ETA-direction.
@@ -235,16 +208,13 @@
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng)%v(:,:,:,NOUT),             &
      &                      NposR, XposR, YposR, ZposR, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVvel,ng),           &
-     &                        rsta, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVvel)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVvel)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVvel,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out vertical velocity (m/s).
@@ -255,16 +225,13 @@
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, OCEAN(ng)%wvel,                      &
      &                      NposW, XposW, YposW, ZposW, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idWvel,ng),           &
-     &                        rsta, start, total+(/1,0,0/))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idWvel)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idWvel)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng)+1,Nstation(ng),1/),               &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idWvel,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write S-coordinate "omega" vertical velocity (m3/s).
@@ -275,16 +242,13 @@
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, OCEAN(ng)%W,                         &
      &                      NposW, XposW, YposW, ZposW, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idOvel,ng),           &
-     &                        rsta, start, total+(/1,0,0/))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idOvel)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idOvel)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng)+1,Nstation(ng),1/),               &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idOvel,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out tracer type variables.
@@ -297,16 +261,13 @@
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        scale, OCEAN(ng)%t(:,:,:,NOUT,i),         &
      &                        NposR, XposR, YposR, ZposR, rsta)
-          IF (Master) THEN
-            status=nf90_put_var(ncSTAid(ng), staTid(i,ng),              &
-     &                          rsta, start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTvar(i))), tSTAindx(ng)
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
-          END IF
+          CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                  &
+     &                          TRIM(Vname(1,idTvar(i))), rsta,         &
+     &                          (/1,1,tSTAindx(ng)/),                   &
+     &                          (/N(ng),Nstation(ng),1/),               &
+     &                          ncid = ncSTAid(ng),                     &
+     &                          varid = staTid(i,ng))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
 !
@@ -318,17 +279,15 @@
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      scale, OCEAN(ng)%rho,                       &
      &                      NposR, XposR, YposR, ZposR, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idDano,ng),           &
-     &                        rsta, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idDano)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idDano)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng),Nstation(ng),1/),                 &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idDano,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
+
 #  ifdef LMD_SKPP
 !
 !  Write out depth of surface boundary layer.
@@ -339,16 +298,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, MIXING(ng)%hsbl,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idHsbl,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idHsbl)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idHsbl)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idHsbl,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
 #  ifdef LMD_BKPP
@@ -361,16 +316,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, MIXING(ng)%hbbl,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idHbbl,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idHbbl)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idHbbl)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idHbbl,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
 !
@@ -382,16 +333,13 @@
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%Akv,                      &
      &                      NposW, XposW, YposW, ZposW, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVvis,ng),           &
-     &                        rsta, start, total+(/1,0,0/))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVvis)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVvis)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng)+1,Nstation(ng),1/),               &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVvis,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out vertical diffusion coefficient for potential temperature.
@@ -402,17 +350,15 @@
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%Akt(:,:,:,itemp),         &
      &                      NposW, XposW, YposW, ZposW, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idTdif,ng),           &
-     &                        rsta, start, total+(/1,0,0/))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idTdif)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idTdif)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng)+1,Nstation(ng),1/),               &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idTdif,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
+
 #  ifdef SALINITY
 !
 !  Write out vertical diffusion coefficient for salinity.
@@ -423,16 +369,13 @@
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%Akt(:,:,:,isalt),         &
      &                      NposW, XposW, YposW, ZposW, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idSdif,ng),           &
-     &                        rsta, start, total+(/1,0,0/))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSdif)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idSdif)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng)+1,Nstation(ng),1/),               &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idSdif,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
 #  if defined MY25_MIXING || defined GLS_MIXING
@@ -445,16 +388,13 @@
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%tke(:,:,:,NOUT),          &
      &                      NposW, XposW, YposW, ZposW, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idMtke,ng),           &
-     &                        rsta, start, total+(/1,0,0/))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idMtke)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idMtke)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng)+1,Nstation(ng),1/),               &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idMtke,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out turbulent kinetic energy times length scale.
@@ -465,16 +405,13 @@
      &                      LBi, UBi, LBj, UBj, 0, N(ng),               &
      &                      scale, MIXING(ng)%gls(:,:,:,NOUT),          &
      &                      NposW, XposW, YposW, ZposW, rsta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idMtls,ng),           &
-     &                        rsta, start, total+(/1,0,0/))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idMtls)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idMtls)), rsta,              &
+     &                        (/1,1,tSTAindx(ng)/),                     &
+     &                        (/N(ng)+1,Nstation(ng),1/),               &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idMtls,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
 !
@@ -487,16 +424,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%stflx(:,:,itemp),         &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(ifield,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,ifield)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,ifield)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(ifield,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out surface salt flux.
@@ -508,17 +441,14 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%stflx(:,:,isalt),         &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(ifield,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,ifield)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,ifield)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(ifield,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
+
 #  ifdef BULK_FLUXES
 !
 !  Write out latent heat flux.
@@ -529,16 +459,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%lhflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idLhea,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idLhea)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idLhea)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idLhea,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out sensible heat flux.
@@ -549,16 +475,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%shflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idShea,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idShea)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idShea)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idShea,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out longwave radiation flux.
@@ -569,17 +491,14 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%lrflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idLrad,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idLrad)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idLrad)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idLrad,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
+
 #   ifdef EMINUSP
 !
 !  Write out evaportaion rate (kg/m2/s).
@@ -590,16 +509,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%evap,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idevap,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idevap)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idevap)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idevap,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out precipitation rate (kg/m2/s).
@@ -610,19 +525,16 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%rain,                     &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idrain,ng),       &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idrain)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idrain)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idrain,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 #   endif
 #  endif
+
 #  ifdef SHORTWAVE
 !
 !  Write out shortwave radiation flux.
@@ -633,16 +545,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%srflx,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idSrad,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idSrad)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idSrad)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idSrad,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 #  endif
 # endif
@@ -655,16 +563,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%sustr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUsms,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUsms)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUsms)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUsms,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out surface V-momentum stress.
@@ -675,16 +579,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%svstr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVsms,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVsms)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVsms)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVsms,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out bottom U-momentum stress.
@@ -695,16 +595,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%bustr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUbms,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbms)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUbms)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUbms,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out bottom V-momentum stress.
@@ -715,17 +611,14 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, FORCES(ng)%bvstr,                    &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVbms,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbms)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVbms)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVbms,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
+
 #ifdef SOLVE3D
 # ifdef BBL_MODEL
 !
@@ -737,16 +630,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%bustrc,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUbrs,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbrs)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUbrs)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUbrs,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out current-induced, bottom V-stress.
@@ -757,16 +646,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%bvstrc,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVbrs,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbrs)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVbrs)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVbrs,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out wind-induced, bottom U-stress.
@@ -777,16 +662,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%bustrw,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUbws,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbws)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUbws)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUbws,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out wind-induced, bottom V-wave stress.
@@ -797,16 +678,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%bvstrw,                      &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVbws,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbws)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVbws)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVbws,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out maximum wind and current, bottom U-stress.
@@ -817,16 +694,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%bustrcwmax,                  &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUbcs,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbcs)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUbcs)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUbcs,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out maximum wind and current, bottom V-stress.
@@ -837,16 +710,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%bvstrcwmax,                  &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVbcs,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbcs)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVbcs)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVbcs,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out wind-induced, bed wave orbital U-velocity.
@@ -857,16 +726,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Ubot,                        &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUbot,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbot)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUbot)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUbot,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out wind-induced, bed wave orbital V-velocity.
@@ -877,16 +742,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Vbot,                        &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVbot,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbot)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVbot)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVbot,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out bottom U-velocity above bed.
@@ -897,16 +758,12 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Ur,                          &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idUbur,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbur)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idUbur)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idUbur,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 !
 !  Write out bottom V-velocity above bed.
@@ -917,23 +774,19 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      scale, BBL(ng)%Vr,                          &
      &                      Nstation(ng), Xpos, Ypos, psta)
-        IF (Master) THEN
-          status=nf90_put_var(ncSTAid(ng), staVid(idVbvr,ng),           &
-     &                        psta, start(2:), total(2:))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbvr)), tSTAindx(ng)
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                    &
+     &                        TRIM(Vname(1,idVbvr)), psta,              &
+     &                        (/1,tSTAindx(ng)/), (/Nstation(ng),1/),   &
+     &                        ncid = ncSTAid(ng),                       &
+     &                        varid = staVid(idVbvr,ng))
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 # endif
+
 # ifdef SEDIMENT
 !
 !  Write out sediment fraction of each size class in each bed layer.
 !
-      total(1)=Nbed                       ! Warning, total(1) redefined
       DO i=1,NST      
         IF (Sout(idfrac(i),ng)) THEN
           scale=1.0_r8
@@ -941,16 +794,13 @@
      &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        scale, OCEAN(ng)%bed_frac(:,:,:,i),       &
      &                        NposB, XposB, YposB, ZposB, bsta)
-          IF (Master) THEN
-            status=nf90_put_var(ncSTAid(ng), staVid(idfrac(i),ng),      &
-     &                          bsta, start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idfrac(i))), tSTAindx(ng)
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
-          END IF
+          CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                  &
+     &                          TRIM(Vname(1,idfrac(i))), rsta,         &
+     &                          (/1,1,tSTAindx(ng)/),                   &
+     &                          (/Nbed,Nstation(ng),1/),                &
+     &                          ncid = ncSTAid(ng),                     &
+     &                          varid = staVid(idfrac(i),ng))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 !
 !  Write out sediment mass of each size class in each bed layer.
@@ -962,16 +812,13 @@
      &                        scale,                                    &
      &                        OCEAN(ng)%bed_mass(:,:,:,NOUT,i),         &
      &                        NposB, XposB, YposB, ZposB, bsta)
-          IF (Master) THEN
-            status=nf90_put_var(ncSTAid(ng), staVid(idBmas(i),ng),      &
-     &                          bsta, start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBmas(i))), tSTAindx(ng)
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
-          END IF
+          CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                  &
+     &                          TRIM(Vname(1,idBmas(i))), rsta,         &
+     &                          (/1,1,tSTAindx(ng)/),                   &
+     &                          (/Nbed,Nstation(ng),1/),                &
+     &                          ncid = ncSTAid(ng),                     &
+     &                          varid = staVid(idBmas(i),ng))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
 !
@@ -984,19 +831,17 @@
      &                        LBi, UBi, LBj, UBj, 1, Nbed,              &
      &                        scale, OCEAN(ng)%bed(:,:,:,i),            &
      &                        NposB, XposB, YposB, ZposB, bsta)
-          IF (Master) THEN
-            status=nf90_put_var(ncSTAid(ng), staVid(idSbed(i),ng),      &
-     &                          bsta, start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idSbed(i))), tSTAindx(ng)
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
-          END IF
+          CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                  &
+     &                          TRIM(Vname(1,idSbed(i))), rsta,         &
+     &                          (/1,1,tSTAindx(ng)/),                   &
+     &                          (/Nbed,Nstation(ng),1/),                &
+     &                          ncid = ncSTAid(ng),                     &
+     &                          varid = staVid(idSbed(i),ng))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
 # endif
+
 # if defined SEDIMENT || defined BBL_MODEL
 !
 !  Write out exposed sediment layer properties.
@@ -1008,16 +853,13 @@
      &                        LBi, UBi, LBj, UBj,                       &
      &                        scale, OCEAN(ng)%bottom(:,:,i),           &
      &                        Nstation(ng), Xpos, Ypos, psta)
-          IF (Master) THEN
-            status=nf90_put_var(ncSTAid(ng), staVid(idBott(i),ng),      &
-     &                          bsta, start(2:), total(2:))
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idBott(i))), tSTAindx(ng)
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
-          END IF
+          CALL netcdf_put_fvar (ng, iNLM, STAname(ng),                  &
+     &                          TRIM(Vname(1,idBott(i))), rsta,         &
+     &                          (/1,tSTAindx(ng)/),                     &
+     &                          (/Nstation(ng),1/),                     &
+     &                          ncid = ncSTAid(ng),                     &
+     &                          varid = staVid(idBott(i),ng))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
       END DO
 # endif
@@ -1027,20 +869,20 @@
 !  Synchronize stations NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
-      IF (Master) THEN
+      IF (OutThread) THEN
         status=nf90_sync(ncSTAid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,10) TRIM(STAname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
       END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+# endif
 !
-  10  FORMAT (/,' WRT_STATION - error while writing variable: ',a,/,    &
-     &        15x,'into stations NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_STATION - unable to synchronize stations',        &
-     &        1x,'NetCDF file to disk.')
+  10  FORMAT (/,' WRT_STATION - unable to synchronize to disk ',        &
+     &        ' stations file:',/,15x,a)
 #else
       SUBROUTINE wrt_station
 #endif

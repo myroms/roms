@@ -25,6 +25,11 @@
       USE mod_sediment
 #endif
       USE mod_stepping
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -36,8 +41,9 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gfactor, gtype, i, itrc, status, varid
-      integer :: ntmp(1), start(4), total(4)
-
+# if defined PERFECT_RESTART || defined SOLVE3D
+      integer :: ntmp(1)
+# endif
       integer :: nf_fwrite2d
 # if defined PERFECT_RESTART || defined SOLVE3D
       integer :: nf_fwrite3d
@@ -62,9 +68,9 @@
 !  points (gfactor=-1) fields only.
 !
 #if defined WRITE_WATER && defined MASKING
-        gfactor=-1
+      gfactor=-1
 #else
-        gfactor=1
+      gfactor=1
 #endif
 !
 !  Set time record index.
@@ -78,8 +84,6 @@
       IF (LcycleRST(ng)) THEN
         tRSTindx(ng)=MOD(tRSTindx(ng)-1,2)+1
       END IF
-      start(1)=tRSTindx(ng)
-      total(1)=1
 
 #ifdef PERFECT_RESTART
 !
@@ -87,38 +91,47 @@
 !
 # ifdef SOLVE3D
       ntmp(1)=1+MOD((iic(ng)-1)-ntstart(ng),2)
-      status=nf90_inq_varid(ncRSTid(ng), 'nstp', varid)
-      status=nf90_put_var(ncRSTid(ng), varid, ntmp, start, total)
+      CALL netcdf_put_ivar (ng, iNLM, RSTname(ng), 'nstp',              &
+     &                      ntmp, (/tRSTindx(ng)/), (/1/),              &
+     &                      ncid = ncRSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
-      status=nf90_inq_varid(ncRSTid(ng), 'nrhs', varid)
-      status=nf90_put_var(ncRSTid(ng), varid, ntmp, start, total)
+      CALL netcdf_put_ivar (ng, iNLM, RSTname(ng), 'nrhs',              &
+     &                      ntmp, (/tRSTindx(ng)/), (/1/),              &
+     &                      ncid = ncRSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
       ntmp(1)=3-ntmp(1)
-      status=nf90_inq_varid(ncRSTid(ng), 'nnew', varid)
-      status=nf90_put_var(ncRSTid(ng), varid, ntmp, start, total)
+      CALL netcdf_put_ivar (ng, iNLM, RSTname(ng), 'nnew',              &
+     &                      ntmp, (/tRSTindx(ng)/), (/1/),
+     &                      ncid = ncRSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 # endif
-      status=nf90_inq_varid(ncRSTid(ng), 'kstp', varid)
-      status=nf90_put_var(ncRSTid(ng), varid, kstp(ng:), start, total)
+      CALL netcdf_put_ivar (ng, iNLM, RSTname(ng), 'kstp',              &
+     &                      kstp(ng:), (/tRSTindx(ng)/), (/1/),         &
+     &                      ncid = ncRSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
-      status=nf90_inq_varid(ncRSTid(ng), 'krhs', varid)
-      status=nf90_put_var(ncRSTid(ng), varid, krhs(ng:), start, total)
+      CALL netcdf_put_ivar (ng, iNLM, RSTname(ng), 'krhs',              &
+     &                      krhs(ng:), (/tRSTindx(ng)/), (/1/),         &
+     &                      ncid = ncRSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
-      status=nf90_inq_varid(ncRSTid(ng), 'knew', varid)
-      status=nf90_put_var(ncRSTid(ng), varid, knew(ng:), start, total)
+      CALL netcdf_put_ivar (ng, iNLM, RSTname(ng), 'knew',              &
+     &                      knew(ng:), (/tRSTindx(ng)/), (/1/),         &
+     &                      ncid = ncRSTid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !  Write out model time (s).
 !
-      IF (OutThread) THEN
-        status=nf90_put_var(ncRSTid(ng), rstVid(idtime,ng),             &
-     &                      time(ng:), start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tRSTindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iNLM, RSTname(ng),                      &
+     &                      TRIM(Vname(idtime,ng)), time(ng:),          &
+     &                      (/tRSTindx(ng)/), (/1/),                    &
+     &                      ncid = ncRSTid(ng),                         &
+     &                      varid = rstVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
+
 #if defined SEDIMENT && defined SED_MORPH
 !
 !  Write out time-dependent bathymetry (m)
@@ -925,22 +938,24 @@
       IF (OutThread) THEN
         status=nf90_sync(ncRSTid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20) TRIM(RSTname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-#ifdef SOLVE3D
-        WRITE (stdout,30) KOUT, NOUT, tRSTindx
-#else
-        WRITE (stdout,30) KOUT, tRSTindx
-#endif
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+#endif
+#ifdef SOLVE3D
+      IF (Master) WRITE (stdout,30) KOUT, NOUT, tRSTindx(ng)
+#else
+      IF (Master) WRITE (stdout,30) KOUT, tRSTindx(ng)
+#endif
 !
   10  FORMAT (/,' WRT_RST - error while writing variable: ',a,/,11x,    &
      &        'into restart NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_RST - unable to synchronize restart NetCDF to ',  &
-     &        'disk.')
+  20  FORMAT (/,' WRT_RST - unable to synchronize to disk restart ',    &
+     &        'file:',/,11x,a)
 #ifdef SOLVE3D
   30  FORMAT (6x,'WRT_RST   - wrote re-start fields (Index=', i1,       &
      &        ',',i1,') into time record = ',i7.7)
@@ -948,5 +963,6 @@
   30  FORMAT (6x,'WRT_RST   - wrote re-start fields (Index=', i1,       &
      &        ') into time record = ',i7.7)
 #endif
+
       RETURN
       END SUBROUTINE wrt_rst

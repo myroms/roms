@@ -23,6 +23,11 @@
       USE mod_scalars
       USE mod_stepping
       USE mod_tides
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -34,7 +39,6 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gtype, status, varid
-      integer :: start(2), total(2)
 
       integer :: nf_fwrite3d
 # ifdef SOLVE3D
@@ -53,108 +57,71 @@
 !
       IF (exit_flag.ne.NoError) RETURN
 !
-!  Set starting and ending vector and matrices indices.
-!
-      start(1)=1
-      total(1)=NTC(ng)
-      start(2)=1
-      total(2)=NTC(ng)
-!
 !  Write out number of time-accumulated harmonics.
 !
-      IF (OutThread) THEN
-        status=nf90_inq_varid(ncTIDEid(ng), 'Hcount', varid)
-        status=nf90_put_var(ncTIDEid(ng), varid, Hcount(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'Hcount', TRIM(TIDEname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng), 'Hcount',           &
+     &                      Hcount(ng), (/0/), (/0/),                   &
+     &                      ncid = ncTIDEid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out model time for current time-accumulated harmonics.
 !
-      IF (OutThread) THEN
-        status=nf90_put_var(ncTIDEid(ng), tideVid(idtime,ng),           &
-     &                      time(ng))
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), TRIM(TIDEname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng),                     &
+     &                      TRIM(Vname(1,idtime)), time(ng),            &
+     &                      (/0/), (/0/),                    &
+     &                      ncid = ncTIDEid(ng),                         &
+     &                      varid = tideVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out time-accumulated COS(omega(k)*t) harmonics.
 !
-      IF (OutThread) THEN
-        status=nf90_put_var(ncTIDEid(ng), tideVid(idCosW,ng),           &
+      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng),                     &
+     &                      TRIM(Vname(1,idCosW)),                      &
      &                      TIDES(ng) % CosW_sum,                       &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCosW)), TRIM(TIDEname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+     &                      (/1/), (/NTC(ng)/),                         &
+     &                      ncid = ncTIDEid(ng),                        &
+     &                      varid = tideVid(idCosW,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out time-accumulated SIN(omega(k)*t) harmonics.
 !
-      IF (OutThread) THEN
-        status=nf90_put_var(ncTIDEid(ng), tideVid(idSinW,ng),           &
+      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng),                     &
+     &                      TRIM(Vname(1,idSinW)),                      &
      &                      TIDES(ng) % SinW_sum,                       &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idSinW)), TRIM(TIDEname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+     &                      (/1/), (/NTC(ng)/),                         &
+     &                      ncid = ncTIDEid(ng),                        &
+     &                      varid = tideVid(idSinW,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out time-accumulated COS(omega(k)*t)*COS(omega(l)*t) harmonics.
 !
-      IF (OutThread) THEN
-        status=nf90_put_var(ncTIDEid(ng), tideVid(idCos2,ng),           &
+      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng),                     &
+     &                      TRIM(Vname(1,idCos2)),                      &
      &                      TIDES(ng) % CosWCosW,                       &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idCos2)), TRIM(TIDEname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+     &                      (/1,1/), (/NTC(ng),NTC(ng)/),               &
+     &                      ncid = ncTIDEid(ng),                        &
+     &                      varid = tideVid(idCos2,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out time-accumulated SIN(omega(k)*t)*SIN(omega(l)*t) harmonics.
 !
-      IF (OutThread) THEN
-        status=nf90_put_var(ncTIDEid(ng), tideVid(idSin2,ng),           &
+      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng),                     &
+     &                      TRIM(Vname(1,idSin2)),                      &
      &                      TIDES(ng) % SinWSinW,                       &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idSin2)), TRIM(TIDEname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+     &                      (/1,1/), (/NTC(ng),NTC(ng)/),               &
+     &                      ncid = ncTIDEid(ng),                        &
+     &                      varid = tideVid(idSin2,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out time-accumulated SIN(omega(k)*t)*COS(omega(l)*t) harmonics.
 !
-      IF (OutThread) THEN
-        status=nf90_put_var(ncTIDEid(ng), tideVid(idSWCW,ng),           &
+      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng),                     &
+     &                      TRIM(Vname(1,idSWCW)),                      &
      &                      TIDES(ng) % SinWCosW,                       &
-     &                      start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idSWCW)), TRIM(TIDEname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+     &                      (/1,1/), (/NTC(ng),NTC(ng)/),               &
+     &                      ncid = ncTIDEid(ng),                        &
+     &                      varid = tideVid(idSWCW,ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Write out free-surface time-accumulated tide harmonics (m).
 !
@@ -272,15 +239,17 @@
           WRITE (stdout,20)
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-        WRITE (stdout,30)
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+#endif
+      IF (Master  WRITE (stdout,30) TRIM(TIDEname(ng))
 !
   10  FORMAT (/,' WRT_TIDES - error while writing variable: ',a,        &
      &        /,13x,'into tide forcing NetCDF file: ',/,13x,a)
-  20  FORMAT (/,' WRT_TIDES - unable to synchronize tide forcing ',     &
-     &        'NetCDF file to disk.')
+  20  FORMAT (/,' WRT_TIDES - unable to synchronize to disk tide ',     &
+     &        'forcing file:',/,13x,1)
   30  FORMAT (6x,'WRT_TIDES - wrote time-accumulated tide harmonics ')
 #else
       SUBROUTINE wrt_tides

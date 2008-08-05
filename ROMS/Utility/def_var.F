@@ -1,5 +1,6 @@
 #include "cppdefs.h"
-      FUNCTION def_var (ncid,Vid,Vtype,nVdim,Vdim,Aval,Vinfo,ncname)
+      FUNCTION def_var (ng, model, ncid, Vid, Vtype, nVdim, Vdim,       &
+     &                  Aval, Vinfo, ncname)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -12,6 +13,8 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
+!     ng       Nested grid number (integer).                           !
+!     model    Calling model identifier (integer).                     !
 !     ncid     NetCDF file ID (integer).                               !
 !     Vtype    NetCDF variable type (integer).                         !
 !     nVdim    Number of variable dimensions (integer; 0=scalar).      !
@@ -61,17 +64,25 @@
 !=======================================================================
 !
       USE mod_param
+      USE mod_parallel
       USE mod_iounits
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
 !  Imported variable declarations.
 !
-      integer, intent (in) :: ncid, Vtype, nVdim
-      integer, dimension(*), intent(in) :: Vdim
+      integer, intent (in) :: ng, model, ncid, Vtype, nVdim
+
+      integer, dimension(*), intent (in) :: Vdim
+
       integer, intent (out) :: Vid
 
       real(r8), dimension(*), intent(inout) :: Aval
@@ -81,7 +92,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: latt
+      integer :: i, j, latt, status
 
       integer :: def_var
 
@@ -91,466 +102,522 @@
 !  Define requested variable and its attributes.
 !-----------------------------------------------------------------------
 !
+      IF (OutThread) THEN
+!
 !  Define variable.
 !
-      IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
-        IF ((nVdim.eq.1).and.(Vdim(1).eq.0)) THEN
-          def_var=nf90_def_var(ncid, TRIM(Vinfo(1)), Vtype,             &
-     &                         varid = Vid)
-        ELSE
-          def_var=nf90_def_var(ncid, TRIM(Vinfo(1)), Vtype,             &
-     &                         Vdim(1:nVdim), Vid)
+        IF (exit_flag.eq.NoError) THEN
+          IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
+            IF ((nVdim.eq.1).and.(Vdim(1).eq.0)) THEN
+              status=nf90_def_var(ncid, TRIM(Vinfo(1)), Vtype,          &
+     &                            varid = Vid)
+            ELSE
+              status=nf90_def_var(ncid, TRIM(Vinfo(1)), Vtype,          &
+     &                            Vdim(1:nVdim), Vid)
+            END IF
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,10) TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
-        END IF
-      END IF
 !
 !  Define "longname" attribute.
 !
-      latt=LEN_TRIM(Vinfo(2))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'long_name',                    &
-     &                       Vinfo(2)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'long_name', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(2))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'long_name',                 &
+     &                          Vinfo(2)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'long_name',                &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(2)=' '
-      END IF
 !
 !  Define "size_class" attribute.
 !
-      latt=LEN_TRIM(Vinfo(19))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'size_class',                   &
-     &                       Vinfo(19)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'size_class', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(19))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'size_class',                &
+     &                          Vinfo(19)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'size_class',               &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(19)=' '
-      END IF
 !
 !  If applicable, define "units" attribute.
 !
-      latt=LEN_TRIM(Vinfo(3))
-      IF (latt.gt.0) THEN
-        IF (TRIM(Vinfo(3)).ne.'nondimensional') THEN
-          def_var=nf90_put_att(ncid, Vid, 'units',                      &
-     &                         Vinfo(3)(1:latt))
-          IF (def_var.ne.nf90_noerr) THEN
-            WRITE (stdout,20) 'units', TRIM(Vinfo(1)), TRIM(ncname)
-            exit_flag=3
-            ioerror=def_var
-            RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(3))
+          IF (latt.gt.0) THEN
+            IF (TRIM(Vinfo(3)).ne.'nondimensional') THEN
+              status=nf90_put_att(ncid, Vid, 'units',                   &
+     &                            Vinfo(3)(1:latt))
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,20) 'units',                  &
+     &                                        TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            END IF
           END IF
         END IF
-        Vinfo(3)=' '
-      END IF
 !
 !  If applicable, define "calendar" attribute.
 !
-      latt=LEN_TRIM(Vinfo(4))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'calendar',                     &
-     &                       Vinfo(4)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'calendar', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(4))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'calendar',                  &
+     &                          Vinfo(4)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'calendar',                 &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(4)=' '
-      END IF
 !
 !  If applicable, define "valid_min" attribute.
 !
-      latt=LEN_TRIM(Vinfo(5))
-      IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf90_int) THEN
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),               &
-     &                         INT(Aval(2)))
-        ELSE
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),               &
-     &                         Aval(2))
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(5))
+          IF (latt.gt.0) THEN
+            IF (Vtype.eq.nf90_int) THEN
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),            &
+     &                            INT(Aval(2)))
+            ELSE
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),            &
+     &                            Aval(2))
+            END IF
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) TRIM(Vinfo(5)),             &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+            Aval(2)=0.0_r8
+          END IF
         END IF
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(Vinfo(5)), TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
-        END IF
-        Aval(2)=0.0_r8
-        Vinfo(5)=' '
-      END IF
 !
 !  If applicable, define "valid_max" attribute.
 !
-      latt=LEN_TRIM(Vinfo(6))
-      IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf90_int) THEN
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),               &
-     &                         INT(Aval(3)))
-        ELSE
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),               &
-     &                         Aval(3))
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(6))
+          IF (latt.gt.0) THEN
+            IF (Vtype.eq.nf90_int) THEN
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),            &
+     &                            INT(Aval(3)))
+            ELSE
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),            &
+     &                            Aval(3))
+            END IF
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) TRIM(Vinfo(6)),             &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+            Aval(3)=0.0_r8
+          END IF
         END IF
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(Vinfo(6)), TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
-        END IF
-        Aval(3)=0.0_r8
-        Vinfo(6)=' '
-      END IF
 !
 !  If applicable, define "option_T" attribute.
 !
-      latt=LEN_TRIM(Vinfo(7))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'option_T',                     &
-     &                       Vinfo(7)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'option_T', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(7))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'option_T',                  &
+     &                          Vinfo(7)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'option_T',                 &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(7)=' '
-      END IF
 !
 !  If applicable, define "option_F" attribute.
 !
-      latt=LEN_TRIM(Vinfo(8))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'option_F',                     &
-     &                       Vinfo(8)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'option_F', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(8))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'option_F',                  &
+     &                          Vinfo(8)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'option_F',                 &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(8)=' '
-      END IF
 !
 !  If applicable, define "option_0" attribute.
 !
-      latt=LEN_TRIM(Vinfo(9))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'option_0',                     &
-     &                       Vinfo(9)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'option_0', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(9))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'option_0',                  &
+     &                          Vinfo(9)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'option_0',                 &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(9)=' '
-      END IF
 !
 !  If applicable, define "option_1" attribute.
 !
-      latt=LEN_TRIM(Vinfo(10))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'option_1',                     &
-     &                       Vinfo(10)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'option_1', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(10))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'option_1',                  &
+     &                          Vinfo(10)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'option_1',                 &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(10)=' '
-      END IF
 !
 !  If applicable, define "negative" attribute.
 !
-      latt=LEN_TRIM(Vinfo(11))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'negative_value',               &
-     &                       Vinfo(11)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'negative_value', TRIM(Vinfo(1)),           &
-     &                      TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(11))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'negative_value',            &
+     &                          Vinfo(11)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'negative_value',           &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(11)=' '
-      END IF
 !
 !  If applicable, define "option_F" attribute.
 !
-      latt=LEN_TRIM(Vinfo(12))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'positive_value',               &
-     &                       Vinfo(12)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'positive_value', TRIM(Vinfo(1)),           &
-     &                      TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(12))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'positive_value',            &
+     &                          Vinfo(12)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'positive_value',           &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(12)=' '
-      END IF
 !
 !  If applicable, define "cycle" attribute.
 !
-      latt=LEN_TRIM(Vinfo(13))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'cycle',                        &
-     &                       Vinfo(13)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'cycle', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(13))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'cycle',                     &
+     &                          Vinfo(13)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'cycle',                    &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(13)=' '
-      END IF
 !
 !  If applicable, define "positions" attribute.
 !
-      latt=LEN_TRIM(Vinfo(15))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'positions',                    &
-     &                       Vinfo(15)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'positions', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(15))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'positions',                 &
+     &                          Vinfo(15)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'positions',                &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(15)=' '
-      END IF
 !
 !  If applicable, define "time" attribute.
 !
-      latt=LEN_TRIM(Vinfo(16))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'time',                         &
-     &                       Vinfo(16)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'time', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(16))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'time',                      &
+     &                          Vinfo(16)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'time',                     &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(16)=' '
-      END IF
 !
 !  If applicable, define "missing_value" attribute.
 !
-      latt=LEN_TRIM(Vinfo(17))
-      IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf90_int) THEN
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),              &
-     &                         INT(Aval(4)))
-        ELSE
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),              &
-     &                         Aval(4))
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(17))
+          IF (latt.gt.0) THEN
+            IF (Vtype.eq.nf90_int) THEN
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),           &
+     &                           INT(Aval(4)))
+            ELSE
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),           &
+     &                            Aval(4))
+            END IF
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) TRIM(Vinfo(17)),            &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+            Aval(4)=0.0_r8
+          END IF
         END IF
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(Vinfo(17)), TRIM(Vinfo(1)),            &
-     &                      TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
-        END IF
-        Aval(4)=0.0_r8
-        Vinfo(17)=' '
-      END IF
 !
 !  If applicable, define "add_offset" attribute.
 !
-      latt=LEN_TRIM(Vinfo(18))
-      IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf90_int) THEN
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),              &
-     &                         INT(Aval(1)))
-        ELSE
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),              &
-     &                         Aval(1))
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(18))
+          IF (latt.gt.0) THEN
+            IF (Vtype.eq.nf90_int) THEN
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),           &
+     &                            INT(Aval(1)))
+            ELSE
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),           &
+     &                            Aval(1))
+            END IF
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) TRIM(Vinfo(18)),            &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+            Aval(1)=0.0_r8
+          END IF
         END IF
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(Vinfo(18)), TRIM(Vinfo(1)),            &
-     &                      TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
-        END IF
-        Aval(1)=0.0_r8
-        Vinfo(18)=' '
-      END IF
 !
 !  If applicable, define "_FillValue" attribute.
 !
-      latt=LEN_TRIM(Vinfo(24))
-      IF (latt.gt.0) THEN
-        IF (Vtype.eq.nf90_int) THEN
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),              &
-     &                         INT(Aval(6)))
-        ELSE
-          def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),              &
-     &                         Aval(6))
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(24))
+          IF (latt.gt.0) THEN
+            IF (Vtype.eq.nf90_int) THEN
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),           &
+     &                            INT(Aval(6)))
+            ELSE
+              status=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),           &
+     &                            Aval(6))
+            END IF
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) TRIM(Vinfo(24)),            &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+            Aval(6)=0.0_r8
+          END IF
         END IF
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) TRIM(Vinfo(24)), TRIM(Vinfo(1)),            &
-     &                      TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
-        END IF
-        Aval(6)=0.0_r8
-        Vinfo(24)=' '
-      END IF
 !
 !  If applicable, define "water_points" attribute.
 !
-      latt=LEN_TRIM(Vinfo(20))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'water_points',                 &
-     &                       Vinfo(20)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'water_points', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(20))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'water_points',              &
+     &                          Vinfo(20)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'water_points',             &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(20)=' '
-      END IF
 !
 !  If applicable, define "standard_name" attribute.
 !
-      latt=LEN_TRIM(Vinfo(21))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'standard_name',                &
-     &                       Vinfo(21)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'standard_name', TRIM(Vinfo(1)),            &
-     &                      TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(21))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'standard_name',             &
+     &                          Vinfo(21)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'standard_name',            &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(21)=' '
-      END IF
 !
 !  If applicable, define "coordinates" attribute.
 !
-      latt=LEN_TRIM(Vinfo(22))
-      IF (latt.gt.0) THEN
-        IF (spherical) THEN
-          IF (INT(Aval(5)).eq.r2dvar) THEN
-            text='lon_rho lat_rho'
-          ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
-            text='lon_rho lat_rho s_rho'
-          ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
-            text='lon_rho lat_rho s_w'
-          ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
-            text='lon_rho lat_rho'
-          ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
-            text='lon_u lat_u'
-          ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
-            text='lon_u lat_u s_rho'
-          ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
-            text='lon_v lat_v'
-          ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
-            text='lon_v lat_v s_rho'
-          ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
-            text='lon_psi lat_psi'
-          ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
-            text='lon_psi lat_psi s_rho'
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(22))
+          IF (latt.gt.0) THEN
+            IF (spherical) THEN
+              IF (INT(Aval(5)).eq.r2dvar) THEN
+                text='lon_rho lat_rho'
+              ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
+                text='lon_rho lat_rho s_rho'
+              ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
+                text='lon_rho lat_rho s_w'
+              ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
+                text='lon_rho lat_rho'
+              ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
+                text='lon_u lat_u'
+              ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
+                text='lon_u lat_u s_rho'
+              ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
+                text='lon_v lat_v'
+              ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
+                text='lon_v lat_v s_rho'
+              ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
+                text='lon_psi lat_psi'
+              ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
+                text='lon_psi lat_psi s_rho'
+              END IF
+            ELSE
+              IF (INT(Aval(5)).eq.r2dvar) THEN
+                text='x_rho y_rho'
+              ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
+                text='x_rho y_rho s_rho'
+              ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
+                text='x_rho y_rho s_w'
+              ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
+                text='x_rho y_rho'
+              ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
+                text='x_u y_u'
+              ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
+                text='x_u y_u s_rho'
+              ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
+                text='x_v y_v'
+              ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
+                text='x_v y_v s_rho'
+              ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
+                text='x_psi y_psi'
+              ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
+                text='x_psi y_psi s_rho'
+              END IF
+            END IF
+            latt=LEN_TRIM(text)
+            IF (nVdim.gt.2) THEN
+              text=text(1:latt)//' ocean_time'
+              latt=LEN_TRIM(text)
+            END IF
+            status=nf90_put_att(ncid, Vid, TRIM(Vinfo(22)),             &
+     &                          text(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'coordinates',              &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+            Aval(5)=0.0_r8
           END IF
-        ELSE
-          IF (INT(Aval(5)).eq.r2dvar) THEN
-            text='x_rho y_rho'
-          ELSE IF (INT(Aval(5)).eq.r3dvar) THEN
-            text='x_rho y_rho s_rho'
-          ELSE IF (INT(Aval(5)).eq.w3dvar) THEN
-            text='x_rho y_rho s_w'
-          ELSE IF (INT(Aval(5)).eq.b3dvar) THEN
-            text='x_rho y_rho'
-          ELSE IF (INT(Aval(5)).eq.u2dvar) THEN
-            text='x_u y_u'
-          ELSE IF (INT(Aval(5)).eq.u3dvar) THEN
-            text='x_u y_u s_rho'
-          ELSE IF (INT(Aval(5)).eq.v2dvar) THEN
-            text='x_v y_v'
-          ELSE IF (INT(Aval(5)).eq.v3dvar) THEN
-            text='x_v y_v s_rho'
-          ELSE IF (INT(Aval(5)).eq.p2dvar) THEN
-            text='x_psi y_psi'
-          ELSE IF (INT(Aval(5)).eq.p3dvar) THEN
-            text='x_psi y_psi s_rho'
-          END IF
         END IF
-        latt=LEN_TRIM(text)
-        IF (nVdim.gt.2) THEN
-          text=text(1:latt)//' ocean_time'
-          latt=LEN_TRIM(text)
-        END IF
-        def_var=nf90_put_att(ncid, Vid, TRIM(Vinfo(22)),                &
-     &                       text(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'coordinates', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
-        END IF
-        Vinfo(22)=' '
-        Aval(5)=0.0_r8
-      END IF
 !
 !  If applicable, define "formula_terms" attribute.
 !
-      latt=LEN_TRIM(Vinfo(23))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'formula_terms',                &
-     &                       Vinfo(23)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'formula_terms', TRIM(Vinfo(1)),            &
-     &                      TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(23))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'formula_terms',             &
+     &                          Vinfo(23)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'formula_terms',            &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(23)=' '
-      END IF
 !
 !  If applicable, define "field" attribute (always last).
 !
-      latt=LEN_TRIM(Vinfo(14))
-      IF (latt.gt.0) THEN
-        def_var=nf90_put_att(ncid, Vid, 'field',                        &
-     &                       Vinfo(14)(1:latt))
-        IF (def_var.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'field', TRIM(Vinfo(1)), TRIM(ncname)
-          exit_flag=3
-          ioerror=def_var
-          RETURN
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(14))
+          IF (latt.gt.0) THEN
+            status=nf90_put_att(ncid, Vid, 'field',                     &
+     &                          Vinfo(14)(1:latt))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) 'field',                    &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
         END IF
-        Vinfo(14)=' '
       END IF
 !
-! Clean variable name.
+!  Clean information variables.
 !
-      Vinfo(1)=' '
+      DO i=1,SIZE(Vinfo)
+        DO j=1,LEN(Vinfo(1))
+          Vinfo(i)(j:j)=' '
+        END DO
+      END DO
+!
+!  Set error flag
+!
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag, 1)
+#endif
+      def_var=exit_flag
 !
  10   FORMAT (/,' DEF_VAR - unable to define variable: ',a,/,           &
      &        11x,'in NetCDF file: ',a)
  20   FORMAT (/,'DEF_VAR - error while defining attribute: ',a,         &
      &        ' for variable: ',a,/,11x,'in NetCDF file: ',a)
+
       RETURN
       END FUNCTION def_var

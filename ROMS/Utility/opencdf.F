@@ -131,34 +131,74 @@
                 ioerror=status
                 RETURN
               END IF
-              IF ((TRIM(dimnam).eq.'xi_rho').or.                        &
-     &            (TRIM(dimnam).eq.'xi_v')) THEN
-                IF ((dimsiz.ne.Lm(ng)+2).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Lm(ng)+2,     &
+              IF (TRIM(dimnam).eq.'xi_rho') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%xi_rho).and.                &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%xi_rho,                &
      &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
-              ELSE IF ((TRIM(dimnam).eq.'xi_u').or.                     &
-     &                 (TRIM(dimnam).eq.'xi_psi')) THEN
-                IF ((dimsiz.ne.Lm(ng)+1).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Lm(ng)+1,     &
+              ELSE IF (TRIM(dimnam).eq.'xi_psi') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%xi_psi).and.                &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%xi_psi,                &
      &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
-              ELSE IF ((TRIM(dimnam).eq.'eta_rho').or.                  &
-     &                 (TRIM(dimnam).eq.'eta_u')) THEN
-                IF ((dimsiz.ne.Mm(ng)+2).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Mm(ng)+2,     &
+              ELSE IF (TRIM(dimnam).eq.'xi_u') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%xi_u).and.                  &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%xi_u,                  &
      &                              TRIM(ncname)
                   exit_flag=4
                   RETURN
                 END IF
-              ELSE IF ((TRIM(dimnam).eq.'eta_v').or.                    &
-     &                 (TRIM(dimnam).eq.'eta_psi')) THEN
-                IF ((dimsiz.ne.Mm(ng)+1).and.(ifield.eq.0)) THEN
-                  WRITE (stdout,60) TRIM(dimnam), dimsiz, Mm(ng)+1,     &
+              ELSE IF (TRIM(dimnam).eq.'xi_v') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%xi_v).and.                  &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%xi_v,                  &
+     &                              TRIM(ncname)
+                  exit_flag=4
+                  RETURN
+                END IF
+              ELSE IF (TRIM(dimnam).eq.'eta_rho') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%eta_rho).and.               &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%eta_rho,               &
+     &                              TRIM(ncname)
+                  exit_flag=4
+                  RETURN
+                END IF
+              ELSE IF (TRIM(dimnam).eq.'eta_psi') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%eta_psi).and.               &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%eta_psi,               &
+     &                              TRIM(ncname)
+                  exit_flag=4
+                  RETURN
+                END IF
+              ELSE IF (TRIM(dimnam).eq.'eta_u') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%eta_u).and.                 &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%eta_u,                 &
+     &                              TRIM(ncname)
+                  exit_flag=4
+                  RETURN
+                END IF
+              ELSE IF (TRIM(dimnam).eq.'eta_v') THEN
+                IF ((dimsiz.ne.IOBOUNDS(ng)%eta_v).and.                 &
+     &              (ifield.eq.0)) THEN
+                  WRITE (stdout,60) TRIM(dimnam), dimsiz,               &
+     &                              IOBOUNDS(ng)%eta_v,                 &
      &                              TRIM(ncname)
                   exit_flag=4
                   RETURN

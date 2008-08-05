@@ -34,10 +34,11 @@
 !
 !  Local variable declarations.
 !
+      logical :: got_var(NV)
+
       integer, parameter :: Natt = 24
 
       logical :: Ldefine = .FALSE.
-      logical :: got_var(NV)
 
       integer :: i, j, nvd4
       integer :: frecdim, status
@@ -45,15 +46,15 @@
       integer :: itrc
 # endif
 
-      integer :: DimIDs(29), t4dfrc(4), u4dfrc(4), v4dfrc(4)
+      integer :: DimIDs(31), t4dfrc(4), u4dfrc(4), v4dfrc(4)
       integer :: Vsize(4)
 
-      integer :: def_var
+      integer :: def_dim, def_var
 
       real(r8) :: Aval(6)
 
       character (len=80) :: Vinfo(Natt)
-      character (len=80) :: fname, ncname
+      character (len=80) :: ncname
 
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
@@ -115,7 +116,7 @@
 !
       IF (Ldefine) THEN
         IF (OutThread) THEN
-          status=nf90_open(TRIM(ncname),nf90_write,ncINIid(ng))
+          status=nf90_open(TRIM(ncname), nf90_write, ncINIid(ng))
           IF (status.eq.nf90_noerr) THEN
             status=nf90_redef(ncINIid(ng))
             IF (status.ne.nf90_noerr) THEN
@@ -139,7 +140,7 @@
 !  Define the dimensions of staggered fields.
 !-----------------------------------------------------------------------
 !
-      IF (Ldefine.and.OutThread) THEN
+      DEFINE: IF (Ldefine) THEN
         DO i=1,n_dim
           SELECT CASE (TRIM(ADJUSTL(dim_name(i))))
             CASE ('xi_rho')
@@ -163,7 +164,9 @@
           END SELECT
         END DO
         DimIDs(12)=rec_id
-        status=nf90_def_dim(ncINIid(ng),'Nadjust',Nfrec(ng),frecdim)
+        status=def_dim(ng, iNLM, ncINIid(ng), ncname, 'Nadjust',        &
+     &                 Nfrec(ng), frecdim)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Set number of dimensions for output variables.
 !
@@ -193,8 +196,8 @@
 !  Initialize local information variable arrays.
 !
         DO i=1,Natt
-          DO j=1,80
-            Vinfo(i)=' '
+          DO j=1,LEN(Vinfo(1))
+            Vinfo(i)(j:j)=' '
           END DO
         END DO
         DO i=1,6
@@ -220,8 +223,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(u2dvar,r8)
-          status=def_var(ncINIid(ng),iniVid(idUsms,ng),NF_FOUT,         &
-     &                   nvd4,u4dfrc,Aval,Vinfo,ncname)
+          status=def_var(ng, iNLM, ncINIid(ng), iniVid(idUsms,ng),      &
+     &                   NF_FOUT, nvd4, u4dfrc, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 !
 !  Define surface V-momentum stress.
@@ -235,8 +239,9 @@
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(v2dvar,r8)
-          status=def_var(ncINIid(ng),iniVid(idVsms,ng),NF_FOUT,         &
-     &                   nvd4,v4dfrc,Aval,Vinfo,ncname)
+          status=def_var(ng, iNLM, ncINIid(ng), iniVid(idVsms,ng),      &
+     &                   NF_FOUT, nvd4, v4dfrc, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 #  endif
 #  if defined ADJUST_STFLUX && defined SOLVE3D
@@ -262,8 +267,10 @@
 #   endif
             Vinfo(22)='coordinates'
             Aval(5)=REAL(r2dvar,r8)
-            status=def_var(ncINIid(ng),iniVid(idTsur(itrc),ng),         &
-     &                     NF_FOUT,nvd4,t4dfrc,Aval,Vinfo,ncname)
+            status=def_var(ng, iNLM, ncINIid(ng),                       &
+     &                     iniVid(idTsur(itrc),ng), NF_FOUT,            &
+     &                     nvd4, t4dfrc, Aval, Vinfo, ncname)
+            IF (exit_flag.ne.NoError) RETURN
           END IF
         END DO
 #  endif
@@ -272,8 +279,19 @@
 !  Leave definition mode.
 !-----------------------------------------------------------------------
 !
-        status=nf90_enddef(ncINIid(ng))
-      END IF
+        IF (OutThread) THEN
+          status=nf90_enddef(ncINIid(ng))
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,30) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+#  ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+#  endif
+        IF (exit_flag.ne.NoError) RETURN
+      END IF DEFINE
 # endif
 !
 !=======================================================================
@@ -299,7 +317,7 @@
 !  Open initialization file for read/write.
 !
         IF (OutThread) THEN
-          status=nf90_open(TRIM(ncname),nf90_write,ncINIid(ng))
+          status=nf90_open(TRIM(ncname), nf90_write, ncINIid(ng))
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,20) TRIM(ncname)
             exit_flag=3
@@ -369,45 +387,45 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idFsur)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idFsur)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idFsur)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idUbar)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idUbar)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVbar)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idVbar)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVbar)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
         IF (.not.got_var(idUvel)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idUvel)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idUvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         IF (.not.got_var(idVvel)) THEN
-          IF (Master) WRITE (stdout,30) TRIM(Vname(1,idVvel)),          &
+          IF (Master) WRITE (stdout,40) TRIM(Vname(1,idVvel)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
         DO itrc=1,NT(ng)
           IF (.not.got_var(idTvar(itrc))) THEN
-            IF (Master) WRITE (stdout,30) TRIM(Vname(1,idTvar(itrc))),  &
+            IF (Master) WRITE (stdout,40) TRIM(Vname(1,idTvar(itrc))),  &
      &                                    TRIM(ncname)
             exit_flag=3
             RETURN
@@ -423,8 +441,11 @@
   10  FORMAT (/,' DEF_INI - unable to put in define mode initial',      &
      &        ' NetCDF file: ',a)
   20  FORMAT (/,' DEF_INI - unable to open initial NetCDF file: ',a)
-  30  FORMAT (/,' DEF_INI - unable to find variable: ',a,2x,            &
-     &        ' in initial NetCDF file: ',a)
+  30  FORMAT (/,' DEF_INI - unable to leave definition mode for',       &
+     &        ' file: ', a)
+  40  FORMAT (/,' DEF_INI - unable to find variable: ',a,2x,            &
+     &        ' in file: ',a)
+
       RETURN
       END SUBROUTINE def_ini
 #else

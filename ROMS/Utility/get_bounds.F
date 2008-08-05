@@ -125,6 +125,120 @@
       RETURN
       END SUBROUTINE get_bounds
 
+      SUBROUTINE get_iobounds (ng)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes the horizontal lower bound, upper bound, and  !
+!  grid size for IO (NetCDF) variables.  Nested grids require special  !
+!  attention due to their connetivity.                                 !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!                                                                      !
+!  On Output, the horizontal lower/upper bounds and grid size for      !
+!  each variable type and nested grid number  are loaded into the      !
+!  IOBOUNDS structure which is declared in module MOD_PARAM:           !
+!                                                                      ! 
+!   IOBOUNDS(ng) % ILB_psi     I-direction lower bound (PSI)           !
+!   IOBOUNDS(ng) % IUB_psi     I-direction upper bound (PSI)           !
+!   IOBOUNDS(ng) % JLB_psi     J-direction lower bound (PSI)           !
+!   IOBOUNDS(ng) % JUB_psi     J-direction upper bound (PSI)           !
+!                                                                      !
+!   IOBOUNDS(ng) % ILB_rho     I-direction lower bound (RHO)           !
+!   IOBOUNDS(ng) % IUB_rho     I-direction upper bound (RHO)           !
+!   IOBOUNDS(ng) % JLB_rho     J-direction lower bound (RHO)           !
+!   IOBOUNDS(ng) % JUB_rho     J-direction upper bound (RHO)           !
+!                                                                      !
+!   IOBOUNDS(ng) % ILB_u       I-direction lower bound (U)             !
+!   IOBOUNDS(ng) % IUB_u       I-direction upper bound (U)             !
+!   IOBOUNDS(ng) % JLB_u       J-direction lower bound (U)             !
+!   IOBOUNDS(ng) % JUB_u       J-direction upper bound (U)             !
+!                                                                      !
+!   IOBOUNDS(ng) % ILB_v       I-direction lower bound (V)             !
+!   IOBOUNDS(ng) % IUB_v       I-direction upper bound (V)             !
+!   IOBOUNDS(ng) % JLB_v       J-direction lower bound (V)             !
+!   IOBOUNDS(ng) % JUB_v       J-direction upper bound (V)             !
+!                                                                      !
+!   IOBOUNDS(ng) % xi_psi      Number of I-direction points (PSI)      !
+!   IOBOUNDS(ng) % xi_rho      Number of I-direction points (RHO)      !
+!   IOBOUNDS(ng) % xi_u        Number of I-direction points (U)        !
+!   IOBOUNDS(ng) % xi_v        Number of I-direction points (V)        !
+!                                                                      !
+!   IOBOUNDS(ng) % eta_psi     Number of J-direction points (PSI)      !
+!   IOBOUNDS(ng) % eta_rho     Number of J-direction points (RHO)      !
+!   IOBOUNDS(ng) % eta_u       Number of I-direction points (U)        !
+!   IOBOUNDS(ng) % eta_v       Number of I-direction points (V)        !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng
+!
+!-----------------------------------------------------------------------
+!  Set IO lower/upper bounds and grid size for each C-grid type
+!  variable.
+!-----------------------------------------------------------------------
+!
+!  Recall that in non-nested applications the horizontal range,
+!  including interior and boundary points, for all variable types
+!  are:
+!
+!    PSI-type      [xi_psi, eta_psi] = [1:Lm(ng)+1, 1:Mm(ng)+1]
+!    RHO-type      [xi_rho, eta_rho] = [0:Lm(ng)+1, 0:Mm(ng)+1]
+!    U-type        [xi_u,   eta_u  ] = [1:Lm(ng)+1, 0:Mm(ng)+1]
+!    V-type        [xi_v,   eta_v  ] = [0:Lm(ng)+1, 1:Mm(ng)+1]
+!
+      IOBOUNDS(ng) % ILB_psi = 1
+      IOBOUNDS(ng) % IUB_psi = Lm(ng)+1
+      IOBOUNDS(ng) % JLB_psi = 1
+      IOBOUNDS(ng) % JUB_psi = Mm(ng)+1
+!
+      IOBOUNDS(ng) % ILB_rho = 0
+      IOBOUNDS(ng) % IUB_rho = Lm(ng)+1
+      IOBOUNDS(ng) % JLB_rho = 0
+      IOBOUNDS(ng) % JUB_rho = Mm(ng)+1
+!
+      IOBOUNDS(ng) % ILB_u = 1
+      IOBOUNDS(ng) % IUB_u = Lm(ng)+1
+      IOBOUNDS(ng) % JLB_u = 0
+      IOBOUNDS(ng) % JUB_u = Mm(ng)+1
+!
+      IOBOUNDS(ng) % ILB_v = 0
+      IOBOUNDS(ng) % IUB_v = Lm(ng)+1
+      IOBOUNDS(ng) % JLB_v = 1
+      IOBOUNDS(ng) % JUB_v = Mm(ng)+1
+!
+!  Set IO NetCDF files horizontal dimension size. Recall that NetCDF
+!  does not support arrays with zero index as an array element.
+!
+      IOBOUNDS(ng) % xi_psi  = IOBOUNDS(ng) % IUB_psi -                 &
+     &                         IOBOUNDS(ng) % ILB_psi + 1
+      IOBOUNDS(ng) % xi_rho  = IOBOUNDS(ng) % IUB_rho -                 &
+     &                         IOBOUNDS(ng) % ILB_rho + 1
+      IOBOUNDS(ng) % xi_u    = IOBOUNDS(ng) % IUB_u   -                 &
+     &                         IOBOUNDS(ng) % ILB_u   + 1
+      IOBOUNDS(ng) % xi_v    = IOBOUNDS(ng) % IUB_v   -                 &
+     &                         IOBOUNDS(ng) % ILB_v   + 1
+!
+      IOBOUNDS(ng) % eta_psi = IOBOUNDS(ng) % JUB_psi -                 &
+     &                         IOBOUNDS(ng) % JLB_psi + 1
+      IOBOUNDS(ng) % eta_rho = IOBOUNDS(ng) % JUB_rho -                 &
+     &                         IOBOUNDS(ng) % JLB_rho + 1
+      IOBOUNDS(ng) % eta_u   = IOBOUNDS(ng) % JUB_u   -                 &
+     &                         IOBOUNDS(ng) % JLB_u   + 1
+      IOBOUNDS(ng) % eta_v   = IOBOUNDS(ng) % JUB_v   -                 &
+     &                         IOBOUNDS(ng) % JLB_v   + 1
+      
+      RETURN
+      END SUBROUTINE get_iobounds
+
       SUBROUTINE get_tile (ng, tile, Itile, Jtile,                      &
      &                     Istr, Iend, Jstr, Jend,                      &
      &                     IstrR, IstrT, IstrU, IendR, IendT,           &

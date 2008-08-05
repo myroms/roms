@@ -123,24 +123,44 @@
 !  correct adjoint solution reading.  The ghost points are then
 !  assumed to be zero.
 !
-      Imin=0
-      Imax=Lm(ng)+1
-      Jmin=0
-      Jmax=Mm(ng)+1
       MyType=gtype
+
+      SELECT CASE (ABS(MyType))
+        CASE (p2dvar)
+          Imin=IOBOUNDS(ng)%ILB_psi
+          Imax=IOBOUNDS(ng)%IUB_psi
+          Jmin=IOBOUNDS(ng)%JLB_psi
+          Jmax=IOBOUNDS(ng)%JUB_psi
+        CASE (r2dvar)
+          Imin=IOBOUNDS(ng)%ILB_rho
+          Imax=IOBOUNDS(ng)%IUB_rho
+          Jmin=IOBOUNDS(ng)%JLB_rho
+          Jmax=IOBOUNDS(ng)%JUB_rho
+        CASE (u2dvar)
+          Imin=IOBOUNDS(ng)%ILB_u
+          Imax=IOBOUNDS(ng)%IUB_u
+          Jmin=IOBOUNDS(ng)%JLB_u
+          Jmax=IOBOUNDS(ng)%JUB_u
+        CASE (v2dvar)
+          Imin=IOBOUNDS(ng)%ILB_v
+          Imax=IOBOUNDS(ng)%IUB_v
+          Jmin=IOBOUNDS(ng)%JLB_v
+          Jmax=IOBOUNDS(ng)%JUB_v
+        CASE DEFAULT
+          Imin=IOBOUNDS(ng)%ILB_rho
+          Imax=IOBOUNDS(ng)%IUB_rho
+          Jmin=IOBOUNDS(ng)%JLB_rho
+          Jmax=IOBOUNDS(ng)%JUB_rho
+      END SELECT
+
+      Ilen=Imax-Imin+1
+      Jlen=Jmax-Jmin+1
+
       IF (model.eq.iADM) THEN
         Nghost=0
       ELSE  
         Nghost=GHOST_POINTS
       END IF
-      IF ((ABS(MyType).eq.p2dvar).or.(ABS(MyType).eq.u2dvar)) THEN
-        Imin=1
-      END IF
-      IF ((ABS(MyType).eq.p2dvar).or.(ABS(MyType).eq.v2dvar)) THEN
-        Jmin=1
-      END IF
-      Ilen=Imax-Imin+1
-      Jlen=Jmax-Jmin+1
 !
 !  Determine if interpolating from coarse gridded data to model grid
 !  is required.  This is only allowed for gridded 2D fields.  This is
@@ -163,16 +183,16 @@
 !  switch.
 !
       IF (ABS(MyType).eq.p2dvar) THEN
-        Npts=Nxyp(ng)
+        Npts=IOBOUNDS(ng)%xy_psi
         wtype=p2dvar
       ELSE IF (ABS(MyType).eq.u2dvar) THEN
-        Npts=Nxyu(ng)
+        Npts=IOBOUNDS(ng)%xy_u
         wtype=u2dvar
       ELSE IF (ABS(MyType).eq.v2dvar) THEN
-        Npts=Nxyv(ng)
+        Npts=IOBOUNDS(ng)%xy_v
         wtype=v2dvar
       ELSE
-        Npts=Nxyr(ng)
+        Npts=IOBOUNDS(ng)%xy_rho
         wtype=r2dvar
       END IF
       NWpts=(Lm(ng)+2)*(Mm(ng)+2)

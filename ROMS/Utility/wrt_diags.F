@@ -22,6 +22,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -33,7 +38,6 @@
 !
       integer :: LBi, UBi, LBj, UBj
       integer :: gfactor, gtype, ifield, itrc, ivar, status
-      integer :: start(4), total(4)
 
       integer :: nf_fwrite2d
 # ifdef SOLVE3D
@@ -68,18 +72,12 @@
 !
 !  Write out averaged time.
 !
-      IF (OutThread) THEN
-        start(1)=tDIAindx(ng)
-        total(1)=1
-        status=nf90_put_var(ncDIAid(ng), diaVid(idtime,ng),             &
-     &                      DIAtime(ng:), start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idtime)), tDIAindx(ng)
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_fvar (ng, iNLM, DIAname(ng),                      &
+     &                      TRIM(Vname(idtime,ng)), time(ng:),          &
+     &                      (/tDIAindx(ng)/), (/1/),                    &
+     &                      ncid = ncDIAid(ng),                         &
+     &                      varid = diaVid(idtime,ng))
+      IF (exit_flag.ne.NoError) RETURN
 
 # ifdef DIAGNOSTICS_UV
 !
@@ -257,18 +255,20 @@
       IF (OutThread) THEN
         status=nf90_sync(ncDIAid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,20)  TRIM(DIAname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-        WRITE (stdout,30) tDIAindx(ng)
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
+#endif
+      IF (Master) WRITE (stdout,30) tDIAindx(ng)
 !
   10  FORMAT (/,' WRT_DIAGS - error while writing variable: ',a,/,11x,  &
      &        'into diagnostics NetCDF file for time record: ',i4)
-  20  FORMAT (/,' WRT_DIAGS - unable to synchronize diagnostics ',      &
-     &        'NetCDF file to disk.')
+  20  FORMAT (/,' WRT_DIAGS - unable to synchronize to disk ',          &
+     &        'diagnostics file:',/,13x,a)
   30  FORMAT (6x,'WRT_DIAGS - wrote diagnostics fields into time ',     &
      &        'record = ',t72,i7.7)
 #else
