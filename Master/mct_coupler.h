@@ -151,18 +151,19 @@
           CALL ROMS_run (Tstr, Tend)
         END IF
         CALL ROMS_finalize
+#if defined SWAN_COUPLING || defined REFDIF_COUPLING
+        CALL finalize_ocn2wav_coupling
+#endif
+#ifdef WRF_COUPLING
+        CALL finalize_ocn2atm_coupling
+#endif
       END IF
 !
 !-----------------------------------------------------------------------
 !  Terminates all the mpi-processing and coupling.
 !-----------------------------------------------------------------------
 !
-#if defined SWAN_COUPLING || defined REFDIF_COUPLING
-      CALL finalize_ocn2wav_coupling
-#endif
-#ifdef WRF_COUPLING
-      CALL finalize_ocn2atm_coupling
-#endif
+      CALL mpi_barrier (MPI_COMM_WORLD)
       CALL MCTWorld_clean ()
       CALL mpi_finalize (MyError)
 
