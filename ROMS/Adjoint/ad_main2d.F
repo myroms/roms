@@ -36,7 +36,7 @@
       USE adsen_force_mod, ONLY : adsen_force
 # endif
       USE ad_diag_mod, ONLY : ad_diag
-      USE ad_ini_fields_mod, ONLY : ad_ini_fields
+      USE ad_ini_fields_mod, ONLY : ad_ini_fields, ad_ini_zeta
 # if defined WEAK_CONSTRAINT || defined IOM
       USE ad_forcing_mod, ONLY : ad_forcing
 # endif
@@ -359,11 +359,25 @@
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.ntend(ng)) THEN
+!
+!  Initialize other state variables.
+!
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
             CALL ad_ini_fields (ng, TILE, iADM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Initialize free-surface.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ad_ini_zeta (ng, TILE, iADM)
           END DO
         END DO
 !$OMP END PARALLEL DO

@@ -56,7 +56,7 @@
 # if defined DIFF_3DCOEF || defined VISC_3DCOEF
       USE hmixing_mod, ONLY : hmixing
 # endif
-      USE ini_fields_mod, ONLY : ini_fields
+      USE ini_fields_mod, ONLY : ini_fields, ini_zeta
 # ifdef LMD_MIXING
       USE lmd_vmix_mod, ONLY : lmd_vmix
 # endif
@@ -180,6 +180,20 @@
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
+!
+!  Initialize free-surface.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ini_zeta (ng, TILE, iNLM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Initialize other state variables.
+!
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

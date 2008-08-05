@@ -20,6 +20,7 @@
 
       PRIVATE
       PUBLIC :: tl_ini_fields
+      PUBLIC :: tl_ini_zeta
 
       CONTAINS
 !
@@ -146,9 +147,6 @@
       USE tl_u2dbc_mod, ONLY : tl_u2dbc_tile
       USE tl_v2dbc_mod, ONLY : tl_v2dbc_tile
 # endif
-# ifndef OBC_FSRADIATION
-      USE tl_zetabc_mod, ONLY : tl_zetabc_tile
-# endif
 !
 !  Imported variable declarations.
 !
@@ -180,8 +178,10 @@
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+      real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Zt_avg1(LBi:,LBj:)
+      real(r8), intent(in) :: tl_Zt_avg1(LBi:,LBj:)
 
 #   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(inout) :: tl_bed_thick0(LBi:,LBj:)
@@ -189,7 +189,6 @@
 #   endif
       real(r8), intent(inout) :: tl_h(LBi:,LBj:)
       real(r8), intent(inout) :: tl_Hz(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
       real(r8), intent(inout) :: tl_z_r(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_z_w(LBi:,LBj:,0:)
 
@@ -199,7 +198,6 @@
 #  endif
       real(r8), intent(inout) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: tl_vbar(LBi:,LBj:,:)
-      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
@@ -221,8 +219,10 @@
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
       real(r8), intent(in) :: Zt_avg1(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
 
 #   if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8), intent(inout) :: tl_bed_thick0(LBi:UBi,LBj:UBj)
@@ -230,7 +230,6 @@
 #   endif
       real(r8), intent(inout) :: tl_h(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: tl_Hz(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: tl_z_r(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(inout) :: tl_z_w(LBi:UBi,LBj:UBj,0:N(ng))
 
@@ -240,7 +239,6 @@
 #  endif
       real(r8), intent(inout) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 # endif
 !
 !  Local variable declarations.
@@ -271,169 +269,8 @@
 # endif
 
 # include "set_bounds.h"
-!
-!-----------------------------------------------------------------------
-!  Initialize other free-surface time-levels.
-!-----------------------------------------------------------------------
-!
-# ifndef OBC_FSRADIATION
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
-# else
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-# endif
-!>        cff1=zeta(i,j,kstp)
-!>
-          tl_cff1=tl_zeta(i,j,kstp)
-# ifdef MASKING
-!>        cff1=cff1*rmask(i,j)
-!>
-          tl_cff1=tl_cff1*rmask(i,j)
-# endif
-!>        zeta(i,j,kstp)=cff1
-!>
-          tl_zeta(i,j,kstp)=tl_cff1
-# ifdef SOLVE3D
-!>        zeta(i,j,knew)=cff1
-!>
-          tl_zeta(i,j,knew)=tl_cff1
-# else
-!>        zeta(i,j,krhs)=cff1
-!>
-          tl_zeta(i,j,krhs)=tl_cff1
-# endif
-        END DO
-      END DO
-# ifndef OBC_FSRADIATION
-!
-!  Apply boundary conditions.
-!
-!>    CALL zetabc_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj,                             &
-!>   &                  krhs, kstp, kstp,                               &
-!>   &                  zeta)
-!>
-      CALL tl_zetabc_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     krhs, kstp, kstp,                            &
-     &                     zeta,                                        &
-     &                     tl_zeta)
-#  ifdef SOLVE3D
-!>    CALL zetabc_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj,                             &
-!>   &                  krhs, kstp, knew,                               &
-!>   &                  zeta)
-!>
-      CALL tl_zetabc_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     krhs, kstp, knew,                            &
-     &                     zeta,                                        &
-     &                     tl_zeta)
-#  else
-!>    CALL zetabc_tile (ng, tile,                                       &
-!>   &                  LBi, UBi, LBj, UBj,                             &
-!>   &                  krhs, kstp, krhs,                               &
-!>   &                  zeta)
-!>
-      CALL tl_zetabc_tile (ng, tile,                                    &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     krhs, kstp, krhs,                            &
-     &                     zeta,                                        &
-     &                     tl_zeta)
-#  endif
-# endif
-# if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_r2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        zeta(:,:,kstp))
-!>
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_zeta(:,:,kstp))
-#  ifdef SOLVE3D
-!>    CALL exchange_r2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        zeta(:,:,knew))
-!>
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_zeta(:,:,knew))
-#  else
-!>    CALL exchange_r2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        zeta(:,:,krhs))
-!>
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_zeta(:,:,krhs))
-#  endif
-# endif
-
-# ifdef DISTRIBUTE
-#  ifdef SOLVE3D
-!>    CALL mp_exchange2d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    zeta(:,:,kstp),                               &
-!>   &                    zeta(:,:,knew))
-!>
-      CALL mp_exchange2d (ng, tile, model, 2,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_zeta(:,:,kstp),                            &
-     &                    tl_zeta(:,:,knew))
-#  else
-!>    CALL mp_exchange2d (ng, tile, model, 2,                           &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    zeta(:,:,kstp),                               &
-!>   &                    zeta(:,:,krhs))
-!>
-      CALL mp_exchange2d (ng, tile, model, 2,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_zeta(:,:,kstp),                            &
-     &                    tl_zeta(:,:,krhs))
-#  endif
-# endif
 
 # ifdef SOLVE3D
-!
-!-----------------------------------------------------------------------
-!  Initialize fast-time averaged free-surface (Zt_avg1) with the inital
-!  free-surface
-!-----------------------------------------------------------------------
-!
-      DO j=JstrR,JendR
-        DO i=IstrR,IendR
-!>        Zt_avg1(i,j)=zeta(i,j,kstp)
-!>
-          tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
-        END DO
-      END DO
-
-#  if defined EW_PERIODIC || defined NS_PERIODIC
-!>    CALL exchange_r2d_tile (ng, tile,                                 &
-!>   &                        LBi, UBi, LBj, UBj,                       &
-!>   &                        Zt_avg1)
-!>
-      CALL exchange_r2d_tile (ng, tile,                                 &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        tl_Zt_avg1)
-#  endif
-#  ifdef DISTRIBUTE
-!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
-!>   &                    LBi, UBi, LBj, UBj,                           &
-!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
-!>   &                    Zt_avg1)
-!>
-      CALL mp_exchange2d (ng, tile, model, 1,                           &
-     &                    LBi, UBi, LBj, UBj,                           &
-     &                    NghostPoints, EWperiodic, NSperiodic,         &
-     &                    tl_Zt_avg1)
-#  endif
-
 #  if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
 !
 !-----------------------------------------------------------------------
@@ -783,12 +620,12 @@
 !
 !  Apply boundary conditions.
 !
-!>      CALL t3dbc_tile (ng, tile,                   itrc,              &
+!>      CALL t3dbc_tile (ng, tile, itrc,                                &
 !>   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
 !>   &                   nstp, nstp,                                    &
 !>   &                   t)
 !>
-        CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
+        CALL tl_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      nstp, nstp,                                 &
      &                      tl_t)
@@ -797,7 +634,7 @@
 !>   &                   nstp, nnew,                                    &
 !>   &                   t)
 !>
-        CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
+        CALL tl_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      nstp, nnew,                                 &
      &                      tl_t)
@@ -1040,5 +877,282 @@
 
       RETURN
       END SUBROUTINE tl_ini_fields_tile
+
+!
+!***********************************************************************
+      SUBROUTINE tl_ini_zeta (ng, tile, model)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+# ifdef SOLVE3D
+      USE mod_coupling
+# endif
+      USE mod_ocean
+      USE mod_stepping
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+      CALL tl_ini_zeta_tile (ng, tile, model,                           &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       kstp(ng), krhs(ng), knew(ng),              &
+# ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+# endif
+# ifdef SOLVE3D
+     &                       COUPLING(ng) % tl_Zt_avg1,                 &
+# endif
+     &                       OCEAN(ng) % zeta,                          &
+     &                       OCEAN(ng) % tl_zeta)
+
+      RETURN
+      END SUBROUTINE tl_ini_zeta
+!
+!***********************************************************************
+      SUBROUTINE tl_ini_zeta_tile (ng, tile, model,                     &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             kstp, krhs, knew,                    &
+# ifdef MASKING
+     &                             rmask,                               &
+# endif
+# ifdef SOLVE3D
+     &                             tl_Zt_avg1,                          &
+# endif
+     &                             zeta, tl_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE exchange_2d_mod, ONLY : exchange_r2d_tile
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : mp_exchange2d
+# endif
+# ifndef OBC_FSRADIATION
+      USE tl_zetabc_mod, ONLY : tl_zetabc_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: kstp, krhs, knew
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_Zt_avg1(LBi:,LBj:)
+#  endif
+      real(r8), intent(inout) :: tl_zeta(LBi:,LBj:,:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: tl_Zt_avg1(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(inout) :: tl_zeta(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: i, j
+
+      real(r8) :: cff1
+      real(r8) :: tl_cff1, tl_cff2
+
+# include "set_bounds.h"
+!
+!-----------------------------------------------------------------------
+!  Initialize other free-surface time-levels.
+!-----------------------------------------------------------------------
+!
+# ifndef OBC_FSRADIATION
+      DO j=Jstr,Jend
+        DO i=Istr,Iend
+# else
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+# endif
+!>        cff1=zeta(i,j,kstp)
+!>
+          tl_cff1=tl_zeta(i,j,kstp)
+# ifdef MASKING
+!>        cff1=cff1*rmask(i,j)
+!>
+          tl_cff1=tl_cff1*rmask(i,j)
+# endif
+!>        zeta(i,j,kstp)=cff1
+!>
+          tl_zeta(i,j,kstp)=tl_cff1
+# ifdef SOLVE3D
+!>        zeta(i,j,knew)=cff1
+!>
+          tl_zeta(i,j,knew)=tl_cff1
+# else
+!>        zeta(i,j,krhs)=cff1
+!>
+          tl_zeta(i,j,krhs)=tl_cff1
+# endif
+        END DO
+      END DO
+
+# ifndef OBC_FSRADIATION
+!
+!  Apply boundary conditions.
+!
+!>    CALL zetabc_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj,                             &
+!>   &                  krhs, kstp, kstp,                               &
+!>   &                  zeta)
+!>
+      CALL tl_zetabc_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     krhs, kstp, kstp,                            &
+     &                     zeta,                                        &
+     &                     tl_zeta)
+#  ifdef SOLVE3D
+!>    CALL zetabc_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj,                             &
+!>   &                  krhs, kstp, knew,                               &
+!>   &                  zeta)
+!>
+      CALL tl_zetabc_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     krhs, kstp, knew,                            &
+     &                     zeta,                                        &
+     &                     tl_zeta)
+#  else
+!>    CALL zetabc_tile (ng, tile,                                       &
+!>   &                  LBi, UBi, LBj, UBj,                             &
+!>   &                  krhs, kstp, krhs,                               &
+!>   &                  zeta)
+!>
+      CALL tl_zetabc_tile (ng, tile,                                    &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     krhs, kstp, krhs,                            &
+     &                     zeta,                                        &
+     &                     tl_zeta)
+#  endif
+# endif
+
+# if defined EW_PERIODIC || defined NS_PERIODIC
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        zeta(:,:,kstp))
+!>
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_zeta(:,:,kstp))
+#  ifdef SOLVE3D
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        zeta(:,:,knew))
+!>
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_zeta(:,:,knew))
+#  else
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        zeta(:,:,krhs))
+!>
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_zeta(:,:,krhs))
+#  endif
+# endif
+
+# ifdef DISTRIBUTE
+#  ifdef SOLVE3D
+!>    CALL mp_exchange2d (ng, tile, model, 2,                           &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    zeta(:,:,kstp),                               &
+!>   &                    zeta(:,:,knew))
+!>
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_zeta(:,:,kstp),                            &
+     &                    tl_zeta(:,:,knew))
+#  else
+!>    CALL mp_exchange2d (ng, tile, model, 2,                           &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    zeta(:,:,kstp),                               &
+!>   &                    zeta(:,:,krhs))
+!>
+      CALL mp_exchange2d (ng, tile, model, 2,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_zeta(:,:,kstp),                            &
+     &                    tl_zeta(:,:,krhs))
+#  endif
+# endif
+
+# ifdef SOLVE3D
+!
+!-----------------------------------------------------------------------
+!  Initialize fast-time averaged free-surface (Zt_avg1) with the inital
+!  free-surface
+!-----------------------------------------------------------------------
+!
+      DO j=JstrR,JendR
+        DO i=IstrR,IendR
+!>        Zt_avg1(i,j)=zeta(i,j,kstp)
+!>
+          tl_Zt_avg1(i,j)=tl_zeta(i,j,kstp)
+        END DO
+      END DO
+
+#  if defined EW_PERIODIC || defined NS_PERIODIC
+!>    CALL exchange_r2d_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        Zt_avg1)
+!>
+      CALL exchange_r2d_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        tl_Zt_avg1)
+#  endif
+#  ifdef DISTRIBUTE
+!>    CALL mp_exchange2d (ng, tile, model, 1,                           &
+!>   &                    LBi, UBi, LBj, UBj,                           &
+!>   &                    NghostPoints, EWperiodic, NSperiodic,         &
+!>   &                    Zt_avg1)
+!>
+      CALL mp_exchange2d (ng, tile, model, 1,                           &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    NghostPoints, EWperiodic, NSperiodic,         &
+     &                    tl_Zt_avg1)
+#  endif
+# endif
+
+      RETURN
+      END SUBROUTINE tl_ini_zeta_tile
 #endif
       END MODULE tl_ini_fields_mod

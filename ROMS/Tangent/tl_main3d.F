@@ -67,7 +67,7 @@
 !!    USE tl_gls_corstep_mod, ONLY : tl_gls_corstep
 !!    USE tl_gls_prestep_mod, ONLY : tl_gls_prestep
 # endif
-      USE tl_ini_fields_mod, ONLY : tl_ini_fields
+      USE tl_ini_fields_mod, ONLY : tl_ini_fields, tl_ini_zeta
 # ifdef LMD_MIXING_NOT_YET
 !!    USE tl_lmd_vmix_mod, ONLY : tl_lmd_vmix
 # endif
@@ -214,6 +214,20 @@
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
+!
+!  Initialize free-surface.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_ini_zeta (ng, TILE, iTLM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Initialize other state variables.
+!
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

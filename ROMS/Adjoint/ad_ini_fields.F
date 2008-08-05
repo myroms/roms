@@ -20,6 +20,7 @@
 
       PRIVATE
       PUBLIC :: ad_ini_fields
+      PUBLIC :: ad_ini_zeta
 
       CONTAINS
 !
@@ -84,7 +85,6 @@
      &                         OCEAN(ng) % ad_vbar_sol,                 &
      &                         OCEAN(ng) % ad_vbar,                     &
      &                         OCEAN(ng) % zeta,                        &
-     &                         OCEAN(ng) % ad_zeta_sol,                 &
      &                         OCEAN(ng) % ad_zeta)
 
       RETURN
@@ -118,7 +118,7 @@
 # endif
      &                               ubar, ad_ubar_sol, ad_ubar,        &
      &                               vbar, ad_vbar_sol, ad_vbar,        &
-     &                               zeta, ad_zeta_sol, ad_zeta)
+     &                               zeta, ad_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -145,9 +145,6 @@
 # ifndef OBC_M2RADIATION
       USE ad_u2dbc_mod, ONLY : ad_u2dbc_tile
       USE ad_v2dbc_mod, ONLY : ad_v2dbc_tile
-# endif
-# ifndef OBC_FSRADIATION
-      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
 # endif
 !
 !  Imported variable declarations.
@@ -197,7 +194,6 @@
 #  endif
       real(r8), intent(inout) :: ad_ubar_sol(LBi:,LBj:)
       real(r8), intent(inout) :: ad_vbar_sol(LBi:,LBj:)
-      real(r8), intent(inout) :: ad_zeta_sol(LBi:,LBj:)
 
       real(r8), intent(inout) :: ad_ubar(LBi:,LBj:,:)
       real(r8), intent(inout) :: ad_vbar(LBi:,LBj:,:)
@@ -240,7 +236,6 @@
 #  endif
       real(r8), intent(inout) :: ad_ubar_sol(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: ad_vbar_sol(LBi:UBi,LBj:UBj)
-      real(r8), intent(inout) :: ad_zeta_sol(LBi:UBi,LBj:UBj)
 
       real(r8), intent(inout) :: ad_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(inout) :: ad_vbar(LBi:UBi,LBj:UBj,3)
@@ -732,21 +727,21 @@
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
      &                             ad_t(:,:,:,nstp,itrc))
 #  endif
-!!      CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
+!!      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
 !!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !!   &                      nstp, nnew,                                 &
 !!   &                      tl_t)
 !!
-!!      CALL ad_t3dbc_tile (ng, tile,                   itrc,           &
+!!      CALL ad_t3dbc_tile (ng, tile, itrc,                             &
 !!   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !!   &                      nstp, nnew,                                 &
 !!   &                      ad_t)
-!>      CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
+!>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
 !>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
 !>   &                      nstp, nstp,                                 &
 !>   &                      tl_t)
 !>
-        CALL ad_t3dbc_tile (ng, tile,                   itrc,           &
+        CALL ad_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
      &                      nstp, nstp,                                 &
      &                      ad_t)
@@ -982,6 +977,138 @@
         END DO
       END DO
 #  endif
+# endif
+!
+!-----------------------------------------------------------------------
+!  Load 2D adjoint momentum solution into IO arrays.
+!-----------------------------------------------------------------------
+!
+      DO j=JstrR,JendR
+        DO i=Istr,IendR
+          ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)
+        END DO
+        IF (j.ge.Jstr) THEN
+          DO i=IstrR,IendR
+            ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)
+          END DO
+        END IF
+      END DO
+
+      RETURN
+      END SUBROUTINE ad_ini_fields_tile
+
+!
+!***********************************************************************
+      SUBROUTINE ad_ini_zeta (ng, tile, model)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_grid
+# ifdef SOLVE3D
+      USE mod_coupling
+# endif
+      USE mod_ocean
+      USE mod_stepping
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+!
+!  Local variable declarations.
+!
+# include "tile.h"
+!
+      CALL ad_ini_zeta_tile (ng, tile, model,                           &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       kstp(ng), krhs(ng), knew(ng),              &
+# ifdef MASKING
+     &                       GRID(ng) % rmask,                          &
+# endif
+# ifdef SOLVE3D
+     &                       COUPLING(ng) % ad_Zt_avg1,                 &
+# endif
+     &                       OCEAN(ng) % zeta,                          &
+     &                       OCEAN(ng) % ad_zeta_sol,                   &
+     &                       OCEAN(ng) % ad_zeta)
+
+      RETURN
+      END SUBROUTINE ad_ini_zeta
+!
+!***********************************************************************
+      SUBROUTINE ad_ini_zeta_tile (ng, tile, model,                     &
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             kstp, krhs, knew,                    &
+# ifdef MASKING
+     &                             rmask,                               &
+# endif
+# ifdef SOLVE3D
+     &                             ad_Zt_avg1,                          &
+# endif
+     &                             zeta, ad_zeta_sol, ad_zeta)
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_scalars
+!
+# if defined EW_PERIODIC || defined NS_PERIODIC
+      USE ad_exchange_2d_mod
+# endif
+# ifdef DISTRIBUTE
+      USE mp_exchange_mod, ONLY : ad_mp_exchange2d
+# endif
+# ifndef OBC_FSRADIATION
+      USE ad_zetabc_mod, ONLY : ad_zetabc_tile
+# endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, tile, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: kstp, krhs, knew
+!
+# ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)
+#  endif
+      real(r8), intent(inout) :: ad_zeta_sol(LBi:,LBj:)
+      real(r8), intent(inout) :: ad_zeta(LBi:,LBj:,:)
+# else
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
+#  ifdef SOLVE3D
+      real(r8), intent(inout) :: ad_Zt_avg1(LBi:UBi,LBj:UBj)
+#  endif
+      real(r8), intent(inout) :: ad_zeta_sol(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: ad_zeta(LBi:UBi,LBj:UBj,3)
+# endif
+!
+!  Local variable declarations.
+!
+# ifdef DISTRIBUTE
+#  ifdef EW_PERIODIC
+      logical :: EWperiodic=.TRUE.
+#  else
+      logical :: EWperiodic=.FALSE.
+#  endif
+#  ifdef NS_PERIODIC
+      logical :: NSperiodic=.TRUE.
+#  else
+      logical :: NSperiodic=.FALSE.
+#  endif
+# endif
+      integer :: i, j
+
+      real(r8) :: ad_cff1
+
+# include "set_bounds.h"
+
+# ifdef SOLVE3D
 !
 !-----------------------------------------------------------------------
 !  Initialize fast-time averaged free-surface (Zt_avg1) with the inital
@@ -1156,24 +1283,16 @@
       END DO
 !
 !-----------------------------------------------------------------------
-!  Load 2D field adjoint solution into IO arrays.
+!  Load free-surface adjoint solution into IO arrays.
 !-----------------------------------------------------------------------
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           ad_zeta_sol(i,j)=ad_zeta(i,j,kstp)
         END DO
-        DO i=Istr,IendR
-          ad_ubar_sol(i,j)=ad_ubar(i,j,kstp)
-        END DO
-        IF (j.ge.Jstr) THEN
-          DO i=IstrR,IendR
-            ad_vbar_sol(i,j)=ad_vbar(i,j,kstp)
-          END DO
-        END IF
       END DO
 
       RETURN
-      END SUBROUTINE ad_ini_fields_tile
+      END SUBROUTINE ad_ini_zeta_tile
 #endif
       END MODULE ad_ini_fields_mod

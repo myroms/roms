@@ -35,7 +35,7 @@
 # ifdef ADJUST_WSTRESS
       USE frc_adjust_mod, ONLY : load_NLforcing
 # endif
-      USE ini_fields_mod, ONLY : ini_fields
+      USE ini_fields_mod, ONLY : ini_fields, ini_zeta
 # ifdef AIR_OCEAN
       USE ocean_coupler_mod, ONLY : ocn2atm_coupling
 # endif
@@ -135,6 +135,20 @@
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
+!
+!  Initialize free-surface.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ini_zeta (ng, TILE, iNLM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Initialize other state variables.
+!
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

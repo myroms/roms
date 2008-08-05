@@ -44,7 +44,7 @@
 # if defined WEAK_CONSTRAINT || defined IOM
       USE tl_forcing_mod, ONLY : tl_forcing
 # endif
-      USE tl_ini_fields_mod, ONLY : tl_ini_fields
+      USE tl_ini_fields_mod, ONLY : tl_ini_fields, tl_ini_zeta
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE tl_radiation_stress_mod, ONLY : tl_radiation_stress
 # endif
@@ -145,6 +145,20 @@
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
+!
+!  Initialize free-surface.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL ini_zeta (ng, TILE, iTLM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Initialize other state variables.
+!
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

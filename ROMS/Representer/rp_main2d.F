@@ -38,7 +38,7 @@
 !!    USE oi_update_mod, ONLY : oi_update
 # endif
       USE rp_diag_mod, ONLY : rp_diag
-      USE rp_ini_fields_mod, ONLY : rp_ini_fields
+      USE rp_ini_fields_mod, ONLY : rp_ini_fields, rp_ini_zeta
 # ifdef NEARSHORE_MELLOR_NOT_YET
 !!    USE rp_radiation_stress_mod, ONLY : rp_radiation_stress
 # endif
@@ -130,11 +130,25 @@
 !-----------------------------------------------------------------------
 !
       IF (iic(ng).eq.ntstart(ng)) THEN
+!
+!  Initialize free-surface.
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL rp_ini_zeta (ng, TILE, iRPM)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+!
+!  Initialize other state variables.
+!
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*(thread+1)-1,subs*thread,-1
-            CALL rp_ini_fields (ng, TILE, IRPM)
+            CALL rp_ini_fields (ng, TILE, iRPM)
           END DO
         END DO
 !$OMP END PARALLEL DO
