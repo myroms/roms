@@ -125,7 +125,7 @@ Nthreads(waves) = 1
 !       Export(...) = NONE
 
  Nexport(ocean) = 4
- Nexport(waves) = 5
+ Nexport(waves) = 6
 
   Export(ocean) = bath  \
                   SSH   \
@@ -136,7 +136,8 @@ Nthreads(waves) = 1
                   Wamp  \
                   Wlen  \
                   Wptop \
-                  Wpbot
+                  Wpbot \
+                  Wubot
 
 ! Import fields per model, [1:Nimport(...)] string values are expected per
 ! coupled model. If there is no field to import, set
@@ -144,14 +145,15 @@ Nthreads(waves) = 1
 !      Nimport(...) = 0
 !       Import(...) = NONE
 
- Nimport(ocean) = 5
+ Nimport(ocean) = 6
  Nimport(waves) = 4
 
   Import(ocean) = Wdir  \
                   Wamp  \
                   Wlen  \
                   Wptop \
-                  Wpbot
+                  Wpbot \
+                  Wubot
 
   Import(waves) = bath  \
                   SSH   \
