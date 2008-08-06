@@ -554,24 +554,14 @@
      &                    hbbl)
 #  endif
 !
-!  Shapiro filter on boundary layer thickness
+!  Apply Shapiro filter
 !
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
-          bl_dpth(i,j)=hbbl(i,j)-z_w(i,j,0)
-        END DO
-      END DO
       CALL shapiro2d_tile (ng, tile, iNLM,                              &
      &                     LBi, UBi, LBj, UBj,                          &
 #  ifdef MASKING
      &                     rmask,                                       &
 #  endif
-     &                     bl_dpth)
-      DO j=Jstr,Jend
-        DO i=Istr,Iend
-          hbbl(i,j)=bl_dpth(i,j)+z_w(i,j,0)
-        END DO
-      END DO
+     &                     hbbl)
 # endif
 !
 !  Apply gradient or periodic boundary conditions.

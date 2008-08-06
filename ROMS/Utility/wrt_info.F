@@ -328,7 +328,6 @@
 !
       CALL netcdf_put_fvar (ng, model, ncname, 'Akt_bak',               &
      &                      Akt_bak(:,ng), (/1/), (/NT(ng)/),           &
-     &                                       &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
