@@ -398,6 +398,8 @@
 !-----------------------------------------------------------------------
 !  Define time-varying variables.
 !-----------------------------------------------------------------------
+
+# if defined IS4DVAR && defined LANCZOS
 !
 !  Define Lanczos algorithm coefficients which can be used for
 !  preconditioning or to compute the sensitivity of the observations
@@ -426,6 +428,7 @@
         status=def_var(ng, iADM, ncLCZid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
 !
 !  Define model time.
 !

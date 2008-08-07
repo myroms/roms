@@ -494,7 +494,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Nritz, i, ng
+      integer :: Nritz, my_NstateVar, i, ng
 
 # ifdef OBSERVATIONS
       real(r8), parameter :: IniVal = 0.0_r8
@@ -521,6 +521,8 @@
             Ndatum(ng)=dim_size(i)
           ELSE IF (TRIM(dim_name(i)).eq.'survey') THEN
             Nsurvey(ng)=dim_size(i)
+          ELSE IF (TRIM(dim_name(i)).eq.'state_variable') THEN
+            my_NstateVar=dim_size(i)
           END IF
         END DO
         IF (Ndatum(ng).eq.0) THEN
@@ -846,7 +848,8 @@
 !
         CALL netcdf_get_fvar (ng, iNLM, TRIM(OBSname(ng)),              &
      &                        TRIM(Vname(1,idOvar)),                    &
-     &                        FOURDVAR(ng)%ObsVar)
+     &                        FOURDVAR(ng)%ObsVar,                      &
+     &                        start = (/1/), total = (/my_NstateVar/))
         IF (exit_flag.ne.NoError) RETURN
 # endif
       END DO

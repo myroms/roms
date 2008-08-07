@@ -3276,7 +3276,7 @@
 !
 !  Imported variable declarations
 !
-      integer, intent(in) :: ng, innLoop, outLoop
+      integer, intent(in) :: ng, model, innLoop, outLoop
 !
 !  Local variable declarations.
 !

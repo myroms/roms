@@ -593,7 +593,7 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
-      CALL netcdf_put_fvar (ng, model, ncname, 'levbfrc',               &
+      CALL netcdf_put_ivar (ng, model, ncname, 'levbfrc',               &
      &                      levbfrc(ng), (/0/), (/0/),                  &
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN

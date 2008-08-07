@@ -59,7 +59,7 @@
 !
 !  Write out number of time-accumulated harmonics.
 !
-      CALL netcdf_put_fvar (ng, iNLM, TIDEname(ng), 'Hcount',           &
+      CALL netcdf_put_ivar (ng, iNLM, TIDEname(ng), 'Hcount',           &
      &                      Hcount(ng), (/0/), (/0/),                   &
      &                      ncid = ncTIDEid(ng))
       IF (exit_flag.ne.NoError) RETURN
@@ -244,12 +244,12 @@
 #ifdef DISTRIBUTE
       CALL mp_bcasti (ng, iNLM, exit_flag, 1)
 #endif
-      IF (Master  WRITE (stdout,30) TRIM(TIDEname(ng))
+      IF (Master) WRITE (stdout,30) TRIM(TIDEname(ng))
 !
   10  FORMAT (/,' WRT_TIDES - error while writing variable: ',a,        &
      &        /,13x,'into tide forcing NetCDF file: ',/,13x,a)
   20  FORMAT (/,' WRT_TIDES - unable to synchronize to disk tide ',     &
-     &        'forcing file:',/,13x,1)
+     &        'forcing file:',/,13x,a)
   30  FORMAT (6x,'WRT_TIDES - wrote time-accumulated tide harmonics ')
 #else
       SUBROUTINE wrt_tides

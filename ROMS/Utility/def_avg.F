@@ -2447,7 +2447,15 @@
         END IF
       END IF QUERY
 !
-!  Set initial average time.
+!  Set initial average time. Notice that the value is offset by half
+!  nAVG*dt so there is not a special case when computing its value
+
+# ifdef ADJOINT
+!  in "ad_set_avg".
+!
+        AVGtime(ng)=time(ng)+0.5_r8*REAL(nAVG(ng),r8)*dt(ng)
+# else
+!  in "set_avg".
 !
       IF (ntsAVG(ng).eq.1) THEN
         AVGtime(ng)=time(ng)-0.5_r8*REAL(nAVG(ng),r8)*dt(ng)
@@ -2455,6 +2463,7 @@
         AVGtime(ng)=time(ng)+REAL(ntsAVG(ng),r8)*dt(ng)-                &
      &              0.5_r8*REAL(nAVG(ng),r8)*dt(ng)
       END IF
+# endif
 !
   10  FORMAT (6x,'DEF_AVG   - creating average file: ',a)
   20  FORMAT (6x,'DEF_AVG   - inquiring average file: ',a)
