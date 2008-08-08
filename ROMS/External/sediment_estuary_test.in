@@ -80,7 +80,7 @@
 
 ! Surface erosion rate (kg/m2/s).
 
-   MUD_ERATE == 1.0d-5  5.0d-4
+   MUD_ERATE == 1.0d-4  5.0d-4
 
 ! Critical shear for erosion and deposition (N/m2).
 

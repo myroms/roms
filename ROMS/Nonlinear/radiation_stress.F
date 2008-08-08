@@ -270,9 +270,9 @@
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
 #  ifdef SOLVE3D
-      real(r8), intent(out) :: Hz(LBi:UBi,LBj:UBj,UBk)
-      real(r8), intent(out) :: z_r(LBi:UBi,LBj:UBj,UBk)
-      real(r8), intent(out) :: z_w(LBi:UBi,LBj:UBj,0:UBk)
+      real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,UBk)
+      real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,UBk)
+      real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:UBk)
 #  endif
       real(r8), intent(in) :: Hwave(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: Dwave(LBi:UBi,LBj:UBj)

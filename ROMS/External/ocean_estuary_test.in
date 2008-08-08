@@ -52,9 +52,9 @@
 ! Grid dimension parameters. See notes below in the Glossary for how to set
 ! these parameters correctly.
 
-          Lm == 50           ! Number of I-direction INTERIOR RHO-points
+          Lm == 200           ! Number of I-direction INTERIOR RHO-points
           Mm == 3             ! Number of J-direction INTERIOR RHO-points
-           N == 10            ! Number of vertical levels
+           N == 20            ! Number of vertical levels
 
         Nbed =  1             ! Number of sediment bed layers
 
