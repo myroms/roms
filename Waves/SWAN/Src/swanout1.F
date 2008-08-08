@@ -295,10 +295,10 @@
 #ifdef MODEL_COUPLING
      &               LOGACT, cplout, userout, numsteps, CouplingTime,
      &               IRQ)
-        IF (RTYPE(1:2) .EQ. 'SP') THEN
-          IVTYPE=500
-        ELSE
+        IF (RTYPE(1:3) .EQ. 'BLK') THEN
           IVTYPE=CORQ%IVTYP(1)
+        ELSE
+          IVTYPE=500
         END IF
 #else
      &               LOGACT)                                              30.00
