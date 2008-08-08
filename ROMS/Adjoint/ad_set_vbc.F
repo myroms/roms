@@ -50,6 +50,7 @@
 #  endif
       CALL ad_set_vbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
 #  if defined SCORRECTION || defined SRELAXATION
      &                      GRID(ng) % Hz,                              &
      &                      GRID(ng) % ad_Hz,                           &
@@ -111,6 +112,7 @@
 !***********************************************************************
       SUBROUTINE ad_set_vbc_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
 #  if defined SCORRECTION || defined SRELAXATION
      &                            Hz, ad_Hz,                            &
 #  endif
@@ -165,6 +167,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 #  ifdef ASSUMED_SHAPE
@@ -315,28 +318,18 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
-      integer :: ILB, IUB, JLB, JUB
-#  endif
       integer :: i, j, itrc
 
       real(r8) :: cff1, cff2, cff3
       real(r8) :: ad_cff1, ad_cff2, ad_cff3, adfac, adfac1, adfac2
 
-#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_wrk
+#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && \
+        defined UV_LOGDRAG
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_wrk
 #  endif
 
 #  include "set_bounds.h"
-
-#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
-!
-      ILB=LBOUND(ad_wrk,DIM=1)
-      IUB=UBOUND(ad_wrk,DIM=1)
-      JLB=LBOUND(ad_wrk,DIM=2)
-      JUB=UBOUND(ad_wrk,DIM=2)
-#  endif
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -345,9 +338,10 @@
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
 
-#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
-      DO j=JLB,JUB
-        DO i=ILB,IUB
+#  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && \
+        defined UV_LOGDRAG
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
           ad_wrk(i,j)=0.0_r8
         END DO
       END DO     
@@ -1112,6 +1106,7 @@
 #  endif
       CALL ad_set_vbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      krhs(ng), kstp(ng), knew(ng),               &
      &                      OCEAN(ng) % ubar,                           &
      &                      OCEAN(ng) % vbar,                           &
@@ -1130,6 +1125,7 @@
 !***********************************************************************
       SUBROUTINE ad_set_vbc_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            krhs, kstp, knew,                     &
      &                            ubar, vbar,                           &
      &                            ad_ubar, ad_vbar,                     &
@@ -1149,6 +1145,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: krhs, kstp, knew
 !
 #  ifdef ASSUMED_SHAPE

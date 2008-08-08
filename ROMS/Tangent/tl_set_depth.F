@@ -49,6 +49,7 @@
 !
       CALL tl_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % h,                             &
      &                        GRID(ng) % tl_h,                          &
@@ -69,6 +70,7 @@
 !***********************************************************************
       SUBROUTINE tl_set_depth_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              nstp, nnew,                         &
      &                              h, tl_h,                            &
 #  ifdef ICESHELF
@@ -96,6 +98,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 !
 #  ifdef ASSUMED_SHAPE
@@ -310,6 +313,7 @@
 !
       CALL tl_bath_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   GRID(ng) % tl_h)
       RETURN
       END SUBROUTINE tl_bath
@@ -317,6 +321,7 @@
 !***********************************************************************
       SUBROUTINE tl_bath_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         tl_h)
 !***********************************************************************
 !
@@ -333,6 +338,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: tl_h(LBi:,LBj:)

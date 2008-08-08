@@ -56,6 +56,7 @@
 # endif
       CALL ad_step3d_t_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nrhs(ng), nstp(ng), nnew(ng),              &
 # if defined TS_PSOURCE || defined Q_PSOURCE
      &                       Nsrc(ng),                                  &
@@ -130,6 +131,7 @@
 !***********************************************************************
       SUBROUTINE ad_step3d_t_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs, nstp, nnew,                    &
 # if defined TS_PSOURCE || defined Q_PSOURCE
      &                             Nsrc, Isrc, Jsrc, Tsrc,              &
@@ -195,6 +197,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
@@ -371,7 +374,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, is, itrc, j, k, ltrc
       integer :: idiag
 
@@ -381,52 +383,47 @@
       real(r8) :: ad_cff, ad_cff1, ad_cff2
       real(r8) :: adfac, adfac1, adfac2
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
 # ifdef SPLINES
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC1
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC1
 # endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_grad
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_oHz
 # ifdef TS_MPDATA_NOT_YET
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                     &
      &                    N(ng),NT(ng)) :: Ta
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                     &
      &                    N(ng),NT(ng)) :: ad_Ta
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: Ua
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: Va
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Wa
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: Ua
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: Va
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: Wa
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_Ua
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_Va
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: ad_Wa
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_Ua
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_Va
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: ad_Wa
 # endif
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FE,DIM=1)
-      IUB=UBOUND(ad_FE,DIM=1)
-      JLB=LBOUND(ad_FE,DIM=2)
-      JUB=UBOUND(ad_FE,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -435,33 +432,33 @@
       ad_cff=0.0_r8
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
-      DO j=JLB,JUB
-        DO i=ILB,IUB
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
           ad_FE(i,j)=0.0_r8
           ad_FX(i,j)=0.0_r8
           ad_curv(i,j)=0.0_r8
           ad_grad(i,j)=0.0_r8
         END DO
         DO k=1,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_oHz(i,j,k)=0.0_r8
           END DO
         END DO 
 # ifdef TS_MPDATA_NOT_YET
         DO k=1,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_Ua(i,j,k)=0.0_r8
             ad_Va(i,j,k)=0.0_r8
           END DO
         END DO
         DO k=0,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_Wa(i,j,k)=0.0_r8
           END DO
         END DO
         DO itrc=1,NT(ng)
           DO k=1,N(ng)
-            DO i=ILB,IUB
+            DO i=IminS,ImaxS
               ad_Ta(i,j,k,itrc)=0.0_r8
             END DO
           END DO
@@ -469,7 +466,7 @@
 # endif
       END DO
       DO k=0,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_CF(i,k)=0.0_r8
           ad_BC(i,k)=0.0_r8
           ad_DC(i,k)=0.0_r8
@@ -581,11 +578,13 @@
 !
 !>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
 !>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+!>   &                      IminS, ImaxS, JminS, JmaxS,                 &
 !>   &                      nstp, nnew,                                 &
 !>   &                      tl_t)
 !>
         CALL ad_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nnew,                                 &
      &                      ad_t)
       END DO
@@ -1221,7 +1220,7 @@
       DO itrc=1,NT(ng)
         CALL mpdata_adiff_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
-     &                          ILB, IUB, JLB, JUB,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nrhs,                                   &
 #  ifdef MASKING
      &                          rmask, umask, vmask,                    &
@@ -1458,7 +1457,7 @@
 !
 !>      CALL tl_mpdata_adiff_tile (ng, tile,                            &
 !>   &                             LBi, UBi, LBj, UBj,                  &
-!>   &                             ILB, IUB, JLB, JUB,                  &
+!>   &                             IminS, ImaxS, JminS, JmaxS,          &
 !>   &                             nrhs,                                &
 #  ifdef MASKING
 !>   &                             rmask, umask, vmask,                 &
@@ -1480,7 +1479,7 @@
 !>
         CALL ad_mpdata_adiff_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
-     &                             ILB, IUB, JLB, JUB,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs,                                &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &

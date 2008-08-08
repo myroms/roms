@@ -43,6 +43,7 @@
 # endif
       CALL rp_diag_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp(ng), kstp(ng),                            &
      &                   GRID(ng) % h,                                  &
      &                   GRID(ng) % omn,                                &
@@ -66,6 +67,7 @@
 !***********************************************************************
       SUBROUTINE rp_diag_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nstp, kstp,                              &
      &                         h, omn,                                  &
 # ifdef SOLVE3D
@@ -91,6 +93,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, kstp
 !
 # ifdef ASSUMED_SHAPE
@@ -136,8 +139,8 @@
 
       real(r8) :: cff, my_avgke, my_avgpe, my_volume
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ke2d
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: pe2d
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ke2d
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: pe2d
 
       character (len=8) :: kechar, pechar
 

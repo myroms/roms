@@ -44,6 +44,7 @@
 !
       CALL ad_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % h,                             &
      &                        GRID(ng) % ad_h,                          &
@@ -66,6 +67,7 @@
 !***********************************************************************
       SUBROUTINE ad_set_depth_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              nstp, nnew,                         &
      &                              h, ad_h,                            &
 # ifdef ICESHELF
@@ -96,6 +98,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
@@ -144,9 +147,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      integer :: ILB, IUB, JLB, JUB
-# endif
       integer :: i, j, k, kbed
 
       real(r8) :: cff, cff_r, cff1_r, cff2_r, cff_w, cff1_w, cff2_w
@@ -154,18 +154,10 @@
       real(r8) :: adfac, ad_hinv, ad_hwater, ad_z_r0, ad_z_w0
 
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_BedThick
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_BedThick
 # endif
 
 # include "set_bounds.h"
-
-# if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-!
-      ILB=LBOUND(adBedThick,DIM=1)
-      IUB=UBOUND(adBedThick,DIM=1)
-      JLB=LBOUND(adBedThick,DIM=2)
-      JUB=UBOUND(adBedThick,DIM=2)
-# endif
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -176,8 +168,8 @@
       ad_hinv=0.0_r8
       ad_hwater=0.0_r8
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
-      DO j=JLB,JUB
-        DO i=ILB,IUB
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
           ad_BedThick(i,j)=0.0_r8
         END DO
       END DO

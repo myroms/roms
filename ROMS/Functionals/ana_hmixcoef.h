@@ -34,6 +34,7 @@
 
       CALL ana_hmixcoef_tile (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
 #ifdef SOLVE3D
 # ifdef TS_DIF2
      &                        MIXING(ng) % diff2,                       &
@@ -66,6 +67,7 @@
 !***********************************************************************
       SUBROUTINE ana_hmixcoef_tile (ng, tile, model,                    &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
 #ifdef SOLVE3D
 # ifdef TS_DIF2
      &                              diff2,                              &
@@ -102,6 +104,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: grdscl(LBi:,LBj:)

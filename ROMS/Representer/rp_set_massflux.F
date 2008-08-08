@@ -63,6 +63,7 @@
 # endif
       CALL rp_set_massflux_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs(ng),                              &
      &                           OCEAN(ng) % u,                         &
      &                           OCEAN(ng) % v,                         &
@@ -89,6 +90,7 @@
 !***********************************************************************
       SUBROUTINE rp_set_massflux_tile (ng, tile,                        &
      &                                 LBi, UBi, LBj, UBj,              &
+     &                                 IminS, ImaxS, JminS, JmaxS,      &
      &                                 nrhs,                            &
      &                                 u, v,                            &
      &                                 tl_u, tl_v,                      &
@@ -116,6 +118,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE

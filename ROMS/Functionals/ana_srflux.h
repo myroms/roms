@@ -25,6 +25,7 @@
 !
       CALL ana_srflux_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      GRID(ng) % lonr,                            &
      &                      GRID(ng) % latr,                            &
 #ifdef ALBEDO
@@ -46,6 +47,7 @@
 !***********************************************************************
       SUBROUTINE ana_srflux_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            lonr, latr,                           &
 #ifdef ALBEDO 
      &                            cloud, Hair, Tair,                    &
@@ -67,6 +69,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: lonr(LBi:,LBj:)

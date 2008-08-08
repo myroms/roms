@@ -30,6 +30,7 @@
 !
       CALL ana_sst_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   FORCES(ng) % sst,                              &
      &                   FORCES(ng) % dqdt)
 !
@@ -45,6 +46,7 @@
 !***********************************************************************
       SUBROUTINE ana_sst_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         sst, dqdt)
 !***********************************************************************
 !
@@ -61,6 +63,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: sst(LBi:,LBj:)

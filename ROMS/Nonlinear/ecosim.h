@@ -58,6 +58,7 @@
 #endif
       CALL biology_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % rmask,                              &
@@ -77,6 +78,7 @@
 !***********************************************************************
       SUBROUTINE biology_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nstp, nnew,                              &
 #ifdef MASKING
      &                         rmask,                                   &
@@ -95,6 +97,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -150,67 +153,67 @@
 
       real(r8), dimension(N(ng),Nphy,Npig) :: Pigs_w
 
-      integer, dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Keuphotic
+      integer, dimension(IminS:ImaxS) :: Keuphotic
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: E0_nz
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Ed_nz
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DOC_frac
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NitrBAC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NH4toNO3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NtoNBAC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NtoPBAC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: NtoFeBAC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totDOC_d
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totDON_d
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totDOP_d
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totFe_d
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totNH4_d
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totNO3_d
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totPO4_d
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: totSiO_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: E0_nz
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Ed_nz
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: DOC_frac
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: NitrBAC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: NH4toNO3
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: NtoNBAC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: NtoPBAC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: NtoFeBAC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totDOC_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totDON_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totDOP_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totFe_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totNH4_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totNO3_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totPO4_d
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: totSiO_d
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nbac) :: GtBAC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nbac) :: NupDOC_ba
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nbac) :: NupDON_ba
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nbac) :: NupDOP_ba
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nbac) :: NupFe_ba
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nbac) :: NupNH4_ba
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nbac) :: NupPO4_ba
+      real(r8), dimension(IminS:ImaxS,N(ng),Nbac) :: GtBAC
+      real(r8), dimension(IminS:ImaxS,N(ng),Nbac) :: NupDOC_ba
+      real(r8), dimension(IminS:ImaxS,N(ng),Nbac) :: NupDON_ba
+      real(r8), dimension(IminS:ImaxS,N(ng),Nbac) :: NupDOP_ba
+      real(r8), dimension(IminS:ImaxS,N(ng),Nbac) :: NupFe_ba
+      real(r8), dimension(IminS:ImaxS,N(ng),Nbac) :: NupNH4_ba
+      real(r8), dimension(IminS:ImaxS,N(ng),Nbac) :: NupPO4_ba
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: C2fALG
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: C2nALG
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: C2pALG
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: C2sALG
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: GtALG
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: GtALG_r
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: NupDOP
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: NupDON
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: NupFe
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: NupNH4
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: NupNO3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: NupPO4
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: NupSiO
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: graz_act
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: mu_bar_f
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: mu_bar_n
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: mu_bar_p
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: mu_bar_s
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy) :: refuge
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: C2fALG
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: C2nALG
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: C2pALG
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: C2sALG
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: GtALG
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: GtALG_r
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: NupDOP
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: NupDON
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: NupFe
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: NupNH4
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: NupNO3
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: NupPO4
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: NupSiO
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: graz_act
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: mu_bar_f
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: mu_bar_n
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: mu_bar_p
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: mu_bar_s
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy) :: refuge
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nfec) :: Regen_C
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nfec) :: Regen_F
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nfec) :: Regen_N
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nfec) :: Regen_P
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nfec) :: Regen_S
+      real(r8), dimension(IminS:ImaxS,N(ng),Nfec) :: Regen_C
+      real(r8), dimension(IminS:ImaxS,N(ng),Nfec) :: Regen_F
+      real(r8), dimension(IminS:ImaxS,N(ng),Nfec) :: Regen_N
+      real(r8), dimension(IminS:ImaxS,N(ng),Nfec) :: Regen_P
+      real(r8), dimension(IminS:ImaxS,N(ng),Nfec) :: Regen_S
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NBands) :: specir_scal
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy,NBands) :: aPHYN_al
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),Nphy,NBands) :: aPHYN_at
+      real(r8), dimension(IminS:ImaxS,N(ng),NBands) :: specir_scal
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy,NBands) :: aPHYN_al
+      real(r8), dimension(IminS:ImaxS,N(ng),Nphy,NBands) :: aPHYN_at
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio_old
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio_new
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_old
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_new
 
 #include "set_bounds.h"
 !

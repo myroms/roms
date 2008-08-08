@@ -92,6 +92,7 @@
 !
       CALL tl_variability_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Linp, Lweak,                            &
 # ifdef SOLVE3D
      &                          OCEAN(ng) % e_t,                        &
@@ -130,6 +131,7 @@
 !***********************************************************************
       SUBROUTINE tl_variability_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                Linp, Lweak,                      &
 # ifdef SOLVE3D
      &                                t_std, u_std, v_std,              &
@@ -167,6 +169,7 @@
 
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp
 !
 # ifdef ASSUMED_SHAPE

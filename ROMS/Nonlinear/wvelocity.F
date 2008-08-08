@@ -42,6 +42,7 @@
 !
       CALL wvelocity_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Ninp,                                        &
      &                     GRID(ng) % pm,                               &
      &                     GRID(ng) % pn,                               &
@@ -59,6 +60,7 @@
 !***********************************************************************
       SUBROUTINE wvelocity_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Ninp,                                  &
      &                           pm, pn, z_r, z_w,                      &
      &                           DU_avg1, DV_avg1,                      &
@@ -81,6 +83,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Ninp
 !
 # ifdef ASSUMED_SHAPE
@@ -126,9 +129,9 @@
 
       real(r8) :: cff1, cff2, cff3, cff4, cff5, slope
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: vert
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: vert
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
 
 # include "set_bounds.h"
 !

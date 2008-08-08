@@ -69,6 +69,7 @@
 #endif
       CALL uv3dmix2_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nrhs(ng), nnew(ng),                           &
 #ifdef MASKING
      &                    GRID(ng) % pmask,                             &
@@ -113,6 +114,7 @@
 !***********************************************************************
       SUBROUTINE uv3dmix2_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nrhs, nnew,                             &
 #ifdef MASKING
      &                          pmask, rmask, umask, vmask,             &
@@ -140,6 +142,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -225,23 +228,23 @@
 #ifdef VISC_3DCOEF
       real(r8) :: visc_p
 #endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFx
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: UFs
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: VFs
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dmUde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dmVde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dnUdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dnVdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dUdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dVdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZde_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZde_r
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZdx_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZdx_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: UFs
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: VFs
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dmUde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dmVde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dnUdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dnVdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dUdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dVdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx_r
 
 #include "set_bounds.h"
 !

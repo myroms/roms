@@ -24,6 +24,7 @@
 !
       CALL ana_rain_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    FORCES(ng) % rain)
 !
 ! Set analytical header file name used.
@@ -38,6 +39,7 @@
 !***********************************************************************
       SUBROUTINE ana_rain_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          rain)
 !***********************************************************************
 !
@@ -54,6 +56,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: rain(LBi:,LBj:)

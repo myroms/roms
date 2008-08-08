@@ -70,6 +70,7 @@
 # endif
       CALL ad_pre_step3d_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
 # ifdef FOUR_DVAR
      &                         kstp(ng), knew(ng),                      &
 # endif
@@ -151,6 +152,7 @@
 !***********************************************************************
       SUBROUTINE ad_pre_step3d_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
 # ifdef FOUR_DVAR
      &                               kstp, knew,                        &
 # endif
@@ -213,6 +215,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 # ifdef FOUR_DVAR
       integer, intent(in) :: kstp, knew
 # endif
@@ -393,7 +396,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, indx, is, itrc, j, k, ltrc
 
       real(r8), parameter :: Gamma = 1.0_r8/6.0_r8
@@ -403,27 +405,27 @@
       real(r8) :: ad_cff, ad_cff1, ad_cff2, ad_cff3, ad_cff4
       real(r8) :: adfac, adfac1, adfac2, adfac3
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
 
 # ifdef SOLAR_SOURCE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: ad_swdk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: ad_swdk
 # endif
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_grad
 
 # include "set_bounds.h"
 !
@@ -434,11 +436,6 @@
 !>
       indx=nnew 
 !
-      ILB=LBOUND(ad_FE,DIM=1)
-      IUB=UBOUND(ad_FE,DIM=1)
-      JLB=LBOUND(ad_FE,DIM=2)
-      JUB=UBOUND(ad_FE,DIM=2)
-!
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
@@ -448,8 +445,8 @@
       ad_cff2=0.0_r8
       ad_cff3=0.0_r8
       ad_cff4=0.0_r8
-      DO j=JLB,JUB
-        DO i=ILB,IUB
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
           ad_FE(i,j)=0.0_r8
           ad_FX(i,j)=0.0_r8 
           ad_curv(i,j)=0.0_r8
@@ -457,14 +454,14 @@
         END DO
 # ifdef SOLAR_SOURCE
         DO k=0,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_swdk(i,j,k)=0.0_r8
           END DO
         END DO
 # endif
       END DO
       DO k=0,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_CF(i,k)=0.0_r8
           ad_DC(i,k)=0.0_r8
           ad_FC(i,k)=0.0_r8
@@ -511,11 +508,13 @@
 #  endif
 !>      CALL tl_t3dbc_tile (ng, tile, itrc,                             &
 !>   &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+!>   &                      IminS, ImaxS, JminS, JmaxS,                 &
 !>   &                      nstp, 3,                                    &
 !>   &                      tl_t)
 !>
         CALL ad_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, 3,                                    &
      &                      ad_t)
       END DO
@@ -2341,10 +2340,14 @@
             ad_swdk(i,j,k)=0.0_r8
           END DO
         END DO
-!>      CALL tl_lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,          &
+!>      CALL tl_lmd_swfrac_tile (ng, tile,                              &
+!>   &                           LBi, UBi, LBj, UBj,                    &
+!>   &                           IminS, ImaxS, JminS, JmaxS,            &
 !>   &                           -1.0_r8, FX, tl_FX, tl_FE)
 !>
-        CALL ad_lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,          &
+        CALL ad_lmd_swfrac_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           -1.0_r8, FX, ad_FX, ad_FE)
         DO j=Jstr,Jend
           DO i=Istr,Iend

@@ -1,4 +1,3 @@
-
 #include "cppdefs.h"
 #ifdef TANGENT
       SUBROUTINE tl_set_data (ng, tile)
@@ -29,7 +28,8 @@
       CALL wclock_on (ng, iTLM, 4)
 # endif
       CALL tl_set_data_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj)
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS)
 # ifdef PROFILE
       CALL wclock_off (ng, iTLM, 4)
 # endif
@@ -38,7 +38,8 @@
 !
 !***********************************************************************
       SUBROUTINE tl_set_data_tile (ng, tile,                            &
-     &                             LBi, UBi, LBj, UBj)
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_param
@@ -96,6 +97,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 !  Local variable declarations.
 !

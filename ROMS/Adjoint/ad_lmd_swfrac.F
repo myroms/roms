@@ -5,6 +5,7 @@
 
       SUBROUTINE ad_lmd_swfrac_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               Zscale, Z, ad_Z, ad_swdk)
 !
 !svn $Id$
@@ -49,13 +50,14 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 
       real(r8), intent(in) :: Zscale
 
-      real(r8), intent(in) :: Z(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8), intent(in) :: Z(IminS:ImaxS,JminS:JmaxS)
 
-      real(r8), intent(inout) :: ad_Z(PRIVATE_2D_SCRATCH_ARRAY)
-      real(r8), intent(inout) :: ad_swdk(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8), intent(inout) :: ad_Z(IminS:ImaxS,JminS:JmaxS)
+      real(r8), intent(inout) :: ad_swdk(IminS:ImaxS,JminS:JmaxS)
 !
 !  Local variable declarations.
 !
@@ -64,7 +66,7 @@
       real(r8) :: cff1, cff2
       real(r8) :: ad_cff1, ad_cff2
 
-      real(r8), dimension(LBi:UBi) :: fac1, fac2, fac3
+      real(r8), dimension(IminS:ImaxS) :: fac1, fac2, fac3
 
 # include "set_bounds.h"
 !

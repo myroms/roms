@@ -46,6 +46,7 @@
 !
       CALL rp_ini_fields_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         kstp(ng), krhs(ng), knew(ng),            &
 # ifdef SOLVE3D
      &                         nstp(ng), nnew(ng),                      &
@@ -91,6 +92,7 @@
 !***********************************************************************
       SUBROUTINE rp_ini_fields_tile (ng, tile, model,                   &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               kstp, krhs, knew,                  &
 # ifdef SOLVE3D
      &                               nstp, nnew,                        &
@@ -152,6 +154,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kstp, krhs, knew
 # ifdef SOLVE3D
       integer, intent(in) :: nstp, nnew
@@ -261,11 +264,11 @@
       real(r8) :: tl_cff1, tl_cff2
 
 # ifdef SOLVE3D
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
 # endif
 
 # include "set_bounds.h"
@@ -380,41 +383,49 @@
 !
 !>    CALL u2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 krhs, kstp, kstp,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, kstp,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
 !>    CALL v2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 krhs, kstp, kstp,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, kstp,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
 !>    CALL u2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 krhs, kstp, krhs,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, krhs,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
 !>    CALL v2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 krhs, kstp, krhs,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, krhs,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
@@ -513,39 +524,47 @@
 !
 !>    CALL u3dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj, N(ng),                       &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 nstp, nstp,                                      &
 !>   &                 u)
 !>
       CALL rp_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nstp,                                   &
      &                    tl_u)
 !>    CALL v3dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj, N(ng),                       &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 nstp, nstp,                                      &
 !>   &                 v)
 !>
       CALL rp_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nstp,                                   &
      &                    tl_v)
 
 !>    CALL u3dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj, N(ng),                       &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 nstp, nnew,                                      &
 !>   &                 u)
 !>
       CALL rp_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nnew,                                   &
      &                    tl_u)
 !>    CALL v3dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj, N(ng),                       &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 nstp, nnew,                                      &
 !>   &                 v)
 !>
       CALL rp_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nnew,                                   &
      &                    tl_v)
 
@@ -622,20 +641,24 @@
 !
 !>      CALL t3dbc_tile (ng, tile, itrc,                                &
 !>   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+!>   &                   IminS, ImaxS, JminS, JmaxS,                    &
 !>   &                   nstp, nstp,                                    &
 !>   &                   t)
 !>
         CALL rp_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nstp,                                 &
      &                      tl_t)
 !>      CALL t3dbc_tile (ng, tile, itrc,                                &
 !>   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+!>   &                   IminS, ImaxS, JminS, JmaxS,                    &
 !>   &                   nstp, nnew,                                    &
 !>   &                   t)
 !>
         CALL rp_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nnew,                                 &
      &                      tl_t)
 # if defined EW_PERIODIC || defined NS_PERIODIC
@@ -675,6 +698,7 @@
 !
 !>    CALL set_depth_tile (ng, tile,                                    &
 !>   &                     LBi, UBi, LBj, UBj,                          &
+!>   &                     IminS, ImaxS, JminS, JmaxS,                  &
 !>   &                     nstp, nnew,                                  &
 !>   &                     h,                                           &
 #  ifdef ICESHELF
@@ -688,6 +712,7 @@
 !>
       CALL rp_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nstp, nnew,                               &
      &                        h, tl_h,                                  &
 #  ifdef ICESHELF
@@ -809,41 +834,49 @@
 !
 !>    CALL u2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 knew, kstp, kstp,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    knew, kstp, kstp,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
 !>    CALL v2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 knew, kstp, kstp,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    knew, kstp, kstp,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
 !>    CALL u2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 knew, kstp, knew,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    knew, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
 !>    CALL v2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 knew, kstp, knew,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    knew, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
@@ -919,6 +952,7 @@
 !
       CALL rp_ini_zeta_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       kstp(ng), krhs(ng), knew(ng),              &
 # ifdef MASKING
      &                       GRID(ng) % rmask,                          &
@@ -939,6 +973,7 @@
 !***********************************************************************
       SUBROUTINE rp_ini_zeta_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             kstp, krhs, knew,                    &
 # ifdef MASKING
      &                             rmask,                               &
@@ -969,6 +1004,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kstp, krhs, knew
 !
 # ifdef ASSUMED_SHAPE
@@ -1060,33 +1096,39 @@
 !
 !>    CALL zetabc_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
+!>   &                  IminS, ImaxS, JminS, JmaxS,                     &
 !>   &                  krhs, kstp, kstp,                               &
 !>   &                  zeta)
 !>
       CALL rp_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     krhs, kstp, kstp,                            &
      &                     zeta,                                        &
      &                     tl_zeta)
 #  ifdef SOLVE3D
 !>    CALL zetabc_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
+!>   &                  IminS, ImaxS, JminS, JmaxS,                     &
 !>   &                  krhs, kstp, knew,                               &
 !>   &                  zeta)
 !>
       CALL rp_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     krhs, kstp, knew,                            &
      &                     zeta,                                        &
      &                     tl_zeta)
 #  else
 !>    CALL zetabc_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
+!>   &                  IminS, ImaxS, JminS, JmaxS,                     &
 !>   &                  krhs, kstp, krhs,                               &
 !>   &                  zeta)
 !>
       CALL rp_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     krhs, kstp, krhs,                            &
      &                     zeta,                                        &
      &                     tl_zeta)

@@ -56,6 +56,7 @@
 # endif
       CALL set_avg_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
      &                   NTC(ng),                                       &
 # endif
@@ -257,6 +258,7 @@
 !***********************************************************************
       SUBROUTINE set_avg_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
      &                         NTC,                                     &
 # endif
@@ -398,6 +400,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Kout
 # ifdef SOLVE3D
       integer, intent(in) :: Nout

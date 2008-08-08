@@ -50,6 +50,7 @@
 !
       CALL ana_perturb_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       kstp(ng), krhs(ng), knew(ng),              &
 #ifdef SOLVE3D
      &                       nstp(ng), nrhs(ng), nnew(ng),              &
@@ -95,6 +96,7 @@
 !***********************************************************************
       SUBROUTINE ana_perturb_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             kstp, krhs, knew,                    &
 #ifdef SOLVE3D
      &                             nstp, nrhs, nnew,                    &
@@ -129,6 +131,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kstp, krhs, knew
 #ifdef SOLVE3D
       integer, intent(in) :: nstp, nrhs, nnew

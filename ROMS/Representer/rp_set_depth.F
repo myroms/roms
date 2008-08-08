@@ -49,6 +49,7 @@
 !
       CALL rp_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nstp(ng), nnew(ng),                       &
      &                        GRID(ng) % h,                             &
      &                        GRID(ng) % tl_h,                          &
@@ -69,6 +70,7 @@
 !***********************************************************************
       SUBROUTINE rp_set_depth_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              nstp, nnew,                         &
      &                              h, tl_h,                            &
 #  ifdef ICESHELF
@@ -96,6 +98,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 !
 #  ifdef ASSUMED_SHAPE
@@ -334,6 +337,7 @@
 !
       CALL rp_bath_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   GRID(ng) % h,                                  &
      &                   GRID(ng) % tl_h)
       RETURN
@@ -342,6 +346,7 @@
 !***********************************************************************
       SUBROUTINE rp_bath_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         h, tl_h)
 !***********************************************************************
 !
@@ -358,6 +363,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: h(LBi:,LBj:)

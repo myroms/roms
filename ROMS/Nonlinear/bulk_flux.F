@@ -83,6 +83,7 @@
 # endif
       CALL bulk_flux_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nrhs(ng),                                    &
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
@@ -131,6 +132,7 @@
 !***********************************************************************
       SUBROUTINE bulk_flux_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs,                                  &
 # ifdef MASKING
      &                           rmask, umask, vmask,                   &
@@ -172,6 +174,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE
@@ -291,62 +294,62 @@
       real(r8) :: Clam, Fc, Hcool, Hsb, Hlb, Qbouy, Qcool, lambd
 # endif
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: CC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cd10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ch10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ct10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: charn
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ct
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cwave
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cwet
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delTc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delW
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Q
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qair
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qsea
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoAir
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoSea
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ri
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ribcu
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rr
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Scff
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairK
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tcff
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaK
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: u10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: VisAir
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: WaveLength
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wgus
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wmag
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Zetu
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Zo10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoT10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoQ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoW
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZWoL
+      real(r8), dimension(IminS:ImaxS) :: CC
+      real(r8), dimension(IminS:ImaxS) :: Cd10
+      real(r8), dimension(IminS:ImaxS) :: Ch10
+      real(r8), dimension(IminS:ImaxS) :: Ct10
+      real(r8), dimension(IminS:ImaxS) :: charn
+      real(r8), dimension(IminS:ImaxS) :: Ct
+      real(r8), dimension(IminS:ImaxS) :: Cwave
+      real(r8), dimension(IminS:ImaxS) :: Cwet
+      real(r8), dimension(IminS:ImaxS) :: delQ
+      real(r8), dimension(IminS:ImaxS) :: delQc
+      real(r8), dimension(IminS:ImaxS) :: delT
+      real(r8), dimension(IminS:ImaxS) :: delTc
+      real(r8), dimension(IminS:ImaxS) :: delW
+      real(r8), dimension(IminS:ImaxS) :: L
+      real(r8), dimension(IminS:ImaxS) :: L10
+      real(r8), dimension(IminS:ImaxS) :: Q
+      real(r8), dimension(IminS:ImaxS) :: Qair
+      real(r8), dimension(IminS:ImaxS) :: Qpsi
+      real(r8), dimension(IminS:ImaxS) :: Qsea
+      real(r8), dimension(IminS:ImaxS) :: Qstar
+      real(r8), dimension(IminS:ImaxS) :: rhoAir
+      real(r8), dimension(IminS:ImaxS) :: rhoSea
+      real(r8), dimension(IminS:ImaxS) :: Ri
+      real(r8), dimension(IminS:ImaxS) :: Ribcu
+      real(r8), dimension(IminS:ImaxS) :: Rr
+      real(r8), dimension(IminS:ImaxS) :: Scff
+      real(r8), dimension(IminS:ImaxS) :: TairC
+      real(r8), dimension(IminS:ImaxS) :: TairK
+      real(r8), dimension(IminS:ImaxS) :: Tcff
+      real(r8), dimension(IminS:ImaxS) :: Tpsi
+      real(r8), dimension(IminS:ImaxS) :: TseaC
+      real(r8), dimension(IminS:ImaxS) :: TseaK
+      real(r8), dimension(IminS:ImaxS) :: Tstar
+      real(r8), dimension(IminS:ImaxS) :: u10
+      real(r8), dimension(IminS:ImaxS) :: VisAir
+      real(r8), dimension(IminS:ImaxS) :: WaveLength
+      real(r8), dimension(IminS:ImaxS) :: Wgus
+      real(r8), dimension(IminS:ImaxS) :: Wmag
+      real(r8), dimension(IminS:ImaxS) :: Wpsi
+      real(r8), dimension(IminS:ImaxS) :: Wstar
+      real(r8), dimension(IminS:ImaxS) :: Zetu
+      real(r8), dimension(IminS:ImaxS) :: Zo10
+      real(r8), dimension(IminS:ImaxS) :: ZoT10
+      real(r8), dimension(IminS:ImaxS) :: ZoL
+      real(r8), dimension(IminS:ImaxS) :: ZoQ
+      real(r8), dimension(IminS:ImaxS) :: ZoT
+      real(r8), dimension(IminS:ImaxS) :: ZoW
+      real(r8), dimension(IminS:ImaxS) :: ZWoL
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hlv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LHeat
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LRad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: SHeat
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: SRad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Taux
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hlv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LHeat
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LRad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: SHeat
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: SRad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Taux
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Tauy
 
 # include "set_bounds.h"
 !

@@ -64,6 +64,7 @@
 !***********************************************************************
       SUBROUTINE tl_conv_r3d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, NVsteps,            &
      &                             DTsizeH, DTsizeV,                    &
      &                             Kh, Kv,                              &
@@ -86,6 +87,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
       real(r8), intent(in) :: DTsizeH, DTsizeV
@@ -145,25 +147,25 @@
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: tl_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
 #  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
 #   ifdef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 #   endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
 #  else
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FS
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FS
 #  endif
 # endif
 
@@ -585,6 +587,7 @@
 !***********************************************************************
       SUBROUTINE tl_conv_u3d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, NVsteps,            &
      &                             DTsizeH, DTsizeV,                    &
      &                             Kh, Kv,                              &
@@ -607,6 +610,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
       real(r8), intent(in) :: DTsizeH, DTsizeV
@@ -664,26 +668,26 @@
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: tl_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
 #  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
 #   ifdef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hzk
 #   endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
 #  else
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FS
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FS
 #  endif
 # endif
 
@@ -1112,6 +1116,7 @@
 !***********************************************************************
       SUBROUTINE tl_conv_v3d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, NVsteps,            &
      &                             DTsizeH, DTsizeV,                    &
      &                             Kh, Kv,                              &
@@ -1134,6 +1139,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
       real(r8), intent(in) :: DTsizeH, DTsizeV
@@ -1192,26 +1198,26 @@
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: tl_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
 #  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
 #   ifdef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hzk
 #   endif
 #  else
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FS
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FS
 #  endif
 # endif
 

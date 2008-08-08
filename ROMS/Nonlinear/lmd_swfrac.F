@@ -5,6 +5,7 @@
 
       SUBROUTINE lmd_swfrac_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            Zscale, Z, swdk)
 !
 !svn $Id$
@@ -47,17 +48,18 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 
       real(r8), intent(in) :: Zscale
 
-      real(r8), intent(in) :: Z(PRIVATE_2D_SCRATCH_ARRAY)
-      real(r8), intent(out) :: swdk(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8), intent(in) :: Z(IminS:ImaxS,JminS:JmaxS)
+      real(r8), intent(out) :: swdk(IminS:ImaxS,JminS:JmaxS)
 !
 !  Local variable declarations.
 !
       integer :: Jindex, i, j
 
-      real(r8), dimension(LBi:UBi) :: fac1, fac2, fac3
+      real(r8), dimension(IminS:ImaxS) :: fac1, fac2, fac3
 
 # include "set_bounds.h"
 !

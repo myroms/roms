@@ -23,7 +23,8 @@
 #include "tile.h"
 !
       CALL ana_nudgcoef_tile (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj)
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS)
 !
 ! Set analytical header file name used.
 !
@@ -36,7 +37,8 @@
 !
 !***********************************************************************
       SUBROUTINE ana_nudgcoef_tile (ng, tile, model,                    &
-     &                              LBi, UBi, LBj, UBj)
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_param
@@ -59,6 +61,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 !  Local variable declarations.
 !
@@ -66,7 +69,7 @@
 
       real(r8) :: cff1, cff2, cff3
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
 
 #include "set_bounds.h"
 !

@@ -69,6 +69,7 @@
 # endif
       CALL ad_rho_eos_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs(ng),                                   &
 # ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -116,6 +117,7 @@
 !***********************************************************************
       SUBROUTINE ad_rho_eos_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs,                                 &
 #  ifdef MASKING
      &                            rmask,                                &
@@ -166,6 +168,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 #  ifdef ASSUMED_SHAPE
@@ -267,7 +270,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB
       integer :: i, ised, itrc, j, k
 
       real(r8) :: SedDen, Tp, Tpr10, Ts, Tt, sqrtTs
@@ -287,45 +289,42 @@
       real(r8), dimension(0:9) :: ad_dCdT(0:9)
       real(r8), dimension(0:9) :: d2Cd2T(0:9)
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DbulkDS
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DbulkDT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Dden1DS
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Dden1DT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Scof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Tcof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: wrk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: DbulkDS
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: DbulkDT
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Dden1DS
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Dden1DT
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Scof
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Tcof
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: wrk
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_DbulkDS
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_DbulkDT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Dden1DS
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Dden1DT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Scof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Tcof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_wrk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_DbulkDS
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_DbulkDT
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Dden1DS
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Dden1DT
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Scof
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Tcof
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_wrk
 #  endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk0
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: den
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: den1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk0
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: den
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: den1
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_bulk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_bulk0
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_bulk1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_bulk2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_den
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_den1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_bulk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_bulk0
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_bulk1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_bulk2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_den
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_den1
 
 #  ifdef VAR_RHO_2D
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rhoA1
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rhoS1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoA1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoS1
 #  endif
 
 #  include "set_bounds.h"
-!
-      ILB=LBOUND(ad_den,DIM=1)
-      IUB=UBOUND(ad_den,DIM=1)
 !
 !-------------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -351,7 +350,7 @@
       ad_dCdT=0.0_r8
 
       DO k=1,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
 #  ifdef EOS_TDERIVATIVE
           ad_DbulkDS(i,k)=0.0_r8
           ad_DbulkDT(i,k)=0.0_r8
@@ -1395,6 +1394,7 @@
 !***********************************************************************
       SUBROUTINE ad_rho_eos_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs,                                 &
 #  ifdef MASKING
      &                            rmask,                                &
@@ -1445,6 +1445,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 #  ifdef ASSUMED_SHAPE
@@ -1552,8 +1553,8 @@
       real(r8) :: adfac, adfac1
 
 #  ifdef VAR_RHO_2D
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rhoA1
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rhoS1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoA1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhoS1
 #  endif
 
 #  include "set_bounds.h"

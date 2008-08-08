@@ -112,6 +112,7 @@
 # endif
       CALL tl_rhs3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nrhs(ng),                                     &
      &                    GRID(ng) % Hz,                                &
      &                    GRID(ng) % tl_Hz,                             &
@@ -207,6 +208,7 @@
 !***********************************************************************
       SUBROUTINE tl_rhs3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nrhs,                                   &
      &                          Hz, tl_Hz,                              &
      &                          Huon, tl_Huon,                          &
@@ -269,6 +271,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE
@@ -434,45 +437,45 @@
       real(r8) :: cff, cff1, cff2, cff3, cff4
       real(r8) :: tl_cff, tl_cff1, tl_cff2
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Huee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Huxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hvee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hvxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Uwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: uee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: uxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: vee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: vxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Huee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Huxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hvee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hvxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Uwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: uee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: uxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: vee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: vxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Huee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Huxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Hvee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Hvxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Uwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_VFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Vwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_uee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_uxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_vee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_vxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Huee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Huxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Hvee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Hvxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Uwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Vwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_uee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_uxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_vee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_vxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_wrk
 
 # include "set_bounds.h"
 

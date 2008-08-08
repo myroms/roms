@@ -54,6 +54,7 @@
 # endif
       CALL radiation_stress_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, N(ng),            &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
 # ifdef SOLVE3D
      &                            nrhs(ng),                             &
 # endif
@@ -125,6 +126,7 @@
 !***********************************************************************
       SUBROUTINE radiation_stress_tile (ng, tile,                       &
      &                                  LBi, UBi, LBj, UBj, UBk,        &
+     &                                  IminS, ImaxS, JminS, JmaxS,     &
 # ifdef SOLVE3D
      &                                  nrhs,                           &
 # endif
@@ -180,6 +182,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 # ifdef SOLVE3D
       integer, intent(in) :: nrhs
 # endif
@@ -323,45 +326,47 @@
 #  endif
 # endif
 
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5, cff6
       real(r8) :: fac1, fac2, FCCr, FCSr, FSSr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Dstp
+
       real(r8), parameter :: eps = 1.0E-14_r8
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: kD
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wavec
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wavecgoc
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: waven
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: owaven
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wavenx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: waveny
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: waveE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: waveEr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: gamw
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Sxxl
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Sxyl
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Syyl
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Sxyl_psi
       real(r8), parameter :: kDmax = 5.0_r8
       real(r8), parameter :: Lwave_min = 1.0_r8
 
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dstp
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: kD
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wavec
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wavecgoc
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: waven
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: owaven
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wavenx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: waveny
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: waveE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: waveEr
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gamw
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Sxxl
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Sxyl
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Syyl
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Sxyl_psi
+
 # ifdef SOLVE3D
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FCC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FCS
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FSS
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rollA
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: oroller
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ocosh
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: osinh
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: o2sinh
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: z_psi
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FCC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FCS
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FSS
+
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rollA
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: oroller
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ocosh
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: osinh
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: o2sinh
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: z_psi
 #  ifdef CURVGRID
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
 #  endif
 
 # endif

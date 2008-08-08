@@ -93,6 +93,7 @@
 # endif
       CALL tl_balance_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Lbck, Linp,                                 &
      &                      GRID(ng) % f,                               &
      &                      GRID(ng) % pm,                              &
@@ -126,6 +127,7 @@
 !***********************************************************************
       SUBROUTINE tl_balance_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            Lbck, Linp,                           &
      &                            f, pm, pn,                            &
 # ifdef SOLVE3D
@@ -158,6 +160,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lbck, Linp
 !
 # ifdef ASSUMED_SHAPE
@@ -254,16 +257,16 @@
 
       real(r8), dimension(N(ng)) :: dSdT, dSdT_filter
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: tl_phie
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: tl_phix
+      real(r8), dimension(IminS:ImaxS) :: tl_phie
+      real(r8), dimension(IminS:ImaxS) :: tl_phix
 
 # ifdef SALINITY
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: dTdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: dSdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: dTdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: dSdz
 # endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: tl_gradP
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: tl_gradP
       
 # include "set_bounds.h"
 

@@ -147,8 +147,8 @@
 #define XI_DIM LOWER_BOUND_I:UPPER_BOUND_I
 #define ETA_DIM LOWER_BOUND_J:UPPER_BOUND_J
 #define GLOBAL_2D_ARRAY XI_DIM,ETA_DIM
-#define PRIVATE_1D_SCRATCH_ARRAY LBi-1:UBi+1
-#define PRIVATE_2D_SCRATCH_ARRAY LBi-1:UBi+1,LBj-1:UBj+1
+#define PRIVATE_1D_SCRATCH_ARRAY IminS:ImaxS
+#define PRIVATE_2D_SCRATCH_ARRAY IminS:ImaxS,JminS:JmaxS
 
 /*
 ** Set switch for distributed-memory applications to gather and scatter

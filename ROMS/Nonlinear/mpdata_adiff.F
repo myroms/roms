@@ -37,7 +37,7 @@
 !***********************************************************************
       SUBROUTINE mpdata_adiff_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
-     &                              ILB, IUB, JLB, JUB,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              nrhs,                               &
 #ifdef MASKING
      &                              rmask, umask, vmask,                &
@@ -60,7 +60,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: ILB, IUB, JLB, JUB
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       Integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE
@@ -78,17 +78,17 @@
       real(r8), intent(in) :: om_u(LBi:,LBj:)
       real(r8), intent(in) :: on_v(LBi:,LBj:)
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
-      real(r8), intent(in) :: oHz(ILB:,JLB:,:)
+      real(r8), intent(in) :: oHz(IminS:,JminS:,:)
       real(r8), intent(in) :: Huon(LBi:,LBj:,:)
       real(r8), intent(in) :: Hvom(LBi:,LBj:,:)
       real(r8), intent(in) :: t(LBi:,LBj:,:)
       real(r8), intent(in) :: w(LBi:,LBj:,0:)
 
-      real(r8), intent(inout) :: Ta(ILB:,JLB:,:)
+      real(r8), intent(inout) :: Ta(IminS:,JminS:,:)
 
-      real(r8), intent(out) :: Ua(ILB:,JLB:,:)
-      real(r8), intent(out) :: Va(ILB:,JLB:,:)
-      real(r8), intent(out) :: Wa(ILB:,JLB:,0:)
+      real(r8), intent(out) :: Ua(IminS:,JminS:,:)
+      real(r8), intent(out) :: Va(IminS:,JminS:,:)
+      real(r8), intent(out) :: Wa(IminS:,JminS:,0:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
@@ -104,17 +104,17 @@
       real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: z_r(LBi:UBi,LBj:UBj,N(ng))
-      real(r8), intent(in) :: oHz(ILB:IUB,JLB:JUB,N(ng))
+      real(r8), intent(in) :: oHz(IminS:ImaxS,JminS:JmaxS,N(ng))
       real(r8), intent(in) :: Huon(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: Hvom(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: w(LBi:UBi,LBj:UBj,0:N(ng))
 
-      real(r8), intent(inout) :: Ta(ILB:IUB,JLB:JUB,N(ng))
+      real(r8), intent(inout) :: Ta(IminS:ImaxS,JminS:JmaxS,N(ng))
 
-      real(r8), intent(out) :: Ua(ILB:IUB,JLB:JUB,N(ng))
-      real(r8), intent(out) :: Va(ILB:IUB,JLB:JUB,N(ng))
-      real(r8), intent(out) :: Wa(ILB:IUB,JLB:JUB,0:N(ng))
+      real(r8), intent(out) :: Ua(IminS:ImaxS,JminS:JmaxS,N(ng))
+      real(r8), intent(out) :: Va(IminS:ImaxS,JminS:JmaxS,N(ng))
+      real(r8), intent(out) :: Wa(IminS:ImaxS,JminS:JmaxS,0:N(ng))
 # endif
 !
 !  Local variable declarations.
@@ -132,13 +132,13 @@
       real(r8) :: sig_a, sig_b, sig_c, sig_d, sig_e, sig_f
 # endif
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: C
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Wm
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: C
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Wm
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: Tadv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: beta_dn
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: beta_up
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: odz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: Tadv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: beta_dn
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: beta_up
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: odz
 
 # include "set_bounds.h"
 !

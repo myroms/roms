@@ -38,6 +38,7 @@
 !
       CALL ad_misfit_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     knew(ng),                                    &
 # ifdef SOLVE3D
      &                     nstp(ng),                                    &
@@ -63,6 +64,7 @@
 !***********************************************************************
       SUBROUTINE ad_misfit_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           knew,                                  &
 # ifdef SOLVE3D
      &                           nstp,                                  &
@@ -96,6 +98,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: knew
 # ifdef SOLVE3D
       integer, intent(in) :: nstp

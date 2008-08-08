@@ -45,6 +45,7 @@
 !
       CALL cost_norm_tile (ng, tile,                                    &  
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Linp,                                        &
 # ifdef ADJUST_WSTRESS
      &                     FORCES(ng) % ad_ustr,                        &
@@ -68,6 +69,7 @@
 !***********************************************************************
       SUBROUTINE cost_norm_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Linp,                                  &
 # ifdef ADJUST_WSTRESS
      &                           ad_ustr, ad_vstr,                      &
@@ -101,6 +103,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp
 !
 # ifdef ASSUMED_SHAPE

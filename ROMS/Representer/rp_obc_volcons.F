@@ -41,6 +41,7 @@
 !
       CALL rp_obc_flux_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       kinp,                                      &
 # ifdef MASKING
      &                       GRID(ng) % umask,                          &
@@ -62,6 +63,7 @@
 !***********************************************************************
       SUBROUTINE rp_obc_flux_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             kinp,                                &
 # ifdef MASKING
      &                             umask, vmask,                        &
@@ -85,6 +87,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kinp
 !
 # ifdef ASSUMED_SHAPE
@@ -313,7 +316,7 @@
 !***********************************************************************
       SUBROUTINE rp_set_DUV_bc_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
-     &                               ILB, IUB, JLB, JUB,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               kinp,                              &
 # ifdef MASKING
      &                               umask, vmask,                      &
@@ -336,7 +339,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
-      integer, intent(in) :: ILB, IUB, JLB, JUB
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kinp
 !
 # ifdef ASSUMED_SHAPE
@@ -349,15 +352,15 @@
 
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: vbar(LBi:,LBj:,:)
-      real(r8), intent(in) :: Drhs(ILB:,JLB:)
+      real(r8), intent(in) :: Drhs(IminS:,JminS:)
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
-      real(r8), intent(in) :: tl_Drhs(ILB:,JLB:)
+      real(r8), intent(in) :: tl_Drhs(IminS:,JminS:)
 
-      real(r8), intent(inout) :: Duon(ILB:,JLB:)
-      real(r8), intent(inout) :: Dvom(ILB:,JLB:)
-      real(r8), intent(inout) :: tl_Duon(ILB:,JLB:)
-      real(r8), intent(inout) :: tl_Dvom(ILB:,JLB:)
+      real(r8), intent(inout) :: Duon(IminS:,JminS:)
+      real(r8), intent(inout) :: Dvom(IminS:,JminS:)
+      real(r8), intent(inout) :: tl_Duon(IminS:,JminS:)
+      real(r8), intent(inout) :: tl_Dvom(IminS:,JminS:)
 # else
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
@@ -368,15 +371,15 @@
 
       real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: Drhs(ILB:IUB,JLB:JUB)
+      real(r8), intent(in) :: Drhs(IminS:ImaxS,JminS:JmaxS)
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: tl_Drhs(ILB:,JLB:)
+      real(r8), intent(in) :: tl_Drhs(IminS:,JminS:)
 
-      real(r8), intent(inout) :: Duon(ILB:IUB,JLB:JUB)
-      real(r8), intent(inout) :: Dvom(ILB:IUB,JLB:JUB)
-      real(r8), intent(inout) :: tl_Duon(ILB:IUB,JLB:JUB)
-      real(r8), intent(inout) :: tl_Dvom(ILB:IUB,JLB:JUB)
+      real(r8), intent(inout) :: Duon(IminS:ImaxS,JminS:JmaxS)
+      real(r8), intent(inout) :: Dvom(IminS:ImaxS,JminS:JmaxS)
+      real(r8), intent(inout) :: tl_Duon(IminS:ImaxS,JminS:JmaxS)
+      real(r8), intent(inout) :: tl_Dvom(IminS:ImaxS,JminS:JmaxS)
 # endif
 !
 !  Local variable declarations.
@@ -511,21 +514,23 @@
 !
 #  if defined WEST_VOLCONS || defined EAST_VOLCONS
 !>    CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
-!>   &                    ILB, IUB, JLB, JUB,                           &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    Duon)
+!>
       CALL mp_exchange2d (ng, tile, iRPM, 1,                            &
-     &                    ILB, IUB, JLB, JUB,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_Duon)
 #  endif
 #  if defined SOUTH_VOLCONS || defined NORTH_VOLCONS
 !>    CALL mp_exchange2d (ng, tile, iNLM, 1,                            &
-!>   &                    ILB, IUB, JLB, JUB,                           &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !>   &                    NghostPoints, EWperiodic, NSperiodic,         &
 !>   &                    Dvom)
+!>
       CALL mp_exchange2d (ng, tile, iRPM, 1,                            &
-     &                    ILB, IUB, JLB, JUB,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_Dvom)
 #  endif
@@ -539,6 +544,7 @@
 !***********************************************************************
       SUBROUTINE rp_conserve_mass_tile (ng, tile,                       &
      &                                  LBi, UBi, LBj, UBj,             &
+     &                                  IminS, ImaxS, JminS, JmaxS,     &
      &                                  kinp,                           &
 # ifdef MASKING
      &                                  umask, vmask,                   &
@@ -553,6 +559,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kinp
 !
 # ifdef ASSUMED_SHAPE

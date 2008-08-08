@@ -36,6 +36,7 @@
 #endif
       CALL rp_t3dmix2_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs(ng), nnew(ng),                         &
 #ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -62,6 +63,7 @@
 !***********************************************************************
       SUBROUTINE rp_t3dmix2_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs, nnew,                           &
 #ifdef MASKING
      &                            umask, vmask,                         &
@@ -82,6 +84,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -129,8 +132,8 @@
 
       real(r8) :: cff, cff1, tl_cff, tl_cff1
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
 
 #include "set_bounds.h"
 !

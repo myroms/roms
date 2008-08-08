@@ -73,49 +73,50 @@
       CALL wclock_on (ng, iADM, 17)
 # endif
       CALL ad_bulk_flux_tile (ng, tile,                                 &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     nrhs(ng),                                    &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS  JminS, JmaxS,               &
+     &                        nrhs(ng),                                 &
 # ifdef MASKING
-     &                     GRID(ng) % rmask,                            &
-     &                     GRID(ng) % umask,                            &
-     &                     GRID(ng) % vmask,                            &
+     &                        GRID(ng) % rmask,                         &
+     &                        GRID(ng) % umask,                         &
+     &                        GRID(ng) % vmask,                         &
 # endif
-     &                     MIXING(ng) % alpha,                          &
-     &                     MIXING(ng) % ad_alpha,                       &
-     &                     MIXING(ng) % beta,                           &
-     &                     MIXING(ng) % ad_beta,                        &
-     &                     OCEAN(ng) % rho,                             &
-     &                     OCEAN(ng) % ad_rho,                          &
-     &                     OCEAN(ng) % t,                               &
-     &                     OCEAN(ng) % ad_t,                            &
-     &                     FORCES(ng) % Hair,                           &
-     &                     FORCES(ng) % Pair,                           &
-     &                     FORCES(ng) % Tair,                           &
-     &                     FORCES(ng) % Uwind,                          &
-     &                     FORCES(ng) % Vwind,                          &
+     &                        MIXING(ng) % alpha,                       &
+     &                        MIXING(ng) % ad_alpha,                    &
+     &                        MIXING(ng) % beta,                        &
+     &                        MIXING(ng) % ad_beta,                     &
+     &                        OCEAN(ng) % rho,                          &
+     &                        OCEAN(ng) % ad_rho,                       &
+     &                        OCEAN(ng) % t,                            &
+     &                        OCEAN(ng) % ad_t,                         &
+     &                        FORCES(ng) % Hair,                        &
+     &                        FORCES(ng) % Pair,                        &
+     &                        FORCES(ng) % Tair,                        &
+     &                        FORCES(ng) % Uwind,                       &
+     &                        FORCES(ng) % Vwind,                       &
 # ifdef CLOUDS
-     &                     FORCES(ng) % cloud,                          &
+     &                        FORCES(ng) % cloud,                       &
 # endif
 # ifdef BBL_MODEL_NOT_YET
-     &                     FORCES(ng) % Awave,                          &
-     &                     FORCES(ng) % Pwave,                          &
+     &                        FORCES(ng) % Awave,                       &
+     &                        FORCES(ng) % Pwave,                       &
 # endif
-     &                     FORCES(ng) % rain,                           &
-     &                     FORCES(ng) % lhflx,                          &
-     &                     FORCES(ng) % ad_lhflx,                       &
-     &                     FORCES(ng) % lrflx,                          &
-     &                     FORCES(ng) % ad_lrflx,                       &
-     &                     FORCES(ng) % shflx,                          &
-     &                     FORCES(ng) % ad_shflx,                       &
-     &                     FORCES(ng) % srflx,                          &
-     &                     FORCES(ng) % stflx,                          &
-     &                     FORCES(ng) % ad_stflx,                       &
+     &                        FORCES(ng) % rain,                        &
+     &                        FORCES(ng) % lhflx,                       &
+     &                        FORCES(ng) % ad_lhflx,                    &
+     &                        FORCES(ng) % lrflx,                       &
+     &                        FORCES(ng) % ad_lrflx,                    &
+     &                        FORCES(ng) % shflx,                       &
+     &                        FORCES(ng) % ad_shflx,                    &
+     &                        FORCES(ng) % srflx,                       &
+     &                        FORCES(ng) % stflx,                       &
+     &                        FORCES(ng) % ad_stflx,                    &
 # ifdef EMINUSP
-     &                     FORCES(ng) % evap,                           &
-     &                     FORCES(ng) % ad_evap,                        &
+     &                        FORCES(ng) % evap,                        &
+     &                        FORCES(ng) % ad_evap,                     &
 # endif
-     &                     FORCES(ng) % ad_sustr,                       &
-     &                     FORCES(ng) % ad_svstr)
+     &                        FORCES(ng) % ad_sustr,                    &
+     &                        FORCES(ng) % ad_svstr)
 
 # ifdef PROFILE
       CALL wclock_off (ng, iADM, 17)
@@ -125,26 +126,33 @@
 !
 !***********************************************************************
       SUBROUTINE ad_bulk_flux_tile (ng, tile,                           &
-     &                           LBi, UBi, LBj, UBj,                    &
-     &                           nrhs,                                  &
+     &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS          &
+     &                              nrhs,                               &
 # ifdef MASKING
-     &                           rmask, umask, vmask,                   &
+     &                              rmask, umask, vmask,                &
 # endif
-     &                           alpha, ad_alpha, beta, ad_beta,        &
-     &                           rho, ad_rho, t, ad_t,                  &
-     &                           Hair, Pair, Tair, Uwind, Vwind,        &
+     &                              alpha, ad_alpha,                    &
+     &                              beta, ad_beta,                      &
+     &                              rho, ad_rho, t, ad_t,               &
+     &                              Hair, Pair, Tair,                   &
+     &                              Uwind, Vwind,                       &
 # ifdef CLOUDS
-     &                           cloud,                                 &
+     &                              cloud,                              &
 # endif
 # ifdef BBL_MODEL_NOT_YET
-     &                           Awave, Pwave,                          &
+     &                              Awave, Pwave,                       &
 # endif
-     &                           rain, lhflx, ad_lhflx, lrflx, ad_lrflx,&
-     &                           shflx, ad_shflx,srflx, stflx, ad_stflx,&
+     &                              rain,                               &
+     &                              lhflx, ad_lhflx,                    &
+     &                              lrflx, ad_lrflx,                    &
+     &                              shflx, ad_shflx,                    &
+     &                              srflx,                              &
+     &                              stflx, ad_stflx,                    &
 # ifdef EMINUSP
-     &                           evap, ad_evap,                         &
+     &                              evap, ad_evap,                      &
 # endif
-     &                           ad_sustr, ad_svstr)
+     &                              ad_sustr, ad_svstr)
 !***********************************************************************
 !
       USE mod_param
@@ -163,6 +171,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE
@@ -269,7 +278,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: Iter, IterA, i, j, k
       integer, parameter :: IterMax = 3
 
@@ -296,121 +304,116 @@
       real(r8) :: ad_Qbouy, ad_Qcool, ad_lambd
 # endif
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: CC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cd10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ch10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ct10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: charn
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ct
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cwave
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Cwet
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delQc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delTc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delW
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delW1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: L10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Lwave
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Q
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qair
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qsea
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoAir
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: rhoSea
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ri
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Ribcu
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Rr
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Scff
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TairK
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tcff
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: TseaK
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: u10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: VisAir
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wgus
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wmag
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Zetu
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Zo10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoT10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoQ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZoW
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ZWoL
+      real(r8), dimension(IminS:ImaxS) :: CC
+      real(r8), dimension(IminS:ImaxS) :: Cd10
+      real(r8), dimension(IminS:ImaxS) :: Ch10
+      real(r8), dimension(IminS:ImaxS) :: Ct10
+      real(r8), dimension(IminS:ImaxS) :: charn
+      real(r8), dimension(IminS:ImaxS) :: Ct
+      real(r8), dimension(IminS:ImaxS) :: Cwave
+      real(r8), dimension(IminS:ImaxS) :: Cwet
+      real(r8), dimension(IminS:ImaxS) :: delQ
+      real(r8), dimension(IminS:ImaxS) :: delQc
+      real(r8), dimension(IminS:ImaxS) :: delT
+      real(r8), dimension(IminS:ImaxS) :: delTc
+      real(r8), dimension(IminS:ImaxS) :: delW
+      real(r8), dimension(IminS:ImaxS) :: delW1
+      real(r8), dimension(IminS:ImaxS) :: L
+      real(r8), dimension(IminS:ImaxS) :: L10
+      real(r8), dimension(IminS:ImaxS) :: Lwave
+      real(r8), dimension(IminS:ImaxS) :: Q
+      real(r8), dimension(IminS:ImaxS) :: Qair
+      real(r8), dimension(IminS:ImaxS) :: Qpsi
+      real(r8), dimension(IminS:ImaxS) :: Qsea
+      real(r8), dimension(IminS:ImaxS) :: Qstar
+      real(r8), dimension(IminS:ImaxS) :: rhoAir
+      real(r8), dimension(IminS:ImaxS) :: rhoSea
+      real(r8), dimension(IminS:ImaxS) :: Ri
+      real(r8), dimension(IminS:ImaxS) :: Ribcu
+      real(r8), dimension(IminS:ImaxS) :: Rr
+      real(r8), dimension(IminS:ImaxS) :: Scff
+      real(r8), dimension(IminS:ImaxS) :: TairC
+      real(r8), dimension(IminS:ImaxS) :: TairK
+      real(r8), dimension(IminS:ImaxS) :: Tcff
+      real(r8), dimension(IminS:ImaxS) :: Tpsi
+      real(r8), dimension(IminS:ImaxS) :: TseaC
+      real(r8), dimension(IminS:ImaxS) :: TseaK
+      real(r8), dimension(IminS:ImaxS) :: Tstar
+      real(r8), dimension(IminS:ImaxS) :: u10
+      real(r8), dimension(IminS:ImaxS) :: VisAir
+      real(r8), dimension(IminS:ImaxS) :: Wgus
+      real(r8), dimension(IminS:ImaxS) :: Wmag
+      real(r8), dimension(IminS:ImaxS) :: Wpsi
+      real(r8), dimension(IminS:ImaxS) :: Wstar
+      real(r8), dimension(IminS:ImaxS) :: Zetu
+      real(r8), dimension(IminS:ImaxS) :: Zo10
+      real(r8), dimension(IminS:ImaxS) :: ZoT10
+      real(r8), dimension(IminS:ImaxS) :: ZoL
+      real(r8), dimension(IminS:ImaxS) :: ZoQ
+      real(r8), dimension(IminS:ImaxS) :: ZoT
+      real(r8), dimension(IminS:ImaxS) :: ZoW
+      real(r8), dimension(IminS:ImaxS) :: ZWoL
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Wstar1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Tstar1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: Qstar1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: delTc1
+      real(r8), dimension(IminS:ImaxS) :: Wstar1
+      real(r8), dimension(IminS:ImaxS) :: Tstar1
+      real(r8), dimension(IminS:ImaxS) :: Qstar1
+      real(r8), dimension(IminS:ImaxS) :: delTc1
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hlv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LHeat
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LRad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: SHeat
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: SRad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Taux
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hlv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LHeat
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LRad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: SHeat
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: SRad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Taux
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Tauy
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_CC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_charn
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Ct
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Cd10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Ct10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Cwet
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_delQ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_delQc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_delT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_delTc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_delW
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_L
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_L10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Q
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Qpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Qsea
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Qstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_rhoSea
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Ri
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Rr
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Scff
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Tcff
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Tpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_TseaC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_TseaK
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Tstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_u10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Wgus
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Wpsi
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Wstar
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Zetu
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_Zo10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_ZoT10
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_ZoL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_ZoQ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_ZoT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_ZoW
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_ZWoL
+      real(r8), dimension(IminS:ImaxS) :: ad_CC
+      real(r8), dimension(IminS:ImaxS) :: ad_charn
+      real(r8), dimension(IminS:ImaxS) :: ad_Ct
+      real(r8), dimension(IminS:ImaxS) :: ad_Cd10
+      real(r8), dimension(IminS:ImaxS) :: ad_Ct10
+      real(r8), dimension(IminS:ImaxS) :: ad_Cwet
+      real(r8), dimension(IminS:ImaxS) :: ad_delQ
+      real(r8), dimension(IminS:ImaxS) :: ad_delQc
+      real(r8), dimension(IminS:ImaxS) :: ad_delT
+      real(r8), dimension(IminS:ImaxS) :: ad_delTc
+      real(r8), dimension(IminS:ImaxS) :: ad_delW
+      real(r8), dimension(IminS:ImaxS) :: ad_L
+      real(r8), dimension(IminS:ImaxS) :: ad_L10
+      real(r8), dimension(IminS:ImaxS) :: ad_Q
+      real(r8), dimension(IminS:ImaxS) :: ad_Qpsi
+      real(r8), dimension(IminS:ImaxS) :: ad_Qsea
+      real(r8), dimension(IminS:ImaxS) :: ad_Qstar
+      real(r8), dimension(IminS:ImaxS) :: ad_rhoSea
+      real(r8), dimension(IminS:ImaxS) :: ad_Ri
+      real(r8), dimension(IminS:ImaxS) :: ad_Rr
+      real(r8), dimension(IminS:ImaxS) :: ad_Scff
+      real(r8), dimension(IminS:ImaxS) :: ad_Tcff
+      real(r8), dimension(IminS:ImaxS) :: ad_Tpsi
+      real(r8), dimension(IminS:ImaxS) :: ad_TseaC
+      real(r8), dimension(IminS:ImaxS) :: ad_TseaK
+      real(r8), dimension(IminS:ImaxS) :: ad_Tstar
+      real(r8), dimension(IminS:ImaxS) :: ad_u10
+      real(r8), dimension(IminS:ImaxS) :: ad_Wgus
+      real(r8), dimension(IminS:ImaxS) :: ad_Wpsi
+      real(r8), dimension(IminS:ImaxS) :: ad_Wstar
+      real(r8), dimension(IminS:ImaxS) :: ad_Zetu
+      real(r8), dimension(IminS:ImaxS) :: ad_Zo10
+      real(r8), dimension(IminS:ImaxS) :: ad_ZoT10
+      real(r8), dimension(IminS:ImaxS) :: ad_ZoL
+      real(r8), dimension(IminS:ImaxS) :: ad_ZoQ
+      real(r8), dimension(IminS:ImaxS) :: ad_ZoT
+      real(r8), dimension(IminS:ImaxS) :: ad_ZoW
+      real(r8), dimension(IminS:ImaxS) :: ad_ZWoL
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Hlv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_LHeat
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_LRad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_SHeat
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Taux
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Tauy
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Hlv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_LHeat
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_LRad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_SHeat
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Taux
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Tauy
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_Hlv,DIM=1)
-      IUB=UBOUND(ad_Hlv,DIM=1)
-      JLB=LBOUND(ad_Hlv,DIM=2)
-      JUB=UBOUND(ad_Hlv,DIM=2)
 !
 !-------------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -439,52 +442,56 @@
       ad_Qcool=0.0_r8
       ad_lambd=0.0_r8
 # endif
-
-      ad_CC(ILB:IUB)=0.0_r8
-      ad_charn(ILB:IUB)=0.0_r8
-      ad_Ct(ILB:IUB)=0.0_r8
-      ad_Cd10(ILB:IUB)=0.0_r8
-      ad_Ct10(ILB:IUB)=0.0_r8
-      ad_Cwet(ILB:IUB)=0.0_r8
-      ad_delQ(ILB:IUB)=0.0_r8
-      ad_delQc(ILB:IUB)=0.0_r8
-      ad_delT(ILB:IUB)=0.0_r8
-      ad_delTc(ILB:IUB)=0.0_r8
-      ad_delW(ILB:IUB)=0.0_r8
-      ad_L(ILB:IUB)=0.0_r8
-      ad_L10(ILB:IUB)=0.0_r8
-      ad_Q(ILB:IUB)=0.0_r8
-      ad_Qpsi(ILB:IUB)=0.0_r8
-      ad_Qsea(ILB:IUB)=0.0_r8
-      ad_Qstar(ILB:IUB)=0.0_r8
-      ad_rhoSea(ILB:IUB)=0.0_r8
-      ad_Ri(ILB:IUB)=0.0_r8
-      ad_Rr(ILB:IUB)=0.0_r8
-      ad_Scff(ILB:IUB)=0.0_r8
-      ad_Tcff(ILB:IUB)=0.0_r8
-      ad_Tpsi(ILB:IUB)=0.0_r8
-      ad_TseaC(ILB:IUB)=0.0_r8
-      ad_TseaK(ILB:IUB)=0.0_r8
-      ad_Tstar(ILB:IUB)=0.0_r8
-      ad_u10(ILB:IUB)=0.0_r8
-      ad_Wgus(ILB:IUB)=0.0_r8
-      ad_Wpsi(ILB:IUB)=0.0_r8
-      ad_Wstar(ILB:IUB)=0.0_r8
-      ad_Zetu(ILB:IUB)=0.0_r8
-      ad_Zo10(ILB:IUB)=0.0_r8
-      ad_ZoT10(ILB:IUB)=0.0_r8
-      ad_ZoL(ILB:IUB)=0.0_r8
-      ad_ZoQ(ILB:IUB)=0.0_r8
-      ad_ZoT(ILB:IUB)=0.0_r8
-      ad_ZoW(ILB:IUB)=0.0_r8
-      ad_ZWoL(ILB:IUB)=0.0_r8
-
-      ad_Hlv(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_LHeat(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_LRad(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_SHeat(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_Taux(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_Tauy(ILB:IUB,JLB:JUB)=0.0_r8
+      DO i=IminS,ImaxS
+        ad_CC(i)=0.0_r8
+        ad_charn(i)=0.0_r8
+        ad_Ct(i)=0.0_r8
+        ad_Cd10(i)=0.0_r8
+        ad_Ct10(i)=0.0_r8
+        ad_Cwet(i)=0.0_r8
+        ad_delQ(i)=0.0_r8
+        ad_delQc(i)=0.0_r8
+        ad_delT(i)=0.0_r8
+        ad_delTc(i)=0.0_r8
+        ad_delW(i)=0.0_r8
+        ad_L(i)=0.0_r8
+        ad_L10(i)=0.0_r8
+        ad_Q(i)=0.0_r8
+        ad_Qpsi(i)=0.0_r8
+        ad_Qsea(i)=0.0_r8
+        ad_Qstar(i)=0.0_r8
+        ad_rhoSea(i)=0.0_r8
+        ad_Ri(i)=0.0_r8
+        ad_Rr(i)=0.0_r8
+        ad_Scff(i)=0.0_r8
+        ad_Tcff(i)=0.0_r8
+        ad_Tpsi(i)=0.0_r8
+        ad_TseaC(i)=0.0_r8
+        ad_TseaK(i)=0.0_r8
+        ad_Tstar(i)=0.0_r8
+        ad_u10(i)=0.0_r8
+        ad_Wgus(i)=0.0_r8
+        ad_Wpsi(i)=0.0_r8
+        ad_Wstar(i)=0.0_r8
+        ad_Zetu(i)=0.0_r8
+        ad_Zo10(i)=0.0_r8
+        ad_ZoT10(i)=0.0_r8
+        ad_ZoL(i)=0.0_r8
+        ad_ZoQ(i)=0.0_r8
+        ad_ZoT(i)=0.0_r8
+        ad_ZoW(i)=0.0_r8
+        ad_ZWoL(i)=0.0_r8
+      END DO
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
+          ad_Hlv(i,j)=0.0_r8
+          ad_LHeat(i,j)=0.0_r8
+          ad_LRad(i,j)=0.0_r8
+          ad_SHeat(i,j)=0.0_r8
+          ad_Taux(i,j)=0.0_r8
+          ad_Tauy(i,j)=0.0_r8
+        END DO
+      END DO
 !
       twopi_inv=0.5_r8/pi
 !

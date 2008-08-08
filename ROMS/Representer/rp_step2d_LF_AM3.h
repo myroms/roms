@@ -52,6 +52,7 @@
 # endif
       CALL rp_step2d_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj, N(ng),                   &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     krhs(ng), kstp(ng), knew(ng),                &
 # ifdef SOLVE3D
      &                     nstp(ng), nnew(ng),                          &
@@ -168,6 +169,7 @@
 !***********************************************************************
       SUBROUTINE rp_step2d_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj, UBk,               &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           krhs, kstp, knew,                      &
 # ifdef SOLVE3D
      &                           nstp, nnew,                            &
@@ -281,6 +283,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: krhs, kstp, knew
 # ifdef SOLVE3D
       integer, intent(in) :: nstp, nnew
@@ -578,7 +581,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, j, ptsk
 # if defined UV_PSOURCE || defined Q_PSOURCE
       integer :: is
@@ -591,85 +593,78 @@
       real(r8) :: fac, fac1, fac2
       real(r8) :: tl_cff, tl_cff1, tl_fac, tl_fac1
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Dgrad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Dnew
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Drhs
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Drhs_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Dstp
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: DUon
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: DVom
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dgrad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dnew
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Drhs
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Drhs_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Dstp
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUon
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVom
 # ifdef NEARSHORE_MELLOR
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: DUSon
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: DVSom
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DUSon
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: DVSom
 # endif
 # ifdef UV_VIS4
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapU
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LapU
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LapV
 # endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: grad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: gzeta
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: gzeta2
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzeta2
 # if defined VAR_RHO_2D && defined SOLVE3D
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: gzetaSA
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: gzetaSA
 # endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rhs_ubar
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rhs_vbar
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rhs_zeta
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: zeta_new
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: zwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhs_ubar
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhs_vbar
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rhs_zeta
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: zeta_new
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: zwrk
 # ifdef WET_DRY_NOT_YET
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wetdry
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wetdry
 # endif
 # ifdef DIAGNOSTICS_UV
-!!    real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Uwrk
-!!    real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vwrk
-!!    real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
-!!   &                                     NDM2d-1) :: DiaU2rhs
-!!    real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
-!!   &                                     NDM2d-1) :: DiaV2rhs
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Uwrk
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vwrk
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS,NDM2d-1) :: DiaU2rhs
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS,NDM2d-1) :: DiaV2rhs
 # endif
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Dgrad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Dnew
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Drhs
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Drhs_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_Dstp
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_DUon
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_DVom
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Dgrad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Dnew
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Drhs
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Drhs_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_Dstp
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DUon
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DVom
 # ifdef NEARSHORE_MELLOR
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_DUSon
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_DVSom
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DUSon
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_DVSom
 # endif
 # ifdef UV_VIS4
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_LapU
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_LapV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_LapU
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_LapV
 # endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_VFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_grad
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_gzeta
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_gzeta2
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_gzeta
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_gzeta2
 # if defined VAR_RHO_2D && defined SOLVE3D
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_gzetaSA
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_gzetaSA
 # endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_rhs_ubar
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_rhs_vbar
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_rhs_zeta
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_zeta_new
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_zwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_rhs_ubar
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_rhs_vbar
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_rhs_zeta
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_zeta_new
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_zwrk
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(Drhs,DIM=1)
-      IUB=UBOUND(Drhs,DIM=1)
-      JLB=LBOUND(Drhs,DIM=2)
-      JUB=UBOUND(Drhs,DIM=2)
 !
       ptsk=3-kstp
       CORRECTOR_2D_STEP=.not.PREDICTOR_2D_STEP(ng)
@@ -771,24 +766,24 @@
 !
 #  if defined EW_PERIODIC || defined NS_PERIODIC
       CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        ILB, IUB, JLB, JUB,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        DUon)
       CALL exchange_u2d_tile (ng, tile,                                 &
-     &                        ILB, IUB, JLB, JUB,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        tl_DUon)
       CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        ILB, IUB, JLB, JUB,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        DVom)
       CALL exchange_v2d_tile (ng, tile,                                 &
-     &                        ILB, IUB, JLB, JUB,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        tl_DVom)
 #  endif
       CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
-     &                    ILB, IUB, JLB, JUB,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    DUon, DVom)
       CALL mp_exchange2d (ng, tile, iRPM, 2,                            &
-     &                    ILB, IUB, JLB, JUB,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NghostPoints, EWperiodic, NSperiodic,         &
      &                    tl_DUon, tl_DVom)
 # endif
@@ -817,6 +812,7 @@
 !
       CALL obc_flux_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    knew,                                         &
 #  ifdef MASKING
      &                    umask, vmask,                                 &
@@ -829,7 +825,7 @@
 !
       CALL set_DUV_bc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
-     &                      ILB, IUB, JLB, JUB,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      krhs,                                       &
 #  ifdef MASKING
      &                      umask, vmask,                               &
@@ -839,7 +835,7 @@
      &                      Drhs, DUon, DVom)
       CALL rp_set_DUV_bc_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
-     &                         ILB, IUB, JLB, JUB,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,               &
      &                         krhs,                                    &
 #  ifdef MASKING
      &                         umask, vmask,                            &
@@ -994,6 +990,7 @@
 #  endif
 !>      CALL set_depth_tile (ng, tile,                                  &
 !>   &                       LBi, UBi, LBj, UBj,                        &
+!>   &                       IminS, ImaxS, JminS, JmaxS,                &
 !>   &                       nstp, nnew,                                &
 !>   &                       h,                                         &
 #  ifdef ICESHELF
@@ -1006,6 +1003,7 @@
 !>
         CALL rp_set_depth_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp, nnew,                             &
      &                          h, tl_h,                                &
 #  ifdef ICESHELF
@@ -1296,11 +1294,13 @@
 !
 !>    CALL zetabc_tile (ng, tile,                                       &
 !>   &                  LBi, UBi, LBj, UBj,                             &
+!>   &                  IminS, ImaxS, JminS, JmaxS,                     &
 !>   &                  krhs, kstp, knew,                               &
 !>   &                  zeta)
 !>
       CALL rp_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     krhs, kstp, knew,                            &
      &                     zeta, tl_zeta)
 # if defined EW_PERIODIC || defined NS_PERIODIC
@@ -4128,21 +4128,25 @@
 !
 !>    CALL u2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 krhs, kstp, knew,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
 !>    CALL v2dbc_tile (ng, tile,                                        &
 !>   &                 LBi, UBi, LBj, UBj,                              &
+!>   &                 IminS, ImaxS, JminS, JmaxS,                      &
 !>   &                 krhs, kstp, knew,                                &
 !>   &                 ubar, vbar, zeta)
 !>
       CALL rp_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, knew,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
@@ -4153,6 +4157,7 @@
 !
       CALL rp_obc_flux_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       knew,                                      &
 #  ifdef MASKING
      &                       umask, vmask,                              &

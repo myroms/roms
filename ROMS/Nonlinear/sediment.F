@@ -98,6 +98,7 @@
 # endif
       CALL sediment_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp(ng), nnew(ng),                           &
      &                    GRID(ng) % pm,                                &
      &                    GRID(ng) % pn,                                &
@@ -154,6 +155,7 @@
 !***********************************************************************
       SUBROUTINE sediment_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp, nnew,                             &
      &                          pm, pn,                                 &
 # ifdef MASKING
@@ -206,13 +208,13 @@
 #  if defined EW_PERIODIC || defined NS_PERIODIC
       USE exchange_3d_mod, ONLY : exchange_r3d_tile
 #  endif
-      USE t3dbc_mod, ONLY : t3dbc_tile
 # endif
 !
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
@@ -334,24 +336,24 @@
       real(r8) :: cu, ero_flux, cff4
       real(r8) :: thck_avail, thck_to_add
 
-      integer, dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ksource
+      integer, dimension(IminS:ImaxS,N(ng)) :: ksource
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv3
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: qc
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: qR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: qL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WL
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,NST) :: dep_mass
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_w
+      real(r8), dimension(IminS:ImaxS,NST) :: dep_mass
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_w
 # ifdef BSTRESS_UPWIND
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_wX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_wE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_wX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_wE
 # endif
 # ifdef BEDLOAD
       real(r8) :: a_slopex, a_slopey, sed_angle, cff5
@@ -360,14 +362,14 @@
       real(r8) :: rhs_bed, Ua, Ra, phi, Clim
       integer :: iff
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX_r
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE_r
 # endif
 # if defined BEDLOAD_MPM
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: angleu
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: anglev
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: angleu
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: anglev
 # endif
 # if defined BEDLOAD_SOULSBY
       real(r8) :: theta_mean, theta_wav, w_asym
@@ -375,18 +377,18 @@
       real(r8) :: phi_x1, phi_x2, phi_x, phi_y, Dstp
       real(r8) :: bedld_x, bedld_y, tau_cur, waven, wavec
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phic
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phicw
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_wav
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_mean
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: phic
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: phicw
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_wav
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_mean
       real(r8), parameter :: kdmax = 100.0_r8      
 # endif
 # if defined SED_MORPH
       integer :: kbed
 # endif
 # ifdef SED_BIODIFF
-!      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_cr_max
-!      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tau_cr_min
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_cr_max
+!!    real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_cr_min
 # endif
 # include "set_bounds.h"
 

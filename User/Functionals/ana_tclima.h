@@ -23,6 +23,7 @@
 !
       CALL ana_tclima_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      CLIMA(ng) % tclm)
 !
 ! Set analytical header file name used.
@@ -37,6 +38,7 @@
 !***********************************************************************
       SUBROUTINE ana_tclima_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            tclm)
 !***********************************************************************
 !
@@ -55,6 +57,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: tclm(LBi:,LBj:,:,:)

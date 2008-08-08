@@ -63,6 +63,7 @@
 # endif
       CALL bblm_tile (ng, tile,                                         &
      &                LBi, UBi, LBj, UBj,                               &
+     &                IminS, ImaxS, JminS, JmaxS,                       &
      &                nrhs(ng),                                         &
      &                GRID(ng) % h,                                     &
      &                GRID(ng) % z_r,                                   &
@@ -100,6 +101,7 @@
 !***********************************************************************
       SUBROUTINE bblm_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs,                                       &
      &                      h, z_r, z_w, angler,                        &
 # ifdef MB_CALC_UB
@@ -129,6 +131,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE
@@ -240,17 +243,17 @@
       real(r8) :: tau_bf, tau_ex,  tau_en, tau_up, tau_w, tau_wb
       real(r8) :: tau_c, tau_cb, tau_cs, tau_cw, tau_cwb, tau_cws
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ub
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ucur
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vcur
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Zr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ur_mb
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vr_mb
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Umag
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tauC
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tauW
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tauCW
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tauCWmax
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ub
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ucur
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vcur
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Zr
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ur_mb
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vr_mb
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Umag
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tauC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tauW
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tauCW
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tauCWmax
     
 #include "set_bounds.h"
 !

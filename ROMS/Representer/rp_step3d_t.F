@@ -57,6 +57,7 @@
 # endif
       CALL rp_step3d_t_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nrhs(ng), nstp(ng), nnew(ng),              &
 # if defined TS_PSOURCE || defined Q_PSOURCE
      &                       Nsrc(ng),                                  &
@@ -131,6 +132,7 @@
 !***********************************************************************
       SUBROUTINE rp_step3d_t_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs, nstp, nnew,                    &
 # if defined TS_PSOURCE || defined Q_PSOURCE
      &                             Nsrc, Isrc, Jsrc, Tsrc,              &
@@ -195,6 +197,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
@@ -371,9 +374,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-# ifdef TS_MPDATA_NOT_YET
-      integer :: ILB, IUB, JLB, JUB
-# endif
       integer :: i, is, itrc, j, k, ltrc
       integer :: idiag
 
@@ -382,52 +382,44 @@
       real(r8) :: cff, cff1, cff2, cff3
       real(r8) :: tl_cff, tl_cff1, tl_cff2
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: tl_oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: tl_oHz
 # ifdef TS_MPDATA_NOT_YET
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                     &
      &                    N(ng),NT(ng)) :: Ta
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,                     &
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,                     &
      &                    N(ng),NT(ng)) :: tl_Ta
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: Ua
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: Va
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: Wa
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: Ua
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: Va
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: Wa
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: tl_Ua
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: tl_Va
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: tl_Wa
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: tl_Ua
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: tl_Va
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: tl_Wa
 # endif
 
 # include "set_bounds.h"
-
-# ifdef TS_MPDATA_NOT_YET
-!
-      ILB=LBOUND(Ua,DIM=1)
-      IUB=UBOUND(Ua,DIM=1)
-      JLB=LBOUND(Ua,DIM=2)
-      JUB=UBOUND(Ua,DIM=2)
-# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step horizontal advection term.
@@ -1440,7 +1432,7 @@
       DO itrc=1,NT(ng)
 !>      CALL mpdata_adiff_tile (ng, tile,                               &
 !>   &                          LBi, UBi, LBj, UBj,                     &
-!>   &                          ILB, IUB, JLB, JUB,                     &
+!>   &                          IminS, ImaxS, JminS, JmaxS,             &
 !>   &                          nrhs,                                   &
 #  ifdef MASKING
 !>   &                          rmask, umask, vmask,                    &
@@ -1456,13 +1448,13 @@
 !>
         CALL rp_mpdata_adiff_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
-     &                             ILB, IUB, JLB, JUB,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs,                                &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
 #  endif
 #  ifdef WET_DRY
-     &                             rmask_wet,                            &
+     &                             rmask_wet,                           &
 #  endif
      &                             pm, pn, omn, om_u, on_v,             &
      &                             z_r, tl_z_r,                         &
@@ -1922,11 +1914,13 @@
 !
 !>      CALL t3dbc_tile (ng, tile, itrc,                                &
 !>   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+!>   &                   IminS, ImaxS, JminS, JmaxS,                    &
 !>   &                   nstp, nnew,                                    &
 !>   &                   t)
 !>
         CALL rp_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, nnew,                                 &
      &                      tl_t)
 

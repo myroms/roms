@@ -25,6 +25,7 @@
 !
       CALL ana_wwave_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
 #if defined BBL_MODEL || defined NEARSHORE_MELLOR
      &                     FORCES(ng) % Dwave,                          &
 #endif
@@ -61,6 +62,7 @@
 !***********************************************************************
       SUBROUTINE ana_wwave_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
 #if defined BBL_MODEL || defined NEARSHORE_MELLOR
      &                           Dwave,                                 &
 #endif
@@ -99,6 +101,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: angler(LBi:,LBj:)

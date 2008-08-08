@@ -71,6 +71,7 @@
 #endif
       CALL ad_uv3dmix4_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nrhs(ng), nnew(ng),                        &
 #ifdef MASKING
      &                       GRID(ng) % pmask,                          &
@@ -111,6 +112,7 @@
 !***********************************************************************
       SUBROUTINE ad_uv3dmix4_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs, nnew,                          &
 #ifdef MASKING
      &                             pmask,                               &
@@ -135,6 +137,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -209,33 +212,27 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 
       real(r8) :: cff, cff1, cff2
       real(r8) :: ad_cff, ad_cff1, ad_cff2
       real(r8) :: adfac, adfac1, adfac2, adfac3, adfac4
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapU
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LapU
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LapV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFx
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_LapU
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_LapV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_LapU
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_LapV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_VFx
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(ad_UFe,DIM=1)
-      IUB=UBOUND(ad_UFe,DIM=1)
-      JLB=LBOUND(ad_UFe,DIM=2)
-      JUB=UBOUND(ad_UFe,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -245,13 +242,13 @@
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
 
-      ad_LapU(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_LapV(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_LapU(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_LapV(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 
-      ad_UFe(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_VFe(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_UFx(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_VFx(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_UFe(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_VFe(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_UFx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_VFx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint horizontal biharmonic viscosity along constant

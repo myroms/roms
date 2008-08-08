@@ -65,6 +65,7 @@
 # endif
       CALL pre_step3d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs(ng), nstp(ng), nnew(ng),               &
 # ifdef TS_PSOURCE
      &                      Nsrc(ng),                                   &
@@ -124,6 +125,7 @@
 !***********************************************************************
       SUBROUTINE pre_step3d_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs, nstp, nnew,                     &
 # ifdef TS_PSOURCE
      &                            Nsrc, Lsrc, Isrc, Jsrc, Dsrc,         &
@@ -171,6 +173,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
@@ -307,17 +310,17 @@
 
       real(r8) :: cff, cff1, cff2, cff3, cff4
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
 # ifdef SOLAR_SOURCE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: swdk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: swdk
 # endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
 # include "set_bounds.h"
 
@@ -338,7 +341,9 @@
             FX(i,j)=z_w(i,j,N(ng))-z_w(i,j,k)
           END DO
         END DO
-        CALL lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,             &
+        CALL lmd_swfrac_tile (ng, tile,                                 &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        -1.0_r8, FX, FE)
         DO j=Jstr,Jend
           DO i=Istr,Iend
@@ -1120,6 +1125,7 @@
       DO itrc=1,NT(ng)
         CALL t3dbc_tile (ng, tile, itrc,                                &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp, 3,                                       &
      &                   t)
 #  if defined EW_PERIODIC || defined NS_PERIODIC

@@ -41,6 +41,7 @@
 !
       CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp(ng), nnew(ng),                          &
      &                     GRID(ng) % h,                                &
 # ifdef ICESHELF
@@ -59,6 +60,7 @@
 !***********************************************************************
       SUBROUTINE set_depth_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nstp, nnew,                            &
      &                           h,                                     &
 # ifdef ICESHELF
@@ -86,6 +88,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 !
 # ifdef ASSUMED_SHAPE

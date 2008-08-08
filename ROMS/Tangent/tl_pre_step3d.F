@@ -69,6 +69,7 @@
 # endif
       CALL tl_pre_step3d_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs(ng), nstp(ng), nnew(ng),            &
 # ifdef TS_PSOURCE
      &                         Nsrc(ng),                                &
@@ -139,6 +140,7 @@
 !***********************************************************************
       SUBROUTINE tl_pre_step3d_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               nrhs, nstp, nnew,                  &
 # ifdef TS_PSOURCE
      &                               Nsrc, Lsrc, Isrc, Jsrc, Dsrc,      &
@@ -192,6 +194,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
@@ -363,27 +366,27 @@
       real(r8) :: cff, cff1, cff2, cff3, cff4
       real(r8) :: tl_cff, tl_cff1, tl_cff2, tl_cff3, tl_cff4
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FC
 
 # ifdef SOLAR_SOURCE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: tl_swdk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: tl_swdk
 # endif
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: grad
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_curv
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_curv
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 
 # include "set_bounds.h"
 
@@ -405,10 +408,14 @@
             tl_FX(i,j)=tl_z_w(i,j,N(ng))-tl_z_w(i,j,k)
           END DO
         END DO
-!>      CALL lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,             &
+!>      CALL lmd_swfrac_tile (ng, tile,                                 &
+!>   &                        LBi, UBi, LBj, UBj,                       &
+!>   &                        IminS, ImaxS, JminS, JmaxS,               &
 !>   &                        -1.0_r8, FX, FE)
 !>
-        CALL tl_lmd_swfrac_tile (ng, tile, LBi, UBi, LBj, UBj,          &
+        CALL tl_lmd_swfrac_tile (ng, tile,                              &
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           -1.0_r8, FX, tl_FX, tl_FE)
         DO j=Jstr,Jend
           DO i=Istr,Iend
@@ -1600,11 +1607,13 @@
       DO itrc=1,NT(ng)
 !>      CALL t3dbc_tile (ng, tile, itrc,                                &
 !>   &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+!>   &                   IminS, ImaxS, JminS, JmaxS,                    &
 !>   &                   nstp, 3,                                       &
 !>   &                   t)
 !>
         CALL tl_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, 3,                                    &
      &                      tl_t)
 #  if defined EW_PERIODIC || defined NS_PERIODIC

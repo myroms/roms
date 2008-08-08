@@ -27,6 +27,7 @@
 !
       CALL ana_tobc_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj, nstp(ng),                 &
+     &                    IminS, ImaxS, JminS, JmaxS,),                 &
      &                    GRID(ng) % z_r,                               &
      &                    OCEAN(ng) % t)
 !
@@ -42,6 +43,7 @@
 !***********************************************************************
       SUBROUTINE ana_tobc_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj, nstp,               &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          z_r, t)
 !***********************************************************************
 !
@@ -54,6 +56,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, nstp
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)

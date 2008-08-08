@@ -41,6 +41,7 @@
 #endif
       CALL ad_biology_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp(ng), nnew(ng),                         &
 #ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -65,6 +66,7 @@
 !-----------------------------------------------------------------------
       SUBROUTINE ad_biology_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, UBk, UBt,         &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nstp, nnew,                           &
 #ifdef MASKING
      &                            rmask,                                &
@@ -83,6 +85,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -123,7 +126,6 @@
 
       integer :: Iter, i, ibio, isink, itime, itrc, iTrcMax, j, k, ks
       integer :: Iteradj, kk
-      integer :: ILB, IUB, JLB, JUB, KLB, KUB
 
       integer, dimension(Nsink) :: idsink
 
@@ -140,54 +142,47 @@
       real(r8), dimension(Nsink) :: Wbio
       real(r8), dimension(Nsink) :: ad_Wbio
 
-      integer, dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ksource
+      integer, dimension(IminS:ImaxS,N(ng)) :: ksource
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: PARsur
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_PARsur
+      real(r8), dimension(IminS:ImaxS) :: PARsur
+      real(r8), dimension(IminS:ImaxS) :: ad_PARsur
 
       real(r8), dimension(NT(ng),2) :: BioTrc
       real(r8), dimension(NT(ng),2) :: BioTrc1
       real(r8), dimension(NT(ng),2) :: ad_BioTrc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio_bak
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio1
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_bak
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: ad_Bio
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: ad_Bio_bak
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: ad_Bio
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: ad_Bio_bak
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Light
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bL1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bR1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qc
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv3
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Light
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bL1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bR1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: qc
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Hz_inv
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Hz_inv2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Hz_inv3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Light
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_WL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_WR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_bL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_bR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_qc
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Hz_inv
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Hz_inv2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Hz_inv3
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Light
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_WL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_WR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_bL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_bR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_qc
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(Bio,DIM=1)
-      IUB=UBOUND(Bio,DIM=1)
-      JLB=LBOUND(Bio,DIM=2)
-      JUB=UBOUND(Bio,DIM=2)
-      KLB=LBOUND(Bio,DIM=3)
-      KUB=UBOUND(Bio,DIM=3)
 !
 !-----------------------------------------------------------------------
 !  Add biological Source/Sink terms.
@@ -233,7 +228,7 @@
         adfac3=0.0_r8
 !
         DO k=1,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_Hz_inv(i,k)=0.0_r8
             ad_Hz_inv2(i,k)=0.0_r8
             ad_Hz_inv3(i,k)=0.0_r8
@@ -250,11 +245,11 @@
           ad_BioTrc(ibio,1)=0.0_r8
           ad_BioTrc(ibio,2)=0.0_r8
         END DO
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_PARsur(i)=0.0_r8
         END DO
         DO k=0,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_FC(i,k)=0.0_r8
           END DO
         END DO

@@ -38,6 +38,7 @@
 !
       CALL ad_forcing_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Kfrc, Nfrc,                                 &
 # ifdef SOLVE3D
      &                      OCEAN(ng) % f_t,                            &
@@ -64,6 +65,7 @@
 !***********************************************************************
       SUBROUTINE ad_forcing_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            Kfrc, Nfrc,                           &
 # ifdef SOLVE3D
      &                            f_t, f_u, f_v,                        &
@@ -85,6 +87,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Kfrc
       integer, intent(in) :: Nfrc
 !

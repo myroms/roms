@@ -45,6 +45,7 @@
 #endif
       CALL diag_tile (ng, tile,                                         &
      &                LBi, UBi, LBj, UBj,                               &
+     &                IminS, ImaxS, JminS, JmaxS,                       &
      &                nstp(ng), krhs(ng),                               &
      &                GRID(ng) % h,                                     &
      &                GRID(ng) % omn,                                   &
@@ -71,6 +72,7 @@
 !***********************************************************************
       SUBROUTINE diag_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp, krhs,                                 &
      &                      h, omn,                                     &
 #ifdef SOLVE3D
@@ -96,6 +98,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, krhs
 
 #ifdef ASSUMED_SHAPE
@@ -148,8 +151,8 @@
 #ifdef SOLVE3D
       real(r8) :: my_maxrho
 #endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ke2d
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: pe2d
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ke2d
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: pe2d
 
       character (len=8) :: kechar, pechar
 

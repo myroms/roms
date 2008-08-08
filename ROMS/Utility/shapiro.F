@@ -25,6 +25,7 @@
 !***********************************************************************
       SUBROUTINE shapiro2d_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
 #ifdef MASKING
      &                           Amask,                                 &
 #endif
@@ -37,6 +38,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -54,8 +56,8 @@
 !
       integer :: i, j
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk1
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk2
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Awrk1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Awrk2
 
 #include "set_bounds.h"
 !
@@ -126,6 +128,7 @@
 !***********************************************************************
       SUBROUTINE shapiro3d_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj, LBk, UBk,          &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
 # ifdef MASKING
      &                           Amask,                                 &
 # endif
@@ -138,6 +141,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING
@@ -155,8 +159,8 @@
 !
       integer :: i, j, k
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk1
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awrk2
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Awrk1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Awrk2
 
 # include "set_bounds.h"
 !

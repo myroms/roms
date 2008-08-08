@@ -59,6 +59,7 @@
 # endif
       CALL ini_lanczos_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       Ladj, Lini,                                &
 # ifdef MASKING
      &                       GRID(ng) % rmask,                          &
@@ -107,6 +108,7 @@
 !***********************************************************************
       SUBROUTINE ini_lanczos_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Ladj, Lini,                          &
 # ifdef MASKING
      &                             rmask, umask, vmask,                 &
@@ -154,6 +156,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Ladj, Lini
 !
 # ifdef ASSUMED_SHAPE

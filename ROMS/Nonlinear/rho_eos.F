@@ -67,6 +67,7 @@
 # endif
       CALL rho_eos_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nrhs(ng),                                      &
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
@@ -106,6 +107,7 @@
 !***********************************************************************
       SUBROUTINE rho_eos_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs,                                    &
 #  ifdef MASKING
      &                         rmask,                                   &
@@ -152,6 +154,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 #  ifdef ASSUMED_SHAPE
@@ -240,20 +243,20 @@
 #  ifdef EOS_TDERIVATIVE
       real(r8), dimension(0:9) :: dCdT(0:9)
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DbulkDS
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: DbulkDT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Dden1DS
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Dden1DT
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Scof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Tcof
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: wrk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: DbulkDS
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: DbulkDT
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Dden1DS
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Dden1DT
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Scof
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Tcof
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: wrk
 #  endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk0
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bulk2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: den
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: den1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk0
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bulk2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: den
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: den1
 
 #  include "set_bounds.h"
 !
@@ -589,6 +592,7 @@
 !***********************************************************************
       SUBROUTINE rho_eos_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs,                                    &
 #  ifdef MASKING
      &                         rmask,                                   &
@@ -634,6 +638,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 #  ifdef ASSUMED_SHAPE

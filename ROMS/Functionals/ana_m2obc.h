@@ -26,6 +26,7 @@
 !    
       CALL ana_m2obc_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     knew(ng),                                    &
      &                     GRID(ng) % angler,                           &
      &                     GRID(ng) % h,                                &
@@ -49,6 +50,7 @@
 !***********************************************************************
       SUBROUTINE ana_m2obc_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           knew,                                  &
      &                           angler, h, pm, pn, on_u,               &
 #ifdef MASKING
@@ -66,6 +68,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: knew
 !
 #ifdef ASSUMED_SHAPE

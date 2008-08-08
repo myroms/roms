@@ -50,6 +50,7 @@
 #endif
       CALL prsgrd_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
+     &                  IminS, ImaxS, JminS, JmaxS,                     &
      &                  nrhs(ng),                                       &
 #ifdef MASKING
      &                  GRID(ng) % umask,                               &
@@ -76,6 +77,7 @@
 !***********************************************************************
       SUBROUTINE prsgrd_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nrhs,                                     &
 #ifdef MASKING
      &                        umask, vmask,                             &
@@ -96,6 +98,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 
 #ifdef ASSUMED_SHAPE
@@ -145,15 +148,15 @@
       real(r8) :: GRho, GRho0,  HalfGRho
       real(r8) :: cff, cff1, cff2
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: P
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: P
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dZ
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: dR
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: dZ
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FC
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: aux
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: dRx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: dZx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: aux
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: dRx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: dZx
 !
 #include "set_bounds.h"
 !

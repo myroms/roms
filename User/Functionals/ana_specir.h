@@ -32,6 +32,7 @@
 !
       CALL ana_specir_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      GRID(ng) % lonr,                            &
      &                      GRID(ng) % latr,                            &
      &                      FORCES(ng) % cloud,                         &
@@ -55,6 +56,7 @@
 !***********************************************************************
       SUBROUTINE ana_specir_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            lonr, latr,                           &
      &                            cloud, Hair, Tair, Pair,              &
      &                            Uwind, Vwind,                         &
@@ -79,6 +81,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: lonr(LBi:,LBj:)

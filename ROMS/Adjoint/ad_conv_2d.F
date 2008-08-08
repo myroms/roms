@@ -59,6 +59,7 @@
 !***********************************************************************
       SUBROUTINE ad_conv_r2d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, DTsizeH,            &
      &                             Kh,                                  &
      &                             pm, pn, pmon_u, pnom_v,              &
@@ -79,6 +80,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
@@ -123,23 +125,17 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, step
 
       real(r8) :: adfac, cff
 
       real(r8), dimension(LBi:UBi,LBj:UBj,2) :: ad_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_Awrk,DIM=1)
-      IUB=UBOUND(ad_Awrk,DIM=1)
-      JLB=LBOUND(ad_Awrk,DIM=2)
-      JUB=UBOUND(ad_Awrk,DIM=2)!
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -147,8 +143,8 @@
 !
       ad_Awrk(LBi:UBi,LBj:UBj,1:2)=0.0_r8
 
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Adjoint space convolution of the diffusion equation for a 2D state
@@ -321,6 +317,7 @@
 !***********************************************************************
       SUBROUTINE ad_conv_u2d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, DTsizeH,            &
      &                             Kh,                                  &
      &                             pm, pn, pmon_r, pnom_p,              &
@@ -341,6 +338,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
@@ -383,23 +381,17 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, step
 
       real(r8) :: adfac, cff
 
       real(r8), dimension(LBi:UBi,LBj:UBj,2) :: ad_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_Awrk,DIM=1)
-      IUB=UBOUND(ad_Awrk,DIM=1)
-      JLB=LBOUND(ad_Awrk,DIM=2)
-      JUB=UBOUND(ad_Awrk,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -407,8 +399,8 @@
 !
       ad_Awrk(LBi:UBi,LBj:UBj,1:2)=0.0_r8
 
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Adjoint space convolution of the diffusion equation for a 2D state
@@ -580,6 +572,7 @@
 !***********************************************************************
       SUBROUTINE ad_conv_v2d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, DTsizeH,            &
      &                             Kh,                                  &
      &                             pm, pn, pmon_p, pnom_r,              &
@@ -600,6 +593,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
@@ -642,23 +636,17 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, step
 
       real(r8) :: adfac, cff
 
       real(r8), dimension(LBi:UBi,LBj:UBj,2) :: ad_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_Awrk,DIM=1)
-      IUB=UBOUND(ad_Awrk,DIM=1)
-      JLB=LBOUND(ad_Awrk,DIM=2)
-      JUB=UBOUND(ad_Awrk,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -666,8 +654,8 @@
 !
       ad_Awrk(LBi:UBi,LBj:UBj,1:2)=0.0_r8
 
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Space convolution of the diffusion equation for a 2D state variable

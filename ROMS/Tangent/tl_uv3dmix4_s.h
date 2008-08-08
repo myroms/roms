@@ -72,6 +72,7 @@
 #endif
       CALL tl_uv3dmix4_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nrhs(ng), nnew(ng),                        &
 #ifdef MASKING
      &                       GRID(ng) % pmask,                          &
@@ -112,6 +113,7 @@
 !***********************************************************************
       SUBROUTINE tl_uv3dmix4_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs, nnew,                          &
 #ifdef MASKING
      &                             pmask,                               &
@@ -136,6 +138,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -215,19 +218,19 @@
       real(r8) :: cff, cff1, cff2
       real(r8) :: tl_cff, tl_cff1, tl_cff2
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapU
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: LapV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LapU
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: LapV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFx
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_LapU
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_LapV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_LapU
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_LapV
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_VFx
 
 #include "set_bounds.h"
 !

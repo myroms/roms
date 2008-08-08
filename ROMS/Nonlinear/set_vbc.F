@@ -46,6 +46,7 @@
 #  endif
       CALL set_vbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nrhs(ng),                                      &
      &                   GRID(ng) % Hz,                                 &
 #  if !defined BBL_MODEL || defined ICESHELF
@@ -89,6 +90,7 @@
 !***********************************************************************
       SUBROUTINE set_vbc_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs,                                    &
      &                         Hz,                                      &
 #  if !defined BBL_MODEL || defined ICESHELF
@@ -131,6 +133,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 #  ifdef ASSUMED_SHAPE
@@ -225,7 +228,7 @@
 #  endif
 
 #  if (!defined BBL_MODEL || defined ICESHELF) && defined UV_LOGDRAG
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
 #  endif
 
 #  include "set_bounds.h"
@@ -538,6 +541,7 @@
 #  endif
       CALL set_vbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs(ng), kstp(ng), knew(ng),                  &
      &                   GRID(ng) % om_u,                               &
      &                   GRID(ng) % om_v,                               &
@@ -556,6 +560,7 @@
 !***********************************************************************
       SUBROUTINE set_vbc_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         krhs, kstp, knew,                        &
      &                         om_u, om_v, on_u, on_v,                  &
      &                         ubar, vbar, bustr, bvstr)
@@ -573,6 +578,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: krhs, kstp, knew
 !
 #  ifdef ASSUMED_SHAPE

@@ -62,6 +62,7 @@
 #  endif
       CALL nl_dotproduct_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         KOUT, Linp,                              &
 #  ifdef SOLVE3D
      &                         NOUT,                                    &
@@ -100,6 +101,7 @@
 !***********************************************************************
       SUBROUTINE nl_dotproduct_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               Kinp, Linp,                        &
 #  ifdef SOLVE3D
      &                               Ninp,                              &
@@ -133,6 +135,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Kinp, Linp
 #  ifdef SOLVE3D
       integer, intent(in) :: Ninp
@@ -392,6 +395,7 @@
 #  endif
       CALL ad_statenorm_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        Kinp, Ninp,                               &
      &                        StateNorm,                                &
 #  ifdef MASKING
@@ -422,6 +426,7 @@
 !***********************************************************************
       SUBROUTINE ad_statenorm_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              Kinp, Ninp,                         &
      &                              StateNorm,                          &
 #  ifdef MASKING
@@ -453,6 +458,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Kinp, Ninp
 
       real(r8), intent(out) :: StateNorm
@@ -696,6 +702,7 @@
 #  endif
       CALL tl_statenorm_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        Kinp, Ninp,                               &
      &                        StateNorm,                                &
 #  ifdef MASKING
@@ -727,6 +734,7 @@
 !***********************************************************************
       SUBROUTINE tl_statenorm_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              Kinp, Ninp,                         &
      &                              StateNorm,                          &
 #  ifdef MASKING
@@ -758,6 +766,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Kinp, Ninp
 
       real(r8), intent(out) :: StateNorm
@@ -1000,6 +1009,7 @@
 #  endif
       CALL tl_dotproduct_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         KOUT, Linp,                              &
 #  ifdef SOLVE3D
      &                         NOUT,                                    &
@@ -1033,6 +1043,7 @@
 !***********************************************************************
       SUBROUTINE tl_dotproduct_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               Kinp, Linp,                        &
 #  ifdef SOLVE3D
      &                               Ninp,                              &
@@ -1065,6 +1076,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Kinp, Linp
 #  ifdef SOLVE3D
       integer, intent(in) :: Ninp
@@ -1300,6 +1312,7 @@
 #  endif
       CALL ad_dotproduct_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Linp,                                    &
 #  ifdef MASKING
      &                         GRID(ng) % rmask,                        &
@@ -1323,6 +1336,7 @@
 !***********************************************************************
       SUBROUTINE ad_dotproduct_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               Linp,                              &
 #  ifdef MASKING
      &                               rmask, umask, vmask,               &
@@ -1348,6 +1362,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp
 !
 #  ifdef ASSUMED_SHAPE

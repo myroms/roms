@@ -45,6 +45,7 @@
 !
       CALL ini_fields_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      kstp(ng), krhs(ng), knew(ng),               &
 # ifdef SOLVE3D
      &                      nstp(ng), nnew(ng),                         &
@@ -99,6 +100,7 @@
 !***********************************************************************
       SUBROUTINE ini_fields_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            kstp, krhs, knew,                     &
 # ifdef SOLVE3D
      &                            nstp, nnew,                           &
@@ -185,6 +187,7 @@
 # endif
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kstp, krhs, knew
 # ifdef SOLVE3D
       integer, intent(in) :: nstp, nnew
@@ -297,8 +300,8 @@
 
       real(r8) :: cff1, cff2
 # ifdef SOLVE3D
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
 # endif
 
 # include "set_bounds.h"
@@ -376,18 +379,22 @@
 !
         CALL u2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, kstp,                              &
      &                   ubar, vbar, zeta)
         CALL v2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, kstp,                              &
      &                   ubar, vbar, zeta)
         CALL u2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, krhs,                              &
      &                   ubar, vbar, zeta)
         CALL v2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, krhs,                              &
      &                   ubar, vbar, zeta)
 #  endif
@@ -467,19 +474,23 @@
 !
         CALL u3dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng),                     &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp, nstp,                                    &
      &                   u)
         CALL v3dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng),                     &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp, nstp,                                    &
      &                   v)
 
         CALL u3dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng),                     &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp, nnew,                                    &
      &                   u)
         CALL v3dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng),                     &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp, nnew,                                    &
      &                   v)
       END IF
@@ -530,12 +541,14 @@
 !
 !  Apply boundary conditions.
 !
-          CALL t3dbc_tile (ng, tile,                   itrc,            &
+          CALL t3dbc_tile (ng, tile, itrc,                              &
      &                     LBi, UBi, LBj, UBj, N(ng), NT(ng),           &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nstp,                                  &
      &                     t)
-          CALL t3dbc_tile (ng, tile,                   itrc,            &
+          CALL t3dbc_tile (ng, tile, itrc,                              &
      &                     LBi, UBi, LBj, UBj, N(ng), NT(ng),           &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
      &                     t)
         END DO
@@ -566,6 +579,7 @@
 !
       CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
 #  ifdef ICESHELF
@@ -642,18 +656,22 @@
 !
         CALL u2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, kstp,                              &
      &                   ubar, vbar, zeta)
         CALL v2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, kstp,                              &
      &                   ubar, vbar, zeta)
         CALL u2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, knew,                              &
      &                   ubar, vbar, zeta)
         CALL v2dbc_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs, kstp, knew,                              &
      &                   ubar, vbar, zeta)
 #  endif
@@ -815,6 +833,7 @@
 !
       CALL ini_zeta_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    kstp(ng), krhs(ng), knew(ng),                 &
 # ifdef MASKING
      &                    GRID(ng) % rmask,                             &
@@ -833,6 +852,7 @@
 !***********************************************************************
       SUBROUTINE ini_zeta_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          kstp, krhs, knew,                       &
 # ifdef MASKING
      &                          rmask,                                  &
@@ -875,6 +895,7 @@
 # endif
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: kstp, krhs, knew
 !
 # ifdef ASSUMED_SHAPE
@@ -947,16 +968,19 @@
 !
         CALL zetabc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, kstp,                             &
      &                    zeta)
 #  ifdef SOLVE3D
         CALL zetabc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, knew,                             &
      &                    zeta)
 #  else
         CALL zetabc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs, kstp, krhs,                             &
      &                    zeta)
 #  endif

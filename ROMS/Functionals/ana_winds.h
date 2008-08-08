@@ -25,6 +25,7 @@
 !
       CALL ana_winds_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
 #ifdef SPHERICAL
      &                     GRID(ng) % lonr,                             &
      &                     GRID(ng) % latr,                             &
@@ -47,6 +48,7 @@
 !***********************************************************************
       SUBROUTINE ana_winds_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
 #ifdef SPHERICAL
      &                           lonr, latr,                            &
 #else
@@ -69,6 +71,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
 # ifdef SPHERICAL

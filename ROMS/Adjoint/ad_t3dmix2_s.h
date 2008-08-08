@@ -36,6 +36,7 @@
 #endif
       CALL ad_t3dmix2_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs(ng), nnew(ng),                         &
 #ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -62,6 +63,7 @@
 !***********************************************************************
       SUBROUTINE ad_t3dmix2_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs, nnew,                           &
 #ifdef MASKING
      &                            umask, vmask,                         &
@@ -82,6 +84,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -125,21 +128,15 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, itrc, j, k
 
       real(r8) :: cff, cff1
       real(r8) :: adfac, adfac1, adfac2, ad_cff, ad_cff1
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FE,DIM=1)
-      IUB=UBOUND(ad_FE,DIM=1)
-      JLB=LBOUND(ad_FE,DIM=2)
-      JUB=UBOUND(ad_FE,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -148,8 +145,8 @@
       ad_cff=0.0_r8
       ad_cff1=0.0_r8
 
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !----------------------------------------------------------------------
 !  Compute adjoint horizontal harmonic diffusion along constant

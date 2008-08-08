@@ -40,6 +40,7 @@
 !
       CALL bvf_mix_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   MIXING(ng) % bvf,                              &
      &                   MIXING(ng) % AKt,                              &
      &                   MIXING(ng) % AKv)
@@ -49,6 +50,7 @@
 !***********************************************************************
       SUBROUTINE bvf_mix_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         bvf, Akt, Akv)
 !***********************************************************************
 !
@@ -66,6 +68,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: bvf(LBi:,LBj:,0:)

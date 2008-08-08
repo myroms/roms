@@ -84,6 +84,7 @@
 # endif
       CALL descent_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   Lold(ng), Lnew(ng), Iter, step,                &
 # ifdef MASKING
      &                   GRID(ng) % rmask,                              &
@@ -123,6 +124,7 @@
 !***********************************************************************
       SUBROUTINE descent_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Lold, Lnew, Iter, step,                  &
 # ifdef MASKING
      &                         rmask, umask, vmask,                     &
@@ -155,6 +157,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Iter
 
       real(r8), intent(in) :: step

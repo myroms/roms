@@ -47,6 +47,7 @@
 #endif
       CALL ad_t3dmix4_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs(ng), nnew(ng),                         &
 #ifdef MASKING
      &                      GRID(ng) % umask,                           &
@@ -77,6 +78,7 @@
 !***********************************************************************
       SUBROUTINE ad_t3dmix4_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs, nnew,                           &
 #ifdef MASKING
      &                            umask, vmask,                         &
@@ -99,6 +101,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -148,7 +151,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, itrc, j, k, kk, kt, k1, k1b, k2, k2b
 
       real(r8), parameter :: eps = 0.5_r8
@@ -160,37 +162,32 @@
       real(r8) :: ad_cff, ad_cff1, ad_cff2, ad_cff3, ad_cff4
       real(r8) :: adfac, adfac1, adfac2, adfac3, adfac4
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: LapT
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: LapT
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_LapT
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_LapT
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: FS
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: FS1
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dRde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dRdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dTde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dTdr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dTdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: FS
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: FS1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dRde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dRdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dTde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dTdr
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dTdx
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_FS
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dRde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dRdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dTde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dTdr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dTdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_FS
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dRde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dRdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dTde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dTdr
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dTdx
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FE,DIM=1)
-      IUB=UBOUND(ad_FE,DIM=1)
-      JLB=LBOUND(ad_FE,DIM=2)
-      JUB=UBOUND(ad_FE,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -202,18 +199,18 @@
       ad_cff3=0.0_r8
       ad_cff4=0.0_r8
 
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 
-      ad_FS(ILB:IUB,JLB:JUB,1:2)=0.0_r8
+      ad_FS(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
 
-      ad_dRde(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dRdx(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dTde(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dTdr(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dTdx(ILB:IUB,JLB:JUB,1:2)=0.0_r8
+      ad_dRde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dRdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dTde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dTdr(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dTdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
 
-      ad_LapT(ILB:IUB,JLB:JUB,1:N(ng))=0.0_r8
+      ad_LapT(IminS:ImaxS,JminS:JmaxS,1:N(ng))=0.0_r8
 !
 !----------------------------------------------------------------------
 !  Compute horizontal biharmonic diffusion along isopycnic surfaces.

@@ -27,6 +27,7 @@
 !
       CALL ana_sediment_tile (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        GRID(ng) % pm,                            &
      &                        GRID(ng) % pn,                            &
      &                        GRID(ng) % xr,                            &
@@ -54,6 +55,7 @@
 !***********************************************************************
       SUBROUTINE ana_sediment_tile (ng, tile, model,                    &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              pm, pn,                             &
      &                              xr, yr,                             &
 #if defined BBL_MODEL && (defined MB_BBL || defined SSW_BBL)
@@ -81,6 +83,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: pm(LBi:,LBj:)

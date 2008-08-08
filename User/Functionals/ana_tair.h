@@ -24,6 +24,7 @@
 !
       CALL ana_tair_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    FORCES(ng) % Tair)
 !
 ! Set analytical header file name used.
@@ -38,6 +39,7 @@
 !***********************************************************************
       SUBROUTINE ana_tair_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Tair)
 !***********************************************************************
 !
@@ -54,6 +56,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: Tair(LBi:,LBj:)

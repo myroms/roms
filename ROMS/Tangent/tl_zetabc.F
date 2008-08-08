@@ -41,6 +41,7 @@
 !
       CALL tl_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     krhs(ng), kstp(ng), kout,                    &
      &                     OCEAN(ng) % zeta,                            &
      &                     OCEAN(ng) % tl_zeta)
@@ -50,6 +51,7 @@
 !***********************************************************************
       SUBROUTINE tl_zetabc_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           krhs, kstp, kout,                      &
      &                           zeta, tl_zeta)
 !***********************************************************************
@@ -63,6 +65,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: krhs, kstp, kout
 !
 # ifdef ASSUMED_SHAPE
@@ -85,7 +88,7 @@
       real(r8) :: tl_Ce, tl_Cx
       real(r8) :: tl_cff1, tl_cff2
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 
 # include "set_bounds.h"
 !

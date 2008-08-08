@@ -44,6 +44,7 @@
 #endif
       CALL tl_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nrhs(ng),                                    &
      &                     GRID(ng) % om_v,                             &
      &                     GRID(ng) % on_u,                             &
@@ -70,6 +71,7 @@
 !***********************************************************************
       SUBROUTINE tl_prsgrd_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs,                                  &
      &                           om_v, on_u,                            &
      &                           Hz, tl_Hz,                             &
@@ -89,6 +91,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 
 #ifdef ASSUMED_SHAPE
@@ -142,11 +145,11 @@
       real(r8) :: gamma, tl_gamma
 #endif
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: phie
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: phix
+      real(r8), dimension(IminS:ImaxS) :: phie
+      real(r8), dimension(IminS:ImaxS) :: phix
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: tl_phie
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: tl_phix
+      real(r8), dimension(IminS:ImaxS) :: tl_phie
+      real(r8), dimension(IminS:ImaxS) :: tl_phix
 
 #include "set_bounds.h"
 !

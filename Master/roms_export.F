@@ -79,7 +79,7 @@
       real(r8), dimension(2) :: range
 
 # ifdef MCT_LIB
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Awork
+      real(r8), dimension(LBi:UBi,LBj:UBj) :: Awork
 # endif
 # ifdef DISTRIBUTE
       character (len=3), dimension(2) :: op_handle

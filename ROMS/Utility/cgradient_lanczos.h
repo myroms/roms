@@ -117,6 +117,7 @@
 #endif
       CALL cgradient_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lold(ng), Lnew(ng),                          &
      &                     innLoop, outLoop,                            &
 #ifdef MASKING
@@ -181,6 +182,7 @@
 !***********************************************************************
       SUBROUTINE cgradient_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Lold, Lnew,                            &
      &                           innLoop, outLoop,                      &
 #ifdef MASKING
@@ -239,6 +241,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
       integer, intent(in) :: innLoop, outLoop
 !
@@ -397,6 +400,7 @@
         Lout=2
         CALL hessian (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
+     &                IminS, ImaxS, JminS, JmaxS,                       &
      &                Linp, Lout, Lwrk,                                 &
      &                innLoop, outLoop,                                 &
 #ifdef MASKING
@@ -443,6 +447,7 @@
       Lwrk=2
       CALL lanczos (ng, tile, model,                                    &
      &              LBi, UBi, LBj, UBj,                                 &
+     &              IminS, ImaxS, JminS, JmaxS,                         &
      &              Linp, Lout, Lwrk,                                   &
      &              innLoop, outLoop,                                   &
 #ifdef MASKING
@@ -477,6 +482,7 @@
 !
       CALL new_direction (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Linp, Lout,                                   &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
@@ -542,6 +548,7 @@
         Lwrk=2
         CALL new_gradient (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Linp, Lout, Lwrk,                            &
      &                     innLoop, outLoop,                            &
 #ifdef MASKING
@@ -655,12 +662,12 @@
             cg_RitzErr(i,outLoop)=cg_RitzErr(i,outLoop)/                &
      &                            cg_Ritz(i,outLoop)
           END DO
-          PRINT *, 'Entering hessian_evecs', MyRank
           Lwrk=2
           Linp=1
           Lout=2
           CALL hessian_evecs (ng, tile, model,                          &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        Linp, Lout, Lwrk,                         &
      &                        innLoop, outLoop,                         &
 # ifdef MASKING
@@ -712,6 +719,7 @@
       Lout=2
       CALL tl_new_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   Linp, Lout,                                    &
      &                   innLoop, outLoop,                              &
      &                   cg_tau(innLoop,outLoop),                       &
@@ -811,6 +819,7 @@
 !***********************************************************************
       SUBROUTINE tl_new_state (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Linp, Lout,                              &
      &                         innLoop, outLoop,                        &
      &                         alphaK,                                  &
@@ -869,6 +878,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
       integer, intent(in) :: innLoop, outLoop
 
@@ -1613,6 +1623,7 @@
 !***********************************************************************
       SUBROUTINE new_direction (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Lold, Lnew,                             &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
@@ -1653,6 +1664,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
 !
 #ifdef ASSUMED_SHAPE
@@ -1865,6 +1877,7 @@
 !***********************************************************************
       SUBROUTINE hessian (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lold, Lnew, Lwrk,                             &
      &                    innLoop, outLoop,                             &
 #ifdef MASKING
@@ -1908,6 +1921,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
 !
@@ -2228,6 +2242,7 @@
 !***********************************************************************
       SUBROUTINE lanczos (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lold, Lnew, Lwrk,                             &
      &                    innLoop, outLoop,                             &
 #ifdef MASKING
@@ -2274,6 +2289,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
 !
@@ -2805,6 +2821,7 @@
 !***********************************************************************
       SUBROUTINE new_gradient (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Lold, Lnew, Lwrk,                        &
      &                         innLoop, outLoop,                        &
 #ifdef MASKING
@@ -2851,6 +2868,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
 !
@@ -3089,6 +3107,7 @@
 !***********************************************************************
       SUBROUTINE hessian_evecs (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Lold, Lnew, Lwrk,                       &
      &                          innLoop, outLoop,                       &
 #ifdef MASKING
@@ -3137,6 +3156,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
 !

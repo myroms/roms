@@ -47,6 +47,7 @@
 !
       CALL adsen_force_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       knew(ng),                                  &
 # ifdef SOLVE3D
      &                       nnew(ng),                                  &
@@ -79,6 +80,7 @@
 !***********************************************************************
       SUBROUTINE adsen_force_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             knew,                                &
 # ifdef SOLVE3D
      &                             nnew,                                &
@@ -105,6 +107,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: knew
 # ifdef SOLVE3D
       integer, intent(in) :: nnew

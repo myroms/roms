@@ -24,6 +24,7 @@
 !
       CALL ana_scope_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
 #ifdef MASKING
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
@@ -45,6 +46,7 @@
 !***********************************************************************
       SUBROUTINE ana_scope_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
 #ifdef MASKING
      &                           rmask, umask, vmask,                   &
 #endif
@@ -65,6 +67,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -101,7 +104,7 @@
 # endif
 #endif
       integer :: Imin, Imax, Jmin, Jmax, i, j
-      real(r8) :: scope(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8) :: scope(IminS:ImaxS,JminS:JmaxS)
 
 #include "set_bounds.h"
 !

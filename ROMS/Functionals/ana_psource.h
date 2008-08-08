@@ -21,15 +21,11 @@
 !
       integer, intent(in) :: ng, tile, model
 
-      integer :: LBi, UBi, LBj, UBj
-!
-      LBi=LBOUND(GRID(ng)%h,DIM=1)
-      UBi=UBOUND(GRID(ng)%h,DIM=1)
-      LBj=LBOUND(GRID(ng)%h,DIM=2)
-      UBj=UBOUND(GRID(ng)%h,DIM=2)
+#include "tile.h"
 !
       CALL ana_psource_grid (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nnew(ng), knew(ng), Nsrc(ng),              &
      &                       OCEAN(ng) % zeta,                          &
      &                       OCEAN(ng) % ubar,                          &
@@ -69,6 +65,7 @@
 !***********************************************************************
       SUBROUTINE ana_psource_grid (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nnew, knew, Nsrc,                    &
      &                             zeta, ubar, vbar,                    &
 #ifdef SOLVE3D
@@ -100,6 +97,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nnew, knew
 
       integer, intent(out) :: Nsrc

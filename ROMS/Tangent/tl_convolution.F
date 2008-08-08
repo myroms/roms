@@ -121,6 +121,7 @@
 !
       CALL tl_convolution_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp(ng), nnew(ng), Linp, ifac,         &
      &                          GRID(ng) % pm,                          &
      &                          GRID(ng) % om_r,                        &
@@ -193,6 +194,7 @@
 !***********************************************************************
       SUBROUTINE tl_convolution_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                nstp, nnew, Linp, ifac,           &
      &                                pm, om_r, om_u, om_v,             &
      &                                pn, on_r, on_u, on_v,             &
@@ -253,6 +255,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew, Linp, ifac
 !
 # ifdef ASSUMED_SHAPE
@@ -434,6 +437,7 @@
 
       CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
 #  ifdef ICESHELF
@@ -590,6 +594,7 @@
 !
       CALL tl_conv_r2d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(isFsur)/ifac,                      &
      &                       DTsizeH(isFsur),                           &
@@ -604,6 +609,7 @@
 !
       CALL tl_conv_u2d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(isUbar)/ifac,                      &
      &                       DTsizeH(isUbar),                           &
@@ -616,6 +622,7 @@
 
       CALL tl_conv_v2d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(isVbar)/ifac,                      &
      &                       DTsizeH(isVbar),                           &
@@ -632,6 +639,7 @@
       DO k=1,Nfrec(ng)
         CALL tl_conv_u2d_tile (ng, tile, iTLM,                          &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         NghostPoints,                            &
      &                         NHsteps(isUstr)/ifac,                    &
      &                         DTsizeH(isUstr),                         &
@@ -644,6 +652,7 @@
 
         CALL tl_conv_v2d_tile (ng, tile, iTLM,                          &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         NghostPoints,                            &
      &                         NHsteps(isVstr)/ifac,                    &
      &                         DTsizeH(isVstr),                         &
@@ -661,6 +670,7 @@
 !
       CALL tl_conv_u3d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(isUvel)/ifac,                      &
      &                       NVsteps(isUvel)/ifac,                      &
@@ -676,6 +686,7 @@
 
       CALL tl_conv_v3d_tile (ng, tile, iTLM,                            &
      &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       NghostPoints,                              &
      &                       NHsteps(isVvel)/ifac,                      &
      &                       NVsteps(isVvel)/ifac,                      &
@@ -695,6 +706,7 @@
         is=isTvar(itrc)
         CALL tl_conv_r3d_tile (ng, tile, iTLM,                          &
      &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         NghostPoints,                            &
      &                         NHsteps(is)/ifac,                        &
      &                         NVsteps(is)/ifac,                        &
@@ -717,6 +729,7 @@
         DO k=1,Nfrec(ng)
           CALL tl_conv_r2d_tile (ng, tile, iTLM,                        &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           NghostPoints,                          &
      &                           NHsteps(is)/ifac,                      &
      &                           DTsizeH(is),                           &

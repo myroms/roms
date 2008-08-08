@@ -46,6 +46,7 @@
 # endif
       CALL ad_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nrhs(ng),                                    &
      &                     GRID(ng) % om_v,                             &
      &                     GRID(ng) % on_u,                             &
@@ -72,6 +73,7 @@
 !***********************************************************************
       SUBROUTINE ad_prsgrd_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs,                                  &
      &                           om_v, on_u,                            &
      &                           Hz, ad_Hz,                             &
@@ -91,6 +93,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 
 #ifdef ASSUMED_SHAPE
@@ -131,7 +134,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB
       integer :: i, j, k, kk
 
       real(r8) :: fac1, fac2, fac3
@@ -142,16 +144,13 @@
       real(r8) :: gamma, ad_gamma
 #endif
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: phie
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: phix
+      real(r8), dimension(IminS:ImaxS) :: phie
+      real(r8), dimension(IminS:ImaxS) :: phix
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_phie
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_phix
+      real(r8), dimension(IminS:ImaxS) :: ad_phie
+      real(r8), dimension(IminS:ImaxS) :: ad_phix
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(ad_phie,DIM=1)
-      IUB=UBOUND(ad_phie,DIM=1)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -165,7 +164,7 @@
 #ifdef WJ_GRADP
       ad_gamma=0.0_r8
 #endif
-      DO i=ILB,IUB
+      DO i=IminS,ImaxS
         ad_phie(i)=0.0_r8
         ad_phix(i)=0.0_r8
       END DO

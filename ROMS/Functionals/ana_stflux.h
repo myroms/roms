@@ -24,6 +24,7 @@
 !
       CALL ana_stflux_tile (ng, tile, model, itrc,                      &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
 #ifdef SHORTWAVE
      &                      FORCES(ng) % srflx,                         &
 #endif
@@ -44,6 +45,7 @@
 !***********************************************************************
       SUBROUTINE ana_stflux_tile (ng, tile, model, itrc,                &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
 #ifdef SHORTWAVE
      &                            srflx,                                &
 #endif
@@ -67,6 +69,7 @@
 !
       integer, intent(in) :: ng, tile, model, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
 # ifdef SHORTWAVE

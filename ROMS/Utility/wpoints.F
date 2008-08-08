@@ -54,6 +54,7 @@
 !
       CALL wpoints_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
 # ifdef MASKING
      &                   GRID(ng) % pmask,                              &
      &                   GRID(ng) % rmask,                              &
@@ -73,6 +74,7 @@
 !***********************************************************************
       SUBROUTINE wpoints_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
 # ifdef MASKING
      &                         pmask, rmask, umask, vmask,              &
 #  ifdef PROPAGATOR
@@ -101,6 +103,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING

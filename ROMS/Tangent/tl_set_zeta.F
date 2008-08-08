@@ -43,6 +43,7 @@
 # endif
       CALL tl_set_zeta_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       COUPLING(ng) % tl_Zt_avg1,                 &
      &                       OCEAN(ng) % tl_zeta)
 # ifdef PROFILE
@@ -54,6 +55,7 @@
 !***********************************************************************
       SUBROUTINE tl_set_zeta_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             tl_Zt_avg1, tl_zeta)
 !***********************************************************************
 !
@@ -72,6 +74,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: tl_Zt_avg1(LBi:,LBj:)

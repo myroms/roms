@@ -43,6 +43,7 @@
 # endif
       CALL ad_set_zeta_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       COUPLING(ng) % ad_Zt_avg1,                 &
      &                       OCEAN(ng) % ad_zeta,                       &
      &                       OCEAN(ng) % ad_zeta_sol)
@@ -55,6 +56,7 @@
 !***********************************************************************
       SUBROUTINE ad_set_zeta_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             ad_Zt_avg1, ad_zeta, ad_zeta_sol)
 !***********************************************************************
 !
@@ -73,6 +75,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: ad_Zt_avg1(LBi:,LBj:)

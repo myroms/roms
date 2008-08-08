@@ -42,6 +42,7 @@
 !
       CALL tl_t3dbc_tile (ng, tile, itrc,                               &
      &                    LBi, UBi, LBj, UBj, N(ng), NT(ng),            &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp(ng), nout,                               &
      &                    OCEAN(ng)% tl_t)
       RETURN
@@ -50,6 +51,7 @@
 !***********************************************************************
       SUBROUTINE tl_t3dbc_tile (ng, tile, itrc,                         &
      &                          LBi, UBi, LBj, UBj, UBk, UBt,           &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp, nout,                             &
      &                          tl_t)
 !***********************************************************************
@@ -63,6 +65,7 @@
 !
       integer, intent(in) :: ng, tile, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nout
 !
 # ifdef ASSUMED_SHAPE
@@ -77,7 +80,7 @@
 
       real(r8) :: Ce, Cx, cff, tau
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 
 # include "set_bounds.h"
 

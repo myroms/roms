@@ -23,6 +23,7 @@
 !
       CALL ana_m3clima_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       CLIMA(ng) % uclm,                          &
      &                       CLIMA(ng) % vclm)
 !
@@ -38,6 +39,7 @@
 !***********************************************************************
       SUBROUTINE ana_m3clima_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             uclm, vclm)
 !***********************************************************************
 !
@@ -54,6 +56,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: uclm(LBi:,LBj:,:)

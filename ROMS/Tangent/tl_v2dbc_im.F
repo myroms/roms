@@ -42,6 +42,7 @@
 !
       CALL tl_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    krhs(ng), kstp(ng), kout,                     &
      &                    OCEAN(ng) % ubar,                             &
      &                    OCEAN(ng) % vbar,                             &
@@ -56,6 +57,7 @@
 !***********************************************************************
       SUBROUTINE tl_v2dbc_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          krhs, kstp, kout,                       &
      &                          ubar, vbar, zeta,                       &
      &                          tl_ubar, tl_vbar, tl_zeta)
@@ -71,6 +73,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: krhs, kstp, kout
 !
 # ifdef ASSUMED_SHAPE
@@ -103,7 +106,7 @@
       real(r8) :: tl_bry_pgr, tl_bry_cor, tl_bry_str, tl_bry_val
       real(r8) :: tl_cff, tl_cff1, tl_cff2
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_grad
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_grad
 
 # include "set_bounds.h"
 !

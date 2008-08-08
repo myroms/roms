@@ -22,7 +22,8 @@
 #include "tile.h"
 !
       CALL ana_fsobc_tile (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj)
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS)
 !
 ! Set analytical header file name used.
 !
@@ -35,7 +36,8 @@
 !
 !***********************************************************************
       SUBROUTINE ana_fsobc_tile (ng, tile, model,                       &
-     &                           LBi, UBi, LBj, UBj)
+     &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_param
@@ -47,6 +49,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 !  Local variable declarations.
 !

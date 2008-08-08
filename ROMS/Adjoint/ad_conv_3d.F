@@ -64,6 +64,7 @@
 !***********************************************************************
       SUBROUTINE ad_conv_r3d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, NVsteps,            &
      &                             DTsizeH, DTsizeV,                    &
      &                             Kh, Kv,                              &
@@ -86,6 +87,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
       real(r8), intent(in) :: DTsizeH, DTsizeV
@@ -140,40 +142,34 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
       real(r8) :: adfac, cff, cff1
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: ad_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
 #  if !defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
 #   ifdef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 #   endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
 #  else
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FS
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FS
 #  endif
 # endif
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FE,DIM=1)
-      IUB=UBOUND(ad_FE,DIM=1)
-      JLB=LBOUND(ad_FE,DIM=2)
-      JUB=UBOUND(ad_FE,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -182,13 +178,13 @@
       ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk,1:2)=0.0_r8
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
-      ad_DC(ILB:IUB,0:N(ng))=0.0_r8
+      ad_DC(IminS:ImaxS,0:N(ng))=0.0_r8
 #  else
-      ad_FS(ILB:IUB,0:N(ng))=0.0_r8
+      ad_FS(IminS:ImaxS,0:N(ng))=0.0_r8
 #  endif
 # endif
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Adjoint space convolution of the diffusion equation for a 2D state
@@ -669,6 +665,7 @@
 !***********************************************************************
       SUBROUTINE ad_conv_u3d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, NVsteps,            &
      &                             DTsizeH, DTsizeV,                    &
      &                             Kh, Kv,                              &
@@ -691,6 +688,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
       real(r8), intent(in) :: DTsizeH, DTsizeV
@@ -743,41 +741,35 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
       real(r8) :: adfac, cff, cff1
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: ad_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
 #  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
 #   ifdef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hzk
 #   endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
 #  else
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FS
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FS
 #  endif
 # endif
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FE,DIM=1)
-      IUB=UBOUND(ad_FE,DIM=1)
-      JLB=LBOUND(ad_FE,DIM=2)
-      JUB=UBOUND(ad_FE,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -786,13 +778,13 @@
       ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk,1:2)=0.0_r8
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
-      ad_DC(ILB:IUB,0:N(ng))=0.0_r8
+      ad_DC(IminS:ImaxS,0:N(ng))=0.0_r8
 #  else
-      ad_FS(ILB:IUB,0:N(ng))=0.0_r8
+      ad_FS(IminS:ImaxS,0:N(ng))=0.0_r8
 #  endif
 # endif
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Adjoint space convolution of the diffusion equation for a 3D state
@@ -1277,6 +1269,7 @@
 !***********************************************************************
       SUBROUTINE ad_conv_v3d_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj, LBk, UBk,        &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Nghost, NHsteps, NVsteps,            &
      &                             DTsizeH, DTsizeV,                    &
      &                             Kh, Kv,                              &
@@ -1299,6 +1292,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps, NVsteps
 
       real(r8), intent(in) :: DTsizeH, DTsizeV
@@ -1351,42 +1345,36 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: Nnew, Nold, Nsav, i, j, k, step
 
       real(r8) :: adfac, cff, cff1
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk,2) :: ad_Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FX
 # ifdef VCONVOLUTION
 #  ifndef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: FC
 #  endif
 #  if !def IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: oHz
 #  endif
 #  if defined IMPLICIT_VCONV || defined SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
 #   ifdef SPLINES_VCONV
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hzk
 #   endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
 #  else
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FS
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FS
 #  endif
 # endif
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FE,DIM=1)
-      IUB=UBOUND(ad_FE,DIM=1)
-      JLB=LBOUND(ad_FE,DIM=2)
-      JUB=UBOUND(ad_FE,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -1395,13 +1383,13 @@
       ad_Awrk(LBi:UBi,LBj:UBj,LBk:UBk,1:2)=0.0_r8
 # ifdef VCONVOLUTION
 #  ifdef IMPLICIT_VCONV
-      ad_DC(ILB:IUB,0:N(ng))=0.0_r8
+      ad_DC(IminS:ImaxS,0:N(ng))=0.0_r8
 #  else
-      ad_FS(ILB:IUB,0:N(ng))=0.0_r8
+      ad_FS(IminS:ImaxS,0:N(ng))=0.0_r8
 #  endif
 # endif
-      ad_FE(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_FX(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_FE(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_FX(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Adjoint space convolution of the diffusion equation for a 3D state

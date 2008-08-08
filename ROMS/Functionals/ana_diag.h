@@ -25,6 +25,7 @@
 !
       CALL ana_diag_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
 #ifdef SOLVE3D
      &                    OCEAN(ng) % u,                                &
      &                    OCEAN(ng) % v,                                &
@@ -44,6 +45,7 @@
 !***********************************************************************
       SUBROUTINE ana_diag_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 #ifdef SOLVE3D
      &                          u, v,                                   &
 #endif
@@ -61,6 +63,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
 # ifdef SOLVE3D

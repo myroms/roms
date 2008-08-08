@@ -142,6 +142,7 @@
 #endif
       CALL cgradient_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lold(ng), Lnew(ng),                          &
      &                     innLoop, outLoop,                            &
 #ifdef MASKING
@@ -222,6 +223,7 @@
 !***********************************************************************
       SUBROUTINE cgradient_tile (ng, tile, model,                       &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Lold, Lnew,                            &
      &                           innLoop, outLoop,                      &
 #ifdef MASKING
@@ -295,6 +297,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
       integer, intent(in) :: innLoop, outLoop
 !
@@ -553,6 +556,7 @@
 !
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
+     &                IminS, ImaxS, JminS, JmaxS,                       &
      &                NstateVar(ng), Lscale,                            &
      &                Lritz, Ltrans,                                    &
      &                nConvRitz, Ritz,                                  &
@@ -697,6 +701,7 @@
 !
       CALL ad_new_state (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   Lold, Lnew,                                    &
      &                   cg_alpha(innLoop,outLoop),                     &
      &                   cg_tau(innLoop,outLoop),                       &
@@ -729,6 +734,7 @@
         Lwrk=2
         CALL orthogonalize (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Lold, Lnew, Lwrk,                           &
      &                      innLoop, outLoop,                           &
 # ifdef MASKING
@@ -816,6 +822,7 @@
 !
           CALL precond (ng, tile, model,                                &
      &                  LBi, UBi, LBj, UBj,                             &
+     &                  IminS, ImaxS, JminS, JmaxS,                     &
      &                  NstateVar(ng), Lscale,                          &
      &                  Lritz, Ltrans,                                  &
      &                  nConvRitz, Ritz,                                &
@@ -867,6 +874,7 @@
 !
         CALL tl_new_state (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Linp, Lout,                                  &
      &                     cg_alpha(innLoop,outLoop),                   &
 #ifdef MASKING
@@ -901,6 +909,7 @@
 !
         CALL new_cost (ng, tile, model,                                 &
      &                 LBi, UBi, LBj, UBj,                              &
+     &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 Lout,                                            &
 #ifdef MASKING
      &                 rmask, umask, vmask,                             &
@@ -980,6 +989,7 @@
 !
       CALL new_direction (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lold, Lnew,                                   &
      &                    cg_beta(innLoop,outLoop),                     &
 #ifdef MASKING
@@ -1027,6 +1037,7 @@
       Lout=2
       CALL tl_new_state (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   Linp, Lout,                                    &
      &                   cg_alpha(innLoop,outLoop),                     &
 #ifdef MASKING
@@ -1093,6 +1104,7 @@
 !
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
+     &                IminS, ImaxS, JminS, JmaxS,                       &
      &                NstateVar(ng), Lscale,                            &
      &                Lritz, Ltrans,                                    &
      &                nConvRitz, Ritz,                                  &
@@ -1116,24 +1128,24 @@
 !
         Lwrk=1
         CALL state_copy (ng, tile,                                      &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Lwrk, Lout,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Lwrk, Lout,                                    &
 #ifdef ADJUST_WSTRESS
-     &                 tl_ustr, nl_ustr,                                &
-     &                 tl_vstr, nl_vstr,                                &
+     &                   tl_ustr, nl_ustr,                              &
+     &                   tl_vstr, nl_vstr,                              &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                 tl_tflux, nl_tflux,                              &
+     &                   tl_tflux, nl_tflux,                            &
 # endif
-     &                 tl_t, nl_t,                                      &
-     &                 tl_u, nl_u,                                      &
-     &                 tl_v, nl_v,                                      &
+     &                   tl_t, nl_t,                                    &
+     &                   tl_u, nl_u,                                    &
+     &                   tl_v, nl_v,                                    &
 #else
-     &                 tl_ubar, nl_ubar,                                &
-     &                 tl_vbar, nl_vbar,                                &
+     &                   tl_ubar, nl_ubar,                              &
+     &                   tl_vbar, nl_vbar,                              &
 #endif
-     &                 tl_zeta, nl_zeta)
+     &                   tl_zeta, nl_zeta)
 ! 
 !  Copy tl_var(Linp) into nl_var(1)
 !
@@ -1159,6 +1171,7 @@
 !
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
+     &                IminS, ImaxS, JminS, JmaxS,                       &
      &                NstateVar(ng), Lscale,                            &
      &                Lritz, Ltrans,                                    &
      &                nConvRitz, Ritz,                                  &
@@ -1182,24 +1195,24 @@
 !
         Lwrk=1
         CALL state_copy (ng, tile,                                      &
-     &                 LBi, UBi, LBj, UBj,                              &
-     &                 Lwrk, Linp,                                      &
+     &                   LBi, UBi, LBj, UBj,                            &
+     &                   Lwrk, Linp,                                    &
 #ifdef ADJUST_WSTRESS
-     &                 tl_ustr, nl_ustr,                                &
-     &                 tl_vstr, nl_vstr,                                &
+     &                   tl_ustr, nl_ustr,                              &
+     &                   tl_vstr, nl_vstr,                              &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                 tl_tflux, nl_tflux,                              &
+     &                   tl_tflux, nl_tflux,                            &
 # endif
-     &                 tl_t, nl_t,                                      &
-     &                 tl_u, nl_u,                                      &
-     &                 tl_v, nl_v,                                      &
+     &                   tl_t, nl_t,                                    &
+     &                   tl_u, nl_u,                                    &
+     &                   tl_v, nl_v,                                    &
 #else
-     &                 tl_ubar, nl_ubar,                                &
-     &                 tl_vbar, nl_vbar,                                &
+     &                   tl_ubar, nl_ubar,                              &
+     &                   tl_vbar, nl_vbar,                              &
 #endif
-     &                 tl_zeta, nl_zeta)
+     &                   tl_zeta, nl_zeta)
 ! 
       END IF
 !
@@ -1247,6 +1260,7 @@
 !***********************************************************************
       SUBROUTINE tl_new_state (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Linp, Lout, alphaK,                      &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
@@ -1286,6 +1300,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 
       real(r8), intent(in) :: alphaK
@@ -1512,6 +1527,7 @@
 !***********************************************************************
       SUBROUTINE ad_new_state (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Lold, Lnew, alphaK, tauK,                &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
@@ -1539,6 +1555,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
 
       real(r8), intent(in) :: alphaK, tauK
@@ -1754,6 +1771,7 @@
 !***********************************************************************
       SUBROUTINE orthogonalize (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Lold, Lnew, Lwrk,                       &
      &                          innLoop, outLoop,                       &
 #ifdef MASKING
@@ -1811,6 +1829,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew, Lwrk
       integer, intent(in) :: innLoop, outLoop
 !
@@ -2182,6 +2201,7 @@
 !***********************************************************************
       SUBROUTINE new_direction (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Lwrk, Lnew, betaK,                      &
 #ifdef MASKING
      &                          rmask, umask, vmask,                    &
@@ -2222,6 +2242,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lwrk, Lnew
 
       real(r8), intent(in) :: betaK
@@ -2444,6 +2465,7 @@
 !***********************************************************************
       SUBROUTINE precond (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    NstateVars, Lscale,                           &
      &                    Lritz, Ltrans,                                &
      &                    nConvRitz, Ritz,                              &
@@ -2487,6 +2509,7 @@
 
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: NstateVars, Lscale
       integer, intent(in) :: nConvRitz
 !
@@ -2676,6 +2699,7 @@
 !***********************************************************************
       SUBROUTINE new_cost (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lwrk,                                        &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
@@ -2720,6 +2744,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lwrk
 !
 #ifdef ASSUMED_SHAPE

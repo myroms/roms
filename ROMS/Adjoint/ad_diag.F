@@ -42,6 +42,7 @@
 # endif
       CALL ad_diag_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp(ng), kstp(ng),                            &
      &                   GRID(ng) % h,                                  &
      &                   GRID(ng) % omn,                                &
@@ -65,6 +66,7 @@
 !***********************************************************************
       SUBROUTINE ad_diag_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nstp, kstp,                              &
      &                         h, omn,                                  &
 # ifdef SOLVE3D
@@ -90,6 +92,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, kstp
 !
 # ifdef ASSUMED_SHAPE
@@ -124,7 +127,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB, JLB, JUB
       integer :: NSUB, i, j, k, trd
 
 # ifdef DISTRIBUTE
@@ -136,22 +138,17 @@
 
       real(r8) :: cff, my_avgke, my_avgpe, my_volume
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ke2d
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: pe2d
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ke2d
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: pe2d
 
       character (len=8) :: kechar, pechar
 
 # include "set_bounds.h"
 !
-      ILB=LBOUND(ke2d,DIM=1)
-      IUB=UBOUND(ke2d,DIM=1)
-      JLB=LBOUND(ke2d,DIM=2)
-      JUB=UBOUND(ke2d,DIM=2)
-!
 !  Initialize private arrays.
 !
-      ke2d(ILB:IUB,JLB:JUB)=0.0_r8
-      pe2d(ILB:IUB,JLB:JUB)=0.0_r8
+      ke2d(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      pe2d(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Compute and report out volume averaged kinetic, potential

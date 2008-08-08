@@ -59,6 +59,7 @@
 !***********************************************************************
       SUBROUTINE conv_r2d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Nghost, NHsteps, DTsizeH,               &
      &                          Kh,                                     &
      &                          pm, pn, pmon_u, pnom_v,                 &
@@ -79,6 +80,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
@@ -127,9 +129,9 @@
 
       real(r8), dimension(LBi:UBi,LBj:UBj,2) :: Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
 # include "set_bounds.h"
 !
 !-----------------------------------------------------------------------
@@ -243,6 +245,7 @@
 !***********************************************************************
       SUBROUTINE conv_u2d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Nghost, NHsteps, DTsizeH,               &
      &                          Kh,                                     &
      &                          pm, pn, pmon_r, pnom_p,                 &
@@ -263,6 +266,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
@@ -311,9 +315,9 @@
 
       real(r8), dimension(LBi:UBi,LBj:UBj,2) :: Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
 
 # include "set_bounds.h"
 !
@@ -427,6 +431,7 @@
 !***********************************************************************
       SUBROUTINE conv_v2d_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Nghost, NHsteps, DTsizeH,               &
      &                          Kh,                                     &
      &                          pm, pn, pmon_p, pnom_r,                 &
@@ -447,6 +452,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nghost, NHsteps
 
       real(r8), intent(in) :: DTsizeH
@@ -495,9 +501,9 @@
 
       real(r8), dimension(LBi:UBi,LBj:UBj,2) :: Awrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hfac
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hfac
 
 # include "set_bounds.h"
 !

@@ -58,6 +58,7 @@
 # endif
       CALL ad_step3d_uv_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        knew(ng), nrhs(ng), nstp(ng), nnew(ng),   &
 # ifdef UV_PSOURCE
      &                        Nsrc(ng),                                 &
@@ -133,6 +134,7 @@
 !***********************************************************************
       SUBROUTINE ad_step3d_uv_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              knew, nrhs, nstp, nnew,             &
 # ifdef UV_PSOURCE
      &                              Nsrc,                               &
@@ -189,6 +191,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: knew, nrhs, nstp, nnew
 !
 # ifdef ASSUMED_SHAPE
@@ -345,51 +348,47 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB
       integer :: i, idiag, is, j, k
 
       real(r8) :: cff, cff1, cff2
       real(r8) :: ad_cff, ad_cff1, ad_cff2
       real(r8) :: adfac, adfac1, adfac2
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: CF1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: FC1
+      real(r8), dimension(IminS:ImaxS) :: CF1
+      real(r8), dimension(IminS:ImaxS) :: FC1
 # ifdef NEARSHORE_MELLOR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: CFs1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: DCs1
+      real(r8), dimension(IminS:ImaxS) :: CFs1
+      real(r8), dimension(IminS:ImaxS) :: DCs1
 # endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: AK
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: AK
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC1
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 # ifdef NEARSHORE_MELLOR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CFs
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DCs
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CFs
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DCs
 # endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hzk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: oHz
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hzk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: oHz
 # ifdef DIAGNOSTICS_UV
-!!    real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: wrk
-!!    real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,1:NDM2d-1) :: Dwrk
+!!    real(r8), dimension(IminS:ImaxS,0:N(ng)) :: wrk
+!!    real(r8), dimension(IminS:ImaxS,1:NDM2d-1) :: Dwrk
 # endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_AK
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_BC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_AK
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_BC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
 # ifdef NEARSHORE_MELLOR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_CFs
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DCs
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_CFs
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DCs
 # endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_Hzk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ad_oHz
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_Hzk
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: ad_oHz
 !
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FC,DIM=1)
-      IUB=UBOUND(ad_FC,DIM=1)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -398,7 +397,7 @@
       ad_cff=0.0_r8
       ad_cff1=0.0_r8
       DO k=0,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_AK(i,k)=0.0_r8
           ad_BC(i,k)=0.0_r8
           ad_CF(i,k)=0.0_r8
@@ -411,7 +410,7 @@
         END DO
       END DO
       DO k=1,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_Hzk(i,k)=0.0_r8
           ad_oHz(i,k)=0.0_r8
         END DO
@@ -1322,20 +1321,24 @@
 !
 !>    CALL tl_v3dbc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj, N(ng),                    &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !>   &                    nstp, nnew,                                   &
 !>   &                    v)
 !>
       CALL ad_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nnew,                                   &
      &                    ad_v)
 !>    CALL tl_u3dbc_tile (ng, tile,                                     &
 !>   &                    LBi, UBi, LBj, UBj, N(ng),                    &
+!>   &                    IminS, ImaxS, JminS, JmaxS,                   &
 !>   &                    nstp, nnew,                                   &
 !>   &                    tl_u)
 !>
       CALL ad_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp, nnew,                                   &
      &                    ad_u)
 !

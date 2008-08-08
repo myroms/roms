@@ -23,6 +23,7 @@
 !
       CALL ana_ssh_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   CLIMA(ng) % ssh)
 !
 ! Set analytical header file name used.
@@ -37,6 +38,7 @@
 !***********************************************************************
       SUBROUTINE ana_ssh_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         ssh)
 !***********************************************************************
 !
@@ -53,6 +55,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: ssh(LBi:,LBj:)

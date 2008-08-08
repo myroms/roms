@@ -58,6 +58,7 @@
 !
       CALL back_step_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lnew, Lold,                                  &
 # ifdef SOLVE3D
      &                     OCEAN(ng) % tl_t,                            &
@@ -74,6 +75,7 @@
 !***********************************************************************
       SUBROUTINE back_step_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Lold, Lnew,                            &
 # ifdef SOLVE3D
      &                           tl_t,                                  &
@@ -100,6 +102,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
 !
 # ifdef ASSUMED_SHAPE

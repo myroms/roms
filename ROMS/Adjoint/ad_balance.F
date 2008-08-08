@@ -93,6 +93,7 @@
 # endif
       CALL ad_balance_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Lbck, Linp,                                 &
      &                      GRID(ng) % f,                               &
      &                      GRID(ng) % pm,                              &
@@ -126,6 +127,7 @@
 !***********************************************************************
       SUBROUTINE ad_balance_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            Lbck, Linp,                           &
      &                            f, pm, pn,                            &
 # ifdef SOLVE3D
@@ -158,6 +160,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lbck, Linp
 !
 # ifdef ASSUMED_SHAPE
@@ -231,7 +234,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB
       integer :: i, j, k, order
 
       integer :: Norder = 2                 ! Shapiro filter order
@@ -255,21 +257,18 @@
 
       real(r8), dimension(N(ng)) :: dSdT, dSdT_filter
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_phie
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_phix
+      real(r8), dimension(IminS:ImaxS) :: ad_phie
+      real(r8), dimension(IminS:ImaxS) :: ad_phix
 
 # ifdef SALINITY
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: dTdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: dSdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: dTdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: dSdz
 # endif
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_gradP
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_gradP
       
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_phie,DIM=1)
-      IUB=UBOUND(ad_phie,DIM=1)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -277,7 +276,7 @@
 !
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
-      DO i=ILB,IUB
+      DO i=IminS,ImaxS
         ad_phie(i)=0.0_r8
         ad_phix(i)=0.0_r8
       END DO
@@ -285,6 +284,10 @@
         DO j=LBj,UBj
           DO i=LBi,UBi
             ad_rho(i,j,k)=0.0_r8
+          END DO
+        END DO
+        DO j=JminS,JmaxS
+          DO i=IminS,ImaxS
             ad_gradP(i,j,k)=0.0_r8
           END DO
         END DO

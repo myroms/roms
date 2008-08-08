@@ -61,6 +61,7 @@
 # endif
       CALL tl_ini_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Lbck, Lini, Lnew,                        &
 # if defined ADJUST_STFLUX && defined SOLVE3D
      &                         FORCES(ng) % tflux,                      &
@@ -97,6 +98,7 @@
 !***********************************************************************
       SUBROUTINE tl_ini_adjust_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               Lbck, Lini, Lnew,                  &
 # if defined ADJUST_STFLUX && defined SOLVE3D
      &                               tflux, tl_tflux,                   &
@@ -125,6 +127,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lbck, Lini, Lnew
 !
 # ifdef ASSUMED_SHAPE
@@ -330,6 +333,7 @@
 #  endif
       CALL tl_frc_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
 #  if defined ADJUST_STFLUX && defined SOLVE3D
      &                         FORCES(ng) % tflux,                      &
      &                         FORCES(ng) % tl_tflux,                   &
@@ -350,6 +354,7 @@
 !***********************************************************************
       SUBROUTINE tl_frc_adjust_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
 #  if defined ADJUST_STFLUX && defined SOLVE3D
      &                               tflux, tl_tflux,                   &
 #  endif
@@ -369,6 +374,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lbck, Lini, Lnew
 !
 #  ifdef ASSUMED_SHAPE

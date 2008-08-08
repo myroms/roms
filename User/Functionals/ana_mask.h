@@ -23,6 +23,7 @@
 !
       CALL ana_mask_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    GRID(ng) % pmask,                             &
      &                    GRID(ng) % rmask,                             &
      &                    GRID(ng) % umask,                             &
@@ -40,6 +41,7 @@
 !***********************************************************************
       SUBROUTINE ana_mask_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          pmask, rmask, umask, vmask)
 !***********************************************************************
 !
@@ -57,6 +59,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: pmask(LBi:,LBj:)
@@ -86,7 +89,7 @@
 #endif
       integer :: Imin, Imax, Jmin, Jmax
       integer :: i, j
-      real(r8) :: mask(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8) :: mask(IminS:ImaxS,JminS:JmaxS)
 
 #include "set_bounds.h"
 !

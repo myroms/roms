@@ -26,6 +26,7 @@
 !
       CALL ana_initial_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       GRID(ng) % h,                              &
 #ifdef SPHERICAL
      &                       GRID(ng) % lonr,                           &
@@ -56,6 +57,7 @@
 !***********************************************************************
       SUBROUTINE ana_initial_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             h,                                   &
 #ifdef SPHERICAL
      &                             lonr, latr,                          &
@@ -76,6 +78,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: h(LBi:,LBj:)

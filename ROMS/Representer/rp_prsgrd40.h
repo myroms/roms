@@ -43,6 +43,7 @@
 #endif
       CALL rp_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nrhs(ng),                                    &
      &                     GRID(ng) % om_v,                             &
      &                     GRID(ng) % on_u,                             &
@@ -67,6 +68,7 @@
 !***********************************************************************
       SUBROUTINE rp_prsgrd_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs,                                  &
      &                           om_v, on_u,                            &
      &                           Hz, tl_Hz,                             &
@@ -85,6 +87,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 
 #ifdef ASSUMED_SHAPE
@@ -128,12 +131,12 @@
       real(r8) :: cff, cff1, dh
       real(r8) :: tl_dh
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: tl_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: tl_FX
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: P
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: tl_P
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: P
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: tl_P
 
 #include "set_bounds.h"
 !

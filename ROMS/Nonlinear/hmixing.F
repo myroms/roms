@@ -71,6 +71,7 @@
 # endif
       CALL hmixing_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nrhs(ng),                                      &
      &                   GRID(ng) % pm,                                 &
      &                   GRID(ng) % pn,                                 &
@@ -108,6 +109,7 @@
 !***********************************************************************
       SUBROUTINE hmixing_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs,                                    &
      &                         pm, pn, omn, om_u, on_v,                 &
      &                         Hz, z_r,                                 &
@@ -144,6 +146,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE

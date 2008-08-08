@@ -97,6 +97,7 @@
 # endif
       CALL ad_rhs3d_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    knew(ng), nrhs(ng),                           &
      &                    GRID(ng) % Hz,                                &
      &                    GRID(ng) % ad_Hz,                             &
@@ -209,6 +210,7 @@
 !***********************************************************************
       SUBROUTINE ad_rhs3d_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          knew, nrhs,                             &
      &                          Hz, ad_Hz,                              &
      &                          Huon, ad_Huon,                          &
@@ -271,6 +273,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: knew, nrhs
 !
 # ifdef ASSUMED_SHAPE
@@ -433,7 +436,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 
       real(r8), parameter :: Gadv = -0.25_r8
@@ -442,52 +444,47 @@
       real(r8) :: ad_cff, ad_cff1, ad_cff2
       real(r8) :: adfac, adfac1, adfac2, adfac3, adfac4, adfac5
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Huee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Huxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hvee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Hvxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Uwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: uee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: uxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: vee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: vxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Huee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Huxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hvee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Hvxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Uwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: uee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: uxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: vee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: vxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Huee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Huxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Hvee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Hvxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Uwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_VFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_Vwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_uee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_uxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_vee
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_vxx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Huee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Huxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Hvee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Hvxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Uwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_Vwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_uee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_uxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_vee
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_vxx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_wrk
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_UFx,DIM=1)
-      IUB=UBOUND(ad_UFx,DIM=1)
-      JLB=LBOUND(ad_UFx,DIM=2)
-      JUB=UBOUND(ad_UFx,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -496,8 +493,8 @@
       ad_cff=0.0_r8
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
-      DO j=JLB,JUB
-        DO i=ILB,IUB
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
           ad_Huee(i,j)=0.0_r8
           ad_Huxx(i,j)=0.0_r8
           ad_Hvee(i,j)=0.0_r8
@@ -516,7 +513,7 @@
         END DO
       END DO
       DO k=0,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_CF(i,k)=0.0_r8
           ad_DC(i,k)=0.0_r8 
           ad_FC(i,k)=0.0_r8

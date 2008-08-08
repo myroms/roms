@@ -23,6 +23,7 @@
 !
       CALL ana_m2clima_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       CLIMA(ng) % ubarclm,                       &
      &                       CLIMA(ng) % vbarclm)
 !
@@ -38,6 +39,7 @@
 !***********************************************************************
       SUBROUTINE ana_m2clima_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             ubarclm, vbarclm)
 !***********************************************************************
 !
@@ -54,6 +56,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: ubarclm(LBi:,LBj:)

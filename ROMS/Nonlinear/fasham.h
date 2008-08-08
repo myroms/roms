@@ -44,6 +44,7 @@
 #endif
       CALL biology_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % rmask,                              &
@@ -79,6 +80,7 @@
 !-----------------------------------------------------------------------
       SUBROUTINE biology_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj, UBk, UBt,            &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nstp, nnew,                              &
 #ifdef MASKING
      &                         rmask,                                   &
@@ -109,6 +111,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -198,7 +201,6 @@
       real(r8) :: l2mol = 1000.0_r8/22.9316_r8      ! liter to mol
 #endif
 #ifdef CARBON
-      integer :: ILB, IUB
       integer, parameter :: DoNewton = 0            ! pCO2 solver
 
       real(r8), parameter :: Acoef = 2073.1_r8      ! Schmidt
@@ -259,33 +261,27 @@
 
       real(r8), dimension(Nsink) :: Wbio
 
-      integer, dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ksource
+      integer, dimension(IminS:ImaxS,N(ng)) :: ksource
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: PARsur
+      real(r8), dimension(IminS:ImaxS) :: PARsur
 #ifdef CARBON
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: pCO2
+      real(r8), dimension(IminS:ImaxS) :: pCO2
 #endif
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qc
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv3
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: qc
 
 #include "set_bounds.h"
-#ifdef CARBON
-!
-      ILB=LBOUND(Bio,DIM=1)
-      IUB=UBOUND(Bio,DIM=1)
-#endif
-
 #ifdef DIAGNOSTICS_BIO
 !
 !-----------------------------------------------------------------------
@@ -864,22 +860,22 @@
 !
           k=N(ng)
 # ifdef pCO2_RZ
-          CALL pCO2_water_RZ (Istr, Iend, LBi, UBi, LBj, UBj, ILB, IUB, &
-     &                        j, DoNewton,                              &
+          CALL pCO2_water_RZ (Istr, Iend, LBi, UBi, LBj, UBj,           &
+     &                        IminS, ImaxS, j, DoNewton,                &
 #  ifdef MASKING
      &                        rmask,                                    &
 #  endif
-     &                        Bio(ILB:,k,itemp), Bio(ILB:,k,isalt),     &
-     &                        Bio(ILB:,k,iTIC_), Bio(ILB:,k,iTAlk),     &
+     &                        Bio(IminS:,k,itemp), Bio(IminS:,k,isalt), &
+     &                        Bio(IminS:,k,iTIC_), Bio(IminS:,k,iTAlk), &
      &                        pH, pCO2)
 # else
-          CALL pCO2_water (Istr, Iend, LBi, UBi, LBj, UBj, ILB, IUB,    &
-     &                     j, DoNewton,                                 &
+          CALL pCO2_water (Istr, Iend, LBi, UBi, LBj, UBj,              &
+     &                     IminS, ImaxS, j, DoNewton,                   &
 #  ifdef MASKING
      &                     rmask,                                       &
 #  endif
-     &                     Bio(ILB:,k,itemp), Bio(ILB:,k,isalt),        &
-     &                     Bio(ILB:,k,iTIC_), Bio(ILB:,k,iTAlk),        &
+     &                     Bio(IminS:,k,itemp), Bio(IminS:,k,isalt),    &
+     &                     Bio(IminS:,k,iTIC_), Bio(IminS:,k,iTAlk),    &
      &                     0.0_r8, 0.0_r8, pH, pCO2)
 # endif
 !
@@ -1201,7 +1197,7 @@
 #ifdef CARBON
 # ifdef pCO2_RZ
       SUBROUTINE pCO2_water_RZ (Istr, Iend,                             &
-     &                          LBi, UBi, LBj, UBj, ILB, IUB,           &
+     &                          LBi, UBi, LBj, UBj, IminS, ImaxS,       &
      &                          j, DoNewton,                            &
 #  ifdef MASKING
      &                          rmask,                                  &
@@ -1221,8 +1217,8 @@
 !     UBi        I-dimension upper bound.                              !
 !     LBj        J-dimension lower bound.                              !
 !     UBj        J-dimension upper bound.                              !
-!     ILB        I-dimension lower bound for private arrays.           !
-!     IUB        I-dimension upper bound for private arrays.           !
+!     IminS      I-dimension lower bound for private arrays.           !
+!     ImaxS      I-dimension upper bound for private arrays.           !
 !     j          j-pipelined index.                                    !
 !     DoNewton   Iteration solver:                                     !
 !                  [0] Bracket and bisection.                          !
@@ -1261,30 +1257,30 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in) :: LBi, UBi, LBj, UBj, ILB, IUB
+      integer,  intent(in) :: LBi, UBi, LBj, UBj, IminS, ImaxS
       integer,  intent(in) :: Istr, Iend, j, DoNewton
 !
 #  ifdef ASSUMED_SHAPE
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #   endif
-      real(r8), intent(in) :: T(ILB:)
-      real(r8), intent(in) :: S(ILB:)
-      real(r8), intent(in) :: TIC(ILB:)
-      real(r8), intent(in) :: TAlk(ILB:)
+      real(r8), intent(in) :: T(IminS:)
+      real(r8), intent(in) :: S(IminS:)
+      real(r8), intent(in) :: TIC(IminS:)
+      real(r8), intent(in) :: TAlk(IminS:)
       real(r8), intent(inout) :: pH(LBi:,LBj:)
 #  else
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: T(ILB:IUB)
-      real(r8), intent(in) :: S(ILB:IUB)
-      real(r8), intent(in) :: TIC(ILB:IUB)
-      real(r8), intent(in) :: TAlk(ILB:IUB)
+      real(r8), intent(in) :: T(IminS:ImaxS)
+      real(r8), intent(in) :: S(IminS:ImaxS)
+      real(r8), intent(in) :: TIC(IminS:ImaxS)
+      real(r8), intent(in) :: TAlk(IminS:ImaxS)
       real(r8), intent(inout) :: pH(LBi:UBi,LBj:UBj)
 #  endif
 
-      real(r8), intent(out) :: pCO2(ILB:IUB)
+      real(r8), intent(out) :: pCO2(IminS:ImaxS)
 !
 !  Local variable declarations.
 !
@@ -1533,8 +1529,8 @@
       END SUBROUTINE pCO2_water_RZ
 # else
       SUBROUTINE pCO2_water (Istr, Iend,                                &
-     &                       LBi, UBi, LBj, UBj, ILB, IUB,              &
-     &                       j, DoNewton,                               &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, j, DoNewton,                 &
 #  ifdef MASKING
      &                       rmask,                                     &
 #  endif
@@ -1553,8 +1549,8 @@
 !     UBi        I-dimension upper bound.                              !
 !     LBj        J-dimension lower bound.                              !
 !     UBj        J-dimension upper bound.                              !
-!     ILB        I-dimension lower bound for private arrays.           !
-!     IUB        I-dimension upper bound for private arrays.           !
+!     IminS      I-dimension lower bound for private arrays.           !
+!     ImaxS      I-dimension upper bound for private arrays.           !
 !     j          j-pipelined index.                                    !
 !     DoNewton   Iteration solver:                                     !
 !                  [0] Bracket and bisection.                          !
@@ -1589,32 +1585,32 @@
 !
 !  Imported variable declarations.
 !
-      integer,  intent(in) :: LBi, UBi, LBj, UBj, ILB, IUB
+      integer,  intent(in) :: LBi, UBi, LBj, UBj, IminS, ImaxS
       integer,  intent(in) :: Istr, Iend, j, DoNewton
 !
 #  ifdef ASSUMED_SHAPE
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:,LBj:)
 #   endif
-      real(r8), intent(in) :: T(ILB:)
-      real(r8), intent(in) :: S(ILB:)
-      real(r8), intent(in) :: TIC(ILB:)
-      real(r8), intent(in) :: TAlk(ILB:)
+      real(r8), intent(in) :: T(IminS:)
+      real(r8), intent(in) :: S(IminS:)
+      real(r8), intent(in) :: TIC(IminS:)
+      real(r8), intent(in) :: TAlk(IminS:)
       real(r8), intent(inout) :: pH(LBi:,LBj:)
 #  else
 #   ifdef MASKING
       real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
 #   endif
-      real(r8), intent(in) :: T(ILB:IUB)
-      real(r8), intent(in) :: S(ILB:IUB)
-      real(r8), intent(in) :: TIC(ILB:IUB)
-      real(r8), intent(in) :: TAlk(ILB:IUB)
+      real(r8), intent(in) :: T(IminS:ImaxS)
+      real(r8), intent(in) :: S(IminS:ImaxS)
+      real(r8), intent(in) :: TIC(IminS:ImaxS)
+      real(r8), intent(in) :: TAlk(IminS:ImaxS)
       real(r8), intent(inout) :: pH(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: PO4
       real(r8), intent(in) :: SiO3
 
-      real(r8), intent(out) :: pCO2(ILB:IUB)
+      real(r8), intent(out) :: pCO2(IminS:ImaxS)
 !
 !  Local variable declarations.
 !

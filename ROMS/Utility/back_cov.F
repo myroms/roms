@@ -46,6 +46,7 @@
 !
       CALL back_cov_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    nstp(ng), nnew(ng), Lold(ng),                 &
      &                    GRID(ng) % h,                                 &
      &                    GRID(ng) % omn,                               &
@@ -77,6 +78,7 @@
 !***********************************************************************
       SUBROUTINE back_cov_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp, nnew, Lold,                       &
      &                          h, omn, om_u, om_v, on_u, on_v,         &
 # ifdef SOLVE3D
@@ -108,6 +110,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, nstp, nnew
 !
 # ifdef ASSUMED_SHAPE

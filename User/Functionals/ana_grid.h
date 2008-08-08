@@ -45,6 +45,7 @@
 !
       CALL ana_grid_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    GRID(ng) % angler,                            &
 #if defined CURVGRID && defined UV_ADV
      &                    GRID(ng) % dmde,                              &
@@ -89,6 +90,7 @@
 !***********************************************************************
       SUBROUTINE ana_grid_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          angler,                                 &
 #if defined CURVGRID && defined UV_ADV
      &                          dmde, dndx,                             &
@@ -124,6 +126,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: angler(LBi:,LBj:)
@@ -215,8 +218,8 @@
       real(r8), dimension(2) :: buffer
       character (len=3), dimension(2) :: op_handle
 #endif
-      real(r8) :: wrkX(PRIVATE_2D_SCRATCH_ARRAY)
-      real(r8) :: wrkY(PRIVATE_2D_SCRATCH_ARRAY)
+      real(r8) :: wrkX(IminS:ImaxS,JminS:JmaxS)
+      real(r8) :: wrkY(IminS:ImaxS,JminS:JmaxS)
 
 #include "set_bounds.h"
 !

@@ -24,6 +24,7 @@
 !
       CALL ana_btflux_tile (ng, tile, model, itrc,                      &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
 #ifdef TL_IOMS
      &                      FORCES(ng) % tl_btflx,                      &
 #endif
@@ -41,6 +42,7 @@
 !***********************************************************************
       SUBROUTINE ana_btflux_tile (ng, tile, model, itrc,                &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
 #ifdef TL_IOMS
      &                            tl_btflx,                             &
 #endif
@@ -54,6 +56,7 @@
 !
       integer, intent(in) :: ng, tile, model, itrc
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(inout) :: btflx(LBi:,LBj:,:)

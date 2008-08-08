@@ -69,6 +69,7 @@
 #endif
       CALL ad_uv3dmix2_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nrhs(ng), nnew(ng),                        &
 #ifdef MASKING
      &                       GRID(ng) % pmask,                          &
@@ -114,6 +115,7 @@
 !***********************************************************************
       SUBROUTINE ad_uv3dmix2_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nrhs, nnew,                          &
 #ifdef MASKING
      &                             pmask, rmask, umask, vmask,          &
@@ -138,6 +140,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -220,7 +223,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k, kk, kt, k1, k1b, k2, k2b
 
       real(r8) :: cff, fac1, fac2, pm_p, pn_p
@@ -234,44 +236,39 @@
       real(r8) :: ad_dmUdz, ad_dnUdz, ad_dmVdz, ad_dnVdz
       real(r8) :: adfac1, adfac2, adfac3, adfac4, adfac5, adfac6
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: VFe
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_UFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_UFx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_VFe
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_VFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_UFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_UFx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_VFe
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_VFx
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dmUde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dmVde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dnUdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dnVdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dUdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dVdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZde_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZde_r
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZdx_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dZdx_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dmUde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dmVde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dnUdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dnVdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dUdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dVdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZde_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dZdx_r
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_UFs
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_VFs
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dmUde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dmVde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dnUdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dnVdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dUdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dVdz
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dZde_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dZde_r
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dZdx_p
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: ad_dZdx_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_UFs
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_VFs
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dmUde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dmVde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dnUdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dnVdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dUdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dVdz
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dZde_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dZde_r
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dZdx_p
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: ad_dZdx_r
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(ad_UFe,DIM=1)
-      IUB=UBOUND(ad_UFe,DIM=1)
-      JLB=LBOUND(ad_UFe,DIM=2)
-      JUB=UBOUND(ad_UFe,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize private adjoint variables and arrays.
@@ -292,26 +289,26 @@
       ad_dmVdz=0.0_r8
       ad_dnVdz=0.0_r8
 
-      ad_UFe(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_UFx(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_VFe(ILB:IUB,JLB:JUB)=0.0_r8
-      ad_VFx(ILB:IUB,JLB:JUB)=0.0_r8
+      ad_UFe(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_UFx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_VFe(IminS:ImaxS,JminS:JmaxS)=0.0_r8
+      ad_VFx(IminS:ImaxS,JminS:JmaxS)=0.0_r8
 
-      ad_UFs(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_VFs(ILB:IUB,JLB:JUB,1:2)=0.0_r8
+      ad_UFs(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_VFs(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
 
-      ad_dmUde(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dmVde(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dnUdx(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dnVdx(ILB:IUB,JLB:JUB,1:2)=0.0_r8
+      ad_dmUde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dmVde(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dnUdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dnVdx(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
 
-      ad_dUdz(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dVdz(ILB:IUB,JLB:JUB,1:2)=0.0_r8
+      ad_dUdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dVdz(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
 
-      ad_dZde_p(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dZde_r(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dZdx_p(ILB:IUB,JLB:JUB,1:2)=0.0_r8
-      ad_dZdx_r(ILB:IUB,JLB:JUB,1:2)=0.0_r8
+      ad_dZde_p(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dZde_r(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dZdx_p(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
+      ad_dZdx_r(IminS:ImaxS,JminS:JmaxS,1:2)=0.0_r8
 !
 !----------------------------------------------------------------------
 !  Compute horizontal harmonic viscosity along geopotential surfaces.

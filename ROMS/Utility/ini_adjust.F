@@ -95,6 +95,7 @@
 #   endif
       CALL ini_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Linp, Lout,                                 &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -126,6 +127,7 @@
 !***********************************************************************
       SUBROUTINE ini_adjust_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            Linp, Lout,                           &
 #   ifdef MASKING
      &                            rmask, umask, vmask,                  &
@@ -146,6 +148,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
 #   ifdef ASSUMED_SHAPE
@@ -314,6 +317,7 @@
 #   endif
       CALL ini_adjust_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Linp, Lout,                                 &
 #   ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -345,6 +349,7 @@
 !***********************************************************************
       SUBROUTINE ini_adjust_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            Linp, Lout,                           &
 #   ifdef MASKING
      &                            rmask, umask, vmask,                  &
@@ -365,6 +370,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
 #   ifdef ASSUMED_SHAPE
@@ -533,6 +539,7 @@
 #   endif
       CALL rp_ini_adjust_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Linp, Lout,                              &
 #   ifdef MASKING
      &                         GRID(ng) % rmask,                        &
@@ -575,6 +582,7 @@
 !***********************************************************************
       SUBROUTINE rp_ini_adjust_tile (ng, tile,                          &
      &                               LBi, UBi, LBj, UBj,                &
+     &                               IminS, ImaxS, JminS, JmaxS,        &
      &                               Linp, Lout,                        &
 #   ifdef MASKING
      &                               rmask, umask, vmask,               &
@@ -605,6 +613,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
 #   ifdef ASSUMED_SHAPE
@@ -800,6 +809,7 @@
 #  endif
       CALL load_ADtoTL_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       Linp, Lout, add,                           &
 #  ifdef MASKING
      &                       GRID(ng) % rmask,                          &
@@ -845,6 +855,7 @@
 !***********************************************************************
       SUBROUTINE load_ADtoTL_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Linp, Lout, add,                     &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
@@ -881,6 +892,7 @@
       logical, intent(in) :: add
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
 #  ifdef ASSUMED_SHAPE
@@ -1201,6 +1213,7 @@
 #  endif
       CALL load_TLtoAD_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       Linp, Lout, add,                           &
 #  ifdef MASKING
      &                       GRID(ng) % rmask,                          &
@@ -1246,6 +1259,7 @@
 !***********************************************************************
       SUBROUTINE load_TLtoAD_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             Linp, Lout, add,                     &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
@@ -1282,6 +1296,7 @@
       logical, intent(in) :: add
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
 #  ifdef ASSUMED_SHAPE
@@ -1598,6 +1613,7 @@
 #  endif
       CALL ini_perturb_tile (ng, tile,                                  &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       nstp(ng), nnew(ng), Linp, Lout,            &
 #  ifdef MASKING
      &                       GRID(ng) % rmask,                          &
@@ -1640,6 +1656,7 @@
 !***********************************************************************
       SUBROUTINE ini_perturb_tile (ng, tile,                            &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             nstp, nnew, Linp, Lout,              &
 #  ifdef MASKING
      &                             rmask, umask, vmask,                 &
@@ -1695,6 +1712,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew, Linp, Lout
 !
 #  ifdef ASSUMED_SHAPE
@@ -1962,15 +1980,18 @@
 !
       CALL zetabc_tile (ng, tile,                                       &
      &                  LBi, UBi, LBj, UBj,                             &
+     &                  IminS, ImaxS, JminS, JmaxS,                     &
      &                  Lout, Lout, Lout,                               &
      &                  zeta)
 #  ifndef SOLVE3D
       CALL u2dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj,                              &
+     &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 Lout, Lout, Lout,                                &
      &                 ubar, vbar, zeta)
       CALL v2dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj,                              &
+     &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 Lout, Lout, Lout,                                &
      &                 ubar, vbar, zeta)
 #  endif
@@ -2011,6 +2032,7 @@
 !
       CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
 #   ifdef ICESHELF
@@ -2028,13 +2050,16 @@
 !
       CALL u3dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj, N(ng),                       &
+     &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 Lout, Lout, u)
       CALL v3dbc_tile (ng, tile,                                        &
      &                 LBi, UBi, LBj, UBj, N(ng),                       &
+     &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 Lout, Lout, v)
       DO itrc=1,NT(ng)
-        CALL t3dbc_tile (ng, tile,                   itrc,              &
+        CALL t3dbc_tile (ng, tile, itrc,                                &
      &                   LBi, UBi, LBj, UBj, N(ng), NT(ng),             &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   Lout, Lout, t)
       END DO
 
@@ -2106,6 +2131,7 @@
 #  endif
       CALL ad_ini_perturb_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          Kinp, Kout, Ninp, Nout,                 &
 #  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
@@ -2141,6 +2167,7 @@
 !***********************************************************************
       SUBROUTINE ad_ini_perturb_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                Kinp, Kout, Ninp, Nout,           &
 #  ifdef MASKING
      &                                rmask, umask, vmask,              &
@@ -2168,6 +2195,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Kinp, Kout, Ninp, Nout
 !
 #  ifdef ASSUMED_SHAPE
@@ -2393,6 +2421,7 @@
 #  endif
       CALL tl_ini_perturb_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp(ng), nnew(ng), Linp, Lout,         &
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
@@ -2437,6 +2466,7 @@
 !***********************************************************************
       SUBROUTINE tl_ini_perturb_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                nstp, nnew, Linp, Lout,           &
 #  ifdef SOLVE3D
 #   if defined SEDIMENT && defined SED_MORPH
@@ -2494,6 +2524,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew, Linp, Lout
 !
 #  ifdef ASSUMED_SHAPE
@@ -2778,16 +2809,19 @@
 !
       CALL tl_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lout, Lout, Lout,                            &
      &                     zeta, tl_zeta)
 #  ifndef SOLVE3D
       CALL tl_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
       CALL tl_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
@@ -2830,6 +2864,7 @@
 !
       CALL tl_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nstp, nnew,                               &
      &                        h, tl_h,                                  &
 #   ifdef ICESHELF
@@ -2847,13 +2882,16 @@
 !
       CALL tl_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, tl_u)
       CALL tl_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, tl_v)
       DO itrc=1,NT(ng)
-        CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
+        CALL tl_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Lout, Lout, tl_t)
       END DO
 
@@ -2927,6 +2965,7 @@
 #  endif
       CALL tl_ini_perturb_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          nstp(ng), nnew(ng), Linp, Lout,         &
 #  ifdef MASKING
      &                          GRID(ng) % rmask,                       &
@@ -2982,6 +3021,7 @@
 !***********************************************************************
       SUBROUTINE tl_ini_perturb_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
      &                                nstp, nnew, Linp, Lout,           &
 #  ifdef MASKING
      &                                rmask, umask, vmask,              &
@@ -3049,6 +3089,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew, Linp, Lout
 !
 #  ifdef ASSUMED_SHAPE
@@ -3181,10 +3222,10 @@
 #  ifdef SOLVE3D
       real(r8) :: cff, tl_cff
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: DC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_CF
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: DC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_CF
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_DC
 #  endif
 #  ifdef DISTRIBUTE
       character (len=3) :: op_handle
@@ -3409,16 +3450,19 @@
 !
       CALL tl_zetabc_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lout, Lout, Lout,                            &
      &                     zeta, tl_zeta)
 #  ifndef SOLVE3D
       CALL tl_u2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
       CALL tl_v2dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, Lout,                             &
      &                    ubar, vbar, zeta,                             &
      &                    tl_ubar, tl_vbar, tl_zeta)
@@ -3461,6 +3505,7 @@
 !
       CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
 #   ifdef ICESHELF
@@ -3473,6 +3518,7 @@
      &                     Hz, z_r, z_w)
       CALL tl_set_depth_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nstp, nnew,                               &
      &                        h, tl_h,                                  &
 #   ifdef ICESHELF
@@ -3490,13 +3536,16 @@
 !
       CALL tl_u3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, tl_u)
       CALL tl_v3dbc_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj, N(ng),                    &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    Lout, Lout, tl_v)
       DO itrc=1,NT(ng)
-        CALL tl_t3dbc_tile (ng, tile,                   itrc,           &
+        CALL tl_t3dbc_tile (ng, tile, itrc,                             &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Lout, Lout, tl_t)
       END DO
 
@@ -3569,6 +3618,7 @@
         END DO
         CALL tl_u2dbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Lout, Lout, Lout,                           &
      &                      ubar, vbar, zeta,                           &
      &                      tl_ubar, tl_vbar, tl_zeta)
@@ -3624,6 +3674,7 @@
         END DO
         CALL tl_v2dbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      Lout, Lout, Lout,                           &
      &                      ubar, vbar, zeta,                           &
      &                      tl_ubar, tl_vbar, tl_zeta)

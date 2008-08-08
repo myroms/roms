@@ -47,6 +47,7 @@
 # endif
       CALL set_tides_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     NTC(ng),                                     &
      &                     GRID(ng) % angler,                           &
 # ifdef MASKING
@@ -97,6 +98,7 @@
 !***********************************************************************
       SUBROUTINE set_tides_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           NTC,                                   &
      &                           angler,                                &
 # ifdef MASKING
@@ -144,6 +146,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: NTC
 !
 # ifdef ASSUMED_SHAPE
@@ -255,11 +258,11 @@
       real(r8) :: angle, cff, phase, omega, ramp
       real(r8) :: bry_cor, bry_pgr, bry_str, bry_val
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Etide
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Utide
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Uwrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vtide
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Etide
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Utide
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Uwrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vtide
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vwrk
 
 # include "set_bounds.h"
 

@@ -28,7 +28,8 @@
       CALL wclock_on (ng, iADM, 4)
 # endif
       CALL ad_set_data_tile (ng, tile,                                  &
-     &                       LBi, UBi, LBj, UBj)
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS)
 # ifdef PROFILE
       CALL wclock_off (ng, iADM, 4)
 # endif
@@ -37,7 +38,8 @@
 !
 !***********************************************************************
       SUBROUTINE ad_set_data_tile (ng, tile,                            &
-     &                             LBi, UBi, LBj, UBj)
+     &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS)
 !***********************************************************************
 !
       USE mod_param
@@ -94,6 +96,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 !  Local variable declarations.
 !
@@ -118,8 +121,8 @@
 
       real(r8) :: Zr, cff, cff1, cff2
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) ::  work1
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) ::  work2
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) ::  work1
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) ::  work2
 
 # include "set_bounds.h"
 

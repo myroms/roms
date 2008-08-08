@@ -53,6 +53,7 @@
 # endif
       CALL ad_omega_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    nstp(ng), nnew(ng),                           &
 # endif
@@ -85,6 +86,7 @@
 !***********************************************************************
       SUBROUTINE ad_omega_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                          nstp, nnew,                             &
 # endif
@@ -114,6 +116,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       integer, intent(in) :: nstp, nnew
 # endif
@@ -179,7 +182,6 @@
       logical :: NSperiodic=.FALSE.
 #  endif
 # endif
-      integer :: ILB, IUB
       integer :: i, j, k
 # ifdef Q_PSOURCE
       integer :: ii, jj, is
@@ -189,20 +191,17 @@
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8) :: cff1
 # endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: wrk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: ad_wrk
+      real(r8), dimension(IminS:ImaxS) :: wrk
+      real(r8), dimension(IminS:ImaxS) :: ad_wrk
 
 # include "set_bounds.h"
-!
-      ILB=LBOUND(ad_wrk,DIM=1)
-      IUB=UBOUND(ad_wrk,DIM=1)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
 !
       ad_cff=0.0_r8
-      DO i=ILB,IUB    
+      DO i=IminS,ImaxS    
         ad_wrk(i)=0.0_r8
       END DO
 !  

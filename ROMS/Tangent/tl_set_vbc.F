@@ -51,6 +51,7 @@
 #  endif
       CALL tl_set_vbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs(ng),                                   &
      &                      GRID(ng) % Hz,                              &
      &                      GRID(ng) % tl_Hz,                           &
@@ -102,6 +103,7 @@
 !***********************************************************************
       SUBROUTINE tl_set_vbc_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nrhs,                                 &
      &                            Hz, tl_Hz,                            &
 #  if !defined BBL_MODEL_NOT_YET || defined ICESHELF
@@ -147,6 +149,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 #  ifdef ASSUMED_SHAPE
@@ -258,8 +261,8 @@
 #  endif
 
 #  if (!defined BBL_MODEL_NOT_YET || defined ICESHELF) && defined UV_LOGDRAG
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: wrk
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: tl_wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tl_wrk
 #  endif
 
 #  include "set_bounds.h"
@@ -767,6 +770,7 @@
 #  endif
       CALL tl_set_vbc_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      krhs(ng), kstp(ng), knew(ng),               &
      &                      OCEAN(ng) % ubar,                           &
      &                      OCEAN(ng) % vbar,                           &
@@ -783,6 +787,7 @@
 !***********************************************************************
       SUBROUTINE tl_set_vbc_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            krhs, kstp, knew,                     &
      &                            ubar, vbar,                           &
      &                            tl_ubar, tl_vbar,                     &
@@ -801,6 +806,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: krhs, kstp, knew
 !
 #  ifdef ASSUMED_SHAPE

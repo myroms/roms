@@ -50,6 +50,7 @@
 #endif
       CALL ad_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nrhs(ng),                                    &
 #ifdef MASKING
      &                     GRID(ng) % umask,                            &
@@ -80,6 +81,7 @@
 !***********************************************************************
       SUBROUTINE ad_prsgrd_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs,                                  &
 #ifdef MASKING
      &                           umask, vmask,                          &
@@ -102,6 +104,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 
 #ifdef ASSUMED_SHAPE
@@ -150,7 +153,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 
       real(r8), parameter :: OneFifth = 0.2_r8
@@ -163,34 +165,29 @@
       real(r8) :: adfac1, adfac2, adfac3, adfac4, adfac5, adfac6
       real(r8) :: adfac7, adfac8, adfac9, adfac10, adfac11, adfac12
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: P
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: P
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_P
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_P
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dR1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dZ
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: dZ1
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: dR
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: dR1
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: dZ
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: dZ1
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_dR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_dZ
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_dR
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_dZ
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FC
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: aux
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: dRx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: dZx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: aux
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: dRx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: dZx
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_FC
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_aux
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_dRx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: ad_dZx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_FC
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_aux
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_dRx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: ad_dZx
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(ad_FC,DIM=1)
-      IUB=UBOUND(ad_FC,DIM=1)
-      JLB=LBOUND(ad_FC,DIM=2)
-      JUB=UBOUND(ad_FC,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
@@ -199,21 +196,21 @@
       ad_cff=0.0_r8
       ad_cff1=0.0_r8
       ad_cff2=0.0_r8
-      DO j=JLB,JUB
-        DO i=ILB,IUB
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
           ad_FC(i,j)=0.0_r8
           ad_aux(i,j)=0.0_r8
           ad_dRx(i,j)=0.0_r8
           ad_dZx(i,j)=0.0_r8
         END DO
         DO k=1,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_P(i,j,k)=0.0_r8
           END DO
         END DO
       END DO          
       DO k=0,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_dR(i,k)=0.0_r8
           ad_dZ(i,k)=0.0_r8
         END DO

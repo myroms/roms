@@ -74,6 +74,7 @@
 # endif
       CALL frc_NLadjust_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
 # ifdef MASKING
      &                        GRID(ng) % rmask,                         &
      &                        GRID(ng) % umask,                         &
@@ -102,6 +103,7 @@
 !***********************************************************************
       SUBROUTINE frc_NLadjust_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
 # ifdef MASKING
      &                              rmask, umask, vmask,                &
 # endif
@@ -123,6 +125,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp, Lout
 !
 # ifdef ASSUMED_SHAPE
@@ -318,6 +321,7 @@
 # endif
       CALL frc_ADadjust_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
 # ifdef ADJUST_WSTRESS
      &                        FORCES(ng) % ad_ustr,                     &
      &                        FORCES(ng) % ad_vstr,                     &
@@ -338,6 +342,7 @@
 !***********************************************************************
       SUBROUTINE frc_ADadjust_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
 # ifdef ADJUST_WSTRESS
      &                              ad_ustr,  ad_vstr,                  &
      &                              ad_sustr, ad_svstr,                 &
@@ -355,6 +360,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lout
 !
 # ifdef ASSUMED_SHAPE
@@ -494,6 +500,7 @@
 # endif
       CALL frc_TLadjust_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
 # ifdef ADJUST_WSTRESS
      &                        FORCES(ng) % tl_ustr,                     &
      &                        FORCES(ng) % tl_vstr,                     &
@@ -514,6 +521,7 @@
 !***********************************************************************
       SUBROUTINE frc_TLadjust_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
 # ifdef ADJUST_WSTRESS
      &                              tl_ustr,  tl_vstr,                  &
      &                              tl_sustr, tl_svstr,                 &
@@ -531,6 +539,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Linp
 !
 # ifdef ASSUMED_SHAPE
@@ -665,6 +674,7 @@
 # endif
       CALL load_NLforcing_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 # ifdef ADJUST_WSTRESS
      &                          FORCES(ng) % sustr,                     &
      &                          FORCES(ng) % svstr,                     &
@@ -686,6 +696,7 @@
 !***********************************************************************
       SUBROUTINE load_NLforcing_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
 # ifdef ADJUST_WSTRESS
      &                                sustr, svstr,                     &
      &                                ustr,  vstr,                      &
@@ -703,6 +714,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lout
 !
 # ifdef ASSUMED_SHAPE
@@ -819,6 +831,7 @@
 # endif
       CALL load_TLforcing_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 # ifdef ADJUST_WSTRESS
      &                          FORCES(ng) % tl_sustr,                  &
      &                          FORCES(ng) % tl_svstr,                  &
@@ -840,6 +853,7 @@
 !***********************************************************************
       SUBROUTINE load_TLforcing_tile (ng, tile,                         &
      &                                LBi, UBi, LBj, UBj,               &
+     &                                IminS, ImaxS, JminS, JmaxS,       &
 # ifdef ADJUST_WSTRESS
      &                                tl_sustr, tl_svstr,               &
      &                                tl_ustr,  tl_vstr,                &
@@ -857,6 +871,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lout
 !
 # ifdef ASSUMED_SHAPE

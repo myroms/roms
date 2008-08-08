@@ -49,6 +49,7 @@
 # endif
       CALL ad_set_avg_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
 # ifdef SOLVE3D
      &                      nstp(ng),                                   &
      &                      GRID(ng) % pm,                              &
@@ -165,6 +166,7 @@
 !***********************************************************************
       SUBROUTINE ad_set_avg_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
 # ifdef SOLVE3D
      &                            nstp,                                 &
      &                            pm, pn,                               &
@@ -256,6 +258,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 # ifdef SOLVE3D
       integer, intent(in) :: nstp
 # endif

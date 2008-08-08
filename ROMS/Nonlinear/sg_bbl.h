@@ -40,6 +40,7 @@
 # endif
       CALL bblm_tile (ng, tile,                                         &
      &                LBi, UBi, LBj, UBj,                               &
+     &                IminS, ImaxS, JminS, JmaxS,                       &
      &                nrhs(ng),                                         &
      &                GRID(ng) % h,                                     &
      &                GRID(ng) % z_r,                                   &
@@ -78,6 +79,7 @@
 !***********************************************************************
       SUBROUTINE bblm_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nrhs,                                       &
      &                      h, z_r, z_w, angler,                        &
 # if defined SG_CALC_UB
@@ -109,6 +111,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 !
 # ifdef ASSUMED_SHAPE
@@ -208,24 +211,24 @@
       real(r8) :: sg_ustarc, sg_ustarcw, sg_ustarwm, sg_znot, sg_znotp
       real(r8) :: sg_zr, sg_zrozn, sg_z1, sg_z1ozn, sg_z2, twopi, z1, z2
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ab
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauc
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Tauw
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Taucwmax
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ur_sg
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vr_sg
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ub
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Ucur
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Umag
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Vcur
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: Zr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phic
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: phicw
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rheight
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: rlength
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: u100
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: znot
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: znotc
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ab
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Tauc
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Tauw
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Taucwmax
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ur_sg
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vr_sg
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ub
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Ucur
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Umag
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Vcur
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: Zr
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: phic
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: phicw
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rheight
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: rlength
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: u100
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: znot
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: znotc
 
 #include "set_bounds.h"
 !

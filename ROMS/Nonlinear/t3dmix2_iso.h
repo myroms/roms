@@ -34,6 +34,7 @@
 #endif
       CALL t3dmix2_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nrhs(ng), nnew(ng),                            &
 #ifdef MASKING
      &                   GRID(ng) % umask,                              &
@@ -64,6 +65,7 @@
 !***********************************************************************
       SUBROUTINE t3dmix2_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nrhs, nnew,                              &
 #ifdef MASKING
      &                         umask, vmask,                            &
@@ -89,6 +91,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -147,15 +150,15 @@
 
       real(r8) :: cff, cff1, cff2, cff3, cff4
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FE
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY) :: FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: FS
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dRde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dRdx
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dTde
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dTdr
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,2) :: dTdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: FS
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dRde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dRdx
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dTde
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dTdr
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,2) :: dTdx
 
 #include "set_bounds.h"
 !

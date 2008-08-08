@@ -23,6 +23,7 @@
 !
       CALL ana_bmflux_tile (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      GRID(ng) % xr,                              &
      &                      GRID(ng) % yr,                              &
      &                      OCEAN(ng) % bottom)
@@ -39,6 +40,7 @@
 !***********************************************************************
       SUBROUTINE ana_bmflux_tile (ng, tile, model,                      &
      &                            LBi, UBi, LBj, UBj,                   &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            xr, yr,                               &
      &                            bottom)
 !***********************************************************************
@@ -55,6 +57,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: xr(LBi:,LBj:)

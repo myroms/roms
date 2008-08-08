@@ -25,6 +25,7 @@
 !
       CALL ana_diag_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    OCEAN(ng) % ubar,                             &
      &                    OCEAN(ng) % vbar,                             &
      &                    OCEAN(ng) % u,                                &
@@ -42,6 +43,7 @@
 !***********************************************************************
       SUBROUTINE ana_diag_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          ubar, vbar, u, v)
 !***********************************************************************
 !
@@ -53,6 +55,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: ubar(LBi:,LBj:,:)

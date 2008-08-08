@@ -24,6 +24,7 @@
 !
       CALL ana_passive_tile (ng, tile, model,                           &
      &                       LBi, UBi, LBj, UBj,                        &
+     &                       IminS, ImaxS, JminS, JmaxS,                &
      &                       OCEAN(ng) % t)
 !
 ! Set analytical header file name used.
@@ -38,6 +39,7 @@
 !***********************************************************************
       SUBROUTINE ana_passive_tile (ng, tile, model,                     &
      &                             LBi, UBi, LBj, UBj,                  &
+     &                             IminS, ImaxS, JminS, JmaxS,          &
      &                             t)
 !***********************************************************************
 !
@@ -48,6 +50,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 #ifdef ASSUMED_SHAPE
       real(r8), intent(out) :: t(LBi:,LBj:,:,:,:)

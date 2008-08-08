@@ -100,6 +100,7 @@
 #  endif
       CALL ad_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   kstp(ng),                                      &
 #  ifdef SOLVE3D
      &                   nstp(ng),                                      &
@@ -152,6 +153,7 @@
 !***********************************************************************
       SUBROUTINE ad_pack_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         kstp,                                    &
 #  ifdef SOLVE3D
      &                         nstp,                                    &
@@ -184,6 +186,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: kstp
 #  ifdef SOLVE3D
@@ -733,6 +736,7 @@
 #  endif
       CALL ad_unpack_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     knew(ng),                                    &
 #  ifdef SOLVE3D
      &                     nstp(ng),                                    &
@@ -770,6 +774,7 @@
 !***********************************************************************
       SUBROUTINE ad_unpack_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           knew,                                  &
 #  ifdef SOLVE3D
      &                           nstp,                                  &
@@ -798,6 +803,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: knew
 #  ifdef SOLVE3D
@@ -1236,6 +1242,7 @@
 #  endif
       CALL tl_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   krhs(ng), kstp(ng), knew(ng),                  &
 #  ifdef SOLVE3D
      &                   nstp(ng),                                      &
@@ -1283,6 +1290,7 @@
 !***********************************************************************
       SUBROUTINE tl_pack_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         krhs, kstp, knew,                        &
 #  ifdef SOLVE3D
      &                         nstp,                                    &
@@ -1311,6 +1319,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: krhs, kstp, knew
 #  ifdef SOLVE3D
@@ -1767,6 +1776,7 @@
 #  endif
       CALL tl_unpack_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     kstp(ng),                                    &
 #  ifdef SOLVE3D
      &                     nstp(ng),                                    &
@@ -1809,6 +1819,7 @@
 !***********************************************************************
       SUBROUTINE tl_unpack_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           kstp,                                  &
 #  ifdef SOLVE3D
      &                           nstp,                                  &
@@ -1841,6 +1852,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nstr, Nend
       integer, intent(in) :: kstp
 #  ifdef SOLVE3D
@@ -2380,6 +2392,7 @@
 #  endif
       CALL so_pack_tile (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
 #  ifdef DISTRIBUTE
      &                   1, Mstate(ng), Swork,                          &
 #  else
@@ -2418,6 +2431,7 @@
 !***********************************************************************
       SUBROUTINE so_pack_tile (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         Nstr, Nend,                              &
      &                         so_state,                                &
 #  ifdef MASKING
@@ -2440,6 +2454,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nstr, Nend
 !
 #  ifdef ASSUMED_SHAPE
@@ -2737,6 +2752,7 @@
 #  endif
       CALL so_unpack_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
 #  ifdef DISTRIBUTE
      &                     1, Mstate(ng), Swork,                        &
 #  else
@@ -2765,6 +2781,7 @@
 !***********************************************************************
       SUBROUTINE so_unpack_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Nstr, Nend, state,                     &
 #  ifdef MASKING
      &                           IJwaterR, IJwaterU, IJwaterV,          &
@@ -2785,6 +2802,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Nstr, Nend
 !
 #  ifdef ASSUMED_SHAPE

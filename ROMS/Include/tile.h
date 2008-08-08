@@ -6,16 +6,16 @@
 **   See License_ROMS.txt                                                    **
 *******************************************************************************
 */
-      integer :: Iend, Istr, Jend, Jstr
+      integer :: IminS, ImaxS, JminS, JmaxS
       integer :: LBi, UBi, LBj, UBj
 !
-!  Set horizontal starting and ending indices for parallel domain
-!  partitions in the XI- and ETA-directions.
+!  Set horizontal starting and ending indices for automatic private storage
+!  arrays.
 !
-      Istr=BOUNDS(ng)%Istr(tile)
-      Iend=BOUNDS(ng)%Iend(tile)
-      Jstr=BOUNDS(ng)%Jstr(tile)
-      Jend=BOUNDS(ng)%Jend(tile)
+      IminS=BOUNDS(ng)%Istr(tile)-3
+      ImaxS=BOUNDS(ng)%Iend(tile)+3
+      JminS=BOUNDS(ng)%Jstr(tile)-3
+      JmaxS=BOUNDS(ng)%Jend(tile)+3
 !
 !  Determine array lower and upper bounds in the I- and J-directions.
 !

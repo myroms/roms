@@ -86,6 +86,7 @@
 !
       CALL back_cost_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lbck,                                        &
 # ifdef ADJUST_WSTRESS
      &                     FORCES(ng) % tl_ustr,                        &
@@ -109,6 +110,7 @@
 !***********************************************************************
       SUBROUTINE back_cost_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Lbck,                                  &
 # ifdef ADJUST_WSTRESS
      &                           tl_ustr, tl_vstr,                      &
@@ -142,6 +144,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lbck
 !
 # ifdef ASSUMED_SHAPE

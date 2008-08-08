@@ -669,7 +669,7 @@
       real(r8), parameter :: IniVal = 0.0_r8
 
 #ifndef DISTRIBUTE
-# include "tile.h"
+# include "set_bounds.h"
 #endif
 !
 !-----------------------------------------------------------------------

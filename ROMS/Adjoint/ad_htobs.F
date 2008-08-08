@@ -40,6 +40,7 @@
 !
       CALL ad_htobs_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
 # ifdef MASKING
      &                    GRID(ng) % rmask,                             &
      &                    GRID(ng) % umask,                             &
@@ -61,6 +62,7 @@
 !***********************************************************************
       SUBROUTINE ad_htobs_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 # ifdef MASKING
      &                          rmask, umask, vmask,                    &
 # endif
@@ -90,6 +92,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING

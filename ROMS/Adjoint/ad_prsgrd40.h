@@ -43,6 +43,7 @@
 #endif
       CALL ad_prsgrd_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nrhs(ng),                                    &
      &                     GRID(ng) % om_v,                             &
      &                     GRID(ng) % on_u,                             &
@@ -67,6 +68,7 @@
 !***********************************************************************
       SUBROUTINE ad_prsgrd_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
+     &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           nrhs,                                  &
      &                           om_v, on_u,                            &
      &                           Hz, ad_Hz,                             &
@@ -85,6 +87,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nrhs
 
 #ifdef ASSUMED_SHAPE
@@ -121,43 +124,37 @@
 !
 !  Local variable declarations.
 !
-      integer :: ILB, IUB, JLB, JUB
       integer :: i, j, k
 
       real(r8) :: cff, cff1, dh
       real(r8) :: ad_dh
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: ad_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: ad_FC
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,N(ng)) :: ad_FX
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,N(ng)) :: ad_FX
 
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: P
-      real(r8), dimension(PRIVATE_2D_SCRATCH_ARRAY,0:N(ng)) :: ad_P
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: P
+      real(r8), dimension(IminS:ImaxS,JminS:JmaxS,0:N(ng)) :: ad_P
 
 #include "set_bounds.h"
-!
-      ILB=LBOUND(ad_P,DIM=1)
-      IUB=UBOUND(ad_P,DIM=1)
-      JLB=LBOUND(ad_P,DIM=2)
-      JUB=UBOUND(ad_P,DIM=2)
 !
 !-----------------------------------------------------------------------
 !  Initialize adjoint private variables.
 !-----------------------------------------------------------------------
 !
       ad_dh=0.0_r8
-      DO j=JLB,JUB
-        DO i=ILB,IUB
+      DO j=JminS,JmaxS
+        DO i=IminS,ImaxS
           ad_FX=(i,j)=0.0_r8
         END DO
         DO k=0,N(ng)
-          DO i=ILB,IUB
+          DO i=IminS,ImaxS
             ad_P(i,j,k)=0.0_r8
           END DO
         END DO
       END DO
       DO k=0,N(ng)
-        DO i=ILB,IUB
+        DO i=IminS,ImaxS
           ad_FC=(i,k)=0.0_r8
         END DO
       END DO

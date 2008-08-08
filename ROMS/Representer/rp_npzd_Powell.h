@@ -41,6 +41,7 @@
 #endif
       CALL rp_biology_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, N(ng), NT(ng),          &
+     &                      IminS, ImaxS, JminS, JmaxS,                 &
      &                      nstp(ng), nnew(ng),                         &
 #ifdef MASKING
      &                      GRID(ng) % rmask,                           &
@@ -65,6 +66,7 @@
 !-----------------------------------------------------------------------
       SUBROUTINE rp_biology_tile (ng, tile,                             &
      &                            LBi, UBi, LBj, UBj, UBk, UBt,         &
+     &                            IminS, ImaxS, JminS, JmaxS,           &
      &                            nstp, nnew,                           &
 #ifdef MASKING
      &                            rmask,                                &
@@ -85,6 +87,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj, UBk, UBt
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -140,45 +143,45 @@
       real(r8), dimension(Nsink) :: Wbio
       real(r8), dimension(Nsink) :: tl_Wbio
 
-      integer, dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: ksource
+      integer, dimension(IminS:ImaxS,N(ng)) :: ksource
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: PARsur
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: tl_PARsur
+      real(r8), dimension(IminS:ImaxS) :: PARsur
+      real(r8), dimension(IminS:ImaxS) :: tl_PARsur
 
       real(r8), dimension(NT(ng),2) :: BioTrc
       real(r8), dimension(NT(ng),2) :: BioTrc1
       real(r8), dimension(NT(ng),2) :: tl_BioTrc
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: Bio_bak
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio1
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: Bio_bak
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: tl_Bio
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng),NT(ng)) :: tl_Bio_bak
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: tl_Bio
+      real(r8), dimension(IminS:ImaxS,N(ng),NT(ng)) :: tl_Bio_bak
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: FC
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,0:N(ng)) :: tl_FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: FC
+      real(r8), dimension(IminS:ImaxS,0:N(ng)) :: tl_FC
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Hz_inv3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: Light
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: WR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bL1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: bR1
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: qc
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Hz_inv3
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: Light
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: WR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bL1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: bR1
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: qc
 
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_Hz_inv
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_Hz_inv2
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_Hz_inv3
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_Light
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_WL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_WR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_bL
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_bR
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY,N(ng)) :: tl_qc
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_Hz_inv
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_Hz_inv2
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_Hz_inv3
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_Light
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_WL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_WR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_bL
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_bR
+      real(r8), dimension(IminS:ImaxS,N(ng)) :: tl_qc
 
 #include "set_bounds.h"
 !

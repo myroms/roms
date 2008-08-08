@@ -57,6 +57,7 @@
 # endif
       CALL rp_omega_tile (ng, tile,                                     &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                    nstp(ng), nnew(ng),                           &
 # endif
@@ -89,6 +90,7 @@
 !***********************************************************************
       SUBROUTINE rp_omega_tile (ng, tile,                               &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
      &                          nstp, nnew,                             &
 # endif
@@ -116,6 +118,7 @@
 !
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       integer, intent(in) :: nstp, nnew
 # endif
@@ -189,8 +192,8 @@
 # if defined SEDIMENT_NOT_YET && defined SED_MORPH_NOT_YET
       real(r8) :: cff1
 # endif
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: wrk
-      real(r8), dimension(PRIVATE_1D_SCRATCH_ARRAY) :: tl_wrk
+      real(r8), dimension(IminS:ImaxS) :: wrk
+      real(r8), dimension(IminS:ImaxS) :: tl_wrk
 
 # include "set_bounds.h"
 !

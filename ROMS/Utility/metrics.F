@@ -41,6 +41,7 @@
 !
       CALL metrics_tile (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
+     &                   IminS, ImaxS, JminS, JmaxS,                    &
      &                   nstp(ng), nnew(ng),                            &
      &                   GRID(ng) % f,                                  &
      &                   GRID(ng) % h,                                  &
@@ -100,6 +101,7 @@
 !***********************************************************************
       SUBROUTINE metrics_tile (ng, tile, model,                         &
      &                         LBi, UBi, LBj, UBj,                      &
+     &                         IminS, ImaxS, JminS, JmaxS,              &
      &                         nstp, nnew,                              &
      &                         f, h, pm, pn,                            &
 #ifdef MASKING
@@ -162,6 +164,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: nstp, nnew
 
 #ifdef ASSUMED_SHAPE
@@ -716,6 +719,7 @@
 
       CALL set_depth_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
+     &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     nstp, nnew,                                  &
      &                     h,                                           &
 # ifdef ICESHELF

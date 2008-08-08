@@ -27,6 +27,7 @@
 !
       CALL ana_vmix_tile (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
      &                    knew(ng),                                     &
      &                    GRID(ng) % h,                                 &
      &                    GRID(ng) % z_r,                               &
@@ -47,6 +48,7 @@
 !***********************************************************************
       SUBROUTINE ana_vmix_tile (ng, tile, model,                        &
      &                          LBi, UBi, LBj, UBj,                     &
+     &                          IminS, ImaxS, JminS, JmaxS,             &
      &                          knew,                                   &
      &                          h, z_r, z_w, zeta, Akv, Akt)
 !***********************************************************************
@@ -65,6 +67,7 @@
 !
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: knew
 !
 #ifdef ASSUMED_SHAPE
