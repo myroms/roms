@@ -169,7 +169,7 @@
         RETURN
       END IF
       IF (.not.find_string(var_name,n_var,'mask_psi',vindex)) THEN
-        IF (Master) WRITE (stdout,10) 'mask_rho', TRIM(ncname)
+        IF (Master) WRITE (stdout,10) 'mask_psi', TRIM(ncname)
         exit_flag=2
         RETURN
       END IF

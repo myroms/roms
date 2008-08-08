@@ -341,7 +341,7 @@
 !  Check if model state variables are available in input NetCDF file.
 !
       IF (.not.have_var(idtime)) THEN
-        IF (Master) WRITE (stdout,10) string, TRIM(tvarnam),            &
+        IF (Master) WRITE (stdout,10) string, TRIM(Vname(1,idtime)),    &
      &                                TRIM(ncname)
         exit_flag=2
         RETURN
