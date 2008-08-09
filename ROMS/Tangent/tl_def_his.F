@@ -1348,8 +1348,8 @@
             RETURN
           END IF
 #  endif
-# endif
         END DO
+# endif
 !
 !  Set unlimited time record dimension to the appropriate value.
 !

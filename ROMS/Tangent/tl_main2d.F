@@ -152,7 +152,7 @@
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL ini_zeta (ng, TILE, iTLM)
+            CALL tl_ini_zeta (ng, TILE, iTLM)
           END DO
         END DO
 !$OMP END PARALLEL DO
