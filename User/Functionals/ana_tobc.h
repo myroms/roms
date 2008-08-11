@@ -26,8 +26,9 @@
 #include "tile.h"
 !
       CALL ana_tobc_tile (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj, nstp(ng),                 &
-     &                    IminS, ImaxS, JminS, JmaxS,),                 &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    nstp(ng),                                     &
      &                    GRID(ng) % z_r,                               &
      &                    OCEAN(ng) % t)
 !
@@ -42,8 +43,9 @@
 !
 !***********************************************************************
       SUBROUTINE ana_tobc_tile (ng, tile, model,                        &
-     &                          LBi, UBi, LBj, UBj, nstp,               &
+     &                          LBi, UBi, LBj, UBj,                     &
      &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          nstp,                                   &
      &                          z_r, t)
 !***********************************************************************
 !

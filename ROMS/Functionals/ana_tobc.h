@@ -26,8 +26,9 @@
 #include "tile.h"
 !
       CALL ana_tobc_tile (ng, tile, model,                              &
-     &                    LBi, UBi, LBj, UBj, nstp(ng),                 &
-     &                    IminS, ImaxS, JminS, JmaxS,),                 &
+     &                    LBi, UBi, LBj, UBj,                           &
+     &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    nstp(ng),                                     &
      &                    GRID(ng) % z_r,                               &
      &                    OCEAN(ng) % t)
 !
@@ -42,8 +43,9 @@
 !
 !***********************************************************************
       SUBROUTINE ana_tobc_tile (ng, tile, model,                        &
-     &                          LBi, UBi, LBj, UBj, nstp,               &
+     &                          LBi, UBi, LBj, UBj,                     &
      &                          IminS, ImaxS, JminS, JmaxS,             &
+     &                          nstp,                                   &
      &                          z_r, t)
 !***********************************************************************
 !
@@ -55,8 +57,9 @@
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
-      integer, intent(in) :: LBi, UBi, LBj, UBj, nstp
+      integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: nstp
 
 #ifdef ASSUMED_SHAPE
       real(r8), intent(in) :: z_r(LBi:,LBj:,:)
