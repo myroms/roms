@@ -473,7 +473,7 @@
 !-----------------------------------------------------------------------
 !
         DO iobs=Mstr,Mend
-          TLmodVal(iobs)=-TLmodVal(iobs)*ObsErr(iobs)
+          TLmodVal(iobs)=TLmodVal(iobs)*ObsErr(iobs)
         END DO
 # endif
 
