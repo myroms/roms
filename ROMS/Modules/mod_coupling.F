@@ -209,16 +209,11 @@
 
       real(r8), parameter :: IniVal = 0.0_r8
 
-#include "set_bounds.h"
+# include "set_bounds.h"
 !
 !  Set array initialization range.
 !
-#ifdef DISTRIBUTE
-      Imin=BOUNDS(ng)%LBi(tile)
-      Imax=BOUNDS(ng)%UBi(tile)
-      Jmin=BOUNDS(ng)%LBj(tile)
-      Jmax=BOUNDS(ng)%UBj(tile)
-#else
+# ifdef _OPENMP
       IF (WESTERN_EDGE) THEN
         Imin=BOUNDS(ng)%LBi(tile)
       ELSE
@@ -239,7 +234,12 @@
       ELSE
         Jmax=Jend
       END IF
-#endif
+# else
+      Imin=BOUNDS(ng)%LBi(tile)
+      Imax=BOUNDS(ng)%UBi(tile)
+      Jmin=BOUNDS(ng)%LBj(tile)
+      Jmax=BOUNDS(ng)%UBj(tile)
+# endif
 !
 !-----------------------------------------------------------------------
 !  Initialize module variables.
