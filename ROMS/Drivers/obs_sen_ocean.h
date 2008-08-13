@@ -301,7 +301,7 @@
       logical :: Lweak = .FALSE. 
 
       integer :: i, my_iic, ng,  subs, tile, thread
-      integer :: Lini, Litl
+      integer :: Lbck, Lini, Litl
 
       real (r8) :: str_day, end_day
 !
@@ -313,12 +313,13 @@
 !
 !  Initialize relevant parameters.
 !
-        Lini=1              ! NLM initial conditions record in INIname
-        Litl=1              ! TLM initial conditions record
+        Lini=1        ! 4DVAR initial conditions record in INIname
+        Lbck=2        ! First guess initial conditions record in INIname
+        Litl=1        ! TLM initial conditions record
         Lnew(ng)=1
 !
-!  Initialize nonlinear model with the same initial conditions, xb(0),
-!  used to run the IS4DVAR Lanczos algorithm.
+!  Initialize nonlinear model with the estimated initial conditions
+!  from the IS4DVAR Lanczos algorithm.
 !
         wrtNLmod(ng)=.FALSE.
         wrtTLmod(ng)=.FALSE.
@@ -329,7 +330,7 @@
 !
 !  Run nonlinear model for the combined assimilation plus forecast
 !  period, t=t0 to t2. Save nonlinear (basic state) tracjectory, xb(t),
-!  needed by the adjoint and tangent linear models. 
+!  needed by the adjoint model. 
 !
         IF (Master) THEN
           WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
@@ -337,7 +338,7 @@
 
         time(ng)=time(ng)-dt(ng)
 
-        NL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
+        NL_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
           iic(ng)=my_iic
 #ifdef SOLVE3D
@@ -347,7 +348,7 @@
 #endif
           IF (exit_flag.ne.NoError) RETURN
 
-        END DO NL_LOOP
+        END DO NL_LOOP1
 !
 !  Initialize adjoint model and define sensitivity functional.
 !
@@ -434,6 +435,41 @@
         CALL netcdf_get_ivar (ng, iADM, LCZname(ng), 'ntimes',          &
      &                        ntimes(ng))
         IF (exit_flag.ne. NoError) RETURN
+!
+!  Initialize nonlinear model with the same initial conditions, xb(0),
+!  Lbck record in INIname. This is the first guess NLM initial
+!  conditions used to start the IS4DVAR Lanczos algorithm.
+!
+        LdefINI(ng)=.FALSE.
+        wrtNLmod(ng)=.FALSE.
+        wrtTLmod(ng)=.FALSE.
+        tRSTindx(ng)=0
+        tINIindx(ng)=Lbck
+        NrecRST(ng)=0
+        CALL initial (ng)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Run nonlinear model for the combined assimilation plus forecast
+!  period, t=t0 to t2. Save nonlinear (basic state) tracjectory, xb(t),
+!  needed by the tangent linear model. 
+!
+        IF (Master) THEN
+          WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
+        END IF
+
+        time(ng)=time(ng)-dt(ng)
+
+        NL_LOOP2 : DO my_iic=ntstart(ng),ntend(ng)+1
+
+          iic(ng)=my_iic
+#ifdef SOLVE3D
+          CALL main3d (ng)
+#else
+          CALL main2d (ng)
+#endif
+          IF (exit_flag.ne.NoError) RETURN
+
+        END DO NL_LOOP2
 !
 !  Initialize tangent linear model with the weighted sum of the
 !  Lanczos vectors, steps (4) to (6) from the algorithm summary

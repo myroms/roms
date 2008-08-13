@@ -77,9 +77,6 @@
 #   endif
 #  endif
 # endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : frc_TLadjust
-# endif
 # ifdef DISTRIBUTE
       USE mp_exchange_mod, ONLY : mp_exchange2d
 #  ifdef SOLVE3D
@@ -1439,15 +1436,6 @@
       END DO
 #   endif
 #  endif
-# endif
-
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-!
-!-----------------------------------------------------------------------
-!  Adjust surface forcing, add 4DVAR increments
-!-----------------------------------------------------------------------
-!
-      CALL frc_TLadjust (ng, tile, Lfinp(ng))
 # endif
 
       RETURN

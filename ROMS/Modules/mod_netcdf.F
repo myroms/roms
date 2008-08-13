@@ -1264,12 +1264,12 @@
 !  Read in variable.
 !
         IF (exit_flag.eq.NoError) THEN
-          status=nf90_inq_varid(ncid, TRIM(myVarName), varid)
+          status=nf90_inq_varid(my_ncid, TRIM(myVarName), varid)
           IF (status.eq.nf90_noerr) THEN
             IF (PRESENT(start).and.PRESENT(total)) THEN
-              status=nf90_get_var(ncid, varid, A, start, total)
+              status=nf90_get_var(my_ncid, varid, A, start, total)
             ELSE
-              status=nf90_get_var(ncid, varid, A)
+              status=nf90_get_var(my_ncid, varid, A)
             END IF
             IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,20) TRIM(myVarName), TRIM(ncname)

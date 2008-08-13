@@ -33,7 +33,7 @@
       USE forcing_mod, ONLY : forcing
 # endif
 # ifdef ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : load_NLforcing
+      USE frc_adjust_mod, ONLY : frc_NLadjust, load_NLforcing
 # endif
       USE ini_fields_mod, ONLY : ini_fields, ini_zeta
 # ifdef AIR_OCEAN
@@ -205,6 +205,24 @@
       END IF
 # endif
 
+# ifdef ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Load surface forcing to storage arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL frc_NLadjust (ng, TILE, Lfinp(ng), Lfout(ng))
+          CALL load_NLforcing (ng, TILE, Lfout(ng))
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
+
 # ifdef WAVES_OCEAN
 !
 !-----------------------------------------------------------------------
@@ -256,22 +274,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-
-# ifdef ADJUST_WSTRESS
-!
-!-----------------------------------------------------------------------
-!  Load surface forcing to storage arrays.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL load_NLforcing (ng, TILE, Lfout(ng))
-        END DO
-      END DO
-!$OMP END PARALLEL DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice

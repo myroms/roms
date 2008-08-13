@@ -211,24 +211,6 @@
 
 # ifdef ADJUST_WSTRESS
 !
-!  If first pass, load background surface momentum stress to store
-!  arrays so it can be written into INIname NetCDF file for latter
-!  use.  Notice that "sustr" and "svstr" contains the initial
-!  interpolated forcing from snapshots.
-!
-      IF ((time(ng).eq.SF_time(it1,ng))) THEN
-        DO j=JstrR,JendR
-          DO i=Istr,IendR
-            ustr(i,j,it1,Lout)=sustr(i,j)
-          END DO
-        END DO
-        DO j=Jstr,JendR
-          DO i=IstrR,IendR
-            vstr(i,j,it1,Lout)=svstr(i,j)
-          END DO
-        END DO
-      END IF
-!
 !  Adjust surface momentum stress. Interpolate between surface forcing
 !  increments, if appropriate.
 !
@@ -254,21 +236,6 @@
       END DO
 # endif
 # if defined ADJUST_STFLUX && defined SOLVE3D
-!
-!  If first pass, load background surface tracers flux to store
-!  arrays so it can be written into INIname NetCDF file for latter
-!  use.  Notice that "stflx" contain the initial interpolated
-!  forcing from snapshots.
-!
-      IF ((time(ng).eq.SF_time(it1,ng))) THEN
-        DO itrc=1,NT(ng)
-          DO j=JstrR,JendR
-            DO i=IstrR,IendR
-              tflux(i,j,it1,Lout,itrc)=stflx(i,j,itrc)
-            END DO
-          END DO
-        END DO
-      END IF
 !
 !  Adjust surface tracer fluxes. Interpolate between surface forcing
 !  increments, if appropriate.
@@ -472,7 +439,7 @@
 !
 !=======================================================================
 !                                                                      !
-!  This routine addsinterpolates 4DVAR surface forcing increments.     !
+!  This routine interpolates 4DVAR surface forcing increments.         !
 !  The increments can be constant (Nfrec=1) or time                    !
 !  interpolated between snapshots (Nfrec>1).                           !
 !                                                                      !

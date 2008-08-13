@@ -47,7 +47,7 @@
       USE forcing_mod, ONLY : forcing
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE frc_adjust_mod, ONLY : load_NLforcing
+      USE frc_adjust_mod, ONLY : frc_NLadjust, load_NLforcing
 # endif
 # ifdef GLS_MIXING
       USE gls_corstep_mod, ONLY : gls_corstep
@@ -285,6 +285,9 @@
 !-----------------------------------------------------------------------
 !  Set fields for vertical boundary conditions. Process tidal forcing,
 !  if any.
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!  Interpolate surface forcing increments and adjust surface forcing.
+# endif
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
@@ -293,6 +296,9 @@
         DO tile=subs*thread,subs*(thread+1)-1,+1
 # ifdef BULK_FLUXES
           CALL bulk_flux (ng, TILE)
+# endif
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+          CALL frc_NLadjust (ng, TILE, Lfinp(ng), Lfout(ng))
 # endif
 # ifdef BBL_MODEL
           CALL bblm (ng, TILE)
@@ -304,6 +310,22 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Load surface forcing into storage arrays.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+          CALL load_NLforcing (ng, TILE, Lfout(ng))
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute time-dependent vertical/horizontal mixing coefficients for
@@ -331,22 +353,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-!
-!-----------------------------------------------------------------------
-!  Load surface forcing to storage arrays.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL load_NLforcing (ng, TILE, Lfout(ng))
-        END DO
-      END DO
-!$OMP END PARALLEL DO
-# endif
 
 # ifdef SET_ZETA
 !

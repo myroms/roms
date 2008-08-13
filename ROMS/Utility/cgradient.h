@@ -3078,11 +3078,11 @@
       DO i=1,4
         Vsize(i)=0
       END DO
-      scale=1.0_r8
 !
 !  Read in free-surface.
 !
       gtype=r2dvar
+      scale=1.0_r8
       status=nf_fread2d(ng, iTLM, ncid, vid(idFsur), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
@@ -3104,6 +3104,7 @@
 !  Read in 2D momentum.
 !
       gtype=u2dvar
+      scale=1.0_r8
       status=nf_fread2d(ng, iTLM, ncid, vid(idUbar), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
@@ -3121,6 +3122,7 @@
       END IF
 
       gtype=v2dvar
+      scale=1.0_r8
       status=nf_fread2d(ng, iTLM, ncid, vid(idVbar), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
@@ -3143,6 +3145,7 @@
 !  Read surface momentum stress.
 !
       gtype=u3dvar
+      scale=1.0_r8/rho0                           ! N/m2 (Pa) to m2/s2
       status=nf_fread3d(ng, iTLM, ncid, vid(idUsms), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
@@ -3160,6 +3163,7 @@
       END IF
 
       gtype=v3dvar
+      scale=1.0_r8/rho0                           ! N/m2 (Pa) to m2/s2
       status=nf_fread3d(ng, iTLM, ncid, vid(idVsms), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
@@ -3182,6 +3186,7 @@
 !  Read in 3D momentum.
 !
       gtype=u3dvar
+      scale=1.0_r8
       status=nf_fread3d(ng, iTLM, ncid, vid(idUvel), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
@@ -3199,6 +3204,7 @@
       END IF
 
       gtype=v3dvar
+      scale=1.0_r8
       status=nf_fread3d(ng, iTLM, ncid, vid(idVvel), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
@@ -3218,6 +3224,7 @@
 !  Read in tracers.
 !
       gtype=r3dvar
+      scale=1.0_r8
       DO itrc=1,NT(ng)
         status=nf_fread3d(ng, iTLM, ncid, vid(idTvar(itrc)), rec,       &
      &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),   &
@@ -3243,6 +3250,11 @@
 !
       gtype=r3dvar
       DO itrc=1,NT(ng)
+        IF (itrc.eq.itemp) THEN
+          scale=1.0_r8/(rho0*Cp)                  ! W/m2 to Celsius m/s
+        ELSE
+          scale=1.0_r8
+        END IF
         status=nf_fread3d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
      &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1,Nfrec(ng),&
      &                    scale, Fmin, Fmax,                            &
