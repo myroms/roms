@@ -336,11 +336,16 @@
           END IF
 !
 !  If first pass and preconditioning, open Hessian eigenvectors
-!  NetCDF file and inquire about its content.
+!  NetCDF file and Lanczos vectors file and inquire about their
+!  content.
 !
           IF (Lprecond.and.(Nrun.eq.1)) THEN
             LdefHSS(ng)=.FALSE.
             CALL def_hessian (ng)
+            IF (exit_flag.ne.NoError) RETURN
+!
+            LdefLCZ(ng)=.FALSE.
+            CALL def_lanczos (ng)
             IF (exit_flag.ne.NoError) RETURN
           END IF
 !

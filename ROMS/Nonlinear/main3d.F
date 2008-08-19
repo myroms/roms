@@ -287,6 +287,7 @@
 !  if any.
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !  Interpolate surface forcing increments and adjust surface forcing.
+!  Load surface forcing into storage arrays.
 # endif
 !-----------------------------------------------------------------------
 !
@@ -299,6 +300,7 @@
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
           CALL frc_NLadjust (ng, TILE, Lfinp(ng), Lfout(ng))
+          CALL load_NLforcing (ng, TILE, Lfout(ng))
 # endif
 # ifdef BBL_MODEL
           CALL bblm (ng, TILE)
@@ -310,22 +312,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-!
-!-----------------------------------------------------------------------
-!  Load surface forcing into storage arrays.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL load_NLforcing (ng, TILE, Lfout(ng))
-        END DO
-      END DO
-!$OMP END PARALLEL DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Compute time-dependent vertical/horizontal mixing coefficients for

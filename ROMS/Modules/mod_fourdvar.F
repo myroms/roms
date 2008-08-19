@@ -323,6 +323,10 @@
 !  preconditioning.
 !
         real(r8), allocatable :: Ritz(:)
+!
+!  Orthogonal eigenvectors of Lanczos recurrence term Q(k)T(k).
+!
+        real(r8), allocatable :: cg_zv(:,:)
 
 #  if defined LANCZOS
 !
@@ -353,10 +357,6 @@
 !
         real(r8), allocatable :: cg_Ritz(:,:)
         real(r8), allocatable :: cg_RitzErr(:,:)
-!
-!  Orthogonal eigenvectors of Lanczos recurrence term Q(k)T(k).
-!
-        real(r8), allocatable :: cg_zv(:,:)
 #  endif
 # endif
 # if defined OBS_SENSITIVITY
@@ -372,6 +372,7 @@
 !
         real(r8), allocatable :: cg_beta(:,:)
         real(r8), allocatable :: cg_delta(:,:)
+        real(r8), allocatable :: cg_zu(:,:)
 # endif
 !
 !-----------------------------------------------------------------------
@@ -780,6 +781,9 @@
       allocate ( Ritz(Nritz) )
       Ritz = IniVal
 
+      allocate ( cg_zv(Ninner,Ninner) )
+      cg_zv = IniVal
+
 #  ifdef LANCZOS
       allocate ( cg_delta(Ninner,Nouter) )
       cg_delta = IniVal
@@ -808,9 +812,6 @@
       allocate ( cg_zu(Ninner,Nouter) )
       cg_zu = IniVal
 
-      allocate ( cg_zv(Ninner,Ninner) )
-      cg_zv = IniVal
-
 #  endif
 # endif
 # if defined OBS_SENSITIVITY
@@ -822,6 +823,9 @@
 
       allocate ( cg_delta(Ninner,Nouter) )
       cg_delta = IniVal
+
+      allocate ( cg_zu(Ninner,Nouter) )
+      cg_zu = IniVal
 # endif
 !
 !-----------------------------------------------------------------------

@@ -187,14 +187,22 @@
           type='ROMS/TOMS diagnostics file'
         ELSE IF (ncid.eq.ncGSTid(ng)) THEN
           type='ROMS/TOMS GST check pointing restart file'
+        ELSE IF (ncid.eq.ncHSSid(ng)) THEN
+          type='ROMS/TOMS 4DVAR Hessian eigenvectors file'
         ELSE IF (ncid.eq.ncHISid(ng)) THEN
           type='ROMS/TOMS history file'
+        ELSE IF (ncid.eq.ncITLid(ng)) THEN
+          type='ROMS/TOMS tangent linear model initial file'
+        ELSE IF (ncid.eq.ncLCZid(ng)) THEN
+          type='ROMS/TOMS 4DVAR Lanczos vectors file'
         ELSE IF (ncid.eq.ncNRMid(ng)) THEN
           type='ROMS/TOMS background error covariance norm file'
         ELSE IF (ncid.eq.ncRSTid(ng)) THEN
           type='ROMS/TOMS restart file'
         ELSE IF (ncid.eq.ncSTAid(ng)) THEN
           type='ROMS/TOMS station file'
+        ELSE IF (ncid.eq.ncTLFid(ng)) THEN
+          type='ROMS/TOMS tangent linear impulse forcing file'
         ELSE IF (ncid.eq.ncTLMid(ng)) THEN
           type='ROMS/TOMS tangent linear history file'
         ELSE IF (ncid.eq.ncFLTid(ng)) THEN

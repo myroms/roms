@@ -287,9 +287,6 @@
       USE mod_netcdf
       USE mod_scalars
 !
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
-#endif
       USE state_copy_mod, ONLY : state_copy
       USE state_dotprod_mod, ONLY : state_dotprod
 !
@@ -469,7 +466,7 @@
 !  Initialize trial step size.
 !-----------------------------------------------------------------------
 !
-      Lritz=.FALSE.
+      Lritz=.TRUE.
       Ltrans=.FALSE.
 !
       IF (innLoop.eq.0) THEN
@@ -491,32 +488,17 @@
 !  associated eigenvalues.
 !
       IF (Lprecond.and.((innLoop.eq.0).and.(outLoop.eq.1))) THEN
-        IF (InpThread) THEN
-          status=nf90_inq_varid(ncHSSid(ng), 'nConvRitz', varid)
-          status=nf90_get_var(ncHSSid(ng), varid, nConvRitz)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) 'nConvRitz', TRIM(HSSname(ng))
- 20         FORMAT (/,' CGRADIENT - error while reading variable: ',    &
-     &              a,/,12x,'from NetCDF file: ',a)
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-          status=nf90_inq_varid(ncHSSid(ng), 'Ritz', varid)
-          start(1)=1
-          total(1)=nConvRitz
-          status=nf90_get_var(ncHSSid(ng), varid, Ritz, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) 'Ritz', TRIM(HSSname(ng))
-            exit_flag=2
-            ioerror=status
-            RETURN
-          END IF
-        END IF
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iADM, nConvRitz, 1)
-        CALL mp_bcastf (ng, iADM, Ritz, nConvRitz)
-#endif
+
+        CALL netcdf_get_ivar (ng, model, HSSname(ng), 'nConvRitz',      &
+     &                        nConvRitz,                                &
+     &                        ncid = ncHSSid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL netcdf_get_fvar (ng, model, HSSname(ng), 'Ritz',           &
+     &                        Ritz,                                     &
+     &                        ncid = ncHSSid(ng),                       &
+     &                        start = (/1/), total = (/nConvRitz/))
+        IF (exit_flag.ne. NoError) RETURN
 !
 !  Reset number of eigenpairs to use to specified value.
 !
@@ -557,6 +539,7 @@
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                IminS, ImaxS, JminS, JmaxS,                       &
+     &                innLoop, outLoop,                                 &
      &                NstateVar(ng), Lscale,                            &
      &                Lritz, Ltrans,                                    &
      &                nConvRitz, Ritz,                                  &
@@ -575,6 +558,7 @@
      &                nl_ubar, nl_vbar,                                 &
 #endif
      &                nl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Copy nl_var(1) into ad_var(Lnew)
 !
@@ -776,6 +760,7 @@
      &                      ad_ubar, ad_vbar,                           &
 # endif
      &                      ad_zeta)
+        IF (exit_flag.ne.NoError) RETURN
       END IF
 #endif
 !
@@ -823,6 +808,7 @@
           CALL precond (ng, tile, model,                                &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  IminS, ImaxS, JminS, JmaxS,                     &
+     &                  innLoop, outLoop,                               &
      &                  NstateVar(ng), Lscale,                          &
      &                  Lritz, Ltrans,                                  &
      &                  nConvRitz, Ritz,                                &
@@ -841,6 +827,7 @@
      &                  nl_ubar, nl_vbar,                               &
 #endif
      &                  nl_zeta)
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Copy nl_var(1) into tl_var(Linp)
 !
@@ -938,6 +925,7 @@
      &                 tl_ubar, tl_vbar,                                &
 #endif
      &                 tl_zeta) 
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  If last iteration of inner loop, skip remaining computations. The
 !  TLM increments computed here are the ones that are needed update
@@ -1105,6 +1093,7 @@
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                IminS, ImaxS, JminS, JmaxS,                       &
+     &                innLoop, outLoop,                                 &
      &                NstateVar(ng), Lscale,                            &
      &                Lritz, Ltrans,                                    &
      &                nConvRitz, Ritz,                                  &
@@ -1123,6 +1112,7 @@
      &                nl_ubar, nl_vbar,                                 &
 #endif
      &                nl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Copy nl_var(1) into tl_var(Lout)
 !
@@ -1172,6 +1162,7 @@
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                IminS, ImaxS, JminS, JmaxS,                       &
+     &                innLoop, outLoop,                                 &
      &                NstateVar(ng), Lscale,                            &
      &                Lritz, Ltrans,                                    &
      &                nConvRitz, Ritz,                                  &
@@ -1190,6 +1181,7 @@
      &                nl_ubar, nl_vbar,                                 &
 #endif
      &                nl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Copy nl_var(1) into tl_var(Linp)
 !
@@ -2012,6 +2004,7 @@
      &                   tl_ubar, tl_vbar,                              &
 #endif
      &                   tl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute <G(k+1), G(rec)>. Recall that the TLM (index Lwrk) contains
 !  G(rec).
@@ -2144,6 +2137,7 @@
      &                   tl_ubar, tl_vbar,                              &
 #endif
      &                   tl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
         CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -2466,6 +2460,7 @@
       SUBROUTINE precond (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
+     &                    innLoop, outLoop,                             &
      &                    NstateVars, Lscale,                           &
      &                    Lritz, Ltrans,                                &
      &                    nConvRitz, Ritz,                              &
@@ -2488,12 +2483,11 @@
 !
       USE mod_param
       USE mod_parallel
+      USE mod_fourdvar
       USE mod_ncparam
       USE mod_netcdf
       USE mod_iounits
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_scalars
-#endif
 !
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_reduce
@@ -2510,6 +2504,7 @@
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
+      integer, intent(in) :: innLoop, outLoop
       integer, intent(in) :: NstateVars, Lscale
       integer, intent(in) :: nConvRitz
 !
@@ -2566,12 +2561,16 @@
 !
 !  Local variable declarations.
 !
-      integer :: NSUB, i, j, k, L1, L2, nvec
+      integer :: NSUB, i, j, k, L1, L2, nvec, ndefLCZ, rec
+      integer :: lstr
 #ifdef SOLVE3D
       integer :: itrc
 #endif
-      real(r8) :: cff, fac, fac1, fac2
+      real(r8) :: cff, fac, fac1, fac2, facritz
       real(r8), dimension(0:NstateVars) :: Dotprod
+
+      character (len=80) :: ncname
+
 #ifdef DISTRIBUTE
       character (len=3) :: op_handle
 #endif
@@ -2589,11 +2588,107 @@
 !  stored in HSSname NetCDF file.
 !-----------------------------------------------------------------------
 !
+      L1=1
+      L2=2
+      fac2=0.0_r8
+!
+!  If using the Ritz preconditioner, read information from the 
+!  Lanczos vector file.
+!
+      IF (Lritz) THEN
+
+        IF (.not.Ltrans) THEN
+!
+!  Determine if single or multiple Lanczos vector NetCDF files.
+!
+          CALL netcdf_get_ivar (ng, iADM, TRIM(LCZname(ng)), 'ndefADJ', &
+     &                          ndefLCZ)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Determine Lanczos vector file to read.
+!
+          IF (ndefLCZ.gt.0) THEN
+            lstr=LEN_TRIM(LCZname(ng))
+            WRITE (ncname,10) LCZname(ng)(1:lstr-8), inner
+ 10         FORMAT (a,'_',i4.4,'.nc')
+          ELSE
+            ncname=LCZname(ng)
+          END IF
+!
+!  Read in the Lanczos vector q_k+1 computed from the IS4DVAR algorithm
+!  first outer loop, where k=nConvRitz. Load Lanczos vectors into NL
+!  state arrays at index L2.
+!
+          rec=nConvRitz+1
+          CALL read_state (ng, tile, model,                             &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     L2, rec,                                     &
+     &                     ndefLCZ, ncLCZid(ng), TRIM(ncname),          &
+# ifdef MASKING
+     &                     rmask, umask, vmask,                         &
+# endif
+# ifdef ADJUST_WSTRESS
+     &                     nl_ustr, nl_vstr,                            &
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+     &                     nl_tflux,                                    &
+#  endif
+     &                     nl_t, nl_u, nl_v,                            &
+# else
+     &                     nl_ubar, nl_vbar,                            &
+# endif
+     &                     nl_zeta)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Compute the dot-product between the input vector and the nConvRitz+1
+!  Lanczos vector.
+!
+          CALL state_dotprod (ng, tile, model,                          &
+     &                        LBi, UBi, LBj, UBj,                       &
+     &                        NstateVars, Dotprod(0:),                  &
+#ifdef MASKING
+     &                        rmask, umask, vmask,                      &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                        nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L2),     &
+     &                        nl_vstr(:,:,:,L1), nl_vstr(:,:,:,L2),     &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                        nl_tflux(:,:,:,L1,:),                     &
+     &                        nl_tflux(:,:,:,L2,:),                     &
+# endif
+     &                        nl_t(:,:,:,L1,:), nl_t(:,:,:,L2,:),       &
+     &                        nl_u(:,:,:,L1), nl_u(:,:,:,L2),           &
+     &                        nl_v(:,:,:,L1), nl_v(:,:,:,L2),           &
+#else
+     &                        nl_ubar(:,:,L1), nl_ubar(:,:,L2),         &
+     &                        nl_vbar(:,:,L1), nl_vbar(:,:,L2),         &
+#endif
+     &                        nl_zeta(:,:,L1), nl_zeta(:,:,L2))
+
+        END IF
+!
+!  Now read the primitive Ritz vectors cg_v and cg_beta.
+!
+        CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_beta',         &
+     &                        cg_beta)
+        IF (exit_flag.ne. NoError) RETURN
+        CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_zv',           &
+     &                        cg_zv)
+        IF (exit_flag.ne. NoError) RETURN 
+!
+        IF (Ltrans) THEN
+          facritz=cg_beta(nConvRitz,outLoop)
+        ELSE
+          facritz=cg_beta(nConvRitz,outLoop)*Dotprod(0)
+        END IF
+      END IF
+!
 !  Read the converged Hessian eigenvectors into NLM state array,
 !  index L2.
 !
-      L1=1
-      L2=2
       DO nvec=1,nConvRitz
         CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
@@ -2614,6 +2709,7 @@
      &                   nl_ubar, nl_vbar,                              &
 #endif
      &                   nl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute dot product between input vector and Hessian eigenvector.
 !  The input vector is in nl_var(L1) and the Hessian vector in 
@@ -2665,7 +2761,16 @@
         END IF
 
         IF (Lritz.and.Lscale.eq.-2) THEN
-          fac2=(1.0_r8-SQRT(Ritz(nvec)))*Dotprod(0)
+         fac2=-fac2
+        END IF
+
+        IF(.not.Ltrans) THEN
+          IF (Lritz.and.Lscale.eq.-2) THEN
+            fac2=fac2+SQRT(Ritz(nvec))*cg_zv(nConvRitz,nvec)*facritz
+          END IF
+          IF (Lritz.and.Lscale.eq.2) THEN
+            fac2=fac2-cg_zv(nConvRitz,nvec)*facritz/Ritz(nvec)
+          END IF
         END IF
 
         CALL state_addition (ng, tile,                                  &
@@ -2690,6 +2795,82 @@
      &                       nl_vbar, nl_vbar,                          &
 #endif
      &                       nl_zeta, nl_zeta)
+!
+        IF (Lritz.and.Ltrans) THEN
+!
+!  Determine if single or multiple Lanczos vector NetCDF files.
+!
+          CALL netcdf_get_ivar (ng, iADM, TRIM(LCZname(ng)), 'ndefADJ', &
+     &                          ndefLCZ)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Determine Lanczos vector file to read.
+!
+          IF (ndefLCZ.gt.0) THEN
+            lstr=LEN_TRIM(LCZname(ng))
+            WRITE (ncname,10) LCZname(ng)(1:lstr-8), inner
+          ELSE
+            ncname=LCZname(ng)
+          END IF
+!
+!  Read in the Lanczos vector q_k+1 computed from the incremental 4DVar
+!  algorithm first outer loop, where k=nConvRitz. Load Lanczos vectors
+!  into NLM state arrays at index L2.
+!
+          rec=nConvRitz+1
+          CALL read_state (ng, tile, model,                             &
+     &                     LBi, UBi, LBj, UBj,                          &
+     &                     L2, rec,                                     &
+     &                     ndefLCZ, ncLCZid(ng), TRIM(ncname),          &
+# ifdef MASKING
+     &                     rmask, umask, vmask,                         &
+# endif
+# ifdef ADJUST_WSTRESS
+     &                     nl_ustr, nl_vstr,                            &
+# endif
+# ifdef SOLVE3D
+#  ifdef ADJUST_STFLUX
+     &                     nl_tflux,                                    &
+#  endif
+     &                     nl_t, nl_u, nl_v,                            &
+# else
+     &                     nl_ubar, nl_vbar,                            &
+# endif
+     &                     nl_zeta)
+          IF (exit_flag.ne.NoError) RETURN
+!
+          IF (Lscale.eq.2) THEN
+            fac2=-cg_zv(nConvRitz,nvec)*facritz*Dotprod(0)/Ritz(nvec)
+          END IF
+          IF (Lscale.eq.-2) THEN
+            fac2=SQRT(Ritz(nvec))*cg_zv(nConvRitz,nvec)*facritz*        &
+     &                Dotprod(0)
+          END IF
+!
+          CALL state_addition (ng, tile,                                &
+     &                         LBi, UBi, LBj, UBj,                      &
+     &                         L1, L2, L1, fac1, fac2,                  &
+#ifdef MASKING
+     &                         rmask, umask, vmask,                     &
+#endif
+#ifdef ADJUST_WSTRESS
+     &                         nl_ustr, nl_ustr,                        &
+     &                         nl_vstr, nl_vstr,                        &
+#endif
+#ifdef SOLVE3D
+# ifdef ADJUST_STFLUX
+     &                         nl_tflux, nl_tflux,                      &
+# endif
+     &                         nl_t, nl_t,                              &
+     &                         nl_u, nl_u,                              &
+     &                         nl_v, nl_v,                              &
+#else
+     &                         nl_ubar, nl_ubar,                        &
+     &                         nl_vbar, nl_vbar,                        &
+#endif
+     &                         nl_zeta, nl_zeta)
+
+        END IF
       END DO
 
       RETURN
@@ -2890,6 +3071,7 @@
      &                 nl_ubar, nl_vbar,                                &
 #endif
      &                 nl_zeta)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute the dot-product of the initial gradient with the current
 !  increment.

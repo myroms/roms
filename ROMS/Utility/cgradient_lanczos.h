@@ -234,7 +234,7 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcastf_m, mp_bcasti
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
 #endif
 !
 !  Imported variable declarations.
@@ -430,6 +430,7 @@
      &                tl_ubar, tl_vbar,                                 &
 #endif
      &                tl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Check for positive Hessian, J''.
 !
@@ -477,6 +478,7 @@
      &              ad_ubar, ad_vbar,                                   &
 #endif
      &              ad_zeta)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute new direction, d(k+1).
 !
@@ -511,6 +513,7 @@
      &                    d_ubar, d_vbar,                               &
 #endif
      &                    d_zeta)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Calculate the reduction in the gradient norm by solving a 
@@ -612,7 +615,7 @@
         END IF
 #ifdef DISTRIBUTE
         CALL mp_bcastf (ng, iTLM, cg_Ritz(:,outLoop), Ninner)
-        CALL mp_bcastf_m (ng, ITLM, cg_zv, Ninner, Ninner)
+        CALL mp_bcastf (ng, ITLM, cg_zv, Ninner, Ninner)
 #endif
 !
 !  Estimate the Ritz value error bounds.
@@ -697,9 +700,7 @@
      &                        ad_ubar, ad_vbar,                         &
 # endif
      &                        ad_zeta)
-
-          PRINT *, 'Exiting hessian_evecs', MyRank
-
+          IF (exit_flag.ne.NoError) RETURN
           IF (Master.and.(nConvRitz.eq.0)) THEN
             PRINT *,' No converged Hesssian eigenvectors found.'
           END IF
@@ -762,6 +763,7 @@
      &                   ad_ubar, ad_vbar,                              &
 #endif
      &                   ad_zeta)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Write out conjugate gradient information into NetCDF file.
@@ -1199,6 +1201,7 @@
      &                     tl_ubar, tl_vbar,                            &
 #endif
      &                     tl_zeta)
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Sum all previous normalized gradients:
 !
@@ -2218,6 +2221,7 @@
      &                 tl_ubar, tl_vbar,                                &
 #endif
      &                 tl_zeta)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute current iteration norm Delta(k) used to compute tri-diagonal
 !  matrix T(k) in the Lanczos recurrence.
@@ -2480,6 +2484,7 @@
      &                   tl_ubar, tl_vbar,                              &
 #endif
      &                   tl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Substract previous orthonormal Lanczos vector:
 !
@@ -2556,6 +2561,7 @@
      &                   tl_ubar, tl_vbar,                              &
 #endif
      &                   tl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute dot product <q(k+1), q(rec)>.
 !
@@ -2777,6 +2783,7 @@
      &                   tl_ubar, tl_vbar,                              &
 # endif
      &                   tl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
         CALL state_dotprod (ng, tile, model,                            &
      &                      LBi, UBi, LBj, UBj,                         &
@@ -3051,6 +3058,7 @@
      &                   tl_ubar, tl_vbar,                              &
 #endif
      &                   tl_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  In this expression for FAC2, the term cg_QG gives the contribution
 !  to the gradient of Jo, and the term cg_Tmatrix gives the contribution
@@ -3289,16 +3297,10 @@
 !
 !  Write out number of converged eigenvalues.
 !      
-      IF (OutThread) THEN
-        status=nf90_inq_varid(ncHSSid(ng), 'nConvRitz', varid)
-        status=nf90_put_var(ncHSSid(ng), varid, nConvRitz)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'nConvRitz', TRIM(HSSname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
-      END IF
+      CALL netcdf_put_ivar (ng, model, HSSname(ng), 'nConvRitz',        &
+     &                      nConvRitz, (/0/), (/0/),                    &
+     &                      ncid = ncHSSid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  First, premultiply the converged eigenvectors of the tridiagonal
@@ -3368,6 +3370,7 @@
      &                       tl_ubar, tl_vbar,                          &
 #endif
      &                       tl_zeta)
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute Hessian eigenvectors:
 !
@@ -3445,6 +3448,7 @@
      &                   ad_ubar, ad_vbar,                              &
 #endif
      &                   ad_zeta)
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Initialize adjoint state arrays index Lnew with just read Hessian
 !  vector in index Lold (initialize the summation):
@@ -3498,6 +3502,7 @@
      &                     tl_ubar, tl_vbar,                            &
 #endif
      &                     tl_zeta)
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Compute dot product.
 !
@@ -3609,28 +3614,15 @@
 !
 !  Write out converged Ritz eigenvalues and is associated accuracy.
 !
-        IF (OutThread) THEN
-          status=nf90_inq_varid(ncHSSid(ng),'Ritz',varid)
-          start(1)=nvec
-          total(1)=1
-          status=nf90_put_var(ncHSSid(ng), varid, Ritz(nvec:),          &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'Ritz', TRIM(HSSname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-          status=nf90_inq_varid(ncHSSid(ng),'Ritz_error',varid)
-          status=nf90_put_var(ncHSSid(ng), varid, RitzErr(nvec:),       &
-     &                        start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'Ritz_error', TRIM(HSSname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-        END IF
+        CALL netcdf_put_fvar (ng, model, HSSname(ng), 'Ritz',           &
+     &                        Ritz(nvec:), (/nvec/), (/1/),             &
+     &                        ncid = ncHSSid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL netcdf_put_fvar (ng, model, HSSname(ng), 'Ritz_error',     &
+     &                        RitzErr(nvec:), (/nvec/), (/1/),          &
+     &                        ncid = ncHSSid(ng))
+        IF (exit_flag.ne.NoError) RETURN
 !
 !  Replace record "nvec" of Hessian eigenvectors NetCDF with the
 !  normalized value in adjoint state arrays at index Lnew.
