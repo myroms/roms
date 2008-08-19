@@ -62,6 +62,8 @@
 !                 bottom(:,:,izdef) => default bottom roughness        !
 !                 bottom(:,:,iactv) => active layer thickness          !
 !                 bottom(:,:,ishgt) => saltation height                !
+!  ero_flux       Flux from erosion.                                   !
+!  settling_flux  Flux from settling.                                  !
 !                                                                      !
 #ifdef NEARSHORE_MELLOR
 !  Nearshore radiation stresses:                                       !
@@ -121,6 +123,10 @@
           real(r8), pointer :: bed(:,:,:,:)
           real(r8), pointer :: bed_frac(:,:,:,:)
           real(r8), pointer :: bed_mass(:,:,:,:,:)
+#  ifdef SUSPLOAD
+          real(r8), pointer :: ero_flux(:,:,:)
+          real(r8), pointer :: settling_flux(:,:,:)
+#  endif
 # endif
 # if defined SEDIMENT || defined BBL_MODEL
           real(r8), pointer :: bottom(:,:,:)
@@ -346,6 +352,10 @@
       allocate ( OCEAN(ng) % bed(LBi:UBi,LBj:UBj,Nbed,MBEDP) )
       allocate ( OCEAN(ng) % bed_frac(LBi:UBi,LBj:UBj,Nbed,NST) )
       allocate ( OCEAN(ng) % bed_mass(LBi:UBi,LBj:UBj,Nbed,2,NST) )
+#  ifdef SUSPLOAD
+      allocate ( OCEAN(ng) % ero_flux(LBi:UBi,LBj:UBj,NST) )
+      allocate ( OCEAN(ng) % settling_flux(LBi:UBi,LBj:UBj,NST) )
+#  endif
 # endif
 # if defined SEDIMENT || defined BBL_MODEL
       allocate ( OCEAN(ng) % bottom(LBi:UBi,LBj:UBj,MBOTP) )
@@ -673,6 +683,14 @@
               END DO
             END DO
           END DO
+#  ifdef SUSPLOAD
+          DO itrc=1,NST
+            DO i=Imin,Imax
+              OCEAN(ng) % ero_flux(i,j,itrc) = IniVal
+              OCEAN(ng) % settling_flux(i,j,itrc) = IniVal
+            END DO
+          END DO
+#  endif
 # endif
 # if defined SEDIMENT || defined BBL_MODEL
           DO itrc=1,MBOTP

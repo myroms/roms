@@ -2154,6 +2154,51 @@
   'v2dvar'
   1.0d0
 
+'ero_flux'                                         ! Output
+  'erosion flux'
+  'kilogram meter-2'                               ! [kg/m2]
+  'ero_flux, scalar, series'
+  'ocean_time'
+  'idBott(idflux)'
+  'r2dvar'
+  1.0d0
+
+'dep_net'                                          ! Output
+  'erosion or deposition'
+  'meter'                                          ! [m]
+  'dep_net, scalar, series'
+  'ocean_time'
+  'idBott(idnet)'
+  'r2dvar'
+  1.0d0
+
+'tau_crit_off'                                     ! Output
+  'Offset for critical shear stress equation'
+  'kg/Pa/s'                                        ! [kg/Pa/s]
+  'tau_crit_off, scalar, series'
+  'ocean_time'
+  'idBott(idoff)'
+  'r2dvar'
+  1.0d0
+
+'tau_crit_slope'                                   ! Output
+  'Slope for critical shear stress equation'
+  'Pa/s'                                           ! [Pa/s]
+  'tau_crit_slope, scalar, series'
+  'ocean_time'
+  'idBott(idslp)'
+  'r2dvar'
+  1.0d0
+
+'tau_crit_time'                                    ! Output
+  'Nudging time for critical shear stress equation'
+  's-1'                                            ! [s-1]
+  'tau_crit_time, scalar, series'
+  'ocean_time'
+  'idBott(idtim)'
+  'r2dvar'
+  1.0d0
+
 'bed_thickness'                                    ! Input/Output
   'sediment bed layer thickness'
   'meter'                                          ! [m]
@@ -2334,6 +2379,15 @@
   'r2dvar'
   1.0d0
 
+'cohesive_behavior'                                ! Output
+  'cohesive behavior'
+  '1'                                              ! []
+  'cohesive_behavior, scalar, series'
+  'ocean_time'
+  'idBott(idprp)'
+  'r2dvar'
+  1.0d0
+
 'saltation'                                        ! Input/Output
   'bottom saltation height'
   'meter'                                          ! [m]
@@ -2355,7 +2409,7 @@
 'dmix_slope'                                      ! Input/Output
   'dmix erodibility profile slope'
   '_'                                             ! [_]
-  'dmix_offset, scalar, series'
+  'dmix_slope, scalar, series'
   'ocean_time'
   'idBott(idslp)'
   'r2dvar'
@@ -2364,7 +2418,7 @@
 'dmix_time'                                        ! Input/Output
   'dmix erodibility profile time scale'
   'seconds'                                        ! [s]
-  'dmix_offset, scalar, series'
+  'dmix_time, scalar, series'
   'ocean_time'
   'idBott(idtim)'
   'r2dvar'

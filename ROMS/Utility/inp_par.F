@@ -5747,6 +5747,23 @@
             DO ng=1,Ngrids
               newlayer_thick(ng)=Rbed(ng)
             END DO
+          ELSE IF (TRIM(KeyWord).eq.'MINLAYER_THICK') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              minlayer_thick(ng)=Rbed(ng)
+            END DO
+# ifdef MIXED_BED
+          ELSE IF (TRIM(KeyWord).eq.'TRANSC') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              transC(ng)=Rbed(ng)
+          END DO
+          ELSE IF (TRIM(KeyWord).eq.'TRANSN') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              transN(ng)=Rbed(ng)
+          END DO
+# endif
           ELSE IF (TRIM(KeyWord).eq.'BEDLOAD_COEFF') THEN 
             Npts=load_r(Nval, Rval, Ngrids, Rbed)
             DO ng=1,Ngrids
@@ -5858,6 +5875,33 @@
                 morph_fac(itrc,ng)=Rmud(itrc,ng)
               END DO
             END DO
+#if defined COHESIVE_BED || defined MIXED_BED
+          ELSE IF (TRIM(KeyWord).eq.'MUD_TAUCR_MIN') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              tcr_min(ng)=Rbed(ng)
+          END DO
+          ELSE IF (TRIM(KeyWord).eq.'MUD_TAUCR_MAX') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              tcr_max(ng)=Rbed(ng)
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'MUD_TAUCR_SLOPE') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              tcr_slp(ng)=Rbed(ng)
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'MUD_TAUCR_OFF') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              tcr_off(ng)=Rbed(ng)
+            END DO
+          ELSE IF (TRIM(KeyWord).eq.'MUD_TAUCR_TIME') THEN 
+            Npts=load_r(Nval, Rval, Ngrids, Rbed)
+            DO ng=1,Ngrids
+              tcr_tim(ng)=Rbed(ng)
+          END DO 
+# endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idmud)') THEN
             Npts=load_l(Nval, Cval, NCS*Ngrids, Lmud)
             DO ng=1,Ngrids
@@ -6107,6 +6151,14 @@
             DO ng=1,Ngrids
               Hout(i,ng)=Lbed(ng)
             END DO
+# if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
+          ELSE IF (TRIM(KeyWord).eq.'Hout(ibtcr)') THEN 
+            Npts=load_l(Nval, Cval, Ngrids, Lbed) 
+            i=idSbed(ibtcr) 
+            DO ng=1,Ngrids 
+              Hout(i,ng)=Lbed(ng) 
+            END DO
+# endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idiff)') THEN
             Npts=load_l(Nval, Cval, Ngrids, Lbed)
             i=idSbed(idiff)
@@ -6146,7 +6198,12 @@
               WRITE (out,70) itrc,  morph_fac(itrc,ng)
             END DO
             WRITE (out,110) newlayer_thick(ng)
+            WRITE (out,115) minlayer_thick(ng)
             WRITE (out,120) bedload_coeff(ng)
+# ifdef MIXED_BED
+            WRITE (out,130) transC(ng)
+            WRITE (out,140) transN(ng)
+# endif
             DO itrc=1,NST
               i=idTvar(idsed(itrc))
               IF (Hout(i,ng)) WRITE (out,90) Hout(i,ng),                &
@@ -6227,7 +6284,11 @@
  100  FORMAT (/,' READ_SEDPAR - variable info not yet loaded, ', a)
  110  FORMAT (/,' New bed layer formed when deposition exceeds ',e11.5, &
      &        ' (m).')
+ 115  FORMAT (' Two first layers are combined when 2nd layer smaller ', &
+     &         'than ',e11.5,' (m).')
  120  FORMAT (' Rate coefficient for bed load transport = ',e11.5,/)
+ 130  FORMAT (' Transition for mixed sediment =',e11.5,/)
+ 140  FORMAT (' Transition for cohesive sediment =',e11.5,/)
       RETURN
       END SUBROUTINE read_SedPar
 #endif

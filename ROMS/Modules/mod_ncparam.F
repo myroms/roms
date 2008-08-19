@@ -1455,7 +1455,7 @@
                 idSbed(iporo)=varid
               CASE ('idSbed(idiff)')
                 idSbed(idiff)=varid
-# ifdef SED_BIODIFF
+# if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
               CASE ('idSbed(ibtcr)')
                 idSbed(ibtcr)=varid
 # endif
@@ -1491,7 +1491,11 @@
                 idBott(iactv)=varid
               CASE ('idBott(ishgt)')
                 idBott(ishgt)=varid
-# ifdef SED_BIODIFF
+              CASE ('idBott(idflux)')
+                idBott(idflux)=varid
+              CASE ('idBott(idnet)')
+                idBott(idnet)=varid
+# if defined COHESIVE_BED || defined SED_BIODIFF || defined MIXED_BED
               CASE ('idBott(idoff)')
                 idBott(idoff)=varid
               CASE ('idBott(idslp)')
@@ -1508,6 +1512,10 @@
                 idBott(idbzm)=varid
               CASE ('idBott(idbzp)')
                 idBott(idbzp)=varid
+# endif
+# if defined MIXED_BED
+              CASE ('idBott(idprp)')
+                idBott(idprp)=varid
 # endif
 #endif
 #if defined NPZD_FRANKS || defined NPZD_POWELL

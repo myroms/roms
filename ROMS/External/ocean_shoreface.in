@@ -60,8 +60,8 @@
 
          NAT =  2             ! Number of active tracers (usually, 2)
          NPT =  0             ! Number of inactive passive tracers
-         NCS =  1             ! Number of cohesive (mud) sediment tracers
-         NNS =  0             ! Number of non-cohesive (sand) sediment tracers
+         NCS =  0             ! Number of cohesive (mud) sediment tracers
+         NNS =  1             ! Number of non-cohesive (sand) sediment tracers
 
 ! Domain decomposition parameters for serial, distributed-memory or
 ! shared-memory configurations used to determine tile horizontal range
@@ -195,7 +195,7 @@
 
 ! Minimum depth for wetting and drying.
 
-       DCRIT == 0.200d0                     !m
+       DCRIT == 0.10d0                     ! m
 
 ! Various parameters.
 
