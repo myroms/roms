@@ -2159,7 +2159,7 @@
   'kilogram meter-2'                               ! [kg/m2]
   'ero_flux, scalar, series'
   'ocean_time'
-  'idBott(idflux)'
+  'idBott(idefx)'
   'r2dvar'
   1.0d0
 

@@ -105,7 +105,7 @@
 # else
       real(r8), intent(in) :: Hz(LBi:UBi,LBj:UBj,N(ng))
       real(r8), intent(in) :: z_w(LBi:UBi,LBj:UBj,0:N(ng))
-      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,NST(ng))
+      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,NST)
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 # endif
 !
