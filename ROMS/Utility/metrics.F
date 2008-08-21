@@ -1032,6 +1032,7 @@
 !  Report convolution parameters.
 !
       IF (Master.and.LwrtInfo(ng)) THEN
+        LwrtInfo(ng)=.FALSE.
         DO is=1,NstateVar(ng)
           WRITE (stdout,70) NHsteps(is), DTsizeH(ng),                   &
      &                      TRIM(Vname(1,idSvar(is)))
@@ -1050,12 +1051,6 @@
         WRITE (stdout,'(/)')
       END IF
 #endif
-!
-!  Turn off application information switch.
-!
-      IF (SOUTH_WEST_TEST) THEN
-        LwrtInfo(ng)=.FALSE.
-      END IF
 
       RETURN
       END SUBROUTINE metrics_tile
