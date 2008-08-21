@@ -42,7 +42,7 @@
 
 ! C-preprocessing Flag.
 
-    MyAppCPP = BENCHMARK3
+    MyAppCPP = BENCHMARK
 
 ! Input variable information file name.  This file needs to be processed
 ! first so all information arrays can be initialized properly.
