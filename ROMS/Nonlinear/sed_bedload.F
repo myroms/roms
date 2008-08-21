@@ -301,11 +301,10 @@
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: tau_wE
 # endif
 # ifdef BEDLOAD
-      real(r8) :: a_slopex, a_slopey, sed_angle, 
+      real(r8) :: a_slopex, a_slopey, sed_angle
       real(r8) :: bedld, bedld_mass, dzdx, dzdy
       real(r8) :: smgd, smgdr, osmgd, Umag
       real(r8) :: rhs_bed, Ua, Ra, phi, Clim
-      integer :: iff
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FX
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: FE
