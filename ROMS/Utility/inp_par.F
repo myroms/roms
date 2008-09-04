@@ -20,7 +20,7 @@
       USE mod_scalars
 !
 #ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasts
+      USE distribute_mod, ONLY : mp_bcasti, mp_bcasts
 #endif
       USE ran_state, ONLY: ran_seed
 !
@@ -381,6 +381,10 @@
         CALL checkdefs
         CALL my_flush (out)
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag, 1)
+#endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Compute various constants.

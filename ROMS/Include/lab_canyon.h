@@ -14,6 +14,7 @@
 
 #define UV_COR
 #define UV_ADV
+#define UV_LDRAG
 #define UV_VIS2
 #define MIX_S_UV
 #define DJ_GRADPS

@@ -3101,22 +3101,20 @@
 !
 !  Angle between XI-axis and EAST at RHO-points.
 !
-        IF (spherical) THEN
-          Vinfo( 1)='angle'
-          Vinfo( 2)='angle between XI-axis and EAST'
-          Vinfo( 3)='radians'
-          Vinfo(14)='angle, scalar'
-          Vinfo(22)='coordinates'
-          Aval(5)=REAL(r2dvar,r8)
-          IF (ncid.eq.ncSTAid(ng)) THEN
-            status=def_var(ng, model, ncid, varid, NF_TYPE,             &
-     &                     1, stadim, Aval, Vinfo,  ncname)
-            IF (exit_flag.ne.NoError) RETURN
-          ELSE
-            status=def_var(ng, model, ncid, varid, NF_TYPE,             &
-     &                     2, t2dgrd, Aval, Vinfo, ncname)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
+        Vinfo( 1)='angle'
+        Vinfo( 2)='angle between XI-axis and EAST'
+        Vinfo( 3)='radians'
+        Vinfo(14)='angle, scalar'
+        Vinfo(22)='coordinates'
+        Aval(5)=REAL(r2dvar,r8)
+        IF (ncid.eq.ncSTAid(ng)) THEN
+          status=def_var(ng, model, ncid, varid, NF_TYPE,               &
+     &                   1, stadim, Aval, Vinfo,  ncname)
+          IF (exit_flag.ne.NoError) RETURN
+        ELSE
+          status=def_var(ng, model, ncid, varid, NF_TYPE,               &
+     &                   2, t2dgrd, Aval, Vinfo, ncname)
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 # endif
 # ifdef MASKING

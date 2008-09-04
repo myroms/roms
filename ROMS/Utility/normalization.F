@@ -2583,7 +2583,7 @@
           IF (Cnorm(is)) Lsame=.TRUE.
         END DO
         IF (Lsame) THEN
-          WRITE (stdout,30) '3D normalization factors at STF-points'
+          WRITE (stdout,30) '2D normalization factors at STF-points'
           CALL my_flush (stdout)
         END IF
       END IF
@@ -2672,11 +2672,9 @@
       END DO
       IF (Lsame) THEN
         DO itrc=2,NT(ng)
-          DO k=1,N(ng)
-            DO j=Jstr,Jend
-              DO i=Istr,Iend
-                VnormR(i,j,k,itrc)=VnormR(i,j,k,1)
-              END DO
+          DO j=Jstr,Jend
+            DO i=Istr,Iend
+              HnormSTF(i,j,itrc)=HnormSTF(i,j,1)
             END DO
           END DO
         END DO
