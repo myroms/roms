@@ -382,7 +382,7 @@
         CALL my_flush (out)
       END IF
 #ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, exit_flag, 1)
+      CALL mp_bcasti (1, model, exit_flag, 1)
 #endif
       IF (exit_flag.ne.NoError) RETURN
 !
