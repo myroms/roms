@@ -562,6 +562,8 @@
 !
         Vinfo( 1)=Vname(1,idObsS)
         Vinfo( 2)=Vname(2,idObsS)
+        Vinfo(24)='_FillValue'
+        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idObsS,ng),        &
      &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -573,7 +575,7 @@
         Vinfo( 1)=Vname(1,idNLmi)
         Vinfo( 2)=Vname(2,idNLmi)
         Vinfo(24)='_FillValue'
-        Aval(6)=1.0E-6_r8
+        Aval(6)=1.0E+35_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idNLmi,ng),        &
      &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -586,7 +588,7 @@
         Vinfo( 1)=Vname(1,idNLmo)
         Vinfo( 2)=Vname(2,idNLmo)
         Vinfo(24)='_FillValue'
-        Aval(6)=1.0E-6_r8
+        Aval(6)=1.0E+35_r8
 #  ifdef S4DVAR
         vardim(1)=datumDim
         vardim(2)=recordDim
@@ -612,7 +614,7 @@
         Vinfo( 2)=Vname(2,idTLmo)
 #  endif
         Vinfo(24)='_FillValue'
-        Aval(6)=1.0E-6_r8
+        Aval(6)=1.0E+35_r8
 #  ifdef IS4DVAR_OLD
         vardim(1)=datumDim
         vardim(2)=recordDim

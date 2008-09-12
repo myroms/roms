@@ -226,6 +226,7 @@
       logical :: converged
       logical :: Lweak = .FALSE.
 
+      integer :: my_inner, my_outer
       integer :: AdjRec, Iold, Inew, Isav, Lbck, Lini, Litl, Lsav
       integer :: i, lstr, my_iic, ng, status, subs, tile, thread
 
@@ -259,7 +260,8 @@
         IterSD=0
         Ipass=0
 
-        OUTER_LOOP : DO outer=1,Nouter
+        OUTER_LOOP : DO my_outer=1,Nouter
+          outer=my_outer
 !
 !  Initialize nonlinear model. If outer=1, the model is initialized
 !  with the background or reference state. Otherwise, the model is
@@ -355,7 +357,8 @@
           CGstepF=CGstepI
           converged=.FALSE.
 
-          INNER_LOOP : DO inner=1,Ninner
+          INNER_LOOP : DO my_inner=1,Ninner
+            inner=my_inner
 
             CONVERGE : IF (.not.converged) THEN
 !

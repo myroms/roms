@@ -197,6 +197,7 @@
       logical :: add, converged, outer_impulse
       logical :: Lweak
 
+      integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2
       integer :: i, lstr, my_iic, ng, rec, status, subs, tile, thread
 
@@ -364,7 +365,8 @@
 !
 !-----------------------------------------------------------------------
 !
-        OUTER_LOOP : DO outer=1,Nouter
+        OUTER_LOOP : DO my_outer=1,Nouter
+          outer=my_outer
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run nonlinear model and compute a "prior estimate" state trajectory,
@@ -427,7 +429,8 @@
           inner=0
           CALL congrad (ng, outer, inner, Ninner, converged)
 
-          INNER_LOOP : DO inner=1,Ninner
+          INNER_LOOP : DO my_inner=1,Ninner
+            inner=my_inner
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Integrate adjoint model forced with any vector PSI at the observation

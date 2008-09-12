@@ -226,7 +226,8 @@
 !
       logical :: converged
       logical :: Lweak = .FALSE.
-
+ 
+      integer :: my_inner, my_outer
       integer :: AdjRec, Lbck, Lini, Lsav, Rec1, Rec2, Rec3
       integer :: i, my_iic, ng, subs, tile, thread
       integer :: Lcon, LTLM1, LTLM2, LTLM3, LADJ1, LADJ2
@@ -264,7 +265,8 @@
         ERstr=1
         ERend=Nouter
 
-        OUTER_LOOP : DO outer=1,Nouter
+        OUTER_LOOP : DO my_outer=1,Nouter
+          outer=my_outer
 !
 !  Initialize nonlinear model. If outer=1, the model is initialized
 !  with the background or reference state. Otherwise, the model is
@@ -380,7 +382,8 @@
 !  gradient G(0), and descent direction d(0) used in the conjugate
 !  gradient algorithm.
 !
-          INNER_LOOP : DO inner=0,Ninner
+          INNER_LOOP : DO my_inner=0,Ninner
+            inner=my_inner
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Time-step tangent linear model: compute cost function.

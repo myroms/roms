@@ -73,8 +73,9 @@
 !
 !  Set starting and ending indices of observations to process for the
 !  current time survey. In weak constraint, the entire observation
-!  vector is maintained. Otherwise, only the observations for the
-!  current time survey are maintained (starting index is always one).
+!  vector for the assimilation window is maintained. Otherwise, only
+!  the observations for the current survey time are maintained
+!  (starting index is always one).
 !
 # if defined WEAK_CONSTRAINT || defined IOM
         Mstr=NstrObs(ng)

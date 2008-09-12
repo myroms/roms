@@ -74,9 +74,9 @@
 !-----------------------------------------------------------------------
 !
 !  Set starting index of obervation vectors for reading.  In weak
-!  constraint, the entire observation data is loaded. Otherwise,
-!  only the observation for the current time window are loaded
-!  and started from vector index one.
+!  constraint, the entire observation data for the assimilation
+!  window is loaded. Otherwise, only the observation for the current
+!  observation survey time is loaded and started from vector index one.
 !
 #  if defined WEAK_CONSTRAINT || defined IOM
       Mstr=NstrObs(ng)
