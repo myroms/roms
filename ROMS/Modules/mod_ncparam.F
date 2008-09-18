@@ -1491,7 +1491,7 @@
                 idBott(iactv)=varid
               CASE ('idBott(ishgt)')
                 idBott(ishgt)=varid
-              CASE ('idBott(idrfx)')
+              CASE ('idBott(idefx)')
                 idBott(idefx)=varid
               CASE ('idBott(idnet)')
                 idBott(idnet)=varid

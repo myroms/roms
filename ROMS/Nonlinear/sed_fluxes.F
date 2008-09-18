@@ -166,8 +166,8 @@
       real(r8), intent(inout):: bed_thick(LBi:UBi,LBj:UBj,2)
 #  endif
       real(r8), intent(inout) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(inout) :: ero_flux(LBi:UBi,LBj:UBj,:) 
-      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,:) 
+      real(r8), intent(inout) :: ero_flux(LBi:UBi,LBj:UBj,NST) 
+      real(r8), intent(inout) :: settling_flux(LBi:UBi,LBj:UBj,NST) 
       real(r8), intent(inout) :: bed(LBi:UBi,LBj:UBj,Nbed,MBEDP)
       real(r8), intent(inout) :: bed_frac(LBi:UBi,LBj:UBj,Nbed,NST)
       real(r8), intent(inout) :: bed_mass(LBi:UBi,LBj:UBj,Nbed,1:2,NST)
