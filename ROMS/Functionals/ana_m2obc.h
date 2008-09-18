@@ -23,7 +23,7 @@
       integer, intent(in) :: ng, tile, model
 
 #include "tile.h"
-!    
+!
       CALL ana_m2obc_tile (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
@@ -72,8 +72,8 @@
       integer, intent(in) :: knew
 !
 #ifdef ASSUMED_SHAPE
-      real(r8), intent(in) :: angler(LBi:,LBj:)   
-      real(r8), intent(in) :: h(LBi:,LBj:)   
+      real(r8), intent(in) :: angler(LBi:,LBj:)
+      real(r8), intent(in) :: h(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
@@ -82,8 +82,8 @@
 # endif
       real(r8), intent(in) :: zeta(LBi:,LBj:,:)
 #else
-      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)   
-      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)   
+      real(r8), intent(in) :: angler(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
@@ -138,7 +138,7 @@
           my_area=0.0_r8
           my_flux=0.0_r8
           DO j=Jstr,Jend
-            cff=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                &  
+            cff=0.5_r8*(zeta(Iend  ,j,knew)+h(Iend  ,j)+                &
      &                  zeta(Iend+1,j,knew)+h(Iend+1,j))/pn(Iend,j)
             my_area=my_area+cff
           END DO
@@ -155,9 +155,9 @@
       IF (WESTERN_EDGE) THEN
         DO j=JstrR,JendR
           cff=SQRT(g*GRID(ng)%h(Istr-1,j))
-          BOUNDARY(ng)%ubar_west(j)=val*cff*EXP(-GRID(ng)%f(Istr-1,j)*  &
-     &                                           GRID(ng)%yp(Istr-1,j)/ &
-     &                                          cff)
+          BOUNDARY(ng)%ubar_west(j)=(val*cff/GRID(ng)%h(Istr-1,j))*     &
+     &                              EXP(-GRID(ng)%f(Istr-1,j)*          &
+     &                                   GRID(ng)%yp(Istr-1,j)/cff)
         END DO
         DO j=Jstr,JendR
           BOUNDARY(ng)%vbar_west(j)=0.0_r8
@@ -165,10 +165,11 @@
       END IF
       IF (EASTERN_EDGE) THEN
         DO j=JstrR,JendR
-          cff=1.0_r8/SQRT(g*GRID(ng)%h(Iend,j))
-          val=fac*EXP(-GRID(ng)%f(Iend,j)*GRID(ng)%yp(Istr-1,j)*cff)
-          BOUNDARY(ng)%ubar_east(j)=val*SIN(omega*GRID(ng)%xp(Iend,j)*  &
-     &                                      cff-omega*time(ng))
+          cff=SQRT(g*GRID(ng)%h(Iend,j))
+          val=fac*EXP(-GRID(ng)%f(Iend,j)*GRID(ng)%yp(Istr-1,j)/cff)
+          BOUNDARY(ng)%ubar_east(j)=(val*cff/GRID(ng)%h(Iend,j))*       &
+     &                              SIN(omega*GRID(ng)%xp(Iend,j)/cff-  &
+     &                                  omega*time(ng))
         END DO
         DO j=Jstr,JendR
           BOUNDARY(ng)%vbar_east(j)=0.0_r8
