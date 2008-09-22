@@ -50,7 +50,7 @@ ifdef USE_NETCDF4
     NETCDF_LIBDIR ?= /usr/local/netcdf4/lib
       HDF5_LIBDIR ?= /usr/local/hdf5/lib
 else
-    NETCDF_INCDIR ?= /usr/include
+    NETCDF_INCDIR ?= /usr/local/include
     NETCDF_LIBDIR ?= /usr/local/lib
 endif
              LIBS := -L$(NETCDF_LIBDIR) -lnetcdf
@@ -63,13 +63,26 @@ ifdef USE_ARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
+ifdef USE_MPI
+         CPPFLAGS += -DMPI
+ ifdef USE_MPIF90
+               FC := mpif90
+               LD := $(FC)
+  ifdef USE_DEBUG
+           FFLAGS += -mpe=mpicheck
+  endif
+ else
+  # MPI without mpif90 is not currently supported
+ endif
+endif
+
 ifdef USE_OpenMP
          CPPFLAGS += -D_OPENMP
            FFLAGS += -fopenmp
 endif
 
 ifdef USE_DEBUG
-           FFLAGS += -g -fbounds-check -Wall -Wno-unused-variable -Wno-unused-label
+           FFLAGS += -g -fbounds-check -fbacktrace
 else
            FFLAGS += -O3 -ffast-math
 endif

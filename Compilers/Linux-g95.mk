@@ -114,9 +114,9 @@ endif
 # local directory and compilation flags inside the code.
 #
 
-$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form
-$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form
-$(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form -ffree-line-length-huge
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form -ffree-line-length-huge
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form -ffree-line-length-huge
 
 #
 # Supress free format in SWAN source files since there are comments

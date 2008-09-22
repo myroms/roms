@@ -68,6 +68,16 @@ ifdef USE_ARPACK
              LIBS += -L$(ARPACK_LIBDIR) -larpack
 endif
 
+ifdef USE_MPI
+         CPPFLAGS += -DMPI
+ ifdef USE_MPIF90
+               FC := mpif90
+               LD := $(FC)
+ else
+             LIBS += -lfmpi -lmpi
+ endif
+endif
+
 ifdef USE_DEBUG
            FFLAGS += -g -fbounds-check -ftrace=full
 else
@@ -99,9 +109,9 @@ endif
 # local directory and compilation flags inside the code.
 #
 
-$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form
-$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form
-$(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form
+$(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form -ffree-line-length-huge
+$(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form -ffree-line-length-huge
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form -ffree-line-length-huge
 
 #
 # Supress free format in SWAN source files since there are comments
