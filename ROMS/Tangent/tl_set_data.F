@@ -1022,7 +1022,7 @@
                 cff1=pcoef_SST(npSST(ng),ng)
                 DO order=npSST(ng)-1,0,-1
                   cff=Zr*cff+perr_SST(order,ng)
-                  cff1=Zr*cff+pcoef_SST(order,ng)
+                  cff1=Zr*cff1+pcoef_SST(order,ng)
                 END DO
                 OBS(ng)%EobsT(i,j,k,itemp)=MIN(1.0_r8,cff*              &
      &                                         OBS(ng)%EobsSST(i,j))

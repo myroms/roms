@@ -1400,11 +1400,6 @@
 !  Data assimilation parameters.
 !-----------------------------------------------------------------------
 !
-!  Switches to assimilate and perturb state variables
-!
-        logical, allocatable :: assi(:)
-        logical, allocatable :: pert(:)
-!
 !  Switches to assimilate observations.
 !
         logical, dimension(Ngrids) :: assi_SSH      ! Sea surface height
@@ -1461,10 +1456,6 @@
         real(r8), dimension(Ngrids) :: EobsUVmax
         real(r8), allocatable :: EobsTmin(:,:)      ! Tracers
         real(r8), allocatable :: EobsTmax(:,:)
-!
-!  Non-dimensional perturbation strength of state variables.
-!
-        real(r8), allocatable :: Prms(:)
 !
 !  Observations vertical extension coefficients.
 !
@@ -1632,9 +1623,6 @@
       allocate ( tsTobs(MT,Ngrids) )
       allocate ( EobsTmin(MT,Ngrids) )
       allocate ( EobsTmax(MT,Ngrids) )
-      allocate ( assi(NSV(ng)) )
-      allocate ( pert(NSV(ng)) )
-      allocate ( Prms(NSV(ng)) )
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
       allocate ( Cnorm(MstateVar) )
