@@ -704,8 +704,8 @@
 !
         Vinfo( 1)='cost_gradient'
         Vinfo( 2)='cost function gradient norm'
-        Vinfo(17)='missing_value'
-        Aval(1)=0.0_r8
+        Vinfo(24)='_FillValue'
+        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 2, CostDim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -716,8 +716,8 @@
 !
         Vinfo( 1)='cost_function'
         Vinfo( 2)='model minus observation misfit cost function'
-        Vinfo(17)='missing_value'
-        Aval(1)=0.0_r8
+        Vinfo(24)='_FillValue'
+        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 2, CostDim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -728,8 +728,8 @@
 !
         Vinfo( 1)='back_function'
         Vinfo( 2)='model minus background misfit cost function'
-        Vinfo(17)='missing_value'
-        Aval(1)=0.0_r8
+        Vinfo(24)='_FillValue'
+        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 2, CostDim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN

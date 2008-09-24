@@ -133,7 +133,7 @@
 
 # ifdef DISTRIBUTE
       real(r8) :: Xstr, Xend, Ystr, Yend
-      real(r8), dimension(Nfloats(ng)*NFV(ng)) :: Fwrk
+      real(r8), dimension(Nfloats(ng)*NFV(ng)*(NFT+1)) :: Fwrk
 # endif
 !
 ! Set tile array bounds.
@@ -164,6 +164,7 @@
       Ystr=REAL(BOUNDS(ng)%Jstr(MyRank),r8)-0.5_r8
       Yend=REAL(BOUNDS(ng)%Jend(MyRank),r8)+0.5_r8
       DO l=Lstr,Lend
+        MyThread(l)=.FALSE.
         IF ((Xstr.le.track(ixgrd,nf,l)).and.                            &
      &      (track(ixgrd,nf,l).lt.Xend).and.                            &
      &      (Ystr.le.track(iygrd,nf,l)).and.                            &
@@ -172,8 +173,11 @@
         ELSE IF (Master.and.(.not.bounded(l))) THEN
           MyThread(l)=.TRUE.
         ELSE
-          MyThread(l)=.FALSE.
-          track(1:NFV(ng),0:NFT,l)=Fspv
+          DO j=0,NFT
+            DO i=1,NFV(ng)
+              track(i,j,l)=Fspv
+            END DO
+          END DO
         END IF
       END DO
 # else
@@ -269,13 +273,24 @@
      &                        dt(ng)*(cff1*track(iyrhs,nf  ,l)-         &
      &                                cff2*track(iyrhs,nfm1,l)+         &
      &                                cff1*track(iyrhs,nfm2,l))
+
 # if defined SOLVE3D && !defined FLOAT_VWALK
 !
-!  If isobaric (constant depth) floats, keep floats at its initial depth
-!  location. Use bilinear interpolation to determine the isobaric in
-!  terms vertical grid units.
+!  Compute vertical position (grid units) 3D Lagrangian floats.
 !
-          IF ((Ftype(l).eq.1).or.(Ftype(l).eq.2)) THEN
+          IF (Ftype(l).eq.flt_Lagran) THEN
+            track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
+     &                          cff2*track(izgrd,nfm2,l)+               &
+     &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
+     &                                  cff4*track(izrhs,nf  ,l)-       &
+     &                                  cff3*track(izrhs,nfm1,l))
+!
+!  Compute vertical position (grid units) for isobaric floats
+!  (p=g*(z+zeta)=constant) or geopotential floats (constant depth).
+!  Use bilinear interpolation to determine vertical position.
+!
+          ELSE IF ((Ftype(l).eq.flt_Isobar).or.                         &
+     &             (Ftype(l).eq.flt_Geopot)) THEN
             Ir=INT(track(ixgrd,nfp1,l))
             Jr=INT(track(iygrd,nfp1,l))
 !
@@ -307,9 +322,9 @@
 #  endif
             cff6=cff9
 !
-            IF (Ftype(l).eq.1) THEN
+            IF (Ftype(l).eq.flt_Geopot) THEN
               zfloat=Fz0(l)
-            ELSEIF (Ftype(l).eq.2) THEN
+            ELSE IF (Ftype(l).eq.flt_Isobar) THEN
               zfloat=Fz0(l)+cff9
             END IF
 !
@@ -323,8 +338,11 @@
      &             p2*q1*GRID(ng)%rmask(i2,j1)+                         &
      &             p1*q2*GRID(ng)%rmask(i1,j2)+                         &
      &             p2*q2*GRID(ng)%rmask(i2,j2)
-              cff5=0.0_r8
-              IF (cff8.gt.0.0_r8) cff5=cff7/cff8
+              IF (cff8.gt.0.0_r8) THEN
+                cff5=cff7/cff8
+              ELSE
+                cff5=0.0_r8
+              END IF
 #  else
               cff5=p1*q1*GRID(ng)%z_w(i1,j1,k)+                         &
      &             p2*q1*GRID(ng)%z_w(i2,j1,k)+                         &
@@ -336,11 +354,6 @@
               END IF
               cff6=cff5
             END DO
-          ELSE
-            track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                    &
-     &                          dt(ng)*(cff1*track(izrhs,nf  ,l)-       &
-     &                                  cff2*track(izrhs,nfm1,l)+       &
-     &                                  cff1*track(izrhs,nfm2,l))
           END IF
 # endif
         END IF
@@ -433,13 +446,24 @@
      &                        dt(ng)*(cff3*track(iyrhs,nfp1,l)+         &
      &                                cff4*track(iyrhs,nf  ,l)-         &
      &                                cff3*track(iyrhs,nfm1,l))
+
 # if defined SOLVE3D && !defined FLOAT_VWALK
 !
-!  If isobaric (constant depth) floats, keep floats at its initial depth
-!  location. Use bilinear interpolation to determine the isobaric in
-!  terms vertical grid units.
+!  Compute vertical position (grid units) 3D Lagrangian floats.
 !
-          IF ((Ftype(l).eq.1).or.(Ftype(l).eq.2)) THEN
+          IF (Ftype(l).eq.flt_Lagran) THEN
+            track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
+     &                          cff2*track(izgrd,nfm2,l)+               &
+     &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
+     &                                  cff4*track(izrhs,nf  ,l)-       &
+     &                                  cff3*track(izrhs,nfm1,l))
+!
+!  Compute vertical position (grid units) for isobaric floats
+!  (p=g*(z+zeta)=constant) or geopotential floats (constant depth).
+!  Use bilinear interpolation to determine vertical position.
+!
+          ELSE IF ((Ftype(l).eq.flt_Isobar).or.                         &
+     &             (Ftype(l).eq.flt_Geopot)) THEN
             Ir=INT(track(ixgrd,nfp1,l))
             Jr=INT(track(iygrd,nfp1,l))
 !
@@ -461,8 +485,11 @@
      &           p2*q1*GRID(ng)%rmask(i2,j1)+                           &
      &           p1*q2*GRID(ng)%rmask(i1,j2)+                           &
      &           p2*q2*GRID(ng)%rmask(i2,j2)
-            cff9=0.0_r8
-            IF (cff8.gt.0.0_r8) cff9=cff7/cff8
+            IF (cff8.gt.0.0_r8) THEN
+              cff9=cff7/cff8
+            ELSE
+              cff9=0.0_r8
+            END IF
 #  else
             cff9=p1*q1*GRID(ng)%z_w(i1,j1,N(ng))+                       &
      &           p2*q1*GRID(ng)%z_w(i2,j1,N(ng))+                       &
@@ -471,9 +498,9 @@
 #  endif
             cff6=cff9
 !
-            IF (Ftype(l).eq.1) THEN
+            IF (Ftype(l).eq.flt_Geopot) THEN
               zfloat=Fz0(l)
-            ELSEIF (Ftype(l).eq.2) THEN
+            ELSE IF (Ftype(l).eq.flt_Isobar) THEN
               zfloat=Fz0(l)+cff9
             END IF
 !
@@ -500,12 +527,6 @@
               END IF
               cff6=cff5
             END DO
-          ELSE
-            track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
-     &                          cff2*track(izgrd,nfm2,l)+               &
-     &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
-     &                                  cff4*track(izrhs,nf  ,l)-       &
-     &                                  cff3*track(izrhs,nfm1,l))
           END IF
 # endif
         END IF
@@ -536,7 +557,9 @@
       END DO
 #  ifdef DISTRIBUTE
       IF (NtileI(ng).gt.1) THEN
-        CALL mp_collect (ng, iNLM, Npts, Fspv, track)
+        Fwrk=RESHAPE(track,(/Npts/))
+        CALL mp_collect (ng, iNLM, Npts, Fspv, Fwrk)
+        track=RESHAPE(Fwrk,(/NFV(ng),NFT+1,Nfloats(ng)/))
         DO l=Lstr,Lend
           IF ((Xstr.le.track(ixgrd,nfp1,l)).and.                        &
      &        (track(ixgrd,nfp1,l).lt.Xend).and.                        &
@@ -547,7 +570,11 @@
             MyThread(l)=.TRUE.
           ELSE
             MyThread(l)=.FALSE.
-            track(1:NFV(ng),0:NFT,l)=Fspv
+            DO j=0,NFT
+              DO i=1,NFV(ng)
+                track(i,j,l)=Fspv
+              END DO
+            END DO
           END IF
         END DO
       END IF
@@ -583,7 +610,9 @@
       END DO
 #  ifdef DISTRIBUTE
       IF (NtileJ(ng).gt.1) THEN
-        CALL mp_collect (ng, iNLM, Npts, Fspv, track)
+        Fwrk=RESHAPE(track,(/Npts/))
+        CALL mp_collect (ng, iNLM, Npts, Fspv, Fwrk)
+        track=RESHAPE(Fwrk,(/NFV(ng),NFT+1,Nfloats(ng)/))
         DO l=Lstr,Lend
           IF ((Xstr.le.track(ixgrd,nfp1,l)).and.                        &
      &        (track(ixgrd,nfp1,l).lt.Xend).and.                        &
@@ -594,7 +623,11 @@
             MyThread(l)=.TRUE.
           ELSE
             MyThread(l)=.FALSE.
-            track(1:NFV(ng),0:NFT,l)=Fspv
+            DO j=0,NFT
+              DO i=1,NFV(ng)
+                track(i,j,l)=Fspv
+              END DO
+            END DO
           END IF
         END DO
       END IF
@@ -639,19 +672,31 @@
      &        (Tinfo(ixgrd,l).lt.Xend).and.                             &
      &        (Ystr.le.Tinfo(iygrd,l)).and.                             &
      &        (Tinfo(iygrd,l).lt.Yend)) THEN
-            track(ixgrd,0:NFT,l)=Tinfo(ixgrd,l)
-            track(iygrd,0:NFT,l)=Tinfo(iygrd,l)
-            track(izgrd,0:NFT,l)=Tinfo(izgrd,l)
+            DO j=0,NFT
+              track(ixgrd,j,l)=Tinfo(ixgrd,l)
+              track(iygrd,j,l)=Tinfo(iygrd,l)
+#  ifdef SOLVE3D
+              track(izgrd,j,l)=Tinfo(izgrd,l)
+#  endif
+            END DO
             MyThread(l)=.TRUE.
           ELSE
             MyThread(l)=.FALSE.
-            track(1:NFV(ng),0:NFT,l)=Fspv
+            DO j=0,NFT
+              DO i=1,NFV(ng)
+                track(i,j,l)=Fspv
+              END DO
+            END DO
           END IF
 # else
           MyThread(l)=.TRUE.
-          track(ixgrd,0:NFT,l)=Tinfo(ixgrd,l)
-          track(iygrd,0:NFT,l)=Tinfo(iygrd,l)
-          track(izgrd,0:NFT,l)=Tinfo(izgrd,l)
+          DO j=0,NFT
+            track(ixgrd,j,l)=Tinfo(ixgrd,l)
+            track(iygrd,j,l)=Tinfo(iygrd,l)
+#  ifdef SOLVE3D
+            track(izgrd,j,l)=Tinfo(izgrd,l)
+#  endif
+          END DO
 # endif
         END IF
       END DO
@@ -667,9 +712,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    OCEAN(ng) % u(LBi,LBj,1,nnew),                &
      &                    MyThread, bounded, track(1,0,1))
 
@@ -679,9 +724,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    OCEAN(ng) % v(LBi,LBj,1,nnew),                &
      &                    MyThread, bounded, track(1,0,1))
 
@@ -692,9 +737,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#   ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#   endif
      &                    OCEAN(ng) % W(LBi,LBj,0),                     &
      &                    MyThread, bounded, track(1,0,1))
 #  endif
@@ -704,9 +749,9 @@
      &                    -u2dvar, Lmask, nudg,                         &
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    OCEAN(ng) % ubar(LBi,LBj,knew),               &
      &                    MyThread, bounded, track(1,0,1))
 
@@ -715,9 +760,9 @@
      &                    -v2dvar, Lmask, nudg,                         &
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    OCEAN(ng) % vbar(LBi,LBj,knew),               &
      &                    MyThread, bounded, track(1,0,1))
 # endif
@@ -812,9 +857,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    GRID(ng) % z_w(LBi,LBj,0),                    &
      &                    MyThread, bounded, track(1,0,1))
 
@@ -824,9 +869,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    OCEAN(ng) % rho(LBi,LBj,1),                   &
      &                    MyThread, bounded, track(1,0,1))
 
@@ -837,9 +882,9 @@
      &                      GRID(ng) % pm(LBi,LBj),                     &
      &                      GRID(ng) % pn(LBi,LBj),                     &
      &                      GRID(ng) % Hz(LBi,LBj,1),                   &
-# ifdef MASKING
+#  ifdef MASKING
      &                      GRID(ng) % rmask(LBi,LBj),                  &
-# endif
+#  endif
      &                      OCEAN(ng) % t(LBi,LBj,1,nnew,itrc),         &
      &                      MyThread, bounded, track(1,0,1))
       END DO
@@ -850,7 +895,9 @@
 !  Collect floats on all nodes.
 !-----------------------------------------------------------------------
 !
-      CALL mp_collect (ng, iNLM, Npts, Fspv, track)
+      Fwrk=RESHAPE(track,(/Npts/))
+      CALL mp_collect (ng, iNLM, Npts, Fspv, Fwrk)
+      track=RESHAPE(Fwrk,(/NFV(ng),NFT+1,Nfloats(ng)/))
 !
 !  Collect the bounded status switch.
 !

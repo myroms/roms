@@ -233,6 +233,16 @@
         integer, parameter :: ifakt = 11         ! diffusivity, Akt
         integer, parameter :: ifdak = 12         ! d(Akt)/d(s)
 # endif
+!
+!  Set float tracjectory types:
+!
+!     flt_Lagran:  3D Lagrangian floats
+!     flt_Isobar:  Isobaric floats, p=g*(z+zeta)=constant
+!     flt_Geopot:  Geopotential floats, constant depth
+!
+      integer, parameter :: flt_Lagran = 1
+      integer, parameter :: flt_Isobar = 2
+      integer, parameter :: flt_Geopot = 3
 #endif
 !
 !-----------------------------------------------------------------------

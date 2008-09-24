@@ -42,7 +42,7 @@
       real(r8), parameter :: spv = 0.0_r8
 
 # ifdef FLOATS
-      real(r8) :: zfloat
+      real(r8) :: Xstr, Xend, Ystr, Yend, zfloat
       logical, dimension(Nfloats(ng)) :: MyThread
       real(r8), dimension(Nfloats(ng)) :: Iflt, Jflt
 #  ifdef SOLVE3D
@@ -54,7 +54,6 @@
       real(r8), dimension(Nstation(ng)) :: Slon, Slat
       real(r8), dimension(Nstation(ng)) :: Ista, Jsta
 # endif
-
 !
 !-----------------------------------------------------------------------
 !  Determine searching model grid box and arrays bounds.
@@ -71,12 +70,18 @@
       JstrR=0
       Jend =Mm(ng)
 # endif
+!
       LBi=LBOUND(GRID(ng)%h,DIM=1)
       UBi=UBOUND(GRID(ng)%h,DIM=1)
       LBj=LBOUND(GRID(ng)%h,DIM=2)
       UBj=UBOUND(GRID(ng)%h,DIM=2)
 
 # ifdef FLOATS
+!
+      Xstr=REAL(BOUNDS(ng)%Istr(MyRank),r8)-0.5_r8
+      Xend=REAL(BOUNDS(ng)%Iend(MyRank),r8)+0.5_r8
+      Ystr=REAL(BOUNDS(ng)%Jstr(MyRank),r8)-0.5_r8
+      Yend=REAL(BOUNDS(ng)%Jend(MyRank),r8)+0.5_r8
 !
 !-----------------------------------------------------------------------
 !  If applicable, convert initial floats locations (Flon,Flat) to 
@@ -115,10 +120,10 @@
 !
 #   ifdef DISTRIBUTE
       DO l=1,Nfloats(ng)
-        i=INT(FLT(ng)%Tinfo(ixgrd,l))
-        j=INT(FLT(ng)%Tinfo(iygrd,l))
-        IF (((IstrR.le.i).and.(i.le.Iend)).and.                         &
-     &      ((JstrR.le.j).and.(j.le.Jend))) THEN
+        IF ((Xstr.le.FLT(ng)%Tinfo(ixgrd,l)).and.                       &
+     &      (FLT(ng)%Tinfo(ixgrd,l).lt.Xend).and.                       &
+     &      (Ystr.le.FLT(ng)%Tinfo(iygrd,l)).and.                       &
+     &      (FLT(ng)%Tinfo(iygrd,l).lt.Yend)) THEN
           MyThread(l)=.TRUE.
         ELSE
           MyThread(l)=.FALSE.
@@ -139,13 +144,14 @@
 !
       DO l=1,Nfloats(ng)
 #  ifdef SOLVE3D
+        FLT(ng)%Fz0(l)=spv
         IF (MyThread(l)) THEN
           zfloat=FLT(ng)%Tinfo(izgrd,l)
-          FLT(ng)%Fz0(l)=zfloat                   ! Save original value
+          FLT(ng)%Fz0(l)=zfloat                 ! Save original value
           Kflt(l)=zfloat
           IF (zfloat.le.0.0_r8) THEN
-            i=INT(FLT(ng)%Tinfo(ixgrd,l))
-            j=INT(FLT(ng)%Tinfo(iygrd,l))
+            i=INT(FLT(ng)%Tinfo(ixgrd,l))       ! Fractional positions
+            j=INT(FLT(ng)%Tinfo(iygrd,l))       ! are still in this cell
             IF (zfloat.lt.GRID(ng)%z_w(i,j,0)) THEN
               zfloat=GRID(ng)%z_w(i,j,0)+5.0_r8
               FLT(ng)%Fz0(l)=zfloat
@@ -169,6 +175,7 @@
       END DO
 #  ifdef SOLVE3D
 #   ifdef DISTRIBUTE
+      CALL mp_collect (ng, model, Nfloats(ng), spv, FLT(ng)%Fz0)
       CALL mp_collect (ng, model, Nfloats(ng), spv, Kflt)
 #   endif
       DO l=1,Nfloats(ng)

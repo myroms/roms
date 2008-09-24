@@ -125,6 +125,10 @@
 #endif
 
       CALL read_PhyPar (model, inp, out, Lwrite)
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (1, model, exit_flag, 1)
+#endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Set lower and upper bounds indices per domain partition for all
@@ -280,6 +284,10 @@
      &          /,11x,'because it yields too small tile, ',a,i3,a,i3,   &
      &          /,11x,'Decrease partition parameter: ',a)
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (1, model, exit_flag, 1)
+#endif
+      IF (exit_flag.ne.NoError) RETURN
 
 #ifdef DISTRIBUTE
 !

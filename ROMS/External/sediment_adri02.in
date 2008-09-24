@@ -54,9 +54,13 @@
 
     NEWLAYER_THICK == 0.01d0
 
+! Minimum thickness for second bed layer, [1:Ngrids]
+
+    MINLAYER_THICK == 0.01d0
+
 ! Bed load transport rate coefficient. [1:Ngrids].
 
-    BEDLOAD_COEFF == 0.05d0
+     BEDLOAD_COEFF == 0.05d0
 
 !------------------------------------------------------------------------------
 ! Suspended Cohesive Sediment Parameters, [1:NCS,1:Ngrids] values expected.
