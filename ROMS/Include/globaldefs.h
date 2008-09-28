@@ -23,11 +23,8 @@
 ** the arrays are copied when passed by arguments.
 */
 
-#define ASSUMED_SHAPE
-#if defined G95 && defined I686
-# undef ASSUMED_SHAPE
-#elif defined UNICOS_SN
-# undef ASSUMED_SHAPE
+#if !((defined G95 && defined I686) || defined UNICOS_SN)
+# define ASSUMED_SHAPE
 #endif
 
 /*
@@ -587,23 +584,19 @@
 #endif
 
 #if (defined WEST_FSRADIATION  && defined WEST_FSNUDGING)  || \
-     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED   || \
-     defined WEST_M2REDUCED
+     defined WEST_M2FLATHER    || defined WEST_FSCLAMPED
 # define WEST_FSOBC
 #endif
 #if (defined EAST_FSRADIATION  && defined EAST_FSNUDGING)  || \
-     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED   || \
-     defined EAST_M2REDUCED
+     defined EAST_M2FLATHER    || defined EAST_FSCLAMPED
 # define EAST_FSOBC
 #endif
 #if (defined SOUTH_FSRADIATION && defined SOUTH_FSNUDGING) || \
-     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED  || \
-     defined SOUTH_M2REDUCED
+     defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED
 # define SOUTH_FSOBC
 #endif
 #if (defined NORTH_FSRADIATION && defined NORTH_FSNUDGING) || \
-     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED  || \
-     defined NORTH_M2REDUCED
+     defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED
 # define NORTH_FSOBC
 #endif
 

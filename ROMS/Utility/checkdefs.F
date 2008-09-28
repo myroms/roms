@@ -2888,7 +2888,7 @@
         exit_flag=5
       END IF
 #endif
-#if defined NEMURO && defined HOLLING_GRAZING && IVLEV_EXPLICIT
+#if defined NEMURO && defined HOLLING_GRAZING && defined IVLEV_EXPLICIT
 !
 !  Stop if using more than one grazing algorithm.
 !

@@ -33,7 +33,6 @@
 #define AVERAGES_AKT
 #define AVERAGES_AKS
 
-#undef  NS_PERIODIC
 #define SOUTH_FSCHAPMAN
 #define SOUTH_M2GRADIENT
 #define SOUTH_M3GRADIENT
@@ -45,7 +44,6 @@
 #define WESTERN_WALL
 #define EASTERN_WALL
 
-#undef  MY25_MIXING
 #define LMD_MIXING
 #ifdef LMD_MIXING
 # define LMD_RIMIX
