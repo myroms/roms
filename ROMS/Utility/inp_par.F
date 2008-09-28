@@ -6924,8 +6924,10 @@
           ELSE IF (TRIM(KeyWord).eq.'HSSname') THEN
             DO i=1,LEN(HSSname(Nval))
               HSSname(Nval)(i:i)=blank
+              HSSbase(Nval)(i:i)=blank
             END DO
             HSSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
+            HSSbase(Nval)=TRIM(ADJUSTL(ADJname(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'LCZname') THEN
             DO i=1,LEN(LCZname(Nval))
               LCZname(Nval)(i:i)=blank

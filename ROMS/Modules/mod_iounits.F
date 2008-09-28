@@ -26,6 +26,7 @@
 !  GSTname     Input/output GST analysis check pointing NetCDF file.   !
 !  HISbase     Output history base file name.                          !
 !  HISname     Output history file name.                               !
+!  HSSbase     Input/output Hessian eigenvectors base file name.       !
 !  HSSname     Input/output Hessian eigenvectors file name.            !
 !  IADname     Input adjoint initial conditions file name.             !
 !  INIname     Input nonlinear initial conditions file name.           !
@@ -107,6 +108,7 @@
         character (len=80), dimension(Ngrids) :: GSTname
         character (len=80), dimension(Ngrids) :: HISbase
         character (len=80), dimension(Ngrids) :: HISname
+        character (len=80), dimension(Ngrids) :: HSSbase
         character (len=80), dimension(Ngrids) :: HSSname
         character (len=80), dimension(Ngrids) :: IADname
         character (len=80), dimension(Ngrids) :: INIname
