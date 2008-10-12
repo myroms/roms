@@ -976,7 +976,7 @@
             ELSE IF (TRIM(var_name(i)).eq.                              &
      &               TRIM(Vname(1,idTsur(itrc)))) THEN
               got_var(idTsur(itrc))=.TRUE.
-              adjVid(idTsur(itemp),ng)=var_id(i)
+              adjVid(idTsur(itrc),ng)=var_id(i)
             END IF
           END DO
 #endif

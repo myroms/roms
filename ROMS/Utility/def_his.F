@@ -2311,7 +2311,7 @@
           END DO
           DO itrc=1,NAT
             IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTsur(itrc)))) THEN
-              got_var(idTsur(itemp))=.TRUE.
+              got_var(idTsur(itrc))=.TRUE.
               hisVid(idTsur(itrc),ng)=var_id(i)
 # if defined FORWARD_WRITE && defined LMD_NONLOCAL
             ELSE IF (TRIM(var_name(i)).eq.                              &
