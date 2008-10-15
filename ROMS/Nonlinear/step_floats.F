@@ -279,11 +279,10 @@
 !  Compute vertical position (grid units) 3D Lagrangian floats.
 !
           IF (Ftype(l).eq.flt_Lagran) THEN
-            track(izgrd,nfp1,l)=cff1*track(izgrd,nf  ,l)-               &
-     &                          cff2*track(izgrd,nfm2,l)+               &
-     &                          dt(ng)*(cff3*track(izrhs,nfp1,l)+       &
-     &                                  cff4*track(izrhs,nf  ,l)-       &
-     &                                  cff3*track(izrhs,nfm1,l))
+            track(izgrd,nfp1,l)=track(izgrd,nfm3,l)+                    &
+     &                          dt(ng)*(cff1*track(izrhs,nf  ,l)-       &
+     &                                  cff2*track(izrhs,nfm1,l)+       &
+     &                                  cff1*track(izrhs,nfm2,l))
 !
 !  Compute vertical position (grid units) for isobaric floats
 !  (p=g*(z+zeta)=constant) or geopotential floats (constant depth).
