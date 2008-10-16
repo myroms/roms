@@ -28,6 +28,18 @@
 #endif
 
 /*
+** Set switch for computer lacking 4-byte (32 bit) floating point
+** representation, like some Crays.  This becomes important when
+** defining attributes for 4-byte float variables in NetCDF files.
+** We need to have the _FillValue attribute of the same type as
+** as the NetCDF variable.
+*/
+
+#if defined UNICOS_SN
+# define NO_4BYTE_REALS
+#endif 
+
+/*
 ** Set internal distributed-memory switch.
 */
 

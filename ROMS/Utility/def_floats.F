@@ -232,8 +232,10 @@
         Aval(3)=REAL(Lm(ng)+1,r8)
         Vinfo(14)='Xgrid, scalar, series'
         Vinfo(16)=Vname(1,idtime)
+# ifndef NO_4BYTE_REALS
         Vinfo(24)='_FillValue'
         Aval(6)=spval
+# endif
         status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idXgrd,ng),        &
      &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -248,8 +250,10 @@
         Aval(3)=REAL(Mm(ng)+1,r8)
         Vinfo(14)='Ygrid, scalar, series'
         Vinfo(16)=Vname(1,idtime)
+# ifndef NO_4BYTE_REALS
         Vinfo(24)='_FillValue'
         Aval(6)=spval
+# endif
         status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idYgrd,ng),        &
      &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -266,8 +270,10 @@
         Aval(3)=REAL(N(ng),r8)
         Vinfo(14)='Zgrid, scalar, series'
         Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
         Vinfo(24)='_FillValue'
         Aval(6)=spval
+#  endif
         status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idZgrd,ng),        &
      &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -283,10 +289,12 @@
           Vinfo( 6)='valid_max'
           Vinfo(14)='lon, scalar, series'
           Vinfo(16)=Vname(1,idtime)
+# ifndef NO_4BYTE_REALS
           Vinfo(24)='_FillValue'
+          Aval(6)=spval
+# endif
           Aval(2)=-180.0_r8
           Aval(3)=180.0_r8
-          Aval(6)=spval
           status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idglon,ng),      &
      &                   NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
@@ -298,10 +306,12 @@
           Vinfo( 6)='valid_max'
           Vinfo(14)='lat, scalar, series'
           Vinfo(16)=Vname(1,idtime)
+# ifndef NO_4BYTE_REALS
           Vinfo(24)='_FillValue'
+          Aval(6)=spval
+# endif
           Aval(2)=-90.0_r8
           Aval(3)=90.0_r8
-          Aval(6)=spval
           status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idglat,ng),      &
      &                   NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
@@ -311,8 +321,10 @@
           Vinfo( 3)='meter'
           Vinfo(14)='x, scalar, series'
           Vinfo(16)=Vname(1,idtime)
+# ifndef NO_4BYTE_REALS
           Vinfo(24)='_FillValue'
           Aval(6)=spval
+# endif
           status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idglon,ng),      &
      &                   NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
@@ -322,8 +334,10 @@
           Vinfo( 3)='meter'
           Vinfo(14)='y, scalar, series'
           Vinfo(16)=Vname(1,idtime)
+# ifndef NO_4BYTE_REALS
           Vinfo(24)='_FillValue'
           Aval(6)=spval
+# endif
           status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idglat,ng),      &
      &                   NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
@@ -338,8 +352,10 @@
         Vinfo( 3)='meter'
         Vinfo(14)='depth, scalar, series'
         Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
         Vinfo(24)='_FillValue'
         Aval(6)=spval
+#  endif
         status=def_var(ng, iNLM, ncFLTid(ng), fltVid(iddpth,ng),        &
      &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -351,8 +367,10 @@
         Vinfo( 3)=Vname(3,idDano)
         Vinfo(14)=Vname(4,idDano)
         Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
         Vinfo(24)='_FillValue'
         Aval(6)=spval
+#  endif
         status=def_var(ng, iNLM, ncFLTid(ng), fltVid(idDano,ng),        &
      &                 NF_FOUT, 2, fgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -365,8 +383,10 @@
           Vinfo( 3)=Vname(3,idTvar(itrc))
           Vinfo(14)=Vname(4,idTvar(itrc))
           Vinfo(16)=Vname(1,idtime)
+#  ifndef NO_4BYTE_REALS
           Vinfo(24)='_FillValue'
           Aval(6)=spval
+#  endif
 #  ifdef SEDIMENT
           DO i=1,NST
             IF (itrc.eq.idsed(i)) THEN

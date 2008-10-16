@@ -9,6 +9,9 @@
 !=======================================================================
 !
         USE mod_param
+#ifdef NO_4BYTE_REALS
+        USE netcdf
+#endif
 !
         implicit none
 !
@@ -634,7 +637,11 @@
         real(r8), parameter :: rad2deg = 180.0_r8 / pi
         real(r8), parameter :: day2sec = 86400.0_r8
         real(r8), parameter :: sec2day = 1.0_r8 / 86400.0_r8
+#ifdef NO_4BYTE_REALS
+        real(r8), parameter :: spval = NF90_FILL_DOUBLE
+#else
         real(r8), parameter :: spval = 1.0E+35_r8
+#endif
         real(r8), parameter :: jul_off = 2440000.0_r8
 !
 !-----------------------------------------------------------------------

@@ -202,9 +202,11 @@
             IF (Vtype.eq.nf90_int) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),            &
      &                            INT(Aval(2)))
+#ifndef NO_4BYTE_REALS
             ELSE IF (Vtype.eq.nf90_float) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),            &
      &                            REAL(Aval(2),r4))
+#endif
             ELSE
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(5)),            &
      &                            Aval(2))
@@ -228,9 +230,11 @@
             IF (Vtype.eq.nf90_int) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),            &
      &                            INT(Aval(3)))
+#ifndef NO_4BYTE_REALS
             ELSE IF (Vtype.eq.nf90_float) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),            &
      &                            REAL(Aval(3),r4))
+#endif
             ELSE
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(6)),            &
      &                            Aval(3))
@@ -407,9 +411,11 @@
             IF (Vtype.eq.nf90_int) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),           &
      &                            INT(Aval(4)))
+#ifndef NO_4BYTE_REALS
             ELSE IF (Vtype.eq.nf90_float) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),           &
      &                            REAL(Aval(4),r4))
+#endif
             ELSE
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(17)),           &
      &                            Aval(4))
@@ -433,9 +439,11 @@
             IF (Vtype.eq.nf90_int) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),           &
      &                            INT(Aval(1)))
+#ifndef NO_4BYTE_REALS
             ELSE IF (Vtype.eq.nf90_float) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),           &
      &                            REAL(Aval(1),r4))
+#endif
             ELSE
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(18)),           &
      &                            Aval(1))
@@ -459,9 +467,11 @@
             IF (Vtype.eq.nf90_int) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),           &
      &                            INT(Aval(6)))
+#ifndef NO_4BYTE_REALS
             ELSE IF (Vtype.eq.nf90_float) THEN
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),           &
      &                            REAL(Aval(6),r4))
+#endif
             ELSE
               status=nf90_put_att(ncid, Vid, TRIM(Vinfo(24)),           &
      &                            Aval(6))
