@@ -168,7 +168,7 @@
 # ifdef AVERAGES
 !!        CALL rp_set_avg (ng, TILE)
 # endif
-# ifdef DIAGNOSTICS_UV
+# ifdef DIAGNOSTICS
 !!        CALL rp_set_diags (ng, TILE)
 # endif
           CALL rp_diag (ng, TILE)

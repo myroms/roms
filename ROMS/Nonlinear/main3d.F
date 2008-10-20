@@ -353,7 +353,7 @@
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1     ! irreversible loop
           CALL set_zeta (ng, TILE)
-#  if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+#  ifdef DIAGNOSTICS
           CALL set_diags (ng, TILE)
 #  endif
 #  if defined AVERAGES && !defined ADJOINT
@@ -401,7 +401,7 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
-#  if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+#  ifdef DIAGNOSTICS
           CALL set_diags (ng, TILE)
 #  endif
           CALL rhs3d (ng, TILE)

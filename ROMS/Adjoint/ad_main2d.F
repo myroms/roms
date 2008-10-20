@@ -130,7 +130,7 @@
 # ifdef AVERAGES
           CALL ad_set_avg (ng, TILE)
 # endif
-# ifdef DIAGNOSTICS_UV
+# ifdef DIAGNOSTICS
 !!        CALL ad_set_diags (ng, TILE)
 # endif
           CALL ad_diag (ng, TILE)

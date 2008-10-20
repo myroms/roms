@@ -103,7 +103,7 @@
 
       ntmp(1)=3-ntmp(1)
       CALL netcdf_put_ivar (ng, iNLM, RSTname(ng), 'nnew',              &
-     &                      ntmp, (/tRSTindx(ng)/), (/1/),
+     &                      ntmp, (/tRSTindx(ng)/), (/1/),              &
      &                      ncid = ncRSTid(ng))
       IF (exit_flag.ne.NoError) RETURN
 # endif

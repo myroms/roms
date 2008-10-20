@@ -183,7 +183,7 @@
 # ifdef AVERAGES
 !!        CALL tl_set_avg (ng, TILE)
 # endif
-# ifdef DIAGNOSTICS_UV
+# ifdef DIAGNOSTICS
 !!        CALL set_diags (ng, TILE)
 # endif
           CALL tl_diag (ng, TILE)

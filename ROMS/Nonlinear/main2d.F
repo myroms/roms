@@ -173,7 +173,7 @@
 # if defined AVERAGES && !defined ADJOINT
           CALL set_avg (ng, TILE)
 # endif
-# ifdef DIAGNOSTICS_UV
+# ifdef DIAGNOSTICS
           CALL set_diags (ng, TILE)
 # endif
           CALL diag (ng, TILE)

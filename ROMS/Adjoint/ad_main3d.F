@@ -449,7 +449,7 @@
           CALL ad_gls_prestep (ng, TILE)
 # endif
           CALL ad_rhs3d (ng, TILE)
-# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+# ifdef DIAGNOSTICS
 !!        CALL ad_set_diags (ng, TILE)
 # endif
         END DO

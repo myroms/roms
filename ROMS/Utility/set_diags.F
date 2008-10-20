@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-#if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+#ifdef DIAGNOSTICS
       SUBROUTINE set_diags (ng, tile)
 !
 !svn $Id$
@@ -92,6 +92,8 @@
 !-----------------------------------------------------------------------
 !
       IF (nDIA(ng).eq.0) RETURN
+
+# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
 !
 !-----------------------------------------------------------------------
 ! Initialize time-averaged diagnostic arrays when appropriate.  Notice
@@ -102,7 +104,7 @@
       IF (((iic(ng).gt.ntsDIA(ng)).and.                                 &
      &     (MOD(iic(ng)-1,nDIA(ng)).eq.1)).or.                          &
      &    ((nrrec(ng).gt.0).and.(iic(ng).eq.ntstart(ng)))) THEN
-# ifdef DIAGNOSTICS_TS
+#  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
             DO k=1,N(ng)
@@ -115,8 +117,8 @@
             END DO
           END DO
         END DO
-# endif
-# ifdef DIAGNOSTICS_UV
+#  endif
+#  ifdef DIAGNOSTICS_UV
         DO j=JstrR,JendR
           DO idiag=1,NDM2d
             DO i=IstrR,IendR
@@ -124,7 +126,7 @@
               DIAGS(ng)%DiaV2d(i,j,idiag)=DIAGS(ng)%DiaV2wrk(i,j,idiag)
             END DO
           END DO
-#  ifdef SOLVE3D
+#   ifdef SOLVE3D
           DO idiag=1,NDM3d
             DO k=1,N(ng)
               DO i=IstrR,IendR
@@ -135,16 +137,16 @@
               END DO
             END DO
           END DO
-#  endif
+#   endif
         END DO
-# endif
+#  endif
 !
 !-----------------------------------------------------------------------
 !  Accumulate time-averaged fields.
 !-----------------------------------------------------------------------
 !
       ELSE IF (iic(ng).gt.ntsDIA(ng)) THEN
-# ifdef DIAGNOSTICS_TS
+#  ifdef DIAGNOSTICS_TS
         DO idiag=1,NDT
           DO it=1,NT(ng)
             DO k=1,N(ng)
@@ -158,8 +160,8 @@
             END DO
           END DO
         END DO
-# endif
-# ifdef DIAGNOSTICS_UV
+#  endif
+#  ifdef DIAGNOSTICS_UV
         DO j=JstrR,JendR
           DO idiag=1,NDM2d
             DO i=IstrR,IendR
@@ -169,7 +171,7 @@
      &                                    DIAGS(ng)%DiaV2wrk(i,j,idiag)
             END DO
           END DO
-#  ifdef SOLVE3D
+#   ifdef SOLVE3D
           DO idiag=1,NDM3d
             DO k=1,N(ng)
               DO i=IstrR,IendR
@@ -182,14 +184,14 @@
               END DO
             END DO
           END DO
-#  endif
+#   endif
         END DO
-# endif
+#  endif
       END IF
+# endif
 !
 !-----------------------------------------------------------------------
-!  Apply periodic or gradient boundary conditions and land-mask
-!  for output purposes.
+!  Set diagnotics time.
 !-----------------------------------------------------------------------
 !
       IF ((iic(ng).gt.ntsDIA(ng)).and.                                  &
@@ -198,7 +200,15 @@
         IF (SOUTH_WEST_TEST) THEN
           DIAtime(ng)=DIAtime(ng)+REAL(nDIA(ng),r8)*dt(ng)
         END IF
-# ifdef DIAGNOSTICS_TS
+
+# if defined DIAGNOSTICS_TS || defined DIAGNOSTICS_UV
+!
+!-----------------------------------------------------------------------
+!  Apply periodic or gradient boundary conditions and land-mask
+!  for output purposes.
+!-----------------------------------------------------------------------
+
+#  ifdef DIAGNOSTICS_TS
 !
 !  Apply periodic or gradient boundary conditions for output purposes.
 !
@@ -207,7 +217,7 @@
             CALL bc_r3d_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj, 1, N(ng),             &
      &                        DIAGS(ng)%DiaTrc(:,:,:,it,idiag))
-#  ifdef MASKING
+#   ifdef MASKING
             DO k=1,N(ng)
               DO j=JstrR,JendR
                 DO i=IstrR,IendR
@@ -217,17 +227,17 @@
                 END DO
               END DO
             END DO
-#  endif
+#   endif
           END DO
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
           CALL mp_exchange4d (ng, tile, iNLM, 1,                        &
      &                        LBi, UBi, LBj, UBj, 1, N(ng), 1, NT(ng),  &
      &                        NghostPoints, EWperiodic, NSperiodic,     &
      &                        DIAGS(ng)%DiaTrc(:,:,:,:,idiag))
-#  endif
+#   endif
         END DO
-# endif
-# ifdef DIAGNOSTICS_UV
+#  endif
+#  ifdef DIAGNOSTICS_UV
 !
 !  Apply periodic or gradient boundary conditions for output purposes.
 !
@@ -239,14 +249,14 @@
      &                      LBi, UBi, LBj, UBj,                         &
      &                      DIAGS(ng)%DiaV2d(:,:,idiag))
         END DO
-#  ifdef DISTRIBUTE
+#   ifdef DISTRIBUTE
         CALL mp_exchange3d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj, 1, NDM2d,               &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      DIAGS(ng)%DiaU2d,                           &
      &                      DIAGS(ng)%DiaV2d)
-#  endif
-#  ifdef SOLVE3D
+#   endif
+#   ifdef SOLVE3D
         DO idiag=1,NDM3d
           CALL bc_u3d_tile (ng, tile,                                   &
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
@@ -255,15 +265,15 @@
      &                      LBi, UBi, LBj, UBj, 1, N(ng),               &
      &                      DIAGS(ng)%DiaV3d(:,:,:,idiag))
         END DO
-#   ifdef DISTRIBUTE
+#    ifdef DISTRIBUTE
         CALL mp_exchange4d (ng, tile, iNLM, 2,                          &
      &                      LBi, UBi, LBj, UBj, 1, N(ng), 1, NDM3d,     &
      &                      NghostPoints, EWperiodic, NSperiodic,       &
      &                      DIAGS(ng)%DiaU3d,                           &
      &                      DIAGS(ng)%DiaV3d)
+#    endif
 #   endif
-#  endif
-#  ifdef MASKING
+#   ifdef MASKING
         DO j=JstrR,JendR
           DO idiag=1,NDM2d
             DO i=IstrR,IendR
@@ -273,7 +283,7 @@
      &                                    GRID(ng)%vmask(i,j)
             END DO
           END DO
-#   ifdef SOLVE3D
+#    ifdef SOLVE3D
           DO idiag=1,NDM3d
             DO k=1,N(ng)
               DO i=IstrR,IendR
@@ -286,8 +296,9 @@
               END DO
             END DO
           END DO
-#   endif
+#    endif
         END DO
+#   endif
 #  endif
 # endif
       END IF
