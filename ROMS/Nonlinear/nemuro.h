@@ -408,7 +408,7 @@
               cff3=1.0_r8/(KNH4L(ng)+Bio(i,k,iNH4_))
               cff4=cff2*Bio(i,k,iNO3_)
               cff5=cff3*Bio(i,k,iNH4_)
-              cff6=fac1*Bio(i,k,iSiOH)/(KSiL(ng)+Bio(i,k,iSiOH))
+              cff6=Bio(i,k,iSiOH)/(KSiL(ng)+Bio(i,k,iSiOH))
               cff7=cff6/MAX(MinVal,cff4+cff5)
               cff4=cff1*cff2*MIN(1.0_r8,cff7)     ! Si limitation on N03
               cff5=cff1*cff3*MIN(1.0_r8,cff7)     ! Si limitation on NH4
