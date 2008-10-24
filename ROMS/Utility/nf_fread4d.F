@@ -95,7 +95,7 @@
 
       integer :: nf_fread4d
 
-      real(r8) :: BIG = 1.0E+35_r8
+      real(r8) :: BIG = 1.0E+37_r8
       real(r8) :: Aval
 
       real(r8), dimension(2+(Lm(ng)+2)*(Mm(ng)+2)*(UBk-LBk+1)) :: wrk
