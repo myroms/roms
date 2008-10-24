@@ -1411,21 +1411,20 @@
       END DO
 # ifdef MASKING
 !
-!  If processing water-points only, flag land-points.
+!  If overwriting Land/Sea mask or processing water-points only, flag
+!  land-points with special value.
 !
-      IF (gtype.lt.0) THEN
-        np=0
-        DO k=LBk,UBk
-          DO j=Jmin(MyRank),Jmax(MyRank)
-            DO i=Imin(MyRank),Imax(MyRank)
-              np=np+1
-              IF (Amask(i,j).eq.0.0_r8) THEN
-                Asend(np)=spval
-              END IF
-            END DO
+      np=0
+      DO k=LBk,UBk
+        DO j=Jmin(MyRank),Jmax(MyRank)
+          DO i=Imin(MyRank),Imax(MyRank)
+            np=np+1
+            IF (Amask(i,j).eq.0.0_r8) THEN
+              Asend(np)=spval
+            END IF
           END DO
         END DO
-      END IF
+      END DO
 # endif
 !
 !  If master processor, unpack the send buffer since there is not

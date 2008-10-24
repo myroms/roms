@@ -139,7 +139,14 @@
 !-----------------------------------------------------------------------
 !  If distributed-memory set-up, collect tile data from all spawned
 !  nodes and store it into a global scratch 1D array, packed in column-
-!  major order. If applicable, remove land points.
+!  major order.
+# ifdef MASKING
+#  ifdef WRiTE_WATER 
+!  Remove land points and pack water points into 1D-array.
+#  else
+!  Overwrite masked points with special value.
+#  endif
+# endif
 !-----------------------------------------------------------------------
 !
 !  Process data as 3D slices.
@@ -185,8 +192,14 @@
 !
 !-----------------------------------------------------------------------
 !  If serial or shared-memory applications and serial output, pack data
-!  into a global 1D array in column-major order. If applicable, remove
-!  land points.
+!  into a global 1D array in column-major order.
+# ifdef MASKING
+#  ifdef WRiTE_WATER 
+!  Remove land points and pack water points into 1D-array.
+#  else
+!  Overwrite masked points with special value.
+#  endif
+# endif
 !-----------------------------------------------------------------------
 !
 !  Process data as 3D slices.
@@ -200,6 +213,11 @@
               DO i=Imin,Imax
                 ic=ic+1
                 Aout(ic)=A(i,j,k,fourth)*Ascl
+# ifdef MASKING
+                IF (Amask(i,j).eq.0.0_r8) THEN
+                  Aout(ic)=spval
+                END IF
+# endif
               END DO
             END DO
           END DO

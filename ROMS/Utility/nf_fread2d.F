@@ -235,12 +235,16 @@
       IF (InpThread) THEN
         status=nf90_get_var(ncid, ncvarid, wrk, start, total)
         IF (status.eq.nf90_noerr) THEN
-          Amin=wrk(1)*Ascl
-          Amax=wrk(1)*Ascl
+          Amin=spval
+          Amax=-spval
           DO i=1,Npts
             wrk(i)=Ascl*wrk(i)
-            Amin=MIN(Amin,wrk(i))
-            Amax=MAX(Amax,wrk(i))
+            IF (wrk(i).ge.spval) THEN
+              wrk(i)=0.0_r8             ! land/sea maked with _FillValue
+            ELSE
+              Amin=MIN(Amin,wrk(i))
+              Amax=MAX(Amax,wrk(i))
+            END IF
           END DO
         END IF
       END IF

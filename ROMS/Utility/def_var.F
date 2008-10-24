@@ -623,6 +623,36 @@
           END IF
         END IF
       END IF
+
+#if defined MASKING && !defined WRITE_WATER
+!
+!  If land/sea masking, define "_FillValue" attribute since masking
+!  areas are overwrite with special value (spval) during output.
+!  Notice that the coordinate attribute is used to check which
+!  variables need the "_FillValue" attribute.
+!
+        IF (exit_flag.eq.NoError) THEN
+          latt=LEN_TRIM(Vinfo(22))
+          IF ((latt.gt.0).and.(nVdim.gt.2)) THEN
+            IF (Vtype.eq.nf90_double) THEN
+              status=nf90_put_att(ncid, Vid, '_FillValue',              &
+     &                            spval)
+# ifndef NO_4BYTE_REALS
+            ELSE IF (Vtype.eq.nf90_float) THEN
+              status=nf90_put_att(ncid, Vid, '_FillValue',              &
+     &                            REAL(spval,r4))
+# endif
+            END IF
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) WRITE (stdout,20) '_FillValue',               &
+     &                                      TRIM(Vinfo(1)),             &
+     &                                      TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+#endif
 !
 !  Clean information variables.
 !
