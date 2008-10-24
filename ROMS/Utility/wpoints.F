@@ -423,7 +423,7 @@
 !  Gather masking at RHO-points from all nodes.
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
-     &                r2dvar, 1.0_r8,                                   &
+     &                0, r2dvar, 1.0_r8,                                &
      &                rmask, rmask, Npts, mask)
       CALL mp_bcastf (ng, model, mask, Npts)
 #  else
@@ -505,7 +505,7 @@
 !  Gather masking at PSI-points from all nodes.
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
-     &                p2dvar, 1.0_r8,                                   &
+     &                0, p2dvar, 1.0_r8,                                &
      &                pmask, pmask, Npts, mask)
       CALL mp_bcastf (ng, model, mask, Npts)
 #   else
@@ -538,7 +538,7 @@
 !  Gather masking at U-points from all nodes.
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
-     &                u2dvar, 1.0_r8,                                   &
+     &                0, u2dvar, 1.0_r8,                                &
      &                umask, umask, Npts, mask)
       CALL mp_bcastf (ng, model, mask, Npts)
 #  else
@@ -618,7 +618,7 @@
 !  Gather masking at V-points from all nodes.
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
-     &                v2dvar, 1.0_r8,                                   &
+     &                0, v2dvar, 1.0_r8,                                &
      &                vmask, vmask, Npts, mask)
       CALL mp_bcastf (ng, model, mask, Npts)
 #  else

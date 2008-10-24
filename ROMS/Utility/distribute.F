@@ -1248,7 +1248,7 @@
       END SUBROUTINE mp_collect
 
       SUBROUTINE mp_gather (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,    &
-     &                      gtype, Ascl,                                &
+     &                      tindex, gtype, Ascl,                        &
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
@@ -1274,6 +1274,7 @@
 !     LBk        K-dimension Upper bound, if any. Otherwise, a value   !
 !                  of one is expected.                                 !
 !     UBk        K-dimension Upper bound.                              !
+!     tindex     Time record index to process.                         !
 !     gtype      C-grid type. If negative and Land-Sea is available,   !
 !                  only water-points processed.                        !
 !     Ascl       Factor to scale field before writing.                 !
@@ -1300,7 +1301,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, gtype
+      integer, intent(in) :: ng, model, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(out) :: Npts
 
@@ -1414,17 +1415,31 @@
 !  If overwriting Land/Sea mask or processing water-points only, flag
 !  land-points with special value.
 !
-      np=0
-      DO k=LBk,UBk
-        DO j=Jmin(MyRank),Jmax(MyRank)
-          DO i=Imin(MyRank),Imax(MyRank)
-            np=np+1
-            IF (Amask(i,j).eq.0.0_r8) THEN
-              Asend(np)=spval
-            END IF
+      IF (gtype.lt.0) THEN
+        np=0
+        DO k=LBk,UBk
+          DO j=Jmin(MyRank),Jmax(MyRank)
+            DO i=Imin(MyRank),Imax(MyRank)
+              np=np+1
+              IF (Amask(i,j).eq.0.0_r8) THEN
+                Asend(np)=spval
+              END IF
+            END DO
           END DO
         END DO
-      END DO
+      ELSE IF (tindex.gt.0) THEN
+        np=0
+        DO k=LBk,UBk
+          DO j=Jmin(MyRank),Jmax(MyRank)
+            DO i=Imin(MyRank),Imax(MyRank)
+              np=np+1
+              IF (Amask(i,j).eq.0.0_r8) THEN
+                Asend(np)=spval
+              END IF
+            END DO
+          END DO
+        END DO
+      END IF
 # endif
 !
 !  If master processor, unpack the send buffer since there is not
@@ -3029,7 +3044,7 @@
       RETURN
       END SUBROUTINE mp_dump
 
-      SUBROUTINE mp_aggregate (ng, model, gtype,                        &
+      SUBROUTINE mp_aggregate (ng, model, tindex, gtype,                &
      &                         LBi, UBi, LBj, UBj, LBk, UBk,            &
 # ifdef MASKING
      &                         Amask,                                   &
@@ -3049,7 +3064,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, model, gtype
+      integer, intent(in) :: ng, model, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
 # ifdef MASKING
@@ -3071,7 +3086,7 @@
 !
       Ascl=1.0_r8
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,           &
-     &                gtype, Ascl,                                       &
+     &                tindex, gtype, Ascl,                               &
 # ifdef MASKING
      &                Amask(LBi:,LBj:),                                  &
 # endif

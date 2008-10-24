@@ -157,7 +157,7 @@
         Kmax=UBk
 # endif
         CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, Kmin, Kmax,      &
-     &                  gtype, Ascl,                                    &
+     &                  tindex, gtype, Ascl,                            &
 # ifdef MASKING
      &                  Amask,                                          &
 # endif
@@ -224,7 +224,7 @@
               ic=ic+1
               Aout(ic)=A(i,j,k)*Ascl
 # ifdef MASKING
-              IF (Amask(i,j).eq.0.0_r8) THEN
+              IF ((Amask(i,j).eq.0.0_r8).and.(tindex.gt.0)) THEN
                 Aout(ic)=spval
               END IF
 # endif
