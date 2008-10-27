@@ -413,7 +413,7 @@
 #  endif
 # endif
 
-# if defined MASKING
+# if (defined READ_WATER || defined PROPAGATOR) && defined MASKING
 !
 !-----------------------------------------------------------------------
 !  If distributed-memory, set process water indices arrays.

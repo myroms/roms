@@ -19,16 +19,20 @@
 ! Multiple grid structure.
 !-----------------------------------------------------------------------
 !
+#if defined READ_WATER && defined MASKING && defined DISTRIBUTE
 !    IJwater       IJ-indices of water points.
+#endif
 !    Lstate        Logical switches to control computations of the
 !                    model state.
 !    SOstate       Logical switches to control computations of the
 !                    stochastic optimals.
+#ifdef STATIONS
 !    Sflag         Station extraction special flag:
 !                    Sflag = 0  => locations in terms of (I,J) pairs.
 !                    Sflag = 1  => locations in terms of (lon,lat) pairs.
 !    SposX         Longitude or frational I-coordinate station location.
 !    SposY         Latitude  or frational J-coordinate station location.
+#endif
 !    Cs_r          Set of S-curves used to stretch the vertical grid
 !                    that follows the bathymetry at vertical RHO-points.
 !    Cs_w          Set of S-curves used to stretch the vertical grid
@@ -640,7 +644,7 @@
 #ifdef NO_4BYTE_REALS
         real(r8), parameter :: spval = NF90_FILL_DOUBLE
 #else
-        real(r8), parameter :: spval = 1.0E+35_r8
+        real(r8), parameter :: spval = 1.0E+37_r8
 #endif
         real(r8), parameter :: jul_off = 2440000.0_r8
 !
@@ -1574,7 +1578,7 @@
 #endif
 #if defined READ_WATER && defined MASKING && defined DISTRIBUTE
         allocate ( SCALARS(ng) % IJwater((Lm(ng)+2)*(Mm(ng)+2),4) )
-        SCALARS(ng) % IJwater((1:Lm(ng)+2)*(Mm(ng)+2),1:4) = 0
+        SCALARS(ng) % IJwater = 0
 #endif
 
         allocate ( SCALARS(ng) % Cs_r(N(ng)) )

@@ -156,7 +156,7 @@
           integer :: eta_u          ! number of I-direction points (U)
           integer :: eta_v          ! number of I-direction points (V)
 
-#if defined WRITE_WATER && defined MASKING
+#if (defined READ_WATER || defined WRITE_WATER) && defined MASKING
           integer :: xy_psi         ! number of IJ-water points (PSI)
           integer :: xy_rho         ! number of IJ-water points (RHO)
           integer :: xy_u           ! number of IJ-water points (U)

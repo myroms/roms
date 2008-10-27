@@ -203,6 +203,10 @@
 #ifdef DISTRIBUTE
         CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, 1, 1,           &
      &                   NghostPoints, gtype, Rmin, Rmax,               &
+# if defined READ_WATER && defined MASKING
+     &                   (Lm(ng)+2)*(Mm(ng)+2),                         &
+     &                   SCALARS(ng)%IJwater(1,gtype),                  &
+# endif
      &                   SIZE(random), random, R)
 #else
         ic=0
@@ -306,6 +310,10 @@
 # ifdef DISTRIBUTE
         CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,       &
      &                   NghostPoints, gtype, Rmin, Rmax,               &
+#  if defined READ_WATER && defined MASKING
+     &                   (Lm(ng)+2)*(Mm(ng)+2),                         &
+     &                   SCALARS(ng)%IJwater(1,gtype),                  &
+#  endif
      &                   SIZE(random), random, R)
 # else
         ic=0
