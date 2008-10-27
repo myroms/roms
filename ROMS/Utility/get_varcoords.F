@@ -88,6 +88,7 @@
             RETURN
           END IF       
         ELSE
+          status=nf90_inquire_variable(ncid, ncvarid, name)
           WRITE (stdout,20) 'coordinates', TRIM(name)
           exit_flag=4
           ioerror=status
