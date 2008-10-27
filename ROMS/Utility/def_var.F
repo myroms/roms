@@ -1,6 +1,5 @@
 #include "cppdefs.h"
-      FUNCTION def_var (ng, model, ncid, Vid, Vtype, nVdim, Vdim,       &
-     &                  Aval, Vinfo, ncname)
+      MODULE def_var_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -13,55 +12,66 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng       Nested grid number (integer).                           !
-!     model    Calling model identifier (integer).                     !
-!     ncid     NetCDF file ID (integer).                               !
-!     Vtype    NetCDF variable type (integer).                         !
-!     nVdim    Number of variable dimensions (integer; 0=scalar).      !
-!     Vdim     Dimensions IDs for this variable (integer vector).      !
-!     Aval     Attribute values (real vector):                         !
-!                Aval(1)   =>  Add offset value.                       !
-!                Aval(2)   =>  Valid minimum value.                    !
-!                Aval(3)   =>  Valid maximum value.                    !
-!                Aval(4)   =>  Missing value.                          !
-!                Aval(5)   =>  C-grid variable type.                   !
-!                Aval(6)   =>  Fill value.                             !
-!     Vinfo    Variable information (character array):                 !
-!                Vinfo( 1) =>  Variable name.                          !
-!                Vinfo( 2) =>  Variable "longname" attribute.          !
-!                Vinfo( 3) =>  Variable "units" attribute.             !
-!                Vinfo( 4) =>  Variable "calendar" attribute.          !
-!                Vinfo( 5) =>  Variable "valid_min" attribute.         !
-!                Vinfo( 6) =>  Variable "valid_max" attribute.         !
-!                Vinfo( 7) =>  Variable "option_T" attribute.          !
-!                Vinfo( 8) =>  Variable "option_F" attribute.          !
-!                Vinfo( 9) =>  Variable "option_0" attribute.          !
-!                Vinfo(10) =>  Variable "option_1" attribute.          !
-!                Vinfo(11) =>  Variable "negative_value" attribute.    !
-!                Vinfo(12) =>  Variable "positive_value" attribute.    !
-!                Vinfo(13) =>  Variable "cycle" attribute.             !
-!                Vinfo(14) =>  Variable "field" attribute.             !
-!                Vinfo(15) =>  Variable "positions" attribute.         !
-!                Vinfo(16) =>  Variable "time" attribute.              !
-!                Vinfo(17) =>  Variable "missing_value" attribute.     !
-!                Vinfo(18) =>  Variable "add_offset" attribute.        !
-!                Vinfo(19) =>  Variable "size_class" attribute.        !
-!                Vinfo(20) =>  Variable "water_points" attribute.      !
-!                Vinfo(21) =>  Variable "standard_name" attribute.     !
-!                Vinfo(22) =>  Variable "coordinates" attribute.       !
-!                Vinfo(23) =>  Variable "formula_terms" attribute.     !
-!                Vinfo(24) =>  Variable "_FillValue" attribute.        !
-!     ncname   NetCDF file name.                                       !
+!     ng         Nested grid number (integer).                         !
+!     model      Calling model identifier (integer).                   !
+!     ncid       NetCDF file ID (integer).                             !
+!     Vtype      NetCDF variable type (integer).                       !
+!     nVdim      Number of variable dimensions (integer; 0=scalar).    !
+!     Vdim       Dimensions IDs for this variable (integer vector).    !
+!     Aval       Attribute values (real vector):                       !
+!                  Aval(1)   =>  Add offset value.                     !
+!                  Aval(2)   =>  Valid minimum value.                  !
+!                  Aval(3)   =>  Valid maximum value.                  !
+!                  Aval(4)   =>  Missing value.                        !
+!                  Aval(5)   =>  C-grid variable type.                 !
+!                  Aval(6)   =>  Fill value.                           !
+!     Vinfo      Variable information (character array):               !
+!                  Vinfo( 1) =>  Variable name.                        !
+!                  Vinfo( 2) =>  Variable "longname" attribute.        !
+!                  Vinfo( 3) =>  Variable "units" attribute.           !
+!                  Vinfo( 4) =>  Variable "calendar" attribute.        !
+!                  Vinfo( 5) =>  Variable "valid_min" attribute.       !
+!                  Vinfo( 6) =>  Variable "valid_max" attribute.       !
+!                  Vinfo( 7) =>  Variable "option_T" attribute.        !
+!                  Vinfo( 8) =>  Variable "option_F" attribute.        !
+!                  Vinfo( 9) =>  Variable "option_0" attribute.        !
+!                  Vinfo(10) =>  Variable "option_1" attribute.        !
+!                  Vinfo(11) =>  Variable "negative_value" attribute.  !
+!                  Vinfo(12) =>  Variable "positive_value" attribute.  !
+!                  Vinfo(13) =>  Variable "cycle" attribute.           !
+!                  Vinfo(14) =>  Variable "field" attribute.           !
+!                  Vinfo(15) =>  Variable "positions" attribute.       !
+!                  Vinfo(16) =>  Variable "time" attribute.            !
+!                  Vinfo(17) =>  Variable "missing_value" attribute.   !
+!                  Vinfo(18) =>  Variable "add_offset" attribute.      !
+!                  Vinfo(19) =>  Variable "size_class" attribute.      !
+!                  Vinfo(20) =>  Variable "water_points" attribute.    !
+!                  Vinfo(21) =>  Variable "standard_name" attribute.   !
+!                  Vinfo(22) =>  Variable "coordinates" attribute.     !
+!                  Vinfo(23) =>  Variable "formula_terms" attribute.   !
+!                  Vinfo(24) =>  Variable "_FillValue" attribute.      !
+!     ncname     NetCDF file name.                                     !
+!     SetFillVal Logical switch to set fill value in land areas        !
+!                  (optional).                                         !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     def_var  Error flag (integer).                                   !
-!     Vid      NetCDF variable ID (integer).                           !
+!     def_var    Error flag (integer).                                 !
+!     Vid        NetCDF variable ID (integer).                         !
 !                                                                      !
 !  Notice that arrays "Aval" and "Vinfo" is destroyed on output to     !
 !  facilitate the definition of the next variable.                     !
 !                                                                      !
 !=======================================================================
+!
+      implicit none
+
+      CONTAINS
+!
+!***********************************************************************
+      FUNCTION def_var (ng, model, ncid, Vid, Vtype, nVdim, Vdim,       &
+     &                  Aval, Vinfo, ncname, SetFillVal)
+!***********************************************************************
 !
       USE mod_param
       USE mod_parallel
@@ -70,28 +80,31 @@
       USE mod_netcdf
       USE mod_scalars
 
-# ifdef DISTRIBUTE
+#ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcasti
-# endif
-!
-      implicit none
+#endif
 !
 !  Imported variable declarations.
 !
+      logical, intent(in), optional :: SetFillVal
+
       integer, intent (in) :: ng, model, ncid, Vtype, nVdim
 
-      integer, dimension(*), intent (in) :: Vdim
+      integer, dimension(:), intent (in) :: Vdim
 
       integer, intent (out) :: Vid
 
-      real(r8), dimension(*), intent(inout) :: Aval
+      real(r8), dimension(:), intent(inout) :: Aval
 
       character (len=*), intent(in) :: ncname
       character (len=*), intent(inout) :: Vinfo(24)
 !
 !  Local variable declarations.
 !
+#ifdef MASKING
+      logical :: LandFill
+#endif
       integer :: i, j, latt, status
 
       integer :: def_var
@@ -631,9 +644,15 @@
 !  Notice that the coordinate attribute is used to check which
 !  variables need the "_FillValue" attribute.
 !
+
         IF (exit_flag.eq.NoError) THEN
           latt=LEN_TRIM(Vinfo(22))
-          IF ((latt.gt.0).and.(nVdim.gt.2)) THEN
+          IF (PRESENT(SetFillVal)) THEN
+            LandFill=SetFillVal
+          ELSE
+            LandFill=(latt.gt.0).and.(nVdim.gt.2)
+          END IF
+          IF (LandFill) THEN
             IF (Vtype.eq.nf90_double) THEN
               status=nf90_put_att(ncid, Vid, '_FillValue',              &
      &                            spval)
@@ -676,3 +695,5 @@
 
       RETURN
       END FUNCTION def_var
+
+      END MODULE def_var_mod

@@ -23,8 +23,9 @@
       USE mod_scalars
       USE mod_stepping
       USE mod_tides
-# ifdef DISTRIBUTE
 !
+      USE def_var_mod, ONLY : def_var
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
@@ -53,7 +54,7 @@
 # endif
       integer :: Vsize(4)
 
-      integer :: def_dim, def_var
+      integer :: def_dim
 
       real(r8) :: Aval(6)
 
@@ -275,7 +276,7 @@
         Vinfo( 1)='Hcount'
         Vinfo( 2)='number of time-accumulated tide harmonics'
         status=def_var(ng, iNLM, ncTIDEid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !  
 !  Define model time for accumulated tide harmonic fields.
@@ -297,7 +298,7 @@
           Vinfo( 4)='gregorian'
         END IF
         status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idtime,ng),      &
-     &                 NF_FRST, 1, 0, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define time-accumulated COS(omega(k)*t) harmonics.
@@ -307,7 +308,7 @@
           Vinfo( 2)=Vname(2,idCosW)
           Vinfo( 3)=Vname(3,idCosW)
           status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idCosW,ng),    &
-     &                   NF_FRST, 1, tharm(1), Aval, Vinfo, ncname)
+     &                   NF_FRST, 1, (/tharm(1)/), Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
@@ -318,7 +319,7 @@
           Vinfo( 2)=Vname(2,idSinW)
           Vinfo( 3)=Vname(3,idSinW)
           status=def_var(ng, iNLM, ncTIDEid(ng), tideVid(idSinW,ng),    &
-     &                   NF_FRST, 1, tharm(1), Aval, Vinfo, ncname)
+     &                   NF_FRST, 1, (/tharm(1)/), Aval, Vinfo, ncname)
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !

@@ -90,7 +90,7 @@
 !
       def_dim=status
 !
- 10   FORMAT (/,' DEF_VAR - error while defining dimension: ',a,        &
+ 10   FORMAT (/,' DEF_DIM - error while defining dimension: ',a,        &
      &        /,11x,'in file: ',a)
 
       RETURN

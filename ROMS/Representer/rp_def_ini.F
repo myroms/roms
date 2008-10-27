@@ -21,8 +21,9 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-# ifdef DISTRIBUTE
 !
+      USE def_var_mod, ONLY : def_var
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
@@ -49,7 +50,7 @@
       integer :: DimIDs(31), t4dfrc(4), u4dfrc(4), v4dfrc(4)
       integer :: Vsize(4)
 
-      integer :: def_dim, def_var
+      integer :: def_dim
 
       real(r8) :: Aval(6)
 

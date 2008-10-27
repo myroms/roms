@@ -1252,7 +1252,7 @@
 # ifdef MASKING
      &                      Amask,                                      &
 # endif
-     &                      A, Npts, Aout)
+     &                      A, Npts, Aout, SetFillVal)
 !
 !***********************************************************************
 !                                                                      !
@@ -1280,6 +1280,8 @@
 !     Ascl       Factor to scale field before writing.                 !
 !     Amask      Land/Sea mask, if any.                                !
 !     A          Tile array (2D or 3D) to process.                     !
+!     SetFillVal Logical switch to set fill value in land areas        !
+!                  (optional).                                         !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
@@ -1301,6 +1303,8 @@
 !
 !  Imported variable declarations.
 !
+      logical, intent(in), optional :: SetFillVal
+
       integer, intent(in) :: ng, model, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
       integer, intent(out) :: Npts
@@ -1315,6 +1319,9 @@
 !
 !  Local variable declarations.
 !
+# ifdef MASKING
+      logical :: LandFill
+# endif
       integer :: Itile, Jtile, Nghost
       integer :: Io, Ie, Jo, Je, Ioff, Joff, Koff
       integer :: Ilen, Jlen, Klen, IJlen
@@ -1410,11 +1417,17 @@
           END DO
         END DO
       END DO
+
 # ifdef MASKING
 !
 !  If overwriting Land/Sea mask or processing water-points only, flag
 !  land-points with special value.
 !
+      IF (PRESENT(SetFillVal)) THEN
+        LandFill=SetFillVal
+      ELSE
+        LandFill=tindex.gt.0
+      END IF
       IF (gtype.lt.0) THEN
         np=0
         DO k=LBk,UBk
@@ -1427,7 +1440,7 @@
             END DO
           END DO
         END DO
-      ELSE IF (tindex.gt.0) THEN
+      ELSE IF (LandFill) THEN
         np=0
         DO k=LBk,UBk
           DO j=Jmin(MyRank),Jmax(MyRank)

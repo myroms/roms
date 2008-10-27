@@ -374,6 +374,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+!
 !  Imported variable declarations.
 !
       logical, intent(in) :: outer_impulse
@@ -404,7 +406,6 @@
       integer :: Irec, Iold, Inow, Inxt, Iout, Isav
 
       integer :: nf_fread2d
-      integer :: nf_fwrite2d
 
       integer, dimension(4) :: Vsize(4)
 
@@ -654,6 +655,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
+!
 !  Imported variable declarations.
 !
       logical, intent(in) :: outer_impulse
@@ -684,7 +687,6 @@
       integer :: Irec, Iold, Inow, Inxt, Iout, Isav
 
       integer :: nf_fread3d
-      integer :: nf_fwrite3d
 
       integer, dimension(4) :: Vsize(4)
 

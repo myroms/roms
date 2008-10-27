@@ -1,10 +1,5 @@
 #include "cppdefs.h"
-      FUNCTION nf_fwrite2d (ng, model, ncid, ncvarid, tindex, gtype,    &
-     &                      LBi, UBi, LBj, UBj, Ascl,                   &
-#ifdef MASKING
-     &                      Amask,                                      &
-#endif
-     &                      A)
+      MODULE nf_fwrite2d_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -18,25 +13,40 @@
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
-!     ng         Nested grid number.                                   !
-!     model      Calling model identifier.                             !
-!     ncid       NetCDF file ID.                                       !
-!     ncvarid    NetCDF variable ID.                                   !
-!     tindex     NetCDF time record index to write.                    !
-!     gtype      Grid type. If negative, only write water points.      !
-!     LBi        I-dimension Lower bound.                              !
-!     UBi        I-dimension Upper bound.                              !
-!     LBj        J-dimension Lower bound.                              !
-!     UBj        J-dimension Upper bound.                              !
-!     Amask      land/Sea mask, if any (real).                         !
-!     Ascl       Factor to scale field before writing (real).          !
-!     A          Field to write out (real).                            !
+!     ng           Nested grid number.                                 !
+!     model        Calling model identifier.                           !
+!     ncid         NetCDF file ID.                                     !
+!     ncvarid      NetCDF variable ID.                                 !
+!     tindex       NetCDF time record index to write.                  !
+!     gtype        Grid type. If negative, only write water points.    !
+!     LBi          I-dimension Lower bound.                            !
+!     UBi          I-dimension Upper bound.                            !
+!     LBj          J-dimension Lower bound.                            !
+!     UBj          J-dimension Upper bound.                            !
+!     Amask        land/Sea mask, if any (real).                       !
+!     Ascl         Factor to scale field before writing (real).        !
+!     A            Field to write out (real).                          !
+!     SetFillVal   Logical switch to set fill value in land areas      !
+!                    (optional).                                       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
 !     nf_fwrite  Error flag (integer).                                 !
 !                                                                      !
 !=======================================================================
+!
+      implicit none
+
+      CONTAINS
+!
+!***********************************************************************
+      FUNCTION nf_fwrite2d (ng, model, ncid, ncvarid, tindex, gtype,    &
+     &                      LBi, UBi, LBj, UBj, Ascl,                   &
+#ifdef MASKING
+     &                      Amask,                                      &
+#endif
+     &                      A, SetFillVal)
+!***********************************************************************
 !
       USE mod_param
       USE mod_parallel
@@ -49,10 +59,10 @@
       USE distribute_mod, ONLY : mp_bcasti, mp_gather
 #endif
 !
-      implicit none
-!
 !  Imported variable declarations.
 !
+      logical, intent(in), optional :: SetFillVal
+
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
@@ -65,6 +75,9 @@
 !
 !  Local variable declarations.
 !
+#ifdef MASKING
+      logical :: LandFill
+#endif
       integer :: i, j, ic, Npts
       integer :: Imin, Imax, Jmin, Jmax
       integer :: Ilen, Jlen, IJlen, MyType, status
@@ -116,6 +129,16 @@
       Jlen=Jmax-Jmin+1
       IJlen=Ilen*Jlen
 
+#ifdef MASKING
+!
+!  Set switch to replace land areas with fill value, spval.
+!
+      IF (PRESENT(SetFillVal)) THEN
+        LandFill=SetFillVal
+      ELSE
+        LandFill=tindex.gt.0
+      END IF
+#endif
 #ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
@@ -136,7 +159,7 @@
 # ifdef MASKING
      &                Amask,                                            &
 # endif
-     &                A, Npts, Aout)
+     &                A, Npts, Aout, SetFillVal)
 #else
 !
 !-----------------------------------------------------------------------
@@ -158,7 +181,7 @@
             ic=ic+1
             Aout(ic)=A(i,j)*Ascl
 # ifdef MASKING
-            IF ((Amask(i,j).eq.0.0_r8).and.(tindex.gt.0)) THEN
+            IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
               Aout(ic)=spval
             END IF
 # endif
@@ -214,3 +237,5 @@
       nf_fwrite2d=status
       RETURN
       END FUNCTION nf_fwrite2d
+
+      END MODULE nf_fwrite2d_mod

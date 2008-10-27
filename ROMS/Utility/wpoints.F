@@ -424,7 +424,7 @@
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
      &                0, r2dvar, 1.0_r8,                                &
-     &                rmask, rmask, Npts, mask)
+     &                rmask, rmask, Npts, mask, .FALSE.)
       CALL mp_bcastf (ng, model, mask, Npts)
 #  else
 !
@@ -506,7 +506,7 @@
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
      &                0, p2dvar, 1.0_r8,                                &
-     &                pmask, pmask, Npts, mask)
+     &                pmask, pmask, Npts, mask, .FALSE.)
       CALL mp_bcastf (ng, model, mask, Npts)
 #   else
 !
@@ -539,7 +539,7 @@
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
      &                0, u2dvar, 1.0_r8,                                &
-     &                umask, umask, Npts, mask)
+     &                umask, umask, Npts, mask, .FALSE.)
       CALL mp_bcastf (ng, model, mask, Npts)
 #  else
 !
@@ -619,7 +619,7 @@
 !
       CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
      &                0, v2dvar, 1.0_r8,                                &
-     &                vmask, vmask, Npts, mask)
+     &                vmask, vmask, Npts, mask, .FALSE.)
       CALL mp_bcastf (ng, model, mask, Npts)
 #  else
 !

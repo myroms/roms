@@ -2735,6 +2735,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
@@ -2756,8 +2758,6 @@
 !  Local variable declarations.
 !
       integer :: gfactor, gtype, status
-
-      integer :: nf_fwrite2d
 
       real(r8) :: scale
 
@@ -2841,6 +2841,8 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
+!
 !  Imported variable declarations.
 !
       integer, intent(in) :: ng, tile, model
@@ -2862,8 +2864,6 @@
 !  Local variable declarations.
 !
       integer :: gfactor, gtype, status
-
-      integer :: nf_fwrite3d
 
       real(r8) :: scale
 

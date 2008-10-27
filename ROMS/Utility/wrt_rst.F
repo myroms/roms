@@ -30,6 +30,13 @@
 !
       USE distribute_mod, ONLY : mp_bcasti
 # endif
+      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+# if defined PERFECT_RESTART || defined SOLVE3D
+      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
+# endif
+# if defined PERFECT_RESTART && defined SOLVE3D
+      USE nf_fwrite4d_mod, ONLY : nf_fwrite4d
+# endif
 !
       implicit none
 !
@@ -43,13 +50,6 @@
       integer :: gfactor, gtype, i, itrc, status, varid
 # if defined PERFECT_RESTART || defined SOLVE3D
       integer :: ntmp(1)
-# endif
-      integer :: nf_fwrite2d
-# if defined PERFECT_RESTART || defined SOLVE3D
-      integer :: nf_fwrite3d
-# endif
-# if defined PERFECT_RESTART && defined SOLVE3D
-      integer :: nf_fwrite4d
 # endif
       real(r8) :: scale
 !
@@ -145,7 +145,7 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 # endif
-     &                     GRID(ng) % h(LBi,LBj))
+     &                     GRID(ng) % h(LBi,LBj), .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idbath)), tRSTindx(ng)

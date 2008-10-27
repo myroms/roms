@@ -28,8 +28,9 @@
 # ifdef SEDIMENT
       USE mod_sediment
 # endif
-# ifdef DISTRIBUTE
 !
+      USE def_var_mod, ONLY : def_var
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
@@ -57,7 +58,7 @@
       integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
-      integer :: def_dim, def_var
+      integer :: def_dim
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
@@ -449,7 +450,7 @@
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iADM, ncLCZid(ng), lczVid(idtime,ng),        &
-     &                  NF_TYPE, 1, recdim, Aval, Vinfo,ncname)
+     &                  NF_TYPE, 1, (/recdim/), Aval, Vinfo,ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define free-surface.

@@ -1,11 +1,5 @@
 #include "cppdefs.h"
-      FUNCTION nf_fwrite4d (ng, model, ncid, ncvarid, tindex, gtype,    &
-     &                      LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,     &
-     &                      Ascl,                                       &
-#ifdef MASKING
-     &                      Amask,                                      &
-#endif
-     &                      A)
+      MODULE nf_fwrite4d_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -36,12 +30,28 @@
 !     Amask        land/Sea mask, if any (real).                       !
 !     Ascl         Factor to scale field before writing (real).        !
 !     A            Field to write out (real).                          !
+!     SetFillVal   Logical switch to set fill value in land areas      !
+!                    (optional).                                       !
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
 !     nf_fwrite4d  Error flag (integer).                               !
 !                                                                      !
 !=======================================================================
+!
+      implicit none
+
+      CONTAINS
+!
+!***********************************************************************
+      FUNCTION nf_fwrite4d (ng, model, ncid, ncvarid, tindex, gtype,    &
+     &                      LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,     &
+     &                      Ascl,                                       &
+#ifdef MASKING
+     &                      Amask,                                      &
+#endif
+     &                      A, SetFillVal)
+!***********************************************************************
 !
       USE mod_param
       USE mod_parallel
@@ -54,10 +64,10 @@
       USE distribute_mod, ONLY : mp_bcasti, mp_gather
 #endif
 !
-      implicit none
-!
 !  Imported variable declarations.
 !
+      logical, intent(in), optional :: SetFillVal
+
       integer, intent(in) :: ng, model, ncid, ncvarid, tindex, gtype
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt
 
@@ -70,6 +80,9 @@
 !
 !  Local variable declarations.
 !
+#ifdef MASKING
+      logical :: LandFill
+#endif
       integer :: i, j, k, ic, fourth, Npts
       integer :: Imin, Imax, Jmin, Jmax, Kmin, Kmax, Koff, Loff
       integer :: Ilen, Jlen, Klen, IJlen, MyType, status
@@ -134,6 +147,16 @@
         Loff=0
       END IF
 
+#ifdef MASKING
+!
+!  Set switch to replace land areas with fill value, spval.
+!
+      IF (PRESENT(SetFillVal)) THEN
+        LandFill=SetFillVal
+      ELSE
+        LandFill=tindex.gt.0
+      END IF
+#endif
 #ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
@@ -157,7 +180,7 @@
 # ifdef MASKING
      &                  Amask,                                          &
 # endif
-     &                  A(LBi,LBj,LBk,fourth), Npts, Aout)
+     &                  A(LBi,LBj,LBk,fourth), Npts, Aout, SetFillVal)
 !
 !-----------------------------------------------------------------------
 !  Write output buffer into NetCDF file.
@@ -214,7 +237,7 @@
                 ic=ic+1
                 Aout(ic)=A(i,j,k,fourth)*Ascl
 # ifdef MASKING
-                IF ((Amask(i,j).eq.0.0_r8).and.(tindex.gt.0)) THEN
+                IF ((Amask(i,j).eq.0.0_r8).and.LandFill) THEN
                   Aout(ic)=spval
                 END IF
 # endif
@@ -277,3 +300,5 @@
       nf_fwrite4d=status
       RETURN
       END FUNCTION nf_fwrite4d
+
+      END MODULE nf_fwrite4d_mod

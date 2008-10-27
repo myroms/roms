@@ -27,8 +27,9 @@
 # ifdef SEDIMENT
       USE mod_sediment
 # endif
-# ifdef DISTRIBUTE
 !
+      USE def_var_mod, ONLY : def_var
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
@@ -52,7 +53,7 @@
       integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
-      integer :: def_dim, def_var
+      integer :: def_dim
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
@@ -385,7 +386,7 @@
         Vinfo( 1)='nConvRitz'
         Vinfo( 2)='number of converged Ritz eigenvalues'
         status=def_var(ng, iADM, ncHSSid(ng), varid, nf90_int,          &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define Ritz eigenvalues.
@@ -393,7 +394,7 @@
         Vinfo( 1)='Ritz'
         Vinfo( 2)='Ritz eigenvalues'
         status=def_var(ng, iADM, ncHSSid(ng), varid, NF_TYPE,           &
-     &                 1, recdim, Aval, Vinfo, ncname) 
+     &                 1, (/recdim/), Aval, Vinfo, ncname) 
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define accuracy of Ritz eigenvalues .
@@ -401,7 +402,7 @@
         Vinfo( 1)='Ritz_error'
         Vinfo( 2)='accuracy of Ritz eigenvalues'
         status=def_var(ng, iADM, ncHSSid(ng), varid, NF_TYPE,           &
-     &                 1, recdim, Aval, Vinfo, ncname)
+     &                 1, (/recdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define model time.
@@ -423,7 +424,7 @@
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iADM, ncHSSid(ng), hssVid(idtime,ng),        &
-     &                  NF_TYPE, 1, recdim, Aval, Vinfo,ncname)
+     &                  NF_TYPE, 1, (/recdim/), Aval, Vinfo,ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define free-surface.

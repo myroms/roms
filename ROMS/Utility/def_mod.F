@@ -22,9 +22,9 @@
       USE mod_netcdf
       USE mod_scalars
       USE mod_strings
-
-# ifdef DISTRIBUTE
 !
+      USE def_var_mod, ONLY : def_var
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
@@ -47,7 +47,7 @@
       integer :: i, j, status, varid
       integer :: CostDim(2), Vsize(4), vardim(2)
 
-      integer :: def_dim, def_var
+      integer :: def_dim
 
       real(r8) :: Aval(6)
 
@@ -326,13 +326,13 @@
         Vinfo( 1)='outer'
         Vinfo( 2)='outer loop counter'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='inner'
         Vinfo( 2)='inner loop counter'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # ifndef OBS_SENSITIVITY
@@ -342,55 +342,55 @@
         Vinfo( 1)='Nobs'
         Vinfo( 2)='Number of usable observations'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='obs_mean'
         Vinfo( 2)='observations mean'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='obs_std'
         Vinfo( 2)='observations standard deviation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='model_mean'
         Vinfo( 2)='model mean'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='model_std'
         Vinfo( 2)='model standard deviation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='model_bias'
         Vinfo( 2)='model bias'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo,ncname)
+     &                 1, (/stateDim/), Aval, Vinfo,ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='SDE'
         Vinfo( 2)='model-observations standard deviation error'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='CC'
         Vinfo( 2)='model-observations cross-correlation'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='MSE'
         Vinfo( 2)='model-observations mean squared error'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, stateDim, Aval, Vinfo, ncname)
+     &                 1, (/stateDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR
@@ -400,13 +400,13 @@
         Vinfo( 1)='nConvRitz'
         Vinfo( 2)='Number of converged Ritz eigenvalues'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='Ritz'
         Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, Ninnerdim, Aval, Vinfo, ncname)
+     &                 1, (/Ninnerdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define conjugate gradient norms.
@@ -461,7 +461,7 @@
         Vinfo( 1)='cg_Gnorm'
         Vinfo( 2)='initial gradient normalization factor'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, NouterDim, Aval, Vinfo, ncname)
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Lanczos vector normalization factor.
@@ -542,19 +542,19 @@
         Vinfo( 1)='cg_gamma'
         Vinfo( 2)='conjugate gradient gamma norm'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='cg_sigma'
         Vinfo( 2)='conjugate gradient sigma norm'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)='cg_rnorm'
         Vinfo( 2)='conjugate gradient right-hand-side norm'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 !
@@ -565,7 +565,7 @@
         Vinfo(24)='_FillValue'
         Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idObsS,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
 # if defined FOUR_DVAR && !defined OBS_SENSITIVITY
@@ -577,7 +577,7 @@
         Vinfo(24)='_FillValue'
         Aval(6)=1.0E+35_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idNLmi,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # ifndef OBS_SENSITIVITY
@@ -596,7 +596,7 @@
      &                 NF_FRST, 2, vardim, Aval, Vinfo, ncname)
 #  else
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idNLmo,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
 #  endif
         IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -622,7 +622,7 @@
      &                 NF_FRST, 2, vardim, Aval, Vinfo, ncname)
 #  else
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idTLmo,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
 #  endif
         IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -636,7 +636,7 @@
         Vinfo(24)='_FillValue'
         Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idMOMi,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Final model-observation misfit (innovation) vector.
@@ -646,7 +646,7 @@
         Vinfo(24)='_FillValue'
         Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idMOMf,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined WEAK_CONSTRAINT || defined IOM
@@ -657,7 +657,7 @@
         Vinfo( 1)=Vname(1,idRepC)
         Vinfo( 2)=Vname(2,idRepC)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idRepC,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Conjugate gradient vectors.
@@ -665,37 +665,37 @@
         Vinfo( 1)=Vname(1,idCG_P)
         Vinfo( 2)=Vname(2,idCG_P)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_P,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)=Vname(1,idCG_R)
         Vinfo( 2)=Vname(2,idCG_R)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_R,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)=Vname(1,idCG_S)
         Vinfo( 2)=Vname(2,idCG_S)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_S,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)=Vname(1,idCG_V)
         Vinfo( 2)=Vname(2,idCG_V)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_V,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
        
         Vinfo( 1)=Vname(1,idCG_X)
         Vinfo( 2)=Vname(2,idCG_X)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_X,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
         Vinfo( 1)=Vname(1,idCG_Z)
         Vinfo( 2)=Vname(2,idCG_Z)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_Z,ng),        &
-     &                 NF_FRST, 1, datumDim, Aval, Vinfo, ncname)
+     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR || defined IS4DVAR_OLD
@@ -742,7 +742,7 @@
         Vinfo( 1)='Jmin'
         Vinfo( 2)='normalized, optimal cost function minimum'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 1, iterDim, Aval, Vinfo, ncname)
+     &                 1, (/iterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 !

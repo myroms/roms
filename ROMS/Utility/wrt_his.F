@@ -37,7 +37,9 @@
 #ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 #endif
+      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 #ifdef SOLVE3D
+      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
       USE omega_mod, ONLY : scale_omega
 #endif
 !
@@ -53,10 +55,6 @@
       integer :: gfactor, gtype, status
 #ifdef SOLVE3D
       integer :: i, itrc, j, k, tile
-#endif
-      integer :: nf_fwrite2d
-#ifdef SOLVE3D
-      integer :: nf_fwrite3d
 #endif
       real(r8) :: scale
 
@@ -186,7 +184,7 @@
 # ifdef MASKING
      &                     GRID(ng) % rmask(LBi,LBj),                   &
 # endif
-     &                     GRID(ng) % h(LBi,LBj))
+     &                     GRID(ng) % h(LBi,LBj), .FALSE.)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idbath)), tHISindx(ng)

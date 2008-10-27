@@ -24,10 +24,13 @@
       USE mod_ocean
       USE mod_scalars
       USE mod_stepping
-
-# ifdef DISTRIBUTE
 !
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
+# endif
+      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+# ifdef SOLVE3D
+      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
 # endif
 !
       implicit none
@@ -43,11 +46,6 @@
 # ifdef SOLVE3D
       integer :: itrc, k
 # endif
-      integer :: nf_fwrite2d
-# ifdef SOLVE3D
-      integer :: nf_fwrite3d
-# endif
-
       real(r8) :: scale
 !
       LBi=LBOUND(GRID(ng)%h,DIM=1)

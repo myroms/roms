@@ -22,9 +22,9 @@
       USE mod_netcdf
       USE mod_scalars
       USE mod_storage
-
-# ifdef DISTRIBUTE
 !
+      USE def_var_mod, ONLY : def_var
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
@@ -45,7 +45,7 @@
       integer :: i, j, status, varid
       integer :: DimIDs(31), vardim(2)
 
-      integer :: def_dim, def_var
+      integer :: def_dim
 
       real(r8) :: Aval(6)
 
@@ -185,7 +185,7 @@
         Vinfo( 1)='NEV'
         Vinfo( 2)='number of eigenvalues to compute'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define number of Lanczos vectors to compute.
@@ -193,7 +193,7 @@
         Vinfo( 1)='NCV'
         Vinfo( 2)='number of Lanczos vectors to compute'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define size of eigenvalue problem.
@@ -201,7 +201,7 @@
         Vinfo( 1)='Mstate'
         Vinfo( 2)='total size of eigenvalue problem'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
 # ifdef DISTRIBUTE
@@ -211,7 +211,7 @@
         Vinfo( 1)='Nnodes'
         Vinfo( 2)='number of distribute-memory nodes'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 !
@@ -220,7 +220,7 @@
         Vinfo( 1)='iter'
         Vinfo( 2)='iteration number'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define reverse communications flag.
@@ -228,7 +228,7 @@
         Vinfo( 1)='ido'
         Vinfo( 2)='reverse communications flag'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define information and error flag.
@@ -236,7 +236,7 @@
         Vinfo( 1)='info'
         Vinfo( 2)='information and error flag'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define eigenvalue problem type.
@@ -244,7 +244,7 @@
         Vinfo( 1)='bmat'
         Vinfo( 2)='eigenvalue problem type'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_char,        &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define Ritz eigenvalues to compute.
@@ -252,7 +252,7 @@
         Vinfo( 1)='which'
         Vinfo( 2)='Ritz eigenvalues to compute'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_char,        &
-     &                 1, char2dim, Aval, Vinfo, ncname)
+     &                 1, (/char2dim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define form of basis function.
@@ -260,7 +260,7 @@
         Vinfo( 1)='howmany'
         Vinfo( 2)='form of basis function'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_char,        &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define relative accuracy of computed Ritz values.
@@ -268,7 +268,7 @@
         Vinfo( 1)='Ritz_tol'
         Vinfo( 2)='relative accuracy of computed Ritz values'
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 1, 0, Aval, Vinfo, ncname)
+     &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define eigenproblem parameters.
@@ -276,7 +276,7 @@
         Vinfo( 1)='iparam'
         Vinfo( 2)='eigenproblem parameters'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, iparamdim, Aval, Vinfo, ncname)
+     &                 1, (/iparamdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define pointers to mark starting location in work arrays.
@@ -284,7 +284,7 @@
         Vinfo( 1)='ipntr'
         Vinfo( 2)='pointers to mark starting location in work arrays'
         status=def_var(ng, model, ncGSTid(ng),varid, nf90_int,          &
-     &                 1, ipntrdim, Aval, Vinfo, ncname)
+     &                 1, (/ipntrdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define ARPACK internal integer parameters to _aupd routines.
@@ -292,7 +292,7 @@
         Vinfo( 1)='iaupd'
         Vinfo( 2)='ARPACK internal integer parameters to _aupd routines'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, iaupddim, Aval, Vinfo, ncname)
+     &                 1, (/iaupddim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define ARPACK internal integer parameters to _aitr routines.
@@ -300,7 +300,7 @@
         Vinfo( 1)='iaitr'
         Vinfo( 2)='ARPACK internal integer parameters to _aitr routines'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, iaitrdim, Aval, Vinfo, ncname)
+     &                 1, (/iaitrdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define ARPACK internal integer parameters to _aup2 routines.
@@ -308,7 +308,7 @@
         Vinfo( 1)='iaup2'
         Vinfo( 2)='ARPACK internal integer parameters to _aup2 routines'
         status=def_var(ng, model, ncGSTid(ng), varid, nf90_int,         &
-     &                 1, iaup2dim, Aval, Vinfo, ncname)
+     &                 1, (/iaup2dim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define ARPACK internal logical parameters to _aitr routines.
@@ -336,7 +336,7 @@
         Vinfo( 1)='raitr'
         Vinfo( 2)='ARPACK internal real parameters to _aitr routines'
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 1, raitrdim, Aval, Vinfo, ncname)
+     &                 1, (/raitrdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define ARPACK internal real parameters to _aup2 routines.
@@ -344,7 +344,7 @@
         Vinfo( 1)='raup2'
         Vinfo( 2)='ARPACK internal real parameters to _aup2 routines'
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 1, raup2dim, Aval, Vinfo, ncname)
+     &                 1, (/raup2dim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define Lanczos/Arnoldi basis vectors.
@@ -362,7 +362,7 @@
         Vinfo( 1)='resid'
         Vinfo( 2)='eigenproblem residual vector'
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 1, Mstatedim, Aval, Vinfo, ncname)
+     &                 1, (/Mstatedim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define state reverse communications work array.
@@ -376,7 +376,7 @@
      &                 2, vardim, Aval, Vinfo, ncname)
 # else
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 1, SworkDdim, Aval, Vinfo, ncname)
+     &                 1, (/SworkDdim/), Aval, Vinfo, ncname)
 # endif
         IF (exit_flag.ne.NoError) RETURN
 !
@@ -391,7 +391,7 @@
      &                 2, vardim, Aval, Vinfo, ncname)
 # else
         status=def_var(ng, model, ncGSTid(ng), varid, NF_FRST,          &
-     &                 1, SworkLdim, Aval, Vinfo, ncname)
+     &                 1, (/SworkLdim/), Aval, Vinfo, ncname)
 # endif
         IF (exit_flag.ne.NoError) RETURN
 !

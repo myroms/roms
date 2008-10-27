@@ -28,10 +28,13 @@
       USE mod_sediment
 # endif
       USE mod_stepping
-
-# ifdef DISTRIBUTE
 !
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
+# endif
+      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+# ifdef SOLVE3D
+      USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
 # endif
 !
       implicit none
@@ -48,12 +51,6 @@
 # ifdef SOLVE3D
       integer :: itrc, k, nout
 # endif
-
-      integer :: nf_fwrite2d
-# ifdef SOLVE3D
-      integer :: nf_fwrite3d
-# endif
-
       real(r8) :: scale
       real(r8) :: Tval(1)
 !
@@ -207,7 +204,7 @@
 # ifdef MASKING
      &                   GRID(ng) % rmask(LBi,LBj),                     &
 # endif
-     &                   GRID(ng)% ad_h(LBi,LBj))
+     &                   GRID(ng)% ad_h(LBi,LBj), .FALSE.)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idbath)), tADJindx(ng)

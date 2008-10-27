@@ -26,8 +26,9 @@
 # if defined SEDIMENT_NOT_YET || defined BBL_MODEL_NOT_YET
       USE mod_sediment
 # endif
-# ifdef DISTRIBUTE
 !
+      USE def_var_mod, ONLY : def_var
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
 !
@@ -57,7 +58,7 @@
       integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
-      integer :: def_dim, def_var
+      integer :: def_dim
 
 # ifdef SOLVE3D
       integer :: t3dgrd(4), u3dgrd(4), v3dgrd(4), w3dgrd(4)
@@ -418,7 +419,7 @@
         END IF
         Vinfo(14)=Vname(4,idtime)
         status=def_var(ng, iADM, ncADJid(ng), adjVid(idtime,ng),        &
-     &                 NF_TYPE, 1, recdim, Aval, Vinfo, ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
 # ifdef PROPAGATOR
@@ -428,21 +429,21 @@
         Vinfo( 1)='Ritz_rvalue'
         Vinfo( 2)='Ritz eigenvalues'
         status=def_var(ng, iADM, ncADJid(ng), varid,                    &
-     &                 NF_TYPE, 1, recdim, Aval, Vinfo, ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
 #  if defined AFT_EIGENMODES
         Vinfo( 1)='Ritz_ivalue'
         Vinfo( 2)='imaginary Ritz eigenvalues'
         status=def_var(ng, iADM, ncADJid(ng), varid,                    &
-     &                 NF_TYPE, 1, recdim, Aval, Vinfo, ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 
         Vinfo( 1)='Ritz_norm'
         Vinfo( 2)='Ritz eigenvectors Euclidean norm'
         status=def_var(ng, iADM, ncADJid(ng), varid,                    &
-     &                 NF_TYPE, 1, recdim, Aval, Vinfo, ncname)
+     &                 NF_TYPE, 1, (/recdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # if defined IS4DVAR && defined LANCZOS
@@ -552,7 +553,8 @@
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idbath,ng),r8)
         status=def_var(ng, iADM, ncADJid(ng), adjVid(idbath,ng),        &
-     &                 NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
+     &                 NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname,      &
+     &                 .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define free-surface.
