@@ -278,23 +278,22 @@
 #if defined CONVOLUTION      || defined CORRELATION      || \
     defined GRADIENT_CHECK   || defined FT_EIGENMODES    || \
     defined FORCING_SV       || defined INNER_PRODUCT    || \
-    defined IS4DVAR          || defined IS4DVAR_OLD      || \
-    defined OBS_SENSITIVITY  || defined OPT_PERTURBATION || \
-    defined OPT_OBSERVATIONS || defined R_SYMMETRY       || \
-    defined RPM_DRIVER       || defined SANITY_CHECK     || \
-    defined TLM_CHECK        || defined TLM_DRIVER       || \
-    defined W4DPSAS          || defined W4DVAR
+    defined IS4DVAR          || defined OBS_SENSITIVITY  || \
+    defined OPT_PERTURBATION || defined OPT_OBSERVATIONS || \
+    defined R_SYMMETRY       || defined RPM_DRIVER       || \
+    defined SANITY_CHECK     || defined TLM_CHECK        || \
+    defined TLM_DRIVER       || defined W4DPSAS          || \
+    defined W4DVAR
 # define TANGENT
 #endif
 #if defined AD_SENSITIVITY   || defined ADM_DRIVER       || \
     defined AFT_EIGENMODES   || defined CONVOLUTION      || \
     defined CORRELATION      || defined GRADIENT_CHECK   || \
     defined FORCING_SV       || defined INNER_PRODUCT    || \
-    defined IS4DVAR          || defined IS4DVAR_OLD      || \
-    defined OBS_SENSITIVITY  || defined OPT_PERTURBATION || \
-    defined OPT_OBSERVATIONS || defined R_SYMMETRY       || \
-    defined SANITY_CHECK     || defined SO_SEMI          || \
-    defined S4DVAR           || defined TLM_CHECK        || \
+    defined IS4DVAR          || defined OBS_SENSITIVITY  || \
+    defined OPT_PERTURBATION || defined OPT_OBSERVATIONS || \
+    defined R_SYMMETRY       || defined SANITY_CHECK     || \
+    defined SO_SEMI          || defined TLM_CHECK        || \
     defined W4DPSAS          || defined W4DVAR
 # define ADJOINT
 #endif
@@ -405,16 +404,15 @@
 #endif
 #if defined CONVOLUTION      || defined CORRELATION      || \
     defined GRADIENT_CHECK   || defined IOM              || \
-    defined IS4DVAR          || defined IS4DVAR_OLD      || \
-    defined OBS_SENSITIVITY  || defined OPT_OBSERVATIONS || \
-    defined S4DVAR           || defined TLM_CHECK        || \
+    defined IS4DVAR          || defined OBS_SENSITIVITY  || \
+    defined OPT_OBSERVATIONS || defined TLM_CHECK        || \
     defined WEAK_CONSTRAINT
 # define FOUR_DVAR
 #endif
 #if !defined WEAK_CONSTRAINT && defined FOUR_DVAR
 # define CONVOLVE
 #endif
-#if defined IS4DVAR || defined IS4DVAR_OLD
+#if defined IS4DVAR
 # define BACKGROUND
 #endif
 
@@ -422,28 +420,18 @@
 ** Activate internal switch to process 4DVAR observations.
 */
 
-#if defined GRADIENT_CHECK  || defined IOM          || \
-    defined IS4DVAR         || defined IS4DVAR_OLD  || \
-    defined OBS_SENSITIVITY || defined S4DVAR       || \
-    defined TLM_CHECK       || defined VERIFICATION || \
+#if defined GRADIENT_CHECK  || defined IOM             || \
+    defined IS4DVAR         || defined OBS_SENSITIVITY || \
+    defined TLM_CHECK       || defined VERIFICATION    || \
     defined W4DPSAS         || defined W4DVAR
 # define OBSERVATIONS
 #endif
 
-#if defined GRADIENT_CHECK || defined IS4DVAR         || \
-    defined IS4DVAR_OLD    || defined OBS_SENSITIVITY || \
-    defined R_SYMMETRY     || defined TLM_CHECK       || \
-    defined W4DPSAS        || defined W4DVAR
+#if defined GRADIENT_CHECK  || defined IS4DVAR    || \
+    defined OBS_SENSITIVITY || defined R_SYMMETRY || \
+    defined TLM_CHECK       || defined W4DPSAS    || \
+    defined W4DVAR
 # define TLM_OBS
-#endif
-
-/*
-**  Check S4DVar normalization switches.
-*/
-
-#if !(defined ENERGY1_NORM || defined ENERGY2_NORM || \
-      defined ENERGY3_NORM)
-# undef N2NORM_PROFILE
 #endif
 
 /*
@@ -451,15 +439,13 @@
 */
 
 #if !defined FORWARD_READ  && \
-    (defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined OBS_SENSITIVITY || defined S4DVAR      || \
-     defined W4DPSAS         || defined W4DVAR)
+    (defined IS4DVAR || defined OBS_SENSITIVITY || \
+     defined W4DPSAS || defined W4DVAR)
 # define FORWARD_READ
 #endif
 #if !defined FORWARD_WRITE  && \
-    (defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined OBS_SENSITIVITY || defined S4DVAR      || \
-     defined W4DPSAS         || defined W4DVAR)
+    (defined IS4DVAR || defined OBS_SENSITIVITY || \
+     defined W4DPSAS || defined W4DVAR)
 # define FORWARD_WRITE
 #endif
 
@@ -596,18 +582,22 @@
 #endif
 
 #if (defined WEST_FSRADIATION  && defined WEST_FSNUDGING)  || \
+    (defined WEST_M2REDUCED    && defined FSOBC_REDUCED)   || \
      defined WEST_M2FLATHER    || defined WEST_FSCLAMPED
 # define WEST_FSOBC
 #endif
 #if (defined EAST_FSRADIATION  && defined EAST_FSNUDGING)  || \
+    (defined EAST_M2REDUCED    && defined FSOBC_REDUCED)   || \
      defined EAST_M2FLATHER    || defined EAST_FSCLAMPED
 # define EAST_FSOBC
 #endif
 #if (defined SOUTH_FSRADIATION && defined SOUTH_FSNUDGING) || \
+    (defined SOUTH_M2REDUCED   && defined FSOBC_REDUCED)   || \
      defined SOUTH_M2FLATHER   || defined SOUTH_FSCLAMPED
 # define SOUTH_FSOBC
 #endif
 #if (defined NORTH_FSRADIATION && defined NORTH_FSNUDGING) || \
+    (defined NORTH_M2REDUCED   && defined FSOBC_REDUCED)   || \
      defined NORTH_M2FLATHER   || defined NORTH_FSCLAMPED
 # define NORTH_FSOBC
 #endif
