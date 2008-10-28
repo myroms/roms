@@ -70,10 +70,17 @@
 
       real(r8), intent(in) :: Ascl
 
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+# endif
+      real(r8), intent(in) :: A(LBi:,LBj:,LBk:)
+#else
+# ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+#endif
 !
 !  Local variable declarations.
 !
@@ -185,7 +192,7 @@
      &                  Amask,                                          &
 # endif
 # ifdef INLINE_2DIO
-     &                  A(LBi,LBj,k), Npts, Aout, SetFillVal)
+     &                  A(:,:,k), Npts, Aout, SetFillVal)
 # else
      &                  A, Npts, Aout, SetFillVal)
 # endif

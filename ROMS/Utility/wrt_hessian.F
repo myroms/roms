@@ -90,9 +90,9 @@
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % rmask(LBi,LBj),                     &
+     &                   GRID(ng) % rmask,                              &
 # endif
-     &                   OCEAN(ng)% ad_zeta(LBi,LBj,kout))
+     &                   OCEAN(ng)% ad_zeta(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idFsur)), tHSSindx(ng)
@@ -110,9 +110,9 @@
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   GRID(ng) % umask(LBi,LBj),                     &
+     &                   GRID(ng) % umask,                              &
 # endif
-     &                   OCEAN(ng) % ad_ubar(LBi,LBj,kout))
+     &                   OCEAN(ng) % ad_ubar(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUbar)), tHSSindx(ng)
@@ -130,9 +130,9 @@
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-      &                  GRID(ng) % vmask(LBi,LBj),                     &
+      &                  GRID(ng) % vmask,                              &
 # endif
-     &                   OCEAN(ng) % ad_vbar(LBi,LBj,kout))
+     &                   OCEAN(ng) % ad_vbar(:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVbar)), tHSSindx(ng)
@@ -151,9 +151,9 @@
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % umask(LBi,LBj),                     &
+     &                   GRID(ng) % umask,                              &
 #  endif
-     &                   OCEAN(ng) % ad_u(LBi,LBj,1,nout))
+     &                   OCEAN(ng) % ad_u(:,:,:,nout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUvel)), tHSSindx(ng)
@@ -171,9 +171,9 @@
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, N(ng), scale,           &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask(LBi,LBj),                     &
+     &                   GRID(ng) % vmask,                              &
 #  endif
-     &                   OCEAN(ng) % ad_v(LBi,LBj,1,nout))
+     &                   OCEAN(ng) % ad_v(:,:,:,nout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVvel)), tHSSindx(ng)
@@ -192,9 +192,9 @@
      &                     tHSSindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
 #  ifdef MASKING
-     &                     GRID(ng) % rmask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask,                            &
 #  endif
-     &                     OCEAN(ng) % ad_t(LBi,LBj,1,nout,itrc))
+     &                     OCEAN(ng) % ad_t(:,:,:,nout,itrc))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),              &
@@ -219,9 +219,9 @@
      &                     tHSSindx(ng), gtype,                         &
      &                     LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,     &
 #   ifdef MASKING
-     &                     GRID(ng) % rmask(LBi,LBj),                   &
+     &                     GRID(ng) % rmask,                            &
 #   endif
-     &                     FORCES(ng) % ad_tflux(LBi,LBj,1,nout,itrc))
+     &                     FORCES(ng) % ad_tflux(:,:,:,nout,itrc))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTsur(itrc))),              &
@@ -246,9 +246,9 @@
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
-     &                   GRID(ng) % umask(LBi,LBj),                     &
+     &                   GRID(ng) % umask,                              &
 #  endif
-     &                   FORCES(ng) % ad_ustr(LBi,LBj,1,kout))
+     &                   FORCES(ng) % ad_ustr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idUsms)), tHSSindx(ng)
@@ -266,9 +266,9 @@
      &                   tHSSindx(ng), gtype,                           &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask(LBi,LBj),                     &
+     &                   GRID(ng) % vmask,                              &
 #  endif
-     &                   FORCES(ng) % ad_vstr(LBi,LBj,1,kout))
+     &                   FORCES(ng) % ad_vstr(:,:,:,kout))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idVsms)), tHSSindx(ng)

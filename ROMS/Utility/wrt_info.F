@@ -1689,9 +1689,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask(LBi,LBj),             &
+     &                           GRID(ng) % rmask,                      &
 # endif
-     &                           GRID(ng) % h(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % h, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'h', TRIM(ncname)
                 exit_flag=3
@@ -1727,9 +1727,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 #ifdef MASKING
-     &                           GRID(ng) % rmask(LBi,LBj),             &
+     &                           GRID(ng) % rmask,                      &
 #endif
-     &                           GRID(ng) % f(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % f, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'f', TRIM(ncname)
                 exit_flag=3
@@ -1752,9 +1752,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 #ifdef MASKING
-     &                           GRID(ng) % rmask(LBi,LBj),             &
+     &                           GRID(ng) % rmask,                      &
 #endif
-     &                           GRID(ng) % pm(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % pm, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'pm', TRIM(ncname)
                 exit_flag=3
@@ -1775,9 +1775,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 #ifdef MASKING
-     &                           GRID(ng) % rmask(LBi,LBj),             &
+     &                           GRID(ng) % rmask,                      &
 #endif
-     &                           GRID(ng) % pn(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % pn, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'pn', TRIM(ncname)
                 exit_flag=3
@@ -1801,9 +1801,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask(LBi,LBj),           &
+     &                             GRID(ng) % rmask,                    &
 #endif
-     &                             GRID(ng) % lonr(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % lonr, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lon_rho', TRIM(ncname)
                   exit_flag=3
@@ -1836,9 +1836,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask(LBi,LBj),           &
+     &                             GRID(ng) % rmask,                    &
 #endif
-     &                             GRID(ng) % latr(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % latr, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lat_rho', TRIM(ncname)
                   exit_flag=3
@@ -1873,9 +1873,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask(LBi,LBj),           &
+     &                             GRID(ng) % rmask,                    &
 #endif
-     &                             GRID(ng) % xr(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % xr, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'x_rho', TRIM(ncname)
                   exit_flag=3
@@ -1908,9 +1908,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % rmask(LBi,LBj),           &
+     &                             GRID(ng) % rmask,                    &
 #endif
-     &                             GRID(ng) % yr(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % yr, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'y_rho', TRIM(ncname)
                   exit_flag=3
@@ -1947,9 +1947,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask(LBi,LBj),           &
+     &                             GRID(ng) % umask,                    &
 #endif
-     &                             GRID(ng) % lonu(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % lonu, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lon_u', TRIM(ncname)
                   exit_flag=3
@@ -1970,9 +1970,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask(LBi,LBj),           &
+     &                             GRID(ng) % umask,                    &
 #endif
-     &                             GRID(ng) % latu(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % latu, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lat_u', TRIM(ncname)
                   exit_flag=3
@@ -1995,9 +1995,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask(LBi,LBj),           &
+     &                             GRID(ng) % umask,                    &
 #endif
-     &                             GRID(ng) % xu(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % xu, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'x_u', TRIM(ncname)
                   exit_flag=3
@@ -2018,9 +2018,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % umask(LBi,LBj),           &
+     &                             GRID(ng) % umask,                    &
 #endif
-     &                             GRID(ng) % yu(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % yu, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'y_u', TRIM(ncname)
                   exit_flag=3
@@ -2045,9 +2045,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask(LBi,LBj),           &
+     &                             GRID(ng) % vmask,                    &
 #endif
-     &                             GRID(ng) % lonv(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % lonv, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lon_v', TRIM(ncname)
                   exit_flag=3
@@ -2068,9 +2068,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask(LBi,LBj),           &
+     &                             GRID(ng) % vmask,                    &
 #endif
-     &                             GRID(ng) % latv(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % latv, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lat_v', TRIM(ncname)
                   exit_flag=3
@@ -2093,9 +2093,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask(LBi,LBj),           &
+     &                             GRID(ng) % vmask,                    &
 #endif
-     &                             GRID(ng) % xv(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % xv, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'x_v', TRIM(ncname)
                   exit_flag=3
@@ -2116,9 +2116,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask(LBi,LBj),           &
+     &                             GRID(ng) % vmask,                    &
 #endif
-     &                             GRID(ng) % yv(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % yv, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'y_v', TRIM(ncname)
                   exit_flag=3
@@ -2143,9 +2143,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % pmask(LBi,LBj),           &
+     &                             GRID(ng) % pmask,                    &
 #endif
-     &                             GRID(ng) % lonp(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % lonp, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lon_p', TRIM(ncname)
                   exit_flag=3
@@ -2166,9 +2166,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask(LBi,LBj),           &
+     &                             GRID(ng) % vmask,                    &
 #endif
-     &                             GRID(ng) % latp(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % latp, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'lat_p', TRIM(ncname)
                   exit_flag=3
@@ -2191,9 +2191,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % pmask(LBi,LBj),           &
+     &                             GRID(ng) % pmask,                    &
 #endif
-     &                             GRID(ng) % xp(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % xp, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'x_p', TRIM(ncname)
                   exit_flag=3
@@ -2214,9 +2214,9 @@
                 status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,   &
      &                             LBi, UBi, LBj, UBj, scale,           &
 #ifdef MASKING
-     &                             GRID(ng) % vmask(LBi,LBj),           &
+     &                             GRID(ng) % vmask,                    &
 #endif
-     &                             GRID(ng) % yp(LBi,LBj), .FALSE.)
+     &                             GRID(ng) % yp, .FALSE.)
                 IF (status.ne.nf90_noerr) THEN
                   IF (Master) WRITE (stdout,10) 'y_p', TRIM(ncname)
                   exit_flag=3
@@ -2242,9 +2242,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask(LBi,LBj),             &
+     &                           GRID(ng) % rmask,                      &
 # endif
-     &                           GRID(ng) % angler(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % angler, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'angle', TRIM(ncname)
                 exit_flag=3
@@ -2281,8 +2281,8 @@
             IF (find_string(var_name, n_var, 'mask_rho', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % rmask(LBi,LBj),             &
-     &                           GRID(ng) % rmask(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % rmask,                      &
+     &                           GRID(ng) % rmask, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_rho', TRIM(ncname)
                 exit_flag=3
@@ -2302,8 +2302,8 @@
             IF (find_string(var_name, n_var, 'mask_u', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % umask(LBi,LBj),             &
-     &                           GRID(ng) % umask(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % umask,                      &
+     &                           GRID(ng) % umask, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_u', TRIM(ncname)
                 exit_flag=3
@@ -2323,8 +2323,8 @@
             IF (find_string(var_name, n_var, 'mask_v', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % vmask(LBi,LBj),             &
-     &                           GRID(ng) % vmask(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % vmask,                      &
+     &                           GRID(ng) % vmask, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_v', TRIM(ncname)
                 exit_flag=3
@@ -2344,8 +2344,8 @@
             IF (find_string(var_name, n_var, 'mask_psi', varid)) THEN
               status=nf_fwrite2d(ng, model, ncid, varid, 0, p2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
-     &                           GRID(ng) % pmask(LBi,LBj),             &
-     &                           GRID(ng) % pmask(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % pmask,                      &
+     &                           GRID(ng) % pmask, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'mask_psi', TRIM(ncname)
                 exit_flag=3
@@ -2372,9 +2372,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, r2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask(LBi,LBj),             &
+     &                           GRID(ng) % rmask,                      &
 # endif
-     &                           GRID(ng) % Rscope(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % Rscope, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'scope_rho', TRIM(ncname)
                 exit_flag=3
@@ -2395,9 +2395,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, u2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % umask(LBi,LBj),             &
+     &                           GRID(ng) % umask,                      &
 # endif
-     &                           GRID(ng) % Uscope(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % Uscope, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'scope_u', TRIM(ncname)
                 exit_flag=3
@@ -2418,9 +2418,9 @@
               status=nf_fwrite2d(ng, model, ncid, varid, 0, v2dvar,     &
      &                           LBi, UBi, LBj, UBj, scale,             &
 # ifdef MASKING
-     &                           GRID(ng) % rmask(LBi,LBj),             &
+     &                           GRID(ng) % rmask,                      &
 # endif
-     &                           GRID(ng) % Vscope(LBi,LBj), .FALSE.)
+     &                           GRID(ng) % Vscope, .FALSE.)
               IF (status.ne.nf90_noerr) THEN
                 IF (Master) WRITE (stdout,10) 'scope_v', TRIM(ncname)
                 exit_flag=3

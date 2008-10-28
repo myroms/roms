@@ -27,9 +27,9 @@
 # ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
 # endif
-      USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
-# ifdef SOLVE3D
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
+# ifdef SOLVE3D
+      USE nf_fwrite4d_mod, ONLY : nf_fwrite4d
 # endif
 !
       implicit none
@@ -130,9 +130,9 @@
      &                   0, gtype,                                      &
      &                   LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,       &
 # ifdef MASKING
-     &                   GRID(ng) % rmask(LBi,LBj),                     &
+     &                   GRID(ng) % rmask,                              &
 # endif
-     &                   TIDES(ng) % zeta_tide(LBi,LBj,0))
+     &                   TIDES(ng) % zeta_tide)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idFsuH)), TRIM(TIDEname(ng))
@@ -150,9 +150,9 @@
      &                   0, gtype,                                      &
      &                   LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,       &
 # ifdef MASKING
-     &                   GRID(ng) % umask(LBi,LBj),                     &
+     &                   GRID(ng) % umask,                              &
 # endif
-     &                   TIDES(ng) % ubar_tide(LBi,LBj,0))
+     &                   TIDES(ng) % ubar_tide)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idu2dH)), TRIM(TIDEname(ng))
@@ -170,9 +170,9 @@
      &                   0, gtype,                                      &
      &                   LBi, UBi, LBj, UBj, 0, 2*NTC(ng), scale,       &
 # ifdef MASKING
-     &                   GRID(ng) % vmask(LBi,LBj),                     &
+     &                   GRID(ng) % vmask,                              &
 # endif
-     &                   TIDES(ng) % vbar_tide(LBi,LBj,0))
+     &                   TIDES(ng) % vbar_tide)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idv2dH)), TRIM(TIDEname(ng))
@@ -193,9 +193,9 @@
      &                   LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),    &
      &                   scale,                                         &
 #  ifdef MASKING
-     &                   GRID(ng) % umask(LBi,LBj),                     &
+     &                   GRID(ng) % umask,                              &
 #  endif
-     &                   TIDES(ng) % u_tide(LBi,LBj,1,0))
+     &                   TIDES(ng) % u_tide)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idu3dH)), TRIM(TIDEname(ng))
@@ -214,9 +214,9 @@
      &                   LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),    &
      &                   scale,                                         &
 #  ifdef MASKING
-     &                   GRID(ng) % vmask(LBi,LBj),                     &
+     &                   GRID(ng) % vmask,                              &
 #  endif
-     &                   TIDES(ng) % v_tide(LBi,LBj,1,0))
+     &                   TIDES(ng) % v_tide)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,idv3dH)), TRIM(TIDEname(ng))

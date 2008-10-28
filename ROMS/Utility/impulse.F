@@ -508,9 +508,9 @@
       status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, gtype,       &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   mask(LBi,LBj),                                 &
+     &                   mask,                                          &
 # endif
-     &                   Awrk(LBi,LBj))
+     &                   Awrk)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
@@ -567,9 +567,9 @@
         status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, gtype,     &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
-     &                     mask(LBi,LBj),                               &
+     &                     mask,                                        &
 # endif
-     &                     Awrk(LBi,LBj))
+     &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
@@ -606,9 +606,9 @@
         status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, gtype,     &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
-     &                     mask(LBi,LBj),                               &
+     &                     mask,                                        &
 # endif
-     &                     Awrk(LBi,LBj))
+     &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
@@ -791,9 +791,9 @@
       status=nf_fwrite3d(ng, model, OUTncid, OUTvid, Iout, gtype,       &
      &                   LBi, UBi, LBj, UBj, LBk, UBk, scale,           &
 #  ifdef MASKING
-     &                   mask(LBi,LBj),                                 &
+     &                   mask,                                          &
 #  endif
-     &                   Awrk(LBi,LBj,LBk))
+     &                   Awrk)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
@@ -852,9 +852,9 @@
         status=nf_fwrite3d(ng, model, OUTncid, OUTvid, Iout, gtype,     &
      &                     LBi, UBi, LBj, UBj, LBk, UBk, scale,         &
 #  ifdef MASKING
-     &                     mask(LBi,LBj),                               &
+     &                     mask,                                        &
 #  endif
-     &                     Awrk(LBi,LBj,LBk))
+     &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
@@ -892,9 +892,9 @@
         status=nf_fwrite3d(ng, model, OUTncid, OUTvid, 1, gtype,        &
      &                     LBi, UBi, LBj, UBj, LBk, UBk, scale,         &
 #  ifdef MASKING
-     &                     mask(LBi,LBj),                               &
+     &                     mask,                                        &
 #  endif
-     &                     Awrk(LBi,LBj,LBk))
+     &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)

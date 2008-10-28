@@ -68,10 +68,17 @@
 
       real(r8), intent(in) :: Ascl
 
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+# endif
+      real(r8), intent(in) :: A(LBi:,LBj:)
+#else
+# ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(in) :: A(LBi:UBi,LBj:UBj)
+#endif
 !
 !  Local variable declarations.
 !

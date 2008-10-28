@@ -2787,9 +2787,9 @@
       status=nf_fwrite2d(ng, model, ncid, ncvarid, tindex, gtype,       &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
-     &                   Amask(LBi,LBj),                                &
+     &                   Amask,                                         &
 # endif
-     &                   A(LBi,LBj))
+     &                   A)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,ifield)), tindex
@@ -2893,9 +2893,9 @@
       status=nf_fwrite3d(ng, model, ncid, ncvarid, tindex, gtype,       &
      &                   LBi, UBi, LBj, UBj, LBk, UBk, scale,           &
 # ifdef MASKING
-     &                   Amask(LBi,LBj),                                &
+     &                   Amask,                                         &
 # endif
-     &                   A(LBi,LBj,LBk))
+     &                   A)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,10) TRIM(Vname(1,ifield)), tindex

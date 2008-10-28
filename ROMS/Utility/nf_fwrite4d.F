@@ -73,10 +73,17 @@
 
       real(r8), intent(in) :: Ascl
 
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+# endif
+      real(r8), intent(in) :: A(LBi:,LBj:,LBk:,LBt:)
+#else
+# ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(in) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+#endif
 !
 !  Local variable declarations.
 !
@@ -180,7 +187,7 @@
 # ifdef MASKING
      &                  Amask,                                          &
 # endif
-     &                  A(LBi,LBj,LBk,fourth), Npts, Aout, SetFillVal)
+     &                  A(:,:,:,fourth), Npts, Aout, SetFillVal)
 !
 !-----------------------------------------------------------------------
 !  Write output buffer into NetCDF file.
