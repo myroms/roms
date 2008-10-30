@@ -2083,19 +2083,19 @@
        is=LEN_TRIM(Coptions)+1
        Coptions(is:is+19)=' SSW_FORM_DRAG_COR,'
 # endif
-# ifdef SSW_Z0BIO
+# ifdef SSW_ZOBIO
        IF (Master) WRITE (stdout,20) 'SSW_Z0BIO',                       &
      &   'Biogenic bedfrom roughness from ripples.'
        is=LEN_TRIM(Coptions)+1
        Coptions(is:is+11)=' SSW_Z0BIO,'
 # endif
-# ifdef SSW_Z0BL
+# ifdef SSW_ZOBL
        IF (Master) WRITE (stdout,20) 'SSW_Z0BL',                        &
      &   'Bedload roughness from ripples.'
        is=LEN_TRIM(Coptions)+1
        Coptions(is:is+10)=' SSW_Z0BL,'
 # endif
-# ifdef SSW_Z0RIP
+# ifdef SSW_ZORIP
        IF (Master) WRITE (stdout,20) 'SSW_Z0RIP',                       &
      &   'Bedfrom roughness from ripples.'
        is=LEN_TRIM(Coptions)+1

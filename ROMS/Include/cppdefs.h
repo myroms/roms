@@ -305,9 +305,9 @@
 ** SSW_LOGINT          use if logarithmic interpolation of (Ur,Vr)           **
 ** SSW_CALC_UB         use if computing bottom orbital velocity internally   **
 ** SSW_FORM_DRAG_COR   use to activate form drag coefficient                 **
-** SSW_Z0BIO           use if biogenic bedform roughness from ripples        **
-** SSW_Z0BL            use if bedload roughness for ripples                  **
-** SSW_Z0RIP           use if bedform roughness from ripples                 **
+** SSW_ZOBIO           use if biogenic bedform roughness from ripples        **
+** SSW_ZOBL            use if bedload roughness for ripples                  **
+** SSW_ZORIP           use if bedform roughness from ripples                 **
 **                                                                           **
 ** Lateral boundary conditions OPTIONS:                                      **
 **                                                                           **
