@@ -413,7 +413,8 @@
 #  endif
 # endif
 
-# if (defined READ_WATER || defined PROPAGATOR) && defined MASKING
+# if ((defined READ_WATER && defined DISTRIBUTE) || \
+      defined PROPAGATOR) && defined MASKING
 !
 !-----------------------------------------------------------------------
 !  If distributed-memory, set process water indices arrays.
@@ -439,7 +440,7 @@
       END DO
       Npts=ic
 #  endif
-#  ifdef READ_WATER
+#  if defined READ_WATER && defined DISTRIBUTED
 !
 !  Determine water RHO-points for IO purposes.
 !
@@ -499,8 +500,7 @@
       END DO
 #  endif
 
-#  ifdef READ_WATER
-#   ifdef DISTRIBUTE
+#  if defined READ_WATER && defined DISTRIBUTE
 !
 !  Gather masking at PSI-points from all nodes.
 !
@@ -508,19 +508,6 @@
      &                0, p2dvar, 1.0_r8,                                &
      &                pmask, pmask, Npts, mask, .FALSE.)
       CALL mp_bcastf (ng, model, mask, Npts)
-#   else
-!
-!  Load masking at PSI-points in mask vector.
-!
-      ic=0
-      DO j=1,Mm(ng)
-        DO i=1,Lm(ng)
-          ic=ic+1
-          mask(ic)=pmask(i,j)
-        END DO
-      END DO
-      Npts=ic
-#   endif
 !
 !  Determine water PSI-points for IO purposes.
 !
@@ -533,6 +520,7 @@
       END DO
       my_Nxyp=ic
 #  endif
+
 #  ifdef DISTRIBUTE
 !
 !  Gather masking at U-points from all nodes.
@@ -554,7 +542,7 @@
       END DO
       Npts=ic
 #  endif
-#  ifdef READ_WATER
+#  if defined READ_WATER && defined DISTRIBUTE
 !
 !  Determine water U-points for IO purposes.
 !
@@ -613,6 +601,7 @@
         END DO
       END DO
 #  endif
+
 #  ifdef DISTRIBUTE
 !
 !  Gather masking at V-points from all nodes.
@@ -634,7 +623,7 @@
       END DO
       Npts=ic
 #  endif
-#  ifdef READ_WATER
+#  if defined READ_WATER && defined DISTRIBUTE
 !
 !  Determine water V-points for IO purposes.
 !
