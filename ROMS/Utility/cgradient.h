@@ -448,7 +448,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lritz, Ltrans
+      logical :: Ltrans
 
       integer :: Linp, Lout, Lwrk, L1, L2, i, Lscale
       integer :: status, varid
@@ -466,7 +466,6 @@
 !  Initialize trial step size.
 !-----------------------------------------------------------------------
 !
-      Lritz=.TRUE.
       Ltrans=.FALSE.
 !
       IF (innLoop.eq.0) THEN
@@ -539,9 +538,7 @@
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                IminS, ImaxS, JminS, JmaxS,                       &
-     &                innLoop, outLoop,                                 &
-     &                NstateVar(ng), Lscale,                            &
-     &                Lritz, Ltrans,                                    &
+     &                NstateVar(ng), Lscale, Ltrans,                    &
      &                nConvRitz, Ritz,                                  &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
@@ -686,7 +683,7 @@
       CALL ad_new_state (ng, tile,                                      &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   IminS, ImaxS, JminS, JmaxS,                    &
-     &                   Lold, Lnew,                                    &
+     &                   Lold, Lnew, innLoop,                           &
      &                   cg_alpha(innLoop,outLoop),                     &
      &                   cg_tau(innLoop,outLoop),                       &
 #ifdef MASKING
@@ -808,9 +805,7 @@
           CALL precond (ng, tile, model,                                &
      &                  LBi, UBi, LBj, UBj,                             &
      &                  IminS, ImaxS, JminS, JmaxS,                     &
-     &                  innLoop, outLoop,                               &
-     &                  NstateVar(ng), Lscale,                          &
-     &                  Lritz, Ltrans,                                  &
+     &                  NstateVar(ng), Lscale, Ltrans,                  &
      &                  nConvRitz, Ritz,                                &
 #ifdef MASKING 
      &                  rmask, umask, vmask,                            &
@@ -898,6 +893,7 @@
      &                 LBi, UBi, LBj, UBj,                              &
      &                 IminS, ImaxS, JminS, JmaxS,                      &
      &                 Lout,                                            &
+     &                 innLoop, outLoop,                                &
 #ifdef MASKING
      &                 rmask, umask, vmask,                             &
 #endif
@@ -1093,9 +1089,7 @@
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                IminS, ImaxS, JminS, JmaxS,                       &
-     &                innLoop, outLoop,                                 &
-     &                NstateVar(ng), Lscale,                            &
-     &                Lritz, Ltrans,                                    &
+     &                NstateVar(ng), Lscale, Ltrans,                    &
      &                nConvRitz, Ritz,                                  &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
@@ -1162,9 +1156,7 @@
         CALL precond (ng, tile, model,                                  &
      &                LBi, UBi, LBj, UBj,                               &
      &                IminS, ImaxS, JminS, JmaxS,                       &
-     &                innLoop, outLoop,                                 &
-     &                NstateVar(ng), Lscale,                            &
-     &                Lritz, Ltrans,                                    &
+     &                NstateVar(ng), Lscale, Ltrans,                    &
      &                nConvRitz, Ritz,                                  &
 #ifdef MASKING
      &                rmask, umask, vmask,                              &
@@ -1520,7 +1512,8 @@
       SUBROUTINE ad_new_state (ng, tile,                                &
      &                         LBi, UBi, LBj, UBj,                      &
      &                         IminS, ImaxS, JminS, JmaxS,              &
-     &                         Lold, Lnew, alphaK, tauK,                &
+     &                         Lold, Lnew, innLoop,                     &
+     &                         alphaK, tauK,                            &
 #ifdef MASKING
      &                         rmask, umask, vmask,                     &
 #endif
@@ -1549,6 +1542,7 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lold, Lnew
+      integer, intent(in) :: innLoop
 
       real(r8), intent(in) :: alphaK, tauK
 !
@@ -2460,9 +2454,7 @@
       SUBROUTINE precond (ng, tile, model,                              &
      &                    LBi, UBi, LBj, UBj,                           &
      &                    IminS, ImaxS, JminS, JmaxS,                   &
-     &                    innLoop, outLoop,                             &
-     &                    NstateVars, Lscale,                           &
-     &                    Lritz, Ltrans,                                &
+     &                    NstateVars, Lscale, Ltrans,                   &
      &                    nConvRitz, Ritz,                              &
 #ifdef MASKING
      &                    rmask, umask, vmask,                          &
@@ -2498,13 +2490,11 @@
 !
 !  Imported variable declarations.
 !
-      logical, intent(in) :: Lritz
       logical, intent(in) :: Ltrans
 
       integer, intent(in) :: ng, tile, model
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: innLoop, outLoop
       integer, intent(in) :: NstateVars, Lscale
       integer, intent(in) :: nConvRitz
 !
@@ -2562,12 +2552,14 @@
 !  Local variable declarations.
 !
       integer :: NSUB, i, j, k, L1, L2, nvec, ndefLCZ, rec
+      integer :: is, ie, inc, iss
       integer :: lstr
 #ifdef SOLVE3D
       integer :: itrc
 #endif
       real(r8) :: cff, fac, fac1, fac2, facritz
       real(r8), dimension(0:NstateVars) :: Dotprod
+      real(r8), dimension(1:Ninner+1,Nouter) :: beta_lcz
 
       character (len=80) :: ncname
 
@@ -2588,108 +2580,138 @@
 !  stored in HSSname NetCDF file.
 !-----------------------------------------------------------------------
 !
+!  Read the primitive Ritz vectors cg_v and cg_beta.
+!
+      CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_beta',           &
+     &                      beta_lcz)
+      IF (exit_flag.ne. NoError) RETURN
+
+      CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_zv',             &
+     &                      cg_zv)
+      IF (exit_flag.ne. NoError) RETURN 
+!
+!  Set state arrays work time indices.
+!
       L1=1
       L2=2
-      fac2=0.0_r8
+!
+!  Set eigenvector processing loop parameters.
+!
+      IF (Lscale.gt.0) THEN
+        is=1
+        ie=nConvRitz
+        inc=1
+      ELSE
+        is=nConvRitz
+        ie=1
+        inc=-1
+      END IF
+!
+      IF (Ltrans) THEN
+        iss=is
+        is=ie
+        ie=iss
+        inc=-inc
+      END IF
+!
+      DO nvec=is,ie,inc
+!
+        fac2=0.0_r8
 !
 !  If using the Ritz preconditioner, read information from the 
 !  Lanczos vector file.
 !
-      IF (Lritz) THEN
+        IF (Lritz) THEN
 
-        IF (.not.Ltrans) THEN
+          IF (.not.Ltrans) THEN
 !
 !  Determine if single or multiple Lanczos vector NetCDF files.
 !
-          CALL netcdf_get_ivar (ng, iADM, TRIM(LCZname(ng)), 'ndefADJ', &
-     &                          ndefLCZ)
-          IF (exit_flag.ne.NoError) RETURN
+            CALL netcdf_get_ivar (ng, iADM, TRIM(LCZname(ng)),          &
+     &                            'ndefADJ', ndefLCZ)
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Determine Lanczos vector file to read.
 !
-          IF (ndefLCZ.gt.0) THEN
-            lstr=LEN_TRIM(LCZname(ng))
-            WRITE (ncname,10) LCZname(ng)(1:lstr-8), inner
- 10         FORMAT (a,'_',i4.4,'.nc')
-          ELSE
-            ncname=LCZname(ng)
-          END IF
+            IF (ndefLCZ.gt.0) THEN
+              lstr=LEN_TRIM(LCZname(ng))
+              WRITE (ncname,10) LCZname(ng)(1:lstr-8), inner
+ 10           FORMAT (a,'_',i4.4,'.nc')
+            ELSE
+              ncname=LCZname(ng)
+            END IF
 !
-!  Read in the Lanczos vector q_k+1 computed from the IS4DVAR algorithm
-!  first outer loop, where k=nConvRitz. Load Lanczos vectors into NL
-!  state arrays at index L2.
+!  Read in the Lanczos vector q_k+1 computed from the incremental 4DVar
+!  algorithm first outer loop, where k=Ninner. Load Lanczos vectors into
+!  NLM state arrays at index L2.
 !
-          rec=nConvRitz+1
-          CALL read_state (ng, tile, model,                             &
-     &                     LBi, UBi, LBj, UBj,                          &
-     &                     L2, rec,                                     &
-     &                     ndefLCZ, ncLCZid(ng), TRIM(ncname),          &
+            rec=Ninner
+            CALL read_state (ng, tile, model,                           &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       L2, rec,                                   &
+     &                       ndefLCZ, ncLCZid(ng), TRIM(ncname),        &
 # ifdef MASKING
-     &                     rmask, umask, vmask,                         &
+     &                       rmask, umask, vmask,                       &
 # endif
 # ifdef ADJUST_WSTRESS
-     &                     nl_ustr, nl_vstr,                            &
+     &                       nl_ustr, nl_vstr,                          &
 # endif
 # ifdef SOLVE3D
 #  ifdef ADJUST_STFLUX
-     &                     nl_tflux,                                    &
+     &                       nl_tflux,                                  &
 #  endif
-     &                     nl_t, nl_u, nl_v,                            &
+     &                       nl_t, nl_u, nl_v,                          &
 # else
-     &                     nl_ubar, nl_vbar,                            &
+     &                       nl_ubar, nl_vbar,                          &
 # endif
-     &                     nl_zeta)
-          IF (exit_flag.ne.NoError) RETURN
+     &                       nl_zeta)
+            IF (exit_flag.ne.NoError) RETURN
 !
-!  Compute the dot-product between the input vector and the nConvRitz+1
+!  Compute the dot-product between the input vector and the Ninner
 !  Lanczos vector.
 !
-          CALL state_dotprod (ng, tile, model,                          &
-     &                        LBi, UBi, LBj, UBj,                       &
-     &                        NstateVars, Dotprod(0:),                  &
+            CALL state_dotprod (ng, tile, model,                        &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          NstateVars, Dotprod(0:),                &
 #ifdef MASKING
-     &                        rmask, umask, vmask,                      &
+     &                          rmask, umask, vmask,                    &
 #endif
 #ifdef ADJUST_WSTRESS
-     &                        nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L2),     &
-     &                        nl_vstr(:,:,:,L1), nl_vstr(:,:,:,L2),     &
+     &                          nl_ustr(:,:,:,L1), nl_ustr(:,:,:,L2),   &
+     &                          nl_vstr(:,:,:,L1), nl_vstr(:,:,:,L2),   &
 #endif
 #ifdef SOLVE3D
 # ifdef ADJUST_STFLUX
-     &                        nl_tflux(:,:,:,L1,:),                     &
-     &                        nl_tflux(:,:,:,L2,:),                     &
+     &                          nl_tflux(:,:,:,L1,:),                   &
+     &                          nl_tflux(:,:,:,L2,:),                   &
 # endif
-     &                        nl_t(:,:,:,L1,:), nl_t(:,:,:,L2,:),       &
-     &                        nl_u(:,:,:,L1), nl_u(:,:,:,L2),           &
-     &                        nl_v(:,:,:,L1), nl_v(:,:,:,L2),           &
+     &                          nl_t(:,:,:,L1,:), nl_t(:,:,:,L2,:),     &
+     &                          nl_u(:,:,:,L1), nl_u(:,:,:,L2),         &
+     &                          nl_v(:,:,:,L1), nl_v(:,:,:,L2),         &
 #else
-     &                        nl_ubar(:,:,L1), nl_ubar(:,:,L2),         &
-     &                        nl_vbar(:,:,L1), nl_vbar(:,:,L2),         &
+     &                          nl_ubar(:,:,L1), nl_ubar(:,:,L2),       &
+     &                          nl_vbar(:,:,L1), nl_vbar(:,:,L2),       &
 #endif
-     &                        nl_zeta(:,:,L1), nl_zeta(:,:,L2))
+     &                          nl_zeta(:,:,L1), nl_zeta(:,:,L2))
 
+          END IF
+!
+! Note: the primitive Ritz vectors cg_zv are arranged in order of
+!       ASCENDING eigenvalue while the Hessian eigenvectors are 
+!       arranged in DESCENDING order. In addition, cg_zv(:,Ninner)=0,
+!       so we need to use Ninner-nvec as the second index of cg_zv here.
+!
+          facritz=beta_lcz(Ninner,1)*cg_zv(Ninner-1,Ninner-nvec)
+!
+          IF (.not.Ltrans) THEN
+            facritz=facritz*Dotprod(0)
+          END IF
+!
         END IF
-!
-!  Now read the primitive Ritz vectors cg_v and cg_beta.
-!
-        CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_beta',         &
-     &                        cg_beta)
-        IF (exit_flag.ne. NoError) RETURN
-        CALL netcdf_get_fvar (ng, iADM, LCZname(ng), 'cg_zv',           &
-     &                        cg_zv)
-        IF (exit_flag.ne. NoError) RETURN 
-!
-        IF (Ltrans) THEN
-          facritz=cg_beta(nConvRitz,outLoop)
-        ELSE
-          facritz=cg_beta(nConvRitz,outLoop)*Dotprod(0)
-        END IF
-      END IF
 !
 !  Read the converged Hessian eigenvectors into NLM state array,
 !  index L2.
 !
-      DO nvec=1,nConvRitz
         CALL read_state (ng, tile, model,                               &
      &                   LBi, UBi, LBj, UBj,                            &
      &                   L2, nvec,                                      &
@@ -2759,17 +2781,13 @@
         ELSE IF (Lscale.eq.2) THEN
           fac2=(1.0_r8/SQRT(Ritz(nvec))-1.0_r8)*Dotprod(0)
         END IF
-
-        IF (Lritz.and.Lscale.eq.-2) THEN
-         fac2=-fac2
-        END IF
-
-        IF(.not.Ltrans) THEN
+!
+        IF (.not.Ltrans) THEN
           IF (Lritz.and.Lscale.eq.-2) THEN
-            fac2=fac2+SQRT(Ritz(nvec))*cg_zv(nConvRitz,nvec)*facritz
+            fac2=fac2+facritz/SQRT(Ritz(nvec))
           END IF
           IF (Lritz.and.Lscale.eq.2) THEN
-            fac2=fac2-cg_zv(nConvRitz,nvec)*facritz/Ritz(nvec)
+            fac2=fac2-facritz/Ritz(nvec)
           END IF
         END IF
 
@@ -2814,10 +2832,10 @@
           END IF
 !
 !  Read in the Lanczos vector q_k+1 computed from the incremental 4DVar
-!  algorithm first outer loop, where k=nConvRitz. Load Lanczos vectors
+!  algorithm first outer loop, where k=Ninner. Load Lanczos vectors
 !  into NLM state arrays at index L2.
 !
-          rec=nConvRitz+1
+          rec=Ninner
           CALL read_state (ng, tile, model,                             &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     L2, rec,                                     &
@@ -2840,11 +2858,10 @@
           IF (exit_flag.ne.NoError) RETURN
 !
           IF (Lscale.eq.2) THEN
-            fac2=-cg_zv(nConvRitz,nvec)*facritz*Dotprod(0)/Ritz(nvec)
+            fac2=-facritz*Dotprod(0)/Ritz(nvec)
           END IF
           IF (Lscale.eq.-2) THEN
-            fac2=SQRT(Ritz(nvec))*cg_zv(nConvRitz,nvec)*facritz*        &
-     &                Dotprod(0)
+            fac2=facritz*Dotprod(0)/SQRT(Ritz(nvec))
           END IF
 !
           CALL state_addition (ng, tile,                                &
@@ -2882,6 +2899,7 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lwrk,                                        &
+     &                     innLoop, outLoop,                            &
 #ifdef MASKING
      &                     rmask, umask, vmask,                         &
 #endif
@@ -2927,6 +2945,7 @@
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
       integer, intent(in) :: Lwrk
+      integer, intent(in) :: innLoop, outLoop
 !
 #ifdef ASSUMED_SHAPE
 # ifdef MASKING
@@ -3102,7 +3121,7 @@
 !
 !   Compute the new cost function. Only the total value is meaningful.
 !
-      FOURDVAR(ng)%CostFun(0)=FOURDVAR(ng)%CostNorm(0)+0.5_r8*dot(0)
+      FOURDVAR(ng)%CostFun(0)=FOURDVAR(ng)%Cost0(outLoop)+0.5_r8*dot(0)
       DO i=1,NstateVar(ng)
         FOURDVAR(ng)%CostFun(i)=0.0_r8
       END DO

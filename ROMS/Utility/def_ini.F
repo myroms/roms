@@ -9,9 +9,8 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 !                                                                      !
-!  This routine creates a initialization NetCDF file used for          !
-!  variational data assimilation.  It defines its dimensions,          !
-!  attributes, and variables.                                          !
+!  This routine open existing nonlinear model initial conditions file  !
+!  and either define new new variables or inquire its contents.        !
 !                                                                      !
 !=======================================================================
 !

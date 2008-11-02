@@ -279,7 +279,6 @@
 !  Determine variables to perturb.
 !
         Lold(ng)=1
-        Ipass=1
         ERstr=1
 #ifdef SOLVE3D
         ERend=NstateVar(ng)-2

@@ -340,8 +340,7 @@
 !  correlations. Notice that the spatial convolution is only done
 !  for half of the diffusion steps.
 !
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck)                     &
-!$OMP&            SHARED(inner,CGstepF,numthreads)
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lbck) SHARED(numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1

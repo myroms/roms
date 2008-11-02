@@ -118,11 +118,7 @@
       CALL netcdf_get_fvar (ng, iNLM, MODname(ng), Vname(1,idNLmo),     &
      &                      mod_value,                                  &
      &                      ncid = ncMODid(ng),                         &
-#  ifdef S4DVAR
-     &                      start = (/1,2/), total = (/Ndatum(ng),1/))
-#  else
      &                      start = (/1/), total = (/Ndatum(ng)/))
-#  endif
 # endif
       IF (exit_flag.ne. NoError) RETURN
 !

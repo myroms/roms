@@ -78,15 +78,10 @@
 #if defined PERTURBATION
         WRITE (stdout,10) Nrun
  10     FORMAT (/,' <<<< Ensemble/Perturbation Run: ',i5.5,' >>>>',/)
-#elif defined IS4DVAR || defined IS4DVAR_OLD || defined W4DPSAS || \
-      defined W4DVAR
+#elif defined IS4DVAR || defined W4DPSAS || defined W4DVAR
         WRITE (stdout,10) outer, inner
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Outer = ',i3.3, ', Inner = ',i3.3,' >>>>',/)
-#elif defined S4DVAR
-        WRITE (stdout,10) Nrun, Ipass
- 10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
-     &          'Iteration = ',i5.5, ', Ipass = ',i1,' >>>>',/)
 #endif
         WRITE (stdout,20) 'INITIAL: Configuring and initializing ',     &
      &                    'forward nonlinear model ...'
@@ -187,22 +182,7 @@
       tHISindx(ng)=0
       NrecHIS(ng)=0
 
-# if defined S4DVAR
-!  
-!  Avoid writing data into average, history, and restart files in
-!  the second iteration pass (Ipass=2).
-!
-      IF (Ipass.eq.1) THEN
-        LwrtAVG(ng)=.TRUE.
-        LwrtHIS(ng)=.TRUE.
-        LwrtRST(ng)=.TRUE.
-      ELSEif (Ipass.eq.2) THEN
-        LwrtAVG(ng)=.FALSE.
-        LwrtHIS(ng)=.FALSE.
-        LwrtRST(ng)=.FALSE.
-      END IF
-
-# elif defined IS4DVAR || defined IS4DVAR_OLD
+# ifdef IS4DVAR
 !
 !  Activate switches to writting data into average, history and
 !  restart files.

@@ -266,26 +266,17 @@
 !
       ProcessObs(ng)=.FALSE.
 
-# ifdef FOUR_DVAR
+# ifdef IS4DVAR
 !
 !  Initialize cost function misfit between model and observations.
 !  The IF statement is to avoid rewritting its value before it is
 !  written into the initial NetCDF file.
 !
-#  ifdef IS4DVAR
       IF (.not.backward) THEN
-#  else
-      IF (.not.backward.and.(Ipass.eq.1)) THEN
-#  endif
         DO i=0,NstateVar(ng)
           FOURDVAR(ng)%ObsCost(i)=0.0_r8
         END DO
       END IF
-!
-!  Initialize descent algorithm step size factors.
-!
-      StepBotObs=0.0_r8
-      StepTopObs=0.0_r8
 # endif
 !
 !  Set staring and ending observation indices.

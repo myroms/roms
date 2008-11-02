@@ -188,7 +188,6 @@
         Lold(ng)=1
         Lnew(ng)=1
         Nrun=1
-        Ipass=1
         ERstr=1
         ERend=NstateVar(ng)+1
         IniRec=1

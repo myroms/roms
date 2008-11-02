@@ -86,7 +86,7 @@
       USE mod_ncparam
       USE mod_scalars
 !
-# if defined DISTRIBUTE && !defined S4DVAR
+# ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_collect
 # endif
       USE ad_extract_obs_mod, ONLY : ad_extract_obs2d
@@ -162,28 +162,15 @@
 !  If normalizing, the scale is terms of screenning and some specified
 !  norm. In incremental 4DVAR only screenning is carried out.
 !
-# ifdef S4DVAR
-        CALL obs_scale (ng, model)
-# else
         DO iobs=1,Mobs
           ObsScale(iobs)=IniVal
         END DO
-# endif
 !
 !  Compute adjoint forcing terms at observation locations.
 !
         DO iobs=1,Nobs(ng)
-# if defined S4DVAR
-          ADmodVal(iobs)=ObsScale(iobs)*ObsErr(iobs)*                   &
-     &                   (NLmodVal(iobs,Ipass)-ObsVal(iobs))
-# elif defined IS4DVAR
           ADmodVal(iobs)=ObsErr(iobs)*                                  &
      &                   (NLmodVal(iobs)+TLmodVal(iobs)-ObsVal(iobs))
-# elif defined IS4DVAR_OLD
-          ADmodVal(iobs)=ObsErr(iobs)*                                  &
-     &                   (NLmodVal(iobs)+TLmodVal(iobs,Ipass)-          &
-     &                    ObsVal(iobs))
-# endif
         END DO
 !
 !  Set adjoint time index to update.
@@ -333,7 +320,7 @@
           END IF
         END DO
 # endif
-# if defined DISTRIBUTE && !defined S4DVAR
+# ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
 !  Collect all observations scaling factors.

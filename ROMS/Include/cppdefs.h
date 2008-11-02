@@ -510,7 +510,6 @@
 ** GRADIENT_CHECK      use if tangent linear and adjoint codes gradient test **
 ** INNER_PRODUCT       use if tangent linear and adjoint inner product check **
 ** IS4DVAR             use if incremental 4DVar data assimilation            **
-** IS4DVAR_OLD         use if old incremental 4DVar data assimilation        **
 ** OBS_SENSITIVITY     use if 4DVAR observations sensitivity driver          **
 ** OPT_OBSERVATIONS    use if optimal observations driver                    **
 ** OPT_PERTURBATION    use if optimal perturbations driver, singular vectors **
@@ -522,7 +521,6 @@
 ** SO_SEMI             use if stochastic optimals driver, semi-norm          **
 ** SO_TRACE            use if stochastic optimals, randomized trace          **
 ** STOCHASTIC_OPT      use if stochastic optimals                            **
-** S4DVAR              use if Strong constraint 4DVar data assimilation      **
 ** TLM_CHECK           use if tangent linear model linearization check       **
 ** TLM_DRIVER          use if generic tangent linear model driver            **
 ** W4DPSAS             use if weak constraint 4D-PSAS data assimilation      **
@@ -547,7 +545,6 @@
 ** IOM                 use to activate IOM multiple executables              **
 ** LANCZOS             use to activate Lanczos conjugate gradient algorithm  **
 ** MULTIPLE_TLM        use if multiple TLM history files in 4DVAR            **
-** N2NORM_PROFILE      use if N2(z) profile for energy normalization         **
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **
 ** RPM_RELAXATION      use if Picard iterations, Diffusive Relaxation of RPM **
 ** SO_SEMI_WHITE       use to activate white/red noise processes             **

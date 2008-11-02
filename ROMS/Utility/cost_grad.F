@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE cost_grad_mod
-#if defined IS4DVAR || defined IS4DVAR_OLD
+#if defined IS4DVAR
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -14,13 +14,13 @@
 !                                                                      !
 !      GRADv(J) = GRADv(Jb) + GRADv(Jo)                         (1)    !
 !                                                                      !
-!      GRADv(J) = deltaV + B^(T/2) GRADx(Jo)                    (2)    !
+!      GRADv(J) = SUM deltaV + B^(T/2) GRADx(Jo)                (2)    !
 !                                                                      !
-!      GRADv(J) = deltaV + W^(-1/2) L^(T/2) G S                 (3)    !
+!      GRADv(J) = SUM deltaV + W^(-1/2) L^(T/2) G S             (3)    !
 !                                                                      !
 !  where                                                               !
 !                                                                      !
-!      deltaV     Increment vector (TLM solution) in v-space           !
+!      deltaV     Increment vectors (TLM solution) in v-space          !
 !      B          Background-error covariance matrix                   !
 !      S          Background-error standard deviations                 !
 !      G          Normalization coefficients matrix                    !
@@ -39,7 +39,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE cost_grad (ng, tile, Linp, Lout)
+      SUBROUTINE cost_grad (ng, tile, Linp1, Linp2, Lout)
 !***********************************************************************
 !
       USE mod_param
@@ -50,7 +50,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Linp, Lout
+      integer, intent(in) :: ng, tile, Linp1, Linp2, Lout
 !
 !  Local variable declarations.
 !
@@ -59,7 +59,7 @@
       CALL cost_grad_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     Linp, Lout,                                  &
+     &                     Linp1, Linp2, Lout,                          &
 # ifdef ADJUST_WSTRESS
     &                      FORCES(ng) % tl_ustr,                        &
     &                      FORCES(ng) % tl_vstr,                        &
@@ -99,7 +99,7 @@
       SUBROUTINE cost_grad_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
-     &                           Linp, Lout,                            &
+     &                           Linp1, Linp2, Lout,                    &
 # ifdef ADJUST_WSTRESS
     &                            tl_ustr, tl_vstr,                      &
 # endif
@@ -136,7 +136,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Linp, Lout
+      integer, intent(in) :: Linp1, Linp2, Lout
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
@@ -227,7 +227,8 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          ad_zeta(i,j,Lout)=tl_zeta(i,j,Linp)+                          &
+          ad_zeta(i,j,Lout)=tl_zeta(i,j,Linp1)+                         &
+     &                      tl_zeta(i,j,Linp2)+                         &
      &                      ad_zeta(i,j,Lout)
         END DO
       END DO
@@ -239,13 +240,15 @@
       DO k=1,Nfrec(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            ad_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Linp)+                    &
+            ad_ustr(i,j,k,Lout)=tl_ustr(i,j,k,Linp1)+                   &
+     &                          tl_ustr(i,j,k,Linp2)+                   &
      &                          ad_ustr(i,j,k,Lout)
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            ad_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Linp)+                    &
+            ad_vstr(i,j,k,Lout)=tl_vstr(i,j,k,Linp1)+                   &
+     &                          tl_vstr(i,j,k,Linp2)+                   &
      &                          ad_vstr(i,j,k,Lout)
           END DO
         END DO
@@ -257,13 +260,15 @@
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR
-          ad_ubar(i,j,Lout)=tl_ubar(i,j,Linp)+                          &
+          ad_ubar(i,j,Lout)=tl_ubar(i,j,Linp1)+                         &
+     &                      tl_ubar(i,j,Linp2)+                         &
      &                      ad_ubar(i,j,Lout)
         END DO
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
-          ad_vbar(i,j,Lout)=tl_vbar(i,j,Linp)+                          &
+          ad_vbar(i,j,Lout)=tl_vbar(i,j,Linp1)+                         &
+     &                      tl_vbar(i,j,Linp2)+                         &
      &                      ad_vbar(i,j,Lout)
         END DO
       END DO
@@ -274,13 +279,15 @@
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            ad_u(i,j,k,Lout)=tl_u(i,j,k,Linp)+                          &
+            ad_u(i,j,k,Lout)=tl_u(i,j,k,Linp1)+                         &
+     &                       tl_u(i,j,k,Linp2)+                         &
      &                       ad_u(i,j,k,Lout)
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            ad_v(i,j,k,Lout)=tl_v(i,j,k,Linp)+                          &
+            ad_v(i,j,k,Lout)=tl_v(i,j,k,Linp1)+                         &
+     &                       tl_v(i,j,k,Linp2)+                         &
      &                       ad_v(i,j,k,Lout)
           END DO
         END DO
@@ -292,7 +299,8 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              ad_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Linp,itrc)+              &
+              ad_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Linp1,itrc)+             &
+     &                              tl_t(i,j,k,Linp2,itrc)+             &
      &                              ad_t(i,j,k,Lout,itrc)
             END DO
           END DO
@@ -307,7 +315,8 @@
         DO k=1,Nfrec(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              ad_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Linp,itrc)+      &
+              ad_tflux(i,j,k,Lout,itrc)=tl_tflux(i,j,k,Linp1,itrc)+     &
+     &                                  tl_tflux(i,j,k,Linp2,itrc)+     &
      &                                  ad_tflux(i,j,k,Lout,itrc)
             END DO
           END DO

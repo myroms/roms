@@ -20,13 +20,11 @@
 #undef  GRADIENT_CHECK          /* TLM/ADM Gradient Check */
 #undef  FORCING_SV              /* Forcing Singular Vectors */
 #undef  FT_EIGENMODES           /* Finite Time Eigenmodes */
-#undef  IS4DVAR_OLD             /* Old Incremental, strong constraint 4DVAR */
 #define IS4DVAR                 /* Incremental, strong constraint 4DVAR */
 #undef  NLM_DRIVER              /* Nonlinear Basic State trajectory */
 #undef  OPT_PERTURBATION        /* Optimal perturbations */
 #undef  PICARD_TEST             /* Picard Iterations Test */
 #undef  R_SYMMETRY              /* Representer Matrix Symmetry Test */
-#undef  S4DVAR                  /* Strong constraint 4DVAR */
 #undef  SANITY_CHECK            /* Sanity Check */
 #undef  SO_SEMI                 /* Stochastic Optimals: Semi-norm */
 #undef  TLM_CHECK               /* Tangent Linear Model Check */
@@ -237,9 +235,9 @@
 */
 
 #if defined CORRELATION || defined GRADIENT_CHECK || \
-    defined IS4DVAR     || defined IS4DVAR_OLD    || \
-    defined R_SYMMETRY  || defined TLM_CHECK      || \
-    defined W4DPSAS     || defined W4DVAR
+    defined IS4DVAR     || defined R_SYMMETRY     || \
+    defined TLM_CHECK   || defined W4DPSAS        || \
+    defined W4DVAR
 # if defined SOLVE3D                   /* 3D Application */
 #  undef  UV_C2ADVECTION
 #  undef  UV_C4ADVECTION
@@ -288,18 +286,9 @@
 #  endif
 #  define VCONVOLUTION
 #  define IMPLICIT_VCONV
-#  ifdef S4DVAR
-#   define ENERGY1_NORM
-#   undef  ENERGY2_NORM
-#   undef  ENERGY3_NORM
-#   define N2NORM_PROFILE
-#  endif
 #  ifdef W4DVAR
 #   define RPM_RELAXATION
 #   undef  CONVOLVE
-#  endif
-#  ifdef IS4DVAR_OLD
-#   undef  MULTIPLE_TLM
 #  endif
 # else                                 /* 2D Application */
 #  undef  UV_C2ADVECTION

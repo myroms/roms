@@ -291,80 +291,45 @@
 #  endif
 # endif
 
-# if defined IS4DVAR || defined IS4DVAR_OLD || defined BACKGROUND
+# if defined IS4DVAR || defined BACKGROUND
 !
 !-----------------------------------------------------------------------
 !  Write other 4DVAR data to MODname file.
 !-----------------------------------------------------------------------
 
-#  if defined IS4DVAR || defined IS4DVAR_OLD
+#  if defined IS4DVAR
 !
-!  Write out cost function gradient norm. Notice that it is written
-!  into MODname file instead of ITLname file.
+!  Write out tangent linear model misfit cost function. Notice that it
+!  is written into MODname file instead of ITLname file.
 !
-#   ifdef IS4DVAR_OLD
-      IF (Ipass.eq.1) THEN
-#   endif
-        CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'cost_gradient',   &
-     &                        FOURDVAR(ng)%CostGrad(0:),                &
-     &                        (/1,Nrun/), (/NstateVar(ng)+1,1/),        &
-     &                        ncid = ncMODid(ng))
-        IF (exit_flag.ne.NoError) RETURN
-#   ifdef IS4DVAR_OLD
-      END IF
-#   endif
-!
-!  Write out model minus observations misfit cost function value to
-!  both nonlinear and tangent linear initial file.  Notice that it is
-!  written into MODname file instead of ITLname file.
-!
-#   ifdef IS4DVAR_OLD
-      IF (Ipass.eq.1) THEN
-#   endif
-        CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'cost_function',   &
-     &                        FOURDVAR(ng)%ObsCost(0:),                 &
-     &                        (/1,Nrun/), (/NstateVar(ng)+1,1/),        &
-     &                        ncid = ncMODid(ng))
-        IF (exit_flag.ne.NoError) RETURN
-#   ifdef IS4DVAR_OLD
-      END IF
-#   endif
+      CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'TLcost_function',   &
+     &                      FOURDVAR(ng)%ObsCost(0),                    &
+     &                      (/Nrun/), (/1/),                            &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 #  endif
 
 #  ifdef BACKGROUND
 !
-!  Write out model minus background misfit cost function value to
-!  both nonlinear and tangent linear initial file. Notice that it
-!  is written into MODname file instead of ITLname file.
+!  Write out background misfit cost function, Jb. Notice that it is
+!  written into MODname file instead of ITLname file.
 !
-#   ifdef IS4DVAR_OLD
-      IF (Ipass.eq.1) THEN
-#   endif
-        CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'back_function',   &
-     &                        FOURDVAR(ng)%BackCost(0:),                &
-     &                        (/1,Nrun/), (/NstateVar(ng)+1,1/),        &
-     &                        ncid = ncMODid(ng))
-        IF (exit_flag.ne.NoError) RETURN
-#   ifdef IS4DVAR_OLD
-      END IF
-#   endif
+      CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'back_function',     &
+     &                      FOURDVAR(ng)%BackCost(0),                   &
+     &                      (/Nrun/), (/1/),                            &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 #  endif
 
-#  if defined IS4DVAR || defined IS4DVAR_OLD
+#  if defined IS4DVAR
 !
 !  Write out current optimal, normalized cost function minimun.  Notice
 !  that it is written into MODname file instead of ITLname file.
 !
-#   ifdef IS4DVAR_OLD
-      IF (Ipass.eq.1) THEN
-#   endif
-        CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'Jmin',            &
-     &                        Optimality(ng:), (/Nrun/), (/1/),         &
-     &                        ncid = ncMODid(ng))
-        IF (exit_flag.ne.NoError) RETURN
-#   ifdef IS4DVAR_OLD
-      END IF
-#   endif
+      CALL netcdf_put_fvar (ng, iTLM, MODname(ng), 'Jmin',              &
+     &                      Optimality(ng:), (/Nrun/), (/1/),           &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
 !
@@ -386,7 +351,7 @@
 # endif
       IF (exit_flag.ne.NoError) RETURN
 
-# if defined IS4DVAR || defined IS4DVAR_OLD || defined BACKGROUND
+# if defined IS4DVAR || defined BACKGROUND
       IF (OutThread) THEN
         status=nf90_sync(ncMODid(ng))
         IF (status.ne.nf90_noerr) THEN
@@ -407,6 +372,8 @@
           string='v-increments   '
         ELSE IF (OutRec.eq.3) THEN
           string='v-increments   '
+        ELSE IF (OutRec.eq.4) THEN
+          string='v-summations   '
         END IF
 # ifdef SOLVE3D
         WRITE (stdout,30) string, Nrun, Tindex, Tindex, OutRec

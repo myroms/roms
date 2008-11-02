@@ -23,7 +23,6 @@
 !
 !  Local variable declarations.
 !
-      integer :: EnergyN = 0
       integer :: FS_east = 0
       integer :: FS_west = 0
       integer :: FS_north = 0
@@ -839,27 +838,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+10)=' ENSEMBLE,'
 #endif
-#if defined ENERGY1_NORM && defined FOUR_DVAR
-      IF (Master) WRITE (stdout,20) 'ENERGY1_NORM',                     &
-     &   'Cost function scaled with the energy norm, 1'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+14)=' ENERGY1_NORM,'
-      EnergyN=EnergyN+1
-#endif
-#if defined ENERGY2_NORM && defined FOUR_DVAR
-      IF (Master) WRITE (stdout,20) 'ENERGY2_NORM',                     &
-     &   'Cost function scaled with the energy norm, 2'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+14)=' ENERGY2_NORM,'
-      EnergyN=EnergyN+1
-#endif
-#if defined ENERGY3_NORM && defined FOUR_DVAR
-      IF (Master) WRITE (stdout,20) 'ENERGY3_NORM',                     &
-     &   'Cost function scaled with the energy norm, 3'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+14)=' ENERGY3_NORM,'
-      EnergyN=EnergyN+1
-#endif
 #ifdef EW_PERIODIC
       IF (Master) WRITE (stdout,20) 'EW_PERIODIC',                      &
      &   'East-West periodic boundaries.'
@@ -1009,13 +987,6 @@
      &   'Incremental strong constraint 4DVAR data assimilation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' IS4DVAR,'
-      idriver=idriver+1
-#endif
-#ifdef IS4DVAR_OLD
-      IF (Master) WRITE (stdout,20) 'IS4DVAR_OLD',                      &
-     &   'Old incremental strong constraint 4DVAR data assimilation.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+13)=' IS4DVAR_OLD,'
       idriver=idriver+1
 #endif
 #if defined INLINE_2DIO && defined DISTRIBUTE
@@ -1504,12 +1475,6 @@
       T_north=T_north+1
       T_south=T_south+1
 #endif
-#if defined N2NORM_PROFILE && defined FOUR_DVAR
-      IF (Master) WRITE (stdout,20) 'N2NORM_PROFILE',                   &
-     &   'Using N2(z) profile during energy normalization.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+16)=' N2NORM_PROFILE,'
-#endif
 #if defined N2S2_HORAVG && (defined GLS_MIXING || defined MY25_MIXING)
       IF (Master) WRITE (stdout,20) 'N2S2_HORAVG',                      &
      &   'Horizontal smoothing of buoyancy and shear.'
@@ -1751,13 +1716,6 @@
      &   'Double precision fields in restart NetCDF file.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+13)=' !RST_SINGLE,'
-#endif
-#ifdef S4DVAR
-      IF (Master) WRITE (stdout,20) 'S4DVAR',                           &
-     &   'Strong constraint 4DVAR data assimilation.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+8)=' S4DVAR,'
-      idriver=idriver+1
 #endif
 #ifdef SALINITY
       IF (Master) WRITE (stdout,20) 'SALINITY',                         &
@@ -2869,21 +2827,10 @@
         END IF
       END DO
 #endif
-#if defined FOUR_DVAR
-!
-!  Stop if more that one energy norm is defined.
-!
-      IF (Master.and.(EnergyN.gt.1)) THEN
-        WRITE (stdout,100)
- 100    FORMAT (/,' CHECKDEFS - only one energy norm scaling is',       &
-     &            ' allowed.')
-        exit_flag=5
-      END IF
-#endif
 #if defined ADJOINT && defined _OPENMP
       IF (Master) THEN
-        WRITE (stdout,110)
- 110    FORMAT (/,' CHECKDEFS - cannot run the adjoint model in',       &
+        WRITE (stdout,100)
+ 100    FORMAT (/,' CHECKDEFS - cannot run the adjoint model in',       &
      &            ' shared-memory mode.')
         exit_flag=5
       END IF
@@ -2893,8 +2840,8 @@
 !  Stop if using more than one grazing algorithm.
 !
       IF (Master) THEN
-        WRITE (stdout,120)
- 120    FORMAT (/,' CHECKDEFS - More than one grazing algorithm',       &
+        WRITE (stdout,110)
+ 110    FORMAT (/,' CHECKDEFS - More than one grazing algorithm',       &
      &            ' selected for Nemuro model.')
         exit_flag=5
       END IF
@@ -2905,8 +2852,8 @@
 !  Stop if using more than vertical convolution algorithm.
 !
       IF (Master) THEN
-        WRITE (stdout,130)
- 130    FORMAT (/,' CHECKDEFS - More than one vertical convolution',    &
+        WRITE (stdout,120)
+ 120    FORMAT (/,' CHECKDEFS - More than one vertical convolution',    &
      &            ' algorithm selected.')
         exit_flag=5
       END IF
@@ -2914,8 +2861,8 @@
 #endif
 #if defined MODEL_COUPLING && (defined ESMF_LIB && defined MCT_LIB)
       IF (Master) THEN
-        WRITE (stdout,140)
- 140    FORMAT (/,' CHECKDEFS - More than one coupling library',        &
+        WRITE (stdout,130)
+ 130    FORMAT (/,' CHECKDEFS - More than one coupling library',        &
      &            ' selected.')
         exit_flag=5
       END IF
@@ -2925,33 +2872,33 @@
 !  Stop if more than one advection scheme has been activated.
 !
       IF (Master.and.(ivelHadv.gt.1)) THEN
-        WRITE (stdout,150) 'horizontal','momentum','ivelHadv =',ivelHadv
+        WRITE (stdout,140) 'horizontal','momentum','ivelHadv =',ivelHadv
         exit_flag=5
       END IF
 # ifdef SOLVE3D
       IF (Master.and.(ivelVadv.gt.1)) THEN
-        WRITE (stdout,150) 'vertical','momentum','ivelVadv =',ivelVadv
+        WRITE (stdout,140) 'vertical','momentum','ivelVadv =',ivelVadv
         exit_flag=5
       END IF
 # endif
 #endif
 #ifdef SOLVE3D
       IF (Master.and.(itrcHadv.gt.1)) THEN
-        WRITE (stdout,150) 'horizontal','tracers','itrcHadv =',itrcHadv
+        WRITE (stdout,140) 'horizontal','tracers','itrcHadv =',itrcHadv
         exit_flag=5
       END IF
       IF (Master.and.(itrcVadv.gt.1)) THEN
-        WRITE (stdout,150) 'vertical','tracers','itrcVadv =',itrcVadv
+        WRITE (stdout,140) 'vertical','tracers','itrcVadv =',itrcVadv
         exit_flag=5
       END IF
 #endif
- 150  FORMAT (/,' CHECKDEFS - only one ',a,' advection scheme',         &
+ 140  FORMAT (/,' CHECKDEFS - only one ',a,' advection scheme',         &
      &        /,13x,'is allowed for ',a,', ',a,1x,i1)
 #if defined SOLVE3D && defined NEMURO
 # if !(defined IVLEV_EXPLICIT || defined HOLLING_GRAZING)
       IF (Master) THEN
-        WRITE (stdout,160)
- 160    FORMAT (/,' CHECKDEFS - Need to choose a zooplankton grazing',  &
+        WRITE (stdout,150)
+ 150    FORMAT (/,' CHECKDEFS - Need to choose a zooplankton grazing',  &
      &            ' option;',/,13x,'use either IVLEV_EXPLICIT or',      &
      &            ' implicit HOLLING_GRAZING.',/,13x,'The default',     &
      &            ' implicit IVLEV algorithm does not work well yet.')

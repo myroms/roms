@@ -40,22 +40,6 @@
 
      LcycleINI == T
 
-! Simple descent (numerical recipes) algorithm method:
-!
-!   [0]  Fletcher-Reeves scheme
-!   [1]  Polak-Riviere scheme
-
-           ICG =  1
-
-! Number of iterations between each steepest descent step.
-
-       NiterSD =  5
-
-! Strong constraint conjugate gradient orthogonality tolerance: dot
-! product orthogonality between current and previous search.
-
-         CGtol =  0.1d+2
-
 ! Conjugate gradient algorithm initial step size.
 
        CGstepI =  1.0d-4
@@ -63,10 +47,6 @@
 ! Weak constraint conjugate gradient algorithm convergence criteria.
 
          CGeps =  1.0d-8
-
-! Cosfunction convergence factor.
-
-    CostFunFac =  5.0d-5
 
 ! Upper bound on the relative error of the gradient for the Lanczos
 ! conjugate gradient algorithm.
@@ -82,12 +62,18 @@
 ! Switch (T/F) to compute approximated Hessian eigenpairs in the Lanzos
 ! conjugate gradient algorithm.
 
-    LhessianEV = F
+    LhessianEV = T
 
-! Switch (T/F) to pre-conditioning with Hessian eigenpairs computed
-! by the Lanczos algorithm and saved in HSSname NetCDF file.
+! Switch (T/F) to activate IS4DVAR conjugate gradient preconditioning.
+! Two types of Limited-Memory Preconditioner (LMP) are available
+! (Tshimanga et al., 2008): spectral LMP and Ritz LMP.
  
-      Lprecond = F 
+      Lprecond = T 
+
+! Switch to activate either Ritz Limited-Memory Preconditioner (T)
+! or spectral Limited-Memory Preconditioner (F) to the IS4DVAR algorithm.
+
+         Lritz = T
 
 ! If preconditioning, specify number of eigenpairs to use.  If zero,
 ! use all available vectors.
@@ -187,27 +173,6 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
  Cfscale(isTvar) = 0.3d0  0.3d0            ! NT tracers
  Cfscale(isTsur) = 0.3d0  0.3d0            ! NT surface tracers flux
 
-! Polynomial coefficients for Brunt-Vaisala frequency squared (N2) used for
-! normalization of tracer misfit cost function. The first value in each line
-! is the polynomial order whereas the second value is the polynomial expansion
-! coefficient. The values can be entered in any order, [0:npN2] values are
-! expected.  Coeffiecient are derived from a typical North Atlantic profile.
-
-          npN2 =  9                                ! degree of polynomial
-
-      Pcoef_N2 =   ORDER        COEFFICIENT
-
-                     0          0.00014377915637d+00
-                     1          8.22721559660467d-07
-                     2          2.01838193105922d-09
-                     3          2.50856113444129d-12
-                     4          1.76963644333035d-15
-                     5          7.53464079555416d-19
-                     6          1.97494078419000d-22
-                     7          3.11823869844803d-26
-                     8          2.72050044674897d-30
-                     9          1.00753302045407d-34
-
 ! Input background-error standard deviation file name, [1:Ngrids].
 
        STDname == ocean_std.nc
@@ -247,46 +212,13 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !                  descent algorithm without recycling.
 !
 !------------------------------------------------------------------------------
-! Descent algorithm (descent.F, downhill.F) parameters.
-!------------------------------------------------------------------------------
-!
-!  ICG            Simple conjugate gradient algorithm.  This alorithm is
-!                 similar to the one found in numerical recipes.  
-!
-!                   ICG = 0   Fletcher-Reeves scheme
-!                   ICG = 1   Polak-Riviere scheme
-!
-!  NiterSD        Number of iterations between each steepest descent step.
-!                 The descent algorithm is reinitialized every NiterSD
-!                 iterations to avoid searching in directions which have
-!                 been searched previously.
-!
-!  CGtol          Strong constraint conjugate gradient orthogonality
-!                 tolerance: dot product orthogonality between current and
-!                 previous search.
-!
-!------------------------------------------------------------------------------
 ! Conjugate gradient parameters.
 !------------------------------------------------------------------------------
 !
 !  CGstepI        Conjugate gradient algorithm initial step size.
 !
-!
 !  CGeps          Weak constraint conjugate gradient algorithm convergence
 !                 criteria.
-!
-!------------------------------------------------------------------------------
-! Misfit cost function convergence.
-!------------------------------------------------------------------------------
-!
-!  CostFunFac     Cost function percentage change between succesive
-!                 iterations for convergence.  The inner iteration
-!                 loop is stoped when the following condition is
-!                 false:
-!
-!                 DO WHILE ((inner.le.Ninner).or.
-!    &                      (ABS(CostFunOld(0)-CostFun(0)).le.
-!    &                       CostFunFac*CostFunOld(0)) THEN
 !
 !------------------------------------------------------------------------------
 ! Lanczos conjugate gradient algorithm parameters.
@@ -301,9 +233,21 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !  LhessianEV     Switch (T/F) to compute approximated Hessian eigenvalues
 !                 and eigenvectors.
 !
-!  Lprecond       Switch (T/F) to pre-conditioning with Hessian eigenpairs
-!                 computed by the Lanczos algorithm and saved in HSSname
-!                 NetCDF file.
+!  Lprecond       Switch (T/F) to activate preconditioning in the IS4DVAR
+!                 algorithm. Two types of Limited-Memory preconditioner (LMP)
+!                 are available Tshimanga et al., 2008): Spectral and Ritz.
+!
+!                   If Lprecond=T and Lritz=F,  Spectral LMP
+!                   If Lprecond=T and Lritz=T,  Ritz LMP
+!
+!  Lritz          Switch to activate either Ritz Limited-Memory Preconditioner
+!                 (T) or spectral Limited-Memory Preconditioner (F) to the
+!                 IS4DVAR algorithm using eigenpairs approximation for the
+!                 Hessian matrix.  The accuracy of the Hessian eigenvectors
+!                 (HevecErr) can be used to fine tune the minimization. That
+!                 is, HevecErr can be used to control number of eigenvalues
+!                 of the preconditioning Hessian matrix. See Tshimanga et al.
+!                 (2008) Q. J. R. Met. Soc. paper for details.
 !
 !  NritzEV        If preconditioning, specify number of eigenpairs to use.
 !                   If zero, use all available vectors.
@@ -413,18 +357,6 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !  Cfscale(isVvel)  scale for 3D variable at V-points
 !  Cfscale(isTvar)  scale for tracers (1:NT)
 !  Cfscale(isTsur)  surface tracers flux scale (1:NT)
-!
-!------------------------------------------------------------------------------
-! Parameters for Brunt-Vaisala frequency squared.
-!------------------------------------------------------------------------------
-!
-!  npN2           Order of the polynomial representing the basis functions
-!                 used for N2(z).
-!
-!  Pcoef_N2       Polynomial coefficients for N2(z), (0:npN2) values are
-!                 expected.
-!
-!                 N2(z) = pcoef_N2(0) + pcoef_N2(1)*z + pcoef_N2(2)*z*z + ...
 !
 !------------------------------------------------------------------------------
 !  Input/Output NetCDF files (a string with a maximum of eighty characters).

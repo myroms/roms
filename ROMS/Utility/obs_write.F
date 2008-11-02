@@ -95,21 +95,13 @@
 !
         IF (wrtNLmod(ng)) THEN
           DO iobs=Mstr,Mend
-#  ifdef S4DVAR
-            NLmodVal(iobs,Ipass)=IniVal
-#  else
             NLmodVal(iobs)=IniVal
-#  endif
           END DO
         END IF
 #  ifdef TLM_OBS
         IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN
           DO iobs=Mstr,Mend
-#   ifdef IS4DVAR_OLD
-            TLmodVal(iobs,Ipass)=IniVal
-#   else
             TLmodVal(iobs)=IniVal
-#   endif
           END DO
         END IF
 #  endif
@@ -120,13 +112,9 @@
 !  for screenning of the observations. This scale is one for good 
 !  observations and zero for bad observations.
 !
-#  ifdef S4DVAR
-        CALL obs_scale (ng, model)
-#  else
         DO iobs=Mstr,Mend
           ObsScale(iobs)=IniVal
         END DO
-#  endif
 # endif
 !
 !  Free-surface observations.
@@ -147,11 +135,7 @@
 #  ifdef MASKING
      &                        GRID(ng)%rmask,                           &
 #  endif
-#  ifdef S4DVAR
-     &                        NLmodVal(:,Ipass))
-#  else
      &                        NLmodVal)
-#  endif
         END IF
 # endif
 # ifdef TLM_OBS
@@ -170,11 +154,7 @@
 #  ifdef MASKING
      &                        GRID(ng)%rmask,                           &
 #  endif
-#  ifdef IS4DVAR_OLD
-     &                        TLmodVal(:,Ipass))
-#  else
      &                        TLmodVal)
-#  endif
         END IF
 # endif
 !
@@ -196,11 +176,7 @@
 #  ifdef MASKING
      &                        GRID(ng)%umask,                           &
 #  endif
-#  ifdef S4DVAR
-     &                        NLmodVal(:,Ipass))
-#  else
      &                        NLmodVal)
-#  endif
         END IF
 # endif
 # ifdef TLM_OBS
@@ -219,11 +195,7 @@
 #  ifdef MASKING
      &                        GRID(ng)%umask,                           &
 #  endif
-#  ifdef IS4DVAR_OLD
-     &                        TLmodVal(:,Ipass))
-#  else
      &                        TLmodVal)
-#  endif
         END IF
 # endif
 !
@@ -245,11 +217,7 @@
 #  ifdef MASKING
      &                        GRID(ng)%vmask,                           &
 #  endif
-#  ifdef S4DVAR
-     &                        NLmodVal(:,Ipass))
-#  else
      &                        NLmodVal)
-#  endif
         END IF
 # endif
 # ifdef TLM_OBS
@@ -268,11 +236,7 @@
 #  ifdef MASKING
      &                        GRID(ng)%vmask,                           &
 #  endif
-#  ifdef IS4DVAR_OLD
-     &                        TLmodVal(:,Ipass))
-#  else
      &                        TLmodVal)
-#  endif
         END IF
 # endif
 
@@ -305,11 +269,7 @@
 #   ifdef MASKING
      &                        GRID(ng)%umask,                           &
 #   endif
-#   ifdef S4DVAR
-     &                        NLmodVal(:,Ipass))
-#   else
      &                        NLmodVal)
-#   endif
         END IF
 #  endif
 #  ifdef TLM_OBS
@@ -337,11 +297,7 @@
 #   ifdef MASKING
      &                        GRID(ng)%umask,                           &
 #   endif
-#   ifdef IS4DVAR_OLD
-     &                        TLmodVal(:,Ipass))
-#   else
      &                        TLmodVal)
-#   endif
         END IF
 #  endif
 !
@@ -372,11 +328,7 @@
 #   ifdef MASKING
      &                        GRID(ng)%vmask,                           &
 #   endif
-#   ifdef S4DVAR
-     &                        NLmodVal(:,Ipass))
-#   else
      &                        NLmodVal)
-#   endif
         END IF
 #  endif
 #  ifdef TLM_OBS
@@ -404,11 +356,7 @@
 #   ifdef MASKING
      &                        GRID(ng)%vmask,                           &
 #   endif
-#   ifdef IS4DVAR_OLD
-     &                        TLmodVal(:,Ipass))
-#   else
      &                        TLmodVal)
-#   endif
         END IF
 #  endif
 !
@@ -432,11 +380,7 @@
 #   ifdef MASKING
      &                          GRID(ng)%rmask,                         &
 #   endif
-#   ifdef S4DVAR
-     &                          NLmodVal(:,Ipass))
-#   else
      &                          NLmodVal)
-#   endif
           END IF
 #  endif
 #  ifdef TLM_OBS
@@ -456,11 +400,7 @@
 #   ifdef MASKING
      &                          GRID(ng)%rmask,                         &
 #   endif
-#   ifdef IS4DVAR_OLD
-     &                          TLmodVal(:,Ipass))
-#   else
      &                          TLmodVal)
-#   endif
           END IF
 #  endif
         END DO
@@ -493,9 +433,7 @@
 
         IF (wrtNLmod(ng)) THEN 
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
-#   if defined S4DVAR
-     &                     NLmodVal(:,Ipass))
-#   elif defined WEAK_CONSTRAINT
+#   if defined WEAK_CONSTRAINT
      &                     NLmodVal(Mstr:))
 #   else
      &                     NLmodVal)
@@ -505,9 +443,7 @@
 #  ifdef TLM_OBS
         IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN 
           CALL mp_collect (ng, model, Ncollect, IniVal,                 &
-#   if defined IS4DVAR_OLD
-     &                     TLmodVal(:,Ipass))
-#   elif defined WEAK_CONSTRAINT
+#   if defined WEAK_CONSTRAINT
      &                     TLmodVal(Mstr:))
 #   else
      &                     TLmodVal)
@@ -541,16 +477,9 @@
 !
         IF (wrtMisfit(ng).and.OutThread) THEN
           DO iobs=Mstr,Mend
-#  if defined S4DVAR
-            misfit(iobs)=ObsScale(iobs)*SQRT(ObsErr(iobs))*             &
-     &                   (NLmodVal(iobs,Ipass)-ObsVal(iobs))
-#  elif defined IS4DVAR
+#  if defined IS4DVAR
             misfit(iobs)=ObsScale(iobs)*SQRT(ObsErr(iobs))*             &
      &                   (NLmodVal(iobs)+TLmodVal(iobs)-ObsVal(iobs))
-#  elif defined IS4DVAR_OLD
-            misfit(iobs)=ObsScale(iobs)*SQRT(ObsErr(iobs))*             &
-     &                   (NLmodVal(iobs)+TLmodVal(iobs,Ipass)-          &
-     &                    ObsVal(iobs))
 #  elif defined WEAK_CONSTRAINT || defined IOM
             misfit(iobs)=ObsScale(iobs)/SQRT(ObsErr(iobs))*             &
      &                   (TLmodVal(iobs)-ObsVal(iobs))
@@ -560,11 +489,7 @@
           total(1)=Nobs(ng)
           IF (Nrun.eq.1) THEN
             status=nf90_put_var(ncMODid(ng), modVid(idNLmi,ng),         &
-#  ifdef S4DVAR
-     &                          NLmodVal(Mstr:,:), start, total)
-#  else
      &                          NLmodVal(Mstr:), start, total)
-#  endif
             IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idMOMi)), TRIM(MODname(ng))
               exit_flag=3
@@ -635,25 +560,17 @@
             RETURN
           END IF
         END IF
+
 # ifndef OBS_SENSITIVITY
 !
 !  Nonlinear model or first guess (background) state at observation
 !  locations.
 !
         IF (OutThread.and.wrtNLmod(ng)) THEN 
-#  ifdef S4DVAR
-          start(1)=NstrObs(ng)
-          total(1)=Nobs(ng)
-          start(2)=Ipass
-          total(2)=1
-          status=nf90_put_var(ncMODid(ng), modVid(idNLmo,ng),           &
-     &                        NLmodVal(:,Ipass), start, total)
-#  else
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
           status=nf90_put_var(ncMODid(ng), modVid(idNLmo,ng),           &
      &                        NLmodVal(Mstr:), start, total)
-#  endif
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(Vname(1,idNLmo)), TRIM(MODname(ng))
             exit_flag=3
@@ -673,19 +590,10 @@
 !  Tangent linear model state increments at observation locations.
 !
         IF (OutThread.and.(wrtTLmod(ng).or.wrtRPmod(ng))) THEN 
-#  ifdef IS4DVAR_OLD
-          start(1)=NstrObs(ng)
-          total(1)=Nobs(ng)
-          start(2)=Ipass
-          total(2)=1
-          status=nf90_put_var(ncMODid(ng),modVid(idTLmo,ng),            &
-     &                        TLmodVal(:,Ipass), start, total)
-#  else
           start(1)=NstrObs(ng)
           total(1)=Nobs(ng)
           status=nf90_put_var(ncMODid(ng), modVid(idTLmo,ng),           &
      &                        TLmodVal(Mstr:), start, total)
-#  endif
           IF (status.ne.nf90_noerr) then
             WRITE (stdout,10) TRIM(Vname(1,idTLmo)), TRIM(MODname(ng))
             exit_flag=3
@@ -823,7 +731,7 @@
         END IF
 !
         IF (wrtNLmod(ng)) THEN
-# if defined IS4DVAR || defined IS4DVAR_OLD
+# if defined IS4DVAR
           string='Wrote background state at observation locations,  '
 # else
           string='Wrote NLM state at observation locations,         '

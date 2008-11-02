@@ -390,9 +390,7 @@
 #   endif
         CALL obs_read (ng, iNLM, .FALSE.)
         CALL obs_write (ng, tile, iNLM)
-#   ifdef S4DVAR
         CALL obs_cost (ng, iNLM)
-#   endif
       ELSE
         ProcessObs=.FALSE.
       END IF

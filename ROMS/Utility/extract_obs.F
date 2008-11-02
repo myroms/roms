@@ -189,12 +189,10 @@
      &               Hmat(2)*A(i2,j1)+                                  &
      &               Hmat(3)*A(i2,j2)+                                  &
      &               Hmat(4)*A(i1,j2)
-# ifndef S4DVAR
-#  ifdef MASKING
+# ifdef MASKING
           IF (wsum.gt.0.0_r8) ObsScale(iobs)=1.0_r8
-#  else
+# else
           ObsScale(iobs)=1.0_r8
-#  endif
 # endif
         END IF
       END DO
@@ -365,12 +363,10 @@
      &                 Hmat(6)*A(i2,j1,k2)+                             &
      &                 Hmat(7)*A(i2,j2,k2)+                             &
      &                 Hmat(8)*A(i1,j2,k2)
-#  ifndef S4DVAR
-#   ifdef MASKING
+#  ifdef MASKING
             IF (wsum.gt.0.0_r8) ObsScale(iobs)=1.0_r8
-#   else
+#  else
             ObsScale(iobs)=1.0_r8
-#   endif
 #  endif
           END IF
         END IF

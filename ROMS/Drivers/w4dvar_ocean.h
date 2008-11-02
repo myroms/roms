@@ -215,7 +215,6 @@
         Rec1=1
         Rec2=2 
         Nrun=1
-        Ipass=1
         outer=0
         inner=0
         ERstr=1

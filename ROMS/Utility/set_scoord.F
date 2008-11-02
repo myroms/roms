@@ -23,9 +23,6 @@
 !
       USE mod_param
       USE mod_parallel
-# if defined FOUR_DVAR && defined N2NORM_PROFILE
-      USE mod_fourdvar
-# endif
       USE mod_grid
       USE mod_iounits
       USE mod_scalars
@@ -103,28 +100,7 @@
   20      FORMAT (i6,2f12.7,4x,3f12.3)
         END DO
       END IF
-# if defined FOUR_DVAR && defined N2NORM_PROFILE
-!
-!-----------------------------------------------------------------------
-!  Report N2(z) profile for cost function normalization.
-!-----------------------------------------------------------------------
-!
-      IF (Master.and.LwrtInfo(ng)) THEN
-        WRITE (stdout,30)
-  30    FORMAT (/,' N2 (1/s2) vertical profile used for',               &
-     &            ' normalization:',/)
-        DO k=N(ng),0,-1
-          cff1=SCALARS(ng)%sc_w(k)*hc(ng)+                              &
-     &         (hmax(ng)-hc(ng))*SCALARS(ng)%Cs_w(k)
-          cff2=pcoef_N2(npN2)
-          DO order=npN2-1,0,-1
-            cff2=cff1*cff2+pcoef_N2(order)
-          END DO
-          WRITE (stdout,40) k, cff1, ABS(cff2)
-  40      FORMAT (I6,F12.3,3x,1p,e21.14,0p)
-        END DO
-      END IF
-# endif
+
       RETURN
       END SUBROUTINE set_scoord
 #else

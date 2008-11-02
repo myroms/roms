@@ -25,6 +25,8 @@
 !  CostGradOld  Cost function gradient norm from previous iteration.   !
 !  CostNorm     Total cost function normalization scales (minimization !
 !                 starting value, Jb+Jo).                              !
+!  Cost0        The total cost function at the beggining of the inner  !
+!                 loop (inner=0) for each outer loop.                  !
 !  DTsizeH      Horizontal diffusion time-step size for spatial        !
 !                 convolutions.                                        !
 !  DTsizeV      Vertical diffusion time-step size for spatial          !
@@ -40,13 +42,15 @@
 !                 "extract_obs3d" and written to observation NetCDF    !
 !                 file for latter use.                                 !
 !  LhessianEV   Logical switch to compute Hessian eigenvectors.        !
-!  Lprecond     Logical switch to pre-conditioning with Hessian        !
-!                 eigenvectors.                                        !
+!  Lprecond     Logical switch for conjugate gradient preconditioning. !
+!  Lritz        Logical switch for Ritz limited-memory preconditioning.!
 !  nConvRitz    Number of converged Ritz eigenvalues.                  !
 !  NLmodVal     Nonlinear model values at observation locations.       !
 !  NritzEV      If preconditioning, number of eigenpairs to use.       !
 !  NHsteps      Full number of horizontal diffusion steps for spatial  !
 !                 convolutions.                                        !
+!  NLobsCost    Current NLM observation cost function misfit (mean     !
+!                 squared difference) between NLM and observations.    !
 !  NVsteps      Full number of vertical diffusion steps for spatial    !
 !                 convolutions.                                        !
 !  ObsCost      Current observation cost function misfit (mean squared !
@@ -107,17 +111,9 @@
         real(r8), allocatable :: Zobs(:)
 #  endif          
         real(r8), allocatable :: ADmodVal(:)
-#  ifdef S4DVAR
-        real(r8), allocatable :: NLmodVal(:,:)
-#  else
         real(r8), allocatable :: NLmodVal(:)
-#  endif
 #  ifdef TLM_OBS
-#   ifdef IS4DVAR_OLD
-        real(r8), allocatable :: TLmodVal(:,:)
-#   else
         real(r8), allocatable :: TLmodVal(:)
-#   endif
 #  endif
 #  if defined WEAK_CONSTRAINT || defined IOM
         real(r8), allocatable :: zdelta(:)
@@ -136,6 +132,7 @@
           integer , pointer :: ObsReject(:)
 #  ifdef FOUR_DVAR
           real(r8), pointer :: BackCost(:)
+          real(r8), pointer :: Cost0(:)
           real(r8), pointer :: CostFun(:)
           real(r8), pointer :: CostFunOld(:)
           real(r8), pointer :: CostGrad(:)
@@ -143,6 +140,8 @@
           real(r8), pointer :: CostGradDot(:)
           real(r8), pointer :: CostNorm(:)
           real(r8), pointer :: ObsCost(:)
+          real(r8), pointer :: NLobsCost(:)
+          real(r8), pointer :: NLcostNorm(:)
 #  endif
           real(r8), pointer :: ObsVar(:)
           real(r8), pointer :: SurveyTime(:)
@@ -383,47 +382,23 @@
 !
         logical :: LhessianEV
 !
-!  Switch to pre-conditioning with Hessian eigenpairs.
+!  Switch to activate conjugate gradient preconditioning.
 !
         logical :: Lprecond
-
-!  Number of iteration between each steepest descent step.
 !
-        integer :: NiterSD
+!  Switch to activate Ritz limited-memory preconditioning using the
+!  eigenpairs approximation of the Hessian matrix (Tshimanga et al.,
+!  2008).
 !
-!  Iteration of the last steepest descent.
-!
-        integer :: IterSD
-!
-!  Conjugate gradient algorithm: [0] Fletcher-Reeves [1] Polak-Riviere
-!
-        integer :: ICG
-!
-!  Pass number into the descent algorithm within the same iteration.
-!
-        integer :: Ipass = 0
+        logical :: Lritz
 !
 !  If preconditioning, number of Ritz eigenpairs to use.
 !
         integer :: NritzEV
 !
-!  Conjugate gradient alogorithm step size.
+!  Conjugate gradient alogorithm initial step size.
 !
         real(r8) :: CGstepI              ! initial step size
-        real(r8) :: CGstepF              ! first guess step size
-        real(r8) :: CGstepR              ! refined step size
-!
-!  Step size contributions from background and observations
-!
-        real(r8) :: StepBotBck = 0.0_r8  ! background denominator
-        real(r8) :: StepBotObs = 0.0_r8  ! observation denominator
-        real(r8) :: StepTopBck = 0.0_r8  ! background numerator
-        real(r8) :: StepTopObs = 0.0_r8  ! observation numerator
-!
-!  Strong constraint conjugate gradient orthogonality tolerance: dot
-!  product orthogonality between current and previous search.
-!
-        real(r8) :: CGtol
 !
 !  Weak constraint conjugate gradient algorithm convergence criteria.
 !
@@ -435,11 +410,6 @@
         real(r8) :: cg_sigmam1 = 0.0_r8
         real(r8) :: cg_rnorm = 0.0_r8
 !
-!  Cost function percentage change between succesive iterations for
-!  convergence.
-!
-        real(r8) :: CostFunFac
-!
 !  Upper bound on the relative error of the gradient when computing
 !  Hessian eigenvectors.
 !
@@ -449,12 +419,6 @@
 !  innacurate eigenvectors are usefull for pre-condtioning purposes.
 !
         real(r8) :: HevecErr
-!
-!  Brunt-Vaisala expansion polynomial used for cost function
-!  normalization.
-!
-        integer :: npN2
-        real(r8), allocatable :: pcoef_N2(:)
 
 # ifdef FOUR_DVAR
 !
@@ -568,6 +532,9 @@
         allocate ( FOURDVAR(ng) % BackCost(0:NstateVar(ng)) )
         FOURDVAR(ng) % BackCost = IniVal
 
+        allocate ( FOURDVAR(ng) % Cost0(Nouter) )
+        FOURDVAR(ng) % Cost0 = IniVal
+
         allocate ( FOURDVAR(ng) % CostFun(0:NstateVar(ng)) )
         FOURDVAR(ng) % CostFun = IniVal
 
@@ -588,6 +555,12 @@
 
         allocate ( FOURDVAR(ng) % ObsCost(0:NstateVar(ng)) )
         FOURDVAR(ng) % ObsCost = IniVal
+
+        allocate ( FOURDVAR(ng) % NLobsCost(0:NstateVar(ng)) )
+        FOURDVAR(ng) % NLobsCost = IniVal
+
+        allocate ( FOURDVAR(ng) % NLCostNorm(0:NstateVar(ng)) )
+        FOURDVAR(ng) % NLCostNorm = IniVal
 #  endif
         allocate ( FOURDVAR(ng) % ObsVar(NstateVar(ng)) )
         FOURDVAR(ng) % ObsVar = 1.0_r8
@@ -665,19 +638,11 @@
       allocate ( ADmodVal(Mobs) )
       ADmodVal = IniVal
 
-#  ifdef S4DVAR
-      allocate ( NLmodVal(Mobs,2) )
-#  else
       allocate ( NLmodVal(Mobs) )
-#  endif
       NLmodVal = IniVal
 
 #  ifdef TLM_OBS
-#   ifdef IS4DVAR_OLD
-      allocate ( TLmodVal(Mobs,2) )
-#   else
       allocate ( TLmodVal(Mobs) )
-#   endif
       TLmodVal = IniVal
 #  endif
 

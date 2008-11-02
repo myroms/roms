@@ -88,15 +88,10 @@
 # if defined PERTURBATION
         WRITE (stdout,10) Nrun
  10     FORMAT (/,' <<<< Ensemble/Perturbation Run: ',i5.5,' >>>>',/)
-# elif defined IS4DVAR || defined IS4DVAR_OLD || defined W4DPSAS || \
-       defined W4DVAR
+# elif defined IS4DVAR || defined W4DPSAS || defined W4DVAR
         WRITE (stdout,10) outer, inner
  10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
      &          'Outer = ',i3.3, ', Inner = ',i3.3,' >>>>',/)
-# elif defined S4DVAR
-        WRITE (stdout,10) Nrun, Ipass
- 10     FORMAT (/,' <<<< 4D Variational Data Assimilation, ',           &
-     &          'Iteration = ',i5.5, ', Ipass = ',i1,' >>>>',/)
 # endif
         WRITE (stdout,20) 'TL_INITIAL: Configuring and ',               &
      &                    'initializing tangent linear model ...'
@@ -180,8 +175,6 @@
       IF (Nrun.eq.ERstr) THEN
 #   elif defined IS4DVAR
       IF ((Nrun.eq.ERstr).and.(inner.eq.0)) THEN
-#   else    
-      IF ((Nrun.eq.ERstr).and.((inner.eq.1).and.(Ipass.le.1))) THEN
 #   endif
         LdefITL(ng)=.TRUE.
 #   ifndef WEAK_CONSTRAINT
@@ -217,20 +210,7 @@
 !
       tTLMindx(ng)=0
       NrecTLM(ng)=0
-
-#    ifdef IS4DVAR_OLD
-!  
-!  Avoid writing tangent linear history file on the second pass
-!  (Ipass=2).
-!
-      IF (Ipass.eq.1) THEN
-        LwrtTLM(ng)=.TRUE.
-      ELSEif (Ipass.eq.2) THEN
-        LwrtTLM(ng)=.FALSE.
-      END IF
-#    else
       LwrtTLM(ng)=.TRUE.
-#    endif
 !
 !  Insure that forward and history file names are the same. In 4DVar,
 !  the forward solution is computed by the nonlinear model and stored
@@ -398,11 +378,7 @@
 !  outer loop iteration.
 !-----------------------------------------------------------------------
 !
-#    ifdef IS4DVAR_OLD
-      IF ((inner.eq.1).and.(Ipass.le.1)) THEN
-#    else
       IF (inner.eq.0) THEN
-#    endif
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads

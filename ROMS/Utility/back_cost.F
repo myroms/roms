@@ -89,21 +89,31 @@
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lbck,                                        &
 # ifdef ADJUST_WSTRESS
+     &                     FORCES(ng) % ustr,                           &
      &                     FORCES(ng) % tl_ustr,                        &
+     &                     FORCES(ng) % vstr,                           &
      &                     FORCES(ng) % tl_vstr,                        &
 # endif
 # ifdef SOLVE3D
+     &                     OCEAN(ng) % t,                               &
      &                     OCEAN(ng) % tl_t,                            &
+     &                     OCEAN(ng) % u,                               &
      &                     OCEAN(ng) % tl_u,                            &
+     &                     OCEAN(ng) % v,                               &
      &                     OCEAN(ng) % tl_v,                            &
 #  ifdef ADJUST_STFLUX
+     &                     FORCES(ng) % tflux,                          &
      &                     FORCES(ng) % tl_tflux,                       &
 #  endif
 # else
+     &                     OCEAN(ng) % ubar,                            &
      &                     OCEAN(ng) % tl_ubar,                         &
+     &                     OCEAN(ng) % vbar,                            &
      &                     OCEAN(ng) % tl_vbar,                         &
 # endif
+     &                     OCEAN(ng) % zeta,                            &
      &                     OCEAN(ng) % tl_zeta)
+
       RETURN
       END SUBROUTINE back_cost
 !
@@ -113,20 +123,21 @@
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Lbck,                                  &
 # ifdef ADJUST_WSTRESS
-     &                           tl_ustr, tl_vstr,                      &
+     &                           ustr, tl_ustr,                         &
+     &                           vstr, tl_vstr,                         &
 # endif
 # ifdef SOLVE3D
-     &                           tl_t,                                  &
-     &                           tl_u,                                  &
-     &                           tl_v,                                  &
+     &                           t, tl_t,                               &
+     &                           u, tl_u,                               &
+     &                           v, tl_v,                               &
 #  ifdef ADJUST_STFLUX
-     &                           tl_tflux,                              &
+     &                           tflux, tl_tflux,                       &
 #  endif
 # else
-     &                           tl_ubar,                               &
-     &                           tl_vbar,                               &
+     &                           ubar, tl_ubar,                         &
+     &                           vbar, tl_vbar,                         &
 # endif
-     &                           tl_zeta)
+     &                           zeta, tl_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -149,38 +160,59 @@
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ustr(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: vstr(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:,:)
 #  endif
 #  ifdef SOLVE3D
+      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
+      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
+      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: tflux(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_tflux(LBi:,LBj:,:,:,:)
 #   endif
 #  else
+      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
+      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
 #  endif
+      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
+
 # else
+
 #  ifdef ADJUST_WSTRESS
+      real(r8), intent(in) :: ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
+      real(r8), intent(in) :: vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  ifdef SOLVE3D
+      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
+      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
+      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef ADJUST_STFLUX
+      real(r8), intent(in) :: tflux(LBi:UBi,LBj:UBj,                    &
+     &                                 Nfrec(ng),2,NT(ng))
       real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,                 &
      &                                 Nfrec(ng),2,NT(ng))
 #   endif
 #  else
+      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
+      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
 #  endif
+      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 # endif
 !
@@ -216,9 +248,9 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          cff=0.5_r8*tl_zeta(i,j,Lbck)*tl_zeta(i,j,Lbck)
-          my_BackCost(0)=my_BackCost(0)+cff
-          my_BackCost(isFsur)=my_BackCost(isFsur)+cff
+          cff=tl_zeta(i,j,Lbck)+zeta(i,j,Lbck)
+          my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+          my_BackCost(isFsur)=my_BackCost(isFsur)+0.5_r8*cff*cff
         END DO
       END DO
 
@@ -228,16 +260,16 @@
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR
-          cff=0.5_r8*tl_ubar(i,j,Lbck)*tl_ubar(i,j,Lbck)
-          my_BackCost(0)=my_BackCost(0)+cff
-          my_BackCost(isUbar)=my_BackCost(isUbar)+cff
+          cff=tl_ubar(i,j,Lbck)+ubar(i,j,Lbck)
+          my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+          my_BackCost(isUbar)=my_BackCost(isUbar)+0.5_r8*cff*cff
         END DO
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
-          cff=0.5_r8*tl_vbar(i,j,Lbck)*tl_vbar(i,j,Lbck)
-          my_BackCost(0)=my_BackCost(0)+cff
-          my_BackCost(isVbar)=my_BackCost(isVbar)+cff
+          cff=tl_vbar(i,j,Lbck)+vbar(i,j,Lbck)
+          my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+          my_BackCost(isVbar)=my_BackCost(isVbar)+0.5_r8*cff*cff
         END DO
       END DO
 # else
@@ -247,16 +279,16 @@
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            cff=0.5_r8*tl_u(i,j,k,Lbck)*tl_u(i,j,k,Lbck)
-            my_BackCost(0)=my_BackCost(0)+cff
-            my_BackCost(isUvel)=my_BackCost(isUvel)+cff
+            cff=tl_u(i,j,k,Lbck)+u(i,j,k,Lbck)
+            my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+            my_BackCost(isUvel)=my_BackCost(isUvel)+0.5_r8*cff*cff
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            cff=0.5_r8*tl_v(i,j,k,Lbck)*tl_v(i,j,k,Lbck)
-            my_BackCost(0)=my_BackCost(0)+cff
-            my_BackCost(isVvel)=my_BackCost(isVvel)+cff
+            cff=tl_v(i,j,k,Lbck)+v(i,j,k,Lbck)
+            my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+            my_BackCost(isVvel)=my_BackCost(isVvel)+0.5_r8*cff*cff
           END DO
         END DO
       END DO
@@ -267,9 +299,10 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              cff=0.5_r8*tl_t(i,j,k,Lbck,itrc)*tl_t(i,j,k,Lbck,itrc)
-              my_BackCost(0)=my_BackCost(0)+cff
-              my_BackCost(isTvar(itrc))=my_BackCost(isTvar(itrc))+cff
+              cff=tl_t(i,j,k,Lbck,itrc)+t(i,j,k,Lbck,itrc)
+              my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+              my_BackCost(isTvar(itrc))=my_BackCost(isTvar(itrc))+      &
+     &                                  0.5_r8*cff*cff
             END DO
           END DO
         END DO
@@ -282,10 +315,11 @@
         DO k=1,Nfrec(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              cff=0.5_r8*tl_tflux(i,j,k,Lbck,itrc)*                     &
-     &                   tl_tflux(i,j,k,Lbck,itrc)
-              my_BackCost(0)=my_BackCost(0)+cff
-              my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+cff
+              cff=tl_tflux(i,j,k,Lbck,itrc)+                            &
+     &                   tflux(i,j,k,Lbck,itrc)
+              my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+              my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+      &
+     &                                  0.5_r8*cff*cff
             END DO
           END DO
         END DO
@@ -299,16 +333,16 @@
       DO k=1,Nfrec(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            cff=0.5_r8*tl_ustr(i,j,k,Lbck)*tl_ustr(i,j,k,Lbck)
-            my_BackCost(0)=my_BackCost(0)+cff
-            my_BackCost(isUstr)=my_BackCost(isUstr)+cff
+            cff=tl_ustr(i,j,k,Lbck)+ustr(i,j,k,Lbck)
+            my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+            my_BackCost(isUstr)=my_BackCost(isUstr)+0.5_r8*cff*cff
           END DO
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            cff=0.5_r8*tl_vstr(i,j,k,Lbck)*tl_vstr(i,j,k,Lbck)
-            my_BackCost(0)=my_BackCost(0)+cff
-            my_BackCost(isVstr)=my_BackCost(isVstr)+cff
+            cff=tl_vstr(i,j,k,Lbck)+vstr(i,j,k,Lbck)
+            my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
+            my_BackCost(isVstr)=my_BackCost(isVstr)+0.5_r8*cff*cff
           END DO
         END DO
       END DO
@@ -347,16 +381,6 @@
 # endif
       END IF
 !$OMP END CRITICAL (BACKCOST)
-!
-!  If start of minimization, add background contribution to total cost
-!  function scales used to report normalized values.
-!
-      IF (Nrun.eq.1) THEN
-        DO i=0,NstateVar(ng)
-          FOURDVAR(ng)%CostNorm(i)=FOURDVAR(ng)%CostNorm(i)+            &
-     &                             FOURDVAR(ng)%BackCost(i)
-        END DO
-      END IF
 
       RETURN
       END SUBROUTINE back_cost_tile

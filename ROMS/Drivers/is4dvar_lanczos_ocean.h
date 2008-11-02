@@ -190,9 +190,7 @@
       USE mod_fourdvar
       USE mod_iounits
       USE mod_ncparam
-#ifdef MULTIPLE_TLM
       USE mod_netcdf
-#endif
       USE mod_scalars
       USE mod_stepping
 !
@@ -202,18 +200,26 @@
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
       USE back_cost_mod, ONLY : back_cost
-      USE back_step_mod, ONLY : back_step
       USE cgradient_mod, ONLY : cgradient
       USE cost_grad_mod, ONLY : cost_grad
-      USE cost_norm_mod, ONLY : cost_norm
+#ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
       USE ini_adjust_mod, ONLY : ini_adjust
       USE ini_fields_mod, ONLY : ini_fields
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces, ONLY : initialize_forces
+#endif
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
+      USE sum_grad_mod, ONLY : sum_grad
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE tl_ini_adjust_mod, ONLY : tl_frc_adjust
+#endif
       USE tl_ini_adjust_mod, ONLY : tl_ini_adjust
       USE tl_variability_mod, ONLY : tl_variability
 !
@@ -226,11 +232,12 @@
 !
       logical :: converged
       logical :: Lweak = .FALSE.
- 
+
       integer :: my_inner, my_outer
-      integer :: AdjRec, Lbck, Lini, Lsav, Rec1, Rec2, Rec3
+      integer :: AdjRec, Lbck, Lini, Lsav, Rec1, Rec2, Rec3, Rec4
       integer :: i, my_iic, ng, subs, tile, thread
       integer :: Lcon, LTLM1, LTLM2, LTLM3, LADJ1, LADJ2
+      integer :: lstr, status
 
       real(r8) :: rate
 !
@@ -247,6 +254,7 @@
 !  Initialize relevant parameters.
 !
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Lfinp(ng)=1         ! forcing index for input
         Lfout(ng)=1         ! forcing index for output history files
 #endif
         Lold(ng)=1          ! old minimization time index
@@ -261,12 +269,14 @@
         Rec1=1
         Rec2=2
         Rec3=3
+        Rec4=4
         Nrun=1
         ERstr=1
         ERend=Nouter
 
         OUTER_LOOP : DO my_outer=1,Nouter
           outer=my_outer
+          inner=0
 !
 !  Initialize nonlinear model. If outer=1, the model is initialized
 !  with the background or reference state. Otherwise, the model is
@@ -330,22 +340,12 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
 !
-!  If first pass, define output Hessian NetCDF file containing the
-!  eigenvectors approximation to the Hessian matrix computed from
-!  the Lanczos algorithm.
-!
-          IF (Nrun.eq.1) THEN
-            LdefHSS(ng)=.TRUE.
-            CALL def_hessian (ng)
-            IF (exit_flag.ne.NoError) RETURN
-          END IF
-!
 !  Run nonlinear model. Save nonlinear tracjectory needed by the
 !  adjoint and tangent linear models. Interpolate nonlinear model
 !  to boservation locations (compute and save H x).
 !
           IF (Master) THEN
-            WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+            WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
           END IF
 
           time(ng)=time(ng)-dt(ng)
@@ -363,6 +363,29 @@
           END DO NL_LOOP1
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.TRUE.
+
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Write out initial and background surface forcing into initial
+!  INIname NetCDF file for latter use.
+!
+          CALL wrt_frc (ng, Lfout(ng), Lini)
+          IF (exit_flag.ne.NoError) RETURN
+          IF (Nrun.eq.1) THEN
+            CALL wrt_frc (ng, Lfout(ng), Lbck)
+            IF (exit_flag.ne.NoError) RETURN
+          END IF
+#endif
+!
+!  Write out nonlinear model misfit cost function into MODname NetCDF
+!  file.
+!
+          CALL netcdf_put_fvar (ng, iNLM, MODname(ng),                  &
+     &                          'NLcost_function',                      &
+     &                          FOURDVAR(ng)%NLobsCost(0:),             &
+     &                          (/1,outer/), (/NstateVar(ng)+1,1/),     &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  INNER LOOP: iterate using tangent linear model increments.
@@ -373,9 +396,25 @@
 !  orthogonalization in the conjugate gradient algorithm.  Thus,
 !  we need to reset adjoint file record indices.
 !  
-          LdefADJ(ng)=.TRUE.
           tADJindx(ng)=0
           NrecADJ(ng)=0
+!
+!  An adjoint NetCDF is created for each outer loop.
+!
+          LdefADJ(ng)=.TRUE.
+          lstr=LEN_TRIM(ADJbase(ng))
+          WRITE (ADJname(ng),20) ADJbase(ng)(1:lstr-3), outer
+!
+!  Define output Hessian NetCDF file containing the eigenvectors
+!  approximation to the Hessian matrix computed from the Lanczos
+!  algorithm. Notice that the file name is a function of the
+!  outer loop. That is, a file is created for each outer loop.
+
+          lstr=LEN_TRIM(HSSbase(ng))
+          WRITE (HSSname(ng),20) HSSbase(ng)(1:lstr-3), outer
+          LdefHSS(ng)=.TRUE.
+          CALL def_hessian (ng)
+          IF (exit_flag.ne.NoError) RETURN
 !
 !  Notice that inner loop iteration start from zero. This is needed to
 !  compute the minimization initial increment deltaX(0), its associated
@@ -397,6 +436,17 @@
             tITLindx(ng)=1
             CALL tl_initial (ng)
             IF (exit_flag.ne.NoError) RETURN
+!
+!  On first pass, initialize records 2, 3 and 4 of the ITL file to zero.
+!
+            IF (inner.eq.0.and.outer.eq.1) THEN
+              CALL tl_wrt_ini (ng, LTLM1, Rec2)
+              IF (exit_flag.ne.NoError) RETURN
+              CALL tl_wrt_ini (ng, LTLM1, Rec3)
+              IF (exit_flag.ne.NoError) RETURN
+              CALL tl_wrt_ini (ng, LTLM1, Rec4)
+              IF (exit_flag.ne.NoError) RETURN
+            END IF
 
 #ifdef MULTIPLE_TLM
 !
@@ -408,7 +458,7 @@
             LdefTLM(ng)=.TRUE.
             LwrtTLM(ng)=.TRUE.
             lstr=LEN_TRIM(TLMbase(ng))
-            WRITE (TLMname(ng),90) TLMbase(ng)(1:lstr-3), Nrun
+            WRITE (TLMname(ng),20) TLMbase(ng)(1:lstr-3), Nrun
 #endif
 !
 !  Activate switch to write out initial and final misfit between
@@ -424,7 +474,7 @@
 !  Jo.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'TL', ntstart(ng), ntend(ng)
+              WRITE (stdout,10) 'TL', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)-dt(ng)
@@ -446,7 +496,18 @@
 !  If multiple TLM history NetCDF files, close current NetCDF file.
 !
             IF (ncTLMid(ng).ne.-1) THEN
-              status=nf90_close(ncTLMid(ng))
+              IF (OutThread) THEN
+                status=nf90_close(ncTLMid(ng))
+                IF (status.ne.nf90_noerr) THEN
+                  WRITE (stdout,70) TRIM(TLMname(ng))
+                  exit_flag=3
+                  ioerror=status
+                END IF
+              END IF
+# ifdef DISTRIBUTE
+              CALL mp_bcasti (ng, iTLM, exit_flag, 1)
+# endif
+              IF (exit_flag.ne.NoError) RETURN
               ncTLMid(ng)=-1
             END IF
 #endif
@@ -464,7 +525,7 @@
 !  the adjoint of the observation misfit (Jo) term.
 !
             IF (Master) THEN
-              WRITE (stdout,20) 'AD', ntstart(ng), ntend(ng)
+              WRITE (stdout,10) 'AD', ntstart(ng), ntend(ng)
             END IF
 
             time(ng)=time(ng)+dt(ng)
@@ -492,6 +553,9 @@
 #endif
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL initialize_ocean (ng, TILE, iADM)
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+                CALL initialize_forces (ng, TILE, iADM)
+#endif
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -500,13 +564,22 @@
 !  Descent algorithm.
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!  Get previous tl solution in v-space for the background cost function
-!  calculation on the final inner loop.
+!  Read TLM v-space initial conditions, record 3 in ITLname, and
+!  load it into time index LTLM1. This is needed to compute background
+!  cost function. Also read in new (x-space) gradient vector, GRADx(Jo),
+!  from adjoint history file ADJname.  Read in the sum of all the
+!  previous outer-loop increments which are always in record 4 of
+!  the ITL file.
 !
-            IF (inner.gt.0) THEN
-              CALL get_state (ng, iTLM, 4, ITLname(ng), Rec3, LTLM1)
+            IF (inner.eq.0) THEN
+              CALL get_state (ng, iTLM, 8, ITLname(ng), Rec1, LTLM1)
+              IF (exit_flag.ne.NoError) RETURN
+            ELSE
+              CALL get_state (ng, iTLM, 8, ITLname(ng), Rec3, LTLM1)
               IF (exit_flag.ne.NoError) RETURN
             END IF
+            CALL get_state (ng, iTLM, 8, ITLname(ng), Rec4, LTLM2)
+            IF (exit_flag.ne.NoError) RETURN
             CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),     &
      &                      LADJ2)
             IF (exit_flag.ne.NoError) RETURN
@@ -537,24 +610,25 @@
 #endif
                 CALL ad_variability (ng, TILE, LADJ2, Lweak)
                 CALL ad_convolution (ng, TILE, LADJ2, 2)
-                IF (inner.eq.Ninner) THEN
-                    CALL back_cost (ng, TILE, LTLM1)
-                ENDIF
-!
-!   cost_grad not needed since initial v=0 always in this case.
-!
-!                CALL cost_grad (ng, TILE, LTLM1, LADJ2)
+                CALL cost_grad (ng, TILE, LTLM1, LTLM2, LADJ2)
               END DO
             END DO
 !$OMP END PARALLEL DO
 !
 !  Compute current total cost function.
 !
-            DO i=0,NstateVar(ng)
-              FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
-              FOURDVAR(ng)%CostFun(i)=FOURDVAR(ng)%BackCost(i)+         &
-     &                                FOURDVAR(ng)%ObsCost(i)
-            END DO
+            IF (Nrun.eq.1) THEN
+              DO i=0,NstateVar(ng)
+                FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostNorm(i)
+                FOURDVAR(ng)%CostFun(i)=FOURDVAR(ng)%CostNorm(i)
+              END DO
+            ELSE
+              DO i=0,NstateVar(ng)
+                FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
+              END DO
+            END IF
+!
+!  Prepare for background cost function (Jb) calculation:
 !
 !  Read the convolved gradient from inner=0 (which is permanently 
 !  saved in record 1 of the adjoint file)  ALWAYS into record 1.
@@ -563,6 +637,46 @@
               CALL get_state (ng, iADM, 3, ADJname(ng), LADJ1,          &
      &                        LADJ1)
               IF (exit_flag.ne.NoError) RETURN
+            END IF
+!
+!  Compute background cost function (Jb) for inner=0:
+!
+!  read the sum of previous v-space gradients from record 4 of ITL
+!  file using the NLM model variables index 1 as temporary storage.
+!  Also add background cost function to Cost0.
+!
+            IF (inner.eq.0) THEN
+              CALL get_state (ng, iTLM, 2, ITLname(ng), Rec1, LTLM1)
+              IF (exit_flag.ne.NoError) RETURN
+              CALL get_state (ng, iNLM, 2, ITLname(ng), Rec4, LTLM1)
+              IF (exit_flag.ne.NoError) RETURN
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+              DO thread=0,numthreads-1
+                subs=NtileX(ng)*NtileE(ng)/numthreads
+                DO tile=subs*thread,subs*(thread+1)-1
+                  CALL back_cost (ng, TILE, LTLM1)
+                END DO
+              END DO
+!$OMP END PARALLEL DO
+!
+              FOURDVAR(ng)%Cost0(outer)=FOURDVAR(ng)%Cost0(outer)+      &
+     &                                   FOURDVAR(ng)%BackCost(0)
+            END IF
+!  
+!  Compute current total cost function.
+!
+            IF (Nrun.eq.1) THEN
+              DO i=0,NstateVar(ng)
+                FOURDVAR(ng)%CostNorm(i)=FOURDVAR(ng)%CostNorm(i)+      &
+     &                                   FOURDVAR(ng)%BackCost(i)
+                FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostNorm(i)
+                FOURDVAR(ng)%CostFun(i)=FOURDVAR(ng)%CostNorm(i)
+              END DO
+            ELSE
+              DO i=0,NstateVar(ng)
+                FOURDVAR(ng)%CostFunOld(i)=FOURDVAR(ng)%CostFun(i)
+              END DO
             END IF
 !
 !  Determine the descent direction in which the quadractic total cost
@@ -574,27 +688,16 @@
 !  iterations.  This is achieved by orthogonalizing (Gramm-Schmidt
 !  algorithm) against all previous inner loop gradients.
 !
-!  Then, Compute total cost function gradient norm as:
-!
-!     CostGrad = SQRT ( transpose{GRADv(J)} * GRADv(J) )
-!
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
-!$OMP&            SHARED(inner,numthreads)
-!
-!  Skip the call to cgradient on the last inner loop since it
-!  is meaningless.
-!
-            IF (inner.ne.Ninner) THEN
-              DO thread=0,numthreads-1
-                subs=NtileX(ng)*NtileE(ng)/numthreads
-                DO tile=subs*thread,subs*(thread+1)-1
-                  CALL cgradient (ng, TILE, iTLM, inner, outer)
-                END DO
+!$OMP&            SHARED(inner,outer,numthreads)
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1
+                CALL cgradient (ng, TILE, iTLM, inner, outer)
               END DO
-              IF (exit_flag.ne.NoError) RETURN
-            END IF
-!
+            END DO
 !$OMP END PARALLEL DO
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Report background (Jb) and observations (Jo) cost function values
 !  normalized by their first minimization value. It also reports the
@@ -605,7 +708,7 @@
 !  is idealy equal to half the number of observations assimilated
 !  (Optimality=1=2*Jmin/Nobs), for a linear system.
 !
-            IF (Master.and.(inner.eq.Ninner)) THEN        
+            IF (Master) THEN
               IF (Nrun.gt.1) THEN
                 rate=100.0_r8*ABS(FOURDVAR(ng)%CostFun(0)-              &
      &                            FOURDVAR(ng)%CostFunOld(0))/          &
@@ -622,36 +725,24 @@
      &                          FOURDVAR(ng)%ObsCost(0)/                &
      &                          FOURDVAR(ng)%CostNorm(0),               &
      &                          rate
-              WRITE (stdout,40) outer, inner, Optimality(ng)
-!
-              DO i=1,NstateVar(ng)
-                IF (FOURDVAR(ng)%ObsCost(i).ne.0.0_r8) THEN
-                  IF (Nrun.gt.1) THEN
-                    rate=100.0_r8*ABS(FOURDVAR(ng)%CostFun(0)-          &
-     &                                FOURDVAR(ng)%CostFunOld(0))/      &
-     &                            FOURDVAR(ng)%CostFunOld(0)
-                  ELSE
-                    rate=0.0_r8
+              IF (inner.eq.0) THEN
+                DO i=0,NstateVar(ng)
+                  IF (FOURDVAR(ng)%NLobsCost(i).ne.0.0_r8) THEN
+                    IF (i.eq.0) THEN
+                      WRITE (stdout,40) outer, inner,                   &
+     &                                  FOURDVAR(ng)%NLobsCost(i)/      &
+     &                                  FOURDVAR(ng)%NLcostNorm(i)
+                    ELSE
+                      WRITE (stdout,50) outer, inner,                   &
+     &                                  FOURDVAR(ng)%NLobsCost(i)/      &
+     &                                  FOURDVAR(ng)%NLcostNorm(i),     &
+     &                                  TRIM(Vname(1,idSvar(i)))
+                    END IF
                   END IF
-                  IF (i.eq.1) THEN
-                    WRITE (stdout,50) outer, inner,                     &
-     &                                FOURDVAR(ng)%BackCost(i)/         &
-     &                                FOURDVAR(ng)%CostNorm(i),         &
-     &                                FOURDVAR(ng)%CostFun(i)/          &
-     &                                FOURDVAR(ng)%CostNorm(i),         &
-     &                                TRIM(Vname(1,idSvar(i))),         &
-     &                                rate
-                  ELSE
-                    WRITE (stdout,60) outer, inner,                     &
-     &                                FOURDVAR(ng)%BackCost(i)/         &
-     &                                FOURDVAR(ng)%CostNorm(i),         &
-     &                                FOURDVAR(ng)%CostFun(i)/          &
-     &                                FOURDVAR(ng)%CostNorm(i),         &
-     &                                TRIM(Vname(1,idSvar(i))),         &
-     &                                rate
-                  END IF
-                END IF
-              END DO
+                  FOURDVAR(ng)%NLobsCost(i)=0.0
+                END DO
+              END IF
+              WRITE (stdout,60) outer, inner, Optimality(ng)
             END IF
 !
 !  Save total v-space cost function gradient, GRADv{J(Lnew)}, into
@@ -660,29 +751,24 @@
 !  The switch "LwrtState2d" is activated to write out state arrays
 !  instead ad_*_sol arrays.
 !
-            IF (inner.ne.Ninner) THEN
-              kstp(ng)=LADJ2
-#ifdef SOLVE3D
-              nstp(ng)=LADJ2
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+            Lfout(ng)=LADJ2
 #endif
-              tADJindx(ng)=tADJindx(ng)-1
-              LwrtState2d(ng)=.TRUE.
-              CALL ad_wrt_his (ng)
-              IF (exit_flag.ne.NoError) RETURN
-              LwrtState2d(ng)=.FALSE.
-!
-!  Write out previous v-space TLM initial conditions, currently in time
-!  index LTM1, into record 2 of ITLname NetCDF file.
-!
-              CALL tl_wrt_ini (ng, LTLM1, Rec2)
-              IF (exit_flag.ne.NoError) RETURN
+            kstp(ng)=LADJ2
+#ifdef SOLVE3D
+            nstp(ng)=LADJ2
+#endif
+            tADJindx(ng)=tADJindx(ng)-1
+            LwrtState2d(ng)=.TRUE.
+            CALL ad_wrt_his (ng)
+            IF (exit_flag.ne.NoError) RETURN
+            LwrtState2d(ng)=.FALSE.
 !
 !  Write out trial v-space TLM initial conditions, currently in time
 !  index LTM2, into record 3 of ITLname NetCDF file.
 !
-              CALL tl_wrt_ini (ng, LTLM2, Rec3)
-              IF (exit_flag.ne.NoError) RETURN
-            END IF
+            CALL tl_wrt_ini (ng, LTLM2, Rec3)
+            IF (exit_flag.ne.NoError) RETURN
 !
 !  Read current outer loop nonlinear model initial conditions and
 !  background state vectors.
@@ -691,8 +777,6 @@
             IF (exit_flag.ne.NoError) RETURN
             CALL get_state (ng, iNLM, 9, INIname(ng), Lbck, Lbck)
             IF (exit_flag.ne.NoError) RETURN
-
-            IF (inner.ne.Ninner) THEN
 !
 !  Convert increment vector, deltaV, from minimization space (v-space)
 !  to model space (x-space):
@@ -707,38 +791,26 @@
 !  Then, substract current nonlinear initial conditions from the
 !  background state.
 ! 
-              IF (inner.eq.Ninner) THEN
-                Lcon=LTLM1                   ! Equation 5d
-              ELSE
-                Lcon=LTLM2                   ! Equation 5a
-              END IF
-
+            Lcon=LTLM2
+!
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
-              DO thread=0,numthreads-1
-                subs=NtileX(ng)*NtileE(ng)/numthreads
-                DO tile=subs*thread,subs*(thread+1)-1,+1
-                  CALL tl_convolution (ng, TILE, Lcon, 2)
-                  CALL tl_variability (ng, TILE, Lcon, Lweak)
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1,+1
+                CALL tl_convolution (ng, TILE, Lcon, 2)
+                CALL tl_variability (ng, TILE, Lcon, Lweak)
 #ifdef BALANCE_OPERATOR
-                  CALL tl_balance (ng, TILE, Lini, Lcon)
+                CALL tl_balance (ng, TILE, Lini, Lcon)
 #endif
-                  IF (inner.eq.Ninner-1) THEN
-                    CALL tl_ini_adjust (ng, TILE, Lbck, Lini, Lcon)
-                  END IF
-                END DO
               END DO
+            END DO
 !$OMP END PARALLEL DO
 !
 !  Write out trial x-space (convolved) TLM initial conditions, currently
 !  in time index Lcon, into record 1 of ITLname NetCDF file.
-!  Avoid the write on the last inner loop since Rec1 of the ITL
-!  file contains the tl correction for the NL model.
 !
-              IF (inner.ne.Ninner) THEN
-                CALL tl_wrt_ini (ng, Lcon, Rec1)
-                IF (exit_flag.ne.NoError) RETURN
-              END IF
-            END IF
+            CALL tl_wrt_ini (ng, Lcon, Rec1)
+            IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Update counters.
@@ -750,6 +822,42 @@
             Nrun=Nrun+1
 
           END DO INNER_LOOP
+!
+!  Close adjoint NetCDF file.
+!
+          IF (ncADJid(ng).ne.-1) THEN
+            IF (OutThread) THEN
+              status=nf90_close(ncADJid(ng))
+              IF (status.ne.nf90_noerr) THEN
+                WRITE (stdout,70) TRIM(ADJname(ng))
+                exit_flag=3
+                ioerror=status
+               END IF
+            END IF
+#ifdef DISTRIBUTE
+            CALL mp_bcasti (ng, iADM, exit_flag, 1)
+#endif
+            IF (exit_flag.ne.NoError) RETURN
+            ncADJid(ng)=-1
+          END IF
+!
+!  Close Hessian NetCDF file.
+!
+          IF (ncHSSid(ng).ne.-1) THEN
+            IF (OutThread) THEN
+              status=nf90_close(ncHSSid(ng))
+              IF (status.ne.nf90_noerr) THEN
+                WRITE (stdout,70) TRIM(HSSname(ng))
+                exit_flag=3
+                ioerror=status
+               END IF
+            END IF
+#ifdef DISTRIBUTE
+            CALL mp_bcasti (ng, iADM, exit_flag, 1)
+#endif
+            IF (exit_flag.ne.NoError) RETURN
+            ncHSSid(ng)=-1
+          END IF
 !
 !-----------------------------------------------------------------------
 !  Clear nonlinear state variables.
@@ -792,6 +900,15 @@
           CALL get_state (ng, iTLM, 1, ITLname(ng), LTLM1, LTLM1)
           IF (exit_flag.ne.NoError) RETURN
 
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!  Load surface forcing increments into TLM array which will be used
+!  in the next outer loop when calling frc_NLadjust.
+!
+          CALL get_state (ng, iTLM, 1, ITLname(ng), Lfinp(ng), Rec1)
+          IF (exit_flag.ne.NoError) RETURN
+#endif
+
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(numthreads)
           DO thread=0,numthreads-1
@@ -799,6 +916,9 @@
             DO tile=subs*thread,subs*(thread+1)-1
               CALL ini_adjust (ng, TILE, LTLM1, Lini)
               CALL ini_fields (ng, TILE, iNLM)
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+              CALL tl_frc_adjust (ng, TILE, Lbck, Lini, LTLM1)
+#endif
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -811,6 +931,29 @@
             NrecINI(ng)=1
           END IF
           CALL wrt_ini (ng, Lini)
+          IF (exit_flag.ne.NoError) RETURN
+!
+! Gather the v-space increments from the final inner-loop and
+! save in record 4 of the ITL file. The current v-space increment
+! is in record 3 and the sum so far is in record 4.
+!
+          CALL get_state (ng, iTLM, 8, ITLname(ng), Rec3, LTLM1)
+          IF (exit_flag.ne.NoError) RETURN
+          CALL get_state (ng, iTLM, 8, ITLname(ng), Rec4, LTLM2)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL sum_grad (ng, TILE, LTLM1, LTLM2)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+!
+! Write the current sum into record 4 of the ITL file.
+!
+          CALL tl_wrt_ini (ng, LTLM2, Rec4)
           IF (exit_flag.ne.NoError) RETURN
 
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -856,11 +999,17 @@
         CALL initial (ng)
         IF (exit_flag.ne.NoError) RETURN
 !
+! Clear NLobsCost.
+!
+        DO i=0,NstateVar(ng)
+          FOURDVAR(ng)%NLobsCost(i)=0.0
+        END DO
+!
 !  Run nonlinear model. Interpolate nonlinear model to observation
 !  locations.
 !
         IF (Master) THEN
-          WRITE (stdout,20) 'NL', ntstart(ng), ntend(ng)
+          WRITE (stdout,10) 'NL', ntstart(ng), ntend(ng)
         END IF
 
         time(ng)=time(ng)-dt(ng)
@@ -880,22 +1029,49 @@
 !  Compute and report model-observation comparison statistics.
 !
         CALL stats_modobs (ng)
+!
+!  Write out nonlinear model final misfit cost function into MODname
+!  NetCDF file. Notice that it is written in the Nouter+1 record.
+!
+        CALL netcdf_put_fvar (ng, iNLM, MODname(ng), 'NLcost_function', &
+     &                        FOURDVAR(ng)%NLobsCost(0:),               &
+     &                        (/1,Nouter+1/), (/NstateVar(ng)+1,1/),    &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Report the final value of the nonlinear model misfit cost function.
+!
+        IF (Master) THEN
+          DO i=0,NstateVar(ng)
+            IF (FOURDVAR(ng)%NLobsCost(i).ne.0.0_r8) THEN
+              IF (i.eq.0) THEN
+                WRITE (stdout,40) outer, inner,                         &
+     &                            FOURDVAR(ng)%NLobsCost(i)/            &
+     &                            FOURDVAR(ng)%NLcostNorm(i)
+              ELSE
+                WRITE (stdout,50) outer, inner,                         &
+     &                            FOURDVAR(ng)%NLobsCost(i)/            &
+     &                            FOURDVAR(ng)%NLcostNorm(i),           &
+     &                            TRIM(Vname(1,idSvar(i)))
+              END IF
+            END IF
+          END DO
+        END IF
 
       END DO NEST_LOOP
 !
- 20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
+ 10   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 30   FORMAT (/,'>(',i3.3,',',i3.3,'): Cost Jb, J  = ',                 &
+ 20   FORMAT (a,'_',i3.3,'.nc')
+ 30   FORMAT (/,' (',i3.3,',',i3.3,'): TLM Cost Jb, J  = ',             &
      &        1p,e16.10,0p,1x,1p,e16.10,0p,t68,1p,e10.4,' %')
- 40   FORMAT (1x,'(',i3.3,',',i3.3,'): Optimality  = ',                 &
-     &        1p,e16.10)
- 50   FORMAT ('<(',i3.3,',',i3.3,'): cost Jb, J  = ',                   &
-     &        1p,e16.10,0p,1x,1p,e16.10,0p,1x,a,t68,1p,e10.4,' %')
- 60   FORMAT (1x,'(',i3.3,',',i3.3,'): cost Jb, J  = ',                 &
-     &        1p,e16.10,0p,1x,1p,e16.10,0p,1x,a,t68,1p,e10.4,' %')
- 80   FORMAT (/,'>(',i3.3,',',i3.3,'): Gradient Norm = ',               &
-     &        1p,e16.10,0p,1x,t68,1p,e10.4,' %')
- 90   FORMAT (a,'_',i3.3,'.nc')
+ 40   FORMAT (/,'>(',i3.3,',',i3.3,'): NLM Cost     J  = ',             &
+     &        17x,1p,e16.10,0p)
+ 50   FORMAT (' (',i3.3,',',i3.3,'): NLM Cost     J  = ',               &
+     &        17x,1p,e16.10,0p,t68,a)
+ 60   FORMAT (/,1x,'(',i3.3,',',i3.3,'): Optimality (2*J/Nobs) = ',     &
+     &        1p,e16.10,/)
+ 70   FORMAT (/,' Unable to close output NetCDF file:',1x,a)
 
       RETURN
       END SUBROUTINE ROMS_run

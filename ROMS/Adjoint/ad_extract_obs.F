@@ -191,12 +191,10 @@
           ad_A(i2,j2)=ad_A(i2,j2)+Hmat(3)*ad_Aobs(iobs)
           ad_A(i1,j2)=ad_A(i1,j2)+Hmat(4)*ad_Aobs(iobs)
           ad_Aobs(iobs)=0.0_r8
-# ifndef S4DVAR
-#  ifdef MASKING
+# ifdef MASKING
           IF (wsum.gt.0.0_r8) ObsScale(iobs)=1.0_r8
-#  else
+# else
           ObsScale(iobs)=1.0_r8
-#  endif
 # endif
         END IF
       END DO
@@ -377,12 +375,10 @@
             ad_A(i2,j2,k2)=ad_A(i2,j2,k2)+Hmat(7)*ad_Aobs(iobs)
             ad_A(i1,j2,k2)=ad_A(i1,j2,k2)+Hmat(8)*ad_Aobs(iobs)
             ad_Aobs(iobs)=0.0_r8
-#  ifndef S4DVAR
-#   ifdef MASKING
+#  ifdef MASKING
             IF (wsum.gt.0.0_r8) ObsScale(iobs)=1.0_r8
-#   else
+#  else
             ObsScale(iobs)=1.0_r8
-#   endif
 #  endif
           END IF
         END IF

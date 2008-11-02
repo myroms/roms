@@ -50,9 +50,7 @@
 !---------------------------------------------------------------------
 !
       IF (ProcessObs(ng)) THEN
-# if defined S4DVAR
-        readNLmod=backward
-# elif defined TLM_OBS
+# if defined TLM_OBS
         readNLmod=.TRUE.
         readTLmod=.TRUE.
 # endif
@@ -264,19 +262,10 @@
 !
         IF (readNLmod.and.haveNLmod(ng)) THEN
           IF (InpThread) THEN
-# ifdef S4DVAR
-            start(1)=NstrObs(ng)
-            total(1)=Nobs(ng)
-            start(2)=Ipass
-            total(2)=1
-            status=nf90_get_var(ncMODid(ng), modVid(idNLmo,ng),         &
-     &                          NLmodVal(:,Ipass), start, total)
-# else
             start(1)=NstrObs(ng)
             total(1)=Nobs(ng)
             status=nf90_get_var(ncMODid(ng), modVid(idNLmo,ng),         &
      &                          NLmodVal(Mstr:), start, total)
-# endif
             IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idNLmo)), ObsSurvey(ng),   &
      &                          TRIM(MODname(ng))
@@ -286,38 +275,21 @@
             END IF
           END IF
 # ifdef DISTRIBUTE
-#  ifdef S4DVAR
-          CALL mp_bcastf (ng, model, NLmodVal(:,Ipass), Mobs)
-#  else
           CALL mp_bcastf (ng, model, NLmodVal, Mobs)
-#  endif
 # endif
         END IF
 
 # if defined TLM_OBS && !(defined WEAK_CONSTRAINT || defined IOM)
 !
-!  If adjoint pass and incremental S4DVAR, read in tangent linear model
+!  If adjoint pass and incremental 4DVar, read in tangent linear model
 !  values at observation locations.
 !
-#  ifdef IS4DVAR_OLD
-        IF (readTLmod.and.haveTLmod(ng).and.(Ipass.ne.0)) THEN
-#  else
         IF (readTLmod.and.haveTLmod(ng)) THEN
-#  endif
           IF (InpThread) THEN
-#  ifdef IS4DVAR_OLD
-            start(1)=NstrObs(ng)
-            total(1)=Nobs(ng)
-            start(2)=Ipass
-            total(2)=1
-            status=nf90_get_var(ncMODid(ng), modVid(idTLmo,ng),         &
-     &                          TLmodVal(:,Ipass), start, total)
-#  else
             start(1)=NstrObs(ng)
             total(1)=Nobs(ng)
             status=nf90_get_var(ncMODid(ng), modVid(idTLmo,ng),         &
      &                          TLmodVal(Mstr:), start, total)
-#  endif
             IF (status.ne.nf90_noerr) THEN
               WRITE (stdout,10) TRIM(Vname(1,idTLmo)), ObsSurvey(ng),   &
      &                          TRIM(MODname(ng))
@@ -329,14 +301,7 @@
 !
 !  Reset TLM values to zero at the first pass of the inner loop.
 !
-#  if defined IS4DVAR_OLD
-          IF ((inner.eq.1).and.(Ipass.eq.1)) THEN
-            DO iobs=1,Mobs
-              TLmodVal(iobs,1)=0.0_r8
-              TLmodVal(iobs,2)=0.0_r8
-            END DO
-          END IF
-#  elif defined IS4DVAR
+#  if defined IS4DVAR
           IF (inner.eq.0) THEN
             DO iobs=1,Mobs
               TLmodVal(iobs)=0.0_r8
@@ -344,12 +309,7 @@
           END IF
 #  endif
 #  ifdef DISTRIBUTE
-#   ifdef IS4DVAR_OLD
-          CALL mp_bcastf (ng, model, TLmodVal(:,1), Mobs)
-          CALL mp_bcastf (ng, model, TLmodVal(:,2), Mobs)
-#   else
           CALL mp_bcastf (ng, model, TLmodVal, Mobs)
-#   endif
 #  endif
         END IF
 # endif

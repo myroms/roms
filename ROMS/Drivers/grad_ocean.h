@@ -208,7 +208,6 @@
         Lold(ng)=1
         Lnew(ng)=1
         Nrun=1
-        Ipass=1
         ERstr=1
 #ifdef SOLVE3D
         ERend=NstateVar(ng)-1

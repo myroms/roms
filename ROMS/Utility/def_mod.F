@@ -42,7 +42,7 @@
 
       integer :: iterDim, datumDim, recordDim, stateDim
 # ifdef IS4DVAR
-      integer :: MinnerDim, NinnerDim, NouterDim, threeDim
+      integer :: MinnerDim, MouterDim, NinnerDim, NouterDim, threeDim
 # endif
       integer :: i, j, status, varid
       integer :: CostDim(2), Vsize(4), vardim(2)
@@ -131,6 +131,10 @@
      &                 Nouter, NouterDim)
         IF (exit_flag.ne.NoError) RETURN
 
+        status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'Mouter',         &
+     &                 Nouter+1, MouterDim)
+        IF (exit_flag.ne.NoError) RETURN
+
 #   ifdef LANCZOS
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'three',          &
      &                 3, threeDim)
@@ -154,7 +158,7 @@
 !
 !  File type.
 !
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             type='ROMS/TOMS 4DVAR output observation processing file'
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'type', TRIM(type))
@@ -167,7 +171,7 @@
 !
 !  Input observations file.
 !
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'obs_file', TRIM(OBSname(ng)))
             IF (status.ne.nf90_noerr) THEN
@@ -179,7 +183,7 @@
 !
 !  SVN repository information.
 !
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'svn_url', TRIM(svn_url))
             IF (status.ne.nf90_noerr) THEN
@@ -190,7 +194,7 @@
           END IF
 
 # ifdef SVN_REV
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'svn_rev', TRIM(svn_rev))
             IF (status.ne.nf90_noerr) THEN
@@ -202,7 +206,7 @@
 # endif
 
 # ifdef ROOT_DIR
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'code_dir', TRIM(Rdir))
             IF (status.ne.nf90_noerr) THEN
@@ -214,7 +218,7 @@
 # endif
 
 # ifdef HEADER_DIR
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'header_dir', TRIM(Hdir))
             IF (status.ne.nf90_noerr) THEN
@@ -226,7 +230,7 @@
 # endif
 
 # ifdef ROMS_HEADER
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'header_file', TRIM(Hfile))
             IF (status.ne.nf90_noerr) THEN
@@ -239,7 +243,7 @@
 !
 !  Attributes describing platform and compiler
 !
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'os', TRIM(my_os))
             IF (status.ne.nf90_noerr) THEN
@@ -249,7 +253,7 @@
             END IF
           END IF
 
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'cpu', TRIM(my_cpu))
             IF (status.ne.nf90_noerr) THEN
@@ -259,7 +263,7 @@
             END IF
           END IF
 
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'compiler_system', TRIM(my_fort))
             IF (status.ne.nf90_noerr) THEN
@@ -269,7 +273,7 @@
             END IF
           END IF
 
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng),nf90_global,                &
      &                          'compiler_command', TRIM(my_fc))
             IF (status.ne.nf90_noerr) THEN
@@ -279,7 +283,7 @@
             END IF
           END IF
 
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             status=nf90_put_att(ncMODid(ng), nf90_global,               &
      &                          'compiler_flags', TRIM(my_fflags))
             IF (status.ne.nf90_noerr) THEN
@@ -291,7 +295,7 @@
 !
 !  History attribute.
 !
-          IF (exit_flag.ne.NoError) THEN
+          IF (exit_flag.eq.NoError) THEN
             IF (LEN_TRIM(date_str).gt.0) THEN
               WRITE (history,'(a,1x,a,", ",a)') 'ROMS/TOMS, Version',   &
      &                                          TRIM(version),          &
@@ -318,8 +322,8 @@
 !  Define variables and their attributes.
 !-----------------------------------------------------------------------
 
-# if defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined WEAK_CONSTRAINT || defined IOM
+# if defined IS4DVAR         || defined IOM || \
+     defined WEAK_CONSTRAINT
 !
 !  Outer and inner loop contours.
 !
@@ -428,6 +432,7 @@
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
+#  ifndef LANCZOS
         Vinfo( 1)='cg_tau'
         Vinfo( 2)='conjugate gradient tau coefficient'
         vardim(1)=MinnerDim
@@ -435,7 +440,7 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
+#  endif
 #  ifdef LANCZOS
 !
 !  Define Lanczos algorithm coefficients.
@@ -589,20 +594,12 @@
         Vinfo( 2)=Vname(2,idNLmo)
         Vinfo(24)='_FillValue'
         Aval(6)=1.0E+35_r8
-#  ifdef S4DVAR
-        vardim(1)=datumDim
-        vardim(2)=recordDim
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idNLmo,ng),        &
-     &                 NF_FRST, 2, vardim, Aval, Vinfo, ncname)
-#  else
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idNLmo,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-#  endif
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined IS4DVAR         || defined IS4DVAR_OLD     || \
-     defined IOM             || defined OBS_SENSITIVITY || \
-     defined WEAK_CONSTRAINT 
+# if defined IS4DVAR         || defined IOM             || \
+     defined OBS_SENSITIVITY || defined WEAK_CONSTRAINT 
 !
 !  Tangent linear or representer model at observation points.
 !
@@ -615,19 +612,12 @@
 #  endif
         Vinfo(24)='_FillValue'
         Aval(6)=1.0E+35_r8
-#  ifdef IS4DVAR_OLD
-        vardim(1)=datumDim
-        vardim(2)=recordDim
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idTLmo,ng),        &
-     &                 NF_FRST, 2, vardim, Aval, Vinfo, ncname)
-#  else
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idTLmo,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-#  endif
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined WEAK_CONSTRAINT || defined IOM
+# if defined IS4DVAR         || defined IOM || \
+     defined WEAK_CONSTRAINT
 !
 !  Initial model-observation misfit (innovation) vector.
 !
@@ -698,28 +688,26 @@
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined IS4DVAR || defined IS4DVAR_OLD
+# if defined IS4DVAR
 !
-!  Define cost function gradient norm.
+!  Define model minus observations misfit NLM cost function.
 !
-        Vinfo( 1)='cost_gradient'
-        Vinfo( 2)='cost function gradient norm'
+        Vinfo( 1)='NLcost_function'
+        Vinfo( 2)='nonlinear model misfit cost function'
         Vinfo(24)='_FillValue'
         Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 2, CostDim, Aval, Vinfo, ncname)
+     &                 2, (/stateDim,MouterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-# endif
-# if defined IS4DVAR || defined IS4DVAR_OLD || defined S4DVAR
 !
-!  Define model minus observations misfit cost function.
+!  Define model minus observations misfit TLM cost function.
 !
-        Vinfo( 1)='cost_function'
-        Vinfo( 2)='model minus observation misfit cost function'
+        Vinfo( 1)='TLcost_function'
+        Vinfo( 2)='tangent linear model misfit cost function'
         Vinfo(24)='_FillValue'
         Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 2, CostDim, Aval, Vinfo, ncname)
+     &                 1, (/iterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 # ifdef BACKGROUND
@@ -731,10 +719,10 @@
         Vinfo(24)='_FillValue'
         Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 2, CostDim, Aval, Vinfo, ncname)
+     &                 1, (/iterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined IS4DVAR || defined IS4DVAR_OLD
+# if defined IS4DVAR
 !
 !  Define optimality property that measures the consistency between
 !  background and observation errors hypotheses (Chi-square). 
@@ -821,15 +809,15 @@
             got_var(idNLmo)=.TRUE.
             haveNLmod(ng)=.TRUE.
             modVid(idNLmo,ng)=var_id(i)
-# if defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined WEAK_CONSTRAINT || defined IOM
+# if defined IS4DVAR         || defined IOM || \
+     defined WEAK_CONSTRAINT
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTLmo))) THEN
             got_var(idTLmo)=.TRUE.
             haveTLmod(ng)=.TRUE.
             modVid(idTLmo,ng)=var_id(i)
 # endif
-# if defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined WEAK_CONSTRAINT || defined IOM
+# if defined IS4DVAR         || defined IOM || \
+     defined WEAK_CONSTRAINT
           ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idMOMi))) THEN
             got_var(idMOMi)=.TRUE.
             modVid(idMOMi,ng)=var_id(i)
@@ -886,8 +874,8 @@
           exit_flag=2
           RETURN
         END IF
-# if defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined WEAK_CONSTRAINT || defined IOM
+# if defined IS4DVAR         || defined IOM || \
+     defined WEAK_CONSTRAINT
         IF (.not.got_var(idTLmo)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idTLmo)),          &
      &                                  TRIM(MODname(ng))
@@ -895,8 +883,8 @@
           RETURN
         END IF
 # endif
-# if defined IS4DVAR         || defined IS4DVAR_OLD || \
-     defined WEAK_CONSTRAINT || defined IOM
+# if defined IS4DVAR         || defined IOM || \
+     defined WEAK_CONSTRAINT
         IF (.not.got_var(idMOMi)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMOMi)),          &
      &                                  TRIM(MODname(ng))

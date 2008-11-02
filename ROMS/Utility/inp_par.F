@@ -1949,7 +1949,7 @@
 !
         LcycleADJ(ng)=.FALSE.
 #endif
-#if defined IS4DVAR || defined IS4DVAR_OLD || defined S4DVAR
+#if defined IS4DVAR
 !
 !  If strong constraint, write only final adjoint solution since only
 !  we are estimating initial conditions.
@@ -2061,9 +2061,8 @@
           WRITE (out,120) Nouter, 'Nouter',                             &
      &          'Maximun number of 4DVAR outer loop iterations.'
 #endif
-#if defined IS4DVAR         || defined IS4DVAR_OLD || \
-    defined OBS_SENSITIVITY || defined W4DPSAS     || \
-    defined W4DVAR
+#if defined IS4DVAR || defined OBS_SENSITIVITY || \
+    defined W4DPSAS || defined W4DVAR
           WRITE (out,120) Ninner, 'Ninner',                             &
      &          'Maximun number of 4DVAR inner loop iterations.'
 #endif
@@ -6700,18 +6699,10 @@
         IF (status.gt.0) THEN
           IF (TRIM(KeyWord).eq.'LcycleINI') THEN 
             Npts=load_l(Nval, Cval, Ngrids, LcycleINI)
-          ELSE IF (TRIM(KeyWord).eq.'ICG') THEN
-            Npts=load_i(Nval, Rval, 1, ICG)
-          ELSE IF (TRIM(KeyWord).eq.'NiterSD') THEN
-            Npts=load_i(Nval, Rval, 1, NiterSD)
-          ELSE IF (TRIM(KeyWord).eq.'CGtol') THEN
-            Npts=load_r(Nval, Rval, 1, CGtol)
           ELSE IF (TRIM(KeyWord).eq.'CGstepI') THEN
             Npts=load_r(Nval, Rval, 1, CGstepI)
           ELSE IF (TRIM(KeyWord).eq.'CGeps') THEN
             Npts=load_r(Nval, Rval, 1, CGeps)
-          ELSE IF (TRIM(KeyWord).eq.'CostFunFac') THEN
-            Npts=load_r(Nval, Rval, 1, CostFunFac)
           ELSE IF (TRIM(KeyWord).eq.'GradErr') THEN
             Npts=load_r(Nval, Rval, 1, GradErr)
           ELSE IF (TRIM(KeyWord).eq.'HevecErr') THEN
@@ -6725,6 +6716,8 @@
               LhessianEV=.FALSE.
             END IF
 #  endif
+          ELSE IF (TRIM(KeyWord).eq.'Lritz') THEN
+            Npts=load_l(Nval, Cval, 1, Lritz)
           ELSE IF (TRIM(KeyWord).eq.'NritzEV') THEN
             Npts=load_i(Nval, Rval, 1, NritzEV)
           ELSE IF (TRIM(KeyWord).eq.'tl_M2diff') THEN
@@ -6899,13 +6892,6 @@
             END DO
 #   endif
 #  endif
-          ELSE IF (TRIM(KeyWord).eq.'npN2') THEN
-            Npts=load_i(Nval, Rval, 1, npN2)
-          ELSE IF (TRIM(KeyWord).eq.'Pcoef_N2') THEN
-            allocate ( pcoef_N2(0:npN2) )
-            DO i=0,npN2
-              READ (inp,*) k, pcoef_N2(k)
-            END DO
           ELSE IF (TRIM(KeyWord).eq.'STDname') THEN
             DO i=1,LEN(STDname(Nval))
               STDname(Nval)(i:i)=blank
@@ -6927,7 +6913,7 @@
               HSSbase(Nval)(i:i)=blank
             END DO
             HSSname(Nval)=TRIM(ADJUSTL(Cval(Nval)))
-            HSSbase(Nval)=TRIM(ADJUSTL(ADJname(Nval)))
+            HSSbase(Nval)=TRIM(ADJUSTL(HSSname(Nval)))
           ELSE IF (TRIM(KeyWord).eq.'LCZname') THEN
             DO i=1,LEN(LCZname(Nval))
               LCZname(Nval)(i:i)=blank
@@ -6959,19 +6945,8 @@
 #   endif
 #   if !(defined WEAK_CONSTRAINT || defined IOM || \
          defined OBS_SENSITIVITY)
-#    ifndef IS4DVAR
-          WRITE (out,90) ICG, 'ICG',                                    &
-     &            'Conjugate gradient descent scheme: ',                &
-     &            '[0] Fletcher-reeves, [1] Polak-Ribiere'
-          WRITE (out,80) NiterSD, 'NiterSD',                            &
-     &            'Number of iterations between a steepest descent.'
-          WRITE (out,100) CGtol, 'CGtol',                               &
-     &            'Conjugate gradient orthogonality tolerance.'
-#    endif
           WRITE (out,100) CGstepI, 'CGstepI',                           &
      &            'Initial descent algorithm step size.'
-          WRITE (out,100) CostFunFac, 'CostFunFac',                     &
-     &            'Cost function change convergence factor.'
 #   else
 #    ifndef OBS_SENSITIVITY
           WRITE (out,100) CGeps, 'CGeps',                               &
@@ -7001,12 +6976,16 @@
      &            'Switch to compute Hessian eigenvectors.'
 #    endif
           WRITE (out,70) Lprecond, 'Lprecond',                          &
-     &           'Switch to preconditioning with Hessian eigenpairs.'
+     &           'Switch to preconditioning conjugate gradient.'
 #    ifndef LANCZOS
           IF (Lprecond.and.(NritzEV.gt.0)) THEN
             WRITE (out,80) NritzEV, 'NritzEV',                          &
      &           'Number of preconditioning eigenpairs to use.'
           END IF
+#    endif
+#    ifdef IS4DVAR
+          WRITE (out,70) Lritz, 'Lritz',                                &
+     &           'Switch to Ritz limited-memory preconditioning.'
 #    endif
 #   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)
@@ -7143,16 +7122,6 @@
           END DO
 #     endif
 #    endif
-#    if defined SOLVE3D && defined N2NORM_PROFILE
-          WRITE (out,80) npN2, 'npN2',                                  &
-     &            'Order of polynomial for N2(z) profile.'
-          IF (npN2.gt.0) THEN
-            WRITE (out,*)
-            DO k=0,npN2
-              WRITE (out,140) k, pcoef_N2(k)
-            END DO
-          END IF
-#    endif
 #   endif
 #  endif
 !
@@ -7169,16 +7138,15 @@
      &                    TRIM(aparnam)
 #  endif
 #  ifdef FOUR_DVAR
-#   if defined IS4DVAR          || defined IS4DVAR_OLD     || \
-       defined IOM              || defined OBS_SENSITIBITY || \
-       defined OPT_OBSERVATIONS || defined WEAK_CONSTRAINT
+#   if defined IS4DVAR         || defined IOM              || \
+       defined OBS_SENSITIBITY || defined OPT_OBSERVATIONS || \
+       defined WEAK_CONSTRAINT
           fname=STDname(ng)
           INQUIRE (FILE=TRIM(fname), EXIST=inhere)
           IF (.not.inhere) GO TO 30
           WRITE (out,160) '      Standard Deviation File:  ',           &
      &                    TRIM(fname)
 #   endif
-#   ifndef S4DVAR
           fname=NRMname(ng)
           WRITE (out,160) 'Correlation Norm Factors File:  ',           &
      &                    TRIM(fname)
@@ -7186,7 +7154,6 @@
             INQUIRE (FILE=TRIM(fname), EXIST=inhere)
             IF (.not.inhere) GO TO 30
           END IF
-#   endif
 #   if !(defined CORRELATION || defined CONVOLUTION || \
          defined OPT_OBSERVATIONS)
           fname=OBSname(ng)
@@ -7226,7 +7193,6 @@
  110  FORMAT (10x,l1,2x,a,t30,a,i2.2,':',1x,a)
  120  FORMAT (f11.3,2x,a,t30,a)
  130  FORMAT (f11.3,2x,a,t30,a,a,'.')
- 140  FORMAT (1x,'N2(z) polynomial coefficient: ',i2.2,1x,1p,e15.8)
  150  FORMAT (/,' Input Assimilation Files:',/)
  160  FORMAT (2x,a,a)
  170  FORMAT (/,' READ_ASSPAR - could not find input file:  ',a)

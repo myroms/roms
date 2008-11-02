@@ -35,7 +35,7 @@
 
       PRIVATE
 # if defined ADJOINT && defined TANGENT
-#  if defined IS4DVAR || defined IS4DVAR_OLD || defined W4DPSAS
+#  if defined IS4DVAR || defined W4DPSAS
       PUBLIC :: ini_adjust
 #  endif
 # endif
@@ -59,7 +59,7 @@
       CONTAINS
 
 # if defined ADJOINT && defined TANGENT
-#  if defined IS4DVAR || defined IS4DVAR_OLD
+#  if defined IS4DVAR
       SUBROUTINE ini_adjust (ng, tile, Linp, Lout)
 !
 !=======================================================================

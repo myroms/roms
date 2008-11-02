@@ -79,16 +79,6 @@
 !
       tINIindx(ng)=tINIindx(ng)+1
       NrecINI(ng)=NrecINI(ng)+1
-
-# ifdef S4DVAR
-!
-!  If requested, set time index to recycle time record in the nonlinear
-!  initial file.
-!
-      IF (LcycleINI(ng)) THEN
-        tINIindx(ng)=MOD(tINIindx(ng)-1,2)+1
-      END IF
-# endif
 !
 !  Write out model time (s).
 !

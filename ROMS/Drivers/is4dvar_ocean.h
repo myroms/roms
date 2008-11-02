@@ -201,10 +201,8 @@
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
       USE back_cost_mod, ONLY : back_cost
-      USE back_step_mod, ONLY : back_step
       USE cgradient_mod, ONLY : cgradient
       USE cost_grad_mod, ONLY : cost_grad
-      USE cost_norm_mod, ONLY : cost_norm
       USE ini_adjust_mod, ONLY : ini_adjust
       USE ini_fields_mod, ONLY : ini_fields
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -212,6 +210,7 @@
 #endif
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
+      USE sum_grad_mod, ONLY : sum_grad
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod, ONLY: tl_balance
 #endif
@@ -233,12 +232,12 @@
       logical :: Lweak = .FALSE.
 
       integer :: my_inner, my_outer
-      integer :: AdjRec, Lbck, Lini, Lsav, Rec1, Rec2, Rec3
+      integer :: AdjRec, Lbck, Lini, Lsav, Rec1, Rec2, Rec3, Rec4
       integer :: i, my_iic, ng, subs, tile, thread
+      integer :: Lcon, LTLM1, LTLM2, LTLM3
 #ifdef MULTIPLE_TLM
       integer :: lstr, status
 #endif
-      integer :: Lcon, LTLM1, LTLM2, LTLM3
 
       real(r8) :: rate
 !
@@ -268,6 +267,7 @@
         Rec1=1
         Rec2=2
         Rec3=3
+        Rec4=4
         Nrun=1
         ERstr=1
         ERend=Nouter
@@ -421,6 +421,17 @@
             tITLindx(ng)=1
             CALL tl_initial (ng)
             IF (exit_flag.ne.NoError) RETURN
+!
+!  On first pass, initialize records 2, 3 and 4 of the ITL file to zero.
+!
+            IF (inner.eq.0.and.outer.eq.1) THEN
+              CALL tl_wrt_ini (ng, LTLM1, Rec2)
+              IF (exit_flag.ne.NoError) RETURN
+              CALL tl_wrt_ini (ng, LTLM1, Rec3)
+              IF (exit_flag.ne.NoError) RETURN
+              CALL tl_wrt_ini (ng, LTLM1, Rec4)
+              IF (exit_flag.ne.NoError) RETURN
+            END IF
 
 #ifdef MULTIPLE_TLM
 !
@@ -527,25 +538,29 @@
 !  Descent algorithm.
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!  Read TLM v-space initial conditions, record 3 in ITLname, and 
+!  Read TLM v-space initial conditions, record 3 in ITLname, and
 !  load it into time index LTLM1. This is needed to compute background
-!  cost function and total cost function gradient. Also read in new
-!  (x-space) gradient vector, GRADx(Jo), from adjoint history file
-!  ADJname.
+!  cost function. Also read in new (x-space) gradient vector, GRADx(Jo),
+!  from adjoint history file ADJname.  Read in the sum of all the
+!  previous outer-loop increments which are always in record 4 of
+!  the ITL file.
 !
             IF (inner.eq.0) THEN
-              CALL get_state (ng, iTLM, 8, ITLname(ng), Rec2, LTLM1)
+              CALL get_state (ng, iTLM, 8, ITLname(ng), Rec1, LTLM1)
+              IF (exit_flag.ne.NoError) RETURN
             ELSE
               CALL get_state (ng, iTLM, 8, ITLname(ng), Rec3, LTLM1)
+              IF (exit_flag.ne.NoError) RETURN
             END IF
+            CALL get_state (ng, iTLM, 8, ITLname(ng), Rec4, LTLM2)
             IF (exit_flag.ne.NoError) RETURN
             CALL get_state (ng, iADM, 4, ADJname(ng), tADJindx(ng),     &
      &                      Lnew(ng))
             IF (exit_flag.ne.NoError) RETURN
 #ifdef BALANCE_OPERATOR
             CALL get_state (ng, iNLM, 9, INIname(ng), Lini, Lini)
-#endif
             IF (exit_flag.ne.NoError) RETURN
+#endif
 !
 !  Convert observation cost function gradient, GRADx(Jo), from model
 !  space (x-space) to minimization space (v-space):
@@ -569,7 +584,7 @@
 #endif
                 CALL ad_variability (ng, TILE, Lnew(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lnew(ng), 2)
-                CALL cost_grad (ng, TILE, LTLM1, Lnew(ng))
+                CALL cost_grad (ng, TILE, LTLM1, LTLM2, Lnew(ng))
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -610,17 +625,12 @@
 !  iterations.  This is achieved by orthogonalizing (Gramm-Schmidt
 !  algorithm) against all previous inner loop gradients.
 !
-!  Then, Compute total cost function gradient norm as:
-!
-!     CostGrad = SQRT ( transpose{GRADv(J)} * GRADv(J) )
-!
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,outer,numthreads)
             DO thread=0,numthreads-1
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL cgradient (ng, TILE, iTLM, inner, outer)
-                CALL cost_norm (ng, TILE, Lnew(ng))
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -640,16 +650,29 @@
 !  the different variables in this case since only the total cost
 !  function can be estimated.
 !
-            IF (inner.gt.0) THEN
+!  Read the sum of previous v-space gradients from record 4 of ITL
+!  file using the NLM model variables index 1 as temporary storage.
+!
+            CALL get_state (ng, iNLM, 2, ITLname(ng), Rec4, LTLM1)
+            IF (exit_flag.ne.NoError) RETURN
+!
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
-              DO thread=0,numthreads-1
-                subs=NtileX(ng)*NtileE(ng)/numthreads
-                DO tile=subs*thread,subs*(thread+1)-1
-                  CALL back_cost (ng, TILE, LTLM1)
-                END DO
+            DO thread=0,numthreads-1
+              subs=NtileX(ng)*NtileE(ng)/numthreads
+              DO tile=subs*thread,subs*(thread+1)-1
+                CALL back_cost (ng, TILE, LTLM1)
               END DO
+            END DO
 !$OMP END PARALLEL DO
 !
+!  Add background cost function to Cost0.
+!
+            IF (inner.eq.0) THEN
+              FOURDVAR(ng)%Cost0(outer)=FOURDVAR(ng)%Cost0(outer)+      &
+     &                                  FOURDVAR(ng)%BackCost(0)
+            END IF
+!
+            IF (inner.gt.0) THEN
               FOURDVAR(ng)%ObsCost(0)=FOURDVAR(ng)%CostFun(0)-          &
      &                                FOURDVAR(ng)%BackCost(0)
               DO i=1,NstateVar(ng)
@@ -667,7 +690,7 @@
 !  is idealy equal to half the number of observations assimilated
 !  (Optimality=1=2*Jmin/Nobs), for a linear system.
 !
-            IF (Master) THEN        
+            IF (Master) THEN
               IF (Nrun.gt.1) THEN
                 rate=100.0_r8*ABS(FOURDVAR(ng)%CostFun(0)-              &
      &                            FOURDVAR(ng)%CostFunOld(0))/          &
@@ -715,44 +738,6 @@
                 END IF
               END DO
             END IF
-!
-!  Report total cost function gradient norm.
-!
-            IF (Master) THEN        
-              IF (Nrun.gt.1) THEN
-                rate=100.0_r8*ABS(FOURDVAR(ng)%CostGrad(0)-             &
-     &                            FOURDVAR(ng)%CostGradOld(0))/         &
-     &                        FOURDVAR(ng)%CostGradOld(0)
-              ELSE
-                rate=0.0_r8
-              END IF
-              WRITE (stdout,80) outer, inner,                           &
-     &                          FOURDVAR(ng)%CostGrad(0), rate
-              DO i=1,NstateVar(ng)
-                IF (FOURDVAR(ng)%CostGrad(i).gt.0.0_r8) THEN
-                  IF (Nrun.gt.1) THEN
-                    rate=100.0_r8*ABS(FOURDVAR(ng)%CostGrad(i)-         &
-     &                                FOURDVAR(ng)%CostGradOld(i))/     &
-     &                            FOURDVAR(ng)%CostGradOld(i)
-                  ELSE
-                    rate=0.0_r8
-                  END IF
-                  IF (i.eq.1) THEN
-                    WRITE (stdout,90) outer, inner,                     &
-     &                                FOURDVAR(ng)%CostGrad(i),         &
-     &                                TRIM(Vname(1,idSvar(i))), rate
-                  ELSE
-                    WRITE (stdout,100) outer, inner,                    &
-     &                                 FOURDVAR(ng)%CostGrad(i),        &
-     &                                 TRIM(Vname(1,idSvar(i))), rate
-                  END IF
-                END IF
-              END DO
-              WRITE (stdout,'(/)')
-            END IF
-            DO i=0,NstateVar(ng)
-              FOURDVAR(ng)%CostGradOld(i)=FOURDVAR(ng)%CostGrad(i)
-            END DO
 !
 !  Save total v-space cost function gradient, GRADv{J(Lnew)}, into
 !  ADJname history NetCDF file. Noticed that the lastest adjoint
@@ -820,7 +805,7 @@
 #ifdef BALANCE_OPERATOR
                 CALL tl_balance (ng, TILE, Lini, Lcon)
 #endif
-                CALL tl_ini_adjust (ng, TILE, Lbck, Lini, Lcon)
+!!AMM           CALL tl_ini_adjust (ng, TILE, Lbck, Lini, Lcon)
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -910,6 +895,30 @@
             NrecINI(ng)=1
           END IF
           CALL wrt_ini (ng, Lini)
+          IF (exit_flag.ne.NoError) RETURN
+!
+! Gather the v-space increments from the final inner-loop and
+! save in record 4 of the ITL file. The current v-space increment
+! is in record 2 and the sum so far is in record 4.
+!
+          CALL get_state (ng, iTLM, 8, ITLname(ng), Rec2, LTLM1)
+          IF (exit_flag.ne.NoError) RETURN
+          CALL get_state (ng, iTLM, 8, ITLname(ng), Rec4, LTLM2)
+          IF (exit_flag.ne.NoError) RETURN
+
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL sum_grad (ng, TILE, LTLM1, LTLM2)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+
+!
+! Write the current sum into record 4 of the ITL file.
+!
+          CALL tl_wrt_ini (ng, LTLM2, Rec4)
           IF (exit_flag.ne.NoError) RETURN
 
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS

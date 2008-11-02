@@ -1,7 +1,7 @@
 #include "cppdefs.h"
       MODULE tl_ini_adjust_mod
 
-#if defined IS4DVAR || defined IS4DVAR_OLD
+#if defined IS4DVAR
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===

@@ -13,7 +13,7 @@
 !      s1_var(...,Lout) = fac1 * s1_var(...,Linp1) +                   !
 !                         fac2 * s2_var(...,Linp2)                     !
 !                                                                      !
-!  where alpha and beta are scalars.                                   !
+!  where fac1 and fac2 are scalars.                                    !
 !                                                                      !
 !-----------------------------------------------------------------------
 !

@@ -31,12 +31,10 @@
 !!  op_ocean.h        ROMS/TOMS optimal perturbations.                 !
 !!  optobs_ocean.h    ROMS/TOMS optimal observations.                  !
 !!  symmetry.h        ROMS/TOMS representer matrix symmetry driver.    !
-!!  s4dvar_ocean.h    ROMS/TOMS strong constraint 4DVAR assimilation.  !
 !!  so_semi_ocean.h   ROMS/TOMS stochastic optimals, semi-norm.        !
 !!  is4dvar_*.h       ROMS/TOMS Strong constraint, incremental 4DVAR   !
 !!                      assimilation with various conjugate gradient   !
-!!                      algorithms (cgradient.h, cgradient_lanczos.h,  !
-!!                      descent.F).                                    !
+!!                      algorithms (cgradient.h, cgradient_lanczos.h). !
 !!  w4dpsas_ocean.h   ROMS/TOMS weak constraint 4D-PSAS assimilation.  !
 !!  w4dvar_ocean.h    ROMS/TOMS weak constraint 4DVAR assimilation.    !
 !!                                                                     !
@@ -72,16 +70,12 @@
 # include "picard_ocean.h"
 #elif defined R_SYMMETRY
 # include "symmetry.h"
-#elif defined S4DVAR
-# include "s4dvar_ocean.h"
 #elif defined IS4DVAR
 # if defined LANCZOS
 #  include "is4dvar_lanczos_ocean.h"
 # else
 #  include "is4dvar_ocean.h"
 # endif
-#elif defined IS4DVAR_OLD
-# include "is4dvar_ocean_old.h"
 #elif defined W4DPSAS
 # include "w4dpsas_ocean.h"
 #elif defined W4DVAR
