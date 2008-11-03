@@ -90,7 +90,7 @@
 */
 
 #if defined PROPAGATOR || defined W4DPSAS ||  defined W4DVAR || \
-   (defined IS4DVAR    && defined LANCZOS)
+    defined IS4DVAR
   USE_ARPACK := on
 #else
   USE_ARPACK :=

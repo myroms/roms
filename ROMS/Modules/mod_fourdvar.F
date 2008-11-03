@@ -46,7 +46,6 @@
 !  Lritz        Logical switch for Ritz limited-memory preconditioning.!
 !  nConvRitz    Number of converged Ritz eigenvalues.                  !
 !  NLmodVal     Nonlinear model values at observation locations.       !
-!  NritzEV      If preconditioning, number of eigenpairs to use.       !
 !  NHsteps      Full number of horizontal diffusion steps for spatial  !
 !                 convolutions.                                        !
 !  NLobsCost    Current NLM observation cost function misfit (mean     !
@@ -326,8 +325,6 @@
 !  Orthogonal eigenvectors of Lanczos recurrence term Q(k)T(k).
 !
         real(r8), allocatable :: cg_zv(:,:)
-
-#  if defined LANCZOS
 !
 !  Lanczos algorithm coefficients.
 !
@@ -356,7 +353,6 @@
 !
         real(r8), allocatable :: cg_Ritz(:,:)
         real(r8), allocatable :: cg_RitzErr(:,:)
-#  endif
 # endif
 # if defined OBS_SENSITIVITY
 !
@@ -391,10 +387,6 @@
 !  2008).
 !
         logical :: Lritz
-!
-!  If preconditioning, number of Ritz eigenpairs to use.
-!
-        integer :: NritzEV
 !
 !  Conjugate gradient alogorithm initial step size.
 !
@@ -690,33 +682,6 @@
 #  endif
       END DO
 # endif
-# ifdef IS4DVAR
-!
-!  Determine the number of Hessian eigenpairs available for
-!  preconditioning.
-!
-      Nritz=Ninner+1
-#  if !defined LANCZOS
-      IF (Lprecond) THEN
-        DO ng=1,Ngrids
-          CALL netcdf_get_dim (ng, iNLM, TRIM(HSSname(ng)),             &
-     &                         TRIM(Vname(1,idtime)),                   &
-     &                         Nritz)
-          IF (exit_flag.ne.NoError) RETURN
-        END DO
-      END IF
-#  endif
-#  ifndef LANCZOS
-!
-!  Set number of eigenpairs to use to available quantity.
-!
-      IF (Lprecond) THEN
-        IF (NritzEV.eq.0) THEN
-          NritzEV=Nritz
-        END IF
-      END IF
-#  endif
-# endif
 !
 !  Allocate convolution parameters.
 !
@@ -732,13 +697,8 @@
       allocate ( cg_alpha(0:Ninner,Nouter) )
       cg_alpha = IniVal
 
-#  ifdef LANCZOS
       allocate ( cg_beta(Ninner+1,Nouter) )
       cg_beta = IniVal
-#  else
-      allocate ( cg_beta(0:Ninner,Nouter) )
-      cg_beta = IniVal
-#  endif
 
       allocate ( cg_tau(0:Ninner,Nouter) )
       cg_tau = IniVal
@@ -749,7 +709,6 @@
       allocate ( cg_zv(Ninner,Ninner) )
       cg_zv = IniVal
 
-#  ifdef LANCZOS
       allocate ( cg_delta(Ninner,Nouter) )
       cg_delta = IniVal
 
@@ -777,7 +736,6 @@
       allocate ( cg_zu(Ninner,Nouter) )
       cg_zu = IniVal
 
-#  endif
 # endif
 # if defined OBS_SENSITIVITY
 !

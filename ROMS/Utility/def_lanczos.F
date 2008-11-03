@@ -51,10 +51,8 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       integer :: frecdim
 # endif
-# if defined IS4DVAR && defined LANCZOS
       integer :: MinnerDim, NinnerDim, NouterDim
       integer :: vardim(2)
-# endif
       integer :: DimIDs(31), t2dgrd(3), u2dgrd(3), v2dgrd(3)
       integer :: Vsize(4)
 
@@ -245,7 +243,6 @@
         IF (exit_flag.ne.NoError) RETURN
 # endif
 
-# if defined IS4DVAR && defined LANCZOS
         status=def_dim(ng, iADM, ncLCZid(ng), ncname, 'Ninner',         &
      &                 Ninner, NinnerDim)
         IF (exit_flag.ne.NoError) RETURN
@@ -257,7 +254,6 @@
         status=def_dim(ng, iADM, ncLCZid(ng), ncname, 'Nouter',         &
      &                 Nouter, NouterDim)
         IF (exit_flag.ne.NoError) RETURN
-# endif
 
         status=def_dim(ng, iADM, ncLCZid(ng), ncname,                   &
      &                 TRIM(ADJUSTL(Vname(5,idtime))),                  &
@@ -399,8 +395,6 @@
 !-----------------------------------------------------------------------
 !  Define time-varying variables.
 !-----------------------------------------------------------------------
-
-# if defined IS4DVAR && defined LANCZOS
 !
 !  Define Lanczos algorithm coefficients which can be used for
 !  preconditioning or to compute the sensitivity of the observations
@@ -429,7 +423,6 @@
         status=def_var(ng, iADM, ncLCZid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-# endif
 !
 !  Define model time.
 !

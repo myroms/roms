@@ -1,5 +1,5 @@
 #include "cppdefs.h"
-#if defined IS4DVAR && defined LANCZOS
+#if defined IS4DVAR
       SUBROUTINE wrt_hessian (ng, kout, nout)
 !
 !svn $Id$

@@ -543,7 +543,6 @@
 ** IMPLICIT_VCONV      use if implicit vertical convolution algorithm        **
 ** IMPULSE             use if processing adjoint impulse forcing             **
 ** IOM                 use to activate IOM multiple executables              **
-** LANCZOS             use to activate Lanczos conjugate gradient algorithm  **
 ** MULTIPLE_TLM        use if multiple TLM history files in 4DVAR            **
 ** NLM_OUTER           use if nonlinear model as basic state in outer loop   **
 ** RPM_RELAXATION      use if Picard iterations, Diffusive Relaxation of RPM **

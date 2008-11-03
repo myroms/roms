@@ -135,11 +135,9 @@
      &                 Nouter+1, MouterDim)
         IF (exit_flag.ne.NoError) RETURN
 
-#   ifdef LANCZOS
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'three',          &
      &                 3, threeDim)
         IF (exit_flag.ne.NoError) RETURN
-#   endif
 #  endif
 
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'iteration',      &
@@ -415,7 +413,6 @@
 !
 !  Define conjugate gradient norms.
 !
-#  ifndef LANCZOS
         Vinfo( 1)='cg_alpha'
         Vinfo( 2)='conjugate gradient alpha coefficient'
         vardim(1)=MinnerDim
@@ -423,7 +420,7 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-#  endif
+
         Vinfo( 1)='cg_beta'
         Vinfo( 2)='conjugate gradient beta coefficient'
         vardim(1)=MinnerDim
@@ -431,17 +428,6 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
-#  ifndef LANCZOS
-        Vinfo( 1)='cg_tau'
-        Vinfo( 2)='conjugate gradient tau coefficient'
-        vardim(1)=MinnerDim
-        vardim(2)=NouterDim
-        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 2, vardim, Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-#  endif
-#  ifdef LANCZOS
 !
 !  Define Lanczos algorithm coefficients.
 !
@@ -538,7 +524,6 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-#  endif
 # endif
 # if defined WEAK_CONSTRAINT || defined IOM
 !

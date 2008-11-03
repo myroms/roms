@@ -1007,12 +1007,6 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' KANTHA_CLAYSON,'
 #endif
-#if defined LANCZOS && defined IS4DVAR
-      IF (Master) WRITE (stdout,20) 'LANCZOS',                          &
-     &   'Using Lanczos conjugate gradient algorithm.'
-      is=LEN_TRIM(Coptions)+1
-      Coptions(is:is+9)=' LANCZOS,'
-#endif
 #ifdef LMD_BKPP
       IF (Master) WRITE (stdout,20) 'LMD_BKPP',                         &
      &   'KPP bottom boundary layer mixing.'

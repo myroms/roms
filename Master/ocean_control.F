@@ -33,8 +33,8 @@
 !!  symmetry.h        ROMS/TOMS representer matrix symmetry driver.    !
 !!  so_semi_ocean.h   ROMS/TOMS stochastic optimals, semi-norm.        !
 !!  is4dvar_*.h       ROMS/TOMS Strong constraint, incremental 4DVAR   !
-!!                      assimilation with various conjugate gradient   !
-!!                      algorithms (cgradient.h, cgradient_lanczos.h). !
+!!                      assimilation based on Lanczos methodology with !
+!!                      spectral and Ritz preconditioners.             !
 !!  w4dpsas_ocean.h   ROMS/TOMS weak constraint 4D-PSAS assimilation.  !
 !!  w4dvar_ocean.h    ROMS/TOMS weak constraint 4DVAR assimilation.    !
 !!                                                                     !
@@ -71,11 +71,7 @@
 #elif defined R_SYMMETRY
 # include "symmetry.h"
 #elif defined IS4DVAR
-# if defined LANCZOS
 #  include "is4dvar_lanczos_ocean.h"
-# else
-#  include "is4dvar_ocean.h"
-# endif
 #elif defined W4DPSAS
 # include "w4dpsas_ocean.h"
 #elif defined W4DVAR

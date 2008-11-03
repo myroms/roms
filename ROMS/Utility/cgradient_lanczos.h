@@ -4729,7 +4729,7 @@
 !  THIS PRECONDITIONER IS WRITTEN IN PRODUCT FORM AS DESCRIBED BY
 !  TSHIMANGA - PhD thesis, page 75, proof of proposition 2.3.1.
 !  IT IS THEREFORE IMPORTANT THAT THE EIGENVECTORS/RITZ VECTORS THAT
-!  ARE COMPUTED BY IS4DVAR_LANCZOS ARE ORTHONORMALIZED.
+!  ARE COMPUTED BY is4dvar_lanczos.h ARE ORTHONORMALIZED.
 !
 !  Apply the preconditioner. The approximated Hessian matrix is computed
 !  from the eigenvectors computed by the Lanczos algorithm which are

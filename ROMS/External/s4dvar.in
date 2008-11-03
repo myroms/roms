@@ -75,11 +75,6 @@
 
          Lritz = T
 
-! If preconditioning, specify number of eigenpairs to use.  If zero,
-! use all available vectors.
-
-       NritzEV = 0
-
 ! If weak constraint 4DVar, set diffusive relaxation coefficients (m2/s)
 ! used to relax representer tangent linear solution to privious Picard
 ! iteration linearized trajectory.
