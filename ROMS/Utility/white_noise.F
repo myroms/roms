@@ -205,7 +205,7 @@
      &                   NghostPoints, gtype, Rmin, Rmax,               &
 # if defined READ_WATER && defined MASKING
      &                   (Lm(ng)+2)*(Mm(ng)+2),                         &
-     &                   SCALARS(ng)%IJwater(1,gtype),                  &
+     &                   SCALARS(ng)%IJwater(:,gtype),                  &
 # endif
      &                   SIZE(random), random, R)
 #else
@@ -312,7 +312,7 @@
      &                   NghostPoints, gtype, Rmin, Rmax,               &
 #  if defined READ_WATER && defined MASKING
      &                   (Lm(ng)+2)*(Mm(ng)+2),                         &
-     &                   SCALARS(ng)%IJwater(1,gtype),                  &
+     &                   SCALARS(ng)%IJwater(:,gtype),                  &
 #  endif
      &                   SIZE(random), random, R)
 # else

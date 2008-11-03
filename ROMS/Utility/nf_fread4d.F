@@ -249,7 +249,7 @@
         CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,       &
      &                   Nghost, MyType, Amin, Amax,                    &
 # if defined READ_WATER && defined MASKING
-     &                   NWpts, SCALARS(ng)%IJwater(1,wtype),           &
+     &                   NWpts, SCALARS(ng)%IJwater(:,wtype),           &
 # endif
      &                   Npts, wrk, A(LBi,LBj,LBk,fourth))
 #else        
