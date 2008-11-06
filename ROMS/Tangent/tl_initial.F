@@ -122,6 +122,9 @@
       nfm2(ng)=3
       nfm3(ng)=2
 # endif
+# ifdef OBC_VOLCONS
+      tl_ubar_xs=0.0_r8
+# endif
       tdays(ng)=dstart
       time(ng)=tdays(ng)*day2sec
       ntstart(ng)=INT((time(ng)-dstart*day2sec)/dt(ng))+1

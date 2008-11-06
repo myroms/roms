@@ -552,8 +552,6 @@
 !
         Vinfo( 1)=Vname(1,idObsS)
         Vinfo( 2)=Vname(2,idObsS)
-        Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idObsS,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -564,8 +562,6 @@
 !
         Vinfo( 1)=Vname(1,idNLmi)
         Vinfo( 2)=Vname(2,idNLmi)
-        Vinfo(24)='_FillValue'
-        Aval(6)=1.0E+35_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idNLmi,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -577,8 +573,6 @@
         haveNLmod(ng)=.FALSE.
         Vinfo( 1)=Vname(1,idNLmo)
         Vinfo( 2)=Vname(2,idNLmo)
-        Vinfo(24)='_FillValue'
-        Aval(6)=1.0E+35_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idNLmo,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -595,8 +589,6 @@
 #  else
         Vinfo( 2)=Vname(2,idTLmo)
 #  endif
-        Vinfo(24)='_FillValue'
-        Aval(6)=1.0E+35_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idTLmo,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -608,8 +600,6 @@
 !
         Vinfo( 1)=Vname(1,idMOMi)
         Vinfo( 2)=Vname(2,idMOMi)
-        Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idMOMi,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -618,8 +608,6 @@
 !
         Vinfo( 1)=Vname(1,idMOMf)
         Vinfo( 2)=Vname(2,idMOMf)
-        Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idMOMf,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -679,8 +667,6 @@
 !
         Vinfo( 1)='NLcost_function'
         Vinfo( 2)='nonlinear model misfit cost function'
-        Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 2, (/stateDim,MouterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -689,8 +675,6 @@
 !
         Vinfo( 1)='TLcost_function'
         Vinfo( 2)='tangent linear model misfit cost function'
-        Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 1, (/iterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
@@ -701,8 +685,6 @@
 !
         Vinfo( 1)='back_function'
         Vinfo( 2)='model minus background misfit cost function'
-        Vinfo(24)='_FillValue'
-        Aval(6)=0.0_r8
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 1, (/iterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN

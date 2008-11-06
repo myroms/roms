@@ -311,22 +311,14 @@
         NwaterV(ng)=INT(wp_buffer(3))
 #  endif
 # endif
-      END IF
-!$OMP END CRITICAL (MAX_WATER)
-
 # if defined MASKING && (defined READ_WATER || defined WRITE_WATER)
-!
-!-----------------------------------------------------------------------
-!  Load number of water points into structure array.
-!-----------------------------------------------------------------------
-!
-      IF (SOUTH_WEST_TEST) THEN
         IOBOUNDS(ng) % xy_psi = Nxyp(ng)
         IOBOUNDS(ng) % xy_rho = Nxyr(ng)
-        IOBOUNDS(ng) % xy_u   = Nxyr(ng)
-        IOBOUNDS(ng) % xy_v   = Nxyr(ng)
-      END IF
+        IOBOUNDS(ng) % xy_u   = Nxyu(ng)
+        IOBOUNDS(ng) % xy_v   = Nxyv(ng)
 # endif
+      END IF
+!$OMP END CRITICAL (MAX_WATER)
 
 # ifdef PROPAGATOR
 !
@@ -440,7 +432,7 @@
       END DO
       Npts=ic
 #  endif
-#  if defined READ_WATER && defined DISTRIBUTED
+#  if defined READ_WATER && defined DISTRIBUTE
 !
 !  Determine water RHO-points for IO purposes.
 !

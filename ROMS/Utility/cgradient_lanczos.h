@@ -1564,10 +1564,13 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-#ifdef DISTRIBUTE
 !
+#ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcasti
+#endif
+      USE nf_fread2d_mod, ONLY : nf_fread2d
+#ifdef SOLVE3D
+      USE nf_fread3d_mod, ONLY : nf_fread3d
 #endif
 !
 !  Imported variable declarations.
@@ -1637,11 +1640,6 @@
       integer, dimension(NV) :: vid
       integer, dimension(4) :: Vsize
 
-      integer :: nf_fread2d
-#ifdef SOLVE3D
-      integer :: nf_fread3d
-#endif
-
       real(r8) :: Fmin, Fmax, scale
 
 #include "set_bounds.h"
@@ -1706,9 +1704,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 #ifdef MASKING
-     &                  rmask(LBi,LBj),                                 &
+     &                  rmask,                                          &
 #endif
-     &                  s_zeta(LBi,LBj,Lwrk))
+     &                  s_zeta(:,:,Lwrk))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idFsur)), rec, TRIM(ncname)
@@ -1728,9 +1726,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
-     &                  umask(LBi,LBj),                                 &
+     &                  umask,                                          &
 # endif
-     &                  s_ubar(LBi,LBj,Lwrk))
+     &                  s_ubar(:,:,Lwrk))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUbar)), rec, TRIM(ncname)
@@ -1746,9 +1744,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
-     &                  vmask(LBi,LBj),                                 &
+     &                  vmask,                                          &
 # endif
-     &                  s_vbar(LBi,LBj,Lwrk))
+     &                  s_vbar(:,:,Lwrk))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVbar)), rec, TRIM(ncname)
@@ -1769,9 +1767,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
-     &                  umask(LBi,LBj),                                 &
+     &                  umask,                                          &
 # endif
-     &                  s_ustr(LBi,LBj,1,Lwrk))
+     &                  s_ustr(:,:,:,Lwrk))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUsms)), rec, TRIM(ncname)
@@ -1787,9 +1785,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
-     &                  vmask(LBi,LBj),                                 &
+     &                  vmask,                                          &
 # endif
-     &                  s_vstr(LBi,LBj,1,Lwrk))
+     &                  s_vstr(:,:,:,Lwrk))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVsms)), rec, TRIM(ncname)
@@ -1810,9 +1808,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
-     &                  umask(LBi,LBj),                                 &
+     &                  umask,                                          &
 # endif
-     &                  s_u(LBi,LBj,1,Lwrk))
+     &                  s_u(:,:,:,Lwrk))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idUvel)), rec, TRIM(ncname)
@@ -1828,9 +1826,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj, 1, N(ng),            &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
-     &                  vmask(LBi,LBj),                                 &
+     &                  vmask,                                          &
 # endif
-     &                  s_v(LBi,LBj,1,Lwrk))
+     &                  s_v(:,:,:,Lwrk))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           WRITE (stdout,20) TRIM(Vname(1,idVvel)), rec, TRIM(ncname)
@@ -1849,9 +1847,9 @@
      &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1, N(ng),   &
      &                    scale, Fmin, Fmax,                            &
 # ifdef MASKING
-     &                    rmask(LBi,LBj),                               &
+     &                    rmask,                                        &
 # endif
-     &                    s_t(LBi,LBj,1,Lwrk,itrc))
+     &                    s_t(:,:,:,Lwrk,itrc))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTvar(itrc))), rec,         &
@@ -1878,9 +1876,9 @@
      &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1,Nfrec(ng),&
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
-     &                    rmask(LBi,LBj),                               &
+     &                    rmask,                                        &
 #  endif
-     &                    s_tflux(LBi,LBj,1,Lwrk,itrc))
+     &                    s_tflux(:,:,:,Lwrk,itrc))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,20) TRIM(Vname(1,idTsur(itrc))), rec,         &

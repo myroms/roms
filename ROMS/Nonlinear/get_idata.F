@@ -32,12 +32,16 @@
 # if defined SSH_TIDES || defined UV_TIDES
       USE mod_tides
 # endif
+!
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
 #  ifdef DISTRIBUTE
-!
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
 #  endif
 # endif
+      USE nf_fread3d_mod, ONLY : nf_fread3d
+#ifdef SOLVE3D
+      USE nf_fread4d_mod, ONLY : nf_fread4d
+#endif
 !
       implicit none
 !
@@ -55,10 +59,6 @@
 # if defined AVERAGES_DETIDE && (defined SSH_TIDES || defined UV_TIDES)
       integer :: gtype, status, varid, Vsize(4)
 
-      integer :: nf_fread3d
-#  ifdef SOLVE3D
-      integer :: nf_fread4d
-#  endif
       real(r8), parameter :: Fscl = 1.0_r8
 
       real(r8) :: Fmin, Fmax, Htime
@@ -285,9 +285,9 @@
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
 #  ifdef MASKING
-     &                    GRID(ng) % rmask(LBi,LBj),                    &
+     &                    GRID(ng) % rmask,                             &
 #  endif
-     &                    TIDES(ng) % zeta_tide(LBi,LBj,0))
+     &                    TIDES(ng) % zeta_tide)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idFsuH)), TRIM(TIDEname(ng))
@@ -309,9 +309,9 @@
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
 #  ifdef MASKING
-     &                    GRID(ng) % umask(LBi,LBj),                    &
+     &                    GRID(ng) % umask,                             &
 #  endif
-     &                    TIDES(ng) % ubar_tide(LBi,LBj,0))
+     &                    TIDES(ng) % ubar_tide)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idu2dH)), TRIM(TIDEname(ng))
@@ -333,9 +333,9 @@
      &                    LBi, UBi, LBj, UBj, 0, 2*NTC(ng),             &
      &                    Fscl, Fmin, Fmax,                             &
 #  ifdef MASKING
-     &                    GRID(ng) % vmask(LBi,LBj),                    &
+     &                    GRID(ng) % vmask,                             &
 #  endif
-     &                    TIDES(ng) % vbar_tide(LBi,LBj,0))
+     &                    TIDES(ng) % vbar_tide)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idv2dH)), TRIM(TIDEname(ng))
@@ -359,9 +359,9 @@
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),   &
      &                    Fscl, Fmin, Fmax,                             &
 #   ifdef MASKING
-     &                    GRID(ng) % umask(LBi,LBj),                    &
+     &                    GRID(ng) % umask,                             &
 #   endif
-     &                    TIDES(ng) % u_tide(LBi,LBj,1,0))
+     &                    TIDES(ng) % u_tide)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idu3dH)), TRIM(TIDEname(ng))
@@ -383,9 +383,9 @@
      &                    LBi, UBi, LBj, UBj, 1, N(ng), 0, 2*NTC(ng),   &
      &                    Fscl, Fmin, Fmax,                             &
 #   ifdef MASKING
-     &                    GRID(ng) % vmask(LBi,LBj),                    &
+     &                    GRID(ng) % vmask,                             &
 #   endif
-     &                    TIDES(ng) % v_tide(LBi,LBj,1,0))
+     &                    TIDES(ng) % v_tide)
 #  endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN

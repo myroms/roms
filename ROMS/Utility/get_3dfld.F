@@ -51,12 +51,12 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-#ifdef DISTRIBUTE
 !
+#ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
       USE distribute_mod, ONLY : mp_bcastl, mp_bcasts
 #endif
+      USE nf_fread3d_mod, ONLY : nf_fread3d
 !
       implicit none
 !
@@ -84,8 +84,6 @@
       integer :: i, lend, lfvar, lstr, ltvar, lvar, nrec, nvatts
       integer :: nvd, status, vartype
       integer :: Vsize(4), start(4), total(4)
-
-      integer :: nf_fread3d
 
       real(r8) :: Clength, Fmax, Fmin, Tdelta, Tend
       real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr, scale
@@ -376,9 +374,9 @@
      &                              Vsize, LBi, UBi, LBj, UBj, LBk, UBk,&
      &                              Fscale(ifield,ng), Fmin, Fmax,      &
 # ifdef MASKING
-     &                              Fmask(LBi,LBj),                     &
+     &                              Fmask,                              &
 # endif
-     &                              Fout(LBi,LBj,LBk,i))
+     &                              Fout(:,:,:,i))
                   Finfo(8,ifield,ng)=MIN(Fmin,Finfo(8,ifield,ng))
                   Finfo(9,ifield,ng)=MAX(Fmax,Finfo(9,ifield,ng))
                 END DO
@@ -387,9 +385,9 @@
      &                            Vsize, LBi, UBi, LBj, UBj, LBk, UBk,  &
      &                            Fscale(ifield,ng), Fmin, Fmax,        &
 # ifdef MASKING
-     &                            Fmask(LBi,LBj),                       &
+     &                            Fmask,                                &
 # endif
-     &                            Fout(LBi,LBj,LBk,Tindex))
+     &                            Fout(:,:,:,Tindex))
                 Finfo(8,ifield,ng)=Fmin
                 Finfo(9,ifield,ng)=Fmax
               END IF

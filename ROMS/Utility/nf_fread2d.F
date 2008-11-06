@@ -1,12 +1,6 @@
 #include "cppdefs.h"
 #undef DEBUG
-      FUNCTION nf_fread2d (ng, model, ncid, ncvarid, tindex, gtype,     &
-     &                     Vsize, LBi, UBi, LBj, UBj, Ascl,             &
-     &                     Amin, Amax,                                  &
-#ifdef MASKING
-     &                     Amask,                                       &
-#endif
-     &                     A)
+      MODULE nf_fread2d_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -46,6 +40,20 @@
 !                                                                      !
 !=======================================================================
 !
+      implicit none
+
+      CONTAINS
+!
+!***********************************************************************
+      FUNCTION nf_fread2d (ng, model, ncid, ncvarid, tindex, gtype,     &
+     &                     Vsize, LBi, UBi, LBj, UBj,                   &
+     &                     Ascl, Amin, Amax,                            &
+#ifdef MASKING
+     &                     Amask,                                       &
+#endif
+     &                     A)
+!***********************************************************************
+!
       USE mod_param
       USE mod_parallel
       USE mod_grid
@@ -79,10 +87,17 @@
       real(r8), intent(out) :: Amin
       real(r8), intent(out) :: Amax
 
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+# endif
+      real(r8), intent(out) :: A(LBi:,LBj:)
+#else
+# ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(out) :: A(LBi:UBi,LBj:UBj)
+#endif
 !
 !  Local variable declarations.
 !
@@ -267,7 +282,7 @@
 # if defined READ_WATER && defined MASKING
      &                   NWpts, SCALARS(ng)%IJwater(:,wtype),           &
 # endif
-     &                   Npts+2, wrk, A)
+     &                   Npts, wrk, A)
 #else
         IF (MyType.gt.0) THEN
           ic=0
@@ -306,9 +321,9 @@
      &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
      &                 LBi, UBi, LBj, UBj,                              &
      &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonu(LBi,LBj),                        &
-     &                 GRID(ng) % latu(LBi,LBj),                        &
-     &                 A(LBi,LBj))
+     &                 GRID(ng) % lonu,                                 &
+     &                 GRID(ng) % latu,                                 &
+     &                 A)
         ELSE IF (ABS(MyType).eq.v2dvar) THEN
           CALL regrid (ng, model, ncid, ncvarid, MyType, InterpFlag,    &
      &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
@@ -316,15 +331,15 @@
      &                 Imin, Imax, Jmin, Jmax,                          &
      &                 GRID(ng) % lonv,                                 &
      &                 GRID(ng) % latv,                                 &
-     &                 A(LBi,LBj))
+     &                 A)
         ELSE IF (ABS(MyType).eq.r2dvar) THEN
           CALL regrid (ng, model, ncid, ncvarid, MyType, InterpFlag,    &
      &                 Vsize(1), Vsize(2), wrk, Amin, Amax,             &
      &                 LBi, UBi, LBj, UBj,                              &
      &                 Imin, Imax, Jmin, Jmax,                          &
-     &                 GRID(ng) % lonr(LBi,LBj),                        &
-     &                 GRID(ng) % latr(LBi,LBj),                        &
-     &                 A(LBi,LBj))
+     &                 GRID(ng) % lonr,                                 &
+     &                 GRID(ng) % latr,                                 &
+     &                 A)
         END IF
       END IF
 #if defined DISTRIBUTE && defined DEBUG
@@ -349,3 +364,5 @@
 
       RETURN
       END FUNCTION nf_fread2d
+
+      END MODULE nf_fread2d_mod

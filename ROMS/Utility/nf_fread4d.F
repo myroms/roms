@@ -1,13 +1,6 @@
 #include "cppdefs.h"
 #undef DEBUG
-      FUNCTION nf_fread4d (ng, model, ncid, ncvarid, tindex, gtype,     &
-     &                     Vsize,                                       &
-     &                     LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,      &
-     &                     Ascl, Amin, Amax,                            &
-#ifdef MASKING
-     &                     Amask,                                       &
-#endif
-     &                     A)
+      MODULE nf_fread4d_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -51,6 +44,21 @@
 !                                                                      !
 !=======================================================================
 !
+      implicit none
+
+      CONTAINS
+!
+!***********************************************************************
+      FUNCTION nf_fread4d (ng, model, ncid, ncvarid, tindex, gtype,     &
+     &                     Vsize,                                       &
+     &                     LBi, UBi, LBj, UBj, LBk, UBk, LBt, UBt,      &
+     &                     Ascl, Amin, Amax,                            &
+#ifdef MASKING
+     &                     Amask,                                       &
+#endif
+     &                     A)
+!***********************************************************************
+!
       USE mod_param
       USE mod_parallel
       USE mod_ncparam
@@ -80,10 +88,17 @@
       real(r8), intent(out) :: Amin
       real(r8), intent(out) :: Amax
 
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+# endif
+      real(r8), intent(out) :: A(LBi:,LBj:,LBk:,LBt:)
+#else
+# ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(out) :: A(LBi:UBi,LBj:UBj,LBk:UBk,LBt:UBt)
+#endif
 !
 !  Local variable declarations.
 !
@@ -251,7 +266,7 @@
 # if defined READ_WATER && defined MASKING
      &                   NWpts, SCALARS(ng)%IJwater(:,wtype),           &
 # endif
-     &                   Npts, wrk, A(LBi,LBj,LBk,fourth))
+     &                   Npts, wrk, A(:,:,:,fourth))
 #else        
         IF (MyType.gt.0) THEN
           ic=0
@@ -287,3 +302,5 @@
 
       RETURN
       END FUNCTION nf_fread4d
+
+      END MODULE nf_fread4d_mod

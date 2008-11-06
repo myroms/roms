@@ -374,6 +374,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE nf_fread2d_mod, ONLY : nf_fread2d
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
 !
 !  Imported variable declarations.
@@ -404,8 +405,6 @@
 !
       integer :: i, j, status
       integer :: Irec, Iold, Inow, Inxt, Iout, Isav
-
-      integer :: nf_fread2d
 
       integer, dimension(4) :: Vsize(4)
 
@@ -457,9 +456,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
-     &                  mask(LBi,LBj),                                  &
+     &                  mask,                                           &
 # endif
-     &                  ad_A(LBi,LBj,Inow))
+     &                  ad_A(:,:,Inow))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           status=nf90_inquire_variable(INPncid, INPvid, ncvname)
@@ -477,9 +476,9 @@
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    scale, Fmin, Fmax,                            &
 # ifdef MASKING
-     &                    mask(LBi,LBj),                                &
+     &                    mask,                                         &
 # endif
-     &                    ad_A(LBi,LBj,Inxt))
+     &                    ad_A(:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(INPncid, INPvid, ncvname)
@@ -537,9 +536,9 @@
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    scale, Fmin, Fmax,                            &
 # ifdef MASKING
-     &                    mask(LBi,LBj),                                &
+     &                    mask,                                         &
 # endif
-     &                    ad_A(LBi,LBj,Inxt))
+     &                    ad_A(:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(INPncid, INPvid, ncvname)
@@ -655,6 +654,7 @@
       USE mod_netcdf
       USE mod_scalars
 !
+      USE nf_fread3d_mod, ONLY : nf_fread3d
       USE nf_fwrite3d_mod, ONLY : nf_fwrite3d
 !
 !  Imported variable declarations.
@@ -685,8 +685,6 @@
 !
       integer :: i, j, k, status
       integer :: Irec, Iold, Inow, Inxt, Iout, Isav
-
-      integer :: nf_fread3d
 
       integer, dimension(4) :: Vsize(4)
 
@@ -738,9 +736,9 @@
      &                  Vsize, LBi, UBi, LBj, UBj, LBk, UBk,            &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
-     &                  mask(LBi,LBj),                                  &
+     &                  mask,                                           &
 #  endif
-     &                  ad_A(LBi,LBj,LBk,Inow))
+     &                  ad_A(:,:,:,Inow))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
           status=nf90_inquire_variable(INPncid, INPvid, ncvname)
@@ -758,9 +756,9 @@
      &                    Vsize, LBi, UBi, LBj, UBj, LBk, UBk,          &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
-     &                    mask(LBi,LBj),                                &
+     &                    mask,                                         &
 #  endif
-     &                    ad_A(LBi,LBj,LBk,Inxt))
+     &                    ad_A(:,:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(INPncid, INPvid, ncvname)
@@ -820,9 +818,9 @@
      &                    Vsize, LBi, UBi, LBj, UBj, LBk, UBk,          &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
-     &                    mask(LBi,LBj),                                &
+     &                    mask,                                         &
 #  endif
-     &                    ad_A(LBi,LBj,LBk,Inxt))
+     &                    ad_A(:,:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             status=nf90_inquire_variable(INPncid, INPvid, ncvname)

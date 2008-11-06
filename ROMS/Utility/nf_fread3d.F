@@ -1,12 +1,6 @@
 #include "cppdefs.h"
 #undef DEBUG
-      FUNCTION nf_fread3d (ng, model, ncid, ncvarid, tindex, gtype,     &
-     &                     Vsize, LBi, UBi, LBj, UBj, LBk, UBk, Ascl,   &
-     &                     Amin, Amax,                                  &
-#ifdef MASKING
-     &                     Amask,                                       &
-#endif
-     &                     A)
+      MODULE nf_fread3d_mod
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -48,6 +42,20 @@
 !                                                                      !
 !=======================================================================
 !
+      implicit none
+
+      CONTAINS
+!
+!***********************************************************************
+      FUNCTION nf_fread3d (ng, model, ncid, ncvarid, tindex, gtype,     &
+     &                     Vsize, LBi, UBi, LBj, UBj, LBk, UBk,         &
+     &                     Ascl, Amin, Amax,                            &
+#ifdef MASKING
+     &                     Amask,                                       &
+#endif
+     &                     A)
+!***********************************************************************
+!
       USE mod_param
       USE mod_parallel
       USE mod_ncparam
@@ -80,10 +88,17 @@
       real(r8), intent(out) :: Amin
       real(r8), intent(out) :: Amax
 
-#ifdef MASKING
+#ifdef ASSUMED_SHAPE
+# ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:,LBj:)
+# endif
+      real(r8), intent(out) :: A(LBi:,LBj:,LBk:)
+#else
+# ifdef MASKING
       real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
-#endif
+# endif
       real(r8), intent(out) :: A(LBi:UBi,LBj:UBj,LBk:UBk)
+#endif
 !
 !  Local variable declarations.
 !
@@ -278,7 +293,7 @@
      &                   NWpts, SCALARS(ng)%IJwater(:,wtype),           &
 # endif
 # ifdef INLINE_2DIO
-     &                   Npts, wrk, A(LBi,LBj,k))
+     &                   Npts, wrk, A(:,:,k))
       END DO
 # else
      &                   Npts, wrk, A)
@@ -326,3 +341,5 @@
 
       RETURN
       END FUNCTION nf_fread3d
+
+      END MODULE nf_fread3d_mod

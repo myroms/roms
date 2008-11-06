@@ -47,12 +47,13 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
-
-#ifdef DISTRIBUTE
 !
+#ifdef DISTRIBUTE
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
       USE distribute_mod, ONLY : mp_bcastl, mp_bcasts
 #endif
+      USE nf_fread2d_mod, ONLY : nf_fread2d
+      USE nf_fread3d_mod, ONLY : nf_fread3d
 !
       implicit none
 !
@@ -77,10 +78,8 @@
 
       integer :: Tid, Tindex, Trec, Vid, Vtype
       integer :: dimsiz, i, lend, lfvar, lstr, ltvar, lvar, nrec, nvatts
-      integer :: nvd, status, vartype
+      integer :: gtype, nvd, status, vartype
       integer :: Vsize(4), start(4), total(4)
-
-      integer :: nf_fread2d, nf_fread3d
 
       real(r8) :: Clength, Fmax, Fmin, Tdelta, Tend
       real(r8) :: Tmax, Tmin, Tmono, Tscale, Tstr, scale
@@ -399,13 +398,14 @@
             IF (Lgrided) THEN
               IF (special) THEN
                 Vsize(3)=Irec
-                status=nf_fread3d(ng, model, ncid, Vid, 0, Vtype+4,     &
+                gtype=Vtype+4
+                status=nf_fread3d(ng, model, ncid, Vid, 0, gtype,       &
      &                            Vsize, LBi, UBi, LBj, UBj, 1, Irec,   &
      &                            Fscale(ifield,ng), Fmin, Fmax,        &
 #ifdef MASKING
-     &                            Fmask(LBi,LBj),                       &
+     &                            Fmask,                                &
 #endif
-     &                            Fout(LBi,LBj,1))
+     &                            Fout)
                 Finfo(8,ifield,ng)=Fmin
                 Finfo(9,ifield,ng)=Fmax
               ELSE
@@ -413,9 +413,9 @@
      &                            Vsize, LBi, UBi, LBj, UBj,            &
      &                            Fscale(ifield,ng), Fmin, Fmax,        &
 #ifdef MASKING
-     &                            Fmask(LBi,LBj),                       &
+     &                            Fmask,                                &
 #endif
-     &                            Fout(LBi,LBj,Tindex))
+     &                            Fout(:,:,Tindex))
                 Finfo(8,ifield,ng)=Fmin
                 Finfo(9,ifield,ng)=Fmax
               END IF

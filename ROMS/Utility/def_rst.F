@@ -11,6 +11,11 @@
 !  This routine creates restart NetCDF file, it defines its            !
 !  dimensions, attributes, and variables.                              !
 !                                                                      !
+#if defined PERFECT_RESTART && defined WRITE_WATER && defined MASKING
+!  Currently, perfect restart is not compatible with writing           !
+!  only water points.                                                  !
+!                                                                      !
+#endif
 !=======================================================================
 !
       USE mod_param
@@ -140,7 +145,8 @@
      &                 IOBOUNDS(ng)%eta_psi, DimIDs( 8))
         IF (exit_flag.ne.NoError) RETURN
 
-#if defined WRITE_WATER && defined MASKING
+#if !defined PERFECT_RESTART && \
+    (defined WRITE_WATER && defined MASKING)
         status=def_dim(ng, iNLM, ncRSTid(ng), ncname, 'xy_rho',         &
      &                 IOBOUNDS(ng)%xy_rho, DimIDs(17))
         IF (exit_flag.ne.NoError) RETURN
@@ -155,7 +161,8 @@
 #endif
 
 #ifdef SOLVE3D
-# if defined WRITE_WATER && defined MASKING
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         status=def_dim(ng, iNLM, ncRSTid(ng), ncname, 'xyz_rho',        &
      &                 IOBOUNDS(ng)%xy_rho*N(ng), DimIDs(20))
         IF (exit_flag.ne.NoError) RETURN
@@ -194,7 +201,8 @@
      &                 Nbed, DimIDs(16))
         IF (exit_flag.ne.NoError) RETURN
 
-#  if defined WRITE_WATER && defined MASKING
+#  if !defined PERFECT_RESTART && \
+      (defined WRITE_WATER && defined MASKING)
         status=def_dim(ng, iNLM, ncRSTid(ng), ncname, 'xybed',          &
      &                 IOBOUNDS(ng)%xy_rho*Nbed, DimIDs(24))
         IF (exit_flag.ne.NoError) RETURN
@@ -250,7 +258,8 @@
 !
 !  Set number of dimensions for output variables.
 !
-#if defined WRITE_WATER && defined MASKING
+#if !defined PERFECT_RESTART && \
+    (defined WRITE_WATER && defined MASKING)
         nvd3=2
         nvd4=2
         nvd5=2
@@ -262,7 +271,8 @@
 !
 !  Define dimension vectors for staggered tracer type variables.
 !
-#if defined WRITE_WATER && defined MASKING
+#if !defined PERFECT_RESTART && \
+    (defined WRITE_WATER && defined MASKING)
         t2dgrd(1)=DimIDs(17)
         t2dgrd(2)=DimIDs(12)
         sr2dgrd(1)=DimIDs(17)
@@ -270,6 +280,8 @@
 # ifdef SOLVE3D
         t3dgrd(1)=DimIDs(20)
         t3dgrd(2)=DimIDs(12)
+        r3dgrd(1)=DimIDs(20)
+        r3dgrd(2)=DimIDs(12)
 # endif
 #else
         t2dgrd(1)=DimIDs( 1)
@@ -302,7 +314,8 @@
 !
 !  Define dimension vectors for staggered u-momemtum type variables.
 !
-#if defined WRITE_WATER && defined MASKING
+#if !defined PERFECT_RESTART && \
+    (defined WRITE_WATER && defined MASKING)
         u2dgrd(1)=DimIDs(18)
         u2dgrd(2)=DimIDs(12)
 # ifdef SOLVE3D
@@ -333,7 +346,8 @@
 !
 !  Define dimension vectors for staggered v-momemtum type variables.
 !
-#if defined WRITE_WATER && defined MASKING
+#if !defined PERFECT_RESTART && \
+    (defined WRITE_WATER && defined MASKING)
         v2dgrd(1)=DimIDs(19)
         v2dgrd(2)=DimIDs(12)
 # ifdef SOLVE3D
@@ -365,7 +379,8 @@
 !
 !  Define dimension vectors for RHS free-surface equation.
 !
-# if defined WRITE_WATER && defined MASKING
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         r2dgrd(1)=DimIDs(17)
         r2dgrd(2)=DimIDs(12)
 # else
@@ -377,7 +392,8 @@
 !
 !  Define dimension vectors for RHS u-momemtum equation.
 !
-# if defined WRITE_WATER && defined MASKING
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         ru2dgrd(1)=DimIDs(18)
         ru2dgrd(2)=DimIDs(12)
 #  ifdef SOLVE3D
@@ -400,7 +416,8 @@
 !
 !  Define dimension vectors for RHS v-momemtum equation.
 !
-# if defined WRITE_WATER && defined MASKING
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         rv2dgrd(1)=DimIDs(19)
         rv2dgrd(2)=DimIDs(12)
 #  ifdef SOLVE3D
@@ -425,7 +442,8 @@
 !
 !  Define dimension vector for staggered w-momemtum type variables.
 !
-# if defined WRITE_WATER && defined MASKING
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         w3dgrd(1)=DimIDs(23)
         w3dgrd(2)=DimIDs(12)
 #  ifdef PERFECT_RESTART
@@ -448,7 +466,8 @@
 !
 !  Define dimension vector for sediment, radiation stress variables.
 !
-# if defined WRITE_WATER && defined MASKING
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         su2dgrd(1)=DimIDs(18)
         su2dgrd(2)=DimIDs(12)
         sv2dgrd(1)=DimIDs(19)
@@ -582,13 +601,15 @@
         Vinfo( 3)=Vname(3,idbath)
         Vinfo(14)=Vname(4,idbath)
         Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+# if !defined PERFECT_RESTART && \
+     (defined WRITE_WATER && defined MASKING)
         Vinfo(20)='mask_rho'
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idbath,ng),r8)
         status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idbath,ng),        &
-     &                 NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname)
+     &                 NF_FRST, nvd3, t2dgrd, Aval, Vinfo, ncname,      &
+     &                 .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 #endif
 !
@@ -600,7 +621,12 @@
         Vinfo(14)=Vname(4,idFsur)
         Vinfo(16)=Vname(1,idtime)
 #if defined WRITE_WATER && defined MASKING
+# if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+# else
         Vinfo(20)='mask_rho'
+# endif
 #endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
@@ -623,7 +649,12 @@
         Vinfo(14)=Vname(4,idRzet)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_rho'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
@@ -640,7 +671,12 @@
         Vinfo(14)=Vname(4,idUbar)
         Vinfo(16)=Vname(1,idtime)
 #if defined WRITE_WATER && defined MASKING
+# if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+# else
         Vinfo(20)='mask_u'
+# endif
 #endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUbar,ng),r8)
@@ -663,7 +699,12 @@
         Vinfo(14)=Vname(4,idRu2d)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_u'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idRu2d,ng),r8)
@@ -680,7 +721,12 @@
         Vinfo(14)=Vname(4,idVbar)
         Vinfo(16)=Vname(1,idtime)
 #if defined WRITE_WATER && defined MASKING
+# if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+# else
         Vinfo(20)='mask_v'
+# endif
 #endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
@@ -703,7 +749,12 @@
         Vinfo(14)=Vname(4,idRv2d)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_v'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idRv2d,ng),r8)
@@ -721,7 +772,12 @@
         Vinfo(14)=Vname(4,idUvel)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_u'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idUvel,ng),r8)
@@ -744,7 +800,12 @@
         Vinfo(14)=Vname(4,idRu3d)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_u'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idRu3d,ng),r8)
@@ -761,7 +822,12 @@
         Vinfo(14)=Vname(4,idVvel)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_v'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVvel,ng),r8)
@@ -784,7 +850,12 @@
         Vinfo(14)=Vname(4,idRv3d)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_v'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idRv3d,ng),r8)
@@ -809,7 +880,12 @@
             END DO
 # endif
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
           Vinfo(20)='mask_rho'
+#  endif
 # endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(r3dvar,r8)
@@ -831,7 +907,12 @@
         Vinfo(14)=Vname(4,idDano)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_rho'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idDano,ng),r8)
@@ -849,7 +930,12 @@
         Vinfo(14)=Vname(4,idHsbl)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idHsbl,ng),r8)
@@ -868,7 +954,12 @@
         Vinfo(14)=Vname(4,idHbbl)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idHbbl,ng),r8)
@@ -887,7 +978,12 @@
         Vinfo(14)=Vname(4,idVvis)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVvis,ng),r8)
@@ -903,7 +999,12 @@
         Vinfo(14)=Vname(4,idTdif)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idTdif,ng),r8)
@@ -921,7 +1022,12 @@
         Vinfo(14)=Vname(4,idSdif)
         Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
+#    if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#    else
         Vinfo(20)='mask_rho'
+#    endif
 #   endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idSdif,ng),r8)
@@ -941,7 +1047,12 @@
         Vinfo(14)=Vname(4,idMtke)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idMtke,ng),r8)
@@ -957,7 +1068,12 @@
         Vinfo(14)=Vname(4,idMtls)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idMtls,ng),r8)
@@ -973,7 +1089,12 @@
         Vinfo(14)=Vname(4,idVmLS)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVmLS,ng),r8)
@@ -989,7 +1110,12 @@
         Vinfo(14)=Vname(4,idVmKK)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_rho'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVmKK,ng),r8)
@@ -1007,7 +1133,12 @@
         Vinfo(14)=Vname(4,idVmKP)
         Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
+#    if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#    else
         Vinfo(20)='mask_rho'
+#    endif
 #   endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idVmKP,ng),r8)
@@ -1028,7 +1159,12 @@
           Vinfo(14)=Vname(4,idUbld(i))
           Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
+#    if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#    else
           Vinfo(20)='mask_u'
+#    endif
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idUbld(i),ng),r8)
@@ -1044,7 +1180,12 @@
           Vinfo(14)=Vname(4,idVbld(i))
           Vinfo(16)=Vname(1,idtime)
 #   if defined WRITE_WATER && defined MASKING
+#    if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#    else
           Vinfo(20)='mask_v'
+#    endif
 #   endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idVbld(i),ng),r8)
@@ -1064,7 +1205,12 @@
           Vinfo(16)=Vname(1,idtime)
           WRITE (Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
           Vinfo(20)='mask_rho'
+#  endif
 # endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idfrac(i),ng),r8)
@@ -1083,7 +1229,12 @@
           Vinfo(16)=Vname(1,idtime)
           WRITE (Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
           Vinfo(20)='mask_rho'
+#  endif
 # endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idBmas(i),ng),r8)
@@ -1101,7 +1252,12 @@
           Vinfo(14)=Vname(4,idSbed(i))
           Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+          Vinfo(24)='_FillValue'
+          Aval(6)=spval
+#  else
           Vinfo(20)='mask_rho'
+#  endif
 # endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idSbed(i),ng),r8)
@@ -1123,9 +1279,14 @@
           Vinfo( 3)=Vname(3,idBott(i))
           Vinfo(14)=Vname(4,idBott(i))
           Vinfo(16)=Vname(1,idtime)
-# if defined WRITE_WATER && defined MASKING
+#  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+          Vinfo(24)='_FillValue'
+          Aval(6)=spval
+#   else
           Vinfo(20)='mask_rho'
-# endif
+#   endif
+#  endif
           Vinfo(22)='coordinates'
           Aval(5)=REAL(Iinfo(1,idBott(i),ng),r8)
           status=def_var(ng, iNLM, ncRSTid(ng), rstVid(idBott(i),ng),   &
@@ -1144,7 +1305,12 @@
         Vinfo(14)=Vname(4,idU2Sd)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_u'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idU2Sd,ng),r8)
@@ -1160,7 +1326,12 @@
         Vinfo(14)=Vname(4,idV2Sd)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_v'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idV2Sd,ng),r8)
@@ -1178,7 +1349,12 @@
         Vinfo(14)=Vname(4,idU3Sd)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_u'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idU3Sd,ng),r8)
@@ -1194,7 +1370,12 @@
         Vinfo(14)=Vname(4,idV3Sd)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
+#   if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#   else
         Vinfo(20)='mask_v'
+#   endif
 #  endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idV3Sd,ng),r8)
@@ -1213,7 +1394,12 @@
         Vinfo(14)=Vname(4,idWmsk)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
+#  if defined PERFECT_RESTART
+        Vinfo(24)='_FillValue'
+        Aval(6)=spval
+#  else
         Vinfo(20)='mask_rho'
+#  endif
 # endif
         Vinfo(22)='coordinates'
         Aval(5)=REAL(Iinfo(1,idWmsk,ng),r8)

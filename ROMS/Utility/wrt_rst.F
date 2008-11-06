@@ -67,7 +67,8 @@
 !  Set grid type factor to write full (gfactor=1) fields or water
 !  points (gfactor=-1) fields only.
 !
-#if defined WRITE_WATER && defined MASKING
+#if !defined PERFECT_RESTART && \
+    (defined WRITE_WATER && defined MASKING)
       gfactor=-1
 #else
       gfactor=1
