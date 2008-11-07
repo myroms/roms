@@ -472,9 +472,6 @@
 
       real(r8) :: norm, zbeta, ztheta1
 
-      real(r8), dimension(0:NstateVar(ng)) :: Adjust
-      real(r8), dimension(0:NstateVar(ng)) :: dot_old, dot_new
-      real(r8), dimension(0:NstateVar(ng)) :: old_dot, new_dot
       real(r8), dimension(2*Ninner-2) :: work
 
       character (len=13) :: string
@@ -487,15 +484,6 @@
 !
       Ltrans=.FALSE.
 !
-      IF (innLoop.eq.0) THEN
-        DO i=0,NstateVar(ng)
-          dot_old(i)=0.0_r8
-          dot_new(i)=0.0_r8
-          old_dot(i)=0.0_r8
-          new_dot(i)=0.0_r8
-          FOURDVAR(ng)%CostGradDot(i)=0.0_r8
-        END DO
-      END IF
       IF (Master) WRITE (stdout,10)
  10   FORMAT (/,' <<<< Descent Algorithm >>>>',/)
 !

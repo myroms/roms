@@ -27,7 +27,7 @@
       USE mod_stepping
 !  
 # ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcastl, mp_collect
+      USE distribute_mod, ONLY :  mp_bcasti, mp_collect
 # endif
       USE extract_obs_mod, ONLY : extract_obs2d
 # ifdef SOLVE3D
@@ -50,8 +50,6 @@
 # ifdef DISTRIBUTE
       integer :: Ncollect
 # endif
-      integer, dimension(2) ::  start, total
-
       real(r8), parameter :: IniVal = 0.0_r8
 
       real(r8) :: misfit(Mobs)
@@ -475,7 +473,7 @@
 !  nonlinear model at observation locations.
 !-----------------------------------------------------------------------
 !
-        IF (wrtMisfit(ng).and.OutThread) THEN
+        IF (wrtMisfit(ng)) THEN
           DO iobs=Mstr,Mend
 #  if defined IS4DVAR
             misfit(iobs)=ObsScale(iobs)*SQRT(ObsErr(iobs))*             &
@@ -485,34 +483,27 @@
      &                   (TLmodVal(iobs)-ObsVal(iobs))
 #  endif
           END DO
-          start(1)=NstrObs(ng)
-          total(1)=Nobs(ng)
           IF (Nrun.eq.1) THEN
-            status=nf90_put_var(ncMODid(ng), modVid(idNLmi,ng),         &
-     &                          NLmodVal(Mstr:), start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idMOMi)), TRIM(MODname(ng))
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
-            status=nf90_put_var(ncMODid(ng),modVid(idMOMi,ng),          &
-     &                          misfit(Mstr:), start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idMOMi)), TRIM(MODname(ng))
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
+            CALL netcdf_put_fvar (ng, model, MODname(ng),               &
+     &                            Vname(1,idNLmi), NLmodVal(Mstr:),     &
+     &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
+     &                            ncid = ncMODid(ng),                   &
+     &                            varid = modVid(idNLmi,ng))
+            IF (exit_flag.ne.NoError) RETURN
+
+            CALL netcdf_put_fvar (ng, model, MODname(ng),               &
+     &                            Vname(1,idMOMi), misfit(Mstr:),       &
+     &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
+     &                            ncid = ncMODid(ng),                   &
+     &                            varid = modVid(idMOMi,ng))
+            IF (exit_flag.ne.NoError) RETURN
           ELSE
-            status=nf90_put_var(ncMODid(ng),modVid(idMOMf,ng),          &
-     &                          misfit(Mstr:), start, total)
-            IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idMOMf)), TRIM(MODname(ng))
-              exit_flag=3
-              ioerror=status
-              RETURN
-            END IF
+            CALL netcdf_put_fvar (ng, model, MODname(ng),               &
+     &                            Vname(1,idMOMf), misfit(Mstr:),       &
+     &                            (/NstrObs(ng)/), (/Nobs(ng)/),        &
+     &                            ncid = ncMODid(ng),                   &
+     &                            varid = modVid(idMOMf,ng))
+            IF (exit_flag.ne.NoError) RETURN
           END IF
         END IF
 # endif
@@ -524,41 +515,29 @@
 !
 !  Current outer and inner loop.
 !
-        IF (OutThread.and.                                              &
-     &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-          status=nf90_inq_varid(ncMODid(ng), 'outer', varid)
-          status=nf90_put_var(ncMODid(ng), varid, outer)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'outer', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
-          status=nf90_inq_varid(ncMODid(ng), 'inner', varid)
-          status=nf90_put_var(ncMODid(ng), varid, inner)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) 'inner', TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+        IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
+          CALL netcdf_put_ivar (ng, model, MODname(ng), 'outer',        &
+     &                          outer, (/0/), (/0/),                    &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+
+          CALL netcdf_put_ivar (ng, model, MODname(ng), 'inner',        &
+     &                          inner, (/0/), (/0/),                    &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 #endif
 !
 !  Observation screening/normalization scale.
 !
-        IF (OutThread.and.(Nrun.eq.1).and.                              &
+        IF ((Nrun.eq.1).and.                                            &
      &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-          start(1)=NstrObs(ng)
-          total(1)=Nobs(ng)
-          status=nf90_put_var(ncMODid(ng), modVid(idObsS,ng),           &
-     &                        ObsScale(Mstr:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idObsS)), TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+          CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
+     &                          Vname(1,idObsS), ObsScale(Mstr:),       &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncMODid(ng),                     &
+     &                          varid = modVid(idObsS,ng))
+          IF (exit_flag.ne.NoError) RETURN
         END IF
 
 # ifndef OBS_SENSITIVITY
@@ -566,47 +545,29 @@
 !  Nonlinear model or first guess (background) state at observation
 !  locations.
 !
-        IF (OutThread.and.wrtNLmod(ng)) THEN 
-          start(1)=NstrObs(ng)
-          total(1)=Nobs(ng)
-          status=nf90_put_var(ncMODid(ng), modVid(idNLmo,ng),           &
-     &                        NLmodVal(Mstr:), start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idNLmo)), TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+        IF (wrtNLmod(ng)) THEN 
+          CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
+     &                          Vname(1,idNLmo), NLmodVal(Mstr:),       &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncMODid(ng),                     &
+     &                          varid = modVid(idNLmo,ng))
+          IF (exit_flag.ne.NoError) RETURN
           haveNLmod(ng)=.TRUE.
         END IF
-#  ifdef DISTRIBUTE
-        IF (wrtNLmod(ng)) THEN
-          CALL mp_bcastl (ng, model, haveNLmod(ng), 1)
-        END IF
-#  endif
 # endif
 # ifdef TLM_OBS
 !
 !  Tangent linear model state increments at observation locations.
 !
-        IF (OutThread.and.(wrtTLmod(ng).or.wrtRPmod(ng))) THEN 
-          start(1)=NstrObs(ng)
-          total(1)=Nobs(ng)
-          status=nf90_put_var(ncMODid(ng), modVid(idTLmo,ng),           &
-     &                        TLmodVal(Mstr:), start, total)
-          IF (status.ne.nf90_noerr) then
-            WRITE (stdout,10) TRIM(Vname(1,idTLmo)), TRIM(MODname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN 
+          CALL netcdf_put_fvar (ng, model, MODname(ng),                 &
+     &                          Vname(1,idTLmo), TLmodVal(Mstr:),       &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncMODid(ng),                     &
+     &                          varid = modVid(idTLmo,ng))
+          IF (exit_flag.ne.NoError) RETURN
           haveTLmod(ng)=.TRUE.
         END IF
-#  ifdef DISTRIBUTE
-        IF (wrtTLmod(ng).or.wrtRPmod(ng)) THEN 
-          CALL mp_bcastl (ng, model, haveTLmod(ng), 1)
-        END IF
-#  endif
 # endif
 # ifdef SOLVE3D
 !
@@ -617,21 +578,20 @@
 !  evolve in time, the fractional level coordinate is unknow during
 !  the processing of the observations.
 !  
-        IF (OutThread.and.Load_Zobs(ng).and.                            &
+        IF (Load_Zobs(ng).and.                                          &
      &      (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng))) THEN
-          start(1)=NstrObs(ng)
-          total(1)=Nobs(ng)
+
           DO iobs=Mstr,Mend
             Zobs(iobs)=Zobs(iobs)*ObsScale(iobs)
           END DO
-          status=nf90_put_var(ncOBSid(ng), obsVid(idObsZ,ng),           &
-     &                        Zobs(Mstr:), start, total)
-          IF (status.ne.nf90_noerr) then
-            WRITE (stdout,10) TRIM(Vname(1,idObsZ)), TRIM(OBSname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+
+          CALL netcdf_put_fvar (ng, model, OBSname(ng),                 &
+     &                          Vname(1,idObsZ), Zobs(Mstr:),           &
+     &                          (/NstrObs(ng)/), (/Nobs(ng)/),          &
+     &                          ncid = ncOBSid(ng),                     &
+     &                          varid = obsVid(idObsZ,ng))
+          IF (exit_flag.ne.NoError) RETURN
+
           IF (model.eq.iADM) THEN
             Lwrote=ObsSurvey(ng).eq.1
           ELSE
@@ -639,11 +599,6 @@
           END IF
           IF (Lwrote) wrote_Zobs(ng)=.TRUE.
         END IF
-#  ifdef DISTRIBUTE
-        IF (Load_Zobs(ng)) THEN
-          CALL mp_bcastl (ng, model, wrote_Zobs(ng), 1)
-        END IF
-#  endif
 # endif
 !
 !-----------------------------------------------------------------------
@@ -654,13 +609,16 @@
           IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
             status=nf90_sync(ncMODid(ng))
             IF (status.ne.nf90_noerr) THEN
-              WRITE (stdout,20)
+              WRITE (stdout,10)
               exit_flag=3
               ioerror=status
-              RETURN
             END IF
           END IF
         END IF
+# ifdef DISTRIBUTE
+        CALL mp_bcasti (ng, model, exit_flag, 1)
+# endif
+        IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Set counters for number of rejected observations for each state
@@ -718,14 +676,14 @@
           DO i=1,NstateVar(ng)
             IF (FOURDVAR(ng)%ObsCount(i).gt.0) THEN
               ie=is+FOURDVAR(ng)%ObsCount(i)-1
-              WRITE (stdout,30) TRIM(Vname(1,idSvar(i))), is, ie,       &
+              WRITE (stdout,20) TRIM(Vname(1,idSvar(i))), is, ie,       &
      &                          ie-is+1, FOURDVAR(ng)%ObsReject(i)
               is=ie+1
               ObsSum=ObsSum+FOURDVAR(ng)%ObsCount(i)
               ObsVoid=ObsVoid+FOURDVAR(ng)%ObsReject(i)
             END IF
           END DO
-          WRITE (stdout,40) ObsSum, ObsVoid,                            &
+          WRITE (stdout,30) ObsSum, ObsVoid,                            &
      &                      FOURDVAR(ng)%ObsCount(0),                   &
      &                      FOURDVAR(ng)%ObsReject(0)
         END IF
@@ -755,19 +713,17 @@
         END IF
         IF (Master) THEN
           IF (wrtNLmod(ng).or.wrtTLmod(ng).or.wrtRPmod(ng)) THEN
-             WRITE (stdout,50) TRIM(string), NstrObs(ng), NendObs(ng)
+             WRITE (stdout,40) TRIM(string), NstrObs(ng), NendObs(ng)
           END IF
         END IF
       END IF
 !
-  10  FORMAT (/,' OBS_WRITE - error while writing variable: ',a,/,      &
-     &        11x,'into observation NetCDF: ',a)
-  20  FORMAT (/,' OBS_WRITE - unable to synchronize observations',      &
+  10  FORMAT (/,' OBS_WRITE - unable to synchronize observations',      &
      &        1x,'NetCDF file to disk.')
-  30  FORMAT (10x,a,t25,4(1x,i10))
-  40  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
+  20  FORMAT (10x,a,t25,4(1x,i10))
+  30  FORMAT (/,10x,'Total',t47,2(1x,i10),                              &
      &        /,10x,'Obs Tally',t47,2(1x,i10),/)
-  50  FORMAT (1x,a,' datum = ',i7.7,' - ',i7.7,/)
+  40  FORMAT (1x,a,' datum = ',i7.7,' - ',i7.7,/)
 
       RETURN
       END SUBROUTINE obs_write

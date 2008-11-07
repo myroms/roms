@@ -67,7 +67,7 @@
         END DO
         DO iobs=1,Nobs(ng)
           ivar=ObsType(iobs)
-          cff=0.5_r8*ObsScale(iobs)*ObsErr(iobs)*                      &
+          cff=0.5_r8*ObsScale(iobs)*ObsErr(iobs)*                       &
      &        (NLmodVal(iobs)+TLmodVal(iobs)-ObsVal(iobs))**2
           my_ObsCost(0)=my_ObsCost(0)+cff
           my_ObsCost(ivar)=my_ObsCost(ivar)+cff
@@ -116,16 +116,10 @@
 !  If start of minimization, set cost function scales used to report
 !  normalized values.
 !
-      IF (Nrun.eq.1) THEN
-        IF (model.eq.iTLM) THEN
-          DO ivar=0,NstateVar(ng)
-            FOURDVAR(ng)%CostNorm(ivar)=FOURDVAR(ng)%ObsCost(ivar)
-          END DO
-        ELSE IF (model.eq.iNLM) THEN
-          DO ivar=0,NstateVar(ng)
-            FOURDVAR(ng)%NLcostNorm(ivar)=FOURDVAR(ng)%NLobsCost(ivar)
-          END DO
-        END IF
+      IF ((Nrun.eq.1).and.(model.eq.iTLM)) THEN
+        DO ivar=0,NstateVar(ng)
+          FOURDVAR(ng)%CostNorm(ivar)=FOURDVAR(ng)%ObsCost(ivar)
+        END DO
       END IF
 !
 !  Save initial inner loop cost function.

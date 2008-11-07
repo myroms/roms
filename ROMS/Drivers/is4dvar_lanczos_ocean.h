@@ -731,11 +731,11 @@
                     IF (i.eq.0) THEN
                       WRITE (stdout,40) outer, inner,                   &
      &                                  FOURDVAR(ng)%NLobsCost(i)/      &
-     &                                  FOURDVAR(ng)%NLcostNorm(i)
+     &                                  FOURDVAR(ng)%CostNorm(i)
                     ELSE
                       WRITE (stdout,50) outer, inner,                   &
      &                                  FOURDVAR(ng)%NLobsCost(i)/      &
-     &                                  FOURDVAR(ng)%NLcostNorm(i),     &
+     &                                  FOURDVAR(ng)%CostNorm(i),       &
      &                                  TRIM(Vname(1,idSvar(i)))
                     END IF
                   END IF
@@ -1047,11 +1047,11 @@
               IF (i.eq.0) THEN
                 WRITE (stdout,40) outer, inner,                         &
      &                            FOURDVAR(ng)%NLobsCost(i)/            &
-     &                            FOURDVAR(ng)%NLcostNorm(i)
+     &                            FOURDVAR(ng)%CostNorm(i)
               ELSE
                 WRITE (stdout,50) outer, inner,                         &
      &                            FOURDVAR(ng)%NLobsCost(i)/            &
-     &                            FOURDVAR(ng)%NLcostNorm(i),           &
+     &                            FOURDVAR(ng)%CostNorm(i),             &
      &                            TRIM(Vname(1,idSvar(i)))
               END IF
             END IF

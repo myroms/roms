@@ -19,10 +19,6 @@
 !                 plus observations), J.                               !    
 !  CostFunOld   Previous iteration total cost function (background     !
 !                 plus observations), J.                               !    
-!  CostGrad     Cost function gradient norm.                           !
-!  CostGradDot  Adjoint solution (gradient) dot product used to adjust !
-!                 cost function values in the cgradient algorithm.     !
-!  CostGradOld  Cost function gradient norm from previous iteration.   !
 !  CostNorm     Total cost function normalization scales (minimization !
 !                 starting value, Jb+Jo).                              !
 !  Cost0        The total cost function at the beggining of the inner  !
@@ -134,13 +130,9 @@
           real(r8), pointer :: Cost0(:)
           real(r8), pointer :: CostFun(:)
           real(r8), pointer :: CostFunOld(:)
-          real(r8), pointer :: CostGrad(:)
-          real(r8), pointer :: CostGradOld(:)
-          real(r8), pointer :: CostGradDot(:)
           real(r8), pointer :: CostNorm(:)
           real(r8), pointer :: ObsCost(:)
           real(r8), pointer :: NLobsCost(:)
-          real(r8), pointer :: NLcostNorm(:)
 #  endif
           real(r8), pointer :: ObsVar(:)
           real(r8), pointer :: SurveyTime(:)
@@ -451,7 +443,7 @@
 !
 !  Local variable declarations.
 !
-      integer :: Nritz, my_NstateVar, i, ng
+      integer :: my_NstateVar, i, ng
 
 # ifdef OBSERVATIONS
       real(r8), parameter :: IniVal = 0.0_r8
@@ -533,15 +525,6 @@
         allocate ( FOURDVAR(ng) % CostFunOld(0:NstateVar(ng)) )
         FOURDVAR(ng) % CostFunOld = IniVal
 
-        allocate ( FOURDVAR(ng) % CostGrad(0:NstateVar(ng)) )
-        FOURDVAR(ng) % CostGrad = IniVal
-
-        allocate ( FOURDVAR(ng) % CostGradOld(0:NstateVar(ng)) )
-        FOURDVAR(ng) % CostGradOld = IniVal
-
-        allocate ( FOURDVAR(ng) % CostGradDot(0:NstateVar(ng)) )
-        FOURDVAR(ng) % CostGradDot = IniVal
-
         allocate ( FOURDVAR(ng) % CostNorm(0:NstateVar(ng)) )
         FOURDVAR(ng) % CostNorm = IniVal
 
@@ -550,9 +533,6 @@
 
         allocate ( FOURDVAR(ng) % NLobsCost(0:NstateVar(ng)) )
         FOURDVAR(ng) % NLobsCost = IniVal
-
-        allocate ( FOURDVAR(ng) % NLCostNorm(0:NstateVar(ng)) )
-        FOURDVAR(ng) % NLCostNorm = IniVal
 #  endif
         allocate ( FOURDVAR(ng) % ObsVar(NstateVar(ng)) )
         FOURDVAR(ng) % ObsVar = 1.0_r8
@@ -703,7 +683,7 @@
       allocate ( cg_tau(0:Ninner,Nouter) )
       cg_tau = IniVal
 
-      allocate ( Ritz(Nritz) )
+      allocate ( Ritz(Ninner+1) )
       Ritz = IniVal
 
       allocate ( cg_zv(Ninner,Ninner) )

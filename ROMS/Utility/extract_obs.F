@@ -302,11 +302,9 @@
             Ztop=Adepth(i1,j1,N(ng))
             Zbot=Adepth(i1,j1,1    )              
             IF (Zobs(iobs).ge.Ztop) THEN
-              k1=N(ng)                         ! If shallower, assign
-              k2=k1                            ! observation to surface
-              r1=1.0_r8                        ! level
+              r1=0.0_r8                        ! If shallower, ignore.
               r2=0.0_r8
-              Zobs(iobs)=REAL(k1,r8)           ! overwrite
+              ObsScale(iobs)=0.0_r8
             ELSE IF (Zbot.ge.Zobs(iobs)) THEN
               r1=0.0_r8                        ! If deeper, ignore.
               r2=0.0_r8

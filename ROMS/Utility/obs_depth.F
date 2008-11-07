@@ -63,21 +63,12 @@
         i=INT(Xobs(iobs))
         j=INT(Yobs(iobs))
         IF (Zobs(iobs).lt.0.0_r8) THEN
-# ifdef FULL_GRID
-          r_bound=((IstrR.le.i).and.(i.le.IendR)).and.                  &
-     &            ((JstrR.le.j).and.(j.le.JendR))
-          u_bound=((Istr .le.i).and.(i.le.IendR)).and.                  &
-     &            ((JstrR.le.j).and.(j.le.JendR))
-          v_bound=((IstrR.le.i).and.(i.le.IendR)).and.                  &
-     &            ((Jstr .le.j).and.(j.le.JendR))
-# else
-          r_bound=((Istr .le.i).and.(i.le.Iend )).and.                  &
-     &            ((Jstr .le.j).and.(j.le.Jend ))
-          u_bound=((IstrU.le.i).and.(i.le.Iend )).and.                  &
-     &            ((Jstr .le.j).and.(j.le.Jend ))
-          v_bound=((Istr .le.i).and.(i.le.Iend )).and.                  &
-     &            ((JstrV.le.j).and.(j.le.Jend ))
-# endif
+          r_bound=((rILB(ng).le.i).and.(i.le.rIUB(ng))).and.            &
+     &            ((rJLB(ng).le.j).and.(j.le.rJUB(ng)))
+          u_bound=((uILB(ng).le.i).and.(i.le.uIUB(ng))).and.            &
+     &            ((uJLB(ng).le.j).and.(j.le.uJUB(ng)))
+          v_bound=((vILB(ng).le.i).and.(i.le.vIUB(ng))).and.            &
+     &            ((vJLB(ng).le.j).and.(j.le.vJUB(ng)))
           IF (ObsType(iobs).eq.isUvel) THEN
             IF (.not.u_bound) THEN
               Zobs(iobs)=IniVal
