@@ -409,7 +409,7 @@
 !  approximation to the Hessian matrix computed from the Lanczos
 !  algorithm. Notice that the file name is a function of the
 !  outer loop. That is, a file is created for each outer loop.
-
+!
           lstr=LEN_TRIM(HSSbase(ng))
           WRITE (HSSname(ng),20) HSSbase(ng)(1:lstr-3), outer
           LdefHSS(ng)=.TRUE.

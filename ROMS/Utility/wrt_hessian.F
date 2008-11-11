@@ -264,7 +264,7 @@
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iADM, ncHSSid(ng), hssVid(idVsms,ng),      &
      &                   tHSSindx(ng), gtype,                           &
-     &                   LBi, UBi, LBj, UBj, scale,                     &
+     &                   LBi, UBi, LBj, UBj, 1, Nfrec(ng), scale,       &
 #  ifdef MASKING
      &                   GRID(ng) % vmask,                              &
 #  endif

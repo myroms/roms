@@ -1651,9 +1651,6 @@
       allocate ( Hdecay(MstateVar,Ngrids) )
       allocate ( Vdecay(MstateVar,Ngrids) )
 #endif
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      allocate ( SF_time(MAXVAL(Nfrec),Ngrids) )
-#endif
 !
 !---------------------------------------------------------------------
 !  Set tracer identification indices.
