@@ -689,11 +689,7 @@
         END IF
 !
         IF (wrtNLmod(ng)) THEN
-# if defined IS4DVAR
-          string='Wrote background state at observation locations,  '
-# else
           string='Wrote NLM state at observation locations,         '
-# endif
 # ifdef TLM_OBS
 #  if defined WEAK_CONSTRAINT || defined IOM
         ELSE IF (wrtTLmod(ng)) THEN

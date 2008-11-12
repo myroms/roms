@@ -74,6 +74,9 @@
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
       USE mod_forces
 # endif
+# ifdef MASKING
+      USE mod_grid
+# endif
       USE mod_ocean
 !
 !  Imported variable declarations.
@@ -88,6 +91,11 @@
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
      &                     Lbck,                                        &
+# ifdef MASKING
+     &                     GRID(ng) % rmask,                            &
+     &                     GRID(ng) % umask,                            &
+     &                     GRID(ng) % vmask,                            &
+# endif
 # ifdef ADJUST_WSTRESS
      &                     FORCES(ng) % ustr,                           &
      &                     FORCES(ng) % tl_ustr,                        &
@@ -122,6 +130,9 @@
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
      &                           Lbck,                                  &
+# ifdef MASKING
+     &                           rmask, umask, vmask,                   &
+# endif
 # ifdef ADJUST_WSTRESS
      &                           ustr, tl_ustr,                         &
      &                           vstr, tl_vstr,                         &
@@ -159,6 +170,11 @@
       integer, intent(in) :: Lbck
 !
 # ifdef ASSUMED_SHAPE
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:,LBj:)
+      real(r8), intent(in) :: umask(LBi:,LBj:)
+      real(r8), intent(in) :: vmask(LBi:,LBj:)
+#  endif
 #  ifdef ADJUST_WSTRESS
       real(r8), intent(in) :: ustr(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:,:)
@@ -187,6 +203,11 @@
 
 # else
 
+#  ifdef MASKING
+      real(r8), intent(in) :: rmask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
 #  ifdef ADJUST_WSTRESS
       real(r8), intent(in) :: ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
@@ -249,6 +270,9 @@
       DO j=JstrR,JendR
         DO i=IstrR,IendR
           cff=tl_zeta(i,j,Lbck)+zeta(i,j,Lbck)
+# ifdef MASKING
+          cff=cff*rmask(i,j)
+# endif
           my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
           my_BackCost(isFsur)=my_BackCost(isFsur)+0.5_r8*cff*cff
         END DO
@@ -261,6 +285,9 @@
       DO j=JstrR,JendR
         DO i=Istr,IendR
           cff=tl_ubar(i,j,Lbck)+ubar(i,j,Lbck)
+# ifdef MASKING
+          cff=cff*umask(i,j)
+# endif
           my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
           my_BackCost(isUbar)=my_BackCost(isUbar)+0.5_r8*cff*cff
         END DO
@@ -268,6 +295,9 @@
       DO j=Jstr,JendR
         DO i=IstrR,IendR
           cff=tl_vbar(i,j,Lbck)+vbar(i,j,Lbck)
+# ifdef MASKING
+          cff=cff*vmask(i,j)
+# endif
           my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
           my_BackCost(isVbar)=my_BackCost(isVbar)+0.5_r8*cff*cff
         END DO
@@ -280,6 +310,9 @@
         DO j=JstrR,JendR
           DO i=Istr,IendR
             cff=tl_u(i,j,k,Lbck)+u(i,j,k,Lbck)
+#  ifdef MASKING
+            cff=cff*umask(i,j)
+#  endif
             my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
             my_BackCost(isUvel)=my_BackCost(isUvel)+0.5_r8*cff*cff
           END DO
@@ -287,6 +320,9 @@
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             cff=tl_v(i,j,k,Lbck)+v(i,j,k,Lbck)
+#  ifdef MASKING
+            cff=cff*vmask(i,j)
+#  endif
             my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
             my_BackCost(isVvel)=my_BackCost(isVvel)+0.5_r8*cff*cff
           END DO
@@ -300,6 +336,9 @@
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               cff=tl_t(i,j,k,Lbck,itrc)+t(i,j,k,Lbck,itrc)
+#  ifdef MASKING
+              cff=cff*rmask(i,j)
+#  endif
               my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
               my_BackCost(isTvar(itrc))=my_BackCost(isTvar(itrc))+      &
      &                                  0.5_r8*cff*cff
@@ -317,6 +356,9 @@
             DO i=IstrR,IendR
               cff=tl_tflux(i,j,k,Lbck,itrc)+                            &
      &                   tflux(i,j,k,Lbck,itrc)
+#   ifdef MASKING
+              cff=cff*rmask(i,j)
+#   endif
               my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
               my_BackCost(isTsur(itrc))=my_BackCost(isTsur(itrc))+      &
      &                                  0.5_r8*cff*cff
@@ -334,6 +376,9 @@
         DO j=JstrR,JendR
           DO i=Istr,IendR
             cff=tl_ustr(i,j,k,Lbck)+ustr(i,j,k,Lbck)
+#  ifdef MASKING
+            cff=cff*umask(i,j)
+#  endif
             my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
             my_BackCost(isUstr)=my_BackCost(isUstr)+0.5_r8*cff*cff
           END DO
@@ -341,6 +386,9 @@
         DO j=Jstr,JendR
           DO i=IstrR,IendR
             cff=tl_vstr(i,j,k,Lbck)+vstr(i,j,k,Lbck)
+#  ifdef MASKING
+            cff=cff*vmask(i,j)
+#  endif
             my_BackCost(0)=my_BackCost(0)+0.5_r8*cff*cff
             my_BackCost(isVstr)=my_BackCost(isVstr)+0.5_r8*cff*cff
           END DO

@@ -1339,7 +1339,7 @@
       real(r8), dimension(TileSize(ng)*(UBk-LBk+1)) :: Asend
 
       real(r8), dimension(TileSize(ng)*(UBk-LBk+1),                     &
-     &                     NtileI(ng)*NtileJ(ng)-1) :: Arecv
+     &                    NtileI(ng)*NtileJ(ng)-1) :: Arecv
 
       character (len=MPI_MAX_ERROR_STRING) :: string
 
@@ -1401,6 +1401,12 @@
         MySize(rank)=(Imax(rank)-Imin(rank)+1)*                         &
      &               (Jmax(rank)-Jmin(rank)+1)*(UBk-LBk+1)
       END DO
+!
+!  Initialize local arrays to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      Asend=0.0_r8
+      Arecv=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Collect requested array data. 
@@ -2697,6 +2703,11 @@
       ELSE
         MySize=Npts
       END IF
+!
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      Arecv=0.0_r8
 !
 !-----------------------------------------------------------------------
 !  Scatter requested array data. 

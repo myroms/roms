@@ -238,6 +238,11 @@
 #endif
       END IF
 !
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      wrk=0.0_r8
+!
 !-----------------------------------------------------------------------
 !  Read in requested field and scale it.
 !-----------------------------------------------------------------------
@@ -264,10 +269,10 @@
           status=nf90_get_var(ncid, ncvarid, wrk, start, total)
           IF (status.eq.nf90_noerr) THEN
             DO i=1,Npts
-              wrk(i)=Ascl*wrk(i)
               IF (wrk(i).ge.spval) THEN
                 wrk(i)=0.0_r8           ! land/sea maked with _FillValue
               ELSE
+                wrk(i)=Ascl*wrk(i)
                 Amin=MIN(Amin,wrk(i))
                 Amax=MAX(Amax,wrk(i))
               END IF

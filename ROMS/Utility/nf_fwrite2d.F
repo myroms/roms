@@ -146,6 +146,12 @@
         LandFill=tindex.gt.0
       END IF
 #endif
+!
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      Aout=0.0_r8
+
 #ifdef DISTRIBUTE
 !
 !-----------------------------------------------------------------------
