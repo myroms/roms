@@ -188,7 +188,11 @@
       DO itrc=1,NT(ng)
         DO l=1,Nfloats(ng)
           IF (FLT(ng)%bounded(l)) THEN
+# ifdef FLOAT_VWALK
+            Tout(l)=FLT(ng)%track(itrc+12,nf(ng),l)
+# else
             Tout(l)=FLT(ng)%track(itrc+10,nf(ng),l)
+# endif
           ELSE
             Tout(l)=spval
           END IF

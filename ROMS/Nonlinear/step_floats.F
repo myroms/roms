@@ -202,9 +202,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    MIXING(ng) % Akt(LBi,LBj,0,1),                &
      &                    MyThread, bounded, track(1,0,1))
 
@@ -214,9 +214,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    MIXING(ng) % dAktdz(LBi,LBj,1),               &
      &                    MyThread, bounded, track(1,0,1))
 
@@ -236,9 +236,9 @@
      &                    GRID(ng) % pm(LBi,LBj),                       &
      &                    GRID(ng) % pn(LBi,LBj),                       &
      &                    GRID(ng) % Hz(LBi,LBj,1),                     &
-# ifdef MASKING
+#  ifdef MASKING
      &                    GRID(ng) % rmask(LBi,LBj),                    &
-# endif
+#  endif
      &                    OCEAN(ng) % W(LBi,LBj,0),                     &
      &                    MyThread, bounded, track(1,0,1))
 !
@@ -876,7 +876,11 @@
 
       DO itrc=1,NT(ng)
         CALL interp_floats (ng, LBi, UBi, LBj, UBj, 1, N(ng),           &
+#  ifdef FLOAT_VWALK
+     &                      Lstr, Lend, nfp1, itrc+12,                  &
+#  else
      &                      Lstr, Lend, nfp1, itrc+10,                  &
+#  endif
      &                      r3dvar, Lmask, nudg,                        &
      &                      GRID(ng) % pm(LBi,LBj),                     &
      &                      GRID(ng) % pn(LBi,LBj),                     &
