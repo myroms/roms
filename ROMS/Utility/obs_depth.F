@@ -33,7 +33,7 @@
 !
       logical :: r_bound, u_bound, v_bound
 
-      integer :: Mstr, Mend, i, iobs, itrc, j
+      integer :: Mstr, Mend, iobs, itrc
 
       real(r8) :: IniVal = 0.0_r8
 
@@ -60,15 +60,19 @@
 !  Process vertical positions.
 !
       DO iobs=Mstr,Mend
-        i=INT(Xobs(iobs))
-        j=INT(Yobs(iobs))
         IF (Zobs(iobs).lt.0.0_r8) THEN
-          r_bound=((rILB(ng).le.i).and.(i.le.rIUB(ng))).and.            &
-     &            ((rJLB(ng).le.j).and.(j.le.rJUB(ng)))
-          u_bound=((uILB(ng).le.i).and.(i.le.uIUB(ng))).and.            &
-     &            ((uJLB(ng).le.j).and.(j.le.uJUB(ng)))
-          v_bound=((vILB(ng).le.i).and.(i.le.vIUB(ng))).and.            &
-     &            ((vJLB(ng).le.j).and.(j.le.vJUB(ng)))
+          r_bound=((rXmin(ng) .le.Xobs(iobs)).and.                      &
+     &             (Xobs(iobs).lt.rXmax(ng))).and.                      &
+     &            ((rYmin(ng) .le.Yobs(iobs)).and.                      &
+     &             (Yobs(iobs).lt.rYmax(ng)))
+          u_bound=((uXmin(ng) .le.Xobs(iobs)).and.                      &
+     &             (Xobs(iobs).lt.uXmax(ng))).and.                      &
+     &            ((uYmin(ng) .le.Yobs(iobs)).and.                      &
+     &             (Yobs(iobs).lt.uYmax(ng)))
+          v_bound=((vXmin(ng) .le.Xobs(iobs)).and.                      &
+     &             (Xobs(iobs).lt.vXmax(ng))).and.                      &
+     &            ((vYmin(ng) .le.Yobs(iobs)).and.                      &
+     &             (Yobs(iobs).lt.vYmax(ng)))
           IF (ObsType(iobs).eq.isUvel) THEN
             IF (.not.u_bound) THEN
               Zobs(iobs)=IniVal

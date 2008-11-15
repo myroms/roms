@@ -167,12 +167,12 @@
           END DO
         END DO
         IF (FOURDVAR(ng)%ObsCount(isFsur).gt.0) THEN
-          CALL ad_extract_obs2d (ng, IstrR, IendR, JstrR, JendR,        &
+          CALL ad_extract_obs2d (ng, 0, Lm(ng)+1, 0, Mm(ng)+1,          &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           rILB(ng), rIUB(ng),                    &
-     &                           rJLB(ng), rJUB(ng),                    &
      &                           isFsur,                                &
      &                           Mobs, Mstr, Mend,                      &
+     &                           rXmin(ng), rXmax(ng),                  &
+     &                           rYmin(ng), rYmax(ng),                  &
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs,                      &
@@ -191,12 +191,12 @@
           END DO
         END DO
         IF (FOURDVAR(ng)%ObsCount(isUbar).gt.0) THEN
-          CALL ad_extract_obs2d (ng, Istr, IendR, JstrR, JendR,         &
+          CALL ad_extract_obs2d (ng, 1, Lm(ng)+1, 0, Mm(ng)+1,          &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           uILB(ng), uIUB(ng),                    &
-     &                           uJLB(ng), uJUB(ng),                    &
      &                           isUbar,                                &
      &                           Mobs, Mstr, Mend,                      &
+     &                           uXmin(ng), uXmax(ng),                  &
+     &                           uYmin(ng), uYmax(ng),                  &
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs,                      &
@@ -215,12 +215,12 @@
           END DO
         END DO
         IF (FOURDVAR(ng)%ObsCount(isVbar).gt.0) THEN
-          CALL ad_extract_obs2d (ng, IstrR, IendR, Jstr, JendR,         &
+          CALL ad_extract_obs2d (ng, 0, Lm(ng)+1, 1, Mm(ng)+1,          &
      &                           LBi, UBi, LBj, UBj,                    &
-     &                           vILB(ng), vIUB(ng),                    &
-     &                           vJLB(ng), vJUB(ng),                    &
      &                           isVbar,                                &
      &                           Mobs, Mstr, Mend,                      &
+     &                           vXmin(ng), vXmax(ng),                  &
+     &                           vYmin(ng), vYmax(ng),                  &
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs,                      &
@@ -250,12 +250,12 @@
               END DO
             END DO
           END DO
-          CALL ad_extract_obs3d (ng, Istr, IendR, JstrR, JendR,         &
+          CALL ad_extract_obs3d (ng, 1, Lm(ng)+1, 0, Mm(ng)+1,          &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-     &                           uILB(ng), uIUB(ng),                    &
-     &                           uJLB(ng), uJUB(ng),                    &
      &                           isUvel,                                &
      &                           Mobs, Mstr, Mend,                      &
+     &                           uXmin(ng), uXmax(ng),                  &
+     &                           uYmin(ng), uYmax(ng),                  &
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs, Zobs,                &
@@ -284,12 +284,12 @@
               END DO
             END DO
           END DO
-          CALL ad_extract_obs3d (ng, IstrR, IendR, Jstr, JendR,         &
+          CALL ad_extract_obs3d (ng, 0, Lm(ng)+1, 1, Mm(ng)+1,          &
      &                           LBi, UBi, LBj, UBj, 1, N(ng),          &
-     &                           vILB(ng), vIUB(ng),                    &
-     &                           vJLB(ng), vJUB(ng),                    &
      &                           isVvel,                                &
      &                           Mobs, Mstr, Mend,                      &
+     &                           vXmin(ng), vXmax(ng),                  &
+     &                           vYmin(ng), vYmax(ng),                  &
      &                           time(ng), dt(ng),                      &
      &                           ObsType, ObsScale,                     &
      &                           Tobs, Xobs, Yobs, Zobs,                &
@@ -311,12 +311,12 @@
             END DO
           END DO
           IF (FOURDVAR(ng)%ObsCount(isTvar(itrc)).gt.0) THEN
-            CALL ad_extract_obs3d (ng, IstrR, IendR, JstrR, JendR,      &
+            CALL ad_extract_obs3d (ng, 0, Lm(ng)+1, 0, Mm(ng)+1,        &
      &                             LBi, UBi, LBj, UBj, 1, N(ng),        &
-     &                             rILB(ng), rIUB(ng),                  &
-     &                             rJLB(ng), rJUB(ng),                  &
      &                             isTvar(itrc),                        &
      &                             Mobs, Mstr, Mend,                    &
+     &                             rXmin(ng), rXmax(ng),                &
+     &                             rYmin(ng), rYmax(ng),                &
      &                             time(ng), dt(ng),                    &
      &                             ObsType, ObsScale,                   &
      &                             Tobs, Xobs, Yobs, Zobs,              &

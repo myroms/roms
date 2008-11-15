@@ -106,6 +106,11 @@
         integer, dimension(Ngrids) :: rJLB
         integer, dimension(Ngrids) :: rJUB
 !
+        real(r8), dimension(Ngrids) :: rXmin
+        real(r8), dimension(Ngrids) :: rXmax
+        real(r8), dimension(Ngrids) :: rYmin
+        real(r8), dimension(Ngrids) :: rYmax
+!
 !  Lower and upper bound ranges for U-type variables for processing
 !  state vector and observations.
 !
@@ -114,6 +119,11 @@
         integer, dimension(Ngrids) :: uJLB
         integer, dimension(Ngrids) :: uJUB
 !
+        real(r8), dimension(Ngrids) :: uXmin
+        real(r8), dimension(Ngrids) :: uXmax
+        real(r8), dimension(Ngrids) :: uYmin
+        real(r8), dimension(Ngrids) :: uYmax
+!
 !  Lower and upper bound ranges for V-type variables for processing
 !  state vector and observations.
 !
@@ -121,6 +131,11 @@
         integer, dimension(Ngrids) :: vIUB
         integer, dimension(Ngrids) :: vJLB
         integer, dimension(Ngrids) :: vJUB
+!
+        real(r8), dimension(Ngrids) :: vXmin
+        real(r8), dimension(Ngrids) :: vXmax
+        real(r8), dimension(Ngrids) :: vYmin
+        real(r8), dimension(Ngrids) :: vYmax
 !
 !  Switches indicating which variables are written to output files.
 !
@@ -556,6 +571,7 @@
 #endif
         integer :: Lvar, gtype, i, ic, ie, is, j, ng, varid
 
+        real(r8), parameter :: epsilon = 1.0E-8_r8 
         real(r8) :: scale
 
         character (len=80), dimension(7) :: Vinfo
@@ -624,14 +640,31 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Set lower and upper observation processing (I,J) ranges: Either the
-!  full grid or only interior points will be considered.
+!  Set minimum and maximum fractional coordinates for processing
+!  observations. Either the full grid or only interior points will
+!  be considered.  The strategy here is to add a small value (epsilon)
+!  to the eastern and northern boundary values of Xmax and Ymax so
+!  observations at such boundaries locations are processed. This
+!  is needed because the .lt. operator in the following conditional:
+!
+!     IF (...
+!    &    ((Xmin.le.Xobs(iobs)).and.(Xobs(iobs).lt.Xmax)).and.          &
+!    &    ((Ymin.le.Yobs(iobs)).and.(Yobs(iobs).lt.Ymax))) THEN
+!
+#if distributed
+!  Notice that, in distributed-memory, a unity value is added to
+!  Xmax and Ymax, in all tiles except those next to the eastern
+!  and northern boundaries, so observations are processed between
+!  the tile boundaries.
+!
+#endif
 !-----------------------------------------------------------------------
 !   
       DO ng=1,Ngrids
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, r2dvar, 0, Itile, Jtile,           &
      &                   rILB(ng), rIUB(ng), rJLB(ng), rJUB(ng))
+
 #  ifndef FULL_GRID
         IF (Itile.eq.0) THEN
           rILB(ng)=rILB(ng)+1
@@ -646,6 +679,20 @@
           rJUB(ng)=rJUB(ng)-1
         END IF
 #  endif
+        rXmin(ng)=REAL(rILB(ng),r8)
+        rXmax(ng)=REAL(rIUB(ng),r8)
+        rYmin(ng)=REAL(rJLB(ng),r8)
+        rYmax(ng)=REAL(rJUB(ng),r8)
+        IF (Itile.eq.(NtileI(ng)-1)) THEN
+          rXmax(ng)=rXmax(ng)+epsilon     ! include eastern edge values
+        ELSE
+          rXmax(ng)=rXmax(ng)+1.0_r8      ! observations between tiles
+        END IF
+        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+          rYmax(ng)=rYmax(ng)+epsilon     ! include northern edge values
+        ELSE
+          rYmax(ng)=rYmax(ng)+1.0         ! observations between tiles
+        END IF
 # else
 #  ifdef FULL_GRID
         rILB(ng)=0
@@ -658,8 +705,12 @@
         rJLB(ng)=1
         rJUB(ng)=Mm(ng)
 #  endif
+        rXmin(ng)=REAL(rILB(ng),r8)
+        rXmax(ng)=REAL(rIUB(ng),r8)+epsilon
+        rYmin(ng)=REAL(rJLB(ng),r8)
+        rYmax(ng)=REAL(rJUB(ng),r8)+epsilon
 # endif
-
+!
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, u2dvar, 0, Itile, Jtile,           &
      &                   uILB(ng), uIUB(ng), uJLB(ng), uJUB(ng))
@@ -677,6 +728,20 @@
           uJUB(ng)=uJUB(ng)-1
         END IF
 #  endif
+        uXmin(ng)=REAL(uILB(ng),r8)-0.5_r8
+        uXmax(ng)=REAL(uIUB(ng),r8)-0.5_r8
+        uYmin(ng)=REAL(uJLB(ng),r8)
+        uYmax(ng)=REAL(uJUB(ng),r8)
+        IF (Itile.eq.(NtileI(ng)-1)) THEN
+          uXmax(ng)=uXmax(ng)+epsilon     ! include eastern edge values
+        ELSE
+          uXmax(ng)=uXmax(ng)+1.0_r8      ! observations between tiles
+        END IF
+        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+          uYmax(ng)=uYmax(ng)+epsilon     ! include northern edge values
+        ELSE
+          uYmax(ng)=uYmax(ng)+1.0_r8      ! observations between tiles
+        END IF
 # else
 #  ifdef FULL_GRID
         uILB(ng)=1
@@ -689,8 +754,12 @@
         uJLB(ng)=1
         uJUB(ng)=Mm(ng)
 #  endif
+        uXmin(ng)=REAL(uILB(ng),r8)-0.5_r8
+        uXmax(ng)=REAL(uIUB(ng),r8)-0.5_r8+epsilon
+        uYmin(ng)=REAL(uJLB(ng),r8)
+        uYmax(ng)=REAL(uJUB(ng),r8)+epsilon
 # endif
-
+!
 # ifdef DISTRIBUTE
         CALL get_bounds (ng, MyRank, v2dvar, 0, Itile, Jtile,           &
      &                   vILB(ng), vIUB(ng), vJLB(ng), vJUB(ng))
@@ -708,6 +777,20 @@
           vJUB(ng)=vJUB(ng)-1
         END IF
 #  endif
+        vXmin(ng)=REAL(vILB(ng),r8)
+        vXmax(ng)=REAL(vIUB(ng),r8)
+        vYmin(ng)=REAL(vJLB(ng),r8)-0.5_r8
+        vYmax(ng)=REAL(vJUB(ng),r8)-0.5_r8
+        IF (Itile.eq.(NtileI(ng)-1)) THEN
+          vXmax(ng)=vXmax(ng)+epsilon     ! include eastern edge values
+        ELSE
+          vXmax(ng)=vXmax(ng)+1.0_r8      ! observations between tiles
+        END IF
+        IF (Jtile.eq.(NtileJ(ng)-1)) THEN
+          vYmax(ng)=vYmax(ng)+epsilon     ! include northern edge values
+        ELSE
+          vYmax(ng)=vYmax(ng)+1.0_r8      ! observations between tiles
+        END IF
 # else
 #  ifdef FULL_GRID
         vILB(ng)=0
@@ -720,6 +803,10 @@
         vJLB(ng)=2
         vJUB(ng)=Mm(ng)
 #  endif
+        vXmin(ng)=REAL(vILB(ng),r8)
+        vXmax(ng)=REAL(vIUB(ng),r8)+epsilon
+        vYmin(ng)=REAL(vJLB(ng),r8)-0.5_r8
+        vYmax(ng)=REAL(vJUB(ng),r8)-0.5_r8+epsilon
 # endif
       END DO
 !
