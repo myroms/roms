@@ -1750,7 +1750,7 @@
 !  Read surface momentum stress.
 !
       gtype=u3dvar
-      scale=1.0_r8/rho0                           ! N/m2 (Pa) to m2/s2
+      scale=1.0_r8
       status=nf_fread3d(ng, iTLM, ncid, vid(idUsms), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
@@ -1768,7 +1768,7 @@
       END IF
 
       gtype=v3dvar
-      scale=1.0_r8/rho0                           ! N/m2 (Pa) to m2/s2
+      scale=1.0_r8
       status=nf_fread3d(ng, iTLM, ncid, vid(idVsms), rec, gtype,        &
      &                  Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),        &
      &                  scale, Fmin, Fmax,                              &
@@ -1855,11 +1855,7 @@
 !
       gtype=r3dvar
       DO itrc=1,NT(ng)
-        IF (itrc.eq.itemp) THEN
-          scale=1.0_r8/(rho0*Cp)                  ! W/m2 to Celsius m/s
-        ELSE
-          scale=1.0_r8
-        END IF
+        scale=1.0_r8
         status=nf_fread3d(ng, iTLM, ncid, vid(idTsur(itrc)), rec,       &
      &                    gtype, Vsize, LBi, UBi, LBj, UBj, 1,Nfrec(ng),&
      &                    scale, Fmin, Fmax,                            &

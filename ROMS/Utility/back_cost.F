@@ -67,7 +67,7 @@
       CONTAINS
 !
 !***********************************************************************
-      SUBROUTINE back_cost (ng, tile, Lbck)
+      SUBROUTINE back_cost (ng, tile, Lbck, Lsum)
 !***********************************************************************
 !
       USE mod_param
@@ -81,7 +81,7 @@
 !
 !  Imported variable declarations.
 !
-      integer, intent(in) :: ng, tile, Lbck
+      integer, intent(in) :: ng, tile, Lbck, Lsum
 !
 !  Local variable declarations.
 !
@@ -90,36 +90,27 @@
       CALL back_cost_tile (ng, tile,                                    &
      &                     LBi, UBi, LBj, UBj,                          &
      &                     IminS, ImaxS, JminS, JmaxS,                  &
-     &                     Lbck,                                        &
+     &                     Lbck, Lsum,                                  &
 # ifdef MASKING
      &                     GRID(ng) % rmask,                            &
      &                     GRID(ng) % umask,                            &
      &                     GRID(ng) % vmask,                            &
 # endif
 # ifdef ADJUST_WSTRESS
-     &                     FORCES(ng) % ustr,                           &
      &                     FORCES(ng) % tl_ustr,                        &
-     &                     FORCES(ng) % vstr,                           &
      &                     FORCES(ng) % tl_vstr,                        &
 # endif
 # ifdef SOLVE3D
-     &                     OCEAN(ng) % t,                               &
      &                     OCEAN(ng) % tl_t,                            &
-     &                     OCEAN(ng) % u,                               &
      &                     OCEAN(ng) % tl_u,                            &
-     &                     OCEAN(ng) % v,                               &
      &                     OCEAN(ng) % tl_v,                            &
 #  ifdef ADJUST_STFLUX
-     &                     FORCES(ng) % tflux,                          &
      &                     FORCES(ng) % tl_tflux,                       &
 #  endif
 # else
-     &                     OCEAN(ng) % ubar,                            &
      &                     OCEAN(ng) % tl_ubar,                         &
-     &                     OCEAN(ng) % vbar,                            &
      &                     OCEAN(ng) % tl_vbar,                         &
 # endif
-     &                     OCEAN(ng) % zeta,                            &
      &                     OCEAN(ng) % tl_zeta)
 
       RETURN
@@ -129,26 +120,26 @@
       SUBROUTINE back_cost_tile (ng, tile,                              &
      &                           LBi, UBi, LBj, UBj,                    &
      &                           IminS, ImaxS, JminS, JmaxS,            &
-     &                           Lbck,                                  &
+     &                           Lbck, Lsum,                            &
 # ifdef MASKING
      &                           rmask, umask, vmask,                   &
 # endif
 # ifdef ADJUST_WSTRESS
-     &                           ustr, tl_ustr,                         &
-     &                           vstr, tl_vstr,                         &
+     &                           tl_ustr,                               &
+     &                           tl_vstr,                               &
 # endif
 # ifdef SOLVE3D
-     &                           t, tl_t,                               &
-     &                           u, tl_u,                               &
-     &                           v, tl_v,                               &
+     &                           tl_t,                                  &
+     &                           tl_u,                                  &
+     &                           tl_v,                                  &
 #  ifdef ADJUST_STFLUX
-     &                           tflux, tl_tflux,                       &
+     &                           tl_tflux,                              &
 #  endif
 # else
-     &                           ubar, tl_ubar,                         &
-     &                           vbar, tl_vbar,                         &
+     &                           tl_ubar,                               &
+     &                           tl_vbar,                               &
 # endif
-     &                           zeta, tl_zeta)
+     &                           tl_zeta)
 !***********************************************************************
 !
       USE mod_param
@@ -167,7 +158,7 @@
       integer, intent(in) :: ng, tile
       integer, intent(in) :: LBi, UBi, LBj, UBj
       integer, intent(in) :: IminS, ImaxS, JminS, JmaxS
-      integer, intent(in) :: Lbck
+      integer, intent(in) :: Lbck, Lsum
 !
 # ifdef ASSUMED_SHAPE
 #  ifdef MASKING
@@ -176,29 +167,20 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ustr(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_ustr(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: vstr(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_vstr(LBi:,LBj:,:,:)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: t(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
-      real(r8), intent(in) :: u(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_u(LBi:,LBj:,:,:)
-      real(r8), intent(in) :: v(LBi:,LBj:,:,:)
       real(r8), intent(in) :: tl_v(LBi:,LBj:,:,:)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tflux(LBi:,LBj:,:,:,:)
       real(r8), intent(in) :: tl_tflux(LBi:,LBj:,:,:,:)
 #   endif
 #  else
-      real(r8), intent(in) :: ubar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_ubar(LBi:,LBj:,:)
-      real(r8), intent(in) :: vbar(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_vbar(LBi:,LBj:,:)
 #  endif
-      real(r8), intent(in) :: zeta(LBi:,LBj:,:)
       real(r8), intent(in) :: tl_zeta(LBi:,LBj:,:)
 
 # else
@@ -209,31 +191,21 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef ADJUST_WSTRESS
-      real(r8), intent(in) :: ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(in) :: tl_ustr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
-      real(r8), intent(in) :: vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
       real(r8), intent(in) :: tl_vstr(LBi:UBi,LBj:UBj,Nfrec(ng),2)
 #  endif
 #  ifdef SOLVE3D
-      real(r8), intent(in) :: t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
-      real(r8), intent(in) :: u(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_u(LBi:UBi,LBj:UBj,N(ng),2)
-      real(r8), intent(in) :: v(LBi:UBi,LBj:UBj,N(ng),2)
       real(r8), intent(in) :: tl_v(LBi:UBi,LBj:UBj,N(ng),2)
 #   ifdef ADJUST_STFLUX
-      real(r8), intent(in) :: tflux(LBi:UBi,LBj:UBj,                    &
-     &                                 Nfrec(ng),2,NT(ng))
       real(r8), intent(in) :: tl_tflux(LBi:UBi,LBj:UBj,                 &
      &                                 Nfrec(ng),2,NT(ng))
 #   endif
 #  else
-      real(r8), intent(in) :: ubar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_ubar(LBi:UBi,LBj:UBj,3)
-      real(r8), intent(in) :: vbar(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_vbar(LBi:UBi,LBj:UBj,3)
 #  endif
-      real(r8), intent(in) :: zeta(LBi:UBi,LBj:UBj,3)
       real(r8), intent(in) :: tl_zeta(LBi:UBi,LBj:UBj,3)
 # endif
 !
@@ -255,8 +227,11 @@
 # include "set_bounds.h"
 !
 !----------------------------------------------------------------------
-!  Compute background cost function (Jb) as misfit between model and
-!  background states at initial time of the assimilation window.
+!  Compute v-space background cost function (Jb) as misfit between
+!  model and background states at initial time of the assimilation
+!  window. Add sum of all the previous outer-loop increments (Lsum)
+!  to current value (Lbck).
+!
 !  Initially, the misfit innovation matrix (X-Xb) is zero. As the
 !  assimilation algorithm iterates, Jb becomes greater than zero.
 !----------------------------------------------------------------------
@@ -269,7 +244,7 @@
 !
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          cff=tl_zeta(i,j,Lbck)+zeta(i,j,Lbck)
+          cff=tl_zeta(i,j,Lbck)+tl_zeta(i,j,Lsum)
 # ifdef MASKING
           cff=cff*rmask(i,j)
 # endif
@@ -284,7 +259,7 @@
 !
       DO j=JstrR,JendR
         DO i=Istr,IendR
-          cff=tl_ubar(i,j,Lbck)+ubar(i,j,Lbck)
+          cff=tl_ubar(i,j,Lbck)+tl_ubar(i,j,Lsum)
 # ifdef MASKING
           cff=cff*umask(i,j)
 # endif
@@ -294,7 +269,7 @@
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
-          cff=tl_vbar(i,j,Lbck)+vbar(i,j,Lbck)
+          cff=tl_vbar(i,j,Lbck)+tl_vbar(i,j,Lsum)
 # ifdef MASKING
           cff=cff*vmask(i,j)
 # endif
@@ -309,7 +284,7 @@
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            cff=tl_u(i,j,k,Lbck)+u(i,j,k,Lbck)
+            cff=tl_u(i,j,k,Lbck)+tl_u(i,j,k,Lsum)
 #  ifdef MASKING
             cff=cff*umask(i,j)
 #  endif
@@ -319,7 +294,7 @@
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            cff=tl_v(i,j,k,Lbck)+v(i,j,k,Lbck)
+            cff=tl_v(i,j,k,Lbck)+tl_v(i,j,k,Lsum)
 #  ifdef MASKING
             cff=cff*vmask(i,j)
 #  endif
@@ -335,7 +310,7 @@
         DO k=1,N(ng)
           DO j=JstrR,JendR
             DO i=IstrR,IendR
-              cff=tl_t(i,j,k,Lbck,itrc)+t(i,j,k,Lbck,itrc)
+              cff=tl_t(i,j,k,Lbck,itrc)+tl_t(i,j,k,Lsum,itrc)
 #  ifdef MASKING
               cff=cff*rmask(i,j)
 #  endif
@@ -355,7 +330,7 @@
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               cff=tl_tflux(i,j,k,Lbck,itrc)+                            &
-     &                   tflux(i,j,k,Lbck,itrc)
+     &            tl_tflux(i,j,k,Lsum,itrc)
 #   ifdef MASKING
               cff=cff*rmask(i,j)
 #   endif
@@ -375,7 +350,7 @@
       DO k=1,Nfrec(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            cff=tl_ustr(i,j,k,Lbck)+ustr(i,j,k,Lbck)
+            cff=tl_ustr(i,j,k,Lbck)+tl_ustr(i,j,k,Lsum)
 #  ifdef MASKING
             cff=cff*umask(i,j)
 #  endif
@@ -385,7 +360,7 @@
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            cff=tl_vstr(i,j,k,Lbck)+vstr(i,j,k,Lbck)
+            cff=tl_vstr(i,j,k,Lbck)+tl_vstr(i,j,k,Lsum)
 #  ifdef MASKING
             cff=cff*vmask(i,j)
 #  endif

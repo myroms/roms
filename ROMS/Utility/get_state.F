@@ -1354,7 +1354,7 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
+          scale=1.0_r8
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      scale, Fmin, Fmax,                          &
@@ -1383,7 +1383,7 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
+          scale=1.0_r8
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      scale, Fmin, Fmax,                          &
@@ -1535,11 +1535,7 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
-            IF (itrc.eq.itemp) THEN
-              scale=1.0_r8/(rho0*Cp)        ! W/m2 to Celsius m/s
-            ELSE
-              scale=1.0_r8
-            END IF
+            scale=1.0_r8
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
      &                        scale, Fmin, Fmax,                        &
@@ -1852,7 +1848,7 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
      &                        varid)
           gtype=var_flag(varid)*u3dvar
-          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
+          scale=1.0_r8
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      scale, Fmin, Fmax,                          &
@@ -1881,7 +1877,7 @@
           foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
      &                        varid)
           gtype=var_flag(varid)*v3dvar
-          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
+          scale=1.0_r8
           status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
      &                      scale, Fmin, Fmax,                          &
@@ -2002,11 +1998,7 @@
             foundit=find_string(var_name, n_var,                        &
      &                          TRIM(Vname(1,idTsur(itrc))), varid)
             gtype=var_flag(varid)*r3dvar
-            IF (itrc.eq.itemp) THEN
-              scale=1.0_r8/(rho0*Cp)        ! W/m2 to Celsius m/s
-            ELSE
-              scale=1.0_r8
-            END IF
+            scale=1.0_r8
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
      &                        scale, Fmin, Fmax,                        &

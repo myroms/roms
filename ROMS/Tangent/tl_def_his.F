@@ -436,7 +436,7 @@
 !
         Vinfo( 1)=Vname(1,idUsms)
         WRITE (Vinfo( 2),40) TRIM(Vname(2,idUsms))
-        Vinfo( 3)=Vname(3,idUsms)
+        Vinfo( 3)='meter2 second-2'
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
@@ -451,8 +451,7 @@
 !
         Vinfo( 1)=Vname(1,idVsms)
         WRITE (Vinfo( 2),40) TRIM(Vname(2,idVsms))
-        Vinfo( 2)=Vname(2,idVsms)
-        Vinfo( 3)=Vname(3,idVsms)
+        Vinfo( 3)='meter2 second-2'
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
@@ -472,11 +471,12 @@
         DO itrc=1,NT(ng)
           Vinfo( 1)=Vname(1,idTsur(itrc))
           WRITE (Vinfo( 2),40) TRIM(Vname(2,idTsur(itrc)))
-          Vinfo( 3)=Vname(3,idTsur(itrc))
           IF (itrc.eq.itemp) THEN
+            Vinfo( 3)='Celsius meter second-1'
             Vinfo(11)='upward flux, cooling'
             Vinfo(12)='downward flux, heating'
           ELSE IF (itrc.eq.isalt) THEN
+            Vinfo( 3)='meter second-1'
             Vinfo(11)='upward flux, freshening (net precipitation)'
             Vinfo(12)='downward flux, salting (net evaporation)'
           END IF

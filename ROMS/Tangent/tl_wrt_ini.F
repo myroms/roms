@@ -155,7 +155,7 @@
 !  own fixed time-dimension (of size Nfrec) to allow 4DVAR adjustments
 !  at other times in addition to initialization time.
 !
-      scale=rho0                            ! m2/s2 to N/m2 (Pa)
+      scale=1.0_r8                          ! m2/s2 
       gtype=gfactor*u3dvar
       status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idUsms,ng),      &
      &                   OutRec, gtype,                                 &
@@ -175,7 +175,7 @@
 !
 !  Write out surface V-momentum stress.
 !
-      scale=rho0                            ! m2/s2 to N/m2 (Pa)
+      scale=1.0_r8                          ! m2/s2 
       gtype=gfactor*v3dvar
       status=nf_fwrite3d(ng, iTLM, ncITLid(ng), itlVid(idVsms,ng),      &
      &                   OutRec, gtype,                                 &
@@ -264,11 +264,7 @@
 !  at other times in addition to initialization time.
 !
       DO itrc=1,NT(ng)
-        IF (itrc.eq.itemp) THEN
-          scale=rho0*Cp                     ! Celsius m/s to W/m2
-        ELSE
-          scale=1.0_r8
-        END IF
+        scale=1.0_r8                        ! Celsius m/s
         gtype=gfactor*r3dvar
         status=nf_fwrite3d(ng, iTLM, ncITLid(ng),                       &
      &                     itlVid(idTsur(itrc),ng),                     &

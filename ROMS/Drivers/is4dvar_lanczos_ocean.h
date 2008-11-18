@@ -217,9 +217,6 @@
       USE tl_balance_mod, ONLY: tl_balance
 #endif
       USE tl_convolution_mod, ONLY : tl_convolution
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-      USE tl_ini_adjust_mod, ONLY : tl_frc_adjust
-#endif
       USE tl_ini_adjust_mod, ONLY : tl_ini_adjust
       USE tl_variability_mod, ONLY : tl_variability
 !
@@ -641,27 +638,27 @@
 !
 !  Compute background cost function (Jb) for inner=0:
 !
-!  read the sum of previous v-space gradients from record 4 of ITL
-!  file using the NLM model variables index 1 as temporary storage.
-!  Also add background cost function to Cost0.
+!  If first pass of inner loop, read in the sum of previous v-space 
+!  gradients from record 4 of ITL file using the TLM model variables
+!  as temporary storage. Also add background cost function to Cost0.
 !
             IF (inner.eq.0) THEN
               CALL get_state (ng, iTLM, 2, ITLname(ng), Rec1, LTLM1)
               IF (exit_flag.ne.NoError) RETURN
-              CALL get_state (ng, iNLM, 2, ITLname(ng), Rec4, LTLM1)
+              CALL get_state (ng, iTLM, 2, ITLname(ng), Rec4, LTLM2)
               IF (exit_flag.ne.NoError) RETURN
 !
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
               DO thread=0,numthreads-1
                 subs=NtileX(ng)*NtileE(ng)/numthreads
                 DO tile=subs*thread,subs*(thread+1)-1
-                  CALL back_cost (ng, TILE, LTLM1)
+                  CALL back_cost (ng, TILE, LTLM1, LTLM2)
                 END DO
               END DO
 !$OMP END PARALLEL DO
 !
               FOURDVAR(ng)%Cost0(outer)=FOURDVAR(ng)%Cost0(outer)+      &
-     &                                   FOURDVAR(ng)%BackCost(0)
+     &                                  FOURDVAR(ng)%BackCost(0)
             END IF
 !  
 !  Compute current total cost function.
@@ -900,15 +897,6 @@
           CALL get_state (ng, iTLM, 1, ITLname(ng), LTLM1, LTLM1)
           IF (exit_flag.ne.NoError) RETURN
 
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-!
-!  Load surface forcing increments into TLM array which will be used
-!  in the next outer loop when calling frc_NLadjust.
-!
-          CALL get_state (ng, iTLM, 1, ITLname(ng), Lfinp(ng), Rec1)
-          IF (exit_flag.ne.NoError) RETURN
-#endif
-
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(numthreads)
           DO thread=0,numthreads-1
@@ -916,9 +904,6 @@
             DO tile=subs*thread,subs*(thread+1)-1
               CALL ini_adjust (ng, TILE, LTLM1, Lini)
               CALL ini_fields (ng, TILE, iNLM)
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-              CALL tl_frc_adjust (ng, TILE, Lbck, Lini, LTLM1)
-#endif
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -959,9 +944,39 @@
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
 !
 !  Set index containing the surface forcing increments used the run
-!  the nonlinear model in the outer loop.
+!  the nonlinear model in the outer loop and read the forcing
+!  increments. For bulk fluxes, we read Rec1 because the stress
+!  fluxes change by virtue of the changing initial conditions.
+!  When not using bulk fluxes, we read Rec4 because the background
+!  stress and flux is prescribed by input files which are not
+!  overwritten so we need to correct the background using the
+!  sum of the increments from all previous outer-loops.
+!  If using Rec4 we need to convert from v-space to x-space
+!  by applying the convolution.
+!
+!  AMM: CHECK WHAT HAPPENS WITH SECONDARY PRECONDITIONING.
 !
           Lfinp(ng)=LTLM1
+# ifdef BULK_FLUXES
+          CALL get_state (ng, iTLM, 1, ITLname(ng), Rec1, Lfinp(ng))
+# else
+          CALL get_state (ng, iTLM, 1, ITLname(ng), Rec4, Lfinp(ng))
+          Lcon=Lfinp(ng)
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile,Lini) SHARED(numthreads)
+          DO thread=0,numthreads-1
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+            DO tile=subs*thread,subs*(thread+1)-1,+1
+              CALL tl_convolution (ng, TILE, Lcon, 2)
+              CALL tl_variability (ng, TILE, Lcon, Lweak)
+# ifdef BALANCE_OPERATOR
+              CALL tl_balance (ng, TILE, Lini, Lcon)
+# endif
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+# endif
+          IF (exit_flag.ne.NoError) RETURN
 #endif
 !
 !-----------------------------------------------------------------------
