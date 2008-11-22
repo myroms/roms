@@ -108,6 +108,7 @@ Nthreads(waves) = 1
 !   SSH     ocean     waves             free-surface
 !   Ubar    ocean     waves             vertically integrated U-momentum
 !   Vbar    ocean     waves             vertically integrated V-momentum
+!   ZO      ocean     waves             bottom roughness
 !   Wdir    waves     ocean             wave direction
 !   Wamp    waves     ocean             significant wave height
 !   Wlen    waves     ocean             average wave length
@@ -124,13 +125,14 @@ Nthreads(waves) = 1
 !      Nexport(...) = 0
 !       Export(...) = NONE
 
- Nexport(ocean) = 4
+ Nexport(ocean) = 5
  Nexport(waves) = 6
 
   Export(ocean) = bath  \
                   SSH   \
                   Ubar  \
-                  Vbar
+                  Vbar  \
+                  ZO
 
   Export(waves) = Wdir  \
                   Wamp  \
@@ -146,7 +148,7 @@ Nthreads(waves) = 1
 !       Import(...) = NONE
 
  Nimport(ocean) = 6
- Nimport(waves) = 4
+ Nimport(waves) = 5
 
   Import(ocean) = Wdir  \
                   Wamp  \
@@ -158,7 +160,8 @@ Nthreads(waves) = 1
   Import(waves) = bath  \
                   SSH   \
                   Ubar  \
-                  Vbar
+                  Vbar  \
+                  ZO
 
 !
 !  GLOSSARY:
@@ -279,6 +282,7 @@ Nthreads(waves) = 1
 !               SSH       free-surface
 !               Ubar      vertically integrated U-momentum
 !               Vbar      vertically integrated V-momentum
+!               ZO        bottom roughness
 !               Wdir      wave direction
 !               Wamp      significant wave height
 !               Wlen      average wave length

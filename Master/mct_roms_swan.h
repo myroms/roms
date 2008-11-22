@@ -208,6 +208,7 @@
       USE mod_scalars
       USE mod_stepping
       USE mod_iounits
+      USE mod_sediment
 !
       USE distribute_mod, ONLY : mp_reduce
       USE ROMS_import_mod, ONLY : ROMS_import2d
@@ -233,6 +234,8 @@
       real(r8) :: RecvTime, SendTime, buffer(2), wtime(2)
 
       real(r8) :: my_wtime
+
+      real(r8), dimension(LBi:UBi,LBj:UBj) :: Awrk
 
       real(r8), pointer :: A(:)
 
@@ -514,7 +517,11 @@
             CALL ROMS_export2d (ng, tile,                               &
      &                          id, gtype, scale, add_offset,           &
      &                          LBi, UBi, LBj, UBj,                     &
+#ifdef SOLVE3D
+     &                          OCEAN(ng)%u(:,:,N(ng),NOUT),            &
+#else
      &                          OCEAN(ng)%ubar(:,:,KOUT),               &
+#endif
      &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
      &                          Asize, A,                               &
      &                          status)
@@ -526,7 +533,33 @@
             CALL ROMS_export2d (ng, tile,                               &
      &                          id, gtype, scale, add_offset,           &
      &                          LBi, UBi, LBj, UBj,                     &
+#ifdef SOLVE3D
+     &                          OCEAN(ng)%v(:,:,N(ng),NOUT),            &
+#else
      &                          OCEAN(ng)%vbar(:,:,KOUT),               &
+#endif
+     &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
+     &                          Asize, A,                               &
+     &                          status)
+            CALL AttrVect_importRAttr (ocn2wav_AV, TRIM(code), A, Asize)
+            Iexport=Iexport+1
+
+          CASE ('ZO')                   ! bottom roughness
+
+            DO j=JstrR,JendR
+              DO i=IstrR,IendR
+#ifdef BBL_MODEL
+                Awrk(i,j)=MAX(0.0001_r8,                                &
+     &                        OCEAN(ng)%bottom(i,j,izNik)*30.0_r8)
+#else
+                Awrk(i,j)=MAX(0.0001_r8,rdrg2(ng))
+#endif
+              END DO
+            END DO
+            CALL ROMS_export2d (ng, tile,                               &
+     &                          id, gtype, scale, add_offset,           &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          Awrk,                                   &
      &                          Fields(id)%ExpMin, Fields(id)%ExpMax,   &
      &                          Asize, A,                               &
      &                          status)

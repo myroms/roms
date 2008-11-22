@@ -506,6 +506,20 @@
                 END DO
               END DO
 
+            CASE ('ZO')               !  Bottom roughness
+
+              CALL AttrVect_exportRAttr (ocn2wav_AV, TRIM(code),        &
+     &                                   avdata, gsmsize)
+              Iimport=Iimport+1
+              IP=0
+              DO IY=Jstr,Jend
+                DO IX=Istr,Iend
+                  IP=IP+1
+                  INDXG=(IY-1)*MXC+IX
+                  TEMPMCT(INDXG,5)=REAL( avdata(IP) )
+                END DO
+              END DO
+
 # ifdef AIR_OCEAN
 
             CASE ('Uwind')               ! surface wind u-velocity
@@ -518,7 +532,7 @@
                 DO IX=Istr,Iend
                   IP=IP+1
                   INDXG=(IY-1)*MXC+IX
-                  TEMPMCT(INDXG,5)=REAL( -1.0_r8*avdata(IP) )
+                  TEMPMCT(INDXG,6)=REAL( avdata(IP) )
                 END DO
               END DO
 
@@ -532,7 +546,7 @@
                 DO IX=Istr,Iend
                   IP=IP+1
                   INDXG=(IY-1)*MXC+IX
-                  TEMPMCT(INDXG,6)=REAL( -1.0_r8*avdata(IP) )
+                  TEMPMCT(INDXG,7)=REAL( avdata(IP) )
                 END DO
               END DO
 # endif
@@ -770,6 +784,7 @@
           COMPDA(INDX,JWLV1)=COMPDA(INDX,JWLV2)
           COMPDA(INDX,JVX1) =COMPDA(INDX,JVX2)
           COMPDA(INDX,JVY1) =COMPDA(INDX,JVY2)
+          COMPDA(INDX,JFRC3)=COMPDA(INDX,JFRC2)
         END DO
 !
 ! Insert water level, velx, and vely into SWAN arrays.
@@ -783,9 +798,10 @@
               COMPDA(INDX,JWLV2)=TEMPMCT(IP,2)
               COMPDA(INDX,JVX2)=TEMPMCT(IP,3)
               COMPDA(INDX,JVY2)=TEMPMCT(IP,4)
+              COMPDA(INDX,JFRC2)=REAL(TEMPMCT(IP,5))
 # ifdef AIR_OCEAN
-              COMPDA(INDX,JWX2)=TEMPMCT(IP,5)
-              COMPDA(INDX,JWY2)=TEMPMCT(IP,6)
+              COMPDA(INDX,JWX2)=TEMPMCT(IP,6)
+              COMPDA(INDX,JWY2)=TEMPMCT(IP,7)
 # endif
             END IF
           END DO

@@ -1123,6 +1123,12 @@
           PSNAME = 'FRICGRID'
 #ifdef MODEL_COUPLING
           CALL SINPGR (IGRD, IGR2, PSNAME)
+          IGR1   = 4
+          VARFR  = .TRUE.
+          MCMVAR = MCMVAR + 2                                             40.00
+          JFRC2  = MCMVAR - 1                                             40.00
+          JFRC3  = MCMVAR                                                 40.00
+          IF (.NOT.ALLOCATED(FRIC)) ALLOCATE(FRIC(MXG(IGR1),MYG(IGR1)))   40.31
 #endif
         ELSE IF (KEYWIS ('WI')) THEN
           IGRD = 5
@@ -2952,9 +2958,11 @@
       ELSE IF (KEYWIS ('FR')) THEN
         IGR1   = 4
         VARFR  = .TRUE.
+#ifdef MODEL_COUPLING
         MCMVAR = MCMVAR + 2                                               40.00
         JFRC2  = MCMVAR - 1                                               40.00
         JFRC3  = MCMVAR                                                   40.00
+#endif
       ELSE IF (KEYWIS ('WI')) THEN
         LWINDR = 2                                                        30.10
         IWIND  = LWINDM                                                   30.10

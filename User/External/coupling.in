@@ -111,6 +111,7 @@ Nthreads(atmos) = 1
 !   SSH     ocean     waves             free-surface
 !   Ubar    ocean     waves             vertically integrated U-momentum
 !   Vbar    ocean     waves             vertically integrated V-momentum
+!   ZO      ocean     waves             bottom roughness
 !   Wdir    waves     ocean             wave direction
 !   Wamp    waves     ocean             significant wave height
 !   Wlen    waves     ocean             average wave length
@@ -306,6 +307,7 @@ Nthreads(atmos) = 1
 !               SSH       free-surface
 !               Ubar      vertically integrated U-momentum
 !               Vbar      vertically integrated V-momentum
+!               ZO        bottom roughness
 !               Wdir      wave direction
 !               Wamp      significant wave height
 !               Wlen      average wave length

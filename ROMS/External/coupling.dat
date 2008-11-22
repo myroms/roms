@@ -272,3 +272,11 @@
   'v2dvar'
   0.0d0
   1.0d0
+
+'ZO'
+  'ZO'
+  'bottom roughness'
+  'meter'                                          ! [m/s]
+  'r2dvar'
+  0.0d0
+  1.0d0

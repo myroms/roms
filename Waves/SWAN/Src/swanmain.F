@@ -4743,11 +4743,13 @@
  122  FORMAT (A, 10(1X,E11.4))
 !     field 4: friction coeff.
       IF (IFLDYN(4) .EQ. 1) THEN
+#ifndef MODEL_COUPLING
         CALL FLFILE ( 4, 0, FRIC, 0.,                                     40.31
      &               0, JFRC2, JFRC3, 0, 0, 0,
      &               1., 0.,                                              40.31 30.90
      &               COMPDA, XCGRID, YCGRID,
      &               KGRPNT, IERR)
+#endif
         IF (STPNOW()) RETURN                                              34.01
         IF (NPTST.GT.0) THEN
           WRITE (PRTEST, '(A)') ' fric coeff from file in test points'
