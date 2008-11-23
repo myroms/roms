@@ -30,7 +30,6 @@
            FFLAGS := /stand:f95
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DCYGWIN
-               LD := $(FC)
           LDFLAGS := /link /nodefaultlib:libcmt /nodefaultlib:libifcore /stack:67108864 
                AR := ar
           ARFLAGS := r
@@ -126,6 +125,7 @@ endif
 # Use full path of compiler.
 #
                 FC := "$(shell which ${FC})"
+                LD := $(FC)
 
 #
 # Set free form format in source files to allow long string for

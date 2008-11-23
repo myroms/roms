@@ -27,7 +27,6 @@
            FFLAGS := -e I -e m
               CPP := $(HOME)/bin/cpp
          CPPFLAGS := -P
-               LD := $(FC)
           LDFLAGS :=
                AR := ar
           ARFLAGS := -rv
@@ -98,6 +97,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 # Cray specials
 

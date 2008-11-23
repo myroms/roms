@@ -27,7 +27,6 @@
            FFLAGS :=
               CPP := /usr/bin/cpp-4.0
          CPPFLAGS := -P -traditional-cpp
-               LD := $(FC)
           LDFLAGS := 
                AR := ar
           ARFLAGS := r
@@ -69,7 +68,6 @@ ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
                FC := /usr/local/openmpi-pgi/bin/mpif90
-               LD := $(FC)
  else
              LIBS += -Bdynamic -lfmpi-pgi -lmpi-pgi -Bstatic
  endif
@@ -115,6 +113,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 #
 # Perform floating-point operations in strict conformance with the

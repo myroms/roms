@@ -27,7 +27,6 @@
            FFLAGS := -mips4 -u -TENV:X=3
               CPP := /usr/lib32/cmplrs/cpp
          CPPFLAGS := -P
-               LD := $(FC)
           LDFLAGS :=
                AR := ar
           ARFLAGS := -r
@@ -119,6 +118,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 #
 # Set free form format in source files to allow long string for

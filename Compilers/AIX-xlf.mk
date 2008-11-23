@@ -27,7 +27,6 @@
            FFLAGS := -qsuffix=f=f90 -qmaxmem=-1 -qarch=pwr4 -qtune=pwr4
               CPP := /usr/lib/cpp
          CPPFLAGS := -P
-               LD := $(FC)
           LDFLAGS :=
                AR := ar
           ARFLAGS := -r
@@ -87,7 +86,7 @@ endif
 ifdef USE_MPI
          CPPFLAGS += -DMPI
                FC := mpxlf95_r
-               LD := $(FC)
+
 endif
 
 ifdef USE_OpenMP
@@ -120,6 +119,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 #
 # Set free form format in source files to allow long string for

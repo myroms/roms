@@ -27,7 +27,6 @@
            FFLAGS := 
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
-               LD := $(FC)
           LDFLAGS := -Vaxlib
                AR := ar
           ARFLAGS := r
@@ -69,7 +68,6 @@ ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
                FC := /opt/intelsoft/mpich2/bin/mpif90
-               LD := $(FC)
  else
              LIBS += -lfmpi-pgi -lmpi-pgi 
  endif
@@ -113,6 +111,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 #
 # Set free form format in source files to allow long string for

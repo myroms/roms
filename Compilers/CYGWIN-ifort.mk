@@ -31,7 +31,6 @@
            FFLAGS := /align /G7 /MD
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -DCYGWIN -DCYGWIN_ifort -traditional
-               LD := $(FC)
           LDFLAGS := /link /stack:67108864
                AR := ar
           ARFLAGS := r
@@ -128,6 +127,7 @@ endif
 # Use full path of compiler.
 #
                FC := "$(shell which ${FC})"
+               LD := $(FC)
 
 #
 # For a Windows compiler, override the compilation rule

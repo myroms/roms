@@ -30,7 +30,6 @@
            FFLAGS := -fno-second-underscore
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
-               LD := $(FC)
           LDFLAGS := 
                AR := ar
           ARFLAGS := -r
@@ -72,7 +71,6 @@ ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
                FC := mpif90
-               LD := $(FC)
  else
              LIBS += -lfmpi -lmpi
  endif
@@ -103,6 +101,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 #
 # Set free form format in source files to allow long string for

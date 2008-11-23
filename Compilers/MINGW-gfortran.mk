@@ -30,7 +30,6 @@
            FFLAGS := -frepack-arrays
               CPP := cpp
          CPPFLAGS := -P -traditional
-               LD := $(FC)
           LDFLAGS := 
                AR := ar
           ARFLAGS := -r
@@ -94,6 +93,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 # Turn off bounds checking for function def_var, as "dimension(*)"
 # declarations confuse Gnu Fortran 95 bounds-checking code.

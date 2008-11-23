@@ -29,7 +29,6 @@
            FFLAGS := -frepack-arrays
               CPP := /usr/bin/cpp
          CPPFLAGS := -P -traditional
-               LD := $(FC)
           LDFLAGS := 
                AR := ar
           ARFLAGS := -r
@@ -67,7 +66,6 @@ ifdef USE_MPI
          CPPFLAGS += -DMPI
  ifdef USE_MPIF90
                FC := mpif90
-               LD := $(FC)
   ifdef USE_DEBUG
            FFLAGS += -mpe=mpicheck
   endif
@@ -106,6 +104,7 @@ endif
 # Use full path of compiler.
 #
                FC := $(shell which ${FC})
+               LD := $(FC)
 
 # Turn off bounds checking for function def_var, as "dimension(*)"
 # declarations confuse Gnu Fortran 95 bounds-checking code.
