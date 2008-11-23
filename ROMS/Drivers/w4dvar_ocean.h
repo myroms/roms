@@ -178,6 +178,7 @@
       USE ini_adjust_mod, ONLY : load_TLtoAD
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
+      USE mod_forces, ONLY : initialize_forces
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod, ONLY: tl_balance
 #endif
@@ -421,8 +422,27 @@
 !  Here, PSI is set to misfit between observations and model, H_n.
 !
           inner=0
-          CALL congrad (ng, outer, inner, Ninner, converged)
-
+          CALL congrad (ng, iRPM, outer, inner, Ninner, converged)
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Clear tangent linear forcing arrays before entering inner-loop.
+!  This is very important since these arrays are non-zero after
+!  running the representer model and must be zero when running the
+!  tangent linear model.
+!
+!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
+          DO thread=0,numthreads-1
+#if defined _OPENMP || defined DISTRIBUTE
+            subs=NtileX(ng)*NtileE(ng)/numthreads
+#else
+            subs=1
+#endif
+            DO tile=subs*thread,subs*(thread+1)-1
+              CALL initialize_forces (ng, TILE, iTLM)
+            END DO
+          END DO
+!$OMP END PARALLEL DO
+!
           INNER_LOOP : DO my_inner=1,Ninner
             inner=my_inner
 !
@@ -649,7 +669,7 @@
               WRITE (stdout,40) outer, inner
             END IF
             tTLFindx(ng)=0
-            outer_impulse=.FALSE.
+            outer_impulse=.TRUE.
 #ifdef DISTRIBUTE
             tile=MyRank
 #else
@@ -733,7 +753,8 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
             Nrun=Nrun+1
-            CALL congrad (ng, outer, inner, Ninner, converged)
+            CALL congrad (ng, iRPM, outer, inner, Ninner, converged)
+            IF (exit_flag.ne.NoError) RETURN
             IF (converged) EXIT INNER_LOOP
 
           END DO INNER_LOOP
@@ -874,7 +895,7 @@
               CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-              CALL rp_ini_adjust (ng, TILE, Lold(ng), Lbck)
+              CALL rp_ini_adjust (ng, TILE, Lnew(ng), Lold(ng))
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -978,7 +999,7 @@
             WRITE (stdout,40) outer, inner
           END IF
           tTLFindx(ng)=0
-          outer_impulse=.TRUE.
+          outer_impulse=.FALSE.
 #ifdef DISTRIBUTE
           tile=MyRank
 #else

@@ -82,13 +82,15 @@
 
         integer, allocatable :: FRCids(:,:)
 
-        character (len=50), dimension(6) :: Rerror =                    &
+        character (len=50), dimension(8) :: Rerror =                    &
      &       (/ ' ROMS/TOMS - Blows up ................ exit_flag: ',   &
      &          ' ROMS/TOMS - Input error ............. exit_flag: ',   &
      &          ' ROMS/TOMS - Output error ............ exit_flag: ',   &
      &          ' ROMS/TOMS - IO error ................ exit_flag: ',   &
      &          ' ROMS/TOMS - Configuration error ..... exit_flag: ',   &
-     &          ' ROMS/TOMS - Partition error ......... exit_flag: ' /)
+     &          ' ROMS/TOMS - Partition error ......... exit_flag: ',   &
+     &          ' ROMS/TOMS - Illegal input parameter . exit_flag: ',   &
+     &          ' ROMS/TOMS - Fatal algorithm result .. exit_flag: ' /)
 
         character (len=80), allocatable :: FRCname(:,:)
 

@@ -701,7 +701,7 @@
 #   ifndef SOLVE3D
       DO j=JstrR,JendR
         DO i=Istr,IendR
-          tl_ubar(i,j,Lout)=ubar(i,j,Linp)+ad_ubar(i,j,Linp)
+          tl_ubar(i,j,Lout)=ubar(i,j,Linp)+ad_ubar(i,j,Lout)
 #    ifdef MASKING
           tl_ubar(i,j,Lout)=tl_ubar(i,j,Lout)*umask(i,j)
 #    endif
@@ -709,7 +709,7 @@
       END DO
       DO j=Jstr,JendR
         DO i=IstrR,IendR
-          tl_vbar(i,j,Lout)=vbar(i,j,Linp)+ad_vbar(i,j,Linp)
+          tl_vbar(i,j,Lout)=vbar(i,j,Linp)+ad_vbar(i,j,Lout)
 #    ifdef MASKING
           tl_vbar(i,j,Lout)=tl_vbar(i,j,Lout)*vmask(i,j)
 #    endif
@@ -718,7 +718,7 @@
 #   endif
       DO j=JstrR,JendR
         DO i=IstrR,IendR
-          tl_zeta(i,j,Lout)=zeta(i,j,Linp)+ad_zeta(i,j,Linp)
+          tl_zeta(i,j,Lout)=zeta(i,j,Linp)+ad_zeta(i,j,Lout)
 #   ifdef MASKING
           tl_zeta(i,j,Lout)=tl_zeta(i,j,Lout)*rmask(i,j)
 #   endif
@@ -735,7 +735,7 @@
       DO k=1,N(ng)
         DO j=JstrR,JendR
           DO i=Istr,IendR
-            tl_u(i,j,k,Lout)=u(i,j,k,Linp)+ad_u(i,j,k,Linp)
+            tl_u(i,j,k,Lout)=u(i,j,k,Linp)+ad_u(i,j,k,Lout)
 #    ifdef MASKING
             tl_u(i,j,k,Lout)=tl_u(i,j,k,Lout)*umask(i,j)
 #    endif
@@ -743,7 +743,7 @@
         END DO
         DO j=Jstr,JendR
           DO i=IstrR,IendR
-            tl_v(i,j,k,Lout)=v(i,j,k,Linp)+ad_v(i,j,k,Linp)
+            tl_v(i,j,k,Lout)=v(i,j,k,Linp)+ad_v(i,j,k,Lout)
 #    ifdef MASKING
             tl_v(i,j,k,Lout)=tl_v(i,j,k,Lout)*vmask(i,j)
 #    endif
@@ -755,7 +755,7 @@
           DO j=JstrR,JendR
             DO i=IstrR,IendR
               tl_t(i,j,k,Lout,itrc)=t(i,j,k,Linp,itrc)+                 &
-     &                              ad_t(i,j,k,Linp,itrc)
+     &                              ad_t(i,j,k,Lout,itrc)
 #    ifdef MASKING
               tl_t(i,j,k,Lout,itrc)=tl_t(i,j,k,Lout,itrc)*rmask(i,j)
 #    endif

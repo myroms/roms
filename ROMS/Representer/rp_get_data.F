@@ -1277,6 +1277,74 @@
       END DO
 #   endif
 #  endif
+#  ifdef W4DVAR
+!
+!-----------------------------------------------------------------------
+!  Read frequent impulse forcing for weak constraint.
+!-----------------------------------------------------------------------
+!
+      IF (FrequentImpulse) THEN
+        CALL get_2dfld (ng, iRPM, idZtlf, ncTLFid(ng), 1,               &
+     &                  TLFname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#   ifdef MASKING
+     &                  GRID(ng) % rmask(LBi,LBj),                      &
+#   endif 
+     &                  OCEAN(ng) % f_zetaG(LBi,LBj,1))
+
+#   ifndef SOLVE3D
+!
+!  Read 2D momentum forcing.
+!
+        CALL get_2dfld (ng, iRPM, idUbtf, ncTLFid(ng), 1,               &
+     &                  TLFname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#    ifdef MASKING
+     &                  GRID(ng) % umask(LBi,LBj),                      &
+#    endif
+     &                  OCEAN(ng) % f_ubarG(LBi,LBj,1))
+        CALL get_2dfld (ng, iRPM, idVbtf, ncTLFid(ng), 1,               &
+     &                  TLFname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 2, 1,                       &
+#    ifdef MASKING
+     &                  GRID(ng) % vmask(LBi,LBj),                      &
+#    endif
+     &                  OCEAN(ng) % f_vbarG(LBi,LBj,1))
+#   endif
+
+#   ifdef SOLVE3D
+!
+!  Read in 3D momentum forcing.
+!
+        CALL get_3dfld (ng, iRPM, idUtlf, ncTLFid(ng), 1,               &
+     &                  TLFname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
+#    ifdef MASKING
+     &                  GRID(ng) % umask(LBi,LBj),                      &
+#    endif
+     &                  OCEAN(ng) % f_uG(LBi,LBj,1,1))
+        CALL get_3dfld (ng, iRPM, idVtlf, ncTLFid(ng), 1,               &
+     &                  TLFname(ng), update(1),                         &
+     &                  LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,             &
+#    ifdef MASKING
+     &                  GRID(ng) % vmask(LBi,LBj),                      &
+#    endif
+     &                  OCEAN(ng) % f_vG(LBi,LBj,1,1))
+!
+!  Read in 3D tracers forcing.
+!
+        DO i=1,NT(ng)
+          CALL get_3dfld (ng, iRPM, idTtlf(i), ncTLFid(ng), 1,          &
+     &                    TLFname(ng), update(1),                       &
+     &                    LBi, UBi, LBj, UBj, 1, N(ng), 2, 1,           &
+#    ifdef MASKING
+     &                    GRID(ng) % rmask(LBi,LBj),                    &
+#    endif
+     &                    OCEAN(ng) % f_tG(LBi,LBj,1,1,i))
+        END DO
+#   endif
+      END IF
+#  endif
 # endif
 
 # ifdef PROFILE

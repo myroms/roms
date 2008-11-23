@@ -44,6 +44,9 @@
       USE ini_lanczos_mod, ONLY : ini_lanczos
 # endif
       USE metrics_mod, ONLY : metrics
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces, ONLY : initialize_forces
+# endif
 # if defined W4DPSAS || defined W4DVAR
       USE tl_set_depth_mod, ONLY : tl_bath
 # endif
@@ -387,6 +390,9 @@
           subs=NtileX(ng)*NtileE(ng)/numthreads
           DO tile=subs*thread,subs*(thread+1)-1
             CALL initialize_ocean (ng, TILE, iTLM)
+#    if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+            CALL initialize_forces (ng, TILE, iTLM)
+#    endif
           END DO
         END DO
 !$OMP END PARALLEL DO

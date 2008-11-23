@@ -1,7 +1,7 @@
 #include "cppdefs.h"
 
 #if defined W4DVAR || defined W4DPSAS
-      SUBROUTINE congrad (ng, outer, inner, Ninner, converged)
+      SUBROUTINE congrad (ng, model, outer, inner, Ninner, converged)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -63,214 +63,223 @@
       USE mod_param
       USE mod_parallel
       USE mod_fourdvar
+      USE mod_iounits
+      USE mod_scalars
 
 # ifdef DISTRIBUTE
+!
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
 # endif
       implicit none
 !
 !  Imported variable declarations
 !
-      integer, intent(in) :: ng, outer, inner, Ninner
+      integer, intent(in) :: ng, model, outer, inner, Ninner
       logical, intent(out) :: converged
 !
 !  Local variable declarations.
 !
-      integer :: iobs, jinner
+      integer :: iobs, ivec
       real(r8), dimension(Ninner) :: zu, zgam
       real(r8), dimension(Ndatum(ng)) :: px, pgrad, zw
       real(r8), dimension(Ninner,3) :: zwork
-      real(r8) :: dla, zbet, eps, preduc, Jo
-
-
+      real(r8) :: dla, zbet, eps, preduc
+      real(r8) :: Jopt, Jf, Jmod, Jdata
 !
 !-----------------------------------------------------------------------
-!  Since this is not run in parallel, we should be careful about who
-!  is calculating these vectors. Only Master will run this so that
-!  all nodes have computed their respective solutions.
+!  Weak constraint 4DVar conjugate gradient, Lanczos-based algorithm.
 !-----------------------------------------------------------------------
 !
-
+!  This conjugate gradient algorithm is not run in parallel since the
+!  weak constraint is done in observation space. Mostly all the
+!  variables are 1D arrays. Therefore, in parallel applications (only
+!  distributed-memory is possible) the master node does the computations
+!  and then broadcasts results to remaining nodes in the communicator.
+!
       IF (Master) THEN
+!
+!  Initialize internal parameters.  This is needed here for output
+!  reasons.
+!
+        Jopt=0.0_r8
+        Jf=0.0_r8
+        Jdata=0.0_r8
+        Jmod=0.0_r8
+        preduc=0.0_r8
 
-!
-!-----------------------------------------------------------------------
-!  If this is the first call to the gradient algorithm, we will
-!  set up the vectors and store the first guess.
-!  The initial starting guess is assumed to be zero in which case
-!  the gradient is just -(obs-modval).
-!-----------------------------------------------------------------------
-!
         IF (inner.eq.0) THEN
+!
+!  If this is the first pass of the inner loop, set up the vectors and
+!  store the first guess. The initial starting guess is assumed to be
+!  zero in which case the gradient is just: -(obs-model).
+!
           zgnorm=0.0
           DO iobs=1,Ndatum(ng)
 # ifdef W4DPSAS
-            pgrad(iobs)=-1.0_r8*(ObsScale(iobs)*                        &
-     &                 (ObsVal(iobs)-NLmodVal(iobs)))
+            pgrad(iobs)=-ObsScale(iobs)*                                &
+     &                  (ObsVal(iobs)-NLmodVal(iobs))
 # else
-            pgrad(iobs)=-1.0_r8*(ObsScale(iobs)*                        &
-     &                 (ObsVal(iobs)-TLmodVal(iobs)))
+            pgrad(iobs)=-ObsScale(iobs)*                                &
+     &                  (ObsVal(iobs)-TLmodVal(iobs))
 # endif
             zgrad0(iobs)=pgrad(iobs)
             zgnorm=zgnorm+zgrad0(iobs)*zgrad0(iobs)
           END DO
           zgnorm=SQRT(zgnorm)
-
           DO iobs=1,Ndatum(ng)
             zcglwk(iobs,1)=pgrad(iobs)/zgnorm
             ADmodVal(iobs)=zcglwk(iobs,1)
           END DO
-
           zqg0(1)=0.0_r8
           DO iobs=1,Ndatum(ng)
             zqg0(1)=zqg0(1)+zcglwk(iobs,1)*zgrad0(iobs)
           END DO
 
         ELSE
-
 !
-!-----------------------------------------------------------------------
-!  After the initialization, for every other inner value, we will
-!  calculate a new Lanczos vector, store it in the matrix, and update
-!  our search
-!-----------------------------------------------------------------------
+!  After the initialization, for every other inner loop, calculate a
+!  new Lanczos vector, store it in the matrix, and update search.
 !
-          zdelta(inner)=0.0
+          zdelta(inner)=0.0_r8
           DO iobs=1,Ndatum(ng)
             pgrad(iobs)=ObsScale(iobs)*                                 &
      &                 (TLmodVal(iobs)+ObsErr(iobs)*zcglwk(iobs,inner))
             zdelta(inner)=zdelta(inner)+zcglwk(iobs,inner)*pgrad(iobs)
           END DO
-
-! HERNAN -- Do something here. If zdelta is < 0 then we are in deep doo-doo
-          IF (zdelta(inner).le.0.0) THEN
-            print *,'zdelta not positive definite!'
-            print *,'inner=',inner,' zdelta=',zdelta(inner)
-            STOP
+!
+!  Exit, if not a positive definity algorithm.
+!
+          IF (zdelta(inner).le.0.0_r8) THEN
+            WRITE (stdout,20) zdelta(inner), outer, inner
+            exit_flag=7
+            GO TO 10
           END IF
 !
-!    Compute the new Lanczos vector.
+!  Compute the new Lanczos vector.
 !
           DO iobs=1,Ndatum(ng)
             pgrad(iobs)=pgrad(iobs)-zdelta(inner)*zcglwk(iobs,inner)
           END DO
-
           IF (inner.gt.1) THEN
             DO iobs=1,Ndatum(ng)
               pgrad(iobs)=pgrad(iobs)-zbeta(inner)*zcglwk(iobs,inner-1)
             END DO
           END IF
-
 !
-!    Orthonormalize against previous Lanczos vectors.
+!  Orthonormalize against previous Lanczos vectors.
 !
-          DO jinner=inner,1,-1
+          DO ivec=inner,1,-1
             dla=0.0_r8
             DO iobs=1,Ndatum(ng)
-              dla=dla+pgrad(iobs)*zcglwk(iobs,jinner)
+              dla=dla+pgrad(iobs)*zcglwk(iobs,ivec)
             END DO
             DO iobs=1,Ndatum(ng)
-              pgrad(iobs)=pgrad(iobs)-dla*zcglwk(iobs,jinner)
+              pgrad(iobs)=pgrad(iobs)-dla*zcglwk(iobs,ivec)
             END DO
           END DO
-
+!
           zbeta(inner+1)=0.0_r8
           DO iobs=1,Ndatum(ng)
             zbeta(inner+1)=zbeta(inner+1)+pgrad(iobs)*pgrad(iobs)
           END DO
           zbeta(inner+1)=SQRT(zbeta(inner+1))
-
+!
           DO iobs=1,Ndatum(ng)
             zcglwk(iobs,inner+1)=pgrad(iobs)/zbeta(inner+1)
           END DO
-
+!
           zqg0(inner+1)=0.0_r8
           DO iobs=1,Ndatum(ng)
-            zqg0(inner+1)=zqg0(inner+1)+zcglwk(iobs,inner+1)*zgrad0(iobs)
+            zqg0(inner+1)=zqg0(inner+1)+                                &
+     &                    zcglwk(iobs,inner+1)*zgrad0(iobs)
           END DO
-
-
 !
-!-----------------------------------------------------------------------
 !  Calculate the new solution based upon the new, orthonormalized
 !  Lanczos vector. First, the tridiagonal system is solved by
 !  decomposition and forward/back substitution.
-!-----------------------------------------------------------------------
 !
           zbet=zdelta(1)
           zu(1)=-zqg0(1)/zbet
-          DO jinner=2,inner
-            zgam(jinner)=zbeta(jinner)/zbet
-            zbet=zdelta(jinner)-zbeta(jinner)*zgam(jinner)
-            zu(jinner)=(-zqg0(jinner)-zbeta(jinner)*zu(jinner-1))/zbet
+          DO ivec=2,inner
+            zgam(ivec)=zbeta(ivec)/zbet
+            zbet=zdelta(ivec)-zbeta(ivec)*zgam(ivec)
+            zu(ivec)=(-zqg0(ivec)-zbeta(ivec)*zu(ivec-1))/zbet
           END DO
           zwork(inner,3)=zu(inner)
 
-          DO jinner=inner-1,1,-1
-            zu(jinner)=zu(jinner)-zgam(jinner+1)*zu(jinner+1)
-            zwork(jinner,3)=zu(jinner)
+          DO ivec=inner-1,1,-1
+            zu(ivec)=zu(ivec)-zgam(ivec+1)*zu(ivec+1)
+            zwork(ivec,3)=zu(ivec)
           END DO
 
           DO iobs=1,Ndatum(ng)
-            zw(iobs)=zgrad0(iobs)+zbeta(inner+1)*zcglwk(iobs,inner+1)   &
-     &                       *zwork(inner,3)
+            zw(iobs)=zgrad0(iobs)+                                      &
+     &               zbeta(inner+1)*zcglwk(iobs,inner+1)*zwork(inner,3)
           END DO
 
           DO iobs=1,Ndatum(ng)
             px(iobs)=0.0
-            DO jinner=1,inner
-              px(iobs)=px(iobs)+zcglwk(iobs,jinner)*zwork(jinner,3)
-              zw(iobs)=zw(iobs)-zcglwk(iobs,jinner)*zqg0(jinner)
+            DO ivec=1,inner
+              px(iobs)=px(iobs)+zcglwk(iobs,ivec)*zwork(ivec,3)
+              zw(iobs)=zw(iobs)-zcglwk(iobs,ivec)*zqg0(ivec)
             END DO
           END DO
 !
-!   Compute the reduction in the gradient Ax-b.
+!  Compute the reduction in the gradient Ax-b.
 !
           preduc=0.0_r8
           DO iobs=1,Ndatum(ng)
             preduc=preduc+zw(iobs)*zw(iobs)
           END DO
           preduc=SQRT(preduc)/zgnorm
-
 !
-!   Estimate the residual by: ||Ax-b||=zbeta(k+1)
+!  Estimate the residual by: ||Ax-b|| = zbeta(k+1)
 !
           eps=ABS(zbeta(inner+1))
-
 !
-!   Estimate the cost function
+!  Estimate the various penalty function components based on
+!  Bennett (2002), page 22 and pages 42-44:
 !
-          Jo=0.0_r8
+!     Jopt  = value of the penalty function when true px
+!             has been identified. 
+!     Jf    = initial data misfit for the first-guess
+!     Jdata = data misfit for the state estimate
+!     Jmod  = the model penalty function (the sum of the
+!             dynamical, initial and boundary penalties)     
+!
+!  NOTE:  Unlike IS4DVAR where we compute the actual cost function
+!         for each iteration that decreases with increasing 
+!         number of iterations, the various penalty terms 
+!         represent the optimal values (i.e. the values when
+!         optimal state estimate has been identified). Therefore
+!         the various penalty terms will only be correct when the
+!         optimal state has been found. Therefore, as the
+!         W4DVAR proceeds, Jopt, Jdata and Jmod will asymptote
+!         to their final values and WILL NOT necessary decrease
+!         with increasing iteration number.
+!
           DO iobs=1,Ndatum(ng)
-            Jo=Jo-px(iobs)*zgrad0(iobs)
+            Jopt=Jopt-px(iobs)*zgrad0(iobs)
+            IF (ObsErr(iobs).ne.0.0_r8) THEN
+              Jf=Jf+zgrad0(iobs)*zgrad0(iobs)/ObsErr(iobs)
+            END IF
+            Jdata=Jdata+px(iobs)*px(iobs)*ObsErr(iobs)
           END DO
-! Temporary printing to track the progress
-  print *,'zdelta=',(zdelta(jinner),jinner=1,inner)
-  print *,'zbeta=',(zbeta(jinner),jinner=1,inner+1)
-  print *,'zwork=',(zwork(jinner,3),jinner=1,inner)
-  print *,'eps=',eps
-  print *,'preduc=',preduc
-  print *,'Jo=',Jo
-  print *,'px=',(px(iobs),iobs=1,Ndatum(ng))
-
+          Jmod=Jopt-Jdata
 !
-!   Check the convergence criteria
-!-----------------------------------------------------------------------
-!  The Lanczos algorithm should not be run for more loops than the
-!  size of the data. This will cause problems. If we have performed
-!  more loops than we have datum, then we set converged to TRUE so 
-!  that the inner loop stops. 
-!-----------------------------------------------------------------------
+!  Check the convergence criteria: The Lanczos algorithm should not
+!  be run for more loops than the size of the data. This will cause
+!  problems. If we have performed more loops than we have datum,
+!  then we set converged to TRUE so that the inner loop stops. 
 !
           converged=.FALSE.
           IF (preduc.le.CGeps.or.inner.eq.Ndatum(ng)) THEN
             converged=.TRUE.
           END IF
-
 !
-!   Put the new trial solution into the adjoint vector for the next loop
-!   Put the final solution into the adjoint vector when converged
-!   of on the final inner-loop.
+!  Put the new trial solution into the adjoint vector for the next loop
+!  Put the final solution into the adjoint vector when converged
+!  of on the final inner-loop.
 !
           IF ((inner.eq.Ninner).or.converged) THEN
             DO iobs=1,Ndatum(ng)
@@ -282,61 +291,67 @@
             END DO
           END IF
         END IF
-! DEBUG
-!       ADmodVal=(/1.0, 0.0, 0.0/)
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcastf (ng, iTLM, ADmodVal, Mobs)
-# endif
+!
+!  Report minimization progress.
+!
+        WRITE (stdout,30) Ndatum(ng), converged,                         &
+     &                    outer, inner, eps,                             &
+     &                    outer, inner, preduc,                          &
+     &                    outer, inner, Jf,                              &
+     &                    outer, inner, Jdata,                           &
+     &                    outer, inner, Jmod,                            &
+     &                    outer, inner, Jopt,                            &
+     &                    outer, inner
+        DO ivec=1,inner
+          WRITE (stdout,40) ivec, zdelta(ivec), zbeta(ivec),             &
+     &                      zwork(ivec,3)
+        END DO
+        WRITE (stdout,50) inner+1, zbeta(inner+1)
 
+      END IF
 !
-!  Write out conjugate gradient vectors into 4DVAR NetCDF file.
+!  Come here if not a possite definite algorithm.
 !
-!      CALL cg_write (ng, converged)
+ 10   CONTINUE
+# ifdef DISTRIBUTE
+      CALL mp_bcastl (ng, model, exit_flag, 1)
+# endif
+      IF (exit_flag.ne.NoError) RETURN
+   
+# ifdef DISTRIBUTE
 !
-!  Report minimization parameters.
+!  Broadcast new solution to other nodes.
 !
-!      IF (Master) THEN
-!        PRINT 10, outer, inner, Ndatum(ng), converged,                  &
-!     &            eps,      outer, inner,                               &
-!     &            CGeps,    outer, inner,                               &
-!     &            zbeta,    outer, inner,                               &
-!     &            cg_sigma, outer, inner,                               &
-!     &            cg_rnorm, outer, inner,                               &
-!     &            MINVAL(cg_x), MAXVAL(cg_x),                           &
-!     &            MINVAL(cg_z), MAXVAL(cg_z),                           &
-!     &            MINVAL(cg_p), MAXVAL(cg_p),                           &
-!     &            MINVAL(cg_v), MAXVAL(cg_v),                           &
-!     &            MINVAL(cg_s), MAXVAL(cg_s),                           &
-!     &            MINVAL(cg_r), MAXVAL(cg_r)
-! 10     FORMAT (/,' CONGRAD - Conjugate Gradient Information: ',/,      &
-!     &          /,11x,'Outer Loop = ',i3.3,                             &
-!     &          /,11x,'Inner Loop = ',i3.3,                             &
-!     &          /,11x,'Ndatum     = ',i7.7,                             &
-!     &          /,11x,'converged  = ',l1,/,                             &
-!     &          /,11x,'cg_eps   = ',1p,e15.8,0p,                        &
-!     &            3x,'(',i3.3,', ',i3.3,')',                            &
-!     &          /,11x,'cg_tol   = ',1p,e15.8,0p,                        &
-!     &            3x,'(',i3.3,', ',i3.3,')',                            &
-!     &          /,11x,'cg_gamma = ',1p,e15.8,0p,                        &
-!     &            3x,'(',i3.3,', ',i3.3,')',                            &
-!     &          /,11x,'cg_sigma = ',1p,e15.8,0p,                        &
-!     &            3x,'(',i3.3,', ',i3.3,')',                            &
-!     &          /,11x,'cg_rnorm = ',1p,e15.8,0p,                        &
-!     &            3x,'(',i3.3,', ',i3.3,')',/,                          &
-!     &          /,11x,'Min cg_x = ',1p,e15.8,0p,2x,                     &
-!     &                'Max cg_x = ',1p,e15.8,0p,                        &
-!     &          /,11x,'Min cg_z = ',1p,e15.8,0p,2x,                     &
-!     &                'Max cg_z = ',1p,e15.8,0p,                        &
-!     &          /,11x,'Min cg_p = ',1p,e15.8,0p,2x,                     &
-!     &                'Max cg_p = ',1p,e15.8,0p,                        &
-!     &          /,11x,'Min cg_v = ',1p,e15.8,0p,2x,                     &
-!     &                'Max cg_v = ',1p,e15.8,0p,                        &
-!     &          /,11x,'Min cg_s = ',1p,e15.8,0p,2x,                     &
-!     &                'Max cg_s = ',1p,e15.8,0p,                        &
-!     &          /,11x,'Min cg_r = ',1p,e15.8,0p,2x,                     &
-!     &                'Max cg_r = ',1p,e15.8,0p)
-!      END IF
+      CALL mp_bcastf (ng, iTLM, ADmodVal, Mobs)
+      CALL mp_bcastl (ng, iTLM, converged, 1)
+# endif
+!!
+!! Write out conjugate gradient vectors into 4DVAR NetCDF file.
+!!
+!!    CALL cg_write (ng, converged)
+!
+ 20   FORMAT (/,' CONGRAD - Fatal error, not possitive definite',       &
+     &        ' algorithm:',/,                                          &
+     &        /,11x,'zdelta = ',1p,e15.8,0p,3x,'(',i3.3,', ',i3.3,')')
+ 30   FORMAT (/,' CONGRAD - Conjugate Gradient Information:',/,         &
+     &        /,11x,'Ndatum     = ',i7.7,                               &
+     &        /,11x,'converged  = ',l1,/,/,                             &
+     &        1x,'(',i3.3,',',i3.3,'): ',                               &
+     &        'Residual estimate,                  eps = ',1p,e14.7,/,  &
+     &        1x,'(',i3.3,',',i3.3,'): ',                               &
+     &        'Reduction in gradient norm,      Greduc = ',1p,e14.7,/,  &
+     &        1x,'(',i3.3,',',i3.3,'): ',                               &
+     &        'First guess initial data misfit,     Jf = ',1p,e14.7,/,  &
+     &        1x,'(',i3.3,',',i3.3,'): ',                               &
+     &        'State estimate data misfit,       Jdata = ',1p,e14.7,/,  &
+     &        1x,'(',i3.3,',',i3.3,'): ',                               &
+     &        'Model penalty function,            Jmod = ',1p,e14.7,/,  &
+     &        1x,'(',i3.3,',',i3.3,'): ',                               &
+     &        'Optimal penalty function,          Jopt = ',1p,e14.7,/,  &
+     &        /,1x,'(',i3.3,',',i3.3,'): ',                             &
+     &        'Lanczos vectors - zdelta, zbeta, zwork:',/)
+ 40   FORMAT (6x,i3.3,4x,3(1p,e15.8,5x))
+ 50   FORMAT (6x,i3.3,24x,1p,e15.8)
 
       RETURN
       END SUBROUTINE congrad

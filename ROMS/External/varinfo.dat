@@ -1906,6 +1906,76 @@
   'idTads(isalt)'
   'r3dvar'
   1.0d0
+
+!
+!------------------------------------------------------------------------------
+!  Tangent linear model impulse forcing variables.
+!------------------------------------------------------------------------------
+!
+
+'zeta'                                             ! Input
+  'free-surface impulse forcing'
+  'meter'                                          ! [m]
+  'zeta, scalar, series'
+  'zeta_time'
+  'idZtlf'
+  'r2dvar'
+  1.0d0
+
+'ubar'                                             ! Input
+  'vertically integrated u-momentum impulse forcing'
+  'meter second-1'                                 ! [m/s]
+  'ubar-velocity, scalar, series'
+  'v2d_time'
+  'idUbtf'
+  'u2dvar'
+  1.0d0
+
+'vbar'                                             ! Input
+  'vertically integrated v-momentum impulse forcing'
+  'meter second-1'                                 ! [m/s]
+  'vbar-velocity, scalar, series'
+  'v2d_time'
+  'idVbtf'
+  'v2dvar'
+  1.0d0
+
+'u'                                                ! Input
+  'u-momentum component impulse forcing'
+  'meter second-1'                                 ! [m/s]
+  'u-velocity, scalar, series'
+  'v3d_time'
+  'idUtlf'
+  'u3dvar'
+  1.0d0
+
+'v'                                                ! Input
+  'v-momentum component impulse forcing'
+  'meter second-1'                                 ! [m/s]
+  'v-velocity, scalar, series'
+  'v3d_time'
+  'idVtlf'
+  'v3dvar'
+  1.0d0
+
+'temp'                                             ! Input
+  'potential temperature impulse forcing'
+  'Celsius'                                        ! [Celsius]
+  'temp_time, scalar, series'
+  'temp_time'
+  'idTtlf(itemp)'
+  'r3dvar'
+  1.0d0
+
+'salt'                                             ! Input
+  'salinity functional'
+  'nondimensional'                                 ! [PSU]
+  'salt_time, scalar, series'
+  'salt_time'
+  'idTtlf(isalt)'
+  'r3dvar'
+  1.0d0
+
 !
 !------------------------------------------------------------------------------
 !  Observation variables: Optimal Interpolation and Nudging.

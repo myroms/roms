@@ -275,6 +275,17 @@
           real(r8), pointer :: uG(:,:,:,:)
           real(r8), pointer :: vG(:,:,:,:)
 # endif
+# ifdef W4DVAR
+          real(r8), pointer :: f_zetaG(:,:,:)
+#  ifdef SOLVE3D
+          real(r8), pointer :: f_tG(:,:,:,:,:)
+          real(r8), pointer :: f_uG(:,:,:,:)
+          real(r8), pointer :: f_vG(:,:,:,:)
+#  else
+          real(r8), pointer :: f_ubarG(:,:,:)
+          real(r8), pointer :: f_vbarG(:,:,:)
+#  endif
+# endif
 #endif
 
         END TYPE T_OCEAN
@@ -524,6 +535,17 @@
       allocate ( OCEAN(ng) % tG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
       allocate ( OCEAN(ng) % uG(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % vG(LBi:UBi,LBj:UBj,N(ng),2) )
+# endif
+# ifdef W4DVAR
+      allocate ( OCEAN(ng) % f_zetaG(LBi:UBi,LBj:UBj,2) )
+#  ifdef SOLVE3D
+      allocate ( OCEAN(ng) % f_tG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
+      allocate ( OCEAN(ng) % f_uG(LBi:UBi,LBj:UBj,N(ng),2) )
+      allocate ( OCEAN(ng) % f_vG(LBi:UBi,LBj:UBj,N(ng),2) )
+#  else
+      allocate ( OCEAN(ng) % f_ubarG(LBi:UBi,LBj:UBj,2) )
+      allocate ( OCEAN(ng) % f_vbarG(LBi:UBi,LBj:UBj,2) )
+#  endif
 # endif
 #endif
 
@@ -947,6 +969,16 @@
             OCEAN(ng) % vbarG(i,j,2) = IniVal
             OCEAN(ng) % zetaG(i,j,1) = IniVal
             OCEAN(ng) % zetaG(i,j,2) = IniVal
+# ifdef W4DVAR
+            OCEAN(ng) % f_zetaG(i,j,1) = IniVal
+            OCEAN(ng) % f_zetaG(i,j,2) = IniVal
+#  ifndef SOLVE3D
+            OCEAN(ng) % f_ubarG(i,j,1) = IniVal
+            OCEAN(ng) % f_ubarG(i,j,2) = IniVal
+            OCEAN(ng) % f_vbarG(i,j,1) = IniVal
+            OCEAN(ng) % f_vbarG(i,j,2) = IniVal
+#  endif
+# endif
           END DO
 # ifdef SOLVE3D
           DO k=1,N(ng)
@@ -955,6 +987,12 @@
               OCEAN(ng) % uG(i,j,k,2) = IniVal
               OCEAN(ng) % vG(i,j,k,1) = IniVal
               OCEAN(ng) % vG(i,j,k,2) = IniVal
+#  ifdef W4DVAR
+              OCEAN(ng) % f_uG(i,j,k,1) = IniVal
+              OCEAN(ng) % f_uG(i,j,k,2) = IniVal
+              OCEAN(ng) % f_vG(i,j,k,1) = IniVal
+              OCEAN(ng) % f_vG(i,j,k,2) = IniVal
+#  endif
             END DO
           END DO
 #  ifdef FORWARD_RHS
@@ -972,6 +1010,10 @@
               DO i=Imin,Imax
                 OCEAN(ng) % tG(i,j,k,1,itrc) = IniVal
                 OCEAN(ng) % tG(i,j,k,2,itrc) = IniVal
+#  ifdef W4DVAR
+                OCEAN(ng) % f_tG(i,j,k,1,itrc) = IniVal
+                OCEAN(ng) % f_tG(i,j,k,2,itrc) = IniVal
+#  endif
               END DO
             END DO
           END DO

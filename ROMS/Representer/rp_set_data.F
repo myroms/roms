@@ -1508,6 +1508,65 @@
       END DO
 #   endif
 #  endif
+#  ifdef W4DVAR
+!  
+!-----------------------------------------------------------------------
+!  Set weak contraint frequent impulse forcing.
+!-----------------------------------------------------------------------
+!    
+      IF (FrequentImpulse) THEN
+!
+!  Set free-surface forcing.
+!  
+        CALL set_2dfld_tile (ng, tile, iRPM, idZtlf,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       OCEAN(ng)%f_zetaG,                         &
+     &                       OCEAN(ng)%f_zeta,                          &
+     &                       update)
+
+#   ifndef SOLVE3D
+!
+!  Set 2D momentum forcing.
+!
+        CALL set_2dfld_tile (ng, tile, iRPM, idUbtf,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       OCEAN(ng)%f_ubarG,                         &
+     &                       OCEAN(ng)%f_ubar,                          &
+     &                       update)
+        CALL set_2dfld_tile (ng, tile, iRPM, idVbtf,                    &
+     &                       LBi, UBi, LBj, UBj,                        &
+     &                       OCEAN(ng)%f_vbarG,                         &
+     &                       OCEAN(ng)%f_vbar,                          &
+     &                       update)
+#   endif
+
+#   ifdef SOLVE3D
+!
+!  Set 3D momentum forcing.
+!
+        CALL set_3dfld_tile (ng, tile, iRPM, idUtlf,                    &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       OCEAN(ng)%f_uG,                            &
+     &                       OCEAN(ng)%f_u,                             &
+     &                       update)
+        CALL set_3dfld_tile (ng, tile, iRPM, idVvel,                    &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng),              &
+     &                       OCEAN(ng)%f_vG,                            &
+     &                       OCEAN(ng)%f_v,                             &
+     &                       update)
+!
+!  Set 3D tracers forcing.
+!
+        DO itrc=1,NT(ng)
+          CALL set_3dfld_tile (ng, tile, iRPM, idTtlf(itrc),            &
+     &                         LBi, UBi, LBj, UBj, 1, N(ng),            &
+     &                         OCEAN(ng)%f_tG(:,:,:,:,itrc),            &
+     &                         OCEAN(ng)%f_t(:,:,:,itrc),               &
+     &                         update)
+        END DO
+#   endif
+      END IF
+#  endif
 # endif
 
       RETURN

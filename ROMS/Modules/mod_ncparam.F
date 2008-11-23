@@ -258,6 +258,7 @@
         integer  :: idUbms        ! bottom U-momentum stress
         integer  :: idUbot        ! bed wave orbital U-velocity
         integer  :: idUbrs        ! bottom U-current stress
+        integer  :: idUbtf        ! 2D U-velocity impulse forcing
         integer  :: idUbur        ! bottom U-velocity above bed
         integer  :: idUbws        ! bottom U-wave stress
         integer  :: idUclm        ! 3D U-velocity climatology
@@ -267,6 +268,7 @@
         integer  :: idUobs        ! 3D U-velocity observations
         integer  :: idUsms        ! surface U-momentum stress
         integer  :: idUsur        ! surface U-velocity observations
+        integer  :: idUtlf        ! 3D U-velocity impulse forcing
         integer  :: idUVer        ! 3D velocity error variance
         integer  :: idUVse        ! surface velocity error variance
         integer  :: idUvel        ! 3D U-velocity
@@ -288,6 +290,7 @@
         integer  :: idVbms        ! bottom V-momentum stress
         integer  :: idVbot        ! bed wave orbital V-velocity
         integer  :: idVbrs        ! bottom V-current stress
+        integer  :: idVbtf        ! 2D V-velocity impulse forcing
         integer  :: idVbvr        ! bottom V-velocity above bed
         integer  :: idVbws        ! bottom V-wave stress
         integer  :: idVclm        ! 3D V-velocity climatology
@@ -300,6 +303,7 @@
         integer  :: idVobs        ! 3D V-velocity observations
         integer  :: idVsms        ! surface V-momentum stress
         integer  :: idVsur        ! surface V-velocity observations
+        integer  :: idVtlf        ! 3D V-velocity impulse forcing
         integer  :: idVvel        ! 3D V-velocity
         integer  :: idVvis        ! vertical viscosity coefficient
         integer  :: idv2dD        ! detided 2D U-velocity
@@ -325,6 +329,7 @@
         integer  :: idWorb        ! wind-induced wave orbital velocity
         integer  :: idWvel        ! true vertical velocity
         integer  :: idZads        ! Free-surface adjoint sensitivity
+        integer  :: idZtlf        ! Free-surface impulse forcing
 
         integer, allocatable :: idRtrc(:)    ! river runoff for tracers
         integer, allocatable :: idTads(:)    ! tracers adjoint sentivity
@@ -334,6 +339,7 @@
         integer, allocatable :: idTerr(:)    ! tracers error variance
         integer, allocatable :: idTobs(:)    ! tracers observations
         integer, allocatable :: idTsur(:)    ! surface flux for tracers
+        integer, allocatable :: idTtlf(:)    ! tracers impulse forcing
 
         integer  :: idU2bc(4)      ! 2D U-velocity boundary conditions
         integer  :: idU3bc(4)      ! 3D U-velocity boundary conditions
@@ -588,6 +594,7 @@
         allocate ( idTerr(MT) )
         allocate ( idTobs(MT) )
         allocate ( idTsur(MT) )
+        allocate ( idTtlf(MT) )
         allocate ( idTvar(MT) )
         allocate ( isTvar(MT) )
         allocate ( isTsur(MT) )
@@ -1404,6 +1411,22 @@
                 idTads(itemp)=varid
               CASE ('idTads(isalt)')
                 idTads(isalt)=varid
+#endif
+#if defined WEAK_CONSTRAINT || defined IOM
+              CASE ('idZtlf')
+                idZtlf=varid
+              CASE ('idUbtf')
+                idUbtf=varid
+              CASE ('idVbtf')
+                idVbtf=varid
+              CASE ('idUtlf')
+                idUtlf=varid
+              CASE ('idVtlf')
+                idVtlf=varid
+              CASE ('idTtlf(itemp)')
+                idTtlf(itemp)=varid
+              CASE ('idTtlf(isalt)')
+                idTtlf(isalt)=varid
 #endif
               CASE ('idSSHo')
                 idSSHo=varid

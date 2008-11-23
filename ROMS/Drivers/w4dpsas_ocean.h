@@ -426,7 +426,8 @@
 !  Here, PSI is set to misfit between observations and model, H_n.
 !
           inner=0
-          CALL congrad (ng, outer, inner, Ninner, converged)
+          CALL congrad (ng, iTLM, outer, inner, Ninner, converged)
+          IF (exit_flag.ne.NoError) RETURN
 
           INNER_LOOP : DO my_inner=1,Ninner
             inner=my_inner
@@ -742,7 +743,8 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
             Nrun=Nrun+1
-            CALL congrad (ng, outer, inner, Ninner, converged)
+            CALL congrad (ng, iTLM, outer, inner, Ninner, converged)
+            IF (exit_flag.ne.NoError) RETURN
             IF (converged) EXIT INNER_LOOP
 
           END DO INNER_LOOP

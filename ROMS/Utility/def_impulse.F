@@ -340,49 +340,49 @@
 !
 !  Define free-surface impulse forcing.
 !
-        Vinfo( 1)=Vname(1,idFsur)
-        WRITE (Vinfo( 2),20) TRIM(Vname(2,idFsur))
-        Vinfo( 3)=Vname(3,idFsur)
-        Vinfo(14)=Vname(4,idFsur)
+        Vinfo( 1)=Vname(1,idZtlf)
+        Vinfo( 2)=Vname(2,idZtlf)
+        Vinfo( 3)=Vname(3,idZtlf)
+        Vinfo(14)=Vname(4,idZtlf)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_rho'
 # endif
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idFsur,ng),r8)
-        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idFsur,ng),        &
+        Aval(5)=REAL(Iinfo(1,idZtlf,ng),r8)
+        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idZtlf,ng),        &
      &                 NF_FOUT, nvd3, t2dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define 2D momentum impulse forcing in the XI-direction.
 !
-        Vinfo( 1)=Vname(1,idUbar)
-        WRITE (Vinfo( 2),20) TRIM(Vname(2,idUbar))
-        Vinfo( 3)=Vname(3,idUbar)
-        Vinfo(14)=Vname(4,idUbar)
+        Vinfo( 1)=Vname(1,idUbtf)
+        Vinfo( 2)=Vname(2,idUbtf)
+        Vinfo( 3)=Vname(3,idUbtf)
+        Vinfo(14)=Vname(4,idUbtf)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 # endif
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idUbar,ng),r8)
-        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idUbar,ng),        &
+        Aval(5)=REAL(Iinfo(1,idUbtf,ng),r8)
+        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idUbtf,ng),        &
      &                 NF_FOUT, nvd3, u2dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define 2D momentum impulse forcing in the ETA-direction.
 !
-        Vinfo( 1)=Vname(1,idVbar)
-        WRITE (Vinfo( 2),20) TRIM(Vname(2,idVbar))
-        Vinfo( 3)=Vname(3,idVbar)
-        Vinfo(14)=Vname(4,idVbar)
+        Vinfo( 1)=Vname(1,idVbtf)
+        Vinfo( 2)=Vname(2,idVbtf)
+        Vinfo( 3)=Vname(3,idVbtf)
+        Vinfo(14)=Vname(4,idVbtf)
         Vinfo(16)=Vname(1,idtime)
 # if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 # endif
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idVbar,ng),r8)
-        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idVbar,ng),        &
+        Aval(5)=REAL(Iinfo(1,idVbtf,ng),r8)
+        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idVbtf,ng),        &
      &                 NF_FOUT, nvd3, v2dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 
@@ -390,48 +390,48 @@
 !
 !  Define 3D momentum impulse forcing in the XI-direction.
 !
-        Vinfo( 1)=Vname(1,idUvel)
-        WRITE (Vinfo( 2),20) TRIM(Vname(2,idUvel))
-        Vinfo( 3)=Vname(3,idUvel)
-        Vinfo(14)=Vname(4,idUvel)
+        Vinfo( 1)=Vname(1,idUtlf)
+        Vinfo( 2)=Vname(2,idUtlf)
+        Vinfo( 3)=Vname(3,idUtlf)
+        Vinfo(14)=Vname(4,idUtlf)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_u'
 #  endif
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idUvel,ng),r8)
-        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idUvel,ng),        &
+        Aval(5)=REAL(Iinfo(1,idUtlf,ng),r8)
+        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idUtlf,ng),        &
      &                 NF_FOUT, nvd4, u3dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
-!  Define 3D momentum norm in the ETA-direction.
+!  Define 3D momentum impulse forcing in the ETA-direction.
 !
-        Vinfo( 1)=Vname(1,idVvel)
-        WRITE (Vinfo( 2),20) TRIM(Vname(2,idVvel))
-        Vinfo( 3)=Vname(3,idVvel)
-        Vinfo(14)=Vname(4,idVvel)
+        Vinfo( 1)=Vname(1,idVtlf)
+        Vinfo( 2)=Vname(2,idVtlf)
+        Vinfo( 3)=Vname(3,idVtlf)
+        Vinfo(14)=Vname(4,idVtlf)
         Vinfo(16)=Vname(1,idtime)
 #  if defined WRITE_WATER && defined MASKING
         Vinfo(20)='mask_v'
 #  endif
         Vinfo(22)='coordinates'
-        Aval(5)=REAL(Iinfo(1,idVvel,ng),r8)
-        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idVvel,ng),        &
+        Aval(5)=REAL(Iinfo(1,idVtlf,ng),r8)
+        status=def_var(ng, iTLM, ncTLFid(ng), tlfVid(idVtlf,ng),        &
      &                 NF_FOUT, nvd4, v3dgrd, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 !
 !  Define tracer type impulse forcing variables.
 !
         DO itrc=1,NT(ng)
-          Vinfo( 1)=Vname(1,idTvar(itrc))
-          WRITE (Vinfo( 2),20) TRIM(Vname(2,idTvar(itrc)))
-          Vinfo( 3)=Vname(3,idTvar(itrc))
-          Vinfo(14)=Vname(4,idTvar(itrc))
+          Vinfo( 1)=Vname(1,idTtlf(itrc))
+          Vinfo( 2)=Vname(2,idTtlf(itrc))
+          Vinfo( 3)=Vname(3,idTtlf(itrc))
+          Vinfo(14)=Vname(4,idTtlf(itrc))
           Vinfo(16)=Vname(1,idtime)
 #  ifdef SEDIMENT
             DO i=1,NST
               IF (itrc.eq.idsed(i)) THEN
-                WRITE (Vinfo(19),30) 1000.0_r8*Sd50(i,ng)
+                WRITE (Vinfo(19),20) 1000.0_r8*Sd50(i,ng)
               END IF
             END DO
 #  endif
@@ -453,7 +453,7 @@
         IF (OutThread) THEN
           status=nf90_enddef(ncTLFid(ng))
           IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,40) TRIM(ncname)
+            WRITE (stdout,30) TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
@@ -496,7 +496,7 @@
         IF (OutThread) THEN
           status=nf90_open(TRIM(ncname), nf90_write, ncTLFid(ng))
           IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,50) TRIM(ncname)
+            WRITE (stdout,40) TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
@@ -522,28 +522,28 @@
           IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idtime))) THEN
             got_var(idtime)=.TRUE.
             tlfVid(idtime,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idFsur))) THEN
-            got_var(idFsur)=.TRUE.
-            tlfVid(idFsur,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbar))) THEN
-            got_var(idUbar)=.TRUE.
-            tlfVid(idUbar,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbar))) THEN
-            got_var(idVbar)=.TRUE.
-            tlfVid(idVbar,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idZtlf))) THEN
+            got_var(idZtlf)=.TRUE.
+            tlfVid(idZtlf,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUbtf))) THEN
+            got_var(idUbtf)=.TRUE.
+            tlfVid(idUbtf,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVbtf))) THEN
+            got_var(idVbtf)=.TRUE.
+            tlfVid(idVbtf,ng)=var_id(i)
 # ifdef SOLVE3D
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUvel))) THEN
-            got_var(idUvel)=.TRUE.
-            tlfVid(idUvel,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVvel))) THEN
-            got_var(idVvel)=.TRUE.
-            tlfVid(idVvel,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idUtlf))) THEN
+            got_var(idUtlf)=.TRUE.
+            tlfVid(idUtlf,ng)=var_id(i)
+          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idVtlf))) THEN
+            got_var(idVtlf)=.TRUE.
+            tlfVid(idVtlf,ng)=var_id(i)
 # endif
           END IF
 # ifdef SOLVE3D
           DO itrc=1,NT(ng)
-            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTvar(itrc)))) THEN
-             got_var(idTvar(itrc))=.TRUE.
+            IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idTtlf(itrc)))) THEN
+             got_var(idTtlf(itrc))=.TRUE.
              tlfTid(itrc,ng)=var_id(i)
             END IF
           END DO
@@ -554,38 +554,38 @@
 !  file.
 !
         IF (.not.got_var(idtime)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idtime)),          &
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idtime)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idFsur)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idFsur)),          &
+        IF (.not.got_var(idZtlf)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idZtlf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idUbar)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUbar)),          &
+        IF (.not.got_var(idUbtf)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUbtf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idVbar)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVbar)),          &
+        IF (.not.got_var(idVbtf)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVbtf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
 # ifdef SOLVE3D
-        IF (.not.got_var(idUvel)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idUvel)),          &
+        IF (.not.got_var(idUtlf)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idUtlf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
         END IF
-        IF (.not.got_var(idVvel)) THEN
-          IF (Master) WRITE (stdout,60) TRIM(Vname(1,idVvel)),          &
+        IF (.not.got_var(idVtlf)) THEN
+          IF (Master) WRITE (stdout,50) TRIM(Vname(1,idVtlf)),          &
      &                                  TRIM(ncname)
           exit_flag=3
           RETURN
@@ -593,8 +593,8 @@
 # endif
 # ifdef SOLVE3D
         DO itrc=1,NT(ng)
-          IF (.not.got_var(idTvar(itrc))) THEN
-            IF (Master) WRITE (stdout,60) TRIM(Vname(1,idTvar(itrc))),  &
+          IF (.not.got_var(idTtlf(itrc))) THEN
+            IF (Master) WRITE (stdout,50) TRIM(Vname(1,idTtlf(itrc))),  &
      &                                   TRIM(ncname)
             exit_flag=3
             RETURN
@@ -609,12 +609,11 @@
 !
   10  FORMAT (/,' DEF_IMPULSE - unable to create impulse forcing',      &
      &          ' NetCDF file: ',a)
-  20  FORMAT (a,', impulse forcing')
-  30  FORMAT (1pe11.4,1x,'millimeter')
-  40  FORMAT (/,' DEF_IMPULSE - unable to leave definition mode for',   &
+  20  FORMAT (1pe11.4,1x,'millimeter')
+  30  FORMAT (/,' DEF_IMPULSE - unable to leave definition mode for',   &
      &        ' file: ', a)
-  50  FORMAT (/,' DEF_IMPULSE - unable to open norm NetCDF file: ',a)
-  60  FORMAT (/,' DEF_IMPULSE - unable to find variable: ',a,2x,        &
+  40  FORMAT (/,' DEF_IMPULSE - unable to open norm NetCDF file: ',a)
+  50  FORMAT (/,' DEF_IMPULSE - unable to find variable: ',a,2x,        &
      &        ' in impulse forcing NetCDF file: ',a)
 
       RETURN

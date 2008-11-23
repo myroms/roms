@@ -151,6 +151,8 @@
         IF (Master) WRITE (stdout,110)
       ELSE IF (exit_flag.eq.7) THEN
         IF (Master) WRITE (stdout,120)
+      ELSE IF (exit_flag.eq.8) THEN
+        IF (Master) WRITE (stdout,130)
       END IF
 !
  10   FORMAT (/,' ROMS/TOMS - Output NetCDF summary for Grid ',         &
@@ -170,6 +172,7 @@
 100   FORMAT (/,' ERROR: CHECKDEFS - Illegal model configuration.')
 110   FORMAT (/,' ERROR: PARAM - Illegal domain partition.')
 120   FORMAT (/,' ERROR: INP_PAR - Illegal input parameter.')
+130   FORMAT (/,' ERROR: Fatal algorithm result.')
 
       RETURN
       END SUBROUTINE close_io

@@ -450,6 +450,8 @@
 !    exit_flag = 4   IO error
 !    exit_flag = 5   Configuration error
 !    exit_flag = 6   Partition error
+!    exit_flag = 7   Illegal input parameter
+!    exit_flag = 8   Fatal algorithm result
 !     
         integer :: exit_flag = 0
         integer :: blowup = 0

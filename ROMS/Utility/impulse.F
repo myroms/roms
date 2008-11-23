@@ -102,19 +102,15 @@
 !
 !  Local variable declarations.
 !
-      logical, dimension(NV) :: get_var
-      logical, dimension(NV) :: have_var
-
       integer :: LBi, UBi, LBj, UBj
       integer :: INPncid, INPvid
       integer :: Nrec, Nsave, gtype, status, varid
       integer :: i
       integer :: save(1), start(4), total(4)
 
-      real(r8) :: inp_time(1)
+      integer :: find_string
 
-      character (len=6 ) :: string
-      character (len=15) :: tvarnam
+      real(r8) :: inp_time(1)
 
 # include "set_bounds.h"
 !
@@ -127,14 +123,16 @@
 !  Determine variables to read and their availability.
 !-----------------------------------------------------------------------
 !
-!  Set model identification string.
+!  Inquire about the dimensions and check for consistency.
 !
-      string=' FRC: '
+      CALL netcdf_check_dim (ng, model, INPncname)
+      IF (exit_flag.ne.NoError) RETURN
+      Nrec=rec_size
 !
-!  Determine variables to read.
+!  Inquire about the variables.
 !
-      CALL checkvars (ng, model, INPncname, string, Nrec, NV, tvarnam,  &
-     &                get_var, have_var)
+      CALL netcdf_inq_var (ng, model, INPncname)
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Read adjoint solution and convert to impulse forcing.  Then, write
@@ -146,145 +144,144 @@
       IF (InpThread) THEN
         status=nf90_open(TRIM(INPncname), nf90_nowrite, INPncid)
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) string, TRIM(INPncname)
+          WRITE (stdout,10) TRIM(INPncname)
           exit_flag=2
           ioerror=status
-          RETURN
         END IF
       END IF
+# ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, INPncid, 1)
+      CALL mp_bcasti (ng, model, exit_flag, 1)
+# endif
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Read in input file time-step size and number of time-steps between
 !  snapshots.
 !
-      IF (InpThread) THEN
-        status=nf90_inq_varid(INPncid, 'nADJ', varid)
-        start(1)=ng
-        total(1)=1
-        status=nf90_get_var(INPncid, varid, save, start, total)       
-        Nsave=save(1)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20) 'nADJ', TRIM(INPncname)
-          exit_flag=2
-          ioerror=status
-          RETURN
-        END IF
-      END IF
-# ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, model, Nsave, 1)
-# endif
+      CALL netcdf_get_ivar (ng, model, INPncname, 'nADJ', Nsave,        &
+     &                      ncid = INPncid)
+      IF (exit_flag.ne. NoError) RETURN
 !
 !  Process free-surface impulse.
 !
-      IF (get_var(idFsur)) THEN
-        IF (InpThread) THEN
-          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idFsur)), INPvid)
-          gtype=vflag(varid)*r2dvar
-        END IF
+      IF (find_string(var_name, n_var, Vname(1,idZtlf), INPvid)) THEN
+        gtype=var_flag(INPvid)*r2dvar
         CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
-     &                  INPncname, INPncid, INPvid,                     &
-     &                  TLFname(ng), ncTLFid(ng), tlfVid(idFsur,ng),    &
+     &                  Vname(1,idZtlf), INPncname,                     &
+     &                  INPncid, INPvid,                                &
+     &                  TLFname(ng), ncTLFid(ng), tlfVid(idZtlf,ng),    &
      &                  IstrR, IendR, JstrR, JendR,                     &
      &                  LBi, UBi, LBj, UBj,                             &
 # ifdef MASKING
      &                  GRID(ng) % rmask,                               &
 # endif
      &                  OCEAN(ng) % ad_zeta)
-        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idZtlf)),            &
+     &                                TRIM(INPncname)
+        exit_flag=2
       END IF
 
 # ifndef SOLVE3D
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Process 2D U-momentum component impulse.
 !
-      IF (get_var(idUbar)) THEN
-        IF (InpThread) THEN
-          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idUbar)), INPvid)
-          gtype=vflag(INPvid)*u2dvar
-        END IF
+      IF (find_string(var_name, n_var, Vname(1,idUbtf), INPvid)) THEN
+        gtype=var_flag(INPvid)*u2dvar
         CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
-     &                  INPncname, INPncid, INPvid,                     &
-     &                  TLFname(ng), ncTLFid(ng), tlfVid(idUbar,ng),    &
+     &                  Vname(1,idUbtf), INPncname,                     &
+     &                  INPncid, INPvid,                                &
+     &                  TLFname(ng), ncTLFid(ng), tlfVid(idUbtf,ng),    &
      &                  Istr, IendR, JstrR, JendR,                      &
      &                  LBi, UBi, LBj, UBj,                             &
 #  ifdef MASKING
      &                  GRID(ng) % umask,                               &
 #  endif
      &                  OCEAN(ng) % ad_ubar)
-        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idUbtf)),            &
+     &                                TRIM(INPncname)
+        exit_flag=2
       END IF
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Process 2D V-momentum component impulse.
 !
-      IF (get_var(idVbar)) THEN
-        IF (InpThread) THEN
-          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idVbar)), INPvid)
-          gtype=vflag(varid)*v2dvar
-        END IF
+      IF (find_string(var_name, n_var, Vname(1,idVbtf), INPvid)) THEN
+        gtype=var_flag(INPvid)*v2dvar
         CALL impulse2d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
-     &                  INPncname, INPncid, INPvid,                     &
-     &                  TLFname(ng), ncTLFid(ng), tlfVid(idVbar,ng),    &
+     &                  Vname(1,idVbtf), INPncname,                     &
+     &                  INPncid, INPvid,                                &
+     &                  TLFname(ng), ncTLFid(ng), tlfVid(idVbtf,ng),    &
      &                  IstrR, IendR, Jstr, JendR,                      &
      &                  LBi, UBi, LBj, UBj,                             &
 #  ifdef MASKING
      &                  GRID(ng) % vmask,                               &
 #  endif
      &                  OCEAN(ng) % ad_vbar)
-        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idUbtf)),            &
+     &                                TRIM(INPncname)
+        exit_flag=2
       END IF
-
-# else
+      IF (exit_flag.ne.NoError) RETURN
+# endif
+# ifdef SOLVE3D
 !
 !  Process 3D U-momentum component impulse. Notice that "ad_t" is used
 !  here as a temporary array since it has three-time levels.
 !
-      IF (get_var(idUvel)) THEN
-        IF (InpThread) THEN
-          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idUvel)), INPvid)
-          gtype=vflag(varid)*u3dvar
-        END IF
+      IF (find_string(var_name, n_var, Vname(1,idUtlf), INPvid)) THEN
+        gtype=var_flag(INPvid)*u3dvar
         CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
-     &                  INPncname, INPncid, INPvid,                     &
-     &                  TLFname(ng), ncTLFid(ng), tlfVid(idUvel,ng),    &
+     &                  Vname(1,idUtlf), INPncname,                     &
+     &                  INPncid, INPvid,                                &
+     &                  TLFname(ng), ncTLFid(ng), tlfVid(idUtlf,ng),    &
      &                  Istr, IendR, JstrR, JendR,                      &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
 #  ifdef MASKING
      &                  GRID(ng) % umask,                               &
 #  endif
      &                  OCEAN(ng) % ad_t(:,:,:,:,1))
-        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idUtlf)),            &
+     &                                TRIM(INPncname)
+        exit_flag=2
       END IF
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Process 3D V-momentum component impulse. Notice that "ad_t" is used
 !  here as a temporary array since it has three-time levels.
 !
-      IF (get_var(idVvel)) THEN
-        IF (InpThread) THEN
-          status=nf90_inq_varid(INPncid, TRIM(Vname(1,idVvel)), INPvid)
-          gtype=vflag(varid)*v3dvar
-        END IF
+      IF (find_string(var_name, n_var, Vname(1,idVtlf), INPvid)) THEN
+        gtype=var_flag(INPvid)*v3dvar
         CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave,   &
-     &                  INPncname, INPncid, INPvid,                     &
-     &                  TLFname(ng), ncTLFid(ng), tlfVid(idVvel,ng),    &
+     &                  Vname(1,idVtlf), INPncname,                     &
+     &                  INPncid, INPvid,                                &
+     &                  TLFname(ng), ncTLFid(ng), tlfVid(idVtlf,ng),    &
      &                  IstrR, IendR, Jstr, JendR,                      &
      &                  LBi, UBi, LBj, UBj, 1, N(ng),                   &
 #  ifdef MASKING
      &                  GRID(ng) % vmask,                               &
 #  endif
      &                  OCEAN(ng) % ad_t(:,:,:,:,1))
-        IF (exit_flag.ne.NoError) RETURN
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idVtlf)),            &
+     &                                TRIM(INPncname)
+        exit_flag=2
       END IF
+      IF (exit_flag.ne.NoError) RETURN
 !
 !  Process tracer type variables impulses.
 !
       DO i=1,NT(ng)
-        IF (get_var(idTvar(i))) THEN
-          IF (InpThread) THEN
-            status=nf90_inq_varid(INPncid, TRIM(Vname(1,idTvar(i))),    &
-     &                            INPvid)
-            gtype=vflag(varid)*r3dvar
-          END IF
+        IF (find_string(var_name, n_var, Vname(1,idTtlf(i)),            &
+     &                  INPvid)) THEN
+          gtype=var_flag(INPvid)*r3dvar
           CALL impulse3d (ng, model, gtype, outer_impulse, Nrec, Nsave, &
-     &                    INPncname, INPncid, INPvid,                   &
+     &                    Vname(1,idTtlf(i)), INPncname,                &
+     &                    INPncid, INPvid,                              &
      &                    TLFname(ng), ncTLFid(ng), tlfTid(i,ng),       &
      &                    IstrR, IendR, JstrR, JendR,                   &
      &                    LBi, UBi, LBj, UBj, 1, N(ng),                 &
@@ -292,31 +289,34 @@
      &                    GRID(ng) % rmask,                             &
 #  endif
      &                    OCEAN(ng) % ad_t(:,:,:,:,i))
-          IF (exit_flag.ne.NoError) RETURN
+        ELSE
+          IF (Master) WRITE (stdout,20) TRIM(Vname(1,idTtlf(i))),       &
+     &                                  TRIM(INPncname)
+          exit_flag=2
         END IF
+        IF (exit_flag.ne.NoError) RETURN
       END DO
 # endif
 !
 !  Write out time in backward order.
 !
-      IF (InpThread) THEN
-        status=nf90_inq_varid(INPncid, TRIM(Vname(1,idtime)), INPvid)
+      IF (find_string(var_name, n_var, Vname(1,idtime), INPvid)) THEN
         DO i=1,Nrec        
-          start(1)=i
-          total(1)=1
-          status=nf90_get_var(INPncid,INPvid, inp_time, start, total)
-          start(1)=Nrec-i+1
-          total(1)=1
-          status=nf90_put_var(ncTLFid(ng), tlfVid(idtime,ng),           &
-     &                        inp_time, start, total)
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,30) TRIM(Vname(1,idtime)), Nrec-i+1,          &
-     &                        TRIM(TLFname(ng))
-            exit_flag=3
-            ioerror=status
-            RETURN
-          END IF
+          CALL netcdf_get_fvar (ng, model, INPncname, Vname(1,idtime),  &
+     &                          inp_time,                               &
+     &                          ncid = INPncid,                         &
+     &                          start = (/i/), total = (/1/))
+          IF (exit_flag.ne.NoError) RETURN
+          CALL netcdf_put_fvar (ng, model, TLFname(ng), Vname(1,idtime),&
+     &                          inp_time,                               &
+     &                          (/Nrec-i+1/), (/1/),                    &
+     &                          ncid = ncTLFid(ng))
+          IF (exit_flag.ne.NoError) RETURN
         END DO
+      ELSE
+        IF (Master) WRITE (stdout,20) TRIM(Vname(1,idtime)),            &
+     &                                TRIM(INPncname)
+        exit_flag=2
       END IF
 !
 !-----------------------------------------------------------------------
@@ -324,25 +324,25 @@
 !  to access data immediately after it is written.
 !-----------------------------------------------------------------------
 !
-      IF (InpThread) THEN
+      IF (OutThread) THEN
         status=nf90_sync(ncTLFid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,40)
+          WRITE (stdout,30)
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
-        WRITE (stdout,50) Nrec, TRIM(TLFname(ng))
       END IF
-
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag, 1)
+#endif
+      IF (Master)  WRITE (stdout,40) Nrec, TRIM(TLFname(ng))
+!
   10  FORMAT (/,' IMPULSE - unable to open input NetCDF file: ',a)
-  20  FORMAT (/,' IMPULSE - error while reading variable: ',a,          &
+  20  FORMAT (/,' IMPULSE - cannot find state variable: ',a,            &
      &        /,12x,'in input NetCDF file: ',a)
-  30  FORMAT (/,' IMPULSE - error while writing variable: ',a,2x,       &
-     &        'at time record = ',i3,/,12x,'into NetCDF file: ',a)
-  40  FORMAT (/,' IMPULSE - unable to synchronize impulse NetCDF to ',  &
+  30  FORMAT (/,' IMPULSE - unable to synchronize impulse NetCDF to ',  &
      &        'disk.')
-  50  FORMAT (6x,'IMPULSE   - wrote convolved adjoint impulses, ',      &
+  40  FORMAT (6x,'IMPULSE   - wrote convolved adjoint impulses, ',      &
      &           'records: 001 to ',i3.3,/,18x,'file: ',a)
       
       RETURN
@@ -350,6 +350,7 @@
 
       SUBROUTINE impulse2d (ng, model, gtype, outer_impulse,            &
      &                      Nrec, Nsave,                                &
+     &                      ncvname,                                    &
      &                      INPncname, INPncid, INPvid,                 &
      &                      OUTncname, OUTncid, OUTvid,                 &
      &                      Imin, Imax, Jmin, Jmax,                     &
@@ -386,6 +387,7 @@
       integer, intent(in) :: Imin, Imax, Jmin, Jmax
       integer, intent(in) :: LBi, UBi, LBj, UBj
 
+      character(len=*), intent(in) :: ncvname
       character(len=*), intent(in) :: INPncname
       character(len=*), intent(in) :: OUTncname
 !
@@ -411,8 +413,6 @@
       real(r8) :: C1, C2, C3, Fmin, Fmax, cff, scale
 
       real(r8), dimension(LBi:UBi,LBj:UBj) :: Awrk
-
-      character(len=40) :: ncvname
 !
 !-----------------------------------------------------------------------
 !  Initialize time level indices and impulse focing coefficients.
@@ -461,7 +461,6 @@
      &                  ad_A(:,:,Inow))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf90_inquire_variable(INPncid, INPvid, ncvname)
           WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
         END IF
         exit_flag=2
@@ -481,7 +480,6 @@
      &                    ad_A(:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -512,7 +510,6 @@
      &                   Awrk)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
           WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
         END IF
         exit_flag=3
@@ -541,7 +538,6 @@
      &                    ad_A(:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -571,7 +567,6 @@
      &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
             WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3
@@ -610,8 +605,7 @@
      &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
-              WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
+            WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3
           ioerror=status
@@ -630,6 +624,7 @@
 # ifdef SOLVE3D
       SUBROUTINE impulse3d (ng, model, gtype, outer_impulse,            &
      &                      Nrec, Nsave,                                &
+     &                      ncvname,                                    &
      &                      INPncname, INPncid, INPvid,                 &
      &                      OUTncname, OUTncid, OUTvid,                 &
      &                      Imin, Imax, Jmin, Jmax,                     &
@@ -666,6 +661,7 @@
       integer, intent(in) :: Imin, Imax, Jmin, Jmax
       integer, intent(in) :: LBi, UBi, LBj, UBj, LBk, UBk
 
+      character(len=*), intent(in) :: ncvname
       character(len=*), intent(in) :: INPncname
       character(len=*), intent(in) :: OUTncname
 !
@@ -691,8 +687,6 @@
       real(r8) :: C1, C2, C3, Fmin, Fmax, cff, scale
 
       real(r8), dimension(LBi:UBi,LBj:UBj,LBk:UBk) :: Awrk
-
-      character(len=40) :: ncvname
 !
 !-----------------------------------------------------------------------
 !  Initialize time level indices and impulse focing coefficients.
@@ -741,7 +735,6 @@
      &                  ad_A(:,:,:,Inow))
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf90_inquire_variable(INPncid, INPvid, ncvname)
           WRITE (stdout,10) TRIM(ncvname), Irec, TRIM(INPncname)
         END IF
         exit_flag=2
@@ -761,7 +754,6 @@
      &                    ad_A(:,:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec+1, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -794,7 +786,6 @@
      &                   Awrk)
       IF (status.ne.nf90_noerr) THEN
         IF (Master) THEN
-          status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
           WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
         END IF
         exit_flag=3
@@ -823,7 +814,6 @@
      &                    ad_A(:,:,:,Inxt))
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(INPncid, INPvid, ncvname)
             WRITE (stdout,10) TRIM(ncvname), Irec+1, TRIM(INPncname)
           END IF
           exit_flag=2
@@ -855,7 +845,6 @@
      &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
             WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3
@@ -895,7 +884,6 @@
      &                     Awrk)
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
-            status=nf90_inquire_variable(OUTncid, OUTvid, ncvname)
             WRITE (stdout,20) TRIM(ncvname), Irec, TRIM(OUTncname)
           END IF
           exit_flag=3
