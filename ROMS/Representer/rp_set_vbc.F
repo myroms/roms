@@ -389,7 +389,7 @@
      &                        tl_btflx(i,j,isalt)*                      &
      &                        t(i,j,1,nrhs,isalt)-                      &
 #  ifdef TL_IOMS
-     &                        btflx(i,j,isalt)
+     &                        btflx(i,j,isalt)*t(i,j,1,nrhs,isalt)
 #  endif
         END DO
       END DO

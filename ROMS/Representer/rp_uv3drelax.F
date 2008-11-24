@@ -162,7 +162,7 @@
               UFx(i,j)=tl_M3diff(ng)*pmon_r(i,j)*                       &
      &                 Hz(i,j,k)*                                       &
      &                 (tl_u(i+1,j,k,nrhs)-u(i+1,j,k,nrhs)-             &
-     &                  tl_u(i  ,j,k,nrhs)-u(i  ,j,k,nrhs))
+     &                  tl_u(i  ,j,k,nrhs)+u(i  ,j,k,nrhs))
             END DO
           END DO
           DO j=Jstr,Jend+1
@@ -171,7 +171,7 @@
      &                 0.25_r8*(Hz(i,j  ,k)+Hz(i-1,j  ,k)+              &
      &                          Hz(i,j-1,k)+Hz(i-1,j-1,k))*             &
      &                 (tl_u(i,j  ,k,nrhs)-u(i,j  ,k,nrhs)-             &
-     &                  tl_u(i,j-1,k,nrhs)-u(i,j-1,k,nrhs))
+     &                  tl_u(i,j-1,k,nrhs)+u(i,j-1,k,nrhs))
 # ifdef MASKING
               UFe(i,j)=UFe(i,j)*pmask(i,j)
 # endif
@@ -183,7 +183,7 @@
      &                 0.25_r8*(Hz(i,j  ,k)+Hz(i-1,j  ,k)+              &
      &                          Hz(i,j-1,k)+Hz(i-1,j-1,k))*             &
      &                 (tl_v(i  ,j,k,nrhs)-v(i  ,j,k,nrhs)-             &
-     &                  tl_v(i-1,j,k,nrhs)-v(i-1,j,k,nrhs))
+     &                  tl_v(i-1,j,k,nrhs)+v(i-1,j,k,nrhs))
 # ifdef MASKING
               VFx(i,j)=VFx(i,j)*pmask(i,j)
 # endif
@@ -194,7 +194,7 @@
               VFe(i,j)=tl_M3diff(ng)*pnom_r(i,j)*                       &
      &                 Hz(i,j,k)*                                       &
      &                 (tl_v(i,j+1,k,nrhs)-v(i,j+1,k,nrhs)-             &
-     &                  tl_v(i,j  ,k,nrhs)-v(i,j  ,k,nrhs))
+     &                  tl_v(i,j  ,k,nrhs)+v(i,j  ,k,nrhs))
             END DO
           END DO
 !

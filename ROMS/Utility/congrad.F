@@ -1,7 +1,8 @@
 #include "cppdefs.h"
 
 #if defined W4DVAR || defined W4DPSAS
-      SUBROUTINE congrad (ng, model, outer, inner, Ninner, converged)
+      SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop,        &
+     &                    converged)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -74,15 +75,15 @@
 !
 !  Imported variable declarations
 !
-      integer, intent(in) :: ng, model, outer, inner, Ninner
+      integer, intent(in) :: ng, model, outLoop, innLoop, NinnLoop
       logical, intent(out) :: converged
 !
 !  Local variable declarations.
 !
       integer :: iobs, ivec
-      real(r8), dimension(Ninner) :: zu, zgam
+      real(r8), dimension(NinnLoop) :: zu, zgam
       real(r8), dimension(Ndatum(ng)) :: px, pgrad, zw
-      real(r8), dimension(Ninner,3) :: zwork
+      real(r8), dimension(NinnLoop,3) :: zwork
       real(r8) :: dla, zbet, eps, preduc
       real(r8) :: Jopt, Jf, Jmod, Jdata
 !
@@ -107,7 +108,7 @@
         Jmod=0.0_r8
         preduc=0.0_r8
 
-        IF (inner.eq.0) THEN
+        IF (innLoop.eq.0) THEN
 !
 !  If this is the first pass of the inner loop, set up the vectors and
 !  store the first guess. The initial starting guess is assumed to be
@@ -140,17 +141,19 @@
 !  After the initialization, for every other inner loop, calculate a
 !  new Lanczos vector, store it in the matrix, and update search.
 !
-          zdelta(inner)=0.0_r8
+          zdelta(innLoop)=0.0_r8
           DO iobs=1,Ndatum(ng)
             pgrad(iobs)=ObsScale(iobs)*                                 &
-     &                 (TLmodVal(iobs)+ObsErr(iobs)*zcglwk(iobs,inner))
-            zdelta(inner)=zdelta(inner)+zcglwk(iobs,inner)*pgrad(iobs)
+     &                 (TLmodVal(iobs)+                                 &
+     &                  ObsErr(iobs)*zcglwk(iobs,innLoop))
+            zdelta(innLoop)=zdelta(innLoop)+                            &
+     &                      zcglwk(iobs,innLoop)*pgrad(iobs)
           END DO
 !
 !  Exit, if not a positive definity algorithm.
 !
-          IF (zdelta(inner).le.0.0_r8) THEN
-            WRITE (stdout,20) zdelta(inner), outer, inner
+          IF (zdelta(innLoop).le.0.0_r8) THEN
+            WRITE (stdout,20) zdelta(innLoop), outLoop, innLoop
             exit_flag=7
             GO TO 10
           END IF
@@ -158,17 +161,19 @@
 !  Compute the new Lanczos vector.
 !
           DO iobs=1,Ndatum(ng)
-            pgrad(iobs)=pgrad(iobs)-zdelta(inner)*zcglwk(iobs,inner)
+            pgrad(iobs)=pgrad(iobs)-                                    &
+     &                  zdelta(innLoop)*zcglwk(iobs,innLoop)
           END DO
-          IF (inner.gt.1) THEN
+          IF (innLoop.gt.1) THEN
             DO iobs=1,Ndatum(ng)
-              pgrad(iobs)=pgrad(iobs)-zbeta(inner)*zcglwk(iobs,inner-1)
+              pgrad(iobs)=pgrad(iobs)-                                  &
+     &                    zbeta(innLoop)*zcglwk(iobs,innLoop-1)
             END DO
           END IF
 !
 !  Orthonormalize against previous Lanczos vectors.
 !
-          DO ivec=inner,1,-1
+          DO ivec=innLoop,1,-1
             dla=0.0_r8
             DO iobs=1,Ndatum(ng)
               dla=dla+pgrad(iobs)*zcglwk(iobs,ivec)
@@ -178,20 +183,20 @@
             END DO
           END DO
 !
-          zbeta(inner+1)=0.0_r8
+          zbeta(innLoop+1)=0.0_r8
           DO iobs=1,Ndatum(ng)
-            zbeta(inner+1)=zbeta(inner+1)+pgrad(iobs)*pgrad(iobs)
+            zbeta(innLoop+1)=zbeta(innLoop+1)+pgrad(iobs)*pgrad(iobs)
           END DO
-          zbeta(inner+1)=SQRT(zbeta(inner+1))
+          zbeta(innLoop+1)=SQRT(zbeta(innLoop+1))
 !
           DO iobs=1,Ndatum(ng)
-            zcglwk(iobs,inner+1)=pgrad(iobs)/zbeta(inner+1)
+            zcglwk(iobs,innLoop+1)=pgrad(iobs)/zbeta(innLoop+1)
           END DO
 !
-          zqg0(inner+1)=0.0_r8
+          zqg0(innLoop+1)=0.0_r8
           DO iobs=1,Ndatum(ng)
-            zqg0(inner+1)=zqg0(inner+1)+                                &
-     &                    zcglwk(iobs,inner+1)*zgrad0(iobs)
+            zqg0(innLoop+1)=zqg0(innLoop+1)+                            &
+     &                      zcglwk(iobs,innLoop+1)*zgrad0(iobs)
           END DO
 !
 !  Calculate the new solution based upon the new, orthonormalized
@@ -200,26 +205,27 @@
 !
           zbet=zdelta(1)
           zu(1)=-zqg0(1)/zbet
-          DO ivec=2,inner
+          DO ivec=2,innLoop
             zgam(ivec)=zbeta(ivec)/zbet
             zbet=zdelta(ivec)-zbeta(ivec)*zgam(ivec)
             zu(ivec)=(-zqg0(ivec)-zbeta(ivec)*zu(ivec-1))/zbet
           END DO
-          zwork(inner,3)=zu(inner)
+          zwork(innLoop,3)=zu(innLoop)
 
-          DO ivec=inner-1,1,-1
+          DO ivec=innLoop-1,1,-1
             zu(ivec)=zu(ivec)-zgam(ivec+1)*zu(ivec+1)
             zwork(ivec,3)=zu(ivec)
           END DO
 
           DO iobs=1,Ndatum(ng)
             zw(iobs)=zgrad0(iobs)+                                      &
-     &               zbeta(inner+1)*zcglwk(iobs,inner+1)*zwork(inner,3)
+     &               zbeta(innLoop+1)*zcglwk(iobs,innLoop+1)*           &
+     &               zwork(innLoop,3)
           END DO
 
           DO iobs=1,Ndatum(ng)
             px(iobs)=0.0
-            DO ivec=1,inner
+            DO ivec=1,innLoop
               px(iobs)=px(iobs)+zcglwk(iobs,ivec)*zwork(ivec,3)
               zw(iobs)=zw(iobs)-zcglwk(iobs,ivec)*zqg0(ivec)
             END DO
@@ -235,7 +241,7 @@
 !
 !  Estimate the residual by: ||Ax-b|| = zbeta(k+1)
 !
-          eps=ABS(zbeta(inner+1))
+          eps=ABS(zbeta(innLoop+1))
 !
 !  Estimate the various penalty function components based on
 !  Bennett (2002), page 22 and pages 42-44:
@@ -273,7 +279,7 @@
 !  then we set converged to TRUE so that the inner loop stops. 
 !
           converged=.FALSE.
-          IF (preduc.le.CGeps.or.inner.eq.Ndatum(ng)) THEN
+          IF ((preduc.le.CGeps).or.(innLoop.eq.Ndatum(ng))) THEN
             converged=.TRUE.
           END IF
 !
@@ -281,13 +287,13 @@
 !  Put the final solution into the adjoint vector when converged
 !  of on the final inner-loop.
 !
-          IF ((inner.eq.Ninner).or.converged) THEN
+          IF ((innLoop.eq.NinnLoop).or.converged) THEN
             DO iobs=1,Ndatum(ng)
               ADmodVal(iobs)=px(iobs)
             END DO
           ELSE
             DO iobs=1,Ndatum(ng)
-              ADmodVal(iobs)=zcglwk(iobs,inner+1)
+              ADmodVal(iobs)=zcglwk(iobs,innLoop+1)
             END DO
           END IF
         END IF
@@ -295,18 +301,18 @@
 !  Report minimization progress.
 !
         WRITE (stdout,30) Ndatum(ng), converged,                         &
-     &                    outer, inner, eps,                             &
-     &                    outer, inner, preduc,                          &
-     &                    outer, inner, Jf,                              &
-     &                    outer, inner, Jdata,                           &
-     &                    outer, inner, Jmod,                            &
-     &                    outer, inner, Jopt,                            &
-     &                    outer, inner
-        DO ivec=1,inner
+     &                    outLoop, innLoop, eps,                         &
+     &                    outLoop, innLoop, preduc,                      &
+     &                    outLoop, innLoop, Jf,                          &
+     &                    outLoop, innLoop, Jdata,                       &
+     &                    outLoop, innLoop, Jmod,                        &
+     &                    outLoop, innLoop, Jopt,                        &
+     &                    outLoop, innLoop
+        DO ivec=1,innLoop
           WRITE (stdout,40) ivec, zdelta(ivec), zbeta(ivec),             &
      &                      zwork(ivec,3)
         END DO
-        WRITE (stdout,50) inner+1, zbeta(inner+1)
+        WRITE (stdout,50) innLoop+1, zbeta(innLoop+1)
 
       END IF
 !
@@ -314,7 +320,7 @@
 !
  10   CONTINUE
 # ifdef DISTRIBUTE
-      CALL mp_bcastl (ng, model, exit_flag, 1)
+      CALL mp_bcasti (ng, model, exit_flag, 1)
 # endif
       IF (exit_flag.ne.NoError) RETURN
    

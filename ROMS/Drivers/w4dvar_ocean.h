@@ -380,12 +380,18 @@
           lstr=LEN_TRIM(FWDbase(ng))
           WRITE (FWDname(ng),10) FWDbase(ng)(1:lstr-3), outer-1
 !
+!  Set representer model output file name.  The strategy is to write
+!  the representer solution at the beginning of each outer loop.
+!
+          LdefTLM(ng)=.TRUE.
+          LwrtTLM(ng)=.TRUE.
+          lstr=LEN_TRIM(TLMbase(ng))
+          WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3), outer
+!
 !  Activate switch to write the representer model at observation points.
 !  Turn off writing into history file and turn off impulse forcing.
 !
           wrtRPmod(ng)=.TRUE.
-          LdefTLM(ng)=.FALSE.
-          LwrtTLM(ng)=.FALSE.
           SporadicImpulse=.FALSE.
           FrequentImpulse=.FALSE.
 !
@@ -416,6 +422,11 @@
             IF (exit_flag.ne.NoError) RETURN
 
           END DO RP_LOOP1
+!
+!  Turn off IO switches.
+!
+          LdefTLM(ng)=.FALSE.
+          LwrtTLM(ng)=.FALSE.
           wrtRPmod(ng)=.FALSE.
 !
 !  Set approximation vector PSI to representer coefficients Beta_n.

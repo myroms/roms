@@ -50,7 +50,7 @@
 # ifdef BBL_MODEL_NOT_YET
 !!    USE rp_bbl_mod, ONLY : rp_bblm
 # endif
-# ifdef BULK_FLUXES_NOT_YET
+# ifdef BULK_FLUXES
 !!    USE rp_bulk_flux_mod, ONLY : rp_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
@@ -311,7 +311,7 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1
-# ifdef BULK_FLUXES_NOT_YET
+# ifdef BULK_FLUXES
           CALL rp_bulk_flux (ng, TILE)
 # endif
 # ifdef BBL_MODEL_NOT_YET

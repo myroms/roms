@@ -143,7 +143,7 @@
                 FX(i,j)=0.5_r8*tl_Tdiff(itrc,ng)*pmon_u(i,j)*           &
      &                  (Hz(i,j,k)+Hz(i-1,j,k))*                        &
      &                  (tl_t(i  ,j,k,nrhs,itrc)-t(i  ,j,k,nrhs,itrc)-  &
-     &                   tl_t(i-1,j,k,nrhs,itrc)-t(i-1,j,k,nrhs,itrc))
+     &                   tl_t(i-1,j,k,nrhs,itrc)+t(i-1,j,k,nrhs,itrc))
 # ifdef MASKING
                 FX(i,j)=FX(i,j)*umask(i,j)
 # endif
@@ -154,7 +154,7 @@
                 FE(i,j)=0.5_r8*tl_Tdiff(itrc,ng)*pnom_v(i,j)*           &
      &                  (Hz(i,j,k)+Hz(i,j-1,k))*                        &
      &                  (tl_t(i,j  ,k,nrhs,itrc)-t(i,j  ,k,nrhs,itrc)-  &
-     &                   tl_t(i,j-1,k,nrhs,itrc)-t(i,j-1,k,nrhs,itrc))
+     &                   tl_t(i,j-1,k,nrhs,itrc)+t(i,j-1,k,nrhs,itrc))
 # ifdef MASKING
                 FE(i,j)=FE(i,j)*vmask(i,j)
 # endif

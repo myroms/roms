@@ -101,11 +101,6 @@
 **                                                                           **
 ** ATM_PRESS           use to impose atmospheric pressure onto sea surface   **
 **                                                                           **
-** Model coupling OPTIONS:                                                   **
-**                                                                           **
-** SWAN_COUPLING       use if two-way coupling to SWAN                       **
-** WRF_COUPLING        use if two-way coupling to WRF                        **
-**                                                                           **
 ** OPTIONS for surface fluxes formutalion using atmospheric boundary layer   **
 ** (Fairall et al, 1996):                                                    **
 **                                                                           **
@@ -533,9 +528,6 @@
 ** BALANCE_OPERATOR    use if error covariance multivariate balance term     **
 ** CELERITY_WRITE      use if writing radiation celerity in forward file     **
 ** CONVOLVE            use if convolving solution with diffusion operators   **
-** ENERGY1_NORM        use if cost function scaled with the energy norm, 1   **
-** ENERGY2_NORM        use if cost function scaled with the energy norm, 2   **
-** ENERGY3_NORM        use if cost function scaled with the energy norm, 3   **
 ** FORWARD_MIXING      use if processing forward vertical mixing coefficient **
 ** FORWARD_WRITE       use if writing out forward solution, basic state      **
 ** FORWARD_READ        use if reading in  forward solution, basic state      **

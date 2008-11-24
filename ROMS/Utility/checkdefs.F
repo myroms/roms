@@ -90,6 +90,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+9)=' ADJOINT,'
 #endif
+#if defined ADJUST_BOUNDARY && defined IS4DVAR
+      IF (Master) WRITE (stdout,20) 'ADJUST_BOUNDARY',                  &
+     &   'Including boundary conditions in 4DVar state estimation.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+17)=' ADJUST_BOUNDARY,'
+#endif
 #if defined ADJUST_STFLUX && defined IS4DVAR
       IF (Master) WRITE (stdout,20) 'ADJUST_STFLUX',                    &
      &   'Including surface tracer flux in 4DVar state estimation.'
@@ -2653,6 +2659,15 @@
      &   'Wave amplitude used for Zos calculation.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' ZOS_HSIG,'
+#endif
+#if defined TANGENT || defined TL_IOMS || defined ADJOINT
+!
+!-----------------------------------------------------------------------
+!  Stop if unsupported C-preprocessing options are activated for the
+!  adjoint-based algorithms.
+!-----------------------------------------------------------------------
+!
+      CALL checkadj
 #endif
 !
 !-----------------------------------------------------------------------

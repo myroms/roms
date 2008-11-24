@@ -89,6 +89,7 @@
 !
       USE distribute_mod, ONLY : mp_bcasti
 # endif
+      USE strings_mod, ONLY : find_string
 !
       implicit none
 !
@@ -108,7 +109,7 @@
       integer :: i
       integer :: save(1), start(4), total(4)
 
-      integer :: find_string
+!!    integer :: find_string
 
       real(r8) :: inp_time(1)
 

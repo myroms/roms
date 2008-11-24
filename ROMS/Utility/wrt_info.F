@@ -46,6 +46,7 @@
       USE extract_sta_mod, ONLY : extract_sta2d
 #endif
       USE nf_fwrite2d_mod, ONLY : nf_fwrite2d
+      USE strings_mod, ONLY : find_string
 !
       implicit none
 !
@@ -58,8 +59,6 @@
 !  Local variable declarations.
 !
       logical :: Cgrid = .TRUE.
-
-      logical :: find_string
 
       integer :: LBi, UBi, LBj, UBj
       integer :: i, j, k, ibry, ilev, itrc, status, varid

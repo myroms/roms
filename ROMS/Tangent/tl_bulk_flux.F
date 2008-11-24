@@ -1,6 +1,6 @@
 #include "cppdefs.h"
       MODULE tl_bulk_flux_mod
-#if (defined TANGENT || defined TL_IOMS) && defined BULK_FLUXES_NOT_YET
+#if (defined TANGENT || defined TL_IOMS) && defined BULK_FLUXES
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -74,7 +74,7 @@
 # endif
       CALL tl_bulk_flux_tile (ng, tile,                                 &
      &                        LBi, UBi, LBj, UBj,                       &
-     &                        IminS, ImaxS  JminS, JmaxS,               &
+     &                        IminS, ImaxS, JminS, JmaxS,               &
      &                        nrhs(ng),                                 &
 # ifdef MASKING
      &                        GRID(ng) % rmask,                         &
@@ -128,7 +128,7 @@
 !***********************************************************************
       SUBROUTINE tl_bulk_flux_tile (ng, tile,                           &
      &                              LBi, UBi, LBj, UBj,                 &
-     &                              IminS, ImaxS, JminS, JmaxS          &
+     &                              IminS, ImaxS, JminS, JmaxS,         &
      &                              nrhs,                               &
 # ifdef MASKING
      &                              rmask, umask, vmask,                &

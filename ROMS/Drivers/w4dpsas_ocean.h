@@ -426,7 +426,7 @@
 !  Here, PSI is set to misfit between observations and model, H_n.
 !
           inner=0
-          CALL congrad (ng, iTLM, outer, inner, Ninner, converged)
+          CALL congrad (ng, iNLM, outer, inner, Ninner, converged)
           IF (exit_flag.ne.NoError) RETURN
 
           INNER_LOOP : DO my_inner=1,Ninner
@@ -657,7 +657,7 @@
               WRITE (stdout,40) outer, inner
             END IF
             tTLFindx(ng)=0
-            outer_impulse=.FALSE.
+            outer_impulse=.TRUE.
 #ifdef DISTRIBUTE
             tile=MyRank
 #else
@@ -885,8 +885,7 @@
               CALL tl_balance (ng, TILE, Lini, Lold(ng))
 # endif
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-              CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-              CALL ini_adjust (ng, TILE, Lold(ng), Lbck)
+              CALL ini_adjust (ng, TILE, Lold(ng), Lnew(ng))
             END DO
           END DO
 !$OMP END PARALLEL DO
@@ -894,7 +893,7 @@
 !  Write out representer model initial conditions into INIname, record
 !  Lini.
 !
-          CALL wrt_ini (ng, Lbck)
+          CALL wrt_ini (ng, Lnew(ng))
           IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve adjoint records in ADJname and impose
@@ -990,7 +989,7 @@
             WRITE (stdout,40) outer, inner
           END IF
           tTLFindx(ng)=0
-          outer_impulse=.TRUE.
+          outer_impulse=.FALSE.
 #ifdef DISTRIBUTE
           tile=MyRank
 #else

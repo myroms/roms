@@ -2690,14 +2690,14 @@
           DO i=IstrU-1,Iend
             tl_UFx(i,j)=tl_M2diff(ng)*pmon_r(i,j)*Drhs(i,j)*            &
      &                  (tl_ubar(i+1,j,krhs)-ubar(i+1,j,krhs)-          &
-     &                   tl_ubar(i  ,j,krhs)-ubar(i  ,j,krhs))
+     &                   tl_ubar(i  ,j,krhs)+ubar(i  ,j,krhs))
           END DO
         END DO
         DO j=Jstr,Jend+1
           DO i=IstrU,Iend
             tl_UFe(i,j)=tl_M2diff(ng)*pnom_p(i,j)*Drhs_p(i,j)*          &
      &                  (tl_ubar(i,j  ,krhs)-ubar(i,j  ,krhs)-          &
-     &                   tl_ubar(i,j-1,krhs)-ubar(i,j-1,krhs))
+     &                   tl_ubar(i,j-1,krhs)+ubar(i,j-1,krhs))
 #  ifdef MASKING
             tl_UFe(i,j)=tl_UFe(i,j)*pmask(i,j)
 #  endif
@@ -2707,7 +2707,7 @@
           DO i=Istr,Iend+1
             tl_VFx(i,j)=tl_M2diff(ng)*pmon_p(i,j)*Drhs_p(i,j)*          &
      &                  (tl_vbar(i  ,j,krhs)-vbar(i  ,j,krhs)-          &
-     &                   tl_vbar(i-1,j,krhs)-vbar(i-1,j,krhs))
+     &                   tl_vbar(i-1,j,krhs)+vbar(i-1,j,krhs))
 #  ifdef MASKING
             tl_VFx(i,j)=tl_VFx(i,j)*pmask(i,j)
 #  endif
@@ -2717,7 +2717,7 @@
           DO i=Istr,Iend
             tl_VFe(i,j)=tl_M2diff(ng)*pnom_r(i,j)*Drhs(i,j)*            &
      &                  (tl_vbar(i,j+1,krhs)-vbar(i,j+1,krhs)-          &
-     &                   tl_vbar(i,j  ,krhs)-vbar(i,j  ,krhs))
+     &                   tl_vbar(i,j  ,krhs)+vbar(i,j  ,krhs))
           END DO
         END DO
 !

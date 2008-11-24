@@ -54,6 +54,7 @@
 #ifdef SOLVE3D
       USE nf_fread4d_mod, ONLY : nf_fread4d
 #endif
+      USE strings_mod, ONLY : find_string
 !
       implicit none
 !
@@ -68,8 +69,6 @@
 !  Local variable declarations.
 !
       logical :: Perfect2D, Perfect3D, foundit
-
-      logical :: find_string
 
       logical, dimension(NV) :: get_var, have_var
 
@@ -921,6 +920,7 @@
             END IF
           END IF
         END IF
+#   ifdef SALINITY
 !
 !  Read in salinity vertical diffusion.
 !
@@ -949,6 +949,7 @@
             END IF
           END IF
         END IF
+#   endif
 #  endif
 #  if defined GLS_MIXING || defined MY25_MIXING
 !
@@ -2890,6 +2891,8 @@
             END IF
           END IF
         END IF
+
+# ifndef SOLVE3D
 !
 !  Read in 2D momentum forcing in the XI-direction.
 !
@@ -2900,9 +2903,9 @@
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
-# ifdef MASKING
+#  ifdef MASKING
      &                      GRID(ng) % umask,                           &
-# endif
+#  endif
      &                      OCEAN(ng) % f_ubar)
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
@@ -2928,9 +2931,9 @@
           status=nf_fread2d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
      &                      Vsize, LBi, UBi, LBj, UBj,                  &
      &                      Fscl, Fmin, Fmax,                           &
-# ifdef MASKING
+#  ifdef MASKING
      &                      GRID(ng) % vmask,                           &
-# endif
+#  endif
      &                      OCEAN(ng) % f_vbar)
           IF (status.ne.nf90_noerr) THEN
             IF (Master) THEN
@@ -2946,6 +2949,7 @@
             END IF
           END IF
         END IF
+# endif
 # ifdef SOLVE3D
 !
 !  Read in 3D momentum forcing in the XI-direction.

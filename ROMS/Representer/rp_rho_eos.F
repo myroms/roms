@@ -92,7 +92,7 @@
      &                     MIXING(ng) % tl_bvf,                         &
 # endif
 # if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-     defined BULK_FLUXES_NOT_YET
+     defined BULK_FLUXES
      &                     MIXING(ng) % alpha,                          &
      &                     MIXING(ng) % tl_alpha,                       &
      &                     MIXING(ng) % beta,                           &
@@ -136,7 +136,7 @@
      &                            tl_bvf,                               &
 #  endif
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-      defined BULK_FLUXES_NOT_YET
+      defined BULK_FLUXES
      &                            alpha, tl_alpha,                      &
      &                            beta,  tl_beta,                       &
 #   ifdef LMD_DDMIX_NOT_YET
@@ -189,7 +189,7 @@
       real(r8), intent(in) :: tl_z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(inout) :: alpha(LBi:,LBj:)
       real(r8), intent(inout) :: beta(LBi:,LBj:)
 #   endif
@@ -203,7 +203,7 @@
       real(r8), intent(out) :: tl_bvf(LBi:,LBj:,0:)
 #   endif
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(out) :: tl_alpha(LBi:,LBj:)
       real(r8), intent(out) :: tl_beta(LBi:,LBj:)
 #    ifdef LMD_DDMIX_NOT_YET
@@ -232,7 +232,7 @@
       real(r8), intent(in) :: tl_z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(inout) :: alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: beta(LBi:UBi,LBj:UBj)
 #   endif
@@ -246,7 +246,7 @@
       real(r8), intent(out) :: tl_bvf(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(out) :: tl_alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: tl_beta(LBi:UBi,LBj:UBj)
 #    ifdef LMD_DDMIX_NOT_YET
@@ -532,7 +532,7 @@
 #  endif
 
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-      defined BULK_FLUXES_NOT_YET
+      defined BULK_FLUXES
 !
 !  Compute d(bulk)/d(S) and d(bulk)/d(T) derivatives used
 !  in the computation of thermal expansion and saline contraction
@@ -823,7 +823,7 @@
 #  endif
 
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-      defined BULK_FLUXES_NOT_YET
+      defined BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Compute thermal expansion (1/Celsius) and saline contraction
@@ -960,7 +960,7 @@
      &                        tl_pden)
 #    endif
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-        defined BULK_FLUXES_NOT_YET
+        defined BULK_FLUXES
 #     ifdef LMD_DDMIX_NOT_YET
 !>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
@@ -1029,7 +1029,7 @@
      &                    tl_pden)
 #    endif
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-        defined BULK_FLUXES_NOT_YET
+        defined BULK_FLUXES
 #     ifdef LMD_DDMIX_NOT_YET
 !>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &
@@ -1102,7 +1102,7 @@
      &                            tl_bvf,                               &
 #  endif
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-      defined BULK_FLUXES_NOT_YET
+      defined BULK_FLUXES
      &                            alpha, tl_alpha,                      &
      &                            beta,  tl_beta,                       &
 #   ifdef LMD_DDMIX_NOT_YET
@@ -1153,7 +1153,7 @@
       real(r8), intent(in) :: tl_z_w(LBi:,LBj:,0:)
       real(r8), intent(in) :: tl_t(LBi:,LBj:,:,:,:)
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(inout) :: alpha(LBi:,LBj:)
       real(r8), intent(inout) :: beta(LBi:,LBj:)
 #   endif
@@ -1167,7 +1167,7 @@
       real(r8), intent(out) :: tl_bvf(LBi:,LBj:,0:)
 #   endif
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(out) :: tl_alpha(LBi:,LBj:)
       real(r8), intent(out) :: tl_beta(LBi:,LBj:)
 #    ifdef LMD_DDMIX_NOT_YET
@@ -1196,7 +1196,7 @@
       real(r8), intent(in) :: tl_z_w(LBi:UBi,LBj:UBj,0:N(ng))
       real(r8), intent(in) :: tl_t(LBi:UBi,LBj:UBj,N(ng),3,NT(ng))
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(inout) :: alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(inout) :: beta(LBi:UBi,LBj:UBj)
 #   endif
@@ -1210,7 +1210,7 @@
       real(r8), intent(out) :: tl_bvf(LBi:UBi,LBj:UBj,0:N(ng))
 #   endif
 #   if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-       defined BULK_FLUXES_NOT_YET
+       defined BULK_FLUXES
       real(r8), intent(out) :: tl_alpha(LBi:UBi,LBj:UBj)
       real(r8), intent(out) :: tl_beta(LBi:UBi,LBj:UBj)
 #    ifdef LMD_DDMIX_NOT_YET
@@ -1406,7 +1406,7 @@
 #  endif
 
 #  if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-      defined BULK_FLUXES_NOT_YET
+      defined BULK_FLUXES
 !
 !-----------------------------------------------------------------------
 !  Compute thermal expansion (1/Celsius) and saline contraction
@@ -1480,7 +1480,7 @@
      &                        tl_pden)
 #    endif
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-        defined BULK_FLUXES_NOT_YET
+        defined BULK_FLUXES
 #     ifdef LMD_DDMIX_NOT_YET
 !>    CALL exchange_w3d_tile (ng, tile,                                 &
 !>   &                        LBi, UBi, LBj, UBj, 0, N(ng),             &
@@ -1549,7 +1549,7 @@
      &                    tl_pden)
 #    endif
 #    if defined LMD_SKPP_NOT_YET || defined LMD_BKPP_NOT_YET || \
-        defined BULK_FLUXES_NOT_YET
+        defined BULK_FLUXES
 #     ifdef LMD_DDMIX_NOT_YET
 !>    CALL mp_exchange3d (ng, tile, iNLM, 1,                            &
 !>   &                    LBi, UBi, LBj, UBj, 0, N(ng),                 &

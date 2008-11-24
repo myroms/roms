@@ -29,6 +29,7 @@
       USE mp_exchange_mod, ONLY : mp_exchange2d
 # endif
       USE nf_fread2d_mod, ONLY : nf_fread2d
+      USE strings_mod, ONLY : find_string
 !
       implicit none
 !
@@ -54,8 +55,6 @@
      defined OPT_OBSERVATIONS || defined SO_SEMI
       logical :: GotScope(6)
 # endif
-      logical :: find_string
-
       integer :: tile, LBi, UBi, LBj, UBj
       integer :: gtype, i, status, vindex
 
