@@ -202,7 +202,7 @@
      &                                 Cx*tl_zeta(Istr,j,kout))-        &
 #   ifdef TL_IOMS
      &                           cff2*(zeta(Istr-1,j,know)+             &
-     &                                 Cx*zeta(Istr,j,kout))
+     &                                 2.0_r8*Cx*zeta(Istr,j,kout))
 #   endif
 #   ifdef MASKING
 !>        zeta(Istr-1,j,kout)=zeta(Istr-1,j,kout)*                      &
@@ -360,7 +360,7 @@
      &                                 Cx*tl_zeta(Iend,j,kout))-        &
 #   ifdef TL_IOMS
      &                           cff2*(zeta(Iend+1,j,know)+             &
-     &                                 Cx*zeta(Iend,j,kout))
+     &                                 2.0_r8*Cx*zeta(Iend,j,kout))
 #   endif
 #   ifdef MASKING
 !>        zeta(Iend+1,j,kout)=zeta(Iend+1,j,kout)*                      &
@@ -521,7 +521,7 @@
      &                                 Ce*tl_zeta(i,Jstr,kout))-        &
 #  ifdef TL_IOMS
      &                           cff2*(zeta(i,Jstr-1,know)+             &
-     &                                 Ce*zeta(i,Jstr,kout))
+     &                                 2.0_r8*Ce*zeta(i,Jstr,kout))
 #  endif
 #  ifdef MASKING
 !>        zeta(i,Jstr-1,kout)=zeta(i,Jstr-1,kout)*                      &
@@ -678,7 +678,7 @@
      &                                 Ce*tl_zeta(i,Jend,kout))-        &
 #   ifdef TL_IOMS
      &                           cff2*(zeta(i,Jend+1,know)+             &
-     &                                 Ce*zeta(i,Jend,kout))
+     &                                 2.0_r8*Ce*zeta(i,Jend,kout))
 #   endif
 #   ifdef MASKING
 !>        zeta(i,Jend+1,kout)=zeta(i,Jend+1,kout)*                      &

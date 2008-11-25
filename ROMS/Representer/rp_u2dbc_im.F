@@ -882,7 +882,7 @@
      &                                 Ce*tl_ubar(i,Jstr,kout))-        &
 #   ifdef TL_IOMS
      &                           cff2*(ubar(i,Jstr-1,know)+             &
-     &                                 Ce*ubar(i,Jstr,kout))
+     &                                 2.0_r8*Ce*ubar(i,Jstr,kout))
 #   endif
 #   ifdef MASKING
 !>        ubar(i,Jstr-1,kout)=ubar(i,Jstr-1,kout)*                      &
@@ -1052,7 +1052,7 @@
      &                                 Ce*tl_ubar(i,Jend,kout))-        &
 #   ifdef TL_IOMS
      &                           cff2*(ubar(i,Jend+1,know)+             &
-     &                                 Ce*ubar(i,Jend,kout))
+     &                                 2.0_r8*Ce*ubar(i,Jend,kout))
 #   endif
 #   ifdef MASKING
 !>        ubar(i,Jend+1,kout)=ubar(i,Jend+1,kout)*                      &

@@ -882,7 +882,7 @@
      &                                 Cx*tl_vbar(Istr,j,kout))-        &
 #   ifdef TL_IOMS
      &                           cff2*(vbar(Istr-1,j,know)+             &
-     &                                 Cx*vbar(Istr,j,kout))
+     &                                 2.0_r8*Cx*vbar(Istr,j,kout))
 #   endif
 #   ifdef MASKING
 !>        vbar(Istr-1,j,kout)=vbar(Istr-1,j,kout)*                      &
@@ -1052,7 +1052,7 @@
      &                                 Cx*tl_vbar(Iend,j,kout))-        &
 #   ifdef TL_IOMS
      &                           cff2*(vbar(Iend+1,j,know)+             &
-     &                                 Cx*vbar(Iend,j,kout))
+     &                                 2.0_r8*Cx*vbar(Iend,j,kout))
 #   endif
 #   ifdef MASKING
 !>        vbar(Iend+1,j,kout)=vbar(Iend+1,j,kout)*                      &
