@@ -824,6 +824,26 @@
      &               1, (/0/), Aval, Vinfo, ncname)
       IF (exit_flag.ne.NoError) RETURN
 
+#if defined NETCDF4 && defined DEFLATE
+      Vinfo( 1)='shuffle'
+      Vinfo( 2)='NetCDF-4/HDF5 file format shuffle filer flag'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='deflate'
+      Vinfo( 2)='NetCDF-4/HDF5 file format deflate filer flag'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+
+      Vinfo( 1)='deflate_level'
+      Vinfo( 2)='NetCDF-4/HDF5 file format deflate level parameter'
+      status=def_var(ng, model, ncid, varid, nf90_int,                  &
+     &               1, (/0/), Aval, Vinfo, ncname)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+
       Vinfo( 1)='nHIS'
       Vinfo( 2)='number of time-steps between history records'
       status=def_var(ng, model, ncid, varid, nf90_int,                  &

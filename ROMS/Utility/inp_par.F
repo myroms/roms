@@ -776,6 +776,7 @@
 #endif
       USE mod_iounits
       USE mod_ncparam
+      USE mod_netcdf
       USE mod_scalars
 #if defined SEDIMENT || defined BBL_MODEL
       USE mod_sediment
@@ -1759,6 +1760,12 @@
             Npts=load_i(Nval, Rval, 1, Nuser)
           ELSE IF (TRIM(KeyWord).eq.'USER') THEN
             Npts=load_r(Nval, Rval, MAX(1,Nuser), user)
+          ELSE IF (TRIM(KeyWord).eq.'NC_SHUFFLE') THEN
+            Npts=load_i(Nval, Rval, 1, shuffle)
+          ELSE IF (TRIM(KeyWord).eq.'NC_DEFLATE') THEN
+            Npts=load_i(Nval, Rval, 1, deflate)
+          ELSE IF (TRIM(KeyWord).eq.'NC_DLEVEL') THEN
+            Npts=load_i(Nval, Rval, 1, deflate_level)
           ELSE IF (TRIM(KeyWord).eq.'GSTNAME') THEN
             DO i=1,LEN(GSTname(Nval))
               GSTname(Nval)(i:i)=blank
@@ -2728,6 +2735,14 @@
      &       'Hout(idMtls)',                                            &
      &       'Write out turbulent generic length-scale.'
 # endif
+#endif
+#if defined NETCDF4 && defined DEFLATE
+          WRITE (out,120) shuffle, 'shuffle',                           &
+     &          'NetCDF-4/HDF5 file format shuffle filer flag.'
+          WRITE (out,120) deflate, 'deflate',                           &
+     &          'NetCDF-4/HDF5 file format deflate filer flag.'
+          WRITE (out,120) deflate_level, 'deflate_level',               &
+     &          'NetCDF-4/HDF5 file format deflate level parameter.'
 #endif
 !
 !-----------------------------------------------------------------------

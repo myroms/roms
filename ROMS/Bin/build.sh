@@ -177,64 +177,118 @@ endif
 # and edit the paths to your values. For most applications, only
 # the location of the NetCDF library (NETCDF_LIBDIR) and include
 # directorry (NETCDF_INCDIR) are needed!
+#
+# Notice that when the USE_NETCDF4 macro is activated, we need a
+# serial and parallel version of the NetCDF-4/HDF5 library. The
+# parallel library uses parallel I/O through MPI-I/O so we need
+# compile also with the MPI library. This is fine in ROMS
+# distributed-memory applications.  However, in serial or 
+# shared-memory ROMS applications we need to use the serial
+# version of the NetCDF-4/HDF5 to avoid conflicts with the
+# compiler. Recall also that the MPI library comes in several
+# flavors: MPICH, MPICH2, OpenMPI.
 
-#setenv USE_MY_LIBS         on
+#setenv USE_MY_LIBS             on
 
 if ($?USE_MY_LIBS) then
   switch ($FORT)
 
     case "ifort"
-      setenv ARPACK_LIBDIR  /opt/intelsoft/PARPACK
-      setenv ESMF_DIR       /opt/intelsoft/esmf
-      setenv ESMF_OS        Linux
-      setenv ESMF_COMPILER  ifort
-      setenv ESMF_BOPT      O
-      setenv ESMF_ABI       64
-      setenv ESMF_COMM      mpich
-      setenv ESMF_SITE      default
-      setenv HDF5_LIBDIR    /opt/intelsoft/hdf5/lib
-      setenv MCT_INCDIR     /opt/intelsoft/mct/include
-      setenv MCT_LIBDIR     /opt/intelsoft/mct/lib
-      setenv NETCDF_INCDIR  /opt/intelsoft/netcdf/include
-      setenv NETCDF_LIBDIR  /opt/intelsoft/netcdf/lib
-      setenv PARPACK_LIBDIR /opt/intelsoft/PARPACK
+      setenv ARPACK_LIBDIR      /opt/intelsoft/PARPACK
+      setenv ESMF_DIR           /opt/intelsoft/esmf
+      setenv ESMF_OS            Linux
+      setenv ESMF_COMPILER      ifort
+      setenv ESMF_BOPT          O
+      setenv ESMF_ABI           64
+      setenv ESMF_COMM          mpich
+      setenv ESMF_SITE          default
+      setenv MCT_INCDIR         /opt/intelsoft/mct/include
+      setenv MCT_LIBDIR         /opt/intelsoft/mct/lib
+      if ($?USE_NETCDF4) then
+        if ($?USE_MPI) then
+          setenv NETCDF_INCDIR  /opt/intelsoft/netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/intelsoft/netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/intelsoft/hdf5/lib
+        else
+          setenv NETCDF_INCDIR  /opt/intelsoft/s_netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/intelsoft/s_netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/intelsoft/s_hdf5/lib
+        endif
+      else
+        setenv NETCDF_INCDIR    /opt/intelsoft/netcdf/include
+        setenv NETCDF_LIBDIR    /opt/intelsoft/netcdf/lib
+      endif
+      setenv PARPACK_LIBDIR     /opt/intelsoft/PARPACK
     breaksw
 
     case "pgi"
-      setenv ARPACK_LIBDIR  /opt/pgisoft/PARPACK
-      setenv ESMF_DIR       /opt/pgisoft/esmf-3.1.0
-      setenv ESMF_OS        Linux
-      setenv ESMF_COMPILER  pgi
-      setenv ESMF_BOPT      O
-      setenv ESMF_ABI       64
-      setenv ESMF_COMM      mpich
-      setenv ESMF_SITE      default
-      setenv HDF5_LIBDIR    /opt/pgisoft/hdf5/lib
-      setenv MCT_INCDIR     /opt/pgisoft/mct/include
-      setenv MCT_LIBDIR     /opt/pgisoft/mct/lib
-      setenv NETCDF_INCDIR  /opt/pgisoft/netcdf/include
-      setenv NETCDF_LIBDIR  /opt/pgisoft/netcdf/lib
-      setenv PARPACK_LIBDIR /opt/pgisoft/PARPACK
+      setenv ARPACK_LIBDIR      /opt/pgisoft/PARPACK
+      setenv ESMF_DIR           /opt/pgisoft/esmf-3.1.0
+      setenv ESMF_OS            Linux
+      setenv ESMF_COMPILER      pgi
+      setenv ESMF_BOPT          O
+      setenv ESMF_ABI           64
+      setenv ESMF_COMM          mpich
+      setenv ESMF_SITE          default
+      setenv MCT_INCDIR         /opt/pgisoft/mct/include
+      setenv MCT_LIBDIR         /opt/pgisoft/mct/lib
+      if ($?USE_NETCDF4) then
+        if ($?USE_MPI) then
+          setenv NETCDF_INCDIR  /opt/pgisoft/netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/pgisoft/netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/pgisoft/hdf5/lib
+        else
+          setenv NETCDF_INCDIR  /opt/pgisoft/s_netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/pgisoft/s_netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/pgisoft/s_hdf5/lib
+        endif
+      else
+        setenv NETCDF_INCDIR    /opt/pgisoft/netcdf/include
+        setenv NETCDF_LIBDIR    /opt/pgisoft/netcdf/lib
+      endif
+      setenv PARPACK_LIBDIR     /opt/pgisoft/PARPACK
     breaksw
 
     case "g95"
-      setenv ARPACK_LIBDIR  /opt/g95soft/PARPACK
-      setenv HDF5_LIBDIR    /opt/g95soft/hdf5/lib
-      setenv MCT_INCDIR     /opt/g95soft/mct/include
-      setenv MCT_LIBDIR     /opt/g95soft/mct/lib
-      setenv NETCDF_INCDIR  /opt/g95soft/netcdf/include
-      setenv NETCDF_LIBDIR  /opt/g95soft/netcdf/lib
-      setenv PARPACK_LIBDIR /opt/g95soft/PARPACK
+      setenv ARPACK_LIBDIR      /opt/g95soft/PARPACK
+      setenv MCT_INCDIR         /opt/g95soft/mct/include
+      setenv MCT_LIBDIR         /opt/g95soft/mct/lib
+      if ($?USE_NETCDF4) then
+        if ($?USE_MPI) then
+          setenv NETCDF_INCDIR  /opt/g95soft/netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/g95soft/netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/g95soft/hdf5/lib
+        else
+          setenv NETCDF_INCDIR  /opt/g95soft/s_netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/g95soft/s_netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/g95soft/s_hdf5/lib
+        endif
+      else
+        setenv NETCDF_INCDIR    /opt/g95soft/netcdf/include
+        setenv NETCDF_LIBDIR    /opt/g95soft/netcdf/lib
+      endif
+      setenv PARPACK_LIBDIR     /opt/g95soft/PARPACK
     breaksw
 
     case "gfortran"
-      setenv ARPACK_LIBDIR  /opt/gfortransoft/PARPACK
-      setenv HDF5_LIBDIR    /opt/gfortransoft/hdf5/lib
-      setenv MCT_INCDIR     /opt/gfortransoft/mct/include
-      setenv MCT_LIBDIR     /opt/gfortransoft/mct/lib
-      setenv NETCDF_INCDIR  /opt/gfortransoft/netcdf/include
-      setenv NETCDF_LIBDIR  /opt/gfortransoft/netcdf/lib
-      setenv PARPACK_LIBDIR /opt/gfortransoft/PARPACK
+      setenv ARPACK_LIBDIR      /opt/gfortransoft/PARPACK
+      setenv MCT_INCDIR         /opt/gfortransoft/mct/include
+      setenv MCT_LIBDIR         /opt/gfortransoft/mct/lib
+      if ($?USE_NETCDF4) then
+        if ($?USE_MPI) then
+          setenv NETCDF_INCDIR  /opt/gfortransoft/netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/gfortransoft/netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/gfortransoft/hdf5/lib
+        else
+          setenv NETCDF_INCDIR  /opt/gfortransoft/s_netcdf4/include
+          setenv NETCDF_LIBDIR  /opt/gfortransoft/s_netcdf4/lib
+          setenv HDF5_LIBDIR    /opt/gfortransoft/s_hdf5/lib
+        endif
+      else
+        setenv NETCDF_INCDIR    /opt/gfortransoft/netcdf/include
+        setenv NETCDF_LIBDIR    /opt/gfortransoft/netcdf/lib
+      endif
+      setenv PARPACK_LIBDIR     /opt/gfortransoft/PARPACK
     breaksw
 
   endsw

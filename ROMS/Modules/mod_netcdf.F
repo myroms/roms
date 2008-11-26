@@ -113,6 +113,20 @@
 #else
       integer, parameter :: NF_TYPE = nf90_real
 #endif
+!
+!  Netcdf file creation mode flag.
+!
+#ifdef NETCDF4
+      integer :: CMODE = nf90_netcdf4      ! NetCDF-4/HDF5 format file
+#else
+      integer :: CMODE = nf90_clobber      ! NetCDF classic format file
+#endif
+!
+!  Set NetCDF-4/HDF5 deflate (file compression) parameters.
+!
+      integer :: shuffle = 1
+      integer :: deflate = 1
+      integer :: deflate_level = 1
 
       CONTAINS
 

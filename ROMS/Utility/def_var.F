@@ -136,6 +136,30 @@
             END IF
           END IF
         END IF
+
+#if defined NETCDF4 && defined DEFLATE
+!
+!  Define deflate (file compresion) parameters. Notice that deflation
+!  cannot be used in parallel I/O for writing data. This is because
+!  the compression makes it impossible for the HDF5 library to exactly
+!  map the data to the disk location. However, deflated data can be
+!  read with parallel I/O
+!
+        IF (exit_flag.eq.NoError) THEN
+          IF (LEN_TRIM(Vinfo(1)).gt.0) THEN
+            IF ((nVdim.gt.1).and.(Vdim(1).ne.0)) THEN
+              status=nf90_def_var_deflate (ncid, Vid, shuffle, deflate, &
+     &                                     deflate_level)
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) WRITE (stdout,20) TRIM(Vinfo(1)),           &
+     &                                        TRIM(ncname)
+                exit_flag=3
+                ioerror=status
+              END IF
+            END IF
+          END IF
+        END IF
+#endif
 !
 !  Define "longname" attribute.
 !
@@ -145,7 +169,7 @@
             status=nf90_put_att(ncid, Vid, 'long_name',                 &
      &                          Vinfo(2)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'long_name',                &
+              IF (Master) WRITE (stdout,30) 'long_name',                &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -162,7 +186,7 @@
             status=nf90_put_att(ncid, Vid, 'size_class',                &
      &                          Vinfo(19)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'size_class',               &
+              IF (Master) WRITE (stdout,30) 'size_class',               &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -180,7 +204,7 @@
               status=nf90_put_att(ncid, Vid, 'units',                   &
      &                            Vinfo(3)(1:latt))
               IF (status.ne.nf90_noerr) THEN
-                IF (Master) WRITE (stdout,20) 'units',                  &
+                IF (Master) WRITE (stdout,30) 'units',                  &
      &                                        TRIM(Vinfo(1)),           &
      &                                        TRIM(ncname)
                 exit_flag=3
@@ -198,7 +222,7 @@
             status=nf90_put_att(ncid, Vid, 'calendar',                  &
      &                          Vinfo(4)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'calendar',                 &
+              IF (Master) WRITE (stdout,30) 'calendar',                 &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -225,7 +249,7 @@
      &                            Aval(2))
             END IF
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) TRIM(Vinfo(5)),             &
+              IF (Master) WRITE (stdout,30) TRIM(Vinfo(5)),             &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -253,7 +277,7 @@
      &                            Aval(3))
             END IF
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) TRIM(Vinfo(6)),             &
+              IF (Master) WRITE (stdout,30) TRIM(Vinfo(6)),             &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -271,7 +295,7 @@
             status=nf90_put_att(ncid, Vid, 'option_T',                  &
      &                          Vinfo(7)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'option_T',                 &
+              IF (Master) WRITE (stdout,30) 'option_T',                 &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -288,7 +312,7 @@
             status=nf90_put_att(ncid, Vid, 'option_F',                  &
      &                          Vinfo(8)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'option_F',                 &
+              IF (Master) WRITE (stdout,30) 'option_F',                 &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -305,7 +329,7 @@
             status=nf90_put_att(ncid, Vid, 'option_0',                  &
      &                          Vinfo(9)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'option_0',                 &
+              IF (Master) WRITE (stdout,30) 'option_0',                 &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -322,7 +346,7 @@
             status=nf90_put_att(ncid, Vid, 'option_1',                  &
      &                          Vinfo(10)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'option_1',                 &
+              IF (Master) WRITE (stdout,30) 'option_1',                 &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -339,7 +363,7 @@
             status=nf90_put_att(ncid, Vid, 'negative_value',            &
      &                          Vinfo(11)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'negative_value',           &
+              IF (Master) WRITE (stdout,30) 'negative_value',           &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -356,7 +380,7 @@
             status=nf90_put_att(ncid, Vid, 'positive_value',            &
      &                          Vinfo(12)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'positive_value',           &
+              IF (Master) WRITE (stdout,30) 'positive_value',           &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -373,7 +397,7 @@
             status=nf90_put_att(ncid, Vid, 'cycle',                     &
      &                          Vinfo(13)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'cycle',                    &
+              IF (Master) WRITE (stdout,30) 'cycle',                    &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -390,7 +414,7 @@
             status=nf90_put_att(ncid, Vid, 'positions',                 &
      &                          Vinfo(15)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'positions',                &
+              IF (Master) WRITE (stdout,30) 'positions',                &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -407,7 +431,7 @@
             status=nf90_put_att(ncid, Vid, 'time',                      &
      &                          Vinfo(16)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'time',                     &
+              IF (Master) WRITE (stdout,30) 'time',                     &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -434,7 +458,7 @@
      &                            Aval(4))
             END IF
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) TRIM(Vinfo(17)),            &
+              IF (Master) WRITE (stdout,30) TRIM(Vinfo(17)),            &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -462,7 +486,7 @@
      &                            Aval(1))
             END IF
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) TRIM(Vinfo(18)),            &
+              IF (Master) WRITE (stdout,30) TRIM(Vinfo(18)),            &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -490,7 +514,7 @@
      &                            Aval(6))
             END IF
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) TRIM(Vinfo(24)),            &
+              IF (Master) WRITE (stdout,30) TRIM(Vinfo(24)),            &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -508,7 +532,7 @@
             status=nf90_put_att(ncid, Vid, 'water_points',              &
      &                          Vinfo(20)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'water_points',             &
+              IF (Master) WRITE (stdout,30) 'water_points',             &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -525,7 +549,7 @@
             status=nf90_put_att(ncid, Vid, 'standard_name',             &
      &                          Vinfo(21)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'standard_name',            &
+              IF (Master) WRITE (stdout,30) 'standard_name',            &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -592,7 +616,7 @@
             status=nf90_put_att(ncid, Vid, TRIM(Vinfo(22)),             &
      &                          text(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'coordinates',              &
+              IF (Master) WRITE (stdout,30) 'coordinates',              &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -610,7 +634,7 @@
             status=nf90_put_att(ncid, Vid, 'formula_terms',             &
      &                          Vinfo(23)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'formula_terms',            &
+              IF (Master) WRITE (stdout,30) 'formula_terms',            &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -627,7 +651,7 @@
             status=nf90_put_att(ncid, Vid, 'field',                     &
      &                          Vinfo(14)(1:latt))
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) 'field',                    &
+              IF (Master) WRITE (stdout,30) 'field',                    &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -663,7 +687,7 @@
 # endif
             END IF
             IF (status.ne.nf90_noerr) THEN
-              IF (Master) WRITE (stdout,20) '_FillValue',               &
+              IF (Master) WRITE (stdout,30) '_FillValue',               &
      &                                      TRIM(Vinfo(1)),             &
      &                                      TRIM(ncname)
               exit_flag=3
@@ -690,7 +714,9 @@
 !
  10   FORMAT (/,' DEF_VAR - unable to define variable: ',a,/,           &
      &        11x,'in NetCDF file: ',a)
- 20   FORMAT (/,'DEF_VAR - error while defining attribute: ',a,         &
+ 20   FORMAT (/,' DEF_VAR - error while setting deflate parameters',    &
+     &        ' for variable: ',a,/,11x,'in NetCDF file: ',a)
+ 30   FORMAT (/,'DEF_VAR - error while defining attribute: ',a,         &
      &        ' for variable: ',a,/,11x,'in NetCDF file: ',a)
 
       RETURN

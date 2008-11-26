@@ -92,7 +92,7 @@
 !
       DEFINE : IF (Ldefine) THEN
         IF (OutThread) THEN
-          status=nf90_create(TRIM(ncname), nf90_clobber, ncRSTid(ng))
+          status=nf90_create(TRIM(ncname), CMODE, ncRSTid(ng))
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,10) TRIM(ncname)
             exit_flag=3

@@ -94,7 +94,7 @@
 !
       DEFINE : IF (LdefLCZ(ng)) THEN
         IF (OutThread) THEN
-          status=nf90_create(TRIM(ncname), nf90_clobber, ncLCZid(ng))
+          status=nf90_create(TRIM(ncname), CMODE, ncLCZid(ng))
           IF (status.ne.nf90_noerr) THEN
             WRITE (stdout,30) TRIM(ncname)
             exit_flag=3

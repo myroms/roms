@@ -408,6 +408,12 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
        NUSER =  0
         USER =  0.d0
 
+! NetCDF-4/HDF5 compression parameters for output files.
+
+  NC_SHUFFLE =  1                 ! if non-zero, turn on shuffle filter
+  NC_DEFLATE =  1                 ! if non-zero, turn on deflate filter
+   NC_DLEVEL =  1                 ! deflate level [0-9]
+
 ! Input NetCDF file names, [1:Ngrids].
 
      GRDNAME == nena_grd.nc
@@ -1238,6 +1244,28 @@ Hout(idBott) == T T T T T T T T T F F F F F F F
 !
 !                Set tangent and adjoint parameters to the same values
 !                if perturbing and reporting the same variable.
+!
+!------------------------------------------------------------------------------
+! I/O NetCDF files parameters.
+!------------------------------------------------------------------------------
+!
+! NetCDF-4/HDF5 compression parameters for output files. This capability
+! is used when both NETCDF4 and DEFLATE C-preprocessing options are
+! activated. The user needs to compile with the NetCDF-4/HDF5 and MPI
+! libraries. File deflation cannot be used in parallel I/O for writing
+! because the compression makes it imposible for the HDF5 library
+! to exactly map the data to the disk location.  For more information,
+! check NetCDF official website: www.unidata.ucar.edu/software/netcdf.
+!
+! NC_SHUFFLE    Shuffle filter integer flag. If non-zero, turn on shuffle
+!                 filter.
+!
+! NC_DEFLATE    Deflate filter integer flag, If non-zero, turn on deflate
+!                 filter at the level specified by the NC_DLEVEL parameter.
+!
+! NC_DLEVEL     Deflate filter level parameter (integer). If NC_DEFLATE is
+!                 non-zero, set the deflate level to this value. Must be
+!                 between 0 and 9.
 !
 !------------------------------------------------------------------------------
 ! Input/output NetCDF file names (string with a maximum of eighty characters).

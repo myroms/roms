@@ -127,6 +127,23 @@
      &                      ncid = ncid)
       IF (exit_flag.ne.NoError) RETURN
 
+#if defined NETCDF4 && defined DEFLATE
+      CALL netcdf_put_ivar (ng, model, ncname, 'shuffle',               &
+     &                      shuffle, (/0/), (/0/),                      &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'deflate',               &
+     &                      deflate, (/0/), (/0/),                      &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+
+      CALL netcdf_put_ivar (ng, model, ncname, 'deflate_level',         &
+     &                      deflate_level, (/0/), (/0/),                &
+     &                      ncid = ncid)
+      IF (exit_flag.ne.NoError) RETURN
+#endif
+
       CALL netcdf_put_ivar (ng, model, ncname, 'nHIS',                  &
      &                      nHIS(ng), (/0/), (/0/),                     &
      &                      ncid = ncid)

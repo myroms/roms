@@ -606,6 +606,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' DEEPWATER_WAVES,'
 #endif
+#if defined DEFLATE && defined NETCDF4
+      IF (Master) WRITE (stdout,20) 'DEFLATE',                          &
+     &   'Setting compression in output NetCDF-4/HDF5 files.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' NETCDF4,'
+#endif
 #if defined DENITRIFICATION && defined BIO_FASHAM
       IF (Master) WRITE (stdout,20) 'DENITRIFICATION',                  &
      &   'Add denitrification processes.'
@@ -1219,6 +1225,12 @@
      &   'Nearshore RAdiation Stress Terms.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+18)=' NEARSHORE_MELLOR,'
+#endif
+#ifdef NETCDF4
+      IF (Master) WRITE (stdout,20) 'NETCDF4',                          &
+     &   'Creating NetCDF-4/HDF5 format files.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+9)=' NETCDF4,'
 #endif
 #if defined NLM_OUTER && (defined WEAK_CONSTRAINT || defined IOM)
       IF (Master) WRITE (stdout,20) 'NLM_OUTER',                        &
