@@ -58,10 +58,10 @@
 
         Nbed =  1             ! Number of sediment bed layers
 
-         NAT =  2             ! Number of active tracers (usually, 2)
+         NAT =  1             ! Number of active tracers (usually, 2)
          NPT =  0             ! Number of inactive passive tracers
-         NCS =  1             ! Number of cohesive (mud) sediment tracers
-         NNS =  0             ! Number of non-cohesive (sand) sediment tracers
+         NCS =  0             ! Number of cohesive (mud) sediment tracers
+         NNS =  1             ! Number of non-cohesive (sand) sediment tracers
 
 ! Domain decomposition parameters for serial, distributed-memory or
 ! shared-memory configurations used to determine tile horizontal range

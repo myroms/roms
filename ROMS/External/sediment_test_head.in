@@ -125,7 +125,7 @@ Hout(iMVbld) == T                               ! bed load at V-points
 
 ! Median sediment grain diameter (mm).
 
-   SAND_SD50 == 1.0d0
+   SAND_SD50 == 0.25d0
 
 ! Sediment concentration (kg/m3).
 
@@ -137,7 +137,7 @@ Hout(iMVbld) == T                               ! bed load at V-points
 
 ! Particle settling velocity (mm/s).
 
-   SAND_WSED == 1.0d0
+   SAND_WSED == 30.0d0
 
 ! Surface erosion rate (kg/m2/s).
 
@@ -145,12 +145,12 @@ Hout(iMVbld) == T                               ! bed load at V-points
 
 ! Critical shear for erosion and deposition (N/m2).
 
- SAND_TAU_CE == 0.1d0
- SAND_TAU_CD == 0.1d0
+ SAND_TAU_CE == 0.19d0
+ SAND_TAU_CD == 0.06d0
 
 ! Porosity (nondimensional: 0.0-1.0):  Vwater/(Vwater+Vsed).
 
-  SAND_POROS == 0.5d0
+  SAND_POROS == 0.9d0
 
 ! Lateral, harmonic and biharmonic, constant, diffusion coefficient.
 
@@ -169,7 +169,7 @@ SAND_AKT_BAK == 5.0d-6                          ! m2/s
 ! Morphological time scale factor (greater than or equal to 1.0). A
 ! value of 1.0 has no scale effect.
 
-SAND_MORPH_FAC == 1.0d0 1.0d0 1.0d0             ! nondimensional
+SAND_MORPH_FAC == 10.0d0                        ! nondimensional
 
 ! Logical switches (TRUE/FALSE) to activate writing of non-cohesive
 ! sediment into HISTORY output file.
