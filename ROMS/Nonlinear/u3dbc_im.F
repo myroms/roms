@@ -145,6 +145,10 @@
             u(Istr,j,k,nout)=u(Istr,j,k,nout)*                          &
      &                       GRID(ng)%umask(Istr,j)
 #   endif
+#   ifdef WET_DRY
+            u(Istr,j,k,nout)=u(Istr,j,k,nout)*                          &
+     &                       GRID(ng)%umask_wet(Istr,j)
+#   endif
           END DO
         END DO
 
@@ -159,6 +163,10 @@
             u(Istr,j,k,nout)=u(Istr,j,k,nout)*                          &
      &                       GRID(ng)%umask(Istr,j)
 #   endif
+#   ifdef WET_DRY
+            u(Istr,j,k,nout)=u(Istr,j,k,nout)*                          &
+     &                       GRID(ng)%umask_wet(Istr,j)
+#   endif
           END DO
         END DO
 
@@ -172,6 +180,10 @@
 #   ifdef MASKING
             u(Istr,j,k,nout)=u(Istr,j,k,nout)*                                &
      &                       GRID(ng)%umask(Istr,j)
+#   endif
+#   ifdef WET_DRY
+            u(Istr,j,k,nout)=u(Istr,j,k,nout)*                                &
+     &                       GRID(ng)%umask_wet(Istr,j)
 #   endif
           END DO
         END DO
@@ -248,6 +260,10 @@
             u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                      &
      &                         GRID(ng)%umask(Iend+1,j)
 #   endif
+#   ifdef WET_DRY
+            u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(Iend+1,j)
+#   endif
           END DO
         END DO
 
@@ -262,6 +278,10 @@
             u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                      &
      &                         GRID(ng)%umask(Iend+1,j)
 #   endif
+#   ifdef WET_DRY
+            u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(Iend+1,j)
+#   endif
           END DO
         END DO
 
@@ -275,6 +295,10 @@
 #   ifdef MASKING
           u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                        &
      &                       GRID(ng)%umask(Iend+1,j)
+#   endif
+#   ifdef WET_DRY
+          u(Iend+1,j,k,nout)=u(Iend+1,j,k,nout)*                        &
+     &                       GRID(ng)%umask_wet(Iend+1,j)
 #   endif
         END DO
       END DO
@@ -354,6 +378,10 @@
             u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jstr-1)
 #   endif
+#   ifdef WET_DRY
+            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jstr-1)
+#   endif
           END DO
         END DO
 
@@ -368,6 +396,10 @@
             u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jstr-1)
 #   endif
+#   ifdef WET_DRY
+            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jstr-1)
+#   endif
           END DO
         END DO
 
@@ -381,6 +413,10 @@
 #   ifdef MASKING
             u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jstr-1)
+#   endif
+#   ifdef WET_MASK
+            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jstr-1)
 #   endif
           END DO
         END DO
@@ -401,6 +437,10 @@
 #   ifdef MASKING
             u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jstr-1)
+#   endif
+#   ifdef WET_DRY
+            u(i,Jstr-1,k,nout)=u(i,Jstr-1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jstr-1)
 #   endif
           END DO
         END DO
@@ -468,6 +508,10 @@
             u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jend+1)
 #   endif
+#   ifdef WET_DRY
+            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jend+1)
+#   endif
           END DO
         END DO
 
@@ -482,6 +526,10 @@
             u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jend+1)
 #   endif
+#   ifdef WET_DRY
+            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jend+1)
+#   endif
           END DO
         END DO
 
@@ -495,6 +543,10 @@
 #   ifdef MASKING
             u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jend+1)
+#   endif
+#   ifdef WET_DRY
+            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jend+1)
 #   endif
           END DO
         END DO
@@ -515,6 +567,10 @@
 #   ifdef MASKING
             u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
      &                         GRID(ng)%umask(i,Jend+1)
+#   endif
+#   ifdef WET_DRY
+            u(i,Jend+1,k,nout)=u(i,Jend+1,k,nout)*                      &
+     &                         GRID(ng)%umask_wet(i,Jend+1)
 #   endif
           END DO
         END DO

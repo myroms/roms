@@ -215,6 +215,7 @@
         integer  :: idRv3d        ! RHS of total V-momentum
         integer  :: idRxpo        ! river runoff XI-positions
         integer  :: idRvsh        ! river runoff transport profile
+        integer  :: idRwet        ! wet/dry mask on RHO-points
         integer  :: idRzet        ! RHS of free-surface
         integer  :: idrain        ! rainfall rate
         integer  :: idSdif        ! vertical S-diffusion coefficient
@@ -272,6 +273,7 @@
         integer  :: idUVer        ! 3D velocity error variance
         integer  :: idUVse        ! surface velocity error variance
         integer  :: idUvel        ! 3D U-velocity
+        integer  :: idUwet        ! wet/dry mask on U-points
         integer  :: idu2dD        ! detided 2D U-velocity
         integer  :: idu2dH        ! 2D U-velocity tide harmonics
         integer  :: idu3dD        ! detided 3D U-velocity
@@ -306,6 +308,7 @@
         integer  :: idVtlf        ! 3D V-velocity impulse forcing
         integer  :: idVvel        ! 3D V-velocity
         integer  :: idVvis        ! vertical viscosity coefficient
+        integer  :: idVwet        ! wet/dry mask on V-points
         integer  :: idv2dD        ! detided 2D U-velocity
         integer  :: idv2dH        ! 2D U-velocity tide harmonics
         integer  :: idv3dD        ! detided 3D U-velocity
@@ -323,7 +326,6 @@
         integer  :: idWdis        ! wind-induced wave dissipation
         integer  :: idWdir        ! wind-induced wave direction
         integer  :: idWlen        ! wind-induced wave length
-        integer  :: idWmsk        ! wet-dry masking
         integer  :: idWptp        ! wind-induced surface wave period
         integer  :: idWpbt        ! wind-induced bottom wave period
         integer  :: idWorb        ! wind-induced wave orbital velocity
@@ -1199,6 +1201,12 @@
                 idTbry(isouth,isalt)=varid
               CASE ('idTbry(inorth,isalt)')
                 idTbry(inorth,isalt)=varid
+              CASE ('idRwet')
+                idRwet=varid
+              CASE ('idUwet')
+                idUwet=varid
+              CASE ('idVwet')
+                idVwet=varid
               CASE ('idPair')
                 idPair=varid
               CASE ('idTair')
@@ -1235,8 +1243,6 @@
                 idWdir=varid
               CASE ('idWlen')
                 idWlen=varid
-              CASE ('idWmsk')
-                idWmsk=varid
               CASE ('idWptp')
                 idWptp=varid
               CASE ('idWpbt')

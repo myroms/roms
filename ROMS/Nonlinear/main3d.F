@@ -87,6 +87,9 @@
 # if defined AVERAGES && !defined ADJOINT
       USE set_avg_mod, ONLY : set_avg
 # endif
+# ifdef MOVE_SET_DEPTH
+      USE set_depth_mod, ONLY : set_depth
+# endif
       USE set_massflux_mod, ONLY : set_massflux
 # if defined SSH_TIDES || defined UV_TIDES
       USE set_tides_mod, ONLY : set_tides
@@ -490,6 +493,22 @@
 !$OMP END PARALLEL DO
         END IF
       END DO
+
+# ifdef MOVE_SET_DEPTH
+!
+!-----------------------------------------------------------------------
+!  Recompute depths and thicknesses using the new time filtered
+!  free-surface.  This call was moved from "step2d" to here.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*(thread+1)-1,subs*thread,-1
+          CALL set_depth (ng, TILE)
+        END DO
+      END DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Time-step 3D momentum equations.

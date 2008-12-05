@@ -79,6 +79,8 @@
 # ifdef TS_MPDATA
 #  ifdef WET_DRY
      &                    GRID(ng) % rmask_wet,                         &
+     &                    GRID(ng) % umask_wet,                         &
+     &                    GRID(ng) % vmask_wet,                         &
 #  endif
      &                    GRID(ng) % omn,                               &
      &                    GRID(ng) % om_u,                              &
@@ -138,7 +140,7 @@
 # endif
 # ifdef TS_MPDATA
 #  ifdef WET_DRY
-     &                          rmask_wet,                              &
+     &                          rmask_wet, umask_wet, vmask_wet,        &
 #  endif
      &                          omn, om_u, om_v, on_u, on_v,            &
 # endif
@@ -212,6 +214,8 @@
 #  ifdef TS_MPDATA
 #   ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: umask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
 #   endif
       real(r8), intent(in) :: omn(LBi:,LBj:)
       real(r8), intent(in) :: om_u(LBi:,LBj:)
@@ -281,6 +285,8 @@
 #  ifdef TS_MPDATA
 #   ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
 #   endif
       real(r8), intent(in) :: omn(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
@@ -958,7 +964,7 @@
      &                          rmask, umask, vmask,                    &
 #  endif
 #  ifdef WET_DRY
-     &                          rmask_wet,                              &
+     &                          rmask_wet, umask_wet, vmask_wet,        &
 #  endif
      &                          pm, pn, omn, om_u, on_v,                &
      &                          z_r, oHz,                               &

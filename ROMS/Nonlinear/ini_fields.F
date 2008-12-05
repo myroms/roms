@@ -839,6 +839,7 @@
      &                    GRID(ng) % rmask,                             &
 # endif
 # ifdef WET_DRY
+     &                    GRID(ng) % rmask_wet,                         &
      &                    GRID(ng) % h,                                 &
 # endif
 # ifdef SOLVE3D
@@ -858,6 +859,7 @@
      &                          rmask,                                  &
 # endif
 # ifdef WET_DRY
+     &                          rmask_wet,                              &
      &                          h,                                      &
 # endif
 # ifdef SOLVE3D
@@ -904,6 +906,7 @@
 #  endif
 #  ifdef WET_DRY
       real(r8), intent(in) :: h(LBi:,LBj:)
+      real(r8), intent(inout) :: rmask_wet(LBi:,LBj:)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: Zt_avg1(LBi:,LBj:)
@@ -917,6 +920,7 @@
 #  endif
 #  ifdef WET_DRY
       real(r8), intent(in) :: h(LBi:UBi,LBj:UBj)
+      real(r8), intent(inout) :: rmask_wet(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef SOLVE3D
       real(r8), intent(inout) :: Zt_avg1(LBi:UBi,LBj:UBj)
@@ -951,6 +955,9 @@
 # ifdef WET_DRY
             IF (cff1.le.(Dcrit(ng)-h(i,j))) THEN
               cff1=Dcrit(ng)-h(i,j)
+              rmask_wet(i,j)=0.0_r8
+            ELSE
+              rmask_wet(i,j)=1.0_r8*rmask(i,j)
             END IF
 # endif
             zeta(i,j,kstp)=cff1
@@ -1012,6 +1019,11 @@
      &                          zeta(:,:,knew))
 #  endif
       END IF
+#  ifdef WET_DRY
+        CALL exchange_r2d_tile (ng, tile,                               &
+     &                          LBi, UBi, LBj, UBj,                     &
+     &                          rmask_wet)
+#  endif
 # endif
 
 # ifdef DISTRIBUTE
@@ -1041,6 +1053,12 @@
      &                      zeta(:,:,knew))
 #  endif
       END IF
+#  ifdef WET_DRY
+        CALL mp_exchange2d (ng, tile, model, 1,                         &
+     &                      LBi, UBi, LBj, UBj,                         &
+     &                      NghostPoints, EWperiodic, NSperiodic,       &
+     &                      rmask_wet)
+#  endif
 # endif
 
 # ifdef SOLVE3D

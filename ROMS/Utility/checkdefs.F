@@ -2672,15 +2672,13 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+14)=' ZOS_HSIG,'
 #endif
-#if defined TANGENT || defined TL_IOMS || defined ADJOINT
 !
 !-----------------------------------------------------------------------
-!  Stop if unsupported C-preprocessing options are activated for the
-!  adjoint-based algorithms.
+!  Stop if unsupported C-preprocessing options or report issues with
+!  particular options.
 !-----------------------------------------------------------------------
 !
       CALL checkadj
-#endif
 !
 !-----------------------------------------------------------------------
 !  Check C-preprocessing options.

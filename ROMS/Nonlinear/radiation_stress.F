@@ -65,7 +65,8 @@
      &                            GRID(ng) % vmask,                     &
 # endif
 # ifdef WET_DRY
-     &                            GRID(ng) % rmask_wet,                 &
+     &                            GRID(ng) % umask_wet,                 &
+     &                            GRID(ng) % vmask_wet,                 &
 # endif
      &                            GRID(ng) % om_u,                      &
      &                            GRID(ng) % om_v,                      &
@@ -134,7 +135,7 @@
      &                                  pmask, rmask, umask, vmask,     &
 # endif
 # ifdef WET_DRY
-     &                                  rmask_wet,                      &
+     &                                  umask_wet, vmask_wet,           &
 # endif
      &                                  om_u, om_v, on_u, on_v,         &
      &                                  pm, pn,                         &
@@ -195,7 +196,8 @@
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
 #  ifdef WET_DRY
-      real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: umask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: om_u(LBi:,LBj:)
       real(r8), intent(in) :: om_v(LBi:,LBj:)
@@ -257,7 +259,8 @@
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
 #  endif
 #  ifdef WET_DRY
-      real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: om_u(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
@@ -578,8 +581,7 @@
             u_stokes(i,j,k)=u_stokes(i,j,k)*umask(i,j)
 #  endif
 #  ifdef WET_DRY
-            u_stokes(i,j,k)=u_stokes(i,j,k)*                            &
-     &                      rmask_wet(i-1,j)*rmask_wet(i,j)
+            u_stokes(i,j,k)=u_stokes(i,j,k)*umask_wet(i,j)
 #  endif
 !
 !  Finalize computation of stokes tendency term.
@@ -651,8 +653,7 @@
               v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
 #  endif
 #  ifdef WET_DRY
-              v_stokes(i,j,k)=v_stokes(i,j,k)*                          &
-     &                        rmask_wet(i,j-1)*rmask_wet(i,j)
+              v_stokes(i,j,k)=v_stokes(i,j,k)*vmask_wet(i,j)
 #  endif
 !
 !  Finalize computation of stokes tendency term.

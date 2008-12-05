@@ -43,7 +43,7 @@
      &                              rmask, umask, vmask,                &
 #endif
 #ifdef WET_DRY
-     &                              rmask_wet,                          &
+     &                              rmask_wet, umask_wet, vmask_wet,    &
 #endif
      &                              pm, pn, omn, om_u, on_v,            &
      &                              z_r, oHz,                           &
@@ -71,6 +71,8 @@
 #  endif
 #  ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: umask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
 #  endif
       real(r8), intent(in) :: pm(LBi:,LBj:)
       real(r8), intent(in) :: pn(LBi:,LBj:)
@@ -97,6 +99,8 @@
 #  endif
 #  ifdef WET_DRY
       real(r8), intent(in) :: rmask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: pm(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: pn(LBi:UBi,LBj:UBj)
@@ -413,7 +417,7 @@
             Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
 #  endif
 #  ifdef WET_DRY
-            Ua(i,j,k)=Ua(i,j,k)*rmask_wet(i-1,j)*rmask_wet(i,j)
+            Ua(i,j,k)=Ua(i,j,k)*umask_wet(i,j)
 #  endif
           END DO
           DO i=I_RANGE
@@ -625,7 +629,7 @@
             Va(i,j,k)=Va(i,j,k)*vmask(i,j)
 #  endif
 #  ifdef WET_DRY
-            Va(i,j,k)=Va(i,j,k)*rmask_wet(i,j-1)*rmask_wet(i,j)
+            Va(i,j,k)=Va(i,j,k)*vmask_wet(i,j)
 #  endif
           END DO
           DO i=I_RANGE
@@ -989,7 +993,7 @@
             Ua(i,j,k)=Ua(i,j,k)*umask(i,j)
 # endif
 # ifdef WET_DRY
-            Ua(i,j,k)=Ua(i,j,k)*rmask_wet(i-1,j)*rmask_wet(i,j)
+            Ua(i,j,k)=Ua(i,j,k)*umask_wet(i,j)
 # endif
           END DO
         END DO
@@ -1036,7 +1040,7 @@
             Va(i,j,k)=Va(i,j,k)*vmask(i,j)
 # endif
 # ifdef WET_DRY
-            Va(i,j,k)=Va(i,j,k)*rmask_wet(i,j-1)*rmask_wet(i,j)
+            Va(i,j,k)=Va(i,j,k)*vmask_wet(i,j)
 # endif
           END DO
         END DO

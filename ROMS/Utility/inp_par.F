@@ -522,7 +522,6 @@
       inp=1
       out=stdout
 !
-!!    CALL my_getarg (1,Cname)
       IF (MyRank.eq.0) CALL my_getarg (1,Cname)
       DO ng=1,Ngrids
         CALL mp_bcasts (ng, model, Cname, LEN(Cname))
@@ -1378,50 +1377,50 @@
               WRITE (out,280) 'idbath'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idBath,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idBath,:))
 #endif
           ELSE IF (TRIM(KeyWord).eq.'Hout(idFsur)') THEN
             IF (idFsur.eq.0) THEN
               WRITE (out,280) 'idFsur'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idFsur,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idFsur,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbar)') THEN
             IF (idUbar.eq.0) THEN
               WRITE (out,280) 'idUbar'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbar,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbar,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVbar)') THEN
             IF (idVbar.eq.0) THEN
               WRITE (out,280) 'idVbar'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbar,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbar,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUvel)') THEN
             IF (idUvel.eq.0) THEN
               WRITE (out,280) 'idUvel'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVvel)') THEN
             IF (idVvel.eq.0) THEN
               WRITE (out,280) 'idVvel'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idWvel)') THEN
             IF (idWvel.eq.0) THEN
               WRITE (out,280) 'idWvel'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idWvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idOvel)') THEN
             IF (idOvel.eq.0) THEN
               WRITE (out,280) 'idOvel'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idOvel,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idOvel,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idTvar)') THEN
             IF (MAXVAL(idTvar).eq.0) THEN
               WRITE (out,280) 'idTvar'
@@ -1439,199 +1438,199 @@
               WRITE (out,280) 'idUsms'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUsms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUsms,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVsms)') THEN
             IF (idVsms.eq.0) THEN
               WRITE (out,280) 'idVsms'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVsms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVsms,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbms)') THEN
             IF (idUbms.eq.0) THEN
               WRITE (out,280) 'idUbms'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbms,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVbms)') THEN
             IF (idVbms.eq.0) THEN
               WRITE (out,280) 'idVbms'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbms,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbms,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbrs)') THEN
             IF (idUbrs.eq.0) THEN
               WRITE (out,280) 'idUbrs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbrs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbrs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVbrs)') THEN
             IF (idVbrs.eq.0) THEN
               WRITE (out,280) 'idVbrs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbrs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbrs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbws)') THEN
             IF (idUbws.eq.0) THEN
               WRITE (out,280) 'idUbws'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbws,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbws,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVbws)') THEN
             IF (idVbws.eq.0) THEN
               WRITE (out,280) 'idVbws'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbws,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbws,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbcs)') THEN
             IF (idUbcs.eq.0) THEN
               WRITE (out,280) 'idUbcs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbcs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbcs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVbcs)') THEN
             IF (idVbcs.eq.0) THEN
               WRITE (out,280) 'idVbcs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbcs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbcs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbot)') THEN
             IF (idUbot.eq.0) THEN
               WRITE (out,280) 'idUbot'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbot,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbot,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVbot)') THEN
             IF (idVbot.eq.0) THEN
               WRITE (out,280) 'idVbot'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbot,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbot,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idUbur)') THEN
             IF (idUbur.eq.0) THEN
               WRITE (out,280) 'idUbur'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbur,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idUbur,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVbvr)') THEN
             IF (idVbvr.eq.0) THEN
               WRITE (out,280) 'idVbvr'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbvr,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVbvr,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW2xx)') THEN
             IF (idW2xx.eq.0) THEN
               WRITE (out,280) 'idW2xx'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW2xx,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW2xx,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW2xy)') THEN
             IF (idW2xy.eq.0) THEN
               WRITE (out,280) 'idW2xy'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW2xy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW2xy,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW2yy)') THEN
             IF (idW2yy.eq.0) THEN
               WRITE (out,280) 'idW2yy'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW2yy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW2yy,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW3xx)') THEN
             IF (idW3xx.eq.0) THEN
               WRITE (out,280) 'idW3xx'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3xx,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3xx,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW3xy)') THEN
             IF (idW3xy.eq.0) THEN
               WRITE (out,280) 'idW3xy'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3xy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3xy,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW3yy)') THEN
             IF (idW3yy.eq.0) THEN
               WRITE (out,280) 'idW3yy'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3yy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3yy,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW3zx)') THEN
             IF (idW3zx.eq.0) THEN
               WRITE (out,280) 'idW3zx'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3zx,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3zx,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idW3zy)') THEN
             IF (idW3zy.eq.0) THEN
               WRITE (out,280) 'idW3zy'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3zy,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idW3zy,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idU2rs)') THEN
             IF (idU2rs.eq.0) THEN
               WRITE (out,280) 'idU2rs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idV2rs)') THEN
             IF (idV2rs.eq.0) THEN
               WRITE (out,280) 'idV2rs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idU2Sd)') THEN
             IF (idU2Sd.eq.0) THEN
               WRITE (out,280) 'idU2Sd'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idU2Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idV2Sd)') THEN
             IF (idV2Sd.eq.0) THEN
               WRITE (out,280) 'idV2Sd'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idV2Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idU3rs)') THEN
             IF (idU3rs.eq.0) THEN
               WRITE (out,280) 'idU3rs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idU3rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idU3rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idV3rs)') THEN
             IF (idV3rs.eq.0) THEN
               WRITE (out,280) 'idV3rs'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idV3rs,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idV3rs,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idU3Sd)') THEN
             IF (idU3Sd.eq.0) THEN
               WRITE (out,280) 'idU3Sd'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idU3Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idU3Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idV3Sd)') THEN
             IF (idV3Sd.eq.0) THEN
               WRITE (out,280) 'idV3Sd'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idV3Sd,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idV3Sd,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idWamp)') THEN
             IF (idWamp.eq.0) THEN
               WRITE (out,280) 'idWamp'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idWamp,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWamp,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idWlen)') THEN
             IF (idWlen.eq.0) THEN
               WRITE (out,280) 'idWlen'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idWlen,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWlen,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idWdir)') THEN
             IF (idWdir.eq.0) THEN
               WRITE (out,280) 'idWdir'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idWdir,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idWdir,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idTsur)') THEN
             IF (idTsur(itemp).eq.0) THEN
               WRITE (out,280) 'idTsur'
@@ -1649,85 +1648,85 @@
               WRITE (out,280) 'idLhea'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idLhea,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idLhea,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idShea)') THEN
             IF (idShea.eq.0) THEN
               WRITE (out,280) 'idShea'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idShea,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idShea,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idLrad)') THEN
             IF (idLrad.eq.0) THEN
               WRITE (out,280) 'idLrad'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idLrad,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idLrad,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idSrad)') THEN
             IF (idSrad.eq.0) THEN
               WRITE (out,280) 'idSrad'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idSrad,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idSrad,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idevap)') THEN
             IF (idevap.eq.0) THEN
               WRITE (out,280) 'idevap'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idevap,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idevap,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idrain)') THEN
             IF (idrain.eq.0) THEN
               WRITE (out,280) 'idrain'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idrain,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idrain,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idDano)') THEN
             IF (idDano.eq.0) THEN
               WRITE (out,280) 'idDano'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idDano,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idDano,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idVvis)') THEN
             IF (idVvis.eq.0) THEN
               WRITE (out,280) 'idVvis'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idVvis,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idVvis,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idTdif)') THEN
             IF (idTdif.eq.0) THEN
               WRITE (out,280) 'idTdif'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idTdif,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idTdif,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idSdif)') THEN
             IF (idSdif.eq.0) THEN
               WRITE (out,280) 'idSdif'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idSdif,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idSdif,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idHsbl)') THEN
             IF (idHsbl.eq.0) THEN
               WRITE (out,280) 'idHsbl'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idHsbl,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idHsbl,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idHbbl)') THEN
             IF (idHbbl.eq.0) THEN
               WRITE (out,280) 'idHbbl'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idHbbl,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idHbbl,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idMtke)') THEN
             IF (idMtke.eq.0) THEN
               WRITE (out,280) 'idMtke'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idMtke,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idMtke,:))
           ELSE IF (TRIM(KeyWord).eq.'Hout(idMtls)') THEN
             IF (idMtls.eq.0) THEN
               WRITE (out,280) 'idMtls'
               STOP
             END IF
-            Npts=load_l(Nval, Cval, Ngrids, Hout(idMtls,1))
+            Npts=load_l(Nval, Cval, Ngrids, Hout(idMtls,:))
 #if defined SOLVE3D && defined T_PASSIVE
           ELSE IF (TRIM(KeyWord).eq.'Hout(inert)') THEN
             IF (MAXVAL(inert).eq.0) THEN

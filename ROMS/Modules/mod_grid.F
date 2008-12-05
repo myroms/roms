@@ -179,8 +179,14 @@
           real(r8), pointer :: vmask(:,:)
 #endif
 #ifdef WET_DRY
+# ifdef SOLVE3D
+          real(r8), pointer :: rmask_wet_avg(:,:)
+# endif
+          real(r8), pointer :: rmask_full(:,:)
           real(r8), pointer :: rmask_wet(:,:)
+          real(r8), pointer :: umask_full(:,:)
           real(r8), pointer :: umask_wet(:,:)
+          real(r8), pointer :: vmask_full(:,:)
           real(r8), pointer :: vmask_wet(:,:)
 #endif
 #if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
@@ -339,8 +345,14 @@
 #endif
 
 #ifdef WET_DRY
+# ifdef SOLVE3D
+      allocate ( GRID(ng) % rmask_wet_avg(LBi:UBi,LBj:UBj) )
+# endif
+      allocate ( GRID(ng) % rmask_full(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % rmask_wet(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % umask_full(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % umask_wet(LBi:UBi,LBj:UBj) )
+      allocate ( GRID(ng) % vmask_full(LBi:UBi,LBj:UBj) )
       allocate ( GRID(ng) % vmask_wet(LBi:UBi,LBj:UBj) )
 #endif
 
@@ -528,8 +540,14 @@
 #endif
 
 #ifdef WET_DRY
+# ifdef SOLVE3D
+            GRID(ng) % rmask_wet_avg(i,j) = IniVal
+# endif
+            GRID(ng) % rmask_full(i,j) = 1.0_r8
             GRID(ng) % rmask_wet(i,j) = IniVal
+            GRID(ng) % umask_full(i,j) = 1.0_r8
             GRID(ng) % umask_wet(i,j) = IniVal
+            GRID(ng) % vmask_full(i,j) = 1.0_r8
             GRID(ng) % vmask_wet(i,j) = IniVal
 #endif
 

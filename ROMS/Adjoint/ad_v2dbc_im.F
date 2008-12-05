@@ -143,6 +143,94 @@
         dt2d=dtfast(ng)
       END IF
 
+# if defined WET_DRY_NOT_YET
+!
+!-----------------------------------------------------------------------
+!  Impose wetting and drying conditions.
+!
+!  HGA:  need ADM code here for the NLM code below.
+!-----------------------------------------------------------------------
+!
+#  ifndef EW_PERIODIC
+      IF (WESTERN_EDGE) THEN
+        DO j=JstrV,Jend
+!>        cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,j))-1.0_r8)
+!>        cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,j,kout))*                &
+!>   &                GRID(ng)%vmask_wet(Istr-1,j)
+!>        cff=0.5_r8*GRID(ng)%vmask_wet(Istr-1,j)*cff1+                 &
+!>   &        cff2*(1.0_r8-cff1)
+!>        vbar(Istr,j,kout)=vbar(Istr,j,kout)*cff
+        END DO
+      END IF
+      IF (EASTERN_EDGE) THEN
+        DO j=JstrV,Jend
+!>        cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,j))-1.0_r8)
+!>        cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,j,kout))*                &
+!>   &                GRID(ng)%vmask_wet(Iend+1,j)
+!>        cff=0.5_r8*GRID(ng)%vmask_wet(Iend+1,j)*cff1+                 &
+!>   &        cff2*(1.0_r8-cff1)
+!>        vbar(Iend+1,j,kout)=vbar(Iend+1,j,kout)*cff
+        END DO
+      END IF
+#  endif
+#  ifndef NS_PERIODIC
+      IF (SOUTHERN_EDGE) THEN
+        DO i=Istr,Iend
+!>        cff1=ABS(ABS(GRID(ng)%vmask_wet(i,Jstr))-1.0_r8)
+!>        cff2=0.5_r8+DSIGN(0.5_r8,vbar(i,Jstr,kout))*                  &
+!>   &                GRID(ng)%vmask_wet(i,Jstr)
+!>        cff=0.5_r8*GRID(ng)%vmask_wet(i,Jstr)*cff1+                   &
+!>   &        cff2*(1.0_r8-cff1)
+!>        vbar(i,Jstr,kout)=vbar(i,Jstr,kout)*cff
+        END DO
+      END IF
+      IF (NORTHERN_EDGE) THEN
+        DO i=Istr,Iend
+!>        cff1=ABS(ABS(GRID(ng)%vmask_wet(i,Jend+1))-1.0_r8)
+!>        cff2=0.5_r8+DSIGN(0.5_r8,vbar(i,Jend+1,kout))*                &
+!>   &                GRID(ng)%vmask_wet(i,Jend+1)
+!>        cff=0.5_r8*GRID(ng)%vmask_wet(i,Jend+1)*cff1+                 &
+!>   &        cff2*(1.0_r8-cff1)
+!>        vbar(i,Jend+1,kout)=vbar(i,Jend+1,kout)*cff
+        END DO
+      END IF
+#  endif
+#  if !defined EW_PERIODIC && !defined NS_PERIODIC
+      IF ((SOUTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+!>      cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jstr))-1.0_r8)
+!>      cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jstr,kout))*               &
+!>   &              GRID(ng)%vmask_wet(Istr-1,Jstr)
+!>      cff=0.5_r8*GRID(ng)%vmask_wet(Istr-1,Jstr)*cff1+                &
+!>   &      cff2*(1.0_r8-cff1)
+!>      vbar(Istr-1,Jstr,kout)=vbar(Istr-1,Jstr,kout)*cff
+      END IF
+      IF ((SOUTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+!>      cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jstr))-1.0_r8)
+!>      cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jstr,kout))*               &
+!>   &              GRID(ng)%vmask_wet(Iend+1,Jstr)
+!>      cff=0.5_r8*GRID(ng)%vmask_wet(Iend+1,Jstr)*cff1+                &
+!>   &      cff2*(1.0_r8-cff1)
+!>      vbar(Iend+1,Jstr,kout)=vbar(Iend+1,Jstr,kout)*cff
+      END IF
+      IF ((NORTHERN_EDGE).and.(WESTERN_EDGE)) THEN
+!>      cff1=ABS(ABS(GRID(ng)%vmask_wet(Istr-1,Jend+1))-1.0_r8)
+!>      cff2=0.5_r8+DSIGN(0.5_r8,vbar(Istr-1,Jend+1,kout))*             &
+!>   &              GRID(ng)%vmask_wet(Istr-1,Jend+1)
+!>      cff=0.5_r8*GRID(ng)%vmask_wet(Istr-1,Jend+1)*cff1+              &
+!>   &      cff2*(1.0_r8-cff1)
+!>      vbar(Istr-1,Jend+1,kout)=vbar(Istr-1,Jend+1,kout)*cff
+      END IF
+      IF ((NORTHERN_EDGE).and.(EASTERN_EDGE)) THEN
+!>      cff1=ABS(ABS(GRID(ng)%vmask_wet(Iend+1,Jend+1))-1.0_r8)
+!>      cff2=0.5_r8+DSIGN(0.5_r8,vbar(Iend+1,Jend+1,kout))*             &
+!>   &              GRID(ng)%vmask_wet(Iend+1,Jend+1)
+!>      cff=0.5_r8*GRID(ng)%vmask_wet(Iend+1,Jend+1)*cff1+              &
+!>   &      cff2*(1.0_r8-cff1)
+!>      vbar(Iend+1,Jend+1,kout)=vbar(Iend+1,Jend+1,kout)*cff
+      END IF
+#  endif
+# endif
+
 # if !defined EW_PERIODIC && !defined NS_PERIODIC
 !
 !-----------------------------------------------------------------------

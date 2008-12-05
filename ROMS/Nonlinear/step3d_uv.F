@@ -66,6 +66,10 @@
      &                     GRID(ng) % umask,                            &
      &                     GRID(ng) % vmask,                            &
 # endif
+# ifdef WET_DRY
+     &                     GRID(ng) % umask_wet,                        &
+     &                     GRID(ng) % vmask_wet,                        &
+# endif
      &                     GRID(ng) % om_v,                             &
      &                     GRID(ng) % on_u,                             &
      &                     GRID(ng) % pm,                               &
@@ -120,6 +124,9 @@
 # ifdef MASKING
      &                           umask, vmask,                          &
 # endif
+# ifdef WET_DRY
+     &                           umask_wet, vmask_wet,                  &
+# endif
      &                           om_v, on_u, pm, pn,                    &
      &                           Hz, z_r, z_w,                          &
      &                           Akv,                                   &
@@ -173,6 +180,10 @@
       real(r8), intent(in) :: umask(LBi:,LBj:)
       real(r8), intent(in) :: vmask(LBi:,LBj:)
 #  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: umask_wet(LBi:,LBj:)
+      real(r8), intent(in) :: vmask_wet(LBi:,LBj:)
+#  endif
       real(r8), intent(in) :: om_v(LBi:,LBj:)
       real(r8), intent(in) :: on_u(LBi:,LBj:)
       real(r8), intent(in) :: pm(LBi:,LBj:)
@@ -222,6 +233,10 @@
 #  ifdef MASKING
       real(r8), intent(in) :: umask(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: vmask(LBi:UBi,LBj:UBj)
+#  endif
+#  ifdef WET_DRY
+      real(r8), intent(in) :: umask_wet(LBi:UBi,LBj:UBj)
+      real(r8), intent(in) :: vmask_wet(LBi:UBi,LBj:UBj)
 #  endif
       real(r8), intent(in) :: om_v(LBi:UBi,LBj:UBj)
       real(r8), intent(in) :: on_u(LBi:UBi,LBj:UBj)
@@ -595,10 +610,16 @@
 # ifdef MASKING
             u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
 # endif
+# ifdef WET_DRY
+            u(i,j,k,nnew)=u(i,j,k,nnew)*umask_wet(i,j)
+# endif
 # ifdef NEARSHORE_MELLOR
             u_stokes(i,j,k)=u_stokes(i,j,k)-DCs(i,0)
 #  ifdef MASKING
             u_stokes(i,j,k)=u_stokes(i,j,k)*umask(i,j)
+#  endif
+#  ifdef WET_DRY
+            u_stokes(i,j,k)=u_stokes(i,j,k)*umask_wet(i,j)
 #  endif
 # endif
 # ifdef DIAGNOSTICS_UV
@@ -921,10 +942,16 @@
 # ifdef MASKING
               v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
 # endif
+# ifdef WET_DRY
+              v(i,j,k,nnew)=v(i,j,k,nnew)*vmask_wet(i,j)
+# endif
 # ifdef NEARSHORE_MELLOR
               v_stokes(i,j,k)=v_stokes(i,j,k)-DCs(i,0)
 #  ifdef MASKING
               v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
+#  endif
+#  ifdef WET_DRY
+              v_stokes(i,j,k)=v_stokes(i,j,k)*vmask_wet(i,j)
 #  endif
 # endif
 # ifdef DIAGNOSTICS_UV
@@ -1094,10 +1121,16 @@
 #  ifdef MASKING
             u(Istr,j,k,nnew)=u(Istr,j,k,nnew)*umask(Istr,j)
 #  endif
+#  ifdef WET_DRY
+            u(Istr,j,k,nnew)=u(Istr,j,k,nnew)*umask_wet(Istr,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
             u_stokes(Istr,j,k)=u_stokes(Istr,j,k)-CFs(Istr,0)
 #   ifdef MASKING
             u_stokes(Istr,j,k)=u_stokes(Istr,j,k)*umask(Istr,j)
+#   endif
+#   ifdef WET_DRY
+            u_stokes(Istr,j,k)=u_stokes(Istr,j,k)*umask_wet(Istr,j)
 #   endif
 #  endif
           END DO
@@ -1108,10 +1141,16 @@
 #  ifdef MASKING
             u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)*umask(Iend+1,j)
 #  endif
+#  ifdef WET_DRY
+            u(Iend+1,j,k,nnew)=u(Iend+1,j,k,nnew)*umask_wet(Iend+1,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
             u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)-CFs(Iend+1,0)
 #   ifdef MASKING
             u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)*umask(Iend+1,j)
+#   endif
+#   ifdef WET_DRY
+            u_stokes(Iend+1,j,k)=u_stokes(Iend+1,j,k)*umask_wet(Iend+1,j)
 #   endif
 #  endif
           END DO
@@ -1125,10 +1164,16 @@
 #  ifdef MASKING
               u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
 #  endif
+#  ifdef WET_DRY
+              u(i,j,k,nnew)=u(i,j,k,nnew)*umask_wet(i,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
               u_stokes(i,j,k)=u_stokes(i,j,k)-CFs(i,0)
 #   ifdef MASKING
               u_stokes(i,j,k)=u_stokes(i,j,k)*umask(i,j)
+#   endif
+#   ifdef WET_DRY
+              u_stokes(i,j,k)=u_stokes(i,j,k)*umask_wet(i,j)
 #   endif
 #  endif
             END DO
@@ -1141,10 +1186,16 @@
 #  ifdef MASKING
               u(i,j,k,nnew)=u(i,j,k,nnew)*umask(i,j)
 #  endif
+#  ifdef WET_DRY
+              u(i,j,k,nnew)=u(i,j,k,nnew)*umask_wet(i,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
               u_stokes(i,j,k)=u_stokes(i,j,k)-CFs(i,0)
 #   ifdef MASKING
               u_stokes(i,j,k)=u_stokes(i,j,k)*umask(i,j)
+#   endif
+#   ifdef WET_DRY
+              u_stokes(i,j,k)=u_stokes(i,j,k)*umask_wet(i,j)
 #   endif
 #  endif
             END DO
@@ -1255,10 +1306,16 @@
 #  ifdef MASKING
               v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)*vmask(Istr-1,j)
 #  endif
+#  ifdef WET_DRY
+              v(Istr-1,j,k,nnew)=v(Istr-1,j,k,nnew)*vmask_wet(Istr-1,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
               v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)-CFs(Istr-1,0)
 #   ifdef MASKING
               v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)*vmask(Istr-1,j)
+#   endif
+#   ifdef WET_DRY
+              v_stokes(Istr-1,j,k)=v_stokes(Istr-1,j,k)*vmask_wet(Istr-1,j)
 #   endif
 #  endif
             END DO
@@ -1269,10 +1326,16 @@
 #  ifdef MASKING
               v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*vmask(Iend+1,j)
 #  endif
+#  ifdef WET_DRY
+              v(Iend+1,j,k,nnew)=v(Iend+1,j,k,nnew)*vmask_wet(Iend+1,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
               v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)-CFs(Iend+1,0)
 #   ifdef MASKING
               v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)*vmask(Iend+1,j)
+#   endif
+#   ifdef WET_DRY
+              v_stokes(Iend+1,j,k)=v_stokes(Iend+1,j,k)*vmask_wet(Iend+1,j)
 #   endif
 #  endif
             END DO
@@ -1286,10 +1349,16 @@
 #  ifdef MASKING
                 v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
 #  endif
+#  ifdef WET_DRY
+                v(i,j,k,nnew)=v(i,j,k,nnew)*vmask_wet(i,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
                 v_stokes(i,j,k)=v_stokes(i,j,k)-CFs(i,0)
 #   ifdef MASKING
                 v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
+#   endif
+#   ifdef WET_DRY
+                v_stokes(i,j,k)=v_stokes(i,j,k)*vmask_wet(i,j)
 #   endif
 #  endif
               END DO
@@ -1302,10 +1371,16 @@
 #  ifdef MASKING
                 v(i,j,k,nnew)=v(i,j,k,nnew)*vmask(i,j)
 #  endif
+#  ifdef WET_DRY
+                v(i,j,k,nnew)=v(i,j,k,nnew)*vmask_wet(i,j)
+#  endif
 #  ifdef NEARSHORE_MELLOR
                 v_stokes(i,j,k)=v_stokes(i,j,k)-CFs(i,0)
 #   ifdef MASKING
                 v_stokes(i,j,k)=v_stokes(i,j,k)*vmask(i,j)
+#   endif
+#   ifdef WET_DRY
+                v_stokes(i,j,k)=v_stokes(i,j,k)*vmask_wet(i,j)
 #   endif
 #  endif
               END DO

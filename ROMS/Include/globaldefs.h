@@ -951,6 +951,17 @@
 #endif
 
 /*
+** Activate switch to modify MAIN3D to recompute depths and
+** thicknesses using the new time filtered free-surface.  This
+** call is moved from STEP2D to facilitate nesting.
+** This strategy needs to be tested in the TLM, RPM, and ADM.
+*/
+
+#if !(defined ADJOINT || defined TANGENT || defined TL_IOMS)
+# define MOVE_SET_DEPTH
+#endif
+
+/*
 ** Check if any analytical expression is defined.
 */
 

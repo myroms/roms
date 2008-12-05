@@ -180,6 +180,39 @@
 
 !
 !------------------------------------------------------------------------------
+!  Wet/dry masks.
+!------------------------------------------------------------------------------
+!
+
+'wetdry_mask_rho'                                  ! Input/Output
+  'wet/dry mask on RHO-points'
+  'nondimensional'
+  'wetdry_mask_rho, scalar, series'
+  'ocean_time'
+  'idRwet'
+  'r2dvar'
+  1.0d0
+
+'wetdry_mask_u'                                    ! Input/Output
+  'wet/dry mask on U-points'
+  'nondimensional'
+  'wetdry_mask_u, scalar, series'
+  'ocean_time'
+  'idUwet'
+  'u2dvar'
+  1.0d0
+
+'wetdry_mask_v'                                    ! Input/Output
+  'wet/dry mask on V-points'
+  'nondimensional'
+  'wetdry_mask_v, scalar, series'
+  'ocean_time'
+  'idVwet'
+  'v2dvar'
+  1.0d0
+
+!
+!------------------------------------------------------------------------------
 !  Detided variables
 !------------------------------------------------------------------------------
 !
@@ -2563,15 +2596,6 @@
   'Db_zphi, scalar, series'
   'ocean_time'
   'idBott(idbzp)'
-  'r2dvar'
-  1.0d0
-
-'wet_dry_masking'                                  ! Input/Output
-  'wet_dry mask'
-  '1'                                              ! []
-  'wet masking, scalar, series'
-  'ocean_time'
-  'idWmsk'
   'r2dvar'
   1.0d0
 
