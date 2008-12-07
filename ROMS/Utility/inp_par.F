@@ -3925,8 +3925,8 @@
             Npts=load_r(Nval, Rval, Ngrids, GRmaxPzl)
           ELSE IF (TRIM(KeyWord).eq.'KGraS') THEN
             Npts=load_r(Nval, Rval, Ngrids, KGraS)
-          ELSE IF (TRIM(KeyWord).eq.'KGral') THEN
-            Npts=load_r(Nval, Rval, Ngrids, KGral)
+          ELSE IF (TRIM(KeyWord).eq.'KGraL') THEN
+            Npts=load_r(Nval, Rval, Ngrids, KGraL)
           ELSE IF (TRIM(KeyWord).eq.'KGraP') THEN
             Npts=load_r(Nval, Rval, Ngrids, KGraP)
           ELSE IF (TRIM(KeyWord).eq.'LamS') THEN
@@ -3983,6 +3983,8 @@
             Npts=load_r(Nval, Rval, Ngrids, AlphaZS)
           ELSE IF (TRIM(KeyWord).eq.'AlphaZL') THEN
             Npts=load_r(Nval, Rval, Ngrids, AlphaZL)
+          ELSE IF (TRIM(KeyWord).eq.'AlphaZP') THEN
+            Npts=load_r(Nval, Rval, Ngrids, AlphaZP)
           ELSE IF (TRIM(KeyWord).eq.'BetaZS') THEN
             Npts=load_r(Nval, Rval, Ngrids, BetaZS)
           ELSE IF (TRIM(KeyWord).eq.'BetaZL') THEN
