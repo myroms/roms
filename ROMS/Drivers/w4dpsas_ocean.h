@@ -1045,11 +1045,11 @@
 !  NetCDF record index counter is saved because this counter is used
 !  to write initial conditions.
 !
-          IndxSave=tINIindx(ng)
+          indxSave=tINIindx(ng)
           tINIindx(ng)=outer+2
           CALL initial (ng)
           IF (exit_flag.ne.NoError) RETURN
-          tINIindx(ng)=IndxSave
+          tINIindx(ng)=indxSave
 !
 !  Activate switch to write out final misfit between model and
 !  observations.
