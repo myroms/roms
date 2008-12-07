@@ -35,7 +35,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: got_var(NV)
+      logical :: got_Nadjust, got_var(NV)
 
       integer, parameter :: Natt = 24
 
@@ -61,7 +61,7 @@
 !
 !=======================================================================
 !  Open existing representer model initial conditions and define new
-!  new variables.
+!  variables.
 !=======================================================================
 !
       IF (exit_flag.ne.NoError) RETURN
@@ -142,6 +142,7 @@
 !-----------------------------------------------------------------------
 !
       DEFINE: IF (Ldefine) THEN
+        got_Nadjust=.FALSE.
         DO i=1,n_dim
           SELECT CASE (TRIM(ADJUSTL(dim_name(i))))
             CASE ('xi_rho')
@@ -162,12 +163,17 @@
             CASE ('s_w')
               DimIDs(10)=dim_id(i)
 #  endif
+            CASE ('Nadjust')
+              frecdim=dim_id(i)
+              got_Nadjust=.TRUE.
           END SELECT
         END DO
         DimIDs(12)=rec_id
-        status=def_dim(ng, iRPM, ncIRPid(ng), ncname, 'Nadjust',        &
-     &                 Nfrec(ng), frecdim)
-        IF (exit_flag.ne.NoError) RETURN
+        IF (.not.got_Nadjust) THEN
+          status=def_dim(ng, iRPM, ncIRPid(ng), ncname, 'Nadjust',      &
+     &                   Nfrec(ng), frecdim)
+          IF (exit_flag.ne.NoError) RETURN
+        END IF
 !
 !  Set number of dimensions for output variables.
 !

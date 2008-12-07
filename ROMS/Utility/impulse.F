@@ -407,7 +407,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, status
-      integer :: Irec, Iold, Inow, Inxt, Iout, Isav
+      integer :: Irec, Iold, Inow, Inxt, Iout, Isav, MyType
 
       integer, dimension(4) :: Vsize(4)
 
@@ -453,7 +453,8 @@
 !
 !  Read initial time record.
 !
-      status=nf_fread2d(ng, model, INPncid, INPvid, Irec, gtype,        &
+      MyType=gtype
+      status=nf_fread2d(ng, model, INPncid, INPvid, Irec, MyType,       &
      &                  Vsize, LBi, UBi, LBj, UBj,                      &
      &                  scale, Fmin, Fmax,                              &
 # ifdef MASKING
@@ -472,7 +473,8 @@
 !  Read next time record.
 !
       IF (Nrec.gt.1) THEN
-        status=nf_fread2d(ng, model, INPncid, INPvid, Irec+1, gtype,    &
+        MyType=gtype
+        status=nf_fread2d(ng, model, INPncid, INPvid, Irec+1, MyType,   &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    scale, Fmin, Fmax,                            &
 # ifdef MASKING
@@ -503,7 +505,8 @@
 !  Write out initial adjoint impulse forcing to last record.
 !
       Iout=Nrec
-      status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, gtype,       &
+      MyType=gtype
+      status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, MyType,      &
      &                   LBi, UBi, LBj, UBj, scale,                     &
 # ifdef MASKING
      &                   mask,                                          &
@@ -530,7 +533,8 @@
 !
 !  Read in next time record.
 !
-        status=nf_fread2d(ng, model, INPncid, INPvid, Irec+1, gtype,    &
+        MyType=gtype
+        status=nf_fread2d(ng, model, INPncid, INPvid, Irec+1, MyType,   &
      &                    Vsize, LBi, UBi, LBj, UBj,                    &
      &                    scale, Fmin, Fmax,                            &
 # ifdef MASKING
@@ -560,7 +564,8 @@
 !  ascending time order.
 !
         Iout=Iout-1
-        status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, gtype,     &
+        MyType=gtype
+        status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, MyType,    &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
      &                     mask,                                        &
@@ -598,7 +603,8 @@
 !  Write out last impulse forcing into first record.
 !
         Iout=1
-        status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, gtype,     &
+        MyType=gtype
+        status=nf_fwrite2d(ng, model, OUTncid, OUTvid, Iout, MyType,    &
      &                     LBi, UBi, LBj, UBj, scale,                   &
 # ifdef MASKING
      &                     mask,                                        &
@@ -681,7 +687,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, k, status
-      integer :: Irec, Iold, Inow, Inxt, Iout, Isav
+      integer :: Irec, Iold, Inow, Inxt, Iout, Isav, MyType
 
       integer, dimension(4) :: Vsize(4)
 
@@ -727,7 +733,8 @@
 !
 !  Read initial time record.
 !
-      status=nf_fread3d(ng, model, INPncid, INPvid, Irec, gtype,        &
+      MyType=gtype
+      status=nf_fread3d(ng, model, INPncid, INPvid, Irec, MyType,       &
      &                  Vsize, LBi, UBi, LBj, UBj, LBk, UBk,            &
      &                  scale, Fmin, Fmax,                              &
 #  ifdef MASKING
@@ -746,7 +753,8 @@
 !  Read next time record.
 !
       IF (Nrec.gt.1) THEN
-        status=nf_fread3d(ng, model, INPncid, INPvid, Irec+1, gtype,    &
+        MyType=gtype
+        status=nf_fread3d(ng, model, INPncid, INPvid, Irec+1, MyType,   &
      &                    Vsize, LBi, UBi, LBj, UBj, LBk, UBk,          &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
@@ -779,7 +787,8 @@
 !  Write out initial impulse forcing record to last record.
 !
       Iout=Nrec
-      status=nf_fwrite3d(ng, model, OUTncid, OUTvid, Iout, gtype,       &
+      MyType=gtype
+      status=nf_fwrite3d(ng, model, OUTncid, OUTvid, Iout, MyType,      &
      &                   LBi, UBi, LBj, UBj, LBk, UBk, scale,           &
 #  ifdef MASKING
      &                   mask,                                          &
@@ -806,7 +815,8 @@
 !
 !  Read in next time record.
 !
-        status=nf_fread3d(ng, model, INPncid, INPvid, Irec+1, gtype,    &
+        MyType=gtype
+        status=nf_fread3d(ng, model, INPncid, INPvid, Irec+1, MyType,   &
      &                    Vsize, LBi, UBi, LBj, UBj, LBk, UBk,          &
      &                    scale, Fmin, Fmax,                            &
 #  ifdef MASKING
@@ -838,7 +848,8 @@
 !  ascending time order.
 !
         Iout=Iout-1
-        status=nf_fwrite3d(ng, model, OUTncid, OUTvid, Iout, gtype,     &
+        MyType=gtype
+        status=nf_fwrite3d(ng, model, OUTncid, OUTvid, Iout, MyType,    &
      &                     LBi, UBi, LBj, UBj, LBk, UBk, scale,         &
 #  ifdef MASKING
      &                     mask,                                        &
@@ -877,7 +888,8 @@
 !  Write out last impulse forcing into first record
 !
         Iout=1
-        status=nf_fwrite3d(ng, model, OUTncid, OUTvid, 1, gtype,        &
+        MyType=gtype
+        status=nf_fwrite3d(ng, model, OUTncid, OUTvid, 1, MyType,       &
      &                     LBi, UBi, LBj, UBj, LBk, UBk, scale,         &
 #  ifdef MASKING
      &                     mask,                                        &

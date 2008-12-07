@@ -180,6 +180,9 @@
       USE ini_adjust_mod, ONLY : load_ADtoTL
       USE ini_adjust_mod, ONLY : load_TLtoAD
       USE mod_ocean, ONLY : initialize_ocean
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces, ONLY : initialize_forces
+#endif
       USE normalization_mod, ONLY : normalization
 #ifdef BALANCE_OPERATOR
       USE tl_balance_mod, ONLY: tl_balance
@@ -198,7 +201,7 @@
       logical :: Lweak
 
       integer :: my_inner, my_outer
-      integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2
+      integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2, indxSave
       integer :: i, lstr, my_iic, ng, rec, status, subs, tile, thread
 
       real(r8) :: MyTime, LB_time, UB_time
@@ -211,6 +214,10 @@
 !
 !  Initialize relevant parameters.
 !
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Lfinp(ng)=1         ! forcing index for input
+        Lfout(ng)=1         ! forcing index for output history files
+#endif
         Lold(ng)=1          ! old minimization time index
         Lnew(ng)=2          ! new minimization time index
         Lini=1              ! NLM initial conditions record in INIname
@@ -366,6 +373,7 @@
 !
         OUTER_LOOP : DO my_outer=1,Nouter
           outer=my_outer
+          inner=0
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run nonlinear model and compute a "prior estimate" state trajectory,
@@ -393,11 +401,15 @@
           IF (outer.gt.1) THEN
 !
 !  Initialize always the nonlinear model with the background or
-!  reference state (INIname, record Lbck).
+!  reference state (INIname, record Lbck). Notice that NetCDF record
+!  index counter is saved because this counter is used to write initial
+!  conditions.
 !
+            indxSave=tINIindx(ng)
             tINIindx(ng)=Lbck
             CALL initial (ng)
             IF (exit_flag.ne.NoError) RETURN
+            tINIindx(ng)=indxSave
 !
 !  Run nonlinear model using the nonlinear trajectory as a basic
 !  state.  Compute model solution at observation points, H * X_n.
@@ -425,7 +437,6 @@
 !  Set approximation vector PSI to representer coefficients Beta_n.
 !  Here, PSI is set to misfit between observations and model, H_n.
 !
-          inner=0
           CALL congrad (ng, iNLM, outer, inner, Ninner, converged)
           IF (exit_flag.ne.NoError) RETURN
 
@@ -497,8 +508,11 @@
             END DO
 !$OMF END PARALLEL DO
 !
-!  Convolve initial conditions record (ADJname, record Nrec) with
-!  initial conditions background error covariance. Since routine
+!  Convolve initial conditions record and adjoint forcing
+!  (ADJname, record Nrec) with  initial conditions background error
+!  covariance. Note that we only do this for the forcing in
+!  record Nrec since this is the only record for which
+!  the adjoing forcing arrays are complete. Since routine
 !  "get_state" loads data into the ghost points, the adjoint
 !  solution is read into the tangent linear state arrays by using
 !  iTLM instead of iADM in the calling arguments.
@@ -557,7 +571,8 @@
             END DO
 !$OMP END PARALLEL DO
 !
-!  Write out tangent linear model initial conditions for next inner
+!  Write out tangent linear model initial conditions and tangent
+!  linear surface forcing adjustments for next inner
 !  loop into ITLname (record Rec1). The tangent model initial
 !  conditions are set to the convolved adjoint solution.
 !
@@ -565,7 +580,11 @@
             IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve all adjoint records in ADJname and
-!  impose model error covariance.
+!  impose model error covariance. NOTE: We will not use the
+!  convolved forcing increments generated here since these arrays
+!  do not contain the complete solution and are redundant.
+!  AMM: We might want to get rid of these unwanted records to
+!  avoid any confusion in the future.
 !
             IF (Nrec.gt.1) THEN
               DO rec=1,Nrec
@@ -749,7 +768,7 @@
 
           END DO INNER_LOOP
 !
-!  Close tangent linear NetCDF file. (HH
+!  Close tangent linear NetCDF file.
 !
           status=nf90_close(ncTLMid(ng))
           ncTLMid(ng)=-1
@@ -890,11 +909,15 @@
           END DO
 !$OMP END PARALLEL DO
 !
-!  Write out representer model initial conditions into INIname, record
-!  Lini.
+!  Write out nonlinear model initial conditions into INIname, record
+!  tINIindx.
 !
           CALL wrt_ini (ng, Lnew(ng))
           IF (exit_flag.ne.NoError) RETURN
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+          CALL wrt_frc_AD (ng, Lold(ng), tINIindx(ng))
+          IF (exit_flag.ne.NoError) RETURN
+#endif
 !
 !  If weak constraint, convolve adjoint records in ADJname and impose
 !  model error covariance.
@@ -1018,11 +1041,15 @@
             FrequentImpulse=.TRUE. 
           END IF
 !
-!  Initialize nonlinear model INIname file, record Rec2.
+!  Initialize nonlinear model INIname file, record Rec2. Notice that
+!  NetCDF record index counter is saved because this counter is used
+!  to write initial conditions.
 !
+          IndxSave=tINIindx(ng)
           tINIindx(ng)=outer+2
           CALL initial (ng)
           IF (exit_flag.ne.NoError) RETURN
+          tINIindx(ng)=IndxSave
 !
 !  Activate switch to write out final misfit between model and
 !  observations.
@@ -1060,54 +1087,6 @@
           ncFWDid(ng)=-1
 
         END DO OUTER_LOOP
-#ifdef OLD_DRIVER
-!
-!-----------------------------------------------------------------------
-!  Compute new nonlinear model initial conditions by adding last
-!  convolved adjoint solution (Beta(t=0), currently saved in
-!  record Nrec of ADJname) to the background state.
-!-----------------------------------------------------------------------
-!
-!  Read in adjoint (t=0) and background state.
-!
-        ADrec=Nrec
-        CALL get_state (ng, iADM, 4, ADJname(ng), ADrec, Lold(ng))
-        IF (exit_flag.ne.NoError) RETURN
-        CALL get_state (ng, iNLM, 1, INIname(ng), Lbck, Lini)
-        IF (exit_flag.ne.NoError) RETURN
-!
-!  Notice that "ini_fields" is called below for output purposes only. 
-!  It computes the vertically integrated momentum in 3D applications.
-!  In order to use the correct fields, the model time indices are set
-!  to Lini.
-!
-          kstp(ng)=Lini
-#ifdef SOLVE3D
-          nstp(ng)=Lini
-#endif
-!
-!  Compute nonlinear model initial conditions.
-!
-!$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
-!$OMP&            SHARED(numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1
-            CALL ini_adjust (ng, TILE, Lold(ng), Lini)
-            CALL ini_fields (ng, TILE, iNLM)
-          END DO
-        END DO
-!$OMP END PARALLEL DO
-!
-!  Write out new nonlinear model initial conditions.
-!
-        IF (LcycleINI(ng)) THEN
-          tINIindx(ng)=0
-          NrecINI(ng)=1
-        END IF
-        CALL wrt_ini (ng, Lini)
-        IF (exit_flag.ne.NoError) RETURN
-#endif /* OLD_DRIVER */
 !
 !  Compute and report model-observation comparison statistics.
 !

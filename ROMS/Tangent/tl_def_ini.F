@@ -81,7 +81,7 @@
       END IF
 !
 !=======================================================================
-!  Create a new Lanczos eigenvectors file.
+!  Create a new tangent linear model initialization file.
 !=======================================================================
 !
       DEFINE : IF (LdefITL(ng)) THEN
@@ -663,8 +663,8 @@
 # endif
         END DO
 !
-!  Check if Lanczos eigenvectors variables are available in input
-!  NetCDF file.
+!  Check if tangent linear mode initialization variables are available
+!  in input NetCDF file.
 !
         IF (.not.got_var(idtime)) THEN
           IF (Master) WRITE (stdout,80) TRIM(Vname(1,idtime)),          &

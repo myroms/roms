@@ -28,6 +28,7 @@
       USE analytical_mod, ONLY : ana_vmix
 # endif
 # if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE frc_adjust_mod, ONLY : frc_RPadjust
       USE frc_adjust_mod, ONLY : load_TLforcing
 # endif
 # ifdef AIR_OCEAN_NOT_YET
@@ -51,7 +52,7 @@
 !!    USE rp_bbl_mod, ONLY : rp_bblm
 # endif
 # ifdef BULK_FLUXES
-!!    USE rp_bulk_flux_mod, ONLY : rp_bulk_flux
+      USE rp_bulk_flux_mod, ONLY : rp_bulk_flux
 # endif
 # ifdef BVF_MIXING_NOT_YET
 !!    USE rp_bvf_mix_mod, ONLY : rp_bvf_mix
@@ -184,7 +185,6 @@
 !-----------------------------------------------------------------------
 !
       IF (FrequentImpulse) THEN
-!
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
         DO thread=0,numthreads-1
           subs=NtileX(ng)*NtileE(ng)/numthreads
@@ -327,6 +327,26 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Load surface forcing into storage arrays. Skip the last output
+!  timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_RPadjust (ng, TILE, Lfinp(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute tangent linear vertical mixing coefficients for momentum and
@@ -351,22 +371,6 @@
       END DO
 !$OMP END PARALLEL DO
 
-# ifdef ADJUST_WSTRESS
-!
-!-----------------------------------------------------------------------
-!  Load surface forcing to storage arrays.
-!-----------------------------------------------------------------------
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL load_TLforcing (ng, TILE, Lfout(ng))
-        END DO
-      END DO
-!$OMP END PARALLEL DO
-# endif
-
 # ifdef SET_ZETA
 !
 !-----------------------------------------------------------------------
@@ -380,7 +384,7 @@
       DO thread=0,numthreads-1
         subs=NtileX(ng)*NtileE(ng)/numthreads
         DO tile=subs*thread,subs*(thread+1)-1,+1     ! irreversible loop
-          CALL set_zeta (ng, TILE)
+          CALL rp_set_zeta (ng, TILE)
 #  ifdef DIAGNOSTICS
 !!        CALL rp_set_diags (ng, TILE)
 #  endif

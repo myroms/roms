@@ -323,10 +323,6 @@
 !-----------------------------------------------------------------------
 !  Set fields for vertical boundary conditions. Process tidal forcing,
 !  if any.
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-!  Interpolate surface forcing increments and load surface forcing
-!  into storage arrays.
-# endif
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
@@ -335,10 +331,6 @@
         DO tile=subs*thread,subs*(thread+1)-1,+1
 # ifdef BULK_FLUXES_NOT_YET
           CALL tl_bulk_flux (ng, TILE)
-# endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-          CALL frc_TLadjust (ng, TILE, Lfinp(ng))
-          CALL load_TLforcing (ng, TILE, Lfout(ng))
 # endif
 # ifdef BBL_MODEL_NOT_YET
           CALL tl_bblm (ng, TILE)
@@ -350,6 +342,26 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Load surface forcing into storage arrays. Skip the last output
+!  timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_TLadjust (ng, TILE, Lfinp(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute tangent linear vertical mixing coefficients for momentum and
@@ -396,8 +408,6 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
-
-#  if !(defined WEAK_CONSTRAINT || defined IOM)
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice
@@ -407,7 +417,6 @@
 !
       CALL tl_output (ng)
       IF ((exit_flag.ne.NoError).or.(iic(ng).eq.(ntend(ng)+1))) RETURN
-#  endif
 !
 !-----------------------------------------------------------------------
 !  Compute right-hand-side terms for 3D equations.

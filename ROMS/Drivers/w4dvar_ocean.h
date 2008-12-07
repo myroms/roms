@@ -176,6 +176,9 @@
       USE ini_adjust_mod, ONLY : rp_ini_adjust
       USE ini_adjust_mod, ONLY : load_ADtoTL
       USE ini_adjust_mod, ONLY : load_TLtoAD
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+      USE mod_forces, ONLY : initialize_forces
+#endif
       USE mod_ocean, ONLY : initialize_ocean
       USE normalization_mod, ONLY : normalization
       USE mod_forces, ONLY : initialize_forces
@@ -209,6 +212,10 @@
 !
 !  Initialize relevant parameters.
 !
+#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+        Lfinp(ng)=1         ! forcing index for input
+        Lfout(ng)=1         ! forcing index for output history files
+#endif
         Lold(ng)=1          ! old minimization time index
         Lnew(ng)=2          ! new minimization time index
         Lini=1              ! NLM initial conditions record in INIname
@@ -295,14 +302,11 @@
         CALL def_mod (ng)
         IF (exit_flag.ne.NoError) RETURN
 !
-!  Inquire IDs of tangent linear and representer model initial
-!  conditions NetCDF files.
+!  Inquire IDs of tangent linear initial conditions in NetCDF file.
 !
         LdefITL(ng)=.FALSE.
         LdefIRP(ng)=.FALSE.
         CALL tl_def_ini (ng)
-        IF (exit_flag.ne.NoError) RETURN
-        CALL rp_def_ini (ng)
         IF (exit_flag.ne.NoError) RETURN
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -366,6 +370,7 @@
 !
         OUTER_LOOP : DO my_outer=1,Nouter
           outer=my_outer
+          inner=0
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run representer model and compute a "prior estimate" state
@@ -432,7 +437,6 @@
 !  Set approximation vector PSI to representer coefficients Beta_n.
 !  Here, PSI is set to misfit between observations and model, H_n.
 !
-          inner=0
           CALL congrad (ng, iRPM, outer, inner, Ninner, converged)
           IF (exit_flag.ne.NoError) RETURN
 !
@@ -522,8 +526,11 @@
             END DO
 !$OMF END PARALLEL DO
 !
-!  Convolve initial conditions record (ADJname, record Nrec) with
-!  initial conditions background error covariance. Since routine
+!  Convolve initial conditions record and adjoint forcing
+!  (ADJname, record Nrec) with  initial conditions background error 
+!  covariance. Note that we only do this for the forcing in 
+!  record Nrec since this is the only record for which
+!  the adjoing forcing arrays are complete. Since routine
 !  "get_state" loads data into the ghost points, the adjoint
 !  solution is read into the tangent linear state arrays by using
 !  iTLM instead of iADM in the calling arguments.
@@ -582,7 +589,8 @@
             END DO
 !$OMP END PARALLEL DO
 !
-!  Write out tangent linear model initial conditions for next inner
+!  Write out tangent linear model initial conditions and tangent
+!  linear surface forcing adjustments for next inner
 !  loop into ITLname (record Rec1). The tangent model initial
 !  conditions are set to the convolved adjoint solution.
 !
@@ -590,7 +598,11 @@
             IF (exit_flag.ne.NoError) RETURN
 !
 !  If weak constraint, convolve all adjoint records in ADJname and
-!  impose model error covariance.
+!  impose model error covariance. NOTE: We will not use the
+!  convolved forcing increments generated here since these arrays
+!  do not contain the complete solution and are redundant.
+!  AMM: We might want to get rid of these unwanted records to
+!  avoid any confusion in the future.
 !
             IF (Nrec.gt.1) THEN
               DO rec=1,Nrec

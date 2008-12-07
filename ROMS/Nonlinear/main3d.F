@@ -288,10 +288,6 @@
 !-----------------------------------------------------------------------
 !  Set fields for vertical boundary conditions. Process tidal forcing,
 !  if any.
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-!  Interpolate surface forcing increments and adjust surface forcing.
-!  Load surface forcing into storage arrays.
-# endif
 !-----------------------------------------------------------------------
 !
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
@@ -300,10 +296,6 @@
         DO tile=subs*thread,subs*(thread+1)-1,+1
 # ifdef BULK_FLUXES
           CALL bulk_flux (ng, TILE)
-# endif
-# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
-          CALL frc_NLadjust (ng, TILE, Lfinp(ng), Lfout(ng))
-          CALL load_NLforcing (ng, TILE, Lfout(ng))
 # endif
 # ifdef BBL_MODEL
           CALL bblm (ng, TILE)
@@ -315,6 +307,27 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+!
+!-----------------------------------------------------------------------
+!  Interpolate surface forcing increments and adjust surface forcing.
+!  Load surface forcing into storage arrays. Skip the last output
+!  timestep.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).lt.(ntend(ng)+1)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_NLadjust (ng, TILE, Lfinp(ng), Lfout(ng))
+            CALL load_NLforcing (ng, TILE, Lfout(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute time-dependent vertical/horizontal mixing coefficients for

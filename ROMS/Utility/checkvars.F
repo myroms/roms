@@ -214,8 +214,8 @@
 !
 !  Determine aditional 4Dvar state variables to adjust.
 !
-      IF ((model.eq.iADM).or.(model.eq.iTLM).or.(model.eq.iNLM).or.    &
-     &    (model.eq.5).or.(model.eq.6)) THEN
+      IF ((model.eq.iADM).or.(model.eq.iTLM).or.(model.eq.iNLM).or.     &
+     &    (model.eq.iRPM).or.(model.eq.5).or.(model.eq.6)) THEN
 # ifdef ADJUST_STFLUX
         DO itrc=1,NT(ng)
           get_var(idTsur(itrc))=.TRUE.

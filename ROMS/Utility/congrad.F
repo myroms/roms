@@ -106,6 +106,7 @@
         Jf=0.0_r8
         Jdata=0.0_r8
         Jmod=0.0_r8
+        eps=0.0_r8
         preduc=0.0_r8
 
         IF (innLoop.eq.0) THEN
@@ -154,7 +155,7 @@
 !
           IF (zdelta(innLoop).le.0.0_r8) THEN
             WRITE (stdout,20) zdelta(innLoop), outLoop, innLoop
-            exit_flag=7
+            exit_flag=8
             GO TO 10
           END IF
 !

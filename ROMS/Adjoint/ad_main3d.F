@@ -94,6 +94,9 @@
 !!    USE ad_set_tides_mod, ONLY : ad_set_tides
 # endif
       USE ad_set_vbc_mod, ONLY : ad_set_vbc
+# ifdef SET_ZETA
+      USE ad_set_zeta_mod, ONLY : ad_set_zeta
+# endif
       USE ad_step2d_mod, ONLY : ad_step2d
 # ifndef TS_FIXED
       USE ad_step3d_t_mod, ONLY : ad_step3d_t
@@ -468,12 +471,28 @@
           CALL ad_gls_prestep (ng, TILE)
 # endif
           CALL ad_rhs3d (ng, TILE)
-# ifdef DIAGNOSTICS
-!!        CALL ad_set_diags (ng, TILE)
-# endif
         END DO
       END DO
 !$OMP END PARALLEL DO
+
+# ifdef SET_ZETA
+!
+!-----------------------------------------------------------------------
+!  Set adjoint free-surface to it time-averaged value.
+!-----------------------------------------------------------------------
+!
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+      DO thread=0,numthreads-1
+        subs=NtileX(ng)*NtileE(ng)/numthreads
+        DO tile=subs*thread,subs*(thread+1)-1,+1
+#  ifdef DIAGNOSTICS
+!!        CALL set_diags (ng, TILE)
+#  endif
+          CALL ad_set_zeta (ng, TILE)
+        END DO
+      END DO
+!$OMP END PARALLEL DO
+# endif
 !
 !-----------------------------------------------------------------------
 !  Compute adjoint vertical mixing coefficients for momentum and
@@ -695,14 +714,16 @@
 !  Load surface forcing to storage arrays.
 !-----------------------------------------------------------------------
 !
+      IF (iic(ng).ne.ntstart(ng)) THEN
 !$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,Lfout,numthreads)
-      DO thread=0,numthreads-1
-        subs=NtileX(ng)*NtileE(ng)/numthreads
-        DO tile=subs*thread,subs*(thread+1)-1,+1
-          CALL frc_ADadjust (ng, TILE, Lfout(ng))
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_ADadjust (ng, TILE, Lfout(ng))
+          END DO
         END DO
-      END DO
 !$OMP END PARALLEL DO
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------

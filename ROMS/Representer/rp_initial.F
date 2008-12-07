@@ -312,7 +312,10 @@
           CALL initialize_coupling (ng, TILE, 0)
           CALL initialize_mixing (ng, TILE, iRPM)
 #  endif
-          CALL initialize_forces (ng, TILE, 0)
+          CALL initialize_forces (ng, TILE, iRPM)
+          CALL initialize_forces (ng, TILE, iTLM)
+          CALL initialize_forces (ng, TILE, iNLM)
+          CALL initialize_forces (ng, TILE, iADM)
         END DO
       END DO
 !$OMP END PARALLEL DO

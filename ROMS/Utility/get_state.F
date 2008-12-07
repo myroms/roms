@@ -588,65 +588,69 @@
           END IF
         END IF
 
-# ifdef ADJUST_WSTRESS
+# ifndef W4DPSAS
+#  ifdef ADJUST_WSTRESS
 !
 !  Read in surface U-momentum stress.
 !
-        IF (get_var(idUsms)) THEN
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
-     &                        varid)
-          gtype=var_flag(varid)*u3dvar
-          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % umask,                           &
-#  endif
-     &                      FORCES(ng) % ustr(:,:,:,Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+        IF (inner.ne.0) THEN
+          IF (get_var(idUsms)) THEN
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)), &
+     &                          varid)
+            gtype=var_flag(varid)*u3dvar
+            scale=1.0_r8/rho0               ! N/m2 (Pa) to m2/s2
+            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+     &                        scale, Fmin, Fmax,                        &
+#   ifdef MASKING
+     &                        GRID(ng) % umask,                         &
+#   endif
+     &                        FORCES(ng) % ustr(:,:,:,Tindex))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idUsms)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+              END IF
             END IF
           END IF
-        END IF
 !
 !  Read in surface V-momentum stress.
 !
-        IF (get_var(idVsms)) THEN
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
-     &                        varid)
-          gtype=var_flag(varid)*v3dvar
-          scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      scale, Fmin, Fmax,                          &
-#  ifdef MASKING
-     &                      GRID(ng) % vmask,                           &
-#  endif
-     &                      FORCES(ng) % vstr(:,:,:,Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+          IF (get_var(idVsms)) THEN
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)), &
+     &                          varid)
+            gtype=var_flag(varid)*v3dvar
+            scale=1.0_r8/rho0                 ! N/m2 (Pa) to m2/s2
+            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+     &                        scale, Fmin, Fmax,                        &
+#   ifdef MASKING
+     &                        GRID(ng) % vmask,                         &
+#   endif
+     &                        FORCES(ng) % vstr(:,:,:,Tindex))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idVsms)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+              END IF
             END IF
           END IF
-        END IF
+       END IF
+#  endif
 # endif
 # ifdef SOLVE3D
 !
@@ -825,7 +829,8 @@
           END IF
         END DO
 
-#  ifdef ADJUST_STFLUX
+#  ifndef W4DPSAS
+#   ifdef ADJUST_STFLUX
 !
 !  Read in surface tracers flux.
 !
@@ -842,9 +847,9 @@
             status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
      &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
      &                        scale, Fmin, Fmax,                        &
-#   ifdef MASKING
+#    ifdef MASKING
      &                        GRID(ng) % rmask,                         &
-#   endif
+#    endif
      &                        FORCES(ng) % tflux(:,:,:,Tindex,itrc))
             IF (status.ne.nf90_noerr) THEN
               IF (Master) THEN
@@ -862,6 +867,7 @@
             END IF
           END IF
         END DO
+#   endif
 #  endif
 #  if defined GLS_MIXING || defined MY25_MIXING || defined LMD_MIXING
 !
@@ -1351,58 +1357,60 @@
 !
 !  Read in tangent linear surface U-momentum stress.
 !
-        IF (get_var(idUsms)) THEN
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)),   &
-     &                        varid)
-          gtype=var_flag(varid)*u3dvar
-          scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      scale, Fmin, Fmax,                          &
+        IF (inner.ne.0) THEN
+          IF (get_var(idUsms)) THEN
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)), &
+     &                          varid)
+            gtype=var_flag(varid)*u3dvar
+            scale=1.0_r8
+            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+     &                        scale, Fmin, Fmax,                        &
 #  ifdef MASKING
-     &                      GRID(ng) % umask,                           &
+     &                        GRID(ng) % umask,                         &
 #  endif
-     &                      FORCES(ng) % tl_ustr(:,:,:,Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,idUsms)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+     &                        FORCES(ng) % tl_ustr(:,:,:,Tindex))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idUsms)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+              END IF
             END IF
           END IF
-        END IF
 !
 !  Read in tangent linear surface V-momentum stress.
 !
-        IF (get_var(idVsms)) THEN
-          foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)),   &
-     &                        varid)
-          gtype=var_flag(varid)*v3dvar
-          scale=1.0_r8
-          status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype,   &
-     &                      Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),    &
-     &                      scale, Fmin, Fmax,                          &
+          IF (get_var(idVsms)) THEN
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)), &
+     &                          varid)
+            gtype=var_flag(varid)*v3dvar
+            scale=1.0_r8
+            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+     &                        scale, Fmin, Fmax,                        &
 #  ifdef MASKING
-     &                      GRID(ng) % vmask,                           &
+     &                        GRID(ng) % vmask,                         &
 #  endif
-     &                      FORCES(ng) % tl_vstr(:,:,:,Tindex))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,30) string, TRIM(Vname(1,idVsms)), InpRec,  &
-     &                          TRIM(ncname)
-            END IF
-            exit_flag=2
-            ioerror=status
-            RETURN
-          ELSE
-            IF (Master) THEN
-              WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+     &                        FORCES(ng) % tl_vstr(:,:,:,Tindex))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idVsms)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+              END IF
             END IF
           END IF
         END IF
@@ -1531,35 +1539,38 @@
 !
 !  Read in tangent linear surface tracers flux.
 !
-        DO itrc=1,NT(ng)
-          IF (get_var(idTsur(itrc))) THEN
-            foundit=find_string(var_name, n_var,                        &
-     &                          TRIM(Vname(1,idTsur(itrc))), varid)
-            gtype=var_flag(varid)*r3dvar
-            scale=1.0_r8
-            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
-     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
-     &                        scale, Fmin, Fmax,                        &
+        IF (inner.ne.0) THEN
+          DO itrc=1,NT(ng)
+            IF (get_var(idTsur(itrc))) THEN
+              foundit=find_string(var_name, n_var,                      &
+     &                            TRIM(Vname(1,idTsur(itrc))), varid)
+              gtype=var_flag(varid)*r3dvar
+              scale=1.0_r8
+              status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec,      &
+     &                          gtype, Vsize,                           &
+     &                          LBi, UBi, LBj, UBj, 1, Nfrec(ng),       &
+     &                          scale, Fmin, Fmax,                      &
 #   ifdef MASKING
-     &                        GRID(ng) % rmask,                         &
+     &                          GRID(ng) % rmask,                       &
 #   endif
-     &                        FORCES(ng) % tl_tflux(:,:,:,Tindex,itrc))
-            IF (status.ne.nf90_noerr) THEN
-              IF (Master) THEN
-                WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),  &
-     &                            InpRec, TRIM(ncname)
-              END IF             
-              exit_flag=2
-              ioerror=status
-              RETURN
-            ELSE
-              IF (Master) THEN
-                WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),         &
-     &                             Fmin, Fmax
+     &                          FORCES(ng)% tl_tflux(:,:,:,Tindex,itrc))
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) THEN
+                  WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),&
+     &                              InpRec, TRIM(ncname)
+                END IF             
+                exit_flag=2
+                ioerror=status
+                RETURN
+              ELSE
+                IF (Master) THEN
+                  WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),       &
+     &                               Fmin, Fmax
+                END IF
               END IF
             END IF
-          END IF
-        END DO
+          END DO
+        END IF
 #  endif
 #  ifdef SEDIMENT
 !
@@ -3040,6 +3051,117 @@
         END DO
 # endif
       END IF FRC_STATE
+#endif
+
+#if defined W4DPSAS && (defined ADJUST_WSTRESS || defined ADJUST_STFLUX)
+!
+!-----------------------------------------------------------------------
+!  Read in tangent linear forcing corrections.
+!-----------------------------------------------------------------------
+!
+      TLM_FORCING: IF (model.eq.iNLM) THEN
+
+# ifdef ADJUST_WSTRESS
+!
+!  Read in tangent linear surface U-momentum stress.
+!
+        IF (inner.ne.0) THEN
+          IF (get_var(idUsms)) THEN
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)), &
+     &                          varid)
+            gtype=var_flag(varid)*u3dvar
+            scale=1.0_r8
+            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+     &                        scale, Fmin, Fmax,                        &
+#  ifdef MASKING
+     &                        GRID(ng) % umask,                         &
+#  endif
+     &                        FORCES(ng) % tl_ustr(:,:,:,Tindex))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idUsms)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idUsms)), Fmin, Fmax
+              END IF
+            END IF
+          END IF
+!
+!  Read in tangent linear surface V-momentum stress.
+!
+          IF (get_var(idVsms)) THEN
+            foundit=find_string(var_name, n_var, TRIM(Vname(1,idVsms)), &
+     &                          varid)
+            gtype=var_flag(varid)*v3dvar
+            scale=1.0_r8
+            status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec, gtype, &
+     &                        Vsize, LBi, UBi, LBj, UBj, 1, Nfrec(ng),  &
+     &                        scale, Fmin, Fmax,                        &
+#  ifdef MASKING
+     &                        GRID(ng) % vmask,                         &
+#  endif
+     &                        FORCES(ng) % tl_vstr(:,:,:,Tindex))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,30) string, TRIM(Vname(1,idVsms)),        &
+     &                            InpRec, TRIM(ncname)
+              END IF
+              exit_flag=2
+              ioerror=status
+              RETURN
+            ELSE
+              IF (Master) THEN
+                WRITE (stdout,100) TRIM(Vname(2,idVsms)), Fmin, Fmax
+              END IF
+            END IF
+          END IF
+        END IF
+# endif
+
+# ifdef ADJUST_STFLUX
+!
+!  Read in tangent linear surface tracers flux.
+!
+        IF (inner.NE.0) THEN
+          DO itrc=1,NT(ng)
+            IF (get_var(idTsur(itrc))) THEN
+              foundit=find_string(var_name, n_var,                      &
+     &                            TRIM(Vname(1,idTsur(itrc))), varid)
+              gtype=var_flag(varid)*r3dvar
+              scale=1.0_r8
+              status=nf_fread3d(ng, IDmod, ncINPid, varid, InpRec,      &
+     &                          gtype, Vsize,                           &
+     &                          LBi, UBi, LBj, UBj, 1, Nfrec(ng),       &
+     &                          scale, Fmin, Fmax,                      &
+#   ifdef MASKING
+     &                          GRID(ng) % rmask,                       &
+#   endif
+     &                          FORCES(ng)% tl_tflux(:,:,:,Tindex,itrc))
+              IF (status.ne.nf90_noerr) THEN
+                IF (Master) THEN
+                  WRITE (stdout,30) string, TRIM(Vname(1,idTsur(itrc))),&
+     &                              InpRec, TRIM(ncname)
+                END IF
+                exit_flag=2
+                ioerror=status
+                RETURN
+              ELSE
+                IF (Master) THEN
+                  WRITE (stdout,100) TRIM(Vname(2,idTsur(itrc))),       &
+     &                               Fmin, Fmax
+                END IF
+              END IF
+            END IF
+          END DO
+        END IF
+# endif
+      END IF TLM_FORCING
 #endif
 !
 !-----------------------------------------------------------------------
