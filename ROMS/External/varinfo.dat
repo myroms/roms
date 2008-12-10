@@ -2161,6 +2161,42 @@
   'r3dvar'
   1.0d0
 
+'dye_west_'                                        ! Input
+  'dye concentration western boundary condition'
+  'kilogram meter-3'                               ! [kg/m3]
+  'dye_west_, scalar, series'
+  'dye_time'
+  'idTbry(iwest,inert(i))'
+  'nulvar'
+  1.0d0
+
+'dye_east_'                                        ! Input
+  'dye concentration eastern boundary condition'
+  'kilogram meter-3'                               ! [kg/m3]
+  'dye_east_, scalar, series'
+  'dye_time'
+  'idTbry(ieast,inert(i))'
+  'nulvar'
+  1.0d0
+
+'dye_south_'                                       ! Input
+  'dye concentration southern boundary condition'
+  'kilogram meter-3'                               ! [kg/m3]
+  'dye_south_, scalar, series'
+  'dye_time'
+  'idTbry(isouth,inert(i))'
+  'nulvar'
+  1.0d0
+
+'dye_north_'                                       ! Input
+  'dye concentration northern boundary condition'
+  'kilogram meter-3'                               ! [kg/m3]
+  'dye_north_, scalar, series'
+  'dye_time'
+  'idTbry(inorth,inert(i))'
+  'nulvar'
+  1.0d0
+
 !
 !------------------------------------------------------------------------------
 !  Sediment variables.
