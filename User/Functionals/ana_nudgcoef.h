@@ -289,8 +289,8 @@
       END IF
 #  ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, FSobc_out(:,iwest), Ngrids)
-        CALL mp_bcastf (ng, model, FSobc_in (:,iwest), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_out(:,isouth), Ngrids)
+        CALL mp_bcastf (ng, model, FSobc_in (:,isouth), Ngrids)
       ENDIF
 #  endif
 # else
