@@ -150,7 +150,9 @@
 #   endif
         CALL obs_read (ng, iTLM, .FALSE.)
         CALL obs_write (ng, tile, iTLM)
+#   if !(defined WEAK_CONSTRAINT || defined IOM)
         CALL obs_cost (ng, iTLM)
+#   endif
       ELSE
         ProcessObs(ng)=.FALSE.
       END IF

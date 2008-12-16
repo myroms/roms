@@ -546,6 +546,12 @@
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+16)=' CELERETY_WRITE,'
 #endif
+#if defined DATALESS_LOOPS && defined W4DVAR
+      IF (Master) WRITE (stdout,20) 'DATALESS_LOOPS',                   &
+     &   'Testing convergence of RPM Picard iterations.'
+      is=LEN_TRIM(Coptions)+1
+      Coptions(is:is+16)=' DATALESS_LOOPS,'
+#endif
 #if defined GLS_MIXING && defined CHARNOK
       IF (Master) WRITE (stdout,20) 'CHARNOK',                          &
      &   'Charnok surface roughness from wind stress.'

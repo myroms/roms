@@ -46,6 +46,7 @@
 !                 convolutions.                                        !
 !  NLobsCost    Current NLM observation cost function misfit (mean     !
 !                 squared difference) between NLM and observations.    !
+!  NritzEV      If preconditioning, number of eigenpairs to use.       !
 !  NVsteps      Full number of vertical diffusion steps for spatial    !
 !                 convolutions.                                        !
 !  ObsCost      Current observation cost function misfit (mean squared !
@@ -111,13 +112,11 @@
         real(r8), allocatable :: TLmodVal(:)
 #  endif
 #  if defined WEAK_CONSTRAINT || defined IOM
-        real(r8), allocatable :: zdelta(:)
-        real(r8), allocatable :: zbeta(:)
-        real(r8), allocatable :: zcglwk(:,:)
-        real(r8), allocatable :: vcglev(:,:)
+        real(r8), allocatable :: zcglwk(:,:,:)
+        real(r8), allocatable :: vcglev(:,:,:)
         real(r8), allocatable :: zgrad0(:)
-        real(r8), allocatable :: zqg0(:)
-        real(r8) :: zgnorm = 0.0_r8
+        real(r8), allocatable :: vgrad0(:)
+        real(r8), allocatable :: vgnorm(:)
 #  endif
 !
         TYPE T_FOURDVAR
@@ -132,6 +131,10 @@
           real(r8), pointer :: CostFunOld(:)
           real(r8), pointer :: CostNorm(:)
           real(r8), pointer :: ObsCost(:)
+          real(r8), pointer :: DataPenalty(:)
+#   ifdef DATALESS_LOOPS
+          real(r8), pointer :: NLPenalty(:)
+#   endif
           real(r8), pointer :: NLobsCost(:)
 #  endif
           real(r8), pointer :: ObsVar(:)
@@ -289,7 +292,7 @@
         real(r8), dimension(Ngrids) :: KvMin
         real(r8), dimension(Ngrids) :: KvMax
 
-# if defined IS4DVAR
+# if defined IS4DVAR || defined WEAK_CONSTRAINT || defined IOM
 !
 !-----------------------------------------------------------------------
 !  Conjugate gradient parameters.
@@ -301,9 +304,12 @@
         real(r8), allocatable :: cg_beta(:,:)
         real(r8), allocatable :: cg_tau(:,:)
 !
-!  Number of converged Ritz eigenvalues.
+!  Number of converged Ritz eigenvalues. If input parameter NritzEV > 0,
+!  then nConvRitz=NritzEV.  Therefore, only nConvRitz eigenpairs will
+!  used for preconditioning and the RitzMaxErr threshold is ignored.
 !
-        integer :: nConvRitz
+        integer :: NritzEV
+        integer :: nConvRitz = 0
 !
 !  Ritz values maximum error limit.
 !
@@ -316,7 +322,11 @@
 !
 !  Orthogonal eigenvectors of Lanczos recurrence term Q(k)T(k).
 !
+#   if defined WEAK_CONSTRAINT || defined IOM
+        real(r8), allocatable :: cg_zv(:,:,:)
+#   else
         real(r8), allocatable :: cg_zv(:,:)
+#   endif
 !
 !  Lanczos algorithm coefficients.
 !
@@ -422,6 +432,25 @@
 
         real(r8), dimension(1000) :: g1
         real(r8), dimension(1000) :: g2
+# endif
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!------------------------------------------------------------------------
+!  Weak constraint parameters.
+!------------------------------------------------------------------------
+!
+!  Switch to activate writing of weak constraint forings
+!  into the adjoint NetCDF file.
+!
+        logical, dimension(Ngrids) :: WRTforce
+#  ifdef RPM_RELAXATION
+        logical, dimension(Ngrids) :: LweakRelax
+#  endif
+!
+!  Weak-constraint forcing time.  A new variable is required since this
+!  forcing is delayed by nADJ time-steps.
+!
+        real(r8), dimension(Ngrids) :: ForceTime
 # endif
 
       CONTAINS
@@ -531,6 +560,14 @@
         allocate ( FOURDVAR(ng) % ObsCost(0:NstateVar(ng)) )
         FOURDVAR(ng) % ObsCost = IniVal
 
+        allocate ( FOURDVAR(ng) % DataPenalty(0:NstateVar(ng)) )
+        FOURDVAR(ng) % DataPenalty = IniVal
+
+#   ifdef DATALESS_LOOPS
+        allocate ( FOURDVAR(ng) % NLPenalty(0:NstateVar(ng)) )
+        FOURDVAR(ng) % NLPenalty = IniVal
+#   endif
+
         allocate ( FOURDVAR(ng) % NLobsCost(0:NstateVar(ng)) )
         FOURDVAR(ng) % NLobsCost = IniVal
 #  endif
@@ -622,24 +659,22 @@
 !
 !  Allocate and initialize weak constraint conjugate gradient vectors.
 !
-      allocate ( zdelta(Ninner) )
-      zdelta = IniVal
-
-      allocate ( zbeta(Ninner+1) )
-      zbeta = IniVal
-
-      allocate ( zcglwk(Mobs,Ninner+1) )
+      allocate ( zcglwk(Mobs,Ninner+1,Nouter) )
       zcglwk = IniVal
 
-      allocate ( vcglev(Mobs,Ninner) )
+      allocate ( vcglev(Mobs,Ninner,Nouter) )
       vcglev = IniVal
 
       allocate ( zgrad0(Mobs) )
       zgrad0 = IniVal
 
-      allocate ( zqg0(Ninner+1) )
-      zqg0 = IniVal
+      allocate ( vgrad0(Mobs) )
+      vgrad0 = IniVal
+
+      allocate ( vgnorm(Nouter) )
+      vgnorm = IniVal
 #  endif
+
 # else
 !
 !-----------------------------------------------------------------------
@@ -670,7 +705,7 @@
       allocate ( DTsizeH(MstateVar) )
       allocate ( DTsizeV(MstateVar) )
 
-# ifdef IS4DVAR
+# if defined IS4DVAR || defined WEAK_CONSTRAINT || defined IOM
 !
 !  Allocate conjugate gradient variables.
 !
@@ -686,7 +721,11 @@
       allocate ( Ritz(Ninner+1) )
       Ritz = IniVal
 
+#  if defined WEAK_CONSTRAINT || defined IOM
+      allocate ( cg_zv(Ninner,Ninner,Nouter) )
+#  else
       allocate ( cg_zv(Ninner,Ninner) )
+#  endif
       cg_zv = IniVal
 
       allocate ( cg_delta(Ninner,Nouter) )
@@ -748,6 +787,9 @@
         KvMin(ng)=1.0_r8
         KvMax(ng)=1.0_r8
         Optimality(ng)=0.0_r8
+# if defined WEAK_CONSTRAINT || defined IOM
+        ForceTime(ng)=0.0_r8
+# endif
 
 # ifdef OBSERVATIONS
 !

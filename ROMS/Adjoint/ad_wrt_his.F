@@ -17,6 +17,9 @@
       USE mod_param
       USE mod_parallel
       USE mod_forces
+# if defined WEAK_CONSTRAINT || defined IOM
+      USE mod_fourdvar
+# endif
       USE mod_grid
       USE mod_iounits
       USE mod_mixing
@@ -48,6 +51,9 @@
       integer :: LBi, UBi, LBj, UBj
       integer :: i, j, gfactor, gtype, status
       integer :: kout
+# if defined WEAK_CONSTRAINT || defined IOM
+      integer :: kfout
+# endif
 # ifdef SOLVE3D
       integer :: itrc, k, nout
 # endif
@@ -81,6 +87,9 @@
 # else
       kout=kstp(ng)
 # endif
+# if defined WEAK_CONSTRAINT || defined IOM
+      kfout=2
+# endif
 # ifdef SOLVE3D
       IF (iic(ng).ne.ntend(ng)) THEN
         nout=nnew(ng)
@@ -107,7 +116,11 @@
         IF (LwrtPER(ng)) THEN
           Tval(1)=REAL(Nrun,r8)*day2sec
         ELSE
+# if defined WEAK_CONSTRAINT || defined IOM
+          Tval(1)=ForceTime(ng)
+# else
           Tval(1)=time(ng)
+# endif
         END IF
         CALL netcdf_put_fvar (ng, iADM, ADJname(ng),                    &
      &                        TRIM(Vname(1,idtime)), tval,              &
@@ -212,166 +225,320 @@
 !  Write out free-surface (m).
 !
       IF (Hout(idFsur,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*r2dvar
-        IF (LwrtState2d(ng)) THEN
+# if defined WEAK_CONSTRAINT || defined IOM
+        IF (WRTforce(ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*r2dvar
           status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idFsur,ng),  &
      &                       tADJindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
+#  ifdef MASKING
      &                       GRID(ng) % rmask,                          &
-# endif
-     &                       OCEAN(ng)% ad_zeta(:,:,kout))
-        ELSE
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idFsur,ng),  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-# endif
-     &                       OCEAN(ng)% ad_zeta_sol)
-        ENDIF
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idFsur)), tADJindx(ng)
+#  endif
+     &                       OCEAN(ng)% f_zetaG(:,:,kfout))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idFsur)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+        ELSE
+# endif
+          scale=1.0_r8
+          gtype=gfactor*r2dvar
+          IF (LwrtState2d(ng)) THEN
+            status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idFsur,ng),&
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, scale,               &
+# ifdef MASKING
+     &                         GRID(ng) % rmask,                        &
+# endif
+     &                         OCEAN(ng)% ad_zeta(:,:,kout))
+          ELSE
+            status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idFsur,ng),&
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, scale,               &
+# ifdef MASKING
+     &                         GRID(ng) % rmask,                        &
+# endif
+     &                         OCEAN(ng)% ad_zeta_sol)
+          ENDIF
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idFsur)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+# if defined WEAK_CONSTRAINT || defined IOM
         END IF
+# endif
       END IF
 !
 !  Write out 2D momentum component (m/s) in the XI-direction.
 !
       IF (Hout(idUbar,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*u2dvar
-        IF (LwrtState2d(ng)) THEN
+# if defined WEAK_CONSTRAINT || defined IOM
+#  ifndef SOLVE3D
+        IF (WRTforce(ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*u2dvar
           status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUbar,ng),  &
      &                       tADJindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
+#   ifdef MASKING
      &                       GRID(ng) % umask,                          &
-# endif
-     &                       OCEAN(ng) % ad_ubar(:,:,kout))
-        ELSE
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUbar,ng),  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
-     &                       GRID(ng) % umask,                          &
-# endif
-     &                       OCEAN(ng) % ad_ubar_sol)
-        END IF
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUbar)), tADJindx(ng)
+#   endif
+     &                       OCEAN(ng) % f_ubarG(:,:,kfout))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idUbar)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+        ELSE
+#  endif
+# endif
+          scale=1.0_r8
+          gtype=gfactor*u2dvar
+          IF (LwrtState2d(ng)) THEN
+            status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUbar,ng),&
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, scale,               &
+# ifdef MASKING
+     &                         GRID(ng) % umask,                        &
+# endif
+     &                         OCEAN(ng) % ad_ubar(:,:,kout))
+          ELSE
+            status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idUbar,ng),&
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, scale,               &
+# ifdef MASKING
+     &                         GRID(ng) % umask,                        &
+# endif
+     &                         OCEAN(ng) % ad_ubar_sol)
+          END IF
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idUbar)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+# if defined WEAK_CONSTRAINT || defined IOM
+#  ifndef SOLVE3D
         END IF
+#  endif
+# endif
       END IF
 !
 !  Write out 2D momentum component (m/s) in the ETA-direction.
 !
       IF (Hout(idVbar,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*v2dvar
-        IF (LwrtState2d(ng)) THEN
+# if defined WEAK_CONSTRAINT || defined IOM
+#  ifndef SOLVE3D
+        IF (WRTforce(ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*v2dvar
           status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVbar,ng),  &
      &                       tADJindx(ng), gtype,                       &
      &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
+#   ifdef MASKING
       &                      GRID(ng) % vmask,                          &
-# endif
-     &                       OCEAN(ng) % ad_vbar(:,:,kout))
-        ELSE
-          status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVbar,ng),  &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, scale,                 &
-# ifdef MASKING
-      &                      GRID(ng) % vmask,                          &
-# endif
-     &                       OCEAN(ng) % ad_vbar_sol)
-        END IF
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVbar)), tADJindx(ng)
+#   endif
+     &                       OCEAN(ng) % f_vbarG(:,:,kfout))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idVbar)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+        ELSE
+#  endif
+# endif
+          scale=1.0_r8
+          gtype=gfactor*v2dvar
+          IF (LwrtState2d(ng)) THEN
+            status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVbar,ng),&
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, scale,               &
+# ifdef MASKING
+      &                        GRID(ng) % vmask,                        &
+# endif
+     &                         OCEAN(ng) % ad_vbar(:,:,kout))
+          ELSE
+            status=nf_fwrite2d(ng, iADM, ncADJid(ng), adjVid(idVbar,ng),&
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, scale,               &
+# ifdef MASKING
+      &                        GRID(ng) % vmask,                        &
+# endif
+     &                         OCEAN(ng) % ad_vbar_sol)
+          END IF
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idVbar)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+# if defined WEAK_CONSTRAINT || defined IOM
+#  ifndef SOLVE3D
         END IF
+#  endif
+# endif
       END IF
+
 # ifdef SOLVE3D
 !
 !  Write out 3D momentum component (m/s) in the XI-direction.
 !
       IF (Hout(idUvel,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*u3dvar
-        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idUvel,ng),    &
-     &                     tADJindx(ng), gtype,                         &
-     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#  ifdef MASKING
-     &                     GRID(ng) % umask,                            &
-#  endif
-     &                     OCEAN(ng) % ad_u(:,:,:,nout))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idUvel)), tADJindx(ng)
+#  if defined WEAK_CONSTRAINT || defined IOM
+        IF (WRTforce(ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*u3dvar
+          status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idUvel,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#   ifdef MASKING
+     &                       GRID(ng) % umask,                          &
+#   endif
+     &                       OCEAN(ng) % f_uG(:,:,:,kfout))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idUvel)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+        ELSE
+#  endif
+          scale=1.0_r8
+          gtype=gfactor*u3dvar
+          status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idUvel,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#  ifdef MASKING
+     &                       GRID(ng) % umask,                          &
+#  endif
+     &                       OCEAN(ng) % ad_u(:,:,:,nout))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idUvel)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+#  if defined WEAK_CONSTRAINT || defined IOM
         END IF
+#  endif
       END IF
 !
 !  Write out 3D momentum component (m/s) in the ETA-direction.
 !
       IF (Hout(idVvel,ng)) THEN
-        scale=1.0_r8
-        gtype=gfactor*v3dvar
-        status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idVvel,ng),    &
-     &                     tADJindx(ng), gtype,                         &
-     &                     LBi, UBi, LBj, UBj, 1, N(ng), scale,         &
-#  ifdef MASKING
-     &                     GRID(ng) % vmask,                            &
-#  endif
-     &                     OCEAN(ng) % ad_v(:,:,:,nout))
-        IF (status.ne.nf90_noerr) THEN
-          IF (Master) THEN
-            WRITE (stdout,10) TRIM(Vname(1,idVvel)), tADJindx(ng)
+#  if defined WEAK_CONSTRAINT || defined IOM
+        IF (WRTforce(ng)) THEN
+          scale=1.0_r8
+          gtype=gfactor*v3dvar
+          status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idVvel,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#   ifdef MASKING
+     &                       GRID(ng) % vmask,                          &
+#   endif
+     &                       OCEAN(ng) % f_vG(:,:,:,kfout))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idVvel)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
           END IF
-          exit_flag=3
-          ioerror=status
-          RETURN
+        ELSE
+#  endif
+          scale=1.0_r8
+          gtype=gfactor*v3dvar
+          status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjVid(idVvel,ng),  &
+     &                       tADJindx(ng), gtype,                       &
+     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
+#  ifdef MASKING
+     &                       GRID(ng) % vmask,                          &
+#  endif
+     &                       OCEAN(ng) % ad_v(:,:,:,nout))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) THEN
+              WRITE (stdout,10) TRIM(Vname(1,idVvel)), tADJindx(ng)
+            END IF
+            exit_flag=3
+            ioerror=status
+            RETURN
+          END IF
+#  if defined WEAK_CONSTRAINT || defined IOM
         END IF
+#  endif
       END IF
 !
 !  Write out tracer type variables.
 !
       DO itrc=1,NT(ng)
         IF (Hout(idTvar(itrc),ng)) THEN
-          scale=1.0_r8
-          gtype=gfactor*r3dvar
-          status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjTid(itrc,ng),    &
-     &                       tADJindx(ng), gtype,                       &
-     &                       LBi, UBi, LBj, UBj, 1, N(ng), scale,       &
-#  ifdef MASKING
-     &                       GRID(ng) % rmask,                          &
-#  endif
-     &                       OCEAN(ng) % ad_t(:,:,:,nout,itrc))
-          IF (status.ne.nf90_noerr) THEN
-            IF (Master) THEN
-              WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),            &
-     &                          tADJindx(ng)
+#  if defined WEAK_CONSTRAINT || defined IOM
+          IF (WRTforce(ng)) THEN
+            scale=1.0_r8
+            gtype=gfactor*r3dvar
+            status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjTid(itrc,ng),  &
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
+#   ifdef MASKING
+     &                         GRID(ng) % rmask,                        &
+#   endif
+     &                         OCEAN(ng) % f_tG(:,:,:,kfout,itrc))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),          &
+     &                            tADJindx(ng)
+              END IF
+              exit_flag=3
+              ioerror=status
+              RETURN
             END IF
-            exit_flag=3
-            ioerror=status
-            RETURN
+          ELSE
+#  endif
+            scale=1.0_r8
+            gtype=gfactor*r3dvar
+            status=nf_fwrite3d(ng, iADM, ncADJid(ng), adjTid(itrc,ng),  &
+     &                         tADJindx(ng), gtype,                     &
+     &                         LBi, UBi, LBj, UBj, 1, N(ng), scale,     &
+#  ifdef MASKING
+     &                         GRID(ng) % rmask,                        &
+#  endif
+     &                         OCEAN(ng) % ad_t(:,:,:,nout,itrc))
+            IF (status.ne.nf90_noerr) THEN
+              IF (Master) THEN
+                WRITE (stdout,10) TRIM(Vname(1,idTvar(itrc))),          &
+     &                            tADJindx(ng)
+              END IF
+              exit_flag=3
+              ioerror=status
+              RETURN
+            END IF
+#  if defined WEAK_CONSTRAINT || defined IOM
           END IF
+#  endif
         END IF
       END DO
 !

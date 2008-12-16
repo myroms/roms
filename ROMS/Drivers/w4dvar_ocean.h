@@ -172,7 +172,6 @@
 #endif
       USE ad_convolution_mod, ONLY : ad_convolution
       USE ad_variability_mod, ONLY : ad_variability
-      USE impulse_mod, ONLY : impulse
       USE ini_adjust_mod, ONLY : rp_ini_adjust
       USE ini_adjust_mod, ONLY : load_ADtoTL
       USE ini_adjust_mod, ONLY : load_TLtoAD
@@ -195,14 +194,15 @@
 !
 !  Local variable declarations.
 !
-      logical :: add, converged, outer_impulse
-      logical :: Lweak
+      logical :: Lweak, add
 
       integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2
       integer :: i, lstr, my_iic, ng, rec, status, subs, tile, thread
 
       real(r8) :: MyTime, LB_time, UB_time
+
+      character (len=20) :: string
 !
 !=======================================================================
 !  Run model for all nested grids, if any.
@@ -232,6 +232,10 @@
 !  Configure weak constraint 4DVAR algorithm: Indirect Representer
 !  Approach.
 !-----------------------------------------------------------------------
+!
+!  Initialize the switch to gather weak constraint forcing.
+!
+        WRTforce(ng)=.FALSE.
 !
 !  Initialize and set nonlinear model initial conditions.
 !
@@ -399,6 +403,8 @@
           wrtRPmod(ng)=.TRUE.
           SporadicImpulse=.FALSE.
           FrequentImpulse=.FALSE.
+
+#ifndef DATALESS_LOOPS
 !
 !  As in the nonlinear model, initialize always the representer model
 !  here with the background or reference state (IRPname, record Rec1).
@@ -419,14 +425,33 @@
           RP_LOOP1 : DO my_iic=ntstart(ng),ntend(ng)+1
 
             iic(ng)=my_iic
-#ifdef SOLVE3D
+# ifdef SOLVE3D
             CALL rp_main3d (ng)
-#else
+# else
             CALL rp_main2d (ng)
-#endif
+# endif
             IF (exit_flag.ne.NoError) RETURN
 
           END DO RP_LOOP1
+!
+!  Report data penalty function. Then, clean array before next run of
+!  RP model.
+!
+          IF (Master) THEN
+            DO i=0,NstateVar(ng)
+              IF (i.eq.0) THEN
+                string='Total'
+              ELSE
+                string=Vname(1,idSvar(i))
+              END IF
+              IF (FOURDVAR(ng)%DataPenalty(i).ne.0.0_r8) THEN
+                WRITE (stdout,30) outer, inner, 'RPM',                  &
+     &                            FOURDVAR(ng)%DataPenalty(i),          &
+     &                            TRIM(string)
+              END IF
+            END DO
+          END IF
+          FOURDVAR(ng)%DataPenalty=0.0_r8
 !
 !  Turn off IO switches.
 !
@@ -437,7 +462,7 @@
 !  Set approximation vector PSI to representer coefficients Beta_n.
 !  Here, PSI is set to misfit between observations and model, H_n.
 !
-          CALL congrad (ng, iRPM, outer, inner, Ninner, converged)
+          CALL congrad (ng, iRPM, outer, inner, Ninner)
           IF (exit_flag.ne.NoError) RETURN
 !
 !  Clear tangent linear forcing arrays before entering inner-loop.
@@ -447,11 +472,11 @@
 !
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile) SHARED(numthreads)
           DO thread=0,numthreads-1
-#if defined _OPENMP || defined DISTRIBUTE
+# if defined _OPENMP || defined DISTRIBUTE
             subs=NtileX(ng)*NtileE(ng)/numthreads
-#else
+# else
             subs=1
-#endif
+# endif
             DO tile=subs*thread,subs*(thread+1)-1
               CALL initialize_forces (ng, TILE, iTLM)
             END DO
@@ -472,9 +497,15 @@
             IF (exit_flag.ne.NoError) RETURN
             wrtMisfit(ng)=.FALSE.
 !
+!  Adjoint of representer relaxation is not applied during the 
+!  inner-loops.
+!
+            LweakRelax(ng)=.FALSE.
+!
 !  Set adjoint history NetCDF parameters.  Define adjoint history
 !  file only once to avoid opening too many files.
 !
+            WRTforce(ng)=.TRUE.
             IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
             NrecADJ(ng)=0
             tADJindx(ng)=0
@@ -490,16 +521,30 @@
             AD_LOOP1 : DO my_iic=ntstart(ng),ntend(ng),-1
 
               iic(ng)=my_iic
-#ifdef SOLVE3D
+# ifdef SOLVE3D
               CALL ad_main3d (ng)
-#else
+# else
               CALL ad_main2d (ng)
-#endif
+# endif
               IF (exit_flag.ne.NoError) RETURN
 
             END DO AD_LOOP1
+!
+!  Write out last weak-constraint forcing (WRTforce is still .TRUE.)
+!  record into the adjoint history file.  Note that the weak-constraint
+!  forcing is delayed by nADJ time-steps
+!
+            CALL ad_wrt_his (ng)
+            IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out adjoint initial condition record into the adjoint
+!  history file.
+!
+            WRTforce(ng)=.FALSE.
+            CALL ad_wrt_his (ng)
+            IF (exit_flag.ne.NoError) RETURN
 
-#ifdef CONVOLVE
+# ifdef CONVOLVE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Convolve adjoint trajectory with error covariances and convert
@@ -512,7 +557,7 @@
             LwrtState2d(ng)=.TRUE.
             LwrtTime(ng)=.FALSE.
             IF (Master) THEN
-              WRITE (stdout,30) outer, inner
+              WRITE (stdout,40) outer, inner
             END IF
 !
 !  Clear adjoint state arrays.
@@ -536,6 +581,7 @@
 !  iTLM instead of iADM in the calling arguments.
 !
             ADrec=Nrec
+            FrcRec(ng)=Nrec
             Lweak=.FALSE.
             CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
             IF (exit_flag.ne.NoError) RETURN
@@ -556,9 +602,9 @@
               subs=NtileX(ng)*NtileE(ng)/numthreads
               DO tile=subs*thread,subs*(thread+1)-1
                 CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                 CALL ad_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                 CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                 CALL ad_convolution (ng, TILE, Lold(ng), 2)
                 CALL initialize_ocean (ng, TILE, iTLM)
@@ -582,9 +628,9 @@
                 CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                 CALL tl_convolution (ng, TILE, Lold(ng), 2)
                 CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                 CALL tl_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
               END DO
             END DO
 !$OMP END PARALLEL DO
@@ -597,21 +643,29 @@
             CALL tl_wrt_ini (ng, Lold(ng), Rec1) 
             IF (exit_flag.ne.NoError) RETURN
 !
-!  If weak constraint, convolve all adjoint records in ADJname and
+!  If weak constraint, convolve records 2-Nrec in ADJname and
 !  impose model error covariance. NOTE: We will not use the
 !  convolved forcing increments generated here since these arrays
 !  do not contain the complete solution and are redundant.
 !  AMM: We might want to get rid of these unwanted records to
 !  avoid any confusion in the future.
 !
-            IF (Nrec.gt.1) THEN
-              DO rec=1,Nrec
+            IF (Nrec.gt.3) THEN
+              LwrtTime(ng)=.TRUE.
+              DO rec=1,Nrec-1
                 Lweak=.TRUE.
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
 !  ghost points, the adjoint solution is read in the tangent linear
 !  state arrays by using iTLM instead of iADM in the calling arguments.
 !
+!! HGA: The assigment below is not longer needed. This value is 
+!!      assigned in get_state in a generic way. I also fixed the
+!!      time that is reported in get_state when msg=4.
+!!
+!!              ForceTime(ng)=dstart*day2sec+                           &
+!!   &                        (Nrec-rec-1)*nADJ(ng)*dt(ng)
+!!
                 ADrec=rec
                 CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec,        &
      &                          Lold(ng))
@@ -632,9 +686,9 @@
                   subs=NtileX(ng)*NtileE(ng)/numthreads
                   DO tile=subs*thread,subs*(thread+1)-1
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                     CALL ad_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                     CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                     CALL ad_convolution (ng, TILE, Lold(ng), 2)
                     CALL initialize_ocean (ng, TILE, iTLM)
@@ -659,9 +713,9 @@
                     CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                     CALL tl_convolution (ng, TILE, Lold(ng), 2)
                     CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                     CALL tl_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                     CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
                   END DO
                 END DO
@@ -671,16 +725,16 @@
 !  solution.
 !
                 kstp(ng)=Lold(ng)
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
                 nstp(ng)=Lold(ng)
-# endif
+#  endif
                 CALL ad_wrt_his (ng)
                 IF (exit_flag.ne.NoError) RETURN
               END DO
               LwrtState2d(ng)=.FALSE.
               LwrtTime(ng)=.TRUE.
             END IF
-#endif
+# endif
 !
 !  Convert the current adjoint solution in ADJname to impulse forcing.
 !  Write out impulse forcing into TLFname NetCDF file. To facilitate
@@ -689,16 +743,16 @@
 !  in ADJname is backwards in time).
 !
             IF (Master) THEN
-              WRITE (stdout,40) outer, inner
+              WRITE (stdout,50) outer, inner
             END IF
             tTLFindx(ng)=0
-            outer_impulse=.TRUE.
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
             tile=MyRank
-#else
+# else
             tile=-1
-#endif
-            CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
+# endif
+            CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
+            IF (exit_flag.ne.NoError) RETURN
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Integrate tangent linear model forced by the convolved adjoint
@@ -709,6 +763,13 @@
             TLMname(ng)=TLMbase(ng)
             wrtNLmod(ng)=.FALSE.
             wrtTLmod(ng)=.TRUE.
+!
+!  If weak constraint, the impulses are time-interpolated at each
+!  time-steps.
+!
+            IF (FrcRec(ng).gt.3) THEN
+               FrequentImpulse=.TRUE.
+            END IF
 !
 !  Initialize tangent linear model from ITLname, record Rec1. 
 !
@@ -745,22 +806,11 @@
             TL_LOOP : DO my_iic=ntstart(ng),ntend(ng)+1
 
               iic(ng)=my_iic
-!
-!  Set impulse forcing switches.  Notice that at this point, time(ng)
-!  has not been incremented, so for the following check we need to
-!  add dt(ng).
-!
-              LB_time=time(ng)+0.5_r8*dt(ng)
-              UB_time=time(ng)+1.5_r8*dt(ng)
-              SporadicImpulse=(LB_time.le.FrcTime(ng)).and.             &
-     &                        (FrcTime(ng).lt.UB_time).and.             &
-     &                        (NrecFrc(ng).gt.1)
-              FrequentImpulse=.FALSE.
-#ifdef SOLVE3D
+# ifdef SOLVE3D
               CALL tl_main3d (ng)
-#else
+# else
               CALL tl_main2d (ng)
-#endif
+# endif
               MyTime=time(ng)
 
               IF (exit_flag.ne.NoError) RETURN
@@ -776,9 +826,8 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
             Nrun=Nrun+1
-            CALL congrad (ng, iRPM, outer, inner, Ninner, converged)
+            CALL congrad (ng, iRPM, outer, inner, Ninner)
             IF (exit_flag.ne.NoError) RETURN
-            IF (converged) EXIT INNER_LOOP
 
           END DO INNER_LOOP
 !
@@ -800,9 +849,15 @@
           CALL ad_initial (ng)
           IF (exit_flag.ne.NoError) RETURN
 !
+!  Adjoint of representer relaxation is applied during the 
+!  outer-loops.
+!
+          LweakRelax(ng)=.TRUE.
+!
 !  Set adjoint history NetCDF parameters.  Define adjoint history
 !  file one to avoid opening to many files.
 !
+          WRTforce(ng)=.TRUE.
           IF (Nrun.gt.1) LdefADJ(ng)=.FALSE.
           NrecADJ(ng)=0
           tADJindx(ng)=0
@@ -819,16 +874,30 @@
           AD_LOOP2 : DO my_iic=ntstart(ng),ntend(ng),-1
 
             iic(ng)=my_iic
-#ifdef SOLVE3D
+# ifdef SOLVE3D
             CALL ad_main3d (ng)
-#else
+# else
             CALL ad_main2d (ng)
-#endif
+# endif
             IF (exit_flag.ne.NoError) RETURN
 
           END DO AD_LOOP2
+!
+!  Write out last weak-constraint forcing (WRTforce is still .TRUE.)
+!  record into the adjoint history file.  Note that the weak-constraint
+!  forcing is delayed by nADJ time-steps
+!
+            CALL ad_wrt_his (ng)
+            IF (exit_flag.ne.NoError) RETURN
+!
+!  Write out adjoint initial condition record into the adjoint
+!  history file.
+!
+            WRTforce(ng)=.FALSE.
+            CALL ad_wrt_his (ng)
+            IF (exit_flag.ne.NoError) RETURN
 
-#ifdef CONVOLVE
+# ifdef CONVOLVE
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Convolve adjoint trajectory with model-error covariance and convert
@@ -841,7 +910,7 @@
           LwrtState2d(ng)=.TRUE.
           LwrtTime(ng)=.FALSE.
           IF (Master) THEN
-            WRITE (stdout,30) outer, inner
+            WRITE (stdout,40) outer, inner
           END IF
 !
 !  Clear adjoint state arrays.
@@ -882,9 +951,9 @@
             subs=NtileX(ng)*NtileE(ng)/numthreads
             DO tile=subs*thread,subs*(thread+1)-1
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
               CALL ad_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
               CALL ad_variability (ng, TILE, Lold(ng), Lweak)
               CALL ad_convolution (ng, TILE, Lold(ng), 2)
               CALL initialize_ocean (ng, TILE, iTLM)
@@ -914,9 +983,9 @@
               CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
               CALL tl_convolution (ng, TILE, Lold(ng), 2)
               CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
               CALL tl_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
               CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
               CALL rp_ini_adjust (ng, TILE, Lnew(ng), Lold(ng))
             END DO
@@ -932,14 +1001,22 @@
 !  If weak constraint, convolve adjoint records in ADJname and impose
 !  model error covariance.
 !
-          IF (Nrec.gt.1) THEN
-            DO rec=1,Nrec
+          IF (Nrec.gt.3) THEN
+            LwrtTime(ng)=.TRUE.
+            DO rec=1,Nrec-1
               Lweak=.TRUE.
 !
 !  Read adjoint solution. Since routine "get_state" loads data into the
 !  ghost points, the adjoint solution is read in the tangent linear
 !  state arrays by using iTLM instead of iADM in the calling arguments.
 !
+!! HGA: The assigment below is not longer needed. This value is 
+!!      assigned in get_state in a generic way. I also fixed the
+!!      time that is reported in get_state when msg=4.
+!!
+!!            ForceTime(ng)=dstart*day2sec+                             &
+!!   &                      (Nrec-rec-1)*nADJ(ng)*dt(ng)
+!!
               ADrec=rec
               CALL get_state (ng, iTLM, 4, ADJname(ng), ADrec, Lold(ng))
               IF (exit_flag.ne.NoError) RETURN
@@ -962,9 +1039,9 @@
                 subs=NtileX(ng)*NtileE(ng)/numthreads
                 DO tile=subs*thread,subs*(thread+1)-1
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                   CALL ad_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                   CALL ad_variability (ng, TILE, Lold(ng), Lweak)
                   CALL ad_convolution (ng, TILE, Lold(ng), 2)
                   CALL initialize_ocean (ng, TILE, iTLM)
@@ -989,9 +1066,9 @@
                   CALL load_ADtoTL (ng, TILE, Lold(ng), Lold(ng), add)
                   CALL tl_convolution (ng, TILE, Lold(ng), 2)
                   CALL tl_variability (ng, TILE, Lold(ng), Lweak)
-# ifdef BALANCE_OPERATOR_NOT_YET
+#  ifdef BALANCE_OPERATOR_NOT_YET
                   CALL tl_balance (ng, TILE, Lini, Lold(ng))
-# endif
+#  endif
                   CALL load_TLtoAD (ng, TILE, Lold(ng), Lold(ng), add)
                 END DO
               END DO
@@ -1001,16 +1078,16 @@
 !  solution.
 !
               kstp(ng)=Lold(ng)
-# ifdef SOLVE3D
+#  ifdef SOLVE3D
               nstp(ng)=Lold(ng)
-# endif
+#  endif
               CALL ad_wrt_his (ng)
               IF (exit_flag.ne.NoError) RETURN
             END DO
             LwrtState2d(ng)=.FALSE.
             LwrtTime(ng)=.TRUE.
           END IF
-#endif
+# endif
 !
 !  Convert the current adjoint solution in ADJname to impulse forcing.
 !  Write out impulse forcing into TLFname NetCDF file. To facilitate
@@ -1019,16 +1096,18 @@
 !  in ADJname is backwards in time).
 !
           IF (Master) THEN
-            WRITE (stdout,40) outer, inner
+            WRITE (stdout,50) outer, inner
           END IF
           tTLFindx(ng)=0
-          outer_impulse=.FALSE.
-#ifdef DISTRIBUTE
+# ifdef DISTRIBUTE
           tile=MyRank
-#else
+# else
           tile=-1
-#endif
-          CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
+# endif
+          CALL wrt_impulse (ng, tile, iADM, ADJname(ng))
+          IF (exit_flag.ne.NoError) RETURN
+
+#endif /* !DATALESS_LOOPS */
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run representer model and compute a "new estimate" of the state
@@ -1041,20 +1120,24 @@
           LwrtTLM(ng)=.TRUE.
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.TRUE.
+          wrtRPmod(ng)=.TRUE.
           lstr=LEN_TRIM(FWDbase(ng))
           WRITE (TLMname(ng),10) FWDbase(ng)(1:lstr-3), outer
 !
 !  If weak constraint, the impulses are time-interpolated at each
 !  time-steps.
 !
-          SporadicImpulse=.FALSE.
-          IF (FrcRec(ng).gt.1) THEN
+          IF (FrcRec(ng).gt.3) THEN
             FrequentImpulse=.TRUE. 
           END IF
 !
 !  Initialize representer model IRPname file, record Rec2.
 !
+#ifdef DATALESS_LOOPS
+          tIRPindx(ng)=Rec1
+#else
           tIRPindx(ng)=Rec2
+#endif
           CALL rp_initial (ng)
           IF (exit_flag.ne.NoError) RETURN
 !
@@ -1085,6 +1168,44 @@
             IF (exit_flag.ne.NoError) RETURN
 
           END DO RP_LOOP2
+!
+!  Report data penalty function.
+!
+          IF (Master) THEN
+            DO i=0,NstateVar(ng)
+              IF (i.eq.0) THEN
+                string='Total'
+              ELSE
+                string=Vname(1,idSvar(i))
+              END IF
+              IF (FOURDVAR(ng)%DataPenalty(i).ne.0.0_r8) THEN
+                WRITE (stdout,30) outer, inner, 'RPM',                  &
+     &                            FOURDVAR(ng)%DataPenalty(i),          &
+     &                            TRIM(string)
+#ifdef DATALESS_LOOPS
+                WRITE (stdout,30) outer, inner, 'NLM'                   &
+     &                            FOURDVAR(ng)%NLPenalty(i),            &
+     &                            TRIM(string)
+#endif
+              END IF
+            END DO
+          END IF
+!
+!  Write data penalty function to NetCDF file.
+!
+          CALL netcdf_put_fvar (ng, iRPM, MODname(ng),                  &
+     &                          'RPcost_function',                      &
+     &                          FOURDVAR(ng)%DataPenalty(0),            &
+     &                          (/outer/), (/1/),                       &
+     &                          ncid = ncMODid(ng))
+          IF (exit_flag.ne.NoError) RETURN
+!
+!  Clean array before next run of RP model.
+!
+          FOURDVAR(ng)%DataPenalty=0.0_r8
+#ifdef DATALESS_LOOPS
+          FOURDVAR(ng)%NLPenalty=0.0_r8
+#endif
           wrtNLmod(ng)=.FALSE.
           wrtTLmod(ng)=.FALSE.
 !
@@ -1104,9 +1225,11 @@
  10   FORMAT (a,'_',i3.3,'.nc')
  20   FORMAT (/,1x,a,1x,'ROMS/TOMS: started time-stepping:',            &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 30   FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,        &
+ 30   FORMAT (' (',i3.3,',',i3.3,'): ',a,' data penalty, Jdata = ',     &
+     &        1p,e16.10,0p,t68,a)
+ 40   FORMAT (/,' Convolving Adjoint Trajectory: Outer = ',i3.3,        &
      &          ' Inner = ',i3.3)
- 40   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
+ 50   FORMAT (/,' Converting Convolved Adjoint Trajectory to',          &
      &          ' Impulses: Outer = ',i3.3,' Inner = ',i3.3,/)
 
       RETURN

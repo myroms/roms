@@ -163,9 +163,19 @@
 !-----------------------------------------------------------------------
 !
       IF (SOUTH_WEST_CORNER) THEN
-        IF (Master) WRITE (stdout,10) time_code(ng)
- 10     FORMAT (3x,'TL_FORCING   - added convolved adjoint impulse,',   &
-     &          t62,'t = ', a,/)
+        IF (Master) THEN
+          IF (FrequentImpulse) THEN
+            IF (iic(ng).eq.ntstart(ng)) THEN
+              WRITE (stdout,10)
+ 10           FORMAT (3x,'TL_FORCING   - adding weak-constraint ',      &
+     &                'forcing at each time-step.')
+            END IF
+          ELSE
+            WRITE (stdout,20) time_code(ng)
+ 20         FORMAT (3x,'TL_FORCING   - added weak-constraint forcing,', &
+     &              t62,'t = ', a)
+          END IF
+        END IF
       END IF
 !
 !  Tangent linear free-surface. The two different cases in the

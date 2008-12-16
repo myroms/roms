@@ -1,8 +1,7 @@
 #include "cppdefs.h"
 
 #if defined W4DVAR || defined W4DPSAS
-      SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop,        &
-     &                    converged)
+      SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -69,23 +68,30 @@
 
 # ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl,      &
+     &                           mp_bcastf_m, mp_bcastf_3d
 # endif
       implicit none
 !
 !  Imported variable declarations
 !
       integer, intent(in) :: ng, model, outLoop, innLoop, NinnLoop
-      logical, intent(out) :: converged
 !
 !  Local variable declarations.
 !
-      integer :: iobs, ivec
-      real(r8), dimension(NinnLoop) :: zu, zgam
-      real(r8), dimension(Ndatum(ng)) :: px, pgrad, zw
-      real(r8), dimension(NinnLoop,3) :: zwork
-      real(r8) :: dla, zbet, eps, preduc
+      logical :: Ltrans
+      integer :: i, ic, j, iobs, ivec, Lscale, info
+
+      real(r8) :: dla, zbet, eps, preducv, preducy
       real(r8) :: Jopt, Jf, Jmod, Jdata
+
+      real(r8), dimension(NinnLoop) :: zu, zgam
+      real(r8), dimension(Ndatum(ng)) :: px, pgrad, zw, zt
+      real(r8), dimension(Ninner,3) :: zwork
+      real(r8), dimension(2*(NinnLoop-1)) :: work
+      real(r8), dimension(Ninner,Ninner) :: zgv
+
+      character (len=13) :: string
 !
 !-----------------------------------------------------------------------
 !  Weak constraint 4DVar conjugate gradient, Lanczos-based algorithm.
@@ -97,7 +103,9 @@
 !  distributed-memory is possible) the master node does the computations
 !  and then broadcasts results to remaining nodes in the communicator.
 !
-      IF (Master) THEN
+      Ltrans=.FALSE.
+!
+      MASTER_THREAD : IF (Master) THEN
 !
 !  Initialize internal parameters.  This is needed here for output
 !  reasons.
@@ -107,15 +115,17 @@
         Jdata=0.0_r8
         Jmod=0.0_r8
         eps=0.0_r8
-        preduc=0.0_r8
+        preducv=0.0_r8
+        preducy=0.0_r8
 
         IF (innLoop.eq.0) THEN
 !
 !  If this is the first pass of the inner loop, set up the vectors and
 !  store the first guess. The initial starting guess is assumed to be
 !  zero in which case the gradient is just: -(obs-model).
+!  A first-level preconditioning is applied using the inverse of the
+!  observation error standard deviations (i.e. sqrt(ObsErr)).
 !
-          zgnorm=0.0
           DO iobs=1,Ndatum(ng)
 # ifdef W4DPSAS
             pgrad(iobs)=-ObsScale(iobs)*                                &
@@ -124,37 +134,114 @@
             pgrad(iobs)=-ObsScale(iobs)*                                &
      &                  (ObsVal(iobs)-TLmodVal(iobs))
 # endif
+!
+! Convert pgrad from x-space to v-space.
+!
+            IF (ObsErr(iobs).NE.0.0_r8) THEN
+              pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
+            END IF
+            vgrad0(iobs)=pgrad(iobs)
+          END DO
+!
+!  If preconditioning, convert pgrad from v-space to y-space.
+!
+          IF (Lprecond.and.(outLoop.gt.1)) THEN
+            Lscale=2                 ! SQRT spectral LMP
+            Ltrans=.TRUE.
+            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,       &
+     &                     pgrad)
+          END IF
+
+          cg_Gnorm(outLoop)=0.0_r8
+          vgnorm(outLoop)=0.0_r8
+          DO iobs=1,Ndatum(ng)
             zgrad0(iobs)=pgrad(iobs)
-            zgnorm=zgnorm+zgrad0(iobs)*zgrad0(iobs)
+            cg_Gnorm(outLoop)=cg_Gnorm(outLoop)+                        &
+     &                        zgrad0(iobs)*zgrad0(iobs)
+            vgnorm(outLoop)=vgnorm(outLoop)+vgrad0(iobs)*vgrad0(iobs)
           END DO
-          zgnorm=SQRT(zgnorm)
+
+          cg_Gnorm(outLoop)=SQRT(cg_Gnorm(outLoop))
+          vgnorm(outLoop)=SQRT(vgnorm(outLoop))
           DO iobs=1,Ndatum(ng)
-            zcglwk(iobs,1)=pgrad(iobs)/zgnorm
-            ADmodVal(iobs)=zcglwk(iobs,1)
+            zcglwk(iobs,1,outLoop)=pgrad(iobs)/cg_Gnorm(outLoop)
+            ADmodVal(iobs)=zcglwk(iobs,1,outLoop)
           END DO
-          zqg0(1)=0.0_r8
+!
+!  If preconditioning, convert ADmodVal from y-space to v-space.
+!
+          IF (Lprecond.and.(outLoop.gt.1)) THEN
+            Lscale=2                 ! SQRT spectral LMP
+            Ltrans=.FALSE.
+            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,       &
+     &                     ADmodVal)
+          END IF
+!
+! Convert ADmodVal from v-space to x-space.
+!
           DO iobs=1,Ndatum(ng)
-            zqg0(1)=zqg0(1)+zcglwk(iobs,1)*zgrad0(iobs)
+            IF (ObsErr(iobs).NE.0.0_r8) THEN
+              ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
+            END IF
           END DO
+
+          cg_QG(1,outLoop)=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            cg_QG(1,outLoop)=cg_QG(1,outLoop)+zcglwk(iobs,1,outLoop)*   &
+     &                       zgrad0(iobs)
+          END DO
+
+          preducv=1.0_r8
+          preducy=1.0_r8
 
         ELSE
 !
 !  After the initialization, for every other inner loop, calculate a
 !  new Lanczos vector, store it in the matrix, and update search.
 !
-          zdelta(innLoop)=0.0_r8
           DO iobs=1,Ndatum(ng)
-            pgrad(iobs)=ObsScale(iobs)*                                 &
-     &                 (TLmodVal(iobs)+                                 &
-     &                  ObsErr(iobs)*zcglwk(iobs,innLoop))
-            zdelta(innLoop)=zdelta(innLoop)+                            &
-     &                      zcglwk(iobs,innLoop)*pgrad(iobs)
+            pgrad(iobs)=ObsScale(iobs)*TLmodVal(iobs)
+            IF (ObsErr(iobs).NE.0.0_r8) THEN
+              pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
+            END IF
+          END DO
+
+          DO iobs=1,Ndatum(ng)
+            zt(iobs)=zcglwk(iobs,innLoop,outLoop)
           END DO
 !
-!  Exit, if not a positive definity algorithm.
+!  If preconditioning, convert zt from y-space to v-space.
 !
-          IF (zdelta(innLoop).le.0.0_r8) THEN
-            WRITE (stdout,20) zdelta(innLoop), outLoop, innLoop
+          IF (Lprecond.and.(outLoop.gt.1)) THEN
+            Lscale=2                 ! SQRT spectral LMP
+            Ltrans=.FALSE.
+            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, zt)
+          END IF
+!
+          DO iobs=1,Ndatum(ng)
+            pgrad(iobs)=pgrad(iobs)+zt(iobs)
+          END DO
+!
+!  If preconditioning, convert pgrad from v-space to y-space.
+!
+          IF (Lprecond.and.(outLoop.gt.1)) THEN
+            Lscale=2                 ! SQRT spectral LMP
+            Ltrans=.TRUE.
+            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, pgrad)
+          END IF
+!
+          cg_delta(innLoop,outLoop)=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            cg_delta(innLoop,outLoop)=cg_delta(innLoop,outLoop)+        &
+     &                                zcglwk(iobs,innLoop,outLoop)*     &
+     &                                pgrad(iobs)
+          END DO
+!
+!  Exit, if not a positive definite algorithm.
+!
+          IF (cg_delta(innLoop,outLoop).le.0.0_r8) THEN
+            WRITE (stdout,20) cg_delta(innLoop,outLoop), outLoop,       &
+     &                        innLoop
             exit_flag=8
             GO TO 10
           END IF
@@ -162,13 +249,13 @@
 !  Compute the new Lanczos vector.
 !
           DO iobs=1,Ndatum(ng)
-            pgrad(iobs)=pgrad(iobs)-                                    &
-     &                  zdelta(innLoop)*zcglwk(iobs,innLoop)
+            pgrad(iobs)=pgrad(iobs)-cg_delta(innLoop,outLoop)*          &
+     &                  zcglwk(iobs,innLoop,outLoop)
           END DO
           IF (innLoop.gt.1) THEN
             DO iobs=1,Ndatum(ng)
-              pgrad(iobs)=pgrad(iobs)-                                  &
-     &                    zbeta(innLoop)*zcglwk(iobs,innLoop-1)
+              pgrad(iobs)=pgrad(iobs)-cg_beta(innLoop,outLoop)*         &
+     &                                 zcglwk(iobs,innLoop-1,outLoop)
             END DO
           END IF
 !
@@ -177,39 +264,42 @@
           DO ivec=innLoop,1,-1
             dla=0.0_r8
             DO iobs=1,Ndatum(ng)
-              dla=dla+pgrad(iobs)*zcglwk(iobs,ivec)
+              dla=dla+pgrad(iobs)*zcglwk(iobs,ivec,outLoop)
             END DO
             DO iobs=1,Ndatum(ng)
-              pgrad(iobs)=pgrad(iobs)-dla*zcglwk(iobs,ivec)
+              pgrad(iobs)=pgrad(iobs)-dla*zcglwk(iobs,ivec,outLoop)
             END DO
           END DO
 !
-          zbeta(innLoop+1)=0.0_r8
+          cg_beta(innLoop+1,outLoop)=0.0_r8
           DO iobs=1,Ndatum(ng)
-            zbeta(innLoop+1)=zbeta(innLoop+1)+pgrad(iobs)*pgrad(iobs)
+            cg_beta(innLoop+1,outLoop)=cg_beta(innLoop+1,outLoop)+      &
+     &                                 pgrad(iobs)*pgrad(iobs)
           END DO
-          zbeta(innLoop+1)=SQRT(zbeta(innLoop+1))
+          cg_beta(innLoop+1,outLoop)=SQRT(cg_beta(innLoop+1,outLoop))
 !
           DO iobs=1,Ndatum(ng)
-            zcglwk(iobs,innLoop+1)=pgrad(iobs)/zbeta(innLoop+1)
+            zcglwk(iobs,innLoop+1,outLoop)=pgrad(iobs)/                 &
+     &                                     cg_beta(innLoop+1,outLoop)
           END DO
 !
-          zqg0(innLoop+1)=0.0_r8
+          cg_QG(innLoop+1,outLoop)=0.0_r8
           DO iobs=1,Ndatum(ng)
-            zqg0(innLoop+1)=zqg0(innLoop+1)+                            &
-     &                      zcglwk(iobs,innLoop+1)*zgrad0(iobs)
+            cg_QG(innLoop+1,outLoop)=cg_QG(innLoop+1,outLoop)+          &
+     &                      zcglwk(iobs,innLoop+1,outLoop)*zgrad0(iobs)
           END DO
 !
 !  Calculate the new solution based upon the new, orthonormalized
 !  Lanczos vector. First, the tridiagonal system is solved by
 !  decomposition and forward/back substitution.
 !
-          zbet=zdelta(1)
-          zu(1)=-zqg0(1)/zbet
+          zbet=cg_delta(1,outLoop)
+          zu(1)=-cg_QG(1,outLoop)/zbet
           DO ivec=2,innLoop
-            zgam(ivec)=zbeta(ivec)/zbet
-            zbet=zdelta(ivec)-zbeta(ivec)*zgam(ivec)
-            zu(ivec)=(-zqg0(ivec)-zbeta(ivec)*zu(ivec-1))/zbet
+            zgam(ivec)=cg_beta(ivec,outLoop)/zbet
+            zbet=cg_delta(ivec,outLoop)-cg_beta(ivec,outLoop)*zgam(ivec)
+            zu(ivec)=(-cg_QG(ivec,outLoop)-cg_beta(ivec,outLoop)*       &
+     &                   zu(ivec-1))/zbet
           END DO
           zwork(innLoop,3)=zu(innLoop)
 
@@ -220,29 +310,55 @@
 
           DO iobs=1,Ndatum(ng)
             zw(iobs)=zgrad0(iobs)+                                      &
-     &               zbeta(innLoop+1)*zcglwk(iobs,innLoop+1)*           &
-     &               zwork(innLoop,3)
+     &               cg_beta(innLoop+1,outLoop)*                        &
+     &               zcglwk(iobs,innLoop+1,outLoop)*zwork(innLoop,3)
           END DO
 
           DO iobs=1,Ndatum(ng)
-            px(iobs)=0.0
+            px(iobs)=0.0_r8
             DO ivec=1,innLoop
-              px(iobs)=px(iobs)+zcglwk(iobs,ivec)*zwork(ivec,3)
-              zw(iobs)=zw(iobs)-zcglwk(iobs,ivec)*zqg0(ivec)
+              px(iobs)=px(iobs)+zcglwk(iobs,ivec,outLoop)*zwork(ivec,3)
+              zw(iobs)=zw(iobs)-zcglwk(iobs,ivec,outLoop)*              &
+     &                                       cg_QG(ivec,outLoop)
             END DO
           END DO
 !
-!  Compute the reduction in the gradient Ax-b.
+!  If preconditioning, convert px from y-space to v-space.
+!  We will always keep px in v-space.
 !
-          preduc=0.0_r8
+          IF (Lprecond.and.(outLoop.gt.1)) THEN
+            Lscale=2                 ! SQRT spectral LMP
+            Ltrans=.FALSE.
+            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, px)
+          END IF
+!
+!  Compute the reduction in the gradient Ax-b (in y-space).
+!
+          preducy=0.0_r8
           DO iobs=1,Ndatum(ng)
-            preduc=preduc+zw(iobs)*zw(iobs)
+            preducy=preducy+zw(iobs)*zw(iobs)
           END DO
-          preduc=SQRT(preduc)/zgnorm
+          preducy=SQRT(preducy)/cg_Gnorm(outLoop)
 !
-!  Estimate the residual by: ||Ax-b|| = zbeta(k+1)
+!  Compute the reduction in the gradient Ax-b (in y-space).
 !
-          eps=ABS(zbeta(innLoop+1))
+          IF (Lprecond.and.(outLoop.gt.1)) THEN
+            Lscale=-2                 ! SQRT spectral LMP
+            Ltrans=.TRUE.
+            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, zw)
+          END IF
+!
+          preducv=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            preducv=preducv+zw(iobs)*zw(iobs)
+          END DO
+          preducv=SQRT(preducv)/vgnorm(outLoop)
+!
+!  Estimate the residual (in y-space) by: 
+!
+!    ||Ax-b|| = cg_beta(k+1,outLoop)*zwork(innLoop,3)
+!
+          eps=ABS(cg_beta(innLoop+1,outLoop)*zwork(innLoop,3))
 !
 !  Estimate the various penalty function components based on
 !  Bennett (2002), page 22 and pages 42-44:
@@ -266,56 +382,192 @@
 !         with increasing iteration number.
 !
           DO iobs=1,Ndatum(ng)
-            Jopt=Jopt-px(iobs)*zgrad0(iobs)
+            Jopt=Jopt-px(iobs)*vgrad0(iobs)
             IF (ObsErr(iobs).ne.0.0_r8) THEN
-              Jf=Jf+zgrad0(iobs)*zgrad0(iobs)/ObsErr(iobs)
+!!AMM         Jf=Jf+zgrad0(iobs)*zgrad0(iobs)
+              Jf=Jf+vgrad0(iobs)*vgrad0(iobs)
             END IF
-            Jdata=Jdata+px(iobs)*px(iobs)*ObsErr(iobs)
+            Jdata=Jdata+px(iobs)*px(iobs)
           END DO
           Jmod=Jopt-Jdata
 !
-!  Check the convergence criteria: The Lanczos algorithm should not
-!  be run for more loops than the size of the data. This will cause
-!  problems. If we have performed more loops than we have datum,
-!  then we set converged to TRUE so that the inner loop stops. 
+!  Put the new trial solution into the adjoint vector for the next
+!  loop or put the final solution into the adjoint vector on the
+!  final inner-loop.
 !
-          converged=.FALSE.
-          IF ((preduc.le.CGeps).or.(innLoop.eq.Ndatum(ng))) THEN
-            converged=.TRUE.
-          END IF
+          IF (innLoop.eq.NinnLoop) THEN
 !
-!  Put the new trial solution into the adjoint vector for the next loop
-!  Put the final solution into the adjoint vector when converged
-!  of on the final inner-loop.
+!  Note: px is already in v-space so there is no need to convert
+!  if preconditioning.
 !
-          IF ((innLoop.eq.NinnLoop).or.converged) THEN
             DO iobs=1,Ndatum(ng)
               ADmodVal(iobs)=px(iobs)
             END DO
           ELSE
             DO iobs=1,Ndatum(ng)
-              ADmodVal(iobs)=zcglwk(iobs,innLoop+1)
+              ADmodVal(iobs)=zcglwk(iobs,innLoop+1,outLoop)
             END DO
+!
+!  If preconditioning, convert ADmodVal from y-space to v-space.
+!
+            IF (Lprecond.and.(outLoop.gt.1)) THEN
+              Lscale=2                 ! SQRT spectral LMP
+              Ltrans=.FALSE.
+              CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,     &
+     &                       ADmodVal)
+            END IF
           END IF
+!
+!  Convert ADmodVal from v-space to x-space.
+!
+          DO iobs=1,Ndatum(ng)
+            IF (ObsErr(iobs).NE.0.0_r8) THEN
+              ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
+            END IF
+          END DO
+!
         END IF
 !
 !  Report minimization progress.
 !
-        WRITE (stdout,30) Ndatum(ng), converged,                         &
-     &                    outLoop, innLoop, eps,                         &
-     &                    outLoop, innLoop, preduc,                      &
-     &                    outLoop, innLoop, Jf,                          &
-     &                    outLoop, innLoop, Jdata,                       &
-     &                    outLoop, innLoop, Jmod,                        &
-     &                    outLoop, innLoop, Jopt,                        &
+        WRITE (stdout,30) Ndatum(ng),                                   &
+     &                    outLoop, innLoop, eps,                        &
+     &                    outLoop, innLoop, preducy,                    &
+     &                    outLoop, innLoop, preducv,                    &
+     &                    outLoop, innLoop, Jf,                         &
+     &                    outLoop, innLoop, Jdata,                      &
+     &                    outLoop, innLoop, Jmod,                       &
+     &                    outLoop, innLoop, Jopt,                       &
      &                    outLoop, innLoop
         DO ivec=1,innLoop
-          WRITE (stdout,40) ivec, zdelta(ivec), zbeta(ivec),             &
-     &                      zwork(ivec,3)
+          WRITE (stdout,40) ivec, cg_delta(ivec,outLoop),               &
+     &                      cg_beta(ivec,outLoop), zwork(ivec,3)
         END DO
-        WRITE (stdout,50) innLoop+1, zbeta(innLoop+1)
+        WRITE (stdout,50) innLoop+1, cg_beta(innLoop+1,outLoop)
+!
+!  If preconditioning, report the Ritz eigenvalues used.
+!  
+        IF ((LhessianEV.or.Lprecond).and.(outLoop.gt.1)) THEN
+          IF (NritzEV.gt.0) THEN
+            WRITE (stdout,60) outLoop, innLoop, nConvRitz
+            ic=0
+            DO ivec=1,NinnLoop
+              IF (ivec.le.nConvRitz) THEN
+                string='         '
+                ic=ic+1
+                WRITE (stdout,70) ivec, cg_Ritz(ivec,outLoop-1),        &
+     &                            cg_RitzErr(ivec,outLoop-1),           &
+     &                            TRIM(ADJUSTL(string)),                &
+     &                            'Used=', ic
+              ELSE
+                string='             '
+                WRITE (stdout,80) ivec, cg_Ritz(ivec,outLoop-1),        &
+     &                            cg_RitzErr(ivec,outLoop-1),           &
+     &                            TRIM(ADJUSTL(string))
+              END IF
+            END DO
+          ELSE
+            WRITE (stdout,90) outLoop, innLoop, RitzMaxErr
+            ic=0
+            DO ivec=1,NinnLoop
+              IF (cg_RitzErr(ivec,outLoop-1).le.RitzMaxErr) THEN
+                string='converged'
+                ic=ic+1
+                WRITE (stdout,70) ivec, cg_Ritz(ivec,outLoop-1),        &
+     &                            cg_RitzErr(ivec,outLoop-1),           &
+     &                            TRIM(ADJUSTL(string)),                &
+     &                            'Good=', ic
+              ELSE
+                string='not converged'
+                WRITE (stdout,80) ivec, cg_Ritz(ivec,outLoop-1),        &
+     &                            cg_RitzErr(ivec,outLoop-1),           &
+     &                            TRIM(ADJUSTL(string))
+              END IF
+            END DO
+          END IF
+        END IF
+!
+!   Compute the eigenvalues and eigenvectors of the tridiagonal matrix.
+!
+        IF (innLoop.eq.NinnLoop) THEN
+          IF (LhessianEV.or.Lprecond) THEN
+            DO ivec=1,innLoop
+              cg_Ritz(ivec,outLoop)=cg_delta(ivec,outLoop)
+            END DO
+            DO ivec=1,innLoop-1
+              zwork(ivec,1)=cg_beta(ivec+1,outLoop)
+            END DO
+!
+!  Use the LAPACK routine DSTEQR to compute the eigenvectors and
+!  eigenvalues of the tridiagonal matrix. If applicable, the
+!  eigenpairs are computed by master thread only.
+!
+            CALL DSTEQR ('I', innLoop, cg_Ritz(1,outLoop), zwork(1,1),  &
+     &                   zgv, Ninner, work, info)
+            IF (info.ne.0) THEN
+              PRINT *,' CONGRAD - Error in DSTEQR: info = ',info
+              exit_flag=8
+              GO TO 10
+            END IF
+!
+            DO j=1,Ninner
+              DO i=1,Ninner
+                cg_zv(i,j,outLoop)=zgv(i,j)
+              END DO
+            END DO
+!
+!  Estimate the Ritz value error bounds.
+!
+            DO ivec=1,innLoop
+              cg_RitzErr(ivec,outLoop)=ABS(cg_beta(innLoop+1,outLoop)*  &
+     &                                 cg_zv(innLoop,ivec,outLoop))
+            END DO
+!
+!  Check for exploding or negative Ritz values.
+!
+            DO ivec=1,innLoop
+              IF (cg_RitzErr(ivec,outLoop).lt.0.0_r8) THEN
+                PRINT *,'CONGRAD - negative Ritz value found.'
+                exit_flag=8
+                GO TO 10
+              END IF
+            END DO
+!
+!  Change the error bounds for the acceptable eigenvectors.
+!
+            RitzMaxErr=HevecErr
+            DO ivec=1,NinnLoop
+              cg_RitzErr(ivec,outLoop)=cg_RitzErr(ivec,outLoop)/        &
+     &                                 cg_Ritz(NinnLoop,outLoop)
+            END DO
+!
+!  Report Eigenvalues and their relative accuracy.
+!
+            WRITE (stdout,100) outLoop, InnLoop, RitzMaxErr
+            ic=0
+            DO ivec=1,NinnLoop
+              IF (cg_RitzErr(ivec,outLoop).le.RitzMaxErr) THEN
+                string='converged'
+                ic=ic+1
+                WRITE (stdout,70) ivec, cg_Ritz(ivec,outLoop),          &
+     &                            cg_RitzErr(ivec,outLoop),             &
+     &                            TRIM(ADJUSTL(string)),                &
+     &                            'Good=', ic
+              ELSE
+                string='not converged'
+                WRITE (stdout,80) ivec, cg_Ritz(ivec,outLoop),          &
+     &                            cg_RitzErr(ivec,outLoop),             &
+     &                            TRIM(ADJUSTL(string))
+              END IF
+            END DO
+!
+!  Calculate the converged eigenvectors (vcglev) of the [R_n + Cobs]. 
+!
+            CALL RPevecs (ng, outLoop, NinnLoop)
+          END IF
+        END IF
 
-      END IF
+      END IF MASTER_THREAD
 !
 !  Come here if not a possite definite algorithm.
 !
@@ -329,41 +581,307 @@
 !
 !  Broadcast new solution to other nodes.
 !
-      CALL mp_bcastf (ng, iTLM, ADmodVal, Mobs)
-      CALL mp_bcastl (ng, iTLM, converged, 1)
+      CALL mp_bcastf (ng, model, ADmodVal, Mobs)
+      CALL mp_bcasti (ng, model, info, 1)
+      CALL mp_bcastf (ng, model, cg_beta(:,outLoop), Ninner+1)
+      CALL mp_bcastf_m (ng, model, zcglwk(:,:,outLoop), Ninner, Ninner)
+      IF ((LhessianEV.or.Lprecond).and.(innLoop.eq.NinnLoop)) THEN
+        CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop), Ninner)
+        CALL mp_bcastf (ng, model, cg_RitzErr(:,outLoop), Ninner)
+        CALL mp_bcastf_m (ng, model, cg_zv(:,:,outLoop), Ninner, Ninner)
+        CALL mp_bcastf_m (ng, model, vcglev(:,:,outLoop),Ninner, Ninner)
+      END IF
 # endif
-!!
-!! Write out conjugate gradient vectors into 4DVAR NetCDF file.
-!!
-!!    CALL cg_write (ng, converged)
+!
+!  Write out conjugate gradient vectors into 4DVAR NetCDF file.
+!
+      CALL cg_write (ng, model, innLoop, outLoop,                       &
+     &               Jf, Jdata, Jmod, Jopt, preducv, preducy)
 !
  20   FORMAT (/,' CONGRAD - Fatal error, not possitive definite',       &
      &        ' algorithm:',/,                                          &
-     &        /,11x,'zdelta = ',1p,e15.8,0p,3x,'(',i3.3,', ',i3.3,')')
+     &        /,11x,'cg_delta = ',1p,e15.8,0p,3x,'(',i3.3,', ',i3.3,')')
  30   FORMAT (/,' CONGRAD - Conjugate Gradient Information:',/,         &
-     &        /,11x,'Ndatum     = ',i7.7,                               &
-     &        /,11x,'converged  = ',l1,/,/,                             &
+     &        /,11x,'Ndatum     = ',i7.7,/,/,                           &
      &        1x,'(',i3.3,',',i3.3,'): ',                               &
-     &        'Residual estimate,                  eps = ',1p,e14.7,/,  &
-     &        1x,'(',i3.3,',',i3.3,'): ',                               &
-     &        'Reduction in gradient norm,      Greduc = ',1p,e14.7,/,  &
-     &        1x,'(',i3.3,',',i3.3,'): ',                               &
-     &        'First guess initial data misfit,     Jf = ',1p,e14.7,/,  &
-     &        1x,'(',i3.3,',',i3.3,'): ',                               &
-     &        'State estimate data misfit,       Jdata = ',1p,e14.7,/,  &
-     &        1x,'(',i3.3,',',i3.3,'): ',                               &
-     &        'Model penalty function,            Jmod = ',1p,e14.7,/,  &
-     &        1x,'(',i3.3,',',i3.3,'): ',                               &
-     &        'Optimal penalty function,          Jopt = ',1p,e14.7,/,  &
-     &        /,1x,'(',i3.3,',',i3.3,'): ',                             &
-     &        'Lanczos vectors - zdelta, zbeta, zwork:',/)
+     &        'Residual estimate,                      eps = ',         &
+     &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
+     &        'Reduction in gradient norm,  Greduc y-space = ',         &
+     &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
+     &        'Reduction in gradient norm,  Greduc v-space = ',         &
+     &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
+     &        'First guess initial data misfit,         Jf = ',         &
+     &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
+     &        'State estimate data misfit,           Jdata = ',         &
+     &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
+     &        'Model penalty function,                Jmod = ',         &
+     &        1p,e14.7,/,1x,'(',i3.3,',',i3.3,'): ',                    &
+     &        'Optimal penalty function,              Jopt = ',         &
+     &        1p,e14.7,/,/,1x,'(',i3.3,',',i3.3,'): ',                  &
+     &        'Lanczos vectors - cg_delta, cg_beta, zwork:',/)
  40   FORMAT (6x,i3.3,4x,3(1p,e15.8,5x))
  50   FORMAT (6x,i3.3,24x,1p,e15.8)
+ 60   FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                             &
+     &        'Ritz eigenvalues used in preconditioning, ',             &
+     &        'nConvRitz = ',i3.3,/)
+ 70   FORMAT (6x,i3.3,2x,1p,e14.7,2x,1p,e14.7,2x,a,5x,'('a,i3.3,')')
+ 80   FORMAT (6x,i3.3,2x,1p,e14.7,2x,1p,e14.7,2x,a)
+ 90   FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                             &
+     &        'Ritz eigenvalues used in preconditioning, ',             &
+     &        'RitzMaxErr = ',1p,e12.5,/)
+100   FORMAT (/,1x,'(',i3.3,',',i3.3,'): ',                             &
+     &        'New Ritz eigenvalues and their accuracy,  ',             &
+     &        'RitzMaxErr = ',1p,e12.5,/)
 
       RETURN
       END SUBROUTINE congrad
 
-      SUBROUTINE cg_write (ng, converged)
+      SUBROUTINE RPevecs (ng, outLoop, NinnLoop)
+!
+!=======================================================================
+!                                                                      !
+!  This routine computes the converged eigenvectors of (R_n+Cobs).     !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+      USE mod_iounits
+!
+      implicit none
+!
+!  Imported variable declarations
+!
+      integer, intent(in) :: ng, outLoop, NinnLoop
+!
+!  Local variable declarations.
+!
+      integer :: iobs, ivec, jn, jk, ij, ingood
+
+      real(r8) :: dla
+!
+!-----------------------------------------------------------------------
+!  Compute and store converged eigenvectors of (R_n+Cobs).
+!-----------------------------------------------------------------------
+!
+!  Count and collect the converged eigenvalues.
+!
+      ingood=0
+      DO ivec=NinnLoop,1,-1
+        ingood=ingood+1
+        Ritz(ingood)=cg_Ritz(ivec,outLoop)
+      END DO
+!
+!  Calculate the converged eigenvectors of (R_n+Cobs).
+!
+      ij=0
+      DO jn=NinnLoop,1,-1
+        ij=ij+1
+        DO iobs=1,Ndatum(ng)
+          vcglev(iobs,ij,outLoop)=0.0_r8
+        END DO
+        DO jk=1,NinnLoop
+          DO iobs=1,Ndatum(ng)
+            vcglev(iobs,ij,outLoop)=vcglev(iobs,ij,outLoop)+            &
+     &                              zcglwk(iobs,jk,outLoop)*            &
+     &                              cg_zv(jk,jn,outLoop)
+          END DO
+        END DO
+        DO jk=1,ij-1
+          dla=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            dla=dla+vcglev(iobs,jk,outLoop)*vcglev(iobs,ij,outLoop)
+          END DO
+          DO iobs=1,Ndatum(ng)
+            vcglev(iobs,ij,outLoop)=vcglev(iobs,ij,outLoop)-            &
+     &                              dla*vcglev(iobs,jk,outLoop)
+          END DO
+        END DO
+        dla=0.0_r8
+        DO iobs=1,Ndatum(ng)
+          dla=dla+vcglev(iobs,ij,outLoop)*vcglev(iobs,ij,outLoop)
+        END DO
+        DO iobs=1,Ndatum(ng)
+          vcglev(iobs,ij,outLoop)=vcglev(iobs,ij,outLoop)/SQRT(dla)
+        END DO
+      END DO
+
+      RETURN
+      END SUBROUTINE RPevecs
+
+      SUBROUTINE rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop, py)
+!
+!=======================================================================
+!                                                                      !
+!  This routine is the preconditioner in observation space.            !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_fourdvar
+# ifdef DISTRIBUTE
+      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl
+# endif
+      implicit none
+!
+!  Imported variable declarations
+!
+      logical, intent(in) :: Ltrans
+      integer, intent(in) :: ng, Lscale, outLoop, NinnLoop
+      real(r8), intent(inout) :: py(Ndatum(ng))
+!
+!  Local variable declarations.
+!
+      integer :: is, ie, inc, iss, i
+      integer :: nol, nols, nole, ninc
+      integer :: ingood
+      integer :: iobs, nvec
+
+      real(r8) :: dla, fac, facritz
+!
+!  Set the do-loop indices for the sequential preconditioner
+!  loop.
+!
+      IF (Ltrans) THEN
+        nols=outLoop-1
+        nole=1
+        ninc=-1
+      ELSE
+        nols=1
+        nole=outLoop-1
+        ninc=1
+      END IF
+!
+!  Apply the preconditioners derived from all previous outer-loops
+!  sequentially.
+!
+      DO nol=nols,nole,ninc
+!
+!  Determine the number of Ritz vectors to use.
+!  For Lritz=.TRUE., choose HvecErr to be larger.
+!
+        ingood=0
+        DO i=1,NinnLoop
+          IF (cg_RitzErr(i,nol).le.RitzMaxErr) THEN
+            ingood=ingood+1
+          END IF
+        END DO
+        IF (NritzEV.gt.0) THEN
+          nConvRitz=NritzEV
+          ingood=nConvRitz
+        ELSE
+          nConvRitz=ingood
+        END IF
+!
+        IF (Lscale.gt.0) THEN
+          is=1
+          ie=ingood
+          inc=1
+        ELSE
+          is=ingood
+          ie=1
+          inc=-1
+        END IF
+!
+        IF (Ltrans) THEN
+          iss=is
+          is=ie
+          ie=iss
+          inc=-inc
+        END IF
+!
+!  Lscale determines the form of the preconditioner:
+!
+!     1= LMP (NOT CODED YET)
+!    -1= Inverse LMP (NOT CODED YET)
+!     2= Square root LMP
+!    -2= Inverse square root LMP
+!
+        DO nvec=is,ie,inc
+!
+          fac=0.0_r8
+!
+          IF (Lritz) THEN
+!
+!  Note that the primitive Ritz vectors cg_zv are stored in order of
+!  ascending Ritz values.
+!
+            facritz=cg_beta(NinnLoop+1,nol)*                            &
+     &              cg_zv(NinnLoop,NinnLoop+1-nvec,nol)
+!
+!  Compute dot-product of py with q_k+1 from previous outer-loop.
+!
+            IF (.not.Ltrans) THEN
+              dla=0.0_r8
+              DO iobs=1,Ndatum(ng)
+                dla=dla+zcglwk(iobs,NinnLoop+1,nol)*py(iobs)
+              END DO
+              facritz=facritz*dla
+            END IF
+
+          END IF
+!
+!  Compute the dot-product of py with the Ritz vectors from previous 
+!  outer-loop.
+!
+!  Note that vcglev are arranged in order of descending Ritz values,
+!  while the Ritz values themselves that are stored in cg_Ritz are in
+!  ascending order.
+!
+          dla=0.0_r8
+          DO iobs=1,Ndatum(ng)
+            dla=dla+vcglev(iobs,nvec,nol)*py(iobs)
+          END DO
+!
+!  NOTE: Lscale=1 and Lscale=-1 cases are not complete yet.
+!
+          IF (Lscale.eq.-1) THEN
+            fac=(cg_Ritz(NinnLoop+1-nvec,nol)-1.0_r8)*dla
+          ELSE IF (Lscale.eq.1) THEN
+            fac=(1.0_r8/cg_Ritz(NinnLoop+1-nvec,nol)-1.0_r8)*dla
+          ELSE IF (Lscale.eq.-2) THEN
+            fac=(SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_r8)*dla
+          ELSE IF (Lscale.eq.2) THEN
+            fac=(1.0_r8/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))-1.0_r8)*dla
+          END IF
+!
+          IF (.not.Ltrans) THEN
+            IF (Lritz.and.(Lscale.eq.-2)) THEN
+              fac=fac+facritz/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))
+            END IF
+            IF (Lritz.and.(Lscale.eq.2)) THEN
+              fac=fac-facritz/cg_Ritz(NinnLoop+1-nvec,nol)
+            END IF
+          END IF
+!
+          DO iobs=1,Ndatum(ng)
+             py(iobs)=py(iobs)+fac*vcglev(iobs,nvec,nol)
+          END DO
+!
+          IF (Lritz.and.Ltrans) THEN
+
+            IF (Lscale.eq.2) THEN
+              fac=-facritz*dla/cg_Ritz(NinnLoop+1-nvec,nol)
+            END IF
+            IF (Lscale.eq.-2) THEN
+              fac=facritz*dla/SQRT(cg_Ritz(NinnLoop+1-nvec,nol))
+            END IF
+
+            DO iobs=1,Ndatum(ng)
+               py(iobs)=py(iobs)+fac*zcglwk(iobs,NinnLoop+1,nol)
+            END DO
+
+          END IF
+
+        END DO
+      END DO
+
+      END SUBROUTINE rprecond
+
+      SUBROUTINE cg_write (ng, model, innLoop, outLoop,                 &
+     &                     Jf, Jdata, Jmod, Jopt, preducv, preducy)
 !
 !=======================================================================
 !                                                                      !
@@ -384,78 +902,172 @@
 !
 !  Imported variable declarations
 !
-      logical, intent(in) :: converged
+      integer, intent(in) :: ng, model, innLoop, outLoop
 
-      integer, intent(in) :: ng
+      real(r8), intent(in) :: Jf, Jdata, Jmod, Jopt, preducv, preducy
 !
 !  Local variable declarations.
 !
-      integer :: status, varid
-      integer :: start(2), total(2)
+      integer :: status
 !
 !-----------------------------------------------------------------------
-!  Write out conjugate gradient vectors.
+!  Write out conjugate gradient variables.
 !-----------------------------------------------------------------------
-!
-      IF (OutThread) THEN
 !
 !  Write out outer and inner iteration.
 !
-        status=nf90_inq_varid(ncMODid(ng), 'outer', varid)
-        status=nf90_put_var(ncMODid(ng), varid, outer)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'outer', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_ivar (ng, model, MODname(ng), 'outer',            &
+     &                      outer, (/0/), (/0/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 
-        status=nf90_inq_varid(ncMODid(ng), 'inner', varid)
-        status=nf90_put_var(ncMODid(ng), varid, inner)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) 'inner', TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      CALL netcdf_put_ivar (ng, model, MODname(ng), 'inner',            &
+     &                      inner, (/0/), (/0/),                        &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
-!  Write out representer coefficients.
+!  Write out number of converged Ritz eigenvalues.
 !
-        start(1)=1
-        total(1)=Ndatum(ng)
-        status=nf90_put_var(ncMODid(ng), modVid(idRepC,ng),             &
-     &                      ADmodVal, start, total)
-        IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,10) TRIM(Vname(1,idRepC)), TRIM(MODname(ng))
-          exit_flag=3
-          ioerror=status
-          RETURN
-        END IF
+      IF (innLoop.eq.Ninner) THEN
+        CALL netcdf_put_ivar (ng, model, MODname(ng), 'nConvRitz',      &
+     &                        nConvRitz, (/outLoop/), (/1/),            &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
-!  Write out conjugate gradient vectors.
+!  Write out converged Ritz eigenvalues.
 !
-!  HERNAN -- Here we need to write out zdelta, zbeta, and zcglwk
+      IF (innLoop.eq.Ninner) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'Ritz',           &
+     &                        Ritz, (/1,outLoop/), (/nConvRitz,1/),     &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
 !
-       END IF
+!  Write out conjugate gradient norm.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_beta',        &
+     &                        cg_beta, (/1,1/), (/Ninner+1,Nouter/),    &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Write out Lanczos algorithm coefficients.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_delta',       &
+     &                        cg_delta, (/1,1/), (/Ninner,Nouter/),     &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Initial gradient normalization factor.
+!
+      IF (innLoop.eq.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Gnorm',       &
+     &                        cg_Gnorm, (/1/), (/Nouter/),              &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Lanczos vector normalization factor.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_QG',          &
+     &                        cg_QG, (/1,1/), (/Ninner,Nouter/),        &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Reduction in the gradient norm.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_v',    &
+     &                        preducv, (/innLoop,outLoop/), (/1,1/),    &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_y',    &
+     &                        preducy, (/innLoop,outLoop/), (/1,1/),    &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Eigenvalues of Lanczos recurrence relationship.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Ritz',        &
+     &                        cg_Ritz, (/1,1/), (/Ninner,Nouter/),      &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Eigenvalues relative error.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_RitzErr',     &
+     &                        cg_RitzErr, (/1,1/), (/Ninner,Nouter/),   &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Eigenvectors of Lanczos recurrence relationship.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_zv',          &
+     &                        cg_zv(:,:,outLoop),                       &
+     &                        (/1,1,outLoop/), (/Ninner,Ninner,1/),     &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  First guess initial data misfit.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jf',               &
+     &                      Jf, (/innLoop+1,outLoop/), (/1,1/),         &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  State estimate data misfit.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jdata',            &
+     &                      Jdata, (/innLoop+1,outLoop/), (/1,1/),      &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Model penalty function.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jmod',             &
+     &                      Jmod, (/innLoop+1,outLoop/), (/1,1/),       &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Optimal penalty function.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jopt',             &
+     &                      Jopt, (/innLoop+1,outLoop/), (/1,1/),       &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
-!  Synchronize observations NetCDF file to disk.
+!  Synchronize model/observation NetCDF file to disk.
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
         status=nf90_sync(ncMODid(ng))
         IF (status.ne.nf90_noerr) THEN
-          WRITE (stdout,20)
+          WRITE (stdout,10) TRIM(MODname(ng))
           exit_flag=3
           ioerror=status
-          RETURN
         END IF
       END IF
+#ifdef DISTRIBUTE
+      CALL mp_bcasti (ng, model, exit_flag, 1)
+#endif
 
-  10  FORMAT (/,' CG_WRITE - error while writing variable: ',a,/,       &
-     &        12x,'into NetCDF file: ',a)
-  20  FORMAT (/,' CG_WRITE - unable to synchronize 4DVAR',              &
-     &        1x,'NetCDF file to disk.')
+  10  FORMAT (/,' CG_WRITE - unable to synchronize to disk ',           &
+     &        ' model/observation file: ',/,12x,a)
 
       END SUBROUTINE cg_write
 #else

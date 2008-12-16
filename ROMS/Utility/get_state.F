@@ -230,7 +230,7 @@
 !
       IF ((model.eq.0).or.(model.eq.iNLM).or.                           &
      &    (model.eq.iTLM).or.(model.eq.iRPM)) THEN
-        IF (((model.eq.iTLM).or.(model.eq.iRPM)).and.                   &
+        IF (((model.eq.iTLM).or.(model.eq.iRPM)).and.(msg.eq.1).and.    &
      &      (INPtime.ne.(dstart*day2sec))) THEN
           INPtime=dstart*day2sec
         END IF
@@ -243,6 +243,11 @@
         ELSE
           ntfirst(ng)=ntstart(ng)
         END IF
+#if defined WEAK_CONSTRAINT || defined IOM 
+        IF (msg.eq.4) THEN
+          ForceTime(ng)=time(ng)
+        END IF
+#endif
       ELSE IF (model.eq.iADM) THEN
         IF (msg.ne.1) THEN
           time(ng)=INPtime
@@ -593,7 +598,9 @@
 !
 !  Read in surface U-momentum stress.
 !
+#   ifndef IS4DVAR
         IF (inner.ne.0) THEN
+#   endif
           IF (get_var(idUsms)) THEN
             foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)), &
      &                          varid)
@@ -649,7 +656,9 @@
               END IF
             END IF
           END IF
+#   ifndef IS4DVAR
        END IF
+#   endif
 #  endif
 # endif
 # ifdef SOLVE3D
@@ -1357,7 +1366,9 @@
 !
 !  Read in tangent linear surface U-momentum stress.
 !
+#  ifndef IS4DVAR
         IF (inner.ne.0) THEN
+#  endif
           IF (get_var(idUsms)) THEN
             foundit=find_string(var_name, n_var, TRIM(Vname(1,idUsms)), &
      &                          varid)
@@ -1413,7 +1424,9 @@
               END IF
             END IF
           END IF
+#  ifndef IS4DVAR
         END IF
+#  endif
 # endif
 !
 !  Read in tangent linear 2D momentum component (m/s) in the
@@ -1539,7 +1552,9 @@
 !
 !  Read in tangent linear surface tracers flux.
 !
+#   ifndef IS4DVAR
         IF (inner.ne.0) THEN
+#   endif
           DO itrc=1,NT(ng)
             IF (get_var(idTsur(itrc))) THEN
               foundit=find_string(var_name, n_var,                      &
@@ -1570,7 +1585,9 @@
               END IF
             END IF
           END DO
+#   ifndef IS4DVAR
         END IF
+#   endif
 #  endif
 #  ifdef SEDIMENT
 !

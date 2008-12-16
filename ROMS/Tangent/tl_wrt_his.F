@@ -538,7 +538,11 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
+#   if defined WEAK_CONSTRAINT || defined IOM
+     &                     MIXING(ng) % Akv)
+#   else
      &                     MIXING(ng) % tl_Akv)
+#   endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idVvis)), tTLMindx(ng)
@@ -560,7 +564,11 @@
 #   ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #   endif
+#   if defined WEAK_CONSTRAINT || defined IOM
+     &                     MIXING(ng) % Akt(:,:,:,itemp))
+#   else
      &                     MIXING(ng) % tl_Akt(:,:,:,itemp))
+#   endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idTdif)), tTLMindx(ng)
@@ -583,7 +591,11 @@
 #    ifdef MASKING
      &                     GRID(ng) % rmask,                            &
 #    endif
+#    if defined WEAK_CONSTRAINT || defined IOM
+     &                     MIXING(ng) % Akt(:,:,:,isalt))
+#    else
      &                     MIXING(ng) % tl_Akt(:,:,:,isalt))
+#    endif
         IF (status.ne.nf90_noerr) THEN
           IF (Master) THEN
             WRITE (stdout,10) TRIM(Vname(1,idSdif)), tTLMindx(ng)

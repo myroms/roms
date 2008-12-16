@@ -121,11 +121,16 @@
             IF (exit_flag.ne.NoError) RETURN
           END IF
         ELSE
-          IF (nADJ(ng).eq.ntimes(ng)) THEN        ! avoid ntstart record
+          IF (nADJ(ng).eq.ntimes(ng)) THEN
             wrtHIS=(iic(ng).ne.ntstart(ng)).and.                        &
-     &             (MOD(iic(ng)-1,nADJ(ng)).eq.0)
-          ELSE                                    ! otherwise
-            wrtHIS=(MOD(iic(ng)-1,nADJ(ng)).eq.0)
+     &             (MOD(iic(ng)-1,nADJ(ng)).eq.0) ! avoid ntstart rec
+          ELSE
+# if defined WEAK_CONSTRAINT || defined IOM
+            wrtHIS=(iic(ng).ne.ntstart(ng)).and.                        &
+     &             (MOD(iic(ng)-1,nADJ(ng)).eq.0) ! avoid ntstart-1 rec
+# else
+            wrtHIS=(MOD(iic(ng)-1,nADJ(ng)).eq.0) ! otherwise
+# endif
           END IF
           IF (wrtHIS) THEN
             CALL ad_wrt_his (ng)

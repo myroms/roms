@@ -197,8 +197,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: add, converged, outer_impulse
-      logical :: Lweak
+      logical :: Lweak, add, outer_impulse
 
       integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2, indxSave
@@ -437,7 +436,7 @@
 !  Set approximation vector PSI to representer coefficients Beta_n.
 !  Here, PSI is set to misfit between observations and model, H_n.
 !
-          CALL congrad (ng, iNLM, outer, inner, Ninner, converged)
+          CALL congrad (ng, iNLM, outer, inner, Ninner)
           IF (exit_flag.ne.NoError) RETURN
 
           INNER_LOOP : DO my_inner=1,Ninner
@@ -762,9 +761,8 @@
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
             Nrun=Nrun+1
-            CALL congrad (ng, iTLM, outer, inner, Ninner, converged)
+            CALL congrad (ng, iTLM, outer, inner, Ninner)
             IF (exit_flag.ne.NoError) RETURN
-            IF (converged) EXIT INNER_LOOP
 
           END DO INNER_LOOP
 !

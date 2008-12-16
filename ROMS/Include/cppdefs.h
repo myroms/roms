@@ -528,6 +528,7 @@
 ** BALANCE_OPERATOR    use if error covariance multivariate balance term     **
 ** CELERITY_WRITE      use if writing radiation celerity in forward file     **
 ** CONVOLVE            use if convolving solution with diffusion operators   **
+** DATALESS_LOOPS      use if testing convergence of Picard iterations       **
 ** FORWARD_MIXING      use if processing forward vertical mixing coefficient **
 ** FORWARD_WRITE       use if writing out forward solution, basic state      **
 ** FORWARD_READ        use if reading in  forward solution, basic state      **

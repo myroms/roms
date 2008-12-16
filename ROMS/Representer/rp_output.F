@@ -166,8 +166,8 @@
 #   endif
         CALL obs_read (ng, iRPM, .FALSE.)
         CALL obs_write (ng, tile, iRPM)
-#   if !(defined WEAK_CONSTRAINT || defined IOM)
-        CALL obs_cost (ng)
+#   if defined W4DVAR || defined IOM
+        CALL obs_cost (ng, iRPM)
 #   endif
       ELSE
         ProcessObs(ng)=.FALSE.

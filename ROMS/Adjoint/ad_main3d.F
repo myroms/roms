@@ -114,6 +114,9 @@
 # ifdef AIR_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : atmos_coupling
 # endif
+# if defined WEAK_CONSTRAINT || defined IOM
+      USE frc_weak_mod, ONLY : frc_ADgather, frc_clear
+# endif
 # ifdef WAVES_OCEAN_NOT_YET
       USE ocean_coupler_mod, ONLY : waves_coupling
 # endif
@@ -725,6 +728,23 @@
 !$OMP END PARALLEL DO
       END IF
 # endif
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!-----------------------------------------------------------------------
+!  Gather weak constraint forcing to storage arrays.
+!-----------------------------------------------------------------------
+!
+      IF (iic(ng).ne.ntstart(ng)) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_ADgather (ng, TILE)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 !
 !-----------------------------------------------------------------------
 !  If appropriate, write out fields into output NetCDF files.  Notice
@@ -734,6 +754,23 @@
       CALL ad_output (ng)
       IF (exit_flag.ne.NoError) RETURN
 
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!-----------------------------------------------------------------------
+!  Copy storage arrays index 1 into index 2, and clear index 1.
+!-----------------------------------------------------------------------
+!
+      IF (MOD(iic(ng)-1,nADJ(ng)).eq.0) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL frc_clear (ng, TILE)
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
+# endif
 # if defined AD_SENSITIVITY   || defined OBS_SENSITIVITY || \
      defined OPT_OBSERVATIONS
 !

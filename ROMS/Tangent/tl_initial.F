@@ -186,6 +186,7 @@
 #   ifndef WEAK_CONSTRAINT
         LdefTLM(ng)=.TRUE.
 #   endif
+#   ifndef WEAK_CONSTRAINT
 !
 !  It first pass, create tangent linear model initialization file and
 !  write zero initial conditions for records 1 and 2.
@@ -196,6 +197,7 @@
         IF (exit_flag.ne.NoError) RETURN
         CALL tl_wrt_ini (ng, Tindex, 2)
         IF (exit_flag.ne.NoError) RETURN
+#   endif
       END IF
 !
 !  Set record to read from initial tangent linear NetCDF file.
@@ -654,8 +656,8 @@
 !-----------------------------------------------------------------------
 !
       IF (nADJ(ng).lt.ntimes(ng)) THEN
-        FrcRec(ng)=1
-        CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
+        IniRec=1
+        CALL get_state (ng, 7, 7, TLFname(ng), IniRec, 1)
         IF (exit_flag.ne.NoError) RETURN
       END IF
 # endif

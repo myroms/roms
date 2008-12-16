@@ -68,12 +68,17 @@
 ! Two types of Limited-Memory Preconditioner (LMP) are available
 ! (Tshimanga et al., 2008): spectral LMP and Ritz LMP.
  
-      Lprecond = T 
+      Lprecond = F
 
 ! Switch to activate either Ritz Limited-Memory Preconditioner (T)
 ! or spectral Limited-Memory Preconditioner (F) to the IS4DVAR algorithm.
 
          Lritz = T
+
+! If preconditioning, specify number of eigenpairs to use. If zero,
+! use HevecErr parameter to determine the number of converged eigenpairs.
+
+       NritzEV = 0
 
 ! If weak constraint 4DVar, set diffusive relaxation coefficients (m2/s)
 ! used to relax representer tangent linear solution to privious Picard
@@ -245,7 +250,8 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !                 (2008) Q. J. R. Met. Soc. paper for details.
 !
 !  NritzEV        If preconditioning, specify number of eigenpairs to use.
-!                   If zero, use all available vectors.
+!                   If zero, use HevecErr parameter to determine the number
+!                   of converged eigenpairs.
 !
 !------------------------------------------------------------------------------
 ! Diffusive relaxation coefficients.

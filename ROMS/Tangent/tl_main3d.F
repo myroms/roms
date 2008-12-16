@@ -138,37 +138,6 @@
       time(ng)=time(ng)+dt(ng)
       tdays(ng)=time(ng)*sec2day
       CALL time_string (time(ng), time_code(ng))
-
-#if defined WEAK_CONSTRAINT || defined IOM
-!
-!-----------------------------------------------------------------------
-!  If appropriate, add convolved adjoint solution as impulse forcing to
-!  the nonlinear solution. Notice that, in weak constraint, the forcing
-!  is added intermittently (SporadicImpulse=TRUE) at available times
-!  in the inner loop.
-!-----------------------------------------------------------------------
-!
-      IF (SporadicImpulse) THEN
-!
-!  Add impulse forcing.
-!
-!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
-        DO thread=0,numthreads-1
-          subs=NtileX(ng)*NtileE(ng)/numthreads
-          DO tile=subs*thread,subs*(thread+1)-1,+1
-            CALL tl_forcing (ng, TILE, kstp(ng), nstp(ng))
-          END DO
-        END DO
-!$OMP END PARALLEL DO
-!
-!  Read in next impulse forcing record, if any.
-!
-        FrcRec(ng)=FrcRec(ng)+1
-        IF (FrcRec(ng).le.NrecFrc(ng)) THEN
-          CALL get_state (ng, 7, 7, TLFname(ng), FrcRec(ng), 1)
-        END IF
-      END IF
-#endif
 !
 !-----------------------------------------------------------------------
 !  Read in required data, if any, data from input NetCDF files.
@@ -209,6 +178,27 @@
         END DO
       END DO
 !$OMP END PARALLEL DO
+# endif
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!-----------------------------------------------------------------------
+!  If appropriate, add convolved adjoint solution impulse forcing to
+!  the representer model solution. Notice that the forcing is only
+!  needed after finishing all inner loops. The forcing is continuous.
+!  That is, it is time interpolated at every time-step from available
+!  snapshots (FrequentImpulse=TRUE).
+!-----------------------------------------------------------------------
+!
+      IF (FrequentImpulse) THEN
+!$OMP PARALLEL DO PRIVATE(thread,subs,tile) SHARED(ng,numthreads)
+        DO thread=0,numthreads-1
+          subs=NtileX(ng)*NtileE(ng)/numthreads
+          DO tile=subs*thread,subs*(thread+1)-1,+1
+            CALL tl_forcing (ng, TILE, kstp(ng), nstp(ng))
+          END DO
+        END DO
+!$OMP END PARALLEL DO
+      END IF
 # endif
 !
 !-----------------------------------------------------------------------

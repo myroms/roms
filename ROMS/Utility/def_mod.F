@@ -41,11 +41,11 @@
       integer, parameter :: Natt = 24
 
       integer :: iterDim, datumDim, recordDim, stateDim
-# ifdef IS4DVAR
+# if defined IS4DVAR || defined WEAK_CONSTRAINT
       integer :: MinnerDim, MouterDim, NinnerDim, NouterDim, threeDim
 # endif
       integer :: i, j, status, varid
-      integer :: CostDim(2), Vsize(4), vardim(2)
+      integer :: CostDim(2), Vsize(4), vardim(3)
 
       integer :: def_dim
 
@@ -118,7 +118,7 @@
         IF (exit_flag.ne.NoError) RETURN
 
 # ifdef FOUR_DVAR
-#  ifdef IS4DVAR
+#  if defined IS4DVAR || defined WEAK_CONSTRAINT
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'Ninner',         &
      &                 Ninner, NinnerDim)
         IF (exit_flag.ne.NoError) RETURN
@@ -134,10 +134,11 @@
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'Mouter',         &
      &                 Nouter+1, MouterDim)
         IF (exit_flag.ne.NoError) RETURN
-
+#   ifdef IS4DVAR
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'three',          &
      &                 3, threeDim)
         IF (exit_flag.ne.NoError) RETURN
+#   endif
 #  endif
 
         status=def_dim(ng, iNLM, ncMODid(ng), ncname, 'iteration',      &
@@ -397,30 +398,48 @@
 # endif
 # if defined IS4DVAR
 !
-!  Converged Ritz eigenvalues.
+!  Number of converged Ritz eigenvalues.
 !
         Vinfo( 1)='nConvRitz'
         Vinfo( 2)='Number of converged Ritz eigenvalues'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
      &                 1, (/0/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
+# elif defined WEAK_CONSTRAINT
+!
+!  Number of converged Ritz eigenvalues.
+!
+        Vinfo( 1)='nConvRitz'
+        Vinfo( 2)='Number of converged Ritz eigenvalues'
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_int,          &
+     &                 1, (/Nouterdim/), Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined IS4DVAR
+!
+!  Converged Ritz eigenvalues.
+!
         Vinfo( 1)='Ritz'
         Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/Ninnerdim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# elif defined WEAK_CONSTRAINT
 !
-!  Define conjugate gradient norms.
+!  Converged Ritz eigenvalues.
 !
-        Vinfo( 1)='cg_alpha'
-        Vinfo( 2)='conjugate gradient alpha coefficient'
-        vardim(1)=MinnerDim
+        Vinfo( 1)='Ritz'
+        Vinfo( 2)='converged Ritz eigenvalues to approximate Hessian'
+        vardim(1)=NinnerDim
         vardim(2)=NouterDim
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
+# endif
+# if defined IS4DVAR || defined WEAK_CONSTRAINT
+!
+!  Define conjugate gradient norm.
+!
         Vinfo( 1)='cg_beta'
         Vinfo( 2)='conjugate gradient beta coefficient'
         vardim(1)=MinnerDim
@@ -428,6 +447,8 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined IS4DVAR || defined WEAK_CONSTRAINT
 !
 !  Define Lanczos algorithm coefficients.
 !
@@ -438,7 +459,7 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
+#  ifdef IS4DVAR
         Vinfo( 1)='cg_gamma'
         Vinfo( 2)='Lanczos algorithm gamma coefficient'
         vardim(1)=NinnerDim
@@ -446,6 +467,9 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+#  endif
+# endif
+# if defined IS4DVAR || defined WEAK_CONSTRAINT
 !
 !  Initial gradient vector normalization factor.
 !
@@ -464,6 +488,8 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined IS4DVAR
 !
 !  Reduction in the gradient norm.
 !
@@ -474,6 +500,27 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# elif defined WEAK_CONSTRAINT
+!
+!  Reduction in the gradient norm.
+!
+        Vinfo( 1)='cg_Greduc_v'
+        Vinfo( 2)='reduction in the gradient norm, v-space'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+
+        Vinfo( 1)='cg_Greduc_y'
+        Vinfo( 2)='reduction in the gradient norm, y-space'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined IS4DVAR
 !
 !  Lanczos recurrence tridiagonal matrix.
 !
@@ -494,6 +541,8 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined IS4DVAR || defined WEAK_CONSTRAINT
 !
 !  Eigenvalues of Lanczos recurrence relationship.
 !
@@ -514,6 +563,8 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined IS4DVAR
 !
 !  Eigenvectors of Lanczos recurrence relationship.
 !
@@ -524,27 +575,67 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# elif defined WEAK_CONSTRAINT
+!
+!  Eigenvectors of Lanczos recurrence relationship.
+!
+        Vinfo( 1)='cg_zv'
+        Vinfo( 2)='Lanczos recurrence eigenvectors'
+        vardim(1)=NinnerDim
+        vardim(2)=NinnerDim
+        vardim(3)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
+     &                 3, vardim, Aval, Vinfo, ncname, .FALSE.)
+        IF (exit_flag.ne.NoError) RETURN
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
+# ifdef WEAK_CONSTRAINT
 !
-!  Define conjugate gradient norms
+!  Define RPM data penalty function.
 !
-        Vinfo( 1)='cg_gamma'
-        Vinfo( 2)='conjugate gradient gamma norm'
-        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/0/), Aval, Vinfo, ncname)
+        Vinfo( 1)='RPcost_function'
+        Vinfo( 2)='representer model data penalty function'
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 1, (/MouterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
-        Vinfo( 1)='cg_sigma'
-        Vinfo( 2)='conjugate gradient sigma norm'
-        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/0/), Aval, Vinfo, ncname)
+!
+!  Define first guess initial data misfit.
+!
+        Vinfo( 1)='Jf'
+        Vinfo( 2)='first guess initial data misfit'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
-
-        Vinfo( 1)='cg_rnorm'
-        Vinfo( 2)='conjugate gradient right-hand-side norm'
-        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
-     &                 1, (/0/), Aval, Vinfo, ncname)
+!
+!  Define state estimate data misfit.
+!
+        Vinfo( 1)='Jdata'
+        Vinfo( 2)='state estimate data misfit'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define model penalty function.
+!
+        Vinfo( 1)='Jmod'
+        Vinfo( 2)='model penalty function'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define optimal penalty function.
+!
+        Vinfo( 1)='Jopt'
+        Vinfo( 2)='optimal penalty function'
+        vardim(1)=MinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 !
@@ -609,55 +700,6 @@
         Vinfo( 1)=Vname(1,idMOMf)
         Vinfo( 2)=Vname(2,idMOMf)
         status=def_var(ng, iNLM, ncMODid(ng), modVid(idMOMf,ng),        &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-# endif
-# if defined WEAK_CONSTRAINT || defined IOM
-!
-!  Representer coeficients (or their approximation PSI) at observation
-!  points.
-!
-        Vinfo( 1)=Vname(1,idRepC)
-        Vinfo( 2)=Vname(2,idRepC)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idRepC,ng),        &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-!
-!  Conjugate gradient vectors.
-!
-        Vinfo( 1)=Vname(1,idCG_P)
-        Vinfo( 2)=Vname(2,idCG_P)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_P,ng),        &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-
-        Vinfo( 1)=Vname(1,idCG_R)
-        Vinfo( 2)=Vname(2,idCG_R)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_R,ng),        &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-
-        Vinfo( 1)=Vname(1,idCG_S)
-        Vinfo( 2)=Vname(2,idCG_S)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_S,ng),        &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-
-        Vinfo( 1)=Vname(1,idCG_V)
-        Vinfo( 2)=Vname(2,idCG_V)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_V,ng),        &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-       
-        Vinfo( 1)=Vname(1,idCG_X)
-        Vinfo( 2)=Vname(2,idCG_X)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_X,ng),        &
-     &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
-        IF (exit_flag.ne.NoError) RETURN
-
-        Vinfo( 1)=Vname(1,idCG_Z)
-        Vinfo( 2)=Vname(2,idCG_Z)
-        status=def_var(ng, iNLM, ncMODid(ng), modVid(idCG_Z,ng),        &
      &                 NF_FRST, 1, (/datumDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
@@ -792,30 +834,6 @@
             got_var(idMOMf)=.TRUE.
             modVid(idMOMf,ng)=var_id(i)
 # endif
-# if defined WEAK_CONSTRAINT || defined IOM
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idRepC))) THEN
-            got_var(idRepC)=.TRUE.
-            haveADmod(ng)=.TRUE.
-            modVid(idRepC,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idCG_P))) THEN
-            got_var(idCG_P)=.TRUE.
-            modVid(idCG_P,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idCG_R))) THEN
-            got_var(idCG_R)=.TRUE.
-            modVid(idCG_R,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idCG_S))) THEN
-            got_var(idCG_S)=.TRUE.
-            modVid(idCG_S,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idCG_V))) THEN
-            got_var(idCG_V)=.TRUE.
-            modVid(idCG_V,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idCG_X))) THEN
-            got_var(idCG_X)=.TRUE.
-            modVid(idCG_X,ng)=var_id(i)
-          ELSE IF (TRIM(var_name(i)).eq.TRIM(Vname(1,idCG_Z))) THEN
-            got_var(idCG_Z)=.TRUE.
-            modVid(idCG_Z,ng)=var_id(i)
-# endif
           END IF
         END DO
 !
@@ -860,50 +878,6 @@
         END IF
         IF (.not.got_var(idMOMf)) THEN
           IF (Master) WRITE (stdout,70) TRIM(Vname(1,idMOMf)),          &
-     &                                  TRIM(MODname(ng))
-          exit_flag=2
-          RETURN
-        END IF
-# endif
-# if defined WEAK_CONSTRAINT || defined IOM
-        IF (.not.got_var(idRepC)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idRepC)),          &
-     &                                  TRIM(MODname(ng))
-          exit_flag=2
-          RETURN
-        END IF
-        IF (.not.got_var(idCG_P)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idCG_P)),          &
-     &                                  TRIM(MODname(ng))
-          exit_flag=2
-          RETURN
-        END IF
-        IF (.not.got_var(idCG_R)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idCG_R)),          &
-     &                                  TRIM(MODname(ng))
-          exit_flag=2
-          RETURN
-        END IF
-        IF (.not.got_var(idCG_S)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idCG_S)),          &
-     &                                  TRIM(MODname(ng))
-          exit_flag=2
-          RETURN
-        END IF
-        IF (.not.got_var(idCG_V)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idCG_V)),          &
-     &                                  TRIM(MODname(ng))
-          exit_flag=2
-          RETURN
-        END IF
-        IF (.not.got_var(idCG_X)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idCG_X)),          &
-     &                                  TRIM(MODname(ng))
-          exit_flag=2
-          RETURN
-        END IF
-        IF (.not.got_var(idCG_Z)) THEN
-          IF (Master) WRITE (stdout,70) TRIM(Vname(1,idCG_Z)),          &
      &                                  TRIM(MODname(ng))
           exit_flag=2
           RETURN

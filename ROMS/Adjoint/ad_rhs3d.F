@@ -46,6 +46,9 @@
 # endif
       USE mod_ocean
       USE mod_stepping
+# ifdef RPM_RELAXATION
+      USE mod_fourdvar
+# endif
 !
       USE ad_pre_step3d_mod, ONLY : ad_pre_step3d
       USE ad_prsgrd_mod, ONLY : ad_prsgrd
@@ -56,6 +59,10 @@
 #  ifdef TS_DIF4
       USE ad_t3dmix_mod, ONLY : ad_t3dmix4
 #  endif
+# endif
+# ifdef RPM_RELAXATION
+      USE ad_t3drelax_mod, ONLY : ad_t3drelax
+      USE ad_uv3drelax_mod, ONLY : ad_uv3drelax
 # endif
 # ifdef UV_VIS2
       USE ad_uv3dmix_mod, ONLY : ad_uv3dmix2
@@ -71,6 +78,19 @@
 !  Local variable declarations.
 !
 # include "tile.h"
+# ifdef RPM_RELAXATION
+!
+!-----------------------------------------------------------------------
+!  Improve stability and convergence of the tangent linear representer
+!  model 3D momentum by a "diffusive relaxation" to previous Picard
+!  iteration solution. Only applied in the call to ad_main3d in outer
+!  loop.
+!-----------------------------------------------------------------------
+!
+      IF (LweakRelax(ng)) THEN
+        CALL ad_uv3drelax (ng, tile)
+      END IF
+# endif
 # ifdef UV_VIS4
 !
 !-----------------------------------------------------------------------
@@ -172,6 +192,19 @@
 # endif
 # ifdef PROFILE
       CALL wclock_off (ng, iADM, 21)
+# endif
+# ifdef RPM_RELAXATION
+!
+!-----------------------------------------------------------------------
+!  Improve stability and convergence of the tangent linear representer
+!  model tracer type variables by a "diffusive relaxation" to previous
+!  Picard iteration solution. Only applied in the call to ad_main3d in 
+!  outer loop.
+!-----------------------------------------------------------------------
+!
+      IF (LweakRelax(ng)) THEN
+        CALL ad_t3drelax (ng, tile)
+      END IF
 # endif
 # ifndef TS_FIXED
 #  ifdef TS_DIF4

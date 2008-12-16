@@ -1968,6 +1968,14 @@
 !
         nRST(ng)=ntimes(ng)
 #endif
+#if defined IOM || defined WEAK_CONSTRAINT
+!
+!  If weak constraint assimilation, ensure that nADJ=nHIS. 
+!
+        IF (nADJ(ng).lt.ntimes(ng)) THEN
+          nADJ(ng)=nHIS(ng)
+        END IF
+#endif
 #if defined FOUR_DVAR
 !
 !  If variational data assimilation, disallow creation of multiple
@@ -6734,6 +6742,8 @@
 #  endif
           ELSE IF (TRIM(KeyWord).eq.'Lritz') THEN
             Npts=load_l(Nval, Cval, 1, Lritz)
+          ELSE IF (TRIM(KeyWord).eq.'NritzEV') THEN
+            Npts=load_i(Nval, Rval, 1, NritzEV)
           ELSE IF (TRIM(KeyWord).eq.'tl_M2diff') THEN
             Npts=load_r(Nval, Rval, Ngrids, tl_M2diff)
           ELSE IF (TRIM(KeyWord).eq.'tl_M3diff') THEN
@@ -6994,6 +7004,12 @@
 #    ifdef IS4DVAR
           WRITE (out,70) Lritz, 'Lritz',                                &
      &           'Switch to Ritz limited-memory preconditioning.'
+#    endif
+#    if defined WEAK_CONSTRAINT || defined IOM
+          IF (Lprecond.and.(NritzEV.gt.0)) THEN
+            WRITE (out,80) NritzEV, 'NritzEV',                          &
+     &           'Number of preconditioning eigenpairs to use.'
+          END IF
 #    endif
 #   endif
 #   if !(defined GRADIENT_CHECK || defined TLM_CHECK)

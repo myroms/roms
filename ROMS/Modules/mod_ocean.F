@@ -275,7 +275,7 @@
           real(r8), pointer :: uG(:,:,:,:)
           real(r8), pointer :: vG(:,:,:,:)
 # endif
-# ifdef W4DVAR
+# if defined WEAK_CONSTRAINT || defined IOM
           real(r8), pointer :: f_zetaG(:,:,:)
 #  ifdef SOLVE3D
           real(r8), pointer :: f_tG(:,:,:,:,:)
@@ -536,7 +536,7 @@
       allocate ( OCEAN(ng) % uG(LBi:UBi,LBj:UBj,N(ng),2) )
       allocate ( OCEAN(ng) % vG(LBi:UBi,LBj:UBj,N(ng),2) )
 # endif
-# ifdef W4DVAR
+# if defined WEAK_CONSTRAINT || defined IOM
       allocate ( OCEAN(ng) % f_zetaG(LBi:UBi,LBj:UBj,2) )
 #  ifdef SOLVE3D
       allocate ( OCEAN(ng) % f_tG(LBi:UBi,LBj:UBj,N(ng),2,NT(ng)) )
@@ -969,7 +969,7 @@
             OCEAN(ng) % vbarG(i,j,2) = IniVal
             OCEAN(ng) % zetaG(i,j,1) = IniVal
             OCEAN(ng) % zetaG(i,j,2) = IniVal
-# ifdef W4DVAR
+# if defined WEAK_CONSTRAINT || defined IOM
             OCEAN(ng) % f_zetaG(i,j,1) = IniVal
             OCEAN(ng) % f_zetaG(i,j,2) = IniVal
 #  ifndef SOLVE3D

@@ -390,7 +390,9 @@
 #   endif
         CALL obs_read (ng, iNLM, .FALSE.)
         CALL obs_write (ng, tile, iNLM)
+#   if !(defined W4DVAR || defined IOM)
         CALL obs_cost (ng, iNLM)
+#   endif
       ELSE
         ProcessObs=.FALSE.
       END IF
