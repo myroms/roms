@@ -101,6 +101,9 @@
       character (len=11) :: frcatt
       character (len=50) :: tiling
       character (len=80) :: Vinfo(Natt)
+#ifdef BIOLOGY
+      character (len=512) :: bio_file
+#endif
       character (len=1024) :: ana_file
 !
 !-----------------------------------------------------------------------
@@ -157,7 +160,7 @@
 !-----------------------------------------------------------------------
 !
       IF (OutThread) THEN
-
+!
 !  Define history global attribute.
 !
         IF (LEN_TRIM(date_str).gt.0) THEN
@@ -172,6 +175,18 @@
 !  Define tile decomposition global attribute.
 !
         WRITE (tiling,10) NtileI(ng), NtileJ(ng)
+!
+!  Define file name global attribute.
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_put_att(ncid, nf90_global, 'file',                &
+     &                        TRIM(ncname))
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,20) 'file', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
 !
 !  Define file type global attribute.
 !
@@ -596,11 +611,11 @@
           END IF
         END IF
 #endif
+#ifndef DEBUGGING
 !
 !  Local root directory, cpp header directory and file, and analytical
 !  directory
 !
-#ifndef DEBUGGING
 # ifdef ROOT_DIR
         IF (exit_flag.eq.NoError) THEN
           status=nf90_put_att(ncid, nf90_global, 'code_dir',            &
@@ -745,13 +760,32 @@
           END IF
         END IF
 
+#ifdef BIOLOGY
+!
+!  Biology model header file used.
+!
+        IF (exit_flag.eq.NoError) THEN
+          DO i=1,512
+            bio_file(i:i)='-'
+          END DO
+          status=nf90_put_att(ncid, nf90_global, 'bio_file',            &
+     &                        bio_file)
+          IF (status.ne.nf90_noerr) THEN
+            IF (Master) WRITE (stdout,20) 'bio_file', TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+#endif
+
 #ifndef DEBUGGING
 !
 !  Activated CPP options.
 !
         IF (exit_flag.eq.NoError) THEN
+          lstr=LEN_TRIM(Coptions)-1
           status=nf90_put_att(ncid, nf90_global, 'CPP_options',         &
-     &                        TRIM(Coptions))
+     &                        TRIM(Coptions(1:lstr)))
           IF (status.ne.nf90_noerr) THEN
             IF (Master) WRITE (stdout,20) 'CPP_options', TRIM(ncname)
             exit_flag=3
@@ -3223,7 +3257,7 @@
       END IF
 
   10  FORMAT (i3.3,'x',i3.3)
-  20  FORMAT (/,' DEF_INFO - error while creatinf global attribute: ',  &
+  20  FORMAT (/,' DEF_INFO - error while creating global attribute: ',  &
      &        a,/,12x,a)
   30  FORMAT ('frc_file_',i2.2)
 

@@ -92,7 +92,9 @@
               WRITE (ADJname(ng),10) ADJbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncADJid(ng).ne.-1) status=nf90_close(ncADJid(ng))
+            IF (ncADJid(ng).ne.-1) THEN
+              CALL netcdf_close (ng, iADM, ncADJid(ng))
+            END IF
             CALL ad_def_his (ng, NewFile)
             IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -189,7 +191,9 @@
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncAVGid(ng).ne.-1) status=nf90_close(ncAVGid(ng))
+            IF (ncAVGid(ng).ne.-1) THEN
+              CALL netcdf_close (ng, iADM, ncAVGid(ng))
+            END IF
             CALL def_avg (ng, Newfile)
             IF (exit_flag.ne.NoError) RETURN
             LwrtAVG(ng)=.TRUE.

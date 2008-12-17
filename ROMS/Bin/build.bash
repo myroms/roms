@@ -294,6 +294,10 @@ fi
 
 # The rest of this script sets the path to the users header file and
 # analytical source files, if any. See the templates in User/Functionals.
+#
+# If applicable, use the MY_ANALYTICAL_DIR directory to place your
+# customized biology model header file (like fasham.h, nemuro.h, ecosim.h,
+# etc).
 
 #export     MY_HEADER_DIR=${MY_PROJECT_DIR}
 

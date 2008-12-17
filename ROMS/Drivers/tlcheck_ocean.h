@@ -226,18 +226,9 @@
 !
 !  Close current nonlinear model history file.
 !
-        IF (OutThread) THEN
-          status=nf90_close(ncHISid(ng))
-          IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) TRIM(HISname(ng))
-            exit_flag=3
-            ioerror=status
-          END IF
-        END IF
-#ifdef DISTRIBUTE
-        CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#endif
+        CALL netcdf_close (ng, iNLM, ncHISid(ng))
         IF (exit_flag.ne.NoError) RETURN
+
         wrtNLmod(ng)=.FALSE.
         wrtTLmod(ng)=.TRUE.
 !
@@ -424,17 +415,7 @@
 !
 !  Close current tangent linear model history file.
 !
-            IF (OutThread) THEN
-              status=nf90_close(ncTLMid(ng))
-              IF (status.ne.nf90_noerr) THEN
-                WRITE (stdout,20) TRIM(TLMname(ng))
-                exit_flag=3
-                ioerror=status
-              END IF
-            END IF
-#ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#endif
+            CALL netcdf_close (ng, iTLM, ncTLMid(ng))
             IF (exit_flag.ne.NoError) RETURN
 !
 !  Advance model run counter.
@@ -469,7 +450,6 @@
 !
  10   FORMAT (/,1x,a,1x,'ROMS/TOMS : started time-stepping:',           &
      &        '( TimeSteps: ',i8.8,' - ',i8.8,')',/)
- 20   FORMAT (/,' TLCHECK_OCEAN - unable to close file : ',a)
  30   FORMAT (/,' Nonlinear Model Cost Function = ',1p,e21.14)
  40   FORMAT (' --------------- ','cost function = ',1p,e21.14,2x,a)
  50   FORMAT (17x,'cost function = ',1p,e21.14,2x,a)

@@ -2109,9 +2109,9 @@
       Coptions(is:is+15)=' SWAN_COUPLING,'
 #endif
 #if defined CARBON && defined BIO_FASHAM
-# ifdef TALK_PROGNOSTIC
-      IF (Master) WRITE (stdout,20) 'TALK_PROGNOSTIC',                  &
-     &   'Prognostic computation of alkalinity.'
+# ifdef TALK_NONCONSERV
+      IF (Master) WRITE (stdout,20) 'TALK_NONCONSERV',                  &
+     &   'Nonconservative computation of alkalinity.'
       is=LEN_TRIM(Coptions)+1
       Coptions(is:is+17)=' TALK_PROGNOSTIC,'
 # else

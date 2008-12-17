@@ -523,7 +523,7 @@
 
         real(r8), allocatable :: Vtime(:,:,:)
 
-        character (len=5  ) :: version = '3.0  '
+        character (len=5  ) :: version = '3.2  '
         character (len=40 ) :: varnam(MV)
         character (len=44 ) :: date_str
         character (len=46 ) :: Tname(0:NV)
@@ -545,6 +545,15 @@
         logical :: Lanafile
 
         character (len=200), dimension(37) :: ANANAME
+
+#ifdef BIOLOGY
+!
+!  Biology models file logical and names.
+!
+        logical, dimension(4) :: Lbiofile
+
+        character (len=200), dimension(4) :: BIONAME
+#endif
 !
 !  SVN revision and repository root URL.
 !
@@ -880,7 +889,7 @@
           idefTLM(ng)=-1
         END DO
 !
-!  Analytical files switch and names
+!  Analytical files switch and names.
 !
         Lanafile=.TRUE.
         DO i=1,37
@@ -888,6 +897,18 @@
             ANANAME(i)(j:j)=' '
           END DO
         END DO
+
+#ifdef BIOLOGY
+!
+!  Biology model header names.
+!
+        DO i=1,4
+          Lbiofile(i)=.TRUE.
+          DO j=1,200
+            BIONAME(i)(j:j)=' '
+          END DO
+        END DO
+#endif
 !
 !  Set IDs for state some state variables. 
 !

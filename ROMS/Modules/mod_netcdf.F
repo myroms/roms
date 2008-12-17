@@ -2949,7 +2949,6 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #ifdef DISTRIBUTE
 !
@@ -3093,11 +3092,10 @@
       USE mod_parallel
       USE mod_iounits
       USE mod_scalars
-      USE netcdf
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf, mp_bcasti
+      USE distribute_mod, ONLY : mp_bcasti
 #endif
 !
 !  Imported variable declarations.
@@ -3204,5 +3202,132 @@
 
       RETURN
       END SUBROUTINE netcdf_put_svar_v
+
+      SUBROUTINE netcdf_close (ng, model, ncid)
+!
+!=======================================================================
+!                                                                      !
+!  This routine closes requested NetCDF file. If appropriate, it       !
+!  also performs additional processing, like updating the global       !
+!  attributes, before closing the file.                                !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng           Nested grid number (integer)                        !
+!     model        Calling model identifier (integer)                  !
+!     ncid         NetCDF file ID (integer)                            !
+!                                                                      !
+!=======================================================================
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits
+      USE mod_ncparam
+      USE mod_scalars
+
+#ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+#endif
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+
+      integer, intent(inout) :: ncid
+!
+!  Local variable declarations.
+!
+      integer :: i, status
+#ifdef BIOLOGY
+      integer :: AttLen, is, ie, lstr
+#endif
+#ifdef DISTRIBUTE
+      integer, dimension(2) :: ibuffer
+#endif
+      character (len=200) :: ncname
+#ifdef BIOLOGY
+      character (len=512) :: bio_file
+#endif
+!
+!-----------------------------------------------------------------------
+!  Close requested NetCDF file.
+!-----------------------------------------------------------------------
+!
+      IF (OutThread) THEN
+!
+!  Get filename, if any. It will be nice if there is a function in
+!  the NetCDF library to do this. Fortunately, the filename is
+!  written as a global attribute.
+!
+        DO i=1,200
+          ncname(i:i)=' '
+        END DO
+        status=nf90_get_att(ncid, nf90_global, 'file', ncname)
+
+#ifdef BIOLOGY
+!
+!  Update global attribute with the biology header files used.
+!
+        is=1
+        status=nf90_inquire_attribute(ncid, nf90_global, 'bio_file',    &
+     &                                len = AttLen)
+        IF (status.eq.nf90_noerr) THEN
+          DO i=1,512
+            bio_file(i:i)=' '
+          END DO
+          DO i=1,4
+            lstr=LEN_TRIM(BIONAME(i))
+            IF (lstr.gt.0) THEN
+              ie=is+lstr-1
+              bio_file(is:ie)=TRIM(BIONAME(i))
+              is=ie+1
+              bio_file(is:is)=','
+              is=is+2
+            END IF
+          END DO
+          lstr=LEN_TRIM(bio_file)-1
+          IF (lstr.gt.0) THEN
+            status=nf90_put_att(ncid, nf90_global, 'bio_file',          &
+     &                          bio_file(1:lstr))
+            IF (status.ne.nf90_noerr) THEN
+              WRITE (stdout,10) 'bio_file', TRIM(ncname)
+              exit_flag=3
+              ioerror=status
+            END IF
+          END IF
+        END IF
+#endif
+!
+!  Close requested NetCDF file.
+!
+        IF (exit_flag.eq.NoError) THEN
+          status=nf90_close(ncid)
+          ncid=-1
+          IF (status.ne.nf90_noerr) THEN
+            WRITE (stdout,20) TRIM(ncname)
+            exit_flag=3
+            ioerror=status
+          END IF
+        END IF
+      END IF
+
+#ifdef DISTRIBUTE
+!
+!  Broadcast error flags to all processors in the group.
+!
+      ibuffer(1)=exit_flag
+      ibuffer(2)=ioerror
+      CALL mp_bcasti (ng, model, ibuffer, 2)
+      exit_flag=ibuffer(1)
+      ioerror=ibuffer(2)
+#endif
+!
+  10  FORMAT (/,' NETCDF_CLOSE - error while writing global ',          &
+     &        'attribute: ',a,/,16x,a)
+  20  FORMAT (/,' NETCDF_CLOSE - error during closing of file: ',       &
+     &        /,16x,a)
+
+      END SUBROUTINE netcdf_close
 
       END MODULE mod_netcdf

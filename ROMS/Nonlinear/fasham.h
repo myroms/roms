@@ -28,6 +28,7 @@
 #endif
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -38,6 +39,17 @@
 !  Local variable declarations.
 !
 #include "tile.h"
+!
+!  Set header file name.
+!
+#ifdef DISTRIBUTE
+      IF (Lbiofile(iNLM)) THEN
+#else
+      IF (Lbiofile(iNLM).and.(tile.eq.0)) THEN
+#endif
+        Lbiofile(iNLM)=.FALSE.
+        BIONAME(iNLM)=__FILE__
+      END IF
 !
 #ifdef PROFILE
       CALL wclock_on (ng, iNLM, 15)
@@ -74,6 +86,7 @@
 #ifdef PROFILE
       CALL wclock_off (ng, iNLM, 15)
 #endif
+
       RETURN
       END SUBROUTINE biology
 !
@@ -231,7 +244,7 @@
       real(r8), parameter :: D7 = 0.06_r8
 #endif
 
-      real(r8) :: Att, Epp, L_NH4, L_NO3, LTOT, PAR, Vp
+      real(r8) :: Att, AttFac, Epp, L_NH4, L_NO3, LTOT, PAR, Vp
       real(r8) :: Chl2C, dtdays, t_PPmax, inhNH4
 
       real(r8) :: cff, cff1, cff2, cff3, cff4, cff5
@@ -475,25 +488,19 @@
 !
           DO i=Istr,Iend
             PAR=PARsur(i)
+            AttFac=0.0_r8
             IF (PARsur(i).gt.0.0_r8) THEN
               DO k=N(ng),1,-1
 !
-!  Attenuate the light to the center of the grid cell.
+!  Attenuate the light to the center of the grid cell. To include other
+!  attenuation contributions like suspended sediment or CDOM modify
+!  AttFac.
 !
-#ifdef LATTE
-!  Include a salinity-dependent contribution to the total attenuation
-!  to account for suspended sediment and CDOM from the river.
-!  The relationship is: Ksalt = -0.02*S+0.6
-!
-                fac1=MAX(-0.02_r8*Bio(i,k,isalt)+0.6_r8, 0.0_r8)
-                Att=EXP(-0.5_r8*(AttSW(ng)+AttChl(ng)*Bio(i,k,iChlo)+   &
-     &                  fac1)*(z_w(i,j,k)-z_w(i,j,k-1)))
-                PAR=PAR*Att
-#else 
-                Att=EXP(-0.5_r8*(AttSW(ng)+AttChl(ng)*Bio(i,k,iChlo))*  &
+                Att=EXP(-0.5_r8*(AttSW(ng)+                             &
+     &                           AttChl(ng)*Bio(i,k,iChlo)+             &
+     &                           AttFac)*                               &
      &                  (z_w(i,j,k)-z_w(i,j,k-1)))
                 PAR=PAR*Att
-#endif
 !
 !  Compute Chlorophyll-a phytoplankton ratio, [mg Chla / (mg C)].
 !
@@ -534,7 +541,7 @@
                 Bio(i,k,iChlo)=Bio(i,k,iChlo)+                          &
      &                         (dtdays*t_PPmax*t_PPmax*LTOT*LTOT*       &
      &                          Chl2C_m(ng)*Bio(i,k,iChlo))/            &
-     &                         (PhyIS(ng)*MAX(Chl2C,eps)*PAR)
+     &                         (PhyIS(ng)*MAX(Chl2C,eps)*PAR+eps)
 #ifdef DIAGNOSTICS_BIO
                 DiaBio3d(i,j,k,iPPro)=DiaBio3d(i,j,k,iPPro)+            &
      &                                N_Flux_NewProd+N_Flux_RegProd
@@ -552,7 +559,7 @@
 !
                 cff1=PhyCN(ng)*(N_Flux_NewProd+N_Flux_RegProd)
                 Bio(i,k,iTIC_)=Bio(i,k,iTIC_)-cff1
-# ifdef TALK_PROGNOSTIC
+# ifdef TALK_NONCONSERV
 !
 !  Account for the uptake of NO3 on total alkalinity.
 !
@@ -569,11 +576,16 @@
 ! Note that the entire process has a total loss of two moles of O2 per
 ! mole of NH4. If we were to resolve NO2 profiles, this is where we
 ! would change the code to split out the differential effects of the
-! two different bacteria types. Also, at this time, this process is not
-! constrained by [O2].
+! two different bacteria types. If OXYGEN is defined, nitrification is 
+! inhibited at low oxygen concentrations using a Michaelis-Menten term.
 !
-
+#ifdef OXYGEN
+                fac2=MAX(Bio(i,k,iOxyg),0.0_r8) ! O2 max 
+                fac3=MAX(fac2/(3.0_r8+fac2),0.0_r8) ! MM for O2 dependence 
+                fac1=dtdays*NitriR(ng)*fac3
+#else
                 fac1=dtdays*NitriR(ng)
+#endif
                 cff1=(PAR-I_thNH4(ng))/                                 &
      &               (D_p5NH4(ng)+PAR-2.0_r8*I_thNH4(ng))
                 cff2=1.0_r8-MAX(0.0_r8,cff1)
@@ -584,7 +596,7 @@
 #ifdef OXYGEN
                 Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-2.0_r8*N_Flux_Nitrifi
 #endif
-#if defined CARBON && defined TALK_PROGNOSTIC
+#if defined CARBON && defined TALK_NONCONSERV
                 Bio(i,k,iTAlk)=Bio(i,k,iTAlk)-N_Flux_Nitrifi
 #endif
 !
@@ -604,7 +616,7 @@
 #ifdef OXYGEN
                 Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-2.0_r8*N_Flux_Nitrifi
 #endif
-#if defined CARBON && defined TALK_PROGNOSTIC
+#if defined CARBON && defined TALK_NONCONSERV
                 Bio(i,k,iTAlk)=Bio(i,k,iTAlk)-N_Flux_Nitrifi
 #endif
               END DO
@@ -728,6 +740,24 @@
 !  Detritus recycling to NH4, remineralization.
 !-----------------------------------------------------------------------
 !
+#ifdef OXYGEN
+          DO k=1,N(ng)
+            DO i=Istr,Iend
+              fac1=MAX(Bio(i,k,iOxyg)-6.0_r8,0.0_r8) ! O2 off max
+              fac2=MAX(fac1/(3.0_r8+fac1),0.0_r8) ! MM for O2 dependence
+              cff1=dtdays*SDeRRN(ng)*fac2
+              cff2=1.0_r8/(1.0_r8+cff1)
+              cff3=dtdays*LDeRRN(ng)*fac2
+              cff4=1.0_r8/(1.0_r8+cff3)
+              Bio(i,k,iSDeN)=Bio(i,k,iSDeN)*cff2
+              Bio(i,k,iLDeN)=Bio(i,k,iLDeN)*cff4
+              N_Flux_RemineS=Bio(i,k,iSDeN)*cff1
+              N_Flux_RemineL=Bio(i,k,iLDeN)*cff3
+              Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+                            &
+     &                       N_Flux_RemineS+N_Flux_RemineL
+              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-                            &
+     &                       (N_Flux_RemineS+N_Flux_RemineL)*rOxNH4
+#else
           cff1=dtdays*SDeRRN(ng)
           cff2=1.0_r8/(1.0_r8+cff1)
           cff3=dtdays*LDeRRN(ng)
@@ -740,9 +770,6 @@
               N_Flux_RemineL=Bio(i,k,iLDeN)*cff3
               Bio(i,k,iNH4_)=Bio(i,k,iNH4_)+                            &
      &                       N_Flux_RemineS+N_Flux_RemineL
-#ifdef OXYGEN
-              Bio(i,k,iOxyg)=Bio(i,k,iOxyg)-                            &
-     &                       (N_Flux_RemineS+N_Flux_RemineL)*rOxNH4
 #endif
             END DO
           END DO
@@ -813,7 +840,7 @@
      &                     O2_Flux*Hz_inv(i,k)
 # ifdef DIAGNOSTICS_BIO
             DiaBio2d(i,j,iO2fx)=DiaBio2d(i,j,iO2fx)+                    &
-     &                          O2_Flux*Hz_inv(i,k)
+     &                          O2_Flux
 # endif
 
           END DO
@@ -839,17 +866,6 @@
      &                       C_Flux_RemineS+C_Flux_RemineL
             END DO
           END DO
-# ifndef TALK_PROGNOSTIC
-!
-!  Alkalinity is treated as a diagnostic variable. TAlk = f(S[PSU])
-!  following Brewer et al. (1986).
-!
-          DO k=1,N(ng)
-            DO i=Istr,Iend
-              Bio(i,k,iTAlk)=587.05_r8+50.56_r8*Bio(i,k,isalt)
-            END DO
-          END DO
-# endif
 !
 !-----------------------------------------------------------------------
 !  Surface CO2 gas exchange.
@@ -912,12 +928,12 @@
             CALL caldate (r_date, tdays(ng), year, yday, month, iday,   &
      &                    hour)
             pmonth=2003.0_r8-1951.0_r8+yday/365.0_r8
-            pCO2air_secular=D0+D1*pmonth*12.0_r8+                       &
-     &                         D2*SIN(pi2*pmonth+D3)+                   &
-     &                         D4*SIN(pi2*pmonth+D5)+                   &
-     &                         D6*SIN(pi2*pmonth+D7)
-            CO2_Flux=cff3*CO2_sol*(pCO2air_secular-pCO2(i))
-!!          CO2_Flux=cff3*CO2_sol*(pCO2air(ng)-pCO2(i))
+!!          pCO2air_secular=D0+D1*pmonth*12.0_r8+                       &
+!!   &                         D2*SIN(pi2*pmonth+D3)+                   &
+!!   &                         D4*SIN(pi2*pmonth+D5)+                   &
+!!   &                         D6*SIN(pi2*pmonth+D7)
+!!          CO2_Flux=cff3*CO2_sol*(pCO2air_secular-pCO2(i))
+            CO2_Flux=cff3*CO2_sol*(pCO2air(ng)-pCO2(i))
             Bio(i,k,iTIC_)=Bio(i,k,iTIC_)+                              &
      &                     CO2_Flux*Hz_inv(i,k)
 # ifdef DIAGNOSTICS_BIO
@@ -1241,7 +1257,7 @@
 !                pCO2= ppmv  (DoNewton=1)                              !
 !                                                                      !
 !  This subroutine was adapted by Katja Fennel (Nov 2005) from         !
-!  Zeebe and Dieter (2001).                                            !
+!  Zeebe and Wolf-Gladrow (2001).                                      !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !

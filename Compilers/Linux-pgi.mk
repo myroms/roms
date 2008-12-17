@@ -137,9 +137,19 @@ endif
 # local directory and compilation flags inside the code.
 #
 
-$(SCRATCH_DIR)/analytical.o: FFLAGS += -Mfree
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -Mfree
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS := $(MY_FFLAGS) -Mfree
+$(SCRATCH_DIR)/analytical.o: FFLAGS += -Mfree
+$(SCRATCH_DIR)/biology.o: FFLAGS += -Mfree
+ifdef USE_ADJOINT
+$(SCRATCH_DIR)/ad_biology.o: FFLAGS += -Mfree
+endif
+ifdef USE_REPRESENTER
+$(SCRATCH_DIR)/rp_biology.o: FFLAGS += -Mfree
+endif
+ifdef USE_TANGENT
+$(SCRATCH_DIR)/tl_biology.o: FFLAGS += -Mfree
+endif
 
 #
 # Supress free format in SWAN source files since there are comments

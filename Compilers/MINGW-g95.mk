@@ -101,6 +101,16 @@ endif
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form
 $(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form
+$(SCRATCH_DIR)/biology.o: FFLAGS += -ffree-form
+ifdef USE_ADJOINT
+$(SCRATCH_DIR)/ad_biology.o: FFLAGS += -ffree-form
+endif
+ifdef USE_REPRESENTER
+$(SCRATCH_DIR)/rp_biology.o: FFLAGS += -ffree-form
+endif
+ifdef USE_TANGENT
+$(SCRATCH_DIR)/tl_biology.o: FFLAGS += -ffree-form
+endif
 
 #
 # Supress free format in SWAN source files since there are comments

@@ -833,8 +833,8 @@
 !
 !  Close tangent linear NetCDF file.
 !
-          status=nf90_close(ncTLMid(ng))
-          ncTLMid(ng)=-1
+          CALL netcdf_close (ng, iTLM, ncTLMid(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Once that the representer coefficients, Beta_n, have been
@@ -1211,8 +1211,8 @@
 !
 !  Close current forward NetCDF file.
 !
-          status=nf90_close(ncFWDid(ng))
-          ncFWDid(ng)=-1
+          CALL netcdf_close (ng, iRPM, ncFWDid(ng))
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO OUTER_LOOP
 !

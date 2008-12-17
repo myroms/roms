@@ -22,15 +22,15 @@
       CONTAINS
 
 # if defined BIO_FASHAM
-#  include "fasham.h"
+#  include <fasham.h>
 # elif defined NEMURO
-#  include "nemuro.h"
+#  include <nemuro.h>
 # elif defined NPZD_FRANKS
-#  include "npzd_Franks.h"
+#  include <npzd_Franks.h>
 # elif defined NPZD_POWELL
-#  include "npzd_Powell.h"
+#  include <npzd_Powell.h>
 # elif defined ECOSIM
-#  include "ecosim.h"
+#  include <ecosim.h>
 # endif
 
 #endif

@@ -98,7 +98,9 @@
               WRITE (HISname(ng),10) HISbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncHISid(ng).ne.-1) status=nf90_close(ncHISid(ng))
+            IF (ncHISid(ng).ne.-1) THEN
+              CALL netcdf_close (ng, iNLM, ncHISid(ng))
+            END IF
             CALL def_his (ng, NewFile)
             IF (exit_flag.ne.NoError) RETURN
           END IF
@@ -187,7 +189,9 @@
               WRITE (AVGname(ng),20) AVGbase(ng)(1:lstr-3),ifile
   20          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncAVGid(ng).ne.-1) status=nf90_close(ncAVGid(ng))
+            IF (ncAVGid(ng).ne.-1) THEN
+              CALL netcdf_close (ng, iNLM, ncAVGid(ng))
+            END IF
             CALL def_avg (ng, Newfile)
             IF (exit_flag.ne.NoError) RETURN
             LwrtAVG(ng)=.TRUE.
@@ -266,7 +270,9 @@
               WRITE (DIAname(ng),30) DIAbase(ng)(1:lstr-3),ifile
   30          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncDIAid(ng).ne.-1) status=nf90_close(ncDIAid(ng))
+            IF (ncDIAid(ng).ne.-1) THEN
+              CALL netcdf_close (ng, iNLM, ncDIAid(ng))
+            END IF
             CALL def_diags (ng, Newfile)
             IF (exit_flag.ne.NoError) RETURN
             LwrtDIA(ng)=.TRUE.

@@ -202,9 +202,6 @@
       USE back_cost_mod, ONLY : back_cost
       USE cgradient_mod, ONLY : cgradient
       USE cost_grad_mod, ONLY : cost_grad
-#ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_bcasti
-#endif
       USE ini_adjust_mod, ONLY : ini_adjust
       USE ini_fields_mod, ONLY : ini_fields
 #if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
@@ -493,19 +490,8 @@
 !  If multiple TLM history NetCDF files, close current NetCDF file.
 !
             IF (ncTLMid(ng).ne.-1) THEN
-              IF (OutThread) THEN
-                status=nf90_close(ncTLMid(ng))
-                IF (status.ne.nf90_noerr) THEN
-                  WRITE (stdout,70) TRIM(TLMname(ng))
-                  exit_flag=3
-                  ioerror=status
-                END IF
-              END IF
-# ifdef DISTRIBUTE
-              CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-# endif
+              CALL netcdf_close (ng, iTLM, ncTLMid(ng))
               IF (exit_flag.ne.NoError) RETURN
-              ncTLMid(ng)=-1
             END IF
 #endif
 !
@@ -823,37 +809,15 @@
 !  Close adjoint NetCDF file.
 !
           IF (ncADJid(ng).ne.-1) THEN
-            IF (OutThread) THEN
-              status=nf90_close(ncADJid(ng))
-              IF (status.ne.nf90_noerr) THEN
-                WRITE (stdout,70) TRIM(ADJname(ng))
-                exit_flag=3
-                ioerror=status
-               END IF
-            END IF
-#ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, iADM, exit_flag, 1)
-#endif
+            CALL netcdf_close (ng, iADM, ncADJid(ng))
             IF (exit_flag.ne.NoError) RETURN
-            ncADJid(ng)=-1
           END IF
 !
 !  Close Hessian NetCDF file.
 !
           IF (ncHSSid(ng).ne.-1) THEN
-            IF (OutThread) THEN
-              status=nf90_close(ncHSSid(ng))
-              IF (status.ne.nf90_noerr) THEN
-                WRITE (stdout,70) TRIM(HSSname(ng))
-                exit_flag=3
-                ioerror=status
-               END IF
-            END IF
-#ifdef DISTRIBUTE
-            CALL mp_bcasti (ng, iADM, exit_flag, 1)
-#endif
+            CALL netcdf_close (ng, iADM, ncHSSid(ng))
             IF (exit_flag.ne.NoError) RETURN
-            ncHSSid(ng)=-1
           END IF
 !
 !-----------------------------------------------------------------------
@@ -1086,7 +1050,6 @@
      &        17x,1p,e16.10,0p,t68,a)
  60   FORMAT (/,1x,'(',i3.3,',',i3.3,'): Optimality (2*J/Nobs) = ',     &
      &        1p,e16.10,/)
- 70   FORMAT (/,' Unable to close output NetCDF file:',1x,a)
 
       RETURN
       END SUBROUTINE ROMS_run

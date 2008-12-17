@@ -25,6 +25,7 @@
       USE mod_param
       USE mod_forces
       USE mod_grid
+      USE mod_ncparam
       USE mod_ocean
       USE mod_stepping
 !
@@ -35,6 +36,17 @@
 !  Local variable declarations.
 !
 #include "tile.h"
+!
+!  Set header file name.
+!
+#ifdef DISTRIBUTE
+      IF (Lbiofile(iADM)) THEN
+#else
+      IF (Lbiofile(iADM).and.(tile.eq.0)) THEN
+#endif
+        Lbiofile(iADM)=.FALSE.
+        BIONAME(iADM)=__FILE__
+      END IF
 !
 #ifdef PROFILE
       CALL wclock_on (ng, iADM, 15)

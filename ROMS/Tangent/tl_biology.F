@@ -22,13 +22,13 @@
       CONTAINS
 
 # if defined BIO_FASHAM
-!!#  include "tl_fasham.h"
+!!#  include <tl_fasham.h>
 # elif defined NEMURO
-!!#  include "tl_nemuro.h"
+!!#  include <tl_nemuro.h>
 # elif defined NPZD_FRANKS
-#  include "tl_npzd_Franks.h"
+#  include <tl_npzd_Franks.h>
 # elif defined NPZD_POWELL
-#  include "tl_npzd_Powell.h"
+#  include <tl_npzd_Powell.h>
 # endif
 
 #endif

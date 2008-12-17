@@ -95,7 +95,9 @@
               WRITE (TLMname(ng),10) TLMbase(ng)(1:lstr-3),ifile
   10          FORMAT (a,'_',i4.4,'.nc')
             END IF
-            IF (ncTLMid(ng).ne.-1) status=nf90_close(ncTLMid(ng))
+            IF (ncTLMid(ng).ne.-1) THEN
+              CALL netcdf_close (ng, iTLM, ncTLMid(ng))
+            END IF
             CALL tl_def_his (ng, NewFile)
             IF (exit_flag.ne.NoError) RETURN
           END IF

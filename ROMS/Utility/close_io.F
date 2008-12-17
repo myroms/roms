@@ -23,7 +23,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: First = .TRUE.
+      logical :: First
 
       integer :: MyError, i, ng, status
 !
@@ -33,41 +33,44 @@
 !
       DO ng=1,Ngrids
         IF (ncRSTid(ng).ne.-1) THEN
-          status=nf90_close(ncRSTid(ng))
-          ncRSTid(ng)=-1
+          CALL netcdf_close (ng, iNLM, ncRSTid(ng))
         END IF
         IF (ncHISid(ng).ne.-1) THEN
-          status=nf90_close(ncHISid(ng))
-          ncHISid(ng)=-1
+          CALL netcdf_close (ng, iNLM, ncHISid(ng))
         END IF
 #ifdef ADJOINT
         IF (ncADJid(ng).ne.-1) THEN
-          status=nf90_close(ncADJid(ng))
-          ncADJid(ng)=-1
+          CALL netcdf_close (ng, iADM, ncADJid(ng))
         END IF
 #endif
 #ifdef TANGENT
         IF (ncTLMid(ng).ne.-1) THEN
-          status=nf90_close(ncTLMid(ng))
-          ncTLMid(ng)=-1
+          CALL netcdf_close (ng, iTLM, ncTLMid(ng))
         END IF
 #endif
 #ifdef AVERAGES
         IF (ncAVGid(ng).ne.-1) THEN
-          status=nf90_close(ncAVGid(ng))
-          ncAVGid=-1
+          CALL netcdf_close (ng, iNLM, ncAVGid(ng))
+        END IF
+#endif
+#ifdef DIAGNOSTICS
+        IF (ncDIAid(ng).ne.-1) THEN
+          CALL netcdf_close (ng, iNLM, ncDIAid(ng))
         END IF
 #endif
 #ifdef FLOATS
         IF (ncFLTid(ng).ne.-1) THEN
-          status=nf90_close(ncFLTid(ng))
-          ncFLTid(ng)=-1
+          CALL netcdf_close (ng, iNLM, ncFLTid(ng))
         END IF
 #endif
 #if defined FORWARD_READ || defined FORWARD_WRITE
         IF (ncFWDid(ng).ne.-1) THEN
-          status=nf90_close(ncFWDid(ng))
-          ncFWDid(ng)=-1
+          CALL netcdf_close (ng, iNLM, ncFWDid(ng))
+        END IF
+#endif
+#ifdef STATIONS
+        IF (ncSTAid(ng).ne.-1) THEN
+          CALL netcdf_close (ng, iNLM, ncSTAid(ng))
         END IF
 #endif
 !
@@ -116,16 +119,37 @@
 !-----------------------------------------------------------------------
 !
       IF (Master) THEN
+        First=.TRUE.
         DO i=1,37
           IF (LEN_TRIM(ANANAME(i)).gt.0) THEN
             IF (First) THEN
               First=.FALSE.
-              WRITE (stdout,30)
+              WRITE (stdout,30) ' Analytical header files used:'
             END IF
             WRITE (stdout,'(5x,a)') TRIM(ADJUSTL(ANANAME(i)))
           END IF
         END DO
       END IF
+
+#ifdef BIOLOGY
+!
+!-----------------------------------------------------------------------
+!  Report biology model header files used.
+!-----------------------------------------------------------------------
+!
+      IF (Master) THEN
+        First=.TRUE.
+        DO i=1,4
+          IF (LEN_TRIM(BIONAME(i)).gt.0) THEN
+            IF (First) THEN
+              First=.FALSE.
+              WRITE (stdout,30) ' Biology model header files used:'
+            END IF
+            WRITE (stdout,'(5x,a)') TRIM(ADJUSTL(BIONAME(i)))
+          END IF
+        END DO
+      END IF
+#endif
 !
 !-----------------------------------------------------------------------
 !  If applicable, report internal exit errors.
@@ -159,7 +183,7 @@
      &        i2.2,':')
  20   FORMAT (13x,'number of time records written in ',                 &
      &        a,' file = ',i8.8)
- 30   FORMAT (/,' Analytical header files used:',/)
+ 30   FORMAT (/,a,/)
  40   FORMAT (/,a,i3,/)
  50   FORMAT (/,' ROMS/TOMS: DONE... ',a)
  60   FORMAT (/,' MAIN: Abnormal termination: BLOWUP.')

@@ -197,7 +197,7 @@
 !
 !  Local variable declarations.
 !
-      logical :: Lweak, add, outer_impulse
+      logical :: Lweak, add
 
       integer :: my_inner, my_outer
       integer :: ADrec, Lbck, Lini, Nrec, Rec1, Rec2, indxSave
@@ -675,13 +675,12 @@
               WRITE (stdout,40) outer, inner
             END IF
             tTLFindx(ng)=0
-            outer_impulse=.TRUE.
 #ifdef DISTRIBUTE
             tile=MyRank
 #else
             tile=-1
 #endif
-            CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
+            CALL impulse (ng, tile, iADM, ADJname(ng))
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Integrate tangent linear model forced by the convolved adjoint
@@ -768,8 +767,8 @@
 !
 !  Close tangent linear NetCDF file.
 !
-          status=nf90_close(ncTLMid(ng))
-          ncTLMid(ng)=-1
+          CALL netcdf_close (ng, iTLM, ncTLMid(ng))
+          IF (exit_flag.ne.NoError) RETURN
 !
 !-----------------------------------------------------------------------
 !  Once that the representer coefficients, Beta_n, have been
@@ -1010,13 +1009,12 @@
             WRITE (stdout,40) outer, inner
           END IF
           tTLFindx(ng)=0
-          outer_impulse=.FALSE.
 #ifdef DISTRIBUTE
           tile=MyRank
 #else
           tile=-1
 #endif
-          CALL impulse (ng, tile, iADM, outer_impulse, ADJname(ng))
+          CALL impulse (ng, tile, iADM, ADJname(ng))
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  Run nonlinear model and compute a "new estimate" of the state
@@ -1081,8 +1079,8 @@
 !
 !  Close current forward NetCDF file.
 !
-          status=nf90_close(ncFWDid(ng))
-          ncFWDid(ng)=-1
+          CALL netcdf_close (ng, iNLM, ncFWDid(ng))
+          IF (exit_flag.ne.NoError) RETURN
 
         END DO OUTER_LOOP
 !

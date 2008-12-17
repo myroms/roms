@@ -66,10 +66,13 @@ ROMS_APPLICATION ?= UPWELLING
 
 MY_HEADER_DIR ?=
 
-#  If your application requires analytical expressions and they are not
-#  located in "ROMS/Functionals", provide an alternate directory.
+#  If your application requires analytical expressions and they are
+#  not located in "ROMS/Functionals", provide an alternate directory.
 #  Notice that a set analytical expressions templates can be found in
 #  "User/Functionals".
+#
+#  If applicable, also used this directory to place your customized
+#  biology model header file (like fasham.h, nemuro.h, ecosim.h, etc).
 
 MY_ANALYTICAL_DIR ?=
 
@@ -399,6 +402,9 @@ endif
 		ROMS/Modules
 
  includes :=	ROMS/Include
+ifdef MY_ANALYTICAL
+ includes +=	$(MY_ANALYTICAL_DIR)
+endif
 ifdef USE_ADJOINT
  includes +=	ROMS/Adjoint
 endif
@@ -413,13 +419,8 @@ ifdef USE_TANGENT
 endif
  includes +=	ROMS/Nonlinear \
 		ROMS/Utility \
-		ROMS/Drivers
-
-ifdef MY_ANALYTICAL
- includes +=	$(MY_ANALYTICAL_DIR)
-endif
- includes +=    ROMS/Functionals
-
+		ROMS/Drivers \
+                ROMS/Functionals
 ifdef MY_HEADER_DIR
  includes +=	$(MY_HEADER_DIR)
 endif
@@ -441,12 +442,12 @@ include $(addsuffix /Module.mk,$(modules))
 
 MDEPFLAGS += $(patsubst %,-I %,$(includes)) --silent --moddir $(SCRATCH_DIR)
 
-CPPFLAGS += $(patsubst %,-I%,$(includes))
+CPPFLAGS  += $(patsubst %,-I%,$(includes))
 
 ifdef MY_HEADER_DIR
   CPPFLAGS += -D'HEADER_DIR="$(MY_HEADER_DIR)"'
 else
-  CPPFLAGS += -D'HEADER_DIR="./ROMS/Include"'
+  CPPFLAGS += -D'HEADER_DIR="$(ROOTDIR)/ROMS/Include"'
 endif
 
 $(SCRATCH_DIR):

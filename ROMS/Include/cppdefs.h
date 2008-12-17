@@ -559,7 +559,7 @@
 ** OXYGEN              use to add oxygen dynamics                            **
 ** OCMIP_OXYGEN_SC     use if Schmidt number from Keeling et al. (1998)      **
 ** RIVER_BIOLOGY       use to process river biology point-sources            **
-** TALK_PROGNOSTIC     use if prognostic/diagnotic alkalinity                **
+** TALK_NONCONSERV     use if nonconservative computation of alkalinity      **
 **                                                                           **
 ** NPZD biology model OPTIONS:                                               ** 
 **                                                                           **

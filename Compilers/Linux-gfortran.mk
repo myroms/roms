@@ -114,6 +114,16 @@ $(SCRATCH_DIR)/def_var.o: FFLAGS += -fno-bounds-check
 $(SCRATCH_DIR)/mod_ncparam.o: FFLAGS += -ffree-form -ffree-line-length-none
 $(SCRATCH_DIR)/mod_strings.o: FFLAGS += -ffree-form -ffree-line-length-none
 $(SCRATCH_DIR)/analytical.o: FFLAGS += -ffree-form -ffree-line-length-none
+$(SCRATCH_DIR)/biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+ifdef USE_ADJOINT
+$(SCRATCH_DIR)/ad_biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+endif
+ifdef USE_REPRESENTER
+$(SCRATCH_DIR)/rp_biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+endif
+ifdef USE_TANGENT
+$(SCRATCH_DIR)/tl_biology.o: FFLAGS += -ffree-form -ffree-line-length-none
+endif
 
 #
 # Supress free format in SWAN source files since there are comments
