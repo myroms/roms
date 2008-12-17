@@ -304,13 +304,6 @@
         real(r8), allocatable :: cg_beta(:,:)
         real(r8), allocatable :: cg_tau(:,:)
 !
-!  Number of converged Ritz eigenvalues. If input parameter NritzEV > 0,
-!  then nConvRitz=NritzEV.  Therefore, only nConvRitz eigenpairs will
-!  used for preconditioning and the RitzMaxErr threshold is ignored.
-!
-        integer :: NritzEV
-        integer :: nConvRitz = 0
-!
 !  Ritz values maximum error limit.
 !
         real(r8) :: RitzMaxErr
@@ -389,6 +382,13 @@
 !  2008).
 !
         logical :: Lritz
+!
+!  Number of converged Ritz eigenvalues. If input parameter NritzEV > 0,
+!  then nConvRitz=NritzEV.  Therefore, only nConvRitz eigenpairs will
+!  used for preconditioning and the RitzMaxErr threshold is ignored.
+!
+        integer :: NritzEV
+        integer :: nConvRitz = 0
 !
 !  Conjugate gradient alogorithm initial step size.
 !

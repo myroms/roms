@@ -172,33 +172,33 @@
 !  If variational data assimilation, reset several IO switches and
 !  variables.
 !-----------------------------------------------------------------------
+
 #  ifndef OBS_SENSITIVITY
+#   ifdef IS4DVAR
 !
-!  Set switches to create (TRUE) tangent linear initial conditions and
-!  history NetCDF files or append (FALSE) to existing NetCDF files.
+!  Set switch to create (TRUE) tangent linear initial conditions and
+!  history NetCDF files or append (FALSE) to existing files. Then,
+!  create tangent linear model initialization file and write zero
+!  initial conditions for records 1 and 2.
 !
-#   if defined WEAK_CONSTRAINT
-      IF (Nrun.eq.ERstr) THEN
-#   elif defined IS4DVAR
       IF ((Nrun.eq.ERstr).and.(inner.eq.0)) THEN
-#   endif
         LdefITL(ng)=.TRUE.
-#   ifndef WEAK_CONSTRAINT
-        LdefTLM(ng)=.TRUE.
-#   endif
-#   ifndef WEAK_CONSTRAINT
-!
-!  It first pass, create tangent linear model initialization file and
-!  write zero initial conditions for records 1 and 2.
-!
         CALL tl_def_ini (ng)
         IF (exit_flag.ne.NoError) RETURN
         CALL tl_wrt_ini (ng, Tindex, 1)
         IF (exit_flag.ne.NoError) RETURN
         CALL tl_wrt_ini (ng, Tindex, 2)
         IF (exit_flag.ne.NoError) RETURN
-#   endif
       END IF
+#   endif
+#   ifdef WEAK_CONSTRAINT
+!
+!  Set switch to create tangent linear initial conditions file.
+!
+      IF (Nrun.eq.ERstr) THEN
+        LdefITL(ng)=.TRUE.
+      END IF
+#   endif
 !
 !  Set record to read from initial tangent linear NetCDF file.
 !
@@ -231,25 +231,17 @@
       FWDname(ng)=HISname(ng)
       ncFWDid(ng)=ncHISid(ng)
 #    endif
-#   else
-!
-!  If weak constraint 4DVAR, activate writting of history NetCDF
-!  file.
-!
-!!    LdefTLM(ng)=.TRUE.
-!!    LwrtTLM(ng)=.TRUE.
 #   endif
 #  endif
+#  ifdef OBSERVATIONS
 !
 !  Open observations NetCDF file and initialize various variables
 !  needed for processing the nonlinear state solution at observation
 !  locations.
 !
       CALL obs_initial (ng, iTLM, .FALSE.)
-#  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iTLM, exit_flag, 1)
-#  endif
       IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 !
 !=======================================================================

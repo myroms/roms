@@ -192,8 +192,7 @@
       LwrtRST(ng)=.TRUE.
 # endif
 #endif
-#if defined FOUR_DVAR || defined VERIFICATION
-# ifndef CONVOLUTION
+#ifdef OBSERVATIONS
 !
 !-----------------------------------------------------------------------
 !  Open observations NetCDF file and initialize various variables
@@ -202,11 +201,7 @@
 !-----------------------------------------------------------------------
 !
       CALL obs_initial (ng, iNLM, .FALSE.)
-#  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iNLM, exit_flag, 1)
-#  endif
       IF (exit_flag.ne.NoError) RETURN
-# endif
 #endif
 !
 !=======================================================================

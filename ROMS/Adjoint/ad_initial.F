@@ -192,15 +192,14 @@
 !
       SFcount(ng)=Nfrec(ng)+1
 #  endif
+#  ifdef OBSERVATIONS
 !
 !  Initialize various variables needed for processing observations
 !  backwards in time.
 !
       CALL obs_initial (ng, iADM, .TRUE.)
-#  ifdef DISTRIBUTE
-      CALL mp_bcasti (ng, iADM, exit_flag, 1)
-#  endif
       IF (exit_flag.ne.NoError) RETURN
+#  endif
 # endif
 !
 !=======================================================================
