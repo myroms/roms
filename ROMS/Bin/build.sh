@@ -79,7 +79,7 @@ end
 # determine the name of the ".h" header file with the application 
 # CPP definitions.
 
-setenv ROMS_APPLICATION     CBLAST
+setenv ROMS_APPLICATION     UPWELLING
 
 # Set number of nested/composed/mosaic grids.  Currently, only one grid
 # is supported.
@@ -303,7 +303,7 @@ endif
 
  setenv MY_HEADER_DIR       ${MY_PROJECT_DIR}
 
-#setenv MY_ANALYTICAL_DIR   ${MY_PROJECT_DIR}
+ setenv MY_ANALYTICAL_DIR   ${MY_PROJECT_DIR}
 
 # Put the binary to execute in the following directory.
 

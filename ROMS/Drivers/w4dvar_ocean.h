@@ -293,7 +293,7 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
-!  Define TLM/RPM impulse forcing NetCDF file
+!  Define TLM/RPM impulse forcing NetCDF file.
 !
         LdefTLF(ng)=.TRUE.
         CALL def_impulse (ng)

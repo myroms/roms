@@ -142,7 +142,7 @@ export        MY_ROMS_SRC=${MY_ROOT_DIR}/branches/arango
 # appropriate "mpirun" to execute. Also notice that the path where the
 # MPI library is installed is computer dependent.
 
-if [ -n "${USE_MPIF90+1}" ]; then
+if [ -n "${USE_MPIF90:+1}" ]; then
   case "$FORT" in
     ifort )
 #     export PATH=/opt/intelsoft/mpich/bin:$PATH
@@ -188,8 +188,7 @@ fi
 
 #export           USE_MY_LIBS=on
 
-
-if [ -n "${USE_MY_LIBS+1}" ]; then
+if [ -n "${USE_MY_LIBS:+1}" ]; then
   case "$FORT" in
     ifort )
       export      ARPACK_LIBDIR=/opt/intelsoft/PARPACK
@@ -202,8 +201,8 @@ if [ -n "${USE_MY_LIBS+1}" ]; then
       export          ESMF_SITE=default
       export         MCT_INCDIR=/opt/intelsoft/mct/include
       export         MCT_LIBDIR=/opt/intelsoft/mct/lib
-      if [ -n "${USE_NETCDF4+1}" ]; then
-        if [ -n "${USE_MPI+1}" ]; then
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_MPI:+1}" ]; then
           export  NETCDF_INCDIR=/opt/intelsoft/netcdf4/include
           export  NETCDF_LIBDIR=/opt/intelsoft/netcdf4/lib
           export    HDF5_LIBDIR=/opt/intelsoft/hdf5/lib
@@ -230,8 +229,8 @@ if [ -n "${USE_MY_LIBS+1}" ]; then
       export          ESMF_SITE=default
       export         MCT_INCDIR=/opt/pgisoft/mct/include
       export         MCT_LIBDIR=/opt/pgisoft/mct/lib
-      if [ -n "${USE_NETCDF4+1}" ]; then
-        if [ -n "${USE_MPI+1}" ]; then
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_MPI:+1}" ]; then
           export  NETCDF_INCDIR=/opt/pgisoft/netcdf4/include
           export  NETCDF_LIBDIR=/opt/pgisoft/netcdf4/lib
           export    HDF5_LIBDIR=/opt/pgisoft/hdf5/lib
@@ -251,8 +250,8 @@ if [ -n "${USE_MY_LIBS+1}" ]; then
       export      ARPACK_LIBDIR=/opt/g95soft/PARPACK
       export         MCT_INCDIR=/opt/g95soft/mct/include
       export         MCT_LIBDIR=/opt/g95soft/mct/lib
-      if [ -n "${USE_NETCDF4+1}" ]; then
-        if [ -n "${USE_MPI+1}" ]; then
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_MPI:+1}" ]; then
           export  NETCDF_INCDIR=/opt/g95soft/netcdf4/include
           export  NETCDF_LIBDIR=/opt/g95soft/netcdf4/lib
           export    HDF5_LIBDIR=/opt/g95soft/hdf5/lib
@@ -272,8 +271,8 @@ if [ -n "${USE_MY_LIBS+1}" ]; then
       export      ARPACK_LIBDIR=/opt/gfortransoft/PARPACK
       export         MCT_INCDIR=/opt/gfortransoft/mct/include
       export         MCT_LIBDIR=/opt/gfortransoft/mct/lib
-      if [ -n "${USE_NETCDF4+1}" ]; then
-        if [ -n "${USE_MPI+1}" ]; then
+      if [ -n "${USE_NETCDF4:+1}" ]; then
+        if [ -n "${USE_MPI:+1}" ]; then
           export  NETCDF_INCDIR=/opt/gfortransoft/netcdf4/include
           export  NETCDF_LIBDIR=/opt/gfortransoft/netcdf4/lib
           export    HDF5_LIBDIR=/opt/gfortransoft/hdf5/lib
@@ -299,9 +298,9 @@ fi
 # customized biology model header file (like fasham.h, nemuro.h, ecosim.h,
 # etc).
 
-#export     MY_HEADER_DIR=${MY_PROJECT_DIR}
+ export     MY_HEADER_DIR=${MY_PROJECT_DIR}
 
-#export MY_ANALYTICAL_DIR=${MY_PROJECT_DIR}
+ export MY_ANALYTICAL_DIR=${MY_PROJECT_DIR}
 
 # Put the binary to execute in the following directory.
 

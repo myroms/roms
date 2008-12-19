@@ -235,7 +235,7 @@
 !-----------------------------------------------------------------------
 !  Configure weak constraint 4DVAR algorithm: PSAS Approach.
 !-----------------------------------------------------------------------
-!  
+!
 !  Initialize the switch to gather weak constraint forcing.
 !
         WRTforce(ng)=.FALSE.
@@ -370,12 +370,12 @@
 !
 !              (H M_n B (M_n)' H' + Cobs) * w_n = d_n
 !
-!              d_n = yo - H * Xb_n
+!              d_n = yo - H * X b_n
 !
 !  where M_n is the tangent linear model matrix, Cobs is the 
 !  observation-error covariance, B is the background error covariance
 !  and dx_n=B M' H' w_n is the analysis increment so that Xa=Xb+dx_n.
-!  d_n is the misfit between observations (yo) and model (H * Xb_n), 
+!  d_n is the misfit between observations (yo) and model (H * Xb_n),
 !  and H is the linearized observation operator. 
 !
 !  Here, _n denotes a sequence of outer-loop estimates.
@@ -633,7 +633,7 @@
 !
 !  WARNING: We need to add logic here for new decorrelation scales
 !           and normalization coefficients.
-!  
+!
                   add=.FALSE.
 !$OMP PARALLEL DO PRIVATE(ng,thread,subs,tile)                          &
 !$OMP&            SHARED(inner,add,numthreads)
@@ -719,7 +719,7 @@
 !
 !  Initialize tangent linear model from initial impulse which is now
 !  stored in file ITLname.
-! 
+!
               wrtNLmod(ng)=.FALSE.
               wrtTLmod(ng)=.TRUE.
 !
@@ -939,10 +939,10 @@
 !
           CALL wrt_ini (ng, Lnew(ng))
           IF (exit_flag.ne.NoError) RETURN
-#if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
+# if defined ADJUST_STFLUX || defined ADJUST_WSTRESS
           CALL wrt_frc_AD (ng, Lold(ng), tINIindx(ng))
           IF (exit_flag.ne.NoError) RETURN
-#endif
+# endif
 !
 !  If weak constraint, convolve adjoint records in ADJname and impose
 !  model error covariance.

@@ -120,6 +120,7 @@
 !  constraint forcing will be read by the TL and RP models. Record
 !  Nrec is not processed since it is not needed.
 !
+      Iinp=1
       Iout=0
       scale=1.0_r8
    
