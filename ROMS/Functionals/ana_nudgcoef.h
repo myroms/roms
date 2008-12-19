@@ -56,7 +56,7 @@
       USE mod_scalars
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcastf
+      USE distribute_mod, ONLY : mp_collect
 #endif
 !
       implicit none
@@ -72,6 +72,8 @@
       integer :: Iwrk, i, itrc, j
 
       real(r8) :: cff1, cff2, cff3
+
+      real(r8), parameter :: IniVal = 0.0_r8
 
       real(r8), dimension(IminS:ImaxS,JminS:JmaxS) :: wrk
 
@@ -158,6 +160,10 @@
       END DO
 # endif
 #else
+!
+!  Default nudging coefficients.  Set nudging coefficients uniformly to
+!  the values specified in the standard input file.
+!
 # ifdef ZCLM_NUDGING
       DO j=JstrR,JendR
         DO i=IstrR,IendR
@@ -220,9 +226,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, FSobc_out(:,iwest), Ngrids)
-        CALL mp_bcastf (ng, model, FSobc_in (:,iwest), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_out(:,iwest))
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_in (:,iwest))
+      END IF
 #   endif
 #  else
       IF (SOUTH_WEST_TEST) THEN
@@ -244,9 +250,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, FSobc_out(:,ieast), Ngrids)
-        CALL mp_bcastf (ng, model, FSobc_in (:,ieast), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_out(:,ieast))
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_in (:,ieast))
+      END IF
 #   endif
 #  else
       IF (NORTH_EAST_TEST) THEN
@@ -268,9 +274,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, FSobc_out(:,isouth), Ngrids)
-        CALL mp_bcastf (ng, model, FSobc_in (:,isouth), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_out(:,isouth))
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_in (:,isouth))
+      END IF
 #   endif
 #  else
       IF (SOUTH_WEST_TEST) THEN
@@ -292,9 +298,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, FSobc_out(:,inorth), Ngrids)
-        CALL mp_bcastf (ng, model, FSobc_in (:,inorth), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_out(:,inorth))
+        CALL mp_collect (ng, model, Ngrids, IniVal, FSobc_in (:,inorth))
+      END IF
 #   endif
 #  else
       IF (NORTH_EAST_TEST) THEN
@@ -320,9 +326,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M2obc_out(:,iwest), Ngrids)
-        CALL mp_bcastf (ng, model, M2obc_in (:,iwest), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_out(:,iwest))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_in (:,iwest))
+      END IF
 #   endif
 #  else
       IF (SOUTH_WEST_TEST) THEN
@@ -346,9 +352,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M2obc_out(:,ieast), Ngrids)
-        CALL mp_bcastf (ng, model, M2obc_in (:,ieast), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_out(:,ieast))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_in (:,ieast))
+      END IF
 #   endif
 #  else
       IF (NORTH_EAST_TEST) THEN
@@ -371,9 +377,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M2obc_out(:,isouth), Ngrids)
-        CALL mp_bcastf (ng, model, M2obc_in (:,isouth), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_out(:,isouth))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_in (:,isouth))
+      END IF
 #   endif
 #  else
       IF (SOUTH_WEST_TEST) THEN
@@ -397,9 +403,9 @@
       END IF
 #   ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M2obc_out(:,inorth), Ngrids)
-        CALL mp_bcastf (ng, model, M2obc_in (:,inorth), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_out(:,inorth))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M2obc_in (:,inorth))
+      END IF
 #   endif
 #  else
       IF (NORTH_EAST_TEST) THEN
@@ -426,8 +432,8 @@
         END IF
       END DO
 #    ifdef DISTRIBUTE
-      CALL mp_bcastf (ng, model, Tobc_out(:,ng,iwest), MT)
-      CALL mp_bcastf (ng, model, Tobc_in (:,ng,iwest), MT)
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_out(:,ng,iwest))
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_in (:,ng,iwest))
 #    endif
 #   else
       DO itrc=1,NT(ng)
@@ -453,8 +459,8 @@
         END IF
       END DO
 #    ifdef DISTRIBUTE
-      CALL mp_bcastf (ng, model, Tobc_out(:,ng,ieast), MT)
-      CALL mp_bcastf (ng, model, Tobc_in (:,ng,ieast), MT)
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_out(:,ng,ieast))
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_in (:,ng,ieast))
 #    endif
 #   else
       DO itrc=1,NT(ng)
@@ -479,8 +485,8 @@
         END IF
       END DO
 #    ifdef DISTRIBUTE
-      CALL mp_bcastf (ng, model, Tobc_out(:,ng,isouth), MT)
-      CALL mp_bcastf (ng, model, Tobc_in (:,ng,isouth), MT)
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_out(:,ng,isouth))
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_in (:,ng,isouth))
 #    endif
 #   else
       DO itrc=1,NT(ng)
@@ -506,8 +512,8 @@
         END IF
       END DO
 #    ifdef DISTRIBUTE
-      CALL mp_bcastf (ng, model, Tobc_out(:,ng,inorth), MT)
-      CALL mp_bcastf (ng, model, Tobc_in (:,ng,inorth), MT)
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_out(:,ng,inorth))
+      CALL mp_collect (ng, model, MT, IniVal, Tobc_in (:,ng,inorth))
 #    endif
 #   else
       DO itrc=1,NT(ng)
@@ -536,9 +542,9 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M3obc_out(:,iwest), Ngrids)
-        CALL mp_bcastf (ng, model, M3obc_in (:,iwest), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_out(:,iwest))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_in (:,iwest))
+      END IF
 #    endif
 #   else
       IF (SOUTH_WEST_TEST) THEN
@@ -562,9 +568,9 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M3obc_out(:,ieast), Ngrids)
-        CALL mp_bcastf (ng, model, M3obc_in (:,ieast), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_out(:,ieast))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_in (:,ieast))
+      END IF
 #    endif
 #   else
       IF (NORTH_EAST_TEST) THEN
@@ -588,9 +594,9 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M3obc_out(:,isouth), Ngrids)
-        CALL mp_bcastf (ng, model, M3obc_in (:,isouth), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_out(:,isouth))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_in (:,isouth))
+      END IF
 #    endif
 #   else
       IF (SOUTH_WEST_TEST) THEN
@@ -614,9 +620,9 @@
       END IF
 #    ifdef DISTRIBUTE
       IF (ng.eq.Ngrids) THEN
-        CALL mp_bcastf (ng, model, M3obc_out(:,inorth), Ngrids)
-        CALL mp_bcastf (ng, model, M3obc_in (:,inorth), Ngrids)
-      ENDIF
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_out(:,inorth))
+        CALL mp_collect (ng, model, Ngrids, IniVal, M3obc_in (:,inorth))
+      END IF
 #    endif
 #   else
       IF (NORTH_EAST_TEST) THEN

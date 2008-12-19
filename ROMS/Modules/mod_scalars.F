@@ -1961,6 +1961,16 @@
         blk_ZT(ng)=10.0_r8
         blk_ZW(ng)=10.0_r8
 #endif
+        DO i=1,4
+          FSobc_in (ng,i)=IniVal
+          FSobc_out(ng,i)=IniVal
+          M2obc_in (ng,i)=IniVal
+          M2obc_out(ng,i)=IniVal
+#ifdef SOLVE3D
+          M3obc_in (ng,i)=IniVal
+          M3obc_out(ng,i)=IniVal
+#endif
+        END DO
       END DO
       
 #if defined LMD_SKPP || defined LMD_BKPP
