@@ -9,11 +9,18 @@
 !    See License_ROMS.txt                                              !
 !=======================================================================
 
-# if defined W4DVAR || defined IOM
+# if defined WEAK_CONSTRAINT || defined IOM
+#  if defined W4DVAR || defined IOM
 !                                                                      !
 !  This routine computes the data penalty function directly in during  !
 !  runs of the representer model:                                      !
 !                                                                      !
+#  else
+!                                                                      !
+!  This routine computes the data penalty function directly in during  !
+!  runs of the nonlinear model:                                        !
+!                                                                      !
+#  endif
 !         Jdata = transpose(H X - Xo) * O^(-1) * (H X - Xo)            !
 !                                                                      !
 !         H  : observation operator (linearized if incremental)        !
@@ -103,6 +110,25 @@
 #  endif
         END DO
       END IF
+
+# elif defined W4DPSAS
+!
+!  Compute nonlinear model data penalty function.
+!
+      IF (model.eq.iRPM) THEN
+        DO ivar=0,NstateVar(ng)
+          my_ObsCost(ivar)=0.0_r8
+        END DO
+        DO iobs=NstrObs(ng),NendObs(ng)
+          ivar=ObsType(iobs)
+          IF (ObsErr(iobs).NE.0.0_r8) THEN
+            cff=ObsScale(iobs)*(NLmodVal(iobs)-ObsVal(iobs))**2/        &
+     &          ObsErr(iobs)
+          END IF
+          my_ObsCost(0)=my_ObsCost(0)+cff
+          my_ObsCost(ivar)=my_ObsCost(ivar)+cff
+        END DO
+      END IF
 # else
 !
 !  Compute tangent linear model cost function.
@@ -155,6 +181,13 @@
             FOURDVAR(ng)%NLPenalty(ivar)=my_ObsCost1(ivar)+             &
      &                                   FOURDVAR(ng)%NLPenalty(ivar)
 #  endif
+          END DO
+        END IF
+# elif defined W4DPSAS
+        IF (model.eq.iNLM) THEN
+          DO ivar=0,NstateVar(ng)
+            FOURDVAR(ng)%NLPenalty(ivar)=my_ObsCost(ivar)+              &
+     &                                   FOURDVAR(ng)%NLPenalty(ivar)
           END DO
         END IF
 # else

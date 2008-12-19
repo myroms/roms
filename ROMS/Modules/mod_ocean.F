@@ -987,7 +987,7 @@
               OCEAN(ng) % uG(i,j,k,2) = IniVal
               OCEAN(ng) % vG(i,j,k,1) = IniVal
               OCEAN(ng) % vG(i,j,k,2) = IniVal
-#  ifdef W4DVAR
+#  if defined WEAK_CONSTRAINT || defined IOM
               OCEAN(ng) % f_uG(i,j,k,1) = IniVal
               OCEAN(ng) % f_uG(i,j,k,2) = IniVal
               OCEAN(ng) % f_vG(i,j,k,1) = IniVal
@@ -1010,7 +1010,7 @@
               DO i=Imin,Imax
                 OCEAN(ng) % tG(i,j,k,1,itrc) = IniVal
                 OCEAN(ng) % tG(i,j,k,2,itrc) = IniVal
-#  ifdef W4DVAR
+#  if defined WEAK_CONSTRAINT || defined IOM
                 OCEAN(ng) % f_tG(i,j,k,1,itrc) = IniVal
                 OCEAN(ng) % f_tG(i,j,k,2,itrc) = IniVal
 #  endif

@@ -62,13 +62,18 @@
 ! Switch (T/F) to compute approximated Hessian eigenpairs in the Lanzos
 ! conjugate gradient algorithm.
 
-    LhessianEV = T
+    LhessianEV = F
+
+! Switch (T/F) to activate hot start in weak-constraint (W4DVAR and
+! W4DPSAS) algorithms of subsequent outer loops.
+
+     LhotStart = T
 
 ! Switch (T/F) to activate IS4DVAR conjugate gradient preconditioning.
 ! Two types of Limited-Memory Preconditioner (LMP) are available
 ! (Tshimanga et al., 2008): spectral LMP and Ritz LMP.
  
-      Lprecond = F
+      Lprecond = T
 
 ! Switch to activate either Ritz Limited-Memory Preconditioner (T)
 ! or spectral Limited-Memory Preconditioner (F) to the IS4DVAR algorithm.
@@ -232,6 +237,10 @@ Vdecay(isTvar) == 100.0d0   100.0d0                ! 1:NT tracers
 !
 !  LhessianEV     Switch (T/F) to compute approximated Hessian eigenvalues
 !                 and eigenvectors.
+!
+!
+!  LhotStart      Switch (T/F) to activate hot start in weak-constraint
+!                 (W4DVAR and W4DPSAS) algorithms.
 !
 !  Lprecond       Switch (T/F) to activate preconditioning in the IS4DVAR
 !                 algorithm. Two types of Limited-Memory preconditioner (LMP)

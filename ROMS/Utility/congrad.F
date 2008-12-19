@@ -1,7 +1,8 @@
 #include "cppdefs.h"
 
-#if defined W4DVAR || defined W4DPSAS
-      SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop)
+#if defined WEAK_CONSTRAINT || defined IOM
+      SUBROUTINE congrad (ng, model, outLoop, innLoop, NinnLoop,        &
+     &                    Lcgini)
 !
 !svn $Id$
 !================================================== Hernan G. Arango ===
@@ -12,6 +13,8 @@
 !                                                                      !
 !  Weak Constraint 4-Dimensional Variational (4DVar) Pre-conditioned   !
 !                     Conjugate Gradient Algorithm                     !
+
+# if defined W4DVAR || defined IOM
 !                                                                      !
 !  The indirect representer method solves the system:                  !
 !                                                                      !
@@ -44,19 +47,68 @@
 !  each parallel node has a full copy of the assimilation vectors.     !
 !                                                                      !
 !  This code solves Ax=b by minimizing the cost function               !
-!  0.5*x*A*x-x*b, assuming an initial guess of x=0. In this case the   !
+!  0.5*x*A*x-x*b, assuming an initial guess of x=x0. In this case the  !
 !  gradient is Ax-b and the Hessian is A.                              !
 !                                                                      !
 !  Reference:                                                          !
 !                                                                      !
 !    Chua, B. S. and A. F. Bennett,  2001:  An inverse ocean modeling  !
 !      sytem, Ocean Modelling, 3, 137-165.                             !
+
+# elif defined W4DPSAS
+!                                                                      !
+!  Solve the system (following Courtier, 1997):                        !
+!                                                                      !
+!              (H M_n B (M_n)' H' + Cobs) * w_n = d_n                  !   
+!                                                                      !
+!              d_n = yo - H * Xb_n                                     !
+!                                                                      !
+!  where  M_n is the tangent linear model matrix and  _n denotes a     !
+!  sequence of outer-loop estimates, Cobs is the observation-error     !
+!  covariance,  B is the background error  covariance,  d_n is the     !
+!  misfit between observations (yo) and model (H * Xb_n), and H is     !
+!  the linearized observation operator.                                !
+!                                                                      !
+!  The analysis increment is:                                          !
+!                                                                      !
+!             dx_n = B M' H' w_n                                       !
+!                                                                      !
+!  so that Xa = Xb + dx_n.                                             !
+!                                                                      !
+!  The system does not need to be  solved explicitly  by inverting     !
+!  the symmetric matrix, P_n:                                          !
+!                                                                      !
+!              P_n = H M_n B (M_n)' H' + Cobs                          !
+!                                                                      !
+!  but by computing the action of P_n on any vector PSI, such that     !
+!                                                                      !
+!              P_n * PSI =  H M_n B (M_n)' H' * PSI + Cobs * PSI       !
+!                                                                      !
+!  The (H M_n B (M_n)' H') matrix is not  explicitly computed  but     !
+!  evaluated by  one integration backward of the adjoint model and     !
+!  one  integration  forward of the  tangent linear model  for any     !
+!  forcing vector PSI.                                                 !
+!                                                                      !
+!  A preconditioned conjugate gradient algorithm is used to compute    !
+!  an approximation PSI for w_n.                                       !
+!                                                                      !
+!  Reference:                                                          !
+!                                                                      !
+!    Courtier, P., 1997: Dual formulation of four-dimensional          !
+!      variational assimilation, Quart. J. Roy. Meteor. Soc.,          !
+!      123, 2449-2461.                                                 !
+# endif
 !                                                                      !
 !  Lanczos Algorithm Reference:                                        !
 !                                                                      !
 !    Fisher, M., 1998: Minimization Algorithms for Variational Data    !
 !      Assimilation. In Seminar on Recent Developments in Numerical    !
 !      Methods for Atmospheric Modelling, 1998.                        !
+!                                                                      !
+!    Tchimanga, J., S. Gratton, A.T. Weaver, and A. Sartenaer, 2008:   !
+!      Limited-memory preconditioners, with application to incremental !
+!      four-dimensional variational ocean data assimilation, Q.J.R.    !
+!      Meteorol. Soc., 134, 753-771.                                   !
 !                                                                      !
 !=======================================================================
 !
@@ -69,12 +121,13 @@
 # ifdef DISTRIBUTE
 !
       USE distribute_mod, ONLY : mp_bcastf, mp_bcasti, mp_bcastl,      &
-     &                           mp_bcastf_m, mp_bcastf_3d
+     &                           mp_bcastf_m
 # endif
       implicit none
 !
 !  Imported variable declarations
 !
+      logical, intent(in) :: Lcgini
       integer, intent(in) :: ng, model, outLoop, innLoop, NinnLoop
 !
 !  Local variable declarations.
@@ -82,7 +135,7 @@
       logical :: Ltrans
       integer :: i, ic, j, iobs, ivec, Lscale, info
 
-      real(r8) :: dla, zbet, eps, preducv, preducy
+      real(r8) :: zbet, eps, preducv, preducy
       real(r8) :: Jopt, Jf, Jmod, Jdata
 
       real(r8), dimension(NinnLoop) :: zu, zgam
@@ -93,15 +146,21 @@
 
       character (len=13) :: string
 !
-!-----------------------------------------------------------------------
+!=======================================================================
 !  Weak constraint 4DVar conjugate gradient, Lanczos-based algorithm.
-!-----------------------------------------------------------------------
+!=======================================================================
 !
 !  This conjugate gradient algorithm is not run in parallel since the
 !  weak constraint is done in observation space. Mostly all the
 !  variables are 1D arrays. Therefore, in parallel applications (only
 !  distributed-memory is possible) the master node does the computations
 !  and then broadcasts results to remaining nodes in the communicator.
+!
+!  This version of congrad solves A(x+x0)=b for x, by minimizing
+!  J=0.5*x'Ax-x'(b+Ax0), where x0 is a first-guess estimate of the
+!  representer coefficients from the previous outer-loop.
+!  For the first outer-loop, x0=0. In the code x0=cg_pxsave and
+!  x=px.
 !
       Ltrans=.FALSE.
 !
@@ -117,8 +176,34 @@
         eps=0.0_r8
         preducv=0.0_r8
         preducy=0.0_r8
+!
+!-----------------------------------------------------------------------
+!  Initialization step, innloop = 0.
+!-----------------------------------------------------------------------
+!
+        MINIMIZE : IF (innLoop.eq.0) THEN
+!
+!  If this is the first outer-loop, clear the solution vector px.
+!
+          IF ((outLoop.eq.1).or.(.not.LhotStart)) THEN
+!
+!  For the first outer-loop, x0=0.
+!
+            DO iobs=1,Ndatum(ng)
+              px(iobs)=0.0_r8
+              cg_pxsave(iobs)=0.0_r8
+            END DO
 
-        IF (innLoop.eq.0) THEN
+# ifdef W4DPSAS
+!
+!  If this is the first outer-loop, save NLmodVal in BCKmodVal.
+!
+            IF (outLoop.eq.1) THEN
+              DO iobs=1,Ndatum(ng)
+                BCKmodVal(iobs)=NLmodVal(iobs)
+              END DO
+            END IF
+# endif
 !
 !  If this is the first pass of the inner loop, set up the vectors and
 !  store the first guess. The initial starting guess is assumed to be
@@ -126,74 +211,182 @@
 !  A first-level preconditioning is applied using the inverse of the
 !  observation error standard deviations (i.e. sqrt(ObsErr)).
 !
-          DO iobs=1,Ndatum(ng)
+            DO iobs=1,Ndatum(ng)
 # ifdef W4DPSAS
-            pgrad(iobs)=-ObsScale(iobs)*                                &
-     &                  (ObsVal(iobs)-NLmodVal(iobs))
+              pgrad(iobs)=-ObsScale(iobs)*                              &
+     &                    (ObsVal(iobs)-BCKmodVal(iobs))
 # else
-            pgrad(iobs)=-ObsScale(iobs)*                                &
-     &                  (ObsVal(iobs)-TLmodVal(iobs))
+              pgrad(iobs)=-ObsScale(iobs)*                              &
+     &                    (ObsVal(iobs)-TLmodVal(iobs))
 # endif
 !
 ! Convert pgrad from x-space to v-space.
 !
-            IF (ObsErr(iobs).NE.0.0_r8) THEN
-              pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
-            END IF
-            vgrad0(iobs)=pgrad(iobs)
-          END DO
+              IF (ObsErr(iobs).NE.0.0_r8) THEN
+                pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
+              END IF
+              vgrad0(iobs)=pgrad(iobs)
+            END DO
 !
 !  If preconditioning, convert pgrad from v-space to y-space.
 !
-          IF (Lprecond.and.(outLoop.gt.1)) THEN
-            Lscale=2                 ! SQRT spectral LMP
-            Ltrans=.TRUE.
-            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,       &
-     &                     pgrad)
-          END IF
-
-          cg_Gnorm(outLoop)=0.0_r8
-          vgnorm(outLoop)=0.0_r8
-          DO iobs=1,Ndatum(ng)
-            zgrad0(iobs)=pgrad(iobs)
-            cg_Gnorm(outLoop)=cg_Gnorm(outLoop)+                        &
-     &                        zgrad0(iobs)*zgrad0(iobs)
-            vgnorm(outLoop)=vgnorm(outLoop)+vgrad0(iobs)*vgrad0(iobs)
-          END DO
-
-          cg_Gnorm(outLoop)=SQRT(cg_Gnorm(outLoop))
-          vgnorm(outLoop)=SQRT(vgnorm(outLoop))
-          DO iobs=1,Ndatum(ng)
-            zcglwk(iobs,1,outLoop)=pgrad(iobs)/cg_Gnorm(outLoop)
-            ADmodVal(iobs)=zcglwk(iobs,1,outLoop)
-          END DO
+            IF (Lprecond.and.(outLoop.gt.1)) THEN
+              Lscale=2                 ! SQRT spectral LMP
+              Ltrans=.TRUE.
+              CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,     &
+     &                       pgrad)
+            END IF
+!
+            cg_Gnorm_y(outLoop)=0.0_r8
+            cg_Gnorm_v(outLoop)=0.0_r8
+            DO iobs=1,Ndatum(ng)
+              zgrad0(iobs,outLoop)=pgrad(iobs)
+              cg_Gnorm_y(outLoop)=cg_Gnorm_y(outLoop)+                  &
+     &                            zgrad0(iobs,outLoop)*                 &
+     &                            zgrad0(iobs,outLoop)
+              cg_Gnorm_v(outLoop)=cg_Gnorm_v(outLoop)+                  &
+     &                            vgrad0(iobs)*vgrad0(iobs)
+            END DO
+            cg_Gnorm_y(outLoop)=SQRT(cg_Gnorm_y(outLoop))
+            cg_Gnorm_v(outLoop)=SQRT(cg_Gnorm_v(outLoop))
+            DO iobs=1,Ndatum(ng)
+              zcglwk(iobs,1,outLoop)=pgrad(iobs)/cg_Gnorm_y(outLoop)
+              ADmodVal(iobs)=zcglwk(iobs,1,outLoop)
+            END DO
 !
 !  If preconditioning, convert ADmodVal from y-space to v-space.
 !
-          IF (Lprecond.and.(outLoop.gt.1)) THEN
-            Lscale=2                 ! SQRT spectral LMP
-            Ltrans=.FALSE.
-            CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,       &
-     &                     ADmodVal)
-          END IF
+            IF (Lprecond.and.(outLoop.gt.1)) THEN
+              Lscale=2                 ! SQRT spectral LMP
+              Ltrans=.FALSE.
+              CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,     &
+     &                       ADmodVal)
+            END IF
 !
 ! Convert ADmodVal from v-space to x-space.
 !
-          DO iobs=1,Ndatum(ng)
-            IF (ObsErr(iobs).NE.0.0_r8) THEN
-              ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
-            END IF
-          END DO
+            DO iobs=1,Ndatum(ng)
+              IF (ObsErr(iobs).NE.0.0_r8) THEN
+                ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
+              END IF
+            END DO
 
-          cg_QG(1,outLoop)=0.0_r8
-          DO iobs=1,Ndatum(ng)
-            cg_QG(1,outLoop)=cg_QG(1,outLoop)+zcglwk(iobs,1,outLoop)*   &
-     &                       zgrad0(iobs)
-          END DO
+            cg_QG(1,outLoop)=0.0_r8
+            DO iobs=1,Ndatum(ng)
+               cg_QG(1,outLoop)=cg_QG(1,outLoop)+                       &
+     &                          zcglwk(iobs,1,outLoop)*                 &
+     &                          zgrad0(iobs,outLoop)
+            END DO
+
+            preducv=1.0_r8
+            preducy=1.0_r8
+
+          ELSE
+
+            IF (Lcgini) THEN
+!
+!  When outer>1 we need to evaluate Ax0 so for inner=0 we use
+!  cg_pxsave in v-space as the starting vector.
+!
+              DO iobs=1,Ndatum(ng)
+                ADmodVal(iobs)=cg_pxsave(iobs)
+# ifdef W4DPSAS
+                cg_innov(iobs)=-ObsScale(iobs)*                         &
+     &                         (ObsVal(iobs)-BCKmodVal(iobs))
+# else
+                cg_innov(iobs)=-ObsScale(iobs)*                         &
+     &                         (ObsVal(iobs)-TLmodVal(iobs))
+# endif
+              END DO
+!
+!  Convert ADmodVal from v-space to x-space and cg_innov (the 
+!  contribution to the starting gradient) from x-space to v-space.
+!
+              DO iobs=1,Ndatum(ng)
+                IF (ObsErr(iobs).NE.0.0_r8) THEN
+                  ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
+                  cg_innov(iobs)=cg_innov(iobs)/SQRT(ObsErr(iobs))
+                END IF
+              END DO
+
+            ELSE
+
+              DO iobs=1,Ndatum(ng)
+!
+!  Convert gradient contribution from x-space to v-space.
+!
+                pgrad(iobs)=ObsScale(iobs)*TLmodVal(iobs)
+                IF (ObsErr(iobs).NE.0.0_r8) THEN
+                  pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
+                END IF
+!
+!  Add I*x0=cg_pxsave contribution to the gradient and the term
+!  -b=cg_innov (everything is in v-space at this point).
+!
+                pgrad(iobs)=pgrad(iobs)+ObsScale(iobs)*                 &
+     &                      (cg_pxsave(iobs)+cg_innov(iobs))
+                vgrad0(iobs)=pgrad(iobs)
+              END DO
+!
+!  If preconditioning, convert pgrad from v-space to y-space.
+!
+              IF (Lprecond.and.(outLoop.gt.1)) THEN
+                Lscale=2                 ! SQRT spectral LMP
+                Ltrans=.TRUE.
+                CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,   &
+     &                         pgrad)
+              END IF
+
+              cg_Gnorm_y(outLoop)=0.0_r8
+              cg_Gnorm_v(outLoop)=0.0_r8
+              DO iobs=1,Ndatum(ng)
+                zgrad0(iobs,outLoop)=pgrad(iobs)
+                cg_Gnorm_y(outLoop)=cg_Gnorm_y(outLoop)+                &
+     &                              zgrad0(iobs,outLoop)*               &
+     &                              zgrad0(iobs,outLoop)
+                cg_Gnorm_v(outLoop)=cg_Gnorm_v(outLoop)+                &
+     &                              vgrad0(iobs)*vgrad0(iobs)
+              END DO
+              cg_Gnorm_y(outLoop)=SQRT(cg_Gnorm_y(outLoop))
+              cg_Gnorm_v(outLoop)=SQRT(cg_Gnorm_v(outLoop))
+!
+              DO iobs=1,Ndatum(ng)
+                zcglwk(iobs,1,outLoop)=pgrad(iobs)/cg_Gnorm_y(outLoop)
+                ADmodVal(iobs)=zcglwk(iobs,1,outLoop)
+              END DO
+!
+!  If preconditioning, convert ADmodVal from y-space to v-space.
+!
+              IF (Lprecond.and.(outLoop.gt.1)) THEN
+                Lscale=2                 ! SQRT spectral LMP
+                Ltrans=.FALSE.
+                CALL rprecond (ng, Lscale, Ltrans, outLoop, NinnLoop,   &
+     &                         ADmodVal)
+              END IF
+!
+              DO iobs=1,Ndatum(ng)
+                IF (ObsErr(iobs).NE.0.0_r8) THEN
+                  ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
+                END IF
+              END DO
+              cg_QG(1,outLoop)=0.0_r8
+              DO iobs=1,Ndatum(ng)
+                cg_QG(1,outLoop)=cg_QG(1,outLoop)+                      &
+     &                           zcglwk(iobs,1,outLoop)*                &
+     &                           zgrad0(iobs,outLoop)
+              END DO
+
+            END IF
+
+          END IF
 
           preducv=1.0_r8
           preducy=1.0_r8
-
+!
+!-----------------------------------------------------------------------
+!  Minimization step, innLoop > 0.
+!-----------------------------------------------------------------------
+!
         ELSE
 !
 !  After the initialization, for every other inner loop, calculate a
@@ -201,6 +394,9 @@
 !
           DO iobs=1,Ndatum(ng)
             pgrad(iobs)=ObsScale(iobs)*TLmodVal(iobs)
+!
+!  Convert gradient contribution from x-space to v-space.
+!
             IF (ObsErr(iobs).NE.0.0_r8) THEN
               pgrad(iobs)=pgrad(iobs)/SQRT(ObsErr(iobs))
             END IF
@@ -219,7 +415,7 @@
           END IF
 !
           DO iobs=1,Ndatum(ng)
-            pgrad(iobs)=pgrad(iobs)+zt(iobs)
+            pgrad(iobs)=pgrad(iobs)+ObsScale(iobs)*zt(iobs)
           END DO
 !
 !  If preconditioning, convert pgrad from v-space to y-space.
@@ -262,12 +458,15 @@
 !  Orthonormalize against previous Lanczos vectors.
 !
           DO ivec=innLoop,1,-1
-            dla=0.0_r8
+            cg_dla(ivec,outLoop)=0.0_r8
             DO iobs=1,Ndatum(ng)
-              dla=dla+pgrad(iobs)*zcglwk(iobs,ivec,outLoop)
+              cg_dla(ivec,outLoop)=cg_dla(ivec,outLoop)+pgrad(iobs)*    &
+     &                             zcglwk(iobs,ivec,outLoop)
             END DO
             DO iobs=1,Ndatum(ng)
-              pgrad(iobs)=pgrad(iobs)-dla*zcglwk(iobs,ivec,outLoop)
+              pgrad(iobs)=pgrad(iobs)-                                  &
+     &                    cg_dla(ivec,outLoop)*                         &
+     &                    zcglwk(iobs,ivec,outLoop)
             END DO
           END DO
 !
@@ -286,7 +485,8 @@
           cg_QG(innLoop+1,outLoop)=0.0_r8
           DO iobs=1,Ndatum(ng)
             cg_QG(innLoop+1,outLoop)=cg_QG(innLoop+1,outLoop)+          &
-     &                      zcglwk(iobs,innLoop+1,outLoop)*zgrad0(iobs)
+     &                               zcglwk(iobs,innLoop+1,outLoop)*    &
+     &                               zgrad0(iobs,outLoop)
           END DO
 !
 !  Calculate the new solution based upon the new, orthonormalized
@@ -299,7 +499,7 @@
             zgam(ivec)=cg_beta(ivec,outLoop)/zbet
             zbet=cg_delta(ivec,outLoop)-cg_beta(ivec,outLoop)*zgam(ivec)
             zu(ivec)=(-cg_QG(ivec,outLoop)-cg_beta(ivec,outLoop)*       &
-     &                   zu(ivec-1))/zbet
+     &                zu(ivec-1))/zbet
           END DO
           zwork(innLoop,3)=zu(innLoop)
 
@@ -309,9 +509,10 @@
           END DO
 
           DO iobs=1,Ndatum(ng)
-            zw(iobs)=zgrad0(iobs)+                                      &
+            zw(iobs)=zgrad0(iobs,outLoop)+                              &
      &               cg_beta(innLoop+1,outLoop)*                        &
-     &               zcglwk(iobs,innLoop+1,outLoop)*zwork(innLoop,3)
+     &               zcglwk(iobs,innLoop+1,outLoop)*                    &
+     &               zwork(innLoop,3)
           END DO
 
           DO iobs=1,Ndatum(ng)
@@ -338,9 +539,9 @@
           DO iobs=1,Ndatum(ng)
             preducy=preducy+zw(iobs)*zw(iobs)
           END DO
-          preducy=SQRT(preducy)/cg_Gnorm(outLoop)
+          preducy=SQRT(preducy)/cg_Gnorm_y(outLoop)
 !
-!  Compute the reduction in the gradient Ax-b (in y-space).
+!  Compute the reduction in the gradient Ax-b (in v-space).
 !
           IF (Lprecond.and.(outLoop.gt.1)) THEN
             Lscale=-2                 ! SQRT spectral LMP
@@ -352,7 +553,7 @@
           DO iobs=1,Ndatum(ng)
             preducv=preducv+zw(iobs)*zw(iobs)
           END DO
-          preducv=SQRT(preducv)/vgnorm(outLoop)
+          preducv=SQRT(preducv)/cg_Gnorm_v(outLoop)
 !
 !  Estimate the residual (in y-space) by: 
 !
@@ -381,15 +582,27 @@
 !         to their final values and WILL NOT necessary decrease
 !         with increasing iteration number.
 !
-          DO iobs=1,Ndatum(ng)
-            Jopt=Jopt-px(iobs)*vgrad0(iobs)
-            IF (ObsErr(iobs).ne.0.0_r8) THEN
-!!AMM         Jf=Jf+zgrad0(iobs)*zgrad0(iobs)
-              Jf=Jf+vgrad0(iobs)*vgrad0(iobs)
-            END IF
-            Jdata=Jdata+px(iobs)*px(iobs)
-          END DO
-          Jmod=Jopt-Jdata
+          IF (outLoop.eq.1.or.(.not.LhotStart)) THEN
+            DO iobs=1,Ndatum(ng)
+              Jopt=Jopt-px(iobs)*vgrad0(iobs)
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
+                Jf=Jf+vgrad0(iobs)*vgrad0(iobs)
+              END IF
+              Jdata=Jdata+px(iobs)*px(iobs)
+            END DO
+            Jmod=Jopt-Jdata
+          ELSE
+            DO iobs=1,Ndatum(ng)
+              Jopt=Jopt-(px(iobs)+cg_pxsave(iobs))*cg_innov(iobs)
+              IF (ObsErr(iobs).ne.0.0_r8) THEN
+                Jf=Jf+cg_innov(iobs)*cg_innov(iobs)
+              END IF
+              Jdata=Jdata+                                              &
+     &              (px(iobs)+cg_pxsave(iobs))*                         &
+     &              (px(iobs)+cg_pxsave(iobs))
+            END DO
+            Jmod=Jopt-Jdata
+          ENDIF
 !
 !  Put the new trial solution into the adjoint vector for the next
 !  loop or put the final solution into the adjoint vector on the
@@ -398,11 +611,19 @@
           IF (innLoop.eq.NinnLoop) THEN
 !
 !  Note: px is already in v-space so there is no need to convert
-!  if preconditioning.
+!        if preconditioning; cg_pxsave is also in v-space.
 !
             DO iobs=1,Ndatum(ng)
               ADmodVal(iobs)=px(iobs)
             END DO
+            IF (LhotStart) THEN
+              DO iobs=1,Ndatum(ng)
+                ADmodVal(iobs)=ADmodVal(iobs)+cg_pxsave(iobs)
+              END DO
+              DO iobs=1,Ndatum(ng)
+                cg_pxsave(iobs)=ADmodVal(iobs)
+              END DO
+            END IF
           ELSE
             DO iobs=1,Ndatum(ng)
               ADmodVal(iobs)=zcglwk(iobs,innLoop+1,outLoop)
@@ -425,10 +646,12 @@
               ADmodVal(iobs)=ADmodVal(iobs)/SQRT(ObsErr(iobs))
             END IF
           END DO
+
+        END IF MINIMIZE
 !
-        END IF
-!
+!-----------------------------------------------------------------------
 !  Report minimization progress.
+!-----------------------------------------------------------------------
 !
         WRITE (stdout,30) Ndatum(ng),                                   &
      &                    outLoop, innLoop, eps,                        &
@@ -452,7 +675,7 @@
             WRITE (stdout,60) outLoop, innLoop, nConvRitz
             ic=0
             DO ivec=1,NinnLoop
-              IF (ivec.le.nConvRitz) THEN
+              IF (ivec.gt.(NinnLoop-nConvRitz)) THEN
                 string='         '
                 ic=ic+1
                 WRITE (stdout,70) ivec, cg_Ritz(ivec,outLoop-1),        &
@@ -487,7 +710,11 @@
           END IF
         END IF
 !
-!   Compute the eigenvalues and eigenvectors of the tridiagonal matrix.
+!-----------------------------------------------------------------------
+!  If last inner loop, innLoop = NinnLoop.
+!-----------------------------------------------------------------------
+!
+!  Compute the eigenvalues and eigenvectors of the tridiagonal matrix.
 !
         IF (innLoop.eq.NinnLoop) THEN
           IF (LhessianEV.or.Lprecond) THEN
@@ -569,7 +796,9 @@
 
       END IF MASTER_THREAD
 !
+!-----------------------------------------------------------------------
 !  Come here if not a possite definite algorithm.
+!-----------------------------------------------------------------------
 !
  10   CONTINUE
 # ifdef DISTRIBUTE
@@ -579,21 +808,25 @@
    
 # ifdef DISTRIBUTE
 !
+!-----------------------------------------------------------------------
 !  Broadcast new solution to other nodes.
+!-----------------------------------------------------------------------
 !
       CALL mp_bcastf (ng, model, ADmodVal, Mobs)
       CALL mp_bcasti (ng, model, info, 1)
       CALL mp_bcastf (ng, model, cg_beta(:,outLoop), Ninner+1)
-      CALL mp_bcastf_m (ng, model, zcglwk(:,:,outLoop), Ninner, Ninner)
+      CALL mp_bcastf_m (ng, model, zcglwk(:,:,outLoop), Mobs, Ninner+1)
       IF ((LhessianEV.or.Lprecond).and.(innLoop.eq.NinnLoop)) THEN
         CALL mp_bcastf (ng, model, cg_Ritz(:,outLoop), Ninner)
         CALL mp_bcastf (ng, model, cg_RitzErr(:,outLoop), Ninner)
         CALL mp_bcastf_m (ng, model, cg_zv(:,:,outLoop), Ninner, Ninner)
-        CALL mp_bcastf_m (ng, model, vcglev(:,:,outLoop),Ninner, Ninner)
+        CALL mp_bcastf_m (ng, model, vcglev(:,:,outLoop),Mobs, Ninner)
       END IF
 # endif
 !
+!-----------------------------------------------------------------------
 !  Write out conjugate gradient vectors into 4DVAR NetCDF file.
+!-----------------------------------------------------------------------
 !
       CALL cg_write (ng, model, innLoop, outLoop,                       &
      &               Jf, Jdata, Jmod, Jopt, preducv, preducy)
@@ -897,6 +1130,11 @@
       USE mod_ncparam
       USE mod_netcdf
       USE mod_scalars
+
+# ifdef DISTRIBUTE
+!
+      USE distribute_mod, ONLY : mp_bcasti
+# endif
 !
       implicit none
 !
@@ -962,11 +1200,25 @@
         IF (exit_flag.ne.NoError) RETURN
       END IF
 !
+!  Write normalization coefficients for Lanczos vectos.
+!
+      IF (innLoop.gt.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_dla',         &
+     &                        cg_dla, (/1,1/), (/Ninner,Nouter/),       &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
 !  Initial gradient normalization factor.
 !
       IF (innLoop.eq.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Gnorm',       &
-     &                        cg_Gnorm, (/1/), (/Nouter/),              &
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Gnorm_y',     &
+     &                        cg_Gnorm_y, (/1/), (/Nouter/),            &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Gnorm_v',     &
+     &                        cg_Gnorm_v, (/1/), (/Nouter/),            &
      &                        ncid = ncMODid(ng))
         IF (exit_flag.ne.NoError) RETURN
       END IF
@@ -983,13 +1235,13 @@
 !  Reduction in the gradient norm.
 !
       IF (innLoop.gt.0) THEN
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_v',    &
-     &                        preducv, (/innLoop,outLoop/), (/1,1/),    &
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_y',    &
+     &                        preducy, (/innLoop,outLoop/), (/1,1/),    &
      &                        ncid = ncMODid(ng))
         IF (exit_flag.ne.NoError) RETURN
 
-        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_y',    &
-     &                        preducy, (/innLoop,outLoop/), (/1,1/),    &
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'cg_Greduc_v',    &
+     &                        preducv, (/innLoop,outLoop/), (/1,1/),    &
      &                        ncid = ncMODid(ng))
         IF (exit_flag.ne.NoError) RETURN
       END IF
@@ -1047,6 +1299,24 @@
 !
       CALL netcdf_put_fvar (ng, model, MODname(ng), 'Jopt',             &
      &                      Jopt, (/innLoop+1,outLoop/), (/1,1/),       &
+     &                      ncid = ncMODid(ng))
+      IF (exit_flag.ne.NoError) RETURN
+!
+!  Initial gradient for minimization.
+!
+      IF (innLoop.eq.0) THEN
+        CALL netcdf_put_fvar (ng, model, MODname(ng), 'zgrad0',         &
+     &                        zgrad0(:,outLoop),                        &
+     &                        (/1,outLoop/), (/Ndatum(ng),1/),          &
+     &                        ncid = ncMODid(ng))
+        IF (exit_flag.ne.NoError) RETURN
+      END IF
+!
+!  Lanczos vectors.
+!
+      CALL netcdf_put_fvar (ng, model, MODname(ng), 'zcglwk',           &
+     &                      zcglwk(:,innLoop+1,outLoop),                &
+     &                      (/1,innLoop+1,outLoop/), (/Ndatum(ng),1,1/),&
      &                      ncid = ncMODid(ng))
       IF (exit_flag.ne.NoError) RETURN
 !

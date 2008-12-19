@@ -154,12 +154,6 @@
         integer  :: idAice        ! fraction of cell covered by ice
         integer  :: idbath        ! bathymetry
         integer  :: idCfra        ! cloud fraction
-        integer  :: idCG_P        ! conjugate gradient p-vector
-        integer  :: idCG_R        ! conjugate gradient r-vector
-        integer  :: idCG_S        ! conjugate gradient s-vector
-        integer  :: idCG_V        ! conjugate gradient v-vector
-        integer  :: idCG_X        ! conjugate gradient x-vector
-        integer  :: idCG_Z        ! conjugate gradient z-vector
         integer  :: idCosW        ! COS(omega(k)*t)
         integer  :: idCos2        ! COS(omega(k)*t)*COS(omega(l)*t)
         integer  :: idDano        ! density anomaly
@@ -203,7 +197,6 @@
         integer  :: idPair        ! surface air pressure
         integer  :: idPbar        ! streamfunction
         integer  :: idRdir        ! river runoff direction
-        integer  :: idRepC        ! representer coefficients
         integer  :: idRepo        ! river runoff ETA-positions
         integer  :: idRflg        ! river runoff flag
         integer  :: idRtra        ! river runoff mass transport
@@ -2318,20 +2311,6 @@
                 idVfx2=varid
 #endif
 #if defined FOUR_DVAR || defined VERIFICATION
-# if defined WEAK_CONSTRAINT || defined IOM
-              CASE ('idCG_P')
-                idCG_P=varid
-              CASE ('idCG_R')
-                idCG_R=varid
-              CASE ('idCG_S')
-                idCG_S=varid
-              CASE ('idCG_V')
-                idCG_V=varid
-              CASE ('idCG_X')
-                idCG_X=varid
-              CASE ('idCG_Z')
-                idCG_Z=varid
-# endif
               CASE ('idNLmi')
                 idNLmi=varid
               CASE ('idNLmo')
@@ -2364,10 +2343,6 @@
                 idKhor=varid
               CASE ('idKver')
                 idKver=varid
-# if defined WEAK_CONSTRAINT || defined IOM
-              CASE ('idRepC')
-                idRepC=varid
-# endif
               CASE ('idTLmo')
                 idTLmo=varid
               CASE ('idMOMi')

@@ -459,6 +459,15 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 2, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+#  ifdef WEAK_CONSTRAINT
+        Vinfo( 1)='cg_dla'
+        Vinfo( 2)='normalization coefficients for Lanczos vectors'
+        vardim(1)=NinnerDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+#  endif
 #  ifdef IS4DVAR
         Vinfo( 1)='cg_gamma'
         Vinfo( 2)='Lanczos algorithm gamma coefficient'
@@ -469,7 +478,7 @@
         IF (exit_flag.ne.NoError) RETURN
 #  endif
 # endif
-# if defined IS4DVAR || defined WEAK_CONSTRAINT
+# if defined IS4DVAR
 !
 !  Initial gradient vector normalization factor.
 !
@@ -478,6 +487,23 @@
         status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
      &                 1, (/NouterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# elif defined WEAK_CONSTRAINT
+!
+!  Initial gradient vector normalization factor.
+!
+        Vinfo( 1)='cg_Gnorm_v'
+        Vinfo( 2)='initial gradient normalization factor, v-space'
+        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+
+        Vinfo( 1)='cg_Gnorm_y'
+        Vinfo( 2)='initial gradient normalization factor, y-space'
+        status=def_var(ng, iNLM, ncMODid(ng), varid, NF_FRST,           &
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined IS4DVAR || defined WEAK_CONSTRAINT
 !
 !  Lanczos vector normalization factor.
 !
@@ -588,15 +614,17 @@
      &                 3, vardim, Aval, Vinfo, ncname, .FALSE.)
         IF (exit_flag.ne.NoError) RETURN
 # endif
-# ifdef WEAK_CONSTRAINT
+# if defined W4DVAR || defined IOM
 !
 !  Define RPM data penalty function.
 !
         Vinfo( 1)='RPcost_function'
         Vinfo( 2)='representer model data penalty function'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
-     &                 1, (/MouterDim/), Aval, Vinfo, ncname)
+     &                 1, (/NouterDim/), Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
+# endif
+# ifdef WEAK_CONSTRAINT
 !
 !  Define first guess initial data misfit.
 !
@@ -740,6 +768,29 @@
         Vinfo( 2)='normalized, optimal cost function minimum'
         status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
      &                 1, (/iterDim/), Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+# endif
+# if defined WEAK_CONSTRAINT || defined IOM
+!
+!  Define initial gradient for minimization.
+!
+        Vinfo( 1)='zgrad0'
+        Vinfo( 2)='initial gradient for minimization, observation space'
+        vardim(1)=datumDim
+        vardim(2)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 2, vardim, Aval, Vinfo, ncname)
+        IF (exit_flag.ne.NoError) RETURN
+!
+!  Define Lanczos vectors in observation space.
+!
+        Vinfo( 1)='zcglwk'
+        Vinfo( 2)='Lanczos vectors, observation space'
+        vardim(1)=datumDim
+        vardim(2)=MinnerDim
+        vardim(3)=NouterDim
+        status=def_var(ng, iNLM, ncMODid(ng), varid, nf90_double,       &
+     &                 3, vardim, Aval, Vinfo, ncname)
         IF (exit_flag.ne.NoError) RETURN
 # endif
 !

@@ -6733,6 +6733,8 @@
             Npts=load_r(Nval, Rval, 1, HevecErr)
           ELSE IF (TRIM(KeyWord).eq.'LhessianEV') THEN
             Npts=load_l(Nval, Cval, 1, LhessianEV)
+          ELSE IF (TRIM(KeyWord).eq.'LhotStart') THEN
+            Npts=load_l(Nval, Cval, 1, LhotStart)
           ELSE IF (TRIM(KeyWord).eq.'Lprecond') THEN
             Npts=load_l(Nval, Cval, 1, Lprecond)
 #  if defined WEAK_CONSTRAINT
@@ -6998,6 +7000,10 @@
      &            'Accuracy required for Hessian eigenvectors.'
           WRITE (out,70) LhessianEV, 'LhessianEV',                      &
      &            'Switch to compute Hessian eigenvectors.'
+#    endif
+#    if defined WEAK_CONSTRAINT || defined IOM
+          WRITE (out,70) LhotStart, 'LhotStart',                        &
+     &           'Switch for hot start of subsequent outer loops.'
 #    endif
           WRITE (out,70) Lprecond, 'Lprecond',                          &
      &           'Switch to preconditioning conjugate gradient.'

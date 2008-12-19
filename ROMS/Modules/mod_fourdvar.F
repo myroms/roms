@@ -38,6 +38,8 @@
 !                 "extract_obs3d" and written to observation NetCDF    !
 !                 file for latter use.                                 !
 !  LhessianEV   Logical switch to compute Hessian eigenvectors.        !
+!  LhotStart    Logical switch to activate hot start of subsquent      !
+!                 outer loops in the weak-constraint algorithms.       !
 !  Lprecond     Logical switch for conjugate gradient preconditioning. !
 !  Lritz        Logical switch for Ritz limited-memory preconditioning.!
 !  nConvRitz    Number of converged Ritz eigenvalues.                  !
@@ -110,13 +112,19 @@
         real(r8), allocatable :: NLmodVal(:)
 #  ifdef TLM_OBS
         real(r8), allocatable :: TLmodVal(:)
+#   ifdef W4DPSAS
+        real(r8), allocatable :: BCKmodVal(:)
+#   endif      
 #  endif
 #  if defined WEAK_CONSTRAINT || defined IOM
         real(r8), allocatable :: zcglwk(:,:,:)
         real(r8), allocatable :: vcglev(:,:,:)
-        real(r8), allocatable :: zgrad0(:)
+        real(r8), allocatable :: zgrad0(:,:)
         real(r8), allocatable :: vgrad0(:)
         real(r8), allocatable :: vgnorm(:)
+        real(r8), allocatable :: cg_innov(:)
+        real(r8), allocatable :: cg_pxsave(:)
+        real(r8), allocatable :: cg_dla(:,:)
 #  endif
 !
         TYPE T_FOURDVAR
@@ -132,7 +140,7 @@
           real(r8), pointer :: CostNorm(:)
           real(r8), pointer :: ObsCost(:)
           real(r8), pointer :: DataPenalty(:)
-#   ifdef DATALESS_LOOPS
+#   if defined DATALESS_LOOPS || defined W4DPSAS
           real(r8), pointer :: NLPenalty(:)
 #   endif
           real(r8), pointer :: NLobsCost(:)
@@ -329,6 +337,8 @@
 !  Initial gradient vector normalization factor.
 !  
         real(r8), allocatable :: cg_Gnorm(:)
+        real(r8), allocatable :: cg_Gnorm_v(:)
+        real(r8), allocatable :: cg_Gnorm_y(:)
 !
 !  Reduction in the gradient norm; excess cost function.
 !
@@ -372,6 +382,11 @@
 !  Switch to compute Hessian approximated eigenvalues and eigenvectors.
 !
         logical :: LhessianEV
+!
+!  Switch switch to activate hot start of subsquent outerloops in the
+!  weak-constraint algorithms.
+!
+        logical :: LhotStart
 !
 !  Switch to activate conjugate gradient preconditioning.
 !
@@ -563,7 +578,7 @@
         allocate ( FOURDVAR(ng) % DataPenalty(0:NstateVar(ng)) )
         FOURDVAR(ng) % DataPenalty = IniVal
 
-#   ifdef DATALESS_LOOPS
+#   if defined DATALESS_LOOPS || defined W4DPSAS
         allocate ( FOURDVAR(ng) % NLPenalty(0:NstateVar(ng)) )
         FOURDVAR(ng) % NLPenalty = IniVal
 #   endif
@@ -653,19 +668,26 @@
 #  ifdef TLM_OBS
       allocate ( TLmodVal(Mobs) )
       TLmodVal = IniVal
+#   ifdef W4DPSAS
+      allocate ( BCKmodVal(Mobs) )
+      BCKmodVal = IniVal
+#   endif
 #  endif
 
 #  if defined WEAK_CONSTRAINT || defined IOM
 !
 !  Allocate and initialize weak constraint conjugate gradient vectors.
 !
+      allocate ( cg_dla(Ninner,Nouter) )
+      cg_dla = IniVal
+
       allocate ( zcglwk(Mobs,Ninner+1,Nouter) )
       zcglwk = IniVal
 
       allocate ( vcglev(Mobs,Ninner,Nouter) )
       vcglev = IniVal
 
-      allocate ( zgrad0(Mobs) )
+      allocate ( zgrad0(Mobs,Nouter) )
       zgrad0 = IniVal
 
       allocate ( vgrad0(Mobs) )
@@ -673,6 +695,12 @@
 
       allocate ( vgnorm(Nouter) )
       vgnorm = IniVal
+
+      allocate ( cg_innov(Mobs) )
+      cg_innov = IniVal
+
+      allocate ( cg_pxsave(Mobs) )
+      cg_pxsave = IniVal
 #  endif
 
 # else
@@ -736,6 +764,12 @@
 
       allocate ( cg_Gnorm(Nouter) )
       cg_Gnorm = IniVal
+
+      allocate ( cg_Gnorm_v(Nouter) )
+      cg_Gnorm_v = IniVal
+
+      allocate ( cg_Gnorm_y(Nouter) )
+      cg_Gnorm_y = IniVal
 
       allocate ( cg_Greduc(Ninner,Nouter) )
       cg_Greduc = IniVal

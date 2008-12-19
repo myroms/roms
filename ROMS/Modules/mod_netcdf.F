@@ -3243,7 +3243,7 @@
       integer :: AttLen, is, ie, lstr
 #endif
 #ifdef DISTRIBUTE
-      integer, dimension(2) :: ibuffer
+      integer, dimension(3) :: ibuffer
 #endif
       character (len=200) :: ncname
 #ifdef BIOLOGY
@@ -3251,10 +3251,10 @@
 #endif
 !
 !-----------------------------------------------------------------------
-!  Close requested NetCDF file.
+!  If open, close requested NetCDF file.
 !-----------------------------------------------------------------------
 !
-      IF (OutThread) THEN
+      IF (OutThread.and.(ncid.ne.-1)) THEN
 !
 !  Get filename, if any. It will be nice if there is a function in
 !  the NetCDF library to do this. Fortunately, the filename is
@@ -3303,12 +3303,12 @@
 !
         IF (exit_flag.eq.NoError) THEN
           status=nf90_close(ncid)
-          ncid=-1
           IF (status.ne.nf90_noerr) THEN
-            WRITE (stdout,20) TRIM(ncname)
+            WRITE (stdout,20) ncid, TRIM(ncname)
             exit_flag=3
             ioerror=status
           END IF
+          ncid=-1
         END IF
       END IF
 
@@ -3318,15 +3318,17 @@
 !
       ibuffer(1)=exit_flag
       ibuffer(2)=ioerror
+      ibuffer(3)=ncid
       CALL mp_bcasti (ng, model, ibuffer, 2)
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
+      ncid=ibuffer(3)
 #endif
 !
   10  FORMAT (/,' NETCDF_CLOSE - error while writing global ',          &
      &        'attribute: ',a,/,16x,a)
-  20  FORMAT (/,' NETCDF_CLOSE - error during closing of file: ',       &
-     &        /,16x,a)
+  20  FORMAT (/,' NETCDF_CLOSE - error during closing of file, ',       &
+     &        'ncid = ',i3,/,16x,'file: ',a)
 
       END SUBROUTINE netcdf_close
 

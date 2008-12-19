@@ -81,7 +81,7 @@
        ERstr =  1
        ERend =  1
       Nouter =  2
-      Ninner =  100
+      Ninner =  11
   Nintervals =  1
 
 ! Number of eigenvalues (NEV) and eigenvectors (NCV) to compute for the
