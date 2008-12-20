@@ -35,6 +35,14 @@
         IF (ncRSTid(ng).ne.-1) THEN
           CALL netcdf_close (ng, iNLM, ncRSTid(ng))
         END IF
+#if defined FORWARD_READ || defined FORWARD_WRITE
+        IF ((ncFWDid(ng).ne.-1).and.(ncFWDid(ng).eq.ncHISid(ng))) THEN
+          ncFWDid(ng)=-1
+        END IF
+        IF (ncFWDid(ng).ne.-1) THEN
+          CALL netcdf_close (ng, iNLM, ncFWDid(ng))
+        END IF
+#endif
         IF (ncHISid(ng).ne.-1) THEN
           CALL netcdf_close (ng, iNLM, ncHISid(ng))
         END IF
@@ -61,11 +69,6 @@
 #ifdef FLOATS
         IF (ncFLTid(ng).ne.-1) THEN
           CALL netcdf_close (ng, iNLM, ncFLTid(ng))
-        END IF
-#endif
-#if defined FORWARD_READ || defined FORWARD_WRITE
-        IF (ncFWDid(ng).ne.-1) THEN
-          CALL netcdf_close (ng, iNLM, ncFWDid(ng))
         END IF
 #endif
 #ifdef STATIONS

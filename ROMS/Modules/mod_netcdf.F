@@ -3319,7 +3319,7 @@
       ibuffer(1)=exit_flag
       ibuffer(2)=ioerror
       ibuffer(3)=ncid
-      CALL mp_bcasti (ng, model, ibuffer, 2)
+      CALL mp_bcasti (ng, model, ibuffer, 3)
       exit_flag=ibuffer(1)
       ioerror=ibuffer(2)
       ncid=ibuffer(3)
@@ -3330,6 +3330,7 @@
   20  FORMAT (/,' NETCDF_CLOSE - error during closing of file, ',       &
      &        'ncid = ',i3,/,16x,'file: ',a)
 
+      RETURN
       END SUBROUTINE netcdf_close
 
       END MODULE mod_netcdf
