@@ -199,6 +199,14 @@
         LdefITL(ng)=.TRUE.
       END IF
 #   endif
+#   if !(defined WEAK_CONSTRAINT || defined IOM)
+!
+!  Set switch to create tangent linear history file.
+!
+      IF (Nrun.eq.ERstr) THEN
+        LdefTLM(ng)=.TRUE.
+      END IF
+#   endif
 !
 !  Set record to read from initial tangent linear NetCDF file.
 !
