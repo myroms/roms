@@ -143,7 +143,6 @@
           CALL get_state (ng, 6, 6, STDname(ng), STDrec, 1)
           IF (exit_flag.ne.NoError) RETURN
         END DO
-
       END IF
 
       RETURN
@@ -293,6 +292,12 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
+!  Define tangent linear initial conditions file.
+!
+        LdefITL(ng)=.TRUE.
+        CALL tl_def_ini (ng)
+        IF (exit_flag.ne.NoError) RETURN
+!
 !  Define TLM/RPM impulse forcing NetCDF file.
 !
         LdefTLF(ng)=.TRUE.
@@ -304,13 +309,6 @@
 !
         LdefMOD(ng)=.TRUE.
         CALL def_mod (ng)
-        IF (exit_flag.ne.NoError) RETURN
-!
-!  Inquire IDs of tangent linear initial conditions in NetCDF file.
-!
-        LdefITL(ng)=.FALSE.
-        LdefIRP(ng)=.FALSE.
-        CALL tl_def_ini (ng)
         IF (exit_flag.ne.NoError) RETURN
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

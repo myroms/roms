@@ -56,7 +56,7 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_gather
+      USE distribute_mod, ONLY : mp_bcasti, mp_gather2d
 #endif
 !
 !  Imported variable declarations.
@@ -167,12 +167,12 @@
 # endif
 !-----------------------------------------------------------------------
 !
-      CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, 1, 1,              &
-     &                tindex, gtype, Ascl,                              &
+      CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                  &
+     &                  tindex, gtype, Ascl,                            &
 # ifdef MASKING
-     &                Amask,                                            &
+     &                  Amask,                                          &
 # endif
-     &                A, Npts, Aout, SetFillVal)
+     &                  A, Npts, Aout, SetFillVal)
 #else
 !
 !-----------------------------------------------------------------------

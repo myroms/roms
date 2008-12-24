@@ -26,12 +26,14 @@
 !  mp_boundary       exchange boundary data between tiles              !
 !  mp_collect        collect 1D vector data from tiles                 !
 !  mp_dump           writes 2D and 3D tiles arrays for debugging       !
-!  mp_gather         collect I,J tiled 2D and 3D for output purposes   !
+!  mp_gather2d       collect a 2D tiled array for output purposes      !
+!  mp_gather3d       collect a 3D tiled array for output purposes      !
 !  mp_gather_state   collect state vector for unpacking of variables   !
 !  mp_ncread         read in state vector/matrix from NetCDF file      ! 
 !  mp_ncwrite        write out state vector/matrix into NetCDF file    !
 !  mp_reduce         global reduction operations                       !
-!  mp_scatter        scatter input data to 2D and 3D I,J tiled arrays  !
+!  mp_scatter2d      scatter input data to a 2D tiled array            !
+!  mp_scatter3d      scatter input data to a 3D tiled array            !
 !  mp_scatter_state  scatter global data for packing of state vector   !
 !                                                                      !
 !  Notice that the tile halo exchange can be found in "mp_exchange.F"  !
@@ -1247,19 +1249,18 @@
       RETURN
       END SUBROUTINE mp_collect
 
-      SUBROUTINE mp_gather (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,    &
-     &                      tindex, gtype, Ascl,                        &
+      SUBROUTINE mp_gather2d (ng, model, LBi, UBi, LBj, UBj,            &
+     &                        tindex, gtype, Ascl,                      &
 # ifdef MASKING
-     &                      Amask,                                      &
+     &                        Amask,                                    &
 # endif
-     &                      A, Npts, Aout, SetFillVal)
+     &                        A, Npts, Aout, SetFillVal)
 !
 !***********************************************************************
 !                                                                      !
-!  This routine collects requested real tile array (2D or 3D) from     !
-!  each spawned MPI node and stores it into one dimensional global     !
-!  array. This routine is used by the "Master Node" to collect and     !
-!  pack output data.                                                   !
+!  This routine collects a 2D tiled, floating-point array from each    !
+!  spawned node and stores it into one dimensional global array. It    !
+!  is used to collect and  pack output data.                           !
 !                                                                      !
 !  On Input:                                                           !
 !                                                                      !
@@ -1269,17 +1270,292 @@
 !     UBi        I-dimension Upper bound.                              !
 !     LBj        J-dimension Lower bound.                              !
 !     UBj        J-dimension Upper bound.                              !
-!     LBk        K-dimension Lower bound, if any. Otherwise, a value   !
-!                  of one is expected.                                 !
-!     LBk        K-dimension Upper bound, if any. Otherwise, a value   !
-!                  of one is expected.                                 !
+!     tindex     Time record index to process.                         !
+!     gtype      C-grid type. If negative and Land-Sea is available,   !
+!                  only water-points processed.                        !
+!     Ascl       Factor to scale field before writing.                 !
+!     Amask      Land/Sea mask, if any.                                !
+!     A          2D tiled, floating-point array to process.            !
+!     SetFillVal Logical switch to set fill value in land areas        !
+!                  (optional).                                         !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Npts       Number of points processed in Aout.                   !
+!     Aout       Collected data from each node packed into 1D array    !
+!                  in column-major order. That is, in the same way     !
+!                  that Fortran multi-dimensional arrays are stored    !
+!                  in memory.                                          !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits 
+      USE mod_ncparam
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      logical, intent(in), optional :: SetFillVal
+
+      integer, intent(in) :: ng, model, tindex, gtype
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(out) :: Npts
+
+      real(r8), intent(in) :: Ascl
+
+# ifdef MASKING
+      real(r8), intent(in) :: Amask(LBi:UBi,LBj:UBj)
+# endif
+      real(r8), intent(in)  :: A(LBi:UBi,LBj:UBj)
+      real(r8), intent(out) :: Aout((Lm(ng)+2)*(Mm(ng)+2))
+!
+!  Local variable declarations.
+!
+# ifdef MASKING
+      logical :: LandFill
+# endif
+      integer :: Itile, Jtile, Nghost
+      integer :: Io, Ie, Jo, Je, Ioff, Joff
+      integer :: Ilen, Jlen
+      integer :: Lstr, MyError, MyType, Serror, Srequest
+      integer :: i, ic, j, jc, np, rank
+
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Imin, Imax
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Jmin, Jmax
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: MySize
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Rrequest
+
+      integer, dimension(MPI_STATUS_SIZE) :: Rstatus
+      integer, dimension(MPI_STATUS_SIZE) :: Sstatus
+
+      real(r8), dimension(TileSize(ng)) :: Asend
+
+      real(r8), dimension(TileSize(ng),                                 &
+     &                    NtileI(ng)*NtileJ(ng)-1) :: Arecv
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 44)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Set horizontal starting and ending indices for parallel domain
+!  partitions in the XI- and ETA-directions.
+!-----------------------------------------------------------------------
+!
+!  Set first and last grid point according to staggered C-grid
+!  classification.
+!
+      Io=0
+      Ie=Lm(ng)+1
+      Jo=0
+      Je=Mm(ng)+1
+      MyType=ABS(gtype)
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar)) Io=1
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar)) Jo=1
+      IF (Io.eq.0) THEN
+        Ioff=1
+      ELSE
+        Ioff=0
+      END IF
+      IF (Jo.eq.0) THEN
+        Joff=0
+      ELSE
+        Joff=1
+      END IF
+      Ilen=Ie-Io+1
+      Jlen=Je-Jo+1
+      Npts=Ilen*Jlen
+!
+!  Set physical, non-overlaping (no ghost-points) ranges according to
+!  tile rank. Compute size of distributed buffers.
+!
+      Nghost=0
+      DO rank=0,NtileI(ng)*NtileJ(ng)-1
+        CALL get_bounds (ng, rank, gtype, Nghost, Itile, Jtile,         &
+     &                   Imin(rank), Imax(rank),                        &
+     &                   Jmin(rank), Jmax(rank))
+        MySize(rank)=(Imax(rank)-Imin(rank)+1)*                         &
+     &               (Jmax(rank)-Jmin(rank)+1)
+      END DO
+!
+!  Initialize local arrays to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      Asend=0.0_r8
+      Arecv=0.0_r8
+!
+!-----------------------------------------------------------------------
+!  Collect requested array data. 
+!-----------------------------------------------------------------------
+!
+!  Pack and scale input data.
+!
+      np=0
+      DO j=Jmin(MyRank),Jmax(MyRank)
+        DO i=Imin(MyRank),Imax(MyRank)
+          np=np+1
+          Asend(np)=A(i,j)*Ascl
+        END DO
+      END DO
+
+# ifdef MASKING
+!
+!  If overwriting Land/Sea mask or processing water-points only, flag
+!  land-points with special value.
+!
+      IF (PRESENT(SetFillVal)) THEN
+        LandFill=SetFillVal
+      ELSE
+        LandFill=tindex.gt.0
+      END IF
+      IF (gtype.lt.0) THEN
+        np=0
+        DO j=Jmin(MyRank),Jmax(MyRank)
+          DO i=Imin(MyRank),Imax(MyRank)
+            np=np+1
+            IF (Amask(i,j).eq.0.0_r8) THEN
+              Asend(np)=spval
+            END IF
+          END DO
+        END DO
+      ELSE IF (LandFill) THEN
+        np=0
+        DO j=Jmin(MyRank),Jmax(MyRank)
+          DO i=Imin(MyRank),Imax(MyRank)
+            np=np+1
+            IF (Amask(i,j).eq.0.0_r8) THEN
+              Asend(np)=spval
+            END IF
+          END DO
+        END DO
+      END IF
+# endif
+!
+!  If master processor, unpack the send buffer since there is not
+!  need to distribute.
+!
+      IF (MyRank.eq.MyMaster) THEN
+        np=0
+        DO j=Jmin(MyRank),Jmax(MyRank)
+          jc=(j-Joff)*Ilen
+          DO i=Imin(MyRank),Imax(MyRank)
+            np=np+1
+            ic=i+Ioff+jc
+            Aout(ic)=Asend(np)
+          END DO
+        END DO
+      END IF
+!
+!  Send, receive, and unpack data.
+!
+      IF (MyRank.eq.MyMaster) THEN
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_irecv (Arecv(1,rank), MySize(rank), MP_FLOAT, rank,  &
+     &                    rank+5, OCN_COMM_WORLD, Rrequest(rank),       &
+     &                    MyError)
+        END DO
+        DO rank=1,NtileI(ng)*NtileJ(ng)-1
+          CALL mpi_wait (Rrequest(rank), Rstatus, MyError)
+          IF (MyError.ne.MPI_SUCCESS) THEN
+            CALL mpi_error_string (MyError, string, Lstr, Serror)
+            Lstr=LEN_TRIM(string)
+            WRITE (stdout,10) 'MPI_IRECV', rank, MyError, string(1:Lstr)
+ 10         FORMAT (/,' MP_GATHER2D - error during ',a,' call, Node = ',&
+     &              i3.3,' Error = ',i3,/,13x,a)
+            exit_flag=2
+            RETURN
+          END IF
+          np=0
+          DO j=Jmin(rank),Jmax(rank)
+            jc=(j-Joff)*Ilen
+            DO i=Imin(rank),Imax(rank)
+              np=np+1
+              ic=i+Ioff+jc
+              Aout(ic)=Arecv(np,rank)
+            END DO
+          END DO
+        END DO
+      ELSE
+        CALL mpi_isend (Asend, MySize(MyRank), MP_FLOAT, MyMaster,      &
+     &                  MyRank+5, OCN_COMM_WORLD, Srequest, MyError)
+        CALL mpi_wait (Srequest, Sstatus, MyError)
+        IF (MyError.ne.MPI_SUCCESS) THEN
+          CALL mpi_error_string (MyError, string, Lstr, Serror)
+          Lstr=LEN_TRIM(string)
+          WRITE (stdout,10) 'MPI_ISEND', MyRank, MyError, string(1:Lstr)
+          exit_flag=2
+          RETURN
+        END IF
+      END IF
+
+# ifdef MASKING
+!
+! If pocessing only water-points, remove land points and repack.
+!
+      IF ((MyRank.eq.MyMaster).and.(gtype.lt.0)) THEN
+        ic=0
+        np=Ilen*Jlen
+        DO i=1,np
+          IF (Aout(i).lt.spval) THEN
+            ic=ic+1
+            Aout(ic)=Aout(i)
+          END IF
+        END DO
+        Npts=ic
+      END IF
+# endif
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 44)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_gather2d
+
+      SUBROUTINE mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,  &
+     &                        tindex, gtype, Ascl,                      &
+# ifdef MASKING
+     &                        Amask,                                    &
+# endif
+     &                        A, Npts, Aout, SetFillVal)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine collects a 3D tiled, floating-point array from each    !
+!  spawned node and stores it into one dimensional global array. It    !
+!  is used to collect and  pack output data.                           !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     LBi        I-dimension Lower bound.                              !
+!     UBi        I-dimension Upper bound.                              !
+!     LBj        J-dimension Lower bound.                              !
+!     UBj        J-dimension Upper bound.                              !
+!     LBk        K-dimension Lower bound.                              !
 !     UBk        K-dimension Upper bound.                              !
 !     tindex     Time record index to process.                         !
 !     gtype      C-grid type. If negative and Land-Sea is available,   !
 !                  only water-points processed.                        !
 !     Ascl       Factor to scale field before writing.                 !
 !     Amask      Land/Sea mask, if any.                                !
-!     A          Tile array (2D or 3D) to process.                     !
+!     A          3D tiled, floating-point array to process.            !
 !     SetFillVal Logical switch to set fill value in land areas        !
 !                  (optional).                                         !
 !                                                                      !
@@ -1365,10 +1641,8 @@
       Jo=0
       Je=Mm(ng)+1
       MyType=ABS(gtype)
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
-      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar).or.                  &
-     &    (MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
+      IF ((MyType.eq.p3dvar).or.(MyType.eq.u3dvar)) Io=1
+      IF ((MyType.eq.p3dvar).or.(MyType.eq.v3dvar)) Jo=1
       IF (Io.eq.0) THEN
         Ioff=1
       ELSE
@@ -1493,7 +1767,7 @@
             CALL mpi_error_string (MyError, string, Lstr, Serror)
             Lstr=LEN_TRIM(string)
             WRITE (stdout,10) 'MPI_IRECV', rank, MyError, string(1:Lstr)
- 10         FORMAT (/,' MP_GATHER - error during ',a,' call, Node = ',  &
+ 10         FORMAT (/,' MP_GATHER3D - error during ',a,' call, Node = ',&
      &              i3.3,' Error = ',i3,/,13x,a)
             exit_flag=2
             RETURN
@@ -1550,7 +1824,7 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_gather
+      END SUBROUTINE mp_gather3d
 
       SUBROUTINE mp_gather_state (ng, model, Nstr, Nend, Asize,         &
      &                            A, Aout)
@@ -2555,12 +2829,12 @@
       RETURN
       END SUBROUTINE mp_reduce_v
 
-      SUBROUTINE mp_scatter (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,   &
-     &                       Nghost, gtype, Amin, Amax,                 &
+      SUBROUTINE mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,           &
+     &                         Nghost, gtype, Amin, Amax,               &
 # if defined READ_WATER && defined MASKING
-     &                       NWpts, IJ_water,                           &
+     &                         NWpts, IJ_water,                         &
 # endif
-     &                       Npts, A, Aout)
+     &                         Npts, A, Aout)
 !
 !***********************************************************************
 !                                                                      !
@@ -2578,10 +2852,226 @@
 !     UBi        I-dimension Upper bound.                              !
 !     LBj        J-dimension Lower bound.                              !
 !     UBj        J-dimension Upper bound.                              !
-!     LBk        K-dimension Lower bound, if any. Otherwise, a value   !
-!                  of one is expected.                                 !
-!     LBk        K-dimension Upper bound, if any. Otherwise, a value   !
-!                  of one is expected.                                 !
+!     Nghost     Number of ghost-points in the halo region.            !
+!     gtype      C-grid type. If negative and Land-Sea mask is         !
+!                  available, only water-points are processed.         !
+!     Amin       Input array minimum value.                            !
+!     Amax       Input array maximum value.                            !
+!     NWpts      Number of water points.                               !
+!     IJ_water   IJ-indices for water points.                          !
+!     Npts       Number of points to processes in A.                   !
+!     A          Input global data from each node packed into 1D array !
+!                  in column-major order. That is, in the same way     !
+!                  that Fortran multi-dimensional arrays are stored    !
+!                  in memory.                                          !
+!     Npts       Number of points to processes in A.                   !
+!                                                                      !
+!  On Output:                                                          !
+!                                                                      !
+!     Aout       2D tiled, floating-point array.                       !
+!                                                                      !
+!***********************************************************************
+!
+      USE mod_param
+      USE mod_parallel
+      USE mod_iounits 
+      USE mod_ncparam
+      USE mod_scalars
+!
+      implicit none
+!
+!  Imported variable declarations.
+!
+      integer, intent(in) :: ng, model
+      integer, intent(in) :: LBi, UBi, LBj, UBj
+      integer, intent(in) :: Nghost, gtype, Npts
+
+# if defined READ_WATER && defined MASKING
+      integer, intent(in) :: NWpts
+      integer, intent(in) :: IJ_water(NWpts)
+# endif
+      real(r8), intent(inout) :: Amin, Amax
+      real(r8), intent(inout) :: A(Npts+2)
+      real(r8), intent(out) :: Aout(LBi:UBi,LBj:UBj)
+!
+!  Local variable declarations.
+!
+      integer :: Io, Ie, Jo, Je, Ioff, Joff
+      integer :: Ilen, Jlen, IJlen
+      integer :: Lstr, MyError, MySize, MyType, Serror, rank
+      integer :: i, ic, ij, j, jc, mc, nc
+
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Imin, Imax
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Jmin, Jmax
+      integer, dimension(0:NtileI(ng)*NtileJ(ng)-1) :: Itile, Jtile
+
+      real(r8), dimension((Lm(ng)+2)*(Mm(ng)+2)) :: Arecv
+
+      character (len=MPI_MAX_ERROR_STRING) :: string
+
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn on time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_on (ng, model, 45)
+# endif
+!
+!-----------------------------------------------------------------------
+!  Set horizontal starting and ending indices for parallel domain
+!  partitions in the XI- and ETA-directions.
+!-----------------------------------------------------------------------
+!
+!  Set first and last grid point according to staggered C-grid
+!  classification. The, set 1D counter offsets.
+!
+      Io=0
+      Ie=Lm(ng)+1
+      Jo=0
+      Je=Mm(ng)+1
+      MyType=ABS(gtype)
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.u2dvar)) Io=1
+      IF ((MyType.eq.p2dvar).or.(MyType.eq.v2dvar)) Jo=1
+      IF (Io.eq.0) THEN
+        Ioff=1
+      ELSE
+        Ioff=0
+      END IF
+      IF (Jo.eq.0) THEN
+        Joff=0
+      ELSE
+        Joff=1
+      END IF
+      Ilen=Ie-Io+1
+      Jlen=Je-Jo+1
+      IJlen=Ilen*Jlen
+!
+!  Set physical, non-overlaping (no ghost-points) ranges according to
+!  tile rank.
+!
+      DO rank=0,NtileI(ng)*NtileJ(ng)-1
+        CALL get_bounds (ng, rank, gtype, Nghost,                       &
+     &                   Itile(rank), Jtile(rank),                      &
+     &                   Imin(rank), Imax(rank),                        &
+     &                   Jmin(rank), Jmax(rank))
+      END DO
+!
+!  Size of broadcast buffer.
+!
+      IF (gtype.gt.0) THEN
+        MySize=IJlen
+      ELSE
+        MySize=Npts
+      END IF
+!
+!  Initialize local array to avoid denormalized numbers. This
+!  facilitates processing and debugging.
+!
+      Arecv=0.0_r8
+!
+!-----------------------------------------------------------------------
+!  Scatter requested array data. 
+!-----------------------------------------------------------------------
+!
+!  If master processor, append minimum and maximum values to the end of
+!  the buffer. 
+!
+      IF (MyRank.eq.MyMaster) Then
+        A(MySize+1)=Amin
+        A(MySize+2)=Amax
+      END IF
+      MySize=MySize+2
+!
+!  Broadcast data to all processes in the group, itself included.
+!
+      CALL mpi_bcast (A, MySize, MP_FLOAT, MyMaster, OCN_COMM_WORLD,    &
+     &                MyError)
+      IF (MyError.ne.MPI_SUCCESS) THEN
+        CALL mpi_error_string (MyError, string, Lstr, Serror)
+         Lstr=LEN_TRIM(string)
+        WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
+ 10     FORMAT (/,' MP_SCATTER2D - error during ',a,' call, Node = ',   &
+     &          i3.3, ' Error = ',i3,/,15x,a)
+        exit_flag=2
+        RETURN
+      END IF
+!
+!  If water points only, fill land points.
+!
+      IF (gtype.gt.0) THEN
+        DO nc=1,MySize-2
+          Arecv(nc)=A(nc)
+        END DO
+# if defined READ_WATER && defined MASKING
+      ELSE
+        ij=0
+        mc=0
+        nc=0
+        DO j=Jo,Je
+          jc=(j-Joff)*Ilen
+          DO i=Io,Ie
+            ij=ij+1
+            ic=i+Ioff+jc
+            IF (IJ_water(mc+1).eq.ij) THEN
+              mc=mc+1
+              nc=nc+1
+              Arecv(ic)=A(nc)
+            ELSE
+              Arecv(ic)=0.0_r8
+            ENDIF
+          END DO
+        END DO
+# endif
+      END IF
+!
+!  Unpack data buffer.
+!
+      DO j=Jmin(MyRank),Jmax(MyRank)
+        jc=(j-Joff)*Ilen
+        DO i=Imin(MyRank),Imax(MyRank)
+          ic=i+Ioff+jc
+          Aout(i,j)=Arecv(ic)
+        END DO
+      END DO
+      Amin=A(MySize-1)
+      Amax=A(MySize)
+# ifdef PROFILE
+!
+!-----------------------------------------------------------------------
+!  Turn off time clocks.
+!-----------------------------------------------------------------------
+!
+      CALL wclock_off (ng, model, 45)
+# endif
+
+      RETURN
+      END SUBROUTINE mp_scatter2d
+
+      SUBROUTINE mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk, &
+     &                         Nghost, gtype, Amin, Amax,               &
+# if defined READ_WATER && defined MASKING
+     &                         NWpts, IJ_water,                         &
+# endif
+     &                         Npts, A, Aout)
+!
+!***********************************************************************
+!                                                                      !
+!  This routine broadcasts input global data, packed as 1D real array, !
+!  to each spawned MPI node.  Because this routine is also used by the !
+!  adjoint model,  the ghost-points in the halo region are NOT updated !
+!  in the ouput tile array (Aout).  It is used by the  master node  to !
+!  scatter input global data to each tiled node.                       !
+!                                                                      !
+!  On Input:                                                           !
+!                                                                      !
+!     ng         Nested grid number.                                   !
+!     model      Calling model identifier.                             !
+!     LBi        I-dimension Lower bound.                              !
+!     UBi        I-dimension Upper bound.                              !
+!     LBj        J-dimension Lower bound.                              !
+!     UBj        J-dimension Upper bound.                              !
+!     LBk        K-dimension Lower bound.                              !
 !     UBk        K-dimension Upper bound.                              !
 !     Nghost     Number of ghost-points in the halo region.            !
 !     gtype      C-grid type. If negative and Land-Sea mask is         !
@@ -2599,7 +3089,7 @@
 !                                                                      !
 !  On Output:                                                          !
 !                                                                      !
-!     Aout       Tile array (2D or 3D).                                !
+!     Aout       3D tiled, floating-point array.                       !
 !                                                                      !
 !***********************************************************************
 !
@@ -2730,7 +3220,7 @@
         CALL mpi_error_string (MyError, string, Lstr, Serror)
          Lstr=LEN_TRIM(string)
         WRITE (stdout,10) 'MPI_BCAST', MyRank, MyError, string(1:Lstr)
- 10     FORMAT (/,' MP_SCATTER - error during ',a,' call, Node = ',     &
+ 10     FORMAT (/,' MP_SCATTER3D - error during ',a,' call, Node = ',   &
      &          i3.3, ' Error = ',i3,/,15x,a)
         exit_flag=2
         RETURN
@@ -2791,7 +3281,7 @@
 # endif
 
       RETURN
-      END SUBROUTINE mp_scatter
+      END SUBROUTINE mp_scatter3d
 
       SUBROUTINE mp_scatter_state (ng, model, Nstr, Nend, Asize,        &
      &                             A, Aout)
@@ -3109,13 +3599,13 @@
 !------------------------------------------------------------------------
 !
       Ascl=1.0_r8
-      CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,           &
-     &                tindex, gtype, Ascl,                               &
+      CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,         &
+     &                  tindex, gtype, Ascl,                             &
 # ifdef MASKING
-     &                Amask(LBi:,LBj:),                                  &
+     &                  Amask(LBi:,LBj:),                                &
 # endif
-     &                A(LBi:,LBj:,LBk:),                                 &
-     &                Npts, Aout(0:,0:,LBk:))
+     &                  A(LBi:,LBj:,LBk:),                               &
+     &                  Npts, Aout(0:,0:,LBk:))
 
       RETURN
       END SUBROUTINE mp_aggregate

@@ -64,7 +64,12 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_scatter
+      USE distribute_mod, ONLY : mp_bcasti
+# ifdef INLINE_2DIO
+      USE distribute_mod, ONLY : mp_scatter2d
+# else
+      USE distribute_mod, ONLY : mp_scatter3d
+# endif
 # ifdef DEBUG
       USE distribute_mod, ONLY : mp_dump
 # endif
@@ -103,7 +108,7 @@
 !  Local variable declarations.
 !
       integer :: i, j, k, ic, Npts, NWpts, status, wtype
-      integer :: Imin, Imax, Jmin, Jmax, Kmin, Kmax, Koff
+      integer :: Imin, Imax, Jmin, Jmax, Koff
       integer :: Ilen, Jlen, Klen, IJlen, MyType, Nghost
 
       integer, dimension(4) :: start, total
@@ -255,14 +260,9 @@
 !  If appropriate, process 3D data level by level to reduce memory
 !  requirements.
 !
-      Kmin=1
-      Kmax=1
       DO k=LBk,UBk
         start(3)=k-Koff+1
         total(3)=1
-#else
-        Kmin=LBk
-        Kmax=UBk
 #endif
         status=nf90_noerr
         IF (InpThread) THEN
@@ -292,16 +292,21 @@
 !-----------------------------------------------------------------------
 !
 #ifdef DISTRIBUTE
-        CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, Kmin, Kmax,     &
-     &                   Nghost, MyType, Amin, Amax,                    &
-# if defined READ_WATER && defined MASKING
-     &                   NWpts, SCALARS(ng)%IJwater(:,wtype),           &
-# endif
 # ifdef INLINE_2DIO
-     &                   Npts, wrk, A(:,:,k))
+        CALL mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,               &
+     &                     Nghost, MyType, Amin, Amax,                  &
+#  if defined READ_WATER && defined MASKING
+     &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
+#  endif
+     &                     Npts, wrk, A(:,:,k))
       END DO
 # else
-     &                   Npts, wrk, A)
+        CALL mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,     &
+     &                     Nghost, MyType, Amin, Amax,                  &
+#  if defined READ_WATER && defined MASKING
+     &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
+#  endif
+     &                     Npts, wrk, A)
 # endif
 #else        
       IF (MyType.gt.0) THEN

@@ -61,7 +61,7 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_gather
+      USE distribute_mod, ONLY : mp_bcasti, mp_gather3d
 #endif
 !
 !  Imported variable declarations.
@@ -188,12 +188,12 @@
 !  Process data as 3D slices.
 !
       DO fourth=LBt,UBt
-        CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,        &
-     &                  tindex, gtype, Ascl,                            &
+        CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,      &
+     &                    tindex, gtype, Ascl,                          &
 # ifdef MASKING
-     &                  Amask,                                          &
+     &                    Amask,                                        &
 # endif
-     &                  A(:,:,:,fourth), Npts, Aout, SetFillVal)
+     &                    A(:,:,:,fourth), Npts, Aout, SetFillVal)
 !
 !-----------------------------------------------------------------------
 !  Write output buffer into NetCDF file.

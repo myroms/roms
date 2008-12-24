@@ -63,7 +63,7 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_scatter
+      USE distribute_mod, ONLY : mp_bcasti, mp_scatter2d
 # ifdef DEBUG
       USE distribute_mod, ONLY : mp_dump
 # endif
@@ -278,12 +278,12 @@
 !
       IF (.not.interpolate) THEN
 #ifdef DISTRIBUTE
-        CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, 1, 1,           &
-     &                   Nghost, MyType, Amin, Amax,                    &
+        CALL mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,               &
+     &                     Nghost, MyType, Amin, Amax,                  &
 # if defined READ_WATER && defined MASKING
-     &                   NWpts, SCALARS(ng)%IJwater(:,wtype),           &
+     &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
 # endif
-     &                   Npts, wrk, A)
+     &                     Npts, wrk, A)
 #else
         IF (MyType.gt.0) THEN
           ic=0

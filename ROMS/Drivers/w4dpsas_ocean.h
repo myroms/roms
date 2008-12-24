@@ -296,6 +296,13 @@
           IF (exit_flag.ne.NoError) RETURN
         END IF
 !
+!  Define tangent linear initial conditions file.
+!
+        LdefITL(ng)=.TRUE.
+        CALL tl_def_ini (ng)
+        LdefITL(ng)=.FALSE.
+        IF (exit_flag.ne.NoError) RETURN
+!
 !  Define impulse forcing NetCDF file.
 !
         LdefTLF(ng)=.TRUE.
@@ -307,12 +314,6 @@
 !
         LdefMOD(ng)=.TRUE.
         CALL def_mod (ng)
-        IF (exit_flag.ne.NoError) RETURN
-!
-!  Inquire IDs of tangent linear initial conditions NetCDF files.
-!
-        LdefITL(ng)=.FALSE.
-        CALL tl_def_ini (ng)
         IF (exit_flag.ne.NoError) RETURN
 !
 !:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

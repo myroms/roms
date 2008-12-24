@@ -67,7 +67,7 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_scatter
+      USE distribute_mod, ONLY : mp_bcasti, mp_scatter3d
 #endif
 !
       implicit none
@@ -266,12 +266,12 @@
 !-----------------------------------------------------------------------
 !
 #ifdef DISTRIBUTE
-        CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,       &
-     &                   Nghost, MyType, Amin, Amax,                    &
+        CALL mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,     &
+     &                     Nghost, MyType, Amin, Amax,                  &
 # if defined READ_WATER && defined MASKING
-     &                   NWpts, SCALARS(ng)%IJwater(:,wtype),           &
+     &                     NWpts, SCALARS(ng)%IJwater(:,wtype),         &
 # endif
-     &                   Npts, wrk, A(:,:,:,fourth))
+     &                     Npts, wrk, A(:,:,:,fourth))
 #else        
         IF (MyType.gt.0) THEN
           ic=0

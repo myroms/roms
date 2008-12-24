@@ -58,7 +58,12 @@
 
 #ifdef DISTRIBUTE
 !
-      USE distribute_mod, ONLY : mp_bcasti, mp_gather
+      USE distribute_mod, ONLY : mp_bcasti
+# ifdef INLINE_2DIO
+      USE distribute_mod, ONLY : mp_gather2d
+# else
+      USE distribute_mod, ONLY : mp_gather3d
+# endif
 #endif
 !
 !  Imported variable declarations.
@@ -88,7 +93,7 @@
       logical :: LandFill
 #endif
       integer :: i, j, k, ic, Npts
-      integer :: Imin, Imax, Jmin, Jmax, Kmin, Kmax, Koff
+      integer :: Imin, Imax, Jmin, Jmax, Koff
       integer :: Ilen, Jlen, Klen, IJlen, MyType, status
 
       integer, dimension(4) :: start, total
@@ -185,22 +190,20 @@
 !  If appropriate, process 3D data level by level to reduce memory
 !  requirements.
 !
-      Kmin=1
-      Kmax=1
       DO k=LBk,UBk
+        CALL mp_gather2d (ng, model, LBi, UBi, LBj, UBj,                &
+     &                    tindex, gtype, Ascl,                          &
+#  ifdef MASKING
+     &                    Amask,                                        &
+#  endif
+     &                    A(:,:,k), Npts, Aout, SetFillVal)
 # else
-        Kmin=LBk
-        Kmax=UBk
-# endif
-        CALL mp_gather (ng, model, LBi, UBi, LBj, UBj, Kmin, Kmax,      &
-     &                  tindex, gtype, Ascl,                            &
-# ifdef MASKING
-     &                  Amask,                                          &
-# endif
-# ifdef INLINE_2DIO
-     &                  A(:,:,k), Npts, Aout, SetFillVal)
-# else
-     &                  A, Npts, Aout, SetFillVal)
+        CALL mp_gather3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,      &
+     &                    tindex, gtype, Ascl,                          &
+#  ifdef MASKING
+     &                    Amask,                                        &
+#  endif
+     &                    A, Npts, Aout, SetFillVal)
 # endif
 !
 !-----------------------------------------------------------------------

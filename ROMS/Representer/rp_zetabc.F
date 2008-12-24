@@ -122,8 +122,8 @@
 !
         IF (iic(ng).ne.0) THEN
           DO j=Jstr,Jend+1
-!>          grad(Istr-1,j)=zeta(Istr-1,j  ,kstp)-                       &
-!>   &                     zeta(Istr-1,j-1,kstp)
+!>          grad(Istr-1,j)=zeta(Istr-1,j  ,know)-                       &
+!>   &                     zeta(Istr-1,j-1,know)
 !>
             tl_grad(Istr-1,j)=0.0_r8
           END DO

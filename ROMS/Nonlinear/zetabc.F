@@ -110,13 +110,13 @@
 !  Western edge, implicit upstream radiation condition.
 !
         DO j=Jstr,Jend+1
-          grad(Istr-1,j)=zeta(Istr-1,j  ,kstp)-                         &
-     &                   zeta(Istr-1,j-1,kstp)
+          grad(Istr-1,j)=zeta(Istr-1,j  ,know)-                         &
+     &                   zeta(Istr-1,j-1,know)
 #  ifdef MASKING
           grad(Istr-1,j)=grad(Istr-1,j)*GRID(ng)%vmask(Istr-1,j)
 #  endif
-          grad(Istr,j)=zeta(Istr,j  ,kstp)-                             &
-     &                 zeta(Istr,j-1,kstp)
+          grad(Istr,j)=zeta(Istr,j  ,know)-                             &
+     &                 zeta(Istr,j-1,know)
 #  ifdef MASKING
           grad(Istr,j)=grad(Istr,j)*GRID(ng)%vmask(Istr,j)
 #  endif

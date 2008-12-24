@@ -133,7 +133,7 @@
       USE mod_scalars
 !
 #ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_scatter
+      USE distribute_mod, ONLY : mp_scatter2d
 #endif
       USE nrutil, ONLY : gasdev
 !
@@ -201,13 +201,13 @@
           Rmax=MAXVAL(random)
         END IF
 #ifdef DISTRIBUTE
-        CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, 1, 1,           &
-     &                   NghostPoints, gtype, Rmin, Rmax,               &
+        CALL mp_scatter2d (ng, model, LBi, UBi, LBj, UBj,               &
+     &                     NghostPoints, gtype, Rmin, Rmax,             &
 # if defined READ_WATER && defined MASKING
-     &                   (Lm(ng)+2)*(Mm(ng)+2),                         &
-     &                   SCALARS(ng)%IJwater(:,gtype),                  &
+     &                     (Lm(ng)+2)*(Mm(ng)+2),                       &
+     &                     SCALARS(ng)%IJwater(:,gtype),                &
 # endif
-     &                   SIZE(random), random, R)
+     &                     SIZE(random), random, R)
 #else
         ic=0
         DO j=Jmin,Jmax
@@ -236,7 +236,7 @@
       USE mod_scalars
 !
 # ifdef DISTRIBUTE
-      USE distribute_mod, ONLY : mp_scatter
+      USE distribute_mod, ONLY : mp_scatter3d
 # endif
       USE nrutil, ONLY : gasdev
 !
@@ -308,13 +308,13 @@
           Rmax=MAXVAL(random)
         END IF
 # ifdef DISTRIBUTE
-        CALL mp_scatter (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,       &
-     &                   NghostPoints, gtype, Rmin, Rmax,               &
+        CALL mp_scatter3d (ng, model, LBi, UBi, LBj, UBj, LBk, UBk,     &
+     &                     NghostPoints, gtype, Rmin, Rmax,             &
 #  if defined READ_WATER && defined MASKING
-     &                   (Lm(ng)+2)*(Mm(ng)+2),                         &
-     &                   SCALARS(ng)%IJwater(:,gtype),                  &
+     &                     (Lm(ng)+2)*(Mm(ng)+2),                       &
+     &                     SCALARS(ng)%IJwater(:,gtype),                &
 #  endif
-     &                   SIZE(random), random, R)
+     &                     SIZE(random), random, R)
 # else
         ic=0
         DO k=LBk,UBk

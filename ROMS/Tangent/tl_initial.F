@@ -191,14 +191,6 @@
         IF (exit_flag.ne.NoError) RETURN
       END IF
 #   endif
-#   ifdef WEAK_CONSTRAINT
-!
-!  Set switch to create tangent linear initial conditions file.
-!
-      IF (Nrun.eq.ERstr) THEN
-        LdefITL(ng)=.TRUE.
-      END IF
-#   endif
 #   if !(defined WEAK_CONSTRAINT || defined IOM)
 !
 !  Set switch to create tangent linear history file.
